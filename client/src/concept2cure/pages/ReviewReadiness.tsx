@@ -1461,7 +1461,7 @@ export function ReviewReadiness({ onClose }: { onClose: () => void }) {
   }, [activeTab, qcSections, complianceRules, readinessModules, summary, evidenceSections, auditEntries, traceability]);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-[#FAFAF9]">
+    <div className="fixed inset-0 z-50 flex flex-col bg-[#faf9f5]">
       {/* Top bar */}
       <header className="flex-shrink-0 h-12 border-b border-zinc-100 bg-white">
         <div className="flex items-center h-full px-6">

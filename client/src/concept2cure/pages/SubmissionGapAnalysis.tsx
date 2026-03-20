@@ -183,7 +183,7 @@ function CircularProgress({ value, size = 160 }: { value: number; size?: number 
   const offset = circumference - (value / 100) * circumference;
 
   const color =
-    value >= 80 ? '#059669' : value >= 50 ? '#d97706' : '#dc2626';
+    value >= 80 ? '#647746' : value >= 50 ? '#d97706' : '#dc2626';
 
   return (
     <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
@@ -347,9 +347,23 @@ export default function SubmissionGapAnalysis({ projectId, submissionType: initi
     setResult(null);
 
     try {
+      const authToken =
+        localStorage.getItem('token') ||
+        localStorage.getItem('authToken') ||
+        localStorage.getItem('auth_token') ||
+        '';
+      const organizationId =
+        localStorage.getItem('organizationId') ||
+        localStorage.getItem('currentOrganizationId') ||
+        '1';
       const response = await fetch('/api/ana/gap-analysis', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+          'x-organization-id': organizationId,
+        },
+        credentials: 'include',
         body: JSON.stringify({
           submissionType,
           uploadedDocuments: Array.from(selectedDocs),

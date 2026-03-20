@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { getOpenAIClient } = require('../services/openai-client');
 const logger = require('../utils/logger');
+const { ai } = require('../lib/unified-ai-client');
 
 /**
  * State of the Art (SOTA) API
@@ -12,8 +12,6 @@ const logger = require('../utils/logger');
  */
 
 // Configure OpenAI
-const openai = getOpenAIClient();
-
 /**
  * Generate a State of the Art section based on provided medical and device information
  * Route: POST /api/cer/generate-sota
@@ -111,7 +109,7 @@ Important requirements:
 The output should be a complete, well-structured State of the Art section ready for inclusion in an EU MDR-compliant Clinical Evaluation Report.
 `;
 
-    const response = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4o',
       messages: [
         {
@@ -129,7 +127,7 @@ The output should be a complete, well-structured State of the Art section ready 
     });
 
     // Get the generated content
-    const generatedContent = response.choices[0].message.content;
+    const generatedContent = aiResult.content;
 
     // Return the generated SOTA section
     res.json({

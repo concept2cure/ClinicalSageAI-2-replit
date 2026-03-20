@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://clinicalsage.ai/schemas/leaf_map.schema.json",
+  "$id": "https://concept2cure-ri.ai/schemas/leaf_map.schema.json",
   "title": "eCTD Leaf Map",
   "description": "Maps proof-pack artifact paths to eCTD leaf IDs for Module 4/5 placement. Each entry maps a ZIP-internal artifact path to its target eCTD module, section, and leaf identifier.",
   "type": "object",

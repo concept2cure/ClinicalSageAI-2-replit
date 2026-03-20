@@ -23,19 +23,19 @@ const CerTooltipWrapper = ({
         <TooltipTrigger asChild>
           <div className={`inline-flex items-center ${className}`}>
             {children}
-            {showIcon && <HelpCircle className="ml-1 h-4 w-4 text-[#0F6CBD] opacity-70" />}
+            {showIcon && <HelpCircle className="ml-1 h-4 w-4 text-[#d97757] opacity-70" />}
           </div>
         </TooltipTrigger>
         <TooltipContent
           side={tooltipPosition}
-          className="bg-white border border-[#E1DFDD] shadow-md p-3 max-w-sm text-sm text-[#323130] rounded"
+          className="bg-white border border-[#e8e6dc] shadow-md p-3 max-w-sm text-sm text-[#141413] rounded"
         >
           <div>
             <p className="mb-2">{tooltipContent}</p>
             {whyThisMatters && (
-              <div className="mt-2 pt-2 border-t border-[#E1DFDD]">
-                <p className="text-xs font-medium text-[#0F6CBD] mb-1">Why this matters:</p>
-                <p className="text-xs text-[#605E5C]">{whyThisMatters}</p>
+              <div className="mt-2 pt-2 border-t border-[#e8e6dc]">
+                <p className="text-xs font-medium text-[#d97757] mb-1">Why this matters:</p>
+                <p className="text-xs text-[#6b6963]">{whyThisMatters}</p>
               </div>
             )}
           </div>

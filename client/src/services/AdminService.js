@@ -3,7 +3,7 @@
  *
  * Enterprise-grade administration service that manages multi-tenant operations,
  * client provisioning, user management, and system configuration across the
- * TrialSage platform. Designed to support CRO master accounts with multiple
+ * Concept2Cure platform. Designed to support CRO master accounts with multiple
  * biotech client management capabilities.
  */
 

@@ -400,7 +400,7 @@ export function generateBackbone(params: {
     integrity: {
       backboneHash: '',
       generatedAt: new Date().toISOString(),
-      generatedBy: 'TrialSage eCTD 4.0 Engine v1.0.0',
+      generatedBy: 'Concept2Cure eCTD 4.0 Engine v1.0.0',
     },
   };
 

@@ -229,7 +229,7 @@ ${
     : 'No significant safety signals were identified in EU and global post-market surveillance databases for this device.'
 }
 `,
-      author: 'TrialSage AI',
+      author: 'Concept2Cure AI',
       createdAt: new Date().toISOString(),
       lastUpdated: new Date().toISOString(),
       sources: [

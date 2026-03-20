@@ -10,7 +10,6 @@ import { checkForOpenAIKey } from '../../utils/api-security.js';
 import { validateRequestBody } from '../../utils/validation.js';
 import { preclinicalDataSchema } from './types.js';
 import { rateLimit } from 'express-rate-limit';
-import { getOpenAIClient } from '../../services/openai-client';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -25,6 +24,7 @@ const preclinicalTranslationLimiter = rateLimit({
   legacyHeaders: false,
   message: 'Too many preclinical translation requests, please try again after a minute',
 });
+import { ai } from '../../lib/unified-ai-client';
 
 // Create router
 const router = express.Router();
@@ -65,8 +65,6 @@ const upload = multer({
 });
 
 // Get OpenAI client
-const openai = getOpenAIClient();
-
 // Get current directory
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -142,7 +140,7 @@ router.post('/translate', checkForOpenAIKey, preclinicalTranslationLimiter, asyn
       },
     ];
 
-    const response = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4o',
       messages: messages,
       temperature: 0.3,
@@ -150,7 +148,7 @@ router.post('/translate', checkForOpenAIKey, preclinicalTranslationLimiter, asyn
     });
 
     // Get the response
-    const scaleUpStrategy = response.choices[0].message.content;
+    const scaleUpStrategy = aiResult.content;
 
     // Generate equipment and facility requirements
     const equipmentPrompt = `Based on the formulation and scale-up strategy:
@@ -163,7 +161,7 @@ router.post('/translate', checkForOpenAIKey, preclinicalTranslationLimiter, asyn
     
     Format the response as valid JSON only.`;
 
-    const equipmentResponse = await openai.chat.completions.create({
+    const equipmentResponse = await ai.chat({
       model: 'gpt-4o',
       messages: [
         {
@@ -199,7 +197,7 @@ router.post('/translate', checkForOpenAIKey, preclinicalTranslationLimiter, asyn
     
     Provide a detailed risk assessment with mitigation strategies.`;
 
-    const failurePointResponse = await openai.chat.completions.create({
+    const failurePointResponse = await ai.chat({
       model: 'gpt-4o',
       messages: [
         {
@@ -229,7 +227,7 @@ router.post('/translate', checkForOpenAIKey, preclinicalTranslationLimiter, asyn
     
     Structure this as a validation protocol outline suitable for CMC submission.`;
 
-    const validationResponse = await openai.chat.completions.create({
+    const validationResponse = await ai.chat({
       model: 'gpt-4o',
       messages: [
         {
@@ -332,7 +330,7 @@ router.post('/upload', checkForOpenAIKey, upload.array('files', 5), async (req, 
       
       Please extract structured information in JSON format with these fields.`;
 
-      const extractionResponse = await openai.chat.completions.create({
+      const extractionResponse = await ai.chat({
         model: 'gpt-4o',
         messages: [
           {
@@ -446,7 +444,7 @@ router.post('/generate-mbr', checkForOpenAIKey, preclinicalTranslationLimiter, a
       },
     ];
 
-    const response = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4o',
       messages: messages,
       temperature: 0.3,
@@ -454,7 +452,7 @@ router.post('/generate-mbr', checkForOpenAIKey, preclinicalTranslationLimiter, a
     });
 
     // Get the response
-    const masterBatchRecord = response.choices[0].message.content;
+    const masterBatchRecord = aiResult.content;
 
     // Update the translation results with the master batch record
     translationData.masterBatchRecord = {

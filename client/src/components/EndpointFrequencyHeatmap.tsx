@@ -242,7 +242,7 @@ export default function EndpointFrequencyHeatmap({
               xLabels={phases}
               yLabels={indications}
               data={heatmapData}
-              squares
+              square
               onClick={handleCellClick}
               cellStyle={(background, value) => {
                 // Normalize color intensity based on view type

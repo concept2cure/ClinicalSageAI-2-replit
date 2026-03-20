@@ -12,9 +12,6 @@
 
 import { db } from '../db';
 import { eq, and, ilike, sql } from 'drizzle-orm';
-import { ai } from '../lib/unified-ai-client';
-
-
 // ---------------------------------------------------------------------------
 // Interfaces
 // ---------------------------------------------------------------------------
@@ -22,6 +19,7 @@ import { ai } from '../lib/unified-ai-client';
 export interface MedDRACodingResult {
   verbatimTerm: string;
   codingMethod: 'exact_match' | 'fuzzy_match' | 'ai_assisted';
+import { ai } from '../lib/unified-ai-client';
   confidence: number; // 0-1
   hierarchy: {
     socCode: string;

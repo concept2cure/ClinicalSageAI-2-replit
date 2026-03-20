@@ -93,13 +93,17 @@ const SettingRow: React.FC<SettingRowProps> = ({ label, description, children })
 interface ToggleSwitchProps {
   enabled: boolean;
   onChange: (enabled: boolean) => void;
+  label?: string;
 }
 
-const ToggleSwitch: React.FC<ToggleSwitchProps> = ({ enabled, onChange }) => (
+const ToggleSwitch: React.FC<ToggleSwitchProps> = ({ enabled, onChange, label }) => (
   <button
+    role="switch"
+    aria-checked={enabled}
+    aria-label={label}
     onClick={() => onChange(!enabled)}
     className={cn(
-      'relative w-11 h-6 rounded-full transition-colors duration-200',
+      'relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:ring-offset-2',
       enabled ? 'bg-blue-600' : 'bg-zinc-300'
     )}
   >
@@ -129,46 +133,55 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ title, description }) => 
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const ProfileSection: React.FC = () => {
-  const [name, setName] = useState('John Doe');
-  const [email] = useState('john.doe@company.com');
-  const [role, setRole] = useState('Regulatory Affairs Lead');
-  const [objectives, setObjectives] = useState('Submission readiness, evidence alignment');
-  const [criteria, setCriteria] = useState('Risk reduction, audit readiness');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [title, setTitle] = useState('');
+  const [department, setDepartment] = useState('');
+  const [bio, setBio] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle');
 
   useEffect(() => {
-    try {
-      const savedProfile = localStorage.getItem('concept2cure_user_profile');
-      if (savedProfile) {
-        const parsed = JSON.parse(savedProfile) as {
-          role?: string;
-          objectives?: string[];
-          criteria?: string[];
-        };
-        if (parsed.role) setRole(parsed.role);
-        if (parsed.objectives?.length) setObjectives(parsed.objectives.join(', '));
-        if (parsed.criteria?.length) setCriteria(parsed.criteria.join(', '));
-      }
-    } catch (error) {
-      console.warn('Unable to load profile settings', error);
-    }
+    fetch('/api/users/me', { credentials: 'include' })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data) {
+          setName(data.displayName || data.name || '');
+          setEmail(data.email || '');
+          setTitle(data.title || '');
+          setDepartment(data.department || '');
+          setBio(data.bio || '');
+        }
+      })
+      .catch(() => {});
   }, []);
 
-  const handleSave = () => {
-    const normalizeList = (value: string) =>
-      value
-        .split(/\n|,/)
-        .map(item => item.trim())
-        .filter(Boolean);
-
-    const profile = {
-      role,
-      objectives: normalizeList(objectives),
-      criteria: normalizeList(criteria),
-      updatedAt: new Date().toISOString(),
-    };
-
-    localStorage.setItem('concept2cure_user_profile', JSON.stringify(profile));
+  const handleSave = async () => {
+    setSaving(true);
+    setSaveStatus('idle');
+    try {
+      const res = await fetch('/api/users/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ name, title, department, bio }),
+      });
+      if (res.ok) {
+        setSaveStatus('saved');
+        // Also sync to localStorage for ZenApp profile context
+        const profile = { role: title, objectives: [], criteria: [], updatedAt: new Date().toISOString() };
+        localStorage.setItem('concept2cure_user_profile', JSON.stringify(profile));
+        setTimeout(() => setSaveStatus('idle'), 2000);
+      } else {
+        setSaveStatus('error');
+      }
+    } catch {
+      setSaveStatus('error');
+    }
+    setSaving(false);
   };
+
+  const initials = name.split(/\s+/).map(p => p[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || '??';
 
   return (
     <div>
@@ -181,15 +194,15 @@ const ProfileSection: React.FC = () => {
       <div className="flex items-center gap-4 mb-6 pb-6 border-b border-zinc-100">
         <div className="relative">
           <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-2xl font-semibold">
-            JD
+            {initials}
           </div>
           <button className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-white border border-zinc-200 shadow-sm flex items-center justify-center hover:bg-zinc-50 transition-colors">
             <Camera className="w-4 h-4 text-zinc-600" />
           </button>
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-zinc-900">{name}</h3>
-          <p className="text-sm text-zinc-500">{role}</p>
+          <h3 className="text-lg font-semibold text-zinc-900">{name || 'Your Name'}</h3>
+          <p className="text-sm text-zinc-500">{title || 'Your Title'}</p>
         </div>
       </div>
 
@@ -217,42 +230,52 @@ const ProfileSection: React.FC = () => {
           </p>
         </div>
         <div>
-          <label className="block text-sm font-medium text-zinc-700 mb-1.5">Role</label>
+          <label className="block text-sm font-medium text-zinc-700 mb-1.5">Title / Role</label>
           <input
             type="text"
-            value={role}
-            onChange={e => setRole(e.target.value)}
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+            placeholder="e.g., Regulatory Affairs Lead"
             className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-zinc-700 mb-1.5">Objectives</label>
-          <textarea
-            value={objectives}
-            onChange={e => setObjectives(e.target.value)}
-            rows={3}
+          <label className="block text-sm font-medium text-zinc-700 mb-1.5">Department</label>
+          <input
+            type="text"
+            value={department}
+            onChange={e => setDepartment(e.target.value)}
+            placeholder="e.g., Regulatory, Clinical, CMC"
             className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-            placeholder="Comma or new-line separated"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-zinc-700 mb-1.5">Success criteria</label>
+          <label className="block text-sm font-medium text-zinc-700 mb-1.5">Bio</label>
           <textarea
-            value={criteria}
-            onChange={e => setCriteria(e.target.value)}
+            value={bio}
+            onChange={e => setBio(e.target.value)}
             rows={3}
             className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-            placeholder="What must be true for success"
+            placeholder="A short bio visible to your team"
           />
         </div>
       </div>
 
-      <button
-        onClick={handleSave}
-        className="mt-6 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
-      >
-        Save Changes
-      </button>
+      <div className="flex items-center gap-3 mt-6">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50"
+        >
+          {saving ? 'Saving...' : 'Save Changes'}
+        </button>
+        {saveStatus === 'saved' && (
+          <span className="text-sm text-green-600 font-medium">Saved</span>
+        )}
+        {saveStatus === 'error' && (
+          <span className="text-sm text-red-600 font-medium">Failed to save</span>
+        )}
+      </div>
     </div>
   );
 };
@@ -262,6 +285,22 @@ const ProfileSection: React.FC = () => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const OrganizationSection: React.FC = () => {
+  // Load org data from localStorage/API (populated during auth)
+  const [orgData] = React.useState(() => {
+    try {
+      const profile = localStorage.getItem('concept2cure_user_profile');
+      const parsed = profile ? JSON.parse(profile) : {};
+      return {
+        name: parsed.organizationName || parsed.companyName || 'Your Organization',
+        plan: parsed.tier || parsed.plan || 'Standard',
+        members: parsed.memberCount || '—',
+        nextBilling: parsed.nextBillingDate || 'See billing dashboard',
+      };
+    } catch {
+      return { name: 'Your Organization', plan: 'Standard', members: '—', nextBilling: 'See billing dashboard' };
+    }
+  });
+
   return (
     <div>
       <SectionHeader
@@ -276,30 +315,31 @@ const OrganizationSection: React.FC = () => {
               <Building2 className="w-6 h-6 text-blue-600" />
             </div>
             <div>
-              <h3 className="text-base font-semibold text-zinc-900">Acme Biotech</h3>
-              <p className="text-sm text-zinc-500">Enterprise Plan</p>
+              <h3 className="text-base font-semibold text-zinc-900">{orgData.name}</h3>
+              <p className="text-sm text-zinc-500">{orgData.plan} Plan</p>
             </div>
           </div>
         </div>
 
-        <SettingRow label="Team Members" description="12 active members">
-          <button className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
+        <SettingRow label="Team Members" description={`${orgData.members} active members`}>
+          <a href="/concept2cure/billing" className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
             Manage
             <ChevronRight className="w-4 h-4" />
-          </button>
+          </a>
         </SettingRow>
 
-        <SettingRow label="Billing" description="Next billing date: Feb 1, 2026">
-          <button className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
+        <SettingRow label="Billing" description={`Next billing: ${orgData.nextBilling}`}>
+          <a href="/concept2cure/billing" className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
             View
             <ChevronRight className="w-4 h-4" />
-          </button>
+          </a>
         </SettingRow>
 
-        <SettingRow label="Usage" description="847 / 1,000 RI queries this month">
-          <div className="w-24 h-2 bg-zinc-200 rounded-full overflow-hidden">
-            <div className="h-full bg-blue-600 rounded-full" style={{ width: '84.7%' }} />
-          </div>
+        <SettingRow label="Usage" description="View token usage in billing dashboard">
+          <a href="/concept2cure/billing" className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
+            Dashboard
+            <ChevronRight className="w-4 h-4" />
+          </a>
         </SettingRow>
       </div>
     </div>
@@ -311,37 +351,86 @@ const OrganizationSection: React.FC = () => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const NotificationsSection: React.FC = () => {
-  const [emailDigest, setEmailDigest] = useState(true);
-  const [projectUpdates, setProjectUpdates] = useState(true);
-  const [mentionAlerts, setMentionAlerts] = useState(true);
-  const [weeklyReport, setWeeklyReport] = useState(false);
-  const [regulatoryAlerts, setRegulatoryAlerts] = useState(true);
+  const [prefs, setPrefs] = useState({
+    emailMentions: true,
+    emailApprovals: true,
+    emailCompliance: true,
+    emailSystem: true,
+    emailDigest: 'weekly' as string,
+    inAppMentions: true,
+    inAppApprovals: true,
+    inAppCompliance: true,
+    inAppSystem: true,
+    toastEnabled: true,
+    soundEnabled: false,
+  });
+  const [dirty, setDirty] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/users/me/notifications', { credentials: 'include' })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) setPrefs(p => ({ ...p, ...data })); })
+      .catch(() => {});
+  }, []);
+
+  const toggle = (key: string) => {
+    setPrefs(p => ({ ...p, [key]: !p[key as keyof typeof p] }));
+    setDirty(true);
+  };
+
+  const save = () => {
+    fetch('/api/users/me/notifications', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(prefs),
+    }).then(() => setDirty(false)).catch(() => {});
+  };
 
   return (
     <div>
       <SectionHeader title="Notifications" description="Choose what notifications you receive" />
 
-      <div className="bg-white rounded-xl border border-zinc-200">
-        <SettingRow label="Email Digest" description="Daily summary of your activity">
-          <ToggleSwitch enabled={emailDigest} onChange={setEmailDigest} />
+      <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Email</h3>
+      <div className="bg-white rounded-xl border border-zinc-200 mb-4">
+        <SettingRow label="Mentions" description="When someone @mentions you">
+          <ToggleSwitch enabled={prefs.emailMentions} onChange={() => toggle('emailMentions')} />
         </SettingRow>
-
-        <SettingRow label="Project Updates" description="When projects you're part of change">
-          <ToggleSwitch enabled={projectUpdates} onChange={setProjectUpdates} />
+        <SettingRow label="Approvals" description="Approval requests and decisions">
+          <ToggleSwitch enabled={prefs.emailApprovals} onChange={() => toggle('emailApprovals')} />
         </SettingRow>
-
-        <SettingRow label="Mentions" description="When someone mentions you in a chat">
-          <ToggleSwitch enabled={mentionAlerts} onChange={setMentionAlerts} />
+        <SettingRow label="Compliance Alerts" description="Regulatory deadlines and changes">
+          <ToggleSwitch enabled={prefs.emailCompliance} onChange={() => toggle('emailCompliance')} />
         </SettingRow>
-
-        <SettingRow label="Weekly Reports" description="Weekly summary sent every Monday">
-          <ToggleSwitch enabled={weeklyReport} onChange={setWeeklyReport} />
-        </SettingRow>
-
-        <SettingRow label="Regulatory Alerts" description="New guidance and deadline reminders">
-          <ToggleSwitch enabled={regulatoryAlerts} onChange={setRegulatoryAlerts} />
+        <SettingRow label="System Updates" description="Platform maintenance and new features">
+          <ToggleSwitch enabled={prefs.emailSystem} onChange={() => toggle('emailSystem')} />
         </SettingRow>
       </div>
+
+      <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">In-App</h3>
+      <div className="bg-white rounded-xl border border-zinc-200 mb-4">
+        <SettingRow label="Mentions" description="In-app mention notifications">
+          <ToggleSwitch enabled={prefs.inAppMentions} onChange={() => toggle('inAppMentions')} />
+        </SettingRow>
+        <SettingRow label="Approvals" description="In-app approval notifications">
+          <ToggleSwitch enabled={prefs.inAppApprovals} onChange={() => toggle('inAppApprovals')} />
+        </SettingRow>
+        <SettingRow label="Toast Popups" description="Show floating notification popups">
+          <ToggleSwitch enabled={prefs.toastEnabled} onChange={() => toggle('toastEnabled')} />
+        </SettingRow>
+        <SettingRow label="Sound" description="Play sound on new notifications">
+          <ToggleSwitch enabled={prefs.soundEnabled} onChange={() => toggle('soundEnabled')} />
+        </SettingRow>
+      </div>
+
+      {dirty && (
+        <button
+          onClick={save}
+          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+        >
+          Save Notification Preferences
+        </button>
+      )}
     </div>
   );
 };
@@ -455,72 +544,435 @@ const AppearanceSection: React.FC = () => {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// INTEGRATIONS SECTION
+// INTEGRATIONS SECTION — Enterprise Connectors
 // ═══════════════════════════════════════════════════════════════════════════════
 
+type IntegrationCategory = 'clinical' | 'content' | 'cloud' | 'collaboration';
+
+interface IntegrationConfig {
+  id: string;
+  name: string;
+  description: string;
+  category: IntegrationCategory;
+  connected: boolean;
+  icon: string;
+  authType: 'oauth' | 'api_key' | 'saml' | 'passthrough';
+  configFields: { key: string; label: string; placeholder: string; type: 'text' | 'password' | 'url' }[];
+}
+
+const ENTERPRISE_INTEGRATIONS: IntegrationConfig[] = [
+  // Clinical & Regulatory
+  {
+    id: 'medidata',
+    name: 'Medidata Rave',
+    description: 'Clinical data management, EDC integration, and study data exchange',
+    category: 'clinical',
+    connected: false,
+    icon: 'M',
+    authType: 'oauth',
+    configFields: [
+      { key: 'clientId', label: 'Client ID', placeholder: 'Enter Medidata Client ID', type: 'text' },
+      { key: 'clientSecret', label: 'Client Secret', placeholder: 'Enter Client Secret', type: 'password' },
+      { key: 'environment', label: 'Environment URL', placeholder: 'https://your-org.mdsol.com', type: 'url' },
+    ],
+  },
+  {
+    id: 'veeva-vault',
+    name: 'Veeva Vault',
+    description: 'Regulatory submissions, eTMF, and quality document management',
+    category: 'clinical',
+    connected: false,
+    icon: 'V',
+    authType: 'oauth',
+    configFields: [
+      { key: 'vaultUrl', label: 'Vault URL', placeholder: 'https://your-vault.veevavault.com', type: 'url' },
+      { key: 'username', label: 'API Username', placeholder: 'api-user@domain.com', type: 'text' },
+      { key: 'password', label: 'API Password', placeholder: 'Enter Vault password', type: 'password' },
+    ],
+  },
+  {
+    id: 'veeva-crm',
+    name: 'Veeva CRM',
+    description: 'Sales force automation and medical affairs engagement',
+    category: 'clinical',
+    connected: false,
+    icon: 'V',
+    authType: 'oauth',
+    configFields: [
+      { key: 'instanceUrl', label: 'Instance URL', placeholder: 'https://your-org.veevacrm.com', type: 'url' },
+      { key: 'clientId', label: 'Connected App Client ID', placeholder: 'Enter Client ID', type: 'text' },
+      { key: 'clientSecret', label: 'Client Secret', placeholder: 'Enter Client Secret', type: 'password' },
+    ],
+  },
+  // Content & Document
+  {
+    id: 'adobe',
+    name: 'Adobe Experience Cloud',
+    description: 'PDF services, e-signatures, and document generation',
+    category: 'content',
+    connected: false,
+    icon: 'A',
+    authType: 'api_key',
+    configFields: [
+      { key: 'apiKey', label: 'API Key', placeholder: 'Enter Adobe API Key', type: 'password' },
+      { key: 'orgId', label: 'Organization ID', placeholder: 'Enter Org ID', type: 'text' },
+      { key: 'technicalAccountId', label: 'Technical Account ID', placeholder: 'Enter Account ID', type: 'text' },
+    ],
+  },
+  {
+    id: 'docusign',
+    name: 'DocuSign',
+    description: 'Electronic signatures for regulatory approvals and submissions',
+    category: 'content',
+    connected: false,
+    icon: 'D',
+    authType: 'oauth',
+    configFields: [
+      { key: 'integrationKey', label: 'Integration Key', placeholder: 'Enter Integration Key', type: 'text' },
+      { key: 'secretKey', label: 'Secret Key', placeholder: 'Enter Secret Key', type: 'password' },
+      { key: 'accountId', label: 'Account ID', placeholder: 'Enter DocuSign Account ID', type: 'text' },
+    ],
+  },
+  // Cloud Storage
+  {
+    id: 'google-drive',
+    name: 'Google Drive',
+    description: 'Cloud file storage, collaboration, and document sharing',
+    category: 'cloud',
+    connected: false,
+    icon: 'G',
+    authType: 'oauth',
+    configFields: [
+      { key: 'clientId', label: 'OAuth Client ID', placeholder: 'Enter Google OAuth Client ID', type: 'text' },
+      { key: 'clientSecret', label: 'OAuth Client Secret', placeholder: 'Enter Client Secret', type: 'password' },
+      { key: 'redirectUri', label: 'Redirect URI', placeholder: 'https://your-app.com/auth/google/callback', type: 'url' },
+    ],
+  },
+  {
+    id: 'onedrive',
+    name: 'Microsoft OneDrive',
+    description: 'Cloud storage and file sync with Microsoft 365',
+    category: 'cloud',
+    connected: false,
+    icon: 'O',
+    authType: 'oauth',
+    configFields: [
+      { key: 'tenantId', label: 'Azure Tenant ID', placeholder: 'Enter Azure AD Tenant ID', type: 'text' },
+      { key: 'clientId', label: 'Application Client ID', placeholder: 'Enter App Client ID', type: 'text' },
+      { key: 'clientSecret', label: 'Client Secret', placeholder: 'Enter Client Secret', type: 'password' },
+    ],
+  },
+  {
+    id: 'sharepoint',
+    name: 'Microsoft SharePoint',
+    description: 'Enterprise document management, team sites, and content collaboration',
+    category: 'cloud',
+    connected: false,
+    icon: 'S',
+    authType: 'oauth',
+    configFields: [
+      { key: 'tenantId', label: 'Azure Tenant ID', placeholder: 'Enter Azure AD Tenant ID', type: 'text' },
+      { key: 'clientId', label: 'Application Client ID', placeholder: 'Enter App Client ID', type: 'text' },
+      { key: 'clientSecret', label: 'Client Secret', placeholder: 'Enter Client Secret', type: 'password' },
+      { key: 'siteUrl', label: 'SharePoint Site URL', placeholder: 'https://your-org.sharepoint.com/sites/docs', type: 'url' },
+    ],
+  },
+  // Collaboration
+  {
+    id: 'slack',
+    name: 'Slack',
+    description: 'Team notifications, alerts, and workflow updates',
+    category: 'collaboration',
+    connected: false,
+    icon: 'S',
+    authType: 'oauth',
+    configFields: [
+      { key: 'webhookUrl', label: 'Webhook URL', placeholder: 'https://hooks.slack.com/services/...', type: 'url' },
+      { key: 'botToken', label: 'Bot Token', placeholder: 'xoxb-your-bot-token', type: 'password' },
+    ],
+  },
+  {
+    id: 'jira',
+    name: 'Jira',
+    description: 'Issue tracking, project management, and compliance tasks',
+    category: 'collaboration',
+    connected: false,
+    icon: 'J',
+    authType: 'api_key',
+    configFields: [
+      { key: 'siteUrl', label: 'Jira Site URL', placeholder: 'https://your-org.atlassian.net', type: 'url' },
+      { key: 'email', label: 'Jira Email', placeholder: 'user@company.com', type: 'text' },
+      { key: 'apiToken', label: 'API Token', placeholder: 'Enter Jira API Token', type: 'password' },
+    ],
+  },
+];
+
+const CATEGORY_LABELS: Record<IntegrationCategory, string> = {
+  clinical: 'Clinical & Regulatory',
+  content: 'Content & Documents',
+  cloud: 'Cloud Storage',
+  collaboration: 'Collaboration',
+};
+
+const CATEGORY_ICONS: Record<IntegrationCategory, string> = {
+  clinical: '🔬',
+  content: '📄',
+  cloud: '☁️',
+  collaboration: '💬',
+};
+
+const AUTH_TYPE_LABELS: Record<string, string> = {
+  oauth: 'OAuth 2.0 / SSO',
+  api_key: 'API Key',
+  saml: 'SAML SSO',
+  passthrough: 'Pass-through Auth',
+};
+
 const IntegrationsSection: React.FC = () => {
-  const integrations = [
-    {
-      id: 'slack',
-      name: 'Slack',
-      description: 'Get notifications in Slack',
-      connected: true,
-      icon: '💬',
-    },
-    {
-      id: 'sharepoint',
-      name: 'SharePoint',
-      description: 'Sync documents with SharePoint',
-      connected: true,
-      icon: '📁',
-    },
-    {
-      id: 'jira',
-      name: 'Jira',
-      description: 'Create issues from findings',
-      connected: false,
-      icon: '🎯',
-    },
-    {
-      id: 'docusign',
-      name: 'DocuSign',
-      description: 'E-signatures for approvals',
-      connected: false,
-      icon: '✍️',
-    },
-  ];
+  const [configuring, setConfiguring] = useState<string | null>(null);
+  const [connectedMap, setConnectedMap] = useState<Record<string, boolean>>(() => {
+    try {
+      const saved = localStorage.getItem('c2c_integrations_connected');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+  const [configValues, setConfigValues] = useState<Record<string, Record<string, string>>>(() => {
+    try {
+      const saved = localStorage.getItem('c2c_integrations_config');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+  const [filterCategory, setFilterCategory] = useState<IntegrationCategory | 'all'>('all');
+  const [testingId, setTestingId] = useState<string | null>(null);
+  const [testResults, setTestResults] = useState<Record<string, 'success' | 'error' | null>>({});
+
+  const filteredIntegrations =
+    filterCategory === 'all'
+      ? ENTERPRISE_INTEGRATIONS
+      : ENTERPRISE_INTEGRATIONS.filter(i => i.category === filterCategory);
+
+  const categories = Array.from(new Set(ENTERPRISE_INTEGRATIONS.map(i => i.category)));
+
+  const handleConnect = (id: string) => {
+    const updated = { ...connectedMap, [id]: true };
+    setConnectedMap(updated);
+    localStorage.setItem('c2c_integrations_connected', JSON.stringify(updated));
+    setConfiguring(null);
+  };
+
+  const handleDisconnect = (id: string) => {
+    const updated = { ...connectedMap, [id]: false };
+    setConnectedMap(updated);
+    localStorage.setItem('c2c_integrations_connected', JSON.stringify(updated));
+    setTestResults(prev => ({ ...prev, [id]: null }));
+  };
+
+  const handleConfigChange = (integrationId: string, fieldKey: string, value: string) => {
+    setConfigValues(prev => {
+      const updated = {
+        ...prev,
+        [integrationId]: { ...(prev[integrationId] || {}), [fieldKey]: value },
+      };
+      localStorage.setItem('c2c_integrations_config', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const handleTestConnection = (id: string) => {
+    setTestingId(id);
+    setTestResults(prev => ({ ...prev, [id]: null }));
+    // Simulate test
+    setTimeout(() => {
+      const hasConfig = configValues[id] && Object.values(configValues[id]).some(v => v.trim());
+      setTestResults(prev => ({ ...prev, [id]: hasConfig ? 'success' : 'error' }));
+      setTestingId(null);
+    }, 1500);
+  };
+
+  const connectedCount = Object.values(connectedMap).filter(Boolean).length;
 
   return (
     <div>
-      <SectionHeader title="Integrations" description="Connect with your other tools" />
+      <SectionHeader
+        title="Enterprise Integrations"
+        description={`Connect Concept2Cure with your clinical, document, and collaboration tools. ${connectedCount} of ${ENTERPRISE_INTEGRATIONS.length} connected.`}
+      />
 
-      <div className="space-y-3">
-        {integrations.map(integration => (
-          <div
-            key={integration.id}
-            className="flex items-center justify-between p-4 bg-white rounded-xl border border-zinc-200"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-zinc-100 flex items-center justify-center text-xl">
-                {integration.icon}
-              </div>
-              <div>
-                <h3 className="text-sm font-medium text-zinc-900">{integration.name}</h3>
-                <p className="text-xs text-zinc-500">{integration.description}</p>
-              </div>
-            </div>
+      {/* Category filter tabs */}
+      <div className="flex flex-wrap gap-2 mb-6">
+        <button
+          onClick={() => setFilterCategory('all')}
+          className={cn(
+            'px-3 py-1.5 text-xs font-medium rounded-lg transition-colors',
+            filterCategory === 'all'
+              ? 'bg-blue-600 text-white'
+              : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+          )}
+        >
+          All ({ENTERPRISE_INTEGRATIONS.length})
+        </button>
+        {categories.map(cat => {
+          const count = ENTERPRISE_INTEGRATIONS.filter(i => i.category === cat).length;
+          return (
             <button
+              key={cat}
+              onClick={() => setFilterCategory(cat)}
               className={cn(
                 'px-3 py-1.5 text-xs font-medium rounded-lg transition-colors',
-                integration.connected
-                  ? 'text-zinc-600 bg-zinc-100 hover:bg-zinc-200'
-                  : 'text-white bg-blue-600 hover:bg-blue-700'
+                filterCategory === cat
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
               )}
             >
-              {integration.connected ? 'Disconnect' : 'Connect'}
+              {CATEGORY_ICONS[cat]} {CATEGORY_LABELS[cat]} ({count})
             </button>
-          </div>
-        ))}
+          );
+        })}
+      </div>
+
+      {/* Integration cards */}
+      <div className="space-y-3">
+        {filteredIntegrations.map(integration => {
+          const isConnected = connectedMap[integration.id] || false;
+          const isConfiguring = configuring === integration.id;
+          const testResult = testResults[integration.id];
+          const isTesting = testingId === integration.id;
+
+          return (
+            <div
+              key={integration.id}
+              className={cn(
+                'rounded-xl border transition-all duration-200',
+                isConnected
+                  ? 'border-green-200 bg-green-50/50'
+                  : 'border-zinc-200 bg-white',
+                isConfiguring && 'ring-2 ring-blue-200'
+              )}
+            >
+              {/* Integration header */}
+              <div className="flex items-center justify-between p-4">
+                <div className="flex items-center gap-3">
+                  <div
+                    className={cn(
+                      'w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold',
+                      isConnected
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-zinc-100 text-zinc-600'
+                    )}
+                  >
+                    {integration.icon}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-medium text-zinc-900">{integration.name}</h3>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-400 font-medium">
+                        {AUTH_TYPE_LABELS[integration.authType]}
+                      </span>
+                      {isConnected && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">
+                          Connected
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-zinc-500 mt-0.5">{integration.description}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {isConnected && (
+                    <button
+                      onClick={() => setConfiguring(isConfiguring ? null : integration.id)}
+                      className="px-3 py-1.5 text-xs font-medium rounded-lg text-zinc-600 bg-zinc-100 hover:bg-zinc-200 transition-colors"
+                    >
+                      {isConfiguring ? 'Close' : 'Manage'}
+                    </button>
+                  )}
+                  <button
+                    onClick={() =>
+                      isConnected
+                        ? handleDisconnect(integration.id)
+                        : setConfiguring(isConfiguring ? null : integration.id)
+                    }
+                    className={cn(
+                      'px-3 py-1.5 text-xs font-medium rounded-lg transition-colors',
+                      isConnected
+                        ? 'text-red-600 bg-red-50 hover:bg-red-100'
+                        : isConfiguring
+                          ? 'text-zinc-600 bg-zinc-100 hover:bg-zinc-200'
+                          : 'text-white bg-blue-600 hover:bg-blue-700'
+                    )}
+                  >
+                    {isConnected ? 'Disconnect' : isConfiguring ? 'Cancel' : 'Configure'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Configuration panel */}
+              {isConfiguring && (
+                <div className="px-4 pb-4 border-t border-zinc-100 pt-4">
+                  <div className="space-y-3">
+                    {integration.configFields.map(field => (
+                      <div key={field.key}>
+                        <label className="block text-xs font-medium text-zinc-700 mb-1">
+                          {field.label}
+                        </label>
+                        <input
+                          type={field.type}
+                          placeholder={field.placeholder}
+                          value={configValues[integration.id]?.[field.key] || ''}
+                          onChange={e =>
+                            handleConfigChange(integration.id, field.key, e.target.value)
+                          }
+                          className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all"
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Test + Connect buttons */}
+                  <div className="flex items-center gap-3 mt-4">
+                    <button
+                      onClick={() => handleTestConnection(integration.id)}
+                      disabled={isTesting}
+                      className="px-4 py-2 text-xs font-medium rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-50 transition-colors disabled:opacity-50"
+                    >
+                      {isTesting ? 'Testing...' : 'Test Connection'}
+                    </button>
+                    <button
+                      onClick={() => handleConnect(integration.id)}
+                      className="px-4 py-2 text-xs font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+                    >
+                      Save & Connect
+                    </button>
+                    {testResult === 'success' && (
+                      <span className="text-xs text-green-600 font-medium">Connection successful</span>
+                    )}
+                    {testResult === 'error' && (
+                      <span className="text-xs text-red-600 font-medium">
+                        Connection failed — check credentials
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Auth type info */}
+                  <p className="text-[11px] text-zinc-400 mt-3">
+                    {integration.authType === 'oauth' &&
+                      'Uses OAuth 2.0 for secure authentication. You can also use your organization\'s SSO provider for pass-through sign-on.'}
+                    {integration.authType === 'api_key' &&
+                      'Uses API key authentication. Store your keys securely — they are encrypted at rest.'}
+                    {integration.authType === 'saml' &&
+                      'Uses SAML 2.0 for enterprise SSO. Configure your Identity Provider (IdP) to enable pass-through authentication.'}
+                    {integration.authType === 'passthrough' &&
+                      'Uses your existing organizational credentials for seamless authentication.'}
+                  </p>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -532,10 +984,12 @@ const IntegrationsSection: React.FC = () => {
 
 const HelpSection: React.FC = () => {
   const resources = [
-    { id: 'docs', label: 'Documentation', icon: FileText, link: '#' },
-    { id: 'support', label: 'Contact Support', icon: Mail, link: '#' },
-    { id: 'shortcuts', label: 'Keyboard Shortcuts', icon: Key, link: '#' },
+    { id: 'docs', label: 'Documentation', icon: FileText, href: '/concept2cure/legal/terms', desc: 'Platform guides and regulatory resources' },
+    { id: 'support', label: 'Contact Support', icon: Mail, href: 'mailto:support@concept2cure.com', desc: 'Email our team at support@concept2cure.com' },
+    { id: 'shortcuts', label: 'Keyboard Shortcuts', icon: Key, href: null, desc: null },
   ];
+
+  const [showShortcuts, setShowShortcuts] = React.useState(false);
 
   return (
     <div>
@@ -545,28 +999,56 @@ const HelpSection: React.FC = () => {
       />
 
       <div className="space-y-3 mb-6">
-        {resources.map(({ id, label, icon: Icon }) => (
-          <div
+        {resources.map(({ id, label, icon: Icon, href, desc }) => (
+          <a
             key={id}
-            className="flex items-center justify-between p-4 bg-white rounded-xl border border-zinc-200"
+            href={id === 'shortcuts' ? undefined : (href || '#')}
+            onClick={id === 'shortcuts' ? () => setShowShortcuts(!showShortcuts) : undefined}
+            target={href?.startsWith('http') || href?.startsWith('mailto') ? '_blank' : undefined}
+            rel={href?.startsWith('http') ? 'noopener noreferrer' : undefined}
+            className="flex items-center justify-between p-4 bg-white rounded-xl border border-zinc-200 hover:bg-zinc-50 transition-colors cursor-pointer block"
           >
             <div className="flex items-center gap-3">
               <Icon className="w-5 h-5 text-zinc-500" />
-              <span className="text-sm font-medium text-zinc-900">{label}</span>
+              <div>
+                <span className="text-sm font-medium text-zinc-900 block">{label}</span>
+                {desc && <span className="text-xs text-zinc-500">{desc}</span>}
+              </div>
             </div>
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-400 font-medium">
-              Coming soon
-            </span>
-          </div>
+            <ChevronRight className="w-4 h-4 text-zinc-400" />
+          </a>
         ))}
       </div>
 
+      {/* Keyboard Shortcuts */}
+      {showShortcuts && (
+        <div className="mb-6 p-4 bg-zinc-50 rounded-xl border border-zinc-200">
+          <h4 className="text-sm font-medium text-zinc-900 mb-3">Keyboard Shortcuts</h4>
+          <div className="space-y-2">
+            {[
+              { keys: '⌘ K', desc: 'Open command palette' },
+              { keys: '⌘ ,', desc: 'Open settings' },
+              { keys: '⌘ N', desc: 'New conversation' },
+              { keys: '⌘ B', desc: 'Toggle sidebar' },
+              { keys: '⌘ /', desc: 'Toggle AI copilot' },
+              { keys: 'Esc', desc: 'Close modal / panel' },
+            ].map(s => (
+              <div key={s.keys} className="flex items-center justify-between">
+                <span className="text-xs text-zinc-600">{s.desc}</span>
+                <kbd className="text-[11px] px-1.5 py-0.5 rounded bg-white border border-zinc-200 text-zinc-500 font-mono">{s.keys}</kbd>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="text-center py-6 border-t border-zinc-100">
-        <p className="text-xs text-zinc-400 mb-2">Concept2Cure v3.0.0 • © 2026 Concept2Cure</p>
+        <p className="text-xs text-zinc-400 mb-2">Concept2Cure v3.0.0 • © 2026 Concept2Cure, Inc.</p>
         <div className="flex justify-center gap-4 text-xs">
-          <span className="text-zinc-400">Terms</span>
-          <span className="text-zinc-400">Privacy</span>
-          <span className="text-zinc-400">Licenses</span>
+          <a href="/concept2cure/legal/terms" className="text-zinc-400 hover:text-zinc-600 transition-colors" target="_blank">Terms</a>
+          <a href="/concept2cure/legal/privacy" className="text-zinc-400 hover:text-zinc-600 transition-colors" target="_blank">Privacy</a>
+          <a href="/concept2cure/legal/sla" className="text-zinc-400 hover:text-zinc-600 transition-colors" target="_blank">SLA</a>
+          <a href="/concept2cure/legal/baa" className="text-zinc-400 hover:text-zinc-600 transition-colors" target="_blank">BAA</a>
         </div>
       </div>
     </div>

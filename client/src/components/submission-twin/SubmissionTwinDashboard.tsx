@@ -823,13 +823,13 @@ function getFragilityColor(score: number): string {
 }
 
 function getScoreHex(score: number): string {
-  if (score >= 80) return '#16a34a';
+  if (score >= 80) return '#647746';
   if (score >= 50) return '#ca8a04';
   return '#dc2626';
 }
 
 function getFragilityHex(score: number): string {
-  if (score <= 20) return '#16a34a';
+  if (score <= 20) return '#647746';
   if (score <= 50) return '#ca8a04';
   return '#dc2626';
 }

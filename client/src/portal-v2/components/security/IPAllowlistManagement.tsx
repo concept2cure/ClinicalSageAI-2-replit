@@ -158,8 +158,8 @@ interface AccessLog {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<IPEntryStatus, { label: string; color: string; bgColor: string }> = {
-  active: { label: 'Active', color: '#059669', bgColor: '#d1fae5' },
-  inactive: { label: 'Inactive', color: '#6b7280', bgColor: '#f3f4f6' },
+  active: { label: 'Active', color: '#647746', bgColor: '#e4ebd8' },
+  inactive: { label: 'Inactive', color: '#8a8880', bgColor: '#f4f3ee' },
   expired: { label: 'Expired', color: '#dc2626', bgColor: '#fee2e2' },
   pending_approval: { label: 'Pending', color: '#d97706', bgColor: '#fef3c7' },
 };
@@ -167,8 +167,8 @@ const STATUS_CONFIG: Record<IPEntryStatus, { label: string; color: string; bgCol
 const ENVIRONMENT_CONFIG: Record<Environment, { label: string; color: string }> = {
   production: { label: 'Production', color: '#dc2626' },
   staging: { label: 'Staging', color: '#d97706' },
-  development: { label: 'Development', color: '#2563eb' },
-  all: { label: 'All Environments', color: '#6b7280' },
+  development: { label: 'Development', color: '#5585b3' },
+  all: { label: 'All Environments', color: '#8a8880' },
 };
 
 const TYPE_CONFIG: Record<IPEntryType, { label: string; description: string }> = {

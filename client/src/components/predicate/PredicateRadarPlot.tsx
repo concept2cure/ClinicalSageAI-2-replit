@@ -32,10 +32,10 @@ const SWEET_SPOT = {
 };
 
 const TOXICITY_COLORS = {
-  safe: '#22c55e', // green-500
+  safe: '#92a87a', // green-500
   caution: '#eab308', // yellow-500
   danger: '#ef4444', // red-500
-  recommended: '#3b82f6', // blue-500
+  recommended: '#6a9bcc', // blue-500
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -135,9 +135,9 @@ export function PredicateRadarPlot({
               y={sweetY}
               width={sweetW}
               height={sweetH}
-              fill="#22c55e"
+              fill="#92a87a"
               fillOpacity={0.06}
-              stroke="#22c55e"
+              stroke="#92a87a"
               strokeOpacity={0.25}
               strokeWidth={1}
               strokeDasharray="4 3"
@@ -149,7 +149,7 @@ export function PredicateRadarPlot({
               textAnchor="middle"
               dominantBaseline="central"
               fontSize={10}
-              fill="#22c55e"
+              fill="#92a87a"
               opacity={0.5}
               fontWeight={600}
             >
@@ -165,7 +165,7 @@ export function PredicateRadarPlot({
                   y1={yScale(v)}
                   x2={PLOT_W - PAD.right}
                   y2={yScale(v)}
-                  stroke="#e5e7eb"
+                  stroke="#e8e6dc"
                   strokeWidth={0.5}
                 />
                 {/* Vertical */}
@@ -174,7 +174,7 @@ export function PredicateRadarPlot({
                   y1={PAD.top}
                   x2={xScale(v)}
                   y2={PLOT_H - PAD.bottom}
-                  stroke="#e5e7eb"
+                  stroke="#e8e6dc"
                   strokeWidth={0.5}
                 />
               </g>
@@ -186,7 +186,7 @@ export function PredicateRadarPlot({
               y1={PLOT_H - PAD.bottom}
               x2={PLOT_W - PAD.right}
               y2={PLOT_H - PAD.bottom}
-              stroke="#9ca3af"
+              stroke="#b0aea5"
               strokeWidth={1}
             />
             <line
@@ -194,7 +194,7 @@ export function PredicateRadarPlot({
               y1={PAD.top}
               x2={PAD.left}
               y2={PLOT_H - PAD.bottom}
-              stroke="#9ca3af"
+              stroke="#b0aea5"
               strokeWidth={1}
             />
 
@@ -206,7 +206,7 @@ export function PredicateRadarPlot({
                 y={PLOT_H - PAD.bottom + 18}
                 textAnchor="middle"
                 fontSize={10}
-                fill="#6b7280"
+                fill="#8a8880"
               >
                 {v.toFixed(2)}
               </text>
@@ -216,7 +216,7 @@ export function PredicateRadarPlot({
               y={PLOT_H - 8}
               textAnchor="middle"
               fontSize={11}
-              fill="#374151"
+              fill="#4a4a46"
               fontWeight={600}
             >
               Similarity Score →
@@ -230,7 +230,7 @@ export function PredicateRadarPlot({
                 y={yScale(v) + 3}
                 textAnchor="end"
                 fontSize={10}
-                fill="#6b7280"
+                fill="#8a8880"
               >
                 {v.toFixed(2)}
               </text>
@@ -240,7 +240,7 @@ export function PredicateRadarPlot({
               y={PAD.top + INNER_H / 2}
               textAnchor="middle"
               fontSize={11}
-              fill="#374151"
+              fill="#4a4a46"
               fontWeight={600}
               transform={`rotate(-90, 12, ${PAD.top + INNER_H / 2})`}
             >
@@ -257,7 +257,7 @@ export function PredicateRadarPlot({
                     r={pt.isSelected ? 8 : pt.isHovered ? 7 : 5}
                     fill={pt.color}
                     fillOpacity={pt.isSelected ? 1 : 0.8}
-                    stroke={pt.isSelected ? '#000' : pt.isHovered ? '#6b7280' : 'none'}
+                    stroke={pt.isSelected ? '#000' : pt.isHovered ? '#8a8880' : 'none'}
                     strokeWidth={pt.isSelected ? 2 : 1}
                     className="cursor-pointer transition-all"
                     onMouseEnter={() => setHoveredId(pt.candidate.id)}
@@ -292,7 +292,7 @@ export function PredicateRadarPlot({
                   x={pt.x + 10}
                   y={pt.y - 6}
                   fontSize={9}
-                  fill="#1f2937"
+                  fill="#2d2d2a"
                   fontWeight={600}
                   className="pointer-events-none"
                 >

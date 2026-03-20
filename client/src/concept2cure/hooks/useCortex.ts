@@ -179,6 +179,9 @@ export function useCortexChat(options: UseCortexChatOptions = {}): UseCortexChat
 
   const streamMessage = useCallback(
     (content: string) => {
+      // Prevent concurrent streaming — ignore if already streaming
+      if (isStreaming) return;
+
       setIsStreaming(true);
       setError(null);
       streamingMessageRef.current = '';
@@ -248,9 +251,9 @@ export function useCortexChat(options: UseCortexChatOptions = {}): UseCortexChat
         },
         onError: err => {
           setIsStreaming(false);
-          setError(err);
-          // Remove failed messages
-          setMessages(prev => prev.slice(0, -2));
+          setError({ ...err, failedMessage: content });
+          // Remove the empty assistant placeholder but keep the user message
+          setMessages(prev => prev.slice(0, -1));
         },
       });
     },
@@ -260,6 +263,20 @@ export function useCortexChat(options: UseCortexChatOptions = {}): UseCortexChat
   const cancelStream = useCallback(() => {
     cortexService.cancelRequest();
     setIsStreaming(false);
+    // Remove empty/partial assistant placeholder if no content was streamed
+    setMessages(prev => {
+      const last = prev[prev.length - 1];
+      if (last?.role === 'assistant' && !last.content) {
+        return prev.slice(0, -1);
+      }
+      // Mark partial responses as cancelled
+      if (last?.role === 'assistant') {
+        return prev.map((m, i) =>
+          i === prev.length - 1 ? { ...m, content: m.content + '\n\n_(Response cancelled)_' } : m
+        );
+      }
+      return prev;
+    });
   }, []);
 
   const clearMessages = useCallback(() => {

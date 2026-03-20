@@ -14,8 +14,8 @@
  */
 
 import { Pool } from 'pg';
-import { ai } from '../../lib/unified-ai-client';
 import crypto from 'crypto';
+import { ai } from '../../lib/unified-ai-client';
 
 // Types
 export interface LearningTemplate {

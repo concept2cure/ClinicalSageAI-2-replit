@@ -268,7 +268,7 @@ async function exportToPDF(req: Request, res: Response, type: string) {
       margins: { top: 72, bottom: 72, left: 72, right: 72 },
       info: {
         Title: `${type} - ${sessionId}`,
-        Author: 'TrialSage',
+        Author: 'Concept2Cure',
         Subject: `${type} for Clinical Trial Protocol`,
         Keywords: 'clinical trial, protocol, SAP, IND, summary',
         CreationDate: new Date(),

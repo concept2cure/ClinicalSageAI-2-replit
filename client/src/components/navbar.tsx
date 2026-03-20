@@ -36,7 +36,7 @@ export default function Navbar() {
     <div className="flex h-16 items-center justify-between px-4 md:px-6">
       <Link href="/" className="flex items-center">
         <FileSearch className="h-6 w-6 text-primary" />
-        <span className="ml-2 text-xl font-semibold">TrialSage</span>
+        <span className="ml-2 text-xl font-semibold">Concept2Cure</span>
       </Link>
       <div className="flex items-center gap-4">
         {/* Use Case Library Link */}
@@ -98,7 +98,7 @@ export default function Navbar() {
           </SheetTrigger>
           <SheetContent side="right">
             <SheetHeader>
-              <SheetTitle>TrialSage</SheetTitle>
+              <SheetTitle>Concept2Cure</SheetTitle>
               <SheetDescription>AI-Powered CSR Intelligence Platform</SheetDescription>
             </SheetHeader>
             <div className="flex flex-col gap-4 py-4">

@@ -527,7 +527,7 @@ export const MissionControl: React.FC<MissionControlProps> = ({ projectId }) => 
   const hasData = portfolioMetrics.totalPrograms > 0 || findings.length > 0 || totalRules > 0;
 
   return (
-    <div className="flex-1 h-full overflow-y-auto bg-[#FAFAF9]">
+    <div className="flex-1 h-full overflow-y-auto bg-[#faf9f5]">
       <div className="max-w-7xl mx-auto px-6 py-6">
 
         {/* ── Hero Welcome Section (Claude.AI-style) ──────────────────── */}

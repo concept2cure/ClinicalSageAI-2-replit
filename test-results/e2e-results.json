@@ -1,7 +1,7 @@
 {
   "config": {
-    "configFile": "/workspaces/ClinicalSageAI-2-replit/playwright.config.ts",
-    "rootDir": "/workspaces/ClinicalSageAI-2-replit/tests/e2e",
+    "configFile": "/workspaces/Concept2Cure.RI-2-replit/playwright.config.ts",
+    "rootDir": "/workspaces/Concept2Cure.RI-2-replit/tests/e2e",
     "forbidOnly": false,
     "fullyParallel": false,
     "globalSetup": null,
@@ -16,7 +16,7 @@
     "preserveOutput": "always",
     "projects": [
       {
-        "outputDir": "/workspaces/ClinicalSageAI-2-replit/test-results/e2e",
+        "outputDir": "/workspaces/Concept2Cure.RI-2-replit/test-results/e2e",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
@@ -24,7 +24,7 @@
         },
         "id": "",
         "name": "",
-        "testDir": "/workspaces/ClinicalSageAI-2-replit/tests/e2e",
+        "testDir": "/workspaces/Concept2Cure.RI-2-replit/tests/e2e",
         "testIgnore": [],
         "testMatch": [
           "**/*.e2e.ts"

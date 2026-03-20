@@ -5,10 +5,6 @@
  * for next sections based on regulatory patterns, AI analysis, and ICH guidelines.
  */
 
-import { getOpenAIClient } from './openai-client';
-
-const openai = getOpenAIClient();
-
 interface DocumentContext {
   currentSection?: string;
   documentType: string;
@@ -43,6 +39,7 @@ interface PredictionResponse {
   criticalPath: string[];
   regulatoryGaps: string[];
 }
+import { ai } from '../lib/unified-ai-client';
 
 class PredictiveSectionService {
   private sectionPatterns: Record<SupportedSubmissionType, Record<string, string[]>> = {
@@ -204,7 +201,7 @@ class PredictiveSectionService {
         Consider logical document flow and regulatory requirements.
       `;
 
-      const response = await openai.chat.completions.create({
+      const aiResult = await ai.chat({
         model: 'gpt-4o', // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
         messages: [
           {
@@ -221,7 +218,7 @@ class PredictiveSectionService {
         temperature: 0.3,
       });
 
-      const content = response.choices[0].message.content || '{}';
+      const content = aiResult.content || '{}';
       const result = JSON.parse(content);
       const suggestions = Array.isArray(result.suggestions) ? result.suggestions : [];
 

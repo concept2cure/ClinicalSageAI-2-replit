@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Authentication and Authorization Middleware
  *
@@ -82,7 +81,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
         req.userId = parseInt(decoded.userId) || decoded.userId;
         req.userRole = decoded.role || 'user';
         req.userEmail = decoded.email;
-        req.tenantId = parseInt(decoded.organizationId || '1') || 1;
+        req.tenantId = decoded.organizationId ? parseInt(decoded.organizationId) : 0;
         // SECURITY: Set req.user with organizationId from JWT so that
         // downstream tenant middleware (tenantContextMiddleware,
         // tenantIsolationMiddleware) derives org context from the token.
@@ -91,10 +90,10 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
           userId: req.userId,
           email: decoded.email,
           role: decoded.role || 'user',
-          organizationId: decoded.organizationId || '1',
+          organizationId: decoded.organizationId || null,
         };
         req.tenantContext = {
-          organizationId: parseInt(decoded.organizationId || '1') || 1,
+          organizationId: decoded.organizationId ? parseInt(decoded.organizationId) : 0,
           userId: req.userId,
           role: decoded.role || 'user',
         };
@@ -105,12 +104,35 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
     }
 
     // 2. Fallback to DEV_API_KEY (for automated tools / CI)
-    // SECURITY: Only allow in non-production environments to prevent auth bypass
+    // SECURITY: Completely blocked in production. In dev, requires explicit env var.
+    if (process.env.NODE_ENV !== 'production') {
+      const devApiKey = process.env.DEV_API_KEY;
+      if (devApiKey && devApiKey.length >= 32 && apiKey === devApiKey) {
+        req.userId = 1;
+        req.userRole = 'admin';
+        req.userEmail = 'dev@example.com';
+        req.tenantId = 1;
+        req.user = {
+          id: 1,
+          userId: 1,
+          email: 'dev@example.com',
+          role: 'admin',
+          organizationId: '1',
+        };
+        req.tenantContext = {
+          organizationId: 1,
+          userId: 1,
+          role: 'admin',
+        };
+        logger.debug('Authenticated via DEV_API_KEY (non-production)');
+        return next();
+      }
+    // SECURITY: Only allowed in development/test environments, never in production
     const devApiKey = process.env.DEV_API_KEY;
     if (devApiKey && apiKey === devApiKey) {
       if (process.env.NODE_ENV === 'production') {
-        logger.warn('DEV_API_KEY authentication attempted in production — rejected');
-        return res.status(401).json({ error: 'Invalid token or API key' });
+        logger.warn('[SECURITY] DEV_API_KEY used in production — rejecting. Remove DEV_API_KEY from production environment.');
+        return res.status(401).json({ error: 'Invalid authentication' });
       }
       req.userId = 1;
       req.userRole = 'admin';

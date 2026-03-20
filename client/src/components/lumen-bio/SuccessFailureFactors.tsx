@@ -337,14 +337,14 @@ const ImplementationScorecard = ({
             <div style={{ width: 120, height: 120 }} className="relative">
               <svg width="120" height="120" viewBox="0 0 120 120">
                 {/* Background circle */}
-                <circle cx="60" cy="60" r="50" fill="none" stroke="#e2e8f0" strokeWidth="10" />
+                <circle cx="60" cy="60" r="50" fill="none" stroke="#e8e6dc" strokeWidth="10" />
                 {/* Progress circle - using strokeDasharray and strokeDashoffset */}
                 <circle
                   cx="60"
                   cy="60"
                   r="50"
                   fill="none"
-                  stroke={`rgba(99, 102, 241, ${implementationScore / 100})`}
+                  stroke={`rgba(217, 119, 87, ${implementationScore / 100})`}
                   strokeWidth="10"
                   strokeDasharray={`${2 * Math.PI * 50}`}
                   strokeDashoffset={`${2 * Math.PI * 50 * (1 - implementationScore / 100)}`}
@@ -364,7 +364,7 @@ const ImplementationScorecard = ({
             <div style={{ width: 120, height: 120 }} className="relative">
               <svg width="120" height="120" viewBox="0 0 120 120">
                 {/* Background circle */}
-                <circle cx="60" cy="60" r="50" fill="none" stroke="#e2e8f0" strokeWidth="10" />
+                <circle cx="60" cy="60" r="50" fill="none" stroke="#e8e6dc" strokeWidth="10" />
                 {/* Progress circle - using strokeDasharray and strokeDashoffset */}
                 <circle
                   cx="60"
@@ -706,7 +706,7 @@ const SuccessFailureFactors = () => {
         },
         {
           id: 'ks4',
-          title: 'TrialSage Internal Analysis: Obesity Trial Success Patterns',
+          title: 'Concept2Cure Internal Analysis: Obesity Trial Success Patterns',
           type: 'Internal' as const,
           relevance: 92,
           key_findings:

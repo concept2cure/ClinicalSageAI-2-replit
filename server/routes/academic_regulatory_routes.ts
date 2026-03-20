@@ -2,7 +2,7 @@
  * Academic and Regulatory Intelligence Routes
  *
  * These routes handle the integration of academic knowledge and global regulatory
- * intelligence into the TrialSage platform.
+ * intelligence into the Concept2Cure platform.
  */
 
 import { Router } from 'express';

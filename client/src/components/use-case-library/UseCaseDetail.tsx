@@ -71,11 +71,11 @@ export default function UseCaseDetail({ useCase, onLaunch, onDownload }: UseCase
         </div>
       </div>
 
-      {/* TrialSage Intelligence Solution */}
+      {/* Concept2Cure Intelligence Solution */}
       <div>
         <h3 className="text-lg font-semibold flex items-center mb-3">
           <span className="bg-blue-100 text-blue-700 rounded-full p-1 mr-2">🧠</span>
-          TrialSage Intelligence Solution
+          Concept2Cure Intelligence Solution
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -218,7 +218,7 @@ export default function UseCaseDetail({ useCase, onLaunch, onDownload }: UseCase
         </Button>
         <Button onClick={onLaunch} className="flex items-center">
           <Play className="h-4 w-4 mr-2" />
-          Launch In TrialSage
+          Launch In Concept2Cure
         </Button>
       </div>
     </div>

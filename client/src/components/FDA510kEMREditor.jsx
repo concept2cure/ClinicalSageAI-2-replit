@@ -297,11 +297,11 @@ export default function FDA510kEMREditor({
       const isComplete = completedSections.has(section.id);
 
       html += `
-        <div style="margin: 30px 0; padding: 20px; background: ${isComplete ? '#f0fff0' : '#fff'}; border-left: 4px solid ${isComplete ? '#10b981' : '#fbbf24'};">
+        <div style="margin: 30px 0; padding: 20px; background: ${isComplete ? '#f0fff0' : '#fff'}; border-left: 4px solid ${isComplete ? '#788c5d' : '#fbbf24'};">
           <h2 style="color: #003366; margin-top: 0;">
             ${section.title}
             ${section.required ? '<span style="color: red;">*</span>' : ''}
-            ${isComplete ? '<span style="color: #10b981; float: right;">✓ Complete</span>' : ''}
+            ${isComplete ? '<span style="color: #788c5d; float: right;">✓ Complete</span>' : ''}
           </h2>
       `;
 
@@ -329,7 +329,7 @@ export default function FDA510kEMREditor({
     });
 
     html += `
-        <div style="margin-top: 50px; padding: 20px; background: #f3f4f6; border: 1px solid #d1d5db;">
+        <div style="margin-top: 50px; padding: 20px; background: #f4f3ee; border: 1px solid #d6d3c8;">
           <h2 style="color: #003366;">Document Metadata</h2>
           <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
           <p><strong>Completion:</strong> ${Math.round((completedSections.size / FDA_510K_SECTIONS.filter(s => s.required).length) * 100)}%</p>

@@ -244,7 +244,7 @@ export default function StudyDesignAssistant() {
               >
                 <CardContent className="p-4">
                   <div className="font-semibold mb-1">
-                    {msg.role === 'user' ? 'You' : 'TrialSage'}
+                    {msg.role === 'user' ? 'You' : 'Concept2Cure'}
                   </div>
                   <div className="prose prose-sm max-w-none">{msg.content}</div>
 

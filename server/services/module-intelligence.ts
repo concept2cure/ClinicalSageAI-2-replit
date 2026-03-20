@@ -1213,7 +1213,7 @@ function getVaultIntelligence(_project: ProjectSummary | null): ModuleIntelligen
 ## Document Vault Intelligence — Active Module
 
 You are managing the regulatory Document Vault — the secure, 21 CFR Part 11 compliant
-document management system for TrialSage.
+document management system for Concept2Cure.
 
 ### Vault Capabilities
 - **Version Control**: Full document history with diff comparison, branching, and merging

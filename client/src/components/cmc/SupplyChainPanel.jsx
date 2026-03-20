@@ -61,7 +61,7 @@ function stdev(a){ const m=mean(a); return a?.length>1 ? Math.sqrt(a.reduce((s,v
 function ewma(arr, alpha=0.3){ if(!arr?.length) return []; const e=[arr[0]]; for(let i=1;i<arr.length;i++) e.push(alpha*arr[i]+(1-alpha)*e[i-1]); return e; }
 function zScoreLast(arr){ const m=mean(arr), sd=stdev(arr); return sd>0 ? ((arr?.[arr.length-1] ?? 0)-m)/sd : 0; }
 function clamp(v,lo,hi){ return Math.max(lo, Math.min(hi, v)); }
-function ringColor(score){ return score>=90 ? '#16a34a' : score>=70 ? '#f59e0b' : '#ef4444'; }
+function ringColor(score){ return score>=90 ? '#647746' : score>=70 ? '#f59e0b' : '#ef4444'; }
 function sparklinePath(data, w=120, h=24){
   if(!data?.length) return '';
   const max=Math.max(...data), min=Math.min(...data);
@@ -104,10 +104,10 @@ function minutesOutOfRange(tempsC=[], times=[], lo=2, hi=8){
   return Math.round(mins);
 }
 function classifyMKT(mktC, oorMin, lo=2, hi=8){
-  if(mktC===null) return {status:'unknown', color:'#9ca3af'};
+  if(mktC===null) return {status:'unknown', color:'#b0aea5'};
   if(mktC>hi) return {status:'fail', color:'#ef4444'};
   if(oorMin>0) return {status:'warn', color:'#f59e0b'};
-  return {status:'ok', color:'#16a34a'};
+  return {status:'ok', color:'#647746'};
 }
 
 function computeSupplyGates({supply={}, lot={}, shipment={}}={}) {
@@ -532,13 +532,13 @@ const SupplyChainPanel = ({ crossTabData = {}, supplyData = null }) => {
   // Cold-chain analysis - MKT, out-of-range, classification
   const coldChainAnalysis = useMemo(() => {
     if (!sc_enableMKT || !temperatureData?.length) {
-      return { mktC: null, oorMin: 0, ok: true, status: 'unknown', color: '#9ca3af' };
+      return { mktC: null, oorMin: 0, ok: true, status: 'unknown', color: '#b0aea5' };
     }
     
     const tempsC = temperatureData.map(d => d.temperature).filter(t => typeof t === 'number');
     const times = temperatureData.map(d => d.timestamp);
     
-    if (!tempsC.length) return { mktC: null, oorMin: 0, ok: true, status: 'unknown', color: '#9ca3af' };
+    if (!tempsC.length) return { mktC: null, oorMin: 0, ok: true, status: 'unknown', color: '#b0aea5' };
     
     // Compute proper MKT using exponential weighting
     const mktResult = computeMKT(tempsC, times);
@@ -1211,13 +1211,13 @@ const SupplyChainPanel = ({ crossTabData = {}, supplyData = null }) => {
                       <svg className="w-full h-full" viewBox="0 0 400 64">
                         <defs>
                           <linearGradient id="sparklineGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor={ewsAnalysis.isOutlier ? '#ef4444' : '#3b82f6'} stopOpacity="0.3" />
-                            <stop offset="100%" stopColor={ewsAnalysis.isOutlier ? '#ef4444' : '#3b82f6'} stopOpacity="0.1" />
+                            <stop offset="0%" stopColor={ewsAnalysis.isOutlier ? '#ef4444' : '#6a9bcc'} stopOpacity="0.3" />
+                            <stop offset="100%" stopColor={ewsAnalysis.isOutlier ? '#ef4444' : '#6a9bcc'} stopOpacity="0.1" />
                           </linearGradient>
                         </defs>
                         
                         {/* Background grid */}
-                        <g stroke="#e5e7eb" strokeWidth="0.5" opacity="0.5">
+                        <g stroke="#e8e6dc" strokeWidth="0.5" opacity="0.5">
                           <line x1="0" y1="16" x2="400" y2="16" />
                           <line x1="0" y1="32" x2="400" y2="32" />
                           <line x1="0" y1="48" x2="400" y2="48" />
@@ -1233,7 +1233,7 @@ const SupplyChainPanel = ({ crossTabData = {}, supplyData = null }) => {
                         <path
                           d={sparklinePath(etaVarianceSeries, 400, 64)}
                           fill="none"
-                          stroke={ewsAnalysis.isOutlier ? '#ef4444' : '#3b82f6'}
+                          stroke={ewsAnalysis.isOutlier ? '#ef4444' : '#6a9bcc'}
                           strokeWidth="2"
                           className="animate-pulse"
                         />
@@ -1250,7 +1250,7 @@ const SupplyChainPanel = ({ crossTabData = {}, supplyData = null }) => {
                             cx={390}
                             cy={64 - 4 - ((etaVarianceSeries[etaVarianceSeries.length - 1] - Math.min(...etaVarianceSeries)) / (Math.max(...etaVarianceSeries) - Math.min(...etaVarianceSeries)) || 0) * 56}
                             r="3"
-                            fill={ewsAnalysis.isOutlier ? '#ef4444' : '#3b82f6'}
+                            fill={ewsAnalysis.isOutlier ? '#ef4444' : '#6a9bcc'}
                             className="animate-pulse"
                           />
                         )}
@@ -1339,7 +1339,7 @@ const SupplyChainPanel = ({ crossTabData = {}, supplyData = null }) => {
                         <path
                           d={sparklinePath(temperatureData.map(d => d.temperature), 400, 48)}
                           fill="none"
-                          stroke={coldChainAnalysis.ok ? '#10b981' : '#ef4444'}
+                          stroke={coldChainAnalysis.ok ? '#788c5d' : '#ef4444'}
                           strokeWidth="1.5"
                         />
                         
@@ -1349,7 +1349,7 @@ const SupplyChainPanel = ({ crossTabData = {}, supplyData = null }) => {
                             cx={390}
                             cy={48 - 2 - ((temperatureData[temperatureData.length - 1].temperature - Math.min(...temperatureData.map(d => d.temperature))) / (Math.max(...temperatureData.map(d => d.temperature)) - Math.min(...temperatureData.map(d => d.temperature))) || 0) * 44}
                             r="2"
-                            fill={coldChainAnalysis.ok ? '#10b981' : '#ef4444'}
+                            fill={coldChainAnalysis.ok ? '#788c5d' : '#ef4444'}
                             className="animate-pulse"
                           />
                         )}

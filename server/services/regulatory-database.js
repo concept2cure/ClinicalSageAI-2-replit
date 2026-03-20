@@ -3,15 +3,13 @@
  *
  * This service provides access to comprehensive regulatory data across global authorities,
  * including regulations, guidance documents, standards, and submission requirements.
- * It serves as the central knowledge base for the TrialSage platform's regulatory intelligence.
+ * It serves as the central knowledge base for the Concept2Cure platform's regulatory intelligence.
  */
 
 import { db } from '../db.js';
-import { getOpenAIClient } from './openai-client';
+import { ai } from '../lib/unified-ai-client';
 
 // Initialize OpenAI client
-const openai = getOpenAIClient();
-
 // Cache for regulatory data
 const regulationCache = new Map();
 const guidanceCache = new Map();
@@ -403,7 +401,7 @@ export async function getRegulatoryIntelligence(topic, options = {}) {
       Format your response as a structured JSON object with appropriate sections.
     `;
 
-    const completion = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4o',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.2,
@@ -411,7 +409,7 @@ export async function getRegulatoryIntelligence(topic, options = {}) {
       response_format: { type: 'json_object' },
     });
 
-    const analysis = JSON.parse(completion.choices[0].message.content);
+    const analysis = JSON.parse(aiResult.content);
 
     // Return combined results
     return {

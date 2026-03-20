@@ -117,9 +117,9 @@ export const OnboardingProvider = ({ children }) => {
   // Joyrider styles
   const joyrideStyles = {
     options: {
-      primaryColor: '#2563eb', // blue-600
+      primaryColor: '#5585b3', // blue-600
       backgroundColor: '#ffffff',
-      textColor: '#374151', // gray-700
+      textColor: '#4a4a46', // gray-700
       arrowColor: '#ffffff',
       overlayColor: 'rgba(0, 0, 0, 0.5)',
     },
@@ -128,19 +128,19 @@ export const OnboardingProvider = ({ children }) => {
       padding: '20px',
     },
     buttonNext: {
-      backgroundColor: '#2563eb',
+      backgroundColor: '#5585b3',
       borderRadius: '0.375rem',
       color: '#ffffff',
       fontSize: '14px',
       padding: '8px 12px',
     },
     buttonBack: {
-      color: '#6b7280',
+      color: '#8a8880',
       fontSize: '14px',
       marginRight: '10px',
     },
     buttonSkip: {
-      color: '#6b7280',
+      color: '#8a8880',
       fontSize: '14px',
     },
   };

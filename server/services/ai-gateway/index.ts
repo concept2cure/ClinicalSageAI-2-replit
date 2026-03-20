@@ -1,7 +1,8 @@
 /**
  * AI Gateway — Centralized AI Provider Gateway
  *
- * Single entry point for ALL LLM calls across the TrialSage / ClinicalSage platform.
+ * Single entry point for ALL LLM calls across the TrialSage / Concept2Cure.RI platform.
+ * Single entry point for ALL LLM calls across the Concept2Cure / ClinicalSage platform.
  * Routes requests to OpenAI (default), Anthropic (Claude), or Moonshot (Kimi)
  * with audit logging, rate limiting, policy enforcement, and deterministic mode.
  *

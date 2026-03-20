@@ -329,6 +329,62 @@ export function useCreateCollaboration() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// APPROVAL REQUESTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export function useApprovalRequests(programId: number | null, status?: string) {
+  const params = new URLSearchParams();
+  if (programId) params.set('programId', String(programId));
+  if (status) params.set('status', status);
+  const query = params.toString() ? `?${params}` : '';
+
+  return useQuery({
+    queryKey: ['mc-approvals', programId, status],
+    queryFn: () => api<any[]>(`/approval-requests${query}`),
+  });
+}
+
+export function useDecideApproval() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, decision, comment, decisionBy }: { id: number; decision: 'approved' | 'rejected'; comment?: string; decisionBy?: string }) =>
+      api<any>(`/approval-requests/${id}/decide`, {
+        method: 'POST',
+        body: JSON.stringify({ decision, comment, decisionBy }),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['mc-approvals'] });
+      qc.invalidateQueries({ queryKey: ['mc-collab'] });
+    },
+  });
+}
+
+export function useDelegateApproval() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, delegateTo, delegateToRole, reason }: { id: number; delegateTo: string; delegateToRole?: string; reason?: string }) =>
+      api<any>(`/approval-requests/${id}/delegate`, {
+        method: 'POST',
+        body: JSON.stringify({ delegateTo, delegateToRole, reason }),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['mc-approvals'] });
+    },
+  });
+}
+
+export function useCreateApprovalRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: any) =>
+      api<any>('/approval-requests', { method: 'POST', body: JSON.stringify(data) }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['mc-approvals'] });
+    },
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // READINESS
 // ═══════════════════════════════════════════════════════════════════════════════
 

@@ -23,10 +23,10 @@
  * @compliance FDA 21 CFR Part 11, ICH E6(R2)
  */
 
-import OpenAI from 'openai';
 import { Pool, PoolClient } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
 import { createHash } from 'crypto';
+import { ai } from '../lib/unified-ai-client';
 
 export type EntityType = 
   | 'DRUG_SUBSTANCE' | 'DRUG_PRODUCT' | 'DOSE' | 'ROUTE_OF_ADMINISTRATION'
@@ -95,7 +95,6 @@ Output JSON only:
 
 export class EntityExtractionWorker {
   private pool: Pool;
-  private openai: OpenAI;
   private readonly MAX_RETRIES = 3;
   private readonly RETRY_DELAY_MS = 1000;
   private readonly DEFAULT_TIMEOUT_MS = 120000;
@@ -106,12 +105,6 @@ export class EntityExtractionWorker {
     if (!process.env.OPENAI_API_KEY) {
       throw new Error('OPENAI_API_KEY environment variable is required');
     }
-    
-    this.openai = new OpenAI({ 
-      apiKey: process.env.OPENAI_API_KEY,
-      timeout: this.DEFAULT_TIMEOUT_MS,
-      maxRetries: this.MAX_RETRIES
-    });
   }
 
   /**
@@ -195,7 +188,7 @@ export class EntityExtractionWorker {
       
       try {
         const response = await this.withRetry(
-          () => this.openai.chat.completions.create({
+          () => this.ai.chat({
             model: 'gpt-4-turbo',
             temperature: 0,
             max_tokens: 4000,
@@ -209,7 +202,7 @@ export class EntityExtractionWorker {
           correlationId
         );
 
-        const output = response.choices[0]?.message?.content || '{}';
+        const output = aiResult.content || '{}';
         let parsed: { entities?: Array<Record<string, unknown>>; relationships?: ExtractedRelationship[] };
         
         try {

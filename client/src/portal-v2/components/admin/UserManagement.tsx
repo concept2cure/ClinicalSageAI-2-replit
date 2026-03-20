@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - User Management System
+ * Concept2Cure Client Portal V2 - User Management System
  *
  * Enterprise user management with role assignment, SoD validation,
  * training tracking, and compliance monitoring.
@@ -264,22 +264,22 @@ const ROLE_CONFIG: Record<UserRole, { label: string; color: string; description:
   },
   regulatory_lead: {
     label: 'Regulatory Lead',
-    color: '#7c3aed',
+    color: '#5585b3',
     description: 'Lead regulatory strategy and submissions',
   },
   clinical_ops: {
     label: 'Clinical Operations',
-    color: '#0d9488',
+    color: '#647746',
     description: 'Manage clinical trial operations',
   },
   medical_writer: {
     label: 'Medical Writer',
-    color: '#0284c7',
+    color: '#5585b3',
     description: 'Author and edit regulatory documents',
   },
   biostatistician: {
     label: 'Biostatistician',
-    color: '#059669',
+    color: '#647746',
     description: 'Statistical analysis and reporting',
   },
   quality_assurance: {
@@ -289,7 +289,7 @@ const ROLE_CONFIG: Record<UserRole, { label: string; color: string; description:
   },
   legal_counsel: {
     label: 'Legal Counsel',
-    color: '#4f46e5',
+    color: '#c15f3c',
     description: 'Legal review and approval',
   },
   executive: {
@@ -309,13 +309,13 @@ const ROLE_CONFIG: Record<UserRole, { label: string; color: string; description:
   },
   project_manager: {
     label: 'Project Manager',
-    color: '#8b5cf6',
+    color: '#6a9bcc',
     description: 'Project coordination and timelines',
   },
-  viewer: { label: 'Viewer', color: '#6b7280', description: 'Read-only access to documents' },
+  viewer: { label: 'Viewer', color: '#8a8880', description: 'Read-only access to documents' },
   external_partner: {
     label: 'External Partner',
-    color: '#64748b',
+    color: '#8a8880',
     description: 'Limited external access',
   },
 };

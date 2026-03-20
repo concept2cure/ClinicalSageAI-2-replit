@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Enhanced CER Generator for LumenTrialGuide.AI
+Enhanced CER Generator for Concept2Cure
 
 This module provides a comprehensive solution for generating regulatory-compliant
 Clinical Evaluation Reports (CERs) by automatically gathering and analyzing data
@@ -55,7 +55,7 @@ logger = logging.getLogger("enhanced_cer_generator")
 OUTPUT_DIR = os.path.join(os.getcwd(), 'data', 'exports')
 CACHE_DIR = os.path.join(os.getcwd(), 'data', 'cache')
 DEFAULT_HEADERS = {
-    'User-Agent': 'LumenTrialGuide.AI CER Generator/1.0'
+    'User-Agent': 'Concept2Cure CER Generator/1.0'
 }
 
 # Ensure output and cache directories exist
@@ -1284,7 +1284,7 @@ class ReportGenerator:
             topMargin=2*cm,
             bottomMargin=2*cm,
             title=f"Clinical Evaluation Report - {cer_content['administrative_details']['product_name']}",
-            author="LumenTrialGuide.AI",
+            author="Concept2Cure",
             subject="Clinical Evaluation Report",
             keywords="CER, Medical Device, Clinical Evaluation, Regulatory"
         )

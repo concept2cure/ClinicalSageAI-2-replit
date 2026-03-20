@@ -49,12 +49,12 @@ const ATOM_TYPE_CONFIG: Record<
   AtomType,
   { label: string; icon: React.ElementType; color: string }
 > = {
-  all: { label: 'All Types', icon: Search, color: '#6366f1' },
-  fact: { label: 'Facts', icon: FileText, color: '#059669' },
+  all: { label: 'All Types', icon: Search, color: '#d97757' },
+  fact: { label: 'Facts', icon: FileText, color: '#647746' },
   concept: { label: 'Concepts', icon: Lightbulb, color: '#d97706' },
   rule: { label: 'Rules', icon: BookOpen, color: '#dc2626' },
   procedure: { label: 'Procedures', icon: FileText, color: '#0891b2' },
-  reference: { label: 'References', icon: BookOpen, color: '#7c3aed' },
+  reference: { label: 'References', icon: BookOpen, color: '#5585b3' },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════

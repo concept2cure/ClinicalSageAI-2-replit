@@ -3,7 +3,7 @@
   flex-direction: column;
   justify-content: space-between;
   background: var(--color-bg);
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e8e6dc;
   border-radius: var(--space-sm);
   padding: var(--space-md);
   text-decoration: none;
@@ -19,7 +19,7 @@
   margin-bottom: var(--space-sm);
 }
 .mc-progress {
-  background: #f1f5f9;
+  background: #f4f3ee;
   height: 8px;
   border-radius: 4px;
   overflow: hidden;

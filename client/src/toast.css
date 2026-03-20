@@ -1,40 +1,40 @@
 /* Toast styles from react-toastify */
 .Toastify__toast-container {
-  --toastify-color-light: #fff;
-  --toastify-color-dark: #121212;
-  --toastify-color-info: #3498db;
-  --toastify-color-success: #07bc0c;
-  --toastify-color-warning: #f1c40f;
-  --toastify-color-error: #e74c3c;
-  --toastify-color-transparent: rgba(255, 255, 255, 0.7);
+  --toastify-color-light: #faf9f5;
+  --toastify-color-dark: #141413;
+  --toastify-color-info: #6a9bcc;
+  --toastify-color-success: #788c5d;
+  --toastify-color-warning: #d97706;
+  --toastify-color-error: #dc3545;
+  --toastify-color-transparent: rgba(250, 249, 245, 0.7);
   --toastify-icon-color-info: var(--toastify-color-info);
   --toastify-icon-color-success: var(--toastify-color-success);
   --toastify-icon-color-warning: var(--toastify-color-warning);
   --toastify-icon-color-error: var(--toastify-color-error);
   --toastify-toast-width: 320px;
-  --toastify-toast-background: #fff;
+  --toastify-toast-background: #ffffff;
   --toastify-toast-min-height: 64px;
   --toastify-toast-max-height: 800px;
-  --toastify-font-family: sans-serif;
+  --toastify-font-family: 'Poppins', Arial, sans-serif;
   --toastify-z-index: 9999;
-  --toastify-text-color-light: #757575;
-  --toastify-text-color-dark: #fff;
+  --toastify-text-color-light: #6b6963;
+  --toastify-text-color-dark: #faf9f5;
   --toastify-text-color-info: #fff;
   --toastify-text-color-success: #fff;
   --toastify-text-color-warning: #fff;
   --toastify-text-color-error: #fff;
-  --toastify-spinner-color: #616161;
-  --toastify-spinner-color-empty-area: #e0e0e0;
+  --toastify-spinner-color: #6b6963;
+  --toastify-spinner-color-empty-area: #e8e6dc;
   --toastify-color-progress-light: linear-gradient(
     to right,
-    #4cd964,
-    #5ac8fa,
-    #007aff,
-    #34aadc,
-    #5856d6,
-    #ff2d55
+    #788c5d,
+    #6a9bcc,
+    #d97757,
+    #c15f3c,
+    #6a9bcc,
+    #d97757
   );
-  --toastify-color-progress-dark: #bb86fc;
+  --toastify-color-progress-dark: #d97757;
   --toastify-color-progress-info: var(--toastify-color-info);
   --toastify-color-progress-success: var(--toastify-color-success);
   --toastify-color-progress-warning: var(--toastify-color-warning);

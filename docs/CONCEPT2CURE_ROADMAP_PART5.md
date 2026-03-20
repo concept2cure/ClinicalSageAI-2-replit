@@ -1043,7 +1043,7 @@ release/v1.2.0
 
 This unified roadmap synthesizes and harmonizes content from the following project files:
 
-1. `Green_Locked_Plan__Execution_Guide_for_the_Concept2Cure_ClinicalSageAI_Platform.pdf`
+1. `Green_Locked_Plan__Execution_Guide_for_the_Concept2Cure_Concept2Cure.RI_Platform.pdf`
 2. `DEVELOPMENT_PLAN.md`
 3. `Lumen_Cortex_AI_System_Build_Plan.pdf` / `.docx`
 4. `LUMEN_PM_V2_PREDICTIVE_AI_PROJECT_MANAGER__1_.md`

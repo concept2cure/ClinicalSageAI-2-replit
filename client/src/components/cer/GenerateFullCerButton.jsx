@@ -11,7 +11,6 @@ import {
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Check, Hourglass, FileDown, AlertTriangle, Zap } from 'lucide-react';
-import OpenAI from 'openai';
 import realtimeService from '../../services/realtimeService';
 
 export default function GenerateFullCerButton({ onCompletion }) {

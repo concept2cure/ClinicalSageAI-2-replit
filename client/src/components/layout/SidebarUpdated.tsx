@@ -86,7 +86,7 @@ export function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
           <div className="flex items-center">
             <Database className="h-7 w-7 text-primary" />
             <span className="ml-2 text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-              TrialSage
+              Concept2Cure
             </span>
           </div>
           <button
@@ -186,7 +186,7 @@ export function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
         <div className="h-16 flex items-center justify-center px-6 border-b border-slate-200 bg-slate-50">
           <Database className="h-8 w-8 text-primary" />
           <span className="ml-2 text-xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-            TrialSage
+            Concept2Cure
           </span>
         </div>
 

@@ -422,7 +422,7 @@ export default function AppPackagesBanner({ currentPath }) {
         </div>
       </div>
 
-      {/* TrialSage Platform Section - Enterprise Grade */}
+      {/* Concept2Cure Platform Section - Enterprise Grade */}
       <div className="bg-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row gap-16">
@@ -499,7 +499,7 @@ export default function AppPackagesBanner({ currentPath }) {
                     <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                   </div>
                   <div className="flex-1 text-center text-gray-400 text-sm">
-                    TrialSage™ Intelligence Dashboard{' '}
+                    Concept2Cure™ Intelligence Dashboard{' '}
                     <span className="px-1.5 py-0.5 text-xs bg-slate-700 rounded ml-1">
                       Interface Preview
                     </span>

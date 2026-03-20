@@ -139,7 +139,7 @@ interface SimplePieChartProps {
 const SimplePieChart: React.FC<SimplePieChartProps> = ({ data, labelKey, valueKey }) => {
   const total = useMemo(() => data.reduce((sum, item) => sum + item[valueKey], 0), [data, valueKey]);
   
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A569BD', '#8884d8'];
+  const COLORS = ['#6a9bcc', '#788c5d', '#d97706', '#d97757', '#b0aea5', '#6a9bcc'];
   
   return (
     <div className="space-y-3">
@@ -305,7 +305,7 @@ const AdvancedDashboard: React.FC<AdvancedDashboardProps> = ({ filteredData }) =
                       formatter={(value: number) => [`${value} events`, 'Count']}
                       labelFormatter={(label) => `Age group: ${label}`}
                     />
-                    <Bar dataKey="count" fill="#8884d8" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="count" fill="#6a9bcc" radius={[4, 4, 0, 0]} />
                   </RechartsBarChart>
                 </ResponsiveContainer>
               </div>
@@ -341,7 +341,7 @@ const AdvancedDashboard: React.FC<AdvancedDashboardProps> = ({ filteredData }) =
                     <Line
                       type="monotone"
                       dataKey="count"
-                      stroke="#8884d8"
+                      stroke="#6a9bcc"
                       activeDot={{ r: 8 }}
                       strokeWidth={2}
                     />
@@ -368,7 +368,7 @@ const AdvancedDashboard: React.FC<AdvancedDashboardProps> = ({ filteredData }) =
                           labelLine={false}
                           label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                           outerRadius={80}
-                          fill="#8884d8"
+                          fill="#6a9bcc"
                           dataKey="count"
                         >
                           {displayData.adverseEventsByAgeBracket.map((entry, index) => (
@@ -426,7 +426,7 @@ const AdvancedDashboard: React.FC<AdvancedDashboardProps> = ({ filteredData }) =
                       type="monotone"
                       dataKey="count"
                       name="Event Count"
-                      stroke="#8884d8"
+                      stroke="#6a9bcc"
                       activeDot={{ r: 8 }}
                       strokeWidth={2}
                     />

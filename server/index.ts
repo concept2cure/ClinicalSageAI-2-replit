@@ -53,10 +53,39 @@ import { authMiddleware } from './auth.js';
 // Import database and schema for workflow persistence
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { and, eq, desc } from 'drizzle-orm';
-import { fda510kStageProgress, fda510kProjects, projects } from '@shared/schema';
+import { fda510kStageProgress, fda510kProjects, projects, draftingTasks } from '@shared/schema';
 
-// Debug mode configuration
-const DEBUG = process.env.DEBUG || process.env.NODE_ENV === 'development';
+// ============================================================================
+// STARTUP ENVIRONMENT VALIDATION
+// ============================================================================
+(() => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  const required: string[] = ['DATABASE_URL', 'DATABASE_NEON_NEW_SECRET'].some(k => process.env[k])
+    ? [] // At least one DB URL is set
+    : ['DATABASE_URL']; // None set — require DATABASE_URL
+
+  if (isProduction) {
+    required.push('JWT_SECRET');
+  }
+
+  const missing = required.filter(k => !process.env[k]);
+  if (missing.length > 0) {
+    console.error(`[FATAL] Missing required environment variables: ${missing.join(', ')}`);
+    process.exit(1);
+  }
+
+  // Warn about recommended vars in production
+  if (isProduction) {
+    const recommended = ['ANTHROPIC_API_KEY', 'SENTRY_DSN', 'REDIS_URL'];
+    const missingRecommended = recommended.filter(k => !process.env[k]);
+    if (missingRecommended.length > 0) {
+      console.warn(`⚠️  Recommended env vars not set: ${missingRecommended.join(', ')}`);
+    }
+  }
+})();
+
+// Debug mode configuration — disabled in production
+const DEBUG = process.env.NODE_ENV !== 'production' && (process.env.DEBUG || process.env.NODE_ENV === 'development');
 const debugLog = (message: string, data?: any) => {
   if (DEBUG) {
     console.log(`[DEBUG ${new Date().toISOString()}] ${message}`, data || '');
@@ -70,6 +99,9 @@ import cmcDashboardRoutes from './routes/cmc-dashboard';
 import cmcAggregatorRoutes from './api/cmc/index.js';
 import cmcDashboardPrisma from './routes/cmc-dashboard-prisma';
 import cmcCoreRoutes from './api/cmc/routes';
+import cmcSpecificationRoutes from './api/cmc/specificationRoutes';
+import cmcStabilityRoutes from './api/cmc/stabilityRoutes';
+import cmcBatchRecordRoutes from './api/cmc/batchRecordRoutes';
 
 // Import AI assistance routes
 import aiAssistanceRoutes, { setAIService } from './routes/ai-assistance';
@@ -111,53 +143,56 @@ const startPythonBackend = () => {
 };
 
 // Graceful shutdown
-process.on('SIGTERM', async () => {
-  console.log('🔄 Graceful shutdown initiated...');
-  if (pythonProcess) {
-    console.log('🔄 Shutting down Python backend...');
-    pythonProcess.kill('SIGTERM');
-  }
-  try {
-    await closeRedisRateLimiter();
-    console.log('✅ Redis rate limiter closed');
-  } catch (error: any) {
-    console.error('❌ Error closing Redis rate limiter:', error.message);
-  }
-  // Cleanup performance resources (caches, monitors)
-  cleanupPerformance();
-  // Graceful DB shutdown
-  try {
-    if (pool) await pool.end();
-    console.log('✅ Database connections closed');
-  } catch (error: any) {
-    console.error('❌ Error closing database:', error.message);
-  }
-  process.exit(0);
-});
+// Module-level reference for graceful shutdown
+let _httpServer: any = null;
+export function setHttpServer(server: any) { _httpServer = server; }
 
-process.on('SIGINT', async () => {
-  console.log('🔄 Graceful shutdown initiated...');
+async function gracefulShutdown(signal: string) {
+  console.log(`🔄 Graceful shutdown initiated (${signal})...`);
+
+  // 1. Stop accepting new connections and drain in-flight requests
+  if (_httpServer) {
+    console.log('🔄 Draining HTTP connections...');
+    await new Promise<void>((resolve) => {
+      _httpServer.close(() => {
+        console.log('✅ HTTP server closed — all connections drained');
+        resolve();
+      });
+      // Force close after 10 seconds if connections don't drain
+      setTimeout(() => { console.log('⚠️ Force closing after 10s timeout'); resolve(); }, 10000);
+    });
+  }
+
+  // 2. Kill Python subprocess
   if (pythonProcess) {
     console.log('🔄 Shutting down Python backend...');
     pythonProcess.kill('SIGTERM');
   }
+
+  // 3. Close Redis
   try {
     await closeRedisRateLimiter();
     console.log('✅ Redis rate limiter closed');
   } catch (error: any) {
     console.error('❌ Error closing Redis rate limiter:', error.message);
   }
-  // Cleanup performance resources (caches, monitors)
+
+  // 4. Cleanup performance resources
   cleanupPerformance();
-  // Graceful DB shutdown
+
+  // 5. Close database pool
   try {
     if (pool) await pool.end();
     console.log('✅ Database connections closed');
   } catch (error: any) {
     console.error('❌ Error closing database:', error.message);
   }
+
   process.exit(0);
-});
+}
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 // Add process-level error handlers to prevent crashes on recoverable errors
 process.on('unhandledRejection', (reason, promise) => {
@@ -205,9 +240,23 @@ console.log('✅ Enterprise security and performance middleware enabled');
 app.use(httpLogger); // Add structured logging
 // Audit logging now handled by enterprise-security middleware
 
+// Body parsing with size limits (5MB covers AI chat payloads; file uploads use multer separately)
+app.use(express.json({ limit: '5mb' }));
+app.use(express.urlencoded({ extended: true, limit: '5mb' }));
+// Cookie parsing (required for CSRF double-submit pattern)
+import cookieParser from 'cookie-parser';
+app.use(cookieParser());
+
 // Body parsing with size limits
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// CSRF protection (double-submit cookie pattern)
+import { csrfProtection } from './middleware/csrf.js';
+if (process.env.NODE_ENV === 'production' || process.env.ENABLE_CSRF === 'true') {
+  app.use('/api', csrfProtection);
+  console.log('✅ CSRF protection enabled');
+}
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // IMMUTABILITY POLICY ENFORCEMENT — 21 CFR Part 11 Compliance
@@ -307,18 +356,12 @@ app.get('/readyz', async (_req, res) => {
   }
 });
 
-// Health check endpoint with debug info
+// Health check endpoint — public, minimal info only
 app.get('/api/health', async (req: Request, res: Response) => {
-  debugLog('Health check endpoint called');
-  const healthData = {
+  res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
-    debug: DEBUG,
-    node_env: process.env.NODE_ENV,
-    port: PORT,
-  };
-  debugLog('Health response', healthData);
-  res.json(healthData);
+  });
 });
 
 // Server-authoritative timestamp.
@@ -464,27 +507,16 @@ app.get('/api/csr', (req: Request, res: Response) => {
 // Direct mount /api/projects here to ensure it works
 app.get('/api/projects', async (req, res) => {
   try {
-    // Check multiple sources for organization/workspace context
+    // SECURITY: Always derive organization from authenticated JWT context
     const client_workspace_id =
       req.query.client_workspace_id || req.headers['x-client-workspace-id'];
-    let organization_id = req.query.organization_id || req.headers['x-organization-id'];
+    const organization_id = (req as any).tenantContext?.organizationId
+      || (req as any).organizationId
+      || (req as any).user?.organizationId;
 
-    // Try to get organization from JWT token
     if (!organization_id) {
-      const authHeader = req.headers.authorization;
-      if (authHeader && authHeader.startsWith('Bearer ')) {
-        try {
-          const token = authHeader.substring(7);
-          const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
-          organization_id = payload.organizationId;
-        } catch (e) {
-          // Token parsing failed, use default
-        }
-      }
+      return res.status(403).json({ error: 'Organization context required' });
     }
-
-    // Default to org 2 (Concept2Cure) if no org specified
-    organization_id = organization_id || '2';
 
     if (!pool) {
       // Return empty array if database not available
@@ -821,9 +853,12 @@ try {
   app.use('/api/cmc', cmcAggregatorRoutes);
   app.use('/api/cmc', cmcProjectRoutes);
   app.use('/api/cmc/blueprint', cmcBlueprintRoutes);
+  app.use('/api/cmc/specifications', cmcSpecificationRoutes);
+  app.use('/api/cmc/stability', cmcStabilityRoutes);
+  app.use('/api/cmc/batch-records', cmcBatchRecordRoutes);
   app.use('/api/cmc/dashboard-legacy', cmcDashboardRoutes);
   app.use('/api/cmc/dashboard', cmcDashboardPrisma);
-  console.log('✅ CMC Module API routes mounted (aggregator + projects + blueprint + dashboard)');
+  console.log('✅ CMC Module API routes mounted (aggregator + projects + blueprint + specifications + stability + batch-records + dashboard)');
 } catch (error) {
   console.error('❌ Failed to mount CMC Module routes:', error);
 }
@@ -831,6 +866,8 @@ try {
 // Mount AI Assistance routes
 try {
   app.use('/api/ai-assistance', aiCircuitBreaker, aiAssistanceRoutes);
+  // Also mount at /api/ai so the client aiService.js endpoints (/api/ai/assist, /api/ai/verify, /api/ai/health) resolve
+  app.use('/api/ai', aiCircuitBreaker, aiAssistanceRoutes);
   // Initialize the AI provider router and inject into AI assistance module
   aiProviderRouter = getAIRouter(pool);
   if (aiProviderRouter) {
@@ -1184,6 +1221,36 @@ try {
   console.error('❌ Failed to mount IVDR routes:', error);
 }
 
+// Mount Manufacturing Module routes (ISA-95/FHIR, EBR, Quality, AI review)
+try {
+  const mfgModule = await import('./routes/manufacturing-routes');
+  const createManufacturingRoutes = mfgModule.default;
+  app.use('/api/manufacturing', createManufacturingRoutes(pool));
+  console.log('✅ Manufacturing API routes mounted (ISA-95/FHIR, Plug & Produce, EBR, AI review)');
+} catch (error) {
+  console.error('❌ Failed to mount Manufacturing routes:', error);
+}
+
+// Mount Pharmacovigilance Module routes (ICH E2A/E2B/E2C/E2D/E2E/E2F)
+try {
+  const pvModule = await import('./routes/pharmacovigilance-routes');
+  const createPharmacovigilanceRoutes = pvModule.default;
+  app.use('/api/pharmacovigilance', createPharmacovigilanceRoutes());
+  console.log('✅ Pharmacovigilance API routes mounted (ICH E2A-E2F, GVP Module V/IX)');
+} catch (error) {
+  console.error('❌ Failed to mount Pharmacovigilance routes:', error);
+}
+
+// Mount Clinical Operations Module routes (study/site/enrollment/monitoring)
+try {
+  const clinOpsModule = await import('./routes/clinical-operations-routes');
+  const createClinicalOperationsRoutes = clinOpsModule.default;
+  app.use('/api/clinical-operations', createClinicalOperationsRoutes(pool));
+  console.log('✅ Clinical Operations API routes mounted (studies, sites, enrollment, monitoring, deviations)');
+} catch (error) {
+  console.error('❌ Failed to mount Clinical Operations routes:', error);
+}
+
 // Mount FDA Integration routes
 try {
   const fdaIntegrationModule = await import('./routes/fda-integration-simple');
@@ -1291,6 +1358,54 @@ try {
   console.error('❌ Failed to mount Deep Research routes:', error);
 }
 
+// Mount Intelligent Report Engine routes (immutable reports, provenance, sealing)
+try {
+  const intelligentReportsModule = await import('./routes/intelligent-reports.js');
+  const intelligentReportsRouter = intelligentReportsModule.default;
+  app.use('/api/intelligent-reports', intelligentReportsRouter);
+  console.log('✅ Intelligent Report Engine routes mounted (generate, seal, verify, export)');
+} catch (error) {
+  console.error('❌ Failed to mount Intelligent Report Engine routes:', error);
+}
+
+// Mount Safety Narrative Service routes (aggregate narratives, SAE, benefit-risk)
+try {
+  const safetyNarrativeModule = await import('./routes/safety-narrative.js');
+  const safetyNarrativeRouter = safetyNarrativeModule.default;
+  app.use('/api/safety-narratives', safetyNarrativeRouter);
+  console.log('✅ Safety Narrative Service routes mounted (aggregate, SAE, benefit-risk, signals)');
+} catch (error) {
+  console.error('❌ Failed to mount Safety Narrative routes:', error);
+}
+
+// Mount Statistical Defensibility Service routes (study design assessment)
+try {
+  const statDefModule = await import('./routes/statistical-defensibility.js');
+  const statDefRouter = statDefModule.default;
+  app.use('/api/statistical-defensibility', statDefRouter);
+  console.log('✅ Statistical Defensibility routes mounted (assess, consistency, endpoint-quality, sample-size, multiplicity, reviewer-risks)');
+} catch (error) {
+  console.error('❌ Failed to mount Statistical Defensibility routes:', error);
+}
+
+// Mount Conversation Health Monitoring route
+try {
+  const convHealthModule = await import('./routes/conversation-health.js');
+  const convHealthRouter = convHealthModule.default;
+  app.use('/api/conversation-health', convHealthRouter);
+  console.log('✅ Conversation Health Monitoring route mounted');
+} catch (error) {
+  console.error('❌ Failed to mount Conversation Health routes:', error);
+// Mount Billing Dashboard routes (usage tracking, budgets, alerts, invoices)
+try {
+  const billingDashModule = await import('./routes/billing-dashboard.js');
+  const billingDashRouter = billingDashModule.default;
+  app.use('/api/billing', billingDashRouter);
+  console.log('✅ Billing Dashboard routes mounted (Usage, Budgets, Alerts, Invoices)');
+} catch (error) {
+  console.error('❌ Failed to mount Billing Dashboard routes:', error);
+}
+
 // Mount stability routes
 try {
   const stabilityModule = await import('./src/routes/stability.router.js');
@@ -1386,6 +1501,46 @@ try {
   console.log('✅ eCTD Export routes mounted (ICH M8 v4.0 packaging)');
 } catch (error) {
   console.error('❌ Failed to mount eCTD Export routes:', error);
+}
+
+// Mount eCTD Submission Agent routes (direct agency submissions — FDA ESG, EMA, PMDA, HC)
+try {
+  const ectdSubmissionModule = await import('./routes/ectd-submission-agent.routes');
+  const ectdSubmissionRoutes = ectdSubmissionModule.default;
+  app.use('/api/ectd-submissions', ectdSubmissionRoutes);
+  console.log('✅ eCTD Submission Agent routes mounted (FDA ESG, EMA, PMDA, HC gateway)');
+} catch (error) {
+  console.error('❌ Failed to mount eCTD Submission Agent routes:', error);
+}
+
+// Mount Biotech Document Artifact routes (eCTD, PV, Clinical Ops document generation)
+try {
+  const biotechArtifactsModule = await import('./routes/biotech-artifacts');
+  const biotechArtifactsRoutes = biotechArtifactsModule.default;
+  app.use('/api/biotech-artifacts', biotechArtifactsRoutes);
+  console.log('✅ Biotech Artifact Generator routes mounted (10 document types)');
+} catch (error) {
+  console.error('❌ Failed to mount Biotech Artifact routes:', error);
+}
+
+// Mount HAQ Response Manager routes (FDA IR, EMA D120, PMDA, HC question tracking)
+try {
+  const haqModule = await import('./routes/haq-manager');
+  const haqRoutes = haqModule.default;
+  app.use('/api/haq-manager', haqRoutes);
+  console.log('✅ HAQ Response Manager routes mounted (question tracking, AI drafting, review workflow)');
+} catch (error) {
+  console.error('❌ Failed to mount HAQ Manager routes:', error);
+}
+
+// Mount IND AutoDraft routes (AI-powered IND section generation with source traceability)
+try {
+  const indAutodraftModule = await import('./routes/ind-autodraft');
+  const indAutodraftRoutes = indAutodraftModule.default;
+  app.use('/api/ind-autodraft', indAutodraftRoutes);
+  console.log('✅ IND AutoDraft Engine routes mounted (16 IND sections, sentence-level traceability)');
+} catch (error) {
+  console.error('❌ Failed to mount IND AutoDraft routes:', error);
 }
 
 // Mount IND PDF generation routes (Puppeteer + PDFKit fallback)
@@ -1682,6 +1837,51 @@ try {
   console.log('✅ AI Drafting API routes mounted successfully');
 } catch (error) {
   console.error('❌ Failed to mount AI Drafting routes:', error);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PLATFORM CONTROL PLANE & EXTERNAL API ROUTES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Mount API Key Management routes (CRUD for organization API keys)
+try {
+  const apiKeysModule = await import('./routes/api-keys.js');
+  const apiKeysRoutes = apiKeysModule.default;
+  app.use('/api/api-keys', apiKeysRoutes);
+  console.log('✅ API Key Management routes mounted successfully');
+} catch (error) {
+  console.error('❌ Failed to mount API Key routes:', error);
+}
+
+// Mount Public API routes (external programmatic access via API keys)
+try {
+  const publicApiModule = await import('./routes/public-api.js');
+  const publicApiRoutes = publicApiModule.default;
+  app.use('/api/v1', publicApiRoutes);
+  console.log('✅ Public API v1 routes mounted (CSR, Regulatory, Endpoints, Precedent, Trial Design)');
+} catch (error) {
+  console.error('❌ Failed to mount Public API routes:', error);
+}
+
+// Mount CTD Onboarding Pipeline routes (client CTD project ingestion)
+try {
+  const ctdOnboardingModule = await import('./routes/ctd-onboarding.js');
+  const ctdOnboardingRoutes = ctdOnboardingModule.default;
+  app.use('/api/ctd', ctdOnboardingRoutes);
+  console.log('✅ CTD Onboarding Pipeline routes mounted (projects, upload, validation, gaps)');
+} catch (error) {
+  console.error('❌ Failed to mount CTD Onboarding routes:', error);
+}
+
+// Mount Biologics Intelligence routes (biologic/biosimilar pathways, comparability)
+try {
+  const biologicsModule = await import('./routes/biologics-routes.js');
+  const biologicsRoutes = biologicsModule.default;
+  app.use('/api/biologics', biologicsRoutes);
+  // Combination product routes are co-mounted under /api/biologics/combination-products
+  console.log('✅ Biologics Intelligence & Combination Product routes mounted');
+} catch (error) {
+  console.error('❌ Failed to mount Biologics routes:', error);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -2307,7 +2507,7 @@ stream
 BT
 /F1 18 Tf
 72 720 Td
-(ClinicalSage Report Export) Tj
+(Concept2Cure.RI Report Export) Tj
 ET
 endstream
 endobj
@@ -2329,7 +2529,7 @@ startxref
 %%EOF`;
 
   res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', 'attachment; filename="clinicalsage-report.pdf"');
+  res.setHeader('Content-Disposition', 'attachment; filename="concept2cure-ri-report.pdf"');
   return res.send(Buffer.from(pdfContent, 'utf-8'));
 });
 
@@ -3108,6 +3308,24 @@ For "${query}", I suggest consulting the latest ICH guidelines and FDA guidance 
 console.log('✅ Basic API routes mounted');
 debugLog('Debug mode enabled - enhanced logging active');
 
+// Mount AnA Features routes (change-impact, gap-analysis, memory)
+try {
+  const anaFeaturesModule = await import('./routes/ana-features');
+  app.use('/api/ana', anaFeaturesModule.default);
+  console.log('✅ AnA Features API routes mounted (/api/ana)');
+} catch (error) {
+  console.error('❌ Failed to mount AnA Features routes:', error);
+}
+
+// Mount Ana Platform Control routes (agentic settings, modules, onboarding)
+try {
+  const anaPlatformModule = await import('./routes/ana-platform-control');
+  app.use('/api/ana/platform', anaPlatformModule.default);
+  console.log('✅ Ana Platform Control routes mounted (/api/ana/platform)');
+} catch (error) {
+  console.error('❌ Failed to mount Ana Platform Control routes:', error);
+}
+
 // Mount Lumen Cortex Chat routes
 import chatRoutes from './routes/chat';
 app.use('/api/chat', chatRoutes);
@@ -3192,26 +3410,29 @@ app.post('/api/510k-workflow/:projectId', async (req, res) => {
   try {
     const storage = await getStorage();
 
-    // Track workflow action for 21 CFR Part 11 compliance - TEMPORARILY DISABLED FOR TESTING
-    // TODO: Fix electronic_signature column issue in device_audit_trail table
-    /*
-    const trackingResult = await FDA510kComplianceTracker.trackWorkflowAction({
-      workflowId: `WF_${projectId}_${Date.now()}`,
-      projectId,
-      stage,
-      section,
-      action: 'SAVE',
-      userId: parseInt(req.headers['x-user-id'] as string || '1'),
-      organizationId: parseInt(organizationId),
-      data,
-      metadata: {
-        ipAddress: req.ip,
-        userAgent: req.headers['user-agent'],
-        sessionId: req.headers['x-session-id'] as string
-      }
-    });
-    */
-    const trackingResult = { success: true }; // Dummy result while audit is disabled
+    // Track workflow action for 21 CFR Part 11 compliance
+    // Re-enabled after 0008_ga_hardening migration adds missing columns
+    let trackingResult: { success: boolean } = { success: true };
+    try {
+      trackingResult = await FDA510kComplianceTracker.trackWorkflowAction({
+        workflowId: `WF_${projectId}_${Date.now()}`,
+        projectId,
+        stage,
+        section,
+        action: 'SAVE',
+        userId: parseInt(req.headers['x-user-id'] as string || '1'),
+        organizationId: parseInt(organizationId),
+        data,
+        metadata: {
+          ipAddress: req.ip,
+          userAgent: req.headers['user-agent'],
+          sessionId: req.headers['x-session-id'] as string
+        }
+      });
+    } catch (auditErr) {
+      console.warn('[510k-workflow] Audit trail write failed (migration pending?):', (auditErr as Error).message);
+      // Non-blocking: workflow continues even if audit fails during migration window
+    }
 
     // For now, we'll use the project ID directly as the workflow ID
     // since we're working with project-based workflows
@@ -3336,23 +3557,24 @@ app.post('/api/510k-workflow/:projectId', async (req, res) => {
       console.log(`Saved section data for section: ${section}`);
     }
 
-    // Track document version for compliance - TEMPORARILY DISABLED FOR TESTING
-    // TODO: Fix version_label column issue in document versions table
-    /*
-    await FDA510kComplianceTracker.createDocumentVersion({
-      documentId: `510K_${projectId}`,
-      projectId,
-      userId: parseInt(req.headers['x-user-id'] as string || '1'),
-      organizationId: parseInt(organizationId),
-      content: data,
-      changeDescription: `Updated ${stage} - ${section || 'default'}`,
-      metadata: {
-        stage,
-        section,
-        completedSteps: req.body.completedSteps || []
-      }
-    });
-    */
+    // Track document version for compliance — re-enabled after 0008_ga_hardening migration
+    try {
+      await FDA510kComplianceTracker.createDocumentVersion({
+        documentId: `510K_${projectId}`,
+        projectId,
+        userId: parseInt(req.headers['x-user-id'] as string || '1'),
+        organizationId: parseInt(organizationId),
+        content: data,
+        changeDescription: `Updated ${stage} - ${section || 'default'}`,
+        metadata: {
+          stage,
+          section,
+          completedSteps: req.body.completedSteps || []
+        }
+      });
+    } catch (versionErr) {
+      console.warn('[510k-workflow] Document version tracking failed (migration pending?):', (versionErr as Error).message);
+    }
 
     // Trigger automatic document generation via DocumentOrchestrationService
     let autoPopulated = false;
@@ -5567,7 +5789,7 @@ app.put('/api/cro/milestones/:id', async (req: Request, res: Response) => {
   }
 });
 
-// Create AI Document API endpoint
+// Create AI Document API endpoint — database-persisted
 app.post('/api/v1/drafting/start_task', async (req: Request, res: Response) => {
   try {
     const { project_id, ectd_section, document_title, template } = req.body;
@@ -5578,29 +5800,33 @@ app.post('/api/v1/drafting/start_task', async (req: Request, res: Response) => {
       });
     }
 
-    // Generate unique task ID
     const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    // Simulate document generation process
+    // Generate document content
     const generatedContent = await generateDocumentContent(ectd_section, document_title, template);
 
-    // Store task in memory (in production, this would be in database)
-    const task = {
-      id: taskId,
-      project_id,
-      ectd_section,
-      document_title,
-      template,
-      status: 'COMPLETED',
-      draft_content: generatedContent,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-
-    // In production, store in database
-    // For now, we'll store in memory with a timeout
-    (global as any).draftingTasks = (global as any).draftingTasks || {};
-    (global as any).draftingTasks[taskId] = task;
+    // Persist task to database
+    try {
+      await db.insert(draftingTasks).values({
+        taskId,
+        projectId: project_id,
+        ectdSection: ectd_section,
+        documentTitle: document_title,
+        template: template || null,
+        status: 'COMPLETED',
+        draftContent: generatedContent,
+        createdById: (req as any).user?.id || null,
+      });
+    } catch (dbError) {
+      // Fallback: if table doesn't exist yet (pre-migration), use in-memory
+      console.warn('[drafting] DB insert failed, using in-memory fallback:', (dbError as Error).message);
+      (global as any).draftingTasks = (global as any).draftingTasks || {};
+      (global as any).draftingTasks[taskId] = {
+        id: taskId, project_id, ectd_section, document_title, template,
+        status: 'COMPLETED', draft_content: generatedContent,
+        created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+      };
+    }
 
     res.status(202).json({ task_id: taskId });
   } catch (error) {
@@ -5609,19 +5835,37 @@ app.post('/api/v1/drafting/start_task', async (req: Request, res: Response) => {
   }
 });
 
-// Get task status endpoint
+// Get task status endpoint — database-backed with in-memory fallback
 app.get('/api/v1/drafting/task_status/:task_id', async (req: Request, res: Response) => {
   try {
     const { task_id } = req.params;
 
-    (global as any).draftingTasks = (global as any).draftingTasks || {};
-    const task = (global as any).draftingTasks[task_id];
-
-    if (!task) {
-      return res.status(404).json({ error: 'Task not found' });
+    // Try database first
+    try {
+      const [task] = await db.select().from(draftingTasks).where(eq(draftingTasks.taskId, task_id));
+      if (task) {
+        return res.json({
+          id: task.taskId,
+          project_id: task.projectId,
+          ectd_section: task.ectdSection,
+          document_title: task.documentTitle,
+          template: task.template,
+          status: task.status,
+          draft_content: task.draftContent,
+          created_at: task.createdAt?.toISOString(),
+          updated_at: task.updatedAt?.toISOString(),
+        });
+      }
+    } catch {
+      // DB query failed — fall through to in-memory
     }
 
-    res.json(task);
+    // Fallback to in-memory
+    const memTask = (global as any).draftingTasks?.[task_id];
+    if (!memTask) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+    res.json(memTask);
   } catch (error) {
     console.error('Get task status error:', error);
     res.status(500).json({ error: 'Failed to get task status' });
@@ -5689,7 +5933,7 @@ This document template ensures compliance with:
 3. Prepare for submission
 
 ---
-Generated by TrialSage AI Document Generator
+Generated by Concept2Cure AI Document Generator
 Date: ${new Date().toISOString()}
 `;
 }
@@ -6141,6 +6385,16 @@ async function startServer() {
   }
 
   try {
+    const csrBuilderRoutes = await import('./routes/csr-builder-routes');
+    app.use('/api/csr-builder', csrBuilderRoutes.default);
+    // Also mount at /api/csr for client backward-compatibility (narrative, signals, benefit-risk)
+    app.use('/api/csr', csrBuilderRoutes.default);
+    console.log('✅ CSR Builder routes mounted at /api/csr-builder and /api/csr');
+  } catch (error) {
+    console.error('Failed to mount CSR builder routes:', error);
+  }
+
+  try {
     const { protocolRoutes } = await import('./routes/protocol_routes');
     app.use('/api/protocol', protocolRoutes);
     console.log('✅ Protocol routes mounted at /api/protocol');
@@ -6313,6 +6567,17 @@ async function startServer() {
   }
 
   // ──────────────────────────────────────────────────────────────────────────
+  // ENTERPRISE INTEGRATIONS (Medidata, Veeva, Adobe, Google Drive, etc.)
+  // ──────────────────────────────────────────────────────────────────────────
+  try {
+    const enterpriseIntegrationsModule = await import('./routes/enterprise-integrations.ts');
+    app.use('/api/integrations', enterpriseIntegrationsModule.default);
+    console.log('✅ Enterprise Integration routes mounted (connectors, OAuth, sync)');
+  } catch (error) {
+    console.error('❌ Failed to mount Enterprise Integration routes:', error);
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
   // ADVANCED PLATFORM CAPABILITIES (GraphRAG, Digital Twin, RWE, etc.)
   // ──────────────────────────────────────────────────────────────────────────
   try {
@@ -6413,6 +6678,59 @@ async function startServer() {
     console.log('✅ Snow Globe routes mounted at /api/snowglobe');
   } catch (error) {
     console.error('❌ Failed to mount Mission Control routes:', error);
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // TASK MANAGEMENT — Cross-module unified task system
+  // ──────────────────────────────────────────────────────────────────────────
+  try {
+    const taskMgmtRoutes = await import('./routes/taskManagement.routes');
+    app.use('/api/task-management', taskMgmtRoutes.default);
+    console.log('✅ Task Management routes mounted at /api/task-management');
+
+    const unifiedTaskRoutes = await import('./routes/unifiedTasks.routes');
+    app.use('/api/unified-tasks', unifiedTaskRoutes.default);
+    console.log('✅ Unified Tasks routes mounted at /api/unified-tasks');
+  } catch (error) {
+    console.error('❌ Failed to mount Task Management routes:', error);
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // APPROVAL WORKFLOW — Accept/deny/delegate approval chains
+  // ──────────────────────────────────────────────────────────────────────────
+  try {
+    const approvalWorkflowRoutes = await import('./routes/approval-workflow');
+    app.use('/api/approval-workflows', approvalWorkflowRoutes.default);
+    console.log('✅ Approval Workflow routes mounted at /api/approval-workflows');
+  } catch (error) {
+    console.error('❌ Failed to mount Approval Workflow routes:', error);
+  }
+
+  // ── Client Branding — logo, letterhead, templates, brand settings ──────────
+  try {
+    const clientBrandingRoutes = await import('./routes/client-branding');
+    app.use('/api/client-branding', clientBrandingRoutes.default);
+    console.log('✅ Client Branding routes mounted at /api/client-branding');
+  } catch (error) {
+    console.error('❌ Failed to mount Client Branding routes:', error);
+  }
+
+  // ── Inline Annotations — sentence/selection-level approvals on documents ──
+  try {
+    const inlineAnnotationRoutes = await import('./routes/inline-annotations');
+    app.use('/api/inline-annotations', inlineAnnotationRoutes.default);
+    console.log('✅ Inline Annotations routes mounted at /api/inline-annotations');
+  } catch (error) {
+    console.error('❌ Failed to mount Inline Annotations routes:', error);
+  }
+
+  // ── Decision Lineage — immutable audit-ready decision & data lineage ──────
+  try {
+    const decisionLineageRoutes = await import('./routes/decision-lineage');
+    app.use('/api/decision-lineage', decisionLineageRoutes.default);
+    console.log('✅ Decision Lineage routes mounted at /api/decision-lineage');
+  } catch (error) {
+    console.error('❌ Failed to mount Decision Lineage routes:', error);
   }
 
   // ──────────────────────────────────────────────────────────────────────────
@@ -6576,6 +6894,7 @@ async function startServer() {
 
   // Create HTTP server for proper Vite integration
   const httpServer = createServer(app);
+  setHttpServer(httpServer); // Register for graceful shutdown drain
 
   // Setup Vite middleware for frontend serving (development mode with HMR)
   // This must be done AFTER all API routes are mounted
@@ -6601,9 +6920,10 @@ async function startServer() {
             <!DOCTYPE html>
             <html>
             <head>
-              <title>TrialSage - ClinicalSageAI</title>
+              <title>TrialSage - Concept2Cure.RI</title>
+              <title>Concept2Cure - Concept2Cure</title>
               <style>
-                body { font-family: system-ui, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+                body { font-family: system-ui, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: linear-gradient(135deg, #d97757 0%, #c15f3c 100%); }
                 .container { text-align: center; color: white; padding: 40px; }
                 h1 { font-size: 2.5rem; margin-bottom: 1rem; }
                 p { font-size: 1.2rem; opacity: 0.9; }
@@ -6612,7 +6932,7 @@ async function startServer() {
             </head>
             <body>
               <div class="container">
-                <h1>🧬 TrialSage Platform</h1>
+                <h1>🧬 Concept2Cure Platform</h1>
                 <p>API Server is running successfully.</p>
                 <p>Check <a href="/api/health">/api/health</a> for system status.</p>
                 <p>Frontend build may be required. Run: <code>npm run build</code></p>

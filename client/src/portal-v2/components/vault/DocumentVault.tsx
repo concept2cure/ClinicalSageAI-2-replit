@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Document Vault
+ * Concept2Cure Client Portal V2 - Document Vault
  *
  * Enterprise document management system with version control,
  * smart folders, compliance tracking, and AI-powered search.

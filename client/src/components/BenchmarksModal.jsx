@@ -136,7 +136,7 @@ export default function BenchmarksModal({ onClose }) {
                           data={selectedBenchmark.trend}
                           margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
                         >
-                          <SparkLine dataKey="value" stroke="#10b981" strokeWidth={2} fill="none" />
+                          <SparkLine dataKey="value" stroke="#788c5d" strokeWidth={2} fill="none" />
                           {selectedBenchmark.trend.map((entry, index) => (
                             <SparkPoint
                               key={`point-${index}`}
@@ -150,7 +150,7 @@ export default function BenchmarksModal({ onClose }) {
                                   100
                               }
                               size={4}
-                              fill="#10b981"
+                              fill="#788c5d"
                             />
                           ))}
                         </SparklineChart>

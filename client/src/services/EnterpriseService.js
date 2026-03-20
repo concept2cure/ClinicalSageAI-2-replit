@@ -2,7 +2,7 @@
  * Enterprise Security & Setup Service
  *
  * This service provides enterprise-level security configuration, provisioning,
- * and administration capabilities for the TrialSage platform. It supports
+ * and administration capabilities for the Concept2Cure platform. It supports
  * advanced security features including SSO integration, blockchain verification,
  * RBAC, audit trails, and compliance with regulatory standards.
  */

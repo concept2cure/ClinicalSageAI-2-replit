@@ -14,7 +14,7 @@
  * - Cognitive advisory with project memory
  * - Real-time regulatory intelligence queries
  *
- * @author TrialSage AI Team
+ * @author Concept2Cure AI Team
  * @version 2.0.0
  * @license Proprietary - Concept2Cure Inc.
  */

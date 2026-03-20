@@ -6,14 +6,9 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import documentPreviewRouter from './documentPreview';
-// Generate UUID manually instead of using a package
-const uuidv4 = () => {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-    const r = (Math.random() * 16) | 0,
-      v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-};
+import { randomUUID } from 'crypto';
+// Use cryptographically secure UUID for regulatory document identifiers
+const uuidv4 = () => randomUUID();
 
 const router = Router();
 
@@ -36,7 +31,28 @@ const multerStorage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage: multerStorage });
+// SECURITY: Restrict file types and enforce size limits for regulatory submissions
+const ALLOWED_MIME_TYPES = new Set([
+  'application/pdf',
+  'application/xml', 'text/xml',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
+  'text/plain', 'text/csv',
+  'image/png', 'image/jpeg', 'image/tiff',
+]);
+
+const upload = multer({
+  storage: multerStorage,
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB max per FDA ESG guidelines
+  fileFilter: (_req, file, cb) => {
+    if (ALLOWED_MIME_TYPES.has(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error(`File type "${file.mimetype}" is not allowed. Accepted: PDF, DOCX, XLSX, XML, CSV, TXT, PNG, JPEG, TIFF.`));
+    }
+  },
+});
 
 // Get all documents with optional filtering
 router.get('/', async (req, res) => {
@@ -297,7 +313,7 @@ function generateHtmlFromDocument(document: any): string {
       <title>${document.name}</title>
       <style>
         body { font-family: Arial, sans-serif; margin: 30px; }
-        h1 { color: #0F6CBD; }
+        h1 { color: #d97757; }
         h2 { color: #333; margin-top: 20px; }
         .header { display: flex; justify-content: space-between; align-items: center; }
         .metadata { color: #666; font-size: 12px; margin-bottom: 30px; border: 1px solid #eee; padding: 10px; background: #f9f9f9; }

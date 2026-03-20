@@ -1,9 +1,9 @@
 /**
  * Competitive Analysis Service
  * 
- * This service provides in-depth competitive analysis of TrialSage against the top competitors
+ * This service provides in-depth competitive analysis of Concept2Cure against the top competitors
  * in the clinical trial intelligence platform market. It's used to generate comparative reports
- * and insights that highlight TrialSage's unique value proposition.
+ * and insights that highlight Concept2Cure's unique value proposition.
  */
 
 // Top competitors in the clinical trial intelligence platform market
@@ -317,7 +317,7 @@ export class CompetitiveAnalysisService {
   private competitiveDifferentiators: CompetitiveDifferentiator[] = [
     {
       category: 'Knowledge Retention',
-      description: 'TrialSage permanently retains extracted academic and regulatory knowledge in its intelligence engine, creating a continuously expanding knowledge base that powers all recommendations.',
+      description: 'Concept2Cure permanently retains extracted academic and regulatory knowledge in its intelligence engine, creating a continuously expanding knowledge base that powers all recommendations.',
       impact: 'Organizations build institutional knowledge with each use, unlike competitors where insights are session-based and not retained.',
       marketImportance: 9,
       trialSageCapability: 10,
@@ -325,7 +325,7 @@ export class CompetitiveAnalysisService {
     },
     {
       category: 'Global Regulatory Intelligence',
-      description: 'TrialSage covers 8 global regulatory regions with detailed compliance analysis for each, compared to competitors limited regional focus.',
+      description: 'Concept2Cure covers 8 global regulatory regions with detailed compliance analysis for each, compared to competitors limited regional focus.',
       impact: 'Enables truly global trial strategies with confidence in regulatory alignment across all major markets simultaneously.',
       marketImportance: 8,
       trialSageCapability: 9,
@@ -333,7 +333,7 @@ export class CompetitiveAnalysisService {
     },
     {
       category: 'Version-Aware Protocol Optimization',
-      description: 'TrialSage tracks protocol versions with automatic change detection and optimization history, showing the evolution of protocol quality.',
+      description: 'Concept2Cure tracks protocol versions with automatic change detection and optimization history, showing the evolution of protocol quality.',
       impact: 'Creates an auditable trail of protocol improvements with justifications that can be used in regulatory submissions and stakeholder discussions.',
       marketImportance: 9,
       trialSageCapability: 10,
@@ -341,7 +341,7 @@ export class CompetitiveAnalysisService {
     },
     {
       category: 'Hugging Face Integration',
-      description: 'TrialSage uses an open AI ecosystem powered by Hugging Face, with zero dependency on closed AI platforms like OpenAI or Perplexity.',
+      description: 'Concept2Cure uses an open AI ecosystem powered by Hugging Face, with zero dependency on closed AI platforms like OpenAI or Perplexity.',
       impact: 'Provides cost stability, data privacy, and customization capabilities not possible with competitors closed AI architectures.',
       marketImportance: 7,
       trialSageCapability: 10,
@@ -349,7 +349,7 @@ export class CompetitiveAnalysisService {
     },
     {
       category: 'Explainable Intelligence',
-      description: 'All TrialSage recommendations include detailed explanations backed by specific CSR data sources, academic evidence, and regulatory precedents.',
+      description: 'All Concept2Cure recommendations include detailed explanations backed by specific CSR data sources, academic evidence, and regulatory precedents.',
       impact: 'Enables confident decision-making and stakeholder justification with transparent AI reasoning.',
       marketImportance: 10,
       trialSageCapability: 9,
@@ -400,20 +400,20 @@ export class CompetitiveAnalysisService {
   generateCompetitiveAnalysisSummary(useCase: string): string {
     // Generate a tailored competitive summary based on the use case
     const summaries: Record<string, string> = {
-      'ind-readiness': 'For First-in-Human IND Readiness, TrialSage outperforms competitors with its comprehensive regulatory intelligence covering 8 global regions (vs. 2-4 regions for competitors) and academic knowledge integration. While Medidata offers strong data management and Veeva provides robust document control, only TrialSage delivers AI-powered field-level protocol optimization with explainable recommendations tied directly to regulatory precedents and CSR outcomes. This results in 38% cost savings and 5-week timeline reduction compared to traditional approaches, with significantly lower implementation complexity.',
+      'ind-readiness': 'For First-in-Human IND Readiness, Concept2Cure outperforms competitors with its comprehensive regulatory intelligence covering 8 global regions (vs. 2-4 regions for competitors) and academic knowledge integration. While Medidata offers strong data management and Veeva provides robust document control, only Concept2Cure delivers AI-powered field-level protocol optimization with explainable recommendations tied directly to regulatory precedents and CSR outcomes. This results in 38% cost savings and 5-week timeline reduction compared to traditional approaches, with significantly lower implementation complexity.',
       
-      'adaptive-design': 'In Adaptive Protocol Design, TrialSage key advantage over competitors is its advanced statistical simulation capabilities combined with version-aware protocol tracking. While Medidata offers strong synthetic control arms and Clario provides endpoint expertise, only TrialSage delivers comprehensive academic knowledge integration and explainable AI recommendations for adaptive design parameters. The platform permanent knowledge retention ensures that each adaptive design builds upon institutional learning, unlike competitors where insights are not retained between sessions. This results in a 22% improvement in success probability and 60% cost reduction compared to specialized statistical consultants.',
+      'adaptive-design': 'In Adaptive Protocol Design, Concept2Cure key advantage over competitors is its advanced statistical simulation capabilities combined with version-aware protocol tracking. While Medidata offers strong synthetic control arms and Clario provides endpoint expertise, only Concept2Cure delivers comprehensive academic knowledge integration and explainable AI recommendations for adaptive design parameters. The platform permanent knowledge retention ensures that each adaptive design builds upon institutional learning, unlike competitors where insights are not retained between sessions. This results in a 22% improvement in success probability and 60% cost reduction compared to specialized statistical consultants.',
       
-      'endpoint-optimization': 'For Endpoint Selection & Optimization, TrialSage delivers unmatched competitive intelligence through its comprehensive CSR database with advanced semantic search capabilities. While competitors offer basic benchmarking, only TrialSage provides field-specific endpoint optimization with regulatory precedent matching across 8 global regions. The platform Hugging Face integration enables deeper analysis of endpoint selection impact on trial success, with permanent knowledge retention to build organizational expertise. This delivers 3-week timeline acceleration and $22,000 cost savings compared to traditional approaches, with higher confidence in regulatory acceptance.',
+      'endpoint-optimization': 'For Endpoint Selection & Optimization, Concept2Cure delivers unmatched competitive intelligence through its comprehensive CSR database with advanced semantic search capabilities. While competitors offer basic benchmarking, only Concept2Cure provides field-specific endpoint optimization with regulatory precedent matching across 8 global regions. The platform Hugging Face integration enables deeper analysis of endpoint selection impact on trial success, with permanent knowledge retention to build organizational expertise. This delivers 3-week timeline acceleration and $22,000 cost savings compared to traditional approaches, with higher confidence in regulatory acceptance.',
       
-      'default': 'TrialSage delivers comprehensive clinical trial intelligence with unique advantages over competitors in global regulatory coverage (8 regions vs 2-4), version-aware protocol tracking, and permanent academic knowledge retention. While Medidata, Clario and Veeva offer strong operational capabilities, only TrialSage provides explainable AI-powered protocol optimization with field-level recommendations. The platform Hugging Face integration ensures data privacy and customization flexibility not possible with competitors closed AI architectures, with lower implementation complexity and faster deployment. This results in significant cost and timeline savings across the protocol development lifecycle with improved regulatory alignment.'
+      'default': 'Concept2Cure delivers comprehensive clinical trial intelligence with unique advantages over competitors in global regulatory coverage (8 regions vs 2-4), version-aware protocol tracking, and permanent academic knowledge retention. While Medidata, Clario and Veeva offer strong operational capabilities, only Concept2Cure provides explainable AI-powered protocol optimization with field-level recommendations. The platform Hugging Face integration ensures data privacy and customization flexibility not possible with competitors closed AI architectures, with lower implementation complexity and faster deployment. This results in significant cost and timeline savings across the protocol development lifecycle with improved regulatory alignment.'
     };
     
     return summaries[useCase] || summaries['default'];
   }
 
   /**
-   * Generate ROI comparison for TrialSage vs. competitors
+   * Generate ROI comparison for Concept2Cure vs. competitors
    */
   generateROIComparison(useCase: string): any {
     // Define ROI metrics for different use cases

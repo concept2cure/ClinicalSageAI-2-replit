@@ -144,7 +144,7 @@ const UseCaseLibrary = ({ t }) => {
       categoryLabel: t('CRO Solutions'),
       industry: t('Global • Multi-therapeutic'),
       description: t(
-        'How a leading CRO used TrialSage to scale operations across 200+ trials while maintaining consistent quality and compliance.'
+        'How a leading CRO used Concept2Cure to scale operations across 200+ trials while maintaining consistent quality and compliance.'
       ),
       link: '/cases/cro-scaling',
       icon: BarChart2,
@@ -160,7 +160,7 @@ const UseCaseLibrary = ({ t }) => {
       categoryLabel: t('CRO Solutions'),
       industry: t('Multi-sponsor • Phase 1-3'),
       description: t(
-        "How a mid-size CRO implemented TrialSage's collaboration tools to streamline communication with sponsors and sites."
+        "How a mid-size CRO implemented Concept2Cure's collaboration tools to streamline communication with sponsors and sites."
       ),
       link: '/cases/collaboration-tools',
       icon: Users,
@@ -202,7 +202,7 @@ const UseCaseLibrary = ({ t }) => {
           </h2>
           <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
             {t(
-              'Explore how pharmaceutical companies, biotechs, and medical device manufacturers leverage TrialSage in their workflows.'
+              'Explore how pharmaceutical companies, biotechs, and medical device manufacturers leverage Concept2Cure in their workflows.'
             )}
           </p>
         </div>

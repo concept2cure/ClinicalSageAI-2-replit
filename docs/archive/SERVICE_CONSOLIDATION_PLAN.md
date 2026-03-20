@@ -12,7 +12,7 @@
 
 ## Executive Summary
 
-The ClinicalSageAI codebase contains significant service duplication across 7 functional areas. This document outlines the consolidation plan to reduce 28 duplicate services to 15 canonical services.
+The Concept2Cure.RI codebase contains significant service duplication across 7 functional areas. This document outlines the consolidation plan to reduce 28 duplicate services to 15 canonical services.
 
 ---
 

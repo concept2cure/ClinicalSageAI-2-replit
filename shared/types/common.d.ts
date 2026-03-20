@@ -1,6 +1,6 @@
 /**
  * Global type augmentations and common interface definitions
- * for the ClinicalSageAI application
+ * for the Concept2Cure.RI application
  */
 
 import type * as React from 'react';

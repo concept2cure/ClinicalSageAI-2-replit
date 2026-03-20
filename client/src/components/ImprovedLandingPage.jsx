@@ -15,7 +15,7 @@ export default function ImprovedLandingPage() {
             <Link to="/">
               <div className="flex items-center space-x-2">
                 <img
-                  src="/src/assets/concept2cure-logo.svg"
+                  src="/src/assets/concept2cure-logo.jpg"
                   alt="Concept2Cure"
                   className="h-10 w-auto"
                 />
@@ -81,7 +81,7 @@ export default function ImprovedLandingPage() {
             That Thinks Like a Biotech Founder
           </h1>
           <p className="text-xl text-gray-700 max-w-4xl mx-auto mb-8">
-            TrialSage is a real-time, AI-powered platform that automates the parts of clinical and
+            Concept2Cure is a real-time, AI-powered platform that automates the parts of clinical and
             regulatory development that don't need to be manual anymore—and enhances the parts that
             do, with precision insight and smart, embedded copilots.
           </p>
@@ -322,7 +322,7 @@ export default function ImprovedLandingPage() {
       <section className="py-16 bg-white">
         <Container>
           <h2 className="text-3xl font-bold text-center mb-14 text-gray-900">
-            The Core Systems That Power TrialSage
+            The Core Systems That Power Concept2Cure
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
@@ -445,7 +445,7 @@ export default function ImprovedLandingPage() {
             <div className="grid grid-cols-4 text-center bg-blue-600 text-white py-3 font-semibold">
               <div>Metric</div>
               <div>Traditional</div>
-              <div>With TrialSage</div>
+              <div>With Concept2Cure</div>
               <div>Improvement</div>
             </div>
             {[
@@ -485,7 +485,7 @@ export default function ImprovedLandingPage() {
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4 text-gray-900">Tailored for Your Role</h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              TrialSage delivers specialized experiences for every stakeholder in the clinical
+              Concept2Cure delivers specialized experiences for every stakeholder in the clinical
               development process
             </p>
           </div>
@@ -556,7 +556,7 @@ export default function ImprovedLandingPage() {
                   <div className="mt-6 border-t border-gray-100 pt-6">
                     <div className="font-medium text-gray-500 mb-3">TESTIMONIAL</div>
                     <blockquote className="text-gray-700 italic">
-                      "We completed our IND in under 5 months using TrialSage—with a team half the
+                      "We completed our IND in under 5 months using Concept2Cure—with a team half the
                       size we budgeted for. The automated validation alone saved us weeks of review
                       time."
                     </blockquote>
@@ -647,7 +647,7 @@ export default function ImprovedLandingPage() {
             Ready to Redefine Clinical Development?
           </h2>
           <p className="text-xl mb-8 max-w-3xl mx-auto">
-            TrialSage is how tomorrow's biotech gets built: faster, safer, smarter. If you're tired
+            Concept2Cure is how tomorrow's biotech gets built: faster, safer, smarter. If you're tired
             of waiting on consultants, wrangling PDFs, or crossing your fingers at submission— this
             is your moment.
           </p>
@@ -677,7 +677,7 @@ export default function ImprovedLandingPage() {
         <Container>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
-              <h3 className="text-white font-medium mb-4">TrialSage</h3>
+              <h3 className="text-white font-medium mb-4">Concept2Cure</h3>
               <p className="text-sm">
                 The Clinical Intelligence System that thinks like a biotech founder.
               </p>

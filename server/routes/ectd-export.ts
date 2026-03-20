@@ -30,11 +30,20 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Valid numeric submission ID required' });
   }
 
-  // Organization ID: pull from auth context, body, or default to 1
+  // SECURITY: Always derive org from authenticated context — never from body
+  const organizationId =
+    (req as any).organizationId ||
+    (req as any).user?.organizationId;
+
+  if (!organizationId) {
+    return res.status(403).json({ error: 'Organization context required' });
+  }
+  // Organization ID: pull from auth context only (never trust client body)
   const organizationId =
     (req as any).organizationId ||
     (req as any).user?.organizationId ||
-    req.body?.organizationId ||
+    (req as any).tenantId ||
+    (req as any).tenantContext?.organizationId ||
     1;
 
   const {
@@ -127,6 +136,8 @@ router.post('/:submissionId/validate', async (req: Request, res: Response) => {
       const organizationId =
         (req as any).organizationId ||
         (req as any).user?.organizationId ||
+        (req as any).tenantId ||
+        (req as any).tenantContext?.organizationId ||
         1;
 
       const result = await generateEctdPackage(submissionId, organizationId);

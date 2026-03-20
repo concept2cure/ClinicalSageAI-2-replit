@@ -45,7 +45,12 @@ import {
   ClipboardList,
   Shield,
   Globe,
+  Key,
+  Inbox,
+  Palette,
+  Link2,
 } from 'lucide-react';
+import logoSrc from '@/assets/concept2cure-logo.jpg';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -127,8 +132,8 @@ const NavItem: React.FC<{
   onClick: () => void;
 }> = ({ icon, label, active, accentColor, badge, subtitle, onClick }) => {
   const accentMap = {
-    blue: { bg: 'bg-blue-50', text: 'text-blue-700', iconColor: 'text-blue-500' },
-    violet: { bg: 'bg-violet-50', text: 'text-violet-700', iconColor: 'text-violet-500' },
+    blue: { bg: 'bg-[#FBF0EB]', text: 'text-[#C4623F]', iconColor: 'text-[#D97757]' },
+    violet: { bg: 'bg-[#FBF0EB]', text: 'text-[#C4623F]', iconColor: 'text-[#D97757]' },
     emerald: { bg: 'bg-emerald-50', text: 'text-emerald-700', iconColor: 'text-emerald-500' },
   };
   const accent = accentColor && accentMap[accentColor];
@@ -146,8 +151,8 @@ const NavItem: React.FC<{
           : accent
             ? cn(
                 'text-zinc-600',
-                accent.bg === 'bg-blue-50' && 'hover:bg-blue-50 hover:text-blue-700',
-                accent.bg === 'bg-violet-50' && 'hover:bg-violet-50 hover:text-violet-700',
+                accent.bg === 'bg-[#FBF0EB]' && 'hover:bg-[#FBF0EB] hover:text-[#C4623F]',
+                accent.bg === 'bg-[#FBF0EB]' && 'hover:bg-[#FBF0EB] hover:text-[#C4623F]',
                 accent.bg === 'bg-emerald-50' && 'hover:bg-emerald-50 hover:text-emerald-700'
               )
             : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
@@ -281,8 +286,9 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         role="navigation"
         aria-label="Main sidebar"
       >
-        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center shadow-sm flex-shrink-0">
-          <Sparkles className="w-4 h-4 text-white" />
+        <div className="relative w-8 h-8 rounded-xl overflow-hidden shadow-sm flex-shrink-0">
+          <img src={logoSrc} alt="C2C" className="w-full h-full object-cover object-center" />
+          <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at center, transparent 40%, var(--color-bg, #faf9f5) 100%)' }} />
         </div>
         <button
           onClick={onNewChat}
@@ -306,7 +312,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           aria-label="AI Agents"
           className={cn(
             'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
-            activeNavId === 'agent-hub' ? 'bg-violet-50 text-violet-600' : 'text-zinc-500 hover:bg-zinc-200'
+            activeNavId === 'agent-hub' ? 'bg-[#FBF0EB] text-[#D97757]' : 'text-zinc-500 hover:bg-zinc-200'
           )}
         >
           <Bot className="w-4 h-4" />
@@ -316,17 +322,27 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           aria-label="SnowGlobe"
           className={cn(
             'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
-            activeNavId === 'snowglobe' ? 'bg-blue-50 text-blue-600' : 'text-zinc-500 hover:bg-zinc-200'
+            activeNavId === 'snowglobe' ? 'bg-[#FBF0EB] text-[#D97757]' : 'text-zinc-500 hover:bg-zinc-200'
           )}
         >
           <Snowflake className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => onNavigate?.('user-inbox')}
+          aria-label="My Inbox"
+          className={cn(
+            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
+            activeNavId === 'user-inbox' ? 'bg-amber-50 text-amber-600' : 'text-zinc-500 hover:bg-zinc-200'
+          )}
+        >
+          <Inbox className="w-4 h-4" />
         </button>
         <button
           onClick={() => onNavigate?.('collaboration-hub')}
           aria-label="Collaboration"
           className={cn(
             'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
-            activeNavId === 'collaboration-hub' ? 'bg-blue-50 text-blue-600' : 'text-zinc-500 hover:bg-zinc-200'
+            activeNavId === 'collaboration-hub' ? 'bg-[#FBF0EB] text-[#D97757]' : 'text-zinc-500 hover:bg-zinc-200'
           )}
         >
           <Users className="w-4 h-4" />
@@ -336,7 +352,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           aria-label="Artifacts"
           className={cn(
             'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
-            activeNavId === 'artifacts' ? 'bg-violet-50 text-violet-600' : 'text-zinc-500 hover:bg-zinc-200'
+            activeNavId === 'artifacts' ? 'bg-[#FBF0EB] text-[#D97757]' : 'text-zinc-500 hover:bg-zinc-200'
           )}
         >
           <Layers className="w-4 h-4" />
@@ -383,8 +399,9 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         {/* Brand header */}
         <div className="flex items-center justify-between px-3 h-11 flex-shrink-0">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center">
-              <Sparkles className="w-3 h-3 text-white" />
+            <div className="relative w-7 h-7 rounded-lg overflow-hidden flex-shrink-0 shadow-sm">
+              <img src={logoSrc} alt="Concept2Cure" className="w-full h-full object-cover object-center" />
+              <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at center, transparent 40%, var(--color-bg, #faf9f5) 100%)' }} />
             </div>
             <span className="font-semibold text-zinc-800 text-[13px]">Concept2Cure</span>
           </div>
@@ -527,6 +544,14 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               accentColor="blue"
               onClick={() => onNavigate?.('cmc')}
             />
+            <NavItem
+              icon={<FlaskConical className="w-3.5 h-3.5" />}
+              label="Biologics Intelligence"
+              subtitle="BLA · Biosimilar · ATMP"
+              active={activeNavId === 'biologics-dashboard'}
+              accentColor="violet"
+              onClick={() => onNavigate?.('biologics-dashboard')}
+            />
           </WorkspaceGroup>
 
           {/* ── ASSURE — quality & compliance ─────────────────────── */}
@@ -553,10 +578,40 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               accentColor="indigo"
               onClick={() => onNavigate?.('report-engine')}
             />
+            <NavItem
+              icon={<Shield className="w-3.5 h-3.5" />}
+              label="Safety Narrative"
+              subtitle="ICH E3 · SAE · Benefit-Risk"
+              active={activeNavId === 'safety-narrative'}
+              accentColor="rose"
+              onClick={() => onNavigate?.('safety-narrative')}
+            />
           </WorkspaceGroup>
 
           {/* ── MANAGE — operations & governance ──────────────────── */}
           <WorkspaceGroup label="Manage">
+            <NavItem
+              icon={<Inbox className="w-3.5 h-3.5" />}
+              label="My Inbox"
+              subtitle="Worklist · Approvals · Alerts"
+              active={activeNavId === 'user-inbox'}
+              accentColor="amber"
+              onClick={() => onNavigate?.('user-inbox')}
+              icon={<Activity className="w-3.5 h-3.5" />}
+              label="Ana Dashboard"
+              subtitle="Intelligence · Gaps · Impact"
+              active={activeNavId === 'ana-dashboard'}
+              accentColor="violet"
+              onClick={() => onNavigate?.('ana-dashboard')}
+            />
+            <NavItem
+              icon={<Settings className="w-3.5 h-3.5" />}
+              label="Platform Control"
+              subtitle="Settings · Modules · Onboarding"
+              active={activeNavId === 'ana-platform-control'}
+              accentColor="indigo"
+              onClick={() => onNavigate?.('ana-platform-control')}
+            />
             <NavItem
               icon={<Building2 className="w-3.5 h-3.5" />}
               label="Client Intelligence"
@@ -595,6 +650,30 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               active={activeNavId === 'project-knowledge'}
               onClick={() => onNavigate?.('project-knowledge')}
             />
+            <NavItem
+              icon={<Palette className="w-3.5 h-3.5" />}
+              label="Branding & Templates"
+              subtitle="Logo · Letterhead · Templates"
+              active={activeNavId === 'client-branding'}
+              accentColor="violet"
+              onClick={() => onNavigate?.('client-branding')}
+            />
+            <NavItem
+              icon={<Key className="w-3.5 h-3.5" />}
+              label="Platform Admin"
+              subtitle="API Keys · Users · Billing"
+              active={activeNavId === 'platform-admin'}
+              accentColor="indigo"
+              onClick={() => onNavigate?.('platform-admin')}
+            />
+            <NavItem
+              icon={<Globe className="w-3.5 h-3.5" />}
+              label="CTD Onboarding"
+              subtitle="Ingest · Validate · Learn"
+              active={activeNavId === 'ctd-onboarding'}
+              accentColor="emerald"
+              onClick={() => onNavigate?.('ctd-onboarding')}
+            />
           </WorkspaceGroup>
 
           {/* ── LEARN — enablement & onboarding ────────────────────── */}
@@ -630,6 +709,11 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               label="About & Training"
               active={activeNavId === 'about-training'}
               onClick={() => onNavigate?.('about-training')}
+              icon={<Link2 className="w-3.5 h-3.5" />}
+              label="Integrations"
+              subtitle="Connectors · APIs · Storage"
+              active={activeNavId === 'integrations'}
+              onClick={() => onNavigate?.('integrations')}
             />
           </WorkspaceGroup>
 
@@ -698,7 +782,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 text-[12px] focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
           >
             <div className="w-6 h-6 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
-              <span className="text-[10px] font-bold text-violet-700 leading-none">
+              <span className="text-[10px] font-bold text-[#C4623F] leading-none">
                 {avatarInitial}
               </span>
             </div>

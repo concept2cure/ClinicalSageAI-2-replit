@@ -581,7 +581,7 @@ router.post('/alert-test', async (req, res) => {
     try {
       await httpClient.post('/api/alerter/send-test', {
         userId,
-        message: 'This is a test alert from LumenTrialGuide.AI',
+        message: 'This is a test alert from Concept2Cure',
         preferences,
       });
 

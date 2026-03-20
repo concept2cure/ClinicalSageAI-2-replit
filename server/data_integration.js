@@ -1,5 +1,5 @@
 /**
- * Data Integration Module for LumenTrialGuide.AI
+ * Data Integration Module for Concept2Cure
  *
  * This module integrates data from multiple regulatory sources:
  * - FDA MAUDE (device adverse events)

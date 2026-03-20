@@ -10,7 +10,6 @@ import { checkForOpenAIKey } from '../../utils/api-security.js';
 import { validateRequestBody } from '../../utils/validation.js';
 import { complianceDocumentSchema, regulatoryMarketSchema } from './types.js';
 import { rateLimit } from 'express-rate-limit';
-import { getOpenAIClient } from '../../services/openai-client';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -25,6 +24,7 @@ const complianceLimiter = rateLimit({
   legacyHeaders: false,
   message: 'Too many compliance processing requests, please try again after a minute',
 });
+import { ai } from '../../lib/unified-ai-client';
 
 // Create router
 const router = express.Router();
@@ -64,8 +64,6 @@ const upload = multer({
 });
 
 // Get OpenAI client
-const openai = getOpenAIClient();
-
 // Get current directory
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -139,7 +137,7 @@ router.post('/transform', checkForOpenAIKey, complianceLimiter, async (req, res)
         },
       ];
 
-      const response = await openai.chat.completions.create({
+      const aiResult = await ai.chat({
         model: 'gpt-4o',
         messages: messages,
         temperature: 0.3,
@@ -147,7 +145,7 @@ router.post('/transform', checkForOpenAIKey, complianceLimiter, async (req, res)
       });
 
       // Get the transformed content
-      const regionTransformedContent = response.choices[0].message.content;
+      const regionTransformedContent = aiResult.content;
 
       // Generate a change tracking log
       const changeTrackingPrompt = `Based on the original content:
@@ -165,7 +163,7 @@ router.post('/transform', checkForOpenAIKey, complianceLimiter, async (req, res)
       
       Format as a clear, itemized list of changes.`;
 
-      const changeTrackingResponse = await openai.chat.completions.create({
+      const changeTrackingResponse = await ai.chat({
         model: 'gpt-4o',
         messages: [
           {
@@ -195,7 +193,7 @@ router.post('/transform', checkForOpenAIKey, complianceLimiter, async (req, res)
         
         Please provide only the annexes specific to ${region.toUpperCase()} that aren't part of the main document.`;
 
-        const annexResponse = await openai.chat.completions.create({
+        const annexResponse = await ai.chat({
           model: 'gpt-4o',
           messages: [
             {
@@ -291,7 +289,7 @@ router.post('/upload', checkForOpenAIKey, upload.single('document'), async (req,
     
     File name: ${file.originalname}`;
 
-    const extractionResponse = await openai.chat.completions.create({
+    const extractionResponse = await ai.chat({
       model: 'gpt-4o',
       messages: [
         {
@@ -384,7 +382,7 @@ router.post('/compatibility-matrix', checkForOpenAIKey, complianceLimiter, async
       },
     ];
 
-    const response = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4o',
       messages: messages,
       temperature: 0.3,
@@ -392,7 +390,7 @@ router.post('/compatibility-matrix', checkForOpenAIKey, complianceLimiter, async
     });
 
     // Get the compatibility matrix
-    const compatibilityMatrix = response.choices[0].message.content;
+    const compatibilityMatrix = aiResult.content;
 
     // Generate regulatory requirements for each region
     const requirementsPrompt = `For a ${documentType} document, please provide a concise overview of the regulatory requirements for each of these regions:
@@ -407,7 +405,7 @@ router.post('/compatibility-matrix', checkForOpenAIKey, complianceLimiter, async
     
     Format as a clear, structured listing by region.`;
 
-    const requirementsResponse = await openai.chat.completions.create({
+    const requirementsResponse = await ai.chat({
       model: 'gpt-4o',
       messages: [
         {

@@ -41,8 +41,8 @@ interface CortexHealthIndicatorProps {
 const STATUS_CONFIG = {
   healthy: {
     icon: CheckCircle,
-    color: '#059669',
-    bgColor: '#ecfdf5',
+    color: '#647746',
+    bgColor: '#f0f4ec',
     label: 'Healthy',
   },
   degraded: {
@@ -59,8 +59,8 @@ const STATUS_CONFIG = {
   },
   unknown: {
     icon: Activity,
-    color: '#6b7280',
-    bgColor: '#f3f4f6',
+    color: '#8a8880',
+    bgColor: '#f4f3ee',
     label: 'Checking...',
   },
 };

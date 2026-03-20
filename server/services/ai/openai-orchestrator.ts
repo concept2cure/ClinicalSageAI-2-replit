@@ -4,11 +4,12 @@
  * For Facts Graph, CMC integration, and eCTD Co-Author
  */
 
-import { ai } from '../../lib/unified-ai-client';
 import { v4 as uuid } from 'uuid';
 import { pool } from '../../db';
 import { getIntelligencePrefix } from '../lumen-context-builder.js';
+import { ai } from '../../lib/unified-ai-client';
 
+// Initialize OpenAI with production settings
 // Database pool for Facts Graph
 const db = pool;
 
@@ -136,9 +137,10 @@ export async function responsesJson<T>(args: {
     const intelligencePrefix = await getIntelligencePrefix(args.organizationId, args.projectId).catch(() => '');
     const enrichedSystem = intelligencePrefix + system;
 
-    // Use unified AI client with JSON mode for structured outputs
-    const result = await ai.complete(
-      [
+    // Use chat.completions with response_format for structured outputs
+    const aiResult = await ai.chat({
+      model: 'gpt-4o',
+      messages: [
         { role: 'system', content: enrichedSystem },
         { role: 'user', content: user },
       ],
@@ -151,6 +153,7 @@ export async function responsesJson<T>(args: {
       }
     );
 
+    const result = aiResult.content;
     return JSON.parse(result || '{}') as T;
   } catch (error) {
     console.error('[OpenAI Orchestrator] Error calling AI API:', error);

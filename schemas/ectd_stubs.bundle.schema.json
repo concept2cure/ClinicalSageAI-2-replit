@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://clinicalsage.ai/schemas/ectd_stubs.bundle.schema.json",
+  "$id": "https://concept2cure-ri.ai/schemas/ectd_stubs.bundle.schema.json",
   "title": "eCTD Stubs Bundle Schema",
   "description": "Bundle schema for validating all eCTD stub artifacts in a proof pack ZIP. Validates the DATA payload (ectd-stubs/ectd_stubs.bundle.json), not just the schema artifact. This is the single schema file hashed by compute_schema_hash() in contract_hashes.py.",
   "type": "object",
@@ -97,13 +97,13 @@
       }
     },
     "leaf_map": {
-      "$ref": "https://clinicalsage.ai/schemas/leaf_map.schema.json"
+      "$ref": "https://concept2cure-ri.ai/schemas/leaf_map.schema.json"
     },
     "sequence_plan": {
-      "$ref": "https://clinicalsage.ai/schemas/sequence_plan.schema.json"
+      "$ref": "https://concept2cure-ri.ai/schemas/sequence_plan.schema.json"
     },
     "m1_index": {
-      "$ref": "https://clinicalsage.ai/schemas/m1_index.schema.json"
+      "$ref": "https://concept2cure-ri.ai/schemas/m1_index.schema.json"
     }
   }
 }

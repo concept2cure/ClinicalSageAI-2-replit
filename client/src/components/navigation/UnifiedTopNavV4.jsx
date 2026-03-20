@@ -26,7 +26,7 @@ export default function UnifiedTopNavV4({ tabs = [] }) {
 
       <nav className="utnv4-breadcrumbs">
         {/* You could generate these dynamically from pathname */}
-        <Link href="/">TrialSage™</Link> ›<Link href="/coauthor">eCTD Co-Author™</Link> ›
+        <Link href="/">Concept2Cure™</Link> ›<Link href="/coauthor">eCTD Co-Author™</Link> ›
         <Link href="/coauthor?module=2">Module 2</Link> ›<span>Section 2.7</span>
       </nav>
 

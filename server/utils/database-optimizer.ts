@@ -1,5 +1,5 @@
 /**
- * Database Optimizer Module for TrialSage
+ * Database Optimizer Module for Concept2Cure
  *
  * This module provides database optimization utilities specific to the 510(k) workflow,
  * including creating necessary indexes for performance, validating database schema,

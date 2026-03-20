@@ -232,7 +232,7 @@ export default function SubmissionDashboardPanel({ submissionId }) {
                     key={i}
                     className={`w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-xs font-medium text-white`}
                     style={{
-                      backgroundColor: ['#4F46E5', '#2563EB', '#0891B2', '#059669', '#7C3AED'][i],
+                      backgroundColor: ['#4F46E5', '#d97757', '#0891B2', '#647746', '#5585b3'][i],
                       zIndex: 5 - i,
                     }}
                   >

@@ -225,7 +225,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: ${{ env.STAGING_DB_PASSWORD }}
-          POSTGRES_DB: clinicalsage_staging
+          POSTGRES_DB: concept2cure-ri_staging
         ports:
           - 5432:5432
         options: >-
@@ -252,7 +252,7 @@ jobs:
         run: |
           NODE_ENV=production \
           PORT=${{ env.STAGING_PORT }} \
-          DATABASE_URL="postgresql://postgres:${{ env.STAGING_DB_PASSWORD }}@localhost:5432/clinicalsage_staging" \
+          DATABASE_URL="postgresql://postgres:${{ env.STAGING_DB_PASSWORD }}@localhost:5432/concept2cure-ri_staging" \
           node dist/index.js &
           SERVER_PID=$!
           echo "SERVER_PID=$SERVER_PID" >> "$GITHUB_ENV"

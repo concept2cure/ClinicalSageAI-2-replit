@@ -83,7 +83,7 @@ export default function CSRCompareViewer({ selectedIds = [], onClose }: CSRCompa
     if (element) {
       html2pdf().from(element).set({
         margin: 0.5,
-        filename: 'TrialSage_CSR_Comparison.pdf',
+        filename: 'Concept2Cure_CSR_Comparison.pdf',
         pagebreak: { mode: ['avoid-all'] },
         jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
         html2canvas: { scale: 2 }

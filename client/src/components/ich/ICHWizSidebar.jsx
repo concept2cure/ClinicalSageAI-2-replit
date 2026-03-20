@@ -65,7 +65,7 @@ const ICHWizSidebar = ({ activeItem, onItemClick }) => {
     },
     navItemIcon: {
       marginRight: '0.5rem',
-      color: '#64748b',
+      color: '#8a8880',
     },
     navItemText: {
       fontSize: '0.875rem',

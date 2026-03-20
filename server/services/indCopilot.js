@@ -9,18 +9,16 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import { getOpenAIClient } from './openai-client';
 import { logger } from '../utils/logger.js';
 import { readFile } from 'fs/promises';
 import path from 'path';
+import { ai } from '../lib/unified-ai-client';
 
 // Initialize clients
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 // Only init Supabase if credentials are present (not required in PostgreSQL-only deployments)
 const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
-
-const openai = getOpenAIClient();
 
 // Cache for regulatory guidelines to avoid repeated fetching
 const guidelinesCache = new Map();
@@ -550,7 +548,7 @@ function parseCitations(content, references) {
 async function extractEntities(content, sectionCode, submissionId) {
   try {
     // Use OpenAI to extract entities
-    const response = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4o',
       messages: [
         {
@@ -568,7 +566,7 @@ async function extractEntities(content, sectionCode, submissionId) {
       response_format: { type: 'json_object' },
     });
 
-    const result = JSON.parse(response.choices[0].message.content);
+    const result = JSON.parse(aiResult.content);
 
     // Store entities in database
     if (result && result.entities && result.entities.length > 0) {
@@ -606,7 +604,7 @@ async function extractEntities(content, sectionCode, submissionId) {
 async function validateContent(content, sectionCode, context) {
   try {
     // Use OpenAI to validate content
-    const response = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4o',
       messages: [
         {
@@ -637,7 +635,7 @@ async function validateContent(content, sectionCode, context) {
       response_format: { type: 'json_object' },
     });
 
-    const validation = JSON.parse(response.choices[0].message.content);
+    const validation = JSON.parse(aiResult.content);
 
     // Log validation result
     await supabase.from('ind_content_validations').insert({
@@ -680,7 +678,7 @@ export async function generateSectionContent(submissionId, sectionCode, options 
     const prompt = createPrompt(sectionCode, context, guidelines, references);
 
     // 3. Generate content using OpenAI
-    const completion = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: options.model || 'gpt-4o',
       messages: [
         {
@@ -694,7 +692,7 @@ export async function generateSectionContent(submissionId, sectionCode, options 
       max_tokens: options.max_tokens || 2500,
     });
 
-    const generatedContent = completion.choices[0].message.content;
+    const generatedContent = aiResult.content;
 
     // 4. Process citations in the content
     const contentWithCitations = parseCitations(generatedContent, references);
@@ -775,7 +773,7 @@ Reference relevant FDA guidelines or scientific literature as needed.
 `;
 
     // Generate response using OpenAI
-    const completion = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: options.model || 'gpt-4o',
       messages: [
         {
@@ -788,7 +786,7 @@ Reference relevant FDA guidelines or scientific literature as needed.
       max_tokens: options.max_tokens || 1500,
     });
 
-    const response = completion.choices[0].message.content;
+    const response = aiResult.content;
 
     // Process citations in the response
     const responseWithCitations = parseCitations(response, references);
@@ -955,7 +953,7 @@ export async function analyzeContent(submissionId, sectionCode) {
     const guidelines = await fetchRegulatoryGuidelines(sectionCode);
 
     // Use OpenAI to analyze content
-    const response = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4o',
       messages: [
         {
@@ -983,7 +981,7 @@ export async function analyzeContent(submissionId, sectionCode) {
       response_format: { type: 'json_object' },
     });
 
-    const analysis = JSON.parse(response.choices[0].message.content);
+    const analysis = JSON.parse(aiResult.content);
 
     // Log the analysis
     await supabase.from('ind_content_analyses').insert({
@@ -1024,7 +1022,7 @@ export async function streamSectionContent(submissionId, sectionCode, options = 
   const references = await fetchAvailableReferences(submissionId, sectionCode);
   const prompt = createPrompt(sectionCode, context, guidelines, references);
 
-  const stream = await openai.chat.completions.create({
+  const stream = await ai.chat({
     model: options.model || 'gpt-4o',
     messages: [
       {
@@ -1162,7 +1160,7 @@ Return only valid JSON.`;
 
   try {
     const completion = await withRetry(() =>
-      openai.chat.completions.create({
+      ai.chat({
         model: 'gpt-4o-mini',
         messages: [
           {
@@ -1176,7 +1174,7 @@ Return only valid JSON.`;
       })
     );
 
-    const raw = completion.choices[0].message.content.trim();
+    const raw = aiResult.content.trim();
     const jsonStart = raw.indexOf('{');
     const parsed = JSON.parse(raw.slice(jsonStart));
 

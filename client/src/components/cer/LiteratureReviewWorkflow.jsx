@@ -792,18 +792,18 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
   // Component for the Search Strategy tab
   const SearchStrategyTab = () => (
     <div className="space-y-6">
-      <Card className="border-[#E1DFDD]">
-        <CardHeader className="bg-[#FAFAFA] border-b border-[#E1DFDD]">
+      <Card className="border-[#e8e6dc]">
+        <CardHeader className="bg-[#faf9f5] border-b border-[#e8e6dc]">
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle className="text-lg text-[#323130]">Databases</CardTitle>
+              <CardTitle className="text-lg text-[#141413]">Databases</CardTitle>
               <CardDescription>Select the databases used for the literature search</CardDescription>
             </div>
             <CerTooltipWrapper
               tooltipContent="Select all databases that were searched during the literature review."
               whyThisMatters="MDR requires documentation of the data sources consulted. Multiple databases improve the comprehensiveness of your search and strengthen your clinical evaluation."
             >
-              <HelpCircle className="h-5 w-5 text-[#0F6CBD]" />
+              <HelpCircle className="h-5 w-5 text-[#d97757]" />
             </CerTooltipWrapper>
           </div>
         </CardHeader>
@@ -818,10 +818,10 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                   className="mt-1"
                 />
                 <div>
-                  <Label htmlFor={`db-${database.id}`} className="font-medium text-[#323130]">
+                  <Label htmlFor={`db-${database.id}`} className="font-medium text-[#141413]">
                     {database.name}
                   </Label>
-                  <p className="text-[#605E5C] text-xs">{database.description}</p>
+                  <p className="text-[#6b6963] text-xs">{database.description}</p>
                 </div>
               </div>
             ))}
@@ -829,25 +829,25 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
         </CardContent>
       </Card>
 
-      <Card className="border-[#E1DFDD]">
-        <CardHeader className="bg-[#FAFAFA] border-b border-[#E1DFDD]">
+      <Card className="border-[#e8e6dc]">
+        <CardHeader className="bg-[#faf9f5] border-b border-[#e8e6dc]">
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle className="text-lg text-[#323130]">Search Period</CardTitle>
+              <CardTitle className="text-lg text-[#141413]">Search Period</CardTitle>
               <CardDescription>Define the time period covered by the search</CardDescription>
             </div>
             <CerTooltipWrapper
               tooltipContent="Specify the exact date range of your literature search."
               whyThisMatters="MDR requires documentation of the search period. This allows others to reproduce your search and assess if it covers the relevant timeframe for your device."
             >
-              <HelpCircle className="h-5 w-5 text-[#0F6CBD]" />
+              <HelpCircle className="h-5 w-5 text-[#d97757]" />
             </CerTooltipWrapper>
           </div>
         </CardHeader>
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="start-date" className="text-[#323130]">
+              <Label htmlFor="start-date" className="text-[#141413]">
                 Start Date
               </Label>
               <Input
@@ -863,11 +863,11 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                     },
                   }))
                 }
-                className="border-[#E1DFDD]"
+                className="border-[#e8e6dc]"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="end-date" className="text-[#323130]">
+              <Label htmlFor="end-date" className="text-[#141413]">
                 End Date
               </Label>
               <Input
@@ -883,7 +883,7 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                     },
                   }))
                 }
-                className="border-[#E1DFDD]"
+                className="border-[#e8e6dc]"
                 max={new Date().toISOString().split('T')[0]}
               />
             </div>
@@ -891,11 +891,11 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
         </CardContent>
       </Card>
 
-      <Card className="border-[#E1DFDD]">
-        <CardHeader className="bg-[#FAFAFA] border-b border-[#E1DFDD]">
+      <Card className="border-[#e8e6dc]">
+        <CardHeader className="bg-[#faf9f5] border-b border-[#e8e6dc]">
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle className="text-lg text-[#323130]">Search Queries</CardTitle>
+              <CardTitle className="text-lg text-[#141413]">Search Queries</CardTitle>
               <CardDescription>
                 Document the exact search strings used in each database
               </CardDescription>
@@ -903,7 +903,7 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
             <Button
               onClick={handleAddSearchQuery}
               size="sm"
-              className="bg-[#0F6CBD] hover:bg-[#115EA3] text-white"
+              className="bg-[#d97757] hover:bg-[#c15f3c] text-white"
             >
               <Plus className="h-4 w-4 mr-1" />
               Add Query
@@ -912,23 +912,23 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
         </CardHeader>
         <CardContent className="p-6 space-y-4">
           {reviewData.searchQueries.length === 0 ? (
-            <div className="flex flex-col items-center justify-center p-8 border border-dashed border-[#E1DFDD] rounded-md">
-              <Database className="h-8 w-8 text-[#0F6CBD] mb-2" />
-              <p className="text-center text-[#605E5C]">No search queries added yet</p>
-              <p className="text-center text-xs text-[#605E5C] mt-1">
+            <div className="flex flex-col items-center justify-center p-8 border border-dashed border-[#e8e6dc] rounded-md">
+              <Database className="h-8 w-8 text-[#d97757] mb-2" />
+              <p className="text-center text-[#6b6963]">No search queries added yet</p>
+              <p className="text-center text-xs text-[#6b6963] mt-1">
                 Click "Add Query" to document your search strings
               </p>
             </div>
           ) : (
             reviewData.searchQueries.map((query, index) => (
-              <div key={query.id} className="p-4 border border-[#E1DFDD] rounded-md space-y-3">
+              <div key={query.id} className="p-4 border border-[#e8e6dc] rounded-md space-y-3">
                 <div className="flex justify-between items-center">
                   <div className="flex items-center">
-                    <Badge variant="outline" className="bg-[#EFF6FC] text-[#0F6CBD] mr-2">
+                    <Badge variant="outline" className="bg-[#faf0ec] text-[#d97757] mr-2">
                       Query {index + 1}
                     </Badge>
                     {query.results !== null && (
-                      <Badge variant="outline" className="bg-[#DFF6DD] text-[#107C10]">
+                      <Badge variant="outline" className="bg-[#e4ebd8] text-[#788c5d]">
                         {query.results} results
                       </Badge>
                     )}
@@ -937,21 +937,21 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                     variant="ghost"
                     size="sm"
                     onClick={() => handleRemoveSearchQuery(query.id)}
-                    className="h-8 w-8 p-0 text-[#D83B01]"
+                    className="h-8 w-8 p-0 text-[#c15f3c]"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="md:col-span-1">
-                    <Label htmlFor={`db-select-${query.id}`} className="text-[#323130] text-xs">
+                    <Label htmlFor={`db-select-${query.id}`} className="text-[#141413] text-xs">
                       Database
                     </Label>
                     <Select
                       value={query.database}
                       onValueChange={value => handleUpdateSearchQuery(query.id, 'database', value)}
                     >
-                      <SelectTrigger id={`db-select-${query.id}`} className="border-[#E1DFDD] mt-1">
+                      <SelectTrigger id={`db-select-${query.id}`} className="border-[#e8e6dc] mt-1">
                         <SelectValue placeholder="Select database" />
                       </SelectTrigger>
                       <SelectContent>
@@ -964,14 +964,14 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                     </Select>
                   </div>
                   <div className="md:col-span-2">
-                    <Label htmlFor={`query-${query.id}`} className="text-[#323130] text-xs">
+                    <Label htmlFor={`query-${query.id}`} className="text-[#141413] text-xs">
                       Search String
                     </Label>
                     <Textarea
                       id={`query-${query.id}`}
                       value={query.query}
                       onChange={e => handleUpdateSearchQuery(query.id, 'query', e.target.value)}
-                      className="border-[#E1DFDD] mt-1 h-20"
+                      className="border-[#e8e6dc] mt-1 h-20"
                       placeholder="Enter the exact search string used..."
                     />
                   </div>
@@ -979,7 +979,7 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                     <Button
                       onClick={() => handleSearchPubMed(query.id)}
                       disabled={isSearching || !query.query.trim()}
-                      className="bg-[#0F6CBD] hover:bg-[#115EA3] text-white mt-auto"
+                      className="bg-[#d97757] hover:bg-[#c15f3c] text-white mt-auto"
                     >
                       {isSearching ? (
                         <>
@@ -1001,12 +1001,12 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
 
           {/* Search Results Section */}
           {searchResults.length > 0 && (
-            <div className="mt-6 border border-[#E1DFDD] rounded-md p-4">
+            <div className="mt-6 border border-[#e8e6dc] rounded-md p-4">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-[#323130] font-medium">
+                <h3 className="text-[#141413] font-medium">
                   Search Results ({searchResults.length})
                 </h3>
-                <Badge variant="outline" className="bg-[#EFF6FC] text-[#0F6CBD]">
+                <Badge variant="outline" className="bg-[#faf0ec] text-[#d97757]">
                   <BookOpen className="h-3 w-3 mr-1" />
                   PubMed Results
                 </Badge>
@@ -1036,7 +1036,7 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                             size="sm"
                             onClick={() => handleAddStudy(study)}
                             disabled={reviewData.selectedStudies.some(s => s.id === study.id)}
-                            className="h-8 text-[#0F6CBD] hover:text-[#115EA3] hover:bg-[#EFF6FC]"
+                            className="h-8 text-[#d97757] hover:text-[#c15f3c] hover:bg-[#faf0ec]"
                           >
                             {reviewData.selectedStudies.some(s => s.id === study.id) ? (
                               <>
@@ -1057,7 +1057,7 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                 </Table>
 
                 {searchResults.length > 10 && (
-                  <div className="text-center text-[#605E5C] text-sm mt-2">
+                  <div className="text-center text-[#6b6963] text-sm mt-2">
                     Showing 10 of {searchResults.length} results
                   </div>
                 )}
@@ -1072,11 +1072,11 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
   // Component for the Criteria tab
   const CriteriaTab = () => (
     <div className="space-y-6">
-      <Card className="border-[#E1DFDD]">
-        <CardHeader className="bg-[#FAFAFA] border-b border-[#E1DFDD]">
+      <Card className="border-[#e8e6dc]">
+        <CardHeader className="bg-[#faf9f5] border-b border-[#e8e6dc]">
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle className="text-lg text-[#323130]">Inclusion Criteria</CardTitle>
+              <CardTitle className="text-lg text-[#141413]">Inclusion Criteria</CardTitle>
               <CardDescription>
                 Define criteria for including studies in the analysis
               </CardDescription>
@@ -1084,7 +1084,7 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
             <Button
               onClick={() => handleAddCriterion('inclusionCriteria')}
               size="sm"
-              className="bg-[#0F6CBD] hover:bg-[#115EA3] text-white"
+              className="bg-[#d97757] hover:bg-[#c15f3c] text-white"
             >
               <Plus className="h-4 w-4 mr-1" />
               Add Criterion
@@ -1093,10 +1093,10 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
         </CardHeader>
         <CardContent className="p-6">
           {reviewData.inclusionCriteria.length === 0 ? (
-            <div className="flex flex-col items-center justify-center p-8 border border-dashed border-[#E1DFDD] rounded-md">
-              <Filter className="h-8 w-8 text-[#0F6CBD] mb-2" />
-              <p className="text-center text-[#605E5C]">No inclusion criteria added yet</p>
-              <p className="text-center text-xs text-[#605E5C] mt-1">
+            <div className="flex flex-col items-center justify-center p-8 border border-dashed border-[#e8e6dc] rounded-md">
+              <Filter className="h-8 w-8 text-[#d97757] mb-2" />
+              <p className="text-center text-[#6b6963]">No inclusion criteria added yet</p>
+              <p className="text-center text-xs text-[#6b6963] mt-1">
                 Click "Add Criterion" to define your inclusion criteria
               </p>
             </div>
@@ -1105,7 +1105,7 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
               {reviewData.inclusionCriteria.map(criterion => (
                 <div
                   key={criterion.id}
-                  className="flex items-start space-x-2 p-3 border border-[#E1DFDD] rounded-md"
+                  className="flex items-start space-x-2 p-3 border border-[#e8e6dc] rounded-md"
                 >
                   <Checkbox
                     id={`inclusion-${criterion.id}`}
@@ -1126,7 +1126,7 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                           e.target.value
                         )
                       }
-                      className="border-[#E1DFDD] min-h-10"
+                      className="border-[#e8e6dc] min-h-10"
                       placeholder="Describe inclusion criterion..."
                     />
                   </div>
@@ -1134,7 +1134,7 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                     variant="ghost"
                     size="sm"
                     onClick={() => handleRemoveCriterion('inclusionCriteria', criterion.id)}
-                    className="h-8 w-8 p-0 text-[#D83B01]"
+                    className="h-8 w-8 p-0 text-[#c15f3c]"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -1145,11 +1145,11 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
         </CardContent>
       </Card>
 
-      <Card className="border-[#E1DFDD]">
-        <CardHeader className="bg-[#FAFAFA] border-b border-[#E1DFDD]">
+      <Card className="border-[#e8e6dc]">
+        <CardHeader className="bg-[#faf9f5] border-b border-[#e8e6dc]">
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle className="text-lg text-[#323130]">Exclusion Criteria</CardTitle>
+              <CardTitle className="text-lg text-[#141413]">Exclusion Criteria</CardTitle>
               <CardDescription>
                 Define criteria for excluding studies from the analysis
               </CardDescription>
@@ -1157,7 +1157,7 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
             <Button
               onClick={() => handleAddCriterion('exclusionCriteria')}
               size="sm"
-              className="bg-[#0F6CBD] hover:bg-[#115EA3] text-white"
+              className="bg-[#d97757] hover:bg-[#c15f3c] text-white"
             >
               <Plus className="h-4 w-4 mr-1" />
               Add Criterion
@@ -1166,10 +1166,10 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
         </CardHeader>
         <CardContent className="p-6">
           {reviewData.exclusionCriteria.length === 0 ? (
-            <div className="flex flex-col items-center justify-center p-8 border border-dashed border-[#E1DFDD] rounded-md">
-              <Filter className="h-8 w-8 text-[#0F6CBD] mb-2" />
-              <p className="text-center text-[#605E5C]">No exclusion criteria added yet</p>
-              <p className="text-center text-xs text-[#605E5C] mt-1">
+            <div className="flex flex-col items-center justify-center p-8 border border-dashed border-[#e8e6dc] rounded-md">
+              <Filter className="h-8 w-8 text-[#d97757] mb-2" />
+              <p className="text-center text-[#6b6963]">No exclusion criteria added yet</p>
+              <p className="text-center text-xs text-[#6b6963] mt-1">
                 Click "Add Criterion" to define your exclusion criteria
               </p>
             </div>
@@ -1178,7 +1178,7 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
               {reviewData.exclusionCriteria.map(criterion => (
                 <div
                   key={criterion.id}
-                  className="flex items-start space-x-2 p-3 border border-[#E1DFDD] rounded-md"
+                  className="flex items-start space-x-2 p-3 border border-[#e8e6dc] rounded-md"
                 >
                   <Checkbox
                     id={`exclusion-${criterion.id}`}
@@ -1199,7 +1199,7 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                           e.target.value
                         )
                       }
-                      className="border-[#E1DFDD] min-h-10"
+                      className="border-[#e8e6dc] min-h-10"
                       placeholder="Describe exclusion criterion..."
                     />
                   </div>
@@ -1207,7 +1207,7 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                     variant="ghost"
                     size="sm"
                     onClick={() => handleRemoveCriterion('exclusionCriteria', criterion.id)}
-                    className="h-8 w-8 p-0 text-[#D83B01]"
+                    className="h-8 w-8 p-0 text-[#c15f3c]"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -1218,46 +1218,46 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
         </CardContent>
       </Card>
 
-      <Card className="border-[#E1DFDD]">
-        <CardHeader className="bg-[#FAFAFA] border-b border-[#E1DFDD]">
-          <CardTitle className="text-lg text-[#323130]">PRISMA Flow Diagram</CardTitle>
+      <Card className="border-[#e8e6dc]">
+        <CardHeader className="bg-[#faf9f5] border-b border-[#e8e6dc]">
+          <CardTitle className="text-lg text-[#141413]">PRISMA Flow Diagram</CardTitle>
           <CardDescription>Track the flow of studies through the review process</CardDescription>
         </CardHeader>
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="p-4 border border-[#E1DFDD] rounded-md text-center space-y-2">
-              <p className="text-[#323130] font-medium">Identified</p>
-              <p className="text-3xl text-[#0F6CBD] font-semibold">
+            <div className="p-4 border border-[#e8e6dc] rounded-md text-center space-y-2">
+              <p className="text-[#141413] font-medium">Identified</p>
+              <p className="text-3xl text-[#d97757] font-semibold">
                 {reviewData.prismaFlow.identified || 0}
               </p>
-              <p className="text-xs text-[#605E5C]">
+              <p className="text-xs text-[#6b6963]">
                 Records identified through database searching
               </p>
             </div>
-            <div className="p-4 border border-[#E1DFDD] rounded-md text-center space-y-2">
-              <p className="text-[#323130] font-medium">Screened</p>
-              <p className="text-3xl text-[#0F6CBD] font-semibold">
+            <div className="p-4 border border-[#e8e6dc] rounded-md text-center space-y-2">
+              <p className="text-[#141413] font-medium">Screened</p>
+              <p className="text-3xl text-[#d97757] font-semibold">
                 {reviewData.prismaFlow.screened || 0}
               </p>
-              <p className="text-xs text-[#605E5C]">Records after duplicates removed</p>
+              <p className="text-xs text-[#6b6963]">Records after duplicates removed</p>
             </div>
-            <div className="p-4 border border-[#E1DFDD] rounded-md text-center space-y-2">
-              <p className="text-[#323130] font-medium">Eligible</p>
-              <p className="text-3xl text-[#0F6CBD] font-semibold">
+            <div className="p-4 border border-[#e8e6dc] rounded-md text-center space-y-2">
+              <p className="text-[#141413] font-medium">Eligible</p>
+              <p className="text-3xl text-[#d97757] font-semibold">
                 {reviewData.prismaFlow.eligible || 0}
               </p>
-              <p className="text-xs text-[#605E5C]">Full-text articles assessed for eligibility</p>
+              <p className="text-xs text-[#6b6963]">Full-text articles assessed for eligibility</p>
             </div>
-            <div className="p-4 border border-[#E1DFDD] rounded-md text-center space-y-2">
-              <p className="text-[#323130] font-medium">Included</p>
-              <p className="text-3xl text-[#0F6CBD] font-semibold">
+            <div className="p-4 border border-[#e8e6dc] rounded-md text-center space-y-2">
+              <p className="text-[#141413] font-medium">Included</p>
+              <p className="text-3xl text-[#d97757] font-semibold">
                 {reviewData.prismaFlow.included || 0}
               </p>
-              <p className="text-xs text-[#605E5C]">Studies included in analysis</p>
+              <p className="text-xs text-[#6b6963]">Studies included in analysis</p>
             </div>
           </div>
 
-          <div className="mt-4 text-xs text-[#605E5C]">
+          <div className="mt-4 text-xs text-[#6b6963]">
             <p>
               The PRISMA flow diagram documents how studies were selected through the review
               process. This diagram will be automatically updated as you add studies to your review.
@@ -1272,55 +1272,55 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
   const StudySelectionTab = () => (
     <div className="space-y-6">
       {isSearching ? (
-        <Card className="border-[#E1DFDD]">
+        <Card className="border-[#e8e6dc]">
           <CardContent className="p-8 flex flex-col items-center">
-            <Clock className="h-12 w-12 text-[#0F6CBD] animate-spin mb-4" />
-            <p className="text-[#323130] font-medium mb-2">Searching Literature Database</p>
-            <p className="text-[#605E5C] text-center mb-4">Retrieving results from PubMed...</p>
+            <Clock className="h-12 w-12 text-[#d97757] animate-spin mb-4" />
+            <p className="text-[#141413] font-medium mb-2">Searching Literature Database</p>
+            <p className="text-[#6b6963] text-center mb-4">Retrieving results from PubMed...</p>
             <Progress value={65} className="w-full max-w-md" />
           </CardContent>
         </Card>
       ) : (
         <>
-          <Card className="border-[#E1DFDD]">
-            <CardHeader className="bg-[#FAFAFA] border-b border-[#E1DFDD]">
+          <Card className="border-[#e8e6dc]">
+            <CardHeader className="bg-[#faf9f5] border-b border-[#e8e6dc]">
               <div className="flex justify-between items-center">
                 <div>
-                  <CardTitle className="text-lg text-[#323130]">Selected Studies</CardTitle>
+                  <CardTitle className="text-lg text-[#141413]">Selected Studies</CardTitle>
                   <CardDescription>Studies included in the clinical evaluation</CardDescription>
                 </div>
                 <CerTooltipWrapper
                   tooltipContent="This list contains all studies that have been screened and included in your clinical evaluation."
                   whyThisMatters="MDR requires documentation of all studies included in the clinical evaluation along with their appraisal. Notified Bodies specifically check for a comprehensive and structured literature review."
                 >
-                  <HelpCircle className="h-5 w-5 text-[#0F6CBD]" />
+                  <HelpCircle className="h-5 w-5 text-[#d97757]" />
                 </CerTooltipWrapper>
               </div>
             </CardHeader>
             <CardContent className="p-6">
               {reviewData.selectedStudies.length === 0 ? (
-                <div className="flex flex-col items-center justify-center p-8 border border-dashed border-[#E1DFDD] rounded-md">
-                  <BookOpen className="h-8 w-8 text-[#0F6CBD] mb-2" />
-                  <p className="text-center text-[#605E5C]">No studies selected yet</p>
-                  <p className="text-center text-xs text-[#605E5C] mt-1">
+                <div className="flex flex-col items-center justify-center p-8 border border-dashed border-[#e8e6dc] rounded-md">
+                  <BookOpen className="h-8 w-8 text-[#d97757] mb-2" />
+                  <p className="text-center text-[#6b6963]">No studies selected yet</p>
+                  <p className="text-center text-xs text-[#6b6963] mt-1">
                     Search the literature database and include relevant studies
                   </p>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <Alert className="bg-[#EFF6FC] border-[#0F6CBD]">
-                    <AlertCircle className="h-4 w-4 text-[#0F6CBD]" />
-                    <AlertTitle className="text-[#0F6CBD]">
+                  <Alert className="bg-[#faf0ec] border-[#d97757]">
+                    <AlertCircle className="h-4 w-4 text-[#d97757]" />
+                    <AlertTitle className="text-[#d97757]">
                       AI-Assisted Appraisal Available
                     </AlertTitle>
-                    <AlertDescription className="text-[#323130]">
+                    <AlertDescription className="text-[#141413]">
                       Generate automated relevance and bias assessments for all selected studies
                       using AI. The system will analyze study content and provide initial ratings.
                       <div className="mt-2">
                         <Button
                           onClick={generateAIAppraisals}
                           disabled={isGeneratingAppraisals}
-                          className="bg-[#0F6CBD] hover:bg-[#115EA3] text-white"
+                          className="bg-[#d97757] hover:bg-[#c15f3c] text-white"
                         >
                           {isGeneratingAppraisals ? (
                             <>
@@ -1357,7 +1357,7 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                             <TableCell className="font-medium">
                               <div className="truncate max-w-xs">{study.title}</div>
                               {study.journal && (
-                                <div className="text-xs text-[#605E5C]">{study.journal}</div>
+                                <div className="text-xs text-[#6b6963]">{study.journal}</div>
                               )}
                             </TableCell>
                             <TableCell>
@@ -1377,7 +1377,7 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                                   handleUpdateStudy(study.id, 'studyType', value)
                                 }
                               >
-                                <SelectTrigger className="border-[#E1DFDD] h-8 text-xs w-32">
+                                <SelectTrigger className="border-[#e8e6dc] h-8 text-xs w-32">
                                   <SelectValue placeholder="Select type" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -1394,10 +1394,10 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                                 <Badge
                                   className={`${
                                     study.overallRelevance >= 4
-                                      ? 'bg-[#DFF6DD] text-[#107C10]'
+                                      ? 'bg-[#e4ebd8] text-[#788c5d]'
                                       : study.overallRelevance >= 3
                                         ? 'bg-[#FFF4CE] text-[#797775]'
-                                        : 'bg-[#FED9CC] text-[#D83B01]'
+                                        : 'bg-[#f5ddd4] text-[#c15f3c]'
                                   }`}
                                 >
                                   {study.overallRelevance >= 4
@@ -1407,7 +1407,7 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                                       : 'Low'}
                                 </Badge>
                               ) : (
-                                <span className="text-xs text-[#605E5C]">Not assessed</span>
+                                <span className="text-xs text-[#6b6963]">Not assessed</span>
                               )}
                             </TableCell>
                             <TableCell>
@@ -1415,10 +1415,10 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                                 <Badge
                                   className={`${
                                     study.overallQuality === 'high'
-                                      ? 'bg-[#DFF6DD] text-[#107C10]'
+                                      ? 'bg-[#e4ebd8] text-[#788c5d]'
                                       : study.overallQuality === 'medium'
                                         ? 'bg-[#FFF4CE] text-[#797775]'
-                                        : 'bg-[#FED9CC] text-[#D83B01]'
+                                        : 'bg-[#f5ddd4] text-[#c15f3c]'
                                   }`}
                                 >
                                   {study.overallQuality === 'high'
@@ -1428,7 +1428,7 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                                       : 'Low'}
                                 </Badge>
                               ) : (
-                                <span className="text-xs text-[#605E5C]">Not assessed</span>
+                                <span className="text-xs text-[#6b6963]">Not assessed</span>
                               )}
                             </TableCell>
                             <TableCell className="text-right">
@@ -1437,7 +1437,7 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                                   variant="outline"
                                   size="sm"
                                   onClick={() => setActiveTab('appraisal')}
-                                  className="h-8 text-xs border-[#0F6CBD] text-[#0F6CBD] hover:bg-[#EFF6FC]"
+                                  className="h-8 text-xs border-[#d97757] text-[#d97757] hover:bg-[#faf0ec]"
                                 >
                                   Appraise
                                 </Button>
@@ -1445,7 +1445,7 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => handleRemoveStudy(study.id)}
-                                  className="h-8 text-xs text-[#D83B01] hover:bg-red-50"
+                                  className="h-8 text-xs text-[#c15f3c] hover:bg-red-50"
                                 >
                                   Remove
                                 </Button>
@@ -1459,9 +1459,9 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                 </div>
               )}
             </CardContent>
-            <CardFooter className="bg-[#FAFAFA] border-t border-[#E1DFDD] px-6 py-3">
+            <CardFooter className="bg-[#faf9f5] border-t border-[#e8e6dc] px-6 py-3">
               <div className="w-full flex justify-between items-center">
-                <div className="text-sm text-[#605E5C]">
+                <div className="text-sm text-[#6b6963]">
                   {reviewData.selectedStudies.length}{' '}
                   {reviewData.selectedStudies.length === 1 ? 'study' : 'studies'} included
                 </div>
@@ -1469,7 +1469,7 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                   <Button
                     onClick={() => setActiveTab('search-strategy')}
                     variant="outline"
-                    className="text-[#0F6CBD] border-[#0F6CBD] hover:bg-[#EFF6FC]"
+                    className="text-[#d97757] border-[#d97757] hover:bg-[#faf0ec]"
                   >
                     <Search className="h-4 w-4 mr-2" />
                     Search More Studies
@@ -1486,9 +1486,9 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
   // Component for the Study Appraisal tab
   const StudyAppraisalTab = () => (
     <div className="space-y-6">
-      <Card className="border-[#E1DFDD]">
-        <CardHeader className="bg-[#FAFAFA] border-b border-[#E1DFDD]">
-          <CardTitle className="text-lg text-[#323130]">Study Appraisal</CardTitle>
+      <Card className="border-[#e8e6dc]">
+        <CardHeader className="bg-[#faf9f5] border-b border-[#e8e6dc]">
+          <CardTitle className="text-lg text-[#141413]">Study Appraisal</CardTitle>
           <CardDescription>
             Assess relevance and methodological quality of included studies
           </CardDescription>
@@ -1496,15 +1496,15 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
         <CardContent className="p-0">
           {reviewData.selectedStudies.length === 0 ? (
             <div className="p-6">
-              <div className="flex flex-col items-center justify-center p-8 border border-dashed border-[#E1DFDD] rounded-md">
-                <AlertCircle className="h-8 w-8 text-[#0F6CBD] mb-2" />
-                <p className="text-center text-[#605E5C]">No studies selected for appraisal</p>
-                <p className="text-center text-xs text-[#605E5C] mt-1">
+              <div className="flex flex-col items-center justify-center p-8 border border-dashed border-[#e8e6dc] rounded-md">
+                <AlertCircle className="h-8 w-8 text-[#d97757] mb-2" />
+                <p className="text-center text-[#6b6963]">No studies selected for appraisal</p>
+                <p className="text-center text-xs text-[#6b6963] mt-1">
                   Select studies in the Study Selection tab first
                 </p>
                 <Button
                   onClick={() => setActiveTab('study-selection')}
-                  className="mt-4 bg-[#0F6CBD] hover:bg-[#115EA3] text-white"
+                  className="mt-4 bg-[#d97757] hover:bg-[#c15f3c] text-white"
                 >
                   Go to Study Selection
                 </Button>
@@ -1517,13 +1517,13 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                   <AccordionItem
                     key={study.id}
                     value={study.id}
-                    className="border border-[#E1DFDD] rounded-md mb-4 overflow-hidden"
+                    className="border border-[#e8e6dc] rounded-md mb-4 overflow-hidden"
                   >
-                    <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-[#F3F2F1]">
+                    <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-[#f4f3ee]">
                       <div className="flex-1 flex justify-between items-center pr-4">
                         <div>
-                          <h3 className="font-medium text-[#323130] text-left">{study.title}</h3>
-                          <p className="text-xs text-[#605E5C] text-left">
+                          <h3 className="font-medium text-[#141413] text-left">{study.title}</h3>
+                          <p className="text-xs text-[#6b6963] text-left">
                             {study.authors?.length > 0
                               ? `${study.authors[0]}${study.authors.length > 1 ? ' et al.' : ''}`
                               : 'Unknown'}
@@ -1541,10 +1541,10 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                                 <Badge
                                   className={`${
                                     study.overallRelevance >= 4
-                                      ? 'bg-[#DFF6DD] text-[#107C10]'
+                                      ? 'bg-[#e4ebd8] text-[#788c5d]'
                                       : study.overallRelevance >= 3
                                         ? 'bg-[#FFF4CE] text-[#797775]'
-                                        : 'bg-[#FED9CC] text-[#D83B01]'
+                                        : 'bg-[#f5ddd4] text-[#c15f3c]'
                                   }`}
                                 >
                                   {study.overallRelevance >= 4
@@ -1554,7 +1554,7 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                                       : 'Low'}
                                 </Badge>
                               ) : (
-                                <span className="text-xs text-[#605E5C]">Pending</span>
+                                <span className="text-xs text-[#6b6963]">Pending</span>
                               )}
                             </div>
                             <div className="flex items-center mt-1">
@@ -1563,10 +1563,10 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                                 <Badge
                                   className={`${
                                     study.overallQuality === 'high'
-                                      ? 'bg-[#DFF6DD] text-[#107C10]'
+                                      ? 'bg-[#e4ebd8] text-[#788c5d]'
                                       : study.overallQuality === 'medium'
                                         ? 'bg-[#FFF4CE] text-[#797775]'
-                                        : 'bg-[#FED9CC] text-[#D83B01]'
+                                        : 'bg-[#f5ddd4] text-[#c15f3c]'
                                   }`}
                                 >
                                   {study.overallQuality === 'high'
@@ -1576,34 +1576,34 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                                       : 'Low'}
                                 </Badge>
                               ) : (
-                                <span className="text-xs text-[#605E5C]">Pending</span>
+                                <span className="text-xs text-[#6b6963]">Pending</span>
                               )}
                             </div>
                           </div>
                           {study.aiAppraisal && (
-                            <Badge variant="outline" className="bg-[#EFF6FC] text-[#0F6CBD]">
+                            <Badge variant="outline" className="bg-[#faf0ec] text-[#d97757]">
                               AI Appraised
                             </Badge>
                           )}
                         </div>
                       </div>
                     </AccordionTrigger>
-                    <AccordionContent className="border-t border-[#E1DFDD]">
+                    <AccordionContent className="border-t border-[#e8e6dc]">
                       <div className="p-4 space-y-6">
                         {study.aiAppraisal && (
-                          <Alert className="bg-[#EFF6FC] border-[#0F6CBD]">
-                            <AlertCircle className="h-4 w-4 text-[#0F6CBD]" />
-                            <AlertTitle className="text-[#323130]">
+                          <Alert className="bg-[#faf0ec] border-[#d97757]">
+                            <AlertCircle className="h-4 w-4 text-[#d97757]" />
+                            <AlertTitle className="text-[#141413]">
                               AI-Generated Appraisal
                             </AlertTitle>
-                            <AlertDescription className="text-[#605E5C]">
+                            <AlertDescription className="text-[#6b6963]">
                               <p>
                                 An initial appraisal has been generated using AI analysis. Review
                                 and adjust the ratings as needed.
                               </p>
                               {study.aiAppraisal.relevance?.summary && (
                                 <div className="mt-2">
-                                  <p className="font-medium text-[#323130]">
+                                  <p className="font-medium text-[#141413]">
                                     Relevance Assessment:
                                   </p>
                                   <p className="text-sm">{study.aiAppraisal.relevance.summary}</p>
@@ -1611,7 +1611,7 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                               )}
                               {study.aiAppraisal.bias?.summary && (
                                 <div className="mt-2">
-                                  <p className="font-medium text-[#323130]">Bias Assessment:</p>
+                                  <p className="font-medium text-[#141413]">Bias Assessment:</p>
                                   <p className="text-sm">{study.aiAppraisal.bias.summary}</p>
                                 </div>
                               )}
@@ -1620,12 +1620,12 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                         )}
 
                         <div>
-                          <h4 className="font-medium text-[#323130] mb-3">Study Details</h4>
+                          <h4 className="font-medium text-[#141413] mb-3">Study Details</h4>
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                             <div>
                               <Label
                                 htmlFor={`study-type-${study.id}`}
-                                className="text-[#323130] text-xs"
+                                className="text-[#141413] text-xs"
                               >
                                 Study Type
                               </Label>
@@ -1637,7 +1637,7 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                               >
                                 <SelectTrigger
                                   id={`study-type-${study.id}`}
-                                  className="border-[#E1DFDD] mt-1"
+                                  className="border-[#e8e6dc] mt-1"
                                 >
                                   <SelectValue placeholder="Select type" />
                                 </SelectTrigger>
@@ -1654,7 +1654,7 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                             <div className="md:col-span-2">
                               <Label
                                 htmlFor={`study-notes-${study.id}`}
-                                className="text-[#323130] text-xs"
+                                className="text-[#141413] text-xs"
                               >
                                 Notes
                               </Label>
@@ -1663,13 +1663,13 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                                 value={study.notes || ''}
                                 onChange={e => handleUpdateStudy(study.id, 'notes', e.target.value)}
                                 placeholder="Add notes about this study..."
-                                className="border-[#E1DFDD] mt-1 h-10"
+                                className="border-[#e8e6dc] mt-1 h-10"
                               />
                             </div>
                           </div>
 
                           {study.abstract && (
-                            <div className="p-3 bg-[#F3F2F1] rounded text-sm text-[#323130] mb-4">
+                            <div className="p-3 bg-[#f4f3ee] rounded text-sm text-[#141413] mb-4">
                               <p className="font-medium mb-1">Abstract:</p>
                               <p>{study.abstract}</p>
                             </div>
@@ -1681,7 +1681,7 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                                 href={study.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-sm text-[#0F6CBD] hover:underline flex items-center"
+                                className="text-sm text-[#d97757] hover:underline flex items-center"
                               >
                                 <ExternalLink className="h-3.5 w-3.5 mr-1" />
                                 View Full Text
@@ -1691,7 +1691,7 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                         </div>
 
                         <div>
-                          <h4 className="font-medium text-[#323130] mb-3">Relevance Assessment</h4>
+                          <h4 className="font-medium text-[#141413] mb-3">Relevance Assessment</h4>
                           <Table>
                             <TableHeader>
                               <TableRow>
@@ -1704,10 +1704,10 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                               {reviewData.appraisalCriteria.relevance.map(criterion => (
                                 <TableRow key={criterion.id}>
                                   <TableCell>
-                                    <div className="font-medium text-[#323130]">
+                                    <div className="font-medium text-[#141413]">
                                       {criterion.name}
                                     </div>
-                                    <div className="text-xs text-[#605E5C]">
+                                    <div className="text-xs text-[#6b6963]">
                                       {criterion.description}
                                     </div>
                                   </TableCell>
@@ -1727,7 +1727,7 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                                     {study.aiAppraisal?.relevance?.criteriaAssessments?.[
                                       criterion.id
                                     ] || (
-                                      <span className="text-xs text-[#605E5C]">
+                                      <span className="text-xs text-[#6b6963]">
                                         No AI assessment available
                                       </span>
                                     )}
@@ -1739,7 +1739,7 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
 
                           <div className="mt-4 flex items-center justify-between">
                             <div>
-                              <Label className="text-[#323130]">Overall Relevance Rating</Label>
+                              <Label className="text-[#141413]">Overall Relevance Rating</Label>
                               <div className="flex items-center mt-1">
                                 {renderStarRating(study.overallRelevance || 0, value =>
                                   handleUpdateStudy(study.id, 'overallRelevance', value)
@@ -1749,10 +1749,10 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                                     <Badge
                                       className={`${
                                         study.overallRelevance >= 4
-                                          ? 'bg-[#DFF6DD] text-[#107C10]'
+                                          ? 'bg-[#e4ebd8] text-[#788c5d]'
                                           : study.overallRelevance >= 3
                                             ? 'bg-[#FFF4CE] text-[#797775]'
-                                            : 'bg-[#FED9CC] text-[#D83B01]'
+                                            : 'bg-[#f5ddd4] text-[#c15f3c]'
                                       }`}
                                     >
                                       {study.overallRelevance >= 4
@@ -1769,14 +1769,14 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
 
                             {study.aiAppraisal?.relevance?.overallScore && (
                               <div className="text-sm">
-                                <span className="text-[#605E5C]">AI recommended rating: </span>
+                                <span className="text-[#6b6963]">AI recommended rating: </span>
                                 <Badge
                                   className={`${
                                     study.aiAppraisal.relevance.overallScore >= 4
-                                      ? 'bg-[#DFF6DD] text-[#107C10]'
+                                      ? 'bg-[#e4ebd8] text-[#788c5d]'
                                       : study.aiAppraisal.relevance.overallScore >= 3
                                         ? 'bg-[#FFF4CE] text-[#797775]'
-                                        : 'bg-[#FED9CC] text-[#D83B01]'
+                                        : 'bg-[#f5ddd4] text-[#c15f3c]'
                                   }`}
                                 >
                                   {study.aiAppraisal.relevance.overallScore >= 4
@@ -1791,7 +1791,7 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                         </div>
 
                         <div>
-                          <h4 className="font-medium text-[#323130] mb-3">Bias Assessment</h4>
+                          <h4 className="font-medium text-[#141413] mb-3">Bias Assessment</h4>
                           <Table>
                             <TableHeader>
                               <TableRow>
@@ -1804,8 +1804,8 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                               {BIAS_DOMAINS.map(domain => (
                                 <TableRow key={domain.id}>
                                   <TableCell>
-                                    <div className="font-medium text-[#323130]">{domain.name}</div>
-                                    <div className="text-xs text-[#605E5C]">
+                                    <div className="font-medium text-[#141413]">{domain.name}</div>
+                                    <div className="text-xs text-[#6b6963]">
                                       {domain.description}
                                     </div>
                                   </TableCell>
@@ -1821,7 +1821,7 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                                         )
                                       }
                                     >
-                                      <SelectTrigger className="border-[#E1DFDD]">
+                                      <SelectTrigger className="border-[#e8e6dc]">
                                         <SelectValue placeholder="Select risk" />
                                       </SelectTrigger>
                                       <SelectContent>
@@ -1847,7 +1847,7 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                                         )
                                       }
                                       placeholder="Explain the basis for this risk assessment..."
-                                      className="border-[#E1DFDD] h-16"
+                                      className="border-[#e8e6dc] h-16"
                                     />
                                   </TableCell>
                                 </TableRow>
@@ -1857,7 +1857,7 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
 
                           <div className="mt-4 flex items-center justify-between">
                             <div>
-                              <Label className="text-[#323130]">Overall Quality Assessment</Label>
+                              <Label className="text-[#141413]">Overall Quality Assessment</Label>
                               <div className="flex items-center mt-1">
                                 <Select
                                   value={study.overallQuality || ''}
@@ -1865,7 +1865,7 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                                     handleUpdateStudy(study.id, 'overallQuality', value)
                                   }
                                 >
-                                  <SelectTrigger className="border-[#E1DFDD] w-40">
+                                  <SelectTrigger className="border-[#e8e6dc] w-40">
                                     <SelectValue placeholder="Select overall quality" />
                                   </SelectTrigger>
                                   <SelectContent>
@@ -1879,10 +1879,10 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                                     <Badge
                                       className={`${
                                         study.overallQuality === 'high'
-                                          ? 'bg-[#DFF6DD] text-[#107C10]'
+                                          ? 'bg-[#e4ebd8] text-[#788c5d]'
                                           : study.overallQuality === 'medium'
                                             ? 'bg-[#FFF4CE] text-[#797775]'
-                                            : 'bg-[#FED9CC] text-[#D83B01]'
+                                            : 'bg-[#f5ddd4] text-[#c15f3c]'
                                       }`}
                                     >
                                       {study.overallQuality === 'high'
@@ -1899,14 +1899,14 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
 
                             {study.aiAppraisal?.bias?.overallRisk && (
                               <div className="text-sm">
-                                <span className="text-[#605E5C]">AI recommended quality: </span>
+                                <span className="text-[#6b6963]">AI recommended quality: </span>
                                 <Badge
                                   className={`${
                                     study.aiAppraisal.bias.overallRisk === 'low'
-                                      ? 'bg-[#DFF6DD] text-[#107C10]'
+                                      ? 'bg-[#e4ebd8] text-[#788c5d]'
                                       : study.aiAppraisal.bias.overallRisk === 'some_concerns'
                                         ? 'bg-[#FFF4CE] text-[#797775]'
-                                        : 'bg-[#FED9CC] text-[#D83B01]'
+                                        : 'bg-[#f5ddd4] text-[#c15f3c]'
                                   }`}
                                 >
                                   {study.aiAppraisal.bias.overallRisk === 'low'
@@ -1934,18 +1934,18 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
   // Component for the Search Report tab
   const SearchReportTab = () => (
     <div className="space-y-6">
-      <Card className="border-[#E1DFDD]">
-        <CardHeader className="bg-[#FAFAFA] border-b border-[#E1DFDD]">
+      <Card className="border-[#e8e6dc]">
+        <CardHeader className="bg-[#faf9f5] border-b border-[#e8e6dc]">
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle className="text-lg text-[#323130]">Literature Search Report</CardTitle>
+              <CardTitle className="text-lg text-[#141413]">Literature Search Report</CardTitle>
               <CardDescription>
                 Summary of the literature search methodology and results
               </CardDescription>
             </div>
             <Button
               onClick={generateSearchSummary}
-              className="bg-[#0F6CBD] hover:bg-[#115EA3] text-white"
+              className="bg-[#d97757] hover:bg-[#c15f3c] text-white"
             >
               <FileText className="h-4 w-4 mr-2" />
               Generate Report
@@ -1954,10 +1954,10 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
         </CardHeader>
         <CardContent className="p-6">
           {!searchSummary ? (
-            <div className="flex flex-col items-center justify-center p-8 border border-dashed border-[#E1DFDD] rounded-md">
-              <FileText className="h-8 w-8 text-[#0F6CBD] mb-2" />
-              <p className="text-center text-[#605E5C]">No search report generated yet</p>
-              <p className="text-center text-xs text-[#605E5C] mt-1">
+            <div className="flex flex-col items-center justify-center p-8 border border-dashed border-[#e8e6dc] rounded-md">
+              <FileText className="h-8 w-8 text-[#d97757] mb-2" />
+              <p className="text-center text-[#6b6963]">No search report generated yet</p>
+              <p className="text-center text-xs text-[#6b6963] mt-1">
                 Click "Generate Report" to create a summary of your literature search
               </p>
             </div>
@@ -1966,7 +1966,7 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
               {searchSummary.content && (
                 <div className="prose prose-sm max-w-none">
                   <div
-                    className="text-[#323130]"
+                    className="text-[#141413]"
                     dangerouslySetInnerHTML={{ __html: searchSummary.content }}
                   />
                 </div>
@@ -1974,42 +1974,42 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
 
               {searchSummary.tables && searchSummary.tables.included_studies && (
                 <div className="mt-6">
-                  <h3 className="text-[#323130] font-medium mb-2">Included Studies Overview</h3>
+                  <h3 className="text-[#141413] font-medium mb-2">Included Studies Overview</h3>
                   <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-[#E1DFDD] border border-[#E1DFDD] text-sm">
+                    <table className="min-w-full divide-y divide-[#e8e6dc] border border-[#e8e6dc] text-sm">
                       <thead>
-                        <tr className="bg-[#FAFAFA]">
-                          <th className="px-3 py-2 text-left text-[#323130] font-medium border-b border-[#E1DFDD]">
+                        <tr className="bg-[#faf9f5]">
+                          <th className="px-3 py-2 text-left text-[#141413] font-medium border-b border-[#e8e6dc]">
                             Study
                           </th>
-                          <th className="px-3 py-2 text-left text-[#323130] font-medium border-b border-[#E1DFDD]">
+                          <th className="px-3 py-2 text-left text-[#141413] font-medium border-b border-[#e8e6dc]">
                             Year
                           </th>
-                          <th className="px-3 py-2 text-left text-[#323130] font-medium border-b border-[#E1DFDD]">
+                          <th className="px-3 py-2 text-left text-[#141413] font-medium border-b border-[#e8e6dc]">
                             Type
                           </th>
-                          <th className="px-3 py-2 text-left text-[#323130] font-medium border-b border-[#E1DFDD]">
+                          <th className="px-3 py-2 text-left text-[#141413] font-medium border-b border-[#e8e6dc]">
                             Relevance
                           </th>
-                          <th className="px-3 py-2 text-left text-[#323130] font-medium border-b border-[#E1DFDD]">
+                          <th className="px-3 py-2 text-left text-[#141413] font-medium border-b border-[#e8e6dc]">
                             Quality
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-[#E1DFDD]">
+                      <tbody className="divide-y divide-[#e8e6dc]">
                         {searchSummary.tables.included_studies.map((study, index) => (
-                          <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}>
-                            <td className="px-3 py-2 text-[#323130]">{study.title}</td>
-                            <td className="px-3 py-2 text-[#323130]">{study.year}</td>
-                            <td className="px-3 py-2 text-[#323130]">{study.type}</td>
+                          <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-[#faf9f5]'}>
+                            <td className="px-3 py-2 text-[#141413]">{study.title}</td>
+                            <td className="px-3 py-2 text-[#141413]">{study.year}</td>
+                            <td className="px-3 py-2 text-[#141413]">{study.type}</td>
                             <td className="px-3 py-2">
                               <Badge
                                 className={`${
                                   study.relevance === 'High'
-                                    ? 'bg-[#DFF6DD] text-[#107C10]'
+                                    ? 'bg-[#e4ebd8] text-[#788c5d]'
                                     : study.relevance === 'Medium'
                                       ? 'bg-[#FFF4CE] text-[#797775]'
-                                      : 'bg-[#FED9CC] text-[#D83B01]'
+                                      : 'bg-[#f5ddd4] text-[#c15f3c]'
                                 }`}
                               >
                                 {study.relevance}
@@ -2019,10 +2019,10 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                               <Badge
                                 className={`${
                                   study.quality === 'High'
-                                    ? 'bg-[#DFF6DD] text-[#107C10]'
+                                    ? 'bg-[#e4ebd8] text-[#788c5d]'
                                     : study.quality === 'Medium'
                                       ? 'bg-[#FFF4CE] text-[#797775]'
-                                      : 'bg-[#FED9CC] text-[#D83B01]'
+                                      : 'bg-[#f5ddd4] text-[#c15f3c]'
                                 }`}
                               >
                                 {study.quality}
@@ -2037,7 +2037,7 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
               )}
 
               <div className="pt-4 flex justify-end">
-                <Button onClick={addToCER} className="bg-[#0F6CBD] hover:bg-[#115EA3] text-white">
+                <Button onClick={addToCER} className="bg-[#d97757] hover:bg-[#c15f3c] text-white">
                   <FileCheck className="h-4 w-4 mr-2" />
                   Add to CER
                 </Button>
@@ -2053,15 +2053,15 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-[#323130]">Literature Review Workflow</h2>
-          <p className="text-[#605E5C] mt-1">
+          <h2 className="text-2xl font-semibold text-[#141413]">Literature Review Workflow</h2>
+          <p className="text-[#6b6963] mt-1">
             Document and track your search methodology, evidence selection, and appraisal process
           </p>
         </div>
         <div className="flex space-x-2">
           <Button
             variant="outline"
-            className="border-[#0F6CBD] text-[#0F6CBD] hover:bg-[#EFF6FC]"
+            className="border-[#d97757] text-[#d97757] hover:bg-[#faf0ec]"
             onClick={() => setHasChanged(false)}
             disabled={!hasChanged}
           >
@@ -2077,34 +2077,34 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
         onValueChange={setActiveTab}
         value={activeTab}
       >
-        <TabsList className="bg-[#F3F2F1] p-1 rounded-md mb-4">
+        <TabsList className="bg-[#f4f3ee] p-1 rounded-md mb-4">
           <TabsTrigger
             value="search-strategy"
-            className="data-[state=active]:bg-white data-[state=active]:text-[#323130] px-3 py-1.5 text-[#605E5C] rounded-sm"
+            className="data-[state=active]:bg-white data-[state=active]:text-[#141413] px-3 py-1.5 text-[#6b6963] rounded-sm"
           >
             Search Strategy
           </TabsTrigger>
           <TabsTrigger
             value="criteria"
-            className="data-[state=active]:bg-white data-[state=active]:text-[#323130] px-3 py-1.5 text-[#605E5C] rounded-sm"
+            className="data-[state=active]:bg-white data-[state=active]:text-[#141413] px-3 py-1.5 text-[#6b6963] rounded-sm"
           >
             Inclusion/Exclusion
           </TabsTrigger>
           <TabsTrigger
             value="study-selection"
-            className="data-[state=active]:bg-white data-[state=active]:text-[#323130] px-3 py-1.5 text-[#605E5C] rounded-sm"
+            className="data-[state=active]:bg-white data-[state=active]:text-[#141413] px-3 py-1.5 text-[#6b6963] rounded-sm"
           >
             Study Selection
           </TabsTrigger>
           <TabsTrigger
             value="appraisal"
-            className="data-[state=active]:bg-white data-[state=active]:text-[#323130] px-3 py-1.5 text-[#605E5C] rounded-sm"
+            className="data-[state=active]:bg-white data-[state=active]:text-[#141413] px-3 py-1.5 text-[#6b6963] rounded-sm"
           >
             Quality Appraisal
           </TabsTrigger>
           <TabsTrigger
             value="search-report"
-            className="data-[state=active]:bg-white data-[state=active]:text-[#323130] px-3 py-1.5 text-[#605E5C] rounded-sm"
+            className="data-[state=active]:bg-white data-[state=active]:text-[#141413] px-3 py-1.5 text-[#6b6963] rounded-sm"
           >
             Search Report
           </TabsTrigger>

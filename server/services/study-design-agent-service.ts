@@ -104,7 +104,7 @@ export class StudyDesignAgentService {
         const intelligencePrefix = await getIntelligencePrefix().catch(() => '');
         conversationId = memoryService.createConversation(
           conversationId,
-          `${intelligencePrefix}You are TrialSage's Study Design Agent, a specialized clinical trial advisor with deep expertise in protocol design and optimization.`,
+          `${intelligencePrefix}You are Concept2Cure's Study Design Agent, a specialized clinical trial advisor with deep expertise in protocol design and optimization.`,
           {
             indication: queryData.indication,
             phase: queryData.phase,

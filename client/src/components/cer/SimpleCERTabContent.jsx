@@ -43,9 +43,9 @@ export default function SimpleCERTabContent({
       <div className="bg-[#F9F9F9] py-4">
         <div className="flex flex-col md:flex-row items-start justify-between">
           <div className="flex-1 px-4">
-            <h2 className="text-xl font-semibold text-[#323130]">Section Generator</h2>
+            <h2 className="text-xl font-semibold text-[#141413]">Section Generator</h2>
             <div className="mt-2 mb-4">
-              <div className="bg-[#EFF6FC] rounded-md px-3 py-1 text-sm inline-flex items-center gap-1 text-[#0F6CBD]">
+              <div className="bg-[#faf0ec] rounded-md px-3 py-1 text-sm inline-flex items-center gap-1 text-[#d97757]">
                 <span>AI-Powered</span>
               </div>
             </div>
@@ -61,20 +61,20 @@ export default function SimpleCERTabContent({
             />
           </div>
           <div className="w-full md:w-auto md:min-w-[280px] md:max-w-[320px] px-4 mt-6 md:mt-0">
-            <h2 className="text-xl font-semibold text-[#323130]">Report Sections</h2>
+            <h2 className="text-xl font-semibold text-[#141413]">Report Sections</h2>
             <div className="mt-2 mb-4">
-              <div className="bg-[#F3F2F1] rounded px-3 py-1 text-sm inline-flex items-center gap-1">
+              <div className="bg-[#f4f3ee] rounded px-3 py-1 text-sm inline-flex items-center gap-1">
                 <span>{sections.length} sections</span>
               </div>
             </div>
 
             <div className="mb-4">
-              <h3 className="text-md font-medium mb-2 text-[#323130]">Report Title</h3>
+              <h3 className="text-md font-medium mb-2 text-[#141413]">Report Title</h3>
               <input
                 type="text"
                 value={title}
                 onChange={e => onTitleChange(e.target.value)}
-                className="w-full p-2 border border-[#E1DFDD] rounded"
+                className="w-full p-2 border border-[#e8e6dc] rounded"
                 placeholder="Clinical Evaluation Report"
               />
             </div>
@@ -82,7 +82,7 @@ export default function SimpleCERTabContent({
             {sections.length > 0 ? (
               <div className="space-y-2">
                 {sections.map((section, idx) => (
-                  <div key={idx} className="bg-[#F3F2F1] p-2 rounded text-sm">
+                  <div key={idx} className="bg-[#f4f3ee] p-2 rounded text-sm">
                     {section.title}
                   </div>
                 ))}
@@ -97,7 +97,7 @@ export default function SimpleCERTabContent({
         <div className="px-4 mt-4 text-center">
           <Button
             onClick={() => onExport('docx')}
-            className="bg-transparent text-[#0F6CBD] hover:bg-[#EFF6FC] border-none"
+            className="bg-transparent text-[#d97757] hover:bg-[#faf0ec] border-none"
             variant="outline"
           >
             <Download className="h-4 w-4 mr-2" />
@@ -155,13 +155,13 @@ export default function SimpleCERTabContent({
         <TabsList className="flex overflow-x-auto whitespace-nowrap bg-white border-b border-gray-200 rounded-none w-full justify-start gap-2">
           <TabsTrigger
             value="search"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#0F6CBD] data-[state=active]:text-[#0F6CBD] data-[state=active]:shadow-none bg-transparent px-3 py-2 font-normal text-[#616161] flex-shrink-0"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#d97757] data-[state=active]:text-[#d97757] data-[state=active]:shadow-none bg-transparent px-3 py-2 font-normal text-[#616161] flex-shrink-0"
           >
             Search & Analyze
           </TabsTrigger>
           <TabsTrigger
             value="methodology"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#0F6CBD] data-[state=active]:text-[#0F6CBD] data-[state=active]:shadow-none bg-transparent px-3 py-2 font-normal text-[#616161] flex-shrink-0"
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#d97757] data-[state=active]:text-[#d97757] data-[state=active]:shadow-none bg-transparent px-3 py-2 font-normal text-[#616161] flex-shrink-0"
           >
             Search Methodology
           </TabsTrigger>

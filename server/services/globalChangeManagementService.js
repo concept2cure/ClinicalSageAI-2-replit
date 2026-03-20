@@ -7,8 +7,8 @@
 
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
-import OpenAI from 'openai';
 import ectdAuditService from './ectdAuditService.js';
+import { ai } from '../lib/unified-ai-client';
 
 class GlobalChangeManagementService {
   constructor() {
@@ -54,14 +54,14 @@ class GlobalChangeManagementService {
         Format as JSON with keys: impact, implications, risks, reviewLevel, relatedSections
       `;
 
-      const response = await this.openai.chat.completions.create({
+      const response = await this.ai.chat({
         model: process.env.KIMI_MODEL || 'moonshot-v1-32k',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.3,
         response_format: { type: 'json_object' }
       });
 
-      return JSON.parse(response.choices[0].message.content);
+      return JSON.parse(aiResult.content);
     } catch (error) {
       console.error('Error analyzing change impact:', error);
       return {
@@ -457,14 +457,14 @@ class GlobalChangeManagementService {
         Return only the updated content, no explanations.
       `;
 
-      const response = await this.openai.chat.completions.create({
+      const response = await this.ai.chat({
         model: 'gpt-4o',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.1,
         max_tokens: 4000
       });
 
-      return response.choices[0].message.content;
+      return aiResult.content;
     } catch (error) {
       console.error('Error in smart replacement:', error);
       // Fallback to simple replacement
@@ -497,14 +497,14 @@ class GlobalChangeManagementService {
         Return JSON with: isValid (boolean), issues (array), recommendations (array)
       `;
 
-      const response = await this.openai.chat.completions.create({
+      const response = await this.ai.chat({
         model: 'gpt-4o',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.2,
         response_format: { type: 'json_object' }
       });
 
-      return JSON.parse(response.choices[0].message.content);
+      return JSON.parse(aiResult.content);
     } catch (error) {
       console.error('Error validating change:', error);
       return {

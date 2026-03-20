@@ -157,18 +157,18 @@ const STATUS_CONFIG: Record<
   ComplianceStatus,
   { label: string; color: string; bgColor: string; icon: React.ComponentType<any> }
 > = {
-  compliant: { label: 'Compliant', color: '#059669', bgColor: '#d1fae5', icon: CheckCircle },
+  compliant: { label: 'Compliant', color: '#647746', bgColor: '#e4ebd8', icon: CheckCircle },
   partial: { label: 'Partial', color: '#d97706', bgColor: '#fef3c7', icon: AlertTriangle },
   non_compliant: { label: 'Non-Compliant', color: '#dc2626', bgColor: '#fee2e2', icon: XCircle },
-  not_applicable: { label: 'N/A', color: '#6b7280', bgColor: '#f3f4f6', icon: Minus },
-  pending_review: { label: 'Pending Review', color: '#2563eb', bgColor: '#dbeafe', icon: Clock },
+  not_applicable: { label: 'N/A', color: '#8a8880', bgColor: '#f4f3ee', icon: Minus },
+  pending_review: { label: 'Pending Review', color: '#5585b3', bgColor: '#dce8f3', icon: Clock },
 };
 
 const SEVERITY_CONFIG = {
   critical: { label: 'Critical', color: '#dc2626', bgColor: '#fee2e2' },
   major: { label: 'Major', color: '#ea580c', bgColor: '#ffedd5' },
   minor: { label: 'Minor', color: '#ca8a04', bgColor: '#fef9c3' },
-  observation: { label: 'Observation', color: '#6b7280', bgColor: '#f3f4f6' },
+  observation: { label: 'Observation', color: '#8a8880', bgColor: '#f4f3ee' },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -563,7 +563,7 @@ const ComplianceOverview: React.FC<{ frameworks: ComplianceFramework[] }> = ({ f
   }, [frameworks]);
 
   const getScoreColor = (score: number) => {
-    if (score >= 95) return '#059669';
+    if (score >= 95) return '#647746';
     if (score >= 85) return '#d97706';
     return '#dc2626';
   };
@@ -651,7 +651,7 @@ const ALCOAPlusScorecard: React.FC<{ scores: ALCOAPlusScore[] }> = ({ scores }) 
   const getStatusColor = (status: 'pass' | 'fail' | 'warning') => {
     switch (status) {
       case 'pass':
-        return '#059669';
+        return '#647746';
       case 'warning':
         return '#d97706';
       case 'fail':
@@ -727,11 +727,11 @@ const MetricsGrid: React.FC<{ metrics: ComplianceMetric[] }> = ({ metrics }) => 
   const getTrendColor = (metric: ComplianceMetric) => {
     // For metrics where lower is better (like response time), invert the color logic
     const isInverted = metric.unit === 'hours';
-    if (metric.trend === 'stable') return '#6b7280';
+    if (metric.trend === 'stable') return '#8a8880';
     if (isInverted) {
-      return metric.trend === 'up' ? '#dc2626' : '#059669';
+      return metric.trend === 'up' ? '#dc2626' : '#647746';
     }
-    return metric.trend === 'up' ? '#059669' : '#dc2626';
+    return metric.trend === 'up' ? '#647746' : '#dc2626';
   };
 
   return (

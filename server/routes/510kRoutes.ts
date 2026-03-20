@@ -413,77 +413,350 @@ router.post(
 
 /**
  * @route POST /api/510k/generate-section
- * @desc Generate AI draft for a section
+ * @desc Generate AI draft for a section using the AI gateway
  * @access Private
  */
 router.post('/generate-section', async (req: Request, res: Response) => {
   try {
     const { organizationId } = (req as any).tenantContext;
+    const { sectionType, deviceInfo, deviceProfile, predicateDevices } = req.body;
 
-    // Extract section type and device profile from request body
-    const { sectionType, deviceProfile, predicateDevices } = req.body;
+    // Support both deviceInfo and legacy deviceProfile field
+    const device = deviceInfo || deviceProfile;
 
-    // TODO: Implement or integrate with AISectionWriter service
-    // For now, return a placeholder response
+    if (!sectionType || !device) {
+      return res.status(400).json({
+        success: false,
+        error: 'sectionType and deviceInfo (or deviceProfile) are required',
+      });
+    }
+
+    const validSectionTypes = [
+      'device-description',
+      'predicate-comparison',
+      'substantial-equivalence',
+      'performance-data',
+      'biocompatibility',
+      'electrical-safety',
+      'software',
+      'labeling',
+      'sterilization',
+    ];
+
+    if (!validSectionTypes.includes(sectionType)) {
+      return res.status(400).json({
+        success: false,
+        error: `Invalid sectionType. Must be one of: ${validSectionTypes.join(', ')}`,
+      });
+    }
+
+    // Build section-specific prompts
+    const sectionPrompts: Record<string, string> = {
+      'device-description':
+        `Write a comprehensive Device Description section for a 510(k) submission. ` +
+        `Include physical characteristics, materials, components, dimensions, and operating principles.`,
+      'predicate-comparison':
+        `Write a Predicate Device Comparison section for a 510(k) submission. ` +
+        `Compare the subject device with the predicate device(s) across intended use, technological characteristics, and performance.`,
+      'substantial-equivalence':
+        `Write a Substantial Equivalence Determination section for a 510(k) submission. ` +
+        `Demonstrate that the subject device is substantially equivalent to the predicate device(s) per 21 CFR 807.87.`,
+      'performance-data':
+        `Write a Performance Data section for a 510(k) submission. ` +
+        `Summarize bench testing, animal studies (if applicable), and clinical data that support substantial equivalence.`,
+      'biocompatibility':
+        `Write a Biocompatibility section for a 510(k) submission per ISO 10993 and FDA guidance. ` +
+        `Address biological evaluation, material characterization, and applicable biocompatibility tests.`,
+      'electrical-safety':
+        `Write an Electrical Safety and Electromagnetic Compatibility section for a 510(k) submission. ` +
+        `Address IEC 60601-1, IEC 60601-1-2, and applicable collateral/particular standards.`,
+      'software':
+        `Write a Software Documentation section for a 510(k) submission per FDA guidance on Software in Medical Devices. ` +
+        `Address software level of concern, architecture, hazard analysis, and verification/validation.`,
+      'labeling':
+        `Write a Labeling section for a 510(k) submission. ` +
+        `Include proposed labels, instructions for use, warnings, precautions, and contraindications per 21 CFR 801.`,
+      'sterilization':
+        `Write a Sterilization section for a 510(k) submission. ` +
+        `Address sterilization method, validation per applicable standards (ISO 11135, ISO 11137, ISO 17665), ` +
+        `sterility assurance level, and residual limits.`,
+    };
+
+    const deviceName = device.deviceName || device.name || 'the subject device';
+    const deviceClass = device.deviceClass || device.classification || 'II';
+    const productCode = device.productCode || 'N/A';
+    const intendedUse = device.intendedUse || device.intended_use || 'Not specified';
+    const predicateList = predicateDevices || device.predicateDevices || [];
+
+    const predicateInfo =
+      predicateList.length > 0
+        ? predicateList
+            .map(
+              (p: any, i: number) =>
+                `Predicate ${i + 1}: ${p.deviceName || p.name || 'Unknown'} (510(k): ${p.kNumber || p.clearanceNumber || 'N/A'})`
+            )
+            .join('\n')
+        : 'No predicate devices specified.';
+
+    const systemPrompt =
+      `You are a regulatory affairs expert specializing in FDA 510(k) premarket notifications. ` +
+      `Generate professional, technically accurate regulatory submission content. ` +
+      `Use formal regulatory language appropriate for FDA review. ` +
+      `Include specific references to applicable FDA guidance documents and standards where relevant. ` +
+      `Output your response as valid JSON with the following structure:\n` +
+      `{\n` +
+      `  "content": "The full section text in markdown format",\n` +
+      `  "citations": ["Array of applicable standards, guidance documents, and regulations cited"],\n` +
+      `  "complianceNotes": ["Array of compliance observations and recommendations"]\n` +
+      `}`;
+
+    const userPrompt =
+      `${sectionPrompts[sectionType]}\n\n` +
+      `Device Information:\n` +
+      `- Device Name: ${deviceName}\n` +
+      `- Device Class: ${deviceClass}\n` +
+      `- Product Code: ${productCode}\n` +
+      `- Intended Use: ${intendedUse}\n` +
+      `${device.manufacturer ? `- Manufacturer: ${device.manufacturer}\n` : ''}` +
+      `${device.description ? `- Description: ${device.description}\n` : ''}` +
+      `${device.materials ? `- Materials: ${device.materials}\n` : ''}` +
+      `${device.medicalSpecialty ? `- Medical Specialty: ${device.medicalSpecialty}\n` : ''}` +
+      `\nPredicate Device(s):\n${predicateInfo}`;
+
+    // Dynamically import the unified AI client to avoid circular dependency issues
+    const { ai } = await import('../lib/unified-ai-client');
+
+    const parsed = await ai.structured<{
+      content: string;
+      citations: string[];
+      complianceNotes: string[];
+    }>(
+      [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      undefined,
+      {
+        taskType: 'regulatory_review',
+        maxTokens: 4096,
+        temperature: 0.3,
+        callerModule: '510k-generate-section',
+        organizationId: organizationId || undefined,
+      }
+    );
+
     res.json({
       success: true,
       section: {
         type: sectionType,
-        content: `This is a placeholder for the ${sectionType} section content. In production, this would be generated by the AI service.`,
+        content: parsed.content || '',
+        citations: parsed.citations || [],
+        complianceNotes: parsed.complianceNotes || [],
         metadata: {
           generatedAt: new Date().toISOString(),
-          deviceName: deviceProfile.deviceName || deviceProfile.name,
-          predicatesCount: predicateDevices ? predicateDevices.length : 0,
+          deviceName,
+          deviceClass,
+          predicatesCount: predicateList.length,
+          sectionType,
+          model: 'ai-gateway',
         },
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating section:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to generate section',
+      message: error.message || 'Unknown error',
     });
   }
 });
 
 /**
  * @route POST /api/510k/validate-submission
- * @desc Validate 510(k) submission
+ * @desc Validate 510(k) submission against FDA requirements and compliance rules
  * @access Private
  */
 router.post('/validate-submission', async (req: Request, res: Response) => {
   try {
     const { organizationId } = (req as any).tenantContext;
-
-    // Extract submission data from request body
     const { submission } = req.body;
 
-    // Load compliance rules for validation
-    const rules = complianceRules;
+    if (!submission) {
+      return res.status(400).json({
+        success: false,
+        error: 'submission object is required',
+      });
+    }
 
-    // TODO: Implement full submission validation logic
-    // For now, return a simplified response
+    const rules = complianceRules;
+    const requiredSections: any[] = rules.requiredSections || [];
+    const deviceClassRules = rules.deviceClassRules || {};
+    const templateWarnings: string[] = rules.templateWarnings || [];
+
+    // Gather submitted sections — support both array and object-keyed formats
+    const submittedSections: Record<string, any> = {};
+    if (Array.isArray(submission.sections)) {
+      for (const sec of submission.sections) {
+        const key = sec.id || sec.sectionId || sec.type;
+        if (key) submittedSections[key] = sec;
+      }
+    } else if (submission.sections && typeof submission.sections === 'object') {
+      Object.assign(submittedSections, submission.sections);
+    }
+
+    // Determine device class and its additional section requirements
+    const deviceClass = submission.deviceClass || submission.device?.deviceClass || 'II';
+    const classRules = deviceClassRules[deviceClass] || {};
+    const additionalSectionIds: string[] = classRules.additionalSections || [];
+
+    // Build full required section list (base + class-specific)
+    const allRequired = [
+      ...requiredSections,
+      ...additionalSectionIds.map((id: string) => ({
+        id,
+        name: id
+          .split('_')
+          .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(' '),
+        description: `Required for Class ${deviceClass} devices`,
+        wordCountMin: 100,
+        wordCountMax: 5000,
+        requiredTerms: [],
+      })),
+    ];
+
+    // Validate each required section
+    const sectionResults: any[] = [];
+    let totalSections = allRequired.length;
+    let completedSections = 0;
+
+    for (const required of allRequired) {
+      const submitted = submittedSections[required.id];
+      const findings: string[] = [];
+      let sectionStatus: 'pass' | 'fail' | 'warning' = 'pass';
+
+      if (!submitted) {
+        findings.push(`Section "${required.name}" is missing from the submission.`);
+        sectionStatus = 'fail';
+      } else {
+        const content: string = submitted.content || submitted.text || '';
+        const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
+
+        // Check word count minimums
+        if (required.wordCountMin && wordCount < required.wordCountMin) {
+          findings.push(
+            `Word count (${wordCount}) is below the minimum requirement of ${required.wordCountMin}.`
+          );
+          sectionStatus = 'fail';
+        }
+
+        // Check word count maximums
+        if (required.wordCountMax && wordCount > required.wordCountMax) {
+          findings.push(
+            `Word count (${wordCount}) exceeds the maximum limit of ${required.wordCountMax}. Consider condensing.`
+          );
+          if (sectionStatus !== 'fail') sectionStatus = 'warning';
+        }
+
+        // Check required key terms
+        if (required.requiredTerms && required.requiredTerms.length > 0) {
+          const lowerContent = content.toLowerCase();
+          const missingTerms = required.requiredTerms.filter(
+            (term: string) => !lowerContent.includes(term.toLowerCase())
+          );
+          if (missingTerms.length > 0) {
+            findings.push(
+              `Missing key terms: ${missingTerms.join(', ')}. FDA reviewers expect these terms in this section.`
+            );
+            if (sectionStatus !== 'fail') sectionStatus = 'warning';
+          }
+        }
+
+        // Check for template placeholder language
+        for (const warning of templateWarnings) {
+          if (content.includes(warning)) {
+            findings.push(
+              `Template placeholder detected: "${warning}". This must be replaced with actual content before submission.`
+            );
+            sectionStatus = 'fail';
+          }
+        }
+
+        // Check for empty or near-empty content
+        if (wordCount === 0) {
+          findings.push('Section has no content.');
+          sectionStatus = 'fail';
+        } else if (wordCount < 20) {
+          findings.push('Section content appears incomplete (fewer than 20 words).');
+          sectionStatus = 'fail';
+        }
+
+        if (sectionStatus === 'pass') {
+          completedSections++;
+        } else if (sectionStatus === 'warning') {
+          // Warnings still count as partially complete
+          completedSections += 0.5;
+        }
+      }
+
+      sectionResults.push({
+        sectionId: required.id,
+        sectionName: required.name,
+        status: sectionStatus,
+        findings,
+        wordCount: submitted
+          ? (submitted.content || submitted.text || '').trim().split(/\s+/).filter(Boolean).length
+          : 0,
+        requiredWordCountMin: required.wordCountMin || null,
+        requiredWordCountMax: required.wordCountMax || null,
+      });
+    }
+
+    // Compute overall completeness percentage
+    const completenessPercentage =
+      totalSections > 0 ? Math.round((completedSections / totalSections) * 100) : 0;
+
+    // Determine overall validity
+    const hasCriticalFailures = sectionResults.some(r => r.status === 'fail');
+    const hasWarnings = sectionResults.some(r => r.status === 'warning');
+
+    // Check for missing device info
+    const overallFindings: string[] = [];
+    if (!submission.deviceName && !submission.device?.deviceName) {
+      overallFindings.push('Device name is not specified in the submission.');
+    }
+    if (!submission.predicateDevices && !submission.device?.predicateDevices) {
+      overallFindings.push('No predicate device(s) identified. A 510(k) requires at least one predicate.');
+    }
+    if (!submission.intendedUse && !submission.device?.intendedUse) {
+      overallFindings.push('Intended use statement is missing.');
+    }
+
+    const missingSections = sectionResults
+      .filter(r => r.status === 'fail' && r.wordCount === 0)
+      .map(r => r.sectionName);
+
     res.json({
       success: true,
       validation: {
-        isValid: true,
-        missingElements: [],
-        suggestions: [
-          'Consider adding more details to the Substantial Equivalence section',
-          'Ensure all performance test results are included',
-        ],
-        compliance: {
-          requiredSections: true,
-          wordCounts: true,
-          keyTerms: true,
-        },
+        isValid: !hasCriticalFailures && overallFindings.length === 0,
+        completenessPercentage,
+        overallStatus: hasCriticalFailures ? 'incomplete' : hasWarnings ? 'needs-review' : 'ready',
+        deviceClass,
+        totalRequiredSections: totalSections,
+        completedSections: Math.round(completedSections),
+        missingSections,
+        overallFindings,
+        sectionResults,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error validating submission:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to validate submission',
+      message: error.message || 'Unknown error',
     });
   }
 });

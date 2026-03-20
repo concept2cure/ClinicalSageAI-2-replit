@@ -10,7 +10,6 @@ import { checkForOpenAIKey } from '../../utils/api-security.js';
 import { validateRequestBody } from '../../utils/validation.js';
 import { manufacturingDataSchema } from './types.js';
 import { rateLimit } from 'express-rate-limit';
-import { getOpenAIClient } from '../../services/openai-client';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -25,6 +24,7 @@ const manufacturingAnalysisLimiter = rateLimit({
   legacyHeaders: false,
   message: 'Too many manufacturing analysis requests, please try again after a minute',
 });
+import { ai } from '../../lib/unified-ai-client';
 
 // Create router
 const router = express.Router();
@@ -64,8 +64,6 @@ const upload = multer({
 });
 
 // Get OpenAI client
-const openai = getOpenAIClient();
-
 // Get current directory
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -123,7 +121,7 @@ router.post('/analyze', checkForOpenAIKey, manufacturingAnalysisLimiter, async (
       },
     ];
 
-    const response = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4o',
       messages: messages,
       temperature: 0.3,
@@ -131,7 +129,7 @@ router.post('/analyze', checkForOpenAIKey, manufacturingAnalysisLimiter, async (
     });
 
     // Get the response
-    const analysis = response.choices[0].message.content;
+    const analysis = aiResult.content;
 
     // Structure the results
     const analysisResult = {
@@ -163,7 +161,7 @@ router.post('/analyze', checkForOpenAIKey, manufacturingAnalysisLimiter, async (
     
     Format the response as valid JSON only.`;
 
-    const recommendationsResponse = await openai.chat.completions.create({
+    const recommendationsResponse = await ai.chat({
       model: 'gpt-4o',
       messages: [
         {
@@ -197,7 +195,7 @@ router.post('/analyze', checkForOpenAIKey, manufacturingAnalysisLimiter, async (
     
     Format the response as valid JSON only.`;
 
-    const benchmarksResponse = await openai.chat.completions.create({
+    const benchmarksResponse = await ai.chat({
       model: 'gpt-4o',
       messages: [
         {
@@ -300,7 +298,7 @@ router.post('/upload', checkForOpenAIKey, upload.array('files', 5), async (req, 
         
         Please extract structured information in JSON format.`;
 
-        const extractionResponse = await openai.chat.completions.create({
+        const extractionResponse = await ai.chat({
           model: 'gpt-4o',
           messages: [
             {
@@ -473,7 +471,7 @@ router.post('/optimize', checkForOpenAIKey, manufacturingAnalysisLimiter, async 
     
     Please provide comprehensive, actionable recommendations.`;
 
-    const optimizationResponse = await openai.chat.completions.create({
+    const optimizationResponse = await ai.chat({
       model: 'gpt-4o',
       messages: [
         {

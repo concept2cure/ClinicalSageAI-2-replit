@@ -10,6 +10,15 @@ export function setAIService(service: AIProviderRouter) {
 }
 import { z } from 'zod';
 
+// Unified AI Client — routes through Claude via AI Gateway (primary provider)
+let unifiedAI: { complete: (messages: any, options?: any) => Promise<string> } | null = null;
+try {
+  const mod = await import('../lib/unified-ai-client.js');
+  unifiedAI = mod.ai;
+} catch {
+  console.warn('[AI Assistance] Unified AI client not available, will use legacy provider');
+}
+
 const router = Router();
 
 // Input validation schemas
@@ -115,51 +124,80 @@ router.post('/assist', async (req, res) => {
     
     let suggestion = '';
     let isRealAI = false;
-    
-    if (process.env.OPENAI_API_KEY && openaiService) {
+    let provider = 'fallback';
+
+    // Strategy: Try AI Gateway (Claude) → Legacy provider → Template fallback
+    if (unifiedAI) {
       try {
-        // Add timeout wrapper
-        const timeoutPromise = new Promise((_, reject) => 
+        const systemPrompt = `You are a regulatory intelligence expert specializing in FDA, EMA, and ICH guidelines.
+You are reviewing a ${documentType || 'regulatory'} document. ${context}
+Provide specific, actionable recommendations with regulatory citations where applicable.`;
+
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('AI Gateway timeout')), 30000)
+        );
+
+        const aiPromise = unifiedAI.complete(
+          [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: message },
+          ],
+          {
+            taskType: task === 'regulatory_review' ? 'regulatory_review' :
+                      task === 'content_enhancement' ? 'document_drafting' : 'general',
+            maxTokens: 4096,
+            callerModule: 'ai-assistance/assist',
+          }
+        );
+
+        suggestion = await Promise.race([aiPromise, timeoutPromise]);
+        isRealAI = true;
+        provider = 'ai-gateway-claude';
+
+        logAIRequest('/assist', true, null, {
+          task, documentType, provider,
+          responseTime: Date.now() - startTime,
+          isRealAI: true
+        });
+      } catch (gatewayError) {
+        console.warn('[AI Assistance] AI Gateway failed, trying legacy provider:', gatewayError);
+        // Fall through to legacy provider
+      }
+    }
+
+    // Legacy provider fallback (OpenAI/Kimi)
+    if (!isRealAI && process.env.OPENAI_API_KEY && openaiService) {
+      try {
+        const timeoutPromise = new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error('AI request timeout')), 30000)
         );
-        
-        const aiPromise = openaiService.generateCopilotResponse(
-          message,
-          [] // Empty history for now
-        );
-        
-        suggestion = await Promise.race([aiPromise, timeoutPromise]) as string;
+
+        const aiPromise = openaiService.generateCopilotResponse(message, []);
+        suggestion = await Promise.race([aiPromise, timeoutPromise]);
         isRealAI = true;
-        
+        provider = 'legacy-openai';
+
         logAIRequest('/assist', true, null, {
-          task,
-          documentType,
+          task, documentType, provider,
           responseTime: Date.now() - startTime,
           isRealAI: true
         });
       } catch (aiError) {
-        // Log the AI error but continue with fallback
         logAIRequest('/assist', false, aiError, {
-          task,
-          documentType,
-          fallbackUsed: true
+          task, documentType, fallbackUsed: true
         });
-        
-        console.warn('OpenAI service failed, using fallback response:', aiError);
-        suggestion = getFallbackSuggestion(task, content);
-        isRealAI = false;
+        console.warn('Legacy AI service failed, using template fallback:', aiError);
       }
-    } else {
-      // No API key configured - use fallback
+    }
+
+    // Template fallback (last resort)
+    if (!isRealAI) {
       logAIRequest('/assist', true, null, {
-        task,
-        documentType,
-        fallbackUsed: true,
-        reason: 'No API key configured'
+        task, documentType, fallbackUsed: true,
+        reason: !unifiedAI && !openaiService ? 'No AI providers configured' : 'All providers failed'
       });
-      
       suggestion = getFallbackSuggestion(task, content);
-      isRealAI = false;
+      provider = 'template-fallback';
     }
     
     res.json({
@@ -223,51 +261,82 @@ router.post('/verify', async (req, res) => {
     
     let verificationResults;
     let isRealAI = false;
-    
-    // Try to use OpenAI for verification
-    if (process.env.OPENAI_API_KEY && openaiService) {
+
+    const verifyMessage = `Verify the credibility and accuracy of this regulatory content. Check for compliance with FDA/ICH guidelines, identify factual issues, unsupported claims, and regulatory risks. Rate credibility 0-100.\n\nContent:\n${content}\n\nSources: ${sources?.join(', ') || 'None provided'}`;
+
+    // Try AI Gateway (Claude) first
+    if (unifiedAI) {
       try {
-        const message = `Verify the credibility and accuracy of this content. Check for regulatory compliance and identify any issues:\n\n${content}\n\nSources: ${sources?.join(', ') || 'None provided'}`;
-        
-        const timeoutPromise = new Promise((_, reject) => 
+        const timeoutPromise = new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error('Verification timeout')), 30000)
         );
-        
-        const aiPromise = openaiService.generateCopilotResponse(message, []);
-        const aiResponse = await Promise.race([aiPromise, timeoutPromise]) as string;
-        
-        // Parse AI response to extract verification data
+
+        const aiResponse = await Promise.race([
+          unifiedAI.complete(verifyMessage, {
+            taskType: 'regulatory_review',
+            maxTokens: 4096,
+            callerModule: 'ai-assistance/verify',
+          }),
+          timeoutPromise,
+        ]);
+
         verificationResults = {
-          credibility: 85, // Default credibility score
+          credibility: 85,
           sources_verified: sources ? sources.length : 0,
           recommendations: aiResponse.split('\n').filter(line => line.trim().length > 0).slice(0, 5),
           analysis: aiResponse,
-          isRealAI: true
+          isRealAI: true,
         };
         isRealAI = true;
-        
+
         logAIRequest('/verify', true, null, {
           responseTime: Date.now() - startTime,
-          isRealAI: true
+          provider: 'ai-gateway-claude',
+          isRealAI: true,
+        });
+      } catch (gatewayError) {
+        console.warn('[AI Assistance] AI Gateway verification failed:', gatewayError);
+      }
+    }
+
+    // Legacy provider fallback
+    if (!isRealAI && process.env.OPENAI_API_KEY && openaiService) {
+      try {
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Verification timeout')), 30000)
+        );
+
+        const aiResponse = await Promise.race([
+          openaiService.generateCopilotResponse(verifyMessage, []),
+          timeoutPromise,
+        ]);
+
+        verificationResults = {
+          credibility: 85,
+          sources_verified: sources ? sources.length : 0,
+          recommendations: aiResponse.split('\n').filter(line => line.trim().length > 0).slice(0, 5),
+          analysis: aiResponse,
+          isRealAI: true,
+        };
+        isRealAI = true;
+
+        logAIRequest('/verify', true, null, {
+          responseTime: Date.now() - startTime,
+          provider: 'legacy-openai',
+          isRealAI: true,
         });
       } catch (aiError) {
-        logAIRequest('/verify', false, aiError, {
-          fallbackUsed: true
-        });
-        
-        // Fallback verification
-        verificationResults = getFallbackVerification(content, sources);
-        isRealAI = false;
+        logAIRequest('/verify', false, aiError, { fallbackUsed: true });
       }
-    } else {
-      // Fallback verification when no API key
+    }
+
+    // Template fallback
+    if (!isRealAI) {
       logAIRequest('/verify', true, null, {
         fallbackUsed: true,
-        reason: 'No API key configured'
+        reason: 'All providers unavailable',
       });
-      
       verificationResults = getFallbackVerification(content, sources);
-      isRealAI = false;
     }
     
     res.json({
@@ -294,39 +363,36 @@ router.post('/verify', async (req, res) => {
 
 // Health check endpoint for AI service
 router.get('/health', async (req, res) => {
-  const health = {
+  const health: Record<string, unknown> = {
     status: 'operational',
     apiKeyConfigured: !!process.env.OPENAI_API_KEY,
+    aiGatewayAvailable: !!unifiedAI,
     timestamp: new Date().toISOString(),
     capabilities: {
       assist: true,
       verify: true,
-      realAI: !!process.env.OPENAI_API_KEY
-    }
+      realAI: !!unifiedAI || !!process.env.OPENAI_API_KEY,
+    },
+    providers: {
+      aiGateway: unifiedAI ? 'available' : 'unavailable',
+      legacyOpenAI: process.env.OPENAI_API_KEY && openaiService ? 'available' : 'unavailable',
+    },
   };
-  
-  if (process.env.OPENAI_API_KEY && openaiService) {
-    try {
-      const testMessage = 'Health check test';
-      const timeout = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Health check timeout')), 5000)
-      );
-      
-      const test = openaiService.generateCopilotResponse(testMessage, []);
-      await Promise.race([test, timeout]);
-      
-      health.status = 'healthy';
-      logAIRequest('/health', true, null, { status: 'healthy' });
-    } catch (error) {
-      health.status = 'degraded';
-      health.capabilities.realAI = false;
-      logAIRequest('/health', false, error, { status: 'degraded' });
-    }
+
+  if (unifiedAI) {
+    health.status = 'healthy';
+    health.primaryProvider = 'claude-via-ai-gateway';
+    logAIRequest('/health', true, null, { status: 'healthy', provider: 'ai-gateway' });
+  } else if (process.env.OPENAI_API_KEY && openaiService) {
+    health.status = 'degraded';
+    health.primaryProvider = 'legacy-openai';
+    logAIRequest('/health', true, null, { status: 'degraded', provider: 'legacy-openai' });
   } else {
     health.status = 'fallback-mode';
+    health.primaryProvider = 'template-fallback';
     logAIRequest('/health', true, null, { status: 'fallback-mode' });
   }
-  
+
   res.json(health);
 });
 

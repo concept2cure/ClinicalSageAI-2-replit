@@ -1,5 +1,5 @@
 /**
- * Storage Interface for TrialSage
+ * Storage Interface for Concept2Cure
  *
  * Provides a unified storage interface with both in-memory and database implementations.
  * The system automatically falls back to in-memory storage if no database is available.

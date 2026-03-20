@@ -647,7 +647,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
 
     // Add visual indicator for drop target
     if (objectiveRefs.current[targetObjective.id]) {
-      objectiveRefs.current[targetObjective.id].style.borderTop = '3px dashed #0F6CBD';
+      objectiveRefs.current[targetObjective.id].style.borderTop = '3px dashed #d97757';
     }
   };
 
@@ -1095,21 +1095,21 @@ _Document Generated: ${new Date().toLocaleDateString()}_
       <div className="mb-4 p-3 bg-white rounded-lg border shadow-sm flex flex-wrap items-center justify-between">
         <div className="flex items-center space-x-4">
           <div className="flex flex-col">
-            <h3 className="text-lg font-semibold text-[#0F6CBD]">{planMetadata.planName}</h3>
-            <span className="text-xs text-[#605E5C]">ICH E6(R3) Documentation</span>
+            <h3 className="text-lg font-semibold text-[#d97757]">{planMetadata.planName}</h3>
+            <span className="text-xs text-[#6b6963]">ICH E6(R3) Documentation</span>
           </div>
-          <Badge variant="outline" className="bg-gray-50 text-[#323130] font-medium">
+          <Badge variant="outline" className="bg-gray-50 text-[#141413] font-medium">
             v{planMetadata.planVersion}
           </Badge>
         </div>
 
         <div className="flex items-center space-x-3 text-sm">
-          <div className="flex items-center text-[#605E5C]">
+          <div className="flex items-center text-[#6b6963]">
             <span className="font-medium">{planMetadata.authorName}</span>
             <span className="mx-1">•</span>
             <span>{planMetadata.authorRole}</span>
           </div>
-          <div className="flex items-center text-[#605E5C]">
+          <div className="flex items-center text-[#6b6963]">
             <span>Created: {new Date(planMetadata.dateCreated).toLocaleDateString()}</span>
             <span className="mx-1">•</span>
             <span>CER: {planMetadata.linkedCerVersion}</span>
@@ -1118,7 +1118,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
             onClick={saveQmpData}
             size="sm"
             variant="outline"
-            className="flex items-center text-sm ml-2 bg-[#0F6CBD] text-white hover:bg-[#0F6CBD]/90 hover:text-white"
+            className="flex items-center text-sm ml-2 bg-[#d97757] text-white hover:bg-[#d97757]/90 hover:text-white"
           >
             <Save className="mr-1 h-4 w-4" />
             Save Metadata
@@ -1129,10 +1129,10 @@ _Document Generated: ${new Date().toLocaleDateString()}_
       {/* QMP Metadata Section */}
       <div className="mb-6 p-4 bg-white rounded-lg border shadow-sm">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-semibold text-[#323130] flex items-center">
-            <FileText className="mr-2 h-5 w-5 text-[#E3008C]" />
+          <h3 className="text-lg font-semibold text-[#141413] flex items-center">
+            <FileText className="mr-2 h-5 w-5 text-[#d97757]" />
             Plan Metadata
-            <span className="text-xs font-normal text-[#605E5C] ml-2">
+            <span className="text-xs font-normal text-[#6b6963] ml-2">
               ICH E6(R3) Documentation
             </span>
           </h3>
@@ -1141,7 +1141,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Plan Name & Version */}
           <div>
-            <label className="text-sm font-medium text-[#323130]">Plan Name</label>
+            <label className="text-sm font-medium text-[#141413]">Plan Name</label>
             <Input
               value={planMetadata.planName}
               onChange={e =>
@@ -1156,7 +1156,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-[#323130]">Plan Version</label>
+            <label className="text-sm font-medium text-[#141413]">Plan Version</label>
             <Input
               value={planMetadata.planVersion}
               onChange={e =>
@@ -1171,7 +1171,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-[#323130]">Linked CER Version</label>
+            <label className="text-sm font-medium text-[#141413]">Linked CER Version</label>
             <Select
               value={planMetadata.linkedCerVersion}
               onValueChange={value =>
@@ -1198,7 +1198,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
 
           {/* Author Info & Dates */}
           <div>
-            <label className="text-sm font-medium text-[#323130]">Author Name</label>
+            <label className="text-sm font-medium text-[#141413]">Author Name</label>
             <Input
               value={planMetadata.authorName}
               onChange={e =>
@@ -1213,7 +1213,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-[#323130]">Author Role</label>
+            <label className="text-sm font-medium text-[#141413]">Author Role</label>
             <Input
               value={planMetadata.authorRole}
               onChange={e =>
@@ -1229,7 +1229,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="text-sm font-medium text-[#323130]">Date Created</label>
+              <label className="text-sm font-medium text-[#141413]">Date Created</label>
               <Input
                 value={new Date(planMetadata.dateCreated).toLocaleDateString()}
                 readOnly
@@ -1237,7 +1237,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-[#323130]">Last Updated</label>
+              <label className="text-sm font-medium text-[#141413]">Last Updated</label>
               <Input
                 value={new Date(planMetadata.lastUpdated).toLocaleDateString()}
                 readOnly
@@ -1250,10 +1250,10 @@ _Document Generated: ${new Date().toLocaleDateString()}_
 
       {/* Dashboard Metrics */}
       <div className="mb-6 p-4 bg-white rounded-lg border shadow-sm">
-        <h3 className="text-lg font-semibold text-[#323130] mb-3 flex items-center">
-          <BarChart3 className="mr-2 h-5 w-5 text-[#E3008C]" />
+        <h3 className="text-lg font-semibold text-[#141413] mb-3 flex items-center">
+          <BarChart3 className="mr-2 h-5 w-5 text-[#d97757]" />
           Quality Management Dashboard
-          <span className="text-xs font-normal text-[#605E5C] ml-2">
+          <span className="text-xs font-normal text-[#6b6963] ml-2">
             ICH E6(R3) Implementation Status
           </span>
         </h3>
@@ -1261,11 +1261,11 @@ _Document Generated: ${new Date().toLocaleDateString()}_
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <Card className="shadow-none border-l-4 border-l-blue-500">
             <CardHeader className="p-3 pb-0">
-              <CardTitle className="text-sm text-[#323130]">Quality Objectives</CardTitle>
+              <CardTitle className="text-sm text-[#141413]">Quality Objectives</CardTitle>
             </CardHeader>
             <CardContent className="p-3 pt-1">
-              <div className="text-2xl font-bold text-[#0F6CBD]">{metrics.totalObjectives}</div>
-              <div className="text-xs text-[#605E5C] mt-1 flex items-center">
+              <div className="text-2xl font-bold text-[#d97757]">{metrics.totalObjectives}</div>
+              <div className="text-xs text-[#6b6963] mt-1 flex items-center">
                 <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
                 {metrics.completedObjectives} Complete
                 {metrics.blockedObjectives > 0 && (
@@ -1278,13 +1278,13 @@ _Document Generated: ${new Date().toLocaleDateString()}_
             </CardContent>
           </Card>
 
-          <Card className="shadow-none border-l-4 border-l-[#E3008C]">
+          <Card className="shadow-none border-l-4 border-l-[#d97757]">
             <CardHeader className="p-3 pb-0">
-              <CardTitle className="text-sm text-[#323130]">Critical-to-Quality Factors</CardTitle>
+              <CardTitle className="text-sm text-[#141413]">Critical-to-Quality Factors</CardTitle>
             </CardHeader>
             <CardContent className="p-3 pt-1">
-              <div className="text-2xl font-bold text-[#E3008C]">{metrics.totalCtqFactors}</div>
-              <div className="text-xs text-[#605E5C] mt-1 flex items-center flex-wrap">
+              <div className="text-2xl font-bold text-[#d97757]">{metrics.totalCtqFactors}</div>
+              <div className="text-xs text-[#6b6963] mt-1 flex items-center flex-wrap">
                 {metrics.highRiskFactors > 0 && (
                   <span className="mr-2 text-red-700 flex items-center">
                     <AlertCircle className="h-3 w-3 mr-1" />
@@ -1309,14 +1309,14 @@ _Document Generated: ${new Date().toLocaleDateString()}_
 
           <Card className="shadow-none border-l-4 border-l-purple-500">
             <CardHeader className="p-3 pb-0">
-              <CardTitle className="text-sm text-[#323130]">Document Readiness</CardTitle>
+              <CardTitle className="text-sm text-[#141413]">Document Readiness</CardTitle>
             </CardHeader>
             <CardContent className="p-3 pt-1">
               <div className="text-2xl font-bold text-purple-600">{metrics.documentReadiness}%</div>
               <div className="mt-1">
                 <Progress value={metrics.documentReadiness} className="h-1.5 w-full bg-gray-200" />
               </div>
-              <div className="text-xs text-[#605E5C] mt-1 flex items-center">
+              <div className="text-xs text-[#6b6963] mt-1 flex items-center">
                 <FileText className="h-3 w-3 mr-1 text-purple-500" />
                 {metrics.documentReadiness < 50
                   ? 'Needs attention'
@@ -1372,7 +1372,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <Card className="shadow-none border-l-4 border-l-green-500">
             <CardHeader className="p-3 pb-0">
-              <CardTitle className="text-sm text-[#323130] flex items-center">
+              <CardTitle className="text-sm text-[#141413] flex items-center">
                 CER Section Coverage
                 <CerTooltipWrapper
                   tooltipContent="Measures how many CER sections have associated quality objectives for compliance"
@@ -1392,13 +1392,13 @@ _Document Generated: ${new Date().toLocaleDateString()}_
                   className="h-1.5 w-full bg-gray-200"
                 />
               </div>
-              <div className="text-xs text-[#605E5C] mt-3">
+              <div className="text-xs text-[#6b6963] mt-3">
                 <div className="flex flex-wrap gap-1 mb-1">
                   {metrics.coveredSections.map(section => (
                     <Badge
                       key={section}
                       variant="outline"
-                      className="bg-[#EFF6FC] text-[#0F6CBD] border-[#0F6CBD] text-xs"
+                      className="bg-[#faf0ec] text-[#d97757] border-[#d97757] text-xs"
                     >
                       {section}
                     </Badge>
@@ -1426,7 +1426,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
 
           <Card className="shadow-none border-l-4 border-l-amber-500">
             <CardHeader className="p-3 pb-0">
-              <CardTitle className="text-sm text-[#323130] flex items-center">
+              <CardTitle className="text-sm text-[#141413] flex items-center">
                 Traceability & Compliance Status
                 <CerTooltipWrapper
                   tooltipContent="Measures links between quality objectives, CtQ factors, and CER sections"
@@ -1439,12 +1439,12 @@ _Document Generated: ${new Date().toLocaleDateString()}_
             <CardContent className="p-3 pt-1">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <div className="text-sm font-medium text-[#323130]">Linked CtQ Factors</div>
+                  <div className="text-sm font-medium text-[#141413]">Linked CtQ Factors</div>
                   <div className="text-lg font-bold text-amber-600">
                     {metrics.linkedFactors}/{metrics.totalCtqFactors}
                   </div>
-                  <div className="text-xs text-[#605E5C] mt-1 flex items-center">
-                    <LinkIcon className="h-3 w-3 mr-1 text-[#0F6CBD]" />
+                  <div className="text-xs text-[#6b6963] mt-1 flex items-center">
+                    <LinkIcon className="h-3 w-3 mr-1 text-[#d97757]" />
                     {metrics.totalCtqFactors > 0
                       ? Math.round((metrics.linkedFactors / metrics.totalCtqFactors) * 100)
                       : 0}
@@ -1452,12 +1452,12 @@ _Document Generated: ${new Date().toLocaleDateString()}_
                   </div>
                 </div>
                 <div>
-                  <div className="text-sm font-medium text-[#323130]">Objectives with Scope</div>
+                  <div className="text-sm font-medium text-[#141413]">Objectives with Scope</div>
                   <div className="text-lg font-bold text-amber-600">
                     {metrics.objectivesWithSections}/{metrics.totalObjectives}
                   </div>
-                  <div className="text-xs text-[#605E5C] mt-1 flex items-center">
-                    <FileCheck className="h-3 w-3 mr-1 text-[#0F6CBD]" />
+                  <div className="text-xs text-[#6b6963] mt-1 flex items-center">
+                    <FileCheck className="h-3 w-3 mr-1 text-[#d97757]" />
                     {metrics.scopeCoveragePercentage}% Coverage
                   </div>
                 </div>
@@ -1487,9 +1487,9 @@ _Document Generated: ${new Date().toLocaleDateString()}_
           </Card>
         </div>
 
-        <div className="text-xs text-[#605E5C] flex justify-between items-center">
+        <div className="text-xs text-[#6b6963] flex justify-between items-center">
           <div className="flex items-center">
-            <Shield className="h-4 w-4 mr-1 text-[#E3008C]" />
+            <Shield className="h-4 w-4 mr-1 text-[#d97757]" />
             <span>ICH E6(R3) Quality Management Implementation</span>
           </div>
           <div>
@@ -1502,7 +1502,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
             >
               {isGenerating ? (
                 <>
-                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-[#0F6CBD] mr-1"></div>
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-[#d97757] mr-1"></div>
                   Generating...
                 </>
               ) : (
@@ -1520,7 +1520,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
         {/* Left Panel - Quality Objectives */}
         <div className="w-full md:w-1/2">
           <div className="mb-6">
-            <h2 className="text-xl font-semibold text-[#323130] flex items-center">
+            <h2 className="text-xl font-semibold text-[#141413] flex items-center">
               <CerTooltipWrapper
                 tooltipContent="Quality Objectives define specific, measurable goals to ensure the quality of your clinical evaluation process according to ICH E6(R3) principles."
                 whyThisMatters="Quality objectives are required under EU MDR to demonstrate your approach to ensuring clinical data quality and integrity. They provide auditable evidence of your quality management system."
@@ -1529,14 +1529,14 @@ _Document Generated: ${new Date().toLocaleDateString()}_
               </CerTooltipWrapper>
             </h2>
             <div className="mt-2 mb-4">
-              <div className="bg-[#EFF6FC] rounded-md px-3 py-1 text-sm inline-flex items-center gap-1 text-[#0F6CBD]">
+              <div className="bg-[#faf0ec] rounded-md px-3 py-1 text-sm inline-flex items-center gap-1 text-[#d97757]">
                 <span>ICH E6(R3) Compliant</span>
               </div>
             </div>
 
             {isLoadingPlan ? (
               <div className="flex justify-center items-center h-32">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0F6CBD]"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#d97757]"></div>
               </div>
             ) : (
               <>
@@ -1556,7 +1556,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
                       >
                         <CardHeader className="p-4 pb-2">
                           <div className="flex justify-between items-start">
-                            <CardTitle className="text-md font-medium text-[#323130] flex items-center">
+                            <CardTitle className="text-md font-medium text-[#141413] flex items-center">
                               <span
                                 className="cursor-move mr-2 text-gray-400 hover:text-gray-600"
                                 title="Drag to reorder"
@@ -1571,26 +1571,26 @@ _Document Generated: ${new Date().toLocaleDateString()}_
                           </div>
                         </CardHeader>
                         <CardContent className="p-4 pt-2">
-                          <p className="text-sm text-[#605E5C] mb-2">{objective.description}</p>
+                          <p className="text-sm text-[#6b6963] mb-2">{objective.description}</p>
                           {objective.measures && (
                             <div className="mt-2">
-                              <p className="text-xs font-medium text-[#605E5C]">
+                              <p className="text-xs font-medium text-[#6b6963]">
                                 Success Measures:
                               </p>
-                              <p className="text-xs text-[#605E5C]">{objective.measures}</p>
+                              <p className="text-xs text-[#6b6963]">{objective.measures}</p>
                             </div>
                           )}
                           {objective.responsible && (
                             <div className="mt-2">
-                              <p className="text-xs font-medium text-[#605E5C]">Responsible:</p>
-                              <p className="text-xs text-[#605E5C]">{objective.responsible}</p>
+                              <p className="text-xs font-medium text-[#6b6963]">Responsible:</p>
+                              <p className="text-xs text-[#6b6963]">{objective.responsible}</p>
                             </div>
                           )}
 
                           {/* Inline CtQ form */}
                           {showInlineCtqForm === objective.id && (
                             <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                              <h5 className="text-sm font-medium text-[#323130] flex items-center justify-between">
+                              <h5 className="text-sm font-medium text-[#141413] flex items-center justify-between">
                                 <span>Add New Critical-to-Quality Factor</span>
                                 <Button
                                   onClick={handleCancelInlineCtq}
@@ -1621,7 +1621,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
                                 />
                                 <div className="grid grid-cols-2 gap-2">
                                   <div>
-                                    <label className="text-xs text-[#323130]">Risk Level</label>
+                                    <label className="text-xs text-[#141413]">Risk Level</label>
                                     <Select
                                       value={currentCtq.riskLevel}
                                       onValueChange={value =>
@@ -1639,7 +1639,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
                                     </Select>
                                   </div>
                                   <div>
-                                    <label className="text-xs text-[#323130]">CER Section</label>
+                                    <label className="text-xs text-[#141413]">CER Section</label>
                                     <Input
                                       placeholder="Associated Section"
                                       value={currentCtq.associatedSection}
@@ -1654,7 +1654,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
                                   </div>
                                 </div>
                                 <div>
-                                  <label className="text-xs text-[#323130]">Mitigation</label>
+                                  <label className="text-xs text-[#141413]">Mitigation</label>
                                   <Textarea
                                     placeholder="Mitigation actions"
                                     value={currentCtq.mitigation}
@@ -1667,7 +1667,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
                                 </div>
                                 <Button
                                   size="sm"
-                                  className="w-full mt-2 h-7 text-xs bg-[#0F6CBD] text-white hover:bg-[#0F6CBD]/90"
+                                  className="w-full mt-2 h-7 text-xs bg-[#d97757] text-white hover:bg-[#d97757]/90"
                                   onClick={handleSaveInlineCtq}
                                 >
                                   <Plus size={14} className="mr-1" />
@@ -1680,7 +1680,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
                           {/* Display Scope Sections if available */}
                           {objective.scopeSections && objective.scopeSections.length > 0 && (
                             <div className="mt-3">
-                              <p className="text-xs font-medium text-[#605E5C] mb-1">
+                              <p className="text-xs font-medium text-[#6b6963] mb-1">
                                 Scope Sections:
                               </p>
                               <div className="flex flex-wrap gap-1">
@@ -1688,7 +1688,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
                                   <Badge
                                     key={section}
                                     variant="outline"
-                                    className="bg-[#EFF6FC] text-[#0F6CBD] border-[#0F6CBD] text-xs"
+                                    className="bg-[#faf0ec] text-[#d97757] border-[#d97757] text-xs"
                                   >
                                     {section}
                                   </Badge>
@@ -1701,10 +1701,10 @@ _Document Generated: ${new Date().toLocaleDateString()}_
                           {objective.mitigationActions &&
                             objective.mitigationActions.trim() !== '' && (
                               <div className="mt-3">
-                                <p className="text-xs font-medium text-[#605E5C] mb-1">
+                                <p className="text-xs font-medium text-[#6b6963] mb-1">
                                   Mitigation / Control Actions:
                                 </p>
-                                <div className="text-xs text-[#323130] p-2 bg-[#F3F3F3] rounded-md">
+                                <div className="text-xs text-[#141413] p-2 bg-[#F3F3F3] rounded-md">
                                   {objective.mitigationActions.split('\n').map((line, i) => (
                                     <p key={i} className={i > 0 ? 'mt-1' : ''}>
                                       {line}
@@ -1720,7 +1720,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
                               onClick={() => handleEditObjective(objective)}
                               variant="ghost"
                               size="sm"
-                              className="h-8 px-2 text-[#0F6CBD]"
+                              className="h-8 px-2 text-[#d97757]"
                             >
                               <Edit size={14} className="mr-1" />
                               Edit
@@ -1739,7 +1739,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
                             onClick={() => handleAddCtqInline(objective.id)}
                             variant="outline"
                             size="sm"
-                            className="h-8 bg-transparent text-[#0F6CBD] border-[#0F6CBD]"
+                            className="h-8 bg-transparent text-[#d97757] border-[#d97757]"
                           >
                             <Plus size={14} className="mr-1" />
                             Add CtQ Factor
@@ -1765,13 +1765,13 @@ _Document Generated: ${new Date().toLocaleDateString()}_
             {isEditing ? (
               <Card className="bg-white border rounded-md shadow-sm mt-4">
                 <CardHeader className="p-4 pb-2">
-                  <CardTitle className="text-md font-medium text-[#323130]">
+                  <CardTitle className="text-md font-medium text-[#141413]">
                     {currentObjective.id ? 'Edit Objective' : 'Add New Objective'}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-4 space-y-3">
                   <div>
-                    <label className="text-sm font-medium text-[#323130]">Title</label>
+                    <label className="text-sm font-medium text-[#141413]">Title</label>
                     <Input
                       value={currentObjective.title}
                       onChange={e =>
@@ -1782,7 +1782,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
                     />
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-[#323130]">Description</label>
+                    <label className="text-sm font-medium text-[#141413]">Description</label>
                     <Textarea
                       value={currentObjective.description}
                       onChange={e =>
@@ -1794,7 +1794,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
                     />
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-[#323130]">Success Measures</label>
+                    <label className="text-sm font-medium text-[#141413]">Success Measures</label>
                     <Textarea
                       value={currentObjective.measures}
                       onChange={e =>
@@ -1806,7 +1806,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
                     />
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-[#323130]">Responsible Party</label>
+                    <label className="text-sm font-medium text-[#141413]">Responsible Party</label>
                     <Input
                       value={currentObjective.responsible}
                       onChange={e =>
@@ -1817,7 +1817,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
                     />
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-[#323130]">Timeline</label>
+                    <label className="text-sm font-medium text-[#141413]">Timeline</label>
                     <Input
                       value={currentObjective.timeline}
                       onChange={e =>
@@ -1828,7 +1828,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
                     />
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-[#323130]">Status</label>
+                    <label className="text-sm font-medium text-[#141413]">Status</label>
                     <Select
                       value={currentObjective.status}
                       onValueChange={value =>
@@ -1851,7 +1851,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
 
                   {/* Scope Selector - Multi-select list of CER sections */}
                   <div>
-                    <label className="text-sm font-medium text-[#323130] flex items-center">
+                    <label className="text-sm font-medium text-[#141413] flex items-center">
                       Scope Sections
                       <CerTooltipWrapper
                         tooltipContent="Select which CER sections this quality objective applies to"
@@ -1881,7 +1881,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
                           }
                           className={`cursor-pointer ${
                             currentObjective.scopeSections?.includes(section)
-                              ? 'bg-[#0F6CBD] hover:bg-[#0E5CA8] text-white'
+                              ? 'bg-[#d97757] hover:bg-[#0E5CA8] text-white'
                               : 'bg-white hover:bg-gray-100 text-gray-700'
                           }`}
                           onClick={() => {
@@ -1906,7 +1906,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
 
                   {/* Mitigation / Control Actions */}
                   <div>
-                    <label className="text-sm font-medium text-[#323130] flex items-center">
+                    <label className="text-sm font-medium text-[#141413] flex items-center">
                       Mitigation / Control Actions
                       <CerTooltipWrapper
                         tooltipContent="Define specific actions to ensure this quality objective is met"
@@ -1949,7 +1949,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
                   >
                     Cancel
                   </Button>
-                  <Button onClick={handleSaveObjective} className="bg-[#0F6CBD] hover:bg-[#0E5CA8]">
+                  <Button onClick={handleSaveObjective} className="bg-[#d97757] hover:bg-[#0E5CA8]">
                     <Save size={16} className="mr-1" />
                     Save Objective
                   </Button>
@@ -1958,7 +1958,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
             ) : (
               <Button
                 onClick={() => setIsEditing(true)}
-                className="mt-4 bg-[#0F6CBD] hover:bg-[#0E5CA8]"
+                className="mt-4 bg-[#d97757] hover:bg-[#0E5CA8]"
               >
                 <Plus size={16} className="mr-1" />
                 Add Quality Objective
@@ -1970,7 +1970,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
         {/* Right Panel - Critical-to-Quality Factors */}
         <div className="w-full md:w-1/2">
           <div className="mb-6">
-            <h2 className="text-xl font-semibold text-[#323130] flex items-center">
+            <h2 className="text-xl font-semibold text-[#141413] flex items-center">
               <CerTooltipWrapper
                 tooltipContent="Critical-to-Quality (CtQ) factors identify the specific aspects of your clinical evaluation that are most important for maintaining quality and regulatory compliance."
                 whyThisMatters="CtQ factors help you implement a risk-based approach to quality management as required by ICH E6(R3) and EU MDR. They allow you to focus resources on the most critical quality aspects."
@@ -1979,14 +1979,14 @@ _Document Generated: ${new Date().toLocaleDateString()}_
               </CerTooltipWrapper>
             </h2>
             <div className="mt-2 mb-4">
-              <div className="bg-[#EFF6FC] rounded-md px-3 py-1 text-sm inline-flex items-center gap-1 text-[#0F6CBD]">
+              <div className="bg-[#faf0ec] rounded-md px-3 py-1 text-sm inline-flex items-center gap-1 text-[#d97757]">
                 <span>Risk-Based Approach</span>
               </div>
             </div>
 
             {isLoadingPlan ? (
               <div className="flex justify-center items-center h-32">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0F6CBD]"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#d97757]"></div>
               </div>
             ) : (
               <>
@@ -2001,7 +2001,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
                         <Card key={factor.id} className="bg-white border rounded-md shadow-sm">
                           <CardHeader className="p-4 pb-2">
                             <div className="flex justify-between items-start">
-                              <CardTitle className="text-md font-medium text-[#323130]">
+                              <CardTitle className="text-md font-medium text-[#141413]">
                                 {factor.name}
                               </CardTitle>
                               <div className="flex space-x-1">
@@ -2009,18 +2009,18 @@ _Document Generated: ${new Date().toLocaleDateString()}_
                               </div>
                             </div>
                             {associatedObjective && (
-                              <CardDescription className="text-xs text-[#0F6CBD]">
+                              <CardDescription className="text-xs text-[#d97757]">
                                 {associatedObjective.title}
                               </CardDescription>
                             )}
                           </CardHeader>
                           <CardContent className="p-4 pt-2">
-                            <p className="text-sm text-[#605E5C] mb-2">{factor.description}</p>
+                            <p className="text-sm text-[#6b6963] mb-2">{factor.description}</p>
 
                             {/* Visual traceability links - improved with ICH E6(R3) alignment */}
                             <div className="mt-3 mb-2">
                               <div className="flex justify-between items-center mb-1">
-                                <span className="text-xs font-medium text-[#E3008C]">
+                                <span className="text-xs font-medium text-[#d97757]">
                                   CER Traceability
                                 </span>
                                 <div className="text-xs text-gray-500">ICH E6(R3)</div>
@@ -2042,16 +2042,16 @@ _Document Generated: ${new Date().toLocaleDateString()}_
                                   <div className="p-2 bg-white border-t border-green-200">
                                     <div className="flex flex-col">
                                       <div className="flex items-center mb-1">
-                                        <FileText className="h-3 w-3 mr-1 text-[#0F6CBD]" />
-                                        <p className="text-xs font-medium text-[#0F6CBD]">
+                                        <FileText className="h-3 w-3 mr-1 text-[#d97757]" />
+                                        <p className="text-xs font-medium text-[#d97757]">
                                           Associated CER Section:
                                         </p>
                                       </div>
                                       <div className="flex items-center justify-between">
-                                        <p className="text-xs text-[#323130] pl-4">
+                                        <p className="text-xs text-[#141413] pl-4">
                                           {factor.associatedSection}
                                         </p>
-                                        <div className="bg-[#EFF6FC] rounded-md px-2 py-0.5 text-xs text-[#0F6CBD]">
+                                        <div className="bg-[#faf0ec] rounded-md px-2 py-0.5 text-xs text-[#d97757]">
                                           Direct Link
                                         </div>
                                       </div>
@@ -2094,10 +2094,10 @@ _Document Generated: ${new Date().toLocaleDateString()}_
 
                             {factor.mitigation && (
                               <div className="mt-2">
-                                <p className="text-xs font-medium text-[#605E5C]">
+                                <p className="text-xs font-medium text-[#6b6963]">
                                   Mitigation Strategy:
                                 </p>
-                                <p className="text-xs text-[#605E5C]">{factor.mitigation}</p>
+                                <p className="text-xs text-[#6b6963]">{factor.mitigation}</p>
                               </div>
                             )}
                           </CardContent>
@@ -2106,7 +2106,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
                               onClick={() => handleEditCtqFactor(factor)}
                               variant="ghost"
                               size="sm"
-                              className="h-8 px-2 text-[#0F6CBD]"
+                              className="h-8 px-2 text-[#d97757]"
                             >
                               <Edit size={14} className="mr-1" />
                               Edit
@@ -2143,13 +2143,13 @@ _Document Generated: ${new Date().toLocaleDateString()}_
             <div id="add-ctq-section">
               <Card className="bg-white border rounded-md shadow-sm mt-4">
                 <CardHeader className="p-4 pb-2">
-                  <CardTitle className="text-md font-medium text-[#323130]">
+                  <CardTitle className="text-md font-medium text-[#141413]">
                     {editingCtqId ? 'Edit CtQ Factor' : 'Add New CtQ Factor'}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-4 space-y-3">
                   <div>
-                    <label className="text-sm font-medium text-[#323130]">
+                    <label className="text-sm font-medium text-[#141413]">
                       Associated Objective
                     </label>
                     <Select
@@ -2180,7 +2180,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
                     </Select>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-[#323130]">Factor Name</label>
+                    <label className="text-sm font-medium text-[#141413]">Factor Name</label>
                     <Input
                       value={currentCtq.name}
                       onChange={e => setCurrentCtq({ ...currentCtq, name: e.target.value })}
@@ -2189,7 +2189,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
                     />
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-[#323130]">Description</label>
+                    <label className="text-sm font-medium text-[#141413]">Description</label>
                     <Textarea
                       value={currentCtq.description}
                       onChange={e => setCurrentCtq({ ...currentCtq, description: e.target.value })}
@@ -2199,7 +2199,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
                     />
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-[#323130]">
+                    <label className="text-sm font-medium text-[#141413]">
                       Associated CER Section
                     </label>
                     <Input
@@ -2212,7 +2212,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
                     />
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-[#323130]">Risk Level</label>
+                    <label className="text-sm font-medium text-[#141413]">Risk Level</label>
                     <Select
                       value={currentCtq.riskLevel}
                       onValueChange={value => setCurrentCtq({ ...currentCtq, riskLevel: value })}
@@ -2230,7 +2230,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
                     </Select>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-[#323130]">
+                    <label className="text-sm font-medium text-[#141413]">
                       Mitigation Strategy
                     </label>
                     <Textarea
@@ -2262,7 +2262,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
                   </Button>
                   <Button
                     onClick={handleSaveCtqFactor}
-                    className="bg-[#0F6CBD] hover:bg-[#0E5CA8]"
+                    className="bg-[#d97757] hover:bg-[#0E5CA8]"
                     disabled={objectives.length === 0}
                   >
                     <Save size={16} className="mr-1" />
@@ -2279,8 +2279,8 @@ _Document Generated: ${new Date().toLocaleDateString()}_
       <div className="mt-6 bg-white p-4 rounded-md border shadow-sm">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
           <div>
-            <h3 className="text-lg font-medium text-[#323130]">Quality Management Plan Document</h3>
-            <p className="text-sm text-[#605E5C]">
+            <h3 className="text-lg font-medium text-[#141413]">Quality Management Plan Document</h3>
+            <p className="text-sm text-[#6b6963]">
               Generate an ICH E6(R3) compliant Quality Management Plan to include in your CER.
             </p>
           </div>
@@ -2293,12 +2293,12 @@ _Document Generated: ${new Date().toLocaleDateString()}_
               <Button
                 onClick={validateQmpIntegration}
                 variant="outline"
-                className="mr-2 bg-transparent text-[#E3008C] hover:bg-[#FDF6FA] border-[#F9D8E8]"
+                className="mr-2 bg-transparent text-[#d97757] hover:bg-[#FDF6FA] border-[#F9D8E8]"
                 disabled={objectives.length === 0 || isValidating}
               >
                 {isValidating ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#E3008C] mr-2"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#d97757] mr-2"></div>
                     Validating...
                   </>
                 ) : (
@@ -2327,7 +2327,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
                   });
                 }}
                 variant="outline"
-                className="mr-2 bg-transparent text-[#0F6CBD] hover:bg-[#EFF6FC] border-[#D1E5FA]"
+                className="mr-2 bg-transparent text-[#d97757] hover:bg-[#faf0ec] border-[#D1E5FA]"
               >
                 <Clipboard size={16} className="mr-1" />
                 Preview
@@ -2341,7 +2341,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
             >
               <Button
                 onClick={handleGenerateQMP}
-                className="bg-[#0F6CBD] hover:bg-[#0E5CA8]"
+                className="bg-[#d97757] hover:bg-[#0E5CA8]"
                 disabled={objectives.length === 0 || isGenerating}
               >
                 {isGenerating ? (
@@ -2363,10 +2363,10 @@ _Document Generated: ${new Date().toLocaleDateString()}_
         {/* Display Validation Results */}
         {validationResults && <div className="mb-4">{renderValidationResults()}</div>}
 
-        <Card className="bg-[#FAFAFA] border rounded-md overflow-hidden">
+        <Card className="bg-[#faf9f5] border rounded-md overflow-hidden">
           <CardHeader className="p-3 bg-[#F5F5F5] border-b">
             <div className="flex justify-between items-center">
-              <CardTitle className="text-sm font-medium text-[#323130]">
+              <CardTitle className="text-sm font-medium text-[#141413]">
                 QMP Document Preview
               </CardTitle>
               <div className="text-xs text-gray-500">ICH E6(R3) Compliant Format</div>
@@ -2374,7 +2374,7 @@ _Document Generated: ${new Date().toLocaleDateString()}_
           </CardHeader>
           <CardContent className="p-0">
             <ScrollArea className="h-[200px] py-2 px-4">
-              <div className="text-xs text-[#323130] font-mono whitespace-pre-wrap">
+              <div className="text-xs text-[#141413] font-mono whitespace-pre-wrap">
                 {objectives.length > 0 ? (
                   <pre className="text-xs font-mono">
                     {`# Quality Management Plan

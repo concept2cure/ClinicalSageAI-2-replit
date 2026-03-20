@@ -1,7 +1,7 @@
 /**
  * App Footer
  *
- * This component provides the footer for the TrialSage platform.
+ * This component provides the footer for the Concept2Cure platform.
  */
 
 import React from 'react';

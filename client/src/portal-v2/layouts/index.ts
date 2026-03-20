@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Layout Components Index
+ * Concept2Cure Client Portal V2 - Layout Components Index
  */
 
 export { PortalFrame } from './PortalFrame';

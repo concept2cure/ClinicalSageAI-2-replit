@@ -252,6 +252,15 @@ router.get('/pipeline', asyncHandler(async (req: Request, res: Response) => {
 router.post('/workflow/transition', asyncHandler(async (req: Request, res: Response) => {
     const { projectId, newStage } = req.body;
 
+    // Validate allowed stage values
+    const VALID_STAGES = ['planning', 'authoring', 'review', 'approval', 'submission', 'published'];
+    if (!VALID_STAGES.includes(newStage)) {
+      return res.status(400).json({
+        success: false,
+        error: `Invalid stage "${newStage}". Valid stages: ${VALID_STAGES.join(', ')}`,
+      });
+    }
+
     const result = await query(
       `UPDATE submission_projects
        SET stage = $1, updated_at = CURRENT_TIMESTAMP

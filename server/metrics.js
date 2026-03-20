@@ -1,5 +1,5 @@
 /**
- * Metrics Configuration for TrialSage CER Generator
+ * Metrics Configuration for Concept2Cure CER Generator
  *
  * This module provides Prometheus metrics endpoints and defines custom metrics
  * for monitoring CER job performance, error rates, and system health.

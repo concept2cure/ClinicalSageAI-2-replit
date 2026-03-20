@@ -17,13 +17,11 @@
  * 4. MMR - Balance relevance with diversity
  * 5. Contextual Compression - Extract only relevant passages
  *
- * @author TrialSage AI Team
+ * @author Concept2Cure AI Team
  * @version 2.0.0
  * @license Proprietary - Concept2Cure Inc.
  */
 
-import type OpenAI from 'openai';
-import { getOpenAIClient } from './openai-client';
 import Anthropic from '@anthropic-ai/sdk';
 import pg from 'pg';
 import { randomUUID } from 'node:crypto';

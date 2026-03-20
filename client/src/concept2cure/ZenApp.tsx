@@ -47,6 +47,7 @@ import { useProjects } from './hooks/useProjects';
 import { useCortexThreads, useCortexHealth } from './hooks/useCortex';
 import { usePlatformContext } from './hooks/useLicense';
 import { useWorkspaceSummary } from './hooks/useWorkspaceSummary';
+import { useProjectTasks } from './hooks/useProjectTasks';
 
 import { WorkspaceReadinessStrip } from './components/workspace/WorkspaceReadinessStrip';
 import { ProjectWorkspaceShell } from './components/workspace/ProjectWorkspaceShell';
@@ -57,6 +58,8 @@ import { isFeatureEnabled } from '@/flags/featureFlags';
 
 // Lazy-load CERV2Page for embedded module rendering inside the shell
 const EmbeddedCERV2Page = lazy(() => import('@/pages/csr/CERV2Page'));
+// Lazy-load PMA Workspace for embedded module rendering
+const EmbeddedPMAWorkspace = lazy(() => import('./components/pma/PMAWorkspace'));
 // DTC Landing Page (public, no auth)
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 // Full Document Builder wizard (CSR + CTD across global agencies)
@@ -101,6 +104,7 @@ import {
   MessageSquare,
   FolderOpen,
   Upload,
+  Link2,
   Sparkles,
   PenLine,
   Layers,
@@ -241,6 +245,18 @@ const IntelligentReportGenerator = lazy(
   () => import('./components/reports/IntelligentReportGenerator')
 );
 
+const AnaDashboardPage = lazy(() =>
+  import('./pages/AnaDashboard')
+);
+
+const SafetyNarrativePage = lazy(() =>
+  import('./pages/SafetyNarrative')
+);
+
+const AnaPlatformControlPage = lazy(() =>
+  import('./pages/AnaPlatformControl')
+);
+
 const ProjectKnowledgePanel = lazy(() =>
   import('./components/workspace/ProjectKnowledgePanel').then(m => ({
     default: m.ProjectKnowledgePanel,
@@ -265,6 +281,12 @@ const CollaborationHubPage = lazy(() =>
   import('./pages/MissionControl/CollaborationHub').then(m => ({ default: m.default }))
 );
 
+// User Inbox — personal command center with worklist, approvals, alerts
+const UserInboxPage = lazy(() => import('./pages/UserInbox'));
+
+// Client Branding — logo, letterhead, templates, brand settings
+const ClientBrandingSettings = lazy(() => import('./components/settings/ClientBrandingSettings'));
+
 // Biostatistics Platform — statistical analysis, power calculations, endpoints
 const BiostatPlatformDashboard = lazy(
   () => import('@/components/biostat/BiostatPlatformDashboard')
@@ -273,6 +295,9 @@ const BiostatPlatformDashboard = lazy(
 // Training Center — client onboarding, courses, certifications
 const TrainingManagementPage = lazy(
   () => import('@/portal-v2/components/admin/TrainingManagement')
+);
+const IntegrationsPage = lazy(() =>
+  import('./pages/IntegrationsPage')
 );
 
 // Agent Hub — Agent Swarm showcase, setup wizard, monitoring
@@ -314,14 +339,28 @@ const PlatformHome = lazy(() => import('./components/home/PlatformHome'));
 // Artifacts Gallery — Claude.ai-style browsable artifact gallery
 const ArtifactsGalleryPage = lazy(() => import('./pages/ArtifactsGallery'));
 
+// Platform Admin — API keys, tenant management, billing, security (Regulatory Command Center)
+const PlatformAdminPage = lazy(() => import('./components/control-plane/CommandCenter'));
+
+// Biologics Dashboard — biologic/biosimilar pathway intelligence, comparability, expedited programs
+const BiologicsDashboardPage = lazy(() => import('./components/biologics/BiologicsDashboard'));
+
+// CTD Onboarding Wizard — client CTD ingestion pipeline (5-step wizard)
+const CTDOnboardingWizardPage = lazy(() => import('./components/onboarding/CTDProjectWizard'));
+
 // Project Sidebar — Claude.ai-style right sidebar (Context, Instructions, Files)
 import { ProjectSidebar } from './components/workspace/ProjectSidebar';
 
 // Map panel keys to lazy components
+// Early-access modules (capa, pms, inspection) gated behind feature flag
 const PANEL_COMPONENTS: Record<string, React.LazyExoticComponent<React.ComponentType<any>>> = {
-  capa: CAPAManagementPanel,
-  pms: PostMarketSurveillancePanel,
-  inspection: InspectionReadinessPanel,
+  ...(isFeatureEnabled('ENABLE_EARLY_ACCESS_MODULES')
+    ? {
+        capa: CAPAManagementPanel,
+        pms: PostMarketSurveillancePanel,
+        inspection: InspectionReadinessPanel,
+      }
+    : {}),
   ectd: ECTDNavigatorPanel,
   intelligence: RegulatoryIntelligenceFullPanel,
   'doc-editor': EditorPanel,
@@ -404,10 +443,19 @@ type LayoutMode =
   | 'project-knowledge'
   | 'legal-center'
   | 'artifacts'
+  | 'platform-admin'
+  | 'biologics-dashboard'
+  | 'ctd-onboarding'
   | 'document-builder'
   | 'deep-research'
   | 'report-engine'
-  | 'about-training';
+  | 'about-training'
+  | 'user-inbox'
+  | 'client-branding';
+  | 'ana-dashboard'
+  | 'safety-narrative'
+  | 'ana-platform-control';
+  | 'integrations';
 
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
@@ -809,9 +857,11 @@ export const ZenApp: React.FC = () => {
   // When EMBED_MODULES_IN_SHELL is enabled and URL has /project/:id/510k,
   // render CERV2Page inside the shell frame instead of as a standalone page.
   // ─────────────────────────────────────────────────────────────────────────────
-  const urlModuleSegment = (routeParams as Record<string, string> | null)?.['rest*'] ?? null; // e.g. '510k'
+  const urlModuleSegment = (routeParams as Record<string, string> | null)?.['rest*'] ?? null; // e.g. '510k', 'pma'
   const embedModulesEnabled = isFeatureEnabled('EMBED_MODULES_IN_SHELL');
-  const embeddedModule = embedModulesEnabled && urlModuleSegment === '510k' ? '510k' : null;
+  const embeddedModule =
+    embedModulesEnabled && urlModuleSegment === '510k' ? '510k' :
+    embedModulesEnabled && urlModuleSegment === 'pma' ? 'pma' : null;
 
   // ─────────────────────────────────────────────────────────────────────────────
   // DATA HOOKS (Connected to Cortex + Data Layer)
@@ -1397,6 +1447,8 @@ export const ZenApp: React.FC = () => {
         'go-author': 'author',
         'go-document-sherpa': 'document-sherpa',
         'go-collaboration': 'collaboration-hub',
+        'go-inbox': 'user-inbox',
+        'go-branding': 'client-branding',
         'go-agents': 'agent-hub',
         'go-snowglobe': 'snowglobe',
         'go-review-pulse': 'review-pulse',
@@ -1732,7 +1784,7 @@ export const ZenApp: React.FC = () => {
           --zen-ink: #18181B;
           --zen-ink-muted: #71717A;
           --zen-border: #E4E4E7;
-          --zen-accent: #2563EB;
+          --zen-accent: #d97757;
         }
 
         .zen-scroll::-webkit-scrollbar {
@@ -1793,6 +1845,8 @@ export const ZenApp: React.FC = () => {
               'enablement-center': 'enablement-center',
               'client-intelligence': 'client-intelligence',
               'collaboration-hub': 'collaboration-hub',
+              'user-inbox': 'user-inbox',
+              'client-branding': 'client-branding',
               biostatistics: 'biostatistics',
               'training-center': 'training-center',
               'agent-hub': 'agent-hub',
@@ -1861,6 +1915,15 @@ export const ZenApp: React.FC = () => {
                 setLayoutMode('projects');
               }
               break;
+            case 'pma-workspace':
+              if (embeddedModule !== null || !isFeatureEnabled('EMBED_MODULES_IN_SHELL')) {
+                setLayoutMode('projects');
+              } else if (activeProjectId) {
+                navigate(`/concept2cure/project/${activeProjectId}/pma`);
+              } else {
+                setLayoutMode('projects');
+              }
+              break;
             case 'cer-generator':
               window.location.href = '/cerv2?mode=cer';
               break;
@@ -1919,6 +1982,12 @@ export const ZenApp: React.FC = () => {
             case 'collaboration-hub':
               setLayoutMode('collaboration-hub');
               break;
+            case 'user-inbox':
+              setLayoutMode('user-inbox');
+              break;
+            case 'client-branding':
+              setLayoutMode('client-branding');
+              break;
             case 'biostatistics':
               setLayoutMode('biostatistics');
               break;
@@ -1952,6 +2021,15 @@ export const ZenApp: React.FC = () => {
             case 'artifacts':
               setLayoutMode('artifacts');
               break;
+            case 'platform-admin':
+              setLayoutMode('platform-admin');
+              break;
+            case 'biologics-dashboard':
+              setLayoutMode('biologics-dashboard');
+              break;
+            case 'ctd-onboarding':
+              setLayoutMode('ctd-onboarding');
+              break;
             case 'deep-research':
               setLayoutMode('deep-research');
               break;
@@ -1960,6 +2038,17 @@ export const ZenApp: React.FC = () => {
               break;
             case 'report-engine':
               setLayoutMode('report-engine');
+              break;
+            case 'ana-dashboard':
+              setLayoutMode('ana-dashboard');
+              break;
+            case 'safety-narrative':
+              setLayoutMode('safety-narrative');
+              break;
+            case 'ana-platform-control':
+              setLayoutMode('ana-platform-control');
+            case 'integrations':
+              setLayoutMode('integrations');
               break;
             default:
               break;
@@ -2034,6 +2123,74 @@ export const ZenApp: React.FC = () => {
                       submissionType={activeProject?.type || '510K'}
                       threadId={activeThreadId}
                       greeting="How can I help with your 510(k) submission?"
+                      onNavigate={() => {}}
+                      onNewProject={() => {}}
+                      onThreadChange={handleThreadChange}
+                    />
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* ── Embedded PMA Module Host ── */}
+          {embeddedModule === 'pma' && urlProjectId && (
+            <>
+              <div
+                className={cn(
+                  'flex-1 flex flex-col min-h-0 overflow-hidden',
+                  moduleAssistantOpen && 'mr-0'
+                )}
+              >
+                <ErrorBoundary>
+                  <Suspense fallback={<ModuleLoadingFallback />}>
+                    <EmbeddedPMAWorkspace
+                      embedded={true}
+                      projectId={urlProjectId}
+                      projectName={activeProject?.name}
+                      onBackToProject={() => navigate(`/concept2cure/project/${urlProjectId}`)}
+                    />
+                  </Suspense>
+                </ErrorBoundary>
+              </div>
+
+              {/* Assistant toggle for PMA */}
+              {!moduleAssistantOpen && (
+                <button
+                  onClick={() => setModuleAssistantOpen(true)}
+                  className="flex-shrink-0 w-10 flex flex-col items-center justify-center gap-1 bg-zinc-50 hover:bg-zinc-100 border-l border-zinc-200 transition-colors"
+                  title="Open AI Assistant"
+                >
+                  <MessageSquare className="w-4 h-4 text-zinc-500" />
+                  <span
+                    className="text-[10px] text-zinc-400 writing-mode-vertical"
+                    style={{ writingMode: 'vertical-rl' }}
+                  >
+                    Assistant
+                  </span>
+                </button>
+              )}
+
+              {moduleAssistantOpen && (
+                <div
+                  className="flex-shrink-0 w-[380px] flex flex-col border-l border-zinc-200 bg-white"
+                >
+                  <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100 bg-zinc-50">
+                    <span className="text-sm font-medium text-zinc-700">AI Assistant</span>
+                    <button
+                      onClick={() => setModuleAssistantOpen(false)}
+                      className="p-1 rounded hover:bg-zinc-200 text-zinc-400 hover:text-zinc-600"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="flex-1 min-h-0 overflow-hidden">
+                    <ZenChat
+                      projectId={activeProjectId || urlProjectId}
+                      projectName={activeProject?.name}
+                      submissionType="PMA"
+                      threadId={activeThreadId}
+                      greeting="How can I help with your PMA submission?"
                       onNavigate={() => {}}
                       onNewProject={() => {}}
                       onThreadChange={handleThreadChange}
@@ -2728,6 +2885,57 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
+          {/* ── Platform Admin — API keys, users, billing, modules (Regulatory Command Center) ── */}
+          {!embeddedModule && layoutMode === 'platform-admin' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-platform-admin">
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
+                    </div>
+                  }
+                >
+                  <PlatformAdminPage />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── Biologics Dashboard — biologic/biosimilar pathway intelligence ── */}
+          {!embeddedModule && layoutMode === 'biologics-dashboard' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-biologics">
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
+                    </div>
+                  }
+                >
+                  <BiologicsDashboardPage />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── CTD Onboarding — client CTD ingestion wizard ── */}
+          {!embeddedModule && layoutMode === 'ctd-onboarding' && (
+            <div className="flex-1 flex flex-col min-h-0 p-6" data-testid="workspace-ctd-onboarding">
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
+                    </div>
+                  }
+                >
+                  <CTDOnboardingWizardPage onComplete={() => setLayoutMode('projects')} />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
           {/* ── Client Intelligence — company persona, document ingestion, memory ── */}
           {!embeddedModule && layoutMode === 'client-intelligence' && (
             <div
@@ -2782,6 +2990,42 @@ export const ZenApp: React.FC = () => {
                   />
                 </Suspense>
               </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── User Inbox — personal command center with worklist, approvals, alerts ── */}
+          {!embeddedModule && layoutMode === 'user-inbox' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-user-inbox">
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                    </div>
+                  }
+                >
+                  <UserInboxPage />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── Client Branding — logo, letterhead, templates ── */}
+          {!embeddedModule && layoutMode === 'client-branding' && (
+            <div className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-[#FAFAF9]" data-testid="workspace-client-branding">
+              <div className="p-6">
+                <ErrorBoundary>
+                  <Suspense
+                    fallback={
+                      <div className="flex-1 flex items-center justify-center">
+                        <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                      </div>
+                    }
+                  >
+                    <ClientBrandingSettings />
+                  </Suspense>
+                </ErrorBoundary>
+              </div>
             </div>
           )}
 
@@ -2851,6 +3095,9 @@ export const ZenApp: React.FC = () => {
           {/* ── Agent Hub — Agent Swarm showcase, setup, monitoring ── */}
           {!embeddedModule && layoutMode === 'agent-hub' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-agent-hub">
+          {/* Enterprise Integrations — connectors & API management */}
+          {!embeddedModule && layoutMode === 'integrations' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-integrations">
               <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
@@ -2867,6 +3114,11 @@ export const ZenApp: React.FC = () => {
                     {activeProject.name}
                   </span>
                 )}
+                  <span>Projects</span>
+                </button>
+                <span className="text-zinc-200">&middot;</span>
+                <Link2 className="w-3.5 h-3.5 text-blue-500" />
+                <span className="text-xs font-medium text-zinc-800">Integrations</span>
               </div>
               <ErrorBoundary>
                 <Suspense
@@ -2877,6 +3129,7 @@ export const ZenApp: React.FC = () => {
                   }
                 >
                   <AgentShowcasePage />
+                  <IntegrationsPage />
                 </Suspense>
               </ErrorBoundary>
             </div>
@@ -3135,6 +3388,33 @@ export const ZenApp: React.FC = () => {
                 }
               >
                 <IntelligentReportGenerator />
+              </Suspense>
+            </div>
+          )}
+
+          {/* ── Ana Dashboard — regulatory intelligence, gap analysis, change impact ── */}
+          {!embeddedModule && layoutMode === 'ana-dashboard' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-ana-dashboard">
+              <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-zinc-300" /></div>}>
+                <AnaDashboardPage projectId={activeProjectId} />
+              </Suspense>
+            </div>
+          )}
+
+          {/* ── Safety Narrative — ICH E3 §12 compliant narrative generation ── */}
+          {!embeddedModule && layoutMode === 'safety-narrative' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-safety-narrative">
+              <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-zinc-300" /></div>}>
+                <SafetyNarrativePage projectId={activeProjectId} />
+              </Suspense>
+            </div>
+          )}
+
+          {/* ── Ana Platform Control — agentic settings, modules, onboarding ── */}
+          {!embeddedModule && layoutMode === 'ana-platform-control' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-ana-platform-control">
+              <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-zinc-300" /></div>}>
+                <AnaPlatformControlPage />
               </Suspense>
             </div>
           )}

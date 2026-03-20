@@ -14,8 +14,6 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { v4 as uuidv4 } from 'uuid';
-import { getOpenAIClient } from '../../services/openai-client';
-
 // Rate limiter for document generation (more permissive)
 const docGenerationLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
@@ -33,13 +31,12 @@ const imageGenerationLimiter = rateLimit({
   legacyHeaders: false,
   message: 'Too many image generation requests, please try again after a minute',
 });
+import { ai } from '../../lib/unified-ai-client';
 
 // Create router
 const router = express.Router();
 
 // Get OpenAI client
-const openai = getOpenAIClient();
-
 // Get current directory
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 

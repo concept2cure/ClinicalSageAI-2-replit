@@ -1323,7 +1323,7 @@ router.get('/export', async (req, res) => {
       }
 
       // Add footer
-      doc.fontSize(10).text('© 2025 LumenTrialGuide.AI - Confidential & Proprietary', 100, 700);
+      doc.fontSize(10).text('© 2025 Concept2Cure - Confidential & Proprietary', 100, 700);
 
       // Finalize the PDF
       doc.end();
@@ -1456,7 +1456,7 @@ router.post('/upload-protocol', upload.single('file'), async (req, res) => {
     doc.text(`Verdict: ${confidence.verdict}`, 120, yPos);
 
     // Add footer
-    doc.fontSize(10).text('© 2025 LumenTrialGuide.AI - Confidential & Proprietary', 100, 700);
+    doc.fontSize(10).text('© 2025 Concept2Cure - Confidential & Proprietary', 100, 700);
 
     // Finalize the PDF
     doc.end();

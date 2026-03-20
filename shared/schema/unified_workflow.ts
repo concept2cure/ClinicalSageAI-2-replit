@@ -63,7 +63,7 @@ export const unifiedDocuments = pgTable('unified_documents', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedBy: text('updated_by'),
   updatedAt: timestamp('updated_at').defaultNow(),
-  organizationId: text('organization_id').notNull(),
+  organizationId: integer('organization_id').notNull(),
   latestVersion: integer('latest_version').notNull().default(1),
   metadata: json('metadata').$type<Record<string, any>>().default({}),
 }, table => ({
@@ -99,7 +99,7 @@ export const moduleDocuments = pgTable(
       .references(() => unifiedDocuments.id, { onDelete: 'cascade' }),
     moduleType: moduleTypeEnum('module_type').notNull(),
     originalId: text('original_id').notNull(),
-    organizationId: text('organization_id').notNull(),
+    organizationId: integer('organization_id').notNull(),
     metadata: json('metadata').$type<Record<string, any>>().default({}),
   },
   table => {
@@ -131,7 +131,7 @@ export const workflowTemplates = pgTable('workflow_templates', {
   name: text('name').notNull(),
   description: text('description'),
   moduleType: moduleTypeEnum('module_type').notNull(),
-  organizationId: text('organization_id').notNull(),
+  organizationId: integer('organization_id').notNull(),
   createdBy: text('created_by').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedBy: text('updated_by'),
@@ -170,7 +170,7 @@ export const documentWorkflows = pgTable('document_workflows', {
   completedAt: timestamp('completed_at'),
   rejectedBy: text('rejected_by'),
   rejectedAt: timestamp('rejected_at'),
-  organizationId: text('organization_id').notNull(),
+  organizationId: integer('organization_id').notNull(),
   metadata: json('metadata').$type<Record<string, any>>().default({}),
 }, table => ({
   orgStatusIdx: index('idx_doc_workflows_org_status').on(table.organizationId, table.status),

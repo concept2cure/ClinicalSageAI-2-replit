@@ -1,5 +1,5 @@
 /**
- * UI Utilities for LumenTrialGuide.AI
+ * UI Utilities for Concept2Cure
  *
  * This file contains utility functions for UI customization and layout management.
  */

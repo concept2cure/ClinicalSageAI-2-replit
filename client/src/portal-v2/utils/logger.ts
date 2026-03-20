@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Logging Utility
+ * Concept2Cure Client Portal V2 - Logging Utility
  *
  * Provides structured logging with compliance-aware filtering.
  * In production, logs are sent to the audit service.

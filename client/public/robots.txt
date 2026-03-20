@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /concept2cure/project/
+Disallow: /admin/
+Sitemap: https://concept2cure.com/sitemap.xml

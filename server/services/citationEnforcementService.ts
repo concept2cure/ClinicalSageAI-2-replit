@@ -23,13 +23,12 @@
  * @module server/services/citationEnforcementService
  * @version 1.0.0
  * @compliance 21 CFR Part 11
- * @author TrialSage AI Team
+ * @author Concept2Cure AI Team
  */
 
 import { Pool } from 'pg';
 import crypto from 'crypto';
-import type OpenAI from 'openai';
-import { getOpenAIClient } from './openai-client';
+import { ai } from '../lib/unified-ai-client';
 
 // ═══════════════════════════════════════════════════════════════════════════
 //                          TYPE DEFINITIONS
@@ -173,10 +172,6 @@ export class CitationEnforcementService {
     this.pool = pool;
 
     // Initialize OpenAI if available
-    try {
-      this.openai = getOpenAIClient();
-    } catch {}
-
     console.log('✅ Citation Enforcement Service initialized (Part 11 compliant)');
   }
 
@@ -470,7 +465,7 @@ Use ${options.citationFormat === 'bracketed' ? '[N]' : options.citationFormat ==
       };
     }
 
-    const response = await this.openai.chat.completions.create({
+    const response = await this.ai.chat({
       model: 'gpt-4o',
       messages: [
         {
@@ -485,7 +480,7 @@ Use ${options.citationFormat === 'bracketed' ? '[N]' : options.citationFormat ==
     });
 
     return {
-      text: response.choices[0]?.message?.content || '',
+      text: aiResult.content || '',
       model: response.model,
       promptTokens: response.usage?.prompt_tokens || 0,
       completionTokens: response.usage?.completion_tokens || 0,

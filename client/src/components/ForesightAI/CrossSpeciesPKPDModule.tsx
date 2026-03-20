@@ -26,7 +26,8 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { apiRequest } from '@/lib/queryClient';
+import { useQueryClient } from '@tanstack/react-query';
 import { ScatterChart, Scatter, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 
 interface SpeciesData {
@@ -42,6 +43,7 @@ interface SpeciesData {
 }
 
 export default function CrossSpeciesPKPDModule({ organizationId }: { organizationId: string }) {
+  const queryClient = useQueryClient();
   const [compoundId, setCompoundId] = useState('');
   const [compoundName, setCompoundName] = useState('');
   const [speciesDataList, setSpeciesDataList] = useState<SpeciesData[]>([
@@ -83,11 +85,8 @@ export default function CrossSpeciesPKPDModule({ organizationId }: { organizatio
 
   // Perform cross-species analysis
   const analysisMutation = useMutation({
-    mutationFn: (params: any) => 
-      apiRequest('/api/foresight-ai/pkpd/cross-species-analysis', {
-        method: 'POST',
-        body: JSON.stringify(params)
-      }),
+    mutationFn: (params: any) =>
+      apiRequest('POST', '/api/foresight-ai/pkpd/cross-species-analysis', params),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ 
         queryKey: ['/api/foresight-ai/pkpd/analyses'] 
@@ -482,7 +481,7 @@ export default function CrossSpeciesPKPDModule({ organizationId }: { organizatio
                   <Scatter 
                     name="Clearance" 
                     data={allometricData} 
-                    fill="#3b82f6"
+                    fill="#6a9bcc"
                   />
                 </ScatterChart>
               </ResponsiveContainer>
@@ -503,8 +502,8 @@ export default function CrossSpeciesPKPDModule({ organizationId }: { organizatio
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="cmax" fill="#8b5cf6" name="Cmax (μg/mL)" />
-                  <Bar dataKey="auc" fill="#3b82f6" name="AUC (μg·h/mL)" />
+                  <Bar dataKey="cmax" fill="#6a9bcc" name="Cmax (μg/mL)" />
+                  <Bar dataKey="auc" fill="#6a9bcc" name="AUC (μg·h/mL)" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>

@@ -411,7 +411,7 @@ Rationale:
 | Risk                                           | Severity | Evidence                                                                                              |
 | ---------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------- |
 | **Mock chat as hero feature**                  | CRITICAL | AskLumenCopilot returns hardcoded responses. If demoed, any non-canned question exposes the mock.     |
-| **4 brand names in codebase**                  | MEDIUM   | Concept2Cure, TrialSage, ClinicalSage, ClinicalSageAI all appear. Package.json says "clinicalsageai". |
+| **4 brand names in codebase**                  | MEDIUM   | Concept2Cure, TrialSage, Concept2Cure.RI, Concept2Cure.RI all appear. Package.json says "concept2cure-riai". |
 | **292 schema definitions vs 74 actual tables** | LOW      | Schema file has aspirational definitions beyond what's migrated.                                      |
 
 ### Compliance Risks
@@ -461,7 +461,7 @@ This platform is not a pile of disconnected experiments. It is a single, coheren
 6. Hide non-beta modules from sidebar (reduce 18 → 6–7 visible)
 7. Fix silent mock fallbacks — make evidence/academic/CSR search return clear "no data" instead of fake data
 8. Add Part 11 signature UI to 510(k) workflow (backend is done, needs frontend panel)
-9. Standardize branding to "Concept2Cure" everywhere — remove TrialSage, ClinicalSage, ClinicalSageAI references
+9. Standardize branding to "Concept2Cure" everywhere — remove TrialSage, Concept2Cure.RI, Concept2Cure.RI references
 10. Decompose CoAuthor.jsx into 6 files per its own TODO comment
 
 ## TOP 5 DECISIONS THE FOUNDER MUST MAKE NOW

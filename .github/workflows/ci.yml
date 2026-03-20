@@ -31,8 +31,6 @@ jobs:
         run: npm run lint
 
       - name: Run TypeScript check
-        # NOTE: Typecheck has 400+ pre-existing errors. Temporarily non-blocking until cleanup PR lands.
-        continue-on-error: true
         run: npm run typecheck
 
   test:
@@ -67,7 +65,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: ${{ env.TEST_DB_PASSWORD }}
-          POSTGRES_DB: clinicalsage_test
+          POSTGRES_DB: concept2cure-ri_test
         ports:
           - 5432:5432
         options: >-
@@ -96,14 +94,14 @@ jobs:
             PAGER=cat psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$migration"
           done
         env:
-          DATABASE_URL: postgresql://postgres:${{ env.TEST_DB_PASSWORD }}@localhost:5432/clinicalsage_test
+          DATABASE_URL: postgresql://postgres:${{ env.TEST_DB_PASSWORD }}@localhost:5432/concept2cure-ri_test
 
       - name: Run integration tests
         run: npm test -- --passWithNoTests
         env:
           CI: true
           RUN_INTEGRATION_TESTS: 'true'
-          TEST_DATABASE_URL: postgresql://postgres:${{ env.TEST_DB_PASSWORD }}@localhost:5432/clinicalsage_test
+          TEST_DATABASE_URL: postgresql://postgres:${{ env.TEST_DB_PASSWORD }}@localhost:5432/concept2cure-ri_test
 
   build:
     name: Build
@@ -145,7 +143,6 @@ jobs:
         run: npm install
 
       - name: Run npm audit
-        continue-on-error: true
         run: npm audit --audit-level=high
 
       - name: Trivy filesystem scan (deps + secrets)
@@ -200,7 +197,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-            -Dsonar.projectKey=concept2cure_ClinicalSageAI-2-replit
+            -Dsonar.projectKey=concept2cure_Concept2Cure.RI-2-replit
             -Dsonar.organization=concept2cure
             -Dsonar.sources=server,client/src,shared
             -Dsonar.exclusions=**/node_modules/**,**/coverage/**,**/dist/**,**/*.test.ts,**/*.test.tsx,**/_archive/**,**/_deprecated_migrations/**

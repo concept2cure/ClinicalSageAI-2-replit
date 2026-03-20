@@ -87,17 +87,36 @@ class UnifiedAIClient {
    * Complete a prompt and return just the text content.
    * Simplest API — drop-in replacement for `openai.chat.completions.create()`.
    */
-  async complete(messages: MessageInput, options?: AICompletionOptions): Promise<string> {
+  async complete(messages: MessageInput | Record<string, any>, options?: AICompletionOptions): Promise<string> {
     const response = await this.chat(messages, options);
     return response.content;
   }
 
   /**
    * Complete a prompt and return the full gateway response.
+   *
+   * Supports two calling conventions:
+   * 1. ai.chat(messages, options)           — preferred
+   * 2. ai.chat({ messages, model, ... })    — OpenAI-compatible (legacy migration)
    */
-  async chat(messages: MessageInput, options?: AICompletionOptions): Promise<ClaudeEnhancedResponse> {
+  async chat(messages: MessageInput | Record<string, any>, options?: AICompletionOptions): Promise<ClaudeEnhancedResponse> {
+    // Handle OpenAI-compatible single-object argument: ai.chat({ model, messages, temperature, ... })
+    if (messages && !Array.isArray(messages) && typeof messages === 'object' && 'messages' in messages) {
+      const obj = messages as Record<string, any>;
+      const extractedMessages = obj.messages as MessageInput;
+      const extractedOptions: AICompletionOptions = {
+        ...options,
+        temperature: obj.temperature ?? options?.temperature,
+        maxTokens: obj.max_tokens ?? obj.maxTokens ?? options?.maxTokens,
+        jsonMode: obj.response_format?.type === 'json_object' || options?.jsonMode,
+        callerModule: options?.callerModule,
+        taskType: options?.taskType,
+      };
+      return this.chat(extractedMessages, extractedOptions);
+    }
+
     const gateway = getGateway();
-    const normalizedMessages = this.normalizeMessages(messages);
+    const normalizedMessages = this.normalizeMessages(messages as MessageInput);
 
     const request: GatewayRequest = {
       taskType: options?.taskType || 'general',

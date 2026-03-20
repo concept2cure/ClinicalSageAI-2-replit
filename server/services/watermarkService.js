@@ -24,7 +24,7 @@ class WatermarkService {
       fontSize: 24,
       opacity: 0.3,
       angle: -45, // Diagonal watermark by default
-      color: '#FF007F', // Hot pink
+      color: '#d97757', // Concept2Cure terracotta
       repeat: true, // Repeat watermark across the document
       spacing: 150, // Spacing between watermarks when repeated
       margin: 50, // Margin from the edges

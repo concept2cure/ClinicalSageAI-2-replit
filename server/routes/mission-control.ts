@@ -43,6 +43,7 @@ const store = {
   reviewCycles: new Map<number, any>(),
   riskSignals: new Map<number, any>(),
   collaboration: new Map<number, any>(),
+  approvalRequests: new Map<number, any>(),
   authorityInteractions: new Map<number, any>(),
   provenance: [] as any[],
   nextId: 1,
@@ -143,6 +144,150 @@ function seedDemoData() {
     store.decisionRecords.set(did, {
       id: did, organizationId: 1, programId: p1, ...tpl,
       createdById: 1, createdAt: new Date(), updatedAt: new Date(),
+    });
+  });
+
+  // Collaboration threads — realistic regulatory review discussions
+  const collabTemplates = [
+    {
+      targetType: 'artifact', targetId: 5, // ART-001 Cover Letter
+      type: 'comment', body: 'Cover letter has been updated to reflect the revised formulation change in Module 3. Ready for final RA review.',
+      author: 'Sarah Chen', role: 'Regulatory Lead', visibility: 'internal', priority: 'normal',
+    },
+    {
+      targetType: 'artifact', targetId: 6, // ART-002 Quality Overall Summary
+      type: 'review_note', body: 'QOS Section 2.3.S — Drug substance characterization references outdated batch data. Please update to reflect Q3 2025 stability results.',
+      author: 'Dr. James Whitfield', role: 'CMC Reviewer', visibility: 'internal', priority: 'high',
+    },
+    {
+      targetType: 'artifact', targetId: 6,
+      type: 'comment', body: 'Updated per review note. Stability data now reflects 36-month ICH conditions. Tables 2.3.S.7 and 2.3.S.8 revised.',
+      author: 'Maria Gonzalez', role: 'CMC Author', visibility: 'internal', priority: 'normal',
+    },
+    {
+      targetType: 'artifact', targetId: 7, // ART-003 Clinical Overview
+      type: 'question', body: 'Should we include the post-hoc subgroup analysis from Study 201 in the Clinical Overview, or reserve it for the Clinical Summary?',
+      author: 'Dr. Raj Patel', role: 'Medical Writer', visibility: 'internal', priority: 'normal',
+    },
+    {
+      targetType: 'artifact', targetId: 7,
+      type: 'comment', body: 'Include a brief summary in the Overview and the detailed analysis in Module 2.7 Clinical Summary. This is consistent with FDA expectations for NDA-level submissions.',
+      author: 'Sarah Chen', role: 'Regulatory Lead', visibility: 'internal', priority: 'normal',
+    },
+    {
+      targetType: 'artifact', targetId: 8, // ART-004 Clinical Summary
+      type: 'change_request', body: 'Requesting addition of Kaplan-Meier survival curves for the ITT population. The current draft only includes the per-protocol analysis.',
+      author: 'Dr. Emily Nakamura', role: 'Biostatistician', visibility: 'internal', priority: 'high',
+    },
+    {
+      targetType: 'artifact', targetId: 10, // ART-006 Drug Product
+      type: 'review_note', body: 'Dissolution profile data in Section 3.2.P.5.3 shows batch-to-batch variability exceeding 15%. Flag for CMC team.',
+      author: 'Dr. James Whitfield', role: 'CMC Reviewer', visibility: 'internal', priority: 'high',
+    },
+    {
+      targetType: 'artifact', targetId: 14, // ART-010 IB
+      type: 'escalation', body: 'IB review has exceeded the 10-day SLA by 8 days. Escalating to Program Director for resolution. Three reviewer comments remain unaddressed.',
+      author: 'Michael Torres', role: 'Program Manager', visibility: 'internal', priority: 'high',
+    },
+    {
+      targetType: 'artifact', targetId: 16, // ART-012 Risk Management Plan
+      type: 'question', body: 'Does the Division expect a REMS proposal with the initial NDA submission, or can we defer to the post-marketing commitment?',
+      author: 'Dr. Aisha Williams', role: 'Pharmacovigilance Lead', visibility: 'sponsor', priority: 'high',
+    },
+    {
+      targetType: 'artifact', targetId: 5,
+      type: 'comment', body: 'Final RA review complete. Cover letter is approved for assembly. No further edits required.',
+      author: 'Sarah Chen', role: 'Regulatory Lead', visibility: 'internal', priority: 'normal',
+    },
+    {
+      targetType: 'artifact', targetId: 11, // ART-007 Study 301 CSR
+      type: 'comment', body: 'Study 301 CSR has been finalized and locked. All TLFs verified against SAP specifications. QC sign-off obtained.',
+      author: 'Dr. Raj Patel', role: 'Medical Writer', visibility: 'internal', priority: 'normal',
+    },
+    {
+      targetType: 'artifact', targetId: 7,
+      type: 'change_request', body: 'FDA Oncology Division guidance from 2025 recommends including patient-reported outcomes (PRO) summary in Clinical Overview. Adding Section 2.5.4.7.',
+      author: 'Sarah Chen', role: 'Regulatory Lead', visibility: 'internal', priority: 'normal',
+    },
+  ];
+
+  collabTemplates.forEach((tpl, i) => {
+    const cid = nextId();
+    store.collaboration.set(cid, {
+      id: cid, organizationId: 1, programId: p1, ...tpl,
+      status: tpl.type === 'escalation' ? 'open' : (i % 3 === 0 ? 'resolved' : 'open'),
+      resolvedAt: i % 3 === 0 ? new Date(Date.now() - 86400000) : null,
+      createdAt: new Date(Date.now() - ((collabTemplates.length - i) * 7200000)),
+      updatedAt: new Date(Date.now() - ((collabTemplates.length - i) * 7200000)),
+    });
+  });
+
+  // Approval requests — manager authorization workflow
+  const approvalTemplates = [
+    {
+      artifactId: 6, // ART-002 Quality Overall Summary
+      requestType: 'document_approval',
+      title: 'Approve Module 2.3 QOS for submission assembly',
+      description: 'Quality Overall Summary has completed CMC review cycle. Requires Regulatory Lead sign-off before submission gate.',
+      requestedBy: 'Maria Gonzalez', requestedByRole: 'CMC Author',
+      assignedTo: 'Sarah Chen', assignedToRole: 'Regulatory Lead',
+      priority: 'high', status: 'pending',
+      dueDate: new Date(Date.now() + 3 * 86400000).toISOString(),
+    },
+    {
+      artifactId: 14, // ART-010 IB
+      requestType: 'escalation_approval',
+      title: 'Authorize extended IB review timeline',
+      description: 'IB v4.2 review has exceeded SLA by 8 days. Requesting Program Director authorization to extend review period by 5 business days.',
+      requestedBy: 'Michael Torres', requestedByRole: 'Program Manager',
+      assignedTo: 'Dr. Patricia Wells', assignedToRole: 'Program Director',
+      priority: 'critical', status: 'pending',
+      dueDate: new Date(Date.now() + 1 * 86400000).toISOString(),
+    },
+    {
+      artifactId: 7, // ART-003 Clinical Overview
+      requestType: 'change_approval',
+      title: 'Approve addition of PRO summary to Clinical Overview',
+      description: 'Per new FDA Oncology Division guidance, proposing to add patient-reported outcomes (PRO) section 2.5.4.7. Requires Clinical Lead authorization.',
+      requestedBy: 'Sarah Chen', requestedByRole: 'Regulatory Lead',
+      assignedTo: 'Dr. Raj Patel', assignedToRole: 'Clinical Lead',
+      priority: 'medium', status: 'pending',
+      dueDate: new Date(Date.now() + 5 * 86400000).toISOString(),
+    },
+    {
+      artifactId: 10, // ART-006 Drug Product
+      requestType: 'deviation_approval',
+      title: 'Approve dissolution variability deviation report',
+      description: 'Batch-to-batch dissolution variability in 3.2.P.5.3 exceeds 15% threshold. CMC team proposes tightened manufacturing controls. QA Head sign-off required.',
+      requestedBy: 'Dr. James Whitfield', requestedByRole: 'CMC Reviewer',
+      assignedTo: 'Dr. Linda Park', assignedToRole: 'QA Head',
+      priority: 'high', status: 'approved',
+      decision: 'approved', decisionBy: 'Dr. Linda Park',
+      decisionComment: 'Approved with condition: manufacturing controls must be implemented and validated before next production batch.',
+      decisionAt: new Date(Date.now() - 2 * 86400000).toISOString(),
+      dueDate: new Date(Date.now() - 1 * 86400000).toISOString(),
+    },
+    {
+      artifactId: 16, // ART-012 Risk Management Plan
+      requestType: 'document_approval',
+      title: 'Authorize REMS strategy deferral to post-marketing',
+      description: 'Pharmacovigilance recommends deferring full REMS proposal to post-marketing Phase IV commitment. Requires Regulatory Affairs VP authorization.',
+      requestedBy: 'Dr. Aisha Williams', requestedByRole: 'Pharmacovigilance Lead',
+      assignedTo: 'Dr. Robert Kinsey', assignedToRole: 'VP Regulatory Affairs',
+      priority: 'high', status: 'rejected',
+      decision: 'rejected', decisionBy: 'Dr. Robert Kinsey',
+      decisionComment: 'Rejected: Division has historically required REMS proposal at NDA submission for oncology products with known hepatotoxicity. Revise to include preliminary REMS framework.',
+      decisionAt: new Date(Date.now() - 1 * 86400000).toISOString(),
+      dueDate: new Date(Date.now() - 3 * 86400000).toISOString(),
+    },
+  ];
+
+  approvalTemplates.forEach(tpl => {
+    const aid = nextId();
+    store.approvalRequests.set(aid, {
+      id: aid, organizationId: 1, programId: p1, ...tpl,
+      createdAt: new Date(Date.now() - (5 - approvalTemplates.indexOf(tpl)) * 86400000),
+      updatedAt: new Date(),
     });
   });
 
@@ -712,6 +857,117 @@ router.put('/collaboration/:id', (req: Request, res: Response) => {
     item.resolvedAt = new Date();
   }
   store.collaboration.set(id, item);
+  res.json({ data: item });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// APPROVAL REQUESTS — Accept/Deny/Delegate authorization chains
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.get('/approval-requests', (req: Request, res: Response) => {
+  const { programId, status } = req.query;
+  let items = Array.from(store.approvalRequests.values())
+    .filter(a => a.organizationId === getOrgId(req));
+  if (programId) items = items.filter(a => a.programId === parseInt(programId as string));
+  if (status) items = items.filter(a => a.status === status);
+  // Sort pending first, then by priority
+  const priorityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+  items.sort((a, b) => {
+    if (a.status === 'pending' && b.status !== 'pending') return -1;
+    if (a.status !== 'pending' && b.status === 'pending') return 1;
+    return (priorityOrder[a.priority] || 3) - (priorityOrder[b.priority] || 3);
+  });
+  res.json({ data: items });
+});
+
+router.post('/approval-requests', (req: Request, res: Response) => {
+  const id = nextId();
+  const item = {
+    id,
+    organizationId: getOrgId(req),
+    requestedById: getUserId(req),
+    ...req.body,
+    status: 'pending',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+  store.approvalRequests.set(id, item);
+  logProvenance(getOrgId(req), item.programId, 'approval', id, 'requested', getUserId(req));
+  res.status(201).json({ data: item });
+});
+
+router.post('/approval-requests/:id/decide', (req: Request, res: Response) => {
+  const id = parseInt(req.params.id);
+  const item = store.approvalRequests.get(id);
+  if (!item) return res.status(404).json({ error: 'Approval request not found' });
+  if (item.status !== 'pending') {
+    return res.status(400).json({ error: `Request already ${item.status}` });
+  }
+
+  const { decision, comment } = req.body;
+  if (!decision || !['approved', 'rejected'].includes(decision)) {
+    return res.status(400).json({ error: 'decision must be "approved" or "rejected"' });
+  }
+
+  item.status = decision;
+  item.decision = decision;
+  item.decisionBy = req.body.decisionBy || `User ${getUserId(req)}`;
+  item.decisionComment = comment || '';
+  item.decisionAt = new Date().toISOString();
+  item.updatedAt = new Date();
+
+  store.approvalRequests.set(id, item);
+  logProvenance(getOrgId(req), item.programId, 'approval', id, decision, getUserId(req), { comment });
+
+  // Also add a collaboration thread for the decision
+  const collabId = nextId();
+  store.collaboration.set(collabId, {
+    id: collabId,
+    organizationId: item.organizationId,
+    programId: item.programId,
+    targetType: 'artifact',
+    targetId: item.artifactId,
+    type: decision === 'approved' ? 'comment' : 'change_request',
+    body: `[${decision.toUpperCase()}] ${item.title}\n\n${comment || 'No comment provided.'}`,
+    author: item.decisionBy,
+    role: item.assignedToRole,
+    visibility: 'internal',
+    priority: decision === 'rejected' ? 'high' : 'normal',
+    status: 'open',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+
+  res.json({ data: item });
+});
+
+router.post('/approval-requests/:id/delegate', (req: Request, res: Response) => {
+  const id = parseInt(req.params.id);
+  const item = store.approvalRequests.get(id);
+  if (!item) return res.status(404).json({ error: 'Approval request not found' });
+  if (item.status !== 'pending') {
+    return res.status(400).json({ error: `Request already ${item.status}` });
+  }
+
+  const { delegateTo, delegateToRole, reason } = req.body;
+  if (!delegateTo) {
+    return res.status(400).json({ error: 'delegateTo is required' });
+  }
+
+  const previousAssignee = item.assignedTo;
+  item.assignedTo = delegateTo;
+  item.assignedToRole = delegateToRole || item.assignedToRole;
+  item.delegatedFrom = previousAssignee;
+  item.delegationReason = reason;
+  item.updatedAt = new Date();
+
+  store.approvalRequests.set(id, item);
+  logProvenance(getOrgId(req), item.programId, 'approval', id, 'delegated', getUserId(req), {
+    from: previousAssignee,
+    to: delegateTo,
+    reason,
+  });
+
   res.json({ data: item });
 });
 

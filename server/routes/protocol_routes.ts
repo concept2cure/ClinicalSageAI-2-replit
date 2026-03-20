@@ -673,7 +673,22 @@ function calculateOverallScore(indication: string, phase: string, csrCount: numb
   // Add some randomness for demo purposes
   return Math.min(95, Math.max(65, baseScore + (Math.random() * 10 - 5)));
 }
-const upload = multer({ dest: 'uploads/' });
+const upload = multer({
+  dest: 'uploads/',
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50 MB max
+    files: 1,
+  },
+  fileFilter: (_req: any, file: any, cb: any) => {
+    const allowed = ['.pdf', '.docx', '.doc', '.xlsx', '.csv', '.txt', '.xml', '.json'];
+    const ext = '.' + file.originalname.split('.').pop()?.toLowerCase();
+    if (allowed.includes(ext)) {
+      cb(null, true);
+    } else {
+      cb(new Error(`File type ${ext} not allowed. Accepted: ${allowed.join(', ')}`));
+    }
+  },
+});
 
 // Upload and analyze protocol file
 router.post('/analyze-file', upload.single('file'), async (req, res) => {

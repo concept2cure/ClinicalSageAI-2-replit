@@ -2,7 +2,7 @@
 
 **Date**: 2026-03-18
 **Scope**: Post-implementation audit plan for account/runtime/context architecture
-**Platform**: ClinicalSageAI (Concept2Cure)
+**Platform**: Concept2Cure.RI (Concept2Cure)
 
 ---
 

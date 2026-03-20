@@ -7,7 +7,7 @@
  * - Device Component (11 hierarchical types)
  * 
  * Features:
- * - AI-powered intelligent tagging using OpenAI
+ * - AI-powered intelligent tagging using Claude
  * - Deep search capabilities with pgvector
  * - Auto-citation integration for Document Editor
  * - 21 CFR Part 11 compliant audit logging
@@ -28,8 +28,7 @@ import {
 } from '../../shared/schema.js';
 import { eq, and, or, inArray, like, sql, desc, asc, isNull } from 'drizzle-orm';
 import part11ComplianceService from './part11ComplianceService.js';
-import { getOpenAIClient } from './openai-client';
-import OpenAI from 'openai';
+import { ai } from '../lib/unified-ai-client';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs/promises';
@@ -37,14 +36,7 @@ import crypto from 'crypto';
 import pdfParse from 'pdf-parse';
 import mammoth from 'mammoth';
 
-// Initialize OpenAI for intelligent tagging (if available)
-let openai: OpenAI | null = null;
-try {
-  openai = getOpenAIClient();
-  console.log('✅ OpenAI configured for intelligent tagging');
-} catch {
-  console.log('⚠️ OpenAI API key not found - using fallback keyword-based tagging');
-}
+// AI-powered intelligent tagging available via unified client
 
 // Define FDA 510(k) categories with descriptions
 const FDA_510K_CATEGORIES = {
@@ -289,12 +281,6 @@ class DocumentDataCenterService {
     suggestedTags: string[];
     confidence: number;
   }> {
-    // If OpenAI is not configured, use keyword-based tagging
-    if (!openai) {
-      console.log('Using keyword-based tagging (OpenAI not available)');
-      return this.generateKeywordBasedTags(content, fileName);
-    }
-    
     try {
       const prompt = `Analyze this medical device regulatory document and provide categorization:
       
@@ -325,21 +311,24 @@ class DocumentDataCenterService {
         "confidence": 0.85
       }`;
 
-      const response = await openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages: [
+      const aiResult = await ai.chat(
+        [
           {
             role: 'system',
             content: 'You are an expert FDA regulatory consultant specializing in 510(k) submissions. Analyze documents and provide accurate categorization based on FDA requirements.',
           },
           { role: 'user', content: prompt }
         ],
-        response_format: { type: 'json_object' },
-        temperature: 0.3,
-        max_tokens: 1000,
-      });
+        {
+          taskType: 'document_analysis',
+          jsonMode: true,
+          temperature: 0.3,
+          maxTokens: 1000,
+          callerModule: 'DocumentDataCenterService',
+        }
+      );
 
-      const result = JSON.parse(response.choices[0].message.content || '{}');
+      const result = JSON.parse(aiResult.content || '{}');
       
       return {
         categories: result.categories || [],

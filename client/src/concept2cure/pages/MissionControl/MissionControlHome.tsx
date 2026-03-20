@@ -112,7 +112,7 @@ function ReadinessRadar({ readiness, className }: { readiness: Record<string, nu
                 <path
                   d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                   fill="none"
-                  stroke={color === 'emerald' ? '#10b981' : color === 'amber' ? '#f59e0b' : '#ef4444'}
+                  stroke={color === 'emerald' ? '#788c5d' : color === 'amber' ? '#f59e0b' : '#ef4444'}
                   strokeWidth="3"
                   strokeDasharray={`${value}, 100`}
                 />
@@ -281,7 +281,7 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
 
   if (loadingPrograms) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-[#FAFAF9]">
+      <div className="flex-1 flex items-center justify-center bg-[#faf9f5]">
         <Loader2 className="w-8 h-8 animate-spin text-violet-500" />
       </div>
     );
@@ -290,7 +290,7 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
   // No programs — show creation flow
   if (programs.length === 0 || showCreate) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-[#FAFAF9] p-8">
+      <div className="flex-1 flex items-center justify-center bg-[#faf9f5] p-8">
         <CreateProgramPanel onCreated={(id) => {
           setSelectedProgramId(id);
           setShowCreate(false);
@@ -300,7 +300,7 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-[#FAFAF9] overflow-hidden">
+    <div className="flex-1 flex flex-col bg-[#faf9f5] overflow-hidden">
       {/* ── Top Bar: Program Selector + Confidence ─────────────────── */}
       <div className="border-b bg-white px-6 py-3 flex items-center gap-4">
         <div className="flex items-center gap-2">

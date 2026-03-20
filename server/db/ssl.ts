@@ -32,6 +32,12 @@ export const shouldUseSsl = (
 export const getSslConfig = (
   connectionString?: string,
   nodeEnv?: string
-): { rejectUnauthorized: false } | false => {
-  return shouldUseSsl(connectionString, nodeEnv) ? { rejectUnauthorized: false } : false;
+): { rejectUnauthorized: boolean } | false => {
+  if (!shouldUseSsl(connectionString, nodeEnv)) {
+    return false;
+  }
+  // In production, verify SSL certificates to prevent MITM attacks.
+  // In development, allow self-signed certs for local Postgres/tunnels.
+  const isProduction = (nodeEnv || process.env.NODE_ENV) === 'production';
+  return { rejectUnauthorized: isProduction };
 };

@@ -1,5 +1,5 @@
 /**
- * TrialSage Client-Side Security Module
+ * Concept2Cure Client-Side Security Module
  *
  * This module provides client-side security features including:
  * - Encrypted storage for sensitive data
@@ -198,7 +198,7 @@ export function generateContentHash(content) {
 export function encryptData(data, key = getCookie('encryption_key')) {
   if (!key) {
     // Use a default key if none is provided (not recommended for production)
-    key = 'TrialSage_Secure_Default_Key';
+    key = 'Concept2Cure_Secure_Default_Key';
   }
 
   return CryptoJS.AES.encrypt(JSON.stringify(data), key).toString();
@@ -210,7 +210,7 @@ export function encryptData(data, key = getCookie('encryption_key')) {
 export function decryptData(encryptedData, key = getCookie('encryption_key')) {
   if (!key) {
     // Use a default key if none is provided (not recommended for production)
-    key = 'TrialSage_Secure_Default_Key';
+    key = 'Concept2Cure_Secure_Default_Key';
   }
 
   try {

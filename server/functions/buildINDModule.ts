@@ -158,7 +158,7 @@ export async function buildINDModuleDraft(input: INDModuleInput): Promise<INDMod
 
   try {
     // Call GPT-4 with the prepared evidence
-    const completion = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4o', // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       messages: [
         { role: 'system', content: systemPrompt },
@@ -172,7 +172,7 @@ export async function buildINDModuleDraft(input: INDModuleInput): Promise<INDMod
     });
 
     // Extract and parse response
-    const moduleText = completion.choices[0].message.content;
+    const moduleText = aiResult.content;
 
     // Extract subsections (assuming markdown H2 for subsections)
     const subsectionRegex = /## ([^\n]+)\n([\s\S]*?)(?=## |$)/g;
@@ -196,7 +196,7 @@ export async function buildINDModuleDraft(input: INDModuleInput): Promise<INDMod
       ${moduleText.substring(0, 3000)}
     `;
 
-    const improvementCompletion = await openai.chat.completions.create({
+    const improvementCompletion = await ai.chat({
       model: 'gpt-4o', // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       messages: [
         {

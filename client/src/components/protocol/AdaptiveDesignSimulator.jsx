@@ -271,7 +271,7 @@ const AdaptiveDesignSimulator = () => {
                   L 75,${100 - data.powerByEffect[3].power * 100}
                   L 100,${100 - data.powerByEffect[4].power * 100}
                 `}
-                stroke="#3b82f6"
+                stroke="#6a9bcc"
                 strokeWidth="2"
                 fill="none"
               />
@@ -280,7 +280,7 @@ const AdaptiveDesignSimulator = () => {
               {data.powerByEffect.map((point, index) => {
                 const x = index * 25;
                 const y = 100 - point.power * 100;
-                return <circle key={index} cx={x} cy={y} r="2" fill="#3b82f6" />;
+                return <circle key={index} cx={x} cy={y} r="2" fill="#6a9bcc" />;
               })}
             </svg>
           </div>

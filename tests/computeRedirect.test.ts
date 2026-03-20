@@ -32,10 +32,10 @@ describe('computeRedirect', () => {
     expect(redirect).toBe('/client-portal/dashboard');
   });
 
-  it('prefers organization membership to client portal', () => {
+  it('sends org members without client role to concept2cure dashboard', () => {
     const user = { organizationId: 'org_123' } as any;
     const redirect = computeRedirect('', user);
-    expect(redirect).toBe('/client-portal');
+    expect(redirect).toBe('/concept2cure');
   });
 
   it('uses role-based client redirect for client_user/client_admin', () => {

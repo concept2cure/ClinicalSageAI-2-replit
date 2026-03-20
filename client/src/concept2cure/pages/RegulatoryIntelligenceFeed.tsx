@@ -676,7 +676,7 @@ const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#FAFAF9' }}>
       {/* ===================== HEADER ===================== */}
-      <header className="sticky top-0 z-30 border-b border-zinc-100 bg-[#FAFAF9]/80 backdrop-blur-md">
+      <header className="sticky top-0 z-30 border-b border-zinc-100 bg-[#faf9f5]/80 backdrop-blur-md">
         <div className="max-w-[1440px] mx-auto px-6 py-4">
           {/* Title row */}
           <div className="flex items-center justify-between mb-4">

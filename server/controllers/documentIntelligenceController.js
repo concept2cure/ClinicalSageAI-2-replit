@@ -263,9 +263,7 @@ async function extractStructuredData(content, documentType) {
       throw err;
     }
 
-    const { getOpenAIClient } = require('../services/openai-client');
-    const openai = getOpenAIClient();
-
+    const { ai } = require('../lib/unified-ai-client');
     // If content is very large, truncate it (OpenAI has token limits)
     let processedContent = content;
     const maxContentLength = 100000; // About 25k tokens
@@ -289,7 +287,7 @@ async function extractStructuredData(content, documentType) {
     ];
 
     // Make API call to OpenAI
-    const response = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4o', // Use the newest model for best extraction results
       messages,
       temperature: 0.1, // Low temperature for more precise extraction
@@ -298,7 +296,7 @@ async function extractStructuredData(content, documentType) {
     });
 
     // Extract and parse the response
-    const responseContent = response.choices[0].message.content;
+    const responseContent = aiResult.content;
     const parsedData = JSON.parse(responseContent);
 
     logger.info('Structured data extraction complete', {

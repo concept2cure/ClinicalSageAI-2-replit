@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Electronic Signature Component Tests
+ * Concept2Cure Client Portal V2 - Electronic Signature Component Tests
  *
  * Test coverage for ElectronicSignature component including:
  * - Signature flow (password → MFA → confirmation)

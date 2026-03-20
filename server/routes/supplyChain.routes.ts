@@ -8,8 +8,8 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { db } from '../db';
-import { supplyChainBatches, deviations, auditEvents } from '../../shared/schema';
-import { eq, and } from 'drizzle-orm';
+import { supplyChainBatches, supplyChainSuppliers, deviations, auditEvents } from '../../shared/schema';
+import { eq, and, desc } from 'drizzle-orm';
 import { createInsertSchema } from 'drizzle-zod';
 
 const router = Router();
@@ -482,7 +482,7 @@ router.post('/batches/:id/release', async (req, res) => {
         eventType: 'batch_release',
         entityType: 'batch',
         entityId: batchId,
-        userId: null, // TODO: Get from auth middleware
+        userId: (req as any).user?.id || (req as any).user?.userId || null,
         userName: qpUserId,
         userRole: 'QP',
         timestamp: timestamp,
@@ -872,15 +872,17 @@ router.post('/deviations/:id/capa', async (req, res) => {
 // GET /api/supply-chain/suppliers
 router.get('/suppliers', async (req, res) => {
   try {
-    const { organizationId = 7 } = req.query;
-    
-    // For now, return mock data with standardized structure
-    // TODO: Replace with database query when supplier schema is ready
-    const suppliers = mockSuppliers.map(supplier => ({
-      ...supplier,
-      organizationId: parseInt(organizationId)
-    }));
-    
+    const organizationId = parseInt(req.query.organizationId as string) || (req as any).user?.organizationId;
+    if (!organizationId) {
+      return res.status(400).json({ success: false, error: 'organizationId required' });
+    }
+
+    const suppliers = await db
+      .select()
+      .from(supplyChainSuppliers)
+      .where(eq(supplyChainSuppliers.organizationId, organizationId))
+      .orderBy(desc(supplyChainSuppliers.createdAt));
+
     res.json({
       success: true,
       data: suppliers,
