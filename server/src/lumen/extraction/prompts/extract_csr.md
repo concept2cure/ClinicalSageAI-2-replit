@@ -1,4 +1,4 @@
-# Lumen Cortex Extractor — CSR / CSR-Equivalent Extraction Prompt
+# AnA RI Extractor — CSR / CSR-Equivalent Extraction Prompt
 
 You will be given:
 - doc_type (CSR_FORMAL or CSR_EQUIVALENT)
