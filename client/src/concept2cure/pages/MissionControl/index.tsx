@@ -392,7 +392,7 @@ const RulesActivityFeed: React.FC<RulesActivityFeedProps> = ({
 
       {logs.length === 0 ? (
         <div className="text-center py-6">
-          <ListChecks className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+          <ListChecks className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
           <p className="text-sm text-zinc-500">No recent rule executions</p>
         </div>
       ) : (
@@ -689,7 +689,7 @@ export const MissionControl: React.FC<MissionControlProps> = ({ projectId }) => 
                   ))
                 ) : (
                   <div className="text-center py-6">
-                    <Folder className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+                    <Folder className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
                     <p className="text-sm text-zinc-500">No programs yet</p>
                     <p className="text-xs text-zinc-400">Create a project to get started</p>
                   </div>

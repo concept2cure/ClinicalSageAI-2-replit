@@ -364,7 +364,7 @@ export const ReviewCommandCenter: React.FC<ReviewCommandCenterProps> = ({
                   <button
                     onClick={handleAddComment}
                     disabled={!newComment.trim()}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-50"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-60"
                   >
                     <Send className="w-3.5 h-3.5" />
                     Send

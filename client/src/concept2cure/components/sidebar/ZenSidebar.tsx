@@ -100,7 +100,7 @@ const WorkspaceGroup: React.FC<{
       <button
         onClick={() => setOpen(o => !o)}
         aria-expanded={open}
-        className="w-full flex items-center gap-1.5 px-3 py-2 text-[11px] font-semibold text-zinc-500 uppercase tracking-wider hover:text-zinc-300 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded transition-colors"
+        className="w-full flex items-center gap-1.5 px-3 py-2 text-[11px] font-semibold text-zinc-500 uppercase tracking-wider hover:text-zinc-400 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded transition-colors"
       >
         <ChevronDown
           className={cn(
@@ -391,7 +391,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           <button
             onClick={onToggleCollapse}
             aria-label="Collapse sidebar"
-            className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-300 hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+            className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-400 hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>

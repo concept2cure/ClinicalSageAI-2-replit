@@ -395,7 +395,7 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
             {filteredMemories.length === 0 && memories.length === 0 ? (
               /* Empty State */
               <div className="rounded-xl border border-zinc-200 bg-white p-10 text-center">
-                <Brain className="mx-auto h-10 w-10 text-zinc-300 mb-4" />
+                <Brain className="mx-auto h-10 w-10 text-zinc-400 mb-4" />
                 <p className="text-sm text-zinc-600 max-w-md mx-auto leading-relaxed">
                   AnA doesn't have any memories for this project yet. As you
                   work together, she'll learn your preferences and project
@@ -462,7 +462,7 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
                         <button
                           onClick={() => deleteMemory(memory.id)}
                           disabled={isDeleting}
-                          className="opacity-0 group-hover:opacity-100 rounded-lg p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 transition-all disabled:opacity-50"
+                          className="opacity-0 group-hover:opacity-100 rounded-lg p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 transition-all disabled:opacity-60"
                           title="Remove memory"
                         >
                           {isDeleting ? (

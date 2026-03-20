@@ -403,7 +403,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                         .replace('Create ', '')
                         .replace('Draft ', '')}
                     </span>
-                    <span className="text-[11px] text-zinc-300 ml-auto shrink-0">
+                    <span className="text-[11px] text-zinc-400 ml-auto shrink-0">
                       {doc.ctdSection}
                     </span>
                   </button>
@@ -580,7 +580,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
 
             {filteredCSR.length === 0 && !csrLoading ? (
               <div className="rounded-xl border border-dashed border-zinc-200 bg-white p-6 text-center">
-                <Database className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+                <Database className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
                 <p className="text-xs text-zinc-500">No CSR data matched for this indication.</p>
                 <p className="text-[11px] text-zinc-400 mt-1">
                   Try adjusting the project indication or uploading CSR PDFs.
@@ -820,7 +820,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                       </span>
                       <span className="text-[11px] text-zinc-400">CTD {doc.ctdSection}</span>
                     </div>
-                    <ArrowRight className="w-3 h-3 text-zinc-300 group-hover:text-blue-500 transition-colors" />
+                    <ArrowRight className="w-3 h-3 text-zinc-400 group-hover:text-blue-500 transition-colors" />
                   </button>
                 );
               })}
@@ -1155,7 +1155,7 @@ const MetricPill: React.FC<{
     <div className="rounded-lg border border-zinc-200 bg-white px-2.5 py-2 text-center">
       <span className="text-[11px] text-zinc-400 block">{label}</span>
       {loading ? (
-        <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-300 mx-auto mt-0.5" />
+        <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-400 mx-auto mt-0.5" />
       ) : (
         <span className={cn('text-lg font-bold block', colorMap[color] || 'text-zinc-700')}>
           {value}
@@ -1220,7 +1220,7 @@ const ActionButton: React.FC<{
   >
     {icon}
     <span className="flex-1 text-left">{label}</span>
-    <ExternalLink className="w-3 h-3 text-zinc-300" />
+    <ExternalLink className="w-3 h-3 text-zinc-400" />
   </button>
 );
 

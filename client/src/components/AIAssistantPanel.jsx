@@ -387,7 +387,7 @@ const AIAssistantPanel = ({ isOpen, onClose, activeModule }) => {
           <button
             type="submit"
             disabled={!inputValue.trim() || isProcessing}
-            className="p-2 bg-primary text-white rounded-lg hover:bg-opacity-90 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-2 bg-primary text-white rounded-lg hover:bg-opacity-90 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
             aria-label="Send message"
           >
             <Send size={20} />

@@ -84,7 +84,7 @@ const EmbeddedVaultBrowser = () => {
       {/* File browser header */}
       <div className="bg-zinc-900 text-white px-4 py-2 flex items-center justify-between">
         <div className="flex items-center space-x-2">
-          <Database className="h-5 w-5 text-zinc-300" />
+          <Database className="h-5 w-5 text-zinc-400" />
           <span className="font-medium">VAULT/Docushare Windows-Style Browser</span>
         </div>
         <div className="flex items-center space-x-2">
@@ -134,7 +134,7 @@ const EmbeddedVaultBrowser = () => {
             </div>
           ) : (
             <div className="text-center p-10">
-              <Database className="h-16 w-16 text-zinc-300 mx-auto mb-4" />
+              <Database className="h-16 w-16 text-zinc-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-zinc-800 mb-2">No Document Selected</h3>
               <p className="text-zinc-500 max-w-md mx-auto">
                 Select a document from the file browser on the left to view and edit its contents.

@@ -438,7 +438,7 @@ export const IFUConsistencyChecker: React.FC<IFUConsistencyCheckerProps> = ({
           {/* Run check button */}
           {!result && (
             <div className="text-center py-8">
-              <FileCheck className="h-12 w-12 mx-auto text-zinc-300 mb-4" />
+              <FileCheck className="h-12 w-12 mx-auto text-zinc-400 mb-4" />
               <p className="text-sm text-zinc-600 mb-4">
                 Run a consistency check to identify discrepancies between your IFU and other
                 regulatory documents.

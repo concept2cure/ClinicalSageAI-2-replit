@@ -515,7 +515,7 @@ export default function ClientIntelligencePage() {
               <button
                 onClick={handleSave}
                 disabled={isSavingProfile}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-sm"
               >
                 {isSavingProfile ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -533,7 +533,7 @@ export default function ClientIntelligencePage() {
           <div className="max-w-3xl mx-auto space-y-5">
             {!profile?.id ? (
               <div className="text-center py-12">
-                <Building2 className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
+                <Building2 className="w-12 h-12 text-zinc-400 mx-auto mb-3" />
                 <p className="text-sm text-zinc-500 mb-2">Create a client profile first</p>
                 <button
                   onClick={() => setActiveTab('persona')}
@@ -679,7 +679,7 @@ export default function ClientIntelligencePage() {
           <div className="max-w-3xl mx-auto space-y-5">
             {memoryEntries.length === 0 ? (
               <div className="text-center py-12">
-                <Brain className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
+                <Brain className="w-12 h-12 text-zinc-400 mx-auto mb-3" />
                 <p className="text-sm text-zinc-500 mb-1">No memory entries yet</p>
                 <p className="text-xs text-zinc-400">
                   Upload documents in the Document Vault tab to start building intelligence

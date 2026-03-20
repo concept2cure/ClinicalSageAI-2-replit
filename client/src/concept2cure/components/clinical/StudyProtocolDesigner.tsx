@@ -517,7 +517,7 @@ const SampleSizePanel: React.FC<SampleSizePanelProps> = ({
   if (!endpoint) {
     return (
       <div className="text-center py-8 text-zinc-500">
-        <Calculator className="h-12 w-12 mx-auto mb-3 text-zinc-300" />
+        <Calculator className="h-12 w-12 mx-auto mb-3 text-zinc-400" />
         <p className="text-sm">Select a primary endpoint to calculate sample size</p>
       </div>
     );

@@ -153,7 +153,7 @@ const SideBySideView: React.FC<{ textA: string; textB: string }> = ({ textA, tex
               p.type === 'removed'
                 ? 'bg-red-50 text-red-800'
                 : p.type === 'added'
-                  ? 'bg-zinc-50 text-zinc-300'
+                  ? 'bg-zinc-50 text-zinc-400'
                   : ''
             }`}
           >
@@ -173,7 +173,7 @@ const SideBySideView: React.FC<{ textA: string; textB: string }> = ({ textA, tex
               p.type === 'added'
                 ? 'bg-emerald-50 text-emerald-800'
                 : p.type === 'removed'
-                  ? 'bg-zinc-50 text-zinc-300'
+                  ? 'bg-zinc-50 text-zinc-400'
                   : ''
             }`}
           >
@@ -378,7 +378,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
             </select>
           </div>
 
-          <ArrowLeftRight className="w-4 h-4 text-zinc-300 mt-3" />
+          <ArrowLeftRight className="w-4 h-4 text-zinc-400 mt-3" />
 
           {/* Version B selector */}
           <div className="flex-1">
@@ -438,7 +438,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
                 <button
                   onClick={() => handleRollback(versionA)}
                   disabled={rollingBack}
-                  className="px-2 py-0.5 text-[11px] rounded bg-amber-100 text-amber-800 hover:bg-amber-200 disabled:opacity-50 flex items-center gap-0.5 font-medium"
+                  className="px-2 py-0.5 text-[11px] rounded bg-amber-100 text-amber-800 hover:bg-amber-200 disabled:opacity-60 flex items-center gap-0.5 font-medium"
                 >
                   {rollingBack ? (
                     <Loader2 className="w-3 h-3 animate-spin" />

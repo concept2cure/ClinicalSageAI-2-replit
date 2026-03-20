@@ -300,7 +300,7 @@ export const EvidenceManager: React.FC<EvidenceManagerProps> = ({ programId }) =
                             <p className="text-[11px] text-zinc-400 mt-1 truncate">{ev.source}</p>
                           )}
                         </div>
-                        <ChevronRight className="w-3.5 h-3.5 text-zinc-300 flex-shrink-0 mt-1" />
+                        <ChevronRight className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0 mt-1" />
                       </div>
                     </button>
                   );
@@ -399,7 +399,7 @@ export const EvidenceManager: React.FC<EvidenceManagerProps> = ({ programId }) =
                   <button
                     onClick={handleLink}
                     disabled={!linkArtifactId}
-                    className="px-3 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                    className="px-3 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60"
                   >
                     <Link2 className="w-3.5 h-3.5" />
                   </button>
@@ -531,7 +531,7 @@ export const EvidenceManager: React.FC<EvidenceManagerProps> = ({ programId }) =
               <button
                 onClick={handleCreate}
                 disabled={!form.title.trim() || createEvidence.isPending}
-                className="px-4 py-1.5 text-xs font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-50"
+                className="px-4 py-1.5 text-xs font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-60"
               >
                 {createEvidence.isPending ? 'Adding...' : 'Add Evidence'}
               </button>

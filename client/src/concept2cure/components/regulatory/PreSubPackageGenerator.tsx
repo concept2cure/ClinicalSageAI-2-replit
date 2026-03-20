@@ -311,7 +311,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
 
         {questions.length === 0 && (
           <div className="text-center py-6 text-sm text-zinc-500">
-            <MessageSquare className="h-8 w-8 mx-auto mb-2 text-zinc-300" />
+            <MessageSquare className="h-8 w-8 mx-auto mb-2 text-zinc-400" />
             <p>No questions added yet.</p>
             <p className="text-xs mt-1">Add specific questions you want FDA feedback on.</p>
           </div>

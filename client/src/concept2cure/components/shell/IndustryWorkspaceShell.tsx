@@ -346,7 +346,7 @@ const Sidebar: React.FC<{
       {/* Collapse Toggle */}
       <button
         onClick={() => onCollapse(!collapsed)}
-        className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-zinc-700 text-zinc-300 hover:bg-zinc-600 flex items-center justify-center shadow-lg"
+        className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-zinc-700 text-zinc-400 hover:bg-zinc-600 flex items-center justify-center shadow-lg"
       >
         {collapsed ? '→' : '←'}
       </button>

@@ -325,7 +325,7 @@ const ModuleConnectionCard: React.FC<ModuleConnectionCardProps> = ({
           <button
             onClick={onConnect}
             disabled={isLoading}
-            className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-60"
             data-testid={`button-bridge-connect-${config.id}`}
           >
             {isLoading ? (
@@ -339,7 +339,7 @@ const ModuleConnectionCard: React.FC<ModuleConnectionCardProps> = ({
           <button
             onClick={onSync}
             disabled={isLoading}
-            className="flex items-center gap-1.5 px-4 py-2 bg-amber-600 text-white text-sm font-medium rounded-lg hover:bg-amber-700 transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-4 py-2 bg-amber-600 text-white text-sm font-medium rounded-lg hover:bg-amber-700 transition-colors disabled:opacity-60"
             data-testid={`button-bridge-update-${config.id}`}
           >
             {isLoading ? (

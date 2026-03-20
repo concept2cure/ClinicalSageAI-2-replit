@@ -579,7 +579,7 @@ const AISwarmPreview: React.FC = () => (
           { name: 'Compiler', status: 'Queued', phase: 'Assembly' },
         ].map((a) => (
           <div key={a.name} className="p-2 bg-zinc-50 rounded-lg text-center">
-            <Bot className={cn('w-4 h-4 mx-auto mb-1', a.status === 'Running' ? 'text-violet-500' : a.status === 'Complete' ? 'text-emerald-500' : 'text-zinc-300')} />
+            <Bot className={cn('w-4 h-4 mx-auto mb-1', a.status === 'Running' ? 'text-violet-500' : a.status === 'Complete' ? 'text-emerald-500' : 'text-zinc-400')} />
             <p className="text-[11px] font-medium text-zinc-700 truncate">{a.name}</p>
             <StatusBadge status={a.status} color={a.status === 'Running' ? 'bg-violet-50 text-violet-700' : a.status === 'Complete' ? 'bg-emerald-50 text-emerald-700' : 'bg-zinc-100 text-zinc-500'} />
           </div>
@@ -890,7 +890,7 @@ const CollabHubPreview: React.FC = () => (
               <p className="text-[11px] text-zinc-400">{t.replies} replies — {t.last}</p>
             </div>
           </div>
-          <ArrowRight className="w-3 h-3 text-zinc-300" />
+          <ArrowRight className="w-3 h-3 text-zinc-400" />
         </div>
       ))}
     </MockCard>

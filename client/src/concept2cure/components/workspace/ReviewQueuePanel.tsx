@@ -136,7 +136,7 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
       <div className="flex-1 overflow-y-auto p-2">
         {loading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-4 h-4 animate-spin text-zinc-300" />
+            <Loader2 className="w-4 h-4 animate-spin text-zinc-400" />
           </div>
         ) : totalItems === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-zinc-400">
@@ -195,7 +195,7 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
                       <span className="text-[11px] text-zinc-400 ml-auto shrink-0">
                         {formatTime(t.updatedAt)}
                       </span>
-                      <ChevronRight className="w-3 h-3 text-zinc-300 shrink-0" />
+                      <ChevronRight className="w-3 h-3 text-zinc-400 shrink-0" />
                     </div>
                   </button>
                 ))}
@@ -227,7 +227,7 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
                       <span className="text-[11px] text-zinc-400 ml-auto shrink-0">
                         {formatTime(t.updatedAt)}
                       </span>
-                      <ChevronRight className="w-3 h-3 text-zinc-300 shrink-0" />
+                      <ChevronRight className="w-3 h-3 text-zinc-400 shrink-0" />
                     </div>
                   </button>
                 ))}

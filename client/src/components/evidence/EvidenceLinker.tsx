@@ -545,7 +545,7 @@ export const EvidenceLinker: React.FC<EvidenceLinkerProps> = ({
           <button
             onClick={handleCreateLink}
             disabled={createLinkMutation.isPending}
-            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-60"
           >
             {createLinkMutation.isPending ? 'Linking...' : 'Create Link'}
           </button>

@@ -819,7 +819,7 @@ export const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({
         >
           {flatList.length === 0 ? (
             <div className="px-4 py-12 text-center" role="status">
-              <Search className="w-10 h-10 text-zinc-300 mx-auto mb-3" />
+              <Search className="w-10 h-10 text-zinc-400 mx-auto mb-3" />
               <p className="text-sm text-zinc-500">No commands found for "{query}"</p>
             </div>
           ) : (

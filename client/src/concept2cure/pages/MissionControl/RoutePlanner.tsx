@@ -391,7 +391,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({ programId }) => {
               <button
                 onClick={handleAddRoute}
                 disabled={!newRoute.strategyName.trim()}
-                className="px-4 py-1.5 text-xs font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-50"
+                className="px-4 py-1.5 text-xs font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-60"
               >
                 Add Route
               </button>

@@ -251,7 +251,7 @@ function SummaryRow({ label, value, onClick }: { label: string; value: React.Rea
     >
       <span className="text-sm text-zinc-500 font-medium">{label}</span>
       <span className="text-sm text-zinc-900 font-medium text-right max-w-[60%]">
-        {value || <span className="text-zinc-300">—</span>}
+        {value || <span className="text-zinc-400">—</span>}
       </span>
     </div>
   );
@@ -687,7 +687,7 @@ export default function ProgramWizard({ onComplete, onCancel }: ProgramWizardPro
                   <div className="text-xs text-zinc-500">{cl.desc}</div>
                 </div>
                 {cl.value === 'cfr-part-11' && (
-                  <ShieldCheck className={cn('w-4 h-4 ml-auto', selected ? 'text-blue-500' : 'text-zinc-300')} />
+                  <ShieldCheck className={cn('w-4 h-4 ml-auto', selected ? 'text-blue-500' : 'text-zinc-400')} />
                 )}
               </button>
             );
@@ -784,7 +784,7 @@ export default function ProgramWizard({ onComplete, onCancel }: ProgramWizardPro
           </div>
           <div className="px-1 py-1 divide-y divide-zinc-50">
             <SummaryRow label="Name" value={state.name} />
-            <SummaryRow label="Description" value={state.description || <span className="text-zinc-300 italic">None</span>} />
+            <SummaryRow label="Description" value={state.description || <span className="text-zinc-400 italic">None</span>} />
             <SummaryRow
               label="Customer Track"
               value={CUSTOMER_TRACKS.find((t) => t.value === state.customerTrack)?.label}
@@ -809,7 +809,7 @@ export default function ProgramWizard({ onComplete, onCancel }: ProgramWizardPro
             <SummaryRow label="Destination" value={formatDestinationType(state.destinationType)} />
             <SummaryRow label="Authority" value={state.authority} />
             <SummaryRow label="Region" value={state.region} />
-            <SummaryRow label="Target Date" value={state.targetDate || <span className="text-zinc-300 italic">Not set</span>} />
+            <SummaryRow label="Target Date" value={state.targetDate || <span className="text-zinc-400 italic">Not set</span>} />
           </div>
         </div>
 
@@ -823,14 +823,14 @@ export default function ProgramWizard({ onComplete, onCancel }: ProgramWizardPro
             <span className="text-xs font-bold text-zinc-600 uppercase tracking-wider">Team & Governance</span>
           </div>
           <div className="px-1 py-1 divide-y divide-zinc-50">
-            <SummaryRow label="Program Lead" value={state.programLead || <span className="text-zinc-300 italic">Not assigned</span>} />
+            <SummaryRow label="Program Lead" value={state.programLead || <span className="text-zinc-400 italic">Not assigned</span>} />
             <SummaryRow
               label="Reviewers"
-              value={state.reviewers.length > 0 ? state.reviewers.join(', ') : <span className="text-zinc-300 italic">None</span>}
+              value={state.reviewers.length > 0 ? state.reviewers.join(', ') : <span className="text-zinc-400 italic">None</span>}
             />
             <SummaryRow
               label="Approvers"
-              value={state.approvers.length > 0 ? state.approvers.join(', ') : <span className="text-zinc-300 italic">None</span>}
+              value={state.approvers.length > 0 ? state.approvers.join(', ') : <span className="text-zinc-400 italic">None</span>}
             />
             <SummaryRow
               label="Compliance"
@@ -902,7 +902,7 @@ export default function ProgramWizard({ onComplete, onCancel }: ProgramWizardPro
             type="button"
             onClick={step === 1 ? onCancel : goBack}
             disabled={isLaunching}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-zinc-600 hover:bg-zinc-100 transition disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-zinc-600 hover:bg-zinc-100 transition disabled:opacity-60"
           >
             <ArrowLeft className="w-4 h-4" />
             {step === 1 ? 'Cancel' : 'Back'}

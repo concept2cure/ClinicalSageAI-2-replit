@@ -223,7 +223,7 @@ function CreateProgramPanel({ onCreated }: { onCreated: (id: number) => void }) 
         <button
           onClick={handleCreate}
           disabled={!name.trim() || createProgram.isPending || scaffold.isPending}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-zinc-900 text-white rounded-lg text-sm font-medium hover:bg-zinc-800 disabled:opacity-50 transition-colors"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-zinc-900 text-white rounded-lg text-sm font-medium hover:bg-zinc-800 disabled:opacity-60 transition-colors"
         >
           {(createProgram.isPending || scaffold.isPending) ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -687,7 +687,7 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
               <span className="text-xs font-medium text-zinc-800">Notifications</span>
               <span className="text-[11px] text-zinc-400 block">Alerts & action items</span>
             </div>
-            <ChevronRight className="w-3.5 h-3.5 text-zinc-300 ml-auto" />
+            <ChevronRight className="w-3.5 h-3.5 text-zinc-400 ml-auto" />
           </button>
           <button
             onClick={() => window.dispatchEvent(new CustomEvent('mc-navigate', { detail: { mode: 'collaboration-hub' } }))}
@@ -698,7 +698,7 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
               <span className="text-xs font-medium text-zinc-800">Collaboration Hub</span>
               <span className="text-[11px] text-zinc-400 block">Threads & discussions</span>
             </div>
-            <ChevronRight className="w-3.5 h-3.5 text-zinc-300 ml-auto" />
+            <ChevronRight className="w-3.5 h-3.5 text-zinc-400 ml-auto" />
           </button>
         </div>
       </div>

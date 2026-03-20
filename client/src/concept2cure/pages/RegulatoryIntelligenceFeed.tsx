@@ -805,7 +805,7 @@ const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({
               </div>
             ) : filteredItems.length === 0 ? (
               <div className="bg-white rounded-xl border border-zinc-200 p-10 text-center">
-                <Search size={28} className="mx-auto text-zinc-300 mb-3" />
+                <Search size={28} className="mx-auto text-zinc-400 mb-3" />
                 <p className="text-sm text-zinc-600 font-medium mb-1">
                   No items match your filters
                 </p>

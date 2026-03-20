@@ -418,7 +418,7 @@ export const IndustryAwareApp: React.FC = () => {
         return (
           <div className="flex items-center justify-center h-full bg-zinc-50">
             <div className="text-center">
-              <Settings className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
+              <Settings className="w-12 h-12 text-zinc-400 mx-auto mb-3" />
               <p className="text-zinc-500">Settings workspace</p>
             </div>
           </div>

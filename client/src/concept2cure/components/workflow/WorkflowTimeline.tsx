@@ -83,7 +83,7 @@ const StatusIcon: React.FC<{ status: WorkflowStep['status']; size?: number }> = 
     case 'SKIPPED':
       return <CheckCircle2 {...iconProps} className="text-zinc-400" />;
     default:
-      return <Circle {...iconProps} className="text-zinc-300" />;
+      return <Circle {...iconProps} className="text-zinc-400" />;
   }
 };
 

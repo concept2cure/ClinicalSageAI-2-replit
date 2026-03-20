@@ -65,7 +65,7 @@ export const WorkspaceReadinessStrip: React.FC<Props> = ({
   if (isLoading) {
     return (
       <div className={cn('flex items-center gap-2 py-2 px-1', className)}>
-        <Loader2 className="w-3.5 h-3.5 text-zinc-300 animate-spin" />
+        <Loader2 className="w-3.5 h-3.5 text-zinc-400 animate-spin" />
         <span className="text-xs text-zinc-400">Loading workspace…</span>
       </div>
     );

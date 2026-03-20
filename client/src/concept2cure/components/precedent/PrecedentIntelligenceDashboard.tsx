@@ -349,7 +349,7 @@ export function PrecedentIntelligenceDashboard({
                   </div>
                 ) : !searchResults?.length ? (
                   <div className="text-center py-8">
-                    <Search className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+                    <Search className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
                     <p className="text-sm text-zinc-500">
                       No precedents found. Try broadening your search criteria.
                     </p>
@@ -413,7 +413,7 @@ export function PrecedentIntelligenceDashboard({
                                 {Math.round(p.confidenceScore * 100)}% conf
                               </span>
                             )}
-                            <ChevronRight className="w-3 h-3 text-zinc-300 mt-1" />
+                            <ChevronRight className="w-3 h-3 text-zinc-400 mt-1" />
                           </div>
                         </div>
                       </button>
@@ -430,7 +430,7 @@ export function PrecedentIntelligenceDashboard({
           {!selectedPrecedent ? (
             <div className="border border-border/40 rounded-sm bg-background">
               <div className="px-3 py-2 py-12 text-center">
-                <GitCompare className="w-10 h-10 text-zinc-300 mx-auto mb-3" />
+                <GitCompare className="w-10 h-10 text-zinc-400 mx-auto mb-3" />
                 <h3 className="text-sm font-medium text-zinc-700 mb-1">
                   Select a Precedent to Compare
                 </h3>

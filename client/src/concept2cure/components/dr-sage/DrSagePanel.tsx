@@ -299,7 +299,7 @@ function GuideContent() {
                 {action.why}
               </p>
             </div>
-            <ArrowRight className="h-4 w-4 text-zinc-300 shrink-0 mt-0.5" />
+            <ArrowRight className="h-4 w-4 text-zinc-400 shrink-0 mt-0.5" />
           </button>
         ))}
       </div>
@@ -333,7 +333,7 @@ function DoItContent() {
                   "text-sm tabular-nums shrink-0 w-5 text-right",
                   isDone && "text-zinc-400",
                   isActive && "font-medium text-zinc-900",
-                  isPending && "text-zinc-300"
+                  isPending && "text-zinc-400"
                 )}
               >
                 {isDone ? (

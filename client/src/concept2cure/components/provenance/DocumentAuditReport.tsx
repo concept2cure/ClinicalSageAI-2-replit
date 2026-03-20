@@ -369,7 +369,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
             <button
               onClick={onExportAsArtifact}
               disabled={exportingAudit}
-              className="px-2 py-0.5 text-[11px] rounded bg-indigo-100 text-indigo-700 hover:bg-indigo-200 disabled:opacity-50"
+              className="px-2 py-0.5 text-[11px] rounded bg-indigo-100 text-indigo-700 hover:bg-indigo-200 disabled:opacity-60"
               title="Save as inspection-ready artifact"
             >
               {exportingAudit ? (
@@ -477,7 +477,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
             <button
               onClick={handleVerifyIntegrity}
               disabled={verifyingIntegrity}
-              className="flex items-center gap-1 px-2 py-1 text-[11px] rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 font-medium print:hidden"
+              className="flex items-center gap-1 px-2 py-1 text-[11px] rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-60 font-medium print:hidden"
             >
               {verifyingIntegrity ? (
                 <Loader2 className="w-3 h-3 animate-spin" />

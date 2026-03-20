@@ -164,7 +164,7 @@ export function MessageBubble({ text, typing, actions, className }: MessageBubbl
     <div className={cn('border-l-2 border-zinc-200 pl-3', className)}>
       <p className="text-sm text-zinc-600 leading-relaxed">
         {displayText}
-        {!typingDone && <span className="text-zinc-300">|</span>}
+        {!typingDone && <span className="text-zinc-400">|</span>}
       </p>
       {typingDone && actions && actions.length > 0 && (
         <div className="flex gap-3 mt-2">
@@ -220,7 +220,7 @@ export function ContextualTip({ tip, onDismiss, onExpand, autoHide = 10000 }: Co
       className="text-xs text-zinc-400 italic"
     >
       Tip: {tip}{' '}
-      <button onClick={onDismiss} className="text-zinc-300 hover:text-zinc-500 ml-1">
+      <button onClick={onDismiss} className="text-zinc-400 hover:text-zinc-500 ml-1">
         Dismiss
       </button>
       {onExpand && (

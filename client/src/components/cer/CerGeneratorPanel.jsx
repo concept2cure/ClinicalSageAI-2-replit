@@ -1422,7 +1422,7 @@ const CerGeneratorPanel = ({ documentId }) => {
                 <Label htmlFor="description">Device Description</Label>
                 <textarea
                   id="description"
-                  className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
                   value={deviceData.description}
                   onChange={e => handleDeviceDataChange('description', e.target.value)}
                   placeholder="Comprehensive description of the device..."
@@ -1433,7 +1433,7 @@ const CerGeneratorPanel = ({ documentId }) => {
                 <Label htmlFor="intended-use">Intended Use</Label>
                 <textarea
                   id="intended-use"
-                  className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
                   value={deviceData.intendedUse}
                   onChange={e => handleDeviceDataChange('intendedUse', e.target.value)}
                   placeholder="Detailed description of the intended use..."

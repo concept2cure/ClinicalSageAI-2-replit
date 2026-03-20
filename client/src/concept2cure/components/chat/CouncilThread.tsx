@@ -255,9 +255,9 @@ const MessageBubble: React.FC<{
           <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">
             {persona.name}
           </span>
-          {!isUser && <span className="text-[11px] text-zinc-300">{persona.title}</span>}
+          {!isUser && <span className="text-[11px] text-zinc-400">{persona.title}</span>}
           {message.timestamp && (
-            <span className="text-[11px] text-zinc-300">{message.timestamp}</span>
+            <span className="text-[11px] text-zinc-400">{message.timestamp}</span>
           )}
         </div>
 

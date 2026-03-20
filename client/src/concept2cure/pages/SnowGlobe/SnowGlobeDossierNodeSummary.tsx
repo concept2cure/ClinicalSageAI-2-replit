@@ -246,7 +246,7 @@ export default function SnowGlobeDossierNodeSummary({
         )}
       >
         <div className="flex items-center gap-2">
-          <Loader2 className="h-4 w-4 animate-spin text-zinc-300" />
+          <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
           <span className="text-sm text-zinc-400">Loading node scores...</span>
         </div>
         <div className="mt-3 flex items-center justify-center">

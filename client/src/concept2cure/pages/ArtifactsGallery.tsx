@@ -232,7 +232,7 @@ export const ArtifactsGallery: React.FC = () => {
                         <h3 className="text-sm font-semibold text-zinc-900 group-hover:text-zinc-700">
                           {template.title}
                         </h3>
-                        <Icon className="w-4 h-4 text-zinc-300 flex-shrink-0" />
+                        <Icon className="w-4 h-4 text-zinc-400 flex-shrink-0" />
                       </div>
                       <p className="text-xs text-zinc-500 leading-relaxed mb-3">
                         {template.description}
@@ -303,7 +303,7 @@ export const ArtifactsGallery: React.FC = () => {
               </div>
             ) : filteredArtifacts.length === 0 ? (
               <div className="text-center py-16">
-                <Layers className="w-8 h-8 text-zinc-300 mx-auto mb-3" />
+                <Layers className="w-8 h-8 text-zinc-400 mx-auto mb-3" />
                 <h3 className="text-sm font-medium text-zinc-700 mb-1">
                   {search ? 'No artifacts match your search' : 'No artifacts yet'}
                 </h3>
@@ -349,7 +349,7 @@ export const ArtifactsGallery: React.FC = () => {
                     </div>
                     {artifact.createdAt && (
                       <div className="flex items-center gap-1 mt-1.5">
-                        <Clock className="w-3 h-3 text-zinc-300" />
+                        <Clock className="w-3 h-3 text-zinc-400" />
                         <span className="text-[11px] text-zinc-400">
                           {new Date(artifact.createdAt).toLocaleDateString()}
                         </span>

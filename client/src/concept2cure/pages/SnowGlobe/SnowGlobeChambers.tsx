@@ -459,7 +459,7 @@ export default function SnowGlobeChambers({ programId, initialChamber }: SnowGlo
     return (
       <div className="flex-1 flex items-center justify-center bg-[#FAFAF9]">
         <div className="text-center space-y-3">
-          <Shield className="h-12 w-12 text-zinc-300 mx-auto" />
+          <Shield className="h-12 w-12 text-zinc-400 mx-auto" />
           <p className="text-zinc-500 text-sm">Select a program to view chamber details</p>
         </div>
       </div>
@@ -545,7 +545,7 @@ export default function SnowGlobeChambers({ programId, initialChamber }: SnowGlo
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className={cn('rounded-xl border bg-white p-6 flex items-center gap-6', `ring-1 ${bandColor.ring}`)}>
               {isLoading ? (
-                <Loader2 className="h-8 w-8 animate-spin text-zinc-300 mx-auto" />
+                <Loader2 className="h-8 w-8 animate-spin text-zinc-400 mx-auto" />
               ) : scoreValue !== null ? (
                 <>
                   <div className={cn('text-5xl font-bold tabular-nums', bandColor.text)}>
@@ -651,7 +651,7 @@ export default function SnowGlobeChambers({ programId, initialChamber }: SnowGlo
             <div className="p-4 space-y-2">
               {isLoading ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-6 w-6 animate-spin text-zinc-300" />
+                  <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
                 </div>
               ) : chamberFindings.length === 0 ? (
                 <div className="text-center py-12">
@@ -685,7 +685,7 @@ export default function SnowGlobeChambers({ programId, initialChamber }: SnowGlo
             <div className="p-4">
               {isLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-zinc-300" />
+                  <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
                 </div>
               ) : chamberRemediation.length === 0 ? (
                 <div className="text-center py-8">

@@ -346,7 +346,7 @@ const ConfirmationStep: React.FC<{
         </div>
         
         <div className="flex items-center">
-          <ArrowRight className="w-6 h-6 text-zinc-300" />
+          <ArrowRight className="w-6 h-6 text-zinc-400" />
         </div>
         
         <div className="px-6 py-4 rounded-xl bg-blue-50">

@@ -141,7 +141,7 @@ const expeditedPrograms = [
 function EmptyState({ icon: Icon, title, description }: { icon: React.ElementType; title: string; description: string }) {
   return (
     <div className="bg-white rounded-lg border border-zinc-200 py-12 text-center">
-      <Icon className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+      <Icon className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
       <p className="text-sm text-zinc-500">{title}</p>
       <p className="text-xs text-zinc-400 mt-1">{description}</p>
     </div>
@@ -828,7 +828,7 @@ function StrategicView() {
                     )}>
                       {item.impact} impact
                     </span>
-                    <span className="text-xs text-zinc-300">{item.date}</span>
+                    <span className="text-xs text-zinc-400">{item.date}</span>
                   </div>
                 </div>
                 <p className="text-sm text-zinc-600">{item.event}</p>

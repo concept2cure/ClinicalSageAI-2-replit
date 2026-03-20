@@ -17,7 +17,7 @@ export default function Module1Forms({ project }) {
       {['1571', '1572', '3674'].map(formId => (
         <button
           key={formId}
-          className="bg-green-600 text-white px-3 py-1 rounded disabled:opacity-50"
+          className="bg-green-600 text-white px-3 py-1 rounded disabled:opacity-60"
           disabled={!project}
           onClick={() => downloadForm(formId)}
         >

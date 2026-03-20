@@ -436,7 +436,7 @@ export const ZenOnboarding: React.FC = () => {
         <button
           onClick={handleNext}
           disabled={!preferences.projectName || !preferences.submissionType}
-          className="flex-1 py-3 px-4 text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-colors"
+          className="flex-1 py-3 px-4 text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed rounded-xl transition-colors"
         >
           Continue
         </button>
@@ -625,7 +625,7 @@ export const ZenOnboarding: React.FC = () => {
         <button
           onClick={handleComplete}
           disabled={isLoading}
-          className="inline-flex items-center gap-2 px-8 py-3 text-base font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors disabled:opacity-50"
+          className="inline-flex items-center gap-2 px-8 py-3 text-base font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors disabled:opacity-60"
         >
           {isLoading ? (
             <>

@@ -478,7 +478,7 @@ export function GovernedDocumentPanel({
       <div className="flex-1 overflow-y-auto">
         {loading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-4 h-4 animate-spin text-zinc-300" />
+            <Loader2 className="w-4 h-4 animate-spin text-zinc-400" />
           </div>
         ) : activeTab === 'status' ? (
           <StatusTab
@@ -556,7 +556,7 @@ export function GovernedDocumentPanel({
               <button
                 onClick={() => handleTransition(rationaleTarget, rationale.trim())}
                 disabled={rationale.trim().length < 5 || changingStatus}
-                className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-1"
               >
                 {changingStatus && <Loader2 className="w-3 h-3 animate-spin" />}
                 Confirm
@@ -644,7 +644,7 @@ export function GovernedDocumentPanel({
                   })
                 }
                 disabled={attestationText.trim().length < 10 || changingStatus}
-                className="px-3 py-1 text-xs bg-emerald-600 text-white rounded hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                className="px-3 py-1 text-xs bg-emerald-600 text-white rounded hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-1"
               >
                 {changingStatus && <Loader2 className="w-3 h-3 animate-spin" />}
                 {attestationTarget === 'approved'
@@ -772,7 +772,7 @@ function StatusTab({
                 onClick={() => onTransition(target)}
                 disabled={changingStatus}
                 className={cn(
-                  'w-full text-left px-2 py-1.5 rounded text-[11px] font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50',
+                  'w-full text-left px-2 py-1.5 rounded text-[11px] font-medium flex items-center gap-1.5 transition-colors disabled:opacity-60',
                   regression
                     ? 'text-amber-700 bg-amber-50 hover:bg-amber-100 ring-1 ring-amber-200/60'
                     : 'text-blue-700 bg-blue-50 hover:bg-blue-100 ring-1 ring-blue-200/60'
@@ -924,7 +924,7 @@ function AuditTab({ events }: { events: ProvenanceEvent[] }) {
                     >
                       {e.details.previousStatus}
                     </span>
-                    <ArrowRight className="w-2.5 h-2.5 text-zinc-300" />
+                    <ArrowRight className="w-2.5 h-2.5 text-zinc-400" />
                     <span
                       className={cn(
                         'text-[11px] px-1 py-px rounded ring-1',
@@ -1127,7 +1127,7 @@ function VersionsTab({
                 <button
                   onClick={() => onRollback(v.version)}
                   disabled={rollingBack}
-                  className="text-[11px] text-blue-600 hover:text-blue-800 flex items-center gap-0.5 disabled:opacity-50"
+                  className="text-[11px] text-blue-600 hover:text-blue-800 flex items-center gap-0.5 disabled:opacity-60"
                   title={`Restore version ${v.version}`}
                 >
                   <RotateCcw className="w-2.5 h-2.5" />

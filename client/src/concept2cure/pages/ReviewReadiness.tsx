@@ -362,7 +362,7 @@ function riskColor(score: number): string {
 function EmptyState({ icon: Icon, message, detail }: { icon: React.ElementType; message: string; detail: string }) {
   return (
     <div className="bg-white border border-zinc-200 rounded-lg py-12 text-center">
-      <Icon className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+      <Icon className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
       <p className="text-sm text-zinc-500">{message}</p>
       <p className="text-xs text-zinc-400 mt-1">{detail}</p>
     </div>
@@ -598,13 +598,13 @@ function ComplianceView({ complianceRules }: { complianceRules: ComplianceRule[]
               <tr key={i} className="border-b border-zinc-50 last:border-0">
                 <td className="px-5 py-3 text-zinc-900">{row.requirement}</td>
                 <td className="px-5 py-3 text-center">
-                  <span className={row.fda ? 'text-green-700' : 'text-zinc-300'}>{row.fda ? 'Met' : '\u2014'}</span>
+                  <span className={row.fda ? 'text-green-700' : 'text-zinc-400'}>{row.fda ? 'Met' : '\u2014'}</span>
                 </td>
                 <td className="px-5 py-3 text-center">
-                  <span className={row.ema ? 'text-green-700' : 'text-zinc-300'}>{row.ema ? 'Met' : '\u2014'}</span>
+                  <span className={row.ema ? 'text-green-700' : 'text-zinc-400'}>{row.ema ? 'Met' : '\u2014'}</span>
                 </td>
                 <td className="px-5 py-3 text-center">
-                  <span className={row.pmda ? 'text-green-700' : 'text-zinc-300'}>{row.pmda ? 'Met' : '\u2014'}</span>
+                  <span className={row.pmda ? 'text-green-700' : 'text-zinc-400'}>{row.pmda ? 'Met' : '\u2014'}</span>
                 </td>
               </tr>
             ))}
@@ -726,7 +726,7 @@ function SnowGlobeView() {
             <ul className="mt-3 space-y-1">
               {engine.findings.map((f, j) => (
                 <li key={j} className="text-xs text-zinc-600 flex items-start gap-1.5">
-                  <span className="text-zinc-300 mt-0.5">-</span>
+                  <span className="text-zinc-400 mt-0.5">-</span>
                   {f}
                 </li>
               ))}
@@ -1367,7 +1367,7 @@ function TraceabilityView({ traceability }: { traceability: TraceabilityClaim[] 
                         <ul className="space-y-0.5">
                           {claim.evidenceLinks.map((link, j) => (
                             <li key={j} className="flex items-center gap-1">
-                              <Link2 className="w-3 h-3 text-zinc-300" />
+                              <Link2 className="w-3 h-3 text-zinc-400" />
                               {link}
                             </li>
                           ))}

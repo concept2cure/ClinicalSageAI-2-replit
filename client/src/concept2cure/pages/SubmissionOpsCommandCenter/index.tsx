@@ -1566,7 +1566,7 @@ function ActivityDrawer({ projectId }: { projectId: number }) {
                 <Mail
                   className={cn(
                     'w-3.5 h-3.5 mt-0.5 shrink-0',
-                    d.readAt ? 'text-zinc-300' : 'text-blue-500'
+                    d.readAt ? 'text-zinc-400' : 'text-blue-500'
                   )}
                 />
                 <div className="flex-1 min-w-0">
@@ -1655,7 +1655,7 @@ function DrawerLoading() {
 function DrawerEmpty({ message }: { message: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-12 text-[11px] text-zinc-400">
-      <Layers className="w-5 h-5 mb-2 text-zinc-300" />
+      <Layers className="w-5 h-5 mb-2 text-zinc-400" />
       {message}
     </div>
   );
@@ -1664,7 +1664,7 @@ function DrawerEmpty({ message }: { message: string }) {
 function EmptyState({ message }: { message: string }) {
   return (
     <div className="flex flex-col items-center justify-center p-12 text-xs text-zinc-400">
-      <Layers className="w-6 h-6 mb-2 text-zinc-300" />
+      <Layers className="w-6 h-6 mb-2 text-zinc-400" />
       {message}
     </div>
   );

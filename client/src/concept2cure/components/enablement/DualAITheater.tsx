@@ -172,7 +172,7 @@ function TranscriptMessage({
         <p className="text-xs text-zinc-400 italic">{text}</p>
         {isActive && !done && (
           <motion.span
-            className="inline-block text-zinc-300"
+            className="inline-block text-zinc-400"
             animate={{ opacity: [1, 0, 1] }}
             transition={{ duration: 0.8, repeat: Infinity }}
           >
@@ -214,7 +214,7 @@ function TranscriptMessage({
         {text}
         {isActive && !done && (
           <motion.span
-            className="inline-block text-zinc-300 ml-px"
+            className="inline-block text-zinc-400 ml-px"
             animate={{ opacity: [1, 0, 1] }}
             transition={{ duration: 0.8, repeat: Infinity }}
           >

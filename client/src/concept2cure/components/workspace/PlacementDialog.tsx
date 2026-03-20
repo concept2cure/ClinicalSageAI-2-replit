@@ -419,7 +419,7 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
               >
                 {reason.trim().length}/5 min
               </span>
-              <span className="text-[11px] text-zinc-300">⌘Enter to confirm</span>
+              <span className="text-[11px] text-zinc-400">⌘Enter to confirm</span>
             </div>
           </div>
 

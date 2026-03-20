@@ -104,7 +104,7 @@ export const SubmissionAppsPanel: React.FC<SubmissionAppsPanelProps> = ({
         <h2 className="text-sm font-semibold text-zinc-800">Submission Apps</h2>
         {projectName && (
           <>
-            <span className="text-zinc-300">·</span>
+            <span className="text-zinc-400">·</span>
             <span className="text-xs text-zinc-500 truncate">{projectName}</span>
           </>
         )}
@@ -130,7 +130,7 @@ export const SubmissionAppsPanel: React.FC<SubmissionAppsPanelProps> = ({
                 <div className="flex items-center gap-2 w-full">
                   {APP_ICONS[app.appId] || <FileText className="w-5 h-5 text-zinc-400" />}
                   <span className="text-xs font-semibold text-zinc-800 flex-1">{app.label}</span>
-                  <ChevronRight className="w-3.5 h-3.5 text-zinc-300 group-hover:text-blue-400 transition-colors" />
+                  <ChevronRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-blue-400 transition-colors" />
                 </div>
                 <p className="text-[11px] text-zinc-500 leading-snug">{app.description}</p>
                 <div className="flex items-center gap-2 mt-auto">

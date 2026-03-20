@@ -61,7 +61,7 @@ export default function AnnotationPanel({ section, onClose }) {
         <button
           onClick={fetchAdvice}
           disabled={loading}
-          className="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded text-sm mt-1 disabled:opacity-50"
+          className="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded text-sm mt-1 disabled:opacity-60"
         >
           {loading ? 'Thinking…' : 'Ask AnA for Advice'}
         </button>

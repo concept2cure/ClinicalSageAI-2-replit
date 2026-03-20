@@ -374,7 +374,7 @@ export function ReviewThreadsPanel({
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loader2 className="w-4 h-4 animate-spin text-zinc-300" />
+        <Loader2 className="w-4 h-4 animate-spin text-zinc-400" />
       </div>
     );
   }
@@ -505,7 +505,7 @@ export function ReviewThreadsPanel({
                   <button
                     onClick={handleCreateThread}
                     disabled={creating || !newThreadTitle.trim()}
-                    className="px-2 py-0.5 text-[11px] bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1"
+                    className="px-2 py-0.5 text-[11px] bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-60 flex items-center gap-1"
                   >
                     {creating ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : null}
                     Create
@@ -768,7 +768,7 @@ function ThreadCard({
         <div className="px-2 pb-2 border-t border-zinc-200">
           {loadingComments ? (
             <div className="py-3 flex justify-center">
-              <Loader2 className="w-3 h-3 animate-spin text-zinc-300" />
+              <Loader2 className="w-3 h-3 animate-spin text-zinc-400" />
             </div>
           ) : (
             <>
@@ -830,7 +830,7 @@ function ThreadCard({
                       <button
                         onClick={onReply}
                         disabled={replying || !replyBody.trim()}
-                        className="px-1.5 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                        className="px-1.5 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-60"
                       >
                         {replying ? (
                           <Loader2 className="w-3 h-3 animate-spin" />
@@ -950,7 +950,7 @@ function ThreadCard({
                     <button
                       onClick={() => onCreateTask(thread.threadId)}
                       disabled={creatingTask || !(newTaskTitle || '').trim()}
-                      className="px-1.5 py-0.5 text-[11px] bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 flex items-center gap-0.5"
+                      className="px-1.5 py-0.5 text-[11px] bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-60 flex items-center gap-0.5"
                     >
                       {creatingTask && <Loader2 className="w-2 h-2 animate-spin" />}
                       Create
@@ -988,7 +988,7 @@ function ThreadCard({
                         setShowRequestChanges(false);
                       }}
                       disabled={!requestChangesBody.trim()}
-                      className="px-1.5 py-0.5 text-[11px] bg-amber-600 text-white rounded hover:bg-amber-700 disabled:opacity-50"
+                      className="px-1.5 py-0.5 text-[11px] bg-amber-600 text-white rounded hover:bg-amber-700 disabled:opacity-60"
                     >
                       Submit
                     </button>

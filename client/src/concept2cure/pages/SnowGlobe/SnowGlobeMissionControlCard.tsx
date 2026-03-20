@@ -207,7 +207,7 @@ export default function SnowGlobeMissionControlCard({
         )}
       >
         <div className="mb-4 flex items-center gap-2">
-          <Loader2 className="h-4 w-4 animate-spin text-zinc-300" />
+          <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
           <span className="text-sm text-zinc-400">Loading Snow Globe...</span>
         </div>
         <div className="space-y-2">

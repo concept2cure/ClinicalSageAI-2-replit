@@ -55,7 +55,7 @@ export const ProjectFilesCompact: React.FC<ProjectFilesCompactProps> = ({
       <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200 flex-shrink-0">
         <p className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
           Files
-          {docs.length > 0 && <span className="ml-1.5 text-zinc-300">({docs.length})</span>}
+          {docs.length > 0 && <span className="ml-1.5 text-zinc-400">({docs.length})</span>}
         </p>
         <button
           onClick={() => fileInputRef.current?.click()}
@@ -82,7 +82,7 @@ export const ProjectFilesCompact: React.FC<ProjectFilesCompactProps> = ({
       <div className="flex-1 overflow-y-auto zen-scroll">
         {isLoading ? (
           <div className="flex items-center justify-center py-10">
-            <Loader2 className="w-4 h-4 text-zinc-300 animate-spin" />
+            <Loader2 className="w-4 h-4 text-zinc-400 animate-spin" />
           </div>
         ) : docs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 px-4 text-center">

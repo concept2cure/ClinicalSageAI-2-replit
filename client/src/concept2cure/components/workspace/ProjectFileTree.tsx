@@ -118,7 +118,7 @@ function StatusIcon({ status }: { status?: string }) {
       return <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />;
     case 'draft':
     default:
-      return <Clock className="w-3 h-3 text-zinc-300 shrink-0" />;
+      return <Clock className="w-3 h-3 text-zinc-400 shrink-0" />;
   }
 }
 
@@ -265,7 +265,7 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
 
               {/* Children (files) */}
               {isExpanded && folder.children.length === 0 && (
-                <p className="pl-7 pr-2 py-1.5 text-[11px] text-zinc-300 italic">No documents</p>
+                <p className="pl-7 pr-2 py-1.5 text-[11px] text-zinc-400 italic">No documents</p>
               )}
               {isExpanded &&
                 folder.children.map(a => {
@@ -287,7 +287,7 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
                       <FileText
                         className={cn(
                           'w-3.5 h-3.5 shrink-0',
-                          isSelected ? 'text-blue-600' : 'text-zinc-300'
+                          isSelected ? 'text-blue-600' : 'text-zinc-400'
                         )}
                       />
                       <span className="text-[12px] truncate flex-1 leading-snug">{a.title}</span>

@@ -135,7 +135,7 @@ const STATUS_CONFIG: Record<
   DossierNodeStatus,
   { icon: React.ReactNode; color: string; label: string }
 > = {
-  empty: { icon: <Circle className="w-3 h-3" />, color: 'text-zinc-300', label: 'Empty' },
+  empty: { icon: <Circle className="w-3 h-3" />, color: 'text-zinc-400', label: 'Empty' },
   draft_present: { icon: <Clock className="w-3 h-3" />, color: 'text-amber-500', label: 'Draft' },
   under_review: { icon: <Eye className="w-3 h-3" />, color: 'text-blue-500', label: 'Review' },
   approved: {
@@ -172,7 +172,7 @@ function NodeIcon({ nodeType, isExpanded }: { nodeType: string; isExpanded: bool
       <Folder className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
     );
   }
-  return <FileText className="w-3.5 h-3.5 text-zinc-300 shrink-0" />;
+  return <FileText className="w-3.5 h-3.5 text-zinc-400 shrink-0" />;
 }
 
 // ── Context menu ─────────────────────────────────────────────────────────────

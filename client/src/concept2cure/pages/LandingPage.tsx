@@ -1525,7 +1525,7 @@ export const LandingPage: React.FC = () => {
               </p>
             </div>
             <div>
-              <h4 className="text-sm font-semibold text-zinc-300 mb-3">Platform</h4>
+              <h4 className="text-sm font-semibold text-zinc-400 mb-3">Platform</h4>
               <ul className="space-y-2 text-sm">
                 <li><a href="#features" className="hover:text-white transition-colors">Solutions</a></li>
                 <li><a href="#pricing" className="hover:text-white transition-colors">Pricing</a></li>
@@ -1534,7 +1534,7 @@ export const LandingPage: React.FC = () => {
               </ul>
             </div>
             <div>
-              <h4 className="text-sm font-semibold text-zinc-300 mb-3">Regulatory</h4>
+              <h4 className="text-sm font-semibold text-zinc-400 mb-3">Regulatory</h4>
               <ul className="space-y-2 text-sm">
                 <li>FDA (510(k), IND, NDA)</li>
                 <li>EMA (MAA, CTA)</li>
@@ -1543,7 +1543,7 @@ export const LandingPage: React.FC = () => {
               </ul>
             </div>
             <div>
-              <h4 className="text-sm font-semibold text-zinc-300 mb-3">Compliance</h4>
+              <h4 className="text-sm font-semibold text-zinc-400 mb-3">Compliance</h4>
               <ul className="space-y-2 text-sm">
                 <li>21 CFR Part 11</li>
                 <li>SOC 2 Type II</li>

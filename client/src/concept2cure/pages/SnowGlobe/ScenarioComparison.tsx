@@ -267,7 +267,7 @@ function ScoreRow({
   return (
     <div className="grid grid-cols-12 items-center gap-3 px-4 py-3 border-b border-zinc-800/60 last:border-b-0 hover:bg-zinc-800/30 transition-colors">
       {/* Score Name */}
-      <div className="col-span-3 text-sm text-zinc-300 font-medium truncate" title={def.label}>
+      <div className="col-span-3 text-sm text-zinc-400 font-medium truncate" title={def.label}>
         {def.label}
       </div>
 
@@ -719,7 +719,7 @@ export default function ScenarioComparison({
                     recommendation.recommended === 'alternate'
                       ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
                       : recommendation.recommended === 'baseline'
-                        ? 'bg-zinc-700/50 text-zinc-300 border-zinc-600/50'
+                        ? 'bg-zinc-700/50 text-zinc-400 border-zinc-600/50'
                         : 'bg-blue-500/15 text-blue-400 border-blue-500/30',
                   )}
                 >
@@ -744,7 +744,7 @@ export default function ScenarioComparison({
                   </p>
                   <div className="flex items-center gap-3">
                     <div className="text-center flex-1">
-                      <p className="text-2xl font-bold text-zinc-300 tabular-nums">
+                      <p className="text-2xl font-bold text-zinc-400 tabular-nums">
                         {recommendation.baselineBetter}
                       </p>
                       <p className="text-xs text-zinc-500">Baseline wins</p>

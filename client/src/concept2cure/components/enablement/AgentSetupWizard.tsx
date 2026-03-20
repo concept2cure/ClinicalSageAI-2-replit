@@ -380,7 +380,7 @@ function StepDemo({ submissionType }: { submissionType: SubmissionType }) {
         if (!isComplete && !isCurrent) {
           return (
             <div key={i} className="px-3 py-2 rounded">
-              <p className="text-xs text-zinc-300">
+              <p className="text-xs text-zinc-400">
                 {step.agent} — {step.action}
               </p>
             </div>
@@ -637,7 +637,7 @@ export function AgentSetupWizard({ onSkip, onComplete }: { onSkip?: () => void; 
                 "flex items-center gap-1 text-sm transition-colors duration-100",
                 canContinue()
                   ? "text-blue-600 hover:text-blue-700"
-                  : "text-zinc-300 cursor-not-allowed"
+                  : "text-zinc-400 cursor-not-allowed"
               )}
             >
               Continue

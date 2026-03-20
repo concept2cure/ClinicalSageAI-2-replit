@@ -569,7 +569,7 @@ export default function FirstRunExperience({ onComplete, onSkip, existingProject
               className={`text-sm font-medium transition-colors ${
                 canContinue()
                   ? 'text-zinc-900 hover:underline'
-                  : 'text-zinc-300 cursor-not-allowed'
+                  : 'text-zinc-400 cursor-not-allowed'
               }`}
             >
               Continue &rarr;

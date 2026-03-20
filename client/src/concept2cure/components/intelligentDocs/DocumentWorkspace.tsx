@@ -1182,7 +1182,7 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
               <button
                 onClick={handleSave}
                 disabled={state.isSaving || !state.hasUnsavedChanges}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                 data-testid="button-save-document"
               >
                 {state.isSaving ? (

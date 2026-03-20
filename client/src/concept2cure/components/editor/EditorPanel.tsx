@@ -928,7 +928,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             <button
               onClick={handleCreateNew}
               disabled={creatingNew || !newDocTitle.trim()}
-              className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1"
+              className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60 flex items-center gap-1"
             >
               {creatingNew ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -961,7 +961,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           ) : filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
               <div className="w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center mb-4">
-                <FileText className="w-6 h-6 text-zinc-300" />
+                <FileText className="w-6 h-6 text-zinc-400" />
               </div>
               <p className="text-sm font-medium text-zinc-600 mb-1">
                 {artifacts.length === 0
@@ -1029,9 +1029,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                       </span>
                     )}
                     <span className="text-[11px] text-zinc-400">{a.type?.replace(/_/g, ' ')}</span>
-                    <span className="text-zinc-300">&middot;</span>
+                    <span className="text-zinc-400">&middot;</span>
                     <span className="text-[11px] text-zinc-400 tabular-nums">v{a.version}</span>
-                    <span className="text-zinc-300">&middot;</span>
+                    <span className="text-zinc-400">&middot;</span>
                     <span className="text-[11px] text-zinc-400 tabular-nums">
                       {new Date(a.updatedAt || a.createdAt).toLocaleDateString()}
                     </span>
@@ -1061,7 +1061,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         >
           ← Docs
         </button>
-        <span className="text-zinc-300 text-xs">/</span>
+        <span className="text-zinc-400 text-xs">/</span>
         <span className="text-sm font-semibold text-zinc-900 truncate max-w-[260px]">
           {activeArtifact?.title}
         </span>
@@ -1216,7 +1216,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   role="menuitem"
                   onClick={() => { handleExportDocx(); setOverflowOpen(false); }}
                   disabled={docxExporting}
-                  className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 disabled:opacity-50 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                  className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 disabled:opacity-60 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
                 >
                   <Download className="w-3 h-3 text-zinc-400" />
                   Word (.docx)
@@ -1246,7 +1246,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                     setOverflowOpen(false);
                   }}
                   disabled={signing || !activeArtifact}
-                  className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 disabled:opacity-50 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                  className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 disabled:opacity-60 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
                 >
                   <PenTool className="w-3 h-3 text-zinc-400" />
                   Sign & Approve
@@ -1267,7 +1267,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                       setOverflowOpen(false);
                     }}
                     disabled={changingStatus || !activeArtifact}
-                    className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 disabled:opacity-50 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                    className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 disabled:opacity-60 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
                   >
                     <Lock className="w-3 h-3 text-zinc-400" />
                     {activeArtifact?.status === 'approved'
@@ -1284,7 +1284,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                     setOverflowOpen(false);
                   }}
                   disabled={claimCheckMutation.isPending || !activeArtifact?.content}
-                  className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 disabled:opacity-50"
+                  className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 disabled:opacity-60"
                 >
                   <ShieldCheck className="w-3 h-3 inline mr-1.5 text-amber-500" />
                   Check Claims
@@ -1305,7 +1305,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                     setOverflowOpen(false);
                   }}
                   disabled={exportingAudit}
-                  className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 disabled:opacity-50"
+                  className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 disabled:opacity-60"
                 >
                   <ClipboardList className="w-3 h-3 inline mr-1.5 text-zinc-400" />
                   Export Audit
@@ -1528,7 +1528,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                     setUnlockReason('');
                   }}
                   disabled={changingStatus || unlockReason.trim().length < 5}
-                  className="px-3 py-1.5 text-xs font-medium bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-1.5 mx-auto"
+                  className="px-3 py-1.5 text-xs font-medium bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:opacity-60 flex items-center gap-1.5 mx-auto"
                 >
                   {changingStatus ? (
                     <Loader2 className="w-3 h-3 animate-spin" />

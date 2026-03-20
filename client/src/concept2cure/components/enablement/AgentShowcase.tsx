@@ -756,7 +756,7 @@ function CapabilityCard({ cap }: { cap: AgentCapability }) {
               {cap.whatItDoes.map((item, i) => (
                 <li
                   key={i}
-                  className="text-sm text-zinc-600 leading-relaxed pl-3 relative before:content-['·'] before:absolute before:left-0 before:text-zinc-300"
+                  className="text-sm text-zinc-600 leading-relaxed pl-3 relative before:content-['·'] before:absolute before:left-0 before:text-zinc-400"
                 >
                   {item}
                 </li>
@@ -774,7 +774,7 @@ function CapabilityCard({ cap }: { cap: AgentCapability }) {
 
       {/* API endpoint */}
       {cap.apiEndpoint && (
-        <p className="text-xs text-zinc-300 font-mono mt-2">
+        <p className="text-xs text-zinc-400 font-mono mt-2">
           {cap.apiEndpoint}
         </p>
       )}

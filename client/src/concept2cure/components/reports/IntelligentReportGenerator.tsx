@@ -616,7 +616,7 @@ export default function IntelligentReportGenerator() {
                     </div>
                     <div className="flex items-center gap-1.5 text-xs text-zinc-500">
                       <span>{d.subtypes.length} subtypes</span>
-                      <span className="text-zinc-300">|</span>
+                      <span className="text-zinc-400">|</span>
                       <span className={TIER_COLORS[d.indemnificationTier]?.split(' ')[0] || 'text-zinc-500'}>
                         {d.indemnificationTier === 'full_audit_trail' ? 'Full' :
                          d.indemnificationTier === 'partial' ? 'Partial' : 'Advisory'}
@@ -715,7 +715,7 @@ export default function IntelligentReportGenerator() {
               <button
                 onClick={handleGenerate}
                 disabled={!selectedDomain || !reportTitle || generating}
-                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-medium text-sm hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-200"
+                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-medium text-sm hover:from-indigo-700 hover:to-purple-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-200"
               >
                 {generating ? (
                   <>
@@ -819,7 +819,7 @@ export default function IntelligentReportGenerator() {
               <button
                 onClick={handleDriftCheck}
                 disabled={checkingDrift}
-                className="flex items-center gap-2 px-4 py-2.5 border border-zinc-300 rounded-xl text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2.5 border border-zinc-300 rounded-xl text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-colors disabled:opacity-60"
               >
                 {checkingDrift ? (
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-zinc-600" />
@@ -833,7 +833,7 @@ export default function IntelligentReportGenerator() {
               <div className="relative group">
                 <button
                   disabled={exporting}
-                  className="flex items-center gap-2 px-4 py-2.5 border border-zinc-300 rounded-xl text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-colors disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2.5 border border-zinc-300 rounded-xl text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-colors disabled:opacity-60"
                 >
                   <Download className="w-4 h-4" />
                   Export
@@ -885,7 +885,7 @@ export default function IntelligentReportGenerator() {
                   <button
                     onClick={handleSeal}
                     disabled={!sealJustification || sealing}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 disabled:opacity-60 transition-colors"
                   >
                     <Lock className="w-4 h-4" />
                     {sealing ? 'Sealing...' : 'Seal'}
@@ -898,7 +898,7 @@ export default function IntelligentReportGenerator() {
                 <button
                   onClick={handleSupersede}
                   disabled={superseding}
-                  className="flex items-center gap-2 px-4 py-2.5 border border-amber-300 bg-amber-50 rounded-xl text-sm font-medium text-amber-700 hover:bg-amber-100 transition-colors disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2.5 border border-amber-300 bg-amber-50 rounded-xl text-sm font-medium text-amber-700 hover:bg-amber-100 transition-colors disabled:opacity-60"
                 >
                   <GitBranch className="w-4 h-4" />
                   {superseding ? 'Creating new version...' : 'Supersede'}
@@ -936,7 +936,7 @@ export default function IntelligentReportGenerator() {
                   <button
                     onClick={handleRevoke}
                     disabled={!revokeJustification || revoking}
-                    className="px-4 py-2.5 bg-red-600 text-white rounded-xl text-sm font-medium hover:bg-red-700 disabled:opacity-50"
+                    className="px-4 py-2.5 bg-red-600 text-white rounded-xl text-sm font-medium hover:bg-red-700 disabled:opacity-60"
                   >
                     {revoking ? 'Revoking...' : 'Confirm Revoke'}
                   </button>
@@ -1151,7 +1151,7 @@ export default function IntelligentReportGenerator() {
 
             {/* Indemnification Statement */}
             {generatedReport.record.attestationStatement && (
-              <div className="p-4 bg-zinc-900 rounded-xl text-zinc-300 text-xs font-mono whitespace-pre-wrap leading-relaxed">
+              <div className="p-4 bg-zinc-900 rounded-xl text-zinc-400 text-xs font-mono whitespace-pre-wrap leading-relaxed">
                 <div className="flex items-center gap-2 mb-3 text-zinc-100">
                   <Scale className="w-4 h-4" />
                   <span className="font-bold text-sm">Quasi-Indemnification Statement</span>
@@ -1568,7 +1568,7 @@ export default function IntelligentReportGenerator() {
         {/* ── No Report Placeholder ────────────────────── */}
         {['result', 'provenance', 'compliance'].includes(activeTab) && !generatedReport && (
           <div className="flex flex-col items-center justify-center py-20 text-zinc-400">
-            <FileText className="w-12 h-12 mb-3 text-zinc-300" />
+            <FileText className="w-12 h-12 mb-3 text-zinc-400" />
             <p className="text-sm">No report generated yet</p>
             <button
               onClick={() => setActiveTab('generate')}

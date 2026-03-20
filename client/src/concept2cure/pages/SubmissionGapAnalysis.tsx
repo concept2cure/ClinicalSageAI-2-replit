@@ -438,7 +438,7 @@ export default function SubmissionGapAnalysis({ projectId, submissionType: initi
                   >
                     Select all
                   </button>
-                  <span className="text-zinc-300">|</span>
+                  <span className="text-zinc-400">|</span>
                   <button
                     onClick={clearAllDocs}
                     className="text-xs text-zinc-400 hover:text-zinc-600 font-medium transition-colors"

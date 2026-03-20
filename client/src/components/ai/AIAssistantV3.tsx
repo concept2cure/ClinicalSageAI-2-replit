@@ -522,7 +522,7 @@ const InputArea: React.FC<InputAreaProps> = memo(
               'flex items-center justify-center w-9 h-9 rounded-xl',
               'text-neutral-400 hover:text-neutral-600 hover:bg-neutral-200',
               'transition-colors duration-150',
-              'disabled:opacity-50'
+              'disabled:opacity-60'
             )}
             title="Attach file"
           >
@@ -557,7 +557,7 @@ const InputArea: React.FC<InputAreaProps> = memo(
               'flex-1 resize-none bg-transparent py-2 px-1',
               'text-neutral-900 placeholder:text-neutral-400',
               'focus:outline-none',
-              'disabled:opacity-50',
+              'disabled:opacity-60',
               'max-h-[200px]'
             )}
           />

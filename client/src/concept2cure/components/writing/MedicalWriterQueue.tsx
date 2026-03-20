@@ -595,7 +595,7 @@ export const MedicalWriterQueue: React.FC<MedicalWriterQueueProps> = ({
             ))}
             {filteredTasks.length === 0 && (
               <div className="text-center py-12">
-                <FileText className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
+                <FileText className="w-12 h-12 text-zinc-400 mx-auto mb-3" />
                 <p className="text-zinc-500">No documents match your filters</p>
               </div>
             )}

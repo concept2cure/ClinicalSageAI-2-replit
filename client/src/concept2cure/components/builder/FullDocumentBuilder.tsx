@@ -261,7 +261,7 @@ export const FullDocumentBuilder: React.FC = () => {
         <button
           onClick={() => setStep('study_info')}
           disabled={selectedAgencies.length === 0}
-          className="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          className="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-60"
         >
           Continue
         </button>
@@ -297,7 +297,7 @@ export const FullDocumentBuilder: React.FC = () => {
         <button
           onClick={handleGenerate}
           disabled={!studyInfo.title || !studyInfo.indication || !studyInfo.primaryEndpoint}
-          className="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          className="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-60"
         >
           Generate Document
         </button>

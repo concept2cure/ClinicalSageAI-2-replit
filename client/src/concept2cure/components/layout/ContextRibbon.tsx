@@ -212,7 +212,7 @@ export const ContextRibbon: React.FC<ContextRibbonProps> = ({
           <span className="font-bold text-zinc-800 bg-zinc-100 px-3 py-1 rounded border border-zinc-200 shadow-sm">
             {project}
           </span>
-          <span className="text-zinc-300">/</span>
+          <span className="text-zinc-400">/</span>
           <span className={cn('font-medium uppercase flex items-center gap-1', modeConfig.color)}>
             {modeConfig.icon}
             {status || modeConfig.label}

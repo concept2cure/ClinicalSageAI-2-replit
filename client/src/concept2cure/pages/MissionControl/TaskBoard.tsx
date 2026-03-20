@@ -306,7 +306,7 @@ function TaskCard({
     >
       {/* Drag grip */}
       <div className="flex items-start gap-2">
-        <GripVertical className="w-4 h-4 text-zinc-300 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+        <GripVertical className="w-4 h-4 text-zinc-400 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
         <div className="flex-1 min-w-0 space-y-2">
           {/* Title */}
           <p className="text-sm font-semibold text-zinc-900 leading-snug">{task.title}</p>

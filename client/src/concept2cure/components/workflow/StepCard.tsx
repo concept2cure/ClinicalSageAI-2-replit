@@ -259,7 +259,7 @@ export const StepCard: React.FC<StepCardProps> = ({
                     {step.assigneeName || step.assigneeRole}
                   </span>
                 )}
-                <span className="text-zinc-300">•</span>
+                <span className="text-zinc-400">•</span>
                 <span className="uppercase tracking-wide">Step {step.order}</span>
               </div>
             </div>

@@ -315,7 +315,7 @@ export const RiskCockpit: React.FC<RiskCockpitProps> = ({ programId }) => {
               <button
                 onClick={handleAddRisk}
                 disabled={!newRisk.title.trim()}
-                className="px-4 py-1.5 text-xs font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-50"
+                className="px-4 py-1.5 text-xs font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-60"
               >
                 Add Risk
               </button>

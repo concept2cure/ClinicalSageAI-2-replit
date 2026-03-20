@@ -522,7 +522,7 @@ export const TraceabilityLinking: React.FC<TraceabilityLinkingProps> = ({
               <button
                 onClick={handleCreateLink}
                 disabled={isCreating || !selectedRange}
-                className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 <Link className="w-4 h-4" />
                 {isCreating ? 'Creating Link...' : 'Create Traceability Link'}

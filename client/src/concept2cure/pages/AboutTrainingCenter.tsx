@@ -772,7 +772,7 @@ function PlatformTab() {
         </div>
         <div className="mt-5 grid grid-cols-2 md:grid-cols-5 gap-3 text-center">
           {['Immutable Audit Trail', 'E-Signatures (SHA-256)', 'Role-Based Access', 'Row-Level Security', 'Hash Chain Integrity'].map(f => (
-            <div key={f} className="flex items-center gap-1.5 text-xs text-zinc-300">
+            <div key={f} className="flex items-center gap-1.5 text-xs text-zinc-400">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
               {f}
             </div>
@@ -1341,7 +1341,7 @@ function TrainingTab() {
                           {done ? (
                             <CheckCircle2 className="w-3 h-3 text-emerald-500 flex-shrink-0" />
                           ) : (
-                            <CircleDot className="w-3 h-3 text-zinc-300 flex-shrink-0" />
+                            <CircleDot className="w-3 h-3 text-zinc-400 flex-shrink-0" />
                           )}
                           <span className={done ? 'text-zinc-400' : 'text-zinc-700'}>{mod.title}</span>
                         </div>
@@ -1721,7 +1721,7 @@ function DrSageTab() {
                           ) : step.status === 'running' ? (
                             <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
                           ) : (
-                            <CircleDot className="w-4 h-4 text-zinc-300" />
+                            <CircleDot className="w-4 h-4 text-zinc-400" />
                           )}
                         </div>
                         <div className="flex-1">
@@ -1799,7 +1799,7 @@ function DrSageTab() {
                     key={action.id}
                     onClick={() => handleQuickAction(action.id)}
                     disabled={isThinking}
-                    className="w-full flex items-center gap-2.5 p-2.5 rounded-lg text-left hover:bg-zinc-50 transition-colors disabled:opacity-50 group"
+                    className="w-full flex items-center gap-2.5 p-2.5 rounded-lg text-left hover:bg-zinc-50 transition-colors disabled:opacity-60 group"
                   >
                     <div className="w-7 h-7 rounded-md bg-zinc-100 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-50">
                       <Icon className="w-3.5 h-3.5 text-zinc-500 group-hover:text-blue-600" />

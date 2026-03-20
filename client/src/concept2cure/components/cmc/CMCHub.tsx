@@ -799,7 +799,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
               </div>
 
               <div className="bg-white rounded-xl border p-6 text-center">
-                <ClipboardCheck className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
+                <ClipboardCheck className="w-12 h-12 text-zinc-400 mx-auto mb-3" />
                 <h3 className="text-sm font-medium text-zinc-700 mb-1">No specifications yet</h3>
                 <p className="text-xs text-zinc-500 max-w-md mx-auto mb-4">
                   Add quality specifications for drug substance and drug product, or upload a CoA to auto-generate.
@@ -858,7 +858,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
               </div>
 
               <div className="bg-white rounded-xl border p-6 text-center">
-                <ThermometerSun className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
+                <ThermometerSun className="w-12 h-12 text-zinc-400 mx-auto mb-3" />
                 <h3 className="text-sm font-medium text-zinc-700 mb-1">No stability studies yet</h3>
                 <p className="text-xs text-zinc-500 max-w-md mx-auto mb-4">
                   Create a stability study or upload stability data to track time-point results.
@@ -917,7 +917,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
               </div>
 
               <div className="bg-white rounded-xl border p-6 text-center">
-                <Beaker className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
+                <Beaker className="w-12 h-12 text-zinc-400 mx-auto mb-3" />
                 <h3 className="text-sm font-medium text-zinc-700 mb-1">No impurities recorded yet</h3>
                 <p className="text-xs text-zinc-500 max-w-md mx-auto mb-4">
                   Add impurities manually or upload analytical data (HPLC chromatograms, CoA) to auto-detect.
@@ -993,7 +993,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                         <button
                           onClick={() => handleGenerateSection(section.code, section.title)}
                           disabled={isGenerating}
-                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-violet-50 text-violet-700 border border-violet-200 rounded-lg hover:bg-violet-100 transition-colors disabled:opacity-50"
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-violet-50 text-violet-700 border border-violet-200 rounded-lg hover:bg-violet-100 transition-colors disabled:opacity-60"
                         >
                           {isGenerating ? (
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -1027,7 +1027,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                         <button
                           onClick={() => handleGenerateSection(section.code, section.title)}
                           disabled={isGenerating}
-                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors disabled:opacity-50"
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors disabled:opacity-60"
                         >
                           {isGenerating ? (
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />

@@ -187,7 +187,7 @@ const AlertCard: React.FC<{
       </div>
       
       {/* Arrow */}
-      <div className="flex items-center text-zinc-300 group-hover:text-blue-500 transition-transform group-hover:translate-x-1">
+      <div className="flex items-center text-zinc-400 group-hover:text-blue-500 transition-transform group-hover:translate-x-1">
         <ArrowRight size={18} />
       </div>
     </button>

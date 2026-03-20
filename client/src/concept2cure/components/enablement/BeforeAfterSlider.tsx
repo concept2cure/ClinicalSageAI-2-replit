@@ -111,7 +111,7 @@ export function BeforeAfterSlider({
           <ul className="space-y-3">
             {comparison.before.map((item, i) => (
               <li key={i} className="text-sm text-zinc-500 leading-relaxed">
-                <span className="text-zinc-300 mr-2">&middot;</span>
+                <span className="text-zinc-400 mr-2">&middot;</span>
                 {item.text}
               </li>
             ))}

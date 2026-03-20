@@ -225,7 +225,7 @@ const getStatusConfig = (status?: DocumentStatus['status']) => {
     case 'not_started':
       return { icon: Circle, color: 'text-zinc-400', bg: 'bg-zinc-50', label: 'Not Started' };
     case 'not_required':
-      return { icon: Lock, color: 'text-zinc-300', bg: 'bg-zinc-50', label: 'Not Required' };
+      return { icon: Lock, color: 'text-zinc-400', bg: 'bg-zinc-50', label: 'Not Required' };
     default:
       return { icon: Circle, color: 'text-zinc-400', bg: 'bg-zinc-50', label: 'Pending' };
   }

@@ -336,7 +336,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
                       onSourceSelect?.(source);
                     }}
                   >
-                    <GripVertical className="w-3 h-3 text-zinc-300 mt-0.5 flex-shrink-0 cursor-grab" />
+                    <GripVertical className="w-3 h-3 text-zinc-400 mt-0.5 flex-shrink-0 cursor-grab" />
                     {getFileIcon(source.type)}
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-zinc-800 truncate">

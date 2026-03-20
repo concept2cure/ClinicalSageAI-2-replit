@@ -464,7 +464,7 @@ const PredicatePathfinder: React.FC<{
           })
         ) : (
           <div className="p-8 text-center">
-            <Compass className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
+            <Compass className="w-12 h-12 text-zinc-400 mx-auto mb-3" />
             <p className="text-sm text-zinc-500">No predicate candidates yet</p>
             <p className="text-xs text-zinc-400">Click "Search Predicates" to find your path</p>
           </div>
@@ -836,7 +836,7 @@ const CERTracker: React.FC<{
 
         {documents.length === 0 && (
           <div className="p-8 text-center">
-            <FileText className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
+            <FileText className="w-12 h-12 text-zinc-400 mx-auto mb-3" />
             <p className="text-sm text-zinc-500">No CER documents</p>
           </div>
         )}
@@ -980,7 +980,7 @@ export const MedicalDeviceDashboard: React.FC<MedicalDeviceDashboardProps> = ({
               </>
             ) : (
               <div className="bg-white rounded-xl border border-zinc-200 p-8 text-center">
-                <Compass className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
+                <Compass className="w-12 h-12 text-zinc-400 mx-auto mb-3" />
                 <p className="text-zinc-500">Select a submission to view details</p>
               </div>
             )}

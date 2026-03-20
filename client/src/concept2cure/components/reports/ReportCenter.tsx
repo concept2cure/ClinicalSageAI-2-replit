@@ -158,7 +158,7 @@ export const ReportCenter: React.FC<{ projectId?: string }> = ({ projectId }) =>
           </div>
         ) : reports.length === 0 ? (
           <div className="text-center py-12 text-zinc-400">
-            <FileOutput className="w-10 h-10 mx-auto mb-3 text-zinc-300" />
+            <FileOutput className="w-10 h-10 mx-auto mb-3 text-zinc-400" />
             <p className="text-sm font-medium">No reports generated yet</p>
             <p className="text-xs mt-1">Generate your first report using the templates above</p>
           </div>

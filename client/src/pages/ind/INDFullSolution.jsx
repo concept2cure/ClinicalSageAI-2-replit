@@ -824,7 +824,7 @@ export default function INDFullSolution() {
             <button
               onClick={() => handleCreateFromDocuments(template)}
               disabled={isCreatingFromDocs}
-              className="inline-flex items-center px-3 py-1.5 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded text-sm disabled:opacity-50"
+              className="inline-flex items-center px-3 py-1.5 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded text-sm disabled:opacity-60"
             >
               {isCreatingFromDocs ? <Loader2 className="animate-spin h-4 w-4 mr-1" /> : null}
               Create from Uploaded Docs
@@ -832,7 +832,7 @@ export default function INDFullSolution() {
             <button
               onClick={() => handleDownloadTemplate(template.id)}
               disabled={isLoading}
-              className="inline-flex items-center px-3 py-1.5 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded text-sm disabled:opacity-50"
+              className="inline-flex items-center px-3 py-1.5 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded text-sm disabled:opacity-60"
             >
               {isLoading ? <Loader2 className="animate-spin h-4 w-4 mr-1" /> : null}
               Download Package
@@ -1028,7 +1028,7 @@ export default function INDFullSolution() {
           <button
             onClick={() => handleDownloadModule(module.id)}
             disabled={isLoading}
-            className="inline-flex items-center px-3 py-1.5 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded text-sm disabled:opacity-50"
+            className="inline-flex items-center px-3 py-1.5 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded text-sm disabled:opacity-60"
           >
             {isLoading ? <Loader2 className="animate-spin h-4 w-4 mr-1" /> : null}
             Download Module
@@ -1666,7 +1666,7 @@ export default function INDFullSolution() {
               <button
                 onClick={startGuidedFlow}
                 disabled={isCreatingFromDocs}
-                className="w-full inline-flex items-center justify-center px-3 py-2 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded text-sm disabled:opacity-50"
+                className="w-full inline-flex items-center justify-center px-3 py-2 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded text-sm disabled:opacity-60"
               >
                 {isCreatingFromDocs ? <Loader2 className="animate-spin h-4 w-4 mr-1" /> : null}
                 {guidedFamily === 'ind' ? 'Start Guided Upload' : 'Open Family Workspace'}

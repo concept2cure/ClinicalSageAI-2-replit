@@ -160,7 +160,7 @@ export const DecisionLog: React.FC<DecisionLogProps> = ({ programId }) => {
         <button
           onClick={() => setShowModal(true)}
           disabled={!programId}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-60 disabled:cursor-not-allowed"
         >
           <Plus className="w-3.5 h-3.5" />
           Record Decision
@@ -531,7 +531,7 @@ export const DecisionLog: React.FC<DecisionLogProps> = ({ programId }) => {
               <button
                 onClick={handleSubmit}
                 disabled={!form.title.trim() || createDecision.isPending}
-                className="px-4 py-1.5 text-xs font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-1.5 text-xs font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {createDecision.isPending ? 'Saving...' : 'Save Decision'}
               </button>

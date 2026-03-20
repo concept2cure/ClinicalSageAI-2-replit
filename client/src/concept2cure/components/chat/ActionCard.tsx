@@ -124,7 +124,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({
       >
         <Icon className="w-4 h-4 text-zinc-400 group-hover:text-blue-500 transition-colors" />
         <span>{label}</span>
-        <ArrowRight className="w-3.5 h-3.5 text-zinc-300 group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all" />
+        <ArrowRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all" />
       </button>
     );
   }

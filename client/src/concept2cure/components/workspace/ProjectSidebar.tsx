@@ -93,7 +93,7 @@ const InstructionsModal: React.FC<{
           <button
             onClick={handleSave}
             disabled={saving}
-            className="px-4 py-2 text-sm font-medium text-white bg-zinc-900 hover:bg-zinc-800 rounded-lg transition-colors disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-white bg-zinc-900 hover:bg-zinc-800 rounded-lg transition-colors disabled:opacity-60"
           >
             {saving ? 'Saving...' : 'Save instructions'}
           </button>
@@ -140,7 +140,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
   if (isLoading) {
     return (
       <div className={cn('flex items-center justify-center py-12', className)}>
-        <Loader2 className="w-5 h-5 animate-spin text-zinc-300" />
+        <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
       </div>
     );
   }
@@ -262,7 +262,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
             onClick={() => fileInputRef.current?.click()}
             className="w-full py-8 border-2 border-dashed border-zinc-200 rounded-xl text-center hover:border-zinc-300 hover:bg-zinc-50 transition-colors"
           >
-            <Upload className="w-5 h-5 text-zinc-300 mx-auto mb-2" />
+            <Upload className="w-5 h-5 text-zinc-400 mx-auto mb-2" />
             <p className="text-xs text-zinc-400">Drop files here or click to upload</p>
           </button>
         ) : (
@@ -274,7 +274,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
               >
                 {/* Thumbnail placeholder */}
                 <div className="aspect-[4/5] bg-zinc-50 flex items-center justify-center">
-                  <FileText className="w-6 h-6 text-zinc-300" />
+                  <FileText className="w-6 h-6 text-zinc-400" />
                 </div>
                 {/* File type badge */}
                 <div className="absolute bottom-1 left-1">

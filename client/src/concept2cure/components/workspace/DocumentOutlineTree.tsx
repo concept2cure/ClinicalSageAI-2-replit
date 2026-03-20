@@ -322,7 +322,7 @@ function TemplateStructureView({
             ) : item.required ? (
               <AlertCircle className="w-3 h-3 text-amber-500 shrink-0" />
             ) : (
-              <Circle className="w-3 h-3 text-zinc-300 shrink-0" />
+              <Circle className="w-3 h-3 text-zinc-400 shrink-0" />
             )}
             <span className="text-[11px] flex-1 truncate leading-snug">{item.label}</span>
             {item.required && !present && (
@@ -338,7 +338,7 @@ function TemplateStructureView({
             {!present && onCreateSubsection && (
               <button
                 onClick={() => onCreateSubsection(item.key, item.label)}
-                className="p-0.5 text-zinc-300 hover:text-violet-600 rounded hover:bg-violet-50 shrink-0"
+                className="p-0.5 text-zinc-400 hover:text-violet-600 rounded hover:bg-violet-50 shrink-0"
                 title={`Create "${item.label}" section`}
               >
                 <Plus className="w-3 h-3" />

@@ -324,7 +324,7 @@ export const DossierView: React.FC<DossierViewProps> = ({
               <div className="bg-white rounded-xl border p-6">
                 <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">Content Preview</h3>
                 <div className="bg-zinc-50 rounded-lg p-8 text-center">
-                  <FileText className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+                  <FileText className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
                   <p className="text-xs text-zinc-500">
                     {selectedArtifact.lifecycleState === 'planned'
                       ? 'This artifact has not been drafted yet. Use "Draft with AnA" to begin.'

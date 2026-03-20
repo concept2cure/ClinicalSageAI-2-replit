@@ -151,7 +151,7 @@ const PredicatePathfinder: React.FC<PredicatePathfinderProps> = ({ onSelectPredi
                       {predicate.applicant} • {predicate.productCode} • Class {predicate.deviceClass}
                     </p>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-zinc-300 group-hover:text-zinc-500 transition-colors" />
+                  <ChevronRight className="w-5 h-5 text-zinc-400 group-hover:text-zinc-500 transition-colors" />
                 </div>
               </button>
             ))}
@@ -162,7 +162,7 @@ const PredicatePathfinder: React.FC<PredicatePathfinderProps> = ({ onSelectPredi
           </div>
         ) : (
           <div className="p-8 text-center text-zinc-500">
-            <Search className="w-10 h-10 mx-auto mb-3 text-zinc-300" />
+            <Search className="w-10 h-10 mx-auto mb-3 text-zinc-400" />
             <p className="text-sm">Enter at least 2 characters to search</p>
           </div>
         )}
@@ -194,7 +194,7 @@ const MAUDEHazardMonitor: React.FC<MAUDEHazardMonitorProps> = ({ productCode }) 
   if (!hazardAnalysis) {
     return (
       <div className="bg-white rounded-xl border border-zinc-200 p-8 text-center">
-        <AlertTriangle className="w-10 h-10 mx-auto mb-3 text-zinc-300" />
+        <AlertTriangle className="w-10 h-10 mx-auto mb-3 text-zinc-400" />
         <p className="text-sm text-zinc-500">No hazard data available</p>
       </div>
     );
@@ -375,7 +375,7 @@ const SubmissionTracker: React.FC = () => {
         </div>
       ) : (
         <div className="p-8 text-center text-zinc-500">
-          <FileText className="w-10 h-10 mx-auto mb-3 text-zinc-300" />
+          <FileText className="w-10 h-10 mx-auto mb-3 text-zinc-400" />
           <p className="text-sm">No active submissions</p>
         </div>
       )}
@@ -464,7 +464,7 @@ export const MedTechWorkspace: React.FC<MedTechWorkspaceProps> = ({
 
         {activeTab === 'estar' && (
           <div className="bg-white rounded-xl border border-zinc-200 p-8 text-center">
-            <ClipboardList className="w-16 h-16 mx-auto mb-4 text-zinc-300" />
+            <ClipboardList className="w-16 h-16 mx-auto mb-4 text-zinc-400" />
             <h3 className="text-lg font-semibold text-zinc-900 mb-2">eSTAR Package Manager</h3>
             <p className="text-zinc-500 mb-4">FDA eSTAR template management and validation</p>
             <button className="px-4 py-2 bg-zinc-900 text-white rounded-lg text-sm font-medium hover:bg-zinc-800 transition-colors">
@@ -475,7 +475,7 @@ export const MedTechWorkspace: React.FC<MedTechWorkspaceProps> = ({
 
         {activeTab === 'cer' && (
           <div className="bg-white rounded-xl border border-zinc-200 p-8 text-center">
-            <Globe className="w-16 h-16 mx-auto mb-4 text-zinc-300" />
+            <Globe className="w-16 h-16 mx-auto mb-4 text-zinc-400" />
             <h3 className="text-lg font-semibold text-zinc-900 mb-2">Clinical Evaluation Report</h3>
             <p className="text-zinc-500 mb-4">EU MDR CER and PMCF planning</p>
             <button className="px-4 py-2 bg-zinc-900 text-white rounded-lg text-sm font-medium hover:bg-zinc-800 transition-colors">

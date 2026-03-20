@@ -268,7 +268,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
     return (
       <div className="flex items-center justify-center h-96 text-zinc-500">
         <div className="text-center space-y-2">
-          <BarChart3 className="w-12 h-12 mx-auto text-zinc-300" />
+          <BarChart3 className="w-12 h-12 mx-auto text-zinc-400" />
           <p className="text-lg font-medium">No Program Selected</p>
           <p className="text-sm">Select a program to view analytics.</p>
         </div>
@@ -535,7 +535,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
                     </div>
                   ) : (
                     <div className="h-5 rounded-md bg-zinc-50 flex items-center justify-center">
-                      <span className="text-[11px] text-zinc-300">No artifacts</span>
+                      <span className="text-[11px] text-zinc-400">No artifacts</span>
                     </div>
                   )}
                 </div>

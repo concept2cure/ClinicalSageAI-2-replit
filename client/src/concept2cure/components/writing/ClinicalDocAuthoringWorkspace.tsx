@@ -890,7 +890,7 @@ export const ClinicalDocAuthoringWorkspace: React.FC<ClinicalDocAuthoringWorkspa
             ) : (
               <div className="h-full flex items-center justify-center bg-white rounded-xl border border-zinc-200">
                 <div className="text-center">
-                  <FileText className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
+                  <FileText className="w-12 h-12 text-zinc-400 mx-auto mb-3" />
                   <p className="text-sm text-zinc-500">Select a document to begin authoring</p>
                 </div>
               </div>

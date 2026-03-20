@@ -1033,7 +1033,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                   leftRailMode === tab.key
                     ? 'text-zinc-900 bg-white border-b-2 border-zinc-900'
                     : tab.disabled
-                      ? 'text-zinc-300 cursor-not-allowed'
+                      ? 'text-zinc-400 cursor-not-allowed'
                       : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100/60'
                 )}
                 data-testid={`rail-mode-${tab.key}`}
@@ -1201,7 +1201,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               <button
                 onClick={handleCreateNew}
                 disabled={creatingNew || !newDocTitle.trim()}
-                className="px-2.5 py-1 text-[11px] bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 font-medium flex items-center gap-1"
+                className="px-2.5 py-1 text-[11px] bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-60 font-medium flex items-center gap-1"
               >
                 {creatingNew ? (
                   <Loader2 className="w-3 h-3 animate-spin" />

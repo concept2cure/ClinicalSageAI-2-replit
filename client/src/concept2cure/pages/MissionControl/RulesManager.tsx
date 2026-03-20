@@ -408,7 +408,7 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
         <button
           type="submit"
           disabled={isSaving || !form.name}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
         >
           {isSaving ? (
             <RefreshCw className="w-4 h-4 animate-spin" />
@@ -603,7 +603,7 @@ export const RulesManager: React.FC<RulesManagerProps> = ({ onBack }) => {
               </div>
             ) : filteredRules.length === 0 ? (
               <div className="text-center py-8">
-                <ListChecks className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+                <ListChecks className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
                 <p className="text-sm text-zinc-500">No rules found</p>
               </div>
             ) : (
@@ -886,7 +886,7 @@ export const RulesManager: React.FC<RulesManagerProps> = ({ onBack }) => {
           {viewMode === 'list' && !selectedRuleId && (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
-                <Settings2 className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
+                <Settings2 className="w-12 h-12 text-zinc-400 mx-auto mb-3" />
                 <h3 className="text-base font-semibold text-zinc-700">
                   Select a rule to view details
                 </h3>

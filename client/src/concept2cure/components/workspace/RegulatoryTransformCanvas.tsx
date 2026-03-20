@@ -161,7 +161,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
         <h2 className="text-sm font-semibold text-zinc-800">Regulatory Transform Canvas</h2>
         {projectName && (
           <>
-            <span className="text-zinc-300">·</span>
+            <span className="text-zinc-400">·</span>
             <span className="text-xs text-zinc-500 truncate">{projectName}</span>
           </>
         )}
@@ -446,7 +446,7 @@ function ActionButton({
           ? 'bg-blue-600 text-white hover:bg-blue-700'
           : !disabled
             ? 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100 border border-zinc-200'
-            : 'bg-zinc-50 text-zinc-300 border border-zinc-200 cursor-not-allowed'
+            : 'bg-zinc-50 text-zinc-400 border border-zinc-200 cursor-not-allowed'
       )}
     >
       {icon}

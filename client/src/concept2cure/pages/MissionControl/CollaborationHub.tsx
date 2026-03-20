@@ -571,7 +571,7 @@ const CollaborationHub: React.FC<CollaborationHubProps> = ({ programId }) => {
                   <button
                     onClick={handleSend}
                     disabled={!composeBody.trim() || createCollaboration.isPending}
-                    className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-50 transition-colors"
+                    className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-60 transition-colors"
                   >
                     <Send className="w-3.5 h-3.5" />
                     Send
@@ -711,7 +711,7 @@ const CollaborationHub: React.FC<CollaborationHubProps> = ({ programId }) => {
                               {t.author} &middot; {relativeTime(t.createdAt)}
                             </p>
                           </div>
-                          <ChevronRight className="w-3 h-3 text-zinc-300 mt-0.5 flex-shrink-0" />
+                          <ChevronRight className="w-3 h-3 text-zinc-400 mt-0.5 flex-shrink-0" />
                         </button>
                       );
                     })}

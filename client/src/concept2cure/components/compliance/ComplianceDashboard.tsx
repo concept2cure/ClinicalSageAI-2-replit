@@ -430,7 +430,7 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
               <button
                 onClick={onRefresh}
                 disabled={isLoading}
-                className="p-2 hover:bg-zinc-100 rounded-lg transition-colors disabled:opacity-50"
+                className="p-2 hover:bg-zinc-100 rounded-lg transition-colors disabled:opacity-60"
                 title="Refresh"
               >
                 <RefreshCw className={`w-5 h-5 text-zinc-600 ${isLoading ? 'animate-spin' : ''}`} />

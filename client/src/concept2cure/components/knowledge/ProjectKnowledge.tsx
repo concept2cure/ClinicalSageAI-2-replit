@@ -359,7 +359,7 @@ export const ProjectKnowledge: React.FC<ProjectKnowledgeProps> = ({ project, cla
             {/* Empty State */}
             {knowledge && knowledge.documents.length === 0 && !isUploading && (
               <div className="text-center py-6 text-sm text-zinc-500">
-                <FileText className="h-8 w-8 mx-auto mb-2 text-zinc-300" />
+                <FileText className="h-8 w-8 mx-auto mb-2 text-zinc-400" />
                 <p>No documents uploaded yet.</p>
                 <p className="text-xs mt-1">
                   Upload device specs, predicate summaries, test data, etc.

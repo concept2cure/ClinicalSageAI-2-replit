@@ -247,7 +247,7 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ artifact }) => {
     return (
       <div className="flex items-center justify-center h-full text-center p-8">
         <div className="text-zinc-500">
-          <FileText className="h-12 w-12 mx-auto mb-4 text-zinc-300" />
+          <FileText className="h-12 w-12 mx-auto mb-4 text-zinc-400" />
           <p className="text-sm">No artifact selected</p>
           <p className="text-xs mt-1">Artifacts will appear here when RI creates them</p>
         </div>

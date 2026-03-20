@@ -255,7 +255,7 @@ function DashboardView({ programs, riskSignals, summary, isLoading }: {
           <SectionLabel>Active Programs</SectionLabel>
           {programs.length === 0 ? (
             <Card className="py-12 text-center">
-              <Package className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+              <Package className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
               <p className="text-sm text-zinc-500">No programs yet</p>
               <p className="text-xs text-zinc-400 mt-1">Create projects to see your active regulatory programs here.</p>
             </Card>
@@ -281,7 +281,7 @@ function DashboardView({ programs, riskSignals, summary, isLoading }: {
                         <div className="h-1 bg-zinc-900 rounded-full" style={{ width: `${p.readiness}%` }} />
                       </div>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-zinc-300" />
+                    <ChevronRight className="w-4 h-4 text-zinc-400" />
                   </div>
                 </div>
               ))}
@@ -293,7 +293,7 @@ function DashboardView({ programs, riskSignals, summary, isLoading }: {
           <SectionLabel>Risk Signals</SectionLabel>
           {riskSignals.length === 0 ? (
             <Card className="py-12 text-center">
-              <CheckCircle2 className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+              <CheckCircle2 className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
               <p className="text-sm text-zinc-500">No risk signals</p>
               <p className="text-xs text-zinc-400 mt-1">Pending reviews and risks will appear here.</p>
             </Card>
@@ -312,7 +312,7 @@ function DashboardView({ programs, riskSignals, summary, isLoading }: {
               ))}
             </div>
           )}
-          <p className="text-[11px] text-zinc-300 mt-3">Powered by Mission Control + Submission Readiness Twin</p>
+          <p className="text-[11px] text-zinc-400 mt-3">Powered by Mission Control + Submission Readiness Twin</p>
         </div>
       </div>
     </div>
@@ -354,7 +354,7 @@ function SubmissionsView({ programs }: { programs: any[] }) {
 
       {submissions.length === 0 ? (
         <Card className="py-12 text-center">
-          <Package className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+          <Package className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
           <p className="text-sm text-zinc-500">No submissions yet</p>
           <p className="text-xs text-zinc-400 mt-1">Create projects to track your regulatory submissions here.</p>
         </Card>
@@ -435,7 +435,7 @@ function SubmissionsView({ programs }: { programs: any[] }) {
           )}
         </>
       )}
-      <p className="text-[11px] text-zinc-300">Powered by Submission Ops Command Center</p>
+      <p className="text-[11px] text-zinc-400">Powered by Submission Ops Command Center</p>
     </div>
   );
 }
@@ -472,7 +472,7 @@ function WorkflowsView({ firstProjectId }: { firstProjectId: string | null }) {
 
       {tasks.length === 0 && !isLoadingTasks ? (
         <Card className="py-12 text-center">
-          <ListChecks className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+          <ListChecks className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
           <p className="text-sm text-zinc-500">No tasks yet</p>
           <p className="text-xs text-zinc-400 mt-1">Create projects and add tasks to see your workflow board here.</p>
         </Card>
@@ -503,7 +503,7 @@ function WorkflowsView({ firstProjectId }: { firstProjectId: string | null }) {
         </div>
       )}
 
-      <p className="text-[11px] text-zinc-300">Powered by Workflow Engine + Task Management + Automation</p>
+      <p className="text-[11px] text-zinc-400">Powered by Workflow Engine + Task Management + Automation</p>
     </div>
   );
 }
@@ -543,7 +543,7 @@ function VaultView({ documents }: { documents: any[] }) {
 
       {documents.length === 0 ? (
         <Card className="py-12 text-center">
-          <FolderOpen className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+          <FolderOpen className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
           <p className="text-sm text-zinc-500">No documents yet</p>
           <p className="text-xs text-zinc-400 mt-1">Create projects and generate artifacts to populate the document vault.</p>
         </Card>
@@ -604,7 +604,7 @@ function VaultView({ documents }: { documents: any[] }) {
           </div>
         </Card>
       )}
-      <p className="text-[11px] text-zinc-300">21 CFR Part 11 Compliant · SHA-256 Content Hashing · Full Audit Trail</p>
+      <p className="text-[11px] text-zinc-400">21 CFR Part 11 Compliant · SHA-256 Content Hashing · Full Audit Trail</p>
     </div>
   );
 }
@@ -623,12 +623,12 @@ function NegotiationsView() {
       </div>
 
       <Card className="py-12 text-center">
-        <Handshake className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+        <Handshake className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
         <p className="text-sm text-zinc-500">No FDA meetings recorded yet</p>
         <p className="text-xs text-zinc-400 mt-1">Use AnA to schedule and track agency interactions.</p>
       </Card>
 
-      <p className="text-[11px] text-zinc-300">Powered by Regulatory Negotiation Logbook</p>
+      <p className="text-[11px] text-zinc-400">Powered by Regulatory Negotiation Logbook</p>
     </div>
   );
 }
@@ -647,7 +647,7 @@ function TeamView({ activities }: { activities: { time: string; user: string; ac
       </div>
 
       <Card className="py-12 text-center">
-        <Users className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+        <Users className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
         <p className="text-sm text-zinc-500">Team members will appear here when collaboration features are configured</p>
         <p className="text-xs text-zinc-400 mt-1">Invite team members and assign roles to see capacity and availability.</p>
       </Card>
@@ -658,14 +658,14 @@ function TeamView({ activities }: { activities: { time: string; user: string; ac
           <SectionLabel>Activity Feed</SectionLabel>
           {activities.length === 0 ? (
             <div className="text-center py-4">
-              <Activity className="w-6 h-6 text-zinc-300 mx-auto mb-1" />
+              <Activity className="w-6 h-6 text-zinc-400 mx-auto mb-1" />
               <p className="text-xs text-zinc-400">No recent activity</p>
             </div>
           ) : (
             <div className="space-y-3">
               {activities.map((a, i) => (
                 <div key={i} className="flex items-start gap-2">
-                  <Activity className="w-3 h-3 text-zinc-300 mt-0.5 shrink-0" />
+                  <Activity className="w-3 h-3 text-zinc-400 mt-0.5 shrink-0" />
                   <div>
                     <p className="text-xs text-zinc-600">
                       <span className="font-medium text-zinc-900">{a.user}</span> {a.action}
@@ -678,7 +678,7 @@ function TeamView({ activities }: { activities: { time: string; user: string; ac
           )}
         </Card>
       </div>
-      <p className="text-[11px] text-zinc-300">Powered by Collaboration Hub + Team Workspace</p>
+      <p className="text-[11px] text-zinc-400">Powered by Collaboration Hub + Team Workspace</p>
     </div>
   );
 }
@@ -737,7 +737,7 @@ function AnalyticsView({ programs, summary }: {
           <SectionLabel>Artifact Breakdown</SectionLabel>
           {summary.total === 0 ? (
             <div className="text-center py-6">
-              <BarChart3 className="w-6 h-6 text-zinc-300 mx-auto mb-1" />
+              <BarChart3 className="w-6 h-6 text-zinc-400 mx-auto mb-1" />
               <p className="text-xs text-zinc-400">No artifacts yet. Create projects and artifacts to see analytics.</p>
             </div>
           ) : (
@@ -759,7 +759,7 @@ function AnalyticsView({ programs, summary }: {
           <SectionLabel>Program Readiness Distribution</SectionLabel>
           {programs.length === 0 ? (
             <div className="text-center py-6">
-              <Target className="w-6 h-6 text-zinc-300 mx-auto mb-1" />
+              <Target className="w-6 h-6 text-zinc-400 mx-auto mb-1" />
               <p className="text-xs text-zinc-400">Create projects to see readiness metrics here.</p>
             </div>
           ) : (
@@ -778,7 +778,7 @@ function AnalyticsView({ programs, summary }: {
         </Card>
       </div>
 
-      <p className="text-[11px] text-zinc-300">Powered by Program Analytics + Portfolio Analytics + Reports</p>
+      <p className="text-[11px] text-zinc-400">Powered by Program Analytics + Portfolio Analytics + Reports</p>
     </div>
   );
 }

@@ -460,7 +460,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ editor, onSave, isSaving, isLocked, o
       <button
         onClick={onSave}
         disabled={isSaving}
-        className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-md text-xs font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+        className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-md text-xs font-medium hover:bg-blue-700 transition-colors disabled:opacity-60"
       >
         <Save className="w-3.5 h-3.5" />
         {isSaving ? 'Saving...' : 'Save'}

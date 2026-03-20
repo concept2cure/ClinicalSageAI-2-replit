@@ -162,7 +162,7 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
                             }}
                             className={cn(
                               'p-0.5 shrink-0 transition-transform duration-150',
-                              isExpanded ? 'text-zinc-500' : 'text-zinc-300 hover:text-zinc-500'
+                              isExpanded ? 'text-zinc-500' : 'text-zinc-400 hover:text-zinc-500'
                             )}
                             title="Toggle details"
                           >
@@ -173,7 +173,7 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
                               )}
                             />
                           </button>
-                          <FileText className="w-3.5 h-3.5 text-zinc-300 shrink-0" />
+                          <FileText className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
                           <div className="min-w-0">
                             <p className="text-[12px] font-medium text-zinc-800 truncate leading-snug">
                               {doc.title}
@@ -205,7 +205,7 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
                                   e.stopPropagation();
                                   onCutDocument(doc);
                                 }}
-                                className="p-1 text-zinc-300 hover:text-zinc-600 rounded hover:bg-zinc-100"
+                                className="p-1 text-zinc-400 hover:text-zinc-600 rounded hover:bg-zinc-100"
                                 title="Cut — move to another section"
                               >
                                 <Scissors className="w-3 h-3" />
@@ -217,7 +217,7 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
                                   e.stopPropagation();
                                   onOpenPlacement(doc, doc.ctdSection ? 'relocate' : 'place');
                                 }}
-                                className="p-1 text-zinc-300 hover:text-zinc-600 rounded hover:bg-zinc-100"
+                                className="p-1 text-zinc-400 hover:text-zinc-600 rounded hover:bg-zinc-100"
                                 title={doc.ctdSection ? 'Relocate' : 'Place in dossier'}
                               >
                                 <MapPin className="w-3 h-3" />
@@ -229,7 +229,7 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
                                   e.stopPropagation();
                                   onCopyCtdPath(doc);
                                 }}
-                                className="p-1 text-zinc-300 hover:text-zinc-600 rounded hover:bg-zinc-100"
+                                className="p-1 text-zinc-400 hover:text-zinc-600 rounded hover:bg-zinc-100"
                                 title="Copy CTD path"
                               >
                                 <Copy className="w-3 h-3" />

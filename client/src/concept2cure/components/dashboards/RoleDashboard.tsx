@@ -681,7 +681,7 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
                   )}
                   {!isLoadingOps && tasks.length === 0 && (
                     <div className="text-center py-8 text-zinc-500">
-                      <ClipboardList className="w-8 h-8 mx-auto mb-2 text-zinc-300" />
+                      <ClipboardList className="w-8 h-8 mx-auto mb-2 text-zinc-400" />
                       <p className="text-sm font-medium">No active tasks</p>
                       <p className="text-xs mt-1">Tasks will appear here as they are created in the system</p>
                     </div>

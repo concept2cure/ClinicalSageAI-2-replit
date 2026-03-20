@@ -813,7 +813,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                   </div>
                   <div className="text-xs text-zinc-400">{p.sub}</div>
                 </div>
-                <ArrowUp className="w-4 h-4 text-zinc-300 group-hover:text-blue-400 flex-shrink-0 mt-0.5 rotate-45" />
+                <ArrowUp className="w-4 h-4 text-zinc-400 group-hover:text-blue-400 flex-shrink-0 mt-0.5 rotate-45" />
               </button>
             ))}
           </div>

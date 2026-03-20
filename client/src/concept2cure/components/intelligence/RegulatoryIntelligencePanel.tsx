@@ -270,7 +270,7 @@ export function RegulatoryIntelligencePanel({
             <button
               onClick={handleRunAnalysis}
               disabled={regulatoryAnalysis.isPending}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-indigo-600 text-white text-xs font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-indigo-600 text-white text-xs font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-60"
             >
               {regulatoryAnalysis.isPending ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -507,7 +507,7 @@ export function RegulatoryIntelligencePanel({
             <button
               onClick={handleRunPrediction}
               disabled={foresightPrediction.isPending}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-amber-600 text-white text-xs font-medium rounded-lg hover:bg-amber-700 disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-amber-600 text-white text-xs font-medium rounded-lg hover:bg-amber-700 disabled:opacity-60"
             >
               {foresightPrediction.isPending ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -521,7 +521,7 @@ export function RegulatoryIntelligencePanel({
             <button
               onClick={handleRunRiskAnalysis}
               disabled={clinicalRisk.isPending}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-orange-600 text-white text-xs font-medium rounded-lg hover:bg-orange-700 disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-orange-600 text-white text-xs font-medium rounded-lg hover:bg-orange-700 disabled:opacity-60"
             >
               {clinicalRisk.isPending ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -1093,7 +1093,7 @@ export function RegulatoryIntelligencePanel({
             {/* Empty state */}
             {!evidenceQuery && (!csrSearch.data || csrSearch.data.length === 0) && (
               <div className="text-center py-6">
-                <BookOpen className="w-8 h-8 mx-auto text-zinc-300 mb-2" />
+                <BookOpen className="w-8 h-8 mx-auto text-zinc-400 mb-2" />
                 <p className="text-[11px] text-zinc-400">
                   Search 779+ clinical study reports or set an indication to auto-discover evidence.
                 </p>

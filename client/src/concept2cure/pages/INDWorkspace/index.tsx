@@ -1112,7 +1112,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                             })
                           }
                           disabled={statusMutation.isPending}
-                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors disabled:opacity-50"
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors disabled:opacity-60"
                         >
                           <ActionIcon className="w-3.5 h-3.5" />
                           {action.label}
@@ -1245,7 +1245,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                         {m.ready ? (
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
                         ) : (
-                          <Circle className="w-3.5 h-3.5 text-zinc-300" />
+                          <Circle className="w-3.5 h-3.5 text-zinc-400" />
                         )}
                       </div>
                     ))}

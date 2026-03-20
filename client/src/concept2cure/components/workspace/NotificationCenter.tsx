@@ -257,7 +257,7 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
           <div className="max-h-64 overflow-y-auto">
             {loading ? (
               <div className="flex justify-center py-6">
-                <Loader2 className="w-4 h-4 animate-spin text-zinc-300" />
+                <Loader2 className="w-4 h-4 animate-spin text-zinc-400" />
               </div>
             ) : notifications.length === 0 ? (
               <p className="text-[11px] text-zinc-400 text-center py-6">

@@ -313,9 +313,9 @@ function StepStatusIndicator({ status }: { status: StepStatus }) {
     );
   }
   if (status === "skipped") {
-    return <span className="text-xs text-zinc-300">Skipped</span>;
+    return <span className="text-xs text-zinc-400">Skipped</span>;
   }
-  return <span className="text-xs text-zinc-300">Pending</span>;
+  return <span className="text-xs text-zinc-400">Pending</span>;
 }
 
 // ---------------------------------------------------------------------------
@@ -544,7 +544,7 @@ function StepRow({
         <span
           className={cn(
             "mt-0.5 flex-shrink-0 text-xs tabular-nums",
-            isPending ? "text-zinc-300" : "text-zinc-400"
+            isPending ? "text-zinc-400" : "text-zinc-400"
           )}
         >
           {index + 1}
@@ -557,7 +557,7 @@ function StepRow({
               className={cn(
                 "text-sm font-medium",
                 isPending
-                  ? "text-zinc-300"
+                  ? "text-zinc-400"
                   : isComplete
                   ? "text-zinc-500"
                   : "text-zinc-900"
@@ -576,7 +576,7 @@ function StepRow({
             className={cn(
               "text-sm",
               isPending
-                ? "text-zinc-300"
+                ? "text-zinc-400"
                 : isComplete
                 ? "text-zinc-500"
                 : "text-zinc-600"

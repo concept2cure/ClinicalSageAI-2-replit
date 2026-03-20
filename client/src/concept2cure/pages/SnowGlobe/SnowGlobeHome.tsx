@@ -365,7 +365,7 @@ function ScoreCard({
       {/* Header */}
       <div className="mb-2 flex items-center justify-between">
         <span className="text-xs font-medium text-zinc-500 leading-tight">{def.label}</span>
-        <Info className="h-3.5 w-3.5 text-zinc-300" />
+        <Info className="h-3.5 w-3.5 text-zinc-400" />
       </div>
 
       {/* Score value */}
@@ -1094,7 +1094,7 @@ export default function SnowGlobeHome({ programId }: SnowGlobeHomeProps) {
       {showComparison && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="w-full max-w-5xl max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl border border-zinc-200">
-            <Suspense fallback={<div className="flex items-center justify-center p-12"><Loader2 className="h-8 w-8 animate-spin text-zinc-300" /></div>}>
+            <Suspense fallback={<div className="flex items-center justify-center p-12"><Loader2 className="h-8 w-8 animate-spin text-zinc-400" /></div>}>
               <ScenarioComparison
                 programId={programId}
                 baselineId={null}

@@ -261,7 +261,7 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
             {/* File list */}
             {isLoading ? (
               <div className="flex items-center justify-center py-6">
-                <Loader2 className="w-4 h-4 text-zinc-300 animate-spin" />
+                <Loader2 className="w-4 h-4 text-zinc-400 animate-spin" />
               </div>
             ) : docs.length === 0 ? (
               <p className="text-[11px] text-zinc-400 text-center py-4">
@@ -284,7 +284,7 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
                         {formatBytes(doc.size)}
                       </span>
                       {doc.tokenCount && (
-                        <span className="text-[11px] text-zinc-300 flex-shrink-0 tabular-nums">
+                        <span className="text-[11px] text-zinc-400 flex-shrink-0 tabular-nums">
                           {(doc.tokenCount / 1000).toFixed(0)}K
                         </span>
                       )}
@@ -376,7 +376,7 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
                     <span className="flex-1 text-xs text-zinc-700 truncate min-w-0" title={artifact.title}>
                       {artifact.title}
                     </span>
-                    <span className="text-[11px] text-zinc-300 flex-shrink-0">
+                    <span className="text-[11px] text-zinc-400 flex-shrink-0">
                       v{artifact.version}
                     </span>
                   </li>

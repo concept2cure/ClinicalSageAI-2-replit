@@ -237,7 +237,7 @@ export const ArtifactGraph: React.FC<ArtifactGraphProps> = ({
 
           {Object.keys(moduleGroups).length === 0 && (
             <div className="bg-white rounded-xl border p-12 text-center">
-              <GitBranch className="w-10 h-10 text-zinc-300 mx-auto mb-3" />
+              <GitBranch className="w-10 h-10 text-zinc-400 mx-auto mb-3" />
               <h3 className="text-sm font-medium text-zinc-700">No artifacts yet</h3>
               <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">
                 Create a program and use auto-scaffold to generate the artifact tree for your destination type.

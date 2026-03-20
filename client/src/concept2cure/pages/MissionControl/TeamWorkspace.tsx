@@ -746,7 +746,7 @@ export default function TeamWorkspace({ programId }: TeamWorkspaceProps) {
                                 </div>
                               ) : (
                                 <div className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-zinc-50">
-                                  <X className="w-3.5 h-3.5 text-zinc-300" />
+                                  <X className="w-3.5 h-3.5 text-zinc-400" />
                                 </div>
                               )}
                             </td>

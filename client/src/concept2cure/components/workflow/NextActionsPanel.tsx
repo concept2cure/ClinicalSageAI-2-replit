@@ -247,7 +247,7 @@ const ActionItem: React.FC<{
         
         <ChevronRight 
           size={16} 
-          className="text-zinc-300 group-hover:text-zinc-500 transition-colors" 
+          className="text-zinc-400 group-hover:text-zinc-500 transition-colors" 
         />
       </div>
     </div>

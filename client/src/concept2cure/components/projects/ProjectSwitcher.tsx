@@ -231,7 +231,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
           'absolute top-3 left-3 p-1 rounded-md transition-all',
           project.starred
             ? 'text-amber-500'
-            : 'text-zinc-300 opacity-0 group-hover:opacity-100 hover:text-amber-500'
+            : 'text-zinc-400 opacity-0 group-hover:opacity-100 hover:text-amber-500'
         )}
       >
         <Star className={cn('w-4 h-4', project.starred && 'fill-current')} />
@@ -675,7 +675,7 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
         <div className="flex-1 overflow-y-auto">
           {filteredProjects.length === 0 ? (
             <div className="text-center py-8 px-4">
-              <FileText className="w-5 h-5 mx-auto mb-2 text-zinc-300" />
+              <FileText className="w-5 h-5 mx-auto mb-2 text-zinc-400" />
               <p className="text-xs text-zinc-500">
                 {searchQuery ? 'No projects match your search' : 'No projects yet'}
               </p>
@@ -733,7 +733,7 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
                         >
                           {tc.label}
                         </span>
-                        <ChevronRight className="w-3 h-3 text-zinc-300 shrink-0" />
+                        <ChevronRight className="w-3 h-3 text-zinc-400 shrink-0" />
                       </button>
                     );
                   })}
@@ -790,7 +790,7 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
                         >
                           {tc.label}
                         </span>
-                        <ChevronRight className="w-3 h-3 text-zinc-300 shrink-0" />
+                        <ChevronRight className="w-3 h-3 text-zinc-400 shrink-0" />
                       </button>
                     );
                   })}

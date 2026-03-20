@@ -259,7 +259,7 @@ export const ProgramTwinPanel: React.FC<ProgramTwinPanelProps> = ({
                     {mod}
                   </button>
                   <span className="text-zinc-400 ml-auto">{counts.total}</span>
-                  <span className="text-zinc-300 text-[11px]">
+                  <span className="text-zinc-400 text-[11px]">
                     D{counts.draft} R{counts.review} A{counts.approved} L{counts.locked}
                   </span>
                 </div>
@@ -395,7 +395,7 @@ function TwinHeader({ onClose, projectName }: { onClose: () => void; projectName
       <h2 className="text-sm font-semibold text-zinc-800">Program Twin</h2>
       {projectName && (
         <>
-          <span className="text-zinc-300">·</span>
+          <span className="text-zinc-400">·</span>
           <span className="text-xs text-zinc-500 truncate">{projectName}</span>
         </>
       )}

@@ -2982,7 +2982,7 @@ const CommitmentIntelligenceHub = ({ open, onOpenChange }) => {
                                   size="sm"
                                   variant="outline"
                                   disabled={isProcessing}
-                                  className="bg-red-100 text-red-700 hover:bg-red-200 border-red-300 transition-all duration-200 disabled:opacity-50"
+                                  className="bg-red-100 text-red-700 hover:bg-red-200 border-red-300 transition-all duration-200 disabled:opacity-60"
                                   onClick={() => {
                                     console.log(
                                       '🚀 MITIGATE RISK BUTTON CLICKED - Opening professional dialog...'

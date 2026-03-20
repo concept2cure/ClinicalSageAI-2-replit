@@ -351,13 +351,13 @@ export const TemplateLibraryInline: React.FC<TemplateLibraryInlineProps> = ({
                           {st}
                         </Badge>
                       ))}
-                      <span className="text-[11px] text-zinc-300 ml-auto flex items-center gap-0.5">
+                      <span className="text-[11px] text-zinc-400 ml-auto flex items-center gap-0.5">
                         <Download className="h-2.5 w-2.5" />
                         {t.usageCount.toLocaleString()}
                       </span>
                     </div>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-zinc-300 group-hover:text-zinc-500 flex-shrink-0 mt-1 transition-colors" />
+                  <ArrowRight className="h-4 w-4 text-zinc-400 group-hover:text-zinc-500 flex-shrink-0 mt-1 transition-colors" />
                 </div>
               </button>
             ))}
@@ -390,7 +390,7 @@ export const TemplateLibraryInline: React.FC<TemplateLibraryInlineProps> = ({
                       {t.description}
                     </div>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-zinc-300 group-hover:text-blue-500 flex-shrink-0 mt-1 transition-colors" />
+                  <ArrowRight className="h-4 w-4 text-zinc-400 group-hover:text-blue-500 flex-shrink-0 mt-1 transition-colors" />
                 </div>
               </button>
             ))}

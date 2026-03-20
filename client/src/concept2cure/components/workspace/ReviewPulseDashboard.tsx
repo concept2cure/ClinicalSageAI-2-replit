@@ -347,21 +347,21 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
                       {a.openThreads > 0 ? (
                         <span className="text-blue-600 font-medium">{a.openThreads}</span>
                       ) : (
-                        <span className="text-zinc-300">0</span>
+                        <span className="text-zinc-400">0</span>
                       )}
                     </td>
                     <td className="px-3 py-2 text-center tabular-nums">
                       {a.activeTasks > 0 ? (
                         <span className="text-violet-600 font-medium">{a.activeTasks}</span>
                       ) : (
-                        <span className="text-zinc-300">0</span>
+                        <span className="text-zinc-400">0</span>
                       )}
                     </td>
                     <td className="px-3 py-2 text-center tabular-nums">
                       {a.overdueTasks > 0 ? (
                         <span className="text-red-600 font-bold">{a.overdueTasks}</span>
                       ) : (
-                        <span className="text-zinc-300">0</span>
+                        <span className="text-zinc-400">0</span>
                       )}
                     </td>
                     <td className="px-3 py-2 text-center">

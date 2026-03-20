@@ -706,7 +706,7 @@ export const NotificationCenter: React.FC = () => {
                       {preferences.doNotDisturb ? (
                         <ToggleRight className="w-8 h-8 text-blue-600" />
                       ) : (
-                        <ToggleLeft className="w-8 h-8 text-zinc-300" />
+                        <ToggleLeft className="w-8 h-8 text-zinc-400" />
                       )}
                     </button>
                   </div>
@@ -739,7 +739,7 @@ export const NotificationCenter: React.FC = () => {
                       {preferences.channels.inApp ? (
                         <ToggleRight className="w-8 h-8 text-blue-600" />
                       ) : (
-                        <ToggleLeft className="w-8 h-8 text-zinc-300" />
+                        <ToggleLeft className="w-8 h-8 text-zinc-400" />
                       )}
                     </button>
                   </div>
@@ -763,7 +763,7 @@ export const NotificationCenter: React.FC = () => {
                       {preferences.channels.email ? (
                         <ToggleRight className="w-8 h-8 text-blue-600" />
                       ) : (
-                        <ToggleLeft className="w-8 h-8 text-zinc-300" />
+                        <ToggleLeft className="w-8 h-8 text-zinc-400" />
                       )}
                     </button>
                   </div>
@@ -827,7 +827,7 @@ export const NotificationCenter: React.FC = () => {
                           {enabled ? (
                             <ToggleRight className="w-8 h-8 text-blue-600" />
                           ) : (
-                            <ToggleLeft className="w-8 h-8 text-zinc-300" />
+                            <ToggleLeft className="w-8 h-8 text-zinc-400" />
                           )}
                         </button>
                       </div>

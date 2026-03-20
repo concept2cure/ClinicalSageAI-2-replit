@@ -2493,7 +2493,7 @@ export const ZenApp: React.FC = () => {
                   <Suspense
                     fallback={
                       <div className="flex-1 flex items-center justify-center bg-white h-full">
-                        <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
+                        <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
                       </div>
                     }
                   >
@@ -2653,7 +2653,7 @@ export const ZenApp: React.FC = () => {
                   <Suspense
                     fallback={
                       <div className="flex-1 flex items-center justify-center bg-white">
-                        <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
+                        <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
                       </div>
                     }
                   >
@@ -2687,7 +2687,7 @@ export const ZenApp: React.FC = () => {
                 <Suspense
                   fallback={
                     <div className="flex-1 flex items-center justify-center bg-white">
-                      <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
+                      <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
                     </div>
                   }
                 >
@@ -2704,7 +2704,7 @@ export const ZenApp: React.FC = () => {
                 <Suspense
                   fallback={
                     <div className="flex-1 flex items-center justify-center bg-white">
-                      <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
+                      <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
                     </div>
                   }
                 >
@@ -2721,7 +2721,7 @@ export const ZenApp: React.FC = () => {
                 <Suspense
                   fallback={
                     <div className="flex-1 flex items-center justify-center bg-white">
-                      <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
+                      <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
                     </div>
                   }
                 >
@@ -2741,7 +2741,7 @@ export const ZenApp: React.FC = () => {
                 <Suspense
                   fallback={
                     <div className="flex-1 flex items-center justify-center bg-white">
-                      <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
+                      <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
                     </div>
                   }
                 >
@@ -3091,7 +3091,7 @@ export const ZenApp: React.FC = () => {
               <Suspense
                 fallback={
                   <div className="flex-1 flex items-center justify-center">
-                    <Loader2 className="w-5 h-5 animate-spin text-zinc-300" />
+                    <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
                   </div>
                 }
               >
@@ -3118,7 +3118,7 @@ export const ZenApp: React.FC = () => {
               <Suspense
                 fallback={
                   <div className="flex-1 flex items-center justify-center">
-                    <Loader2 className="w-5 h-5 animate-spin text-zinc-300" />
+                    <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
                   </div>
                 }
               >
@@ -3133,7 +3133,7 @@ export const ZenApp: React.FC = () => {
               <Suspense
                 fallback={
                   <div className="flex-1 flex items-center justify-center">
-                    <Loader2 className="w-5 h-5 animate-spin text-zinc-300" />
+                    <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
                   </div>
                 }
               >
@@ -3254,7 +3254,7 @@ export const ZenApp: React.FC = () => {
             <Suspense
               fallback={
                 <div className="flex-1 flex items-center justify-center">
-                  <Loader2 className="w-5 h-5 animate-spin text-zinc-300" />
+                  <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
                 </div>
               }
             >

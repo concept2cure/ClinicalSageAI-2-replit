@@ -250,7 +250,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
               {artifact.projectName && (
                 <>
                   <span>{artifact.projectName}</span>
-                  <span className="text-zinc-300">•</span>
+                  <span className="text-zinc-400">•</span>
                 </>
               )}
               <span>Updated {formatDate(artifact.updatedAt)}</span>
@@ -496,7 +496,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
               className={cn(
                 'px-4 py-1.5 text-sm font-medium rounded-lg transition-colors',
                 'bg-violet-600 text-white hover:bg-violet-700',
-                'disabled:opacity-50 disabled:cursor-not-allowed',
+                'disabled:opacity-60 disabled:cursor-not-allowed',
                 'flex items-center gap-2'
               )}
             >

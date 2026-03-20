@@ -823,7 +823,7 @@ export const FDAMeetingWorkspace: React.FC<FDAMeetingWorkspaceProps> = ({
             ) : (
               <div className="h-full flex items-center justify-center bg-white rounded-xl border border-zinc-200">
                 <div className="text-center">
-                  <Calendar className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
+                  <Calendar className="w-12 h-12 text-zinc-400 mx-auto mb-3" />
                   <p className="text-sm text-zinc-500">Select a meeting to view details</p>
                 </div>
               </div>

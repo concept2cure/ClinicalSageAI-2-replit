@@ -244,7 +244,7 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
                   <div className="text-[13px] font-medium text-zinc-800 truncate">{mod.label}</div>
                   <div className="text-[11px] text-zinc-400 truncate">{mod.subtitle}</div>
                 </div>
-                <ArrowRight className="w-3 h-3 text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                <ArrowRight className="w-3 h-3 text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
               </button>
             ))}
           </div>

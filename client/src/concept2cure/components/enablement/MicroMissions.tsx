@@ -322,7 +322,7 @@ export function MissionRunner({ mission, onComplete, onCancel }: MissionRunnerPr
                     className={cn(
                       'text-sm',
                       idx < currentStep
-                        ? 'text-zinc-300'
+                        ? 'text-zinc-400'
                         : idx === currentStep
                         ? 'font-medium text-zinc-900'
                         : 'text-zinc-400'

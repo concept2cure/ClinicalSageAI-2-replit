@@ -719,7 +719,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
               <button
                 onClick={handleVerifyIntegrity}
                 disabled={verifyingIntegrity}
-                className="flex items-center gap-1 px-2 py-1 text-[11px] rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 font-medium"
+                className="flex items-center gap-1 px-2 py-1 text-[11px] rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-60 font-medium"
               >
                 {verifyingIntegrity ? (
                   <Loader2 className="w-3 h-3 animate-spin" />
@@ -767,9 +767,9 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
             <div className="space-y-0.5">
               {compliance.versionChain.map((vc, i) => (
                 <div key={i} className="flex items-center gap-1.5 text-[11px]">
-                  <Hash className="w-3 h-3 text-zinc-300" />
+                  <Hash className="w-3 h-3 text-zinc-400" />
                   <span className="font-mono text-zinc-500">{truncHash(vc.hash)}</span>
-                  <span className="text-zinc-300">→</span>
+                  <span className="text-zinc-400">→</span>
                   <span className="text-zinc-400">v{vc.version}</span>
                 </div>
               ))}
@@ -889,7 +889,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
             <button
               onClick={handleAddComment}
               disabled={addingComment || !newComment.trim()}
-              className="px-2 py-1 text-[11px] rounded bg-indigo-50 text-indigo-700 hover:bg-indigo-100 disabled:opacity-50 flex items-center gap-0.5"
+              className="px-2 py-1 text-[11px] rounded bg-indigo-50 text-indigo-700 hover:bg-indigo-100 disabled:opacity-60 flex items-center gap-0.5"
             >
               {addingComment ? (
                 <Loader2 className="w-3 h-3 animate-spin" />
