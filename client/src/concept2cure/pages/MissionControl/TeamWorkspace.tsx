@@ -791,7 +791,7 @@ export default function TeamWorkspace({ programId }: TeamWorkspaceProps) {
                       <Clock className="w-3 h-3 text-zinc-400" />
                       <span className="text-xs text-zinc-400">{entry.timestamp}</span>
                       {member && (
-                        <span className={cn('px-1.5 py-0.5 rounded text-[10px] font-medium', roleStyle.bg, roleStyle.text)}>
+                        <span className={cn('px-1.5 py-0.5 rounded text-[11px] font-medium', roleStyle.bg, roleStyle.text)}>
                           {member.role}
                         </span>
                       )}
@@ -854,7 +854,7 @@ export default function TeamWorkspace({ programId }: TeamWorkspaceProps) {
                     <div className="flex items-center gap-2">
                       <div
                         className={cn(
-                          'w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-semibold',
+                          'w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-semibold',
                           roleStyle.bg,
                           roleStyle.text,
                         )}
@@ -878,7 +878,7 @@ export default function TeamWorkspace({ programId }: TeamWorkspaceProps) {
                         title={`${entry.assigned} assigned`}
                       >
                         {entry.assigned >= 3 && (
-                          <span className="text-[10px] text-white font-medium">{entry.assigned}</span>
+                          <span className="text-[11px] text-white font-medium">{entry.assigned}</span>
                         )}
                       </div>
                     )}
@@ -889,7 +889,7 @@ export default function TeamWorkspace({ programId }: TeamWorkspaceProps) {
                         title={`${entry.inReview} in review`}
                       >
                         {entry.inReview >= 3 && (
-                          <span className="text-[10px] text-white font-medium">{entry.inReview}</span>
+                          <span className="text-[11px] text-white font-medium">{entry.inReview}</span>
                         )}
                       </div>
                     )}
@@ -900,7 +900,7 @@ export default function TeamWorkspace({ programId }: TeamWorkspaceProps) {
                         title={`${entry.overdue} overdue`}
                       >
                         {entry.overdue >= 2 && (
-                          <span className="text-[10px] text-white font-medium">{entry.overdue}</span>
+                          <span className="text-[11px] text-white font-medium">{entry.overdue}</span>
                         )}
                       </div>
                     )}

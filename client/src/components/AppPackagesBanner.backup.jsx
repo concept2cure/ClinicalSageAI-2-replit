@@ -435,7 +435,7 @@ function AppPackagesBanner() {
                             We analyzed your endpoints and found 3 similar trials with 15% higher
                             success rates using modified dosing schedule.
                           </p>
-                          <div className="text-[10px] text-gray-500 mt-1">12 minutes ago</div>
+                          <div className="text-[11px] text-gray-500 mt-1">12 minutes ago</div>
                         </div>
                       </div>
                       <div className="flex items-start gap-3">
@@ -447,7 +447,7 @@ function AppPackagesBanner() {
                             Your Oncology IND has passed all 247 regulatory checks and is cleared
                             for submission.
                           </p>
-                          <div className="text-[10px] text-gray-500 mt-1">1 hour ago</div>
+                          <div className="text-[11px] text-gray-500 mt-1">1 hour ago</div>
                         </div>
                       </div>
                     </div>

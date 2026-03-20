@@ -297,7 +297,7 @@ const RoleStep: React.FC<{
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold text-zinc-900">{role.label}</h3>
                   {isRecommended && (
-                    <span className="px-2 py-0.5 text-[10px] font-medium bg-green-100 text-green-700 rounded-full">
+                    <span className="px-2 py-0.5 text-[11px] font-medium bg-green-100 text-green-700 rounded-full">
                       Recommended
                     </span>
                   )}

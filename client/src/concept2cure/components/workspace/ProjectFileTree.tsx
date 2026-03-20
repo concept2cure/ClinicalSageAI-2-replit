@@ -259,13 +259,13 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
                 )}
                 <span className="text-[12px] font-medium truncate flex-1">{folder.label}</span>
                 {count > 0 && (
-                  <span className="text-[10px] text-zinc-400 tabular-nums shrink-0">{count}</span>
+                  <span className="text-[11px] text-zinc-400 tabular-nums shrink-0">{count}</span>
                 )}
               </button>
 
               {/* Children (files) */}
               {isExpanded && folder.children.length === 0 && (
-                <p className="pl-7 pr-2 py-1.5 text-[10px] text-zinc-300 italic">No documents</p>
+                <p className="pl-7 pr-2 py-1.5 text-[11px] text-zinc-300 italic">No documents</p>
               )}
               {isExpanded &&
                 folder.children.map(a => {
@@ -339,7 +339,7 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
           <div className="px-3 py-1.5 border-b border-zinc-100">
             <p className="text-[11px] text-zinc-600 truncate">{contextMenu.artifact.title}</p>
             {contextMenu.artifact.ctdSection && (
-              <p className="text-[10px] text-zinc-400 font-mono">
+              <p className="text-[11px] text-zinc-400 font-mono">
                 {contextMenu.artifact.ctdSection}
               </p>
             )}

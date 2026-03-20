@@ -352,7 +352,7 @@ export default function SourceLinkPanel({ documentId, onClose }: SourceLinkPanel
               >
                 {/* Top line: type badge + title */}
                 <div className="flex items-start gap-2 mb-1">
-                  <Badge variant={typeConfig.variant} className="text-[10px] shrink-0 mt-0.5">
+                  <Badge variant={typeConfig.variant} className="text-[11px] shrink-0 mt-0.5">
                     {typeConfig.label}
                   </Badge>
                   <span className="text-xs font-medium leading-tight line-clamp-1">

@@ -651,7 +651,7 @@ export default function PackBuilderPanel({ projectId }: PackBuilderPanelProps) {
                         >
                           <Badge
                             variant="outline"
-                            className="text-[10px] px-1 py-0 mt-0.5 shrink-0"
+                            className="text-[11px] px-1 py-0 mt-0.5 shrink-0"
                           >
                             {w.code}
                           </Badge>

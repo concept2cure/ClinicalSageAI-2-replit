@@ -2422,21 +2422,21 @@ export default function CERV2Page({
                     {reviewSignOff.status === 'approved' ? (
                       <Badge
                         variant="secondary"
-                        className="text-[10px] py-0 px-1.5 bg-green-100 text-green-700"
+                        className="text-[11px] py-0 px-1.5 bg-green-100 text-green-700"
                       >
                         Reviewed
                       </Badge>
                     ) : reviewSignOff.status === 'in-review' ? (
                       <Badge
                         variant="secondary"
-                        className="text-[10px] py-0 px-1.5 bg-yellow-100 text-yellow-700"
+                        className="text-[11px] py-0 px-1.5 bg-yellow-100 text-yellow-700"
                       >
                         In Review
                       </Badge>
                     ) : (
                       <Badge
                         variant="secondary"
-                        className="text-[10px] py-0 px-1.5 bg-gray-100 text-gray-500"
+                        className="text-[11px] py-0 px-1.5 bg-gray-100 text-gray-500"
                       >
                         Draft
                       </Badge>
@@ -6488,14 +6488,14 @@ export default function CERV2Page({
                               {/* Status Badge */}
                               {tab.status && (
                                 <span
-                                  className={`text-[10px] px-1.5 py-0.5 rounded-full ${statusColors[tab.status]}`}
+                                  className={`text-[11px] px-1.5 py-0.5 rounded-full ${statusColors[tab.status]}`}
                                 >
                                   {tab.status.toUpperCase()}
                                 </span>
                               )}
                               {/* Required Indicator */}
                               {tab.required && (
-                                <span className="text-[10px] text-red-500">Required</span>
+                                <span className="text-[11px] text-red-500">Required</span>
                               )}
                             </div>
                           </Button>
@@ -7581,13 +7581,13 @@ export default function CERV2Page({
                             </div>
                             {tab.status && (
                               <span
-                                className={`text-[10px] px-1.5 py-0.5 rounded-full ${statusColors[tab.status]}`}
+                                className={`text-[11px] px-1.5 py-0.5 rounded-full ${statusColors[tab.status]}`}
                               >
                                 {tab.status.toUpperCase()}
                               </span>
                             )}
                             {tab.required && (
-                              <span className="text-[10px] text-red-500">Required</span>
+                              <span className="text-[11px] text-red-500">Required</span>
                             )}
                           </div>
                         </Button>
@@ -8994,7 +8994,7 @@ export default function CERV2Page({
                                 }`}
                                 onClick={() => setActiveTab('document-editor')}
                               >
-                                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${
+                                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0 ${
                                   hasContent
                                     ? isSubstantial
                                       ? 'bg-green-500 text-white'
@@ -9008,7 +9008,7 @@ export default function CERV2Page({
                                     {section.title}
                                   </span>
                                 </div>
-                                <span className={`text-[10px] flex-shrink-0 ${
+                                <span className={`text-[11px] flex-shrink-0 ${
                                   hasContent
                                     ? isSubstantial ? 'text-green-600' : 'text-amber-600'
                                     : 'text-gray-400'

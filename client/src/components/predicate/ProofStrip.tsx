@@ -120,7 +120,7 @@ export function ProofStrip({ programId, subjectHash = '' }: ProofStripProps) {
         <Badge variant="outline" className="text-xs px-1.5 py-0">
           v{proof.risk_vocab_version}
         </Badge>
-        <code className="text-[10px] text-muted-foreground font-mono">
+        <code className="text-[11px] text-muted-foreground font-mono">
           {proof.risk_vocab_hash.slice(0, 12)}…
         </code>
         <CopyButton value={proof.risk_vocab_hash} label="risk vocab hash" />
@@ -132,7 +132,7 @@ export function ProofStrip({ programId, subjectHash = '' }: ProofStripProps) {
       <div className="flex items-center gap-1.5">
         <FileCheck className="h-3.5 w-3.5 text-purple-600" />
         <span className="font-medium">Manifest:</span>
-        <code className="text-[10px] text-muted-foreground font-mono">
+        <code className="text-[11px] text-muted-foreground font-mono">
           {proof.manifest_hash ? `${proof.manifest_hash.slice(0, 12)}…` : '—'}
         </code>
         {proof.manifest_hash && <CopyButton value={proof.manifest_hash} label="manifest hash" />}
@@ -159,7 +159,7 @@ export function ProofStrip({ programId, subjectHash = '' }: ProofStripProps) {
         <Badge variant="outline" className="text-xs px-1.5 py-0">
           {proof.audit.signature_method}
         </Badge>
-        <code className="text-[10px] text-muted-foreground font-mono">{proof.audit.key_id}</code>
+        <code className="text-[11px] text-muted-foreground font-mono">{proof.audit.key_id}</code>
         <CopyButton value={proof.audit.doc_hash} label="audit doc hash" />
       </div>
     </div>

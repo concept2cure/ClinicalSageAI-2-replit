@@ -158,7 +158,7 @@ export function RegulatoryStatusCard({
           <div className="p-3">
             <div className="flex items-center gap-1.5 mb-1.5">
               <Target className="w-3.5 h-3.5 text-violet-500" />
-              <span className="text-[10px] text-zinc-500 font-medium">Readiness</span>
+              <span className="text-[11px] text-zinc-500 font-medium">Readiness</span>
             </div>
             <div className="text-2xl font-bold text-zinc-800">{data.submissionReadiness}%</div>
             <div className="h-1.5 bg-zinc-100 rounded-full mt-1.5 overflow-hidden">
@@ -173,21 +173,21 @@ export function RegulatoryStatusCard({
           <div className="p-3">
             <div className="flex items-center gap-1.5 mb-1.5">
               <FileSearch className="w-3.5 h-3.5 text-indigo-500" />
-              <span className="text-[10px] text-zinc-500 font-medium">Precedents</span>
+              <span className="text-[11px] text-zinc-500 font-medium">Precedents</span>
             </div>
             <div className="text-2xl font-bold text-zinc-800">{data.precedentsFound}</div>
-            <span className="text-[10px] text-zinc-400">matching records</span>
+            <span className="text-[11px] text-zinc-400">matching records</span>
           </div>
 
           {/* Risk Score */}
           <div className="p-3">
             <div className="flex items-center gap-1.5 mb-1.5">
               <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
-              <span className="text-[10px] text-zinc-500 font-medium">Risk Score</span>
+              <span className="text-[11px] text-zinc-500 font-medium">Risk Score</span>
             </div>
             <div className="text-2xl font-bold text-zinc-800">{data.riskScore}</div>
             <span
-              className={`text-[10px] font-medium ${
+              className={`text-[11px] font-medium ${
                 data.riskScore < 30
                   ? 'text-emerald-600'
                   : data.riskScore < 60
@@ -203,7 +203,7 @@ export function RegulatoryStatusCard({
           <div className="p-3">
             <div className="flex items-center gap-1.5 mb-1.5">
               <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
-              <span className="text-[10px] text-zinc-500 font-medium">Approval Prob.</span>
+              <span className="text-[11px] text-zinc-500 font-medium">Approval Prob.</span>
             </div>
             <div className="text-2xl font-bold text-zinc-800">{data.approvalProbability}%</div>
             <div className="h-1.5 bg-zinc-100 rounded-full mt-1.5 overflow-hidden">

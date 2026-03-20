@@ -353,7 +353,7 @@ export default function ClientIntelligencePage() {
               {tab.icon}
               {tab.label}
               {tab.badge && (
-                <span className="px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-600 text-[10px] font-semibold">
+                <span className="px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-600 text-[11px] font-semibold">
                   {tab.badge}
                 </span>
               )}
@@ -630,7 +630,7 @@ export default function ClientIntelligencePage() {
                             </div>
                           </div>
                           <span
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                            className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${
                               doc.processingStatus === 'completed'
                                 ? 'bg-emerald-100 text-emerald-700'
                                 : doc.processingStatus === 'failed'
@@ -832,11 +832,11 @@ export default function ClientIntelligencePage() {
                               <p className="text-[11px] text-zinc-400">{item.description}</p>
                             </div>
                             <div className="flex items-center gap-2 flex-shrink-0">
-                              <span className="text-[10px] text-zinc-400">
+                              <span className="text-[11px] text-zinc-400">
                                 {item.fileTypes.map(t => t.toUpperCase()).join(', ')}
                               </span>
                               <span
-                                className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${
+                                className={`px-1.5 py-0.5 rounded text-[11px] font-semibold ${
                                   item.priority === 'required'
                                     ? 'bg-amber-100 text-amber-700'
                                     : item.priority === 'recommended'

@@ -419,7 +419,7 @@ const PredicatePathfinder: React.FC<{
                         {candidate.kNumber}
                       </span>
                       {candidate.hasRecalls && (
-                        <span className="px-1.5 py-0.5 text-[10px] font-bold bg-red-100 text-red-700 rounded flex items-center gap-0.5">
+                        <span className="px-1.5 py-0.5 text-[11px] font-bold bg-red-100 text-red-700 rounded flex items-center gap-0.5">
                           <AlertTriangle className="w-3 h-3" />
                           {candidate.recallCount} RECALL{candidate.recallCount > 1 ? 'S' : ''}
                         </span>
@@ -436,7 +436,7 @@ const PredicatePathfinder: React.FC<{
                     </div>
                     <span
                       className={cn(
-                        'inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded border',
+                        'inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded border',
                         recConfig.color
                       )}
                     >
@@ -452,7 +452,7 @@ const PredicatePathfinder: React.FC<{
                     {candidate.matchingIndications.slice(0, 3).map(ind => (
                       <span
                         key={ind}
-                        className="px-2 py-0.5 text-[10px] bg-zinc-100 text-zinc-600 rounded"
+                        className="px-2 py-0.5 text-[11px] bg-zinc-100 text-zinc-600 rounded"
                       >
                         {ind}
                       </span>
@@ -516,7 +516,7 @@ const MAUDEHazardMonitor: React.FC<{
           >
             {deaths.length}
           </p>
-          <p className="text-[10px] text-zinc-500">Deaths</p>
+          <p className="text-[11px] text-zinc-500">Deaths</p>
         </div>
         <div
           className={cn(
@@ -532,11 +532,11 @@ const MAUDEHazardMonitor: React.FC<{
           >
             {injuries.length}
           </p>
-          <p className="text-[10px] text-zinc-500">Injuries</p>
+          <p className="text-[11px] text-zinc-500">Injuries</p>
         </div>
         <div className="p-2 rounded-lg text-center bg-zinc-100">
           <p className="text-lg font-bold text-zinc-600">{malfunctions.length}</p>
-          <p className="text-[10px] text-zinc-500">Malfunctions</p>
+          <p className="text-[11px] text-zinc-500">Malfunctions</p>
         </div>
       </div>
 
@@ -557,7 +557,7 @@ const MAUDEHazardMonitor: React.FC<{
               <div className="flex items-center gap-2">
                 <span
                   className={cn(
-                    'px-2 py-0.5 text-[10px] font-bold rounded uppercase',
+                    'px-2 py-0.5 text-[11px] font-bold rounded uppercase',
                     alert.eventType === 'death' && 'bg-red-100 text-red-700',
                     alert.eventType === 'injury' && 'bg-amber-100 text-amber-700',
                     alert.eventType === 'malfunction' && 'bg-blue-100 text-blue-700'
@@ -566,12 +566,12 @@ const MAUDEHazardMonitor: React.FC<{
                   {alert.eventType}
                 </span>
                 {alert.isCompetitor && (
-                  <span className="px-1.5 py-0.5 text-[10px] font-medium bg-violet-100 text-violet-700 rounded">
+                  <span className="px-1.5 py-0.5 text-[11px] font-medium bg-violet-100 text-violet-700 rounded">
                     COMPETITOR
                   </span>
                 )}
               </div>
-              <span className="text-[10px] text-zinc-400 font-mono">
+              <span className="text-[11px] text-zinc-400 font-mono">
                 {formatDate(alert.eventDate)}
               </span>
             </div>
@@ -665,7 +665,7 @@ const ESTARProgressTracker: React.FC<{
                   {section.completionPct}%
                 </span>
                 {section.requiredAttachments > 0 && (
-                  <p className="text-[10px] text-zinc-400">
+                  <p className="text-[11px] text-zinc-400">
                     {section.uploadedAttachments}/{section.requiredAttachments} files
                   </p>
                 )}
@@ -731,7 +731,7 @@ const SubmissionCard: React.FC<{
       {/* Predicate (if 510k) */}
       {submission.pathway === '510k' && submission.predicateDevice && (
         <div className="p-2 bg-blue-50 rounded-lg mb-3">
-          <p className="text-[10px] font-medium text-blue-600 mb-1">PREDICATE</p>
+          <p className="text-[11px] font-medium text-blue-600 mb-1">PREDICATE</p>
           <p className="text-xs font-medium text-zinc-900">{submission.predicateDevice.kNumber}</p>
           <p className="text-xs text-zinc-500">{submission.predicateDevice.deviceName}</p>
         </div>
@@ -771,7 +771,7 @@ const SubmissionCard: React.FC<{
             >
               {daysToTarget}d
             </p>
-            <p className="text-[10px] text-zinc-500">to submit</p>
+            <p className="text-[11px] text-zinc-500">to submit</p>
           </div>
         )}
       </div>

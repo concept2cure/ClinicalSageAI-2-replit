@@ -535,7 +535,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
                     </div>
                   ) : (
                     <div className="h-5 rounded-md bg-zinc-50 flex items-center justify-center">
-                      <span className="text-[10px] text-zinc-300">No artifacts</span>
+                      <span className="text-[11px] text-zinc-300">No artifacts</span>
                     </div>
                   )}
                 </div>
@@ -582,7 +582,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
                   <div key={sev} className="text-center">
                     <span
                       className={cn(
-                        'inline-block w-5 h-5 rounded text-[10px] font-bold leading-5 text-center',
+                        'inline-block w-5 h-5 rounded text-[11px] font-bold leading-5 text-center',
                         SEVERITY_CONFIG[sev]?.bg,
                         SEVERITY_CONFIG[sev]?.text,
                       )}
@@ -679,7 +679,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
                           {entry.note && ` — ${entry.note}`}
                         </p>
                       </div>
-                      <span className="text-[10px] text-zinc-400 whitespace-nowrap shrink-0">
+                      <span className="text-[11px] text-zinc-400 whitespace-nowrap shrink-0">
                         {entry.createdAt || entry.timestamp
                           ? relativeTime(entry.createdAt || entry.timestamp)
                           : ''}
@@ -737,7 +737,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
                       </p>
                       <span
                         className={cn(
-                          'px-1.5 py-0.5 text-[10px] font-semibold uppercase rounded',
+                          'px-1.5 py-0.5 text-[11px] font-semibold uppercase rounded',
                           sevConfig.bg,
                           sevConfig.text,
                         )}

@@ -62,7 +62,7 @@ const submissionTypeColors: Record<SubmissionType, string> = {
 const SubmissionBadge: React.FC<{ type: SubmissionType }> = ({ type }) => (
   <Badge
     variant="outline"
-    className={cn('text-[10px] font-medium px-1.5 py-0', submissionTypeColors[type])}
+    className={cn('text-[11px] font-medium px-1.5 py-0', submissionTypeColors[type])}
   >
     {type.replace('_', ' ')}
   </Badge>
@@ -274,9 +274,9 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
           )}
         </div>
         <div className="flex flex-col items-end gap-1">
-          <span className="text-[10px] text-zinc-400">{formatTime(updatedAt)}</span>
+          <span className="text-[11px] text-zinc-400">{formatTime(updatedAt)}</span>
           {artifactCount > 0 && (
-            <span className="flex items-center gap-0.5 text-[10px] text-zinc-400">
+            <span className="flex items-center gap-0.5 text-[11px] text-zinc-400">
               <FileText className="h-2.5 w-2.5" />
               {artifactCount}
             </span>

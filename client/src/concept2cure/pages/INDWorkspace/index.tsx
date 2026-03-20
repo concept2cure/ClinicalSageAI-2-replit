@@ -640,7 +640,7 @@ const SectionRow: React.FC<{
 
         {/* Required badge */}
         {section.required && isLeaf && (
-          <span className="text-[10px] px-1.5 py-0.5 bg-red-50 text-red-600 rounded font-medium flex-shrink-0">
+          <span className="text-[11px] px-1.5 py-0.5 bg-red-50 text-red-600 rounded font-medium flex-shrink-0">
             REQ
           </span>
         )}
@@ -652,7 +652,7 @@ const SectionRow: React.FC<{
               e.stopPropagation();
               onDraftAI(section.code, section.title);
             }}
-            className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-[10px] px-1.5 py-0.5 bg-violet-50 text-violet-600 rounded hover:bg-violet-100 flex-shrink-0"
+            className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-[11px] px-1.5 py-0.5 bg-violet-50 text-violet-600 rounded hover:bg-violet-100 flex-shrink-0"
           >
             <Sparkles className="w-3 h-3" />
             Draft
@@ -661,7 +661,7 @@ const SectionRow: React.FC<{
 
         {/* Hours estimate */}
         {isLeaf && section.estimatedHours > 0 && (
-          <span className="text-[10px] text-zinc-400 tabular-nums flex-shrink-0">
+          <span className="text-[11px] text-zinc-400 tabular-nums flex-shrink-0">
             {section.estimatedHours}h
           </span>
         )}
@@ -934,13 +934,13 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                 )}
                 {compileMutation.isPending ? 'Compiling…' : 'Compile eCTD'}
                 {ectdStatus && (
-                  <span className="ml-1 px-1.5 py-0.5 text-[10px] bg-white/20 rounded">
+                  <span className="ml-1 px-1.5 py-0.5 text-[11px] bg-white/20 rounded">
                     {ectdStatus.overallReadiness}%
                   </span>
                 )}
               </button>
               {!canCompileEctd && (
-                <span className="text-[10px] text-zinc-500">IND + eCTD module access required</span>
+                <span className="text-[11px] text-zinc-500">IND + eCTD module access required</span>
               )}
               {onNavigateToCoAuthor && (
                 <button
@@ -962,7 +962,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                   <span className="text-[11px] font-medium text-zinc-600 truncate">
                     {mod.code.toUpperCase()}
                   </span>
-                  <span className="text-[10px] text-zinc-400 tabular-nums">
+                  <span className="text-[11px] text-zinc-400 tabular-nums">
                     {moduleProgress(mod)}%
                   </span>
                 </div>
@@ -1089,11 +1089,11 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                   <div className="flex items-center gap-3">
                     <span className="font-mono text-xs text-zinc-500">{section.code}</span>
                     <span className="font-medium text-sm text-zinc-800">{section.title}</span>
-                    <span className={cn('text-[10px] px-2 py-0.5 rounded-full', cfg.bg, cfg.color)}>
+                    <span className={cn('text-[11px] px-2 py-0.5 rounded-full', cfg.bg, cfg.color)}>
                       {cfg.label}
                     </span>
                     {section.required && (
-                      <span className="text-[10px] px-1.5 py-0.5 bg-red-50 text-red-600 rounded">
+                      <span className="text-[11px] px-1.5 py-0.5 bg-red-50 text-red-600 rounded">
                         Required
                       </span>
                     )}
@@ -1360,7 +1360,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                             </span>
                             {v.message}
                             {v.fix && (
-                              <span className="block text-[10px] mt-0.5 opacity-75">
+                              <span className="block text-[11px] mt-0.5 opacity-75">
                                 Fix: {v.fix}
                               </span>
                             )}

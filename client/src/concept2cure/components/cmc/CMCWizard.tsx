@@ -279,7 +279,7 @@ const GuardrailCard: React.FC<{
             style={{ left: '100%', transform: 'translateX(-2px)' }}
           />
         </div>
-        <div className="flex justify-between text-[10px] mt-1">
+        <div className="flex justify-between text-[11px] mt-1">
           <span className="text-zinc-400">0</span>
           <span className="text-zinc-600 font-medium">
             Threshold: {guardrail.thresholdValue} {guardrail.unit}
@@ -315,7 +315,7 @@ const GuardrailCard: React.FC<{
       )}
 
       {/* ICH Reference */}
-      <div className="text-[10px] text-zinc-400 mt-2">Ref: {guardrail.ichReference}</div>
+      <div className="text-[11px] text-zinc-400 mt-2">Ref: {guardrail.ichReference}</div>
     </div>
   );
 };
@@ -354,7 +354,7 @@ const ImpurityTable: React.FC<{
                     <span className="font-medium text-zinc-800">{imp.name}</span>
                     <span
                       className={cn(
-                        'ml-2 px-1.5 py-0.5 text-[10px] rounded',
+                        'ml-2 px-1.5 py-0.5 text-[11px] rounded',
                         imp.type === 'specified' && 'bg-blue-100 text-blue-700',
                         imp.type === 'unspecified' && 'bg-zinc-100 text-zinc-600',
                         imp.type === 'total' && 'bg-purple-100 text-purple-700'
@@ -380,7 +380,7 @@ const ImpurityTable: React.FC<{
                   <div className="flex justify-center">
                     <span
                       className={cn(
-                        'flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded',
+                        'flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded',
                         statusConfig.bgColor,
                         statusConfig.color
                       )}
@@ -395,7 +395,7 @@ const ImpurityTable: React.FC<{
                     {!imp.isIdentified && imp.currentLevel >= imp.identificationThreshold && (
                       <button
                         onClick={() => onReview?.(imp)}
-                        className="px-2 py-1 text-[10px] font-medium bg-amber-100 text-amber-700 rounded hover:bg-amber-200"
+                        className="px-2 py-1 text-[11px] font-medium bg-amber-100 text-amber-700 rounded hover:bg-amber-200"
                       >
                         Identify
                       </button>
@@ -403,7 +403,7 @@ const ImpurityTable: React.FC<{
                     {!imp.isQualified && imp.currentLevel >= imp.qualificationThreshold && (
                       <button
                         onClick={() => onReview?.(imp)}
-                        className="px-2 py-1 text-[10px] font-medium bg-red-100 text-red-700 rounded hover:bg-red-200"
+                        className="px-2 py-1 text-[11px] font-medium bg-red-100 text-red-700 rounded hover:bg-red-200"
                       >
                         Qualify
                       </button>
@@ -678,7 +678,7 @@ export const CMCWizard: React.FC<CMCWizardProps> = ({
                         <div className="flex justify-center">
                           <span
                             className={cn(
-                              'flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded',
+                              'flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded',
                               statusConfig.bgColor,
                               statusConfig.color
                             )}

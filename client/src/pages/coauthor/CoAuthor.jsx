@@ -1227,12 +1227,12 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
             </div>
             <div className="flex items-center gap-2">
               {section.documentCount > 0 && (
-                <Badge variant="outline" className="h-4 text-[9px]">
+                <Badge variant="outline" className="h-4 text-[11px]">
                   {section.documentCount}
                 </Badge>
               )}
               {section.hasTemplate && (
-                <Badge variant="outline" className="h-4 text-[9px]">
+                <Badge variant="outline" className="h-4 text-[11px]">
                   Template
                 </Badge>
               )}
@@ -1279,17 +1279,17 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-sm text-slate-800">{module.title}</span>
                   {priorityFlags[module.id] === 'critical' && (
-                    <Badge className="h-4 bg-red-100 text-red-700 border-0 text-[10px]">
+                    <Badge className="h-4 bg-red-100 text-red-700 border-0 text-[11px]">
                       Critical
                     </Badge>
                   )}
-                  <Badge variant="outline" className="h-4 text-[10px]">
+                  <Badge variant="outline" className="h-4 text-[11px]">
                     {module.documentCount || module.sections.length} docs
                   </Badge>
                 </div>
                 <div className="flex items-center gap-2 mt-1">
                   <Progress value={module.progress || 0} className="h-1.5 flex-1" />
-                  <span className="text-[10px] text-slate-500">{module.progress || 0}%</span>
+                  <span className="text-[11px] text-slate-500">{module.progress || 0}%</span>
                 </div>
               </div>
 
@@ -1300,26 +1300,26 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
                       key={idx}
                       className="w-6 h-6 rounded-full bg-blue-500 border-2 border-white flex items-center justify-center"
                     >
-                      <span className="text-[8px] text-white font-semibold">
+                      <span className="text-[11px] text-white font-semibold">
                         {assignee.initials}
                       </span>
                     </div>
                   ))}
                   {documentAssignees[module.id]?.length > 3 && (
                     <div className="w-6 h-6 rounded-full bg-slate-300 border-2 border-white flex items-center justify-center">
-                      <span className="text-[8px] text-slate-700">
+                      <span className="text-[11px] text-slate-700">
                         +{documentAssignees[module.id].length - 3}
                       </span>
                     </div>
                   )}
                 </div>
 
-                <span className="text-[10px] text-slate-500">
+                <span className="text-[11px] text-slate-500">
                   {lastModifiedTimes[module.id] || '2 hours ago'}
                 </span>
 
                 <Badge
-                  className={`h-5 text-[10px] ${statusColors[moduleStatuses[module.id]] || statusColors['pending']} border-0`}
+                  className={`h-5 text-[11px] ${statusColors[moduleStatuses[module.id]] || statusColors['pending']} border-0`}
                 >
                   {moduleStatuses[module.id] || 'Pending'}
                 </Badge>
@@ -7349,7 +7349,7 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                                 </div>
                               </div>
                               <Badge
-                                className={`text-[10px] ${
+                                className={`text-[11px] ${
                                   doc.status === 'Final'
                                     ? 'bg-green-100 text-green-700 border-0'
                                     : doc.status === 'In Review'
@@ -7450,7 +7450,7 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                       {ectdModulesData?.totalModules && (
                         <Badge
                           variant="outline"
-                          className="h-5 text-[10px] bg-blue-50 text-blue-700 border-blue-200"
+                          className="h-5 text-[11px] bg-blue-50 text-blue-700 border-blue-200"
                         >
                           {ectdModulesData.totalModules} modules
                         </Badge>
@@ -8560,7 +8560,7 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                                     <p className="text-xs font-medium text-slate-800">
                                       {moduleName}
                                     </p>
-                                    <span className="text-[10px] rounded-full border border-slate-200 px-2 py-0.5 text-slate-600">
+                                    <span className="text-[11px] rounded-full border border-slate-200 px-2 py-0.5 text-slate-600">
                                       {assessment.confidence || 'low'} confidence
                                     </span>
                                   </div>
@@ -10261,7 +10261,7 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                     <div className="font-medium">
                       {version.name}
                       {version.status === 'Current' && (
-                        <Badge className="ml-2 h-5 bg-green-100 text-green-800 border-green-200 text-[10px]">
+                        <Badge className="ml-2 h-5 bg-green-100 text-green-800 border-green-200 text-[11px]">
                           Current
                         </Badge>
                       )}
@@ -12770,7 +12770,7 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                       {result.provenance && (
                         <Badge
                           variant="outline"
-                          className={`text-[10px] px-1.5 py-0 ${
+                          className={`text-[11px] px-1.5 py-0 ${
                             result.provenance === 'cortex_search'
                               ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                               : 'bg-amber-50 text-amber-700 border-amber-200'
@@ -13632,7 +13632,7 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                           {result.provenance && (
                             <Badge
                               variant="outline"
-                              className={`ml-1 px-1.5 py-0 text-[10px] ${
+                              className={`ml-1 px-1.5 py-0 text-[11px] ${
                                 result.provenance === 'cortex_search'
                                   ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                   : 'bg-amber-50 text-amber-700 border-amber-200'

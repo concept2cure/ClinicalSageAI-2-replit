@@ -282,13 +282,13 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
                     <p className="text-xs text-zinc-500 mt-1">{q.context}</p>
                   )}
                   <div className="flex items-center gap-2 mt-2">
-                    <Badge variant="outline" className={cn('text-[10px]', categoryInfo?.color)}>
+                    <Badge variant="outline" className={cn('text-[11px]', categoryInfo?.color)}>
                       {categoryInfo?.label}
                     </Badge>
                     <Badge
                       variant="outline"
                       className={cn(
-                        'text-[10px]',
+                        'text-[11px]',
                         q.priority === 'high' && 'bg-red-50 text-red-700',
                         q.priority === 'medium' && 'bg-amber-50 text-amber-700',
                         q.priority === 'low' && 'bg-zinc-50 text-zinc-700'
@@ -397,7 +397,7 @@ const SectionChecklist: React.FC<SectionChecklistProps> = ({
                     {section.title}
                   </span>
                   {section.required && (
-                    <Badge variant="outline" className="text-[10px] text-red-600 border-red-200">
+                    <Badge variant="outline" className="text-[11px] text-red-600 border-red-200">
                       Required
                     </Badge>
                   )}

@@ -271,7 +271,7 @@ function DossierNodeRow({
         <NodeIcon nodeType={node.nodeType} isExpanded={isExpanded} />
 
         {/* Section number */}
-        <span className="text-[10px] text-zinc-400 font-mono shrink-0 min-w-[28px]">
+        <span className="text-[11px] text-zinc-400 font-mono shrink-0 min-w-[28px]">
           {node.ctdSection}
         </span>
 
@@ -282,7 +282,7 @@ function DossierNodeRow({
 
         {/* Count badge */}
         {docCount > 0 && (
-          <span className="text-[10px] tabular-nums text-zinc-400 shrink-0 bg-zinc-100 rounded px-1">
+          <span className="text-[11px] tabular-nums text-zinc-400 shrink-0 bg-zinc-100 rounded px-1">
             {docCount}
           </span>
         )}
@@ -294,22 +294,22 @@ function DossierNodeRow({
             title={`${metrics[node.ctdSection].draftCount ?? 0}D / ${metrics[node.ctdSection].reviewCount ?? 0}R / ${metrics[node.ctdSection].approvedCount ?? 0}A / ${metrics[node.ctdSection].lockedCount ?? 0}L`}
           >
             {(metrics[node.ctdSection].draftCount ?? 0) > 0 && (
-              <span className="text-[8px] tabular-nums text-amber-600 bg-amber-50 rounded px-0.5">
+              <span className="text-[11px] tabular-nums text-amber-600 bg-amber-50 rounded px-0.5">
                 {metrics[node.ctdSection].draftCount}D
               </span>
             )}
             {(metrics[node.ctdSection].reviewCount ?? 0) > 0 && (
-              <span className="text-[8px] tabular-nums text-blue-600 bg-blue-50 rounded px-0.5">
+              <span className="text-[11px] tabular-nums text-blue-600 bg-blue-50 rounded px-0.5">
                 {metrics[node.ctdSection].reviewCount}R
               </span>
             )}
             {(metrics[node.ctdSection].approvedCount ?? 0) > 0 && (
-              <span className="text-[8px] tabular-nums text-emerald-600 bg-emerald-50 rounded px-0.5">
+              <span className="text-[11px] tabular-nums text-emerald-600 bg-emerald-50 rounded px-0.5">
                 {metrics[node.ctdSection].approvedCount}A
               </span>
             )}
             {(metrics[node.ctdSection].lockedCount ?? 0) > 0 && (
-              <span className="text-[8px] tabular-nums text-red-600 bg-red-50 rounded px-0.5">
+              <span className="text-[11px] tabular-nums text-red-600 bg-red-50 rounded px-0.5">
                 {metrics[node.ctdSection].lockedCount}L
               </span>
             )}
@@ -353,7 +353,7 @@ function DossierNodeRow({
         {/* Evidence/precedent chips */}
         {metrics?.[node.ctdSection] && metrics[node.ctdSection].evidenceCount > 0 && (
           <span
-            className="text-[9px] text-emerald-600 bg-emerald-50 rounded px-0.5 shrink-0"
+            className="text-[11px] text-emerald-600 bg-emerald-50 rounded px-0.5 shrink-0"
             title="Evidence linked"
           >
             E{metrics[node.ctdSection].evidenceCount}
@@ -361,7 +361,7 @@ function DossierNodeRow({
         )}
         {metrics?.[node.ctdSection] && metrics[node.ctdSection].precedentCount > 0 && (
           <span
-            className="text-[9px] text-violet-600 bg-violet-50 rounded px-0.5 shrink-0"
+            className="text-[11px] text-violet-600 bg-violet-50 rounded px-0.5 shrink-0"
             title="Precedents"
           >
             P{metrics[node.ctdSection].precedentCount}
@@ -382,7 +382,7 @@ function DossierNodeRow({
           metrics?.[node.ctdSection] &&
           metrics[node.ctdSection].templateCoverageAvailable && (
             <span
-              className="text-[8px] text-blue-500 bg-blue-50 rounded px-0.5 shrink-0"
+              className="text-[11px] text-blue-500 bg-blue-50 rounded px-0.5 shrink-0"
               title="Template available, no document created"
             >
               T
@@ -392,7 +392,7 @@ function DossierNodeRow({
         {/* Required children missing indicator */}
         {missingRequired.length > 0 && docCount > 0 && (
           <span
-            className="text-[8px] text-red-500 bg-red-50 rounded px-0.5 shrink-0"
+            className="text-[11px] text-red-500 bg-red-50 rounded px-0.5 shrink-0"
             title={`${missingRequired.length} required section${missingRequired.length > 1 ? 's' : ''} missing: ${missingRequired.join(', ')}`}
           >
             !{missingRequired.length}
@@ -492,7 +492,7 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
         <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
           eCTD Dossier
         </span>
-        <span className="text-[10px] text-zinc-400 tabular-nums">{artifacts.length} docs</span>
+        <span className="text-[11px] text-zinc-400 tabular-nums">{artifacts.length} docs</span>
       </div>
       {/* Tree body */}
       <div className="flex-1 overflow-y-auto py-1 zen-scroll" data-testid="dossier-tree-body">
@@ -521,11 +521,11 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
           aria-label="Section actions"
         >
           <div className="px-3 py-1.5 border-b border-zinc-100">
-            <p className="text-[10px] text-zinc-400 font-mono">{contextMenu.ctdSection}</p>
+            <p className="text-[11px] text-zinc-400 font-mono">{contextMenu.ctdSection}</p>
             <p className="text-[11px] text-zinc-600 truncate">{contextMenu.label}</p>
             {metrics?.[contextMenu.ctdSection] && (
               <div className="flex items-center gap-2 mt-1">
-                <span className="text-[9px] text-zinc-400">
+                <span className="text-[11px] text-zinc-400">
                   {metrics[contextMenu.ctdSection].completionPercent}% complete
                 </span>
                 <span className="w-[40px] h-[3px] bg-zinc-100 rounded-full overflow-hidden">

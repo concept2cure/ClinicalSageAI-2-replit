@@ -244,7 +244,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
               style={{ width: `${Math.max(capacityPercent, 1)}%` }}
             />
           </div>
-          <p className="text-[10px] text-zinc-400 mt-1">
+          <p className="text-[11px] text-zinc-400 mt-1">
             {capacityPercent}% of project capacity used
           </p>
         </div>
@@ -278,7 +278,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
                 </div>
                 {/* File type badge */}
                 <div className="absolute bottom-1 left-1">
-                  <span className="text-[9px] font-bold text-white bg-red-500 px-1.5 py-0.5 rounded uppercase">
+                  <span className="text-[11px] font-bold text-white bg-red-500 px-1.5 py-0.5 rounded uppercase">
                     {(doc.type || doc.name?.split('.').pop() || 'file').toUpperCase()}
                   </span>
                 </div>

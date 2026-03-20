@@ -84,7 +84,7 @@ const Section: React.FC<{
         <Icon className="w-3.5 h-3.5 text-zinc-500" />
         <span className="text-xs font-medium text-zinc-700 flex-1">{title}</span>
         {count !== undefined && (
-          <span className="text-[10px] text-zinc-400 tabular-nums">{count}</span>
+          <span className="text-[11px] text-zinc-400 tabular-nums">{count}</span>
         )}
       </button>
       {open && <div className="pb-3">{children}</div>}
@@ -106,7 +106,7 @@ const ContextUsageBar: React.FC<{
 
   return (
     <div className="px-4 py-2">
-      <div className="flex items-center justify-between text-[10px] text-zinc-500 mb-1">
+      <div className="flex items-center justify-between text-[11px] text-zinc-500 mb-1">
         <span>Context window</span>
         <span className="tabular-nums">
           {(used / 1000).toFixed(0)}K / {(max / 1000).toFixed(0)}K tokens
@@ -204,7 +204,7 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
             <div className="text-xs font-semibold text-zinc-800 truncate">
               {activeProject?.name || 'Project Knowledge'}
             </div>
-            <div className="text-[10px] text-zinc-400">
+            <div className="text-[11px] text-zinc-400">
               {activeProject?.type || 'Submission'} &middot; {docs.length} files &middot; {artifacts.length} artifacts
             </div>
           </div>
@@ -280,11 +280,11 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
                       <span className="flex-1 text-xs text-zinc-700 truncate min-w-0" title={doc.name}>
                         {doc.name}
                       </span>
-                      <span className="text-[10px] text-zinc-400 flex-shrink-0 tabular-nums">
+                      <span className="text-[11px] text-zinc-400 flex-shrink-0 tabular-nums">
                         {formatBytes(doc.size)}
                       </span>
                       {doc.tokenCount && (
-                        <span className="text-[10px] text-zinc-300 flex-shrink-0 tabular-nums">
+                        <span className="text-[11px] text-zinc-300 flex-shrink-0 tabular-nums">
                           {(doc.tokenCount / 1000).toFixed(0)}K
                         </span>
                       )}
@@ -352,7 +352,7 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
                     Add custom instructions for AnA RI on this project...
                   </p>
                 )}
-                <p className="text-[10px] text-zinc-400 mt-1">Click to edit</p>
+                <p className="text-[11px] text-zinc-400 mt-1">Click to edit</p>
               </button>
             )}
           </div>
@@ -376,13 +376,13 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
                     <span className="flex-1 text-xs text-zinc-700 truncate min-w-0" title={artifact.title}>
                       {artifact.title}
                     </span>
-                    <span className="text-[10px] text-zinc-300 flex-shrink-0">
+                    <span className="text-[11px] text-zinc-300 flex-shrink-0">
                       v{artifact.version}
                     </span>
                   </li>
                 ))}
                 {artifacts.length > 20 && (
-                  <li className="text-[10px] text-zinc-400 px-2 py-1">
+                  <li className="text-[11px] text-zinc-400 px-2 py-1">
                     +{artifacts.length - 20} more artifacts
                   </li>
                 )}

@@ -53,7 +53,7 @@ export const ProjectFilesCompact: React.FC<ProjectFilesCompactProps> = ({
     <div className="flex flex-col h-full">
       {/* Header row */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100 flex-shrink-0">
-        <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
+        <p className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
           Files
           {docs.length > 0 && <span className="ml-1.5 text-zinc-300">({docs.length})</span>}
         </p>
@@ -109,7 +109,7 @@ export const ProjectFilesCompact: React.FC<ProjectFilesCompactProps> = ({
                 <span className="flex-1 text-xs text-zinc-700 truncate min-w-0" title={doc.name}>
                   {doc.name}
                 </span>
-                <span className="text-[10px] text-zinc-400 flex-shrink-0 tabular-nums">
+                <span className="text-[11px] text-zinc-400 flex-shrink-0 tabular-nums">
                   {formatBytes(doc.size)}
                 </span>
                 <button

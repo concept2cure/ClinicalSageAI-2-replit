@@ -686,7 +686,7 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
               {starredProjects.length > 0 && (
                 <>
                   <div className="px-4 pt-2 pb-1">
-                    <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
+                    <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
                       Starred
                     </span>
                   </div>
@@ -726,7 +726,7 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
                         </div>
                         <span
                           className={cn(
-                            'text-[10px] font-semibold px-1.5 py-0.5 rounded',
+                            'text-[11px] font-semibold px-1.5 py-0.5 rounded',
                             tc.bgColor,
                             tc.color
                           )}
@@ -745,7 +745,7 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
                 <>
                   {starredProjects.length > 0 && (
                     <div className="px-4 pt-2 pb-1">
-                      <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
+                      <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
                         All Projects
                       </span>
                     </div>
@@ -783,7 +783,7 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
                         </div>
                         <span
                           className={cn(
-                            'text-[10px] font-semibold px-1.5 py-0.5 rounded',
+                            'text-[11px] font-semibold px-1.5 py-0.5 rounded',
                             tc.bgColor,
                             tc.color
                           )}

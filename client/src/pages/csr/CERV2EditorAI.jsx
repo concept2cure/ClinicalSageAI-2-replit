@@ -619,7 +619,7 @@ export default function CERV2EditorAI() {
           <h2 className="text-sm font-semibold tracking-tight">CERV2 Editor</h2>
           {/* P3: Review status badge */}
           <Badge
-            className={`text-[10px] px-1.5 py-0 ${
+            className={`text-[11px] px-1.5 py-0 ${
               reviewState.status === 'draft'
                 ? 'bg-slate-100 text-slate-600'
                 : reviewState.status === 'review'
@@ -832,13 +832,13 @@ export default function CERV2EditorAI() {
                         <span className="truncate flex-1">{section.label}</span>
 
                         {/* P1: Word count / target */}
-                        <span className="text-[10px] tabular-nums text-muted-foreground flex-shrink-0">
+                        <span className="text-[11px] tabular-nums text-muted-foreground flex-shrink-0">
                           {words > 0 ? `${words}/${target.target}` : ''}
                         </span>
 
                         {/* P2: Attachment badge */}
                         {attachCount > 0 && (
-                          <span className="text-[10px] text-muted-foreground">📎{attachCount}</span>
+                          <span className="text-[11px] text-muted-foreground">📎{attachCount}</span>
                         )}
 
                         {/* P2: Compliance issue indicator */}
@@ -888,7 +888,7 @@ export default function CERV2EditorAI() {
                       {isExpanded && isDismissed && (
                         <div className="ml-7 mr-2 mt-0.5 mb-1.5">
                           <button
-                            className="flex items-center gap-1 text-[10px] text-blue-600 hover:text-blue-800 transition-colors"
+                            className="flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-800 transition-colors"
                             onClick={e => {
                               e.stopPropagation();
                               undoDismiss(section.id);

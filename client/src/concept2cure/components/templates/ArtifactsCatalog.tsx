@@ -730,7 +730,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onUse, onPreview 
           </p>
         </div>
         {template.isOfficial && (
-          <Badge variant="secondary" className="text-[10px] flex-shrink-0 bg-zinc-100 text-zinc-600 border-0">
+          <Badge variant="secondary" className="text-[11px] flex-shrink-0 bg-zinc-100 text-zinc-600 border-0">
             Official
           </Badge>
         )}
@@ -742,13 +742,13 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onUse, onPreview 
           <Badge
             key={type}
             variant="outline"
-            className="text-[10px] px-1.5 py-0 border-zinc-200 text-zinc-500"
+            className="text-[11px] px-1.5 py-0 border-zinc-200 text-zinc-500"
           >
             {type}
           </Badge>
         ))}
         {template.ctdSection && (
-          <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-blue-200 text-blue-600">
+          <Badge variant="outline" className="text-[11px] px-1.5 py-0 border-blue-200 text-blue-600">
             {template.ctdSection}
           </Badge>
         )}

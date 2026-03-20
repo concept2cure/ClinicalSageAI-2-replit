@@ -200,7 +200,7 @@ export default function SnowGlobeArtifactSummary({
         </div>
         <span
           className={cn(
-            'rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider',
+            'rounded-full border px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider',
             riskStyles.bg,
             riskStyles.text,
             riskStyles.border,
@@ -224,7 +224,7 @@ export default function SnowGlobeArtifactSummary({
                   style={{ width: `${Math.min(score, 100)}%` }}
                 />
               </div>
-              <span className="w-7 text-right text-[10px] font-medium tabular-nums text-zinc-500">
+              <span className="w-7 text-right text-[11px] font-medium tabular-nums text-zinc-500">
                 {Math.round(score)}
               </span>
             </div>
@@ -246,7 +246,7 @@ export default function SnowGlobeArtifactSummary({
             <span
               key={sev}
               className={cn(
-                'rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase',
+                'rounded px-1.5 py-0.5 text-[11px] font-semibold uppercase',
                 style.badge,
               )}
             >
@@ -279,7 +279,7 @@ export default function SnowGlobeArtifactSummary({
                   <div key={f.id} className="flex items-start gap-2 py-1">
                     <span
                       className={cn(
-                        'mt-0.5 shrink-0 rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase',
+                        'mt-0.5 shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold uppercase',
                         style.badge,
                       )}
                     >

@@ -542,7 +542,7 @@ export default function AuroraAssistant({ isOpen, onClose, selectedModule }) {
                                     {doc.name}
                                   </h4>
                                   <span
-                                    className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                                    className={`text-[11px] px-1.5 py-0.5 rounded-full ${
                                       doc.status === 'Final'
                                         ? 'bg-green-100 text-green-800'
                                         : doc.status === 'Draft'
@@ -553,7 +553,7 @@ export default function AuroraAssistant({ isOpen, onClose, selectedModule }) {
                                     {doc.status}
                                   </span>
                                 </div>
-                                <div className="flex justify-between text-[10px] text-gray-500 mt-1">
+                                <div className="flex justify-between text-[11px] text-gray-500 mt-1">
                                   <span>{doc.type}</span>
                                   <span>{doc.date}</span>
                                 </div>

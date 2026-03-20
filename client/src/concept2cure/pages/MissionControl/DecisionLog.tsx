@@ -261,7 +261,7 @@ export const DecisionLog: React.FC<DecisionLogProps> = ({ programId }) => {
                               </h3>
                               <span
                                 className={cn(
-                                  'text-[10px] px-1.5 py-0.5 rounded-full font-medium capitalize',
+                                  'text-[11px] px-1.5 py-0.5 rounded-full font-medium capitalize',
                                   colors.bg,
                                   colors.text
                                 )}
@@ -270,7 +270,7 @@ export const DecisionLog: React.FC<DecisionLogProps> = ({ programId }) => {
                               </span>
                               <span
                                 className={cn(
-                                  'text-[10px] px-1.5 py-0.5 rounded-full capitalize',
+                                  'text-[11px] px-1.5 py-0.5 rounded-full capitalize',
                                   CATEGORY_COLORS[category]
                                 )}
                               >
@@ -394,7 +394,7 @@ export const DecisionLog: React.FC<DecisionLogProps> = ({ programId }) => {
                                   {decision.stakeholders.map((name: string, idx: number) => (
                                     <span
                                       key={idx}
-                                      className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600"
+                                      className="text-[11px] px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600"
                                     >
                                       {name}
                                     </span>

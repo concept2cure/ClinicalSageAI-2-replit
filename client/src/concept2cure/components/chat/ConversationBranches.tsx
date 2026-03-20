@@ -208,7 +208,7 @@ const BranchNode: React.FC<BranchNodeProps> = ({
               {branch.title}
             </span>
             {isActive && (
-              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+              <Badge variant="secondary" className="text-[11px] px-1.5 py-0">
                 Active
               </Badge>
             )}

@@ -246,7 +246,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
                   <FileText className="w-4 h-4 text-blue-500" />
                   <div className="text-left">
                     <div className="font-medium text-xs">Word Document (.docx)</div>
-                    <div className="text-[10px] text-zinc-400">MS Word, Google Docs compatible</div>
+                    <div className="text-[11px] text-zinc-400">MS Word, Google Docs compatible</div>
                   </div>
                 </button>
                 <button
@@ -256,7 +256,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
                   <FileText className="w-4 h-4 text-red-500" />
                   <div className="text-left">
                     <div className="font-medium text-xs">PDF Document (.pdf)</div>
-                    <div className="text-[10px] text-zinc-400">Read-only, print-ready</div>
+                    <div className="text-[11px] text-zinc-400">Read-only, print-ready</div>
                   </div>
                 </button>
               </div>

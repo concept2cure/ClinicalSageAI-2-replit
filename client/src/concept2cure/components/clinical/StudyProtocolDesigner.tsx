@@ -463,8 +463,8 @@ const EndpointSelector: React.FC<EndpointSelectorProps> = ({
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-zinc-900">{endpoint.name}</span>
-                {isPrimary && <Badge className="bg-blue-600 text-white text-[10px]">Primary</Badge>}
-                <Badge variant="outline" className="text-[10px]">
+                {isPrimary && <Badge className="bg-blue-600 text-white text-[11px]">Primary</Badge>}
+                <Badge variant="outline" className="text-[11px]">
                   {endpoint.measureType.replace('_', ' ')}
                 </Badge>
               </div>
@@ -946,7 +946,7 @@ export const StudyProtocolDesigner: React.FC<StudyProtocolDesignerProps> = ({
                       <Badge
                         variant="outline"
                         className={cn(
-                          'text-[10px] mt-1',
+                          'text-[11px] mt-1',
                           section.status === 'not_started' && 'bg-zinc-100 text-zinc-600',
                           section.status === 'ai_draft' && 'bg-blue-100 text-blue-700',
                           section.status === 'in_review' && 'bg-amber-100 text-amber-700',

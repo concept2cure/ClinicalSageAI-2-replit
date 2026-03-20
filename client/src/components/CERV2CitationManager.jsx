@@ -130,7 +130,7 @@ export default function CERV2CitationManager({
         <BookOpen className="w-3.5 h-3.5 text-slate-500" />
         <span className="text-slate-700">Citations</span>
         {citations.length > 0 && (
-          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+          <Badge variant="secondary" className="text-[11px] px-1.5 py-0">
             {citations.length}
           </Badge>
         )}
@@ -145,7 +145,7 @@ export default function CERV2CitationManager({
         <div className="flex items-center gap-2">
           <BookOpen className="w-4 h-4 text-slate-600" />
           <span className="font-semibold text-sm text-slate-800">Citations & References</span>
-          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+          <Badge variant="outline" className="text-[11px] px-1.5 py-0">
             {citations.length}
           </Badge>
         </div>
@@ -170,7 +170,7 @@ export default function CERV2CitationManager({
         <div className="p-3 border-b bg-blue-50/50 space-y-2">
           <div className="flex gap-2">
             <div className="flex-1">
-              <Label className="text-[10px] text-slate-500">Title / Reference</Label>
+              <Label className="text-[11px] text-slate-500">Title / Reference</Label>
               <Input
                 value={newTitle}
                 onChange={e => setNewTitle(e.target.value)}
@@ -181,7 +181,7 @@ export default function CERV2CitationManager({
               />
             </div>
             <div className="w-28">
-              <Label className="text-[10px] text-slate-500">Type</Label>
+              <Label className="text-[11px] text-slate-500">Type</Label>
               <Select value={newType} onValueChange={setNewType}>
                 <SelectTrigger className="h-7 text-xs mt-0.5">
                   <SelectValue />
@@ -197,7 +197,7 @@ export default function CERV2CitationManager({
             </div>
           </div>
           <div>
-            <Label className="text-[10px] text-slate-500">
+            <Label className="text-[11px] text-slate-500">
               URL (optional — auto-detected for known standards)
             </Label>
             <Input
@@ -231,14 +231,14 @@ export default function CERV2CitationManager({
       {/* Active section citations */}
       {activeSectionId && sectionCitations.length > 0 && (
         <div className="px-3 py-2 border-b bg-slate-50/50">
-          <p className="text-[10px] text-slate-500 mb-1">
+          <p className="text-[11px] text-slate-500 mb-1">
             Linked to current section ({sectionCitations.length}):
           </p>
           <div className="flex flex-wrap gap-1">
             {sectionCitations.map(c => {
               const cfg = getTypeConfig(c.type);
               return (
-                <Badge key={c.id} className={`text-[9px] px-1.5 py-0 ${cfg.color}`}>
+                <Badge key={c.id} className={`text-[11px] px-1.5 py-0 ${cfg.color}`}>
                   {c.title.length > 30 ? c.title.slice(0, 30) + '...' : c.title}
                 </Badge>
               );
@@ -265,7 +265,7 @@ export default function CERV2CitationManager({
                 <div className="flex items-start gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <Badge className={`text-[9px] px-1 py-0 ${cfg.color}`}>{cfg.label}</Badge>
+                      <Badge className={`text-[11px] px-1 py-0 ${cfg.color}`}>{cfg.label}</Badge>
                       <p className="text-xs font-medium text-slate-700 truncate">{c.title}</p>
                     </div>
                     {c.url && (
@@ -273,7 +273,7 @@ export default function CERV2CitationManager({
                         href={c.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[10px] text-blue-500 hover:text-blue-700 flex items-center gap-0.5 mt-0.5"
+                        className="text-[11px] text-blue-500 hover:text-blue-700 flex items-center gap-0.5 mt-0.5"
                       >
                         <ExternalLink className="w-2.5 h-2.5" />
                         {c.url.length > 50 ? c.url.slice(0, 50) + '...' : c.url}
@@ -282,7 +282,7 @@ export default function CERV2CitationManager({
                     {c.sections.length > 0 && (
                       <div className="flex items-center gap-1 mt-1">
                         <Link2 className="w-2.5 h-2.5 text-slate-400" />
-                        <span className="text-[10px] text-slate-400">
+                        <span className="text-[11px] text-slate-400">
                           {c.sections.length} section{c.sections.length !== 1 ? 's' : ''}
                         </span>
                       </div>
@@ -293,7 +293,7 @@ export default function CERV2CitationManager({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className={`h-6 px-1.5 text-[10px] ${isLinked ? 'text-blue-600' : 'text-slate-400'}`}
+                        className={`h-6 px-1.5 text-[11px] ${isLinked ? 'text-blue-600' : 'text-slate-400'}`}
                         onClick={() => toggleSectionLink(c.id, activeSectionId)}
                         title={isLinked ? 'Unlink from section' : 'Link to section'}
                       >

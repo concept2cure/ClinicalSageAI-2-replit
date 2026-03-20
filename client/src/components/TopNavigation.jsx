@@ -46,7 +46,7 @@ export default function TopNavigation() {
             >
               <FileText className="h-4 w-4 mr-1" />
               DocuShare
-              <span className="absolute -top-1 -right-1 bg-teal-100 text-teal-800 text-[8px] px-1 rounded-full border border-teal-300 whitespace-nowrap">
+              <span className="absolute -top-1 -right-1 bg-teal-100 text-teal-800 text-[11px] px-1 rounded-full border border-teal-300 whitespace-nowrap">
                 21 CFR Part 11
               </span>
             </Button>
@@ -58,7 +58,7 @@ export default function TopNavigation() {
             >
               <MessageSquare className="h-4 w-4 mr-1" />
               Chat
-              <span className="absolute -top-1 -right-1 bg-indigo-100 text-indigo-800 text-[8px] px-1 rounded-full border border-indigo-300 whitespace-nowrap">
+              <span className="absolute -top-1 -right-1 bg-indigo-100 text-indigo-800 text-[11px] px-1 rounded-full border border-indigo-300 whitespace-nowrap">
                 New
               </span>
             </Button>

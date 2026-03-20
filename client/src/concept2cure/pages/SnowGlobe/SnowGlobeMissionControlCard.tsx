@@ -276,7 +276,7 @@ export default function SnowGlobeMissionControlCard({
                 />
               )}
             </div>
-            <span className="w-7 text-right text-[10px] font-medium tabular-nums text-zinc-500">
+            <span className="w-7 text-right text-[11px] font-medium tabular-nums text-zinc-500">
               {value !== null ? value : '--'}
             </span>
           </div>
@@ -299,7 +299,7 @@ export default function SnowGlobeMissionControlCard({
                 <div key={f.id} className="flex items-start gap-2">
                   <span
                     className={cn(
-                      'mt-0.5 shrink-0 rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase',
+                      'mt-0.5 shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold uppercase',
                       sev.badge,
                     )}
                   >

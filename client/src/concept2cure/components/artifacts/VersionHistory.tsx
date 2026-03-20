@@ -175,13 +175,13 @@ const VersionItem: React.FC<VersionItemProps> = ({
               {isCurrent && (
                 <Badge
                   variant="secondary"
-                  className="text-[10px] px-1.5 py-0 bg-blue-100 text-blue-700"
+                  className="text-[11px] px-1.5 py-0 bg-blue-100 text-blue-700"
                 >
                   Current
                 </Badge>
               )}
               {version.changeType === 'ai' && (
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                <Badge variant="outline" className="text-[11px] px-1.5 py-0">
                   <Sparkles className="h-2.5 w-2.5 mr-0.5" />
                   RI
                 </Badge>

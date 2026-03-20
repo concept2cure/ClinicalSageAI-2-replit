@@ -222,7 +222,7 @@ const WorkflowCard: React.FC<WorkflowCardProps> = ({ workflow, onView }) => {
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <div className="flex items-center gap-2">
             <Avatar className="h-5 w-5">
-              <AvatarFallback className="text-[10px]">
+              <AvatarFallback className="text-[11px]">
                 {workflow.initiator
                   .split(' ')
                   .map(n => n[0])
@@ -370,7 +370,7 @@ const WorkflowDetail: React.FC<WorkflowDetailProps> = ({ workflow, onClose, onAc
                     {step.assignee && (
                       <>
                         <Avatar className="h-4 w-4">
-                          <AvatarFallback className="text-[8px]">
+                          <AvatarFallback className="text-[11px]">
                             {step.assignee
                               .split(' ')
                               .map(n => n[0])

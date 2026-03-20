@@ -134,10 +134,10 @@ export const SubmissionAppsPanel: React.FC<SubmissionAppsPanelProps> = ({
                 </div>
                 <p className="text-[11px] text-zinc-500 leading-snug">{app.description}</p>
                 <div className="flex items-center gap-2 mt-auto">
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500">
+                  <span className="text-[11px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500">
                     CTD {app.defaultCtdSection}
                   </span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500">
+                  <span className="text-[11px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500">
                     {app.targetDocType.replace(/_/g, ' ')}
                   </span>
                 </div>
@@ -167,13 +167,13 @@ export const SubmissionAppsPanel: React.FC<SubmissionAppsPanelProps> = ({
 
             <div className="grid grid-cols-2 gap-3 p-3 rounded-lg bg-zinc-50 border border-zinc-100">
               <div>
-                <span className="text-[10px] text-zinc-400 uppercase tracking-wider">Creates</span>
+                <span className="text-[11px] text-zinc-400 uppercase tracking-wider">Creates</span>
                 <p className="text-[12px] text-zinc-700 font-medium">
                   {selectedApp.targetDocType.replace(/_/g, ' ')}
                 </p>
               </div>
               <div>
-                <span className="text-[10px] text-zinc-400 uppercase tracking-wider">
+                <span className="text-[11px] text-zinc-400 uppercase tracking-wider">
                   CTD section
                 </span>
                 <p className="text-[12px] text-zinc-700 font-medium">
@@ -182,14 +182,14 @@ export const SubmissionAppsPanel: React.FC<SubmissionAppsPanelProps> = ({
               </div>
               {selectedApp.templateKey && (
                 <div>
-                  <span className="text-[10px] text-zinc-400 uppercase tracking-wider">
+                  <span className="text-[11px] text-zinc-400 uppercase tracking-wider">
                     Template
                   </span>
                   <p className="text-[12px] text-zinc-700 font-medium">{selectedApp.templateKey}</p>
                 </div>
               )}
               <div>
-                <span className="text-[10px] text-zinc-400 uppercase tracking-wider">
+                <span className="text-[11px] text-zinc-400 uppercase tracking-wider">
                   Required inputs
                 </span>
                 <p className="text-[12px] text-zinc-700">{selectedApp.requiredInputs.join(', ')}</p>

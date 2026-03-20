@@ -160,7 +160,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onUse }) => (
       {template.tags.slice(0, 3).map(tag => (
         <span
           key={tag}
-          className="text-[10px] px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-500"
+          className="text-[11px] px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-500"
         >
           {tag}
         </span>

@@ -303,7 +303,7 @@ const CollaborationHub: React.FC<CollaborationHubProps> = ({ programId }) => {
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
                   className={cn(
-                    'flex-1 flex items-center justify-center gap-1 py-2.5 text-[10px] font-medium border-b-2 transition-colors',
+                    'flex-1 flex items-center justify-center gap-1 py-2.5 text-[11px] font-medium border-b-2 transition-colors',
                     activeTab === tab.key
                       ? 'border-blue-500 text-blue-700'
                       : 'border-transparent text-zinc-500 hover:text-zinc-700',
@@ -333,7 +333,7 @@ const CollaborationHub: React.FC<CollaborationHubProps> = ({ programId }) => {
               <select
                 value={typeFilter}
                 onChange={e => setTypeFilter(e.target.value as CollabType | 'all')}
-                className="text-[10px] px-1.5 py-1 border border-zinc-200 rounded-md bg-white text-zinc-700"
+                className="text-[11px] px-1.5 py-1 border border-zinc-200 rounded-md bg-white text-zinc-700"
               >
                 <option value="all">All Types</option>
                 {(Object.keys(COLLAB_TYPE_CONFIG) as CollabType[]).map(key => (
@@ -351,7 +351,7 @@ const CollaborationHub: React.FC<CollaborationHubProps> = ({ programId }) => {
               <div className="p-6 text-center">
                 <MessageSquare className="w-8 h-8 text-zinc-200 mx-auto mb-2" />
                 <p className="text-xs text-zinc-500">No threads found</p>
-                <p className="text-[10px] text-zinc-400 mt-1">
+                <p className="text-[11px] text-zinc-400 mt-1">
                   {searchQuery ? 'Try adjusting your search' : 'Threads will appear as collaboration begins'}
                 </p>
               </div>
@@ -362,10 +362,10 @@ const CollaborationHub: React.FC<CollaborationHubProps> = ({ programId }) => {
                   <div className="px-3 py-1.5 bg-zinc-50 border-b">
                     <div className="flex items-center gap-1.5">
                       <FileText className="w-3 h-3 text-zinc-400" />
-                      <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider truncate">
+                      <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider truncate">
                         {group.artifact.title}
                       </span>
-                      <span className="text-[10px] text-zinc-400 ml-auto">{group.threads.length}</span>
+                      <span className="text-[11px] text-zinc-400 ml-auto">{group.threads.length}</span>
                     </div>
                   </div>
                   {/* Threads under this artifact */}
@@ -392,7 +392,7 @@ const CollaborationHub: React.FC<CollaborationHubProps> = ({ programId }) => {
                               {thread.priority === 'high' && (
                                 <ArrowUp className="w-3 h-3 text-red-500 flex-shrink-0" />
                               )}
-                              <span className="text-[10px] text-zinc-400 ml-auto flex-shrink-0">
+                              <span className="text-[11px] text-zinc-400 ml-auto flex-shrink-0">
                                 {relativeTime(thread.createdAt)}
                               </span>
                             </div>
@@ -400,12 +400,12 @@ const CollaborationHub: React.FC<CollaborationHubProps> = ({ programId }) => {
                               {thread.body || 'No content'}
                             </p>
                             <div className="flex items-center gap-1.5 mt-1">
-                              <span className={cn('text-[9px] px-1 py-0.5 rounded', typeConf.bg, typeConf.color)}>
+                              <span className={cn('text-[11px] px-1 py-0.5 rounded', typeConf.bg, typeConf.color)}>
                                 {typeConf.label}
                               </span>
                               {thread.visibility && (
                                 <span className={cn(
-                                  'text-[9px] px-1 py-0.5 rounded',
+                                  'text-[11px] px-1 py-0.5 rounded',
                                   VISIBILITY_CONFIG[thread.visibility as Visibility]?.bg || 'bg-zinc-100',
                                   VISIBILITY_CONFIG[thread.visibility as Visibility]?.color || 'text-zinc-600',
                                 )}>
@@ -447,13 +447,13 @@ const CollaborationHub: React.FC<CollaborationHubProps> = ({ programId }) => {
                       {(() => {
                         const tc = COLLAB_TYPE_CONFIG[selectedThread.type as CollabType] || COLLAB_TYPE_CONFIG.comment;
                         return (
-                          <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full', tc.bg, tc.color)}>
+                          <span className={cn('text-[11px] px-1.5 py-0.5 rounded-full', tc.bg, tc.color)}>
                             {tc.label}
                           </span>
                         );
                       })()}
                       {selectedThread.priority === 'high' && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-50 text-red-700">
+                        <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-red-50 text-red-700">
                           High Priority
                         </span>
                       )}
@@ -602,12 +602,12 @@ const CollaborationHub: React.FC<CollaborationHubProps> = ({ programId }) => {
                       <FileText className="w-4 h-4 mt-0.5 text-zinc-400 flex-shrink-0" />
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-zinc-800 truncate">{linkedArtifact.title}</p>
-                        <p className="text-[10px] font-mono text-zinc-500">{linkedArtifact.code}</p>
+                        <p className="text-[11px] font-mono text-zinc-500">{linkedArtifact.code}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className={cn(
-                        'text-[10px] px-1.5 py-0.5 rounded-full',
+                        'text-[11px] px-1.5 py-0.5 rounded-full',
                         linkedArtifact.lifecycleState === 'approved'
                           ? 'bg-emerald-100 text-emerald-700'
                           : linkedArtifact.lifecycleState === 'in-review'
@@ -619,12 +619,12 @@ const CollaborationHub: React.FC<CollaborationHubProps> = ({ programId }) => {
                         {linkedArtifact.lifecycleState || 'unknown'}
                       </span>
                       {linkedArtifact.dossierModule && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-600">
+                        <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-600">
                           {linkedArtifact.dossierModule}
                         </span>
                       )}
                       {linkedArtifact.artifactType && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-600 capitalize">
+                        <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-600 capitalize">
                           {linkedArtifact.artifactType}
                         </span>
                       )}
@@ -646,7 +646,7 @@ const CollaborationHub: React.FC<CollaborationHubProps> = ({ programId }) => {
                   <div className="space-y-2">
                     {participants.map((name, idx) => (
                       <div key={idx} className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-semibold flex-shrink-0">
+                        <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[11px] font-semibold flex-shrink-0">
                           {getInitials(name)}
                         </div>
                         <span className="text-xs text-zinc-700 truncate">{name}</span>
@@ -707,7 +707,7 @@ const CollaborationHub: React.FC<CollaborationHubProps> = ({ programId }) => {
                           <TIcon className={cn('w-3.5 h-3.5 mt-0.5 flex-shrink-0', tc.color)} />
                           <div className="min-w-0">
                             <p className="text-xs text-zinc-700 line-clamp-1">{t.body || 'No content'}</p>
-                            <p className="text-[10px] text-zinc-400 mt-0.5">
+                            <p className="text-[11px] text-zinc-400 mt-0.5">
                               {t.author} &middot; {relativeTime(t.createdAt)}
                             </p>
                           </div>
@@ -751,26 +751,26 @@ const ThreadMessage: React.FC<ThreadMessageProps> = ({ message, onReply }) => {
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-medium text-zinc-800">{message.author || 'Unknown'}</span>
             {message.role && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-500">
+              <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-500">
                 {message.role}
               </span>
             )}
-            <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full', typeConf.bg, typeConf.color)}>
+            <span className={cn('text-[11px] px-1.5 py-0.5 rounded-full', typeConf.bg, typeConf.color)}>
               {typeConf.label}
             </span>
             {visConf && (
-              <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-0.5', visConf.bg, visConf.color)}>
+              <span className={cn('text-[11px] px-1.5 py-0.5 rounded-full flex items-center gap-0.5', visConf.bg, visConf.color)}>
                 <visConf.icon className="w-2.5 h-2.5" />
                 {visConf.label}
               </span>
             )}
             {message.priority === 'high' && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-50 text-red-700 flex items-center gap-0.5">
+              <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-red-50 text-red-700 flex items-center gap-0.5">
                 <ArrowUp className="w-2.5 h-2.5" />
                 High Priority
               </span>
             )}
-            <span className="text-[10px] text-zinc-400 ml-auto">
+            <span className="text-[11px] text-zinc-400 ml-auto">
               {relativeTime(message.createdAt)}
             </span>
           </div>
@@ -782,7 +782,7 @@ const ThreadMessage: React.FC<ThreadMessageProps> = ({ message, onReply }) => {
           <div className="flex items-center gap-3 mt-3">
             <button
               onClick={onReply}
-              className="flex items-center gap-1 text-[10px] text-zinc-500 hover:text-blue-600 transition-colors"
+              className="flex items-center gap-1 text-[11px] text-zinc-500 hover:text-blue-600 transition-colors"
             >
               <Reply className="w-3 h-3" />
               Reply

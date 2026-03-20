@@ -460,7 +460,7 @@ const GlobalRegistrationMatrix: React.FC<{
                         {status === 'approved' ? '✓' : status === 'not_applicable' ? '—' : config.label}
                       </span>
                       {reg?.pendingVariations && reg.pendingVariations > 0 && (
-                        <p className="text-[10px] text-amber-600 mt-0.5">
+                        <p className="text-[11px] text-amber-600 mt-0.5">
                           {reg.pendingVariations} variation{reg.pendingVariations > 1 ? 's' : ''}
                         </p>
                       )}

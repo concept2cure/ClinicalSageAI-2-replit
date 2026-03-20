@@ -447,7 +447,7 @@ export const NotificationCenter: React.FC = () => {
           <div className="relative">
             <Bell className="w-5 h-5 text-blue-600" />
             {unreadCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-blue-600 text-white text-[10px] font-bold px-1">
+              <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-blue-600 text-white text-[11px] font-bold px-1">
                 {unreadCount}
               </span>
             )}
@@ -498,7 +498,7 @@ export const NotificationCenter: React.FC = () => {
                   return (
                     <span
                       key={type}
-                      className={cn('text-[10px] px-1.5 py-0.5 rounded-full font-medium', cfg.bgColor, cfg.color)}
+                      className={cn('text-[11px] px-1.5 py-0.5 rounded-full font-medium', cfg.bgColor, cfg.color)}
                     >
                       {count}
                     </span>
@@ -532,7 +532,7 @@ export const NotificationCenter: React.FC = () => {
                   {badge !== null && badge > 0 && (
                     <span
                       className={cn(
-                        'min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-[10px] font-bold px-1',
+                        'min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-[11px] font-bold px-1',
                         isActive ? 'bg-white/20 text-white' : 'bg-zinc-100 text-zinc-600',
                       )}
                     >
@@ -594,7 +594,7 @@ export const NotificationCenter: React.FC = () => {
                                       {notification.title}
                                     </p>
                                     {notification.actionRequired && (
-                                      <span className="flex-shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-700 font-medium">
+                                      <span className="flex-shrink-0 text-[11px] px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-700 font-medium">
                                         Action Required
                                       </span>
                                     )}
@@ -605,18 +605,18 @@ export const NotificationCenter: React.FC = () => {
                                   <div className="flex items-center gap-3">
                                     <span
                                       className={cn(
-                                        'text-[10px] px-1.5 py-0.5 rounded-full font-medium',
+                                        'text-[11px] px-1.5 py-0.5 rounded-full font-medium',
                                         cfg.bgColor,
                                         cfg.color,
                                       )}
                                     >
                                       {cfg.label}
                                     </span>
-                                    <span className="text-[10px] text-zinc-400 flex items-center gap-1">
+                                    <span className="text-[11px] text-zinc-400 flex items-center gap-1">
                                       <ChevronRight className="w-2.5 h-2.5" />
                                       {notification.source}
                                     </span>
-                                    <span className="text-[10px] text-zinc-400">
+                                    <span className="text-[11px] text-zinc-400">
                                       {relativeTime(notification.timestamp)}
                                     </span>
                                   </div>

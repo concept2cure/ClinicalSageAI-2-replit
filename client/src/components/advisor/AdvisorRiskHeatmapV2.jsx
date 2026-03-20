@@ -102,7 +102,7 @@ export default function AdvisorRiskHeatmapV2({ sidebar = false }) {
 
             return (
               <div key={idx} className={`rounded-sm p-1 text-white text-xs ${riskColor}`}>
-                <span className="text-[10px] block truncate">{section}</span>
+                <span className="text-[11px] block truncate">{section}</span>
               </div>
             );
           })}
@@ -225,8 +225,8 @@ export default function AdvisorRiskHeatmapV2({ sidebar = false }) {
               title={`Risk details for ${section}`}
             >
               <span className="text-xs text-center">{section}</span>
-              <span className="text-[10px] mt-2">{risk} Risk</span>
-              <span className="text-[10px]">
+              <span className="text-[11px] mt-2">{risk} Risk</span>
+              <span className="text-[11px]">
                 +{delayDays}d / ~${(financialRisk / 1000).toLocaleString()}k
               </span>
             </div>

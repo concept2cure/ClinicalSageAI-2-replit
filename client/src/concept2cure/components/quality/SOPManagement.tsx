@@ -393,7 +393,7 @@ const SOPList: React.FC<SOPListProps> = ({ sops, onSelect, onEdit }) => {
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{sop.title}</span>
                       {isReviewDue(sop.reviewDate) && sop.status === 'effective' && (
-                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-[10px]">
+                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-[11px]">
                           Review Due
                         </Badge>
                       )}
@@ -401,7 +401,7 @@ const SOPList: React.FC<SOPListProps> = ({ sops, onSelect, onEdit }) => {
                   </TableCell>
                   <TableCell>v{sop.version}</TableCell>
                   <TableCell>
-                    <Badge variant="outline" className={cn('text-[10px]', STATUS_CONFIG[sop.status].color)}>
+                    <Badge variant="outline" className={cn('text-[11px]', STATUS_CONFIG[sop.status].color)}>
                       <StatusIcon className="h-3 w-3 mr-1" />
                       {STATUS_CONFIG[sop.status].label}
                     </Badge>
@@ -546,7 +546,7 @@ const TrainingMatrix: React.FC<TrainingMatrixProps> = ({ records, onAcknowledge 
                   <Badge
                     variant="outline"
                     className={cn(
-                      'text-[10px]',
+                      'text-[11px]',
                       record.status === 'completed' && 'bg-green-100 text-green-700',
                       record.status === 'pending' && 'bg-amber-100 text-amber-700',
                       record.status === 'overdue' && 'bg-red-100 text-red-700'
@@ -617,7 +617,7 @@ export const SOPManagement: React.FC<SOPManagementProps> = ({ className }) => {
     <div className={cn('h-full flex flex-col', className)}>
       {/* Early Access Banner */}
       <div className="mx-4 mt-3 flex items-center gap-2 px-3 py-2 rounded-md bg-amber-50 border border-amber-200 text-amber-700 text-xs">
-        <span className="font-semibold px-1.5 py-0.5 bg-amber-200 text-amber-800 rounded text-[10px] uppercase tracking-wider">Early Access</span>
+        <span className="font-semibold px-1.5 py-0.5 bg-amber-200 text-amber-800 rounded text-[11px] uppercase tracking-wider">Early Access</span>
         <span>This module displays sample data for demonstration. Live data integration coming soon.</span>
       </div>
       {/* Header */}

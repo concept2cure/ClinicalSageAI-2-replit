@@ -652,7 +652,7 @@ function PathwayAdvisor() {
           <div>
             <div className="flex items-center gap-2 mb-3">
               <h3 className="text-sm font-medium text-zinc-900">Regulatory Pathways</h3>
-              <span className="text-[10px] text-zinc-400 border border-zinc-100 rounded px-1.5 py-0.5">Reference Data</span>
+              <span className="text-[11px] text-zinc-400 border border-zinc-100 rounded px-1.5 py-0.5">Reference Data</span>
             </div>
             <div className="space-y-3">
               {fdaPathways.map((p) => (
@@ -673,7 +673,7 @@ function PathwayAdvisor() {
           <div>
             <div className="flex items-center gap-2 mb-3">
               <h3 className="text-sm font-medium text-zinc-900">Expedited Programs</h3>
-              <span className="text-[10px] text-zinc-400 border border-zinc-100 rounded px-1.5 py-0.5">Reference Data</span>
+              <span className="text-[11px] text-zinc-400 border border-zinc-100 rounded px-1.5 py-0.5">Reference Data</span>
             </div>
             <div className="grid grid-cols-2 gap-3">
               {expeditedPrograms.map((ep) => (

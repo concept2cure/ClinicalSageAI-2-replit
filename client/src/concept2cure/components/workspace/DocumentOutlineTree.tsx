@@ -210,7 +210,7 @@ function AlignmentTag({ signal }: { signal?: AlignmentSignal }) {
   return (
     <span
       className={cn(
-        'text-[8px] px-1 rounded font-medium shrink-0 uppercase tracking-wide',
+        'text-[11px] px-1 rounded font-medium shrink-0 uppercase tracking-wide',
         signal === 'template' ? 'bg-violet-50 text-violet-600' : 'bg-blue-50 text-blue-600'
       )}
     >
@@ -303,8 +303,8 @@ function TemplateStructureView({
     <div className="flex-1 overflow-y-auto py-1 zen-scroll">
       {templateNode && (
         <div className="px-3 py-1.5 border-b border-zinc-100 bg-violet-50/30">
-          <p className="text-[10px] text-violet-600 font-medium">{templateNode.label}</p>
-          <p className="text-[9px] text-zinc-400">{templateNode.ctdSection}</p>
+          <p className="text-[11px] text-violet-600 font-medium">{templateNode.label}</p>
+          <p className="text-[11px] text-zinc-400">{templateNode.ctdSection}</p>
         </div>
       )}
       {structure.map(item => {
@@ -326,12 +326,12 @@ function TemplateStructureView({
             )}
             <span className="text-[11px] flex-1 truncate leading-snug">{item.label}</span>
             {item.required && !present && (
-              <span className="text-[8px] px-1 rounded bg-amber-50 text-amber-600 font-medium shrink-0">
+              <span className="text-[11px] px-1 rounded bg-amber-50 text-amber-600 font-medium shrink-0">
                 Missing
               </span>
             )}
             {!item.required && !present && (
-              <span className="text-[8px] px-1 rounded bg-zinc-50 text-zinc-400 font-medium shrink-0">
+              <span className="text-[11px] px-1 rounded bg-zinc-50 text-zinc-400 font-medium shrink-0">
                 Optional
               </span>
             )}
@@ -349,14 +349,14 @@ function TemplateStructureView({
       })}
       {/* Summary */}
       <div className="px-3 py-2 border-t border-zinc-100 mt-1">
-        <div className="flex items-center justify-between text-[10px]">
+        <div className="flex items-center justify-between text-[11px]">
           <span className="text-zinc-400">Present</span>
           <span className="font-medium text-emerald-600">
             {structure.filter(s => isSubsectionPresent(s.label, outlineLabels)).length}/
             {structure.length}
           </span>
         </div>
-        <div className="flex items-center justify-between text-[10px] mt-0.5">
+        <div className="flex items-center justify-between text-[11px] mt-0.5">
           <span className="text-zinc-400">Required missing</span>
           <span className="font-medium text-amber-600">
             {
@@ -427,7 +427,7 @@ export const DocumentOutlineTree: React.FC<DocumentOutlineTreeProps> = ({
     return (
       <div className={cn('flex flex-col h-full', className)} data-testid="document-outline-tree">
         <div className="flex items-center px-3 h-8 border-b border-zinc-100 bg-zinc-50/60 shrink-0">
-          <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">
+          <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
             Outline
           </span>
         </div>
@@ -451,7 +451,7 @@ export const DocumentOutlineTree: React.FC<DocumentOutlineTreeProps> = ({
           <button
             onClick={() => setSubview('outline')}
             className={cn(
-              'flex-1 py-1.5 text-[10px] font-semibold transition-colors text-center',
+              'flex-1 py-1.5 text-[11px] font-semibold transition-colors text-center',
               subview === 'outline'
                 ? 'text-blue-700 bg-white border-b-2 border-blue-600'
                 : 'text-zinc-400 hover:text-zinc-600'
@@ -463,7 +463,7 @@ export const DocumentOutlineTree: React.FC<DocumentOutlineTreeProps> = ({
           <button
             onClick={() => setSubview('structure')}
             className={cn(
-              'flex-1 py-1.5 text-[10px] font-semibold transition-colors text-center',
+              'flex-1 py-1.5 text-[11px] font-semibold transition-colors text-center',
               subview === 'structure'
                 ? 'text-violet-700 bg-white border-b-2 border-violet-600'
                 : 'text-zinc-400 hover:text-zinc-600'
@@ -477,11 +477,11 @@ export const DocumentOutlineTree: React.FC<DocumentOutlineTreeProps> = ({
 
       {/* Header */}
       <div className="flex items-center justify-between px-3 h-8 border-b border-zinc-100 bg-zinc-50/60 shrink-0">
-        <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">
+        <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
           {subview === 'structure' ? 'Template Structure' : 'Document Outline'}
         </span>
         {subview === 'outline' && (
-          <span className="text-[10px] text-zinc-400 tabular-nums">{outlineNodes.length}</span>
+          <span className="text-[11px] text-zinc-400 tabular-nums">{outlineNodes.length}</span>
         )}
       </div>
 

@@ -201,7 +201,7 @@ export const ContextRibbon: React.FC<ContextRibbonProps> = ({
         {/* Context Indicator */}
         <div className="flex items-center gap-2 text-zinc-500 font-bold tracking-widest">
           <Activity className="w-3.5 h-3.5 text-blue-600" />
-          <span className="text-[10px]">ACTIVE CONTEXT</span>
+          <span className="text-[11px]">ACTIVE CONTEXT</span>
         </div>
 
         {/* Project / Status */}
@@ -269,7 +269,7 @@ export const ContextRibbon: React.FC<ContextRibbonProps> = ({
             riskConfig.borderColor
           )}
         >
-          <span className="text-zinc-500 font-bold uppercase tracking-wider text-[10px]">
+          <span className="text-zinc-500 font-bold uppercase tracking-wider text-[11px]">
             RISK:
           </span>
           <div className={cn(riskConfig.color, riskConfig.pulse && 'animate-pulse')}>
@@ -279,7 +279,7 @@ export const ContextRibbon: React.FC<ContextRibbonProps> = ({
           {riskItems !== undefined && riskItems > 0 && (
             <span
               className={cn(
-                'px-1.5 py-0.5 text-[10px] font-bold rounded-full',
+                'px-1.5 py-0.5 text-[11px] font-bold rounded-full',
                 riskLevel === 'CRITICAL' || riskLevel === 'HIGH'
                   ? 'bg-red-600 text-white'
                   : 'bg-zinc-200 text-zinc-600'
@@ -312,11 +312,11 @@ export const ContextRibbon: React.FC<ContextRibbonProps> = ({
           title={`AnA Cortex: ${connConfig.label}${lastSyncTime ? ` • Last sync: ${lastSyncTime}` : ''}`}
         >
           <Zap className="w-3.5 h-3.5 text-blue-600" />
-          <span className="text-[10px] font-bold text-zinc-500 tracking-wider">CORTEX</span>
+          <span className="text-[11px] font-bold text-zinc-500 tracking-wider">CORTEX</span>
           <div className={connConfig.color}>{connConfig.icon}</div>
           <span
             className={cn(
-              'font-mono text-[10px]',
+              'font-mono text-[11px]',
               connection === 'LIVE' ? 'text-blue-600' : 'text-zinc-400'
             )}
           >

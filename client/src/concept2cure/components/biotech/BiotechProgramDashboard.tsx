@@ -251,7 +251,7 @@ const DevelopmentPipeline: React.FC<{
                 {isCompleted ? <CheckCircle className="w-4 h-4" /> : i + 1}
               </div>
               <span className={cn(
-                'text-[10px] mt-1 font-medium',
+                'text-[11px] mt-1 font-medium',
                 isCurrent ? 'text-zinc-900' : 'text-zinc-500'
               )}>
                 {config.shortLabel}
@@ -334,7 +334,7 @@ const CriticalPathTracker: React.FC<{
                       style={{ width: `${d.percentComplete}%` }}
                     />
                   </div>
-                  <p className="text-[10px] text-zinc-500 text-center mt-0.5">{d.percentComplete}%</p>
+                  <p className="text-[11px] text-zinc-500 text-center mt-0.5">{d.percentComplete}%</p>
                 </div>
               )}
               
@@ -425,7 +425,7 @@ const FDAInteractionTimeline: React.FC<{
                 <span>{typeLabels[interaction.type]}</span>
                 {interaction.outcome && (
                   <span className={cn(
-                    'px-1.5 py-0.5 rounded text-[10px]',
+                    'px-1.5 py-0.5 rounded text-[11px]',
                     interaction.outcome === 'favorable' && 'bg-green-100 text-green-700',
                     interaction.outcome === 'neutral' && 'bg-zinc-100 text-zinc-600',
                     interaction.outcome === 'unfavorable' && 'bg-red-100 text-red-700'

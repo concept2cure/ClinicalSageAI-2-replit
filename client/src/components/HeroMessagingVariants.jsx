@@ -177,7 +177,7 @@ export default function HeroMessagingVariants({ t }) {
                 k === persona
                   ? 'bg-emerald-600 text-white border-emerald-600'
                   : 'border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500 dark:text-gray-400'
-              } transition text-[10px] sm:text-xs capitalize`}
+              } transition text-[11px] sm:text-xs capitalize`}
             >
               {k}
             </button>

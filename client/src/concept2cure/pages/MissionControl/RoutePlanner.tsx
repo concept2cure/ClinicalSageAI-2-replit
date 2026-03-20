@@ -135,7 +135,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({ programId }) => {
             <div className="p-6 text-center">
               <Globe className="w-8 h-8 text-zinc-200 mx-auto mb-2" />
               <p className="text-xs text-zinc-500">No destinations configured</p>
-              <p className="text-[10px] text-zinc-400 mt-1">Add a destination to define your regulatory strategy</p>
+              <p className="text-[11px] text-zinc-400 mt-1">Add a destination to define your regulatory strategy</p>
             </div>
           ) : (
             <div className="divide-y">
@@ -158,14 +158,14 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({ programId }) => {
                         <p className={cn('text-sm font-semibold', destType.color)}>{dest.destinationType}</p>
                         <p className="text-xs text-zinc-600 mt-0.5">{destType.label}</p>
                         <div className="flex items-center gap-2 mt-1.5">
-                          <span className="text-[10px] text-zinc-500 flex items-center gap-1">
+                          <span className="text-[11px] text-zinc-500 flex items-center gap-1">
                             <Building2 className="w-3 h-3" /> {destType.authority}
                           </span>
-                          <span className="text-[10px] text-zinc-500 flex items-center gap-1">
+                          <span className="text-[11px] text-zinc-500 flex items-center gap-1">
                             <MapPin className="w-3 h-3" /> {dest.region || 'US'}
                           </span>
                           {dest.targetDate && (
-                            <span className="text-[10px] text-zinc-500 flex items-center gap-1">
+                            <span className="text-[11px] text-zinc-500 flex items-center gap-1">
                               <Calendar className="w-3 h-3" /> {new Date(dest.targetDate).toLocaleDateString()}
                             </span>
                           )}
@@ -236,7 +236,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({ programId }) => {
                           <h3 className="text-sm font-semibold text-zinc-800">{route.strategyName}</h3>
                           <div className="flex items-center gap-2 mt-1">
                             <span className="text-xs text-zinc-500 capitalize">Pathway: {route.pathway}</span>
-                            <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full', ROUTE_STATUS_COLORS[route.status] || 'bg-zinc-100 text-zinc-600')}>
+                            <span className={cn('text-[11px] px-1.5 py-0.5 rounded-full', ROUTE_STATUS_COLORS[route.status] || 'bg-zinc-100 text-zinc-600')}>
                               {route.status}
                             </span>
                           </div>
@@ -270,11 +270,11 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({ programId }) => {
                               strokeLinecap="round"
                             />
                           </svg>
-                          <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-zinc-700">
+                          <span className="absolute inset-0 flex items-center justify-center text-[11px] font-bold text-zinc-700">
                             {Math.round((val as number) * 100)}
                           </span>
                         </div>
-                        <p className="text-[10px] text-zinc-600 capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</p>
+                        <p className="text-[11px] text-zinc-600 capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</p>
                       </div>
                     ))}
                   </div>

@@ -684,7 +684,7 @@ function AboutTab() {
                     : 'bg-white border border-zinc-200'
                 )}>
                   <span className={cn(
-                    'text-[10px] font-bold',
+                    'text-[11px] font-bold',
                     idx === COMPANY_TIMELINE.length - 1 ? 'text-white' : 'text-zinc-600'
                   )}>
                     {item.year.replace('20', "'").replace(' ', '')}
@@ -809,7 +809,7 @@ function IntelligenceTab() {
                   </div>
                   <div className="text-center mt-2">
                     <p className="text-lg font-bold text-zinc-900">{pillar.stat}</p>
-                    <p className="text-[10px] text-zinc-500 leading-tight">{pillar.statLabel}</p>
+                    <p className="text-[11px] text-zinc-500 leading-tight">{pillar.statLabel}</p>
                   </div>
                 </div>
                 <div className="flex-1">
@@ -1106,11 +1106,11 @@ function TrainingTab() {
                               {done ? (
                                 <CheckCircle2 className="w-3 h-3 text-white" />
                               ) : (
-                                <span className="text-[9px] font-bold text-zinc-500">{idx + 1}</span>
+                                <span className="text-[11px] font-bold text-zinc-500">{idx + 1}</span>
                               )}
                             </div>
                             <span className={cn('text-xs', done ? 'text-zinc-400 line-through' : 'text-zinc-700')}>{mod.title}</span>
-                            <span className="text-[10px] text-zinc-400 ml-auto">{mod.duration}</span>
+                            <span className="text-[11px] text-zinc-400 ml-auto">{mod.duration}</span>
                           </div>
                         );
                       })}
@@ -1189,10 +1189,10 @@ function TrainingTab() {
                     </div>
                     <div className="flex items-center gap-3 flex-shrink-0">
                       <div className="flex items-center gap-2">
-                        <span className={cn('px-2 py-0.5 rounded-full text-[10px] font-medium', `bg-${levelCfg.color}-50 text-${levelCfg.color}-700`)}>
+                        <span className={cn('px-2 py-0.5 rounded-full text-[11px] font-medium', `bg-${levelCfg.color}-50 text-${levelCfg.color}-700`)}>
                           {levelCfg.label}
                         </span>
-                        <span className="flex items-center gap-1 text-[10px] text-zinc-400">
+                        <span className="flex items-center gap-1 text-[11px] text-zinc-400">
                           <Clock className="w-3 h-3" />{mod.duration}
                         </span>
                       </div>
@@ -1211,7 +1211,7 @@ function TrainingTab() {
                             {mod.lessons.map((lesson, idx) => (
                               <div key={idx} className="flex items-center gap-3 p-2.5 rounded-lg bg-zinc-50 hover:bg-zinc-100 transition-colors">
                                 <div className="w-6 h-6 rounded-full bg-white border border-zinc-200 flex items-center justify-center flex-shrink-0">
-                                  <span className="text-[10px] font-bold text-zinc-500">{idx + 1}</span>
+                                  <span className="text-[11px] font-bold text-zinc-500">{idx + 1}</span>
                                 </div>
                                 <span className="text-xs text-zinc-700">{lesson}</span>
                               </div>
@@ -1225,19 +1225,19 @@ function TrainingTab() {
                             <div className="p-3 rounded-lg bg-amber-50 border border-amber-100">
                               <div className="flex items-center gap-1.5 mb-1">
                                 <Award className="w-3.5 h-3.5 text-amber-600" />
-                                <span className="text-[10px] font-semibold text-amber-800">Earns Certification</span>
+                                <span className="text-[11px] font-semibold text-amber-800">Earns Certification</span>
                               </div>
-                              <p className="text-[10px] text-amber-700">{mod.certification}</p>
+                              <p className="text-[11px] text-amber-700">{mod.certification}</p>
                             </div>
                           )}
 
                           <div className="p-3 rounded-lg bg-zinc-50">
-                            <p className="text-[10px] font-medium text-zinc-600 mb-1">Category</p>
+                            <p className="text-[11px] font-medium text-zinc-600 mb-1">Category</p>
                             <p className="text-xs text-zinc-800">{mod.category}</p>
                           </div>
 
                           <div className="p-3 rounded-lg bg-zinc-50">
-                            <p className="text-[10px] font-medium text-zinc-600 mb-1">Lessons</p>
+                            <p className="text-[11px] font-medium text-zinc-600 mb-1">Lessons</p>
                             <p className="text-xs text-zinc-800">{mod.lessons.length} lessons</p>
                           </div>
 
@@ -1312,7 +1312,7 @@ function TrainingTab() {
                     <div>
                       <h4 className="text-sm font-semibold text-zinc-900">{cert.name}</h4>
                       {earned && (
-                        <span className="flex items-center gap-1 text-[10px] font-medium text-amber-700">
+                        <span className="flex items-center gap-1 text-[11px] font-medium text-amber-700">
                           <BadgeCheck className="w-3 h-3" /> Earned
                         </span>
                       )}
@@ -1323,8 +1323,8 @@ function TrainingTab() {
                   {/* Progress */}
                   <div className="mb-3">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-[10px] text-zinc-500">Progress</span>
-                      <span className="text-[10px] font-medium text-zinc-700">{progress}/{cert.requiredModules.length}</span>
+                      <span className="text-[11px] text-zinc-500">Progress</span>
+                      <span className="text-[11px] font-medium text-zinc-700">{progress}/{cert.requiredModules.length}</span>
                     </div>
                     <div className="w-full h-1.5 bg-zinc-100 rounded-full overflow-hidden">
                       <div className={cn('h-full rounded-full transition-all', earned ? 'bg-amber-500' : `bg-${cert.color}-500`)} style={{ width: `${(progress / cert.requiredModules.length) * 100}%` }} />
@@ -1730,7 +1730,7 @@ function DrSageTab() {
                               {step.label}
                             </span>
                             <span className={cn(
-                              'px-1.5 py-0.5 rounded text-[9px] font-medium',
+                              'px-1.5 py-0.5 rounded text-[11px] font-medium',
                               step.agent === 'sage' ? 'bg-blue-100 text-blue-600' :
                               step.agent === 'ana' ? 'bg-violet-100 text-violet-600' :
                               'bg-zinc-100 text-zinc-600'
@@ -1739,7 +1739,7 @@ function DrSageTab() {
                             </span>
                           </div>
                           {step.status === 'running' && (
-                            <p className="text-[10px] text-zinc-500 mt-0.5">{step.description}</p>
+                            <p className="text-[11px] text-zinc-500 mt-0.5">{step.description}</p>
                           )}
                         </div>
                       </div>
@@ -1892,7 +1892,7 @@ function WhatsNewTab() {
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className={cn('px-2 py-0.5 rounded-full text-[10px] font-medium', `bg-${typeCfg.color}-100 text-${typeCfg.color}-700`)}>
+                  <span className={cn('px-2 py-0.5 rounded-full text-[11px] font-medium', `bg-${typeCfg.color}-100 text-${typeCfg.color}-700`)}>
                     {typeCfg.label}
                   </span>
                   <span className="text-xs text-zinc-400">v{latest.version} — {new Date(latest.date).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}</span>
@@ -1919,11 +1919,11 @@ function WhatsNewTab() {
                 </div>
                 <div className="bg-white rounded-xl border border-zinc-200 p-4 flex-1 hover:shadow-sm transition-shadow">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className={cn('px-2 py-0.5 rounded-full text-[10px] font-medium', `bg-${typeCfg.color}-50 text-${typeCfg.color}-700`)}>
+                    <span className={cn('px-2 py-0.5 rounded-full text-[11px] font-medium', `bg-${typeCfg.color}-50 text-${typeCfg.color}-700`)}>
                       {typeCfg.label}
                     </span>
-                    <span className="text-[10px] text-zinc-400">v{item.version}</span>
-                    <span className="text-[10px] text-zinc-400 ml-auto">
+                    <span className="text-[11px] text-zinc-400">v{item.version}</span>
+                    <span className="text-[11px] text-zinc-400 ml-auto">
                       {new Date(item.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                     </span>
                   </div>

@@ -101,7 +101,7 @@ function SectionPicker({ selected, onSelect }: SectionPickerProps) {
           ) : (
             <span className="w-3 h-3 shrink-0" />
           )}
-          <span className="text-[10px] text-zinc-400 font-mono shrink-0">{node.ctdSection}</span>
+          <span className="text-[11px] text-zinc-400 font-mono shrink-0">{node.ctdSection}</span>
           <span className="text-[11px] truncate flex-1">
             {node.label.replace(/^Module \d+ — /, '')}
           </span>
@@ -142,7 +142,7 @@ function SectionPicker({ selected, onSelect }: SectionPickerProps) {
                     : 'text-zinc-600 hover:bg-zinc-50'
                 )}
               >
-                <span className="text-[10px] text-zinc-400 font-mono shrink-0">{n.ctdSection}</span>
+                <span className="text-[11px] text-zinc-400 font-mono shrink-0">{n.ctdSection}</span>
                 <span className="text-[11px] truncate flex-1">{n.label}</span>
               </button>
             ))
@@ -359,18 +359,18 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
             >
               {currentSection && (
                 <div className="flex-1 text-center">
-                  <p className="text-[10px] text-zinc-400">From</p>
+                  <p className="text-[11px] text-zinc-400">From</p>
                   <p className="text-[11px] font-mono font-medium text-zinc-700">
                     {currentSection}
                   </p>
-                  <p className="text-[9px] text-zinc-400 truncate">
+                  <p className="text-[11px] text-zinc-400 truncate">
                     {getSectionLabel(currentSection)}
                   </p>
                 </div>
               )}
               {!currentSection && (
                 <div className="flex-1 text-center">
-                  <p className="text-[10px] text-zinc-400">From</p>
+                  <p className="text-[11px] text-zinc-400">From</p>
                   <p className="text-[11px] font-medium text-zinc-400 italic">Unplaced</p>
                 </div>
               )}
@@ -381,9 +381,9 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
                 )}
               />
               <div className="flex-1 text-center">
-                <p className="text-[10px] text-zinc-400">To</p>
+                <p className="text-[11px] text-zinc-400">To</p>
                 <p className="text-[11px] font-mono font-medium text-blue-700">{selectedSection}</p>
-                <p className="text-[9px] text-zinc-400 truncate">
+                <p className="text-[11px] text-zinc-400 truncate">
                   {getSectionLabel(selectedSection)}
                 </p>
               </div>
@@ -413,18 +413,18 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
             <div className="flex items-center justify-between mt-1">
               <span
                 className={cn(
-                  'text-[10px] tabular-nums',
+                  'text-[11px] tabular-nums',
                   reason.trim().length < 5 ? 'text-zinc-400' : 'text-emerald-500'
                 )}
               >
                 {reason.trim().length}/5 min
               </span>
-              <span className="text-[10px] text-zinc-300">⌘Enter to confirm</span>
+              <span className="text-[11px] text-zinc-300">⌘Enter to confirm</span>
             </div>
           </div>
 
           {/* Audit notice */}
-          <div className="flex items-start gap-2 text-[10px] text-zinc-400 leading-relaxed">
+          <div className="flex items-start gap-2 text-[11px] text-zinc-400 leading-relaxed">
             <ShieldCheck className="w-3.5 h-3.5 shrink-0 mt-0.5" />
             <span>
               This action will be recorded in the provenance audit trail with your identity,

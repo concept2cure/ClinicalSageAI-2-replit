@@ -933,7 +933,7 @@ export default function TaskBoard({ programId }: TaskBoardProps) {
                       </td>
                       <td className="px-4 py-3">
                         <span className="flex items-center gap-2">
-                          <AvatarCircle initials={task.assigneeInitials} className="w-6 h-6 text-[10px]" />
+                          <AvatarCircle initials={task.assigneeInitials} className="w-6 h-6 text-[11px]" />
                           <span className="text-zinc-700">{task.assignee}</span>
                         </span>
                       </td>

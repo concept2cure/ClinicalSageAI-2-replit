@@ -177,13 +177,13 @@ export default function CERV2DeviceContextPanel({
         {!allFilled && (
           <Badge
             variant="outline"
-            className="text-[10px] px-1.5 py-0 border-amber-400 text-amber-600"
+            className="text-[11px] px-1.5 py-0 border-amber-400 text-amber-600"
           >
             {filled}/{required.length}
           </Badge>
         )}
         {allFilled && (
-          <Badge className="text-[10px] px-1.5 py-0 bg-green-100 text-green-700 border-green-300">
+          <Badge className="text-[11px] px-1.5 py-0 bg-green-100 text-green-700 border-green-300">
             Complete
           </Badge>
         )}
@@ -201,7 +201,7 @@ export default function CERV2DeviceContextPanel({
           <span className="font-semibold text-sm text-slate-800">Device Context</span>
           <Badge
             variant="outline"
-            className={`text-[10px] px-1.5 py-0 ${allFilled ? 'border-green-400 text-green-700' : 'border-amber-400 text-amber-600'}`}
+            className={`text-[11px] px-1.5 py-0 ${allFilled ? 'border-green-400 text-green-700' : 'border-amber-400 text-amber-600'}`}
           >
             {filled}/{required.length} required
           </Badge>

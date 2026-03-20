@@ -1028,7 +1028,7 @@ ${citations}
                         {paper.authors.join(', ')}
                       </p>
                       <p className="text-xs mt-1 flex items-center">
-                        <Badge variant="outline" className="mr-1 text-[10px] px-1 py-0">
+                        <Badge variant="outline" className="mr-1 text-[11px] px-1 py-0">
                           {paper.source}
                         </Badge>
                         {paper.journal}, {paper.publicationDate}

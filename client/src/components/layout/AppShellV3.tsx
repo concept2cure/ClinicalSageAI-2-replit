@@ -122,7 +122,7 @@ const Logo: React.FC<LogoProps> = memo(({ collapsed }) => (
             <span className="text-lg font-bold text-neutral-900 whitespace-nowrap">
               Concept2Cure
             </span>
-            <span className="text-[10px] text-neutral-500 -mt-1">Regulatory Intelligence Platform</span>
+            <span className="text-[11px] text-neutral-500 -mt-1">Regulatory Intelligence Platform</span>
           </div>
         </motion.div>
       )}

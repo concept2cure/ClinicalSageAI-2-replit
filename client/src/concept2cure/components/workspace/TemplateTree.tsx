@@ -82,7 +82,7 @@ function TemplateNodeRow({
         )}
 
         {/* CTD section badge */}
-        <span className="text-[10px] text-zinc-400 font-mono shrink-0 min-w-[28px]">
+        <span className="text-[11px] text-zinc-400 font-mono shrink-0 min-w-[28px]">
           {node.ctdSection}
         </span>
 
@@ -93,7 +93,7 @@ function TemplateNodeRow({
         {node.templateType && node.templateType !== 'starter' && (
           <span
             className={cn(
-              'text-[9px] px-1 rounded shrink-0 font-medium',
+              'text-[11px] px-1 rounded shrink-0 font-medium',
               node.templateType === 'subsection'
                 ? 'bg-blue-50 text-blue-600'
                 : 'bg-amber-50 text-amber-600'
@@ -167,14 +167,14 @@ export const TemplateTree: React.FC<TemplateTreeProps> = ({
         <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
           Templates
         </span>
-        <span className="text-[10px] text-zinc-400 tabular-nums">
+        <span className="text-[11px] text-zinc-400 tabular-nums">
           {IND_TEMPLATES.length} groups
         </span>
       </div>
 
       {/* Tip */}
       <div className="px-3 py-2 border-b border-zinc-100 bg-violet-50/40">
-        <p className="text-[10px] text-violet-600 leading-relaxed">
+        <p className="text-[11px] text-violet-600 leading-relaxed">
           Templates are pre-structured documents wired to CTD sections. Click + to create a new
           document from any template.
         </p>

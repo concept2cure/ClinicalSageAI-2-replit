@@ -235,7 +235,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
                 />
                 {templateStructure.length > 0 ? (
                   <div>
-                    <span className="text-[10px] text-zinc-400 uppercase tracking-wider">
+                    <span className="text-[11px] text-zinc-400 uppercase tracking-wider">
                       Required blocks
                     </span>
                     <ul className="mt-1 space-y-0.5">
@@ -253,7 +253,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
                         </li>
                       ))}
                       {templateStructure.length > 8 && (
-                        <li className="text-[10px] text-zinc-400">
+                        <li className="text-[11px] text-zinc-400">
                           +{templateStructure.length - 8} more
                         </li>
                       )}
@@ -264,7 +264,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
                 )}
                 {matchingApps.length > 0 && (
                   <div>
-                    <span className="text-[10px] text-zinc-400 uppercase tracking-wider">
+                    <span className="text-[11px] text-zinc-400 uppercase tracking-wider">
                       Matching apps
                     </span>
                     <ul className="mt-1 space-y-0.5">
@@ -304,7 +304,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
               Draft Output
             </div>
             <div>
-              <label className="text-[10px] text-zinc-400 uppercase tracking-wider block mb-1">
+              <label className="text-[11px] text-zinc-400 uppercase tracking-wider block mb-1">
                 Artifact title
               </label>
               <input
@@ -323,7 +323,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
             )}
             {selectedTemplate && <LaneStat label="Template" value={selectedTemplate} />}
             <div>
-              <label className="text-[10px] text-zinc-400 uppercase tracking-wider block mb-1">
+              <label className="text-[11px] text-zinc-400 uppercase tracking-wider block mb-1">
                 Doc type
               </label>
               <select
@@ -407,9 +407,9 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
 function LaneStat({ label, value, sublabel }: { label: string; value: string; sublabel?: string }) {
   return (
     <div>
-      <span className="text-[10px] text-zinc-400 uppercase tracking-wider">{label}</span>
+      <span className="text-[11px] text-zinc-400 uppercase tracking-wider">{label}</span>
       <p className="text-[12px] text-zinc-700 font-medium leading-tight">{value}</p>
-      {sublabel && <p className="text-[10px] text-zinc-400">{sublabel}</p>}
+      {sublabel && <p className="text-[11px] text-zinc-400">{sublabel}</p>}
     </div>
   );
 }

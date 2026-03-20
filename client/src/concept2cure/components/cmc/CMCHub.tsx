@@ -280,7 +280,7 @@ const GuardrailStatusCard: React.FC<{
     <div className="flex items-center justify-between mb-1">
       <span className="text-xs font-bold text-violet-600">ICH {guideline}</span>
       <span className={cn(
-        'flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium rounded',
+        'flex items-center gap-1 px-1.5 py-0.5 text-[11px] font-medium rounded',
         status === 'pass' && 'bg-emerald-50 text-emerald-700',
         status === 'warn' && 'bg-amber-50 text-amber-700',
         status === 'fail' && 'bg-red-50 text-red-700',

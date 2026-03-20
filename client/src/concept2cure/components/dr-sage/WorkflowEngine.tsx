@@ -237,7 +237,7 @@ function StepCard({
 
         {step.objectContext && (
           <div className="mt-2">
-            <Badge variant="outline" className="text-[10px] font-normal">
+            <Badge variant="outline" className="text-[11px] font-normal">
               {step.objectContext}
             </Badge>
           </div>
@@ -340,7 +340,7 @@ export function WorkflowEngine({
             <Badge
               variant={allComplete ? 'default' : 'secondary'}
               className={cn(
-                'text-[10px]',
+                'text-[11px]',
                 allComplete && 'bg-emerald-500 hover:bg-emerald-600',
                 isRunning && !allComplete && 'bg-blue-500 hover:bg-blue-600 text-white',
               )}

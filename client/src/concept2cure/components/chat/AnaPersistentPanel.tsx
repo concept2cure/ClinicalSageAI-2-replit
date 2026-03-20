@@ -358,7 +358,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 <div key={msg.id} className={cn('group px-4 py-3', isUser ? 'bg-zinc-50/60' : 'bg-white')}>
                   <div className="flex gap-2.5 max-w-3xl mx-auto">
                     <div className={cn('w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5', isUser ? 'bg-zinc-700 text-white' : 'bg-violet-600')}>
-                      {isUser ? <span className="text-[9px] font-bold">{(contextProfile?.userRole?.[0] || 'Y').toUpperCase()}</span> : <Sparkles className="w-3 h-3 text-white" />}
+                      {isUser ? <span className="text-[11px] font-bold">{(contextProfile?.userRole?.[0] || 'Y').toUpperCase()}</span> : <Sparkles className="w-3 h-3 text-white" />}
                     </div>
                     <div className="flex-1 min-w-0">
                       <span className="text-xs font-semibold text-zinc-800">{isUser ? 'You' : 'AnA'}</span>
@@ -400,7 +400,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             )}>
               <div className="flex items-center gap-1.5 flex-shrink-0 self-center">
                 <Sparkles className="w-4 h-4 text-violet-500" />
-                {screenLabel && <span className="text-[10px] text-zinc-400 font-medium hidden sm:inline">{screenLabel}</span>}
+                {screenLabel && <span className="text-[11px] text-zinc-400 font-medium hidden sm:inline">{screenLabel}</span>}
               </div>
               <textarea ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)} placeholder="Message AnA..." rows={1} className="flex-1 resize-none bg-transparent border-none outline-none text-zinc-900 placeholder:text-zinc-400 text-sm leading-6 min-h-[24px] max-h-[120px]" />
               {hasMessages && (
@@ -480,7 +480,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       isUser ? 'bg-zinc-700 text-white' : 'bg-violet-600'
                     )}>
                       {isUser ? (
-                        <span className="text-[9px] font-bold">{(contextProfile?.userRole?.[0] || 'Y').toUpperCase()}</span>
+                        <span className="text-[11px] font-bold">{(contextProfile?.userRole?.[0] || 'Y').toUpperCase()}</span>
                       ) : (
                         <Sparkles className="w-3 h-3 text-white" />
                       )}

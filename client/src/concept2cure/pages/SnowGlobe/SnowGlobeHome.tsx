@@ -469,7 +469,7 @@ function FindingRow({ finding }: { finding: Finding }) {
       {/* Severity badge */}
       <span
         className={cn(
-          'mt-0.5 inline-flex shrink-0 items-center rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider',
+          'mt-0.5 inline-flex shrink-0 items-center rounded-md border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider',
           sev.badge,
         )}
       >
@@ -479,7 +479,7 @@ function FindingRow({ finding }: { finding: Finding }) {
       {/* Chamber tag */}
       <span
         className={cn(
-          'mt-0.5 inline-flex shrink-0 items-center rounded-md px-2 py-0.5 text-[10px] font-medium',
+          'mt-0.5 inline-flex shrink-0 items-center rounded-md px-2 py-0.5 text-[11px] font-medium',
           chamber.bg,
           chamber.accent,
         )}
@@ -504,7 +504,7 @@ function RemediationRow({ action }: { action: RemediationAction }) {
   return (
     <div className="flex items-start gap-3 border-b border-zinc-100 px-4 py-3 last:border-b-0">
       {/* Priority number */}
-      <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white">
+      <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[11px] font-bold text-white">
         {action.priority}
       </span>
 
@@ -518,7 +518,7 @@ function RemediationRow({ action }: { action: RemediationAction }) {
       <div className="flex shrink-0 flex-col gap-1">
         <span
           className={cn(
-            'inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium',
+            'inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-medium',
             effortStyle.badge,
           )}
         >
@@ -526,7 +526,7 @@ function RemediationRow({ action }: { action: RemediationAction }) {
         </span>
         <span
           className={cn(
-            'inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] font-semibold',
+            'inline-flex items-center rounded border px-1.5 py-0.5 text-[11px] font-semibold',
             impactStyle.badge,
           )}
         >
@@ -561,7 +561,7 @@ function ScenarioPill({
         <div className="flex items-center gap-1.5">
           <span className="truncate text-sm font-medium text-zinc-800">{scenario.name}</span>
           {scenario.isBaseline && (
-            <span className="shrink-0 rounded bg-blue-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-blue-600">
+            <span className="shrink-0 rounded bg-blue-100 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-blue-600">
               Baseline
             </span>
           )}
@@ -956,7 +956,7 @@ export default function SnowGlobeHome({ programId }: SnowGlobeHomeProps) {
                   Top Findings
                 </h3>
                 {topFindings && (
-                  <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-500">
+                  <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-500">
                     {(topFindings as Finding[]).length}
                   </span>
                 )}

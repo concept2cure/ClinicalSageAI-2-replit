@@ -314,7 +314,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
         <div className="flex-1 overflow-y-auto zen-scroll">
           {/* Evidence Filters */}
           <div className="p-3 border-b border-zinc-100">
-            <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider block mb-2">
+            <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block mb-2">
               Evidence Filters
             </span>
             <div className="space-y-1.5">
@@ -345,7 +345,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                     setFilterPhase('');
                     setFilterOutcome('');
                   }}
-                  className="text-[10px] text-blue-600 hover:text-blue-800 font-medium"
+                  className="text-[11px] text-blue-600 hover:text-blue-800 font-medium"
                 >
                   Clear filters
                 </button>
@@ -355,7 +355,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
 
           {/* Quick prompts */}
           <div className="p-3 border-b border-zinc-100">
-            <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider block mb-2">
+            <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block mb-2">
               Quick Investigations
             </span>
             <div className="space-y-1">
@@ -377,7 +377,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
 
           {/* Document generation actions */}
           <div className="p-3 border-b border-zinc-100">
-            <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider block mb-2">
+            <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block mb-2">
               Generate Document
             </span>
             <div className="space-y-1">
@@ -403,7 +403,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                         .replace('Create ', '')
                         .replace('Draft ', '')}
                     </span>
-                    <span className="text-[8px] text-zinc-300 ml-auto shrink-0">
+                    <span className="text-[11px] text-zinc-300 ml-auto shrink-0">
                       {doc.ctdSection}
                     </span>
                   </button>
@@ -414,7 +414,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
 
           {/* Recent investigations / threads placeholder */}
           <div className="p-3">
-            <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider block mb-2">
+            <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block mb-2">
               Recent Investigations
             </span>
             <div className="space-y-1.5">
@@ -469,7 +469,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                     </span>
                     <p className="text-xs text-blue-700">{strategyData.recommendedStrategy}</p>
                     {strategyData.confidence != null && (
-                      <span className="text-[10px] text-blue-500 mt-1 block">
+                      <span className="text-[11px] text-blue-500 mt-1 block">
                         Confidence: {Math.round(strategyData.confidence * 100)}% · Based on{' '}
                         {precedents.length} precedents
                       </span>
@@ -477,10 +477,10 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
 
                     {/* Source Basis */}
                     <div className="mt-2 pt-2 border-t border-blue-200/60">
-                      <span className="text-[10px] font-semibold text-blue-700 uppercase tracking-wider block mb-1">
+                      <span className="text-[11px] font-semibold text-blue-700 uppercase tracking-wider block mb-1">
                         Source Basis
                       </span>
-                      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-blue-600">
+                      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-blue-600">
                         {csrResults.length > 0 && <span>{csrResults.length} CSR studies</span>}
                         {precedents.length > 0 && (
                           <span>{precedents.length} regulatory precedents</span>
@@ -492,7 +492,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                     {/* Why This Recommendation */}
                     {strategyData.rationale && (
                       <div className="mt-2 pt-2 border-t border-blue-200/60">
-                        <span className="text-[10px] font-semibold text-blue-700 uppercase tracking-wider block mb-1">
+                        <span className="text-[11px] font-semibold text-blue-700 uppercase tracking-wider block mb-1">
                           Why This Recommendation
                         </span>
                         <p className="text-[11px] text-blue-600">{strategyData.rationale}</p>
@@ -543,20 +543,20 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
               color="zinc"
             />
             <div className="rounded-lg border border-zinc-100 bg-white px-2.5 py-2 text-center">
-              <span className="text-[9px] text-zinc-400 block">Regions</span>
+              <span className="text-[11px] text-zinc-400 block">Regions</span>
               <div className="flex justify-center gap-1 mt-0.5">
                 {stats.regionUSA > 0 && (
-                  <span className="text-[9px] px-1 py-0.5 rounded bg-blue-50 text-blue-600 font-medium">
+                  <span className="text-[11px] px-1 py-0.5 rounded bg-blue-50 text-blue-600 font-medium">
                     US
                   </span>
                 )}
                 {stats.regionEU > 0 && (
-                  <span className="text-[9px] px-1 py-0.5 rounded bg-emerald-50 text-emerald-600 font-medium">
+                  <span className="text-[11px] px-1 py-0.5 rounded bg-emerald-50 text-emerald-600 font-medium">
                     EU
                   </span>
                 )}
                 {stats.regionCA > 0 && (
-                  <span className="text-[9px] px-1 py-0.5 rounded bg-red-50 text-red-600 font-medium">
+                  <span className="text-[11px] px-1 py-0.5 rounded bg-red-50 text-red-600 font-medium">
                     CA
                   </span>
                 )}
@@ -572,7 +572,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                 Matched Clinical Study Reports
                 {csrLoading && <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-400 ml-1" />}
               </h2>
-              <span className="text-[10px] text-zinc-400">
+              <span className="text-[11px] text-zinc-400">
                 {filteredCSR.length}
                 {filterPhase || filterOutcome ? ` of ${csrResults.length}` : ''} studies
               </span>
@@ -582,7 +582,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
               <div className="rounded-xl border border-dashed border-zinc-200 bg-white p-6 text-center">
                 <Database className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
                 <p className="text-xs text-zinc-500">No CSR data matched for this indication.</p>
-                <p className="text-[10px] text-zinc-400 mt-1">
+                <p className="text-[11px] text-zinc-400 mt-1">
                   Try adjusting the project indication or uploading CSR PDFs.
                 </p>
               </div>
@@ -646,7 +646,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                     Risk Assessment
                     <span
                       className={cn(
-                        'ml-auto text-[10px] px-2 py-0.5 rounded-full font-medium',
+                        'ml-auto text-[11px] px-2 py-0.5 rounded-full font-medium',
                         riskData.overallRisk === 'low'
                           ? 'bg-emerald-100 text-emerald-700'
                           : riskData.overallRisk === 'medium'
@@ -683,7 +683,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                   )}
                   {riskData.mitigationStrategies && riskData.mitigationStrategies.length > 0 && (
                     <div className="border-t border-zinc-100 pt-2">
-                      <span className="text-[10px] font-semibold text-zinc-500 uppercase block mb-1">
+                      <span className="text-[11px] font-semibold text-zinc-500 uppercase block mb-1">
                         Mitigations
                       </span>
                       {riskData.mitigationStrategies.slice(0, 3).map((m: string, i: number) => (
@@ -733,7 +733,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                             <span className="font-medium text-zinc-700">{alt.strategy}</span>
                             <p className="text-zinc-500 mt-0.5">{alt.rationale}</p>
                           </div>
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-50 text-violet-600 font-medium shrink-0">
+                          <span className="text-[11px] px-2 py-0.5 rounded-full bg-violet-50 text-violet-600 font-medium shrink-0">
                             {Math.round((alt.confidence || 0) * 100)}%
                           </span>
                         </div>
@@ -750,7 +750,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
               <h2 className="text-sm font-semibold text-zinc-800 flex items-center gap-1.5 mb-3">
                 <Microscope className="w-4 h-4 text-blue-500" />
                 Matched Regulatory Precedents
-                <span className="text-[10px] text-zinc-400 ml-1 font-normal">
+                <span className="text-[11px] text-zinc-400 ml-1 font-normal">
                   {precedents.length} found
                 </span>
               </h2>
@@ -818,7 +818,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                       <span className="text-xs font-medium text-zinc-700 group-hover:text-blue-800 transition-colors block">
                         {doc.label}
                       </span>
-                      <span className="text-[9px] text-zinc-400">CTD {doc.ctdSection}</span>
+                      <span className="text-[11px] text-zinc-400">CTD {doc.ctdSection}</span>
                     </div>
                     <ArrowRight className="w-3 h-3 text-zinc-300 group-hover:text-blue-500 transition-colors" />
                   </button>
@@ -828,7 +828,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
           </div>
 
           {/* ── Source Transparency Footer ─────────────────────────── */}
-          <div className="text-[10px] text-zinc-400 flex items-center gap-3 pb-4">
+          <div className="text-[11px] text-zinc-400 flex items-center gap-3 pb-4">
             <Globe className="w-3 h-3" />
             <span>
               Evidence from Lumen Cortex · {csrResults.length} CSRs · {precedents.length} precedents
@@ -845,7 +845,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
         <div className="flex-1 overflow-y-auto zen-scroll">
           {/* Source Lineage */}
           <div className="p-3 border-b border-zinc-100">
-            <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider block mb-2">
+            <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block mb-2">
               Source Lineage
             </span>
             <div className="space-y-1.5">
@@ -882,7 +882,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
 
           {/* Reasoning Provenance */}
           <div className="p-3 border-b border-zinc-100">
-            <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider block mb-2">
+            <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block mb-2">
               Reasoning Provenance
             </span>
             <div className="space-y-1.5 text-[11px]">
@@ -906,7 +906,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
 
           {/* Output Governance — live artifact stats */}
           <div className="p-3 border-b border-zinc-100">
-            <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider block mb-2">
+            <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block mb-2">
               Output Governance
             </span>
             <div className="space-y-1.5 text-[11px]">
@@ -944,7 +944,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
 
           {/* Downstream Document Actions */}
           <div className="p-3">
-            <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider block mb-2">
+            <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider block mb-2">
               Downstream Actions
             </span>
             <div className="space-y-1">
@@ -994,7 +994,7 @@ const CSRStudyCard: React.FC<{
       onClick={onToggle}
       className="w-full text-left px-3 py-2.5 flex items-start gap-2.5 hover:bg-zinc-50 transition-colors"
     >
-      <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-mono font-medium shrink-0 mt-0.5">
+      <span className="text-[11px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-mono font-medium shrink-0 mt-0.5">
         {index + 1}
       </span>
       <div className="flex-1 min-w-0">
@@ -1003,14 +1003,14 @@ const CSRStudyCard: React.FC<{
         </span>
         <div className="flex items-center gap-2 mt-1 flex-wrap">
           {csr.phase && (
-            <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 font-medium">
+            <span className="text-[11px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 font-medium">
               {csr.phase}
             </span>
           )}
           {csr.outcome && (
             <span
               className={cn(
-                'text-[9px] px-1.5 py-0.5 rounded font-medium flex items-center gap-0.5',
+                'text-[11px] px-1.5 py-0.5 rounded font-medium flex items-center gap-0.5',
                 csr.outcome === 'positive'
                   ? 'bg-emerald-50 text-emerald-700'
                   : 'bg-red-50 text-red-700'
@@ -1025,11 +1025,11 @@ const CSRStudyCard: React.FC<{
             </span>
           )}
           {csr.indication && (
-            <span className="text-[9px] text-zinc-400 truncate max-w-[120px]">
+            <span className="text-[11px] text-zinc-400 truncate max-w-[120px]">
               {csr.indication}
             </span>
           )}
-          {csr.sample_size && <span className="text-[9px] text-zinc-400">n={csr.sample_size}</span>}
+          {csr.sample_size && <span className="text-[11px] text-zinc-400">n={csr.sample_size}</span>}
         </div>
       </div>
       <ChevronRight
@@ -1066,7 +1066,7 @@ const CSRStudyCard: React.FC<{
             e.stopPropagation();
             onDraft();
           }}
-          className="mt-2 inline-flex items-center gap-1 text-[10px] text-blue-600 hover:text-blue-800 font-medium"
+          className="mt-2 inline-flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-800 font-medium"
         >
           <FileText className="w-3 h-3" />
           Draft Evidence Memo from this study
@@ -1090,14 +1090,14 @@ const PrecedentCard: React.FC<{
         </span>
         <div className="flex items-center gap-2 mt-1 flex-wrap">
           {precedent.submissionType && (
-            <span className="text-[9px] px-1.5 py-0.5 rounded bg-violet-50 text-violet-700 font-medium">
+            <span className="text-[11px] px-1.5 py-0.5 rounded bg-violet-50 text-violet-700 font-medium">
               {precedent.submissionType}
             </span>
           )}
           {precedent.decisionOutcome && (
             <span
               className={cn(
-                'text-[9px] px-1.5 py-0.5 rounded font-medium',
+                'text-[11px] px-1.5 py-0.5 rounded font-medium',
                 precedent.decisionOutcome === 'APPROVED' || precedent.decisionOutcome === 'CLEARED'
                   ? 'bg-emerald-50 text-emerald-700'
                   : precedent.decisionOutcome === 'REJECTED' || precedent.decisionOutcome === 'CRL'
@@ -1109,10 +1109,10 @@ const PrecedentCard: React.FC<{
             </span>
           )}
           {precedent.clearanceNumber && (
-            <span className="text-[9px] text-zinc-400 font-mono">{precedent.clearanceNumber}</span>
+            <span className="text-[11px] text-zinc-400 font-mono">{precedent.clearanceNumber}</span>
           )}
           {precedent.decisionDate && (
-            <span className="text-[9px] text-zinc-400">{precedent.decisionDate}</span>
+            <span className="text-[11px] text-zinc-400">{precedent.decisionDate}</span>
           )}
         </div>
         {precedent.strategySummary && (
@@ -1122,14 +1122,14 @@ const PrecedentCard: React.FC<{
         )}
       </div>
       {precedent.confidenceScore != null && (
-        <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 font-medium shrink-0">
+        <span className="text-[11px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 font-medium shrink-0">
           {Math.round(precedent.confidenceScore * 100)}%
         </span>
       )}
     </div>
     <button
       onClick={onDraft}
-      className="mt-2 inline-flex items-center gap-1 text-[10px] text-blue-600 hover:text-blue-800 font-medium"
+      className="mt-2 inline-flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-800 font-medium"
     >
       <FileText className="w-3 h-3" />
       Draft from this precedent
@@ -1153,7 +1153,7 @@ const MetricPill: React.FC<{
   };
   return (
     <div className="rounded-lg border border-zinc-100 bg-white px-2.5 py-2 text-center">
-      <span className="text-[9px] text-zinc-400 block">{label}</span>
+      <span className="text-[11px] text-zinc-400 block">{label}</span>
       {loading ? (
         <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-300 mx-auto mt-0.5" />
       ) : (
@@ -1174,7 +1174,7 @@ const InvestigationThread: React.FC<{ label: string; count: number; time: string
     <Clock className="w-3 h-3 text-zinc-400 shrink-0" />
     <div className="flex-1 min-w-0">
       <span className="text-zinc-700 block truncate">{label}</span>
-      <span className="text-[9px] text-zinc-400">
+      <span className="text-[11px] text-zinc-400">
         {count} results · {time}
       </span>
     </div>
@@ -1196,7 +1196,7 @@ const LineageItem: React.FC<{
     {icon}
     <div className="flex-1 min-w-0">
       <span className="text-zinc-700 block">{label}</span>
-      <span className="text-[9px] text-zinc-400">{detail}</span>
+      <span className="text-[11px] text-zinc-400">{detail}</span>
     </div>
     {active && <CheckCircle className="w-3 h-3 text-emerald-500 shrink-0" />}
   </div>

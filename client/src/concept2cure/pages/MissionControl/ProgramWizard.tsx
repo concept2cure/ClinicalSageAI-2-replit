@@ -523,7 +523,7 @@ export default function ProgramWizard({ onComplete, onCancel }: ProgramWizardPro
                 <span className={cn('text-sm font-bold', selected ? 'text-blue-700' : 'text-zinc-700')}>
                   {dt.label}
                 </span>
-                <span className="text-[10px] text-zinc-400 text-center leading-tight">{dt.desc}</span>
+                <span className="text-[11px] text-zinc-400 text-center leading-tight">{dt.desc}</span>
               </button>
             );
           })}

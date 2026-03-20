@@ -723,12 +723,12 @@ function AnalyticsDashboardInline({ projects, onBack }: { projects: any[]; onBac
                   const height = Math.max(8, (count / maxCount) * 100);
                   return (
                     <div key={day} className="flex-1 flex flex-col items-center gap-1">
-                      <span className="text-[10px] text-zinc-500">{count}</span>
+                      <span className="text-[11px] text-zinc-500">{count}</span>
                       <div
                         className="w-full bg-zinc-900 rounded-t"
                         style={{ height: `${height}%` }}
                       />
-                      <span className="text-[10px] text-zinc-400">{day}</span>
+                      <span className="text-[11px] text-zinc-400">{day}</span>
                     </div>
                   );
                 })}
@@ -2004,7 +2004,7 @@ export const ZenApp: React.FC = () => {
                 >
                   <MessageSquare className="w-4 h-4 text-zinc-500" />
                   <span
-                    className="text-[10px] text-zinc-400 writing-mode-vertical"
+                    className="text-[11px] text-zinc-400 writing-mode-vertical"
                     style={{ writingMode: 'vertical-rl' }}
                   >
                     Assistant
@@ -2764,7 +2764,7 @@ export const ZenApp: React.FC = () => {
                 <MessageSquare className="w-3.5 h-3.5 text-blue-500" />
                 <span className="text-xs font-medium text-zinc-800">Collaboration</span>
                 {activeProject && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
+                  <span className="text-[11px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
                     {activeProject.name}
                   </span>
                 )}
@@ -2800,7 +2800,7 @@ export const ZenApp: React.FC = () => {
                 <FlaskConical className="w-3.5 h-3.5 text-emerald-500" />
                 <span className="text-xs font-medium text-zinc-800">Biostatistics</span>
                 {activeProject && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
+                  <span className="text-[11px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
                     {activeProject.name}
                   </span>
                 )}
@@ -2863,7 +2863,7 @@ export const ZenApp: React.FC = () => {
                 <Bot className="w-3.5 h-3.5 text-violet-500" />
                 <span className="text-xs font-medium text-zinc-800">AI Agents</span>
                 {activeProject && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
+                  <span className="text-[11px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
                     {activeProject.name}
                   </span>
                 )}
@@ -2897,7 +2897,7 @@ export const ZenApp: React.FC = () => {
                 <Compass className="w-3.5 h-3.5 text-blue-500" />
                 <span className="text-xs font-medium text-zinc-800">Document Sherpa</span>
                 {activeProject && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
+                  <span className="text-[11px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
                     {activeProject.name}
                   </span>
                 )}
@@ -2931,7 +2931,7 @@ export const ZenApp: React.FC = () => {
                 <Activity className="w-3.5 h-3.5 text-blue-500" />
                 <span className="text-xs font-medium text-zinc-800">Review Pulse</span>
                 {activeProject && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
+                  <span className="text-[11px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
                     {activeProject.name}
                   </span>
                 )}
@@ -3042,7 +3042,7 @@ export const ZenApp: React.FC = () => {
                 <FileStack className="w-3.5 h-3.5 text-blue-500" />
                 <span className="text-xs font-medium text-zinc-800">Project Knowledge</span>
                 {activeProject && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
+                  <span className="text-[11px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
                     {activeProject.name}
                   </span>
                 )}
@@ -3164,7 +3164,7 @@ export const ZenApp: React.FC = () => {
                   <Brain className="w-3.5 h-3.5 text-blue-500" />
                   <span className="text-xs font-medium text-zinc-800">RI Copilot</span>
                   {activeProject && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
+                    <span className="text-[11px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
                       {activeProject.name}
                     </span>
                   )}

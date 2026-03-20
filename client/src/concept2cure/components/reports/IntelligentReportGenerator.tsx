@@ -667,8 +667,8 @@ export default function IntelligentReportGenerator() {
                     }`}
                   >
                     <div className="text-xs font-bold text-zinc-900">{b.code.replace('_', ' ')}</div>
-                    <div className="text-[10px] text-zinc-500 truncate">{b.country}</div>
-                    <div className="text-[10px] text-zinc-400">{b.regulationCount} regs</div>
+                    <div className="text-[11px] text-zinc-500 truncate">{b.country}</div>
+                    <div className="text-[11px] text-zinc-400">{b.regulationCount} regs</div>
                   </button>
                 ))}
               </div>
@@ -1042,7 +1042,7 @@ export default function IntelligentReportGenerator() {
                           <span className="text-zinc-400 mx-1">in</span>
                           <span className="text-zinc-600">{d.sectionPath}</span>
                         </div>
-                        <div className="ml-auto text-zinc-400 font-mono text-[10px]">
+                        <div className="ml-auto text-zinc-400 font-mono text-[11px]">
                           {d.currentHash === 'DELETED' ? 'SOURCE DELETED' : 'HASH CHANGED'}
                         </div>
                       </div>
@@ -1218,7 +1218,7 @@ export default function IntelligentReportGenerator() {
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                              <span className={`px-1.5 py-0.5 rounded text-[11px] font-medium ${
                                 p.transformationType === 'direct_copy' ? 'bg-emerald-50 text-emerald-600' :
                                 p.transformationType === 'aggregation' ? 'bg-blue-50 text-blue-600' :
                                 p.transformationType === 'ai_generated' ? 'bg-purple-50 text-purple-600' :
@@ -1287,7 +1287,7 @@ export default function IntelligentReportGenerator() {
                       <div className="flex gap-3">
                         <div>
                           <div className="text-zinc-400 mb-0.5">Transformation</div>
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${
+                          <span className={`px-2 py-0.5 rounded text-[11px] font-medium ${
                             selectedProvenance.transformationType === 'direct_copy' ? 'bg-emerald-50 text-emerald-600' :
                             selectedProvenance.transformationType === 'aggregation' ? 'bg-blue-50 text-blue-600' :
                             'bg-zinc-100 text-zinc-500'
@@ -1302,7 +1302,7 @@ export default function IntelligentReportGenerator() {
                       </div>
                       <div>
                         <div className="text-zinc-400 mb-0.5">Value Hash (SHA-256)</div>
-                        <div className="text-zinc-500 font-mono text-[10px] break-all">{selectedProvenance.valueHash}</div>
+                        <div className="text-zinc-500 font-mono text-[11px] break-all">{selectedProvenance.valueHash}</div>
                       </div>
                       {selectedProvenance.driftDetected && (
                         <div className="p-2 bg-amber-50 border border-amber-200 rounded-lg">

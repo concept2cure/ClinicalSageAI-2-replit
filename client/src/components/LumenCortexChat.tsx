@@ -531,7 +531,7 @@ export function LumenCortexChat({ className, initialMessage, placeholder }: Lume
                         )}
                       </button>
                       {message.modelUsed && (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-indigo-50 text-indigo-600 border border-indigo-100">
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] bg-indigo-50 text-indigo-600 border border-indigo-100">
                           <Zap className="w-2.5 h-2.5" />
                           {message.modelUsed}
                         </span>
@@ -542,7 +542,7 @@ export function LumenCortexChat({ className, initialMessage, placeholder }: Lume
                   {/* Structured intelligence enrichment panel */}
                   {message.intelligence && (
                     <div className="mt-3 space-y-2 border-t border-gray-200 pt-3">
-                      <span className="text-[10px] font-semibold text-indigo-600 uppercase tracking-wider flex items-center gap-1">
+                      <span className="text-[11px] font-semibold text-indigo-600 uppercase tracking-wider flex items-center gap-1">
                         <ShieldCheck className="w-3 h-3" /> Regulatory Intelligence
                       </span>
 
@@ -550,7 +550,7 @@ export function LumenCortexChat({ className, initialMessage, placeholder }: Lume
                       {message.intelligence.precedents &&
                         message.intelligence.precedents.length > 0 && (
                           <div className="space-y-1">
-                            <span className="text-[10px] font-medium text-gray-500 flex items-center gap-1">
+                            <span className="text-[11px] font-medium text-gray-500 flex items-center gap-1">
                               <Search className="w-2.5 h-2.5" /> Precedent Evidence
                             </span>
                             {message.intelligence.precedents.map((p, i) => (
@@ -563,7 +563,7 @@ export function LumenCortexChat({ className, initialMessage, placeholder }: Lume
                                   <span className="text-gray-400 ml-1.5">{p.clearanceNumber}</span>
                                 </div>
                                 <span
-                                  className={`px-1.5 py-0.5 rounded-full text-[9px] font-semibold ${
+                                  className={`px-1.5 py-0.5 rounded-full text-[11px] font-semibold ${
                                     p.decision === 'CLEARED' || p.decision === 'APPROVED'
                                       ? 'bg-emerald-100 text-emerald-700'
                                       : 'bg-red-100 text-red-700'

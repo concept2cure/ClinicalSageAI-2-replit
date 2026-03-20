@@ -190,7 +190,7 @@ const ThinkingIndicator: React.FC = () => (
 const CitationBadge: React.FC<{ citation: Citation }> = ({ citation }) => (
   <button
     onClick={citation.onClick}
-    className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+    className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
   >
     <FileText className="w-3 h-3" />
     {citation.label}
@@ -252,12 +252,12 @@ const MessageBubble: React.FC<{
         <div
           className={cn('flex items-baseline gap-2 mb-1', isUser ? 'justify-end' : 'justify-start')}
         >
-          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+          <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">
             {persona.name}
           </span>
-          {!isUser && <span className="text-[10px] text-zinc-300">{persona.title}</span>}
+          {!isUser && <span className="text-[11px] text-zinc-300">{persona.title}</span>}
           {message.timestamp && (
-            <span className="text-[10px] text-zinc-300">{message.timestamp}</span>
+            <span className="text-[11px] text-zinc-300">{message.timestamp}</span>
           )}
         </div>
 
@@ -279,7 +279,7 @@ const MessageBubble: React.FC<{
               {message.confidence !== undefined && (
                 <div className="mt-2 pt-2 border-t border-zinc-200/50">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-zinc-400">Confidence:</span>
+                    <span className="text-[11px] text-zinc-400">Confidence:</span>
                     <div className="flex-1 h-1.5 bg-zinc-200 rounded-full overflow-hidden">
                       <div
                         className={cn(
@@ -292,7 +292,7 @@ const MessageBubble: React.FC<{
                         style={{ width: `${message.confidence}%` }}
                       />
                     </div>
-                    <span className="text-[10px] font-mono font-medium text-zinc-500">
+                    <span className="text-[11px] font-mono font-medium text-zinc-500">
                       {message.confidence}%
                     </span>
                   </div>

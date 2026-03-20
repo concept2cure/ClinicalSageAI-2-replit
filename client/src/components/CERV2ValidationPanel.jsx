@@ -124,17 +124,17 @@ export default function CERV2ValidationPanel({
         <div className="flex items-center gap-1.5">
           {/* Summary badges */}
           {counts.error > 0 && (
-            <span className="text-[10px] tabular-nums px-1 py-0.5 rounded bg-destructive/10 text-destructive font-medium">
+            <span className="text-[11px] tabular-nums px-1 py-0.5 rounded bg-destructive/10 text-destructive font-medium">
               {counts.error}
             </span>
           )}
           {counts.warning > 0 && (
-            <span className="text-[10px] tabular-nums px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 font-medium">
+            <span className="text-[11px] tabular-nums px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 font-medium">
               {counts.warning}
             </span>
           )}
           {counts.pass > 0 && (
-            <span className="text-[10px] tabular-nums px-1 py-0.5 rounded bg-primary/10 text-primary font-medium">
+            <span className="text-[11px] tabular-nums px-1 py-0.5 rounded bg-primary/10 text-primary font-medium">
               {counts.pass}
             </span>
           )}

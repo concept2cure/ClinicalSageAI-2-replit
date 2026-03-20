@@ -1089,7 +1089,7 @@ export function PostMarketSurveillance() {
     <div className="p-6 space-y-6">
       {/* Early Access Banner */}
       <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-50 border border-amber-200 text-amber-700 text-xs">
-        <span className="font-semibold px-1.5 py-0.5 bg-amber-200 text-amber-800 rounded text-[10px] uppercase tracking-wider">Early Access</span>
+        <span className="font-semibold px-1.5 py-0.5 bg-amber-200 text-amber-800 rounded text-[11px] uppercase tracking-wider">Early Access</span>
         <span>This module displays sample data for demonstration. Live data integration coming soon.</span>
       </div>
       {/* Header */}

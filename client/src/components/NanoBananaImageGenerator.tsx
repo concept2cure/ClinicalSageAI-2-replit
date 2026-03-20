@@ -199,7 +199,7 @@ const NanoBananaImageGenerator: React.FC<NanoBananaImageGeneratorProps> = ({
           </div>
           <div>
             <h3 className="text-sm font-semibold text-zinc-900">Nano Banana AI</h3>
-            <p className="text-[10px] text-zinc-500">Powered by Google Gemini</p>
+            <p className="text-[11px] text-zinc-500">Powered by Google Gemini</p>
           </div>
         </div>
         {/* Mode tabs */}

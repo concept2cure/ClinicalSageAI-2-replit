@@ -329,7 +329,7 @@ const Header: React.FC<{
         <button className="relative p-2 text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors">
           <Bell className="w-5 h-5" />
           {notifications > 0 && (
-            <span className="absolute top-1 right-1 w-4 h-4 text-[10px] font-bold bg-red-500 text-white rounded-full flex items-center justify-center">
+            <span className="absolute top-1 right-1 w-4 h-4 text-[11px] font-bold bg-red-500 text-white rounded-full flex items-center justify-center">
               {notifications > 9 ? '9+' : notifications}
             </span>
           )}

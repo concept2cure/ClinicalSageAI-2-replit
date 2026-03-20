@@ -340,7 +340,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ editor, onSave, isSaving, isLocked, o
         isActive={editor.isActive('highlight')}
         title="Highlight"
       >
-        <span className="w-4 h-4 bg-yellow-300 rounded text-[10px] flex items-center justify-center font-bold">
+        <span className="w-4 h-4 bg-yellow-300 rounded text-[11px] flex items-center justify-center font-bold">
           H
         </span>
       </ToolButton>
@@ -695,14 +695,14 @@ const StatusBar: React.FC<StatusBarProps> = ({ editor, complianceScore, collabor
               <div
                 key={c.id}
                 title={c.name}
-                className="w-5 h-5 rounded-full border-2 border-white flex items-center justify-center text-[8px] font-bold text-white"
+                className="w-5 h-5 rounded-full border-2 border-white flex items-center justify-center text-[11px] font-bold text-white"
                 style={{ backgroundColor: c.color }}
               >
                 {c.name.charAt(0).toUpperCase()}
               </div>
             ))}
             {collaborators.length > 4 && (
-              <div className="w-5 h-5 rounded-full bg-zinc-300 border-2 border-white flex items-center justify-center text-[8px] font-bold text-zinc-600">
+              <div className="w-5 h-5 rounded-full bg-zinc-300 border-2 border-white flex items-center justify-center text-[11px] font-bold text-zinc-600">
                 +{collaborators.length - 4}
               </div>
             )}
@@ -1310,14 +1310,14 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
                   <div
                     key={c.id}
                     title={c.name}
-                    className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-bold text-white"
+                    className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-[11px] font-bold text-white"
                     style={{ backgroundColor: c.color }}
                   >
                     {c.name.charAt(0).toUpperCase()}
                   </div>
                 ))}
                 {collaborators.length > 3 && (
-                  <div className="w-6 h-6 rounded-full bg-zinc-300 border-2 border-white flex items-center justify-center text-[10px] font-bold text-zinc-600">
+                  <div className="w-6 h-6 rounded-full bg-zinc-300 border-2 border-white flex items-center justify-center text-[11px] font-bold text-zinc-600">
                     +{collaborators.length - 3}
                   </div>
                 )}
@@ -1416,7 +1416,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
                 className={`p-1.5 rounded hover:bg-zinc-700 ${editor.isActive('highlight') ? 'text-blue-400' : 'text-white'}`}
                 title="Highlight"
               >
-                <span className="w-3.5 h-3.5 bg-yellow-400 rounded text-[8px] flex items-center justify-center font-bold text-black">
+                <span className="w-3.5 h-3.5 bg-yellow-400 rounded text-[11px] flex items-center justify-center font-bold text-black">
                   H
                 </span>
               </button>

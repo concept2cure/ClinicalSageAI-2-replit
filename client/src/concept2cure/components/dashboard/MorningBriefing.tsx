@@ -155,14 +155,14 @@ const AlertCard: React.FC<{
         {/* Header */}
         <div className="flex justify-between items-center mb-1">
           <span className={cn(
-            'text-[10px] font-bold uppercase flex items-center gap-1 px-2 py-0.5 rounded',
+            'text-[11px] font-bold uppercase flex items-center gap-1 px-2 py-0.5 rounded',
             source.color
           )}>
             {source.icon}
             {source.label}
           </span>
           {alert.timestamp && (
-            <span className="text-[10px] text-zinc-400 font-mono">{alert.timestamp}</span>
+            <span className="text-[11px] text-zinc-400 font-mono">{alert.timestamp}</span>
           )}
         </div>
         
@@ -215,7 +215,7 @@ const PriorityItem: React.FC<{ priority: TodaysPriority }> = ({ priority }) => (
     </div>
     {priority.deadline && (
       <span className={cn(
-        'text-[10px] font-mono font-bold',
+        'text-[11px] font-mono font-bold',
         priority.urgency === 'now' && 'text-red-600',
         priority.urgency === 'today' && 'text-amber-600',
         priority.urgency === 'this_week' && 'text-zinc-500'
@@ -282,7 +282,7 @@ export const MorningBriefing: React.FC<MorningBriefingProps> = ({
           <div className="grid grid-cols-4 gap-3 p-4 bg-zinc-50 border-b border-zinc-200 flex-shrink-0">
             <div className="text-center p-2">
               <p className="text-2xl font-bold text-zinc-900">{statsSnapshot.projectsActive}</p>
-              <p className="text-[10px] text-zinc-500 uppercase tracking-wide">Active Projects</p>
+              <p className="text-[11px] text-zinc-500 uppercase tracking-wide">Active Projects</p>
             </div>
             <div className="text-center p-2">
               <p className={cn(
@@ -291,7 +291,7 @@ export const MorningBriefing: React.FC<MorningBriefingProps> = ({
               )}>
                 {statsSnapshot.deadlinesThisWeek}
               </p>
-              <p className="text-[10px] text-zinc-500 uppercase tracking-wide">Deadlines This Week</p>
+              <p className="text-[11px] text-zinc-500 uppercase tracking-wide">Deadlines This Week</p>
             </div>
             <div className="text-center p-2">
               <p className={cn(
@@ -300,7 +300,7 @@ export const MorningBriefing: React.FC<MorningBriefingProps> = ({
               )}>
                 {statsSnapshot.pendingReviews}
               </p>
-              <p className="text-[10px] text-zinc-500 uppercase tracking-wide">Pending Reviews</p>
+              <p className="text-[11px] text-zinc-500 uppercase tracking-wide">Pending Reviews</p>
             </div>
             <div className="text-center p-2">
               <p className={cn(
@@ -309,7 +309,7 @@ export const MorningBriefing: React.FC<MorningBriefingProps> = ({
               )}>
                 {statsSnapshot.riskItems}
               </p>
-              <p className="text-[10px] text-zinc-500 uppercase tracking-wide">Risk Items</p>
+              <p className="text-[11px] text-zinc-500 uppercase tracking-wide">Risk Items</p>
             </div>
           </div>
         )}
@@ -325,7 +325,7 @@ export const MorningBriefing: React.FC<MorningBriefingProps> = ({
                   <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest">
                     Critical Updates
                   </h3>
-                  <span className="px-2 py-0.5 text-[10px] font-bold bg-red-100 text-red-700 rounded-full">
+                  <span className="px-2 py-0.5 text-[11px] font-bold bg-red-100 text-red-700 rounded-full">
                     {criticalAlerts.length}
                   </span>
                 </div>

@@ -903,7 +903,7 @@ export default function INDFullSolution() {
                           <div className="flex items-center justify-between gap-3">
                             <p className="text-xs font-medium text-slate-800">{moduleName}</p>
                             <span
-                              className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium ${confidenceBadgeClass(
+                              className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ${confidenceBadgeClass(
                                 assessment.confidence
                               )}`}
                             >
@@ -2029,11 +2029,11 @@ export default function INDFullSolution() {
                   >
                     {acceptanceRatio}%
                   </p>
-                  <p className="text-[10px] text-slate-500">
+                  <p className="text-[11px] text-slate-500">
                     Lifetime: {indStats.kpiDerived?.lifetime?.acceptanceRatio ?? 0}%
                   </p>
                   <p
-                    className={`text-[10px] ${
+                    className={`text-[11px] ${
                       acceptanceRatioDelta > 0
                         ? 'text-emerald-700'
                         : acceptanceRatioDelta < 0
@@ -2058,11 +2058,11 @@ export default function INDFullSolution() {
                   >
                     {draftToExportConversion}%
                   </p>
-                  <p className="text-[10px] text-slate-500">
+                  <p className="text-[11px] text-slate-500">
                     Lifetime: {indStats.kpiDerived?.lifetime?.draftToExportConversion ?? 0}%
                   </p>
                   <p
-                    className={`text-[10px] ${
+                    className={`text-[11px] ${
                       draftToExportConversionDelta > 0
                         ? 'text-emerald-700'
                         : draftToExportConversionDelta < 0

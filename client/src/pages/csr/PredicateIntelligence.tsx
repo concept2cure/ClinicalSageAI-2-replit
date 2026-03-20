@@ -608,7 +608,7 @@ function PredicateRadarTab({
                             <Badge
                               key={`${code}-${idx}`}
                               variant="outline"
-                              className={`text-[10px] ${sevColor}`}
+                              className={`text-[11px] ${sevColor}`}
                               title={typeof f === 'object' ? f.message : ''}
                             >
                               {code.replace(/_/g, ' ')}
@@ -655,7 +655,7 @@ function PredicateRadarTab({
                               <div className="flex items-center gap-2">
                                 <Badge
                                   variant="outline"
-                                  className={`text-[10px] ${
+                                  className={`text-[11px] ${
                                     obj.severity === 'High'
                                       ? 'text-red-700 border-red-300'
                                       : obj.severity === 'Med'
@@ -665,7 +665,7 @@ function PredicateRadarTab({
                                 >
                                   {obj.severity}
                                 </Badge>
-                                <span className="font-mono text-[10px] text-muted-foreground">
+                                <span className="font-mono text-[11px] text-muted-foreground">
                                   {obj.trigger}
                                 </span>
                               </div>
@@ -1982,7 +1982,7 @@ function StrategyTab({
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Shield className="h-5 w-5 text-blue-600" /> Defense Packet Seed
-                  <Badge variant="outline" className="text-[10px] ml-2">
+                  <Badge variant="outline" className="text-[11px] ml-2">
                     Readiness: {suggestMut.data.defense_packet_seed.readiness_score}/100
                   </Badge>
                 </CardTitle>
@@ -1993,7 +1993,7 @@ function StrategyTab({
                     <span className="ml-2">
                       Top risks:{' '}
                       {suggestMut.data.defense_packet_seed.top_risks.map((r: string, i: number) => (
-                        <Badge key={i} variant="destructive" className="text-[9px] ml-1">
+                        <Badge key={i} variant="destructive" className="text-[11px] ml-1">
                           {r}
                         </Badge>
                       ))}
@@ -2014,7 +2014,7 @@ function StrategyTab({
                                 ? 'default'
                                 : 'secondary'
                           }
-                          className="text-[10px] shrink-0"
+                          className="text-[11px] shrink-0"
                         >
                           {task.severity}
                         </Badge>
@@ -2029,7 +2029,7 @@ function StrategyTab({
                       {task.recommended_artifacts?.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1">
                           {task.recommended_artifacts.map((art: string, i: number) => (
-                            <Badge key={i} variant="outline" className="text-[9px]">
+                            <Badge key={i} variant="outline" className="text-[11px]">
                               {art}
                             </Badge>
                           ))}

@@ -231,7 +231,7 @@ export const ProvenanceViewer: React.FC<ProvenanceViewerProps> = ({ programId })
         <div className="flex items-center gap-3">
           <Fingerprint className="w-5 h-5 text-blue-600" />
           <h1 className="text-base font-semibold text-zinc-900">Provenance Trail</h1>
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-medium border border-emerald-200">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-medium border border-emerald-200">
             <Shield className="w-3 h-3" />
             21 CFR Part 11 Compliant
           </span>
@@ -294,7 +294,7 @@ export const ProvenanceViewer: React.FC<ProvenanceViewerProps> = ({ programId })
           </select>
 
           <div className="flex items-center gap-1.5">
-            <label className="text-[10px] text-zinc-500 uppercase tracking-wider">From</label>
+            <label className="text-[11px] text-zinc-500 uppercase tracking-wider">From</label>
             <input
               type="date"
               value={dateFrom}
@@ -303,7 +303,7 @@ export const ProvenanceViewer: React.FC<ProvenanceViewerProps> = ({ programId })
             />
           </div>
           <div className="flex items-center gap-1.5">
-            <label className="text-[10px] text-zinc-500 uppercase tracking-wider">To</label>
+            <label className="text-[11px] text-zinc-500 uppercase tracking-wider">To</label>
             <input
               type="date"
               value={dateTo}
@@ -324,7 +324,7 @@ export const ProvenanceViewer: React.FC<ProvenanceViewerProps> = ({ programId })
           </div>
 
           <div className="ml-auto flex items-center gap-1.5">
-            <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Limit</span>
+            <span className="text-[11px] text-zinc-500 uppercase tracking-wider">Limit</span>
             <select
               value={limit}
               onChange={e => setLimit(Number(e.target.value))}
@@ -398,7 +398,7 @@ export const ProvenanceViewer: React.FC<ProvenanceViewerProps> = ({ programId })
                                   <div className="flex items-center gap-2 flex-wrap mb-1">
                                     <span
                                       className={cn(
-                                        'text-[10px] font-medium px-2 py-0.5 rounded-full capitalize',
+                                        'text-[11px] font-medium px-2 py-0.5 rounded-full capitalize',
                                         style.bg,
                                         style.text,
                                       )}
@@ -423,22 +423,22 @@ export const ProvenanceViewer: React.FC<ProvenanceViewerProps> = ({ programId })
 
                                 {/* Right side: timestamp, actor, hash */}
                                 <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                                  <span className="text-[10px] text-zinc-400 whitespace-nowrap">
+                                  <span className="text-[11px] text-zinc-400 whitespace-nowrap">
                                     {formatTimestamp(ts)}
                                   </span>
                                   <div className="flex items-center gap-1">
                                     <User className="w-3 h-3 text-zinc-400" />
-                                    <span className="text-[10px] text-zinc-500 max-w-[120px] truncate">
+                                    <span className="text-[11px] text-zinc-500 max-w-[120px] truncate">
                                       {actor}
                                     </span>
                                   </div>
                                   {hashOk ? (
-                                    <span className="inline-flex items-center gap-0.5 text-[10px] text-emerald-600">
+                                    <span className="inline-flex items-center gap-0.5 text-[11px] text-emerald-600">
                                       <CheckCircle2 className="w-3 h-3" />
                                       verified
                                     </span>
                                   ) : (
-                                    <span className="inline-flex items-center gap-0.5 text-[10px] text-red-500">
+                                    <span className="inline-flex items-center gap-0.5 text-[11px] text-red-500">
                                       <AlertTriangle className="w-3 h-3" />
                                       invalid
                                     </span>

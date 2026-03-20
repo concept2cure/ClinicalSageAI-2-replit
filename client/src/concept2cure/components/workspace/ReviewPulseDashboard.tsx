@@ -115,7 +115,7 @@ const StatCard: React.FC<{
     <Icon className={cn('w-3.5 h-3.5 shrink-0', color)} />
     <span className="text-sm font-bold tabular-nums text-zinc-900">{value}</span>
     <span className="text-[11px] text-zinc-500 truncate">{label}</span>
-    {subtext && <span className="text-[10px] text-zinc-400 ml-auto">{subtext}</span>}
+    {subtext && <span className="text-[11px] text-zinc-400 ml-auto">{subtext}</span>}
   </div>
 );
 

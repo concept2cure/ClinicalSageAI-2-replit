@@ -216,7 +216,7 @@ export default function WidgetCard({ widget }) {
     >
       <div className="flex justify-between items-center mb-1">
         <h4 className="text-sm font-semibold">{widget.name}</h4>
-        <div className="text-right text-[10px] space-x-1">
+        <div className="text-right text-[11px] space-x-1">
           <button
             onClick={exportToPNG}
             className={`px-2 py-0.5 ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'} rounded`}

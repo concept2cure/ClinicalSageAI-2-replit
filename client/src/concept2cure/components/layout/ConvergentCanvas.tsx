@@ -196,7 +196,7 @@ const Sidebar: React.FC<{
             <Mountain className="w-8 h-8 text-blue-400" />
             <div>
               <h1 className="font-bold text-sm tracking-tight">CONCEPT2CURE</h1>
-              <p className="text-[10px] text-zinc-400">Regulatory Sherpa</p>
+              <p className="text-[11px] text-zinc-400">Regulatory Sherpa</p>
             </div>
           </div>
         )}
@@ -232,7 +232,7 @@ const Sidebar: React.FC<{
                 {!collapsed && (
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{item.label}</p>
-                    <p className="text-[10px] text-zinc-500 truncate">{item.description}</p>
+                    <p className="text-[11px] text-zinc-500 truncate">{item.description}</p>
                   </div>
                 )}
               </button>
@@ -376,7 +376,7 @@ const Header: React.FC<{
           placeholder="Search documents, projects, guidance..."
           className="w-80 pl-10 pr-4 py-2 text-sm bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
-        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-zinc-400 bg-zinc-200 px-1.5 py-0.5 rounded">
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-zinc-400 bg-zinc-200 px-1.5 py-0.5 rounded">
           ⌘K
         </span>
       </div>
@@ -388,7 +388,7 @@ const Header: React.FC<{
       <button className="relative p-2 rounded-lg hover:bg-zinc-100 text-zinc-600 transition-colors">
         <Bell className="w-5 h-5" />
         {notificationCount > 0 && (
-          <span className="absolute top-1 right-1 w-4 h-4 text-[10px] font-bold bg-red-500 text-white rounded-full flex items-center justify-center">
+          <span className="absolute top-1 right-1 w-4 h-4 text-[11px] font-bold bg-red-500 text-white rounded-full flex items-center justify-center">
             {notificationCount}
           </span>
         )}
@@ -412,7 +412,7 @@ const Header: React.FC<{
       <div className="ml-2 flex items-center gap-3 pl-4 border-l border-zinc-200">
         <div className="text-right">
           <p className="text-sm font-medium text-zinc-800">{userName || 'User'}</p>
-          <p className="text-[10px] text-zinc-500">Regulatory Lead</p>
+          <p className="text-[11px] text-zinc-500">Regulatory Lead</p>
         </div>
         <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm">
           {(userName || 'U')[0].toUpperCase()}
