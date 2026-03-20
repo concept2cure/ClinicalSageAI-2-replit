@@ -12,45 +12,45 @@
    ═══════════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* Canvas - Background colors */
-  --zen-canvas: #FAFAF9;
-  --zen-canvas-muted: #F5F5F4;
+  /* Canvas - Background colors — Claude warm sand */
+  --zen-canvas: #FAF9F5;
+  --zen-canvas-muted: #F5F4EF;
   --zen-canvas-elevated: #FFFFFF;
-  --zen-canvas-inverse: #18181B;
+  --zen-canvas-inverse: #141413;
 
-  /* Ink - Text colors */
-  --zen-ink: #18181B;
-  --zen-ink-muted: #71717A;
-  --zen-ink-subtle: #A1A1AA;
-  --zen-ink-disabled: #D4D4D8;
-  --zen-ink-inverse: #FAFAFA;
+  /* Ink - Text colors — Claude warm ink */
+  --zen-ink: #141413;
+  --zen-ink-muted: #6B6962;
+  --zen-ink-subtle: #8A8880;
+  --zen-ink-disabled: #B0AEA5;
+  --zen-ink-inverse: #FAF9F5;
 
-  /* Accent - Primary action color */
-  --zen-accent: #2563EB;
-  --zen-accent-hover: #1D4ED8;
-  --zen-accent-muted: #DBEAFE;
-  --zen-accent-subtle: #EFF6FF;
+  /* Accent - Primary action color — Claude terracotta */
+  --zen-accent: #D97757;
+  --zen-accent-hover: #C4623F;
+  --zen-accent-muted: #F5E0D6;
+  --zen-accent-subtle: #FBF0EB;
 
-  /* AI - Lumen persona color */
-  --zen-ai: #8B5CF6;
-  --zen-ai-hover: #7C3AED;
-  --zen-ai-muted: #EDE9FE;
-  --zen-ai-glow: rgba(139, 92, 246, 0.1);
+  /* AI - Lumen persona color — Claude terracotta */
+  --zen-ai: #D97757;
+  --zen-ai-hover: #C4623F;
+  --zen-ai-muted: #F5E0D6;
+  --zen-ai-glow: rgba(217, 119, 87, 0.1);
 
-  /* Status colors */
-  --zen-success: #059669;
-  --zen-success-muted: #D1FAE5;
+  /* Status colors — Claude warm tones */
+  --zen-success: #788C5D;
+  --zen-success-muted: #E8EDDF;
   --zen-warning: #D97706;
   --zen-warning-muted: #FEF3C7;
   --zen-error: #DC2626;
   --zen-error-muted: #FEE2E2;
-  --zen-info: #0284C7;
-  --zen-info-muted: #E0F2FE;
+  --zen-info: #6A9BCC;
+  --zen-info-muted: #E0EDF8;
 
-  /* Borders */
-  --zen-border: #E4E4E7;
-  --zen-border-subtle: #F4F4F5;
-  --zen-border-focus: #2563EB;
+  /* Borders — warm stone */
+  --zen-border: #E8E6DC;
+  --zen-border-subtle: #F5F4EF;
+  --zen-border-focus: #D97757;
 
   /* Shadows - Subtle, layered */
   --zen-shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.03);

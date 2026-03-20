@@ -51,7 +51,11 @@ router.get('/morning-briefing', async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id || 'anonymous';
     const userName = (req as any).user?.name || 'User';
-    const query = morningBriefingQuerySchema.parse(req.query);
+    const parsed = morningBriefingQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      return res.status(400).json({ success: false, error: 'Invalid query parameters', details: parsed.error.issues });
+    }
+    const query = parsed.data;
 
     logger.info('Generating morning briefing', { userId, query });
 
@@ -262,19 +266,79 @@ router.get('/maude', async (req: Request, res: Response) => {
 
 /**
  * GET /api/regulatory-intelligence/recalls
- * Get FDA recalls and safety communications
+ * Get FDA recalls via openFDA enforcement endpoint
  */
 router.get('/recalls', async (req: Request, res: Response) => {
   try {
-    const { classification, status, dateRange } = req.query;
+    const { classification, status, dateRange, limit = '25' } = req.query;
 
-    logger.info('Fetching recalls', { classification, status, dateRange });
+    logger.info('Fetching FDA recalls', { classification, status, dateRange });
 
+    // Build openFDA query — whitelist classification values and sanitize inputs
+    const sanitize = (val: string) => val.replace(/[^a-zA-Z0-9\s\-_.]/g, '');
+    const validClassifications = ['Class I', 'Class II', 'Class III'];
+    const searchParts: string[] = [];
+    if (classification) {
+      const classStr = classification as string;
+      if (validClassifications.includes(classStr)) {
+        searchParts.push(`classification:"${classStr}"`);
+      }
+    }
+    if (status) searchParts.push(`status:"${sanitize(status as string)}"`);
+    if (dateRange) {
+      // dateRange format: "2024-01-01:2025-01-01"
+      const [from, to] = (dateRange as string).split(':');
+      if (from && to && /^\d{4}-\d{2}-\d{2}$/.test(from) && /^\d{4}-\d{2}-\d{2}$/.test(to)) {
+        searchParts.push(`report_date:[${from.replace(/-/g, '')}+TO+${to.replace(/-/g, '')}]`);
+      }
+    }
+
+    const search = searchParts.length > 0 ? searchParts.join('+AND+') : '';
+    const apiLimit = Math.min(parseInt(limit as string, 10) || 25, 100);
+
+    try {
+      const url = `https://api.fda.gov/drug/enforcement.json?${search ? `search=${search}&` : ''}limit=${apiLimit}`;
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+
+      const response = await fetch(url, { signal: controller.signal });
+
+      if (response.ok) {
+        const data = await response.json();
+        clearTimeout(timeout);
+        const recalls = (data.results || []).map((r: any, idx: number) => ({
+          id: r.recall_number || `recall-${idx}`,
+          recallNumber: r.recall_number,
+          classification: r.classification,
+          status: r.status,
+          productDescription: r.product_description,
+          reason: r.reason_for_recall,
+          recallingFirm: r.recalling_firm,
+          city: r.city,
+          state: r.state,
+          country: r.country,
+          reportDate: r.report_date,
+          voluntaryMandated: r.voluntary_mandated,
+        }));
+
+        return res.json({
+          success: true,
+          data: recalls,
+          total: data.meta?.results?.total || recalls.length,
+          source: 'openFDA',
+        });
+      }
+      clearTimeout(timeout);
+    } catch (fetchErr) {
+      logger.warn('openFDA enforcement fetch failed, returning empty', { error: fetchErr });
+    }
+
+    // Fallback when openFDA is unreachable
     res.json({
       success: true,
       data: [],
       total: 0,
-      meta: { note: 'Recall feed not yet integrated in this endpoint.' },
+      meta: { note: 'openFDA enforcement endpoint unreachable — try again later' },
     });
   } catch (error) {
     logger.error('Failed to fetch recalls', { error });
@@ -323,23 +387,194 @@ router.get('/guidances', async (req: Request, res: Response) => {
 
 /**
  * GET /api/regulatory-intelligence/pdufa-dates
- * Get PDUFA action dates and milestones
+ * Get PDUFA action dates from openFDA drugsfda endpoint
  */
 router.get('/pdufa-dates', async (req: Request, res: Response) => {
   try {
-    const { upcoming = 'true', applicationNumber } = req.query;
+    const { upcoming = 'true', applicationNumber, limit = '25' } = req.query;
 
     logger.info('Fetching PDUFA dates', { upcoming, applicationNumber });
+
+    const apiLimit = Math.min(parseInt(limit as string, 10) || 25, 100);
+
+    try {
+      let url = `https://api.fda.gov/drug/drugsfda.json?limit=${apiLimit}`;
+      if (applicationNumber) {
+        const safeAppNum = (applicationNumber as string).replace(/[^a-zA-Z0-9\-]/g, '');
+        url += `&search=application_number:"${safeAppNum}"`;
+      }
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+
+      const response = await fetch(url, { signal: controller.signal });
+
+      if (response.ok) {
+        const data = await response.json();
+        clearTimeout(timeout);
+        const entries = (data.results || []).map((r: any, idx: number) => {
+          const submissions = r.submissions || [];
+          const latestSubmission = submissions[0] || {};
+
+          return {
+            id: `pdufa-${idx}`,
+            applicationNumber: r.application_number,
+            sponsorName: r.sponsor_name,
+            brandName: r.openfda?.brand_name?.[0] || 'N/A',
+            genericName: r.openfda?.generic_name?.[0] || 'N/A',
+            submissionType: latestSubmission.submission_type,
+            submissionNumber: latestSubmission.submission_number,
+            submissionStatus: latestSubmission.submission_status,
+            submissionStatusDate: latestSubmission.submission_status_date,
+            reviewPriority: latestSubmission.review_priority,
+          };
+        });
+
+        return res.json({
+          success: true,
+          data: entries,
+          total: data.meta?.results?.total || entries.length,
+          source: 'openFDA',
+        });
+      }
+      clearTimeout(timeout);
+    } catch (fetchErr) {
+      logger.warn('openFDA drugsfda fetch failed', { error: fetchErr });
+    }
 
     res.json({
       success: true,
       data: [],
       total: 0,
-      meta: { note: 'PDUFA feed not yet integrated in this endpoint.' },
+      meta: { note: 'openFDA drugsfda endpoint unreachable — try again later' },
     });
   } catch (error) {
     logger.error('Failed to fetch PDUFA dates', { error });
     res.status(500).json({ success: false, error: 'Failed to fetch PDUFA dates' });
+  }
+});
+
+/**
+ * POST /api/regulatory-intelligence/impact-analysis
+ * Run regulatory impact analysis for a given product/submission
+ */
+router.post('/impact-analysis', async (req: Request, res: Response) => {
+  try {
+    const impactSchema = z.object({
+      productName: z.string().min(1),
+      submissionType: z.enum(['NDA', 'BLA', 'ANDA', 'IND', '510k', 'PMA', 'DeNovo']),
+      targetMarkets: z.array(z.string()).default(['US']),
+      indication: z.string().optional(),
+      phase: z.string().optional(),
+    });
+
+    const parsed = impactSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ success: false, error: 'Validation failed', details: parsed.error.issues });
+    }
+
+    const { productName, submissionType, targetMarkets, indication, phase } = parsed.data;
+
+    await regulatoryService.initialize();
+    const intelligence = await regulatoryService.getRegulatoryIntelligence(
+      phase || 'Phase 1',
+      indication,
+    );
+
+    // Build impact matrix per target market
+    const marketImpact = targetMarkets.map(market => {
+      const relevantReqs = intelligence.key_requirements.filter(
+        r => r.agency.toLowerCase().includes(market.toLowerCase()) || market === 'US',
+      );
+      const mandatoryCount = relevantReqs.filter(r => r.compliance_level === 'mandatory').length;
+      const totalReqs = relevantReqs.length;
+
+      return {
+        market,
+        totalRequirements: totalReqs,
+        mandatoryRequirements: mandatoryCount,
+        riskLevel: mandatoryCount > 5 ? 'high' : mandatoryCount > 2 ? 'medium' : 'low',
+        keyGuidelines: relevantReqs.slice(0, 3).map(r => r.guideline),
+      };
+    });
+
+    const overallRisk = marketImpact.some(m => m.riskLevel === 'high') ? 'high'
+      : marketImpact.some(m => m.riskLevel === 'medium') ? 'medium' : 'low';
+
+    res.json({
+      success: true,
+      data: {
+        productName,
+        submissionType,
+        analysisDate: new Date().toISOString(),
+        overallRiskLevel: overallRisk,
+        marketAnalysis: marketImpact,
+        recommendations: intelligence.key_requirements
+          .filter(r => r.compliance_level === 'mandatory')
+          .slice(0, 5)
+          .map(r => ({
+            agency: r.agency,
+            requirement: r.requirement,
+            guideline: r.guideline,
+            priority: 'high',
+          })),
+        relevantGuidanceCount: intelligence.relevant_guidance.length,
+      },
+    });
+  } catch (error) {
+    logger.error('Impact analysis failed', { error });
+    res.status(500).json({ success: false, error: 'Impact analysis failed' });
+  }
+});
+
+/**
+ * GET /api/regulatory-intelligence/compliance-score
+ * Calculate overall regulatory compliance score for the organization
+ */
+router.get('/compliance-score', async (req: Request, res: Response) => {
+  try {
+    const { phase, indication, productCode, submissionType } = req.query;
+
+    await regulatoryService.initialize();
+    const intelligence = await regulatoryService.getRegulatoryIntelligence(
+      (phase as string) || 'Phase 1',
+      indication as string | undefined,
+    );
+
+    const totalReqs = intelligence.key_requirements.length;
+    const mandatoryReqs = intelligence.key_requirements.filter(r => r.compliance_level === 'mandatory');
+    const guidanceCount = intelligence.relevant_guidance.length;
+
+    // Score components (simulated — in production these would be calculated from actual compliance data)
+    const documentationScore = Math.min(100, 60 + guidanceCount * 3);
+    const regulatoryReadiness = Math.min(100, 75 + mandatoryReqs.length);
+    const submissionPreparedness = totalReqs > 0 ? Math.round((guidanceCount / Math.max(totalReqs, 1)) * 100) : 50;
+
+    const overallScore = Math.round((documentationScore + regulatoryReadiness + submissionPreparedness) / 3);
+
+    res.json({
+      success: true,
+      data: {
+        overallScore,
+        breakdown: {
+          documentationCompleteness: documentationScore,
+          regulatoryReadiness,
+          submissionPreparedness: Math.min(100, submissionPreparedness),
+        },
+        totalRequirements: totalReqs,
+        mandatoryRequirements: mandatoryReqs.length,
+        relevantGuidances: guidanceCount,
+        riskAreas: mandatoryReqs.slice(0, 3).map(r => ({
+          area: r.guideline,
+          agency: r.agency,
+          requirement: r.requirement,
+        })),
+        lastCalculated: new Date().toISOString(),
+      },
+    });
+  } catch (error) {
+    logger.error('Compliance score calculation failed', { error });
+    res.status(500).json({ success: false, error: 'Compliance score calculation failed' });
   }
 });
 
@@ -363,9 +598,16 @@ router.get('/alerts/stream', async (req: Request, res: Response) => {
     // Send heartbeat
     res.write(`data: ${JSON.stringify({ type: 'heartbeat', timestamp: new Date().toISOString() })}\n\n`);
   }, 30000);
-  
+
+  // Max connection lifetime: 1 hour to prevent stale connections
+  const maxLifetimeId = setTimeout(() => {
+    res.write(`data: ${JSON.stringify({ type: 'timeout', message: 'Connection expired after 1 hour. Please reconnect.' })}\n\n`);
+    res.end();
+  }, 60 * 60 * 1000);
+
   req.on('close', () => {
     clearInterval(intervalId);
+    clearTimeout(maxLifetimeId);
     logger.info('SSE connection closed', { userId });
   });
 });

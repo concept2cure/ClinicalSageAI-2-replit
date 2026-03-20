@@ -133,7 +133,7 @@ After login, the sidebar shows these modules. **Only click items marked ✅**:
 sudo pg_ctlcluster 15 main start
 
 # 2. Start server
-cd /workspaces/ClinicalSageAI-2-replit
+cd /workspaces/Concept2Cure.RI-2-replit
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/trialsage" \
 JWT_SECRET="demo-secret-key-for-lumen-meeting-2026-03" \
 NODE_ENV=development \

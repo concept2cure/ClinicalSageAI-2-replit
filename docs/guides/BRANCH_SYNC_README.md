@@ -51,7 +51,7 @@ When conflicts are detected:
 
 ```bash
 # Make sure you're in the repository root
-cd /path/to/ClinicalSageAI-2-replit
+cd /path/to/Concept2Cure.RI-2-replit
 
 # Run the synchronization
 ./scripts/sync-branches.sh
@@ -316,7 +316,7 @@ ssh-add ~/.ssh/id_rsa
 
 ## License
 
-This synchronization system is part of the ClinicalSageAI-2-replit project and follows the same license terms.
+This synchronization system is part of the Concept2Cure.RI-2-replit project and follows the same license terms.
 
 ---
 

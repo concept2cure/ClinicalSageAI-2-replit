@@ -78,7 +78,7 @@ class AuditTrailPDF(FPDF):
         self.set_y(-12)
         self.set_font("Helvetica", "I", 6)
         self.set_text_color(*_GRAY)
-        self.cell(0, 4, "ClinicalSageAI - 21 CFR Part 11 Compliant Audit Trail - Confidential", align="L")
+        self.cell(0, 4, "Concept2Cure.RI - 21 CFR Part 11 Compliant Audit Trail - Confidential", align="L")
         self.cell(0, 4, f"Page {self.page_no()}/{{nb}}", align="R")
 
 
@@ -104,7 +104,7 @@ def _build_cover(pdf: AuditTrailPDF, pp_row: dict[str, Any]):
     meta_lines = [
         f"Proof Pack ID: {_safe_str(pp_row.get('id'))}",
         f"Program ID: {_safe_str(pp_row.get('program_id'))}",
-        f"Generator: ClinicalSageAI v{_safe_str(pp_row.get('generator_version', 'unknown'))}",
+        f"Generator: Concept2Cure.RI v{_safe_str(pp_row.get('generator_version', 'unknown'))}",
         f"Manifest Hash: {_safe_str(pp_row.get('manifest_hash'))}",
     ]
     for line in meta_lines:
@@ -169,7 +169,7 @@ def _build_event_table(pdf: AuditTrailPDF, pp_row: dict[str, Any]):
         pdf.set_text_color(*_BLACK)
         pdf.multi_cell(0, 4, _sanitize(
             "Note: Audit events are populated when regulatory actions are performed "
-            "through the ClinicalSageAI platform. This proof pack may have been "
+            "through the Concept2Cure.RI platform. This proof pack may have been "
             "created before audit event logging was enabled."
         ))
         return
@@ -234,7 +234,7 @@ def _build_attestation(pdf: AuditTrailPDF, pp_row: dict[str, Any]):
     pdf.set_font("Helvetica", "", 8)
     pdf.set_text_color(*_BLACK)
     pdf.multi_cell(0, 4, _sanitize(
-        "This audit trail was generated automatically by ClinicalSageAI. "
+        "This audit trail was generated automatically by Concept2Cure.RI. "
         "All events are recorded chronologically and are immutable once created. "
         "The integrity of this log can be verified by comparing the manifest hash "
         f"({_safe_str(pp_row.get('manifest_hash', 'N/A'))}) "

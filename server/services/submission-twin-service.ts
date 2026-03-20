@@ -38,6 +38,9 @@ import {
 } from '../../shared/schema';
 import { eq, and, desc, sql, count, inArray, isNull } from 'drizzle-orm';
 import { ai } from '../lib/unified-ai-client';
+import { getOpenAIClient } from './openai-client';
+
+const openai = getOpenAIClient();
 
 // ── Enum validators ──
 

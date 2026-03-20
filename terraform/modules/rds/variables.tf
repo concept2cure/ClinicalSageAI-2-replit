@@ -25,7 +25,7 @@ variable "max_allocated_storage" {
 
 variable "database_name" {
   type    = string
-  default = "clinicalsage"
+  default = "concept2cure-ri"
 }
 
 variable "master_username" {

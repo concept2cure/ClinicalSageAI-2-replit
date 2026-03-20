@@ -1,374 +1,374 @@
-/workspaces/ClinicalSageAI-2-replit/server/api/vault/routes.ts:11:import { getRequestDbClient } from '../../middleware/tenantContext';
-/workspaces/ClinicalSageAI-2-replit/server/api/drafting/routes.ts:17:import { getRequestDbClient } from '../../middleware/tenantContext';
-/workspaces/ClinicalSageAI-2-replit/server/db/tenantDbHelper.ts:26:    if (req.tenantContext?.organizationId) {
-/workspaces/ClinicalSageAI-2-replit/server/db/tenantDbHelper.ts:27:      return new TenantDb(req.tenantContext.organizationId);
-/workspaces/ClinicalSageAI-2-replit/server/db/tenantDbHelper.ts:51:  if (!req.tenantId && !req.tenantContext?.organizationId) {
-/workspaces/ClinicalSageAI-2-replit/server/db/tenantDbHelper.ts:55:  return req.tenantId || req.tenantContext!.organizationId;
-/workspaces/ClinicalSageAI-2-replit/server/db/tenantDb.ts:16:import { TenantContext } from '../middleware/tenantContext';
-/workspaces/ClinicalSageAI-2-replit/server/db/tenantDb.ts:34:  constructor(tenantContext: TenantContext) {
-/workspaces/ClinicalSageAI-2-replit/server/db/tenantDb.ts:35:    this.orgId = tenantContext.organizationId;
-/workspaces/ClinicalSageAI-2-replit/server/db/tenantDb.ts:36:    this.clientId = tenantContext.clientWorkspaceId;
-/workspaces/ClinicalSageAI-2-replit/server/db/tenantDb.ts:220:export function createTenantDb(tenantContext: TenantContext): TenantDb {
-/workspaces/ClinicalSageAI-2-replit/server/db/tenantDb.ts:221:  return new TenantDb(tenantContext);
-/workspaces/ClinicalSageAI-2-replit/server/routes/change-management.ts:16:import { requireOrganizationContext } from '../middleware/tenantContext';
-/workspaces/ClinicalSageAI-2-replit/server/routes/tenant-config.ts:11:import { requireOrganizationContext } from '../middleware/tenantContext';
-/workspaces/ClinicalSageAI-2-replit/server/routes/ivdr-binder-routes.ts:29:    const fromContext = (req as any).tenantContext?.organizationId;
-/workspaces/ClinicalSageAI-2-replit/server/routes/tenant-stats.ts:19:} from '../middleware/tenantContext';
-/workspaces/ClinicalSageAI-2-replit/server/routes/concept2cure.ts:37:import { requireOrganizationContext, tenantContextMiddleware } from '../middleware/tenantContext';
-/workspaces/ClinicalSageAI-2-replit/server/routes/concept2cure.ts:107:router.use(tenantContextMiddleware);
-/workspaces/ClinicalSageAI-2-replit/server/routes/concept2cure.ts:151:    const orgId = req.tenantContext?.organizationId
-/workspaces/ClinicalSageAI-2-replit/server/routes/concept2cure.ts:152:      ? parseInt(req.tenantContext.organizationId, 10)
-/workspaces/ClinicalSageAI-2-replit/server/routes/concept2cure.ts:558:  if (req.tenantContext?.organizationId) {
-/workspaces/ClinicalSageAI-2-replit/server/routes/concept2cure.ts:560:      typeof req.tenantContext.organizationId === 'number'
-/workspaces/ClinicalSageAI-2-replit/server/routes/concept2cure.ts:561:        ? req.tenantContext.organizationId
-/workspaces/ClinicalSageAI-2-replit/server/routes/concept2cure.ts:562:        : parseInt(String(req.tenantContext.organizationId), 10);
-/workspaces/ClinicalSageAI-2-replit/server/routes/concept2cure.ts:586:  // Check if tenantContext has clientWorkspaceId (from tenant middleware)
-/workspaces/ClinicalSageAI-2-replit/server/routes/concept2cure.ts:587:  const ctx = req.tenantContext as Record<string, unknown> | undefined;
-/workspaces/ClinicalSageAI-2-replit/server/routes/concept2cure.ts:726: * @param req.tenantContext.organizationId - Required organization context
-/workspaces/ClinicalSageAI-2-replit/server/routes/concept2cure.ts:765:      organizationId: req.tenantContext?.organizationId,
-/workspaces/ClinicalSageAI-2-replit/server/routes/concept2cure.ts:911:      organizationId: req.tenantContext?.organizationId,
-/workspaces/ClinicalSageAI-2-replit/server/routes/ivdr-routes.ts:23:  // Uses the authenticated session's tenantId / tenantContext set by authMiddleware.
-/workspaces/ClinicalSageAI-2-replit/server/routes/ivdr-routes.ts:27:    const fromContext = (req as any).tenantContext?.organizationId;
-/workspaces/ClinicalSageAI-2-replit/server/routes/cer-unified.ts:34:  (req as any).tenantContext = {
-/workspaces/ClinicalSageAI-2-replit/server/routes/moduleIntegrationRoutes.ts:24:  req.tenantContext = { organizationId };
-/workspaces/ClinicalSageAI-2-replit/server/routes/fda510k-unified.ts:115:  (req as any).tenantContext = {
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-rules.ts:23:import { getTenantContext, getRequestActor } from '../utils/tenantContext';
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-rules.ts:111:    const tenantContext = getTenantContext(req);
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-rules.ts:112:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-rules.ts:113:    const { organizationId } = tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-rules.ts:155:    const tenantContext = getTenantContext(req);
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-rules.ts:156:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-rules.ts:157:    const { organizationId } = tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-rules.ts:210:    const tenantContext = getTenantContext(req);
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-rules.ts:211:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-rules.ts:212:    const { organizationId } = tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-rules.ts:233:    const tenantContext = getTenantContext(req);
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-rules.ts:234:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-rules.ts:235:    const { organizationId } = tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-rules.ts:321:    const tenantContext = getTenantContext(req);
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-rules.ts:322:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-rules.ts:323:    const { organizationId } = tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-rules.ts:359:    const tenantContext = getTenantContext(req);
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-rules.ts:360:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-rules.ts:361:    const { organizationId } = tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-rules.ts:417:    const tenantContext = getTenantContext(req);
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-rules.ts:418:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-rules.ts:419:    const { organizationId } = tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/tenant-quality-validation.ts:12:import { requireOrganizationContext } from '../middleware/tenantContext';
-/workspaces/ClinicalSageAI-2-replit/server/routes/tenant-quality-validation.ts:24:    const { organizationId } = req.tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/tenant-quality-validation.ts:227:    const { organizationId, userId } = req.tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/tenant-quality-validation.ts:321:    const { organizationId } = req.tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/projects-management.ts:7:import { getRequestActor, getTenantContext } from '../utils/tenantContext';
-/workspaces/ClinicalSageAI-2-replit/server/routes/projects-management.ts:41:    const tenantContext = getTenantContext(req);
-/workspaces/ClinicalSageAI-2-replit/server/routes/projects-management.ts:42:    if ('error' in tenantContext) {
-/workspaces/ClinicalSageAI-2-replit/server/routes/projects-management.ts:43:      return res.status(400).json({ error: tenantContext.error });
-/workspaces/ClinicalSageAI-2-replit/server/routes/projects-management.ts:45:    const { organizationId, clientWorkspaceId } = tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/projects-management.ts:92:    const tenantContext = getTenantContext(req);
-/workspaces/ClinicalSageAI-2-replit/server/routes/projects-management.ts:93:    if ('error' in tenantContext) {
-/workspaces/ClinicalSageAI-2-replit/server/routes/projects-management.ts:94:      return res.status(400).json({ error: tenantContext.error });
-/workspaces/ClinicalSageAI-2-replit/server/routes/projects-management.ts:96:    const { organizationId, clientWorkspaceId } = tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/projects-management.ts:289:    const tenantContext = getTenantContext(req);
-/workspaces/ClinicalSageAI-2-replit/server/routes/projects-management.ts:290:    if ('error' in tenantContext) {
-/workspaces/ClinicalSageAI-2-replit/server/routes/projects-management.ts:291:      return res.status(400).json({ error: tenantContext.error });
-/workspaces/ClinicalSageAI-2-replit/server/routes/projects-management.ts:293:    const { organizationId } = tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/projects-management.ts:366:    const tenantContext = getTenantContext(req);
-/workspaces/ClinicalSageAI-2-replit/server/routes/projects-management.ts:367:    if ('error' in tenantContext) {
-/workspaces/ClinicalSageAI-2-replit/server/routes/projects-management.ts:368:      return res.status(400).json({ error: tenantContext.error });
-/workspaces/ClinicalSageAI-2-replit/server/routes/projects-management.ts:370:    const { organizationId } = tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/regulatorySubmissions.ts:34:    const { organizationId, clientWorkspaceId } = req.tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/regulatorySubmissions.ts:58:    const { organizationId, clientWorkspaceId, userId } = req.tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/regulatorySubmissions.ts:83:    const { organizationId, clientWorkspaceId } = req.tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/regulatorySubmissions.ts:114:    const { organizationId, clientWorkspaceId } = req.tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/regulatorySubmissions.ts:155:      const { organizationId, clientWorkspaceId } = req.tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/regulatorySubmissions.ts:197:    const { organizationId, clientWorkspaceId } = req.tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/regulatorySubmissions.ts:247:      const { organizationId, clientWorkspaceId } = req.tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/regulatorySubmissions.ts:298:    const { organizationId, clientWorkspaceId } = req.tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/regulatorySubmissions.ts:353:      const { organizationId, clientWorkspaceId, userId } = req.tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/maud-routes.ts:17:  validateTenantAccess = require('../middleware/tenantContext').default;
-/workspaces/ClinicalSageAI-2-replit/server/routes/section-quality-gates.ts:12:import tenantContext from '../middleware/tenantContext.js';
-/workspaces/ClinicalSageAI-2-replit/server/routes/section-quality-gates.ts:23:router.use(tenantContext);
-/workspaces/ClinicalSageAI-2-replit/server/routes/section-quality-gates.ts:66:    const organizationId = req.tenantContext?.organizationId;
-/workspaces/ClinicalSageAI-2-replit/server/routes/section-quality-gates.ts:113:    const organizationId = req.tenantContext?.organizationId;
-/workspaces/ClinicalSageAI-2-replit/server/routes/section-quality-gates.ts:114:    const userId = req.tenantContext?.userId;
-/workspaces/ClinicalSageAI-2-replit/server/routes/section-quality-gates.ts:188:      const organizationId = req.tenantContext?.organizationId;
-/workspaces/ClinicalSageAI-2-replit/server/routes/section-quality-gates.ts:225:    const organizationId = req.tenantContext?.organizationId;
-/workspaces/ClinicalSageAI-2-replit/server/routes/section-quality-gates.ts:226:    const userId = req.tenantContext?.userId;
-/workspaces/ClinicalSageAI-2-replit/server/routes/product-audit.ts:19:import { requireOrganizationContext } from '../middleware/tenantContext';
-/workspaces/ClinicalSageAI-2-replit/server/routes/quality-validation-routes.ts:12:import { requireOrganizationContext } from '../middleware/tenantContext';
-/workspaces/ClinicalSageAI-2-replit/server/routes/quality-validation-routes.ts:47:    const { organizationId } = req.tenantContext || {};
-/workspaces/ClinicalSageAI-2-replit/server/routes/quality-validation-routes.ts:213:    const { organizationId } = req.tenantContext || {};
-/workspaces/ClinicalSageAI-2-replit/server/routes/quality-validation-routes.ts:426:    const { organizationId } = req.tenantContext || {};
-/workspaces/ClinicalSageAI-2-replit/server/routes/ai-claims-routes.ts:22:    const fromContext = (req as any).tenantContext?.organizationId;
-/workspaces/ClinicalSageAI-2-replit/server/routes/users.ts:65:    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; email: string };
-/workspaces/ClinicalSageAI-2-replit/server/routes/users.ts:115:    const decoded = jwt.verify(token, JWT_SECRET) as {
-/workspaces/ClinicalSageAI-2-replit/server/routes/auth.ts:103:    const decoded = jwt.verify(token, JWT_SECRET) as {
-/workspaces/ClinicalSageAI-2-replit/server/routes/auth.ts:488:    const decoded = jwt.verify(refreshToken, JWT_SECRET) as {
-/workspaces/ClinicalSageAI-2-replit/server/routes/auth.ts:552:    const decoded = jwt.verify(token, JWT_SECRET) as {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cerv2-document-routes.ts:18:  const tenantOrg = req.tenantContext?.organizationId;
-/workspaces/ClinicalSageAI-2-replit/server/routes/510k-api-routes.ts:306:    const { organizationId, clientWorkspaceId } = (req as any).tenantContext || {};
-/workspaces/ClinicalSageAI-2-replit/server/routes/510k-api-routes.ts:352:    const { organizationId } = (req as any).tenantContext || {};
-/workspaces/ClinicalSageAI-2-replit/server/routes/510k-api-routes.ts:402:    const { organizationId } = (req as any).tenantContext || {};
-/workspaces/ClinicalSageAI-2-replit/server/routes/510k-api-routes.ts:435:    const { organizationId } = (req as any).tenantContext || {};
-/workspaces/ClinicalSageAI-2-replit/server/routes/510k-api-routes.ts:462:    const { organizationId } = (req as any).tenantContext || {};
-/workspaces/ClinicalSageAI-2-replit/server/routes/medical-device-api.ts:14:import { tenantContextMiddleware } from '../middleware/tenantContext';
-/workspaces/ClinicalSageAI-2-replit/server/routes/medical-device-api.ts:27:router.use(tenantContextMiddleware);
-/workspaces/ClinicalSageAI-2-replit/server/routes/medical-device-api.ts:344:    const organizationId = Number((req as any).tenantContext?.organizationId || (req as any).organizationId);
-/workspaces/ClinicalSageAI-2-replit/server/routes/medical-device-api.ts:369:    const organizationId = Number((req as any).tenantContext?.organizationId || (req as any).organizationId);
-/workspaces/ClinicalSageAI-2-replit/server/routes/medical-device-api.ts:411:    const organizationId = Number((req as any).tenantContext?.organizationId || (req as any).organizationId);
-/workspaces/ClinicalSageAI-2-replit/server/routes/medical-device-api.ts:436:    const organizationId = Number((req as any).tenantContext?.organizationId || (req as any).organizationId);
-/workspaces/ClinicalSageAI-2-replit/server/routes/medical-device-api.ts:683:    const organizationId = Number((req as any).tenantContext?.organizationId || (req as any).organizationId || 0);
-/workspaces/ClinicalSageAI-2-replit/server/routes/medical-device-api.ts:713:    const organizationId = Number((req as any).tenantContext?.organizationId || (req as any).organizationId || 0);
-/workspaces/ClinicalSageAI-2-replit/server/routes/cerv2-sections.ts:18:  const tenantOrg = req.tenantContext?.organizationId;
-/workspaces/ClinicalSageAI-2-replit/server/routes/510k-compliance-routes.ts:35:  (req as any).tenantContext = {
-/workspaces/ClinicalSageAI-2-replit/server/routes/510k-compliance-routes.ts:53:    const tenantContext = (req as any).tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/510k-compliance-routes.ts:57:      tenantContext,
-/workspaces/ClinicalSageAI-2-replit/server/routes/510k-compliance-routes.ts:204:    const tenantContext = (req as any).tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/510k-compliance-routes.ts:208:      tenantContext,
-/workspaces/ClinicalSageAI-2-replit/server/routes/510k-compliance-routes.ts:355:    const tenantContext = (req as any).tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/510k-compliance-routes.ts:361:      tenantContext,
-/workspaces/ClinicalSageAI-2-replit/server/routes/510k-compliance-routes.ts:401:    const tenantContext = (req as any).tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/510k-compliance-routes.ts:406:      tenantContext,
-/workspaces/ClinicalSageAI-2-replit/server/routes/sentinel-routes.ts:20:import { getTenantContext } from '../utils/tenantContext';
-/workspaces/ClinicalSageAI-2-replit/server/routes/sentinel-routes.ts:41:    const tenantContext = getTenantContext(req);
-/workspaces/ClinicalSageAI-2-replit/server/routes/sentinel-routes.ts:42:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
-/workspaces/ClinicalSageAI-2-replit/server/routes/sentinel-routes.ts:43:    const { organizationId } = tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/sentinel-routes.ts:69:    const tenantContext = getTenantContext(req);
-/workspaces/ClinicalSageAI-2-replit/server/routes/sentinel-routes.ts:70:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
-/workspaces/ClinicalSageAI-2-replit/server/routes/sentinel-routes.ts:71:    const { organizationId } = tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/sentinel-routes.ts:103:    const tenantContext = getTenantContext(req);
-/workspaces/ClinicalSageAI-2-replit/server/routes/sentinel-routes.ts:104:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
-/workspaces/ClinicalSageAI-2-replit/server/routes/sentinel-routes.ts:105:    const { organizationId } = tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/sentinel-routes.ts:135:    const tenantContext = getTenantContext(req);
-/workspaces/ClinicalSageAI-2-replit/server/routes/sentinel-routes.ts:136:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
-/workspaces/ClinicalSageAI-2-replit/server/routes/sentinel-routes.ts:137:    const { organizationId } = tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/sentinel-routes.ts:197:    const tenantContext = getTenantContext(req);
-/workspaces/ClinicalSageAI-2-replit/server/routes/sentinel-routes.ts:198:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
-/workspaces/ClinicalSageAI-2-replit/server/routes/sentinel-routes.ts:199:    const { organizationId } = tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/sentinel-routes.ts:226:    const tenantContext = getTenantContext(req);
-/workspaces/ClinicalSageAI-2-replit/server/routes/sentinel-routes.ts:227:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
-/workspaces/ClinicalSageAI-2-replit/server/routes/sentinel-routes.ts:228:    const { organizationId } = tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/sentinel-routes.ts:269:    const tenantContext = getTenantContext(req);
-/workspaces/ClinicalSageAI-2-replit/server/routes/sentinel-routes.ts:270:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
-/workspaces/ClinicalSageAI-2-replit/server/routes/sentinel-routes.ts:271:    const { organizationId } = tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-hierarchy.ts:21:import { getTenantContext, getRequestActor } from '../utils/tenantContext';
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-hierarchy.ts:59:    const tenantContext = getTenantContext(req);
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-hierarchy.ts:60:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-hierarchy.ts:61:    const { organizationId, clientWorkspaceId } = tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-hierarchy.ts:112:    const tenantContext = getTenantContext(req);
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-hierarchy.ts:113:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-hierarchy.ts:114:    const { organizationId } = tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-hierarchy.ts:136:    const tenantContext = getTenantContext(req);
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-hierarchy.ts:137:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-hierarchy.ts:138:    const { organizationId } = tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-hierarchy.ts:163:    const tenantContext = getTenantContext(req);
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-hierarchy.ts:164:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-hierarchy.ts:165:    const { organizationId } = tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-hierarchy.ts:198:    const tenantContext = getTenantContext(req);
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-hierarchy.ts:199:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-hierarchy.ts:200:    const { organizationId } = tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-hierarchy.ts:345:    const tenantContext = getTenantContext(req);
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-hierarchy.ts:346:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-hierarchy.ts:347:    const { organizationId } = tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-hierarchy.ts:452:    const tenantContext = getTenantContext(req);
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-hierarchy.ts:453:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-hierarchy.ts:454:    const { organizationId } = tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-hierarchy.ts:477:    const tenantContext = getTenantContext(req);
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-hierarchy.ts:478:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-hierarchy.ts:479:    const { organizationId, clientWorkspaceId } = tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/documentAuthoring.routes.ts:58:      tenantContext?: {
-/workspaces/ClinicalSageAI-2-replit/server/routes/documentAuthoring.routes.ts:263:      req.user?.organizationId || req.tenantContext?.organizationId || 1
-/workspaces/ClinicalSageAI-2-replit/server/routes/documentAuthoring.routes.ts:426:      req.user?.organizationId || req.tenantContext?.organizationId || 1
-/workspaces/ClinicalSageAI-2-replit/server/routes/documentAuthoring.routes.ts:565:        req.user?.organizationId || req.tenantContext?.organizationId || 1
-/workspaces/ClinicalSageAI-2-replit/server/routes/documentAuthoring.routes.ts:567:      const clientWorkspaceId = Number((req as any).tenantContext?.clientWorkspaceId || 1);
-/workspaces/ClinicalSageAI-2-replit/server/routes/documentAuthoring.routes.ts:1069:        req.user?.organizationId || req.tenantContext?.organizationId || 1
-/workspaces/ClinicalSageAI-2-replit/server/routes/documentAuthoring.routes.ts:1495:        req.user?.organizationId || req.tenantContext?.organizationId || 1
-/workspaces/ClinicalSageAI-2-replit/server/routes/documentAuthoring.routes.ts:1569:      req.user?.organizationId || req.tenantContext?.organizationId || 1
-/workspaces/ClinicalSageAI-2-replit/server/routes/tenant-section-gating.ts:33:import { tenantContext } from '../middleware/tenantContext';
-/workspaces/ClinicalSageAI-2-replit/server/routes/tenant-section-gating.ts:40:router.use(tenantContext);
-/workspaces/ClinicalSageAI-2-replit/server/routes/cortex-unified.ts:78:  (req as any).tenantContext = {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cortex-unified.ts:188:      parseInt((req as any).tenantContext?.organizationId, 10) ||
-/workspaces/ClinicalSageAI-2-replit/server/routes/cortex-unified.ts:508:      parseInt((req as any).tenantContext?.organizationId, 10) ||
-/workspaces/ClinicalSageAI-2-replit/server/routes/cortex-unified.ts:731:    const decoded = jwt.verify(
-/workspaces/ClinicalSageAI-2-replit/server/routes/programs.ts:152:    const tenantId = (req as any).tenantContext?.tenantId || 1;
-/workspaces/ClinicalSageAI-2-replit/server/routes/programs.ts:217:    const tenantId = (req as any).tenantContext?.tenantId || 1;
-/workspaces/ClinicalSageAI-2-replit/server/routes/programs.ts:293:    const tenantId = (req as any).tenantContext?.tenantId || 1;
-/workspaces/ClinicalSageAI-2-replit/server/routes/programs.ts:529:    const tenantId = (req as any).tenantContext?.tenantId || 1;
-/workspaces/ClinicalSageAI-2-replit/server/routes/tenant-traceability.ts:20:import { tenantContextMiddleware, requireOrganizationContext } from '../middleware/tenantContext';
-/workspaces/ClinicalSageAI-2-replit/server/routes/tenant-traceability.ts:39:      tenantContext?: {
-/workspaces/ClinicalSageAI-2-replit/server/routes/tenant-traceability.ts:63:router.use(tenantContextMiddleware);
-/workspaces/ClinicalSageAI-2-replit/server/routes/tenant-traceability.ts:72:    const { organizationId } = req.tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/tenant-traceability.ts:106:    const { organizationId } = req.tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/tenant-traceability.ts:144:    const { organizationId } = req.tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/tenant-traceability.ts:236:    const { organizationId } = req.tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/tenant-traceability.ts:338:    const { organizationId } = req.tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/tenant-traceability.ts:386:    const { organizationId, userId } = req.tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/tenant-traceability.ts:465:    const { organizationId } = req.tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/chat.ts:183:    const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
-/workspaces/ClinicalSageAI-2-replit/server/routes/chat.ts:249:      (req as any).tenantContext?.organizationUuid ||
-/workspaces/ClinicalSageAI-2-replit/server/routes/cerRoutes.ts:27:      tenantContext?: {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cerRoutes.ts:76:    const payload = jwt.verify(token, process.env.JWT_SECRET!) as { id: string };
-/workspaces/ClinicalSageAI-2-replit/server/routes/cortexQueryRoutes.ts:126:      req.tenantContext?.organizationUuid || (req.headers['x-org-uuid'] as string | undefined);
-/workspaces/ClinicalSageAI-2-replit/server/routes/evidence.ts:169:    const tenantId = (req as any).tenantContext?.tenantId || 1;
-/workspaces/ClinicalSageAI-2-replit/server/routes/evidence.ts:320:    const tenantId = (req as any).tenantContext?.tenantId || 1;
-/workspaces/ClinicalSageAI-2-replit/server/routes/evidence.ts:495:    const tenantId = (req as any).tenantContext?.tenantId || 1;
-/workspaces/ClinicalSageAI-2-replit/server/routes/evidence.ts:592:    const tenantId = (req as any).tenantContext?.tenantId || 1;
-/workspaces/ClinicalSageAI-2-replit/server/routes/traceability-mapping-routes.ts:12:import { requireOrganizationContext } from '../middleware/tenantContext';
-/workspaces/ClinicalSageAI-2-replit/server/routes/traceability-mapping-routes.ts:48:    const { organizationId } = req.tenantContext || {};
-/workspaces/ClinicalSageAI-2-replit/server/routes/traceability-mapping-routes.ts:173:    const { organizationId } = req.tenantContext || {};
-/workspaces/ClinicalSageAI-2-replit/server/routes/traceability-mapping-routes.ts:291:    const { organizationId } = req.tenantContext || {};
-/workspaces/ClinicalSageAI-2-replit/server/routes/traceability-mapping-routes.ts:377:      const { organizationId } = req.tenantContext || {};
-/workspaces/ClinicalSageAI-2-replit/server/routes/traceability-mapping-routes.ts:512:      const { organizationId } = req.tenantContext || {};
-/workspaces/ClinicalSageAI-2-replit/server/routes/traceability-mapping-routes.ts:584:    const { organizationId } = req.tenantContext || {};
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:60:const requireAuth = (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:113:  router.post('/agents', requireAuth, requireTenant, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:131:  router.get('/agents/:agentId', requireAuth, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:145:  router.post('/threads', requireAuth, requireTenant, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:164:  router.get('/threads/:threadId', requireAuth, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:178:  router.post('/threads/:threadId/checkpoints', requireAuth, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:196:  router.get('/threads/:threadId/checkpoints', requireAuth, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:211:  router.post('/threads/:threadId/breakpoints', requireAuth, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:228:  router.post('/breakpoints/:breakpointId/resolve', requireAuth, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:252:  router.post('/audit/events', requireAuth, requireTenant, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:272:  router.get('/audit/events', requireAuth, requireTenant, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:295:  router.get('/audit/verify/:entityType/:entityId', requireAuth, requireTenant, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:314:  router.post('/audit/signatures', requireAuth, requireTenant, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:333:  router.get('/audit/signatures/:signatureId/verify', requireAuth, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:351:  router.post('/dossiers', requireAuth, requireTenant, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:369:  router.get('/dossiers/:dossierId', requireAuth, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:383:  router.post('/dossiers/:dossierId/branches', requireAuth, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:400:  router.post('/dossiers/branches/:branchId/sync', requireAuth, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:417:  router.post('/dossiers/:dossierId/comments', requireAuth, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:438:  router.post('/manufacturing/equipment', requireAuth, requireTenant, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:456:  router.get('/manufacturing/equipment/:equipmentId', requireAuth, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:470:  router.post('/manufacturing/batches', requireAuth, requireTenant, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:489:  router.get('/manufacturing/batches/:batchId', requireAuth, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:503:  router.post('/manufacturing/batches/:batchId/tests', requireAuth, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:522:  router.get('/manufacturing/batches/:batchId/release-readiness', requireAuth, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:536:  router.post('/manufacturing/transform/isa95-to-fhir', requireAuth, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:557:  router.post('/digital-twins', requireAuth, requireTenant, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:575:  router.get('/digital-twins/:twinId', requireAuth, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:589:  router.post('/digital-twins/:twinId/sync', requireAuth, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:606:  router.post('/digital-twins/:twinId/predictions', requireAuth, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:624:  router.post('/digital-twins/:twinId/drift-analysis', requireAuth, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:645:  router.post('/federated/models', requireAuth, requireTenant, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:663:  router.get('/federated/models/:modelId', requireAuth, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:677:  router.post('/federated/models/:modelId/participants', requireAuth, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:694:  router.get('/federated/models/:modelId/participants', requireAuth, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:710:  router.post('/federated/models/:modelId/gradients', requireAuth, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:730:  router.post('/federated/models/:modelId/aggregate', requireAuth, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:744:  router.get('/federated/participants/:participantId/privacy-budget', requireAuth, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:758:  router.post('/federated/safety-signals', requireAuth, requireTenant, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:776:  router.get('/federated/safety-signals', requireAuth, requireTenant, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:794:  router.post('/federated/horizon-scans', requireAuth, requireTenant, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:812:  router.get('/federated/horizon-scans/actionable', requireAuth, requireTenant, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:833:  router.post('/fhir/rules', requireAuth, requireTenant, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:851:  router.get('/fhir/rules', requireAuth, requireTenant, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:873:  router.post('/fhir/validate', requireAuth, requireTenant, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:893:  router.post('/fhir/validate/batch', requireAuth, requireTenant, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:911:  router.get('/fhir/validation-history/:resourceType/:resourceId', requireAuth, requireTenant, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/cognitive-ecosystem.routes.ts:931:  router.post('/fhir/rules/install-builtin', requireAuth, requireTenant, asyncHandler(async (req, res) => {
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-sections.ts:44:    parseInt((req as any).tenantContext?.organizationId, 10) ||
-/workspaces/ClinicalSageAI-2-replit/server/routes/cortexRoutes.ts:12:import { requireAuth, requireOrgAccess } from '../middleware/auth';
-/workspaces/ClinicalSageAI-2-replit/server/routes/cortexRoutes.ts:126:router.use(requireAuth);
-/workspaces/ClinicalSageAI-2-replit/server/routes/fda510k-routes.ts:537:  (req as any).tenantContext = {
-/workspaces/ClinicalSageAI-2-replit/server/routes/fda510k-routes.ts:842:      const tenantContext = (req as any).tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/fda510k-routes.ts:875:      const fdaData = await callFDAAPI(fdaUrl, tenantContext.organizationId);
-/workspaces/ClinicalSageAI-2-replit/server/routes/fda510k-routes.ts:982:      const tenantContext = (req as any).tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/fda510k-routes.ts:1022:      const fdaData = await callFDAAPI(fdaUrl, tenantContext.organizationId);
-/workspaces/ClinicalSageAI-2-replit/server/routes/fda510k-routes.ts:1108:    const tenantContext = (req as any).tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/fda510k-routes.ts:1164:    const fdaData = await callFDAAPI(fdaUrl, tenantContext.organizationId);
-/workspaces/ClinicalSageAI-2-replit/server/routes/fda510k-routes.ts:1283:      const tenantContext = (req as any).tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/fda510k-routes.ts:1288:        organizationId: tenantContext.organizationId,
-/workspaces/ClinicalSageAI-2-replit/server/routes/fda510k-routes.ts:1394:      results.organizationId = tenantContext.organizationId;
-/workspaces/ClinicalSageAI-2-replit/server/routes/fda510k-routes.ts:1423:    const tenantContext = (req as any).tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/fda510k-routes.ts:1468:    const fdaData = await callFDAAPI(fdaUrl, tenantContext.organizationId);
-/workspaces/ClinicalSageAI-2-replit/server/routes/fda510k-routes.ts:1534:    const tenantContext = (req as any).tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/fda510k-routes.ts:1560:    const fdaData = await callFDAAPI(fdaUrl, tenantContext.organizationId);
-/workspaces/ClinicalSageAI-2-replit/server/routes/fda510k-routes.ts:1626:    const tenantContext = (req as any).tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/fda510k-routes.ts:1656:      const fdaData = await callFDAAPI(fdaUrl, tenantContext.organizationId);
-/workspaces/ClinicalSageAI-2-replit/server/routes/fda510k-routes.ts:1728:    const tenantContext = (req as any).tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/fda510k-routes.ts:1732:      organizationId: tenantContext.organizationId,
-/workspaces/ClinicalSageAI-2-replit/server/routes/ind-unified.ts:31:  (req as any).tenantContext = {
-/workspaces/ClinicalSageAI-2-replit/server/routes/authEnterprise.ts:341:      decoded = jwt.verify(oldToken, JWT_SECRET) as any;
-/workspaces/ClinicalSageAI-2-replit/server/routes/authEnterprise.ts:406:    const decoded = jwt.verify(token, JWT_SECRET) as any;
-/workspaces/ClinicalSageAI-2-replit/server/routes/compliance-gap-analysis.ts:24:import { requireOrganizationContext } from '../middleware/tenantContext';
-/workspaces/ClinicalSageAI-2-replit/server/routes/module-subscriptions.ts:46:    const orgId = (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
-/workspaces/ClinicalSageAI-2-replit/server/routes/module-subscriptions.ts:65:    const orgId = (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
-/workspaces/ClinicalSageAI-2-replit/server/routes/module-subscriptions.ts:92:    const orgId = (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
-/workspaces/ClinicalSageAI-2-replit/server/routes/module-subscriptions.ts:127:    const orgId = (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
-/workspaces/ClinicalSageAI-2-replit/server/routes/module-subscriptions.ts:158:    const orgId = (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
-/workspaces/ClinicalSageAI-2-replit/server/routes/module-subscriptions.ts:207:    const orgId = (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
-/workspaces/ClinicalSageAI-2-replit/server/routes/module-subscriptions.ts:230:    const orgId = (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
-/workspaces/ClinicalSageAI-2-replit/server/routes/module-subscriptions.ts:262:    const orgId = (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
-/workspaces/ClinicalSageAI-2-replit/server/routes/module-subscriptions.ts:300:    const orgId = (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
-/workspaces/ClinicalSageAI-2-replit/server/routes/module-subscriptions.ts:329:    const orgId = (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
-/workspaces/ClinicalSageAI-2-replit/server/routes/tenant-ctq-factors.ts:12:import { requireOrganizationContext } from '../middleware/tenantContext';
-/workspaces/ClinicalSageAI-2-replit/server/routes/documents-unified.ts:66:  (req as any).tenantContext = {
-/workspaces/ClinicalSageAI-2-replit/server/routes/tenants.ts:18:} from '../middleware/tenantContext';
-/workspaces/ClinicalSageAI-2-replit/server/routes/510kRoutes.ts:67:  (req as any).tenantContext = {
-/workspaces/ClinicalSageAI-2-replit/server/routes/510kRoutes.ts:74:  console.log('Tenant Context:', (req as any).tenantContext);
-/workspaces/ClinicalSageAI-2-replit/server/routes/510kRoutes.ts:105:      const { organizationId, clientWorkspaceId } = (req as any).tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/510kRoutes.ts:145:    const { organizationId } = (req as any).tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/510kRoutes.ts:179:    const { organizationId } = (req as any).tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/510kRoutes.ts:206:    const { organizationId } = (req as any).tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/510kRoutes.ts:245:      const { organizationId } = (req as any).tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/510kRoutes.ts:314:      const { organizationId } = (req as any).tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/510kRoutes.ts:383:      const { organizationId } = (req as any).tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/510kRoutes.ts:421:    const { organizationId } = (req as any).tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/510kRoutes.ts:456:    const { organizationId } = (req as any).tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/project-modules.ts:14:import { getTenantContext } from '../utils/tenantContext';
-/workspaces/ClinicalSageAI-2-replit/server/routes/regulatory-intelligence-api.ts:14:import { tenantContextMiddleware } from '../middleware/tenantContext';
-/workspaces/ClinicalSageAI-2-replit/server/routes/regulatory-intelligence-api.ts:24:router.use(tenantContextMiddleware);
-/workspaces/ClinicalSageAI-2-replit/server/routes/realtime-validation.ts:13:import { requireOrganizationContext } from '../middleware/tenantContext';
-/workspaces/ClinicalSageAI-2-replit/server/routes/quality-management-api.ts:12:import { requireOrganizationContext } from '../middleware/tenantContext';
-/workspaces/ClinicalSageAI-2-replit/server/routes/quality-management-api.ts:37:    const { organizationId } = req.tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/quality-management-api.ts:164:    const { organizationId } = req.tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/quality-management-api.ts:415:      const { organizationId } = req.tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/quality-management-api.ts:469:    const { organizationId } = req.tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/quality-management-api.ts:490:    const { organizationId } = req.tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/quality-management-api.ts:578:    const { organizationId, userId } = req.tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/quality-management-api.ts:628:    const { organizationId, userId } = req.tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/routes/quality-management-api.ts:707:    const { organizationId } = req.tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/auth.ts:33:      tenantContext?: {
-/workspaces/ClinicalSageAI-2-replit/server/auth.ts:53: * Sets req.userId, req.userRole, req.userEmail, req.tenantId, req.tenantContext.
-/workspaces/ClinicalSageAI-2-replit/server/auth.ts:78:      const decoded = jwt.verify(apiKey, JWT_SECRET) as {
-/workspaces/ClinicalSageAI-2-replit/server/auth.ts:90:        req.tenantContext = {
-/workspaces/ClinicalSageAI-2-replit/server/auth.ts:108:      req.tenantContext = {
-/workspaces/ClinicalSageAI-2-replit/server/index.ts:770:    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
-/workspaces/ClinicalSageAI-2-replit/server/index.ts:847:    const userRole = (req as any).userRole || (req as any).tenantContext?.role || '';
-/workspaces/ClinicalSageAI-2-replit/server/index.ts:5802:      req.tenantContext?.organizationId ||
-/workspaces/ClinicalSageAI-2-replit/server/index.ts:5876:      req.tenantContext?.organizationId ||
-/workspaces/ClinicalSageAI-2-replit/server/auth/index.ts:61:      tenantContext?: {
-/workspaces/ClinicalSageAI-2-replit/server/services/license-manager.ts:227:      const orgId = (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
-/workspaces/ClinicalSageAI-2-replit/server/services/license-manager.ts:246:    const orgId = (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
-/workspaces/ClinicalSageAI-2-replit/server/middleware/featureToggleMiddleware.ts:26:    const { organizationId, clientWorkspaceId } = req.tenantContext || {};
-/workspaces/ClinicalSageAI-2-replit/server/middleware/auth.ts:1:// @ts-nocheck - Express.Request.user type conflicts with tenantContext.ts
-/workspaces/ClinicalSageAI-2-replit/server/middleware/auth.ts:48:      tenantContext?: {
-/workspaces/ClinicalSageAI-2-replit/server/middleware/auth.ts:92:    const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
-/workspaces/ClinicalSageAI-2-replit/server/middleware/auth.ts:124:export const requireAuth = authenticateToken;
-/workspaces/ClinicalSageAI-2-replit/server/middleware/auth.ts:255:    const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
-/workspaces/ClinicalSageAI-2-replit/server/middleware/auth.ts:287:  requireAuth,
-/workspaces/ClinicalSageAI-2-replit/server/middleware/setup.ts:11:import { requireTenantContext, tenantContextMiddleware } from './tenantContext';
-/workspaces/ClinicalSageAI-2-replit/server/middleware/setup.ts:80:      tenantContextMiddleware(req, res, async () => {
-/workspaces/ClinicalSageAI-2-replit/server/middleware/tenantContext.ts:43:      tenantContext?: {
-/workspaces/ClinicalSageAI-2-replit/server/middleware/tenantContext.ts:79:export function tenantContextMiddleware(req: Request, res: Response, next: NextFunction) {
-/workspaces/ClinicalSageAI-2-replit/server/middleware/tenantContext.ts:87:  const existing = req.tenantContext || ({} as any);
-/workspaces/ClinicalSageAI-2-replit/server/middleware/tenantContext.ts:90:  const tenantContext: TenantContext = {
-/workspaces/ClinicalSageAI-2-replit/server/middleware/tenantContext.ts:99:  req.tenantContext = tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/middleware/tenantContext.ts:103:    console.log('Tenant Context:', JSON.stringify(tenantContext));
-/workspaces/ClinicalSageAI-2-replit/server/middleware/tenantContext.ts:114:  if (!req.tenantContext?.organizationId) {
-/workspaces/ClinicalSageAI-2-replit/server/middleware/tenantContext.ts:122:    const contextOrgId = parseInt(req.tenantContext.organizationId, 10);
-/workspaces/ClinicalSageAI-2-replit/server/middleware/tenantContext.ts:150:    const decoded = jwt.verify(
-/workspaces/ClinicalSageAI-2-replit/server/middleware/tenantContext.ts:186:      req.tenantContext?.organizationUuid || decoded.organizationUuid || null;
-/workspaces/ClinicalSageAI-2-replit/server/middleware/tenantContext.ts:188:    req.tenantContext = {
-/workspaces/ClinicalSageAI-2-replit/server/middleware/tenantContext.ts:191:      clientWorkspaceId: req.tenantContext?.clientWorkspaceId || null,
-/workspaces/ClinicalSageAI-2-replit/server/middleware/tenantContext.ts:192:      module: req.tenantContext?.module || null,
-/workspaces/ClinicalSageAI-2-replit/server/middleware/tenantContext.ts:240:  if (!req.tenantContext?.clientWorkspaceId) {
-/workspaces/ClinicalSageAI-2-replit/server/middleware/tenantContext.ts:254:  if (!req.tenantContext?.module) {
-/workspaces/ClinicalSageAI-2-replit/server/middleware/tenantContext.ts:268:  return req.tenantContext;
-/workspaces/ClinicalSageAI-2-replit/server/middleware/tenantContext.ts:287:export const tenantContext = tenantContextMiddleware;
-/workspaces/ClinicalSageAI-2-replit/server/middleware/tenantContext.ts:290:  tenantContextMiddleware,
-/workspaces/ClinicalSageAI-2-replit/server/middleware/index.ts:4:export * from './tenantContext';
-/workspaces/ClinicalSageAI-2-replit/server/middleware/errorHandlerMiddleware.ts:52:    tenant: (req as any).tenantContext || {},
-/workspaces/ClinicalSageAI-2-replit/server/middleware/redisRateLimiter.ts:349:  if (perOrganization && req.tenantContext?.organizationId) {
-/workspaces/ClinicalSageAI-2-replit/server/middleware/redisRateLimiter.ts:350:    parts.push(`org:${req.tenantContext.organizationId}`);
+/workspaces/Concept2Cure.RI-2-replit/server/api/vault/routes.ts:11:import { getRequestDbClient } from '../../middleware/tenantContext';
+/workspaces/Concept2Cure.RI-2-replit/server/api/drafting/routes.ts:17:import { getRequestDbClient } from '../../middleware/tenantContext';
+/workspaces/Concept2Cure.RI-2-replit/server/db/tenantDbHelper.ts:26:    if (req.tenantContext?.organizationId) {
+/workspaces/Concept2Cure.RI-2-replit/server/db/tenantDbHelper.ts:27:      return new TenantDb(req.tenantContext.organizationId);
+/workspaces/Concept2Cure.RI-2-replit/server/db/tenantDbHelper.ts:51:  if (!req.tenantId && !req.tenantContext?.organizationId) {
+/workspaces/Concept2Cure.RI-2-replit/server/db/tenantDbHelper.ts:55:  return req.tenantId || req.tenantContext!.organizationId;
+/workspaces/Concept2Cure.RI-2-replit/server/db/tenantDb.ts:16:import { TenantContext } from '../middleware/tenantContext';
+/workspaces/Concept2Cure.RI-2-replit/server/db/tenantDb.ts:34:  constructor(tenantContext: TenantContext) {
+/workspaces/Concept2Cure.RI-2-replit/server/db/tenantDb.ts:35:    this.orgId = tenantContext.organizationId;
+/workspaces/Concept2Cure.RI-2-replit/server/db/tenantDb.ts:36:    this.clientId = tenantContext.clientWorkspaceId;
+/workspaces/Concept2Cure.RI-2-replit/server/db/tenantDb.ts:220:export function createTenantDb(tenantContext: TenantContext): TenantDb {
+/workspaces/Concept2Cure.RI-2-replit/server/db/tenantDb.ts:221:  return new TenantDb(tenantContext);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/change-management.ts:16:import { requireOrganizationContext } from '../middleware/tenantContext';
+/workspaces/Concept2Cure.RI-2-replit/server/routes/tenant-config.ts:11:import { requireOrganizationContext } from '../middleware/tenantContext';
+/workspaces/Concept2Cure.RI-2-replit/server/routes/ivdr-binder-routes.ts:29:    const fromContext = (req as any).tenantContext?.organizationId;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/tenant-stats.ts:19:} from '../middleware/tenantContext';
+/workspaces/Concept2Cure.RI-2-replit/server/routes/concept2cure.ts:37:import { requireOrganizationContext, tenantContextMiddleware } from '../middleware/tenantContext';
+/workspaces/Concept2Cure.RI-2-replit/server/routes/concept2cure.ts:107:router.use(tenantContextMiddleware);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/concept2cure.ts:151:    const orgId = req.tenantContext?.organizationId
+/workspaces/Concept2Cure.RI-2-replit/server/routes/concept2cure.ts:152:      ? parseInt(req.tenantContext.organizationId, 10)
+/workspaces/Concept2Cure.RI-2-replit/server/routes/concept2cure.ts:558:  if (req.tenantContext?.organizationId) {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/concept2cure.ts:560:      typeof req.tenantContext.organizationId === 'number'
+/workspaces/Concept2Cure.RI-2-replit/server/routes/concept2cure.ts:561:        ? req.tenantContext.organizationId
+/workspaces/Concept2Cure.RI-2-replit/server/routes/concept2cure.ts:562:        : parseInt(String(req.tenantContext.organizationId), 10);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/concept2cure.ts:586:  // Check if tenantContext has clientWorkspaceId (from tenant middleware)
+/workspaces/Concept2Cure.RI-2-replit/server/routes/concept2cure.ts:587:  const ctx = req.tenantContext as Record<string, unknown> | undefined;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/concept2cure.ts:726: * @param req.tenantContext.organizationId - Required organization context
+/workspaces/Concept2Cure.RI-2-replit/server/routes/concept2cure.ts:765:      organizationId: req.tenantContext?.organizationId,
+/workspaces/Concept2Cure.RI-2-replit/server/routes/concept2cure.ts:911:      organizationId: req.tenantContext?.organizationId,
+/workspaces/Concept2Cure.RI-2-replit/server/routes/ivdr-routes.ts:23:  // Uses the authenticated session's tenantId / tenantContext set by authMiddleware.
+/workspaces/Concept2Cure.RI-2-replit/server/routes/ivdr-routes.ts:27:    const fromContext = (req as any).tenantContext?.organizationId;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cer-unified.ts:34:  (req as any).tenantContext = {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/moduleIntegrationRoutes.ts:24:  req.tenantContext = { organizationId };
+/workspaces/Concept2Cure.RI-2-replit/server/routes/fda510k-unified.ts:115:  (req as any).tenantContext = {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-rules.ts:23:import { getTenantContext, getRequestActor } from '../utils/tenantContext';
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-rules.ts:111:    const tenantContext = getTenantContext(req);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-rules.ts:112:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-rules.ts:113:    const { organizationId } = tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-rules.ts:155:    const tenantContext = getTenantContext(req);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-rules.ts:156:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-rules.ts:157:    const { organizationId } = tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-rules.ts:210:    const tenantContext = getTenantContext(req);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-rules.ts:211:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-rules.ts:212:    const { organizationId } = tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-rules.ts:233:    const tenantContext = getTenantContext(req);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-rules.ts:234:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-rules.ts:235:    const { organizationId } = tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-rules.ts:321:    const tenantContext = getTenantContext(req);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-rules.ts:322:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-rules.ts:323:    const { organizationId } = tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-rules.ts:359:    const tenantContext = getTenantContext(req);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-rules.ts:360:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-rules.ts:361:    const { organizationId } = tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-rules.ts:417:    const tenantContext = getTenantContext(req);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-rules.ts:418:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-rules.ts:419:    const { organizationId } = tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/tenant-quality-validation.ts:12:import { requireOrganizationContext } from '../middleware/tenantContext';
+/workspaces/Concept2Cure.RI-2-replit/server/routes/tenant-quality-validation.ts:24:    const { organizationId } = req.tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/tenant-quality-validation.ts:227:    const { organizationId, userId } = req.tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/tenant-quality-validation.ts:321:    const { organizationId } = req.tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/projects-management.ts:7:import { getRequestActor, getTenantContext } from '../utils/tenantContext';
+/workspaces/Concept2Cure.RI-2-replit/server/routes/projects-management.ts:41:    const tenantContext = getTenantContext(req);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/projects-management.ts:42:    if ('error' in tenantContext) {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/projects-management.ts:43:      return res.status(400).json({ error: tenantContext.error });
+/workspaces/Concept2Cure.RI-2-replit/server/routes/projects-management.ts:45:    const { organizationId, clientWorkspaceId } = tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/projects-management.ts:92:    const tenantContext = getTenantContext(req);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/projects-management.ts:93:    if ('error' in tenantContext) {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/projects-management.ts:94:      return res.status(400).json({ error: tenantContext.error });
+/workspaces/Concept2Cure.RI-2-replit/server/routes/projects-management.ts:96:    const { organizationId, clientWorkspaceId } = tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/projects-management.ts:289:    const tenantContext = getTenantContext(req);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/projects-management.ts:290:    if ('error' in tenantContext) {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/projects-management.ts:291:      return res.status(400).json({ error: tenantContext.error });
+/workspaces/Concept2Cure.RI-2-replit/server/routes/projects-management.ts:293:    const { organizationId } = tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/projects-management.ts:366:    const tenantContext = getTenantContext(req);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/projects-management.ts:367:    if ('error' in tenantContext) {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/projects-management.ts:368:      return res.status(400).json({ error: tenantContext.error });
+/workspaces/Concept2Cure.RI-2-replit/server/routes/projects-management.ts:370:    const { organizationId } = tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/regulatorySubmissions.ts:34:    const { organizationId, clientWorkspaceId } = req.tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/regulatorySubmissions.ts:58:    const { organizationId, clientWorkspaceId, userId } = req.tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/regulatorySubmissions.ts:83:    const { organizationId, clientWorkspaceId } = req.tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/regulatorySubmissions.ts:114:    const { organizationId, clientWorkspaceId } = req.tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/regulatorySubmissions.ts:155:      const { organizationId, clientWorkspaceId } = req.tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/regulatorySubmissions.ts:197:    const { organizationId, clientWorkspaceId } = req.tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/regulatorySubmissions.ts:247:      const { organizationId, clientWorkspaceId } = req.tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/regulatorySubmissions.ts:298:    const { organizationId, clientWorkspaceId } = req.tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/regulatorySubmissions.ts:353:      const { organizationId, clientWorkspaceId, userId } = req.tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/maud-routes.ts:17:  validateTenantAccess = require('../middleware/tenantContext').default;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/section-quality-gates.ts:12:import tenantContext from '../middleware/tenantContext.js';
+/workspaces/Concept2Cure.RI-2-replit/server/routes/section-quality-gates.ts:23:router.use(tenantContext);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/section-quality-gates.ts:66:    const organizationId = req.tenantContext?.organizationId;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/section-quality-gates.ts:113:    const organizationId = req.tenantContext?.organizationId;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/section-quality-gates.ts:114:    const userId = req.tenantContext?.userId;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/section-quality-gates.ts:188:      const organizationId = req.tenantContext?.organizationId;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/section-quality-gates.ts:225:    const organizationId = req.tenantContext?.organizationId;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/section-quality-gates.ts:226:    const userId = req.tenantContext?.userId;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/product-audit.ts:19:import { requireOrganizationContext } from '../middleware/tenantContext';
+/workspaces/Concept2Cure.RI-2-replit/server/routes/quality-validation-routes.ts:12:import { requireOrganizationContext } from '../middleware/tenantContext';
+/workspaces/Concept2Cure.RI-2-replit/server/routes/quality-validation-routes.ts:47:    const { organizationId } = req.tenantContext || {};
+/workspaces/Concept2Cure.RI-2-replit/server/routes/quality-validation-routes.ts:213:    const { organizationId } = req.tenantContext || {};
+/workspaces/Concept2Cure.RI-2-replit/server/routes/quality-validation-routes.ts:426:    const { organizationId } = req.tenantContext || {};
+/workspaces/Concept2Cure.RI-2-replit/server/routes/ai-claims-routes.ts:22:    const fromContext = (req as any).tenantContext?.organizationId;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/users.ts:65:    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; email: string };
+/workspaces/Concept2Cure.RI-2-replit/server/routes/users.ts:115:    const decoded = jwt.verify(token, JWT_SECRET) as {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/auth.ts:103:    const decoded = jwt.verify(token, JWT_SECRET) as {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/auth.ts:488:    const decoded = jwt.verify(refreshToken, JWT_SECRET) as {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/auth.ts:552:    const decoded = jwt.verify(token, JWT_SECRET) as {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cerv2-document-routes.ts:18:  const tenantOrg = req.tenantContext?.organizationId;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/510k-api-routes.ts:306:    const { organizationId, clientWorkspaceId } = (req as any).tenantContext || {};
+/workspaces/Concept2Cure.RI-2-replit/server/routes/510k-api-routes.ts:352:    const { organizationId } = (req as any).tenantContext || {};
+/workspaces/Concept2Cure.RI-2-replit/server/routes/510k-api-routes.ts:402:    const { organizationId } = (req as any).tenantContext || {};
+/workspaces/Concept2Cure.RI-2-replit/server/routes/510k-api-routes.ts:435:    const { organizationId } = (req as any).tenantContext || {};
+/workspaces/Concept2Cure.RI-2-replit/server/routes/510k-api-routes.ts:462:    const { organizationId } = (req as any).tenantContext || {};
+/workspaces/Concept2Cure.RI-2-replit/server/routes/medical-device-api.ts:14:import { tenantContextMiddleware } from '../middleware/tenantContext';
+/workspaces/Concept2Cure.RI-2-replit/server/routes/medical-device-api.ts:27:router.use(tenantContextMiddleware);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/medical-device-api.ts:344:    const organizationId = Number((req as any).tenantContext?.organizationId || (req as any).organizationId);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/medical-device-api.ts:369:    const organizationId = Number((req as any).tenantContext?.organizationId || (req as any).organizationId);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/medical-device-api.ts:411:    const organizationId = Number((req as any).tenantContext?.organizationId || (req as any).organizationId);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/medical-device-api.ts:436:    const organizationId = Number((req as any).tenantContext?.organizationId || (req as any).organizationId);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/medical-device-api.ts:683:    const organizationId = Number((req as any).tenantContext?.organizationId || (req as any).organizationId || 0);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/medical-device-api.ts:713:    const organizationId = Number((req as any).tenantContext?.organizationId || (req as any).organizationId || 0);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cerv2-sections.ts:18:  const tenantOrg = req.tenantContext?.organizationId;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/510k-compliance-routes.ts:35:  (req as any).tenantContext = {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/510k-compliance-routes.ts:53:    const tenantContext = (req as any).tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/510k-compliance-routes.ts:57:      tenantContext,
+/workspaces/Concept2Cure.RI-2-replit/server/routes/510k-compliance-routes.ts:204:    const tenantContext = (req as any).tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/510k-compliance-routes.ts:208:      tenantContext,
+/workspaces/Concept2Cure.RI-2-replit/server/routes/510k-compliance-routes.ts:355:    const tenantContext = (req as any).tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/510k-compliance-routes.ts:361:      tenantContext,
+/workspaces/Concept2Cure.RI-2-replit/server/routes/510k-compliance-routes.ts:401:    const tenantContext = (req as any).tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/510k-compliance-routes.ts:406:      tenantContext,
+/workspaces/Concept2Cure.RI-2-replit/server/routes/sentinel-routes.ts:20:import { getTenantContext } from '../utils/tenantContext';
+/workspaces/Concept2Cure.RI-2-replit/server/routes/sentinel-routes.ts:41:    const tenantContext = getTenantContext(req);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/sentinel-routes.ts:42:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
+/workspaces/Concept2Cure.RI-2-replit/server/routes/sentinel-routes.ts:43:    const { organizationId } = tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/sentinel-routes.ts:69:    const tenantContext = getTenantContext(req);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/sentinel-routes.ts:70:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
+/workspaces/Concept2Cure.RI-2-replit/server/routes/sentinel-routes.ts:71:    const { organizationId } = tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/sentinel-routes.ts:103:    const tenantContext = getTenantContext(req);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/sentinel-routes.ts:104:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
+/workspaces/Concept2Cure.RI-2-replit/server/routes/sentinel-routes.ts:105:    const { organizationId } = tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/sentinel-routes.ts:135:    const tenantContext = getTenantContext(req);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/sentinel-routes.ts:136:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
+/workspaces/Concept2Cure.RI-2-replit/server/routes/sentinel-routes.ts:137:    const { organizationId } = tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/sentinel-routes.ts:197:    const tenantContext = getTenantContext(req);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/sentinel-routes.ts:198:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
+/workspaces/Concept2Cure.RI-2-replit/server/routes/sentinel-routes.ts:199:    const { organizationId } = tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/sentinel-routes.ts:226:    const tenantContext = getTenantContext(req);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/sentinel-routes.ts:227:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
+/workspaces/Concept2Cure.RI-2-replit/server/routes/sentinel-routes.ts:228:    const { organizationId } = tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/sentinel-routes.ts:269:    const tenantContext = getTenantContext(req);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/sentinel-routes.ts:270:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
+/workspaces/Concept2Cure.RI-2-replit/server/routes/sentinel-routes.ts:271:    const { organizationId } = tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-hierarchy.ts:21:import { getTenantContext, getRequestActor } from '../utils/tenantContext';
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-hierarchy.ts:59:    const tenantContext = getTenantContext(req);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-hierarchy.ts:60:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-hierarchy.ts:61:    const { organizationId, clientWorkspaceId } = tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-hierarchy.ts:112:    const tenantContext = getTenantContext(req);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-hierarchy.ts:113:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-hierarchy.ts:114:    const { organizationId } = tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-hierarchy.ts:136:    const tenantContext = getTenantContext(req);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-hierarchy.ts:137:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-hierarchy.ts:138:    const { organizationId } = tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-hierarchy.ts:163:    const tenantContext = getTenantContext(req);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-hierarchy.ts:164:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-hierarchy.ts:165:    const { organizationId } = tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-hierarchy.ts:198:    const tenantContext = getTenantContext(req);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-hierarchy.ts:199:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-hierarchy.ts:200:    const { organizationId } = tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-hierarchy.ts:345:    const tenantContext = getTenantContext(req);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-hierarchy.ts:346:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-hierarchy.ts:347:    const { organizationId } = tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-hierarchy.ts:452:    const tenantContext = getTenantContext(req);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-hierarchy.ts:453:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-hierarchy.ts:454:    const { organizationId } = tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-hierarchy.ts:477:    const tenantContext = getTenantContext(req);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-hierarchy.ts:478:    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-hierarchy.ts:479:    const { organizationId, clientWorkspaceId } = tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/documentAuthoring.routes.ts:58:      tenantContext?: {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/documentAuthoring.routes.ts:263:      req.user?.organizationId || req.tenantContext?.organizationId || 1
+/workspaces/Concept2Cure.RI-2-replit/server/routes/documentAuthoring.routes.ts:426:      req.user?.organizationId || req.tenantContext?.organizationId || 1
+/workspaces/Concept2Cure.RI-2-replit/server/routes/documentAuthoring.routes.ts:565:        req.user?.organizationId || req.tenantContext?.organizationId || 1
+/workspaces/Concept2Cure.RI-2-replit/server/routes/documentAuthoring.routes.ts:567:      const clientWorkspaceId = Number((req as any).tenantContext?.clientWorkspaceId || 1);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/documentAuthoring.routes.ts:1069:        req.user?.organizationId || req.tenantContext?.organizationId || 1
+/workspaces/Concept2Cure.RI-2-replit/server/routes/documentAuthoring.routes.ts:1495:        req.user?.organizationId || req.tenantContext?.organizationId || 1
+/workspaces/Concept2Cure.RI-2-replit/server/routes/documentAuthoring.routes.ts:1569:      req.user?.organizationId || req.tenantContext?.organizationId || 1
+/workspaces/Concept2Cure.RI-2-replit/server/routes/tenant-section-gating.ts:33:import { tenantContext } from '../middleware/tenantContext';
+/workspaces/Concept2Cure.RI-2-replit/server/routes/tenant-section-gating.ts:40:router.use(tenantContext);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cortex-unified.ts:78:  (req as any).tenantContext = {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cortex-unified.ts:188:      parseInt((req as any).tenantContext?.organizationId, 10) ||
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cortex-unified.ts:508:      parseInt((req as any).tenantContext?.organizationId, 10) ||
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cortex-unified.ts:731:    const decoded = jwt.verify(
+/workspaces/Concept2Cure.RI-2-replit/server/routes/programs.ts:152:    const tenantId = (req as any).tenantContext?.tenantId || 1;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/programs.ts:217:    const tenantId = (req as any).tenantContext?.tenantId || 1;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/programs.ts:293:    const tenantId = (req as any).tenantContext?.tenantId || 1;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/programs.ts:529:    const tenantId = (req as any).tenantContext?.tenantId || 1;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/tenant-traceability.ts:20:import { tenantContextMiddleware, requireOrganizationContext } from '../middleware/tenantContext';
+/workspaces/Concept2Cure.RI-2-replit/server/routes/tenant-traceability.ts:39:      tenantContext?: {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/tenant-traceability.ts:63:router.use(tenantContextMiddleware);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/tenant-traceability.ts:72:    const { organizationId } = req.tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/tenant-traceability.ts:106:    const { organizationId } = req.tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/tenant-traceability.ts:144:    const { organizationId } = req.tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/tenant-traceability.ts:236:    const { organizationId } = req.tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/tenant-traceability.ts:338:    const { organizationId } = req.tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/tenant-traceability.ts:386:    const { organizationId, userId } = req.tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/tenant-traceability.ts:465:    const { organizationId } = req.tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/chat.ts:183:    const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/chat.ts:249:      (req as any).tenantContext?.organizationUuid ||
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cerRoutes.ts:27:      tenantContext?: {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cerRoutes.ts:76:    const payload = jwt.verify(token, process.env.JWT_SECRET!) as { id: string };
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cortexQueryRoutes.ts:126:      req.tenantContext?.organizationUuid || (req.headers['x-org-uuid'] as string | undefined);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/evidence.ts:169:    const tenantId = (req as any).tenantContext?.tenantId || 1;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/evidence.ts:320:    const tenantId = (req as any).tenantContext?.tenantId || 1;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/evidence.ts:495:    const tenantId = (req as any).tenantContext?.tenantId || 1;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/evidence.ts:592:    const tenantId = (req as any).tenantContext?.tenantId || 1;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/traceability-mapping-routes.ts:12:import { requireOrganizationContext } from '../middleware/tenantContext';
+/workspaces/Concept2Cure.RI-2-replit/server/routes/traceability-mapping-routes.ts:48:    const { organizationId } = req.tenantContext || {};
+/workspaces/Concept2Cure.RI-2-replit/server/routes/traceability-mapping-routes.ts:173:    const { organizationId } = req.tenantContext || {};
+/workspaces/Concept2Cure.RI-2-replit/server/routes/traceability-mapping-routes.ts:291:    const { organizationId } = req.tenantContext || {};
+/workspaces/Concept2Cure.RI-2-replit/server/routes/traceability-mapping-routes.ts:377:      const { organizationId } = req.tenantContext || {};
+/workspaces/Concept2Cure.RI-2-replit/server/routes/traceability-mapping-routes.ts:512:      const { organizationId } = req.tenantContext || {};
+/workspaces/Concept2Cure.RI-2-replit/server/routes/traceability-mapping-routes.ts:584:    const { organizationId } = req.tenantContext || {};
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:60:const requireAuth = (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:113:  router.post('/agents', requireAuth, requireTenant, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:131:  router.get('/agents/:agentId', requireAuth, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:145:  router.post('/threads', requireAuth, requireTenant, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:164:  router.get('/threads/:threadId', requireAuth, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:178:  router.post('/threads/:threadId/checkpoints', requireAuth, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:196:  router.get('/threads/:threadId/checkpoints', requireAuth, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:211:  router.post('/threads/:threadId/breakpoints', requireAuth, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:228:  router.post('/breakpoints/:breakpointId/resolve', requireAuth, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:252:  router.post('/audit/events', requireAuth, requireTenant, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:272:  router.get('/audit/events', requireAuth, requireTenant, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:295:  router.get('/audit/verify/:entityType/:entityId', requireAuth, requireTenant, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:314:  router.post('/audit/signatures', requireAuth, requireTenant, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:333:  router.get('/audit/signatures/:signatureId/verify', requireAuth, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:351:  router.post('/dossiers', requireAuth, requireTenant, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:369:  router.get('/dossiers/:dossierId', requireAuth, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:383:  router.post('/dossiers/:dossierId/branches', requireAuth, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:400:  router.post('/dossiers/branches/:branchId/sync', requireAuth, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:417:  router.post('/dossiers/:dossierId/comments', requireAuth, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:438:  router.post('/manufacturing/equipment', requireAuth, requireTenant, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:456:  router.get('/manufacturing/equipment/:equipmentId', requireAuth, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:470:  router.post('/manufacturing/batches', requireAuth, requireTenant, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:489:  router.get('/manufacturing/batches/:batchId', requireAuth, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:503:  router.post('/manufacturing/batches/:batchId/tests', requireAuth, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:522:  router.get('/manufacturing/batches/:batchId/release-readiness', requireAuth, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:536:  router.post('/manufacturing/transform/isa95-to-fhir', requireAuth, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:557:  router.post('/digital-twins', requireAuth, requireTenant, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:575:  router.get('/digital-twins/:twinId', requireAuth, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:589:  router.post('/digital-twins/:twinId/sync', requireAuth, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:606:  router.post('/digital-twins/:twinId/predictions', requireAuth, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:624:  router.post('/digital-twins/:twinId/drift-analysis', requireAuth, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:645:  router.post('/federated/models', requireAuth, requireTenant, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:663:  router.get('/federated/models/:modelId', requireAuth, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:677:  router.post('/federated/models/:modelId/participants', requireAuth, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:694:  router.get('/federated/models/:modelId/participants', requireAuth, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:710:  router.post('/federated/models/:modelId/gradients', requireAuth, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:730:  router.post('/federated/models/:modelId/aggregate', requireAuth, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:744:  router.get('/federated/participants/:participantId/privacy-budget', requireAuth, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:758:  router.post('/federated/safety-signals', requireAuth, requireTenant, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:776:  router.get('/federated/safety-signals', requireAuth, requireTenant, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:794:  router.post('/federated/horizon-scans', requireAuth, requireTenant, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:812:  router.get('/federated/horizon-scans/actionable', requireAuth, requireTenant, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:833:  router.post('/fhir/rules', requireAuth, requireTenant, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:851:  router.get('/fhir/rules', requireAuth, requireTenant, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:873:  router.post('/fhir/validate', requireAuth, requireTenant, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:893:  router.post('/fhir/validate/batch', requireAuth, requireTenant, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:911:  router.get('/fhir/validation-history/:resourceType/:resourceId', requireAuth, requireTenant, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cognitive-ecosystem.routes.ts:931:  router.post('/fhir/rules/install-builtin', requireAuth, requireTenant, asyncHandler(async (req, res) => {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-sections.ts:44:    parseInt((req as any).tenantContext?.organizationId, 10) ||
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cortexRoutes.ts:12:import { requireAuth, requireOrgAccess } from '../middleware/auth';
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cortexRoutes.ts:126:router.use(requireAuth);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/fda510k-routes.ts:537:  (req as any).tenantContext = {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/fda510k-routes.ts:842:      const tenantContext = (req as any).tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/fda510k-routes.ts:875:      const fdaData = await callFDAAPI(fdaUrl, tenantContext.organizationId);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/fda510k-routes.ts:982:      const tenantContext = (req as any).tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/fda510k-routes.ts:1022:      const fdaData = await callFDAAPI(fdaUrl, tenantContext.organizationId);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/fda510k-routes.ts:1108:    const tenantContext = (req as any).tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/fda510k-routes.ts:1164:    const fdaData = await callFDAAPI(fdaUrl, tenantContext.organizationId);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/fda510k-routes.ts:1283:      const tenantContext = (req as any).tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/fda510k-routes.ts:1288:        organizationId: tenantContext.organizationId,
+/workspaces/Concept2Cure.RI-2-replit/server/routes/fda510k-routes.ts:1394:      results.organizationId = tenantContext.organizationId;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/fda510k-routes.ts:1423:    const tenantContext = (req as any).tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/fda510k-routes.ts:1468:    const fdaData = await callFDAAPI(fdaUrl, tenantContext.organizationId);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/fda510k-routes.ts:1534:    const tenantContext = (req as any).tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/fda510k-routes.ts:1560:    const fdaData = await callFDAAPI(fdaUrl, tenantContext.organizationId);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/fda510k-routes.ts:1626:    const tenantContext = (req as any).tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/fda510k-routes.ts:1656:      const fdaData = await callFDAAPI(fdaUrl, tenantContext.organizationId);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/fda510k-routes.ts:1728:    const tenantContext = (req as any).tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/fda510k-routes.ts:1732:      organizationId: tenantContext.organizationId,
+/workspaces/Concept2Cure.RI-2-replit/server/routes/ind-unified.ts:31:  (req as any).tenantContext = {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/authEnterprise.ts:341:      decoded = jwt.verify(oldToken, JWT_SECRET) as any;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/authEnterprise.ts:406:    const decoded = jwt.verify(token, JWT_SECRET) as any;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/compliance-gap-analysis.ts:24:import { requireOrganizationContext } from '../middleware/tenantContext';
+/workspaces/Concept2Cure.RI-2-replit/server/routes/module-subscriptions.ts:46:    const orgId = (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/module-subscriptions.ts:65:    const orgId = (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/module-subscriptions.ts:92:    const orgId = (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/module-subscriptions.ts:127:    const orgId = (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/module-subscriptions.ts:158:    const orgId = (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/module-subscriptions.ts:207:    const orgId = (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/module-subscriptions.ts:230:    const orgId = (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/module-subscriptions.ts:262:    const orgId = (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/module-subscriptions.ts:300:    const orgId = (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/module-subscriptions.ts:329:    const orgId = (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/tenant-ctq-factors.ts:12:import { requireOrganizationContext } from '../middleware/tenantContext';
+/workspaces/Concept2Cure.RI-2-replit/server/routes/documents-unified.ts:66:  (req as any).tenantContext = {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/tenants.ts:18:} from '../middleware/tenantContext';
+/workspaces/Concept2Cure.RI-2-replit/server/routes/510kRoutes.ts:67:  (req as any).tenantContext = {
+/workspaces/Concept2Cure.RI-2-replit/server/routes/510kRoutes.ts:74:  console.log('Tenant Context:', (req as any).tenantContext);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/510kRoutes.ts:105:      const { organizationId, clientWorkspaceId } = (req as any).tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/510kRoutes.ts:145:    const { organizationId } = (req as any).tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/510kRoutes.ts:179:    const { organizationId } = (req as any).tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/510kRoutes.ts:206:    const { organizationId } = (req as any).tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/510kRoutes.ts:245:      const { organizationId } = (req as any).tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/510kRoutes.ts:314:      const { organizationId } = (req as any).tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/510kRoutes.ts:383:      const { organizationId } = (req as any).tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/510kRoutes.ts:421:    const { organizationId } = (req as any).tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/510kRoutes.ts:456:    const { organizationId } = (req as any).tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/project-modules.ts:14:import { getTenantContext } from '../utils/tenantContext';
+/workspaces/Concept2Cure.RI-2-replit/server/routes/regulatory-intelligence-api.ts:14:import { tenantContextMiddleware } from '../middleware/tenantContext';
+/workspaces/Concept2Cure.RI-2-replit/server/routes/regulatory-intelligence-api.ts:24:router.use(tenantContextMiddleware);
+/workspaces/Concept2Cure.RI-2-replit/server/routes/realtime-validation.ts:13:import { requireOrganizationContext } from '../middleware/tenantContext';
+/workspaces/Concept2Cure.RI-2-replit/server/routes/quality-management-api.ts:12:import { requireOrganizationContext } from '../middleware/tenantContext';
+/workspaces/Concept2Cure.RI-2-replit/server/routes/quality-management-api.ts:37:    const { organizationId } = req.tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/quality-management-api.ts:164:    const { organizationId } = req.tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/quality-management-api.ts:415:      const { organizationId } = req.tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/quality-management-api.ts:469:    const { organizationId } = req.tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/quality-management-api.ts:490:    const { organizationId } = req.tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/quality-management-api.ts:578:    const { organizationId, userId } = req.tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/quality-management-api.ts:628:    const { organizationId, userId } = req.tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/routes/quality-management-api.ts:707:    const { organizationId } = req.tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/auth.ts:33:      tenantContext?: {
+/workspaces/Concept2Cure.RI-2-replit/server/auth.ts:53: * Sets req.userId, req.userRole, req.userEmail, req.tenantId, req.tenantContext.
+/workspaces/Concept2Cure.RI-2-replit/server/auth.ts:78:      const decoded = jwt.verify(apiKey, JWT_SECRET) as {
+/workspaces/Concept2Cure.RI-2-replit/server/auth.ts:90:        req.tenantContext = {
+/workspaces/Concept2Cure.RI-2-replit/server/auth.ts:108:      req.tenantContext = {
+/workspaces/Concept2Cure.RI-2-replit/server/index.ts:770:    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+/workspaces/Concept2Cure.RI-2-replit/server/index.ts:847:    const userRole = (req as any).userRole || (req as any).tenantContext?.role || '';
+/workspaces/Concept2Cure.RI-2-replit/server/index.ts:5802:      req.tenantContext?.organizationId ||
+/workspaces/Concept2Cure.RI-2-replit/server/index.ts:5876:      req.tenantContext?.organizationId ||
+/workspaces/Concept2Cure.RI-2-replit/server/auth/index.ts:61:      tenantContext?: {
+/workspaces/Concept2Cure.RI-2-replit/server/services/license-manager.ts:227:      const orgId = (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
+/workspaces/Concept2Cure.RI-2-replit/server/services/license-manager.ts:246:    const orgId = (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
+/workspaces/Concept2Cure.RI-2-replit/server/middleware/featureToggleMiddleware.ts:26:    const { organizationId, clientWorkspaceId } = req.tenantContext || {};
+/workspaces/Concept2Cure.RI-2-replit/server/middleware/auth.ts:1:// @ts-nocheck - Express.Request.user type conflicts with tenantContext.ts
+/workspaces/Concept2Cure.RI-2-replit/server/middleware/auth.ts:48:      tenantContext?: {
+/workspaces/Concept2Cure.RI-2-replit/server/middleware/auth.ts:92:    const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
+/workspaces/Concept2Cure.RI-2-replit/server/middleware/auth.ts:124:export const requireAuth = authenticateToken;
+/workspaces/Concept2Cure.RI-2-replit/server/middleware/auth.ts:255:    const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
+/workspaces/Concept2Cure.RI-2-replit/server/middleware/auth.ts:287:  requireAuth,
+/workspaces/Concept2Cure.RI-2-replit/server/middleware/setup.ts:11:import { requireTenantContext, tenantContextMiddleware } from './tenantContext';
+/workspaces/Concept2Cure.RI-2-replit/server/middleware/setup.ts:80:      tenantContextMiddleware(req, res, async () => {
+/workspaces/Concept2Cure.RI-2-replit/server/middleware/tenantContext.ts:43:      tenantContext?: {
+/workspaces/Concept2Cure.RI-2-replit/server/middleware/tenantContext.ts:79:export function tenantContextMiddleware(req: Request, res: Response, next: NextFunction) {
+/workspaces/Concept2Cure.RI-2-replit/server/middleware/tenantContext.ts:87:  const existing = req.tenantContext || ({} as any);
+/workspaces/Concept2Cure.RI-2-replit/server/middleware/tenantContext.ts:90:  const tenantContext: TenantContext = {
+/workspaces/Concept2Cure.RI-2-replit/server/middleware/tenantContext.ts:99:  req.tenantContext = tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/middleware/tenantContext.ts:103:    console.log('Tenant Context:', JSON.stringify(tenantContext));
+/workspaces/Concept2Cure.RI-2-replit/server/middleware/tenantContext.ts:114:  if (!req.tenantContext?.organizationId) {
+/workspaces/Concept2Cure.RI-2-replit/server/middleware/tenantContext.ts:122:    const contextOrgId = parseInt(req.tenantContext.organizationId, 10);
+/workspaces/Concept2Cure.RI-2-replit/server/middleware/tenantContext.ts:150:    const decoded = jwt.verify(
+/workspaces/Concept2Cure.RI-2-replit/server/middleware/tenantContext.ts:186:      req.tenantContext?.organizationUuid || decoded.organizationUuid || null;
+/workspaces/Concept2Cure.RI-2-replit/server/middleware/tenantContext.ts:188:    req.tenantContext = {
+/workspaces/Concept2Cure.RI-2-replit/server/middleware/tenantContext.ts:191:      clientWorkspaceId: req.tenantContext?.clientWorkspaceId || null,
+/workspaces/Concept2Cure.RI-2-replit/server/middleware/tenantContext.ts:192:      module: req.tenantContext?.module || null,
+/workspaces/Concept2Cure.RI-2-replit/server/middleware/tenantContext.ts:240:  if (!req.tenantContext?.clientWorkspaceId) {
+/workspaces/Concept2Cure.RI-2-replit/server/middleware/tenantContext.ts:254:  if (!req.tenantContext?.module) {
+/workspaces/Concept2Cure.RI-2-replit/server/middleware/tenantContext.ts:268:  return req.tenantContext;
+/workspaces/Concept2Cure.RI-2-replit/server/middleware/tenantContext.ts:287:export const tenantContext = tenantContextMiddleware;
+/workspaces/Concept2Cure.RI-2-replit/server/middleware/tenantContext.ts:290:  tenantContextMiddleware,
+/workspaces/Concept2Cure.RI-2-replit/server/middleware/index.ts:4:export * from './tenantContext';
+/workspaces/Concept2Cure.RI-2-replit/server/middleware/errorHandlerMiddleware.ts:52:    tenant: (req as any).tenantContext || {},
+/workspaces/Concept2Cure.RI-2-replit/server/middleware/redisRateLimiter.ts:349:  if (perOrganization && req.tenantContext?.organizationId) {
+/workspaces/Concept2Cure.RI-2-replit/server/middleware/redisRateLimiter.ts:350:    parts.push(`org:${req.tenantContext.organizationId}`);

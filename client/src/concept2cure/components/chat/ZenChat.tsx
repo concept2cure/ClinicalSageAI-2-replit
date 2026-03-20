@@ -153,20 +153,20 @@ const ThinkingIndicator: React.FC = () => {
   return (
     <div className="flex items-center gap-2 py-1">
       <div className="relative flex items-center gap-1">
-        <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_infinite]" />
-        <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
-        <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
+        <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_infinite]" />
+        <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
+        <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
       </div>
-      <span className="text-sm text-violet-600 font-medium animate-pulse">{msg}</span>
+      <span className="text-sm text-[#D97757] font-medium animate-pulse">{msg}</span>
     </div>
   );
 };
 
 const TypingIndicator: React.FC = () => (
   <div className="flex items-center gap-1.5 py-1">
-    <div className="w-2 h-2 rounded-full bg-violet-500 animate-pulse" />
-    <div className="w-2 h-2 rounded-full bg-violet-500 animate-pulse delay-100" />
-    <div className="w-2 h-2 rounded-full bg-violet-500 animate-pulse delay-200" />
+    <div className="w-2 h-2 rounded-full bg-[#D97757] animate-pulse" />
+    <div className="w-2 h-2 rounded-full bg-[#D97757] animate-pulse delay-100" />
+    <div className="w-2 h-2 rounded-full bg-[#D97757] animate-pulse delay-200" />
   </div>
 );
 
@@ -205,7 +205,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
   return (
     <div className="mt-2 p-3 bg-zinc-50 border border-zinc-200 rounded-xl">
       <div className="flex items-center gap-2 mb-2">
-        <FileText className="w-4 h-4 text-violet-500" />
+        <FileText className="w-4 h-4 text-[#D97757]" />
         <span className="text-sm font-medium text-zinc-800 truncate flex-1">
           {artifact.title}
         </span>
@@ -219,7 +219,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
             'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
             isSaved
               ? 'bg-green-50 text-green-700 border border-green-200'
-              : 'bg-violet-50 text-violet-700 border border-violet-200 hover:bg-violet-100'
+              : 'bg-[#FBF0EB] text-[#C4623F] border border-[#F5E0D6] hover:bg-[#F5E0D6]'
           )}
         >
           {isSaving ? (
@@ -250,7 +250,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
                   onClick={() => { onExportDocx(artifact); setShowExportMenu(false); }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
                 >
-                  <FileText className="w-4 h-4 text-blue-500" />
+                  <FileText className="w-4 h-4 text-[#D97757]" />
                   <div className="text-left">
                     <div className="font-medium text-xs">Word Document (.docx)</div>
                     <div className="text-[10px] text-zinc-400">MS Word, Google Docs compatible</div>
@@ -378,15 +378,15 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
               {message.isStreaming && message.content && (
                 <span className="inline-flex gap-0.5 items-center">
                   <span
-                    className="w-1 h-1 rounded-full bg-violet-400 animate-bounce"
+                    className="w-1 h-1 rounded-full bg-[#E8967A] animate-bounce"
                     style={{ animationDelay: '0ms' }}
                   />
                   <span
-                    className="w-1 h-1 rounded-full bg-violet-400 animate-bounce"
+                    className="w-1 h-1 rounded-full bg-[#E8967A] animate-bounce"
                     style={{ animationDelay: '150ms' }}
                   />
                   <span
-                    className="w-1 h-1 rounded-full bg-violet-400 animate-bounce"
+                    className="w-1 h-1 rounded-full bg-[#E8967A] animate-bounce"
                     style={{ animationDelay: '300ms' }}
                   />
                 </span>
@@ -409,13 +409,13 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                   prose-h1:text-xl prose-h2:text-lg prose-h3:text-base
                   prose-p:text-zinc-700 prose-p:leading-relaxed prose-p:my-2
                   prose-strong:text-zinc-900 prose-strong:font-semibold
-                  prose-code:text-violet-700 prose-code:bg-violet-50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:font-mono prose-code:before:content-none prose-code:after:content-none
+                  prose-code:text-[#C4623F] prose-code:bg-[#FBF0EB] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:font-mono prose-code:before:content-none prose-code:after:content-none
                   prose-pre:bg-zinc-900 prose-pre:text-zinc-100 prose-pre:rounded-xl prose-pre:p-4 prose-pre:text-xs
                   prose-blockquote:border-l-violet-400 prose-blockquote:text-zinc-600 prose-blockquote:not-italic
                   prose-ul:text-zinc-700 prose-ol:text-zinc-700
                   prose-li:my-0.5
                   prose-table:text-sm prose-th:bg-zinc-50 prose-th:font-semibold prose-td:border-zinc-200
-                  prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline
+                  prose-a:text-[#D97757] prose-a:no-underline hover:prose-a:underline
                   [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
                 dangerouslySetInnerHTML={{ __html: htmlContent }}
               />
@@ -741,13 +741,13 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         {/* Continuing work */}
         {(nextTask || lastWork) && (
           <div className="mb-6 rounded-xl border border-blue-200 bg-blue-50/50 p-4">
-            <div className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-2">
+            <div className="text-xs font-semibold text-[#C4623F] uppercase tracking-wide mb-2">
               Pick up where you left off
             </div>
             {nextTask && (
               <button
                 onClick={() => onSuggestionClick(nextTask.taskTitle)}
-                className="block w-full text-left text-sm font-medium text-blue-900 hover:text-blue-700 transition-colors"
+                className="block w-full text-left text-sm font-medium text-[#141413] hover:text-[#C4623F] transition-colors"
               >
                 → {nextTask.taskTitle}
               </button>
@@ -755,7 +755,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             {lastWork && (
               <button
                 onClick={() => onSuggestionClick(`Continue: ${lastWork.contextTitle}`)}
-                className="block w-full text-left text-xs text-blue-600 mt-1 hover:text-blue-800 transition-colors"
+                className="block w-full text-left text-xs text-[#D97757] mt-1 hover:text-[#A5512F] transition-colors"
               >
                 Continue: {lastWork.contextTitle}
               </button>
@@ -815,12 +815,12 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                 className="group flex items-start gap-4 p-4 rounded-xl border border-zinc-200 bg-white hover:border-blue-300 hover:bg-blue-50/30 text-left transition-all duration-150"
               >
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold text-zinc-900 group-hover:text-blue-800 mb-0.5">
+                  <div className="text-sm font-semibold text-zinc-900 group-hover:text-[#A5512F] mb-0.5">
                     {p.label}
                   </div>
                   <div className="text-xs text-zinc-400">{p.sub}</div>
                 </div>
-                <ArrowUp className="w-4 h-4 text-zinc-300 group-hover:text-blue-400 flex-shrink-0 mt-0.5 rotate-45" />
+                <ArrowUp className="w-4 h-4 text-zinc-300 group-hover:text-[#E8967A] flex-shrink-0 mt-0.5 rotate-45" />
               </button>
             ))}
           </div>

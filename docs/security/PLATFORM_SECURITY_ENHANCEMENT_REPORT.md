@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-This report documents the comprehensive security and performance enhancements implemented across the ClinicalSageAI platform. These changes address critical vulnerabilities identified during security audit and prepare the platform for FDA/EMA regulatory compliance review.
+This report documents the comprehensive security and performance enhancements implemented across the Concept2Cure.RI platform. These changes address critical vulnerabilities identified during security audit and prepare the platform for FDA/EMA regulatory compliance review.
 
 ### Key Metrics
 
@@ -61,8 +61,8 @@ res.header('Access-Control-Allow-Origin', '*');
 ```typescript
 const allowedOrigins = [
   process.env.FRONTEND_URL,
-  'https://clinicalsageai.com',
-  'https://app.clinicalsageai.com',
+  'https://concept2cure-riai.com',
+  'https://app.concept2cure-riai.com',
   'http://localhost:5173', // Dev only if NODE_ENV=development
 ];
 ```

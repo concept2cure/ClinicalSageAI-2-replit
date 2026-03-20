@@ -9,7 +9,7 @@
 
 ## Reporting a Vulnerability
 
-We take security seriously at Concept2Cure. If you discover a security vulnerability in ClinicalSageAI, please report it responsibly.
+We take security seriously at Concept2Cure. If you discover a security vulnerability in Concept2Cure.RI, please report it responsibly.
 
 ### How to Report
 
@@ -33,7 +33,7 @@ We take security seriously at Concept2Cure. If you discover a security vulnerabi
 
 ### Security Measures in Place
 
-ClinicalSageAI implements the following security controls:
+Concept2Cure.RI implements the following security controls:
 
 #### Authentication & Authorization
 - Session-based authentication with secure cookies

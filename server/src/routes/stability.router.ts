@@ -4,32 +4,17 @@ import { v4 as uuidv4 } from 'uuid';
 import multer from 'multer';
 import PDFDocument from 'pdfkit';
 import JSZip from 'jszip';
-// Temporarily commented out missing AI services - using stubs
-// import {
-//   aiPlanStudy,
-//   aiExplainStability,
-//   aiCoachPriorities,
-//   aiFixPlanFromIssues,
-//   aiDraftP8,
-//   aiRootCauseOOS,
-//   aiRecommendLabelStorage,
-//   simpleShelfLifeT90,
-//   aiDraftProtocol,
-//   aiCAPAFromOOT,
-// } from '../services/ai/stability.js';
-
-// Stub functions for AI services
-const aiExplainStability = async (id: string) => ({ explanation: 'AI explanation not available' });
-const aiCoachPriorities = async (id: string) => ({ priorities: [] });
-const aiFixPlanFromIssues = async (id: string, issues: any) => ({ plan: 'Fix plan not available' });
-const aiDraftP8 = async (id: string) => ({ draft: 'Draft not available' });
-const aiRootCauseOOS = async (id: string, oosData: any) => ({ analysis: 'Analysis not available' });
-const aiRecommendLabelStorage = async (id: string) => ({
-  recommendation: 'Recommendation not available',
-});
-const simpleShelfLifeT90 = async (id: string, test: string, condition: string) => ({ t90: 0 });
-const aiDraftProtocol = async (ctx: any) => ({ draft: 'Protocol draft not available' });
-const aiCAPAFromOOT = async (ctx: any) => ({ suggestion: 'CAPA suggestion not available' });
+import {
+  aiExplainStability,
+  aiCoachPriorities,
+  aiFixPlanFromIssues,
+  aiDraftP8,
+  aiRootCauseOOS,
+  aiRecommendLabelStorage,
+  simpleShelfLifeT90,
+  aiDraftProtocol,
+  aiCAPAFromOOT,
+} from '../services/ai/stability.js';
 // Temporarily commented out missing csv-parse dependency
 // import { parse } from 'csv-parse/sync';
 import dayjs from 'dayjs';

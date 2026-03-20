@@ -34,6 +34,14 @@ const CERV2Page = lazy(() => import('@/pages/csr/CERV2Page'));
 // Lazy-load PMA Workspace for standalone mode
 const PMAWorkspacePage = lazy(() => import('../components/pma/PMAWorkspace'));
 
+// Claude-aligned biotech dashboards
+const ECTDSubmissionDashboard = lazy(() => import('../pages/ECTDSubmissionDashboard'));
+const PharmacovigilanceDashboard = lazy(() => import('../pages/PharmacovigilanceDashboard'));
+const ClinicalOperationsDashboard = lazy(() => import('../pages/ClinicalOperationsDashboard'));
+const DocumentArtifactsHub = lazy(() => import('../pages/DocumentArtifactsHub'));
+const HAQManagerDashboard = lazy(() => import('../pages/HAQManagerDashboard'));
+const INDAutoDraftDashboard = lazy(() => import('../pages/INDAutoDraftDashboard'));
+
 // DTC Landing Page — public, renders at / for unauthenticated users
 const LandingPage = lazy(() => import('../pages/LandingPage'));
 
@@ -54,8 +62,8 @@ const Project510kBridge: React.FC = () => {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#FAFAF9]">
-          <p className="text-sm text-zinc-400">Loading workspace…</p>
+        <div className="min-h-screen flex items-center justify-center bg-[#FAF9F5]">
+          <p className="text-sm text-[#B0AEA5]">Loading workspace…</p>
         </div>
       }
     >
@@ -87,7 +95,7 @@ const ProjectPMABridge: React.FC = () => {
 // LOADING SCREEN
 // ═══════════════════════════════════════════════════════════════════════════════
 const ZenLoadingScreen: React.FC<{ message?: string }> = ({ message = 'Loading...' }) => (
-  <div className="min-h-screen bg-[#FAFAF9] flex items-center justify-center">
+  <div className="min-h-screen bg-[#FAF9F5] flex items-center justify-center">
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
@@ -117,31 +125,31 @@ const ZenLoadingScreen: React.FC<{ message?: string }> = ({ message = 'Loading..
             r="18"
             stroke="currentColor"
             strokeWidth="2"
-            className="text-blue-600"
+            className="text-[#D97757]"
           />
           <motion.path
             d="M12 14C16 14 18 18 20 20C22 22 24 26 28 26"
             stroke="currentColor"
             strokeWidth="2"
             strokeLinecap="round"
-            className="text-blue-600"
+            className="text-[#D97757]"
           />
           <motion.path
             d="M28 14C24 14 22 18 20 20C18 22 16 26 12 26"
             stroke="currentColor"
             strokeWidth="2"
             strokeLinecap="round"
-            className="text-violet-500"
+            className="text-[#E8967A]"
           />
         </svg>
       </motion.div>
 
-      <p className="text-sm text-zinc-500">{message}</p>
+      <p className="text-sm text-[#8A8880]">{message}</p>
 
       {/* Progress bar */}
-      <div className="w-48 h-1 bg-zinc-200 rounded-full overflow-hidden">
+      <div className="w-48 h-1 bg-[#E8E6DC] rounded-full overflow-hidden">
         <motion.div
-          className="h-full bg-blue-600 rounded-full"
+          className="h-full bg-[#D97757] rounded-full"
           initial={{ x: '-100%' }}
           animate={{ x: '100%' }}
           transition={{
@@ -412,6 +420,84 @@ export const ZenRouter: React.FC = () => {
               <PageTransition>
                 <ProtectedRoute>
                   <ZenApp />
+                </ProtectedRoute>
+              </PageTransition>
+            )}
+          </Route>
+
+          {/* eCTD Submission Agent Dashboard */}
+          <Route path="/concept2cure/ectd-agent">
+            {() => (
+              <PageTransition>
+                <ProtectedRoute>
+                  <Suspense fallback={<ZenLoadingScreen message="Loading eCTD Agent..." />}>
+                    <ECTDSubmissionDashboard />
+                  </Suspense>
+                </ProtectedRoute>
+              </PageTransition>
+            )}
+          </Route>
+
+          {/* Pharmacovigilance Dashboard */}
+          <Route path="/concept2cure/pharmacovigilance">
+            {() => (
+              <PageTransition>
+                <ProtectedRoute>
+                  <Suspense fallback={<ZenLoadingScreen message="Loading Pharmacovigilance..." />}>
+                    <PharmacovigilanceDashboard />
+                  </Suspense>
+                </ProtectedRoute>
+              </PageTransition>
+            )}
+          </Route>
+
+          {/* Document Artifacts Hub */}
+          <Route path="/concept2cure/documents">
+            {() => (
+              <PageTransition>
+                <ProtectedRoute>
+                  <Suspense fallback={<ZenLoadingScreen message="Loading Document Artifacts..." />}>
+                    <DocumentArtifactsHub />
+                  </Suspense>
+                </ProtectedRoute>
+              </PageTransition>
+            )}
+          </Route>
+
+          {/* HAQ Response Manager */}
+          <Route path="/concept2cure/haq-manager">
+            {() => (
+              <PageTransition>
+                <ProtectedRoute>
+                  <Suspense fallback={<ZenLoadingScreen message="Loading HAQ Manager..." />}>
+                    <HAQManagerDashboard />
+                  </Suspense>
+                </ProtectedRoute>
+              </PageTransition>
+            )}
+          </Route>
+
+          {/* IND AutoDraft Engine */}
+          <Route path="/concept2cure/ind-autodraft">
+            {() => (
+              <PageTransition>
+                <ProtectedRoute>
+                  <Suspense fallback={<ZenLoadingScreen message="Loading IND AutoDraft..." />}>
+                    <INDAutoDraftDashboard />
+                  </Suspense>
+                </ProtectedRoute>
+              </PageTransition>
+            )}
+          </Route>
+
+          {/* Clinical Operations Dashboard */}
+          <Route path="/concept2cure/clinical-operations">
+            {() => (
+              <PageTransition>
+                <ProtectedRoute>
+                  <Suspense fallback={<ZenLoadingScreen message="Loading Clinical Operations..." />}>
+                    <ClinicalOperationsDashboard />
+                  </Suspense>
                 </ProtectedRoute>
               </PageTransition>
             )}

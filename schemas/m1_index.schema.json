@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://clinicalsage.ai/schemas/m1_index.schema.json",
+  "$id": "https://concept2cure-ri.ai/schemas/m1_index.schema.json",
   "title": "eCTD Module 1 Index",
   "description": "Index for Module 1 (Administrative) of an eCTD submission. Contains cover letter references, form references, and regional information.",
   "type": "object",

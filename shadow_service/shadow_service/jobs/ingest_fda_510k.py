@@ -452,7 +452,7 @@ async def _main() -> None:
                      args.limit, args.codes or "ALL")
         return
 
-    dsn = os.environ.get("DATABASE_URL", "postgresql://localhost:5432/clinicalsage")
+    dsn = os.environ.get("DATABASE_URL", "postgresql://localhost:5432/concept2cure-ri")
     pool = await asyncpg.create_pool(dsn, min_size=2, max_size=5)
     try:
         ingestor = FDA510kIngestor(pool, api_key=os.environ.get("OPENFDA_API_KEY"))

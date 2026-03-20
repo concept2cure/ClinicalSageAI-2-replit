@@ -38,6 +38,13 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
   if (!organizationId) {
     return res.status(403).json({ error: 'Organization context required' });
   }
+  // Organization ID: pull from auth context only (never trust client body)
+  const organizationId =
+    (req as any).organizationId ||
+    (req as any).user?.organizationId ||
+    (req as any).tenantId ||
+    (req as any).tenantContext?.organizationId ||
+    1;
 
   const {
     region = 'FDA',
@@ -129,6 +136,8 @@ router.post('/:submissionId/validate', async (req: Request, res: Response) => {
       const organizationId =
         (req as any).organizationId ||
         (req as any).user?.organizationId ||
+        (req as any).tenantId ||
+        (req as any).tenantContext?.organizationId ||
         1;
 
       const result = await generateEctdPackage(submissionId, organizationId);

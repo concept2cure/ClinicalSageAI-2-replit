@@ -1,5 +1,5 @@
 {
-  "name": "clinicalsageai",
+  "name": "concept2cure-riai",
   "version": "1.0.0",
   "description": "Enterprise-grade regulatory intelligence platform for life sciences",
   "type": "module",
@@ -7,7 +7,7 @@
   "author": "Concept2Cure <info@concept2cure.pro>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/concept2cure/ClinicalSageAI-2-replit.git"
+    "url": "https://github.com/concept2cure/Concept2Cure.RI-2-replit.git"
   },
   "keywords": [
     "regulatory",

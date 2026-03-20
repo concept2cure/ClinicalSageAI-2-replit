@@ -107,7 +107,11 @@ router.post('/:projectId/compile', async (req: Request, res: Response) => {
       ? new Set(targetModules.map((m: string) => String(m).toLowerCase()))
       : null;
 
-    // 1. Gather all project sections from DB
+    // Derive org from auth context
+    const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId ||
+      (req as any).organizationId || (req as any).user?.organizationId || 1;
+
+    // 1. Gather all project sections from DB (with org filter)
     const sectionsResult = await pool.query(
       `SELECT section_code, title, status, content, word_count, assigned_to, module,
               required, updated_at
@@ -181,6 +185,7 @@ router.post('/:projectId/compile', async (req: Request, res: Response) => {
          VALUES ($1, $2, $3, $4, $5, NOW(), '1.0')`,
         [
           (req as any).organizationId || (req as any).user?.organizationId || 1,
+          orgId,
           `IND Compilation — Project ${projectId}`,
           submissionType,
           hasBlockingErrors ? 'failed' : 'completed',

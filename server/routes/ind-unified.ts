@@ -16,6 +16,8 @@
 
 import { Router, Request, Response, NextFunction } from 'express';
 import { createScopedLogger } from '../utils/logger';
+import { getPool } from '../db';
+import createINDKpiRoutes from './ind-kpi.routes';
 
 const logger = createScopedLogger('ind-unified');
 const router = Router();
@@ -56,7 +58,7 @@ router.get('/health', (_req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
     service: 'ind-unified-api',
     version: '2.0.0',
-    modules: ['automation', 'database', 'submissions', 'templates', 'pre-ind'],
+    modules: ['automation', 'database', 'submissions', 'templates', 'pre-ind', 'kpi'],
   });
 });
 
@@ -94,6 +96,15 @@ router.get('/docs', (_req: Request, res: Response) => {
         description: 'Pre-IND meeting and preparation',
         methods: ['GET', 'POST'],
         legacyPath: '/api/pre-ind/*',
+      },
+      '/kpi': {
+        description: 'KPI event recording and aggregation (database-backed)',
+        methods: ['GET', 'POST'],
+        endpoints: [
+          'POST /kpi/record-event',
+          'GET /kpi/aggregate?windowDays=N',
+          'GET /kpi/success-rate?windowDays=N',
+        ],
       },
     },
   });
@@ -147,6 +158,16 @@ async function mountSubRouters() {
     logger.info('Mounted: /pre-ind (Pre-IND operations)');
   } catch (error) {
     logger.error('Failed to mount pre-IND routes:', error);
+  }
+
+  // IND KPI (database-backed event recording & aggregation)
+  try {
+    const pool = getPool();
+    const kpiRouter = createINDKpiRoutes(pool);
+    router.use('/kpi', kpiRouter);
+    logger.info('Mounted: /kpi (IND KPI aggregation)');
+  } catch (error) {
+    logger.error('Failed to mount KPI routes:', error);
   }
 }
 

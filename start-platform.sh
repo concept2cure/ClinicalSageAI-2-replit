@@ -1,10 +1,10 @@
 #!/bin/bash
-# ClinicalSage / Concept2Cure Platform Startup Script
+# Concept2Cure.RI / Concept2Cure Platform Startup Script
 # Run this after a codespace restart: bash start-platform.sh
 
 set -e
 
-echo "🚀 Starting ClinicalSage Platform..."
+echo "🚀 Starting Concept2Cure.RI Platform..."
 
 # 1. Ensure PostgreSQL is running
 echo "📦 Starting PostgreSQL..."
@@ -29,9 +29,9 @@ fi
 
 # 4. Start the Express + Vite server
 echo "🌐 Starting Express server on port 5000..."
-cd /workspaces/ClinicalSageAI-2-replit
+cd /workspaces/Concept2Cure.RI-2-replit
 
-DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5432/clinicalsage?sslmode=disable" \
+DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5432/concept2cure-ri?sslmode=disable" \
   SKIP_DB_STARTUP_TEST=true \
   NODE_ENV=development \
   PORT=5000 \

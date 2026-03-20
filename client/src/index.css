@@ -793,117 +793,141 @@ input[type='checkbox'].sp-checkbox:checked {
 }
 
 :root {
-  /* SharePoint/OneDrive Color Palette */
-  --color-primary: #0078d4; /* SharePoint Blue */
-  --color-primary-dark: #106ebe;
-  --color-primary-light: #2b88d8;
-  --color-primary-glow: rgba(0, 120, 212, 0.2);
-  --color-secondary: #0078d4; /* SharePoint Blue */
-  --color-secondary-dark: #106ebe;
-  --color-secondary-light: #2b88d8;
-  --color-secondary-glow: rgba(0, 120, 212, 0.2);
-  --color-accent: #0078d4; /* SharePoint Blue */
-  --color-accent-dark: #106ebe;
-  --color-accent-light: #2b88d8;
-  --color-accent-glow: rgba(0, 120, 212, 0.2);
-  --color-highlight: #107c10; /* SharePoint Success Green */
-  --color-highlight-glow: rgba(16, 124, 16, 0.2);
+  /* Claude/Anthropic Color Palette — warm, professional, minimal */
+  --color-primary: #d97757; /* Warm terracotta — Claude's signature accent */
+  --color-primary-dark: #c4623f;
+  --color-primary-light: #e8967a;
+  --color-primary-glow: rgba(217, 119, 87, 0.15);
+  --color-secondary: #788c5d; /* Muted sage green */
+  --color-secondary-dark: #637547;
+  --color-secondary-light: #95a87d;
+  --color-secondary-glow: rgba(120, 140, 93, 0.15);
+  --color-accent: #6a9bcc; /* Soft steel blue */
+  --color-accent-dark: #5280ad;
+  --color-accent-light: #8db5db;
+  --color-accent-glow: rgba(106, 155, 204, 0.15);
+  --color-highlight: #788c5d;
+  --color-highlight-glow: rgba(120, 140, 93, 0.15);
 
-  /* SharePoint Status Colors */
-  --color-success: #107c10;
-  --gradient-success: linear-gradient(135deg, #107c10 0%, #0b6a0b 100%);
-  --color-warning: #ffb900;
-  --gradient-warning: linear-gradient(135deg, #ffb900 0%, #ff8c00 100%);
-  --color-error: #d13438;
-  --gradient-error: linear-gradient(135deg, #d13438 0%, #a4262c 100%);
-  --color-info: #0078d4;
-  --gradient-info: linear-gradient(135deg, #0078d4 0%, #106ebe 100%);
+  /* Status Colors — Claude-aligned warm tones */
+  --color-success: #788c5d;
+  --gradient-success: linear-gradient(135deg, #788c5d 0%, #637547 100%);
+  --color-warning: #d97706;
+  --gradient-warning: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  --color-error: #dc2626;
+  --gradient-error: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  --color-info: #6a9bcc;
+  --gradient-info: linear-gradient(135deg, #6a9bcc 0%, #5280ad 100%);
 
-  /* Dark Mode Premium Colors */
-  --dark-bg-primary: #0f0f23;
-  --dark-bg-secondary: #1a1a2e;
-  --dark-bg-tertiary: #16213e;
-  --dark-surface: rgba(255, 255, 255, 0.02);
-  --dark-surface-hover: rgba(255, 255, 255, 0.05);
-  --dark-glow: rgba(99, 102, 241, 0.15);
+  /* Dark Mode */
+  --dark-bg-primary: #141413;
+  --dark-bg-secondary: #1c1c1a;
+  --dark-bg-tertiary: #252522;
+  --dark-surface: rgba(255, 255, 255, 0.03);
+  --dark-surface-hover: rgba(255, 255, 255, 0.06);
+  --dark-glow: rgba(217, 119, 87, 0.1);
 
-  /* SharePoint Neutral Palette */
-  --color-gray-50: #faf9f8;
-  --color-gray-100: #f3f2f1;
-  --color-gray-200: #edebe9;
-  --color-gray-300: #e1dfdd;
-  --color-gray-400: #c8c6c4;
-  --color-gray-500: #979593;
-  --color-gray-600: #605e5c;
-  --color-gray-700: #484644;
-  --color-gray-800: #323130;
-  --color-gray-900: #201f1e;
-  --color-gray-950: #000000;
-  --color-bg: #ffffff;
+  /* Claude Neutral Palette — warm sand/stone tones */
+  --color-gray-50: #faf9f5;
+  --color-gray-100: #f5f4ef;
+  --color-gray-200: #e8e6dc;
+  --color-gray-300: #d8d5ca;
+  --color-gray-400: #b0aea5;
+  --color-gray-500: #8a8880;
+  --color-gray-600: #6b6962;
+  --color-gray-700: #4d4b45;
+  --color-gray-800: #2d2c28;
+  --color-gray-900: #141413;
+  --color-gray-950: #0a0a09;
+  --color-bg: #faf9f5;
   --color-surface: #ffffff;
-  /* Typography tokens (conflict-resolved: keep full token set) */
-  --color-text-primary: #0f172a;
-  --color-text-secondary: #475569;
-  --color-text-tertiary: #64748b;
-  --color-text-inverse: #ffffff;
-  --color-text-code: #0b1220;
-  --color-link: #0b4aa8;
-  --color-link-hover: #0f172a;
-  --color-link-visited: #233876;
+  /* Typography tokens — warm ink tones */
+  --color-text-primary: #141413;
+  --color-text-secondary: #4d4b45;
+  --color-text-tertiary: #6b6962;
+  --color-text-inverse: #faf9f5;
+  --color-text-code: #141413;
+  --color-link: #5280ad;
+  --color-link-hover: #141413;
+  --color-link-visited: #4d6a8a;
 
-  /* Semantic background tokens */
-  --background: 0 0% 100%;
-  --foreground: 222 47% 11%;
+  /* Semantic background tokens — Claude warm */
+  --background: 45 33% 97%;
+  --foreground: 50 5% 8%;
   --card: 0 0% 100%;
+  --card-foreground: 50 5% 8%;
   --popover: 0 0% 100%;
-  --muted: 0 0% 100%;
-  --muted-foreground: 215 20% 35%;
-  --secondary: 0 0% 100%;
-  --accent: 0 0% 100%;
-  --sidebar-background: 0 0% 100%;
-  --sidebar-accent: 0 0% 100%;
-  --sidebar-border: 210 20% 94%;
+  --popover-foreground: 50 5% 8%;
+  --muted: 45 20% 95%;
+  --muted-foreground: 45 5% 35%;
+  --primary: 18 60% 60%;
+  --primary-foreground: 45 33% 97%;
+  --secondary: 100 20% 46%;
+  --secondary-foreground: 45 33% 97%;
+  --accent: 210 40% 61%;
+  --accent-foreground: 45 33% 97%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 45 33% 97%;
+  --border: 45 17% 88%;
+  --input: 45 17% 88%;
+  --ring: 18 60% 60%;
+  --radius: 0.5rem;
+  --sidebar-background: 45 20% 95%;
+  --sidebar-foreground: 50 5% 8%;
+  --sidebar-primary: 18 60% 60%;
+  --sidebar-primary-foreground: 45 33% 97%;
+  --sidebar-accent: 45 20% 93%;
+  --sidebar-accent-foreground: 50 5% 8%;
+  --sidebar-border: 45 17% 88%;
+  --sidebar-ring: 18 60% 60%;
 
-  /* SharePoint Gradients - Minimal/Flat */
-  --gradient-primary: linear-gradient(135deg, #0078d4 0%, #106ebe 100%);
-  --gradient-secondary: linear-gradient(135deg, #0078d4 0%, #106ebe 100%);
-  --gradient-accent: linear-gradient(135deg, #0078d4 0%, #106ebe 100%);
-  --gradient-premium: linear-gradient(135deg, #0078d4 0%, #106ebe 100%);
-  --gradient-warm: linear-gradient(135deg, #ffb900 0%, #ff8c00 100%);
-  --gradient-cool: linear-gradient(135deg, #0078d4 0%, #106ebe 100%);
-  --gradient-sunset: linear-gradient(135deg, #ffb900 0%, #ff8c00 100%);
-  --gradient-ocean: linear-gradient(135deg, #0078d4 0%, #106ebe 100%);
-  --gradient-aurora: linear-gradient(135deg, #0078d4 0%, #106ebe 100%);
-  --gradient-dark: linear-gradient(135deg, #323130 0%, #201f1e 100%);
+  /* Chart colors — Claude warm palette */
+  --chart-1: 18 60% 60%;
+  --chart-2: 100 20% 46%;
+  --chart-3: 210 40% 61%;
+  --chart-4: 45 70% 55%;
+  --chart-5: 340 45% 55%;
+
+  /* Gradients — subtle, warm, non-flashy */
+  --gradient-primary: linear-gradient(135deg, #d97757 0%, #c4623f 100%);
+  --gradient-secondary: linear-gradient(135deg, #788c5d 0%, #637547 100%);
+  --gradient-accent: linear-gradient(135deg, #6a9bcc 0%, #5280ad 100%);
+  --gradient-premium: linear-gradient(135deg, #d97757 0%, #c4623f 100%);
+  --gradient-warm: linear-gradient(135deg, #d97757 0%, #c4623f 100%);
+  --gradient-cool: linear-gradient(135deg, #6a9bcc 0%, #5280ad 100%);
+  --gradient-sunset: linear-gradient(135deg, #d97757 0%, #e8967a 100%);
+  --gradient-ocean: linear-gradient(135deg, #6a9bcc 0%, #5280ad 100%);
+  --gradient-aurora: linear-gradient(135deg, #788c5d 0%, #6a9bcc 100%);
+  --gradient-dark: linear-gradient(135deg, #2d2c28 0%, #141413 100%);
   --gradient-mesh: none;
   --gradient-mesh-dark: none;
 
-  /* Glass Morphism Effects */
+  /* Glass Morphism — softened for Claude aesthetic */
   --glass-bg: rgba(255, 255, 255, 0.05);
-  --glass-bg-solid: rgba(255, 255, 255, 0.9);
-  --glass-bg-medium: rgba(255, 255, 255, 0.7);
-  --glass-bg-heavy: rgba(255, 255, 255, 0.95);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-border-light: rgba(255, 255, 255, 0.2);
-  --glass-blur: blur(10px);
-  --glass-blur-heavy: blur(20px);
-  --glass-blur-ultra: blur(40px);
+  --glass-bg-solid: rgba(255, 255, 255, 0.92);
+  --glass-bg-medium: rgba(255, 255, 255, 0.75);
+  --glass-bg-heavy: rgba(255, 255, 255, 0.96);
+  --glass-border: rgba(0, 0, 0, 0.06);
+  --glass-border-light: rgba(0, 0, 0, 0.04);
+  --glass-blur: blur(8px);
+  --glass-blur-heavy: blur(16px);
+  --glass-blur-ultra: blur(32px);
 
-  /* SharePoint Shadow Collection */
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-sm: 0 1.6px 3.6px rgba(0, 0, 0, 0.13);
-  --shadow-md: 0 3.2px 7.2px rgba(0, 0, 0, 0.13);
-  --shadow-lg: 0 6.4px 14.4px rgba(0, 0, 0, 0.13);
-  --shadow-xl: 0 8px 16px rgba(0, 0, 0, 0.13);
-  --shadow-2xl: 0 16px 32px rgba(0, 0, 0, 0.13);
-  --shadow-3xl: 0 24px 48px rgba(0, 0, 0, 0.13);
-  --shadow-inner: inset 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-glow-primary: none;
-  --shadow-glow-secondary: none;
-  --shadow-glow-accent: none;
-  --shadow-3d: 0 1.6px 3.6px rgba(0, 0, 0, 0.13);
-  --shadow-sharepoint: 0 1.6px 3.6px rgba(0, 0, 0, 0.13);
-  --shadow-sharepoint-hover: 0 3.2px 7.2px rgba(0, 0, 0, 0.13);
+  /* Shadow Collection — soft, warm, Claude-style */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.06), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+  --shadow-3xl: 0 35px 60px -15px rgba(0, 0, 0, 0.1);
+  --shadow-inner: inset 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --shadow-glow-primary: 0 0 20px rgba(217, 119, 87, 0.1);
+  --shadow-glow-secondary: 0 0 20px rgba(120, 140, 93, 0.1);
+  --shadow-glow-accent: 0 0 20px rgba(106, 155, 204, 0.1);
+  --shadow-3d: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-sharepoint: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-sharepoint-hover: 0 4px 6px rgba(0, 0, 0, 0.06);
 
   /* Modern Spacing Scale */
   --space-xs: 0.25rem;
@@ -914,12 +938,13 @@ input[type='checkbox'].sp-checkbox:checked {
   --space-2xl: 3rem;
   --space-3xl: 4rem;
 
-  /* Typography - SharePoint Fonts */
+  /* Typography — Claude/Anthropic font stack */
   font-family:
-    'Segoe UI',
     -apple-system,
     BlinkMacSystemFont,
-    system-ui,
+    'Segoe UI',
+    'Helvetica Neue',
+    Arial,
     sans-serif;
   line-height: 1.5;
   font-weight: 400;
@@ -927,7 +952,7 @@ input[type='checkbox'].sp-checkbox:checked {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-feature-settings: 'ss01', 'cv02', 'cv03', 'liga', 'kern';
+  font-feature-settings: 'kern';
   font-variant-ligatures: common-ligatures;
 
   /* Typography Scale */
@@ -961,10 +986,11 @@ body {
   background: var(--color-bg);
   position: relative;
   font-family:
-    'Segoe UI',
     -apple-system,
     BlinkMacSystemFont,
-    system-ui,
+    'Segoe UI',
+    'Helvetica Neue',
+    Arial,
     sans-serif;
 }
 
@@ -2215,25 +2241,23 @@ div.dropdown-menu-content {
   box-shadow: 0 6px 20px rgba(0, 102, 255, 0.4);
 }
 
-/* Custom Scrollbar */
+/* Custom Scrollbar — Claude-style minimal */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-gray-100);
-  border-radius: 10px;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--gradient-primary);
-  border-radius: 10px;
-  border: 2px solid var(--color-gray-100);
+  background: var(--color-gray-300);
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--gradient-secondary);
+  background: var(--color-gray-400);
 }
 
 /* Sidebar scrollbar — thin, neutral, ChatGPT-style */

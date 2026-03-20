@@ -70,6 +70,9 @@ import cmcDashboardRoutes from './routes/cmc-dashboard';
 import cmcAggregatorRoutes from './api/cmc/index.js';
 import cmcDashboardPrisma from './routes/cmc-dashboard-prisma';
 import cmcCoreRoutes from './api/cmc/routes';
+import cmcSpecificationRoutes from './api/cmc/specificationRoutes';
+import cmcStabilityRoutes from './api/cmc/stabilityRoutes';
+import cmcBatchRecordRoutes from './api/cmc/batchRecordRoutes';
 
 // Import AI assistance routes
 import aiAssistanceRoutes, { setAIService } from './routes/ai-assistance';
@@ -804,9 +807,12 @@ try {
   app.use('/api/cmc', cmcAggregatorRoutes);
   app.use('/api/cmc', cmcProjectRoutes);
   app.use('/api/cmc/blueprint', cmcBlueprintRoutes);
+  app.use('/api/cmc/specifications', cmcSpecificationRoutes);
+  app.use('/api/cmc/stability', cmcStabilityRoutes);
+  app.use('/api/cmc/batch-records', cmcBatchRecordRoutes);
   app.use('/api/cmc/dashboard-legacy', cmcDashboardRoutes);
   app.use('/api/cmc/dashboard', cmcDashboardPrisma);
-  console.log('✅ CMC Module API routes mounted (aggregator + projects + blueprint + dashboard)');
+  console.log('✅ CMC Module API routes mounted (aggregator + projects + blueprint + specifications + stability + batch-records + dashboard)');
 } catch (error) {
   console.error('❌ Failed to mount CMC Module routes:', error);
 }
@@ -1169,6 +1175,36 @@ try {
   console.error('❌ Failed to mount IVDR routes:', error);
 }
 
+// Mount Manufacturing Module routes (ISA-95/FHIR, EBR, Quality, AI review)
+try {
+  const mfgModule = await import('./routes/manufacturing-routes');
+  const createManufacturingRoutes = mfgModule.default;
+  app.use('/api/manufacturing', createManufacturingRoutes(pool));
+  console.log('✅ Manufacturing API routes mounted (ISA-95/FHIR, Plug & Produce, EBR, AI review)');
+} catch (error) {
+  console.error('❌ Failed to mount Manufacturing routes:', error);
+}
+
+// Mount Pharmacovigilance Module routes (ICH E2A/E2B/E2C/E2D/E2E/E2F)
+try {
+  const pvModule = await import('./routes/pharmacovigilance-routes');
+  const createPharmacovigilanceRoutes = pvModule.default;
+  app.use('/api/pharmacovigilance', createPharmacovigilanceRoutes());
+  console.log('✅ Pharmacovigilance API routes mounted (ICH E2A-E2F, GVP Module V/IX)');
+} catch (error) {
+  console.error('❌ Failed to mount Pharmacovigilance routes:', error);
+}
+
+// Mount Clinical Operations Module routes (study/site/enrollment/monitoring)
+try {
+  const clinOpsModule = await import('./routes/clinical-operations-routes');
+  const createClinicalOperationsRoutes = clinOpsModule.default;
+  app.use('/api/clinical-operations', createClinicalOperationsRoutes(pool));
+  console.log('✅ Clinical Operations API routes mounted (studies, sites, enrollment, monitoring, deviations)');
+} catch (error) {
+  console.error('❌ Failed to mount Clinical Operations routes:', error);
+}
+
 // Mount FDA Integration routes
 try {
   const fdaIntegrationModule = await import('./routes/fda-integration-simple');
@@ -1371,6 +1407,46 @@ try {
   console.log('✅ eCTD Export routes mounted (ICH M8 v4.0 packaging)');
 } catch (error) {
   console.error('❌ Failed to mount eCTD Export routes:', error);
+}
+
+// Mount eCTD Submission Agent routes (direct agency submissions — FDA ESG, EMA, PMDA, HC)
+try {
+  const ectdSubmissionModule = await import('./routes/ectd-submission-agent.routes');
+  const ectdSubmissionRoutes = ectdSubmissionModule.default;
+  app.use('/api/ectd-submissions', ectdSubmissionRoutes);
+  console.log('✅ eCTD Submission Agent routes mounted (FDA ESG, EMA, PMDA, HC gateway)');
+} catch (error) {
+  console.error('❌ Failed to mount eCTD Submission Agent routes:', error);
+}
+
+// Mount Biotech Document Artifact routes (eCTD, PV, Clinical Ops document generation)
+try {
+  const biotechArtifactsModule = await import('./routes/biotech-artifacts');
+  const biotechArtifactsRoutes = biotechArtifactsModule.default;
+  app.use('/api/biotech-artifacts', biotechArtifactsRoutes);
+  console.log('✅ Biotech Artifact Generator routes mounted (10 document types)');
+} catch (error) {
+  console.error('❌ Failed to mount Biotech Artifact routes:', error);
+}
+
+// Mount HAQ Response Manager routes (FDA IR, EMA D120, PMDA, HC question tracking)
+try {
+  const haqModule = await import('./routes/haq-manager');
+  const haqRoutes = haqModule.default;
+  app.use('/api/haq-manager', haqRoutes);
+  console.log('✅ HAQ Response Manager routes mounted (question tracking, AI drafting, review workflow)');
+} catch (error) {
+  console.error('❌ Failed to mount HAQ Manager routes:', error);
+}
+
+// Mount IND AutoDraft routes (AI-powered IND section generation with source traceability)
+try {
+  const indAutodraftModule = await import('./routes/ind-autodraft');
+  const indAutodraftRoutes = indAutodraftModule.default;
+  app.use('/api/ind-autodraft', indAutodraftRoutes);
+  console.log('✅ IND AutoDraft Engine routes mounted (16 IND sections, sentence-level traceability)');
+} catch (error) {
+  console.error('❌ Failed to mount IND AutoDraft routes:', error);
 }
 
 // Mount IND PDF generation routes (Puppeteer + PDFKit fallback)
@@ -2337,7 +2413,7 @@ stream
 BT
 /F1 18 Tf
 72 720 Td
-(ClinicalSage Report Export) Tj
+(Concept2Cure.RI Report Export) Tj
 ET
 endstream
 endobj
@@ -2359,7 +2435,7 @@ startxref
 %%EOF`;
 
   res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', 'attachment; filename="clinicalsage-report.pdf"');
+  res.setHeader('Content-Disposition', 'attachment; filename="concept2cure-ri-report.pdf"');
   return res.send(Buffer.from(pdfContent, 'utf-8'));
 });
 
@@ -6694,7 +6770,7 @@ async function startServer() {
             <!DOCTYPE html>
             <html>
             <head>
-              <title>TrialSage - ClinicalSageAI</title>
+              <title>TrialSage - Concept2Cure.RI</title>
               <style>
                 body { font-family: system-ui, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
                 .container { text-align: center; color: white; padding: 40px; }

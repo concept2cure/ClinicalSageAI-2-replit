@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://clinicalsage.ai/schemas/sequence_plan.schema.json",
+  "$id": "https://concept2cure-ri.ai/schemas/sequence_plan.schema.json",
   "title": "eCTD Sequence Plan",
   "description": "Defines the submission sequence plan for a regulatory proof pack. Specifies which eCTD sequence this proof pack targets and the operation type for each leaf.",
   "type": "object",

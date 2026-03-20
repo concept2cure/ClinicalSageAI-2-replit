@@ -204,7 +204,7 @@ function generateIndexXml(opts: {
   Application: ${escapeXml(opts.applicationNumber)}
   Sequence: ${opts.sequenceNumber}
   Generated: ${opts.generatedAt}
-  Generator: ClinicalSageAI eCTD Export Service
+  Generator: Concept2Cure.RI eCTD Export Service
 -->
 <ectd:ectd xmlns:ectd="http://www.ich.org/ectd"
            xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -313,7 +313,7 @@ function generateStructuredDocument(opts: {
     `    3. Re-export the eCTD package to include final content`,
     ``,
     `${'='.repeat(72)}`,
-    `  ClinicalSageAI eCTD Export Service — ICH M8 v4.0`,
+    `  Concept2Cure.RI eCTD Export Service — ICH M8 v4.0`,
     `${'='.repeat(72)}`,
     ``,
   ].filter(line => line !== null).join('\n');

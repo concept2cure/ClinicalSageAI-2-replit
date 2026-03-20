@@ -68,8 +68,8 @@
     "NODE_ENV": "development"
   },
   "python.analysis.extraPaths": ["shadow_service"],
-  "python.defaultInterpreterPath": "/workspaces/ClinicalSageAI-2-replit/.venv/bin/python",
-  "python.pythonPath": "/workspaces/ClinicalSageAI-2-replit/.venv/bin/python",
+  "python.defaultInterpreterPath": "/workspaces/Concept2Cure.RI-2-replit/.venv/bin/python",
+  "python.pythonPath": "/workspaces/Concept2Cure.RI-2-replit/.venv/bin/python",
   "python.analysis.autoSearchPaths": false,
   "python.analysis.diagnosticMode": "openFilesOnly",
   "files.associations": {
