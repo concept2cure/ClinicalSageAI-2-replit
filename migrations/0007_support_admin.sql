@@ -22,6 +22,9 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
+-- Sequence for atomic ticket number generation (race-free, never reuses values)
+CREATE SEQUENCE IF NOT EXISTS support_ticket_number_seq;
+
 -- Support Tickets
 CREATE TABLE IF NOT EXISTS support_tickets (
   id SERIAL PRIMARY KEY,

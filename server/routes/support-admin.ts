@@ -123,14 +123,13 @@ function getUserId(req: Request): number | null {
   return typeof uid === 'string' ? parseInt(uid, 10) : (uid as number);
 }
 
-/** Generate a unique ticket number like TKT-000001 */
+/** Generate a unique ticket number using a PostgreSQL sequence (atomic, race-free) */
 async function generateTicketNumber(): Promise<string> {
   if (!pool) throw new Error('Database not available');
   const result = await pool.query(
-    `SELECT COUNT(*)::int AS cnt FROM support_tickets`
+    `SELECT nextval('support_ticket_number_seq')::int AS num`
   );
-  const count = (result.rows[0]?.cnt || 0) + 1;
-  return `TKT-${String(count).padStart(6, '0')}`;
+  return `TKT-${String(result.rows[0].num).padStart(6, '0')}`;
 }
 
 // ============================================================
@@ -179,41 +178,41 @@ router.get('/tickets', async (req: Request, res: Response) => {
     }
 
     const whereSQL = whereClauses.join(' AND ');
-
-    // Count
-    const countResult = await pool.query(
-      `SELECT COUNT(*)::int AS total FROM support_tickets t WHERE ${whereSQL}`,
-      params
-    );
-    const total = countResult.rows[0]?.total || 0;
-
-    // Fetch with pagination
     const dataParams = [...params, limitNum, offset];
-    const dataResult = await pool.query(
-      `SELECT
-        t.id, t.ticket_number AS "ticketNumber", t.subject, t.status, t.priority, t.category,
-        t.tags, t.assigned_to_id AS "assignedToId", t.created_by_id AS "createdById",
-        t.sla_response_due AS "slaResponseDue", t.sla_resolution_due AS "slaResolutionDue",
-        t.first_response_at AS "firstResponseAt", t.resolved_at AS "resolvedAt",
-        t.satisfaction_rating AS "satisfactionRating",
-        t.created_at AS "createdAt", t.updated_at AS "updatedAt",
-        u.name AS "createdByName", u.email AS "createdByEmail",
-        a.name AS "assignedToName"
-      FROM support_tickets t
-      LEFT JOIN users u ON u.id = t.created_by_id
-      LEFT JOIN users a ON a.id = t.assigned_to_id
-      WHERE ${whereSQL}
-      ORDER BY
-        CASE t.priority
-          WHEN 'critical' THEN 1
-          WHEN 'high' THEN 2
-          WHEN 'medium' THEN 3
-          WHEN 'low' THEN 4
-        END,
-        t.created_at DESC
-      LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`,
-      dataParams
-    );
+
+    // Run count and data queries in parallel
+    const [countResult, dataResult] = await Promise.all([
+      pool.query(
+        `SELECT COUNT(*)::int AS total FROM support_tickets t WHERE ${whereSQL}`,
+        params
+      ),
+      pool.query(
+        `SELECT
+          t.id, t.ticket_number AS "ticketNumber", t.subject, t.status, t.priority, t.category,
+          t.tags, t.assigned_to_id AS "assignedToId", t.created_by_id AS "createdById",
+          t.sla_response_due AS "slaResponseDue", t.sla_resolution_due AS "slaResolutionDue",
+          t.first_response_at AS "firstResponseAt", t.resolved_at AS "resolvedAt",
+          t.satisfaction_rating AS "satisfactionRating",
+          t.created_at AS "createdAt", t.updated_at AS "updatedAt",
+          u.name AS "createdByName", u.email AS "createdByEmail",
+          a.name AS "assignedToName"
+        FROM support_tickets t
+        LEFT JOIN users u ON u.id = t.created_by_id
+        LEFT JOIN users a ON a.id = t.assigned_to_id
+        WHERE ${whereSQL}
+        ORDER BY
+          CASE t.priority
+            WHEN 'critical' THEN 1
+            WHEN 'high' THEN 2
+            WHEN 'medium' THEN 3
+            WHEN 'low' THEN 4
+          END,
+          t.created_at DESC
+        LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`,
+        dataParams
+      ),
+    ]);
+    const total = countResult.rows[0]?.total || 0;
 
     res.json({
       tickets: dataResult.rows,
@@ -238,40 +237,41 @@ router.get('/tickets/:id', async (req: Request, res: Response) => {
     const ticketId = parseInt(req.params.id, 10);
     if (isNaN(ticketId)) return res.status(400).json({ error: 'Invalid ticket ID' });
 
-    const ticketResult = await pool.query(
-      `SELECT
-        t.*, t.ticket_number AS "ticketNumber", t.created_by_id AS "createdById",
-        t.assigned_to_id AS "assignedToId", t.internal_notes AS "internalNotes",
-        t.sla_response_due AS "slaResponseDue", t.sla_resolution_due AS "slaResolutionDue",
-        t.first_response_at AS "firstResponseAt", t.resolved_at AS "resolvedAt",
-        t.closed_at AS "closedAt", t.satisfaction_rating AS "satisfactionRating",
-        t.satisfaction_feedback AS "satisfactionFeedback",
-        t.created_at AS "createdAt", t.updated_at AS "updatedAt",
-        u.name AS "createdByName", u.email AS "createdByEmail",
-        a.name AS "assignedToName"
-      FROM support_tickets t
-      LEFT JOIN users u ON u.id = t.created_by_id
-      LEFT JOIN users a ON a.id = t.assigned_to_id
-      WHERE t.id = $1 AND t.organization_id = $2`,
-      [ticketId, orgId]
-    );
+    // Fetch ticket and messages in parallel
+    const [ticketResult, messagesResult] = await Promise.all([
+      pool.query(
+        `SELECT
+          t.*, t.ticket_number AS "ticketNumber", t.created_by_id AS "createdById",
+          t.assigned_to_id AS "assignedToId", t.internal_notes AS "internalNotes",
+          t.sla_response_due AS "slaResponseDue", t.sla_resolution_due AS "slaResolutionDue",
+          t.first_response_at AS "firstResponseAt", t.resolved_at AS "resolvedAt",
+          t.closed_at AS "closedAt", t.satisfaction_rating AS "satisfactionRating",
+          t.satisfaction_feedback AS "satisfactionFeedback",
+          t.created_at AS "createdAt", t.updated_at AS "updatedAt",
+          u.name AS "createdByName", u.email AS "createdByEmail",
+          a.name AS "assignedToName"
+        FROM support_tickets t
+        LEFT JOIN users u ON u.id = t.created_by_id
+        LEFT JOIN users a ON a.id = t.assigned_to_id
+        WHERE t.id = $1 AND t.organization_id = $2`,
+        [ticketId, orgId]
+      ),
+      pool.query(
+        `SELECT
+          m.id, m.content, m.is_internal AS "isInternal", m.attachments,
+          m.created_at AS "createdAt",
+          u.id AS "userId", u.name AS "userName", u.email AS "userEmail", u.avatar AS "userAvatar"
+        FROM support_ticket_messages m
+        LEFT JOIN users u ON u.id = m.user_id
+        WHERE m.ticket_id = $1
+        ORDER BY m.created_at ASC`,
+        [ticketId]
+      ),
+    ]);
 
     if (ticketResult.rows.length === 0) {
       return res.status(404).json({ error: 'Ticket not found' });
     }
-
-    // Get messages
-    const messagesResult = await pool.query(
-      `SELECT
-        m.id, m.content, m.is_internal AS "isInternal", m.attachments,
-        m.created_at AS "createdAt",
-        u.id AS "userId", u.name AS "userName", u.email AS "userEmail", u.avatar AS "userAvatar"
-      FROM support_ticket_messages m
-      LEFT JOIN users u ON u.id = m.user_id
-      WHERE m.ticket_id = $1
-      ORDER BY m.created_at ASC`,
-      [ticketId]
-    );
 
     res.json({
       ...ticketResult.rows[0],
@@ -295,19 +295,17 @@ router.post('/tickets', async (req: Request, res: Response) => {
     if (!orgId || !userId) return res.status(400).json({ error: 'Organization and user context required' });
 
     const data = createTicketSchema.parse(req.body);
-    const ticketNumber = await generateTicketNumber();
 
-    // Calculate SLA deadlines from org settings
-    let slaResponseHours = 24;
-    let slaResolutionHours = 72;
-    const settingsResult = await pool.query(
-      `SELECT sla_response_hours, sla_resolution_hours FROM support_settings WHERE organization_id = $1`,
-      [orgId]
-    );
-    if (settingsResult.rows.length > 0) {
-      slaResponseHours = settingsResult.rows[0].sla_response_hours;
-      slaResolutionHours = settingsResult.rows[0].sla_resolution_hours;
-    }
+    // Fetch ticket number and SLA settings in parallel
+    const [ticketNumber, settingsResult] = await Promise.all([
+      generateTicketNumber(),
+      pool.query(
+        `SELECT sla_response_hours, sla_resolution_hours FROM support_settings WHERE organization_id = $1`,
+        [orgId]
+      ),
+    ]);
+    const slaResponseHours = settingsResult.rows[0]?.sla_response_hours ?? 24;
+    const slaResolutionHours = settingsResult.rows[0]?.sla_resolution_hours ?? 72;
 
     const result = await pool.query(
       `INSERT INTO support_tickets
@@ -447,16 +445,25 @@ router.delete('/tickets/:id', async (req: Request, res: Response) => {
     const ticketId = parseInt(req.params.id, 10);
     if (isNaN(ticketId)) return res.status(400).json({ error: 'Invalid ticket ID' });
 
-    // Delete messages first (child records)
-    await pool.query(`DELETE FROM support_ticket_messages WHERE ticket_id = $1`, [ticketId]);
-
-    const result = await pool.query(
-      `DELETE FROM support_tickets WHERE id = $1 AND organization_id = $2 RETURNING id`,
-      [ticketId, orgId]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Ticket not found' });
+    // Use a transaction to ensure atomicity and verify ownership before deleting messages
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const ticketResult = await client.query(
+        `DELETE FROM support_tickets WHERE id = $1 AND organization_id = $2 RETURNING id`,
+        [ticketId, orgId]
+      );
+      if (ticketResult.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ error: 'Ticket not found' });
+      }
+      await client.query(`DELETE FROM support_ticket_messages WHERE ticket_id = $1`, [ticketId]);
+      await client.query('COMMIT');
+    } catch (txError) {
+      await client.query('ROLLBACK');
+      throw txError;
+    } finally {
+      client.release();
     }
 
     res.json({ message: 'Ticket deleted successfully' });
@@ -502,18 +509,16 @@ router.post('/tickets/:id/messages', async (req: Request, res: Response) => {
       [ticketId, userId, data.isInternal, data.content, JSON.stringify(data.attachments || [])]
     );
 
-    // Track first response time (only for non-internal, non-creator replies)
-    if (!ticketCheck.rows[0].first_response_at && !data.isInternal) {
-      await pool.query(
-        `UPDATE support_tickets SET first_response_at = NOW(), updated_at = NOW() WHERE id = $1`,
-        [ticketId]
-      );
-    }
-
-    // Also update ticket's updated_at
+    // Update ticket: always refresh updated_at, conditionally set first_response_at
     await pool.query(
-      `UPDATE support_tickets SET updated_at = NOW() WHERE id = $1`,
-      [ticketId]
+      `UPDATE support_tickets SET
+        updated_at = NOW(),
+        first_response_at = CASE
+          WHEN first_response_at IS NULL AND $2 = false THEN NOW()
+          ELSE first_response_at
+        END
+      WHERE id = $1`,
+      [ticketId, data.isInternal]
     );
 
     res.status(201).json(result.rows[0]);
@@ -566,29 +571,31 @@ router.get('/articles', async (req: Request, res: Response) => {
     }
 
     const whereSQL = whereClauses.join(' AND ');
-
-    const countResult = await pool.query(
-      `SELECT COUNT(*)::int AS total FROM support_articles a WHERE ${whereSQL}`,
-      params
-    );
-    const total = countResult.rows[0]?.total || 0;
-
     const dataParams = [...params, limitNum, offset];
-    const dataResult = await pool.query(
-      `SELECT
-        a.id, a.title, a.slug, a.excerpt, a.category, a.tags, a.status,
-        a.is_global AS "isGlobal", a.sort_order AS "sortOrder",
-        a.view_count AS "viewCount", a.helpful_count AS "helpfulCount",
-        a.not_helpful_count AS "notHelpfulCount",
-        a.published_at AS "publishedAt", a.created_at AS "createdAt", a.updated_at AS "updatedAt",
-        u.name AS "authorName"
-      FROM support_articles a
-      LEFT JOIN users u ON u.id = a.author_id
-      WHERE ${whereSQL}
-      ORDER BY a.sort_order ASC, a.created_at DESC
-      LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`,
-      dataParams
-    );
+
+    // Run count and data queries in parallel
+    const [countResult, dataResult] = await Promise.all([
+      pool.query(
+        `SELECT COUNT(*)::int AS total FROM support_articles a WHERE ${whereSQL}`,
+        params
+      ),
+      pool.query(
+        `SELECT
+          a.id, a.title, a.slug, a.excerpt, a.category, a.tags, a.status,
+          a.is_global AS "isGlobal", a.sort_order AS "sortOrder",
+          a.view_count AS "viewCount", a.helpful_count AS "helpfulCount",
+          a.not_helpful_count AS "notHelpfulCount",
+          a.published_at AS "publishedAt", a.created_at AS "createdAt", a.updated_at AS "updatedAt",
+          u.name AS "authorName"
+        FROM support_articles a
+        LEFT JOIN users u ON u.id = a.author_id
+        WHERE ${whereSQL}
+        ORDER BY a.sort_order ASC, a.created_at DESC
+        LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`,
+        dataParams
+      ),
+    ]);
+    const total = countResult.rows[0]?.total || 0;
 
     res.json({
       articles: dataResult.rows,
@@ -613,23 +620,22 @@ router.get('/articles/:id', async (req: Request, res: Response) => {
     const articleId = parseInt(req.params.id, 10);
     if (isNaN(articleId)) return res.status(400).json({ error: 'Invalid article ID' });
 
-    // Increment view count
-    await pool.query(
-      `UPDATE support_articles SET view_count = view_count + 1 WHERE id = $1 AND (organization_id = $2 OR is_global = true)`,
-      [articleId, orgId]
-    );
-
+    // Increment view count and fetch in a single query (avoids blind UPDATE on missing articles)
     const result = await pool.query(
-      `SELECT
-        a.*, a.is_global AS "isGlobal", a.sort_order AS "sortOrder",
-        a.view_count AS "viewCount", a.helpful_count AS "helpfulCount",
-        a.not_helpful_count AS "notHelpfulCount",
-        a.published_at AS "publishedAt", a.created_at AS "createdAt", a.updated_at AS "updatedAt",
-        a.author_id AS "authorId",
+      `WITH updated AS (
+        UPDATE support_articles SET view_count = view_count + 1
+        WHERE id = $1 AND (organization_id = $2 OR is_global = true)
+        RETURNING *
+      )
+      SELECT
+        updated.*, updated.is_global AS "isGlobal", updated.sort_order AS "sortOrder",
+        updated.view_count AS "viewCount", updated.helpful_count AS "helpfulCount",
+        updated.not_helpful_count AS "notHelpfulCount",
+        updated.published_at AS "publishedAt", updated.created_at AS "createdAt", updated.updated_at AS "updatedAt",
+        updated.author_id AS "authorId",
         u.name AS "authorName"
-      FROM support_articles a
-      LEFT JOIN users u ON u.id = a.author_id
-      WHERE a.id = $1 AND (a.organization_id = $2 OR a.is_global = true)`,
+      FROM updated
+      LEFT JOIN users u ON u.id = updated.author_id`,
       [articleId, orgId]
     );
 
@@ -966,34 +972,34 @@ router.get('/analytics', async (req: Request, res: Response) => {
     const { days = '30' } = req.query;
     const daysNum = Math.min(365, Math.max(1, parseInt(days as string, 10) || 30));
 
-    // Run analytics queries in parallel
-    const [statusCounts, priorityCounts, categoryCounts, slaMetrics, satisfactionMetrics, volumeByDay] =
+    // Run analytics queries in parallel (SLA + satisfaction merged into one scan)
+    const [statusCounts, priorityCounts, categoryCounts, slaAndSatisfaction, volumeByDay] =
       await Promise.all([
         // Tickets by status
         pool.query(
           `SELECT status, COUNT(*)::int AS count
            FROM support_tickets
-           WHERE organization_id = $1 AND created_at >= NOW() - ($2 || ' days')::interval
+           WHERE organization_id = $1 AND created_at >= NOW() - make_interval(days => $2::int)
            GROUP BY status ORDER BY count DESC`,
-          [orgId, String(daysNum)]
+          [orgId, daysNum]
         ),
         // Tickets by priority
         pool.query(
           `SELECT priority, COUNT(*)::int AS count
            FROM support_tickets
-           WHERE organization_id = $1 AND created_at >= NOW() - ($2 || ' days')::interval
+           WHERE organization_id = $1 AND created_at >= NOW() - make_interval(days => $2::int)
            GROUP BY priority ORDER BY count DESC`,
-          [orgId, String(daysNum)]
+          [orgId, daysNum]
         ),
         // Tickets by category
         pool.query(
           `SELECT category, COUNT(*)::int AS count
            FROM support_tickets
-           WHERE organization_id = $1 AND created_at >= NOW() - ($2 || ' days')::interval
+           WHERE organization_id = $1 AND created_at >= NOW() - make_interval(days => $2::int)
            GROUP BY category ORDER BY count DESC`,
-          [orgId, String(daysNum)]
+          [orgId, daysNum]
         ),
-        // SLA metrics
+        // SLA + satisfaction metrics (merged into single scan)
         pool.query(
           `SELECT
             COUNT(*)::int AS total,
@@ -1002,22 +1008,14 @@ router.get('/analytics', async (req: Request, res: Response) => {
             COUNT(*) FILTER (WHERE resolved_at IS NOT NULL AND resolved_at <= sla_resolution_due)::int AS "slaResolutionMet",
             COUNT(*) FILTER (WHERE resolved_at IS NOT NULL AND resolved_at > sla_resolution_due)::int AS "slaResolutionBreached",
             ROUND(AVG(EXTRACT(EPOCH FROM (first_response_at - created_at)) / 3600)::numeric, 1) AS "avgResponseTimeHours",
-            ROUND(AVG(EXTRACT(EPOCH FROM (resolved_at - created_at)) / 3600)::numeric, 1) AS "avgResolutionTimeHours"
-          FROM support_tickets
-          WHERE organization_id = $1 AND created_at >= NOW() - ($2 || ' days')::interval`,
-          [orgId, String(daysNum)]
-        ),
-        // Satisfaction metrics
-        pool.query(
-          `SELECT
+            ROUND(AVG(EXTRACT(EPOCH FROM (resolved_at - created_at)) / 3600)::numeric, 1) AS "avgResolutionTimeHours",
             COUNT(satisfaction_rating)::int AS "totalRatings",
             ROUND(AVG(satisfaction_rating)::numeric, 2) AS "avgRating",
             COUNT(*) FILTER (WHERE satisfaction_rating >= 4)::int AS "satisfied",
             COUNT(*) FILTER (WHERE satisfaction_rating <= 2)::int AS "unsatisfied"
           FROM support_tickets
-          WHERE organization_id = $1 AND created_at >= NOW() - ($2 || ' days')::interval
-            AND satisfaction_rating IS NOT NULL`,
-          [orgId, String(daysNum)]
+          WHERE organization_id = $1 AND created_at >= NOW() - make_interval(days => $2::int)`,
+          [orgId, daysNum]
         ),
         // Volume over time (daily)
         pool.query(
@@ -1026,20 +1024,38 @@ router.get('/analytics', async (req: Request, res: Response) => {
             COUNT(*)::int AS created,
             COUNT(*) FILTER (WHERE resolved_at IS NOT NULL)::int AS resolved
           FROM support_tickets
-          WHERE organization_id = $1 AND created_at >= NOW() - ($2 || ' days')::interval
+          WHERE organization_id = $1 AND created_at >= NOW() - make_interval(days => $2::int)
           GROUP BY DATE(created_at)
           ORDER BY date ASC`,
-          [orgId, String(daysNum)]
+          [orgId, daysNum]
         ),
       ]);
+
+    // Split merged SLA+satisfaction result for clean API response
+    const combined = slaAndSatisfaction.rows[0] || {};
+    const sla = {
+      total: combined.total,
+      slaResponseMet: combined.slaResponseMet,
+      slaResponseBreached: combined.slaResponseBreached,
+      slaResolutionMet: combined.slaResolutionMet,
+      slaResolutionBreached: combined.slaResolutionBreached,
+      avgResponseTimeHours: combined.avgResponseTimeHours,
+      avgResolutionTimeHours: combined.avgResolutionTimeHours,
+    };
+    const satisfaction = {
+      totalRatings: combined.totalRatings,
+      avgRating: combined.avgRating,
+      satisfied: combined.satisfied,
+      unsatisfied: combined.unsatisfied,
+    };
 
     res.json({
       period: { days: daysNum },
       byStatus: statusCounts.rows,
       byPriority: priorityCounts.rows,
       byCategory: categoryCounts.rows,
-      sla: slaMetrics.rows[0] || {},
-      satisfaction: satisfactionMetrics.rows[0] || {},
+      sla,
+      satisfaction,
       volumeByDay: volumeByDay.rows,
     });
   } catch (error) {
@@ -1072,10 +1088,10 @@ router.get('/analytics/agents', async (req: Request, res: Response) => {
         ROUND(AVG(t.satisfaction_rating)::numeric, 2) AS "avgSatisfaction"
       FROM support_tickets t
       INNER JOIN users u ON u.id = t.assigned_to_id
-      WHERE t.organization_id = $1 AND t.created_at >= NOW() - ($2 || ' days')::interval
+      WHERE t.organization_id = $1 AND t.created_at >= NOW() - make_interval(days => $2::int)
       GROUP BY u.id, u.name, u.email
       ORDER BY "totalAssigned" DESC`,
-      [orgId, String(daysNum)]
+      [orgId, daysNum]
     );
 
     res.json({ agents: result.rows });
