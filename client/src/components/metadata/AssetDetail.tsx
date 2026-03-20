@@ -376,7 +376,7 @@ export default function AssetDetail({ assetId, onBack }: AssetDetailProps) {
                   key={index}
                   dateText={change.date}
                   style={{ color: '#333' }}
-                  dateInnerStyle={{ background: '#f3f4f6', color: '#374151' }}
+                  dateInnerStyle={{ background: '#f4f3ee', color: '#4a4a46' }}
                 >
                   <div className="bg-white p-4 rounded-md border border-gray-200">
                     <h3 className="text-sm font-medium">Version {change.version}</h3>

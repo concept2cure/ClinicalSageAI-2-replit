@@ -274,7 +274,9 @@ export class BiostatKnowledgeGraphService {
    */
   async queryGraph(query: string, organizationId: number): Promise<GraphQueryResult> {
     // Step 1: Use AI to extract search terms and intent
-    const extractionMessages = [
+    const extractionResponse = await ai.chat({
+      model: 'gpt-4o',
+      messages: [
         {
           role: 'system' as const,
           content: `You are a biostatistics knowledge graph query parser. Extract search parameters from the user query.
@@ -377,7 +379,9 @@ Return JSON with these fields:
     const uniqueEdges = Array.from(uniqueEdgeMap.values());
 
     // Step 4: Use AI to synthesize an answer
-    const synthesisMessages = [
+    const synthesisResponse = await ai.chat({
+      model: 'gpt-4o',
+      messages: [
         {
           role: 'system' as const,
           content:

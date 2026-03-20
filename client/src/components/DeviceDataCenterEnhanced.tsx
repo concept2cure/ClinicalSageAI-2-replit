@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { queryClient, apiRequest } from '@/lib/queryClient';
+import { apiRequest } from '@/lib/queryClient';
+import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -61,7 +62,7 @@ import {
 } from 'lucide-react';
 
 // FDA Requirement Categories
-const FDA_REQUIREMENTS = {
+const FDA_REQUIREMENTS: Record<string, { id: string; required: boolean; sections: { id: string; label: string; required: boolean; }[] }> = {
   'Device Description': {
     id: 'device_desc',
     required: true,
@@ -147,7 +148,7 @@ const FDA_REQUIREMENTS = {
 };
 
 // Workflow Stage Mapping
-const WORKFLOW_STAGE_REQUIREMENTS = {
+const WORKFLOW_STAGE_REQUIREMENTS: Record<number, string[]> = {
   0: ['device_desc', 'labeling'],
   1: ['performance', 'biocompat'],
   2: ['clinical', 'predicate_comparison'],
@@ -183,6 +184,19 @@ interface EvidenceFile {
   metadata?: any;
 }
 
+interface FilesResponse {
+  files: EvidenceFile[];
+  totalFiles?: number;
+  approvedFiles?: number;
+  underReview?: number;
+  gaps?: number;
+}
+
+interface RequirementStatusResponse {
+  completed?: number;
+  [key: string]: any;
+}
+
 interface DeviceDataCenterEnhancedProps {
   projectId?: string;
   workflowStage?: number;
@@ -197,6 +211,7 @@ export default function DeviceDataCenterEnhanced({
   mode = 'full' 
 }: DeviceDataCenterEnhancedProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [selectedRequirement, setSelectedRequirement] = useState<string | null>(null);
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -206,19 +221,19 @@ export default function DeviceDataCenterEnhanced({
   const [isDragging, setIsDragging] = useState(false);
 
   // Fetch files
-  const { data: filesData, isLoading: isLoadingFiles } = useQuery({
+  const { data: filesData, isLoading: isLoadingFiles } = useQuery<FilesResponse>({
     queryKey: ['/api/device-data-center/files', projectId, selectedRequirement, searchQuery],
     enabled: true
   });
 
   // Fetch requirement mapping
-  const { data: requirementStatus, isLoading: isLoadingStatus } = useQuery({
+  const { data: requirementStatus, isLoading: isLoadingStatus } = useQuery<RequirementStatusResponse>({
     queryKey: [`/api/device-data-center/requirements/${projectId}`],
     enabled: !!projectId
   });
 
   // Fetch analytics
-  const { data: analytics } = useQuery({
+  const { data: analytics } = useQuery<FilesResponse>({
     queryKey: [`/api/device-data-center/analytics/${projectId}`],
     enabled: !!projectId
   });
@@ -388,7 +403,7 @@ export default function DeviceDataCenterEnhanced({
                         </div>
                         <div className="flex items-center gap-2">
                           {sectionFiles.length > 0 ? (
-                            <Badge variant="success">
+                            <Badge variant="default" className="bg-green-500">
                               <CheckCircle className="h-3 w-3 mr-1" />
                               {sectionFiles.length} files
                             </Badge>
@@ -433,10 +448,10 @@ export default function DeviceDataCenterEnhanced({
                               </div>
                               <div className="flex items-center gap-2">
                                 <Badge variant={
-                                  file.regulatory_status === 'approved' ? 'success' :
-                                  file.regulatory_status === 'under_review' ? 'warning' :
+                                  file.regulatory_status === 'approved' ? 'default' :
+                                  file.regulatory_status === 'under_review' ? 'outline' :
                                   'secondary'
-                                }>
+                                } className={file.regulatory_status === 'approved' ? 'bg-green-500' : ''}>
                                   {file.regulatory_status}
                                 </Badge>
                                 <Button size="sm" variant="ghost">
@@ -559,14 +574,14 @@ export default function DeviceDataCenterEnhanced({
             <h3 className="text-lg font-semibold mb-3">Files Pending Review</h3>
             <div className="space-y-2">
               {filesData?.files?.filter((f: EvidenceFile) => 
-                f.regulatory_status === 'pending' || f.regulatory_status === 'under_review'
+                f.regulatory_status === 'draft' || f.regulatory_status === 'under_review'
               ).map((file: EvidenceFile) => (
                 <Card key={file.id} className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <FileText className="h-5 w-5 text-gray-500" />
                       <div>
-                        <p className="font-medium">{file.filename}</p>
+                        <p className="font-medium">{file.file_name}</p>
                         <div className="flex gap-2 text-sm text-muted-foreground">
                           <span>Uploaded {new Date(file.created_at).toLocaleDateString()}</span>
                           {file.fda_requirement && (
@@ -604,7 +619,7 @@ export default function DeviceDataCenterEnhanced({
               ).slice(0, 3).map((file: EvidenceFile) => (
                 <div key={file.id} className="flex items-center gap-3 p-2">
                   <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-sm">{file.filename}</span>
+                  <span className="text-sm">{file.file_name}</span>
                   <Badge variant="outline" className="text-green-600">Approved</Badge>
                 </div>
               )) || <p className="text-muted-foreground text-sm">No recently approved files</p>}
@@ -637,7 +652,7 @@ export default function DeviceDataCenterEnhanced({
               <CardContent className="pt-6">
                 <div className="text-center">
                   <p className="text-2xl font-bold text-gray-600">
-                    {filesData?.files?.filter((f: EvidenceFile) => f.regulatory_status === 'pending').length || 0}
+                    {filesData?.files?.filter((f: EvidenceFile) => f.regulatory_status === 'draft').length || 0}
                   </p>
                   <p className="text-sm text-muted-foreground">Pending</p>
                 </div>

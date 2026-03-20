@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-This document outlines the enterprise-grade architectural enforcement techniques implemented in the TrialSage/ClinicalSageAI platform. These mechanisms ensure code quality, maintain architectural consistency, and provide comprehensive documentation for both human developers and AI agents.
+This document outlines the enterprise-grade architectural enforcement techniques implemented in the TrialSage/Concept2Cure.RI platform. These mechanisms ensure code quality, maintain architectural consistency, and provide comprehensive documentation for both human developers and AI agents.
 
 ---
 
@@ -129,7 +129,7 @@ Continuous code quality analysis with automated quality gates to prevent technic
 ### Configuration
 
 ```properties
-sonar.projectKey=concept2cure_ClinicalSageAI-2-replit
+sonar.projectKey=concept2cure_Concept2Cure.RI-2-replit
 sonar.organization=concept2cure
 sonar.sources=server,client/src,shared
 sonar.exclusions=**/node_modules/**,**/coverage/**,**/dist/**,**/_archive/**

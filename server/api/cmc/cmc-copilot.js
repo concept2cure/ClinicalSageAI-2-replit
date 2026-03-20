@@ -9,7 +9,6 @@
 import express from 'express';
 import { checkForOpenAIKey } from '../../utils/api-security.js';
 import { rateLimit } from 'express-rate-limit';
-import { getOpenAIClient } from '../../services/openai-client';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -23,13 +22,12 @@ const copilotLimiter = rateLimit({
   legacyHeaders: false,
   message: 'Too many copilot requests, please try again after a minute',
 });
+import { ai } from '../../lib/unified-ai-client';
 
 // Create router
 const router = express.Router();
 
 // Get OpenAI client
-const openai = getOpenAIClient();
-
 // Get current directory
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -106,7 +104,7 @@ router.post('/query', checkForOpenAIKey, copilotLimiter, async (req, res) => {
     });
 
     // Call OpenAI API
-    const completion = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4o',
       messages: messages,
       temperature: 0.2,
@@ -114,7 +112,7 @@ router.post('/query', checkForOpenAIKey, copilotLimiter, async (req, res) => {
     });
 
     // Extract the response
-    const responseContent = completion.choices[0].message.content;
+    const responseContent = aiResult.content;
 
     // Log the conversation
     logConversation(chatId, {
@@ -212,7 +210,7 @@ router.post('/specialized-query', checkForOpenAIKey, copilotLimiter, async (req,
     ];
 
     // Call OpenAI API
-    const completion = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4o',
       messages: messages,
       temperature: 0.2,
@@ -220,7 +218,7 @@ router.post('/specialized-query', checkForOpenAIKey, copilotLimiter, async (req,
     });
 
     // Extract the response
-    const responseContent = completion.choices[0].message.content;
+    const responseContent = aiResult.content;
 
     // Log the conversation
     logConversation(chatId, {
@@ -421,7 +419,7 @@ router.post('/execute-task', checkForOpenAIKey, copilotLimiter, async (req, res)
     ];
 
     // Call OpenAI API with function calling
-    const completion = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4o',
       messages: messages,
       temperature: 0.1,
@@ -509,7 +507,7 @@ router.post('/execute-task', checkForOpenAIKey, copilotLimiter, async (req, res)
       followUpMessages.push(responseMessage);
     }
 
-    const followUpCompletion = await openai.chat.completions.create({
+    const followUpCompletion = await ai.chat({
       model: 'gpt-4o',
       messages: followUpMessages,
       temperature: 0.2,
@@ -586,7 +584,7 @@ router.post('/get-suggestions', checkForOpenAIKey, copilotLimiter, async (req, r
     Format as a numbered list of suggestions, each with a clear title and brief explanation.`;
 
     // Call OpenAI API
-    const completion = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4o',
       messages: [
         {
@@ -603,7 +601,7 @@ router.post('/get-suggestions', checkForOpenAIKey, copilotLimiter, async (req, r
     });
 
     // Extract the suggestions
-    const suggestions = completion.choices[0].message.content;
+    const suggestions = aiResult.content;
 
     // Return the suggestions
     return res.status(200).json({

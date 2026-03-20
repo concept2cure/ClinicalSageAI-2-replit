@@ -1,6 +1,6 @@
 # Contributing Guidelines
 
-Welcome to the ClinicalSageAI-2 repository! This document outlines the best practices for working with our Git repository. Following these guidelines helps keep our codebase stable, maintainable and easy to collaborate on.
+Welcome to the Concept2Cure.RI-2 repository! This document outlines the best practices for working with our Git repository. Following these guidelines helps keep our codebase stable, maintainable and easy to collaborate on.
 
 ## 1. Initialize & Configure Git
 

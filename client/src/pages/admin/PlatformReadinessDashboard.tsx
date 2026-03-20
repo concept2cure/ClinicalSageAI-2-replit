@@ -42,12 +42,12 @@ const pageStyle: React.CSSProperties = {
   height: '100vh',
   display: 'flex',
   flexDirection: 'column',
-  fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif",
-  background: '#f8fafc',
+  fontFamily: "'Poppins', Arial, sans-serif",
+  background: '#faf9f5',
 };
 
 const headerStyle: React.CSSProperties = {
-  background: 'linear-gradient(135deg, #0f172a, #1e293b)',
+  background: 'linear-gradient(135deg, #141413, #2d2d2a)',
   color: 'white',
   padding: '16px 24px',
   display: 'flex',
@@ -60,9 +60,9 @@ const headerStyle: React.CSSProperties = {
 const tabBarStyle: React.CSSProperties = {
   display: 'flex',
   gap: 0,
-  background: '#1e293b',
+  background: '#2d2d2a',
   padding: '0 24px',
-  borderBottom: '1px solid #334155',
+  borderBottom: '1px solid #4a4a46',
   flexShrink: 0,
   zIndex: 10,
 };
@@ -71,10 +71,10 @@ const tabStyle = (active: boolean): React.CSSProperties => ({
   padding: '10px 20px',
   fontSize: 13,
   fontWeight: active ? 700 : 400,
-  color: active ? '#38bdf8' : '#94a3b8',
+  color: active ? '#8bb4d9' : '#b0aea5',
   background: 'transparent',
   border: 'none',
-  borderBottom: active ? '2px solid #38bdf8' : '2px solid transparent',
+  borderBottom: active ? '2px solid #8bb4d9' : '2px solid transparent',
   cursor: 'pointer',
   transition: 'color 0.2s, border-color 0.2s',
   fontFamily: 'inherit',
@@ -110,10 +110,10 @@ const QuickStats: React.FC = () => {
 
   const stats = [
     { label: 'Overall Readiness', value: '55%', color: '#f59e0b' },
-    { label: 'Modules', value: '3', color: '#3b82f6' },
+    { label: 'Modules', value: '3', color: '#6a9bcc' },
     { label: 'Total Gaps', value: String(totalGaps), color: '#ef4444' },
     { label: 'Critical', value: String(criticalGaps), color: '#dc2626' },
-    { label: 'Remediation Tasks', value: String(totalTasks), color: '#8b5cf6' },
+    { label: 'Remediation Tasks', value: String(totalTasks), color: '#6a9bcc' },
     { label: 'Endpoints Broken', value: '~200', color: '#f97316' },
   ];
 
@@ -123,8 +123,8 @@ const QuickStats: React.FC = () => {
         display: 'flex',
         gap: 16,
         padding: '10px 24px',
-        background: '#f1f5f9',
-        borderBottom: '1px solid #e2e8f0',
+        background: '#f4f3ee',
+        borderBottom: '1px solid #e8e6dc',
         flexShrink: 0,
         overflowX: 'auto',
       }}
@@ -132,7 +132,7 @@ const QuickStats: React.FC = () => {
       {stats.map(s => (
         <div key={s.label} style={{ textAlign: 'center', minWidth: 100 }}>
           <div style={{ fontSize: 20, fontWeight: 800, color: s.color }}>{s.value}</div>
-          <div style={{ fontSize: 10, color: '#64748b', fontWeight: 500 }}>{s.label}</div>
+          <div style={{ fontSize: 10, color: '#8a8880', fontWeight: 500 }}>{s.label}</div>
         </div>
       ))}
     </div>
@@ -162,19 +162,19 @@ const OverviewView: React.FC = () => {
       maxZoom={2}
       attributionPosition="bottom-left"
     >
-      <Background color="#e2e8f0" gap={20} />
+      <Background color="#e8e6dc" gap={20} />
       <Controls position="bottom-right" />
       <MiniMap
         nodeColor={node => {
-          if (node.type === 'platformHeader') return '#1e293b';
+          if (node.type === 'platformHeader') return '#2d2d2a';
           if (node.type === 'moduleCard') {
             const modId = node.data?.module?.id;
-            return MODULE_COLORS[modId]?.border || '#94a3b8';
+            return MODULE_COLORS[modId]?.border || '#b0aea5';
           }
           if (node.type === 'gapBadge') {
-            return SEVERITY_COLORS[node.data?.gap?.severity]?.badge || '#94a3b8';
+            return SEVERITY_COLORS[node.data?.gap?.severity]?.badge || '#b0aea5';
           }
-          return '#94a3b8';
+          return '#b0aea5';
         }}
         maskColor="rgba(15, 23, 42, 0.1)"
         style={{ borderRadius: 8 }}
@@ -201,7 +201,7 @@ const OverviewView: React.FC = () => {
               {sev.charAt(0).toUpperCase() + sev.slice(1)}
             </div>
           ))}
-          <div style={{ marginTop: 8, fontSize: 10, color: '#64748b' }}>
+          <div style={{ marginTop: 8, fontSize: 10, color: '#8a8880' }}>
             Click module cards to expand details
           </div>
         </div>
@@ -233,14 +233,14 @@ const RoadmapView: React.FC = () => {
       maxZoom={2}
       attributionPosition="bottom-left"
     >
-      <Background color="#e2e8f0" gap={20} />
+      <Background color="#e8e6dc" gap={20} />
       <Controls position="bottom-right" />
       <MiniMap
         nodeColor={node => {
-          if (node.type === 'phaseHeader') return node.data?.phase?.color || '#94a3b8';
+          if (node.type === 'phaseHeader') return node.data?.phase?.color || '#b0aea5';
           if (node.type === 'taskCard')
-            return SEVERITY_COLORS[node.data?.task?.priority]?.badge || '#94a3b8';
-          return '#94a3b8';
+            return SEVERITY_COLORS[node.data?.task?.priority]?.badge || '#b0aea5';
+          return '#b0aea5';
         }}
         maskColor="rgba(15, 23, 42, 0.1)"
         style={{ borderRadius: 8 }}
@@ -266,7 +266,7 @@ const RoadmapView: React.FC = () => {
               {sev.charAt(0).toUpperCase() + sev.slice(1)}
             </div>
           ))}
-          <div style={{ marginTop: 8, fontSize: 10, color: '#64748b' }}>
+          <div style={{ marginTop: 8, fontSize: 10, color: '#8a8880' }}>
             Dashed yellow lines = dependency
           </div>
         </div>
@@ -298,17 +298,17 @@ const ArchitectureView: React.FC = () => {
       maxZoom={2}
       attributionPosition="bottom-left"
     >
-      <Background color="#e2e8f0" gap={20} />
+      <Background color="#e8e6dc" gap={20} />
       <Controls position="bottom-right" />
       <MiniMap
         nodeColor={node => {
           if (node.type === 'archComponent') {
             const status = node.data?.component?.status;
-            if (status === 'connected') return '#16a34a';
+            if (status === 'connected') return '#647746';
             if (status === 'broken') return '#dc2626';
-            return '#94a3b8';
+            return '#b0aea5';
           }
-          return '#94a3b8';
+          return '#b0aea5';
         }}
         maskColor="rgba(15, 23, 42, 0.1)"
         style={{ borderRadius: 8 }}
@@ -324,7 +324,7 @@ const ArchitectureView: React.FC = () => {
           <div>🖥️ Express Server (Port 5000)</div>
           <div>🐍 Shadow Service (Python FastAPI)</div>
           <div>🗄️ PostgreSQL Database</div>
-          <div style={{ marginTop: 8, fontSize: 10, color: '#64748b' }}>
+          <div style={{ marginTop: 8, fontSize: 10, color: '#8a8880' }}>
             Hover components for details
           </div>
         </div>
@@ -354,12 +354,12 @@ const SummaryPanel: React.FC<{ visible: boolean; onClose: () => void }> = ({
         width: 380,
         height: '100%',
         background: 'white',
-        borderLeft: '1px solid #e2e8f0',
+        borderLeft: '1px solid #e8e6dc',
         boxShadow: '-4px 0 16px rgba(0,0,0,0.08)',
         zIndex: 20,
         overflowY: 'auto',
         padding: 20,
-        fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif",
+        fontFamily: "'Poppins', Arial, sans-serif",
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -371,7 +371,7 @@ const SummaryPanel: React.FC<{ visible: boolean; onClose: () => void }> = ({
             border: 'none',
             fontSize: 20,
             cursor: 'pointer',
-            color: '#64748b',
+            color: '#8a8880',
           }}
         >
           ✕
@@ -422,7 +422,7 @@ const SummaryPanel: React.FC<{ visible: boolean; onClose: () => void }> = ({
                 fontSize: 12,
                 fontWeight: 700,
                 color:
-                  mod.readiness >= 75 ? '#16a34a' : mod.readiness >= 50 ? '#ca8a04' : '#dc2626',
+                  mod.readiness >= 75 ? '#647746' : mod.readiness >= 50 ? '#ca8a04' : '#dc2626',
               }}
             >
               {mod.readiness}%
@@ -430,7 +430,7 @@ const SummaryPanel: React.FC<{ visible: boolean; onClose: () => void }> = ({
           </div>
 
           {/* Gaps */}
-          <div style={{ fontSize: 11, marginBottom: 4, color: '#475569' }}>
+          <div style={{ fontSize: 11, marginBottom: 4, color: '#6b6963' }}>
             Gaps: {mod.gaps.length} ({mod.gaps.filter(g => g.severity === 'critical').length}{' '}
             critical)
           </div>
@@ -440,7 +440,7 @@ const SummaryPanel: React.FC<{ visible: boolean; onClose: () => void }> = ({
               style={{
                 fontSize: 10,
                 padding: '4px 0',
-                borderBottom: '1px solid #f1f5f9',
+                borderBottom: '1px solid #f4f3ee',
                 display: 'flex',
                 gap: 6,
               }}
@@ -465,7 +465,7 @@ const SummaryPanel: React.FC<{ visible: boolean; onClose: () => void }> = ({
           ))}
 
           {/* Tasks */}
-          <div style={{ fontSize: 11, marginTop: 8, marginBottom: 4, color: '#475569' }}>
+          <div style={{ fontSize: 11, marginTop: 8, marginBottom: 4, color: '#6b6963' }}>
             Remediation: {mod.tasks.length} tasks
           </div>
           {mod.tasks.slice(0, 5).map(task => (
@@ -474,7 +474,7 @@ const SummaryPanel: React.FC<{ visible: boolean; onClose: () => void }> = ({
               style={{
                 fontSize: 10,
                 padding: '3px 0',
-                borderBottom: '1px solid #f1f5f9',
+                borderBottom: '1px solid #f4f3ee',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 6,
@@ -490,11 +490,11 @@ const SummaryPanel: React.FC<{ visible: boolean; onClose: () => void }> = ({
                 }}
               />
               <span style={{ flex: 1 }}>{task.title}</span>
-              <span style={{ color: '#94a3b8', fontSize: 9 }}>{task.effort}</span>
+              <span style={{ color: '#b0aea5', fontSize: 9 }}>{task.effort}</span>
             </div>
           ))}
           {mod.tasks.length > 5 && (
-            <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 4 }}>
+            <div style={{ fontSize: 10, color: '#b0aea5', marginTop: 4 }}>
               + {mod.tasks.length - 5} more tasks
             </div>
           )}
@@ -530,7 +530,7 @@ export default function PlatformReadinessDashboard() {
           <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-0.02em' }}>
             Concept2Cure — Platform Readiness Dashboard
           </div>
-          <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>
+          <div style={{ fontSize: 12, color: '#b0aea5', marginTop: 2 }}>
             Phase 0–1 Interactive Audit · 3 Modules ·{' '}
             {Object.values(MODULES).reduce((s, m) => s + m.gaps.length, 0)} Gaps ·{' '}
             {Object.values(MODULES).reduce((s, m) => s + m.tasks.length, 0)} Tasks
@@ -539,7 +539,7 @@ export default function PlatformReadinessDashboard() {
         <button
           onClick={toggleSummary}
           style={{
-            background: showSummary ? '#38bdf8' : '#334155',
+            background: showSummary ? '#8bb4d9' : '#4a4a46',
             color: 'white',
             border: 'none',
             padding: '8px 16px',

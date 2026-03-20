@@ -1,5 +1,5 @@
 """
-Task Management Module for LumenTrialGuide.AI
+Task Management Module for Concept2Cure
 
 This module defines Celery tasks for long-running operations such as
 enhanced PDF generation, data processing, and email notifications.
@@ -108,10 +108,10 @@ def generate_enhanced_pdf(self, ndc_code: str, user_id: str, user_email: str) ->
                 body = f"""
                 Your enhanced Clinical Evaluation Report (CER) for NDC {ndc_code} is now ready.
                 
-                You can access it in the LumenTrialGuide.AI platform under 'My Reports' or
+                You can access it in the Concept2Cure platform under 'My Reports' or
                 download it directly from the link in your notifications.
                 
-                Thank you for using LumenTrialGuide.AI!
+                Thank you for using Concept2Cure!
                 """
                 
                 notifier.send_email(

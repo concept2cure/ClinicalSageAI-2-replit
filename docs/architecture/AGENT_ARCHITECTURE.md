@@ -1,4 +1,4 @@
-# ClinicalSageAI Agent Architecture
+# Concept2Cure.RI Agent Architecture
 
 ## Document Control
 | Attribute | Value |
@@ -13,7 +13,7 @@
 
 ## 1. Executive Summary
 
-ClinicalSageAI implements a sophisticated multi-agent AI architecture designed for regulatory affairs in life sciences. This document describes the two agent systems present in the codebase:
+Concept2Cure.RI implements a sophisticated multi-agent AI architecture designed for regulatory affairs in life sciences. This document describes the two agent systems present in the codebase:
 
 1. **Multi-Agent Council** (`server/services/multi-agent-council.ts`) - Production-ready, Part 11 compliant
 2. **Cognitive Ecosystem** (`server/services/cognitive-ecosystem/`) - Next-generation LangGraph implementation
@@ -24,7 +24,7 @@ ClinicalSageAI implements a sophisticated multi-agent AI architecture designed f
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                         ClinicalSageAI Agent Layer                          │
+│                         Concept2Cure.RI Agent Layer                          │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
 │  ┌─────────────────────────────┐    ┌─────────────────────────────────────┐│

@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Workflow Dashboard
+ * Concept2Cure Client Portal V2 - Workflow Dashboard
  *
  * Workflow management for document reviews, approvals,
  * and regulatory submission preparation.

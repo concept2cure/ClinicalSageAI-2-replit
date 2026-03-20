@@ -18,12 +18,12 @@ import { TabsList } from '@/components/ui/tabs';
 export default function TabRow({ children, label, className = '' }) {
   return (
     <div
-      className={`overflow-x-auto whitespace-nowrap bg-white border-b border-[#E1DFDD] py-2 ${className}`}
+      className={`overflow-x-auto whitespace-nowrap bg-white border-b border-[#e8e6dc] py-2 ${className}`}
     >
       <div className="flex items-center px-6">
         {label && (
           <div className="flex items-center mr-4 flex-shrink-0">
-            <span className="text-xs font-medium text-[#605E5C]">{label}</span>
+            <span className="text-xs font-medium text-[#6b6963]">{label}</span>
           </div>
         )}
         <TabsList className="inline-flex items-center h-auto bg-transparent p-0 space-x-0">

@@ -138,7 +138,7 @@ export default function DashboardSidebar({ collapsed, setCollapsed }) {
       ],
     },
     {
-      title: t('TrialSage Assistant'),
+      title: t('Concept2Cure Assistant'),
       icon: <Coffee size={20} />,
       link: '/ind/wizard',
       notification: null,
@@ -181,7 +181,7 @@ export default function DashboardSidebar({ collapsed, setCollapsed }) {
         <div className="flex items-center">
           {!collapsed && (
             <span className="font-bold text-emerald-700 dark:text-emerald-400 text-lg">
-              TrialSage
+              Concept2Cure
             </span>
           )}
           {collapsed && (

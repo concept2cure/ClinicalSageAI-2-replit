@@ -116,7 +116,7 @@ function parseContentToSlides(title: string, content: string): SlideData[] {
 export async function generatePptxBuffer(title: string, content: string): Promise<Buffer> {
   const pptx = new PptxGenJS();
 
-  pptx.author = 'ClinicalSageAI — AnA';
+  pptx.author = 'Concept2Cure.RI — AnA';
   pptx.company = 'Concept2Cure';
   pptx.title = title;
   pptx.subject = 'Regulatory Document';
@@ -154,7 +154,7 @@ export async function generatePptxBuffer(title: string, content: string): Promis
         });
       }
       // Branding footer
-      slide.addText('Concept2Cure · ClinicalSageAI', {
+      slide.addText('Concept2Cure · Concept2Cure.RI', {
         x: 0.8,
         y: 6.5,
         w: 5,

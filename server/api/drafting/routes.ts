@@ -12,9 +12,9 @@
  */
 import { Router, Request, Response } from 'express';
 import type { Pool, PoolClient } from 'pg';
-import { getOpenAIClient } from '../../services/openai-client';
 import { v4 as uuidv4 } from 'uuid';
 import { getRequestDbClient } from '../../middleware/tenantContext';
+import { ai } from '../../lib/unified-ai-client';
 
 // Types
 interface DraftingRequest {
@@ -98,8 +98,6 @@ const CONFIG = {
 type Queryable = Pool | PoolClient;
 
 // OpenAI client
-const openai = getOpenAIClient();
-
 // GxP-Hardened System Prompt
 const SYSTEM_PROMPT = `You are a Senior Regulatory Scientist with expertise in FDA submissions, ICH guidelines, and clinical regulatory writing.
 
@@ -371,7 +369,7 @@ ${evidenceText}
 
 Generate a regulatory-grade response using the evidence above. Remember to output valid JSON with draft_text, reasoning_trace, and citations.`;
 
-    const completion = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: CONFIG.model,
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
@@ -381,7 +379,7 @@ Generate a regulatory-grade response using the evidence above. Remember to outpu
       max_tokens: 4000,
     });
 
-    const aiContent = completion.choices[0]?.message?.content || '';
+    const aiContent = aiResult.content || '';
     const parsed = parseAIResponse(aiContent);
 
     // Step 5: Enrich citations with document info
@@ -515,7 +513,7 @@ router.post('/extract-entities', async (req: Request, res: Response) => {
     }
 
     // Use AI to extract entities
-    const extraction = await openai.chat.completions.create({
+    const extraction = await ai.chat({
       model: 'gpt-4o-mini',
       messages: [
         {

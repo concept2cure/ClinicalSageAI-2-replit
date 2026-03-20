@@ -1,5 +1,5 @@
 """
-Redis Caching Module for LumenTrialGuide.AI
+Redis Caching Module for Concept2Cure
 
 This module provides a Redis-based caching layer that abstracts
 set/get operations and handles JSON serialization for storing complex data.

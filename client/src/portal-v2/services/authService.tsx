@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Authentication Service Layer
+ * Concept2Cure Client Portal V2 - Authentication Service Layer
  *
  * Centralized authentication service with:
  * - Token management (JWT)
@@ -66,7 +66,7 @@ export interface DeviceInfo {
 }
 
 export interface MfaMethod {
-  type: 'totp' | 'sms' | 'email' | 'hardware_key' | 'biometric';
+  type: 'totp' | 'sms' | 'email' | 'hardware_key' | 'biometric' | 'backup_code';
   isEnabled: boolean;
   isPrimary: boolean;
   lastUsedAt?: Date;
@@ -484,7 +484,7 @@ export class AuthService {
 
   async login(
     credentials: LoginCredentials
-  ): Promise<AuthResult<{ mfaRequired: boolean; methods?: MfaMethod[] }>> {
+  ): Promise<AuthResult<{ mfaRequired: boolean; methods?: MfaMethod[]; maskedEmail?: string }>> {
     const deviceInfo = DeviceFingerprint.getDeviceInfo();
 
     const result = await this.api.post<{
@@ -495,6 +495,7 @@ export class AuthService {
       mfaRequired: boolean;
       mfaMethods?: MfaMethod[];
       challengeId?: string;
+      maskedEmail?: string;
     }>(
       `${this.baseUrl}/login`,
       {
@@ -516,6 +517,7 @@ export class AuthService {
         data: {
           mfaRequired: true,
           methods: result.data.mfaMethods,
+          maskedEmail: result.data.maskedEmail,
         },
       };
     }
@@ -721,6 +723,11 @@ export class AuthService {
   // MFA Management
   // ─────────────────────────────────────────────────────────────────────────
 
+  async resendLoginOtp(): Promise<AuthResult<{ maskedEmail: string }>> {
+    const challengeId = SecureStorage.getItem('trialsage_mfa_challenge');
+    return this.api.post(`${this.baseUrl}/mfa/resend`, { challengeId }, { skipAuth: true });
+  }
+
   async getMfaMethods(): Promise<AuthResult<MfaMethod[]>> {
     return this.api.get<MfaMethod[]>(`${this.baseUrl}/mfa/methods`);
   }
@@ -905,7 +912,7 @@ interface AuthContextValue {
   isLoading: boolean;
   login: (
     credentials: LoginCredentials
-  ) => Promise<AuthResult<{ mfaRequired: boolean; methods?: MfaMethod[] }>>;
+  ) => Promise<AuthResult<{ mfaRequired: boolean; methods?: MfaMethod[]; maskedEmail?: string }>>;
   verifyMfa: (verification: MfaVerification) => Promise<AuthResult<AuthUser>>;
   logout: (terminateAll?: boolean) => Promise<void>;
   hasPermission: (permission: string) => boolean;

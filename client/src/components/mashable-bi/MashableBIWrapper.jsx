@@ -546,7 +546,7 @@ export function MashableBIWrapper({
             <Badge variant="outline" className="mr-2">
               MashableBI
             </Badge>
-            <span>Powered by TrialSage™ Analytics</span>
+            <span>Powered by Concept2Cure™ Analytics</span>
           </div>
         </div>
       </Card>

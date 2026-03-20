@@ -166,12 +166,20 @@ function verifyClaim(
 // No demo response function — returns 503 when AI providers are unavailable.
 
 /**
- * POST /api/chat/send-message
+ * POST /api/chat/send-message  (and POST /api/chat via root alias)
  * Main chat endpoint — 9-step provenance-tracked RAG pipeline.
  *
  * Steps: RESOLVE_ORG → THREAD → USER_MSG → RETRIEVE → PROMPT → GENERATE → PERSIST → CLAIMS → CITATIONS
  */
-router.post('/send-message', async (req: Request, res: Response) => {
+/** Normalize useChat payload: map context.projectId → project_id */
+function normalizeBody(req: Request) {
+  if (req.body.context?.projectId && !req.body.project_id) {
+    req.body.project_id = req.body.context.projectId;
+  }
+}
+
+const sendMessageHandler = async (req: Request, res: Response) => {
+  normalizeBody(req);
   try {
     const { message, thread_id, file_id, system_prompt, project_id } = req.body;
 
@@ -639,7 +647,11 @@ router.post('/send-message', async (req: Request, res: Response) => {
       code: 'CHAT_ERROR',
     });
   }
-});
+};
+
+// Register on both /send-message and root / (useChat hook sends to POST /api/chat)
+router.post('/send-message', sendMessageHandler);
+router.post('/', sendMessageHandler);
 
 /**
  * POST /api/chat/upload
@@ -814,10 +826,11 @@ router.post('/stream', async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('[Chat Stream] Error:', error.message);
     if (res.headersSent) {
-      res.write(`data: ${JSON.stringify({ type: 'error', error: error.message })}\n\n`);
+      // SECURITY: Don't leak internal error details to client
+      res.write(`data: ${JSON.stringify({ type: 'error', error: 'An error occurred while generating the response' })}\n\n`);
       res.end();
     } else {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: 'An error occurred while generating the response' });
     }
   }
 });

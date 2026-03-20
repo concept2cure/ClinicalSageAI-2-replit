@@ -1,22 +1,15 @@
 /**
- * OpenAI Integration API for TrialSage
+ * OpenAI Integration API for Concept2Cure
  *
  * This module provides secure endpoints to interact with OpenAI services.
  * It implements proper validation, error handling, rate limiting, and audit logging.
  */
 
-import { getOpenAIClient } from './services/openai-client';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
+import { ai } from './lib/unified-ai-client';
 
-// Lazy-initialize OpenAI client (only used for legacy endpoints)
-// All new AI functionality routes through Claude via the AI Gateway
-let openai: any = null;
-function getClient() {
-  if (!openai) openai = getOpenAIClient();
-  return openai;
-}
-
+// Initialize OpenAI client
 // Create rate limiter
 const apiRateLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
@@ -110,8 +103,8 @@ export function registerOpenAIRoutes(app) {
       }
 
       // Call OpenAI
-      const response = await getClient().chat.completions.create({
-        model: 'gpt-4o',
+      const aiResult = await ai.chat({
+        model: 'gpt-4o', // the newest OpenAI model is "gpt-4o" which was released May 13, 2024
         messages: [
           {
             role: 'system',
@@ -132,7 +125,7 @@ export function registerOpenAIRoutes(app) {
 
       // Return response
       res.json({
-        content: response.choices[0].message.content,
+        content: aiResult.content,
         usage: response.usage,
       });
     } catch (error) {
@@ -168,7 +161,7 @@ export function registerOpenAIRoutes(app) {
       const { image, processDetails } = validation.data;
 
       // Call OpenAI Vision API
-      const response = await getClient().chat.completions.create({
+      const aiResult = await ai.chat({
         model: 'gpt-4o', // the newest OpenAI model is "gpt-4o" which was released May 13, 2024
         messages: [
           {
@@ -200,7 +193,7 @@ export function registerOpenAIRoutes(app) {
 
       // Return response
       res.json({
-        analysis: response.choices[0].message.content,
+        analysis: aiResult.content,
         usage: response.usage,
       });
     } catch (error) {

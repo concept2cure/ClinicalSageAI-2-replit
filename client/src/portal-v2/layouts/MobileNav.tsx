@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Mobile Navigation
+ * Concept2Cure Client Portal V2 - Mobile Navigation
  *
  * Bottom navigation bar for mobile devices with:
  * - Quick access to primary modules

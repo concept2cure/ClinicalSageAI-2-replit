@@ -159,7 +159,7 @@ export default function AdvisorSidebarV3() {
 
       {/* Powered by */}
       <div className="text-center mt-3 border-t pt-2">
-        <p className="text-xs text-gray-400">Powered by TrialSage™ Regulatory AI</p>
+        <p className="text-xs text-gray-400">Powered by Concept2Cure™ Regulatory AI</p>
       </div>
     </div>
   );

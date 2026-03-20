@@ -84,16 +84,33 @@ const getJwtSecret = (): string => {
   const secret = process.env[envVar];
 
   if (!secret) {
-    // Fall back to generic JWT_SECRET before using hardcoded default
+    // Fall back to generic JWT_SECRET
     if (process.env.JWT_SECRET) {
       return process.env.JWT_SECRET;
     }
-    // In development, use a default secret to avoid blocking the app
-    if (ENV === 'development') {
-      console.warn(`${envVar} not found, using default development secret`);
-      return 'trialsage-dev-secret-key-change-in-production';
+    throw new Error(
+      `Missing required environment variable: ${envVar} (or JWT_SECRET). ` +
+      `Set a secure random string of at least 32 characters.`
+    );
+    if (ENV === 'production') {
+      throw new Error(`[FATAL] Missing required JWT secret in production. Set ${envVar} or JWT_SECRET.`);
     }
-    throw new Error(`Missing required environment variable: ${envVar}`);
+    // Development/staging: generate a random ephemeral secret and warn loudly
+    const ephemeral = require('crypto').randomBytes(48).toString('base64url');
+    console.warn(
+      `⚠️  ${envVar} not found — using random ephemeral JWT secret. ` +
+      `Sessions will NOT survive restarts. Set JWT_SECRET to fix.`
+    );
+    return ephemeral;
+    // SECURITY: Never use hardcoded secrets in any environment.
+    // Generate a random ephemeral secret for development only.
+    if (ENV === 'development') {
+      const crypto = require('crypto');
+      const ephemeral = crypto.randomBytes(64).toString('hex');
+      console.warn(`[SECURITY] ${envVar} not set. Using ephemeral random secret (sessions will not persist across restarts).`);
+      return ephemeral;
+    }
+    throw new Error(`[SECURITY] Missing required environment variable: ${envVar}. Server cannot start without a JWT secret in ${ENV} mode.`);
   }
 
   return secret;

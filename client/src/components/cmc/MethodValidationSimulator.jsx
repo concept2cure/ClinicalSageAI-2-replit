@@ -261,7 +261,7 @@ const MethodValidationSimulator = () => {
                     <Line
                       type="monotone"
                       dataKey="response"
-                      stroke="#8884d8"
+                      stroke="#6a9bcc"
                       activeDot={{ r: 8 }}
                     />
                   </LineChart>

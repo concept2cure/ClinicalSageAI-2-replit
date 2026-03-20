@@ -8,14 +8,12 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { getOpenAIClient } from '../services/openai-client';
+import { ai } from '../lib/unified-ai-client';
 
 // Get current directory
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Initialize OpenAI client
-const openai = getOpenAIClient();
-
 /**
  * Generate CMC documentation based on molecular structure and process data
  *
@@ -66,7 +64,7 @@ export async function generateDocumentation(
     Format the document with proper headings, subheadings, tables, and sections according to ICH CTD guidelines.`;
 
     // Call OpenAI API to generate document content
-    const response = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4o',
       messages: [
         {
@@ -81,7 +79,7 @@ export async function generateDocumentation(
     });
 
     // Extract the generated content
-    const generatedContent = response.choices[0].message.content;
+    const generatedContent = aiResult.content;
 
     // Generate a document name
     const documentName = `${documentType.replace(/\./g, '_')}_${moleculeData.moleculeName}_${new Date().toISOString().split('T')[0]}`;

@@ -7,11 +7,9 @@
 
 import { supabase } from '../lib/supabaseClient.js';
 import { logger } from '../utils/logger.js';
-import { getOpenAIClient } from './openai-client';
+import { ai } from '../lib/unified-ai-client';
 
 // Initialize OpenAI with API key from environment
-const openai = getOpenAIClient();
-
 class CMCBlueprintService {
   /**
    * Create a new CMC blueprint from a template
@@ -328,7 +326,7 @@ class CMCBlueprintService {
 
       // Call OpenAI API
       // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-      const response = await openai.chat.completions.create({
+      const aiResult = await ai.chat({
         model: 'gpt-4o',
         messages: [
           {
@@ -344,7 +342,7 @@ class CMCBlueprintService {
         max_tokens: settings.max_tokens,
       });
 
-      const generatedContent = response.choices[0].message.content;
+      const generatedContent = aiResult.content;
 
       // Log this generation
       await supabase.from('cmc_generation_log').insert({

@@ -32,9 +32,9 @@ const FeatureRow = ({ label, values, isHighlighted = false }) => (
 
 // Main Competitor Comparison Component
 const CompetitorComparison = ({ t }) => {
-  // Define headers - the first one is TrialSage, followed by competitors
+  // Define headers - the first one is Concept2Cure, followed by competitors
   const tableHeaders = [
-    { name: 'TrialSage', isHighlighted: true },
+    { name: 'Concept2Cure', isHighlighted: true },
     { name: t('Traditional CRO') },
     { name: t('Document Portal') },
     { name: t('Regulatory Software') },
@@ -82,7 +82,7 @@ const CompetitorComparison = ({ t }) => {
           </h2>
           <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
             {t(
-              'See how TrialSage compares to traditional solutions in the clinical intelligence space.'
+              'See how Concept2Cure compares to traditional solutions in the clinical intelligence space.'
             )}
           </p>
         </div>

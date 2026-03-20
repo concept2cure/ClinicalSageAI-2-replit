@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - All Components Index
+ * Concept2Cure Client Portal V2 - All Components Index
  *
  * Central export file for all portal components including
  * admin, security, compliance, and feature components.

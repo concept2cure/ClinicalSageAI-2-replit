@@ -1,6 +1,4 @@
-// Quality AI Service — routes through Claude via AI Gateway
-import { ai } from '../../../lib/unified-ai-client.js';
-
+// Quality AI Service
 export async function aiExtractSpecsFromText(text) {
   try {
     const result = await ai.complete([
@@ -8,7 +6,22 @@ export async function aiExtractSpecsFromText(text) {
       { role: 'user', content: `Extract specifications from: ${text}` }
     ], { maxTokens: 1000, callerModule: 'quality/aiExtractSpecsFromText' });
 
-    return { specs: result, status: 'success' };
+    const aiResult = await ai.chat({
+      model: "gpt-4o",
+      messages: [{
+        role: "system",
+        content: "Extract quality specifications from text. Return structured data."
+      }, {
+        role: "user",
+        content: `Extract specifications from: ${text}`
+      }],
+      max_tokens: 1000
+    });
+
+    return {
+      specs: aiResult.content,
+      status: 'success'
+    };
   } catch (error) {
     console.error('AI Extract Specs error:', error);
     return { specs: [], status: 'error' };
@@ -22,7 +35,22 @@ export async function aiMapInstrumentCSV(csvData) {
       { role: 'user', content: `Map columns in CSV: ${JSON.stringify(csvData)}` }
     ], { maxTokens: 500, callerModule: 'quality/aiMapInstrumentCSV' });
 
-    return { mapping: result, confidence: 0.85 };
+    const aiResult = await ai.chat({
+      model: "gpt-4o",
+      messages: [{
+        role: "system",
+        content: "Map CSV columns to identify value and unit columns."
+      }, {
+        role: "user",
+        content: `Map columns in CSV: ${JSON.stringify(csvData)}`
+      }],
+      max_tokens: 500
+    });
+
+    return {
+      mapping: aiResult.content,
+      confidence: 0.85
+    };
   } catch (error) {
     console.error('AI Map CSV error:', error);
     return { mapping: {}, confidence: 0 };
@@ -36,12 +64,25 @@ export async function aiDeviationSummary(deviationData) {
       { role: 'user', content: `Summarize deviation: ${JSON.stringify(deviationData)}` }
     ], { maxTokens: 800, callerModule: 'quality/aiDeviationSummary' });
 
-    return result;
+    const aiResult = await ai.chat({
+      model: "gpt-4o",
+      messages: [{
+        role: "system",
+        content: "Generate quality deviation summary for regulatory submission."
+      }, {
+        role: "user",
+        content: `Summarize deviation: ${JSON.stringify(deviationData)}`
+      }],
+      max_tokens: 800
+    });
+
+    return aiResult.content;
   } catch (error) {
     console.error('AI Deviation Summary error:', error);
     return "Unable to generate deviation summary";
   }
 }
+import { ai } from '../../../lib/unified-ai-client';
 
 // Statistical process control functions
 export function cusum(data, target, k = 0.5, h = 4) {
@@ -98,7 +139,22 @@ export async function aiInterpretResult(testResult) {
       { role: 'user', content: `Interpret result: ${JSON.stringify(testResult)}` }
     ], { maxTokens: 500, callerModule: 'quality/aiInterpretResult' });
 
-    return { interpretation: result, confidence: 0.9 };
+    const aiResult = await ai.chat({
+      model: "gpt-4o",
+      messages: [{
+        role: "system",
+        content: "Interpret quality test results for regulatory compliance."
+      }, {
+        role: "user",
+        content: `Interpret result: ${JSON.stringify(testResult)}`
+      }],
+      max_tokens: 500
+    });
+
+    return {
+      interpretation: aiResult.content,
+      confidence: 0.9
+    };
   } catch (error) {
     console.error('AI Interpret Result error:', error);
     return { interpretation: "Unable to interpret result", confidence: 0 };
@@ -112,7 +168,22 @@ export async function aiReleaseDecision(batchData) {
       { role: 'user', content: `Evaluate batch for release: ${JSON.stringify(batchData)}` }
     ], { maxTokens: 800, callerModule: 'quality/aiReleaseDecision' });
 
-    return { decision: "approved", rationale: result };
+    const aiResult = await ai.chat({
+      model: "gpt-4o",
+      messages: [{
+        role: "system",
+        content: "Make batch release decisions based on quality data."
+      }, {
+        role: "user",
+        content: `Evaluate batch for release: ${JSON.stringify(batchData)}`
+      }],
+      max_tokens: 800
+    });
+
+    return {
+      decision: "approved",
+      rationale: aiResult.content
+    };
   } catch (error) {
     console.error('AI Release Decision error:', error);
     return { decision: "pending", rationale: "Manual review required" };
@@ -126,7 +197,22 @@ export async function aiDraftCOA(batchData) {
       { role: 'user', content: `Draft COA for batch: ${JSON.stringify(batchData)}` }
     ], { maxTokens: 2000, callerModule: 'quality/aiDraftCOA' });
 
-    return { certificate: result, sections: [] };
+    const aiResult = await ai.chat({
+      model: "gpt-4o",
+      messages: [{
+        role: "system",
+        content: "Generate Certificate of Analysis for pharmaceutical batch."
+      }, {
+        role: "user",
+        content: `Draft COA for batch: ${JSON.stringify(batchData)}`
+      }],
+      max_tokens: 2000
+    });
+
+    return {
+      certificate: aiResult.content,
+      sections: []
+    };
   } catch (error) {
     console.error('AI Draft COA error:', error);
     return { certificate: "Unable to generate COA", sections: [] };
@@ -176,7 +262,19 @@ export async function aiNotificationText(eventData) {
       { role: 'user', content: `Generate notification for: ${JSON.stringify(eventData)}` }
     ], { maxTokens: 300, callerModule: 'quality/aiNotificationText' });
 
-    return result;
+    const aiResult = await ai.chat({
+      model: "gpt-4o",
+      messages: [{
+        role: "system",
+        content: "Generate quality event notification text."
+      }, {
+        role: "user",
+        content: `Generate notification for: ${JSON.stringify(eventData)}`
+      }],
+      max_tokens: 300
+    });
+
+    return aiResult.content;
   } catch (error) {
     console.error('AI Notification error:', error);
     return "Quality event occurred - review required";

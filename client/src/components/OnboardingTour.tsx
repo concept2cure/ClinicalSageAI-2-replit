@@ -35,7 +35,7 @@ export default function OnboardingTour() {
       showProgress
       showSkipButton
       callback={handleJoyrideCallback}
-      styles={{ options: { primaryColor: '#2563EB', zIndex: 10000 } }}
+      styles={{ options: { primaryColor: '#d97757', zIndex: 10000 } }}
     />
   );
 }

@@ -12,14 +12,13 @@ import { eq, and, sql } from 'drizzle-orm';
 import { spawn } from 'child_process';
 import { createHash } from 'crypto';
 import path from 'path';
-import { ai } from '../lib/unified-ai-client';
-
 interface ProtocolExtractionInput {
   filePath: string;
   organizationId: number;
   projectId?: string;
   documentId?: string;
 }
+import { ai } from '../lib/unified-ai-client';
 
 interface ProtocolFields {
   title: string | null;
@@ -59,6 +58,13 @@ interface ProtocolExtractionResult {
 }
 
 class ProtocolExtractionPersistenceService {
+  private openai: OpenAI | null = null;
+
+  private getOpenAI(): OpenAI {
+    if (!this.openai) {
+    }
+    return this.openai;
+  }
 
   /**
    * Extract protocol data and persist to database
@@ -215,8 +221,10 @@ class ProtocolExtractionPersistenceService {
     try {
       const truncatedText = text.slice(0, 30000);
 
-      const content = await ai.complete(
-        [
+      const aiResult = await ai.chat({
+        model: 'gpt-4o',
+        response_format: { type: 'json_object' },
+        messages: [
           {
             role: 'system',
             content: `You are a clinical trial protocol extraction specialist. Extract structured data from clinical trial protocols. Return ONLY valid JSON. For fields you cannot determine, use null for strings/objects and [] for arrays. Never fabricate data — only extract what is explicitly stated in the text.`,
@@ -253,6 +261,7 @@ ${truncatedText}`,
         { jsonMode: true, temperature: 0.1, maxTokens: 4000 }
       );
 
+      const content = aiResult.content;
       if (!content) return defaults;
 
       const parsed = JSON.parse(content);

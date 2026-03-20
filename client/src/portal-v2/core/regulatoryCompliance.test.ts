@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Regulatory Compliance Module Tests
+ * Concept2Cure Client Portal V2 - Regulatory Compliance Module Tests
  *
  * Test coverage for regulatory compliance utilities including:
  * - SoD (Segregation of Duties) validation

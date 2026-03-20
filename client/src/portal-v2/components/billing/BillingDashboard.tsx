@@ -156,7 +156,7 @@ export default function BillingDashboard() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Billing & Subscription</h1>
           <p className="text-gray-500 mt-1">
-            Manage your ClinicalSage subscription and billing
+            Manage your Concept2Cure.RI subscription and billing
           </p>
         </div>
         {subscription?.stripeSubscriptionId && (

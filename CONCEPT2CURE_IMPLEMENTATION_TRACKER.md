@@ -6,7 +6,7 @@
 
 ### Objective
 
-Re-establish a professional, predictable release track across the full ClinicalSageAI platform (not just eCTD Co-Author) by enforcing canonical UX/API contracts and eliminating route/service drift.
+Re-establish a professional, predictable release track across the full Concept2Cure.RI platform (not just eCTD Co-Author) by enforcing canonical UX/API contracts and eliminating route/service drift.
 
 ### Scope (Platform-Wide)
 

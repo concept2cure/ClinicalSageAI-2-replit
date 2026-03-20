@@ -1,5 +1,5 @@
 /**
- * Drizzle ORM Configuration for TrialSage
+ * Drizzle ORM Configuration for Concept2Cure
  *
  * This file sets up the Drizzle ORM to work with our PostgreSQL database.
  */

@@ -322,7 +322,7 @@ const GanttChartView = ({ tasks, dependencies = [], onTaskUpdate, onTaskClick })
             height={task.height - 8}
             rx={4}
             fill={statusColor}
-            stroke={isSelected ? '#2563EB' : barColor}
+            stroke={isSelected ? '#d97757' : barColor}
             strokeWidth={isSelected ? 2 : 1}
             opacity={0.9}
           />

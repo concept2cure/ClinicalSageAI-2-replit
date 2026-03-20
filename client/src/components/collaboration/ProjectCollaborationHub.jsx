@@ -179,7 +179,7 @@ const ProjectCollaborationHub = ({
           content:
             'Based on your clinical evaluation data, consider adding a comparison with the latest similar device (MedTech XR200) that received FDA clearance last month.',
           timestamp: new Date().toISOString(),
-          sender: { id: 'ai', name: 'TrialSage AI', avatar: '/ai-avatar.png' },
+          sender: { id: 'ai', name: 'Concept2Cure AI', avatar: '/ai-avatar.png' },
           confidence: 0.92,
           actions: [
             { id: 'action-1', label: 'Add to Tasks', action: 'create-task' },
@@ -192,7 +192,7 @@ const ProjectCollaborationHub = ({
           content:
             'I noticed your predicate device section is missing comparative data for electrical characteristics. This could delay your 510(k) submission approval.',
           timestamp: new Date().toISOString(),
-          sender: { id: 'ai', name: 'TrialSage AI', avatar: '/ai-avatar.png' },
+          sender: { id: 'ai', name: 'Concept2Cure AI', avatar: '/ai-avatar.png' },
           confidence: 0.87,
           actions: [
             { id: 'action-3', label: 'View Details', action: 'view-details' },
@@ -982,7 +982,7 @@ const ProjectCollaborationHub = ({
         content:
           'I noticed the device classification is set to Class II. Based on the intended use statement, you should verify this classification with the product code database using 21 CFR 880-892.',
         timestamp: new Date(baseDate.getTime() + 60 * 60000).toISOString(),
-        sender: { id: 'ai', name: 'TrialSage AI', avatar: '/ai-avatar.png' },
+        sender: { id: 'ai', name: 'Concept2Cure AI', avatar: '/ai-avatar.png' },
         confidence: 0.89,
         actions: [
           { id: 'action-5', label: 'Verify Classification', action: 'verify-classification' },

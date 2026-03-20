@@ -16,15 +16,12 @@ import path from 'path';
 import multer from 'multer';
 import { TextProcessor } from '../utils/textProcessing.js';
 import { pool as dbPool } from '../utils/database.js';
-import { getOpenAIClient } from './openai-client';
 import PDFParser from 'pdf-parse';
 import mammoth from 'mammoth';
 import ExcelJS from 'exceljs';
 import { v4 as uuidv4 } from 'uuid';
 
 // Initialize OpenAI
-const openai = getOpenAIClient();
-
 // Document storage configuration
 const uploadDir = path.join(process.cwd(), 'uploads', 'documents');
 if (!fs.existsSync(uploadDir)) {
@@ -42,6 +39,7 @@ export const documentUpload = multer({
       cb(null, uniqueName);
     },
   }),
+import { ai } from '../lib/unified-ai-client';
   fileFilter: (req, file, cb) => {
     // Accept regulatory document formats
     const allowedTypes = [
@@ -274,7 +272,7 @@ export class DocumentIngestionWorkflow {
         Respond with just the classification and confidence level.
       `;
 
-      const response = await openai.chat.completions.create({
+      const aiResult = await ai.chat({
         model: 'gpt-4o',
         messages: [
           {
@@ -291,7 +289,7 @@ export class DocumentIngestionWorkflow {
         temperature: 0.1,
       });
 
-      const classification = response.choices[0].message.content.trim();
+      const classification = aiResult.content.trim();
       return classification;
     } catch (error) {
       console.error('Document classification error:', error);
@@ -321,7 +319,7 @@ export class DocumentIngestionWorkflow {
         Format as JSON with clear categories.
       `;
 
-      const response = await openai.chat.completions.create({
+      const aiResult = await ai.chat({
         model: 'gpt-4o',
         messages: [
           {
@@ -339,9 +337,9 @@ export class DocumentIngestionWorkflow {
       });
 
       try {
-        return JSON.parse(response.choices[0].message.content);
+        return JSON.parse(aiResult.content);
       } catch (parseError) {
-        return { rawExtraction: response.choices[0].message.content };
+        return { rawExtraction: aiResult.content };
       }
     } catch (error) {
       console.error('Regulatory information extraction error:', error);
@@ -369,7 +367,7 @@ export class DocumentIngestionWorkflow {
         Make it suitable for regulatory professionals.
       `;
 
-      const response = await openai.chat.completions.create({
+      const aiResult = await ai.chat({
         model: 'gpt-4o',
         messages: [
           {
@@ -386,7 +384,7 @@ export class DocumentIngestionWorkflow {
         temperature: 0.3,
       });
 
-      return response.choices[0].message.content;
+      return aiResult.content;
     } catch (error) {
       console.error('Document summary generation error:', error);
       return 'Summary generation failed';

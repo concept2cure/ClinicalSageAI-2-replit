@@ -1,20 +1,18 @@
 /**
  * Document Processor Service
  *
- * This service provides advanced document processing capabilities for the TrialSage platform,
+ * This service provides advanced document processing capabilities for the Concept2Cure platform,
  * including PDF extraction, text analysis, and document transformation.
  * It integrates with AI services for intelligent document processing.
  */
 
 import fs from 'fs/promises';
 import path from 'path';
-import { getOpenAIClient } from './openai-client';
 import { db } from '../db.js';
 import { hashDocument } from './blockchain.js';
+import { ai } from '../lib/unified-ai-client';
 
 // Initialize OpenAI client
-const openai = getOpenAIClient();
-
 // Document types
 export const DOCUMENT_TYPES = {
   CSR: 'clinical_study_report',
@@ -253,7 +251,7 @@ async function extractCSRData(result, options) {
       If a field is not found, set its value to null.
     `;
 
-    const completion = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4o',
       messages: [
         { role: 'system', content: systemPrompt },
@@ -265,7 +263,7 @@ async function extractCSRData(result, options) {
     });
 
     // Parse extraction result
-    const extractedData = JSON.parse(completion.choices[0].message.content);
+    const extractedData = JSON.parse(aiResult.content);
 
     // Add document type and processing metadata
     return {
@@ -328,7 +326,7 @@ async function extractProtocolData(result, options) {
       If a field is not found, set its value to null.
     `;
 
-    const completion = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4o',
       messages: [
         { role: 'system', content: systemPrompt },
@@ -340,7 +338,7 @@ async function extractProtocolData(result, options) {
     });
 
     // Parse extraction result
-    const extractedData = JSON.parse(completion.choices[0].message.content);
+    const extractedData = JSON.parse(aiResult.content);
 
     // Add document type and processing metadata
     return {
@@ -400,7 +398,7 @@ async function extractIBData(result, options) {
       If a field is not found, set its value to null.
     `;
 
-    const completion = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4o',
       messages: [
         { role: 'system', content: systemPrompt },
@@ -412,7 +410,7 @@ async function extractIBData(result, options) {
     });
 
     // Parse extraction result
-    const extractedData = JSON.parse(completion.choices[0].message.content);
+    const extractedData = JSON.parse(aiResult.content);
 
     // Add document type and processing metadata
     return {
@@ -471,7 +469,7 @@ async function extractCMCData(result, options) {
       If a field is not found, set its value to null.
     `;
 
-    const completion = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4o',
       messages: [
         { role: 'system', content: systemPrompt },
@@ -483,7 +481,7 @@ async function extractCMCData(result, options) {
     });
 
     // Parse extraction result
-    const extractedData = JSON.parse(completion.choices[0].message.content);
+    const extractedData = JSON.parse(aiResult.content);
 
     // Add document type and processing metadata
     return {
@@ -538,7 +536,7 @@ async function extractGenericData(result, options) {
       If a field is not found, set its value to null.
     `;
 
-    const completion = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4o',
       messages: [
         { role: 'system', content: systemPrompt },
@@ -550,7 +548,7 @@ async function extractGenericData(result, options) {
     });
 
     // Parse extraction result
-    const extractedData = JSON.parse(completion.choices[0].message.content);
+    const extractedData = JSON.parse(aiResult.content);
 
     // Add document type and processing metadata
     return {

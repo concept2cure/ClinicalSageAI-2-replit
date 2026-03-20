@@ -52,28 +52,28 @@ export default function GeneratedReportPanel({ jobId }) {
           ctx.fillRect(0, 0, canvas.width, canvas.height);
 
           // Draw header
-          ctx.fillStyle = '#e2e8f0';
+          ctx.fillStyle = '#e8e6dc';
           ctx.fillRect(0, 0, canvas.width, 80);
 
           // Title
-          ctx.fillStyle = '#1e293b';
+          ctx.fillStyle = '#2d2d2a';
           ctx.font = 'bold 24px Arial';
           ctx.fillText('Clinical Evaluation Report', 30, 50);
 
           // Content section
-          ctx.fillStyle = '#1e293b';
+          ctx.fillStyle = '#2d2d2a';
           ctx.font = '16px Arial';
           ctx.fillText('1. Executive Summary', 30, 120);
 
           // Content lines
-          ctx.fillStyle = '#6b7280';
+          ctx.fillStyle = '#8a8880';
           ctx.font = '14px Arial';
           for (let i = 0; i < 15; i++) {
             ctx.fillRect(30, 150 + i * 30, 550, 2);
           }
 
           // Draw a chart
-          ctx.fillStyle = '#60a5fa';
+          ctx.fillStyle = '#8bb4d9';
           ctx.fillRect(100, 600, 100, 100);
           ctx.fillStyle = '#34d399';
           ctx.fillRect(220, 620, 100, 80);

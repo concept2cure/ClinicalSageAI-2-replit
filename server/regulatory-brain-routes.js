@@ -1,7 +1,7 @@
 /**
  * Regulatory Brain API Routes
  *
- * This file defines the API endpoints for the TrialSage™ Regulatory Brain services,
+ * This file defines the API endpoints for the Concept2Cure™ Regulatory Brain services,
  * including the IND Wizard, eCTD Builder, and Risk Predictor.
  */
 

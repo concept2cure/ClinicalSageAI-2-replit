@@ -6620,7 +6620,7 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                 <ChevronLeft className="w-4 h-4" />
                 Hub
               </button>
-              <img src="/src/assets/concept2cure-icon.svg" alt="Concept2Cure" className="h-8 w-8 rounded-lg" />
+              <img src="/src/assets/concept2cure-logo.jpg" alt="Concept2Cure" className="h-8 w-8 rounded-lg" />
               <div className="flex items-center space-x-2">
                 <h1 className="text-xl font-semibold text-slate-800">eCTD Co-Author</h1>
                 <Badge variant="outline" className="text-xs border-blue-200 text-blue-700">

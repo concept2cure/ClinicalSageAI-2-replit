@@ -171,7 +171,7 @@ const RiskAnalysisScorecard = ({ analysis, isLoading, onRunAnalysis }) => {
                         ? '#ef4444'
                         : analysis.riskCategory === 'moderate'
                           ? '#f59e0b'
-                          : '#22c55e'
+                          : '#92a87a'
                     }
                     strokeWidth="10"
                     strokeDasharray={`${2 * Math.PI * 40 * (riskScorePercentage / 100)} ${2 * Math.PI * 40}`}

@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Delegation of Authority
+ * Concept2Cure Client Portal V2 - Delegation of Authority
  *
  * Comprehensive delegation management with:
  * - Temporary authority assignments

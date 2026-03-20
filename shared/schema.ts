@@ -2454,8 +2454,12 @@ export const users = pgTable('users', {
   mfaEnabled: boolean('mfa_enabled').default(false),
   mfaSecret: text('mfa_secret'), // encrypted TOTP secret
   mfaBackupCodes: json('mfa_backup_codes'), // encrypted backup codes array
-  mfaMethod: text('mfa_method').default('totp'), // totp, sms, email
+  mfaMethod: text('mfa_method').default('email'), // totp, sms, email
   mfaVerifiedAt: timestamp('mfa_verified_at'),
+  // Email OTP fields (for email-based 2FA)
+  emailOtpHash: text('email_otp_hash'),
+  emailOtpExpiresAt: timestamp('email_otp_expires_at'),
+  emailOtpAttempts: integer('email_otp_attempts').default(0),
   // Account lockout fields
   failedLoginAttempts: integer('failed_login_attempts').default(0),
   lockedUntil: timestamp('locked_until'),
@@ -3719,6 +3723,34 @@ export const insertSimpleDocumentVersionSchema = createInsertSchemaOmit(simpleDo
 // Simple Document Version Types
 export type SimpleDocumentVersion = InferSelectModel<typeof simpleDocumentVersions>;
 export type InsertSimpleDocumentVersion = z.infer<typeof insertSimpleDocumentVersionSchema>;
+
+// ============================================================================
+// DRAFTING TASKS (persistent storage for AI document generation)
+// ============================================================================
+
+export const draftingTasks = pgTable('drafting_tasks', {
+  id: serial('id').primaryKey(),
+  taskId: text('task_id').notNull().unique(),
+  projectId: text('project_id').notNull(),
+  ectdSection: text('ectd_section').notNull(),
+  documentTitle: text('document_title').notNull(),
+  template: text('template'),
+  status: text('status').notNull().default('PENDING'), // PENDING, IN_PROGRESS, COMPLETED, FAILED
+  draftContent: text('draft_content'),
+  errorMessage: text('error_message'),
+  createdById: integer('created_by_id').references(() => users.id),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const insertDraftingTaskSchema = createInsertSchemaOmit(draftingTasks, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type DraftingTask = InferSelectModel<typeof draftingTasks>;
+export type InsertDraftingTask = z.infer<typeof insertDraftingTaskSchema>;
 
 /**
  * CER Approvals Table
@@ -17281,8 +17313,7 @@ export type SubmissionTwinAssessment = InferSelectModel<typeof submissionTwinAss
 
 // ============================================================
 // INTELLIGENT REPORT ENGINE — Immutable Records & Quasi-Indemnification
-// ============================================================
-
+// =====================================================
 /** Report domain categories across the entire platform */
 export const reportDomainEnum = pgEnum('report_domain', [
   'regulatory_submission',   // eCTD, IND, NDA, BLA, 510k, PMA, CER
@@ -17807,3 +17838,103 @@ export type EvidenceComplianceScore = InferSelectModel<typeof evidenceCompliance
 export type InsertEvidenceComplianceScore = z.infer<typeof insertEvidenceScoreSchema>;
 export type EvidenceChangeEvent = InferSelectModel<typeof evidenceChangeEvents>;
 export type InsertEvidenceChangeEvent = z.infer<typeof insertEvidenceChangeEventSchema>;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GAP ANALYSIS RESULTS TABLE
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Persisted gap analysis results for audit trail and trend tracking.
+ * Each row represents one gap analysis run.
+ */
+export const gapAnalysisResults = pgTable('gap_analysis_results', {
+  id: serial('id').primaryKey(),
+  organizationId: text('organization_id').notNull(),
+  userId: text('user_id').notNull(),
+  submissionType: text('submission_type').notNull(),
+  projectId: text('project_id'),
+  overallReadiness: integer('overall_readiness').notNull(),
+  totalRequired: integer('total_required').notNull(),
+  completedCount: integer('completed_count').notNull(),
+  gapsSnapshot: json('gaps_snapshot').notNull(),
+  recommendations: json('recommendations').notNull(),
+  uploadedDocuments: json('uploaded_documents'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const insertGapAnalysisResultSchema = createInsertSchemaOmit(gapAnalysisResults, {
+  id: true,
+  createdAt: true,
+});
+export type GapAnalysisResult = InferSelectModel<typeof gapAnalysisResults>;
+export type InsertGapAnalysisResult = z.infer<typeof insertGapAnalysisResultSchema>;
+=======
+// BILLING: API USAGE TRACKING
+// ============================================================
+
+export const apiUsageLogs = pgTable('api_usage_logs', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id').references(() => organizations.id).notNull(),
+  userId: integer('user_id'),
+  module: text('module').notNull(), // '510k', 'cer', 'ectd', 'cmc', 'ai_assistance', 'vault'
+  endpoint: text('endpoint'),
+  requestCount: integer('request_count').default(1).notNull(),
+  tokensUsed: integer('tokens_used').default(0).notNull(),
+  costCents: integer('cost_cents').default(0).notNull(), // cost in cents
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  orgDateIdx: index('api_usage_org_date_idx').on(table.organizationId, table.createdAt),
+  moduleIdx: index('api_usage_module_idx').on(table.module),
+}));
+
+export type ApiUsageLog = InferSelectModel<typeof apiUsageLogs>;
+
+// ============================================================
+// BILLING: BUDGETS & SPENDING LIMITS
+// ============================================================
+
+export const billingBudgets = pgTable('billing_budgets', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id').references(() => organizations.id).notNull().unique(),
+  monthlyBudgetCents: integer('monthly_budget_cents'), // null = no budget set
+  hardLimitEnabled: boolean('hard_limit_enabled').default(false).notNull(),
+  alertThresholds: json('alert_thresholds').$type<Array<{
+    threshold: number; // 50, 75, 90, 100
+    emailEnabled: boolean;
+    inAppEnabled: boolean;
+  }>>().default([
+    { threshold: 50, emailEnabled: false, inAppEnabled: true },
+    { threshold: 75, emailEnabled: true, inAppEnabled: true },
+    { threshold: 90, emailEnabled: true, inAppEnabled: true },
+    { threshold: 100, emailEnabled: true, inAppEnabled: true },
+  ]),
+  notifyEmails: json('notify_emails').$type<string[]>().default([]),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export type BillingBudget = InferSelectModel<typeof billingBudgets>;
+
+// ============================================================
+// BILLING: ALERTS & NOTIFICATIONS
+// ============================================================
+
+export const billingAlerts = pgTable('billing_alerts', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id').references(() => organizations.id).notNull(),
+  type: text('type').notNull(), // 'budget_warning', 'budget_exceeded', 'payment_failed', 'plan_change', 'invoice_ready'
+  threshold: integer('threshold'), // percentage threshold that triggered this alert (50, 75, 90, 100)
+  message: text('message').notNull(),
+  metadata: json('metadata'),
+  emailSent: boolean('email_sent').default(false).notNull(),
+  acknowledged: boolean('acknowledged').default(false).notNull(),
+  acknowledgedAt: timestamp('acknowledged_at'),
+  acknowledgedBy: integer('acknowledged_by'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  orgIdx: index('billing_alerts_org_idx').on(table.organizationId),
+  typeIdx: index('billing_alerts_type_idx').on(table.type),
+}));
+
+export type BillingAlert = InferSelectModel<typeof billingAlerts>;

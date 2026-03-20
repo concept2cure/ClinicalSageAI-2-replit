@@ -324,7 +324,7 @@ export default function SENDValidationPanel({ documentId, moduleType = 'module4'
                   <div className="space-y-3">
                     {validationResults.map((result, idx) => (
                       <Card key={idx} className="border-l-4" 
-                            style={{ borderLeftColor: result.valid ? '#10b981' : '#ef4444' }}>
+                            style={{ borderLeftColor: result.valid ? '#788c5d' : '#ef4444' }}>
                         <CardContent className="pt-4">
                           <div className="flex justify-between items-start mb-3">
                             <div className="flex items-center gap-2">
@@ -448,7 +448,7 @@ export default function SENDValidationPanel({ documentId, moduleType = 'module4'
                               value={category.score} 
                               className="h-2"
                               style={{
-                                '--progress-background': category.status === 'success' ? '#10b981' :
+                                '--progress-background': category.status === 'success' ? '#788c5d' :
                                                          category.status === 'warning' ? '#f59e0b' : '#ef4444'
                               }}
                             />

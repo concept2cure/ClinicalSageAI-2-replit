@@ -748,7 +748,7 @@ const StudyDesignReport = () => {
               <p>
                 Generated on {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString()}
               </p>
-              <p>Study Design Report – TrialSage by C2C.AI™</p>
+              <p>Study Design Report – Concept2Cure by C2C.AI™</p>
             </div>
             <div className="print:hidden flex gap-2">
               <Button

@@ -28,7 +28,7 @@ const variants = {
   exec: {
     headline: 'From Concepts to Cures — in Half the Time',
     subhead:
-      'TrialSage automates regulatory writing, submission assembly, and ESG delivery across FDA, EMA, PMDA, and more. Cut costs. Launch faster. Stay compliant.',
+      'Concept2Cure automates regulatory writing, submission assembly, and ESG delivery across FDA, EMA, PMDA, and more. Cut costs. Launch faster. Stay compliant.',
     cta: { label: 'Calculate Your ROI', to: '/roi' },
   },
   medwriter: {
@@ -40,7 +40,7 @@ const variants = {
   ops: {
     headline: 'Faster Documents, Smoother Approvals, Fewer Vendors',
     subhead:
-      'TrialSage centralizes protocol authoring, team reviews, and submission packaging into one platform — no hand‑offs, no delays.',
+      'Concept2Cure centralizes protocol authoring, team reviews, and submission packaging into one platform — no hand‑offs, no delays.',
     cta: { label: 'Launch a New Study', to: '/contact' },
   },
   qa: {
@@ -52,7 +52,7 @@ const variants = {
   investor: {
     headline: 'AI for Biotech That Actually Moves the Needle',
     subhead:
-      'TrialSage cuts submission timelines 78% so capital works harder — therapies reach patients sooner.',
+      'Concept2Cure cuts submission timelines 78% so capital works harder — therapies reach patients sooner.',
     cta: { label: 'Read Results', to: '/case-studies' },
   },
   biostats: {
@@ -70,7 +70,7 @@ const variants = {
   cro: {
     headline: 'Upgrade Your CRO Offering with White‑Label AI',
     subhead:
-      'Embed TrialSage to cut client timelines and expand margins. Keep your brand, add our intelligence.',
+      'Embed Concept2Cure to cut client timelines and expand margins. Keep your brand, add our intelligence.',
     cta: { label: 'Partner Program', to: '/partners' },
   },
 };

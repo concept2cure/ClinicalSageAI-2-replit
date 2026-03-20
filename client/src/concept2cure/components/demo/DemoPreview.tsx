@@ -83,7 +83,7 @@ const HeroPreview: React.FC = () => (
     <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center mb-6 shadow-lg shadow-violet-200">
       <Sparkles className="w-10 h-10 text-white" />
     </div>
-    <h2 className="text-2xl font-bold text-zinc-900 mb-2">ClinicalSageAI</h2>
+    <h2 className="text-2xl font-bold text-zinc-900 mb-2">Concept2Cure.RI</h2>
     <p className="text-sm text-zinc-500 max-w-md">
       The unified regulatory intelligence platform. One AI co-pilot replacing 10-15 disconnected tools.
     </p>

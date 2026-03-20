@@ -455,6 +455,235 @@ router.post('/federated/models/:modelId/rounds', async (req: Request, res: Respo
 });
 
 // =============================================================================
+// Federated Learning Dashboard
+// =============================================================================
+
+/**
+ * Ensure federated learning tables exist.
+ * Uses CREATE TABLE IF NOT EXISTS so it's safe to call on every request.
+ */
+let flTablesInitialized = false;
+const ensureFederatedTables = async () => {
+  if (flTablesInitialized) return;
+  try {
+    const { db } = await import('../db');
+    const { sql } = await import('drizzle-orm');
+
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS federated_models (
+        id SERIAL PRIMARY KEY,
+        model_id TEXT NOT NULL UNIQUE,
+        model_type TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'initialized',
+        privacy_budget NUMERIC DEFAULT 1.0,
+        privacy_budget_used NUMERIC DEFAULT 0.0,
+        participant_count INTEGER DEFAULT 0,
+        rounds_completed INTEGER DEFAULT 0,
+        accuracy NUMERIC,
+        created_by TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS federated_participants (
+        id SERIAL PRIMARY KEY,
+        model_id TEXT NOT NULL,
+        participant_id TEXT NOT NULL,
+        site_name TEXT,
+        status TEXT NOT NULL DEFAULT 'active',
+        data_points INTEGER DEFAULT 0,
+        last_contribution TIMESTAMPTZ,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS federated_safety_signals (
+        id SERIAL PRIMARY KEY,
+        signal_id TEXT NOT NULL UNIQUE,
+        model_id TEXT,
+        severity TEXT NOT NULL DEFAULT 'low',
+        signal_type TEXT NOT NULL,
+        description TEXT NOT NULL,
+        affected_sites INTEGER DEFAULT 0,
+        status TEXT NOT NULL DEFAULT 'open',
+        detected_at TIMESTAMPTZ DEFAULT NOW(),
+        resolved_at TIMESTAMPTZ
+      )
+    `);
+
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS federated_horizon_scans (
+        id SERIAL PRIMARY KEY,
+        scan_id TEXT NOT NULL UNIQUE,
+        topic TEXT NOT NULL,
+        category TEXT NOT NULL,
+        relevance_score NUMERIC DEFAULT 0.5,
+        summary TEXT,
+        source TEXT,
+        scanned_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+
+    flTablesInitialized = true;
+  } catch (err) {
+    console.error('[CognitiveRoutes] Failed to initialize federated tables:', err);
+    // Don't set initialized — retry next request
+  }
+};
+
+/**
+ * Federated Learning Dashboard
+ * GET /api/cognitive/federated/dashboard
+ *
+ * Returns aggregated dashboard data including:
+ *  - Total models & active participants
+ *  - Privacy budget usage
+ *  - Recent safety signals
+ *  - Horizon scan summary
+ */
+router.get('/federated/dashboard', async (req: Request, res: Response) => {
+  try {
+    await ensureFederatedTables();
+
+    const { db } = await import('../db');
+    const { sql } = await import('drizzle-orm');
+
+    // 1. Model summary
+    const modelsResult = await db.execute(sql`
+      SELECT
+        COUNT(*)::int AS total_models,
+        COUNT(*) FILTER (WHERE status = 'training')::int AS training_models,
+        COUNT(*) FILTER (WHERE status = 'initialized')::int AS initialized_models,
+        COUNT(*) FILTER (WHERE status = 'completed')::int AS completed_models,
+        COALESCE(SUM(rounds_completed), 0)::int AS total_rounds,
+        COALESCE(AVG(accuracy), 0)::numeric AS avg_accuracy
+      FROM federated_models
+    `);
+    const modelSummary = (modelsResult as any).rows?.[0] || (modelsResult as any)[0] || {
+      total_models: 0,
+      training_models: 0,
+      initialized_models: 0,
+      completed_models: 0,
+      total_rounds: 0,
+      avg_accuracy: 0,
+    };
+
+    // 2. Participant summary
+    const participantsResult = await db.execute(sql`
+      SELECT
+        COUNT(*)::int AS total_participants,
+        COUNT(*) FILTER (WHERE status = 'active')::int AS active_participants,
+        COALESCE(SUM(data_points), 0)::int AS total_data_points
+      FROM federated_participants
+    `);
+    const participantSummary = (participantsResult as any).rows?.[0] || (participantsResult as any)[0] || {
+      total_participants: 0,
+      active_participants: 0,
+      total_data_points: 0,
+    };
+
+    // 3. Privacy budget usage
+    const privacyResult = await db.execute(sql`
+      SELECT
+        COALESCE(AVG(privacy_budget), 1.0)::numeric AS avg_budget,
+        COALESCE(AVG(privacy_budget_used), 0.0)::numeric AS avg_budget_used,
+        COALESCE(MIN(privacy_budget - privacy_budget_used), 1.0)::numeric AS min_remaining_budget
+      FROM federated_models
+    `);
+    const privacySummary = (privacyResult as any).rows?.[0] || (privacyResult as any)[0] || {
+      avg_budget: 1.0,
+      avg_budget_used: 0.0,
+      min_remaining_budget: 1.0,
+    };
+
+    const avgBudget = Number(privacySummary.avg_budget) || 1.0;
+    const avgUsed = Number(privacySummary.avg_budget_used) || 0.0;
+    const budgetUtilizationPct = avgBudget > 0 ? Math.round((avgUsed / avgBudget) * 100) : 0;
+
+    // 4. Recent safety signals (last 30 days, max 20)
+    const signalsResult = await db.execute(sql`
+      SELECT signal_id, model_id, severity, signal_type, description,
+             affected_sites, status, detected_at, resolved_at
+      FROM federated_safety_signals
+      WHERE detected_at >= NOW() - INTERVAL '30 days'
+      ORDER BY detected_at DESC
+      LIMIT 20
+    `);
+    const recentSignals = (signalsResult as any).rows || signalsResult || [];
+
+    const signalBreakdown = {
+      total: recentSignals.length,
+      open: recentSignals.filter((s: any) => s.status === 'open').length,
+      resolved: recentSignals.filter((s: any) => s.status === 'resolved').length,
+      critical: recentSignals.filter((s: any) => s.severity === 'critical').length,
+      high: recentSignals.filter((s: any) => s.severity === 'high').length,
+      medium: recentSignals.filter((s: any) => s.severity === 'medium').length,
+      low: recentSignals.filter((s: any) => s.severity === 'low').length,
+    };
+
+    // 5. Horizon scan summary (latest 10)
+    const horizonResult = await db.execute(sql`
+      SELECT scan_id, topic, category, relevance_score, summary, source, scanned_at
+      FROM federated_horizon_scans
+      ORDER BY scanned_at DESC
+      LIMIT 10
+    `);
+    const horizonScans = (horizonResult as any).rows || horizonResult || [];
+
+    // Aggregate by category
+    const categoryMap: Record<string, number> = {};
+    for (const scan of horizonScans) {
+      const cat = scan.category || 'uncategorized';
+      categoryMap[cat] = (categoryMap[cat] || 0) + 1;
+    }
+
+    res.json({
+      success: true,
+      data: {
+        models: {
+          total: Number(modelSummary.total_models) || 0,
+          training: Number(modelSummary.training_models) || 0,
+          initialized: Number(modelSummary.initialized_models) || 0,
+          completed: Number(modelSummary.completed_models) || 0,
+          totalRounds: Number(modelSummary.total_rounds) || 0,
+          averageAccuracy: Number(Number(modelSummary.avg_accuracy).toFixed(4)) || 0,
+        },
+        participants: {
+          total: Number(participantSummary.total_participants) || 0,
+          active: Number(participantSummary.active_participants) || 0,
+          totalDataPoints: Number(participantSummary.total_data_points) || 0,
+        },
+        privacyBudget: {
+          averageBudget: Number(Number(avgBudget).toFixed(4)),
+          averageUsed: Number(Number(avgUsed).toFixed(4)),
+          utilizationPercentage: budgetUtilizationPct,
+          minimumRemainingBudget: Number(Number(privacySummary.min_remaining_budget).toFixed(4)),
+        },
+        safetySignals: {
+          breakdown: signalBreakdown,
+          recent: recentSignals,
+        },
+        horizonScans: {
+          total: horizonScans.length,
+          byCategory: categoryMap,
+          recent: horizonScans,
+        },
+        generatedAt: new Date().toISOString(),
+      },
+    });
+  } catch (error: any) {
+    console.error('[CognitiveRoutes] Federated dashboard error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to load federated learning dashboard',
+    });
+  }
+});
+
+// =============================================================================
 // Health & Status Routes
 // =============================================================================
 

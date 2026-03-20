@@ -284,8 +284,8 @@ export default function ClinicalEvaluationPlanPanel({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-[#323130]">Clinical Evaluation Plan</h2>
-          <p className="text-[#605E5C] mt-1">
+          <h2 className="text-2xl font-semibold text-[#141413]">Clinical Evaluation Plan</h2>
+          <p className="text-[#6b6963] mt-1">
             Document the clinical evaluation methodology according to MEDDEV 2.7/1 Rev 4 and MDR
             requirements.
           </p>
@@ -293,7 +293,7 @@ export default function ClinicalEvaluationPlanPanel({
         <div className="flex space-x-2">
           <Button
             variant="outline"
-            className="border-[#0F6CBD] text-[#0F6CBD] hover:bg-[#EFF6FC]"
+            className="border-[#d97757] text-[#d97757] hover:bg-[#faf0ec]"
             onClick={() => handleSave(false)}
             disabled={!changes}
           >
@@ -304,7 +304,7 @@ export default function ClinicalEvaluationPlanPanel({
             whyThisMatters="A comprehensive CEP is required by MEDDEV 2.7/1 Rev 4. It demonstrates a systematic approach to clinical evaluation and helps regulatory reviewers understand your evaluation methodology."
           >
             <Button
-              className="bg-[#0F6CBD] hover:bg-[#115EA3] text-white"
+              className="bg-[#d97757] hover:bg-[#c15f3c] text-white"
               onClick={() => handleSave(true)}
             >
               <ClipboardList className="h-4 w-4 mr-2" />
@@ -314,15 +314,15 @@ export default function ClinicalEvaluationPlanPanel({
         </div>
       </div>
 
-      <Card className="border-[#E1DFDD]">
-        <CardHeader className="bg-[#FAFAFA] border-b border-[#E1DFDD]">
-          <CardTitle className="text-lg text-[#323130]">Device Information</CardTitle>
+      <Card className="border-[#e8e6dc]">
+        <CardHeader className="bg-[#faf9f5] border-b border-[#e8e6dc]">
+          <CardTitle className="text-lg text-[#141413]">Device Information</CardTitle>
           <CardDescription>Basic information about the device being evaluated</CardDescription>
         </CardHeader>
         <CardContent className="p-6 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="device-name" className="text-[#323130]">
+              <Label htmlFor="device-name" className="text-[#141413]">
                 Device Name <span className="text-red-500">*</span>
               </Label>
               <Input
@@ -330,11 +330,11 @@ export default function ClinicalEvaluationPlanPanel({
                 value={cepData.deviceName}
                 onChange={e => handleChange('deviceName', e.target.value)}
                 placeholder="Enter device name"
-                className="border-[#E1DFDD]"
+                className="border-[#e8e6dc]"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="manufacturer" className="text-[#323130]">
+              <Label htmlFor="manufacturer" className="text-[#141413]">
                 Manufacturer <span className="text-red-500">*</span>
               </Label>
               <Input
@@ -342,13 +342,13 @@ export default function ClinicalEvaluationPlanPanel({
                 value={cepData.manufacturer}
                 onChange={e => handleChange('manufacturer', e.target.value)}
                 placeholder="Enter manufacturer"
-                className="border-[#E1DFDD]"
+                className="border-[#e8e6dc]"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="model-numbers" className="text-[#323130]">
+            <Label htmlFor="model-numbers" className="text-[#141413]">
               Model Numbers / Part Numbers
             </Label>
             <Input
@@ -356,12 +356,12 @@ export default function ClinicalEvaluationPlanPanel({
               value={cepData.modelNumbers}
               onChange={e => handleChange('modelNumbers', e.target.value)}
               placeholder="Enter model numbers or product codes"
-              className="border-[#E1DFDD]"
+              className="border-[#e8e6dc]"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="device-description" className="text-[#323130]">
+            <Label htmlFor="device-description" className="text-[#141413]">
               Device Description
             </Label>
             <Textarea
@@ -369,20 +369,20 @@ export default function ClinicalEvaluationPlanPanel({
               value={cepData.deviceDescription}
               onChange={e => handleChange('deviceDescription', e.target.value)}
               placeholder="Provide a comprehensive description of the device"
-              className="border-[#E1DFDD] h-24"
+              className="border-[#e8e6dc] h-24"
             />
           </div>
         </CardContent>
       </Card>
 
-      <Card className="border-[#E1DFDD]">
-        <CardHeader className="bg-[#FAFAFA] border-b border-[#E1DFDD]">
-          <CardTitle className="text-lg text-[#323130]">Scope of the Clinical Evaluation</CardTitle>
+      <Card className="border-[#e8e6dc]">
+        <CardHeader className="bg-[#faf9f5] border-b border-[#e8e6dc]">
+          <CardTitle className="text-lg text-[#141413]">Scope of the Clinical Evaluation</CardTitle>
           <CardDescription>Define the scope and focus of the clinical evaluation</CardDescription>
         </CardHeader>
         <CardContent className="p-6 space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="intended-purpose" className="text-[#323130]">
+            <Label htmlFor="intended-purpose" className="text-[#141413]">
               Intended Purpose <span className="text-red-500">*</span>
             </Label>
             <Textarea
@@ -390,12 +390,12 @@ export default function ClinicalEvaluationPlanPanel({
               value={cepData.intendedPurpose}
               onChange={e => handleChange('intendedPurpose', e.target.value)}
               placeholder="Describe the exact medical purpose intended for this device"
-              className="border-[#E1DFDD] h-20"
+              className="border-[#e8e6dc] h-20"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="target-population" className="text-[#323130]">
+            <Label htmlFor="target-population" className="text-[#141413]">
               Target Population
             </Label>
             <Textarea
@@ -403,12 +403,12 @@ export default function ClinicalEvaluationPlanPanel({
               value={cepData.targetPopulation}
               onChange={e => handleChange('targetPopulation', e.target.value)}
               placeholder="Detail the patient populations for which the device is intended"
-              className="border-[#E1DFDD] h-20"
+              className="border-[#e8e6dc] h-20"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="clinical-benefits" className="text-[#323130]">
+            <Label htmlFor="clinical-benefits" className="text-[#141413]">
               Clinical Benefits
             </Label>
             <Textarea
@@ -416,12 +416,12 @@ export default function ClinicalEvaluationPlanPanel({
               value={cepData.clinicalBenefits}
               onChange={e => handleChange('clinicalBenefits', e.target.value)}
               placeholder="List the primary and secondary clinical benefits to be demonstrated"
-              className="border-[#E1DFDD] h-20"
+              className="border-[#e8e6dc] h-20"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="risk-profile" className="text-[#323130]">
+            <Label htmlFor="risk-profile" className="text-[#141413]">
               Risk Profile
             </Label>
             <Textarea
@@ -429,15 +429,15 @@ export default function ClinicalEvaluationPlanPanel({
               value={cepData.riskProfile}
               onChange={e => handleChange('riskProfile', e.target.value)}
               placeholder="Summarize key risks that will be evaluated"
-              className="border-[#E1DFDD] h-20"
+              className="border-[#e8e6dc] h-20"
             />
           </div>
         </CardContent>
       </Card>
 
-      <Card className="border-[#E1DFDD]">
-        <CardHeader className="bg-[#FAFAFA] border-b border-[#E1DFDD]">
-          <CardTitle className="text-lg text-[#323130]">
+      <Card className="border-[#e8e6dc]">
+        <CardHeader className="bg-[#faf9f5] border-b border-[#e8e6dc]">
+          <CardTitle className="text-lg text-[#141413]">
             Clinical Questions to be Addressed
           </CardTitle>
           <CardDescription>
@@ -446,7 +446,7 @@ export default function ClinicalEvaluationPlanPanel({
         </CardHeader>
         <CardContent className="p-6 space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="safety-questions" className="text-[#323130]">
+            <Label htmlFor="safety-questions" className="text-[#141413]">
               Safety Questions <span className="text-red-500">*</span>
             </Label>
             <Textarea
@@ -454,12 +454,12 @@ export default function ClinicalEvaluationPlanPanel({
               value={cepData.safetyQuestions}
               onChange={e => handleChange('safetyQuestions', e.target.value)}
               placeholder="What safety questions must be addressed? (e.g., 'What is the adverse event profile?')"
-              className="border-[#E1DFDD] h-24"
+              className="border-[#e8e6dc] h-24"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="performance-questions" className="text-[#323130]">
+            <Label htmlFor="performance-questions" className="text-[#141413]">
               Performance Questions <span className="text-red-500">*</span>
             </Label>
             <Textarea
@@ -467,12 +467,12 @@ export default function ClinicalEvaluationPlanPanel({
               value={cepData.performanceQuestions}
               onChange={e => handleChange('performanceQuestions', e.target.value)}
               placeholder="What performance questions must be addressed? (e.g., 'Does the device achieve its intended technical performance?')"
-              className="border-[#E1DFDD] h-24"
+              className="border-[#e8e6dc] h-24"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="risk-benefit-questions" className="text-[#323130]">
+            <Label htmlFor="risk-benefit-questions" className="text-[#141413]">
               Risk-Benefit Questions
             </Label>
             <Textarea
@@ -480,15 +480,15 @@ export default function ClinicalEvaluationPlanPanel({
               value={cepData.riskBenefitQuestions}
               onChange={e => handleChange('riskBenefitQuestions', e.target.value)}
               placeholder="What risk-benefit questions must be addressed? (e.g., 'Does the clinical benefit outweigh the risks?')"
-              className="border-[#E1DFDD] h-24"
+              className="border-[#e8e6dc] h-24"
             />
           </div>
         </CardContent>
       </Card>
 
-      <Card className="border-[#E1DFDD]">
-        <CardHeader className="bg-[#FAFAFA] border-b border-[#E1DFDD]">
-          <CardTitle className="text-lg text-[#323130]">
+      <Card className="border-[#e8e6dc]">
+        <CardHeader className="bg-[#faf9f5] border-b border-[#e8e6dc]">
+          <CardTitle className="text-lg text-[#141413]">
             Data Sources for Clinical Evaluation
           </CardTitle>
           <CardDescription>Select data sources that will be used in the evaluation</CardDescription>
@@ -505,11 +505,11 @@ export default function ClinicalEvaluationPlanPanel({
                 <div className="space-y-1">
                   <Label
                     htmlFor="use-clinical-investigations"
-                    className="text-[#323130] font-medium cursor-pointer"
+                    className="text-[#141413] font-medium cursor-pointer"
                   >
                     Clinical Investigations
                   </Label>
-                  <p className="text-[#605E5C] text-sm">
+                  <p className="text-[#6b6963] text-sm">
                     Studies specifically conducted for this device
                   </p>
                 </div>
@@ -522,10 +522,10 @@ export default function ClinicalEvaluationPlanPanel({
                   onCheckedChange={checked => handleChange('usePMCF', checked)}
                 />
                 <div className="space-y-1">
-                  <Label htmlFor="use-pmcf" className="text-[#323130] font-medium cursor-pointer">
+                  <Label htmlFor="use-pmcf" className="text-[#141413] font-medium cursor-pointer">
                     Post-Market Clinical Follow-up
                   </Label>
-                  <p className="text-[#605E5C] text-sm">PMCF studies and reports</p>
+                  <p className="text-[#6b6963] text-sm">PMCF studies and reports</p>
                 </div>
               </div>
 
@@ -538,11 +538,11 @@ export default function ClinicalEvaluationPlanPanel({
                 <div className="space-y-1">
                   <Label
                     htmlFor="use-literature"
-                    className="text-[#323130] font-medium cursor-pointer"
+                    className="text-[#141413] font-medium cursor-pointer"
                   >
                     Scientific Literature
                   </Label>
-                  <p className="text-[#605E5C] text-sm">Published studies and papers</p>
+                  <p className="text-[#6b6963] text-sm">Published studies and papers</p>
                 </div>
               </div>
 
@@ -555,11 +555,11 @@ export default function ClinicalEvaluationPlanPanel({
                 <div className="space-y-1">
                   <Label
                     htmlFor="use-registries"
-                    className="text-[#323130] font-medium cursor-pointer"
+                    className="text-[#141413] font-medium cursor-pointer"
                   >
                     Registry Data
                   </Label>
-                  <p className="text-[#605E5C] text-sm">Data from device registries</p>
+                  <p className="text-[#6b6963] text-sm">Data from device registries</p>
                 </div>
               </div>
             </div>
@@ -574,11 +574,11 @@ export default function ClinicalEvaluationPlanPanel({
                 <div className="space-y-1">
                   <Label
                     htmlFor="use-complaints"
-                    className="text-[#323130] font-medium cursor-pointer"
+                    className="text-[#141413] font-medium cursor-pointer"
                   >
                     Complaints & Vigilance
                   </Label>
-                  <p className="text-[#605E5C] text-sm">Post-market surveillance data</p>
+                  <p className="text-[#6b6963] text-sm">Post-market surveillance data</p>
                 </div>
               </div>
 
@@ -591,11 +591,11 @@ export default function ClinicalEvaluationPlanPanel({
                 <div className="space-y-1">
                   <Label
                     htmlFor="use-non-clinical"
-                    className="text-[#323130] font-medium cursor-pointer"
+                    className="text-[#141413] font-medium cursor-pointer"
                   >
                     Non-Clinical Studies
                   </Label>
-                  <p className="text-[#605E5C] text-sm">Lab tests, bench testing, animal studies</p>
+                  <p className="text-[#6b6963] text-sm">Lab tests, bench testing, animal studies</p>
                 </div>
               </div>
 
@@ -608,11 +608,11 @@ export default function ClinicalEvaluationPlanPanel({
                 <div className="space-y-1">
                   <Label
                     htmlFor="use-equivalent-devices"
-                    className="text-[#323130] font-medium cursor-pointer"
+                    className="text-[#141413] font-medium cursor-pointer"
                   >
                     Equivalent Device Data
                   </Label>
-                  <p className="text-[#605E5C] text-sm">Clinical data from equivalent devices</p>
+                  <p className="text-[#6b6963] text-sm">Clinical data from equivalent devices</p>
                 </div>
               </div>
             </div>
@@ -620,7 +620,7 @@ export default function ClinicalEvaluationPlanPanel({
 
           {cepData.useEquivalentDevices && (
             <div className="mt-4 space-y-2">
-              <Label htmlFor="equivalent-device-details" className="text-[#323130]">
+              <Label htmlFor="equivalent-device-details" className="text-[#141413]">
                 Equivalent Device Details
               </Label>
               <Textarea
@@ -628,16 +628,16 @@ export default function ClinicalEvaluationPlanPanel({
                 value={cepData.equivalentDeviceDetails}
                 onChange={e => handleChange('equivalentDeviceDetails', e.target.value)}
                 placeholder="Describe the equivalent devices and justify their equivalence"
-                className="border-[#E1DFDD] h-24"
+                className="border-[#e8e6dc] h-24"
               />
             </div>
           )}
         </CardContent>
       </Card>
 
-      <Card className="border-[#E1DFDD]">
-        <CardHeader className="bg-[#FAFAFA] border-b border-[#E1DFDD]">
-          <CardTitle className="text-lg text-[#323130]">
+      <Card className="border-[#e8e6dc]">
+        <CardHeader className="bg-[#faf9f5] border-b border-[#e8e6dc]">
+          <CardTitle className="text-lg text-[#141413]">
             GSPRs to be Addressed in the Clinical Evaluation
           </CardTitle>
           <CardDescription>
@@ -646,12 +646,12 @@ export default function ClinicalEvaluationPlanPanel({
           </CardDescription>
         </CardHeader>
         <CardContent className="p-6 space-y-4">
-          <div className="bg-[#F3F2F1] p-4 rounded border border-[#E1DFDD] mb-4">
+          <div className="bg-[#f4f3ee] p-4 rounded border border-[#e8e6dc] mb-4">
             <div className="flex items-start space-x-3">
-              <Info className="h-5 w-5 text-[#0F6CBD] mt-0.5" />
+              <Info className="h-5 w-5 text-[#d97757] mt-0.5" />
               <div>
-                <h4 className="text-[#323130] font-medium">GSPR Selection Guidance</h4>
-                <p className="text-[#605E5C] text-sm">
+                <h4 className="text-[#141413] font-medium">GSPR Selection Guidance</h4>
+                <p className="text-[#6b6963] text-sm">
                   Select all GSPRs that require clinical evidence for demonstration of conformity.
                   For each selected GSPR, provide the approach for how clinical data will be used to
                   demonstrate conformity.
@@ -662,7 +662,7 @@ export default function ClinicalEvaluationPlanPanel({
 
           <Accordion type="multiple" className="w-full">
             {GSPRs.map(gspr => (
-              <AccordionItem value={gspr.id} key={gspr.id} className="border-b border-[#E1DFDD]">
+              <AccordionItem value={gspr.id} key={gspr.id} className="border-b border-[#e8e6dc]">
                 <div className="flex items-center">
                   <Checkbox
                     id={`gspr-${gspr.id}`}
@@ -671,16 +671,16 @@ export default function ClinicalEvaluationPlanPanel({
                     className="mr-2 ml-1"
                   />
                   <AccordionTrigger className="hover:no-underline py-4 flex-1">
-                    <span className="font-medium text-[#323130]">{gspr.title}</span>
+                    <span className="font-medium text-[#141413]">{gspr.title}</span>
                   </AccordionTrigger>
                 </div>
                 <AccordionContent className="px-6 pb-4">
                   <div className="space-y-3">
-                    <p className="text-[#605E5C]">{gspr.description}</p>
+                    <p className="text-[#6b6963]">{gspr.description}</p>
 
                     {cepData.selectedGSPRs.includes(gspr.id) && (
                       <div className="space-y-2 pt-2">
-                        <Label htmlFor={`justification-${gspr.id}`} className="text-[#323130]">
+                        <Label htmlFor={`justification-${gspr.id}`} className="text-[#141413]">
                           Clinical Evaluation Approach
                         </Label>
                         <Textarea
@@ -688,7 +688,7 @@ export default function ClinicalEvaluationPlanPanel({
                           value={cepData.gspr_justifications[gspr.id] || ''}
                           onChange={e => handleJustificationChange(gspr.id, e.target.value)}
                           placeholder="Describe how clinical data will be used to demonstrate conformity with this GSPR"
-                          className="border-[#E1DFDD] h-24"
+                          className="border-[#e8e6dc] h-24"
                         />
                       </div>
                     )}
@@ -700,16 +700,16 @@ export default function ClinicalEvaluationPlanPanel({
         </CardContent>
       </Card>
 
-      <Card className="border-[#E1DFDD]">
-        <CardHeader className="bg-[#FAFAFA] border-b border-[#E1DFDD]">
-          <CardTitle className="text-lg text-[#323130]">Methods</CardTitle>
+      <Card className="border-[#e8e6dc]">
+        <CardHeader className="bg-[#faf9f5] border-b border-[#e8e6dc]">
+          <CardTitle className="text-lg text-[#141413]">Methods</CardTitle>
           <CardDescription>
             Define the methodology for data collection, analysis, and evaluation
           </CardDescription>
         </CardHeader>
         <CardContent className="p-6 space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="literature-search-strategy" className="text-[#323130]">
+            <Label htmlFor="literature-search-strategy" className="text-[#141413]">
               Literature Search Strategy
             </Label>
             <Textarea
@@ -717,12 +717,12 @@ export default function ClinicalEvaluationPlanPanel({
               value={cepData.literatureSearchStrategy}
               onChange={e => handleChange('literatureSearchStrategy', e.target.value)}
               placeholder="Describe the literature search methodology including databases, search terms, inclusion/exclusion criteria"
-              className="border-[#E1DFDD] h-24"
+              className="border-[#e8e6dc] h-24"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="data-analysis-methods" className="text-[#323130]">
+            <Label htmlFor="data-analysis-methods" className="text-[#141413]">
               Data Analysis Methods
             </Label>
             <Textarea
@@ -730,12 +730,12 @@ export default function ClinicalEvaluationPlanPanel({
               value={cepData.dataAnalysisMethods}
               onChange={e => handleChange('dataAnalysisMethods', e.target.value)}
               placeholder="Describe the methods for analyzing clinical data, including statistical approaches if applicable"
-              className="border-[#E1DFDD] h-24"
+              className="border-[#e8e6dc] h-24"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="clinical-evaluation-team" className="text-[#323130]">
+            <Label htmlFor="clinical-evaluation-team" className="text-[#141413]">
               Clinical Evaluation Team
             </Label>
             <Textarea
@@ -743,12 +743,12 @@ export default function ClinicalEvaluationPlanPanel({
               value={cepData.clinicalEvaluationTeam}
               onChange={e => handleChange('clinicalEvaluationTeam', e.target.value)}
               placeholder="List the individuals involved in the clinical evaluation and their qualifications"
-              className="border-[#E1DFDD] h-24"
+              className="border-[#e8e6dc] h-24"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="evaluation-criteria" className="text-[#323130]">
+            <Label htmlFor="evaluation-criteria" className="text-[#141413]">
               Evaluation Criteria
             </Label>
             <Textarea
@@ -756,13 +756,13 @@ export default function ClinicalEvaluationPlanPanel({
               value={cepData.evaluationCriteria}
               onChange={e => handleChange('evaluationCriteria', e.target.value)}
               placeholder="Describe the criteria that will be used to determine if the clinical evidence is sufficient"
-              className="border-[#E1DFDD] h-24"
+              className="border-[#e8e6dc] h-24"
             />
           </div>
 
           <div className="mt-6 border-t border-gray-200 pt-4">
             <div className="flex items-center mb-2">
-              <h3 className="text-md font-semibold text-[#323130]">
+              <h3 className="text-md font-semibold text-[#141413]">
                 Post-Market Clinical Follow-up (PMCF) Plan
               </h3>
               <CerTooltipWrapper
@@ -773,10 +773,10 @@ export default function ClinicalEvaluationPlanPanel({
               </CerTooltipWrapper>
             </div>
 
-            <div className="bg-[#EFF6FC] p-3 rounded mb-4 text-sm">
+            <div className="bg-[#faf0ec] p-3 rounded mb-4 text-sm">
               <div className="flex items-start space-x-2">
-                <FileCheck className="h-4 w-4 text-[#0F6CBD] mt-0.5" />
-                <p className="text-[#0F6CBD]">
+                <FileCheck className="h-4 w-4 text-[#d97757] mt-0.5" />
+                <p className="text-[#d97757]">
                   The PMCF Plan is a mandatory document for EU MDR compliance and should align with
                   MDCG 2020-7 requirements.
                 </p>
@@ -790,7 +790,7 @@ export default function ClinicalEvaluationPlanPanel({
                   checked={cepData.usePMCF}
                   onCheckedChange={checked => handleChange('usePMCF', checked)}
                 />
-                <Label htmlFor="use-pmcf" className="text-sm text-[#323130]">
+                <Label htmlFor="use-pmcf" className="text-sm text-[#141413]">
                   PMCF is required for this device
                 </Label>
               </div>
@@ -801,37 +801,37 @@ export default function ClinicalEvaluationPlanPanel({
                   checked={cepData.highRiskDevice || false}
                   onCheckedChange={checked => handleChange('highRiskDevice', checked)}
                 />
-                <Label htmlFor="high-risk-device" className="text-sm text-[#323130]">
+                <Label htmlFor="high-risk-device" className="text-sm text-[#141413]">
                   This is a high-risk device (Class III or implantable)
                 </Label>
               </div>
             </div>
 
-            <div className="border border-[#E1DFDD] rounded-md bg-white mb-5">
-              <div className="p-3 bg-[#FAFAFA] border-b border-[#E1DFDD] flex items-center justify-between">
+            <div className="border border-[#e8e6dc] rounded-md bg-white mb-5">
+              <div className="p-3 bg-[#faf9f5] border-b border-[#e8e6dc] flex items-center justify-between">
                 <div className="flex items-center">
-                  <CalendarClock className="h-4 w-4 text-[#0F6CBD] mr-2" />
-                  <h4 className="text-sm font-medium text-[#323130]">CER Update Schedule</h4>
+                  <CalendarClock className="h-4 w-4 text-[#d97757] mr-2" />
+                  <h4 className="text-sm font-medium text-[#141413]">CER Update Schedule</h4>
                 </div>
                 <CerTooltipWrapper
                   tooltipContent="Under EU MDR, the CER must be a 'living document' that is updated throughout the device lifecycle"
                   whyThisMatters="Regular CER updates are essential for maintaining regulatory compliance and ensuring continued device safety and performance"
                 >
-                  <Info className="h-4 w-4 text-[#605E5C]" />
+                  <Info className="h-4 w-4 text-[#6b6963]" />
                 </CerTooltipWrapper>
               </div>
               <div className="p-4 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="update-frequency" className="text-sm text-[#323130]">
+                    <Label htmlFor="update-frequency" className="text-sm text-[#141413]">
                       CER Update Frequency
-                      <span className="text-xs text-[#E3008C] ml-1">*</span>
+                      <span className="text-xs text-[#d97757] ml-1">*</span>
                     </Label>
                     <Select
                       value={cepData.updateFrequency}
                       onValueChange={value => handleChange('updateFrequency', value)}
                     >
-                      <SelectTrigger className="border-[#E1DFDD] h-9">
+                      <SelectTrigger className="border-[#e8e6dc] h-9">
                         <SelectValue placeholder="Select frequency" />
                       </SelectTrigger>
                       <SelectContent>
@@ -847,22 +847,22 @@ export default function ClinicalEvaluationPlanPanel({
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="next-update-date" className="text-sm text-[#323130]">
+                    <Label htmlFor="next-update-date" className="text-sm text-[#141413]">
                       Next Scheduled Update
-                      <span className="text-xs text-[#E3008C] ml-1">*</span>
+                      <span className="text-xs text-[#d97757] ml-1">*</span>
                     </Label>
                     <Input
                       id="next-update-date"
                       type="date"
                       value={cepData.nextUpdateDate || ''}
                       onChange={e => handleChange('nextUpdateDate', e.target.value)}
-                      className="border-[#E1DFDD] h-9"
+                      className="border-[#e8e6dc] h-9"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="update-criteria" className="text-sm text-[#323130]">
+                  <Label htmlFor="update-criteria" className="text-sm text-[#141413]">
                     Criteria Triggering Unscheduled Updates
                   </Label>
                   <Textarea
@@ -870,7 +870,7 @@ export default function ClinicalEvaluationPlanPanel({
                     value={cepData.updateCriteria || ''}
                     onChange={e => handleChange('updateCriteria', e.target.value)}
                     placeholder="E.g., new safety signals, significant changes in benefit-risk ratio, substantial changes to the device..."
-                    className="border-[#E1DFDD] h-16 text-sm"
+                    className="border-[#e8e6dc] h-16 text-sm"
                   />
                 </div>
 
@@ -878,7 +878,7 @@ export default function ClinicalEvaluationPlanPanel({
                   <div className="flex items-center justify-between mb-2">
                     <Label
                       htmlFor="enable-reminders"
-                      className="flex items-center text-sm text-[#323130] cursor-pointer"
+                      className="flex items-center text-sm text-[#141413] cursor-pointer"
                     >
                       <div className="flex items-center mr-2">
                         <Checkbox
@@ -891,7 +891,7 @@ export default function ClinicalEvaluationPlanPanel({
                       </div>
                       <Badge
                         variant="outline"
-                        className="ml-1 bg-[#E8F5FC] text-[#0F6CBD] border-[#85C6E8] px-2 py-0.5"
+                        className="ml-1 bg-[#E8F5FC] text-[#d97757] border-[#85C6E8] px-2 py-0.5"
                       >
                         MDR Recommendation
                       </Badge>
@@ -901,14 +901,14 @@ export default function ClinicalEvaluationPlanPanel({
                   {cepData.enableReminders && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
                       <div className="space-y-2">
-                        <Label htmlFor="reminder-lead-time" className="text-xs text-[#323130]">
+                        <Label htmlFor="reminder-lead-time" className="text-xs text-[#141413]">
                           Send Reminder (days before deadline)
                         </Label>
                         <Select
                           value={cepData.reminderLeadTime || '30'}
                           onValueChange={value => handleChange('reminderLeadTime', value)}
                         >
-                          <SelectTrigger className="border-[#E1DFDD] h-8 text-sm">
+                          <SelectTrigger className="border-[#e8e6dc] h-8 text-sm">
                             <SelectValue placeholder="Select days" />
                           </SelectTrigger>
                           <SelectContent>
@@ -922,7 +922,7 @@ export default function ClinicalEvaluationPlanPanel({
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="reminder-recipients" className="text-xs text-[#323130]">
+                        <Label htmlFor="reminder-recipients" className="text-xs text-[#141413]">
                           Notification Recipients
                         </Label>
                         <Input
@@ -930,7 +930,7 @@ export default function ClinicalEvaluationPlanPanel({
                           value={cepData.reminderRecipients || ''}
                           onChange={e => handleChange('reminderRecipients', e.target.value)}
                           placeholder="Email addresses (comma separated)"
-                          className="border-[#E1DFDD] h-8 text-sm"
+                          className="border-[#e8e6dc] h-8 text-sm"
                         />
                       </div>
                     </div>
@@ -940,44 +940,44 @@ export default function ClinicalEvaluationPlanPanel({
             </div>
 
             {cepData.usePMCF && (
-              <div className="border border-[#E1DFDD] rounded-md bg-white mb-5">
-                <div className="p-3 bg-[#FAFAFA] border-b border-[#E1DFDD]">
-                  <h4 className="text-sm font-medium text-[#323130]">
+              <div className="border border-[#e8e6dc] rounded-md bg-white mb-5">
+                <div className="p-3 bg-[#faf9f5] border-b border-[#e8e6dc]">
+                  <h4 className="text-sm font-medium text-[#141413]">
                     PMCF Plan Components (MDCG 2020-7)
                   </h4>
                 </div>
                 <div className="p-4 space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="pmcf-objectives" className="text-sm text-[#323130]">
+                    <Label htmlFor="pmcf-objectives" className="text-sm text-[#141413]">
                       General & Specific Objectives
-                      <span className="text-xs text-[#E3008C] ml-1">*</span>
+                      <span className="text-xs text-[#d97757] ml-1">*</span>
                     </Label>
                     <Textarea
                       id="pmcf-objectives"
                       value={cepData.pmcfObjectives || ''}
                       onChange={e => handleChange('pmcfObjectives', e.target.value)}
                       placeholder="Define the objectives of your PMCF activities in line with MDCG 2020-7 (e.g., confirm safety and performance, identify previously unknown side-effects, identify emerging risks...)"
-                      className="border-[#E1DFDD] h-20 text-sm"
+                      className="border-[#e8e6dc] h-20 text-sm"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="pmcf-methods" className="text-sm text-[#323130]">
+                    <Label htmlFor="pmcf-methods" className="text-sm text-[#141413]">
                       PMCF Methods & Procedures
-                      <span className="text-xs text-[#E3008C] ml-1">*</span>
+                      <span className="text-xs text-[#d97757] ml-1">*</span>
                     </Label>
                     <Textarea
                       id="pmcf-methods"
                       value={cepData.pmcfMethods || ''}
                       onChange={e => handleChange('pmcfMethods', e.target.value)}
                       placeholder="Describe your specific PMCF methodologies (e.g., patient/user surveys, registry studies, clinical follow-up studies, etc.)"
-                      className="border-[#E1DFDD] h-20 text-sm"
+                      className="border-[#e8e6dc] h-20 text-sm"
                     />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="pmcf-data-analysis" className="text-sm text-[#323130]">
+                      <Label htmlFor="pmcf-data-analysis" className="text-sm text-[#141413]">
                         Data Analysis Methodology
                       </Label>
                       <Textarea
@@ -985,12 +985,12 @@ export default function ClinicalEvaluationPlanPanel({
                         value={cepData.pmcfDataAnalysis || ''}
                         onChange={e => handleChange('pmcfDataAnalysis', e.target.value)}
                         placeholder="Describe how PMCF data will be analyzed, including statistical methodology if applicable"
-                        className="border-[#E1DFDD] h-16 text-sm"
+                        className="border-[#e8e6dc] h-16 text-sm"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="pmcf-indicators" className="text-sm text-[#323130]">
+                      <Label htmlFor="pmcf-indicators" className="text-sm text-[#141413]">
                         Criteria & Indicators
                       </Label>
                       <Textarea
@@ -998,14 +998,14 @@ export default function ClinicalEvaluationPlanPanel({
                         value={cepData.pmcfIndicators || ''}
                         onChange={e => handleChange('pmcfIndicators', e.target.value)}
                         placeholder="List specific indicators that will be monitored (e.g., adverse event rates, specific clinical outcomes, etc.)"
-                        className="border-[#E1DFDD] h-16 text-sm"
+                        className="border-[#e8e6dc] h-16 text-sm"
                       />
                     </div>
                   </div>
 
                   <div className="border-t border-dashed border-gray-200 pt-4 mt-4">
-                    <h5 className="text-sm font-medium text-[#323130] mb-3 flex items-center">
-                      <FileText className="h-4 w-4 mr-2 text-[#0F6CBD]" />
+                    <h5 className="text-sm font-medium text-[#141413] mb-3 flex items-center">
+                      <FileText className="h-4 w-4 mr-2 text-[#d97757]" />
                       PMCF Reporting Schedule
                       <Badge
                         variant="outline"
@@ -1017,15 +1017,15 @@ export default function ClinicalEvaluationPlanPanel({
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                       <div className="space-y-2">
-                        <Label htmlFor="pmcf-report-frequency" className="text-xs text-[#323130]">
+                        <Label htmlFor="pmcf-report-frequency" className="text-xs text-[#141413]">
                           PMCF Report Frequency
-                          <span className="text-xs text-[#E3008C] ml-1">*</span>
+                          <span className="text-xs text-[#d97757] ml-1">*</span>
                         </Label>
                         <Select
                           value={cepData.pmcfReportFrequency || 'Annual'}
                           onValueChange={value => handleChange('pmcfReportFrequency', value)}
                         >
-                          <SelectTrigger className="border-[#E1DFDD] h-8 text-sm">
+                          <SelectTrigger className="border-[#e8e6dc] h-8 text-sm">
                             <SelectValue placeholder="Select frequency" />
                           </SelectTrigger>
                           <SelectContent>
@@ -1038,7 +1038,7 @@ export default function ClinicalEvaluationPlanPanel({
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="first-pmcf-report-date" className="text-xs text-[#323130]">
+                        <Label htmlFor="first-pmcf-report-date" className="text-xs text-[#141413]">
                           First PMCF Report Due
                         </Label>
                         <Input
@@ -1046,37 +1046,37 @@ export default function ClinicalEvaluationPlanPanel({
                           type="date"
                           value={cepData.firstPmcfReportDate || ''}
                           onChange={e => handleChange('firstPmcfReportDate', e.target.value)}
-                          className="border-[#E1DFDD] h-8 text-sm"
+                          className="border-[#e8e6dc] h-8 text-sm"
                         />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="pmcf-timelines" className="text-sm text-[#323130]">
+                      <Label htmlFor="pmcf-timelines" className="text-sm text-[#141413]">
                         Detailed Timeline & Activities
-                        <span className="text-xs text-[#E3008C] ml-1">*</span>
+                        <span className="text-xs text-[#d97757] ml-1">*</span>
                       </Label>
                       <Textarea
                         id="pmcf-timelines"
                         value={cepData.pmcfTimelines || ''}
                         onChange={e => handleChange('pmcfTimelines', e.target.value)}
                         placeholder="Specify the detailed timelines for PMCF activities (data collection periods, interim analyses, etc.) and when PMCF evaluation reports will be generated"
-                        className="border-[#E1DFDD] h-16 text-sm"
+                        className="border-[#e8e6dc] h-16 text-sm"
                       />
                     </div>
                   </div>
 
                   {/* PMCF Reference Documents */}
                   <div className="border-t border-dashed border-gray-200 pt-4 mt-4">
-                    <h5 className="text-sm font-medium text-[#323130] mb-3 flex items-center">
-                      <FolderOpen className="h-4 w-4 mr-2 text-[#0F6CBD]" />
+                    <h5 className="text-sm font-medium text-[#141413] mb-3 flex items-center">
+                      <FolderOpen className="h-4 w-4 mr-2 text-[#d97757]" />
                       Related PMCF Documents
                     </h5>
 
                     <div className="space-y-3">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label htmlFor="pmcf-plan-doc-id" className="text-xs text-[#323130]">
+                          <Label htmlFor="pmcf-plan-doc-id" className="text-xs text-[#141413]">
                             PMCF Plan Document ID
                           </Label>
                           <Input
@@ -1084,12 +1084,12 @@ export default function ClinicalEvaluationPlanPanel({
                             value={cepData.pmcfPlanDocId || ''}
                             onChange={e => handleChange('pmcfPlanDocId', e.target.value)}
                             placeholder="e.g., PMCF-PLAN-001"
-                            className="border-[#E1DFDD] h-8 text-sm"
+                            className="border-[#e8e6dc] h-8 text-sm"
                           />
                         </div>
 
                         <div className="space-y-2">
-                          <Label htmlFor="psur-ref" className="text-xs text-[#323130]">
+                          <Label htmlFor="psur-ref" className="text-xs text-[#141413]">
                             PSUR Reference
                           </Label>
                           <Input
@@ -1097,13 +1097,13 @@ export default function ClinicalEvaluationPlanPanel({
                             value={cepData.psurReference || ''}
                             onChange={e => handleChange('psurReference', e.target.value)}
                             placeholder="e.g., PSUR-2024-001"
-                            className="border-[#E1DFDD] h-8 text-sm"
+                            className="border-[#e8e6dc] h-8 text-sm"
                           />
                         </div>
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="reference-docs" className="text-xs text-[#323130]">
+                        <Label htmlFor="reference-docs" className="text-xs text-[#141413]">
                           Additional Reference Documents
                         </Label>
                         <Textarea
@@ -1111,7 +1111,7 @@ export default function ClinicalEvaluationPlanPanel({
                           value={cepData.referenceDocuments || ''}
                           onChange={e => handleChange('referenceDocuments', e.target.value)}
                           placeholder="List any additional documents related to this PMCF plan (e.g., survey templates, registry documentation, etc.)"
-                          className="border-[#E1DFDD] h-16 text-sm"
+                          className="border-[#e8e6dc] h-16 text-sm"
                         />
                       </div>
                     </div>
@@ -1125,10 +1125,10 @@ export default function ClinicalEvaluationPlanPanel({
                 <div className="flex items-start space-x-3">
                   <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5" />
                   <div>
-                    <h4 className="text-sm font-medium text-[#323130] mb-1">
+                    <h4 className="text-sm font-medium text-[#141413] mb-1">
                       PMCF Exemption Justification
                     </h4>
-                    <p className="text-xs text-[#605E5C] mb-3">
+                    <p className="text-xs text-[#6b6963] mb-3">
                       According to MDCG 2020-7, PMCF may be exempted only in exceptional cases with
                       a strong scientific justification. Notified Bodies scrutinize these
                       justifications very carefully.
@@ -1139,23 +1139,23 @@ export default function ClinicalEvaluationPlanPanel({
                 <div className="space-y-2">
                   <Label
                     htmlFor="pmcf-justification"
-                    className="text-sm text-[#323130] flex items-center"
+                    className="text-sm text-[#141413] flex items-center"
                   >
                     Scientific Justification for PMCF Exemption
-                    <span className="text-xs text-[#E3008C] ml-1">*</span>
+                    <span className="text-xs text-[#d97757] ml-1">*</span>
                   </Label>
                   <Textarea
                     id="pmcf-justification"
                     value={cepData.pmcfJustification}
                     onChange={e => handleChange('pmcfJustification', e.target.value)}
                     placeholder="Provide a detailed scientific justification explaining why PMCF is not required. Reference MDCG 2020-7 specifically and address all related exemption criteria."
-                    className="border-[#E1DFDD] h-24 text-sm"
+                    className="border-[#e8e6dc] h-24 text-sm"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="alternative-pms" className="text-sm text-[#323130]">
+                    <Label htmlFor="alternative-pms" className="text-sm text-[#141413]">
                       Alternative PMS Activities
                     </Label>
                     <Textarea
@@ -1163,12 +1163,12 @@ export default function ClinicalEvaluationPlanPanel({
                       value={cepData.alternativePMS || ''}
                       onChange={e => handleChange('alternativePMS', e.target.value)}
                       placeholder="Describe alternative post-market surveillance activities that will be used instead of PMCF"
-                      className="border-[#E1DFDD] h-16 text-sm"
+                      className="border-[#e8e6dc] h-16 text-sm"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="exemption-references" className="text-sm text-[#323130]">
+                    <Label htmlFor="exemption-references" className="text-sm text-[#141413]">
                       Supporting References
                     </Label>
                     <Textarea
@@ -1176,7 +1176,7 @@ export default function ClinicalEvaluationPlanPanel({
                       value={cepData.exemptionReferences || ''}
                       onChange={e => handleChange('exemptionReferences', e.target.value)}
                       placeholder="List published literature, clinical data or other references supporting the exemption"
-                      className="border-[#E1DFDD] h-16 text-sm"
+                      className="border-[#e8e6dc] h-16 text-sm"
                     />
                   </div>
                 </div>
@@ -1184,11 +1184,11 @@ export default function ClinicalEvaluationPlanPanel({
             )}
           </div>
         </CardContent>
-        <CardFooter className="border-t border-[#E1DFDD] bg-[#FAFAFA] px-6 py-4">
+        <CardFooter className="border-t border-[#e8e6dc] bg-[#faf9f5] px-6 py-4">
           <div className="flex justify-end space-x-2 w-full">
             <Button
               variant="outline"
-              className="border-[#0F6CBD] text-[#0F6CBD] hover:bg-[#EFF6FC]"
+              className="border-[#d97757] text-[#d97757] hover:bg-[#faf0ec]"
               onClick={() => handleSave(false)}
               disabled={!changes}
             >
@@ -1199,7 +1199,7 @@ export default function ClinicalEvaluationPlanPanel({
               whyThisMatters="A comprehensive CEP is required by MEDDEV 2.7/1 Rev 4. It demonstrates a systematic approach to clinical evaluation and helps regulatory reviewers understand your evaluation methodology."
             >
               <Button
-                className="bg-[#0F6CBD] hover:bg-[#115EA3] text-white"
+                className="bg-[#d97757] hover:bg-[#c15f3c] text-white"
                 onClick={() => handleSave(true)}
               >
                 <ClipboardList className="h-4 w-4 mr-2" />

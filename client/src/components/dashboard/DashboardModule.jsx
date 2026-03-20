@@ -238,7 +238,7 @@ const DashboardModule = () => {
       <div className="mb-6">
         <h1 className="text-2xl font-bold mb-2">Dashboard</h1>
         <p className="text-gray-600">
-          Overview of your TrialSage platform activity and regulatory operations
+          Overview of your Concept2Cure platform activity and regulatory operations
         </p>
       </div>
 

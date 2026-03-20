@@ -228,7 +228,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
                     <>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <button className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded">
+                          <button className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded" onClick={() => console.info(`[chat-feedback] messageId=${message.id} positive=true`)}>
                             <ThumbsUp className="h-3.5 w-3.5" />
                           </button>
                         </TooltipTrigger>
@@ -237,7 +237,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
 
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <button className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded">
+                          <button className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded" onClick={() => console.info(`[chat-feedback] messageId=${message.id} positive=false`)}>
                             <ThumbsDown className="h-3.5 w-3.5" />
                           </button>
                         </TooltipTrigger>

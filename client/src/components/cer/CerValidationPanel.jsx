@@ -401,9 +401,9 @@ const CerValidationPanel = ({
   // Render loading/progress state
   if (isValidating) {
     return (
-      <div className="space-y-4 p-6 bg-white rounded-lg border border-[#E1DFDD]">
+      <div className="space-y-4 p-6 bg-white rounded-lg border border-[#e8e6dc]">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-lg font-medium text-[#323130]">Validating CER Document</h3>
+          <h3 className="text-lg font-medium text-[#141413]">Validating CER Document</h3>
           <Badge variant="outline" className="bg-blue-50 text-blue-800 border-blue-200">
             <Zap className="h-3.5 w-3.5 mr-1" />
             In Progress
@@ -412,16 +412,16 @@ const CerValidationPanel = ({
 
         <Progress value={validationProgress} className="h-2 mb-3" />
 
-        <p className="text-[#605E5C] text-sm">
+        <p className="text-[#6b6963] text-sm">
           {validationProgress < 100
             ? 'Applying regulatory verification and AI-powered validation checks...'
             : 'Validation complete! Processing results...'}
         </p>
 
-        <div className="flex items-start space-x-3 p-3 bg-[#EFF6FC] rounded-md border border-[#BDD6F1]">
-          <Info className="h-5 w-5 text-[#0F6CBD] mt-0.5" />
+        <div className="flex items-start space-x-3 p-3 bg-[#faf0ec] rounded-md border border-[#BDD6F1]">
+          <Info className="h-5 w-5 text-[#d97757] mt-0.5" />
           <div>
-            <p className="text-sm text-[#323130]">
+            <p className="text-sm text-[#141413]">
               Validation is checking your document against {regulatoryFramework} requirements,
               analyzing internal consistency, verifying citations, and detecting potential factual
               errors.
@@ -452,11 +452,11 @@ const CerValidationPanel = ({
         <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg font-medium text-[#323130]">
+              <CardTitle className="text-lg font-medium text-[#141413]">
                 Validation Results
               </CardTitle>
               {validationResults.complete ? (
-                <Badge className="bg-[#DFF6DD] text-[#107C10] border-[#107C10]">
+                <Badge className="bg-[#e4ebd8] text-[#788c5d] border-[#788c5d]">
                   <CheckCircle className="h-3.5 w-3.5 mr-1" />
                   Compliant
                 </Badge>
@@ -467,7 +467,7 @@ const CerValidationPanel = ({
                 </Badge>
               )}
             </div>
-            <CardDescription className="text-[#605E5C]">
+            <CardDescription className="text-[#6b6963]">
               {validationResults.complete
                 ? 'Your document is compliant with regulatory requirements and ready for submission.'
                 : 'Your document requires attention to meet regulatory requirements.'}
@@ -478,11 +478,11 @@ const CerValidationPanel = ({
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {/* Critical Issues */}
               <div
-                className={`p-3 rounded-md border ${criticalCount > 0 ? 'bg-red-50 border-red-200' : 'bg-[#F3F2F1] border-[#E1DFDD]'}`}
+                className={`p-3 rounded-md border ${criticalCount > 0 ? 'bg-red-50 border-red-200' : 'bg-[#f4f3ee] border-[#e8e6dc]'}`}
               >
-                <p className="text-xs uppercase text-[#605E5C] mb-1">Critical</p>
+                <p className="text-xs uppercase text-[#6b6963] mb-1">Critical</p>
                 <p
-                  className={`text-xl font-semibold ${criticalCount > 0 ? 'text-red-700' : 'text-[#323130]'}`}
+                  className={`text-xl font-semibold ${criticalCount > 0 ? 'text-red-700' : 'text-[#141413]'}`}
                 >
                   {criticalCount}
                 </p>
@@ -490,11 +490,11 @@ const CerValidationPanel = ({
 
               {/* Major Issues */}
               <div
-                className={`p-3 rounded-md border ${majorCount > 0 ? 'bg-amber-50 border-amber-200' : 'bg-[#F3F2F1] border-[#E1DFDD]'}`}
+                className={`p-3 rounded-md border ${majorCount > 0 ? 'bg-amber-50 border-amber-200' : 'bg-[#f4f3ee] border-[#e8e6dc]'}`}
               >
-                <p className="text-xs uppercase text-[#605E5C] mb-1">Major</p>
+                <p className="text-xs uppercase text-[#6b6963] mb-1">Major</p>
                 <p
-                  className={`text-xl font-semibold ${majorCount > 0 ? 'text-amber-700' : 'text-[#323130]'}`}
+                  className={`text-xl font-semibold ${majorCount > 0 ? 'text-amber-700' : 'text-[#141413]'}`}
                 >
                   {majorCount}
                 </p>
@@ -502,11 +502,11 @@ const CerValidationPanel = ({
 
               {/* Minor Issues */}
               <div
-                className={`p-3 rounded-md border ${minorCount > 0 ? 'bg-blue-50 border-blue-200' : 'bg-[#F3F2F1] border-[#E1DFDD]'}`}
+                className={`p-3 rounded-md border ${minorCount > 0 ? 'bg-blue-50 border-blue-200' : 'bg-[#f4f3ee] border-[#e8e6dc]'}`}
               >
-                <p className="text-xs uppercase text-[#605E5C] mb-1">Minor</p>
+                <p className="text-xs uppercase text-[#6b6963] mb-1">Minor</p>
                 <p
-                  className={`text-xl font-semibold ${minorCount > 0 ? 'text-blue-700' : 'text-[#323130]'}`}
+                  className={`text-xl font-semibold ${minorCount > 0 ? 'text-blue-700' : 'text-[#141413]'}`}
                 >
                   {minorCount}
                 </p>
@@ -514,11 +514,11 @@ const CerValidationPanel = ({
 
               {/* Checklist Compliance */}
               <div
-                className={`p-3 rounded-md border ${checklistPercentage < 100 ? 'bg-purple-50 border-purple-200' : 'bg-[#DFF6DD] border-[#107C10]'}`}
+                className={`p-3 rounded-md border ${checklistPercentage < 100 ? 'bg-purple-50 border-purple-200' : 'bg-[#e4ebd8] border-[#788c5d]'}`}
               >
-                <p className="text-xs uppercase text-[#605E5C] mb-1">Compliance</p>
+                <p className="text-xs uppercase text-[#6b6963] mb-1">Compliance</p>
                 <p
-                  className={`text-xl font-semibold ${checklistPercentage < 100 ? 'text-purple-700' : 'text-[#107C10]'}`}
+                  className={`text-xl font-semibold ${checklistPercentage < 100 ? 'text-purple-700' : 'text-[#788c5d]'}`}
                 >
                   {checklistPercentage}%
                 </p>
@@ -527,13 +527,13 @@ const CerValidationPanel = ({
 
             {totalIssues > 0 && (
               <div className="mt-4 flex flex-col sm:flex-row gap-2 justify-between items-center">
-                <p className="text-sm text-[#605E5C]">
+                <p className="text-sm text-[#6b6963]">
                   Found {totalIssues} issue{totalIssues !== 1 ? 's' : ''} requiring attention.
                 </p>
                 <div className="flex space-x-2">
                   <Button
                     variant="outline"
-                    className={`border-[#0F6CBD] text-[#0F6CBD] hover:bg-[#EFF6FC] ${selectedIssues.length === 0 ? 'opacity-50' : ''}`}
+                    className={`border-[#d97757] text-[#d97757] hover:bg-[#faf0ec] ${selectedIssues.length === 0 ? 'opacity-50' : ''}`}
                     onClick={handleAutoFix}
                     disabled={selectedIssues.length === 0}
                   >
@@ -544,8 +544,8 @@ const CerValidationPanel = ({
                     variant={feedbackMode ? 'default' : 'outline'}
                     className={
                       feedbackMode
-                        ? 'bg-[#0F6CBD] hover:bg-[#115EA3] text-white'
-                        : 'border-[#0F6CBD] text-[#0F6CBD] hover:bg-[#EFF6FC]'
+                        ? 'bg-[#d97757] hover:bg-[#c15f3c] text-white'
+                        : 'border-[#d97757] text-[#d97757] hover:bg-[#faf0ec]'
                     }
                     onClick={toggleFeedbackMode}
                   >
@@ -560,10 +560,10 @@ const CerValidationPanel = ({
 
         {/* Feedback Mode Banner */}
         {feedbackMode && (
-          <Alert className="bg-[#EFF6FC] border-[#0F6CBD]">
-            <Info className="h-4 w-4 text-[#0F6CBD]" />
-            <AlertTitle className="text-[#323130]">Review Mode Active</AlertTitle>
-            <AlertDescription className="text-[#605E5C]">
+          <Alert className="bg-[#faf0ec] border-[#d97757]">
+            <Info className="h-4 w-4 text-[#d97757]" />
+            <AlertTitle className="text-[#141413]">Review Mode Active</AlertTitle>
+            <AlertDescription className="text-[#6b6963]">
               You're now in reviewer mode. Review issues and provide feedback to improve document
               quality.
               <div className="mt-2">
@@ -586,7 +586,7 @@ const CerValidationPanel = ({
                   className="max-w-lg h-20"
                 />
                 <Button
-                  className="mt-3 bg-[#0F6CBD] hover:bg-[#115EA3] text-white"
+                  className="mt-3 bg-[#d97757] hover:bg-[#c15f3c] text-white"
                   onClick={submitFeedback}
                   disabled={reviewerFeedback.items.length === 0}
                 >
@@ -603,20 +603,20 @@ const CerValidationPanel = ({
           <TabsList className="bg-white border-b border-gray-200 rounded-none w-full flex justify-start gap-2 mb-4">
             <TabsTrigger
               value="issues"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#0F6CBD] data-[state=active]:text-[#0F6CBD] data-[state=active]:shadow-none bg-transparent px-3 py-2 font-normal text-[#616161]"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#d97757] data-[state=active]:text-[#d97757] data-[state=active]:shadow-none bg-transparent px-3 py-2 font-normal text-[#616161]"
             >
               Issues ({totalIssues})
             </TabsTrigger>
             <TabsTrigger
               value="checklist"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#0F6CBD] data-[state=active]:text-[#0F6CBD] data-[state=active]:shadow-none bg-transparent px-3 py-2 font-normal text-[#616161]"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#d97757] data-[state=active]:text-[#d97757] data-[state=active]:shadow-none bg-transparent px-3 py-2 font-normal text-[#616161]"
             >
               Regulatory Checklist ({checklistPassed}/{checklistTotal})
             </TabsTrigger>
             {feedbackMode && (
               <TabsTrigger
                 value="feedback"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#0F6CBD] data-[state=active]:text-[#0F6CBD] data-[state=active]:shadow-none bg-transparent px-3 py-2 font-normal text-[#616161]"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#d97757] data-[state=active]:text-[#d97757] data-[state=active]:shadow-none bg-transparent px-3 py-2 font-normal text-[#616161]"
               >
                 Review Items ({reviewerFeedback.items.length})
               </TabsTrigger>
@@ -625,7 +625,7 @@ const CerValidationPanel = ({
 
           <TabsContent value="issues" className="space-y-4">
             {totalIssues === 0 ? (
-              <div className="bg-[#DFF6DD] text-[#107C10] p-4 rounded-md border border-[#107C10] flex items-start space-x-3">
+              <div className="bg-[#e4ebd8] text-[#788c5d] p-4 rounded-md border border-[#788c5d] flex items-start space-x-3">
                 <CheckCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
                 <div>
                   <h4 className="font-medium">No Issues Found</h4>
@@ -648,7 +648,7 @@ const CerValidationPanel = ({
                         >
                           Critical
                         </Badge>
-                        <span className="font-medium text-[#323130]">
+                        <span className="font-medium text-[#141413]">
                           Critical Issues ({criticalCount})
                         </span>
                       </div>
@@ -672,7 +672,7 @@ const CerValidationPanel = ({
                                 />
                                 <div className="flex items-center">
                                   {getIssueTypeIcon(issue.type)}
-                                  <span className="ml-2 font-medium text-[#323130]">
+                                  <span className="ml-2 font-medium text-[#141413]">
                                     {issue.message}
                                   </span>
                                 </div>
@@ -698,13 +698,13 @@ const CerValidationPanel = ({
                             </div>
 
                             {issue.location && (
-                              <p className="text-xs text-[#605E5C] mb-2">
+                              <p className="text-xs text-[#6b6963] mb-2">
                                 Location: <span className="font-mono">{issue.location}</span>
                               </p>
                             )}
 
                             {issue.regulatoryReference && (
-                              <p className="text-xs text-[#605E5C] mb-2">
+                              <p className="text-xs text-[#6b6963] mb-2">
                                 Reference:{' '}
                                 <span className="font-medium">{issue.regulatoryReference}</span>
                               </p>
@@ -712,8 +712,8 @@ const CerValidationPanel = ({
 
                             {issue.details && (
                               <div className="text-sm mt-2 p-2 bg-white rounded border border-gray-200">
-                                <p className="text-xs text-[#605E5C] mb-1">Details:</p>
-                                <p className="text-[#323130]">
+                                <p className="text-xs text-[#6b6963] mb-1">Details:</p>
+                                <p className="text-[#141413]">
                                   {typeof issue.details === 'string'
                                     ? issue.details
                                     : JSON.stringify(issue.details)}
@@ -748,7 +748,7 @@ const CerValidationPanel = ({
                                         <div className="space-y-2">
                                           <Label>Feedback Type</Label>
                                           <select
-                                            className="w-full px-3 py-2 border border-[#E1DFDD] rounded-md"
+                                            className="w-full px-3 py-2 border border-[#e8e6dc] rounded-md"
                                             id="feedback-type"
                                           >
                                             <option value="text_correction">Text Correction</option>
@@ -844,7 +844,7 @@ const CerValidationPanel = ({
                         >
                           Major
                         </Badge>
-                        <span className="font-medium text-[#323130]">
+                        <span className="font-medium text-[#141413]">
                           Major Issues ({majorCount})
                         </span>
                       </div>
@@ -868,7 +868,7 @@ const CerValidationPanel = ({
                                 />
                                 <div className="flex items-center">
                                   {getIssueTypeIcon(issue.type)}
-                                  <span className="ml-2 font-medium text-[#323130]">
+                                  <span className="ml-2 font-medium text-[#141413]">
                                     {issue.message}
                                   </span>
                                 </div>
@@ -894,13 +894,13 @@ const CerValidationPanel = ({
                             </div>
 
                             {issue.location && (
-                              <p className="text-xs text-[#605E5C] mb-2">
+                              <p className="text-xs text-[#6b6963] mb-2">
                                 Location: <span className="font-mono">{issue.location}</span>
                               </p>
                             )}
 
                             {issue.regulatoryReference && (
-                              <p className="text-xs text-[#605E5C] mb-2">
+                              <p className="text-xs text-[#6b6963] mb-2">
                                 Reference:{' '}
                                 <span className="font-medium">{issue.regulatoryReference}</span>
                               </p>
@@ -908,8 +908,8 @@ const CerValidationPanel = ({
 
                             {issue.details && (
                               <div className="text-sm mt-2 p-2 bg-white rounded border border-gray-200">
-                                <p className="text-xs text-[#605E5C] mb-1">Details:</p>
-                                <p className="text-[#323130]">
+                                <p className="text-xs text-[#6b6963] mb-1">Details:</p>
+                                <p className="text-[#141413]">
                                   {typeof issue.details === 'string'
                                     ? issue.details
                                     : JSON.stringify(issue.details)}
@@ -944,7 +944,7 @@ const CerValidationPanel = ({
                                         <div className="space-y-2">
                                           <Label>Feedback Type</Label>
                                           <select
-                                            className="w-full px-3 py-2 border border-[#E1DFDD] rounded-md"
+                                            className="w-full px-3 py-2 border border-[#e8e6dc] rounded-md"
                                             id={`feedback-type-major-${index}`}
                                           >
                                             <option value="text_correction">Text Correction</option>
@@ -1042,7 +1042,7 @@ const CerValidationPanel = ({
                         >
                           Minor
                         </Badge>
-                        <span className="font-medium text-[#323130]">
+                        <span className="font-medium text-[#141413]">
                           Minor Issues ({minorCount})
                         </span>
                       </div>
@@ -1066,7 +1066,7 @@ const CerValidationPanel = ({
                                 />
                                 <div className="flex items-center">
                                   {getIssueTypeIcon(issue.type)}
-                                  <span className="ml-2 font-medium text-[#323130]">
+                                  <span className="ml-2 font-medium text-[#141413]">
                                     {issue.message}
                                   </span>
                                 </div>
@@ -1092,13 +1092,13 @@ const CerValidationPanel = ({
                             </div>
 
                             {issue.location && (
-                              <p className="text-xs text-[#605E5C] mb-2">
+                              <p className="text-xs text-[#6b6963] mb-2">
                                 Location: <span className="font-mono">{issue.location}</span>
                               </p>
                             )}
 
                             {issue.regulatoryReference && (
-                              <p className="text-xs text-[#605E5C] mb-2">
+                              <p className="text-xs text-[#6b6963] mb-2">
                                 Reference:{' '}
                                 <span className="font-medium">{issue.regulatoryReference}</span>
                               </p>
@@ -1114,11 +1114,11 @@ const CerValidationPanel = ({
           </TabsContent>
 
           <TabsContent value="checklist" className="space-y-4">
-            <div className="bg-white p-4 rounded-md border border-[#E1DFDD]">
+            <div className="bg-white p-4 rounded-md border border-[#e8e6dc]">
               <div className="flex justify-between items-center mb-4">
                 <div>
-                  <h3 className="text-lg font-medium text-[#323130]">Regulatory Checklist</h3>
-                  <p className="text-sm text-[#605E5C]">
+                  <h3 className="text-lg font-medium text-[#141413]">Regulatory Checklist</h3>
+                  <p className="text-sm text-[#6b6963]">
                     {regulatoryFramework} compliance verification - {checklistPassed} of{' '}
                     {checklistTotal} requirements met
                   </p>
@@ -1131,7 +1131,7 @@ const CerValidationPanel = ({
                     <Progress
                       value={checklistPercentage}
                       className="h-2 w-32"
-                      indicatorColor={checklistPercentage === 100 ? 'bg-[#107C10]' : 'bg-[#0F6CBD]'}
+                      indicatorColor={checklistPercentage === 100 ? 'bg-[#788c5d]' : 'bg-[#d97757]'}
                     />
                     <span className="text-sm font-medium">{checklistPercentage}%</span>
                   </div>
@@ -1168,13 +1168,13 @@ const CerValidationPanel = ({
                           </Badge>
                         )}
                       </TableCell>
-                      <TableCell className="font-medium text-[#323130]">
+                      <TableCell className="font-medium text-[#141413]">
                         {item.description}
                         {item.details && (
-                          <p className="text-xs text-[#605E5C] mt-1">{item.details}</p>
+                          <p className="text-xs text-[#6b6963] mt-1">{item.details}</p>
                         )}
                       </TableCell>
-                      <TableCell className="text-sm text-[#605E5C]">
+                      <TableCell className="text-sm text-[#6b6963]">
                         {item.regulatoryReference}
                       </TableCell>
                     </TableRow>
@@ -1186,17 +1186,17 @@ const CerValidationPanel = ({
 
           {feedbackMode && (
             <TabsContent value="feedback" className="space-y-4">
-              <div className="bg-white p-4 rounded-md border border-[#E1DFDD]">
+              <div className="bg-white p-4 rounded-md border border-[#e8e6dc]">
                 <div className="flex justify-between items-center mb-4">
                   <div>
-                    <h3 className="text-lg font-medium text-[#323130]">Review Feedback</h3>
-                    <p className="text-sm text-[#605E5C]">
+                    <h3 className="text-lg font-medium text-[#141413]">Review Feedback</h3>
+                    <p className="text-sm text-[#6b6963]">
                       {reviewerFeedback.items.length} feedback item
                       {reviewerFeedback.items.length !== 1 ? 's' : ''} to be applied
                     </p>
                   </div>
                   <Button
-                    className="bg-[#0F6CBD] hover:bg-[#115EA3] text-white"
+                    className="bg-[#d97757] hover:bg-[#c15f3c] text-white"
                     onClick={submitFeedback}
                     disabled={reviewerFeedback.items.length === 0}
                   >
@@ -1206,8 +1206,8 @@ const CerValidationPanel = ({
 
                 {reviewerFeedback.items.length === 0 ? (
                   <div className="text-center py-8">
-                    <p className="text-[#605E5C]">No feedback items added yet.</p>
-                    <p className="text-sm text-[#605E5C] mt-1">
+                    <p className="text-[#6b6963]">No feedback items added yet.</p>
+                    <p className="text-sm text-[#6b6963] mt-1">
                       Review issues and add feedback to include them here.
                     </p>
                   </div>
@@ -1232,8 +1232,8 @@ const CerValidationPanel = ({
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <p className="font-medium text-[#323130]">{item.correction}</p>
-                            <p className="text-xs text-[#605E5C] mt-1">
+                            <p className="font-medium text-[#141413]">{item.correction}</p>
+                            <p className="text-xs text-[#6b6963] mt-1">
                               For issue: {item.issueType} at {item.location}
                             </p>
                           </TableCell>
@@ -1268,11 +1268,11 @@ const CerValidationPanel = ({
 
   // Render initial state
   return (
-    <div className="p-6 bg-white rounded-lg border border-[#E1DFDD]">
+    <div className="p-6 bg-white rounded-lg border border-[#e8e6dc]">
       <div className="text-center">
-        <ShieldCheck className="h-12 w-12 text-[#0F6CBD] mx-auto mb-3" />
-        <h3 className="text-lg font-medium text-[#323130] mb-2">Regulatory Validation</h3>
-        <p className="text-[#605E5C] max-w-md mx-auto mb-4">
+        <ShieldCheck className="h-12 w-12 text-[#d97757] mx-auto mb-3" />
+        <h3 className="text-lg font-medium text-[#141413] mb-2">Regulatory Validation</h3>
+        <p className="text-[#6b6963] max-w-md mx-auto mb-4">
           Validate your CER document against {regulatoryFramework} requirements to ensure compliance
           with regulations, confirm internal consistency, and verify data accuracy.
         </p>
@@ -1281,34 +1281,34 @@ const CerValidationPanel = ({
           tooltipContent="Runs AI-powered validation to identify issues that could cause regulatory rejection"
           whyThisMatters="Regulatory authorities require high standards of accuracy and completeness in CER documents"
         >
-          <Button onClick={startValidation} className="bg-[#0F6CBD] hover:bg-[#115EA3] text-white">
+          <Button onClick={startValidation} className="bg-[#d97757] hover:bg-[#c15f3c] text-white">
             <ShieldCheck className="h-4 w-4 mr-2" />
             Start Validation
           </Button>
         </CerTooltipWrapper>
       </div>
 
-      <div className="mt-8 border-t border-[#E1DFDD] pt-6">
-        <h4 className="font-medium text-[#323130] mb-2">What We Check</h4>
-        <ul className="space-y-2 text-[#605E5C]">
+      <div className="mt-8 border-t border-[#e8e6dc] pt-6">
+        <h4 className="font-medium text-[#141413] mb-2">What We Check</h4>
+        <ul className="space-y-2 text-[#6b6963]">
           <li className="flex items-start">
-            <CheckCircle className="h-4 w-4 text-[#0F6CBD] mr-2 mt-0.5" />
+            <CheckCircle className="h-4 w-4 text-[#d97757] mr-2 mt-0.5" />
             <span>Document completeness against regulatory requirements</span>
           </li>
           <li className="flex items-start">
-            <CheckCircle className="h-4 w-4 text-[#0F6CBD] mr-2 mt-0.5" />
+            <CheckCircle className="h-4 w-4 text-[#d97757] mr-2 mt-0.5" />
             <span>Internal consistency of claims and intended use</span>
           </li>
           <li className="flex items-start">
-            <CheckCircle className="h-4 w-4 text-[#0F6CBD] mr-2 mt-0.5" />
+            <CheckCircle className="h-4 w-4 text-[#d97757] mr-2 mt-0.5" />
             <span>Citation accuracy and prevention of hallucinated references</span>
           </li>
           <li className="flex items-start">
-            <CheckCircle className="h-4 w-4 text-[#0F6CBD] mr-2 mt-0.5" />
+            <CheckCircle className="h-4 w-4 text-[#d97757] mr-2 mt-0.5" />
             <span>Factual accuracy of clinical data interpretations</span>
           </li>
           <li className="flex items-start">
-            <CheckCircle className="h-4 w-4 text-[#0F6CBD] mr-2 mt-0.5" />
+            <CheckCircle className="h-4 w-4 text-[#d97757] mr-2 mt-0.5" />
             <span>Compliance with {regulatoryFramework} requirements checklist</span>
           </li>
         </ul>

@@ -25,6 +25,42 @@ import { sql } from 'drizzle-orm';
 const router = Router();
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// DB Table Initialization
+// ═══════════════════════════════════════════════════════════════════════════════
+
+async function ensureSimulationsTable(): Promise<void> {
+  try {
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS regulatory_twin_simulations (
+        id TEXT PRIMARY KEY,
+        submission_type TEXT NOT NULL,
+        therapeutic_area TEXT NOT NULL,
+        agencies TEXT[] DEFAULT ARRAY['FDA'],
+        submission_profile JSONB,
+        results JSONB NOT NULL DEFAULT '{}'::jsonb,
+        summary JSONB,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS idx_reg_twin_sim_created
+        ON regulatory_twin_simulations (created_at DESC)
+    `);
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS idx_reg_twin_sim_type
+        ON regulatory_twin_simulations (submission_type)
+    `);
+    console.log('[DigitalTwin] regulatory_twin_simulations table ready');
+  } catch (err) {
+    console.warn('[DigitalTwin] Table init warning:', (err as Error).message);
+  }
+}
+
+// Initialize table on module load
+ensureSimulationsTable();
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // Types & Interfaces
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -1372,18 +1408,83 @@ class RegulatoryDigitalTwin {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// In-memory simulation store
+// DB Persistence Helpers
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const simulationStore = new Map<
-  string,
-  {
-    twin: RegulatoryDigitalTwin;
-    submission: SubmissionProfile;
-    results: Record<string, any>;
-    createdAt: string;
-  }
->();
+async function dbInsertSimulation(
+  simulationId: string,
+  submission: SubmissionProfile,
+  agencies: string[],
+  results: Record<string, any>,
+  summary: Record<string, any>
+): Promise<void> {
+  await db.execute(sql`
+    INSERT INTO regulatory_twin_simulations
+      (id, submission_type, therapeutic_area, agencies, submission_profile, results, summary, created_at, updated_at)
+    VALUES (
+      ${simulationId},
+      ${submission.type},
+      ${submission.therapeuticArea},
+      ${sql.raw(`ARRAY[${agencies.map(a => `'${a}'`).join(',')}]::text[]`)},
+      ${JSON.stringify(submission)}::jsonb,
+      ${JSON.stringify(results)}::jsonb,
+      ${JSON.stringify(summary)}::jsonb,
+      NOW(),
+      NOW()
+    )
+  `);
+}
+
+async function dbGetSimulation(simulationId: string): Promise<{
+  id: string;
+  submissionType: string;
+  therapeuticArea: string;
+  submissionProfile: SubmissionProfile;
+  results: Record<string, any>;
+  summary: Record<string, any>;
+  createdAt: string;
+} | null> {
+  const rows = await db.execute(sql`
+    SELECT id, submission_type, therapeutic_area, submission_profile, results, summary, created_at
+    FROM regulatory_twin_simulations
+    WHERE id = ${simulationId}
+    LIMIT 1
+  `);
+  const row = (rows as any).rows?.[0] ?? (rows as any)?.[0];
+  if (!row) return null;
+  return {
+    id: row.id,
+    submissionType: row.submission_type,
+    therapeuticArea: row.therapeutic_area,
+    submissionProfile: row.submission_profile as SubmissionProfile,
+    results: row.results as Record<string, any>,
+    summary: row.summary as Record<string, any>,
+    createdAt: row.created_at,
+  };
+}
+
+async function dbListSimulations(): Promise<Array<{
+  simulationId: string;
+  submissionType: string;
+  therapeuticArea: string;
+  createdAt: string;
+  rtfRisk: string | undefined;
+}>> {
+  const rows = await db.execute(sql`
+    SELECT id, submission_type, therapeutic_area, created_at, results
+    FROM regulatory_twin_simulations
+    ORDER BY created_at DESC
+    LIMIT 100
+  `);
+  const resultRows = (rows as any).rows ?? rows;
+  return (resultRows as any[]).map(row => ({
+    simulationId: row.id,
+    submissionType: row.submission_type,
+    therapeuticArea: row.therapeutic_area,
+    createdAt: row.created_at,
+    rtfRisk: (row.results as any)?.rtfRisk?.overallRisk,
+  }));
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // API Endpoints
@@ -1424,38 +1525,35 @@ router.post('/simulations', async (req: Request, res: Response) => {
       advisoryCommittee,
     };
 
-    simulationStore.set(simulationId, {
-      twin,
-      submission,
-      results,
-      createdAt: new Date().toISOString(),
-    });
+    const summary = {
+      totalPredictedQuestions: questions.length,
+      criticalQuestions: questions.filter(q => q.severity === 'critical').length,
+      rtfRisk: rtfRisk.overallRisk,
+      rtfScore: rtfRisk.overallScore,
+      predictedLetterType: deficiencyPrediction.letterType,
+      deficiencyLikelihood: deficiencyPrediction.likelihood,
+      advisoryVote: advisoryCommittee.votePrediction,
+      advisorySentiment: advisoryCommittee.overallSentiment,
+    };
 
-    // Persist to DB if available
+    // Persist to DB
     try {
-      await db.execute(sql`
-        INSERT INTO regulatory_twin_simulations (id, submission_type, therapeutic_area, results, created_at)
-        VALUES (${simulationId}, ${submission.type}, ${submission.therapeuticArea}, ${JSON.stringify(results)}::jsonb, NOW())
-      `);
+      await dbInsertSimulation(
+        simulationId,
+        submission,
+        agencies || ['FDA'],
+        results,
+        summary
+      );
     } catch (dbErr) {
-      // Table may not exist yet — log and proceed with in-memory only
-      console.warn('[DigitalTwin] DB persistence failed:', (dbErr as Error).message);
+      console.warn('[DigitalTwin] DB persistence failed, continuing:', (dbErr as Error).message);
     }
 
     res.json({
       simulationId,
       submissionType: submission.type,
       therapeuticArea: submission.therapeuticArea,
-      summary: {
-        totalPredictedQuestions: questions.length,
-        criticalQuestions: questions.filter(q => q.severity === 'critical').length,
-        rtfRisk: rtfRisk.overallRisk,
-        rtfScore: rtfRisk.overallScore,
-        predictedLetterType: deficiencyPrediction.letterType,
-        deficiencyLikelihood: deficiencyPrediction.likelihood,
-        advisoryVote: advisoryCommittee.votePrediction,
-        advisorySentiment: advisoryCommittee.overallSentiment,
-      },
+      summary,
       results,
     });
   } catch (error: any) {
@@ -1467,31 +1565,35 @@ router.post('/simulations', async (req: Request, res: Response) => {
 /**
  * GET /simulations/:id — Retrieve a simulation result
  */
-router.get('/simulations/:id', (req: Request, res: Response) => {
-  const sim = simulationStore.get(req.params.id);
-  if (!sim) {
-    return res.status(404).json({ error: 'Simulation not found' });
+router.get('/simulations/:id', async (req: Request, res: Response) => {
+  try {
+    const sim = await dbGetSimulation(req.params.id);
+    if (!sim) {
+      return res.status(404).json({ error: 'Simulation not found' });
+    }
+    res.json({
+      simulationId: sim.id,
+      createdAt: sim.createdAt,
+      submission: sim.submissionProfile,
+      results: sim.results,
+    });
+  } catch (error: any) {
+    console.error('[DigitalTwin] Failed to retrieve simulation:', error);
+    res.status(500).json({ error: 'Failed to retrieve simulation', details: error.message });
   }
-  res.json({
-    simulationId: req.params.id,
-    createdAt: sim.createdAt,
-    submission: sim.submission,
-    results: sim.results,
-  });
 });
 
 /**
  * GET /simulations — List all simulations
  */
-router.get('/simulations', (_req: Request, res: Response) => {
-  const simulations = Array.from(simulationStore.entries()).map(([id, sim]) => ({
-    simulationId: id,
-    submissionType: sim.submission.type,
-    therapeuticArea: sim.submission.therapeuticArea,
-    createdAt: sim.createdAt,
-    rtfRisk: sim.results.rtfRisk?.overallRisk,
-  }));
-  res.json({ simulations, total: simulations.length });
+router.get('/simulations', async (_req: Request, res: Response) => {
+  try {
+    const simulations = await dbListSimulations();
+    res.json({ simulations, total: simulations.length });
+  } catch (error: any) {
+    console.error('[DigitalTwin] Failed to list simulations:', error);
+    res.status(500).json({ error: 'Failed to list simulations', details: error.message });
+  }
 });
 
 /**
@@ -1619,12 +1721,19 @@ router.get('/rtf-criteria', (_req: Request, res: Response) => {
 /**
  * GET /health — Health check
  */
-router.get('/health', (_req: Request, res: Response) => {
+router.get('/health', async (_req: Request, res: Response) => {
+  let simulationCount = 0;
+  try {
+    const countResult = await db.execute(sql`SELECT COUNT(*)::int AS cnt FROM regulatory_twin_simulations`);
+    const row = (countResult as any).rows?.[0] ?? (countResult as any)?.[0];
+    simulationCount = row?.cnt ?? 0;
+  } catch { /* table may not exist yet */ }
+
   res.json({
     status: 'healthy',
     service: 'regulatory-digital-twin',
     version: '1.0.0',
-    simulationsInMemory: simulationStore.size,
+    simulationsStored: simulationCount,
     personasLoaded: REVIEWER_PERSONAS.length,
     rtfCriteriaCategories: Object.keys(RTF_CRITERIA).length,
     deficiencyPatternCategories: Object.keys(DEFICIENCY_PATTERNS).length,

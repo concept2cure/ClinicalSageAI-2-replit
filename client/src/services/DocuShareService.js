@@ -1,7 +1,7 @@
 /**
  * DocuShare Service
  *
- * This service handles document management across the TrialSage platform,
+ * This service handles document management across the Concept2Cure platform,
  * including versioning, metadata, and sharing.
  */
 

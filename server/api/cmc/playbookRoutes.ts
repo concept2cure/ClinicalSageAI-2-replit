@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { pool } from '../../db.js';
-import { getOpenAIClient } from '../../services/openai-client';
+import { ai } from '../../lib/unified-ai-client';
 
 const router = Router();
 
@@ -23,8 +23,6 @@ interface TaskTemplate {
 }
 
 // Initialize OpenAI client
-const openai = getOpenAIClient();
-
 // ===== CMC PLAYBOOK WORKFLOWS =====
 
 // Get all available workflows
@@ -389,7 +387,7 @@ async function createWorkflowTasks(workflowInstanceId: string, templateId: strin
 async function executeAITool(command: string, drugName: string, context: any): Promise<any> {
   try {
     // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
-    const completion = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-5',
       messages: [
         {
@@ -406,7 +404,7 @@ async function executeAITool(command: string, drugName: string, context: any): P
       temperature: 0.3,
     });
 
-    const result = completion.choices[0].message.content;
+    const result = aiResult.content;
 
     return {
       command: command,

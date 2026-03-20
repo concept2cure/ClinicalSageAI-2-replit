@@ -36,18 +36,18 @@ Based on our comprehensive analysis, this build plan implements the **optimal ar
 ```bash
 # Week 1: AWS Organization Structure
 aws organizations create-organization
-aws organizations create-account --email prod@clinicalsage.ai --account-name "ClinicalSage-Prod"
-aws organizations create-account --email dev@clinicalsage.ai --account-name "ClinicalSage-Dev"
-aws organizations create-account --email audit@clinicalsage.ai --account-name "ClinicalSage-Audit"
+aws organizations create-account --email prod@concept2cure-ri.ai --account-name "Concept2Cure.RI-Prod"
+aws organizations create-account --email dev@concept2cure-ri.ai --account-name "Concept2Cure.RI-Dev"
+aws organizations create-account --email audit@concept2cure-ri.ai --account-name "Concept2Cure.RI-Audit"
 ```
 
 **Account Structure:**
 ```
-ClinicalSage-Root (Management)
-├── ClinicalSage-Prod (Production workloads)
-├── ClinicalSage-Dev (Development/Testing)
-├── ClinicalSage-Audit (Centralized audit logs)
-└── ClinicalSage-DR (Disaster Recovery)
+Concept2Cure.RI-Root (Management)
+├── Concept2Cure.RI-Prod (Production workloads)
+├── Concept2Cure.RI-Dev (Development/Testing)
+├── Concept2Cure.RI-Audit (Centralized audit logs)
+└── Concept2Cure.RI-DR (Disaster Recovery)
 ```
 
 ### 1.2 Service Control Policies (SCPs)
@@ -101,7 +101,7 @@ module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "5.0.0"
 
-  name = "clinicalsage-${var.environment}"
+  name = "concept2cure-ri-${var.environment}"
   cidr = "10.0.0.0/16"
 
   azs             = ["us-east-1a", "us-east-1b", "us-east-1c"]
@@ -124,7 +124,7 @@ module "vpc" {
   tags = {
     Environment = var.environment
     Compliance  = "21CFR11"
-    Project     = "ClinicalSage"
+    Project     = "Concept2Cure.RI"
   }
 }
 ```
@@ -152,7 +152,7 @@ module "rds" {
   source  = "terraform-aws-modules/rds/aws"
   version = "6.0.0"
 
-  identifier = "clinicalsage-${var.environment}"
+  identifier = "concept2cure-ri-${var.environment}"
 
   engine               = "postgres"
   engine_version       = "15.4"
@@ -166,7 +166,7 @@ module "rds" {
   storage_encrypted     = true
   kms_key_id           = aws_kms_key.rds.arn
 
-  db_name  = "clinicalsage"
+  db_name  = "concept2cure-ri"
   username = "csadmin"
   port     = 5432
 
@@ -315,7 +315,7 @@ WITH (lists = 100);
 ```hcl
 # terraform/modules/ecs/main.tf
 resource "aws_ecs_cluster" "main" {
-  name = "clinicalsage-${var.environment}"
+  name = "concept2cure-ri-${var.environment}"
 
   setting {
     name  = "containerInsights"
@@ -336,7 +336,7 @@ resource "aws_ecs_cluster" "main" {
 }
 
 resource "aws_ecs_task_definition" "api" {
-  family                   = "clinicalsage-api"
+  family                   = "concept2cure-ri-api"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   cpu                      = 2048
@@ -394,7 +394,7 @@ resource "aws_ecs_task_definition" "api" {
 }
 
 resource "aws_ecs_service" "api" {
-  name            = "clinicalsage-api"
+  name            = "concept2cure-ri-api"
   cluster         = aws_ecs_cluster.main.id
   task_definition = aws_ecs_task_definition.api.arn
   desired_count   = 3  # HA deployment
@@ -429,7 +429,7 @@ resource "aws_ecs_service" "api" {
 ```hcl
 # terraform/modules/alb/main.tf
 resource "aws_lb" "main" {
-  name               = "clinicalsage-${var.environment}"
+  name               = "concept2cure-ri-${var.environment}"
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb.id]
@@ -529,7 +529,7 @@ CMD ["node", "dist/server/index.js"]
 ```hcl
 # terraform/modules/cloudtrail/main.tf
 resource "aws_cloudtrail" "main" {
-  name                          = "clinicalsage-audit-trail"
+  name                          = "concept2cure-ri-audit-trail"
   s3_bucket_name               = aws_s3_bucket.cloudtrail.id
   s3_key_prefix                = "cloudtrail"
   include_global_service_events = true
@@ -572,7 +572,7 @@ resource "aws_cloudtrail" "main" {
 
 # Immutable S3 bucket for audit logs
 resource "aws_s3_bucket" "cloudtrail" {
-  bucket = "clinicalsage-audit-${data.aws_caller_identity.current.account_id}"
+  bucket = "concept2cure-ri-audit-${data.aws_caller_identity.current.account_id}"
 
   tags = {
     Compliance = "21CFR11"
@@ -783,7 +783,7 @@ echo "=== Validation Complete ==="
 ```hcl
 # terraform/modules/monitoring/main.tf
 resource "aws_cloudwatch_dashboard" "main" {
-  dashboard_name = "ClinicalSage-Production"
+  dashboard_name = "Concept2Cure.RI-Production"
 
   dashboard_body = jsonencode({
     widgets = [
@@ -845,7 +845,7 @@ resource "aws_cloudwatch_dashboard" "main" {
           title  = "Audit Trail Entries (24h)"
           region = var.region
           metrics = [
-            ["ClinicalSage", "AuditEntryCount", "Environment", "production"]
+            ["Concept2Cure.RI", "AuditEntryCount", "Environment", "production"]
           ]
           stat   = "Sum"
           period = 86400

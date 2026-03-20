@@ -105,7 +105,7 @@ export async function generateProtocolFromEvidence(
 
   try {
     // Call GPT-4 with the prepared CSR data
-    const completion = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4o', // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       messages: [
         { role: 'system', content: systemPrompt },
@@ -123,7 +123,7 @@ export async function generateProtocolFromEvidence(
     });
 
     // Extract and parse response to construct the protocol
-    const protocolText = completion.choices[0].message.content;
+    const protocolText = aiResult.content;
 
     // Basic parsing of the output into sections
     const sectionRegex = /## ([^\n]+)\n([\s\S]*?)(?=## |$)/g;

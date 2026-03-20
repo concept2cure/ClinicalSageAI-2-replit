@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Compliance Dashboard
+ * Concept2Cure Client Portal V2 - Compliance Dashboard
  *
  * Real-time compliance monitoring with:
  * - Regulatory compliance status

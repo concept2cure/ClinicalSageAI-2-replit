@@ -183,7 +183,7 @@ export default function WizardHeader({ kpi }) {
                     formatter={value => [`${value}%`, 'Readiness']}
                     contentStyle={{
                       backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                      borderColor: '#e2e8f0',
+                      borderColor: '#e8e6dc',
                       fontSize: '12px',
                     }}
                   />
@@ -211,9 +211,9 @@ function Chip({ icon: Icon, label, delta, color, data = [], onClick }) {
   };
 
   const sparklineColors = {
-    emerald: '#10b981',
+    emerald: '#788c5d',
     amber: '#d97706',
-    sky: '#0ea5e9',
+    sky: '#6a9bcc',
     regulatory: '#7549ff',
   };
 

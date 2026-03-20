@@ -1,5 +1,5 @@
 /**
- * CSR Training Service for TrialSage
+ * CSR Training Service for Concept2Cure
  *
  * This service handles the training and fine-tuning of models
  * on clinical study reports (CSRs) to extract structured data.

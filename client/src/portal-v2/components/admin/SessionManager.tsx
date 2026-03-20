@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Session Manager
+ * Concept2Cure Client Portal V2 - Session Manager
  *
  * Comprehensive session management with:
  * - Active session monitoring

@@ -5,14 +5,12 @@
  * across CER and 510(k) modules using vector search with OpenAI-powered fallbacks.
  */
 
-import { getOpenAIClient } from './openai-client';
 import path from 'path';
 import fs from 'fs';
 import { pool } from '../utils/database.js';
+import { ai } from '../lib/unified-ai-client';
 
 // Initialize OpenAI client
-const openai = getOpenAIClient();
-
 // Setup IEEE API connection
 const IEEE_API_KEY = process.env.IEEE_API_KEY;
 
@@ -233,7 +231,7 @@ async function searchFDA510K(query, filters = {}) {
 async function fallbackPredicateSearch(query, deviceContext = '') {
   try {
     // Use OpenAI to handle cases where structured data is unavailable
-    const completion = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4o', // Use the latest model for best results
       messages: [
         {
@@ -252,7 +250,7 @@ async function fallbackPredicateSearch(query, deviceContext = '') {
     });
 
     try {
-      const result = JSON.parse(completion.choices[0].message.content);
+      const result = JSON.parse(aiResult.content);
 
       if (Array.isArray(result.devices)) {
         return result.devices.map(device => ({
@@ -268,7 +266,7 @@ async function fallbackPredicateSearch(query, deviceContext = '') {
       console.error('Failed to parse AI predicate device response:', parseError);
 
       // Try with a simplified prompt if parsing failed
-      const fallbackCompletion = await openai.chat.completions.create({
+      const fallbackCompletion = await ai.chat({
         model: 'gpt-4o',
         messages: [
           {
@@ -403,7 +401,7 @@ const discoveryService = {
         try {
           searchStats.aiSearch.attempted = true;
           // Extract key terms from the query to improve search quality
-          const keyTermsPrompt = await openai.chat.completions.create({
+          const keyTermsPrompt = await ai.chat({
             model: 'gpt-4o',
             messages: [
               {
@@ -421,7 +419,7 @@ const discoveryService = {
           const keyTerms = keyTermsPrompt.choices[0].message.content;
 
           // Generate AI-based literature results
-          const completion = await openai.chat.completions.create({
+          const aiResult = await ai.chat({
             model: 'gpt-4o',
             messages: [
               {
@@ -438,7 +436,7 @@ const discoveryService = {
           });
 
           try {
-            const aiResult = JSON.parse(completion.choices[0].message.content);
+            const aiResult = JSON.parse(aiResult.content);
 
             if (Array.isArray(aiResult.articles)) {
               const aiGeneratedResults = aiResult.articles.map(article => ({
@@ -580,7 +578,7 @@ const discoveryService = {
           searchStats.aiSearch.attempted = true;
 
           // First extract device classification and key attributes to improve search
-          const deviceAnalysisPrompt = await openai.chat.completions.create({
+          const deviceAnalysisPrompt = await ai.chat({
             model: 'gpt-4o',
             messages: [
               {
@@ -685,7 +683,7 @@ const discoveryService = {
         // Use OpenAI to extract structured information from PDF
         const base64 = fileBuffer.toString('base64');
 
-        const completion = await openai.chat.completions.create({
+        const aiResult = await ai.chat({
           model: 'gpt-4o',
           messages: [
             {
@@ -712,7 +710,7 @@ const discoveryService = {
           response_format: { type: 'json_object' },
         });
 
-        const extractedData = JSON.parse(completion.choices[0].message.content);
+        const extractedData = JSON.parse(aiResult.content);
         extractedText = JSON.stringify(extractedData);
 
         // Generate embedding
@@ -782,7 +780,7 @@ const discoveryService = {
         systemPrompt = `You are a medical device regulatory expert specializing in Clinical Evaluation Reports (CERs) under EU MDR. Your task is to create a comprehensive literature review section that establishes the current state of knowledge about the device's safety and performance compared to alternatives. The review should emphasize clinical data, post-market experience, and benefit-risk determinations.`;
       }
 
-      const completion = await openai.chat.completions.create({
+      const aiResult = await ai.chat({
         model: 'gpt-4o',
         messages: [
           {
@@ -796,7 +794,7 @@ const discoveryService = {
         ],
       });
 
-      const review = completion.choices[0].message.content;
+      const review = aiResult.content;
 
       // Store the generated review
       const query = `
@@ -891,7 +889,7 @@ const discoveryService = {
         .join('\n\n');
 
       // Step 3: Generate a more comprehensive comparison with structured sections
-      const completion = await openai.chat.completions.create({
+      const aiResult = await ai.chat({
         model: 'gpt-4o',
         messages: [
           {
@@ -931,13 +929,13 @@ const discoveryService = {
         ],
       });
 
-      const comparison = completion.choices[0].message.content;
+      const comparison = aiResult.content;
 
       // Step 4: Enhance with scientific literature references if available
       let enhancedComparison = comparison;
       try {
         // Get device keywords for literature search
-        const keywordsCompletion = await openai.chat.completions.create({
+        const keywordsCompletion = await ai.chat({
           model: 'gpt-3.5-turbo', // Use smaller model for efficiency
           messages: [
             {
@@ -967,7 +965,7 @@ const discoveryService = {
 
         // If we have literature results, enhance the comparison with references
         if (literatureResults.length > 0) {
-          const referencesCompletion = await openai.chat.completions.create({
+          const referencesCompletion = await ai.chat({
             model: 'gpt-4o',
             messages: [
               {

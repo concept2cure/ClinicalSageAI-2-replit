@@ -285,7 +285,7 @@ export default function RegionalExportModal({ sequenceId, onClose }) {
         }
 
         .format-option.selected {
-          border-color: #4caf50;
+          border-color: #788c5d;
           background-color: #f1f8e9;
         }
 
@@ -339,7 +339,7 @@ export default function RegionalExportModal({ sequenceId, onClose }) {
 
         .spinner {
           border: 4px solid rgba(0, 0, 0, 0.1);
-          border-left-color: #4caf50;
+          border-left-color: #788c5d;
           border-radius: 50%;
           width: 40px;
           height: 40px;
@@ -352,7 +352,7 @@ export default function RegionalExportModal({ sequenceId, onClose }) {
         }
 
         .text-success {
-          color: #4caf50;
+          color: #788c5d;
         }
 
         .text-muted {

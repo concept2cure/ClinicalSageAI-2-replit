@@ -2,7 +2,7 @@
  * Organization Switcher Component
  *
  * This component provides an interface for switching between organizations
- * in the multi-tenant TrialSage platform.
+ * in the multi-tenant Concept2Cure platform.
  */
 
 import React, { useState } from 'react';

@@ -10,7 +10,6 @@
  * defensibility scoring.
  */
 
-import { ai } from '../lib/unified-ai-client';
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
 
@@ -28,6 +27,7 @@ interface EndpointForAssessment {
   isSurrogate: boolean;
   regulatoryQualification?: string;
 }
+import { ai } from '../lib/unified-ai-client';
 
 interface DefensibilityRequest {
   studyPhase: string;
@@ -146,11 +146,12 @@ interface MultiplicityAssessment {
 // ============================================================
 
 class StatisticalDefensibilityService {
+
   /**
    * Comprehensive defensibility assessment.
    */
   async assessDefensibility(request: DefensibilityRequest): Promise<DefensibilityReport> {
-    const content = await ai.complete(
+    const aiResult = await ai.chat(
       [
         {
           role: 'system',
@@ -196,9 +197,10 @@ Subgroups: ${(request.subgroupAnalyses || []).join(', ') || 'None'}
 Estimand Strategy: ${request.estimandStrategy || 'Not specified'}`,
         },
       ],
-      { jsonMode: true, temperature: 0.2, maxTokens: 4000 }
+      { taskType: 'regulatory_review', jsonMode: true, temperature: 0.2, maxTokens: 4000, callerModule: 'statistical-defensibility-service' }
     );
 
+    const content = aiResult.content;
     if (!content) {
       return this.defaultReport();
     }
@@ -521,7 +523,7 @@ Estimand Strategy: ${request.estimandStrategy || 'Not specified'}`,
     hasInterimAnalysis: boolean;
     subgroupAnalyses: string[];
   }): Promise<ReviewerRiskAnnotation[]> {
-    const content = await ai.complete(
+    const aiResult = await ai.chat(
       [
         {
           role: 'system',
@@ -534,9 +536,10 @@ Return JSON: { "annotations": [{ "concern": "string", "severity": "high|medium|l
           content: `Predict reviewer concerns for this study:\n${JSON.stringify(studyData, null, 2)}`,
         },
       ],
-      { jsonMode: true, temperature: 0.3, maxTokens: 3000 }
+      { taskType: 'regulatory_review', jsonMode: true, temperature: 0.3, maxTokens: 3000, callerModule: 'statistical-defensibility-service' }
     );
 
+    const content = aiResult.content;
     if (!content) return [];
 
     const parsed = JSON.parse(content);

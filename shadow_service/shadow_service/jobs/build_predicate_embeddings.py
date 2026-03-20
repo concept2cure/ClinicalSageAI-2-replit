@@ -158,7 +158,7 @@ async def _main() -> None:
     import asyncpg  # type: ignore[import-untyped]
 
     logging.basicConfig(level=logging.INFO)
-    dsn = os.environ.get("DATABASE_URL", "postgresql://localhost:5432/clinicalsage")
+    dsn = os.environ.get("DATABASE_URL", "postgresql://localhost:5432/concept2cure-ri")
     pool = await asyncpg.create_pool(dsn, min_size=2, max_size=5)
     try:
         builder = PredicateEmbeddingBuilder(pool)

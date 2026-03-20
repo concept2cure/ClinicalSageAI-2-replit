@@ -87,7 +87,7 @@ export default function CmcNavigation({ currentBlueprintId }) {
       icon: FileText,
     },
     {
-      name: 'TrialSage Vault™',
+      name: 'Concept2Cure Vault™',
       href: '/vault/cmc-documents',
       description: 'Document management',
       buttonText: 'View in Vault',

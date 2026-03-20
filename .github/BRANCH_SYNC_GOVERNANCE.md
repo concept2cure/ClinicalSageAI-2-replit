@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document defines the governance rules and procedures for maintaining branch synchronization in the ClinicalSageAI-2-replit repository. The goal is to ensure **main** serves as the single source of truth while maintaining regulatory compliance and repository health.
+This document defines the governance rules and procedures for maintaining branch synchronization in the Concept2Cure.RI-2-replit repository. The goal is to ensure **main** serves as the single source of truth while maintaining regulatory compliance and repository health.
 
 ## Core Principles
 
@@ -266,7 +266,7 @@ Updates require:
 
 ## References
 
-- Repository: `concept2cure/ClinicalSageAI-2-replit`
+- Repository: `concept2cure/Concept2Cure.RI-2-replit`
 - Branch Protection: Configured in GitHub repository settings
 - CI/CD: Defined in `.github/workflows/`
 - Scripts: Located in `scripts/` directory

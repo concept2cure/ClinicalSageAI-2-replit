@@ -91,12 +91,12 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
                 padding: '10px 15px',
                 backgroundColor:
                   toast.type === 'success'
-                    ? '#4caf50'
+                    ? '#788c5d'
                     : toast.type === 'error'
                       ? '#f44336'
                       : toast.type === 'warning'
                         ? '#ff9800'
-                        : '#2196f3',
+                        : '#6a9bcc',
                 color: 'white',
                 borderRadius: '4px',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.2)',

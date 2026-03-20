@@ -112,13 +112,13 @@ const PieChartComponent = ({ metrics }) => {
   return (
     <div className="h-60 flex items-center justify-center">
       <svg width="200" height="200" viewBox="0 0 200 200">
-        <circle cx="100" cy="100" r="80" fill="transparent" stroke="#e2e8f0" strokeWidth="30" />
+        <circle cx="100" cy="100" r="80" fill="transparent" stroke="#e8e6dc" strokeWidth="30" />
         <circle
           cx="100"
           cy="100"
           r="80"
           fill="transparent"
-          stroke="#3b82f6"
+          stroke="#6a9bcc"
           strokeWidth="30"
           strokeDasharray={`${2 * Math.PI * 80 * percentages[0]} ${2 * Math.PI * 80 * (1 - percentages[0])}`}
           transform="rotate(-90) translate(-200 0)"
@@ -128,7 +128,7 @@ const PieChartComponent = ({ metrics }) => {
           cy="100"
           r="80"
           fill="transparent"
-          stroke="#10b981"
+          stroke="#788c5d"
           strokeWidth="30"
           strokeDasharray={`${2 * Math.PI * 80 * percentages[1]} ${2 * Math.PI * 80 * (1 - percentages[1])}`}
           transform="rotate(14) translate(-200 0)"
@@ -152,11 +152,11 @@ const LineChartComponent = () => (
     <svg width="100%" height="100%" viewBox="0 0 300 100">
       <polyline
         fill="none"
-        stroke="#3b82f6"
+        stroke="#6a9bcc"
         strokeWidth="2"
         points="0,80 25,70 50,75 75,60 100,65 125,55 150,45 175,50 200,30 225,40 250,35 275,25 300,20"
       />
-      <line x1="0" y1="100" x2="300" y2="100" stroke="#e2e8f0" strokeWidth="1" />
+      <line x1="0" y1="100" x2="300" y2="100" stroke="#e8e6dc" strokeWidth="1" />
     </svg>
     <div className="absolute bottom-0 left-0 w-full border-t border-gray-200"></div>
     <div className="absolute left-0 bottom-0 h-full border-r border-gray-200"></div>

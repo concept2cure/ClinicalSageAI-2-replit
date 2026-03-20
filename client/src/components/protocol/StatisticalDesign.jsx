@@ -94,7 +94,7 @@ import {
 import { toast } from '../lightweight-wrappers.js';
 
 /**
- * StatisticalDesign component for the TrialSage Study Architect module
+ * StatisticalDesign component for the Concept2Cure Study Architect module
  * Implements advanced statistical calculations for clinical trial design
  */
 const StatisticalDesign = () => {

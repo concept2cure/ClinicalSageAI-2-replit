@@ -24,7 +24,7 @@ export default function CSRAlignmentPanel() {
     },
     {
       id: 'CSR-002',
-      title: 'Safety and Efficacy Study of TrialSage-IV in Rheumatoid Arthritis',
+      title: 'Safety and Efficacy Study of Concept2Cure-IV in Rheumatoid Arthritis',
       sponsor: 'Novartis',
       date: '2023-09-22',
     },

@@ -31,12 +31,41 @@ import { isFeatureEnabled } from '@/flags/featureFlags';
 
 // Lazy-load CERV2Page only when a project 510k route is hit (standalone mode)
 const CERV2Page = lazy(() => import('@/pages/csr/CERV2Page'));
+// Lazy-load PMA Workspace for standalone mode
+const PMAWorkspacePage = lazy(() => import('../components/pma/PMAWorkspace'));
+
+// Claude-aligned biotech dashboards
+const ECTDSubmissionDashboard = lazy(() => import('../pages/ECTDSubmissionDashboard'));
+const PharmacovigilanceDashboard = lazy(() => import('../pages/PharmacovigilanceDashboard'));
+const ClinicalOperationsDashboard = lazy(() => import('../pages/ClinicalOperationsDashboard'));
+const DocumentArtifactsHub = lazy(() => import('../pages/DocumentArtifactsHub'));
+const HAQManagerDashboard = lazy(() => import('../pages/HAQManagerDashboard'));
+const INDAutoDraftDashboard = lazy(() => import('../pages/INDAutoDraftDashboard'));
 
 // DTC Landing Page — public, renders at / for unauthenticated users
 const LandingPage = lazy(() => import('../pages/LandingPage'));
 
 // Interactive Demo — public, AnA-narrated platform walkthrough
 const InteractiveDemoPage = lazy(() => import('../pages/InteractiveDemoPage'));
+
+// Error pages
+const ErrorPages = lazy(() => import('../pages/ErrorPages'));
+
+// Pricing page
+const PricingPage = lazy(() => import('../pages/PricingPage'));
+
+// Legal pages
+const TermsOfService = lazy(() => import('../pages/legal/TermsOfService'));
+const PrivacyPolicy = lazy(() => import('../pages/legal/PrivacyPolicy'));
+const DataProcessingAgreement = lazy(() => import('../pages/legal/DataProcessingAgreement'));
+const BusinessAssociateAgreement = lazy(() => import('../pages/legal/BusinessAssociateAgreement'));
+const ServiceLevelAgreement = lazy(() => import('../pages/legal/ServiceLevelAgreement'));
+const CookiePolicy = lazy(() => import('../pages/legal/CookiePolicy'));
+const AcceptableUsePolicy = lazy(() => import('../pages/legal/AcceptableUsePolicy'));
+
+// Lazy-load Billing Dashboard and Sales Landing Page
+const BillingDashboard = lazy(() => import('@/pages/billing/BillingDashboard'));
+const SalesLandingPage = lazy(() => import('@/pages/SalesLandingPage'));
 
 // Lazy-load PasswordReset for the reset-password-via-email flow
 const PasswordResetPage = lazy(
@@ -52,7 +81,9 @@ const Project510kBridge: React.FC = () => {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#FAFAF9]">
+        <div className="min-h-screen flex items-center justify-center bg-[#FAF9F5]">
+          <p className="text-sm text-[#B0AEA5]">Loading workspace…</p>
+        <div className="min-h-screen flex items-center justify-center bg-[#faf9f5]">
           <p className="text-sm text-zinc-400">Loading workspace…</p>
         </div>
       }
@@ -62,27 +93,41 @@ const Project510kBridge: React.FC = () => {
   );
 };
 
+/**
+ * Bridge that extracts :projectId from URL and renders PMAWorkspace with it.
+ */
+const ProjectPMABridge: React.FC = () => {
+  const [, params] = useRoute('/concept2cure/project/:projectId/pma');
+  const projectId = params?.projectId ?? null;
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#FAFAF9]">
+          <p className="text-sm text-zinc-400">Loading PMA workspace…</p>
+        </div>
+      }
+    >
+      <PMAWorkspacePage projectId={projectId || ''} projectName="PMA Submission" />
+    </Suspense>
+  );
+};
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // LOADING SCREEN
 // ═══════════════════════════════════════════════════════════════════════════════
 const ZenLoadingScreen: React.FC<{ message?: string }> = ({ message = 'Loading...' }) => (
-  <div className="min-h-screen bg-[#FAFAF9] flex items-center justify-center">
+  <div className="min-h-screen bg-[#FAF9F5] flex items-center justify-center">
+  <div className="min-h-screen bg-[#faf9f5] flex items-center justify-center">
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex flex-col items-center gap-4"
+      className="flex flex-col items-center gap-6"
     >
-      {/* Animated logo */}
+      {/* Brand logo with gentle pulse */}
       <motion.div
-        animate={{
-          rotate: [0, 360],
-        }}
-        transition={{
-          duration: 2,
-          repeat: Infinity,
-          ease: 'linear',
-        }}
-        className="w-12 h-12"
+        animate={{ scale: [1, 1.03, 1], opacity: [0.8, 1, 0.8] }}
+        transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+        className="relative"
       >
         <svg
           viewBox="0 0 40 40"
@@ -96,38 +141,50 @@ const ZenLoadingScreen: React.FC<{ message?: string }> = ({ message = 'Loading..
             r="18"
             stroke="currentColor"
             strokeWidth="2"
-            className="text-blue-600"
+            className="text-[#D97757]"
           />
           <motion.path
             d="M12 14C16 14 18 18 20 20C22 22 24 26 28 26"
             stroke="currentColor"
             strokeWidth="2"
             strokeLinecap="round"
-            className="text-blue-600"
+            className="text-[#D97757]"
           />
           <motion.path
             d="M28 14C24 14 22 18 20 20C18 22 16 26 12 26"
             stroke="currentColor"
             strokeWidth="2"
             strokeLinecap="round"
-            className="text-violet-500"
+            className="text-[#E8967A]"
           />
         </svg>
       </motion.div>
 
-      <p className="text-sm text-zinc-500">{message}</p>
+      <p className="text-sm text-[#8A8880]">{message}</p>
+        <div className="relative w-20 h-20 rounded-2xl overflow-hidden shadow-md">
+          <img
+            src="/src/assets/concept2cure-logo.jpg"
+            alt="Concept2Cure"
+            className="w-full h-full object-cover object-center"
+          />
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{ background: 'radial-gradient(circle at center, transparent 40%, #faf9f5 100%)' }}
+          />
+        </div>
+      </motion.div>
+
+      <p className="text-sm text-zinc-500" style={{ fontFamily: "'Poppins', Arial, sans-serif" }}>{message}</p>
 
       {/* Progress bar */}
-      <div className="w-48 h-1 bg-zinc-200 rounded-full overflow-hidden">
+      <div className="w-48 h-1 bg-[#E8E6DC] rounded-full overflow-hidden">
         <motion.div
-          className="h-full bg-blue-600 rounded-full"
+          className="h-full bg-[#D97757] rounded-full"
+          className="h-full rounded-full"
+          style={{ background: 'linear-gradient(135deg, #d97757, #c15f3c)' }}
           initial={{ x: '-100%' }}
           animate={{ x: '100%' }}
-          transition={{
-            duration: 1,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
+          transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
         />
       </div>
     </motion.div>
@@ -301,6 +358,8 @@ export const ZenRouter: React.FC = () => {
               </PageTransition>
             )}
           </Route>
+          {/* Alias: /billing redirects to /concept2cure/billing */}
+          <Route path="/billing">{() => <Redirect to="/concept2cure/billing" />}</Route>
 
           {/* Password reset (linked from email) */}
           <Route path="/concept2cure/password-reset">
@@ -351,6 +410,59 @@ export const ZenRouter: React.FC = () => {
             </Route>
           )}
 
+          {/* Project-scoped PMA workspace (standalone mode) */}
+          {!isFeatureEnabled('EMBED_MODULES_IN_SHELL') && (
+            <Route path="/concept2cure/project/:projectId/pma">
+              {() => (
+                <PageTransition>
+                  <ProtectedRoute>
+                    <ProjectPMABridge />
+                  </ProtectedRoute>
+                </PageTransition>
+              )}
+            </Route>
+          )}
+          {/* Billing Dashboard - protected */}
+          <Route path="/concept2cure/billing">
+            {() => (
+              <PageTransition>
+                <ProtectedRoute>
+                  <Suspense fallback={<ZenLoadingScreen message="Loading billing..." />}>
+                    <BillingDashboard />
+                  </Suspense>
+                </ProtectedRoute>
+              </PageTransition>
+            )}
+          </Route>
+
+          {/* Pricing Page — public */}
+          <Route path="/concept2cure/pricing">
+            {() => (<PageTransition><Suspense fallback={<ZenLoadingScreen message="Loading pricing..." />}><PricingPage /></Suspense></PageTransition>)}
+          </Route>
+
+          {/* Legal Pages — public, no auth required */}
+          <Route path="/concept2cure/legal/terms">
+            {() => (<PageTransition><Suspense fallback={<ZenLoadingScreen message="Loading..." />}><TermsOfService /></Suspense></PageTransition>)}
+          </Route>
+          <Route path="/concept2cure/legal/privacy">
+            {() => (<PageTransition><Suspense fallback={<ZenLoadingScreen message="Loading..." />}><PrivacyPolicy /></Suspense></PageTransition>)}
+          </Route>
+          <Route path="/concept2cure/legal/dpa">
+            {() => (<PageTransition><Suspense fallback={<ZenLoadingScreen message="Loading..." />}><DataProcessingAgreement /></Suspense></PageTransition>)}
+          </Route>
+          <Route path="/concept2cure/legal/baa">
+            {() => (<PageTransition><Suspense fallback={<ZenLoadingScreen message="Loading..." />}><BusinessAssociateAgreement /></Suspense></PageTransition>)}
+          </Route>
+          <Route path="/concept2cure/legal/sla">
+            {() => (<PageTransition><Suspense fallback={<ZenLoadingScreen message="Loading..." />}><ServiceLevelAgreement /></Suspense></PageTransition>)}
+          </Route>
+          <Route path="/concept2cure/legal/cookies">
+            {() => (<PageTransition><Suspense fallback={<ZenLoadingScreen message="Loading..." />}><CookiePolicy /></Suspense></PageTransition>)}
+          </Route>
+          <Route path="/concept2cure/legal/aup">
+            {() => (<PageTransition><Suspense fallback={<ZenLoadingScreen message="Loading..." />}><AcceptableUsePolicy /></Suspense></PageTransition>)}
+          </Route>
+
           {/* Project-scoped hub — ZenApp reads :projectId from route */}
           <Route path="/concept2cure/project/:projectId/:rest*">
             {() => (
@@ -378,6 +490,84 @@ export const ZenRouter: React.FC = () => {
               <PageTransition>
                 <ProtectedRoute>
                   <ZenApp />
+                </ProtectedRoute>
+              </PageTransition>
+            )}
+          </Route>
+
+          {/* eCTD Submission Agent Dashboard */}
+          <Route path="/concept2cure/ectd-agent">
+            {() => (
+              <PageTransition>
+                <ProtectedRoute>
+                  <Suspense fallback={<ZenLoadingScreen message="Loading eCTD Agent..." />}>
+                    <ECTDSubmissionDashboard />
+                  </Suspense>
+                </ProtectedRoute>
+              </PageTransition>
+            )}
+          </Route>
+
+          {/* Pharmacovigilance Dashboard */}
+          <Route path="/concept2cure/pharmacovigilance">
+            {() => (
+              <PageTransition>
+                <ProtectedRoute>
+                  <Suspense fallback={<ZenLoadingScreen message="Loading Pharmacovigilance..." />}>
+                    <PharmacovigilanceDashboard />
+                  </Suspense>
+                </ProtectedRoute>
+              </PageTransition>
+            )}
+          </Route>
+
+          {/* Document Artifacts Hub */}
+          <Route path="/concept2cure/documents">
+            {() => (
+              <PageTransition>
+                <ProtectedRoute>
+                  <Suspense fallback={<ZenLoadingScreen message="Loading Document Artifacts..." />}>
+                    <DocumentArtifactsHub />
+                  </Suspense>
+                </ProtectedRoute>
+              </PageTransition>
+            )}
+          </Route>
+
+          {/* HAQ Response Manager */}
+          <Route path="/concept2cure/haq-manager">
+            {() => (
+              <PageTransition>
+                <ProtectedRoute>
+                  <Suspense fallback={<ZenLoadingScreen message="Loading HAQ Manager..." />}>
+                    <HAQManagerDashboard />
+                  </Suspense>
+                </ProtectedRoute>
+              </PageTransition>
+            )}
+          </Route>
+
+          {/* IND AutoDraft Engine */}
+          <Route path="/concept2cure/ind-autodraft">
+            {() => (
+              <PageTransition>
+                <ProtectedRoute>
+                  <Suspense fallback={<ZenLoadingScreen message="Loading IND AutoDraft..." />}>
+                    <INDAutoDraftDashboard />
+                  </Suspense>
+                </ProtectedRoute>
+              </PageTransition>
+            )}
+          </Route>
+
+          {/* Clinical Operations Dashboard */}
+          <Route path="/concept2cure/clinical-operations">
+            {() => (
+              <PageTransition>
+                <ProtectedRoute>
+                  <Suspense fallback={<ZenLoadingScreen message="Loading Clinical Operations..." />}>
+                    <ClinicalOperationsDashboard />
+                  </Suspense>
                 </ProtectedRoute>
               </PageTransition>
             )}

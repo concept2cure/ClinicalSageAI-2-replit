@@ -6,11 +6,9 @@
  * from FAERS, literature sources, and user-provided device information.
  */
 
-const { getOpenAIClient } = require('../../services/openai-client');
+const { ai } = require('../../lib/unified-ai-client');
 
 // Initialize OpenAI client
-const openai = getOpenAIClient();
-
 /**
  * Calculate initial compliance score based on section content
  * @param {Array} sections - Generated CER sections
@@ -277,7 +275,7 @@ async function generateFullCER(req, res) {
       };
 
       // Call OpenAI API to generate the section
-      const response = await openai.chat.completions.create({
+      const aiResult = await ai.chat({
         model: 'gpt-4o', // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
         messages: [sectionPrompt],
         temperature: 0.4, // Balance between creativity and consistency
@@ -288,7 +286,7 @@ async function generateFullCER(req, res) {
       generatedSections.push({
         title: section.title,
         type: section.type,
-        content: response.choices[0].message.content.trim(),
+        content: aiResult.content.trim(),
         regulatoryPath,
         timestamp: new Date().toISOString(),
       });

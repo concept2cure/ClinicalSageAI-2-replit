@@ -39,3 +39,6 @@ export * from '../schema';
 export { CDISC_TABLES, type CdiscTableName } from './cdisc-reference';
 export { CSR_KNOWLEDGE_DB_TABLES, type CsrKnowledgeDbTableName } from './csr-knowledge-db';
 export * from './regulatory-atoms';
+export * from './api-keys';
+export * from './ctd-projects';
+export * from './support-admin';

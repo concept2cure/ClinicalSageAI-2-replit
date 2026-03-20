@@ -8068,10 +8068,10 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                               fill="none"
                               stroke={
                                 result.trend === 'increasing'
-                                  ? '#22c55e'
+                                  ? '#92a87a'
                                   : result.trend === 'decreasing'
                                     ? '#ef4444'
-                                    : '#6b7280'
+                                    : '#8a8880'
                               }
                               strokeWidth="1.5"
                               points="0,20 20,18 40,16 60,14"
@@ -8082,10 +8082,10 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                               r="1.5"
                               fill={
                                 result.trend === 'increasing'
-                                  ? '#22c55e'
+                                  ? '#92a87a'
                                   : result.trend === 'decreasing'
                                     ? '#ef4444'
-                                    : '#6b7280'
+                                    : '#8a8880'
                               }
                             />
                             <circle
@@ -8094,10 +8094,10 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                               r="1.5"
                               fill={
                                 result.trend === 'increasing'
-                                  ? '#22c55e'
+                                  ? '#92a87a'
                                   : result.trend === 'decreasing'
                                     ? '#ef4444'
-                                    : '#6b7280'
+                                    : '#8a8880'
                               }
                             />
                             <circle
@@ -8106,10 +8106,10 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                               r="1.5"
                               fill={
                                 result.trend === 'increasing'
-                                  ? '#22c55e'
+                                  ? '#92a87a'
                                   : result.trend === 'decreasing'
                                     ? '#ef4444'
-                                    : '#6b7280'
+                                    : '#8a8880'
                               }
                             />
                             <circle
@@ -8118,10 +8118,10 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                               r="1.5"
                               fill={
                                 result.trend === 'increasing'
-                                  ? '#22c55e'
+                                  ? '#92a87a'
                                   : result.trend === 'decreasing'
                                     ? '#ef4444'
-                                    : '#6b7280'
+                                    : '#8a8880'
                               }
                             />
                           </svg>
@@ -21390,8 +21390,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                     padding: '32px 48px',
                     lineHeight: '1.8',
                     fontSize: '16px',
-                    fontFamily: 'Calibri, "Segoe UI", Arial, sans-serif',
-                    color: '#333333',
+                    fontFamily: '"Lora", Georgia, serif',
+                    color: '#141413',
                     letterSpacing: '0.01em',
                     wordSpacing: '0.05em',
                     maxWidth: '21cm', // A4 width simulation
@@ -21413,7 +21413,7 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                         'insertHTML',
                         false,
                         `
-                        <div style="background: #3b82f6; color: white; padding: 10px; border-radius: 8px; margin: 10px 0; border: 2px solid #1d4ed8; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+                        <div style="background: #6a9bcc; color: white; padding: 10px; border-radius: 8px; margin: 10px 0; border: 2px solid #4a7399; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
                           <div style="font-weight: bold; margin-bottom: 8px;">🚀 TOKEN INSERTION MENU ACTIVE</div>
                           <div style="font-size: 14px;">
                             <div style="margin: 4px 0; cursor: pointer;" onclick="this.innerHTML='<span style=&quot;background: green; color: white; padding: 2px 8px; border-radius: 4px;&quot;>🔬 CAS Number: 123-45-6 (INSERTED)</span>'">
@@ -21536,8 +21536,8 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
 
                   /* Regulatory suggestion highlights */
                   .regulatory-highlight {
-                    background-color: rgba(59, 130, 246, 0.1);
-                    border-bottom: 2px solid #3b82f6;
+                    background-color: rgba(106, 155, 204, 0.1);
+                    border-bottom: 2px solid #6a9bcc;
                     cursor: pointer;
                     position: relative;
                   }
@@ -21553,7 +21553,7 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
                   }
 
                   .regulatory-highlight:hover {
-                    background-color: rgba(59, 130, 246, 0.2);
+                    background-color: rgba(106, 155, 204, 0.2);
                   }
                 `}</style>
 
@@ -22342,10 +22342,10 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
     };
 
     const ringColor = score => {
-      if (score >= 90) return '#10b981'; // green
+      if (score >= 90) return '#788c5d'; // green
       if (score >= 75) return '#f59e0b'; // yellow
       if (score >= 60) return '#ef4444'; // red
-      return '#6b7280'; // gray
+      return '#8a8880'; // gray
     };
 
     const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
@@ -23545,7 +23545,7 @@ This report confirms current supply chain operational status for regulatory and 
                         style={{
                           color:
                             coldChainAnalysis.classification === 'COMPLIANT'
-                              ? '#10b981'
+                              ? '#788c5d'
                               : coldChainAnalysis.classification === 'INVESTIGATION'
                                 ? '#f59e0b'
                                 : '#ef4444',
@@ -23623,7 +23623,7 @@ This report confirms current supply chain operational status for regulatory and 
                       <div
                         className="text-lg font-bold"
                         style={{
-                          color: Math.abs(ewsAnalysis.zscore) > 2 ? '#ef4444' : '#10b981',
+                          color: Math.abs(ewsAnalysis.zscore) > 2 ? '#ef4444' : '#788c5d',
                         }}
                       >
                         Z = {ewsAnalysis.zscore.toFixed(2)}
@@ -23672,7 +23672,7 @@ This report confirms current supply chain operational status for regulatory and 
                               200,
                               20
                             )}
-                            stroke={ewsAnalysis.outlier_detected ? '#ef4444' : '#6366f1'}
+                            stroke={ewsAnalysis.outlier_detected ? '#ef4444' : '#d97757'}
                             strokeWidth="1.5"
                             fill="none"
                           />

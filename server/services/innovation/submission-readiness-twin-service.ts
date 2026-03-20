@@ -15,8 +15,8 @@
  */
 
 import { Pool } from 'pg';
-import { ai } from '../../lib/unified-ai-client';
 import crypto from 'crypto';
+import { ai } from '../../lib/unified-ai-client';
 
 // Types
 export interface ReadinessCriterion {
@@ -128,9 +128,161 @@ export class SubmissionReadinessTwinService {
   private pool: Pool;
   private static criteriaCache: ReadinessCriterion[] = [];
   private static assessmentsCache: ReadinessTwinAssessment[] = [];
+  private static tablesInitialized = false;
 
   constructor(pool: Pool, openaiApiKey?: string) {
     this.pool = pool;
+    this.openai = getOpenAIClient();
+    this.ensureTables();
+  }
+
+  /**
+   * Ensure all required DB tables exist (idempotent).
+   * Uses the innovation schema to keep readiness twin data organized.
+   */
+  private async ensureTables(): Promise<void> {
+    if (SubmissionReadinessTwinService.tablesInitialized) return;
+
+    try {
+      const client = await this.pool.connect();
+      try {
+        await client.query(`CREATE SCHEMA IF NOT EXISTS innovation`);
+
+        await client.query(`
+          CREATE TABLE IF NOT EXISTS innovation.readiness_criteria (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            submission_type TEXT NOT NULL DEFAULT 'NDA',
+            agency TEXT NOT NULL DEFAULT 'FDA',
+            module_path TEXT,
+            criterion_code TEXT NOT NULL,
+            criterion_name TEXT NOT NULL,
+            description TEXT NOT NULL DEFAULT '',
+            requirement_type TEXT NOT NULL DEFAULT 'mandatory'
+              CHECK (requirement_type IN ('mandatory','conditional','recommended')),
+            condition_expression TEXT,
+            weight NUMERIC NOT NULL DEFAULT 1.0,
+            impact_on_rejection TEXT,
+            guidance_reference TEXT,
+            regulation_reference TEXT,
+            is_active BOOLEAN NOT NULL DEFAULT TRUE,
+            effective_date DATE,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            UNIQUE (submission_type, agency, criterion_code)
+          )
+        `);
+
+        await client.query(`
+          CREATE TABLE IF NOT EXISTS innovation.readiness_twin_assessments (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            program_id TEXT NOT NULL,
+            submission_id TEXT,
+            assessment_type TEXT NOT NULL DEFAULT 'automated',
+            submission_type TEXT NOT NULL,
+            target_agency TEXT NOT NULL,
+            overall_readiness_score NUMERIC NOT NULL DEFAULT 0,
+            module_scores JSONB DEFAULT '{}'::jsonb,
+            completeness_score NUMERIC,
+            quality_score NUMERIC,
+            consistency_score NUMERIC,
+            compliance_score NUMERIC,
+            predicted_approval_probability NUMERIC,
+            predicted_review_time_days INTEGER,
+            predicted_deficiency_count INTEGER,
+            risk_factors JSONB,
+            status TEXT NOT NULL DEFAULT 'pending',
+            assessed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+          )
+        `);
+
+        await client.query(`
+          CREATE TABLE IF NOT EXISTS innovation.readiness_criterion_evaluations (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            assessment_id UUID NOT NULL REFERENCES innovation.readiness_twin_assessments(id) ON DELETE CASCADE,
+            criterion_id UUID NOT NULL,
+            status TEXT NOT NULL DEFAULT 'not_met'
+              CHECK (status IN ('met','partially_met','not_met','not_applicable')),
+            score NUMERIC NOT NULL DEFAULT 0,
+            evidence_summary TEXT,
+            evidence_locations TEXT[],
+            gaps_identified TEXT[],
+            recommendations TEXT[],
+            estimated_effort_hours NUMERIC,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+          )
+        `);
+
+        await client.query(`
+          CREATE TABLE IF NOT EXISTS innovation.readiness_trends (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            program_id TEXT NOT NULL,
+            trend_date DATE NOT NULL DEFAULT CURRENT_DATE,
+            overall_score NUMERIC NOT NULL DEFAULT 0,
+            module_scores JSONB,
+            criteria_met_count INTEGER NOT NULL DEFAULT 0,
+            criteria_total_count INTEGER NOT NULL DEFAULT 0,
+            score_delta NUMERIC,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            UNIQUE (program_id, trend_date)
+          )
+        `);
+
+        // Seed default FDA NDA readiness criteria if table is empty
+        const countResult = await client.query(
+          `SELECT COUNT(*)::int AS cnt FROM innovation.readiness_criteria`
+        );
+        if (parseInt(countResult.rows[0].cnt) === 0) {
+          await this.seedDefaultCriteria(client);
+        }
+
+        SubmissionReadinessTwinService.tablesInitialized = true;
+        console.log('[ReadinessTwin] All tables initialized successfully');
+      } finally {
+        client.release();
+      }
+    } catch (err) {
+      console.warn('[ReadinessTwin] Table initialization warning:', (err as Error).message);
+    }
+  }
+
+  /**
+   * Seed default regulatory readiness criteria for FDA NDA submissions.
+   */
+  private async seedDefaultCriteria(client: any): Promise<void> {
+    const defaultCriteria = [
+      { code: 'ectd_structure', name: 'eCTD Structure Compliance', module: 'm1', desc: 'Submission follows eCTD format with valid XML backbone and all required module folders', weight: 1.5, req: 'mandatory', guidance: 'FDA eCTD Guidance v4.0' },
+      { code: 'form_356h', name: 'FDA Form 356h', module: 'm1', desc: 'Complete and signed FDA Form 356h included', weight: 1.0, req: 'mandatory', guidance: '21 CFR 314.50(a)' },
+      { code: 'user_fee', name: 'PDUFA User Fee', module: 'm1', desc: 'PDUFA user fee payment confirmed or waiver obtained', weight: 1.0, req: 'mandatory', guidance: 'PDUFA Reauthorization Act' },
+      { code: 'clinical_overview', name: 'Clinical Overview (2.5)', module: 'm2.5', desc: 'Module 2.5 Clinical Overview provides integrated analysis of clinical evidence', weight: 2.0, req: 'mandatory', guidance: 'ICH M4E(R2)' },
+      { code: 'clinical_summary', name: 'Clinical Summary (2.7)', module: 'm2.7', desc: 'Module 2.7 Clinical Summary with efficacy and safety summaries', weight: 2.0, req: 'mandatory', guidance: 'ICH M4E(R2)' },
+      { code: 'quality_summary', name: 'Quality Overall Summary (2.3)', module: 'm2.3', desc: 'Module 2.3 Quality Overall Summary covering drug substance and product', weight: 1.5, req: 'mandatory', guidance: 'ICH M4Q(R1)' },
+      { code: 'nonclinical_overview', name: 'Nonclinical Overview (2.4)', module: 'm2.4', desc: 'Module 2.4 Nonclinical Overview with integrated safety assessment', weight: 1.5, req: 'mandatory', guidance: 'ICH M4S(R2)' },
+      { code: 'drug_substance', name: 'Drug Substance (3.2.S)', module: 'm3.2.s', desc: 'Complete characterization of drug substance including manufacturing, controls, and stability', weight: 2.0, req: 'mandatory', guidance: 'ICH Q1-Q12' },
+      { code: 'drug_product', name: 'Drug Product (3.2.P)', module: 'm3.2.p', desc: 'Drug product formulation, manufacturing, specifications, and stability data', weight: 2.0, req: 'mandatory', guidance: 'ICH Q1-Q12' },
+      { code: 'stability_data', name: 'Stability Data', module: 'm3', desc: 'Minimum 6 months accelerated and 12 months long-term stability data', weight: 1.5, req: 'mandatory', guidance: 'ICH Q1A(R2), Q1E' },
+      { code: 'tox_package', name: 'Toxicology Package', module: 'm4', desc: 'Complete nonclinical toxicology package per ICH M3(R2)', weight: 1.5, req: 'mandatory', guidance: 'ICH M3(R2), S1-S11' },
+      { code: 'genotox_battery', name: 'Genotoxicity Battery', module: 'm4', desc: 'Standard genotoxicity battery (Ames, in vitro chromosomal, in vivo micronucleus)', weight: 1.0, req: 'mandatory', guidance: 'ICH S2(R1)' },
+      { code: 'pivotal_studies', name: 'Pivotal Clinical Studies', module: 'm5', desc: 'At least one adequate and well-controlled clinical study per 21 CFR 314.126', weight: 2.5, req: 'mandatory', guidance: '21 CFR 314.126, ICH E8/E9' },
+      { code: 'safety_database', name: 'Safety Database Size', module: 'm5', desc: 'Safety database meets ICH E1 requirements (300/100/1500 rule for chronic use)', weight: 2.0, req: 'mandatory', guidance: 'ICH E1' },
+      { code: 'statistical_analysis', name: 'Statistical Analysis Plan', module: 'm5', desc: 'Pre-specified statistical analysis plan with appropriate multiplicity control', weight: 1.5, req: 'mandatory', guidance: 'ICH E9(R1)' },
+      { code: 'labeling_draft', name: 'Draft Labeling', module: 'm1', desc: 'Proposed product labeling including prescribing information', weight: 1.0, req: 'mandatory', guidance: '21 CFR 201' },
+      { code: 'pediatric_plan', name: 'Pediatric Study Plan', module: 'm1', desc: 'Pediatric study plan or waiver request per PREA', weight: 0.8, req: 'conditional', guidance: 'PREA, 21 CFR 314.55' },
+      { code: 'rems', name: 'REMS Assessment', module: 'm1', desc: 'Risk Evaluation and Mitigation Strategy if safety profile warrants', weight: 0.8, req: 'conditional', guidance: 'FDA REMS Guidance' },
+      { code: 'environmental_assessment', name: 'Environmental Assessment', module: 'm1', desc: 'Environmental assessment or categorical exclusion claim', weight: 0.5, req: 'recommended', guidance: '21 CFR 25' },
+      { code: 'patent_info', name: 'Patent Information', module: 'm1', desc: 'Patent and exclusivity information for Orange Book listing', weight: 0.5, req: 'recommended', guidance: '21 CFR 314.53' },
+    ];
+
+    for (const c of defaultCriteria) {
+      await client.query(`
+        INSERT INTO innovation.readiness_criteria
+          (submission_type, agency, module_path, criterion_code, criterion_name, description, requirement_type, weight, guidance_reference, is_active)
+        VALUES ('NDA', 'FDA', $1, $2, $3, $4, $5, $6, $7, TRUE)
+        ON CONFLICT (submission_type, agency, criterion_code) DO NOTHING
+      `, [c.module, c.code, c.name, c.desc, c.req, c.weight, c.guidance]);
+    }
+
+    console.log('[ReadinessTwin] Seeded default FDA NDA readiness criteria');
   }
 
   /**

@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to ClinicalSageAI will be documented in this file.
+All notable changes to Concept2Cure.RI will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -41,7 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GRDHE (Global Regulatory Data Harmonization Engine) module
 
 ### Changed
-- Package renamed from `rest-express` to `clinicalsageai`
+- Package renamed from `rest-express` to `concept2cure-riai`
 - Added Node.js engine requirements (>=20.0.0)
 
 ### Fixed
@@ -84,5 +84,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/concept2cure/ClinicalSageAI-2-replit/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/concept2cure/ClinicalSageAI-2-replit/releases/tag/v1.0.0
+[Unreleased]: https://github.com/concept2cure/Concept2Cure.RI-2-replit/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/concept2cure/Concept2Cure.RI-2-replit/releases/tag/v1.0.0

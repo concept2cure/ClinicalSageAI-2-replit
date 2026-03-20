@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - AI Assistant Components Index
+ * Concept2Cure Client Portal V2 - AI Assistant Components Index
  */
 
 export { AIAssistant } from './AIAssistant';

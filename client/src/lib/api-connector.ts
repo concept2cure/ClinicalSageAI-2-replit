@@ -1,7 +1,7 @@
 import { apiRequest, extractData } from './queryClient';
 
 /**
- * TrialSage API Connector
+ * Concept2Cure API Connector
  *
  * This service provides a centralized interface for all API calls to the backend services.
  * It follows a modular structure based on the different service domains.
@@ -242,6 +242,20 @@ const analyticsApi = {
   getCriteriaTrends: async (params: any = {}): Promise<ApiResponse<any>> => {
     const queryString = buildQueryString(params);
     const response = await apiRequest('GET', `/api/analytics/criteria-trends${queryString}`);
+    return extractData(response);
+  },
+
+  // Get benchmark data
+  getBenchmarkData: async (params: any = {}): Promise<ApiResponse<any>> => {
+    const queryString = buildQueryString(params);
+    const response = await apiRequest('GET', `/api/analytics/benchmarks${queryString}`);
+    return extractData(response);
+  },
+
+  // Get AI model data
+  getAiModelData: async (params: any = {}): Promise<ApiResponse<any>> => {
+    const queryString = buildQueryString(params);
+    const response = await apiRequest('GET', `/api/analytics/ai-models${queryString}`);
     return extractData(response);
   },
 };

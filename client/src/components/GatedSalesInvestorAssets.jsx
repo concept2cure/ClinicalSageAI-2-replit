@@ -126,7 +126,7 @@ export default function GatedSalesInvestorAssets() {
     <div className="font-sans bg-gray-50 min-h-screen py-20">
       <Container>
         <div className="text-center mb-12">
-          <h1 className="text-5xl font-extrabold text-gray-900 mb-4">TrialSage Resource Hub</h1>
+          <h1 className="text-5xl font-extrabold text-gray-900 mb-4">Concept2Cure Resource Hub</h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Comprehensive resources for biotech and pharmaceutical experts to accelerate regulatory
             success.
@@ -173,7 +173,7 @@ export default function GatedSalesInvestorAssets() {
             <div className="bg-white p-8 rounded-2xl shadow-md border border-gray-100">
               <h2 className="text-3xl font-bold text-gray-900 mb-4">Your Premium Resources</h2>
               <p className="text-gray-600 mb-6">
-                Thank you for your interest in TrialSage. Access all resources below by clicking on
+                Thank you for your interest in Concept2Cure. Access all resources below by clicking on
                 each category.
               </p>
 

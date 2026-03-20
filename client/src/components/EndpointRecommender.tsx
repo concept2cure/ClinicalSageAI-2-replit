@@ -108,7 +108,7 @@ export default function EndpointRecommender() {
   };
 
   // Chart colors
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+  const COLORS = ['#6a9bcc', '#788c5d', '#d97706', '#d97757', '#6a9bcc'];
 
   // Handler for search action
   const handleSearch = async () => {
@@ -468,8 +468,8 @@ export default function EndpointRecommender() {
                             <YAxis label={{ value: 'Frequency (%)', angle: -90, position: 'insideLeft' }} />
                             <Tooltip />
                             <Legend />
-                            <Bar dataKey="frequency" name="Usage Frequency (%)" fill="#0088FE" />
-                            <Bar dataKey="successRate" name="Success Rate (%)" fill="#00C49F" />
+                            <Bar dataKey="frequency" name="Usage Frequency (%)" fill="#6a9bcc" />
+                            <Bar dataKey="successRate" name="Success Rate (%)" fill="#788c5d" />
                           </BarChart>
                         </ResponsiveContainer>
                       </div>
@@ -492,7 +492,7 @@ export default function EndpointRecommender() {
                                 labelLine={true}
                                 label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                                 outerRadius={100}
-                                fill="#8884d8"
+                                fill="#6a9bcc"
                                 dataKey="value"
                               >
                                 {getPhaseDistributionData(recommendations.endpoints[0].name).map((entry, index) => (

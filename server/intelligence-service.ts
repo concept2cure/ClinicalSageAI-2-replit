@@ -45,7 +45,7 @@ export class IntelligenceService {
     // Find similar trial reports in our database
     const similarCSRs = await this.findSimilarTrials(summary, indication, phase);
 
-    // Find TrialSage trials for the same indication/phase
+    // Find Concept2Cure trials for the same indication/phase
     const competitorTrials = await this.findCompetitorTrials(indication, phase);
 
     // Generate historical benchmarking section

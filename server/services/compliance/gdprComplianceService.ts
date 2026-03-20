@@ -2,7 +2,8 @@
  * GDPR Compliance Service
  *
  * Implements the core requirements of the EU General Data Protection Regulation
- * (Regulation 2016/679) for the ClinicalSageAI platform, covering:
+ * (Regulation 2016/679) for the Concept2Cure.RI platform, covering:
+ * (Regulation 2016/679) for the Concept2Cure platform, covering:
  *
  * - Records of Processing Activities (Article 30)
  * - Data Protection Impact Assessments (Article 35)

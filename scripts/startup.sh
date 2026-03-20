@@ -22,10 +22,10 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 # ============================================================================
 # CONFIGURATION - SINGLE SOURCE OF TRUTH
 # ============================================================================
-export DEFAULT_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/clinicalsage?sslmode=disable"
+export DEFAULT_DATABASE_URL="postgresql://postgres:postgres@localhost:5432/concept2cure-ri?sslmode=disable"
 export DATABASE_URL="${DATABASE_URL:-$DEFAULT_DATABASE_URL}"
-export DOCKER_DB_CONTAINER="clinicalsageai-2-replit-db-1"
-export DB_NAME="clinicalsage"
+export DOCKER_DB_CONTAINER="concept2cure-riai-2-replit-db-1"
+export DB_NAME="concept2cure-ri"
 export DB_USER="postgres"
 export DB_PASSWORD="postgres"
 export DB_HOST="localhost"
@@ -322,7 +322,13 @@ INSERT INTO organization_users (organization_id, user_id, role)
     'admin')
   ON CONFLICT ON CONSTRAINT unique_user_org DO NOTHING;
 
--- Demo Personas (password: demo123 for all)
+SEED_SQL
+
+    # Demo personas — only seeded when SEED_DEMO_ACCOUNTS=true (NOT in production)
+    if [ "${SEED_DEMO_ACCOUNTS:-false}" = "true" ] && [ "${NODE_ENV}" != "production" ]; then
+        log_info "Seeding demo personas (SEED_DEMO_ACCOUNTS=true, non-production)..."
+        run_sql <<'DEMO_SQL'
+-- Demo Personas (password: demo123 for all) — NEVER seed in production
 INSERT INTO users (email, name, password_hash, title, department, status, default_organization_id)
   VALUES ('sarah.chen@concept2cure.pro', 'Sarah Chen',
     '$2b$10$trZaDVYb2r3RQClw8LoI1u/PY/Bawe1mvOXJsv2fcy/1DXyRW0zgq',
@@ -361,8 +367,13 @@ INSERT INTO organization_users (organization_id, user_id, role)
     (SELECT id FROM users WHERE email = 'demo@concept2cure.pro'),
     'member')
   ON CONFLICT ON CONSTRAINT unique_user_org DO NOTHING;
-SEED_SQL
-    log_success "Auth tables and demo user seeded"
+DEMO_SQL
+        log_success "Demo personas seeded"
+    else
+        log_info "Skipping demo personas (set SEED_DEMO_ACCOUNTS=true in non-production to enable)"
+    fi
+
+    log_success "Auth tables and admin user seeded"
 }
 
 # ============================================================================
@@ -464,7 +475,7 @@ show_summary() {
 main() {
     echo ""
     echo "============================================================================"
-    echo "ClinicalSageAI Database Startup Script"
+    echo "Concept2Cure.RI Database Startup Script"
     echo "============================================================================"
     echo ""
 

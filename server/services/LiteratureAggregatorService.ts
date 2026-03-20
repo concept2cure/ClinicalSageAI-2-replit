@@ -7,16 +7,15 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
-import { getOpenAIClient } from './openai-client';
 import { pool } from '../db/setupLiterature';
 import dotenv from 'dotenv';
+import { ai } from '../lib/unified-ai-client';
 
 // Load environment variables
 dotenv.config();
 
 // Initialize OpenAI client for embeddings
-let openai: ReturnType<typeof getOpenAIClient> | null = null;
-try { openai = getOpenAIClient(); } catch {}
+
 
 // Define available literature sources with configuration
 export const LITERATURE_SOURCES = [

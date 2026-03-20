@@ -60,15 +60,15 @@ import {
 // SharePoint colors and styles
 const sharePointColors = {
   primary: '#0078D4',
-  primaryDark: '#106ebe',
+  primaryDark: '#c15f3c',
   primaryLight: '#2B88D8',
-  success: '#107C10',
+  success: '#788c5d',
   warning: '#FFB900',
   error: '#D13438',
-  neutral: '#605E5C',
-  neutralLight: '#EDEBE9',
-  neutralLighter: '#F3F2F1',
-  neutralLightest: '#FAF9F8',
+  neutral: '#6b6963',
+  neutralLight: '#e8e6dc',
+  neutralLighter: '#f4f3ee',
+  neutralLightest: '#faf9f5',
   white: '#FFFFFF',
   black: '#000000'
 };
@@ -84,8 +84,8 @@ const swimlaneColumns = [
     id: 'preview',
     title: 'Preview',
     status: 'pending',
-    color: '#605E5C',
-    bgColor: '#FAF9F8',
+    color: '#6b6963',
+    bgColor: '#faf9f5',
     description: 'Changes being reviewed'
   },
   {
@@ -93,7 +93,7 @@ const swimlaneColumns = [
     title: 'Validation',
     status: 'validating',
     color: '#FFB900',
-    bgColor: '#FAF9F8',
+    bgColor: '#faf9f5',
     description: 'FDA compliance checking'
   },
   {
@@ -101,23 +101,23 @@ const swimlaneColumns = [
     title: 'In Review',
     status: 'pending',
     color: '#0078D4',
-    bgColor: '#FAF9F8',
+    bgColor: '#faf9f5',
     description: 'Awaiting approval'
   },
   {
     id: 'approved',
     title: 'Approved',
     status: 'approved',
-    color: '#107C10',
-    bgColor: '#FAF9F8',
+    color: '#788c5d',
+    bgColor: '#faf9f5',
     description: 'Ready to apply'
   },
   {
     id: 'applied',
     title: 'Applied',
     status: 'completed',
-    color: '#107C10',
-    bgColor: '#FAF9F8',
+    color: '#788c5d',
+    bgColor: '#faf9f5',
     description: 'Completed changes'
   }
 ];
@@ -365,7 +365,7 @@ function SwimlaneColumn({ column, changes, onDrop, onAddNew, onEditChange, onDel
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
             <Circle className="h-3 w-3" style={{ color: column.color, fill: column.color }} />
-            <h3 className="font-semibold text-sm" style={{ fontFamily: 'Segoe UI, system-ui, sans-serif' }}>
+            <h3 className="font-semibold text-sm" style={{ fontFamily: 'Poppins, Arial, sans-serif' }}>
               {column.title}
             </h3>
             <Badge variant="secondary" className="text-xs">
@@ -566,7 +566,7 @@ export function WorkflowTimeline() {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="flex flex-col h-full" style={{ fontFamily: 'Segoe UI, system-ui, sans-serif' }}>
+      <div className="flex flex-col h-full" style={{ fontFamily: 'Poppins, Arial, sans-serif' }}>
         {/* Toolbar */}
         <div className="p-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
           <div className="flex items-center justify-between flex-wrap gap-4">

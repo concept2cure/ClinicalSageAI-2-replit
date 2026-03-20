@@ -1,5 +1,5 @@
 """
-Statistical Predictor Module for TrialSage
+Statistical Predictor Module for Concept2Cure
 
 This module provides advanced statistical modeling and prediction capabilities
 for clinical trial design, including sample size estimation, power analysis,

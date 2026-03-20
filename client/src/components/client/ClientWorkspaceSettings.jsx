@@ -142,7 +142,7 @@ const ClientWorkspaceSettings = ({ clientId: propClientId }) => {
         },
         appearance: {
           theme: data.appearance?.theme ?? 'system',
-          primaryColor: data.appearance?.primaryColor ?? '#0f172a',
+          primaryColor: data.appearance?.primaryColor ?? '#141413',
           brandLogo: data.appearance?.brandLogo ?? currentClientWorkspace?.logo ?? '',
           customFonts: data.appearance?.customFonts !== undefined ? data.appearance.customFonts : false,
           darkModeEnabled: data.appearance?.darkModeEnabled !== undefined ? data.appearance.darkModeEnabled : true,
@@ -213,7 +213,7 @@ const ClientWorkspaceSettings = ({ clientId: propClientId }) => {
       },
       appearance: {
         theme: 'system',
-        primaryColor: '#0f172a',
+        primaryColor: '#141413',
         brandLogo: currentClientWorkspace?.logo || '',
         customFonts: false,
         darkModeEnabled: true,

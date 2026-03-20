@@ -386,8 +386,8 @@ export default function EnrollmentStratifier({ studyId = "STUDY001", phase = "II
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="enrollment" fill="#3b82f6" name="Enrollment Score %" />
-                  <Bar dataKey="capacity" fill="#10b981" name="5-Month Capacity" />
+                  <Bar dataKey="enrollment" fill="#6a9bcc" name="Enrollment Score %" />
+                  <Bar dataKey="capacity" fill="#788c5d" name="5-Month Capacity" />
                   <Bar dataKey="risk" fill="#ef4444" name="Risk Score %" />
                 </BarChart>
               </ResponsiveContainer>
@@ -413,8 +413,8 @@ export default function EnrollmentStratifier({ studyId = "STUDY001", phase = "II
                     <Radar 
                       name="Selected Sites" 
                       dataKey="value" 
-                      stroke="#3b82f6" 
-                      fill="#3b82f6" 
+                      stroke="#6a9bcc" 
+                      fill="#6a9bcc" 
                       fillOpacity={0.6} 
                     />
                     <Tooltip />

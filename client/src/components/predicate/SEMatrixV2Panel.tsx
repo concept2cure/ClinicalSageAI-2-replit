@@ -108,7 +108,7 @@ function ReadinessGauge({ score }: { score: number }) {
     <div className="flex flex-col items-center gap-2">
       <div className="relative h-24 w-24">
         <svg viewBox="0 0 100 100" className="transform -rotate-90">
-          <circle cx="50" cy="50" r="40" fill="none" stroke="#e5e7eb" strokeWidth="8" />
+          <circle cx="50" cy="50" r="40" fill="none" stroke="#e8e6dc" strokeWidth="8" />
           <circle
             cx="50"
             cy="50"

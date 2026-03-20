@@ -321,7 +321,7 @@ export class StudyDesignAgentService {
    */
   private constructPrompt(message: string, fullContext: string): string {
     // Base system prompt with instructions for the agent
-    const systemPrompt = `You are TrialSage, an expert AI assistant trained on 5,000+ clinical study reports (CSRs) and academic literature. 
+    const systemPrompt = `You are Concept2Cure, an expert AI assistant trained on 5,000+ clinical study reports (CSRs) and academic literature. 
 Your job is to help clinical teams design better trials by:
 - Recommending endpoints based on successful trials in similar indications
 - Suggesting study arms or dose ranges based on precedent
@@ -345,7 +345,7 @@ Include a references section at the end of your response if you've cited any sou
     }
 
     // Add user message
-    fullPrompt += `User: ${message}\n\nTrialSage:`;
+    fullPrompt += `User: ${message}\n\nConcept2Cure:`;
 
     return fullPrompt;
   }

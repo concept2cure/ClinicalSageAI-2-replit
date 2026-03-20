@@ -10,6 +10,15 @@
 import { pool } from '../db.js';
 import { recordUsage, checkQuota } from './usage-metering.js';
 
+// AI-powered drafting via the unified AI client (Claude primary)
+let ai: { complete: (messages: any, options?: any) => Promise<string> } | null = null;
+try {
+  const mod = await import('../lib/unified-ai-client.js');
+  ai = mod.ai;
+} catch {
+  console.warn('[CSR Builder] Unified AI client not available, using template drafting');
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // ICH E3 SECTION STRUCTURE
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -175,20 +184,37 @@ export async function launchCSRBuild(request: CSRBuildRequest): Promise<CSRBuild
 
 /**
  * Generate content for CSR sections using study information.
+ * Uses AI Gateway (Claude) when available, falls back to templates.
  */
 async function generateCSRSections(
   sections: CSRSection[],
   request: CSRBuildRequest
 ): Promise<CSRSection[]> {
   const info = request.studyInfo;
+  const useAI = !!ai && !request.sectionsToGenerate; // AI for full builds only
 
   for (const section of sections) {
-    section.content = generateSectionContent(section, info);
+    if (request.sectionsToGenerate?.length && !request.sectionsToGenerate.includes(section.number)) {
+      continue;
+    }
+
+    if (useAI) {
+      section.content = await generateSectionWithAI(section, info);
+    } else {
+      section.content = generateSectionTemplate(section, info);
+    }
     section.status = section.content ? 'drafted' : 'empty';
 
     if (section.childSections) {
       for (const child of section.childSections) {
-        child.content = generateSectionContent(child, info);
+        if (request.sectionsToGenerate?.length && !request.sectionsToGenerate.includes(child.number)) {
+          continue;
+        }
+        if (useAI) {
+          child.content = await generateSectionWithAI(child, info);
+        } else {
+          child.content = generateSectionTemplate(child, info);
+        }
         child.status = child.content ? 'drafted' : 'empty';
       }
     }
@@ -197,11 +223,223 @@ async function generateCSRSections(
   return sections;
 }
 
-function generateSectionContent(
+/**
+ * AI-powered section drafting via Claude (AI Gateway).
+ * Generates regulatory-grade content aligned with ICH E3 structure.
+ */
+async function generateSectionWithAI(
+  section: CSRSection,
+  info: CSRBuildRequest['studyInfo']
+): Promise<string> {
+  if (!ai) return generateSectionTemplate(section, info);
+
+  const systemPrompt = `You are an expert clinical study report writer specializing in ICH E3 guideline-compliant CSRs.
+You are drafting a section of a Clinical Study Report for a ${info.phase} clinical trial.
+
+Study Details:
+- Title: ${info.title}
+- Protocol: ${info.protocolNumber}
+- Phase: ${info.phase}
+- Indication: ${info.indication}
+- Sponsor: ${info.sponsor}
+- Drug: ${info.investigationalProduct}
+${info.comparator ? `- Comparator: ${info.comparator}` : ''}
+- Design: ${info.studyDesign}
+- Primary Endpoint: ${info.primaryEndpoint}
+${info.secondaryEndpoints?.length ? `- Secondary Endpoints: ${info.secondaryEndpoints.join('; ')}` : ''}
+${info.sampleSize ? `- Sample Size: ${info.sampleSize}` : ''}
+${info.treatmentDuration ? `- Treatment Duration: ${info.treatmentDuration}` : ''}
+
+Write professional regulatory prose suitable for FDA/EMA submission. Use precise clinical language.
+Do NOT use markdown. Write in plain text with section headers in CAPS.
+Include placeholders like [DATA TO BE INSERTED] where actual study data would go.`;
+
+  try {
+    const content = await ai.complete(
+      [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `Draft ICH E3 Section ${section.number}: ${section.title}\n\nDescription: ${section.description}\n\nWrite a complete, submission-ready draft for this section. Include all required elements per ICH E3 guidelines.` },
+      ],
+      {
+        taskType: 'document_drafting',
+        maxTokens: 4096,
+        temperature: 0.3,
+        callerModule: 'csr-builder/section-draft',
+      }
+    );
+    return content;
+  } catch (err) {
+    console.warn(`[CSR Builder] AI drafting failed for section ${section.number}, using template:`, err);
+    return generateSectionTemplate(section, info);
+  }
+}
+
+/**
+ * Draft a single CSR section with AI on demand.
+ */
+export async function draftCSRSection(
+  sectionNumber: string,
+  studyInfo: CSRBuildRequest['studyInfo']
+): Promise<{ content: string; isAI: boolean }> {
+  const allSections = [...ICH_E3_STRUCTURE];
+  let targetSection: CSRSection | undefined;
+
+  for (const s of allSections) {
+    if (s.number === sectionNumber) { targetSection = s; break; }
+    if (s.childSections) {
+      const child = s.childSections.find(c => c.number === sectionNumber);
+      if (child) { targetSection = child; break; }
+    }
+  }
+
+  if (!targetSection) {
+    return { content: '', isAI: false };
+  }
+
+  if (ai) {
+    const content = await generateSectionWithAI(targetSection, studyInfo);
+    return { content, isAI: true };
+  }
+
+  return { content: generateSectionTemplate(targetSection, studyInfo), isAI: false };
+}
+
+/**
+ * Cross-study comparison: find similar CSRs in the database and compare key metrics.
+ */
+export async function compareWithExistingCSRs(
+  indication: string,
+  phase: string,
+  endpoint: string,
+  organizationId?: number
+): Promise<Array<{
+  studyId: string;
+  title: string;
+  phase: string;
+  indication: string;
+  sampleSize: number;
+  primaryEndpoint: string;
+  outcome: string;
+  similarity: number;
+}>> {
+  try {
+    // Tenant-scoped query with proper parenthesization
+    const query = organizationId
+      ? `SELECT id, title, phase, indication, sample_size, primary_endpoint, outcome
+         FROM csr_reports
+         WHERE (LOWER(indication) LIKE $1 OR LOWER(primary_endpoint) LIKE $2)
+         AND organization_id = $3
+         ORDER BY created_at DESC
+         LIMIT 20`
+      : `SELECT id, title, phase, indication, sample_size, primary_endpoint, outcome
+         FROM csr_reports
+         WHERE (LOWER(indication) LIKE $1 OR LOWER(primary_endpoint) LIKE $2)
+         ORDER BY created_at DESC
+         LIMIT 20`;
+    const params = organizationId
+      ? [`%${indication.toLowerCase()}%`, `%${endpoint.toLowerCase()}%`, organizationId]
+      : [`%${indication.toLowerCase()}%`, `%${endpoint.toLowerCase()}%`];
+    const result = await pool.query(query, params);
+
+    return (result.rows || []).map((row: Record<string, unknown>) => ({
+      studyId: String(row.id || ''),
+      title: String(row.title || 'Untitled'),
+      phase: String(row.phase || ''),
+      indication: String(row.indication || ''),
+      sampleSize: Number(row.sample_size) || 0,
+      primaryEndpoint: String(row.primary_endpoint || ''),
+      outcome: String(row.outcome || 'Unknown'),
+      similarity: indication.toLowerCase() === String(row.indication || '').toLowerCase() ? 0.95 : 0.6,
+    }));
+  } catch (err) {
+    console.warn('[CSR Builder] Cross-study comparison query failed:', err);
+    return [];
+  }
+}
+
+/**
+ * Analyze safety signals across CSRs for a given drug/indication.
+ */
+export async function analyzeCSRSafetySignals(
+  drugName: string,
+  indication: string
+): Promise<{
+  signals: Array<{
+    term: string;
+    frequency: string;
+    severity: string;
+    relatedStudies: number;
+    disproportionalityScore: number;
+  }>;
+  summary: string;
+}> {
+  if (!ai) {
+    return {
+      signals: [],
+      summary: 'AI analysis unavailable. Please ensure the AI Gateway is configured.',
+    };
+  }
+
+  try {
+    const prompt = `Analyze potential safety signals for ${drugName} in the context of ${indication}.
+Based on your knowledge of clinical pharmacology and regulatory precedents, identify the most likely adverse events
+that would be monitored in a clinical trial for this drug class and indication.
+
+Return a JSON object with this structure:
+{
+  "signals": [
+    { "term": "AE term (MedDRA PT)", "frequency": "common/uncommon/rare", "severity": "mild/moderate/severe", "relatedStudies": <number>, "disproportionalityScore": <0-5> }
+  ],
+  "summary": "Brief regulatory-grade summary of the safety landscape"
+}`;
+
+    const response = await ai.complete(
+      [
+        { role: 'system', content: 'You are a pharmacovigilance expert. Return only valid JSON.' },
+        { role: 'user', content: prompt },
+      ],
+      {
+        taskType: 'regulatory_review',
+        maxTokens: 4096,
+        temperature: 0.2,
+        callerModule: 'csr-builder/safety-signals',
+      }
+    );
+
+    try {
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        // Validate expected shape
+        if (parsed && typeof parsed === 'object' && Array.isArray(parsed.signals)) {
+          return {
+            signals: parsed.signals.map((s: Record<string, unknown>) => ({
+              term: String(s.term || ''),
+              frequency: String(s.frequency || 'unknown'),
+              severity: String(s.severity || 'unknown'),
+              relatedStudies: Number(s.relatedStudies) || 0,
+              disproportionalityScore: Number(s.disproportionalityScore) || 0,
+            })),
+            summary: String(parsed.summary || ''),
+          };
+        }
+      }
+    } catch { /* fall through */ }
+
+    return { signals: [], summary: response };
+  } catch (err) {
+    console.warn('[CSR Builder] Safety signal analysis failed:', err);
+    return { signals: [], summary: 'Analysis failed — please retry.' };
+  }
+}
+
+/**
+ * Template-based section generation (fallback when AI unavailable).
+ */
+function generateSectionTemplate(
   section: CSRSection,
   info: CSRBuildRequest['studyInfo']
 ): string {
-  // Template-based generation with placeholders for LLM enhancement
   const templates: Record<string, string> = {
     '1': `CLINICAL STUDY REPORT\n\n${info.title}\n\nProtocol Number: ${info.protocolNumber}\nPhase: ${info.phase}\nIndication: ${info.indication}\nSponsor: ${info.sponsor}\nInvestigational Product: ${info.investigationalProduct}\n${info.comparator ? `Comparator: ${info.comparator}\n` : ''}`,
 
@@ -210,6 +448,8 @@ function generateSectionContent(
     '2.2': `Primary Objective: To evaluate ${info.primaryEndpoint} of ${info.investigationalProduct} in patients with ${info.indication}.\n${info.secondaryEndpoints?.length ? `\nSecondary Objectives:\n${info.secondaryEndpoints.map((e, i) => `${i + 1}. ${e}`).join('\n')}` : ''}`,
 
     '2.3': `This was a ${info.studyDesign} study of ${info.investigationalProduct}${info.comparator ? ` versus ${info.comparator}` : ''} in patients with ${info.indication}.${info.sampleSize ? ` Approximately ${info.sampleSize} subjects were planned for enrollment.` : ''}${info.treatmentDuration ? ` The treatment duration was ${info.treatmentDuration}.` : ''}`,
+
+    '5': `This study was conducted in accordance with the ethical principles that have their origin in the Declaration of Helsinki and that are consistent with ICH/Good Clinical Practice and the applicable regulatory requirements. The protocol and amendments were reviewed and approved by the Institutional Review Board (IRB) or Independent Ethics Committee (IEC) at each participating site. Written informed consent was obtained from all patients prior to performing any study-specific procedures.`,
 
     '7': `${info.indication} represents a significant area of unmet medical need. ${info.investigationalProduct} is being developed for the treatment of ${info.indication}.\n\nThis Phase ${info.phase} study was designed to evaluate the ${info.primaryEndpoint} of ${info.investigationalProduct} in patients with ${info.indication}.`,
 
@@ -223,7 +463,17 @@ function generateSectionContent(
 
     '9.3': `Patients eligible for this study were adults with a confirmed diagnosis of ${info.indication}.\n\n[Inclusion and exclusion criteria to be populated from protocol]`,
 
-    '13': `This Phase ${info.phase} ${info.studyDesign} study evaluated the ${info.primaryEndpoint} of ${info.investigationalProduct} in patients with ${info.indication}.\n\n[Efficacy discussion, safety summary, and benefit-risk conclusions to be drafted based on study results]`,
+    '9.7': `The statistical analysis plan (SAP) was finalized prior to database lock. The primary analysis population was the intent-to-treat (ITT) population, defined as all randomized patients who received at least one dose of study treatment. The primary endpoint of ${info.primaryEndpoint} was analyzed using [statistical method to be specified]. A two-sided significance level of 0.05 was used for the primary analysis.${info.sampleSize ? `\n\nSample size: ${info.sampleSize} patients were planned to provide [X]% power to detect a clinically meaningful difference.` : ''}`,
+
+    '10.1': `[DATA TO BE INSERTED]\n\nA total of [N] patients were screened, of whom [N] were randomized${info.comparator ? ` to ${info.investigationalProduct} (n=[N]) or ${info.comparator} (n=[N])` : ''}. The most common reasons for screen failure were [reasons]. [N] patients completed the study treatment period. The most common reasons for discontinuation were [reasons].`,
+
+    '11.4': `[DATA TO BE INSERTED]\n\nThe primary endpoint of ${info.primaryEndpoint} was met/not met. In the ITT population, ${info.investigationalProduct} demonstrated [result] compared with ${info.comparator || 'baseline'} (p=[value]).`,
+
+    '12.2': `[DATA TO BE INSERTED]\n\nAdverse events were reported by [N]% of patients in the ${info.investigationalProduct} group${info.comparator ? ` and [N]% in the ${info.comparator} group` : ''}. The most common adverse events (≥5% incidence) were [list]. Most adverse events were mild or moderate in severity.`,
+
+    '12.3': `[DATA TO BE INSERTED]\n\n[N] deaths occurred during the study. [N] serious adverse events (SAEs) were reported. Individual narratives for deaths and SAEs are provided below.`,
+
+    '13': `This Phase ${info.phase} ${info.studyDesign} study evaluated the ${info.primaryEndpoint} of ${info.investigationalProduct} in patients with ${info.indication}.\n\nEFFICACY DISCUSSION\n[To be drafted based on study results]\n\nSAFETY DISCUSSION\n[To be drafted based on safety data]\n\nBENEFIT-RISK ASSESSMENT\nBased on the efficacy and safety data from this study, the benefit-risk profile of ${info.investigationalProduct} is considered [favorable/unfavorable] for the treatment of ${info.indication}.`,
   };
 
   return templates[section.number] || '';
@@ -239,5 +489,8 @@ export function getICHE3Structure(): CSRSection[] {
 export default {
   launchCSRBuild,
   getICHE3Structure,
+  draftCSRSection,
+  compareWithExistingCSRs,
+  analyzeCSRSafetySignals,
   ICH_E3_STRUCTURE,
 };

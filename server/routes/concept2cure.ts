@@ -96,6 +96,7 @@ const sendSuccess = <T>(res: Response, data: T, meta?: Record<string, unknown>) 
   }
   return res.json({ success: true, data });
 };
+import { ai } from '../lib/unified-ai-client';
 
 const sendError = (
   res: Response,
@@ -10343,8 +10344,7 @@ router.post('/conversations/:conversationId/summarize', authMiddleware, async (r
     let structured: any;
     try {
       const { getOpenAIClient } = await import('../services/openai-client');
-      const openai = getOpenAIClient();
-      const completion = await openai.chat.completions.create({
+      const aiResult = await ai.chat({
         model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: 'You are a regulatory affairs analyst. Produce concise, structured summaries.' },
@@ -10354,7 +10354,7 @@ router.post('/conversations/:conversationId/summarize', authMiddleware, async (r
         temperature: 0.3,
       });
 
-      const responseText = completion.choices[0]?.message?.content || '{}';
+      const responseText = aiResult.content || '{}';
       // Extract JSON from response (handle markdown code blocks)
       const jsonMatch = responseText.match(/\{[\s\S]*\}/);
       structured = jsonMatch ? JSON.parse(jsonMatch[0]) : {
@@ -10490,12 +10490,11 @@ router.post('/conversations/:conversationId/promote', authMiddleware, async (req
     let documentContent: string;
     try {
       const { getOpenAIClient } = await import('../services/openai-client');
-      const openai = getOpenAIClient();
       const conversationText = messages
         .map((m: any) => `[${m.role}]: ${m.content}`)
         .join('\n\n');
 
-      const completion = await openai.chat.completions.create({
+      const aiResult = await ai.chat({
         model: 'gpt-4o-mini',
         messages: [
           {
@@ -10510,7 +10509,7 @@ router.post('/conversations/:conversationId/promote', authMiddleware, async (req
         max_tokens: 4000,
         temperature: 0.3,
       });
-      documentContent = completion.choices[0]?.message?.content || '';
+      documentContent = aiResult.content || '';
     } catch {
       // Fallback: raw conversation export
       documentContent = `# ${title}\n\n_Promoted from conversation on ${new Date().toISOString()}_\n\n` +
@@ -10604,12 +10603,11 @@ router.post('/conversations/:conversationId/extract-decisions', authMiddleware, 
 
     try {
       const { getOpenAIClient } = await import('../services/openai-client');
-      const openai = getOpenAIClient();
       const conversationText = messages
         .map((m: any) => `[${m.role}]: ${m.content}`)
         .join('\n\n');
 
-      const completion = await openai.chat.completions.create({
+      const aiResult = await ai.chat({
         model: 'gpt-4o-mini',
         messages: [
           {
@@ -10625,7 +10623,7 @@ router.post('/conversations/:conversationId/extract-decisions', authMiddleware, 
         temperature: 0.2,
       });
 
-      const responseText = completion.choices[0]?.message?.content || '{}';
+      const responseText = aiResult.content || '{}';
       const jsonMatch = responseText.match(/\{[\s\S]*\}/);
       const extracted = jsonMatch ? JSON.parse(jsonMatch[0]) : {
         decisions: [], risks: [], openQuestions: [], actionItems: [],
@@ -10639,6 +10637,139 @@ router.post('/conversations/:conversationId/extract-decisions', authMiddleware, 
   } catch (error: any) {
     logConcept2cureError('decision extraction', error);
     return sendError(res, 500, 'Failed to extract decisions');
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PRECEDENTS — Regulatory precedent/predicate data for Intelligence Hub
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.get('/precedents', async (req: Request, res: Response) => {
+  try {
+    const orgId = (req as any).user?.organizationId || (req as any).tenantContext?.organizationId;
+
+    // Try to load precedents from the precedent engine or predicate intelligence tables
+    let precedents: any[] = [];
+    try {
+      const result = await pool.query(
+        `SELECT id, device_name as name, pathway, decision_date as "decisionDate",
+                predicate_device as "predicateDevice", outcome, similarity,
+                key_questions as "keyQuestions"
+         FROM predicate_intelligence_results
+         WHERE organization_id = $1
+         ORDER BY decision_date DESC
+         LIMIT 50`,
+        [orgId || 1]
+      );
+      precedents = result.rows;
+    } catch {
+      // Table may not exist yet — return empty array gracefully
+    }
+
+    return sendSuccess(res, precedents);
+  } catch (error: any) {
+    logConcept2cureError('precedents fetch', error);
+    return sendError(res, 500, 'Failed to fetch precedent data');
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PATENTS — IP portfolio data for Legal Center
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.get('/patents', async (req: Request, res: Response) => {
+  try {
+    const orgId = (req as any).user?.organizationId || (req as any).tenantContext?.organizationId;
+
+    let patents: any[] = [];
+    try {
+      const result = await pool.query(
+        `SELECT id, title, patent_number as "patentNumber", jurisdiction,
+                status, filing_date as "filingDate", expiration_date as "expirationDate",
+                inventors, category, fto_status as "ftoStatus",
+                related_compounds as "relatedCompounds"
+         FROM patent_portfolio
+         WHERE organization_id = $1
+         ORDER BY filing_date DESC`,
+        [orgId || 1]
+      );
+      patents = result.rows;
+    } catch {
+      // Table may not exist yet — return empty array gracefully
+    }
+
+    return res.json(patents);
+  } catch (error: any) {
+    logConcept2cureError('patents fetch', error);
+    return sendError(res, 500, 'Failed to fetch patent data');
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// COMPLIANCE — Compliance tracking data for Legal Center
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.get('/compliance', async (req: Request, res: Response) => {
+  try {
+    const orgId = (req as any).user?.organizationId || (req as any).tenantContext?.organizationId;
+
+    let complianceItems: any[] = [];
+    try {
+      const result = await pool.query(
+        `SELECT id, framework, requirement, status,
+                last_audit_date as "lastAuditDate", next_audit_date as "nextAuditDate",
+                findings, capa_count as "capaCount", owner, risk_level as "riskLevel"
+         FROM compliance_tracking
+         WHERE organization_id = $1
+         ORDER BY next_audit_date ASC`,
+        [orgId || 1]
+      );
+      complianceItems = result.rows;
+    } catch {
+      // Table may not exist yet — return empty array gracefully
+    }
+
+    return res.json(complianceItems);
+  } catch (error: any) {
+    logConcept2cureError('compliance fetch', error);
+    return sendError(res, 500, 'Failed to fetch compliance data');
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TEAM WORKLOAD — Task workload per team member for Mission Control
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.get('/team/workload', async (req: Request, res: Response) => {
+  try {
+    const orgId = (req as any).user?.organizationId || (req as any).tenantContext?.organizationId;
+
+    let workload: any[] = [];
+    try {
+      // Aggregate task counts by assignee from the unified tasks table
+      const result = await pool.query(
+        `SELECT
+           u.id as "memberId",
+           u.name as "memberName",
+           COALESCE(SUM(CASE WHEN t.status = 'assigned' OR t.status = 'in_progress' THEN 1 ELSE 0 END), 0)::int as assigned,
+           COALESCE(SUM(CASE WHEN t.status = 'in_review' THEN 1 ELSE 0 END), 0)::int as "inReview",
+           COALESCE(SUM(CASE WHEN t.due_date < NOW() AND t.status NOT IN ('completed', 'cancelled') THEN 1 ELSE 0 END), 0)::int as overdue
+         FROM users u
+         LEFT JOIN tasks t ON t.assigned_to = u.id AND t.organization_id = $1
+         WHERE u.organization_id = $1
+         GROUP BY u.id, u.name
+         ORDER BY u.name`,
+        [orgId || 1]
+      );
+      workload = result.rows;
+    } catch {
+      // Tables may not exist yet — return empty array gracefully
+    }
+
+    return res.json(workload);
+  } catch (error: any) {
+    logConcept2cureError('team workload fetch', error);
+    return sendError(res, 500, 'Failed to fetch workload data');
   }
 });
 

@@ -1,7 +1,7 @@
 /**
  * Blockchain Service
  *
- * This service provides blockchain verification for documents in the TrialSage platform,
+ * This service provides blockchain verification for documents in the Concept2Cure platform,
  * ensuring immutability and provenance of regulatory submissions.
  */
 

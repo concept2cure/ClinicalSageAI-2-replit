@@ -1,7 +1,5 @@
 // Enhanced CMC generation service with AI capabilities
-import { getOpenAIClient } from '../../services/openai-client';
-
-const openai = getOpenAIClient();
+import { ai } from '../../lib/unified-ai-client';
 
 export class EnhancedCMCService {
   static async generateEnhancedBlueprint(data: {
@@ -147,7 +145,7 @@ Ensure all content is:
 - Technically accurate and comprehensive
 - Formatted for professional presentation`;
 
-    const completion = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4o',
       messages: [
         {
@@ -164,7 +162,7 @@ Ensure all content is:
       temperature: 0.3,
     });
 
-    const aiContent = completion.choices[0].message.content;
+    const aiContent = aiResult.content;
 
     return {
       sections: {
@@ -220,7 +218,7 @@ Identify specific regulatory risks, compliance gaps, and provide actionable reco
 
 Format as JSON array with: {"type": "risk_level", "message": "specific_concern", "section": "CMC_section", "priority": "high/medium/low", "recommendation": "action_needed"}`;
 
-      const completion = await openai.chat.completions.create({
+      const aiResult = await ai.chat({
         model: 'gpt-4o',
         messages: [
           {
@@ -237,7 +235,7 @@ Format as JSON array with: {"type": "risk_level", "message": "specific_concern",
         temperature: 0.2,
       });
 
-      const aiResponse = completion.choices[0].message.content;
+      const aiResponse = aiResult.content;
 
       // Parse AI response and return structured alerts
       try {
@@ -381,7 +379,7 @@ Include recent developments in:
 - Container closure systems
 - Analytical method validation`;
 
-      const completion = await openai.chat.completions.create({
+      const aiResult = await ai.chat({
         model: 'gpt-4o',
         messages: [
           {
@@ -398,7 +396,7 @@ Include recent developments in:
         temperature: 0.1,
       });
 
-      const aiResponse = completion.choices[0].message.content;
+      const aiResponse = aiResult.content;
 
       try {
         const updates = JSON.parse(aiResponse || '[]');
@@ -481,7 +479,7 @@ Drug Information:
 
 Format as comprehensive QbD framework suitable for regulatory submission.`;
 
-      const completion = await openai.chat.completions.create({
+      const aiResult = await ai.chat({
         model: 'gpt-4o',
         messages: [
           {
@@ -499,7 +497,7 @@ Format as comprehensive QbD framework suitable for regulatory submission.`;
       });
 
       return {
-        qbdFramework: completion.choices[0].message.content,
+        qbdFramework: aiResult.content,
         generated: true,
         timestamp: new Date().toISOString(),
       };
@@ -531,7 +529,7 @@ Dosage Form: ${data.structuredInputs.dosageForm}
 
 Provide submission-ready protocol format.`;
 
-      const completion = await openai.chat.completions.create({
+      const aiResult = await ai.chat({
         model: 'gpt-4o',
         messages: [
           {
@@ -549,7 +547,7 @@ Provide submission-ready protocol format.`;
       });
 
       return {
-        validationProtocol: completion.choices[0].message.content,
+        validationProtocol: aiResult.content,
         generated: true,
         timestamp: new Date().toISOString(),
       };

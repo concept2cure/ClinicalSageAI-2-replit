@@ -1,51 +1,51 @@
-/workspaces/ClinicalSageAI-2-replit/server/openai-service.ts:8:const client = new OpenAI({
-/workspaces/ClinicalSageAI-2-replit/server/api/drafting/routes.ts:101:const openai = new OpenAI({
-/workspaces/ClinicalSageAI-2-replit/server/api/cmc/playbookRoutes.ts:26:const openai = new OpenAI({
-/workspaces/ClinicalSageAI-2-replit/server/api/cmc/enhancedCMCService.ts:4:const openai = new OpenAI({
-/workspaces/ClinicalSageAI-2-replit/server/api/cmc/blueprintRoutes.ts:12:const openai = new OpenAI({
-/workspaces/ClinicalSageAI-2-replit/server/api/cmc/regulatory_aiDraft.ts:80:    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
-/workspaces/ClinicalSageAI-2-replit/server/lib/multi-provider-llm.ts:161:        this.clients.set(provider, new OpenAI(clientConfig));
-/workspaces/ClinicalSageAI-2-replit/server/routes/concept2cure.ts:1389:    const openai = new OpenAI({ apiKey });
-/workspaces/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:1911:        const openai = new OpenAI({
-/workspaces/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:4650:      openai = new OpenAI({
-/workspaces/ClinicalSageAI-2-replit/server/routes/cortex-unified.ts:245:        const openai = new OpenAI({ apiKey: openaiKey });
-/workspaces/ClinicalSageAI-2-replit/server/services/foresight-feedback-orchestrator.ts:58:    this.openai = new OpenAI({
-/workspaces/ClinicalSageAI-2-replit/server/services/EvidenceManagementService.ts:62:      this.openai = new OpenAI({ apiKey });
-/workspaces/ClinicalSageAI-2-replit/server/services/citationEnforcementService.ts:176:      this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-/workspaces/ClinicalSageAI-2-replit/server/services/openai-service.ts:12:const openai = new OpenAI({
-/workspaces/ClinicalSageAI-2-replit/server/services/openai-service.ts:17: * Create a new OpenAI Assistant
-/workspaces/ClinicalSageAI-2-replit/server/services/keywordExtractionService.ts:98:const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-/workspaces/ClinicalSageAI-2-replit/server/services/LiteratureSummarizerService.ts:20:  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-/workspaces/ClinicalSageAI-2-replit/server/services/enhancedEmbeddingService.ts:120:    this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-/workspaces/ClinicalSageAI-2-replit/server/services/aiRecommendationService.ts:13:const openai = new OpenAI({
-/workspaces/ClinicalSageAI-2-replit/server/services/predictiveSectionService.ts:10:const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-/workspaces/ClinicalSageAI-2-replit/server/services/lumen-insights-service.ts:61:    this.openai = new OpenAI({
-/workspaces/ClinicalSageAI-2-replit/server/services/figureGenerationService.ts:279:    const openai = new OpenAI({ apiKey });
-/workspaces/ClinicalSageAI-2-replit/server/services/figureGenerationService.ts:373:    const openai = new OpenAI({ apiKey });
-/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:283:      this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:291:      this.anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-/workspaces/ClinicalSageAI-2-replit/server/services/aiProviderRouter.ts:481:    const moonshot = new OpenAI({
-/workspaces/ClinicalSageAI-2-replit/server/services/complianceService.ts:5:const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-/workspaces/ClinicalSageAI-2-replit/server/services/ai/openai-orchestrator.ts:12:const openai = new OpenAI({
-/workspaces/ClinicalSageAI-2-replit/server/services/autoExtractionPipeline.ts:232:const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-/workspaces/ClinicalSageAI-2-replit/server/services/realTimeValidationService.ts:57:    this.openai = new OpenAI({
-/workspaces/ClinicalSageAI-2-replit/server/services/foresight-ai-engine.ts:27:const openai = new OpenAI({
-/workspaces/ClinicalSageAI-2-replit/server/services/advancedRAGPipeline.ts:143:    this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-/workspaces/ClinicalSageAI-2-replit/server/services/innovation/evidence-confidence-heatmap-service.ts:123:    this.openai = new OpenAI({ apiKey: openaiApiKey || process.env.OPENAI_API_KEY });
-/workspaces/ClinicalSageAI-2-replit/server/services/innovation/regulatory-delta-radar-service.ts:103:    this.openai = new OpenAI({ apiKey: openaiApiKey || process.env.OPENAI_API_KEY });
-/workspaces/ClinicalSageAI-2-replit/server/services/innovation/regulatory-negotiation-logbook-service.ts:137:    this.openai = new OpenAI({ apiKey: openaiApiKey || process.env.OPENAI_API_KEY });
-/workspaces/ClinicalSageAI-2-replit/server/services/innovation/compliance-guardrails-sdk-service.ts:172:    this.openai = new OpenAI({ apiKey: openaiApiKey || process.env.OPENAI_API_KEY });
-/workspaces/ClinicalSageAI-2-replit/server/services/innovation/outcome-based-template-learning-service.ts:124:    this.openai = new OpenAI({ apiKey: openaiApiKey || process.env.OPENAI_API_KEY });
-/workspaces/ClinicalSageAI-2-replit/server/services/innovation/auto-traceability-service.ts:112:    this.openai = new OpenAI({ apiKey: openaiApiKey || process.env.OPENAI_API_KEY });
-/workspaces/ClinicalSageAI-2-replit/server/services/innovation/submission-readiness-twin-service.ts:135:    this.openai = new OpenAI({ apiKey: openaiApiKey || process.env.OPENAI_API_KEY });
-/workspaces/ClinicalSageAI-2-replit/server/services/cerGenerator.ts:13:const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-/workspaces/ClinicalSageAI-2-replit/server/services/eSTARPlusBuilder.ts:13:const openai = new OpenAI({
-/workspaces/ClinicalSageAI-2-replit/server/services/confidenceScoringEngine.ts:105:const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-/workspaces/ClinicalSageAI-2-replit/server/services/sentenceTraceabilityService.ts:193:const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-/workspaces/ClinicalSageAI-2-replit/server/services/LiteratureAggregatorService.ts:19:  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-/workspaces/ClinicalSageAI-2-replit/server/services/DocumentDataCenterService.ts:42:  openai = new OpenAI({
-/workspaces/ClinicalSageAI-2-replit/server/workers/entity-extraction-worker.ts:110:    this.openai = new OpenAI({ 
-/workspaces/ClinicalSageAI-2-replit/server/workers/layout-aware-ingestion.ts:85:const openai = new OpenAI({
-/workspaces/ClinicalSageAI-2-replit/server/workers/vectorization-worker.ts:47:const openai = new OpenAI({
-/workspaces/ClinicalSageAI-2-replit/server/src/routes/obligations.router.ts:15:const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-/workspaces/ClinicalSageAI-2-replit/server/src/services/reg/playbook.ts:20:const ai = () => new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+/workspaces/Concept2Cure.RI-2-replit/server/openai-service.ts:8:const client = new OpenAI({
+/workspaces/Concept2Cure.RI-2-replit/server/api/drafting/routes.ts:101:const openai = new OpenAI({
+/workspaces/Concept2Cure.RI-2-replit/server/api/cmc/playbookRoutes.ts:26:const openai = new OpenAI({
+/workspaces/Concept2Cure.RI-2-replit/server/api/cmc/enhancedCMCService.ts:4:const openai = new OpenAI({
+/workspaces/Concept2Cure.RI-2-replit/server/api/cmc/blueprintRoutes.ts:12:const openai = new OpenAI({
+/workspaces/Concept2Cure.RI-2-replit/server/api/cmc/regulatory_aiDraft.ts:80:    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+/workspaces/Concept2Cure.RI-2-replit/server/lib/multi-provider-llm.ts:161:        this.clients.set(provider, new OpenAI(clientConfig));
+/workspaces/Concept2Cure.RI-2-replit/server/routes/concept2cure.ts:1389:    const openai = new OpenAI({ apiKey });
+/workspaces/Concept2Cure.RI-2-replit/server/routes/authoring.router.ts:1911:        const openai = new OpenAI({
+/workspaces/Concept2Cure.RI-2-replit/server/routes/authoring.router.ts:4650:      openai = new OpenAI({
+/workspaces/Concept2Cure.RI-2-replit/server/routes/cortex-unified.ts:245:        const openai = new OpenAI({ apiKey: openaiKey });
+/workspaces/Concept2Cure.RI-2-replit/server/services/foresight-feedback-orchestrator.ts:58:    this.openai = new OpenAI({
+/workspaces/Concept2Cure.RI-2-replit/server/services/EvidenceManagementService.ts:62:      this.openai = new OpenAI({ apiKey });
+/workspaces/Concept2Cure.RI-2-replit/server/services/citationEnforcementService.ts:176:      this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+/workspaces/Concept2Cure.RI-2-replit/server/services/openai-service.ts:12:const openai = new OpenAI({
+/workspaces/Concept2Cure.RI-2-replit/server/services/openai-service.ts:17: * Create a new OpenAI Assistant
+/workspaces/Concept2Cure.RI-2-replit/server/services/keywordExtractionService.ts:98:const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+/workspaces/Concept2Cure.RI-2-replit/server/services/LiteratureSummarizerService.ts:20:  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+/workspaces/Concept2Cure.RI-2-replit/server/services/enhancedEmbeddingService.ts:120:    this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+/workspaces/Concept2Cure.RI-2-replit/server/services/aiRecommendationService.ts:13:const openai = new OpenAI({
+/workspaces/Concept2Cure.RI-2-replit/server/services/predictiveSectionService.ts:10:const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+/workspaces/Concept2Cure.RI-2-replit/server/services/lumen-insights-service.ts:61:    this.openai = new OpenAI({
+/workspaces/Concept2Cure.RI-2-replit/server/services/figureGenerationService.ts:279:    const openai = new OpenAI({ apiKey });
+/workspaces/Concept2Cure.RI-2-replit/server/services/figureGenerationService.ts:373:    const openai = new OpenAI({ apiKey });
+/workspaces/Concept2Cure.RI-2-replit/server/services/aiProviderRouter.ts:283:      this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+/workspaces/Concept2Cure.RI-2-replit/server/services/aiProviderRouter.ts:291:      this.anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+/workspaces/Concept2Cure.RI-2-replit/server/services/aiProviderRouter.ts:481:    const moonshot = new OpenAI({
+/workspaces/Concept2Cure.RI-2-replit/server/services/complianceService.ts:5:const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+/workspaces/Concept2Cure.RI-2-replit/server/services/ai/openai-orchestrator.ts:12:const openai = new OpenAI({
+/workspaces/Concept2Cure.RI-2-replit/server/services/autoExtractionPipeline.ts:232:const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+/workspaces/Concept2Cure.RI-2-replit/server/services/realTimeValidationService.ts:57:    this.openai = new OpenAI({
+/workspaces/Concept2Cure.RI-2-replit/server/services/foresight-ai-engine.ts:27:const openai = new OpenAI({
+/workspaces/Concept2Cure.RI-2-replit/server/services/advancedRAGPipeline.ts:143:    this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+/workspaces/Concept2Cure.RI-2-replit/server/services/innovation/evidence-confidence-heatmap-service.ts:123:    this.openai = new OpenAI({ apiKey: openaiApiKey || process.env.OPENAI_API_KEY });
+/workspaces/Concept2Cure.RI-2-replit/server/services/innovation/regulatory-delta-radar-service.ts:103:    this.openai = new OpenAI({ apiKey: openaiApiKey || process.env.OPENAI_API_KEY });
+/workspaces/Concept2Cure.RI-2-replit/server/services/innovation/regulatory-negotiation-logbook-service.ts:137:    this.openai = new OpenAI({ apiKey: openaiApiKey || process.env.OPENAI_API_KEY });
+/workspaces/Concept2Cure.RI-2-replit/server/services/innovation/compliance-guardrails-sdk-service.ts:172:    this.openai = new OpenAI({ apiKey: openaiApiKey || process.env.OPENAI_API_KEY });
+/workspaces/Concept2Cure.RI-2-replit/server/services/innovation/outcome-based-template-learning-service.ts:124:    this.openai = new OpenAI({ apiKey: openaiApiKey || process.env.OPENAI_API_KEY });
+/workspaces/Concept2Cure.RI-2-replit/server/services/innovation/auto-traceability-service.ts:112:    this.openai = new OpenAI({ apiKey: openaiApiKey || process.env.OPENAI_API_KEY });
+/workspaces/Concept2Cure.RI-2-replit/server/services/innovation/submission-readiness-twin-service.ts:135:    this.openai = new OpenAI({ apiKey: openaiApiKey || process.env.OPENAI_API_KEY });
+/workspaces/Concept2Cure.RI-2-replit/server/services/cerGenerator.ts:13:const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+/workspaces/Concept2Cure.RI-2-replit/server/services/eSTARPlusBuilder.ts:13:const openai = new OpenAI({
+/workspaces/Concept2Cure.RI-2-replit/server/services/confidenceScoringEngine.ts:105:const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+/workspaces/Concept2Cure.RI-2-replit/server/services/sentenceTraceabilityService.ts:193:const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+/workspaces/Concept2Cure.RI-2-replit/server/services/LiteratureAggregatorService.ts:19:  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+/workspaces/Concept2Cure.RI-2-replit/server/services/DocumentDataCenterService.ts:42:  openai = new OpenAI({
+/workspaces/Concept2Cure.RI-2-replit/server/workers/entity-extraction-worker.ts:110:    this.openai = new OpenAI({ 
+/workspaces/Concept2Cure.RI-2-replit/server/workers/layout-aware-ingestion.ts:85:const openai = new OpenAI({
+/workspaces/Concept2Cure.RI-2-replit/server/workers/vectorization-worker.ts:47:const openai = new OpenAI({
+/workspaces/Concept2Cure.RI-2-replit/server/src/routes/obligations.router.ts:15:const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+/workspaces/Concept2Cure.RI-2-replit/server/src/services/reg/playbook.ts:20:const ai = () => new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });

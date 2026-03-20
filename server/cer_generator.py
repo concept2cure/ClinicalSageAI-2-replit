@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-CER Generator Module for LumenTrialGuide.AI
+CER Generator Module for Concept2Cure
 
 This module produces comprehensive Clinical Evaluation Reports (CERs) from integrated
 data sources following EU MDR standards (EU 2017/745).

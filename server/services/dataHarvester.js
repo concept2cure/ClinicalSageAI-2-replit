@@ -13,7 +13,6 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import { getOpenAIClient } from './openai-client';
 import { readFile, writeFile } from 'fs/promises';
 import path from 'path';
 import fs from 'fs/promises';
@@ -24,6 +23,7 @@ import crypto from 'crypto';
 import { promisify } from 'util';
 import { exec } from 'child_process';
 import { eventBus } from '../events/eventBus.js';
+import { ai } from '../lib/unified-ai-client';
 
 // Promisify exec for async/await usage
 const execAsync = promisify(exec);
@@ -32,8 +32,6 @@ const execAsync = promisify(exec);
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 // const supabase = createClient(supabaseUrl, supabaseKey);
-
-const openai = getOpenAIClient();
 
 // PDF extraction utility
 const pdfExtract = new PDFExtract();
@@ -485,7 +483,7 @@ async function extractHtmlContent(filePath) {
 async function extractStructuredSections(text, html) {
   try {
     // Try to identify sections using AI
-    const result = await openai.chat.completions.create({
+    const result = await ai.chat({
       model: 'gpt-4o',
       messages: [
         {
@@ -667,7 +665,7 @@ async function extractFigures(filePath, pageCount) {
  */
 async function extractProtocolData(content, document) {
   try {
-    const result = await openai.chat.completions.create({
+    const result = await ai.chat({
       model: 'gpt-4o',
       messages: [
         {
@@ -742,7 +740,7 @@ async function extractProtocolData(content, document) {
  */
 async function extractCSRData(content, document) {
   try {
-    const result = await openai.chat.completions.create({
+    const result = await ai.chat({
       model: 'gpt-4o',
       messages: [
         {
@@ -815,7 +813,7 @@ async function extractCSRData(content, document) {
  */
 async function extractIBData(content, document) {
   try {
-    const result = await openai.chat.completions.create({
+    const result = await ai.chat({
       model: 'gpt-4o',
       messages: [
         {
@@ -888,7 +886,7 @@ async function extractIBData(content, document) {
  */
 async function extractCMCData(content, document) {
   try {
-    const result = await openai.chat.completions.create({
+    const result = await ai.chat({
       model: 'gpt-4o',
       messages: [
         {
@@ -960,7 +958,7 @@ async function extractCMCData(content, document) {
  */
 async function extractToxicologyData(content, document) {
   try {
-    const result = await openai.chat.completions.create({
+    const result = await ai.chat({
       model: 'gpt-4o',
       messages: [
         {
@@ -1032,7 +1030,7 @@ async function extractToxicologyData(content, document) {
  */
 async function extractAnalyticalData(content, document) {
   try {
-    const result = await openai.chat.completions.create({
+    const result = await ai.chat({
       model: 'gpt-4o',
       messages: [
         {
@@ -1100,7 +1098,7 @@ async function extractAnalyticalData(content, document) {
  */
 async function extractStabilityData(content, document) {
   try {
-    const result = await openai.chat.completions.create({
+    const result = await ai.chat({
       model: 'gpt-4o',
       messages: [
         {
@@ -1169,7 +1167,7 @@ async function extractStabilityData(content, document) {
  */
 async function extractSOPData(content, document) {
   try {
-    const result = await openai.chat.completions.create({
+    const result = await ai.chat({
       model: 'gpt-4o',
       messages: [
         {
@@ -1238,7 +1236,7 @@ async function extractSOPData(content, document) {
  */
 async function extractLiteratureData(content, document) {
   try {
-    const result = await openai.chat.completions.create({
+    const result = await ai.chat({
       model: 'gpt-4o',
       messages: [
         {
@@ -1309,7 +1307,7 @@ async function extractLiteratureData(content, document) {
  */
 async function extractGenericData(content, document) {
   try {
-    const result = await openai.chat.completions.create({
+    const result = await ai.chat({
       model: 'gpt-4o',
       messages: [
         {
@@ -1381,7 +1379,7 @@ async function mapDataToSections(extractedData, targetSections, submissionId) {
 
     // For each target section, map relevant extracted data
     for (const sectionCode of targetSections) {
-      const result = await openai.chat.completions.create({
+      const result = await ai.chat({
         model: 'gpt-4o',
         messages: [
           {
@@ -1579,7 +1577,7 @@ async function insertDataIntoBlocks(mappedSections, submissionId, document) {
  */
 async function generateKnowledgeEntities(extractedData, submissionId, documentId) {
   try {
-    const result = await openai.chat.completions.create({
+    const result = await ai.chat({
       model: 'gpt-4o',
       messages: [
         {

@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Module Registry
+ * Concept2Cure Client Portal V2 - Module Registry
  *
  * Central registry for all platform modules with metadata, routing,
  * and role-based access configuration.
@@ -408,7 +408,7 @@ export const CATEGORY_REGISTRY: Record<ModuleCategory, CategoryConfig> = {
     label: 'Analytics',
     description: 'Data analysis and reporting',
     icon: 'BarChart',
-    color: '#8b5cf6',
+    color: '#6a9bcc',
   },
   administration: {
     id: 'administration',

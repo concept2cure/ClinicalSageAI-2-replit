@@ -6,7 +6,7 @@
  * Express routes exposing the Cognitive Advisory Service
  * Enables AI-powered project guidance and proactive suggestions
  *
- * @author TrialSage AI Team
+ * @author Concept2Cure AI Team
  * @version 2.0.0 - Project Cortex
  */
 

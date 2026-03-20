@@ -54,7 +54,7 @@ export const getMAUDValidationStatus = async (documentId, organizationId = null)
     // Make API call to get latest status
     const headers = {
       'Content-Type': 'application/json',
-      'X-API-Key': import.meta.env.VITE_MAUD_API_KEY || localStorage.getItem('MAUD_API_KEY'),
+      'X-API-Key': localStorage.getItem('MAUD_API_KEY') || '', // API key must not be in VITE_ env vars
     };
 
     // Add organization ID for multi-tenant support if available
@@ -139,7 +139,7 @@ export const submitForMAUDValidation = async (documentId, documentData, organiza
       documentId,
       algorithms: documentData.selectedAlgorithms || [],
       metadata: {
-        source: 'TrialSage CER2V',
+        source: 'Concept2Cure CER2V',
         clientId: localStorage.getItem('clientId') || 'default',
         organizationId: organizationId,
         timestamp: new Date().toISOString(),
@@ -153,7 +153,7 @@ export const submitForMAUDValidation = async (documentId, documentData, organiza
     // Make API call to submit for validation
     const headers = {
       'Content-Type': 'application/json',
-      'X-API-Key': import.meta.env.VITE_MAUD_API_KEY || localStorage.getItem('MAUD_API_KEY'),
+      'X-API-Key': localStorage.getItem('MAUD_API_KEY') || '', // API key must not be in VITE_ env vars
     };
 
     // Add organization ID for multi-tenant support if available
@@ -253,7 +253,7 @@ export const getAvailableMAUDAlgorithms = async (organizationId = null) => {
     // Setup headers with tenant isolation
     const headers = {
       'Content-Type': 'application/json',
-      'X-API-Key': import.meta.env.VITE_MAUD_API_KEY || localStorage.getItem('MAUD_API_KEY'),
+      'X-API-Key': localStorage.getItem('MAUD_API_KEY') || '', // API key must not be in VITE_ env vars
     };
 
     // Add organization ID for multi-tenant support if available
@@ -329,7 +329,7 @@ export const getValidationHistory = async (documentId, organizationId = null) =>
     // Setup headers with tenant isolation
     const headers = {
       'Content-Type': 'application/json',
-      'X-API-Key': import.meta.env.VITE_MAUD_API_KEY || localStorage.getItem('MAUD_API_KEY'),
+      'X-API-Key': localStorage.getItem('MAUD_API_KEY') || '', // API key must not be in VITE_ env vars
     };
 
     // Add organization ID for multi-tenant support if available
@@ -412,7 +412,7 @@ export const exportValidationCertificate = async (
     // Setup headers with tenant isolation
     const headers = {
       'Content-Type': 'application/json',
-      'X-API-Key': import.meta.env.VITE_MAUD_API_KEY || localStorage.getItem('MAUD_API_KEY'),
+      'X-API-Key': localStorage.getItem('MAUD_API_KEY') || '', // API key must not be in VITE_ env vars
     };
 
     // Add organization ID for multi-tenant support if available
@@ -429,7 +429,7 @@ export const exportValidationCertificate = async (
       includeSignature: exportOptions.includeSignature !== false,
       includeTimestamp: exportOptions.includeTimestamp !== false,
       includeQRCode: exportOptions.includeQRCode !== false,
-      issuer: exportOptions.issuer || 'TrialSage CER2V',
+      issuer: exportOptions.issuer || 'Concept2Cure CER2V',
     };
 
     // Make API call to export certificate

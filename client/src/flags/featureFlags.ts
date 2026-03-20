@@ -94,6 +94,15 @@ export const featureFlags: Record<string, FeatureFlag> = {
     enabled: true,
   },
 
+  // PMA module flags
+  ENABLE_PMA_MODULE: {
+    id: 'ENABLE_PMA_MODULE',
+    name: 'PMA Module',
+    description: 'Enables the Pre-Market Approval (Class III medical device) module',
+    defaultValue: true,
+    enabled: true,
+  },
+
   // IVDR module flags
   ENABLE_IVDR_MODULE: {
     id: 'ENABLE_IVDR_MODULE',
@@ -188,6 +197,15 @@ export const featureFlags: Record<string, FeatureFlag> = {
     description: 'Enables device profile intake and management for 510(k) submissions',
     defaultValue: true,
     enabled: true,
+  },
+
+  // Early Access modules — using sample data, not production-ready
+  ENABLE_EARLY_ACCESS_MODULES: {
+    id: 'ENABLE_EARLY_ACCESS_MODULES',
+    name: 'Early Access Modules',
+    description: 'Enables modules still using sample data: Inspection Readiness, Post-Market Surveillance, CAPA Management, SOP Management. Disable for production release.',
+    defaultValue: false,
+    enabled: false,
   },
 
   // Shell embedding — render modules inside the Concept2Cure shell frame

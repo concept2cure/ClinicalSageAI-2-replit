@@ -445,16 +445,7 @@ const CerGeneratorPanel = ({ documentId }) => {
         return;
       }
 
-      // Check if we have OpenAI API key configured
-      if (!import.meta.env.VITE_OPENAI_API_KEY) {
-        toast({
-          title: 'API Key Missing',
-          description:
-            'OpenAI API key is required for report generation. Please check your configuration.',
-          variant: 'destructive',
-        });
-        return;
-      }
+      // API key check removed — all AI calls route through backend gateway
 
       // Verify we have enough selected high-quality references
       const highQualityRefs = literatureData.selectedReferences.filter(
@@ -1192,9 +1183,9 @@ const CerGeneratorPanel = ({ documentId }) => {
                         style={{
                           borderColor:
                             complianceResults.complianceScore > 90
-                              ? '#10b981'
+                              ? '#788c5d'
                               : complianceResults.complianceScore > 70
-                                ? '#60a5fa'
+                                ? '#8bb4d9'
                                 : complianceResults.complianceScore > 50
                                   ? '#f59e0b'
                                   : '#ef4444',

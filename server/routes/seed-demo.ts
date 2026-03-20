@@ -10,6 +10,14 @@ import {
 
 const router = express.Router();
 
+// SECURITY: Block demo seeding in production
+router.use((_req, res, next) => {
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(404).json({ error: 'Not found' });
+  }
+  next();
+});
+
 // Helper functions
 function getStageRequirements(stage: number): string[] {
   const requirements: { [key: number]: string[] } = {

@@ -7,7 +7,6 @@
  */
 
 import { z } from 'zod';
-import { getOpenAIClient } from '../services/openai-client';
 import multer from 'multer';
 import path from 'path';
 import { promises as fs } from 'fs';
@@ -18,6 +17,7 @@ import {
   createECTD,
   createJSONExport,
 } from '../utils/document-generator.js';
+import { ai } from '../lib/unified-ai-client';
 
 // Simple rate limiter implementation until express-rate-limit is properly installed
 const createRateLimiter = options => {
@@ -54,8 +54,6 @@ if (!process.env.OPENAI_API_KEY) {
 }
 
 // Initialize OpenAI client
-const openai = getOpenAIClient();
-
 // Rate limiter specific to blueprint generation (stricter limits due to high resource usage)
 const blueprintRateLimiter = createRateLimiter({
   windowMs: 60 * 60 * 1000, // 1 hour window

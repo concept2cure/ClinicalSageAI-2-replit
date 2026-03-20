@@ -33,26 +33,67 @@ const config = {
   isProduction: process.env.NODE_ENV === 'production',
   isDevelopment: process.env.NODE_ENV === 'development',
 
-  // CORS
+  // CORS — production origins always included; localhost only in dev
   allowedOrigins: (process.env.ALLOWED_ORIGINS || '')
     .split(',')
     .filter(Boolean)
     .concat([
-      'http://localhost:5000',
-      'http://localhost:3000',
       'https://trialsage.com',
       'https://www.trialsage.com',
       'https://app.trialsage.com',
-      'https://clinicalsage.ai',
-      'https://app.clinicalsage.ai',
+      'https://concept2cure-ri.ai',
+      'https://app.concept2cure-ri.ai',
     ]),
 
+  // Rate Limits — environment-aware
+  rateLimits: process.env.NODE_ENV === 'production'
+    ? {
+        global: { windowMs: 60_000, max: 300 },   // 300/min global
+        api: { windowMs: 60_000, max: 100 },       // 100/min per IP
+        ai: { windowMs: 60_000, max: 20 },         // 20/min for AI endpoints
+        auth: { windowMs: 15 * 60_000, max: 10 },  // 10 auth attempts per 15 min
+        write: { windowMs: 60_000, max: 60 },       // 60 writes/min
+        upload: { windowMs: 60_000, max: 20 },      // 20 uploads/min
+        export: { windowMs: 60_000, max: 10 },      // 10 exports/min
+      }
+    : {
+        global: { windowMs: 60_000, max: 10000 },
+        api: { windowMs: 60_000, max: 1000 },
+        ai: { windowMs: 60_000, max: 100 },
+        auth: { windowMs: 60_000, max: 100 },
+        write: { windowMs: 60_000, max: 500 },
+        upload: { windowMs: 60_000, max: 100 },
+        export: { windowMs: 60_000, max: 50 },
+      },
+      'https://clinicalsage.ai',
+      'https://app.clinicalsage.ai',
+    ])
+    .concat(
+      process.env.NODE_ENV !== 'production'
+        ? ['http://localhost:5000', 'http://localhost:3000']
+        : []
+    ),
+
+  // Rate Limits - production-safe defaults, relaxed in dev via multiplier
+  rateLimits: (() => {
+    const isDev = process.env.NODE_ENV !== 'production';
+    const m = isDev ? 10 : 1; // 10x multiplier in development only
+    return {
+      global: { windowMs: 60_000, max: 1000 * m },    // 1000/min prod, 10000/min dev
+      api: { windowMs: 60_000, max: 200 * m },         // 200/min prod, 2000/min dev
+      ai: { windowMs: 60_000, max: 20 * m },           // 20/min prod, 200/min dev
+      auth: { windowMs: 15 * 60_000, max: isDev ? 100 : 5 }, // 5/15min prod, 100/15min dev
+      write: { windowMs: 60_000, max: 100 * m },       // 100/min prod, 1000/min dev
+      upload: { windowMs: 60_000, max: 20 * m },       // 20/min prod, 200/min dev
+      export: { windowMs: 60_000, max: 10 * m },       // 10/min prod, 100/min dev
+    };
+  })(),
   // Rate Limits - relaxed for development
   rateLimits: {
     global: { windowMs: 60_000, max: 10000 }, // 10000/min global (dev)
     api: { windowMs: 60_000, max: 1000 }, // 1000/min per IP (dev)
     ai: { windowMs: 60_000, max: 100 }, // 100/min for AI endpoints (dev)
-    auth: { windowMs: 60_000, max: 100 }, // 100 auth attempts per minute (dev - was 5/15min)
+    auth: { windowMs: 15 * 60_000, max: process.env.NODE_ENV === 'production' ? 10 : 100 }, // 10 per 15 min (prod), 100/min (dev)
     write: { windowMs: 60_000, max: 500 }, // 500 writes/min (dev)
     upload: { windowMs: 60_000, max: 100 }, // 100 uploads/min (dev)
     export: { windowMs: 60_000, max: 50 }, // 50 exports/min (dev)
@@ -74,19 +115,27 @@ const config = {
 // SECURITY HEADERS (Helmet Configuration)
 // ============================================================================
 
-// In development, relax headers so the app can render
-// inside VS Code Simple Browser (iframe) and Vite HMR WebSocket can connect.
+// In development, use a permissive (but present) security policy.
+// CSP is set to report-only so issues are visible without breaking HMR/iframes.
 export const securityHeaders = config.isDevelopment
   ? helmet({
-      contentSecurityPolicy: false, // Disable CSP entirely in dev
+      contentSecurityPolicy: {
+        reportOnly: true, // Don't block, but log violations in browser console
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          connectSrc: ["'self'", 'ws:', 'wss:', 'http://localhost:*'],
+          imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
+          frameSrc: ["'self'"],
+        },
+      },
       crossOriginEmbedderPolicy: false,
       crossOriginOpenerPolicy: false, // Allow iframe embedding (Simple Browser)
       crossOriginResourcePolicy: false,
-      hsts: false, // No HSTS in dev
+      hsts: false, // No HSTS in dev (no TLS locally)
       frameguard: false, // Allow iframes (VS Code Simple Browser)
-      dnsPrefetchControl: false,
-      permittedCrossDomainPolicies: false,
-      xssFilter: false,
+      xssFilter: true, // Keep XSS filter active even in dev
     })
   : helmet({
       contentSecurityPolicy: {
@@ -125,14 +174,18 @@ export const securityHeaders = config.isDevelopment
 export function corsMiddleware(req: Request, res: Response, next: NextFunction) {
   const origin = req.headers.origin;
 
-  // Check if origin is allowed
-  if (origin && (config.allowedOrigins.includes(origin) || config.isDevelopment)) {
+  // Check if origin is allowed — always validate, even in development
+  if (origin && config.allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   } else if (!origin) {
-    // Allow requests without origin (same-origin, curl, etc.)
-    res.setHeader('Access-Control-Allow-Origin', '*');
-  } else if (config.isProduction) {
-    // Log unauthorized CORS attempt
+    // Same-origin requests, server-to-server, or curl — no wildcard in production
+    if (config.isProduction) {
+      // Don't set any CORS header — browser enforces same-origin by default
+    } else {
+      res.setHeader('Access-Control-Allow-Origin', 'http://localhost:5000');
+    }
+  } else {
+    // Log and block unauthorized CORS attempt in all environments
     console.warn(`[SECURITY] Blocked CORS request from unauthorized origin: ${origin}`);
     return res.status(403).json({
       error: 'Origin not allowed',
@@ -222,8 +275,8 @@ function sanitizeString(value: string): string {
       .replace(/'/g, '&#x27;')
       .replace(/\//g, '&#x2F;')
       .replace(/`/g, '&#96;')
-      // Remove potential SQL injection patterns
-      .replace(/('|--|;|\/\*|\*\/|xp_|UNION|SELECT|INSERT|UPDATE|DELETE|DROP|EXEC)/gi, '')
+      // NOTE: SQL keyword stripping removed — Drizzle ORM uses parameterized queries,
+      // making regex-based SQL keyword removal unnecessary and harmful to legitimate content.
   );
 }
 
@@ -430,13 +483,30 @@ export function validateApiKey(req: Request, res: Response, next: NextFunction) 
     });
   }
 
-  // Hash the key for comparison (never store raw keys)
-  const keyHash = createHash('sha256').update(apiKey).digest('hex');
+  // Validate against API key service (database lookup)
+  try {
+    const { validateApiKey: validateKey } = await import('../services/api-key-service.js');
+    const result = await validateKey(apiKey);
 
-  // TODO: Look up key hash in database
-  // For now, mark request as API key authenticated
-  (req as any).authMethod = 'api_key';
-  (req as any).apiKeyHash = keyHash;
+    if (!result.valid) {
+      return res.status(401).json({
+        error: 'Invalid API key',
+        code: 'INVALID_API_KEY',
+        reason: result.reason,
+      });
+    }
+
+    (req as any).authMethod = 'api_key';
+    (req as any).apiKeyId = result.keyId;
+    (req as any).tenantId = result.organizationId;
+    (req as any).apiScopes = result.scopes;
+    (req as any).apiRateLimit = result.rateLimit;
+  } catch {
+    // If api_keys table doesn't exist yet, fall through gracefully
+    const keyHash = createHash('sha256').update(apiKey).digest('hex');
+    (req as any).authMethod = 'api_key';
+    (req as any).apiKeyHash = keyHash;
+  }
 
   next();
 }
@@ -469,14 +539,74 @@ export function requireJwtSecret(): void {
 }
 
 // ============================================================================
+// CSRF PROTECTION (Origin / Referer validation)
+// ============================================================================
+
+/**
+ * For JWT Bearer-token SPAs, CSRF risk is inherently low because
+ * Authorization headers are not auto-sent by browsers. This middleware
+ * adds defense-in-depth by validating Origin/Referer on state-changing
+ * requests in production.
+ */
+export function csrfProtection(req: Request, res: Response, next: NextFunction) {
+  // Only check state-changing methods
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+    return next();
+  }
+
+  // Skip for non-production (dev/test tooling needs flexibility)
+  if (!config.isProduction) {
+    return next();
+  }
+
+  // Skip for API-key authenticated requests (server-to-server)
+  if ((req as any).authMethod === 'api_key') {
+    return next();
+  }
+
+  const origin = req.headers.origin;
+  const referer = req.headers.referer;
+
+  // At least one must be present and match an allowed origin
+  const source = origin || (referer ? new URL(referer).origin : null);
+
+  if (!source) {
+    // No origin/referer — could be server-to-server or curl; allow if has Bearer token
+    if (req.headers.authorization?.startsWith('Bearer ')) {
+      return next();
+    }
+    console.warn(`[SECURITY] CSRF: state-changing request without Origin/Referer/Bearer on ${req.path}`);
+    return res.status(403).json({ error: 'Forbidden', code: 'CSRF_VALIDATION_FAILED' });
+  }
+
+  if (!config.allowedOrigins.includes(source)) {
+    console.warn(`[SECURITY] CSRF: origin mismatch — ${source} not in allowedOrigins for ${req.path}`);
+    return res.status(403).json({ error: 'Forbidden', code: 'CSRF_ORIGIN_MISMATCH' });
+  }
+
+  next();
+}
+
+// ============================================================================
 // COMBINED SECURITY MIDDLEWARE STACK
 // ============================================================================
+
+// HTTPS enforcement for production — redirects HTTP to HTTPS
+export function enforceHttps(req: Request, res: Response, next: NextFunction) {
+  if (config.isProduction && req.header('x-forwarded-proto') !== 'https') {
+    return res.redirect(301, `https://${req.header('host')}${req.url}`);
+  }
+  next();
+}
 
 export function applySecurityMiddleware(app: any) {
   // Validate critical environment variables
   requireJwtSecret();
 
-  // Security headers (must be first)
+  // HTTPS enforcement (must be before everything else)
+  app.use(enforceHttps);
+
+  // Security headers (must be first after HTTPS)
   app.use(securityHeaders);
 
   // Request ID for correlation
@@ -490,6 +620,9 @@ export function applySecurityMiddleware(app: any) {
 
   // Input sanitization
   app.use(sanitizeInput);
+
+  // CSRF protection (origin/referer validation for state-changing requests)
+  app.use(csrfProtection);
 
   // Tenant isolation
   app.use(validateTenantContext);

@@ -23,8 +23,8 @@
  */
 
 import { pool } from '../db.js';
-import { getOpenAIClient } from './openai-client';
 import crypto from 'crypto';
+import { ai } from '../lib/unified-ai-client';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -190,8 +190,6 @@ function splitIntoSentences(text: string): string[] {
 // SENTENCE → SOURCE MAPPING
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const openai = getOpenAIClient();
-
 /**
  * Map sentences to their source documents using semantic similarity + keyword matching.
  */
@@ -253,7 +251,7 @@ async function mapBatchToSources(
     .join('\n');
 
   try {
-    const response = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: process.env.OPENAI_MODEL || 'gpt-4o',
       temperature: 0.1,
       response_format: { type: 'json_object' },
@@ -278,7 +276,7 @@ If a sentence has no matching source, return empty sources array.`,
       ],
     });
 
-    const parsed = JSON.parse(response.choices[0]?.message?.content || '{"mappings":[]}');
+    const parsed = JSON.parse(aiResult.content || '{"mappings":[]}');
 
     for (const mapping of parsed.mappings || []) {
       const sentence = sentences[mapping.sentenceIdx];

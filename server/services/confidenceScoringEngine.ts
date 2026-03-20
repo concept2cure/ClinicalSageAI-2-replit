@@ -21,7 +21,6 @@
  */
 
 import { pool } from '../db.js';
-import { getOpenAIClient } from './openai-client';
 import crypto from 'crypto';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -56,6 +55,7 @@ export interface VerificationResult {
   completenessScore: number; // 0-1, regulatory completeness
   verifiedAt: string;
 }
+import { ai } from '../lib/unified-ai-client';
 
 export interface VerificationCheck {
   checkId: string;
@@ -101,8 +101,6 @@ export interface BatchVerificationResult {
 // ═══════════════════════════════════════════════════════════════════════════════
 // AUTO-COMPUTED CONFIDENCE SCORES
 // ═══════════════════════════════════════════════════════════════════════════════
-
-const openai = getOpenAIClient();
 
 /**
  * Auto-compute confidence score for an evidence object.
@@ -456,7 +454,7 @@ async function checkSourceMatch(
       .map(s => `Source: ${s.title}\nExcerpt: ${(s.excerpt || s.description || '').slice(0, 500)}`)
       .join('\n\n');
 
-    const response = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: process.env.OPENAI_MODEL || 'gpt-4o',
       temperature: 0.1,
       response_format: { type: 'json_object' },
@@ -478,7 +476,7 @@ Return JSON: {
       ],
     });
 
-    const parsed = JSON.parse(response.choices[0]?.message?.content || '{}');
+    const parsed = JSON.parse(aiResult.content || '{}');
 
     if (parsed.supported && parsed.confidence >= 0.7) {
       return {

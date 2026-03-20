@@ -56,7 +56,7 @@ export default function CerModule() {
         </CardHeader>
         <CardContent>
           <p className="text-blue-700 mb-4">
-            TrialSage's CER Generator automatically creates Clinical Evaluation Reports that follow
+            Concept2Cure's CER Generator automatically creates Clinical Evaluation Reports that follow
             EU MDR, FDA, and international guidelines. Upload your device data, select literature,
             customize templates, and generate professional reports.
           </p>

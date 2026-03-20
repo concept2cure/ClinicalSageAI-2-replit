@@ -1,5 +1,5 @@
 /**
- * TrialSage Design System - Empty State
+ * Concept2Cure Design System - Empty State
  *
  * Beautiful empty states that guide users to take action.
  * Inspired by the thoughtful, helpful nature of Claude.AI.

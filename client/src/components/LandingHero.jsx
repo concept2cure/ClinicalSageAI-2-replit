@@ -7,7 +7,7 @@ const LandingHero = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
         <div className="text-center">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
-            TrialSage<span className="text-blue-600">.AI</span> Enterprise Portal
+            Concept2Cure<span className="text-blue-600">.AI</span> Enterprise Portal
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-10">
             AI-powered regulatory document management for clinical research professionals

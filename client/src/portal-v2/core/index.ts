@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Core Utilities Index
+ * Concept2Cure Client Portal V2 - Core Utilities Index
  */
 
 export * from './portalTypes';

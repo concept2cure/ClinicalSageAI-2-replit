@@ -1,4 +1,3 @@
-import { getOpenAIClient } from '../../services/openai-client';
 import { getPool } from '../../db';
 
 const q = async <T = any>(query: string, params: any[] = []): Promise<{ rows: T[] }> => {
@@ -11,6 +10,7 @@ const q = async <T = any>(query: string, params: any[] = []): Promise<{ rows: T[
     client.release();
   }
 };
+import { ai } from '../../lib/unified-ai-client';
 
 const ON = !!process.env.OPENAI_API_KEY;
 
@@ -77,8 +77,7 @@ export async function aiDraftIR(subId: string, qrow: any) {
   }
 
   try {
-    const openai = getOpenAIClient();
-    const out = await openai.chat.completions.create({
+    const out = await ai.chat({
       model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
       temperature: 0.2,
       messages: [

@@ -278,7 +278,7 @@ export default function LandingPage() {
               transition={{ delay: 0.3 }}
               className="text-lg"
             >
-              Step into the future today with TrialSage. Transform data into decisions, speed up
+              Step into the future today with Concept2Cure. Transform data into decisions, speed up
               approvals, and lead the next generation of biotech innovation.
             </motion.p>
           </div>

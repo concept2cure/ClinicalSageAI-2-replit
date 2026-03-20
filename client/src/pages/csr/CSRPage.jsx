@@ -13,11 +13,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Loader2, Search, BarChart3, FileText, AlertTriangle, TrendingUp } from 'lucide-react';
+import DOMPurify from 'dompurify';
 import {
   generateNarrative,
   detectSignals,
   analyzeBenefitRisk,
   fetchDashboardMetrics,
+  searchCsrs,
+  crossStudyCompare,
 } from '../../api/csr';
 import UnifiedDocumentUpload from '../../components/unified/UnifiedDocumentUpload';
 
@@ -51,6 +54,18 @@ const CSRPage = () => {
   const [narrativeResult, setNarrativeResult] = useState('');
   const [signalResults, setSignalResults] = useState([]);
   const [benefitRiskResult, setBenefitRiskResult] = useState({});
+
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchPhase, setSearchPhase] = useState('all');
+  const [searchArea, setSearchArea] = useState('all');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+
+  // Cross-study comparison state
+  const [compareInput, setCompareInput] = useState({ indication: '', phase: '', endpoint: '' });
+  const [compareResults, setCompareResults] = useState([]);
+  const [compareLoading, setCompareLoading] = useState(false);
 
   // Load dashboard metrics on component mount
   useEffect(() => {
@@ -88,6 +103,43 @@ const CSRPage = () => {
       console.error('Error detecting signals:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Handle CSR search
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    setSearchLoading(true);
+    try {
+      const options = {};
+      if (searchPhase !== 'all') options.phase = searchPhase;
+      if (searchArea !== 'all') options.therapeuticArea = searchArea;
+      const results = await searchCsrs(searchQuery, options);
+      setSearchResults(Array.isArray(results) ? results : results?.results || []);
+    } catch (error) {
+      console.error('Search failed:', error);
+      setSearchResults([]);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  // Handle cross-study comparison
+  const handleCompare = async () => {
+    if (!compareInput.indication.trim()) return;
+    setCompareLoading(true);
+    try {
+      const data = await crossStudyCompare(
+        compareInput.indication,
+        compareInput.phase || 'Phase III',
+        compareInput.endpoint || 'Overall Response Rate'
+      );
+      setCompareResults(data.comparisons || []);
+    } catch (error) {
+      console.error('Comparison failed:', error);
+      setCompareResults([]);
+    } finally {
+      setCompareLoading(false);
     }
   };
 
@@ -170,6 +222,7 @@ const CSRPage = () => {
         <TabsList className="mb-4">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="search">Search & Analytics</TabsTrigger>
+          <TabsTrigger value="cross-study">Cross-Study Comparison</TabsTrigger>
           <TabsTrigger value="narrative">Narrative Generator</TabsTrigger>
           <TabsTrigger value="signals">AE Signal Detection</TabsTrigger>
           <TabsTrigger value="benefit-risk">Benefit-Risk Assessment</TabsTrigger>
@@ -252,8 +305,7 @@ const CSRPage = () => {
             <CardHeader>
               <CardTitle>Advanced CSR Search</CardTitle>
               <CardDescription>
-                Search through {dashboardMetrics?.totalCsrs || 0} CSR reports with advanced
-                filtering
+                Search through {dashboardMetrics?.totalCsrs || 0} CSR reports with semantic search
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -261,11 +313,18 @@ const CSRPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <Label htmlFor="search-query">Search Query</Label>
-                    <Input id="search-query" placeholder="Enter search terms..." className="mt-1" />
+                    <Input
+                      id="search-query"
+                      placeholder="e.g., PD-1 inhibitor efficacy in NSCLC..."
+                      className="mt-1"
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleSearch()}
+                    />
                   </div>
                   <div>
                     <Label htmlFor="phase-filter">Phase</Label>
-                    <Select>
+                    <Select value={searchPhase} onValueChange={setSearchPhase}>
                       <SelectTrigger className="mt-1">
                         <SelectValue placeholder="All phases" />
                       </SelectTrigger>
@@ -280,7 +339,7 @@ const CSRPage = () => {
                   </div>
                   <div>
                     <Label htmlFor="area-filter">Therapeutic Area</Label>
-                    <Select>
+                    <Select value={searchArea} onValueChange={setSearchArea}>
                       <SelectTrigger className="mt-1">
                         <SelectValue placeholder="All areas" />
                       </SelectTrigger>
@@ -291,17 +350,167 @@ const CSRPage = () => {
                         <SelectItem value="neurology">Neurology</SelectItem>
                         <SelectItem value="immunology">Immunology</SelectItem>
                         <SelectItem value="endocrinology">Endocrinology</SelectItem>
+                        <SelectItem value="infectious">Infectious Disease</SelectItem>
+                        <SelectItem value="dermatology">Dermatology</SelectItem>
+                        <SelectItem value="respiratory">Respiratory</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
-                <Button className="w-full">
-                  <Search className="mr-2 h-4 w-4" />
-                  Search CSR Database
+                <Button className="w-full" onClick={handleSearch} disabled={searchLoading || !searchQuery.trim()}>
+                  {searchLoading ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Searching...</>
+                  ) : (
+                    <><Search className="mr-2 h-4 w-4" />Search CSR Database</>
+                  )}
                 </Button>
+
+                {/* Search Results */}
+                {searchResults.length > 0 && (
+                  <div className="mt-4 space-y-3">
+                    <p className="text-sm font-medium text-gray-600">{searchResults.length} results found</p>
+                    {searchResults.map((result, index) => (
+                      <div key={result.id || index} className="p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h3 className="font-medium text-sm">{result.title || result.drug_name || 'Untitled CSR'}</h3>
+                            <div className="flex gap-3 mt-1 text-xs text-gray-500">
+                              {result.study_phase && <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded">{result.study_phase}</span>}
+                              {(result.therapeutic_area || result.indication) && (
+                                <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded capitalize">
+                                  {result.therapeutic_area || result.indication}
+                                </span>
+                              )}
+                              {result.sponsor && <span>{result.sponsor}</span>}
+                            </div>
+                          </div>
+                          {result.relevance && (
+                            <span className="text-xs font-mono text-gray-400">
+                              {Math.round(result.relevance * 100)}% match
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {searchResults.length === 0 && searchQuery && !searchLoading && (
+                  <div className="text-center p-6 border rounded bg-gray-50">
+                    <p className="text-gray-500 text-sm">No results found. Try different search terms.</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Cross-Study Comparison Tab */}
+        <TabsContent value="cross-study">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Cross-Study Comparison</CardTitle>
+                <CardDescription>
+                  Find and compare similar clinical studies across the CSR database
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <Label>Indication / Disease Area</Label>
+                    <Input
+                      className="mt-1"
+                      placeholder="e.g., moderate-to-severe plaque psoriasis"
+                      value={compareInput.indication}
+                      onChange={e => setCompareInput(prev => ({ ...prev, indication: e.target.value }))}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Phase</Label>
+                      <Input
+                        className="mt-1"
+                        placeholder="e.g., Phase III"
+                        value={compareInput.phase}
+                        onChange={e => setCompareInput(prev => ({ ...prev, phase: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <Label>Primary Endpoint</Label>
+                      <Input
+                        className="mt-1"
+                        placeholder="e.g., PASI 75 response rate"
+                        value={compareInput.endpoint}
+                        onChange={e => setCompareInput(prev => ({ ...prev, endpoint: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+                  <Button
+                    className="w-full"
+                    onClick={handleCompare}
+                    disabled={compareLoading || !compareInput.indication.trim()}
+                  >
+                    {compareLoading ? (
+                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Finding similar studies...</>
+                    ) : (
+                      <><TrendingUp className="mr-2 h-4 w-4" />Compare Across Studies</>
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Comparison Results</CardTitle>
+                <CardDescription>
+                  {compareResults.length > 0
+                    ? `${compareResults.length} similar studies found`
+                    : 'Matching studies will appear here'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {compareResults.length > 0 ? (
+                  <div className="space-y-3">
+                    {compareResults.map((study, index) => (
+                      <div key={study.studyId || index} className="p-3 border rounded-lg bg-white">
+                        <div className="flex items-start justify-between mb-2">
+                          <h3 className="font-medium text-sm">{study.title || study.studyId}</h3>
+                          <span className={`px-2 py-0.5 text-xs font-medium rounded ${
+                            study.similarity >= 0.8 ? 'bg-green-100 text-green-700' :
+                            study.similarity >= 0.5 ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-gray-100 text-gray-600'
+                          }`}>
+                            {Math.round(study.similarity * 100)}% similar
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                          <div>Phase: <span className="font-medium">{study.phase}</span></div>
+                          <div>N: <span className="font-medium">{study.sampleSize || 'N/A'}</span></div>
+                          <div>Indication: <span className="font-medium capitalize">{study.indication}</span></div>
+                          <div>Outcome: <span className={`font-medium ${
+                            study.outcome === 'Positive' ? 'text-green-600' :
+                            study.outcome === 'Negative' ? 'text-red-600' : 'text-gray-600'
+                          }`}>{study.outcome}</span></div>
+                        </div>
+                        {study.primaryEndpoint && (
+                          <p className="text-xs text-gray-500 mt-2">Endpoint: {study.primaryEndpoint}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center p-6 border rounded bg-gray-50">
+                    <BarChart3 className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                    <p className="text-gray-500 text-sm">
+                      Enter an indication and endpoint to find comparable studies in the CSR database
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         {/* Narrative Generator Tab */}
@@ -380,7 +589,7 @@ const CSRPage = () => {
                     />
                   </div>
 
-                  <Button onClick={handleGenerateNarrative} disabled={loading} className="w-full">
+                  <Button onClick={handleGenerateNarrative} disabled={loading || !narrativeInput.eventDescription.trim()} className="w-full">
                     {loading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -404,7 +613,7 @@ const CSRPage = () => {
                   <div className="p-4 border rounded bg-white">
                     <div
                       className="prose max-w-none"
-                      dangerouslySetInnerHTML={{ __html: narrativeResult.replace(/\n/g, '<br/>') }}
+                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(narrativeResult.replace(/\n/g, '<br/>')) }}
                     />
                   </div>
                 ) : (
@@ -474,7 +683,7 @@ const CSRPage = () => {
                     </select>
                   </div>
 
-                  <Button onClick={handleDetectSignals} disabled={loading} className="w-full">
+                  <Button onClick={handleDetectSignals} disabled={loading || !signalInput.drugName.trim()} className="w-full">
                     {loading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -605,7 +814,7 @@ const CSRPage = () => {
                     />
                   </div>
 
-                  <Button onClick={handleBenefitRiskAnalysis} disabled={loading} className="w-full">
+                  <Button onClick={handleBenefitRiskAnalysis} disabled={loading || !benefitRiskInput.drugName.trim() || !benefitRiskInput.indication.trim()} className="w-full">
                     {loading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />

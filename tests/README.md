@@ -1,6 +1,6 @@
 # Tests
 
-This directory contains all tests for ClinicalSageAI.
+This directory contains all tests for Concept2Cure.RI.
 
 ## Structure
 

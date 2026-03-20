@@ -8,7 +8,7 @@ import { fetchCTDSections, fetchRiskConnections, updateSectionPosition } from '.
 import './CanvasWorkbenchV2.css';
 
 /**
- * Enhanced Canvas Workbench for TrialSage
+ * Enhanced Canvas Workbench for Concept2Cure
  * Provides a visual workspace for viewing and arranging CTD sections,
  * with interactive nodes, connection lines, and detailed section information
  */
@@ -196,7 +196,7 @@ const CanvasWorkbenchV2 = () => {
             fill="${nodeColor}" stroke="#666" stroke-width="1" />
         <rect x="${section.x}" y="${section.y}" width="4" height="50" fill="${borderColor}" />
         <text x="${section.x + 10}" y="${section.y + 25}" font-family="Arial" font-size="12" fill="#333">${section.title}</text>
-        <rect x="${section.x - 5}" y="${section.y - 5}" width="20" height="15" rx="4" ry="4" fill="#5c4dff" />
+        <rect x="${section.x - 5}" y="${section.y - 5}" width="20" height="15" rx="4" ry="4" fill="#d97757" />
         <text x="${section.x}" y="${section.y + 5}" font-family="Arial" font-size="10" fill="white" font-weight="bold">${section.id}</text>
       </g>`;
     });

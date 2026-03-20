@@ -424,7 +424,7 @@ const ProcessTab = () => {
               <YAxis domain={[90, 110]} />
               <Tooltip />
               <Legend />
-              <Line type="monotone" dataKey="value" stroke="#8884d8" name="Measured Value" strokeWidth={2} />
+              <Line type="monotone" dataKey="value" stroke="#6a9bcc" name="Measured Value" strokeWidth={2} />
               <Line type="monotone" dataKey="ucl" stroke="#ff0000" name="UCL" strokeDasharray="5 5" />
               <Line type="monotone" dataKey="lcl" stroke="#ff0000" name="LCL" strokeDasharray="5 5" />
               <Line type="monotone" dataKey="target" stroke="#00ff00" name="Target" strokeDasharray="3 3" />
@@ -738,7 +738,7 @@ const ProcessTab = () => {
                   { x: 7, y: 99.6 },
                   { x: 8, y: 100.2 },
                 ]}
-                fill="#8884d8"
+                fill="#6a9bcc"
               />
             </ScatterChart>
           </ResponsiveContainer>
@@ -876,7 +876,7 @@ const ProcessTab = () => {
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Line type="monotone" dataKey="value" stroke="#8884d8" strokeWidth={2} />
+                  <Line type="monotone" dataKey="value" stroke="#6a9bcc" strokeWidth={2} />
                   <Line type="monotone" dataKey="ucl" stroke="#ff0000" strokeDasharray="5 5" />
                   <Line type="monotone" dataKey="lcl" stroke="#ff0000" strokeDasharray="5 5" />
                 </LineChart>
@@ -889,7 +889,7 @@ const ProcessTab = () => {
                   <XAxis dataKey="batch" />
                   <YAxis />
                   <Tooltip />
-                  <Area type="monotone" dataKey="value" stroke="#82ca9d" fill="#82ca9d" />
+                  <Area type="monotone" dataKey="value" stroke="#92a87a" fill="#92a87a" />
                 </AreaChart>
               </ResponsiveContainer>
             </TabsContent>
@@ -1196,8 +1196,8 @@ const ProcessTab = () => {
               <PolarGrid />
               <PolarAngleAxis dataKey="subject" />
               <PolarRadiusAxis angle={90} domain={[0, 100]} />
-              <Radar name="Current" dataKey="A" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
-              <Radar name="Target" dataKey="B" stroke="#82ca9d" fill="#82ca9d" fillOpacity={0.6} />
+              <Radar name="Current" dataKey="A" stroke="#6a9bcc" fill="#6a9bcc" fillOpacity={0.6} />
+              <Radar name="Target" dataKey="B" stroke="#92a87a" fill="#92a87a" fillOpacity={0.6} />
               <Legend />
             </RadarChart>
           </ResponsiveContainer>

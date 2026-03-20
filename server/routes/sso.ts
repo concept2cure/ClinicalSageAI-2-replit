@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import { config } from '../config/environment';
 
 const router = Router();
-const isDev = process.env.NODE_ENV !== 'production';
+const isDev = process.env.NODE_ENV === 'development';
 
 // GET /api/auth/sso/:provider/initiate
 router.get('/:provider/initiate', (req: Request, res: Response) => {
