@@ -444,7 +444,7 @@ const ReviewCommentsPanel: React.FC<{
           const config = PRIORITY_CONFIG[priority];
           
           return (
-            <div key={priority} className="border-b border-zinc-100 last:border-0">
+            <div key={priority} className="border-b border-zinc-200 last:border-0">
               <div className="px-3 py-2 bg-zinc-50 flex items-center gap-2">
                 <span className={cn('px-2 py-0.5 text-xs font-medium rounded', config.color)}>
                   {config.label}
@@ -453,7 +453,7 @@ const ReviewCommentsPanel: React.FC<{
               </div>
               
               {comments.slice(0, 5).map((comment: any) => (
-                <div key={comment.id} className="p-3 border-t border-zinc-100 hover:bg-zinc-50">
+                <div key={comment.id} className="p-3 border-t border-zinc-200 hover:bg-zinc-50">
                   <div className="flex items-start justify-between mb-1">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-medium text-blue-600">{comment.sectionNumber}</span>
@@ -549,7 +549,7 @@ const SourceDocumentsPanel: React.FC<{
           const config = typeLabels[type] || typeLabels.other;
           
           return (
-            <div key={type} className="border-b border-zinc-100 last:border-0">
+            <div key={type} className="border-b border-zinc-200 last:border-0">
               <div className="px-3 py-2 bg-zinc-50 flex items-center gap-2 text-zinc-600">
                 {config.icon}
                 <span className="text-xs font-medium">{config.label}</span>
@@ -559,7 +559,7 @@ const SourceDocumentsPanel: React.FC<{
               {sources.slice(0, 5).map(source => (
                 <button
                   key={source.id}
-                  className="w-full px-3 py-2 text-left hover:bg-zinc-50 transition-colors border-t border-zinc-100"
+                  className="w-full px-3 py-2 text-left hover:bg-zinc-50 transition-colors border-t border-zinc-200"
                 >
                   <p className="text-sm text-zinc-900 truncate">{source.title}</p>
                   <div className="flex items-center gap-2 mt-0.5">
@@ -641,7 +641,7 @@ const DocumentList: React.FC<{
               key={doc.id}
               onClick={() => onDocumentSelect?.(doc)}
               className={cn(
-                'w-full p-3 text-left border-b border-zinc-100 transition-colors',
+                'w-full p-3 text-left border-b border-zinc-200 transition-colors',
                 isActive ? 'bg-blue-50' : 'hover:bg-zinc-50'
               )}
             >

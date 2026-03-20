@@ -893,7 +893,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
     <>
       <div className="flex-1 flex flex-col bg-white min-h-0 border-t-2 border-violet-500/20">
         {/* Header — ultra minimal */}
-        <div className="border-b border-zinc-100 px-5 py-2.5">
+        <div className="border-b border-zinc-200 px-5 py-2.5">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-sm font-semibold text-zinc-900">{projectName}</h1>
@@ -973,7 +973,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
         </div>
 
         {/* Toolbar */}
-        <div className="border-b border-zinc-100 px-5 py-1.5 flex items-center gap-2">
+        <div className="border-b border-zinc-200 px-5 py-1.5 flex items-center gap-2">
           {/* Search */}
           <div className="relative flex-1 max-w-xs">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
@@ -1041,7 +1041,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                 <div key={mod.code}>
                   {/* Module header */}
                   <div
-                    className="flex items-center gap-2 px-4 py-2 bg-zinc-50 border-b border-zinc-100 cursor-pointer hover:bg-zinc-100 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-zinc-50 border-b border-zinc-200 cursor-pointer hover:bg-zinc-100 transition-colors"
                     onClick={() => handleToggle(mod.code)}
                   >
                     {expandedSet.has(mod.code) ? (
@@ -1164,7 +1164,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[85vh] overflow-y-auto">
             {/* Dialog Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200">
               <div className="flex items-center gap-2">
                 <Package className="w-5 h-5 text-indigo-600" />
                 <h2 className="text-base font-semibold text-zinc-900">Compile eCTD Package</h2>

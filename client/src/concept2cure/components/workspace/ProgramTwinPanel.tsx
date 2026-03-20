@@ -370,7 +370,7 @@ export const ProgramTwinPanel: React.FC<ProgramTwinPanelProps> = ({
         </TwinSection>
 
         {/* ── Quick actions ── */}
-        <div className="flex flex-wrap gap-1.5 pt-2 border-t border-zinc-100">
+        <div className="flex flex-wrap gap-1.5 pt-2 border-t border-zinc-200">
           {onOpenTransformCanvas && (
             <button
               onClick={onOpenTransformCanvas}
@@ -390,7 +390,7 @@ export const ProgramTwinPanel: React.FC<ProgramTwinPanelProps> = ({
 
 function TwinHeader({ onClose, projectName }: { onClose: () => void; projectName?: string }) {
   return (
-    <div className="flex items-center gap-2 px-4 h-10 border-b border-zinc-100 shrink-0">
+    <div className="flex items-center gap-2 px-4 h-10 border-b border-zinc-200 shrink-0">
       <Brain className="w-4 h-4 text-violet-500" />
       <h2 className="text-sm font-semibold text-zinc-800">Program Twin</h2>
       {projectName && (
@@ -412,7 +412,7 @@ function TwinHeader({ onClose, projectName }: { onClose: () => void; projectName
 
 function StatCard({ label, value, icon }: { label: string; value: number; icon: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-1.5 px-2 py-1 border border-zinc-100 rounded bg-zinc-50/50">
+    <div className="flex items-center gap-1.5 px-2 py-1 border border-zinc-200 rounded bg-zinc-50/50">
       {icon}
       <span className="text-sm font-bold text-zinc-800 tabular-nums">{value}</span>
       <span className="text-[11px] text-zinc-400">{label}</span>
@@ -436,7 +436,7 @@ function TwinSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className="border border-zinc-100 rounded-lg">
+    <div className="border border-zinc-200 rounded-lg">
       <button
         onClick={onToggle}
         className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-zinc-50 transition-colors rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"

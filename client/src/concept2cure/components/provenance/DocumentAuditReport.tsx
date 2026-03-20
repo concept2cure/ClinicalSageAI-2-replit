@@ -318,7 +318,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
   if (error || !report) {
     return (
       <div className="h-full flex flex-col bg-white border-l border-zinc-200">
-        <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200">
           <span className="text-xs font-semibold text-zinc-700">Audit Report</span>
           <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600">
             <X className="w-4 h-4" />
@@ -340,7 +340,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
   return (
     <div className="h-full flex flex-col bg-white border-l border-zinc-200 print:border-0">
       {/* Header — hidden on print */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100 bg-gradient-to-r from-emerald-50/50 to-blue-50/50 shrink-0 print:hidden">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200 bg-gradient-to-r from-emerald-50/50 to-blue-50/50 shrink-0 print:hidden">
         <div className="flex items-center gap-2">
           <Shield className="w-4 h-4 text-emerald-600" />
           <span className="text-xs font-bold text-zinc-800">

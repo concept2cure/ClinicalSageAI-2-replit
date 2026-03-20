@@ -52,7 +52,7 @@ export const ProjectFilesCompact: React.FC<ProjectFilesCompactProps> = ({
   return (
     <div className="flex flex-col h-full">
       {/* Header row */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100 flex-shrink-0">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200 flex-shrink-0">
         <p className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
           Files
           {docs.length > 0 && <span className="ml-1.5 text-zinc-300">({docs.length})</span>}
@@ -131,7 +131,7 @@ export const ProjectFilesCompact: React.FC<ProjectFilesCompactProps> = ({
 
       {/* Footer: open full manager */}
       {onOpenFullManager && docs.length > 0 && (
-        <div className="flex-shrink-0 border-t border-zinc-100 px-3 py-1.5">
+        <div className="flex-shrink-0 border-t border-zinc-200 px-3 py-1.5">
           <button
             onClick={onOpenFullManager}
             className="text-[11px] text-zinc-500 hover:text-zinc-700 hover:underline transition-colors"

@@ -99,7 +99,7 @@ export const SubmissionAppsPanel: React.FC<SubmissionAppsPanelProps> = ({
   return (
     <div className="flex-1 flex flex-col bg-white min-h-0 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-2 px-4 h-10 border-b border-zinc-100 shrink-0">
+      <div className="flex items-center gap-2 px-4 h-10 border-b border-zinc-200 shrink-0">
         <Sparkles className="w-4 h-4 text-blue-500" />
         <h2 className="text-sm font-semibold text-zinc-800">Submission Apps</h2>
         {projectName && (
@@ -125,7 +125,7 @@ export const SubmissionAppsPanel: React.FC<SubmissionAppsPanelProps> = ({
               <button
                 key={app.appId}
                 onClick={() => setSelectedApp(app)}
-                className="flex flex-col items-start gap-2 p-3 rounded-lg border border-zinc-100 hover:border-blue-200 hover:bg-blue-50/30 hover:shadow-sm hover:-translate-y-px transition-all duration-150 text-left focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none group"
+                className="flex flex-col items-start gap-2 p-3 rounded-lg border border-zinc-200 hover:border-blue-200 hover:bg-blue-50/30 hover:shadow-sm hover:-translate-y-px transition-all duration-150 text-left focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none group"
               >
                 <div className="flex items-center gap-2 w-full">
                   {APP_ICONS[app.appId] || <FileText className="w-5 h-5 text-zinc-400" />}
@@ -165,7 +165,7 @@ export const SubmissionAppsPanel: React.FC<SubmissionAppsPanelProps> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 p-3 rounded-lg bg-zinc-50 border border-zinc-100">
+            <div className="grid grid-cols-2 gap-3 p-3 rounded-lg bg-zinc-50 border border-zinc-200">
               <div>
                 <span className="text-[11px] text-zinc-400 uppercase tracking-wider">Creates</span>
                 <p className="text-[12px] text-zinc-700 font-medium">

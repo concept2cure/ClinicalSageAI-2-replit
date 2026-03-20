@@ -396,7 +396,7 @@ export default function SubmissionGapAnalysis({ projectId, submissionType: initi
         </header>
 
         {/* ═══ Step 1: Configuration ═══ */}
-        <section className="bg-white border border-zinc-100 rounded-xl shadow-sm p-6 mb-8">
+        <section className="bg-white border border-zinc-200 rounded-xl shadow-sm p-6 mb-8">
           <h2 className="text-sm font-medium text-zinc-900 mb-5 flex items-center gap-2">
             <FileText className="w-4 h-4 text-zinc-400" />
             Configuration
@@ -456,7 +456,7 @@ export default function SubmissionGapAnalysis({ projectId, submissionType: initi
                       className={`flex items-start gap-2.5 px-3 py-2.5 rounded-lg border cursor-pointer transition-all text-sm ${
                         isChecked
                           ? 'border-blue-200 bg-blue-50/50 text-zinc-900'
-                          : 'border-zinc-100 bg-white hover:border-zinc-200 text-zinc-600'
+                          : 'border-zinc-200 bg-white hover:border-zinc-200 text-zinc-600'
                       }`}
                     >
                       <input
@@ -514,7 +514,7 @@ export default function SubmissionGapAnalysis({ projectId, submissionType: initi
             {/* Readiness Score + Summary Stats */}
             <section className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
               {/* Circular Score */}
-              <div className="lg:col-span-1 bg-white border border-zinc-100 rounded-xl shadow-sm p-6 flex flex-col items-center justify-center">
+              <div className="lg:col-span-1 bg-white border border-zinc-200 rounded-xl shadow-sm p-6 flex flex-col items-center justify-center">
                 <CircularProgress value={result.readinessScore} />
               </div>
 
@@ -548,8 +548,8 @@ export default function SubmissionGapAnalysis({ projectId, submissionType: initi
             </section>
 
             {/* Gap Table */}
-            <section className="bg-white border border-zinc-100 rounded-xl shadow-sm overflow-hidden mb-8">
-              <div className="px-6 py-4 border-b border-zinc-100">
+            <section className="bg-white border border-zinc-200 rounded-xl shadow-sm overflow-hidden mb-8">
+              <div className="px-6 py-4 border-b border-zinc-200">
                 <h3 className="text-sm font-medium text-zinc-900 flex items-center gap-2">
                   <Target className="w-4 h-4 text-zinc-400" />
                   Gap Analysis Details
@@ -637,7 +637,7 @@ export default function SubmissionGapAnalysis({ projectId, submissionType: initi
             )}
 
             {/* Timeline Projection */}
-            <section className="bg-white border border-zinc-100 rounded-xl shadow-sm p-6">
+            <section className="bg-white border border-zinc-200 rounded-xl shadow-sm p-6">
               <div className="flex items-center gap-2 mb-4">
                 <Clock className="w-4 h-4 text-zinc-400" />
                 <h3 className="text-sm font-medium text-zinc-900">Timeline Projection</h3>
@@ -675,7 +675,7 @@ function SummaryCard({
   const s = styles[color];
 
   return (
-    <div className={`${s.bg} border border-zinc-100 rounded-xl shadow-sm p-5 flex flex-col`}>
+    <div className={`${s.bg} border border-zinc-200 rounded-xl shadow-sm p-5 flex flex-col`}>
       <div className={`${s.iconColor} mb-2`}>{icon}</div>
       <span className={`text-3xl font-bold ${s.valueColor} tracking-tight`}>{value}</span>
       <span className="text-xs text-zinc-500 mt-1">{label}</span>

@@ -71,7 +71,7 @@ const Section: React.FC<{
 }> = ({ title, icon: Icon, count, defaultOpen = true, children }) => {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="border-b border-zinc-100 last:border-0">
+    <div className="border-b border-zinc-200 last:border-0">
       <button
         onClick={() => setOpen((o) => !o)}
         className="w-full flex items-center gap-2 px-4 py-2.5 text-left hover:bg-zinc-50 transition-colors"
@@ -197,7 +197,7 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
   return (
     <div className={cn('flex flex-col h-full bg-white', className)}>
       {/* Project header */}
-      <div className="px-4 py-3 border-b border-zinc-100 flex-shrink-0">
+      <div className="px-4 py-3 border-b border-zinc-200 flex-shrink-0">
         <div className="flex items-center gap-2">
           <Brain className="w-4 h-4 text-violet-500" />
           <div className="flex-1 min-w-0">
@@ -341,7 +341,7 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
             ) : (
               <button
                 onClick={handleStartEditing}
-                className="w-full text-left p-3 rounded-md border border-zinc-100 hover:border-zinc-200 hover:bg-zinc-50 transition-colors"
+                className="w-full text-left p-3 rounded-md border border-zinc-200 hover:border-zinc-200 hover:bg-zinc-50 transition-colors"
               >
                 {knowledge?.customInstructions ? (
                   <p className="text-xs text-zinc-700 whitespace-pre-wrap line-clamp-4">

@@ -141,7 +141,7 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
               <button
                 key={action.id}
                 onClick={() => action.action === 'new-project' ? onNewProject() : onNavigate(action.action)}
-                className="group flex items-center gap-3 p-4 rounded-xl bg-white border border-zinc-100 hover:border-zinc-200 hover:shadow-sm transition-all text-left"
+                className="group flex items-center gap-3 p-4 rounded-xl bg-white border border-zinc-200 hover:border-zinc-200 hover:shadow-sm transition-all text-left"
               >
                 <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0', action.bg)}>
                   <action.icon className={cn('w-5 h-5', action.color)} />
@@ -174,7 +174,7 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
             <div className="border border-zinc-200 rounded-xl overflow-hidden bg-white">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-zinc-100 bg-zinc-50/60">
+                  <tr className="border-b border-zinc-200 bg-zinc-50/60">
                     <th className="px-4 py-2 font-medium text-zinc-500 text-xs uppercase tracking-wider">Type</th>
                     <th className="px-4 py-2 font-medium text-zinc-500 text-xs uppercase tracking-wider">Project</th>
                     <th className="px-4 py-2 font-medium text-zinc-500 text-xs uppercase tracking-wider hidden sm:table-cell">Chats</th>
@@ -237,7 +237,7 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
               <button
                 key={mod.id}
                 onClick={() => onNavigate(mod.id)}
-                className="group flex items-center gap-2.5 p-3 rounded-xl bg-white border border-zinc-100 hover:border-zinc-200 hover:shadow-sm transition-all text-left"
+                className="group flex items-center gap-2.5 p-3 rounded-xl bg-white border border-zinc-200 hover:border-zinc-200 hover:shadow-sm transition-all text-left"
               >
                 <mod.icon className={cn('w-4 h-4 flex-shrink-0', mod.color)} />
                 <div className="min-w-0 flex-1">

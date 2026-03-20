@@ -1092,7 +1092,7 @@ function TrainingTab() {
 
                   {/* Expanded module list */}
                   {isActive && (
-                    <div className="mt-4 pt-3 border-t border-zinc-100 space-y-2">
+                    <div className="mt-4 pt-3 border-t border-zinc-200 space-y-2">
                       <p className="text-xs font-medium text-zinc-700 mb-2">Modules in this path:</p>
                       {pathModules.map((mod, idx) => {
                         const ModIcon = mod.icon;
@@ -1202,7 +1202,7 @@ function TrainingTab() {
 
                   {/* Expanded Content */}
                   {isExpanded && (
-                    <div className="px-5 pb-5 border-t border-zinc-100 pt-4">
+                    <div className="px-5 pb-5 border-t border-zinc-200 pt-4">
                       <div className="grid grid-cols-12 gap-5">
                         {/* Lessons */}
                         <div className="col-span-8">
@@ -1665,7 +1665,7 @@ function DrSageTab() {
                 )}
                 <div className={cn(
                   'max-w-[80%] rounded-xl px-4 py-3',
-                  msg.role === 'sage' && 'bg-zinc-50 border border-zinc-100',
+                  msg.role === 'sage' && 'bg-zinc-50 border border-zinc-200',
                   msg.role === 'user' && 'bg-zinc-900 text-white',
                   msg.role === 'system' && 'bg-blue-50 border border-blue-100 text-blue-800',
                 )}>
@@ -1703,7 +1703,7 @@ function DrSageTab() {
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center flex-shrink-0">
                   <Stethoscope className="w-4 h-4 text-white" />
                 </div>
-                <div className="bg-zinc-50 border border-zinc-100 rounded-xl px-4 py-4 max-w-[80%]">
+                <div className="bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-4 max-w-[80%]">
                   <div className="flex items-center gap-2 mb-3">
                     <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
                     <span className="text-xs font-semibold text-zinc-700">Agentic Workflow Running...</span>
@@ -1753,7 +1753,7 @@ function DrSageTab() {
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center flex-shrink-0">
                   <Stethoscope className="w-4 h-4 text-white" />
                 </div>
-                <div className="bg-zinc-50 border border-zinc-100 rounded-xl px-4 py-3 flex items-center gap-2">
+                <div className="bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 flex items-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
                   <span className="text-sm text-zinc-500">Dr. Sage is thinking...</span>
                 </div>
@@ -1763,7 +1763,7 @@ function DrSageTab() {
           </div>
 
           {/* Input */}
-          <div className="border-t border-zinc-100 p-3">
+          <div className="border-t border-zinc-200 p-3">
             <div className="flex items-center gap-2">
               <input
                 value={input}

@@ -377,7 +377,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
 
                   {/* Expanded metadata */}
                   {isExpanded && (
-                    <div className="px-3 pb-3 border-t border-zinc-100">
+                    <div className="px-3 pb-3 border-t border-zinc-200">
                       {source.excerpt && (
                         <p className="text-[11px] text-zinc-500 mt-2 line-clamp-3">
                           {source.excerpt}
@@ -447,7 +447,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
                         </button>
                       )}
                       {/* Actions */}
-                      <div className="flex items-center gap-2 mt-2 pt-2 border-t border-zinc-100">
+                      <div className="flex items-center gap-2 mt-2 pt-2 border-t border-zinc-200">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();

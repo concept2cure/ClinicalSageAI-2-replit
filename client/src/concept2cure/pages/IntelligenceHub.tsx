@@ -140,7 +140,7 @@ const expeditedPrograms = [
 
 function EmptyState({ icon: Icon, title, description }: { icon: React.ElementType; title: string; description: string }) {
   return (
-    <div className="bg-white rounded-lg border border-zinc-100 py-12 text-center">
+    <div className="bg-white rounded-lg border border-zinc-200 py-12 text-center">
       <Icon className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
       <p className="text-sm text-zinc-500">{title}</p>
       <p className="text-xs text-zinc-400 mt-1">{description}</p>
@@ -278,7 +278,7 @@ function RegulatoryAlerts() {
           />
         ) : (
           alerts.map((alert) => (
-            <div key={alert.id} className="bg-white rounded-lg border border-zinc-100 p-5">
+            <div key={alert.id} className="bg-white rounded-lg border border-zinc-200 p-5">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-3">
                   <Clock className="w-4 h-4 text-zinc-400" />
@@ -287,7 +287,7 @@ function RegulatoryAlerts() {
                 </div>
                 <div className="flex items-center gap-2">
                   {alert.agencies.map((a) => (
-                    <span key={a} className="text-xs text-zinc-500 border border-zinc-100 rounded px-2 py-0.5">
+                    <span key={a} className="text-xs text-zinc-500 border border-zinc-200 rounded px-2 py-0.5">
                       {a}
                     </span>
                   ))}
@@ -374,7 +374,7 @@ function EvidenceHub() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search evidence by keyword..."
-            className="w-full pl-10 pr-4 py-2 rounded-lg border border-zinc-100 bg-white text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-200"
+            className="w-full pl-10 pr-4 py-2 rounded-lg border border-zinc-200 bg-white text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-200"
           />
         </div>
         <div className="flex items-center gap-1">
@@ -435,7 +435,7 @@ function EvidenceHub() {
           <p className="text-sm text-zinc-400 py-8 text-center">No evidence items match your search.</p>
         ) : (
           filtered.map((item: any) => (
-            <div key={item.id} className="bg-white rounded-lg border border-zinc-100 p-5">
+            <div key={item.id} className="bg-white rounded-lg border border-zinc-200 p-5">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
                   <h3 className="text-sm font-medium text-zinc-900 mb-1">{item.title}</h3>
@@ -530,7 +530,7 @@ function PrecedentFinder() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search by product name, indication, or device type..."
-          className="w-full pl-10 pr-4 py-2 rounded-lg border border-zinc-100 bg-white text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-200"
+          className="w-full pl-10 pr-4 py-2 rounded-lg border border-zinc-200 bg-white text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-200"
         />
       </div>
 
@@ -545,7 +545,7 @@ function PrecedentFinder() {
           <p className="text-sm text-zinc-400 py-8 text-center">No precedents match your search.</p>
         ) : (
           filteredPrecedents.map((p: any) => (
-            <div key={p.id} className="bg-white rounded-lg border border-zinc-100 p-5">
+            <div key={p.id} className="bg-white rounded-lg border border-zinc-200 p-5">
               <div className="flex items-start justify-between mb-3">
                 <div>
                   <h3 className="text-sm font-medium text-zinc-900">{p.name}</h3>
@@ -637,7 +637,7 @@ function PathwayAdvisor() {
               'px-4 py-2 rounded-lg text-sm transition-colors border',
               selectedAgency === a.id
                 ? 'border-zinc-900 text-zinc-900 font-medium'
-                : 'border-zinc-100 text-zinc-400 hover:text-zinc-600'
+                : 'border-zinc-200 text-zinc-400 hover:text-zinc-600'
             )}
           >
             <div>{a.name}</div>
@@ -652,11 +652,11 @@ function PathwayAdvisor() {
           <div>
             <div className="flex items-center gap-2 mb-3">
               <h3 className="text-sm font-medium text-zinc-900">Regulatory Pathways</h3>
-              <span className="text-[11px] text-zinc-400 border border-zinc-100 rounded px-1.5 py-0.5">Reference Data</span>
+              <span className="text-[11px] text-zinc-400 border border-zinc-200 rounded px-1.5 py-0.5">Reference Data</span>
             </div>
             <div className="space-y-3">
               {fdaPathways.map((p) => (
-                <div key={p.name} className="bg-white rounded-lg border border-zinc-100 p-4">
+                <div key={p.name} className="bg-white rounded-lg border border-zinc-200 p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <h4 className="text-sm font-medium text-zinc-900 mb-1">{p.name}</h4>
@@ -673,11 +673,11 @@ function PathwayAdvisor() {
           <div>
             <div className="flex items-center gap-2 mb-3">
               <h3 className="text-sm font-medium text-zinc-900">Expedited Programs</h3>
-              <span className="text-[11px] text-zinc-400 border border-zinc-100 rounded px-1.5 py-0.5">Reference Data</span>
+              <span className="text-[11px] text-zinc-400 border border-zinc-200 rounded px-1.5 py-0.5">Reference Data</span>
             </div>
             <div className="grid grid-cols-2 gap-3">
               {expeditedPrograms.map((ep) => (
-                <div key={ep.name} className="bg-white rounded-lg border border-zinc-100 p-4">
+                <div key={ep.name} className="bg-white rounded-lg border border-zinc-200 p-4">
                   <h4 className="text-sm font-medium text-zinc-900 mb-2">{ep.name}</h4>
                   <div className="text-xs text-zinc-400 mb-1">Criteria</div>
                   <p className="text-sm text-zinc-600 mb-2">{ep.criteria}</p>
@@ -691,7 +691,7 @@ function PathwayAdvisor() {
       )}
 
       {selectedAgency !== 'fda' && (
-        <div className="bg-white rounded-lg border border-zinc-100 p-8 text-center">
+        <div className="bg-white rounded-lg border border-zinc-200 p-8 text-center">
           <Globe className="w-4 h-4 text-zinc-400 mx-auto mb-2" />
           <p className="text-sm text-zinc-600">
             Pathway data for {agencies.find((a) => a.id === selectedAgency)?.name} is available.
@@ -785,7 +785,7 @@ function StrategicView() {
         ) : (
           <div className="space-y-3">
             {upcomingDates.map((d) => (
-              <div key={d.id} className="bg-white rounded-lg border border-zinc-100 p-4">
+              <div key={d.id} className="bg-white rounded-lg border border-zinc-200 p-4">
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-3">
                     <h4 className="text-sm font-medium text-zinc-900">{d.product}</h4>
@@ -815,7 +815,7 @@ function StrategicView() {
         ) : (
           <div className="space-y-3">
             {competitiveLandscape.map((item, i) => (
-              <div key={i} className="bg-white rounded-lg border border-zinc-100 p-4">
+              <div key={i} className="bg-white rounded-lg border border-zinc-200 p-4">
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-3">
                     <h4 className="text-sm font-medium text-zinc-900">{item.company}</h4>
@@ -884,7 +884,7 @@ export function IntelligenceHub({ onClose }: { onClose: () => void }) {
       </div>
 
       {/* Tab navigation */}
-      <nav className="flex items-center gap-6 border-b border-zinc-100 px-8 mt-4">
+      <nav className="flex items-center gap-6 border-b border-zinc-200 px-8 mt-4">
         {tabs.map((tab) => (
           <button
             key={tab.key}

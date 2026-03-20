@@ -303,7 +303,7 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
                 {contextFields.map(({ key, label }) => (
                   <div
                     key={key}
-                    className="group rounded-lg border border-zinc-100 bg-zinc-50/50 px-4 py-3"
+                    className="group rounded-lg border border-zinc-200 bg-zinc-50/50 px-4 py-3"
                   >
                     <p className="text-xs font-medium text-zinc-500 mb-1">
                       {label}

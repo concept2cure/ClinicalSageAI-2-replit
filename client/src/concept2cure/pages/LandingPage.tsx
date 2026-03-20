@@ -521,7 +521,7 @@ function PlatformMockup() {
                 { name: 'NDA-2024-1203', status: 'CSR Drafting', progress: 45, color: 'bg-violet-500' },
                 { name: '510(k)-K241567', status: 'Predicate Analysis', progress: 92, color: 'bg-green-500' },
               ].map(s => (
-                <div key={s.name} className="flex items-center gap-4 p-3 bg-white rounded-lg border border-zinc-100">
+                <div key={s.name} className="flex items-center gap-4 p-3 bg-white rounded-lg border border-zinc-200">
                   <div className="flex-1">
                     <div className="text-sm font-medium text-zinc-900">{s.name}</div>
                     <div className="text-xs text-zinc-500">{s.status}</div>
@@ -541,7 +541,7 @@ function PlatformMockup() {
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.8, duration: 0.5 }}
-        className="absolute -left-4 top-1/3 hidden lg:flex items-center gap-2 px-3 py-2 bg-white rounded-xl shadow-lg border border-zinc-100"
+        className="absolute -left-4 top-1/3 hidden lg:flex items-center gap-2 px-3 py-2 bg-white rounded-xl shadow-lg border border-zinc-200"
       >
         <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center">
           <SparklesIcon className="w-4 h-4 text-violet-600" />
@@ -555,7 +555,7 @@ function PlatformMockup() {
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 1.0, duration: 0.5 }}
-        className="absolute -right-4 top-2/3 hidden lg:flex items-center gap-2 px-3 py-2 bg-white rounded-xl shadow-lg border border-zinc-100"
+        className="absolute -right-4 top-2/3 hidden lg:flex items-center gap-2 px-3 py-2 bg-white rounded-xl shadow-lg border border-zinc-200"
       >
         <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center">
           <CheckIcon className="w-4 h-4 text-green-600" />
@@ -725,7 +725,7 @@ export const LandingPage: React.FC = () => {
             className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto"
           >
             {HERO_STATS.map(s => (
-              <div key={s.label} className="p-4 rounded-xl bg-white/70 backdrop-blur border border-zinc-100">
+              <div key={s.label} className="p-4 rounded-xl bg-white/70 backdrop-blur border border-zinc-200">
                 <div className="text-2xl font-bold text-zinc-900"><AnimatedValue value={s.value} /></div>
                 <div className="text-sm font-medium text-zinc-700">{s.label}</div>
                 <div className="text-xs text-zinc-500 mt-0.5">{s.sub}</div>
@@ -801,7 +801,7 @@ export const LandingPage: React.FC = () => {
               <motion.div
                 key={m.label}
                 variants={fadeUp}
-                className="relative p-6 rounded-2xl bg-white border border-zinc-100 hover:border-green-200 hover:shadow-lg hover:shadow-green-600/5 transition-all duration-300 group"
+                className="relative p-6 rounded-2xl bg-white border border-zinc-200 hover:border-green-200 hover:shadow-lg hover:shadow-green-600/5 transition-all duration-300 group"
               >
                 <div className="text-3xl sm:text-4xl font-bold text-zinc-900 mb-2 group-hover:text-green-700 transition-colors">
                   <AnimatedValue value={m.value} />
@@ -995,7 +995,7 @@ export const LandingPage: React.FC = () => {
                 <motion.div
                   key={f.title}
                   variants={fadeUp}
-                  className="group p-6 rounded-2xl bg-white border border-zinc-100 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-600/5 transition-all duration-300"
+                  className="group p-6 rounded-2xl bg-white border border-zinc-200 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-600/5 transition-all duration-300"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
@@ -1043,7 +1043,7 @@ export const LandingPage: React.FC = () => {
                     <motion.div
                       key={mod.name}
                       variants={fadeIn}
-                      className="p-5 rounded-xl bg-zinc-50 border border-zinc-100 hover:bg-white hover:border-blue-200 hover:shadow-md transition-all duration-200 group"
+                      className="p-5 rounded-xl bg-zinc-50 border border-zinc-200 hover:bg-white hover:border-blue-200 hover:shadow-md transition-all duration-200 group"
                     >
                       <h4 className="text-sm font-semibold text-zinc-900 mb-2 group-hover:text-blue-700 transition-colors">{mod.name}</h4>
                       <p className="text-xs text-zinc-500 leading-relaxed">{mod.desc}</p>
@@ -1054,7 +1054,7 @@ export const LandingPage: React.FC = () => {
             ))}
           </div>
 
-          <motion.div variants={fadeUp} className="text-center mt-12 p-8 rounded-2xl bg-gradient-to-r from-zinc-50 to-blue-50/50 border border-zinc-100">
+          <motion.div variants={fadeUp} className="text-center mt-12 p-8 rounded-2xl bg-gradient-to-r from-zinc-50 to-blue-50/50 border border-zinc-200">
             <p className="text-lg font-semibold text-zinc-900 mb-2">
               All modules included in every plan. No upsells. No add-ons.
             </p>
@@ -1095,7 +1095,7 @@ export const LandingPage: React.FC = () => {
                 <motion.div
                   key={agent.name}
                   variants={fadeUp}
-                  className="p-3.5 rounded-xl bg-white border border-zinc-100 hover:border-violet-200 transition-all"
+                  className="p-3.5 rounded-xl bg-white border border-zinc-200 hover:border-violet-200 transition-all"
                 >
                   <div className="flex items-center gap-2 mb-1.5">
                     <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
@@ -1143,7 +1143,7 @@ export const LandingPage: React.FC = () => {
                 </p>
               </div>
 
-              <div className="p-5 rounded-2xl bg-white border border-zinc-100">
+              <div className="p-5 rounded-2xl bg-white border border-zinc-200">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">
                     <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -1359,7 +1359,7 @@ export const LandingPage: React.FC = () => {
               <motion.div
                 key={i}
                 variants={fadeUp}
-                className="p-6 rounded-2xl bg-white border border-zinc-100 hover:shadow-lg transition-all duration-300"
+                className="p-6 rounded-2xl bg-white border border-zinc-200 hover:shadow-lg transition-all duration-300"
               >
                 <div className="inline-flex items-center gap-1 px-2.5 py-1 mb-4 rounded-full bg-blue-50 border border-blue-100">
                   <span className="text-xs font-semibold text-blue-700">{t.metric}</span>
@@ -1367,7 +1367,7 @@ export const LandingPage: React.FC = () => {
                 <blockquote className="text-sm text-zinc-700 leading-relaxed mb-6">
                   "{t.quote}"
                 </blockquote>
-                <div className="flex items-center gap-3 pt-4 border-t border-zinc-100">
+                <div className="flex items-center gap-3 pt-4 border-t border-zinc-200">
                   <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-xs font-bold">
                     {t.author.split(' ').map(w => w[0]).join('')}
                   </div>

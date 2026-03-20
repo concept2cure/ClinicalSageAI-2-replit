@@ -193,7 +193,7 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div className="py-6 px-5 border-t border-zinc-100 first:border-t-0 first:pt-2">
+    <div className="py-6 px-5 border-t border-zinc-200 first:border-t-0 first:pt-2">
       {label && (
         <p className="text-xs font-medium text-zinc-900 mb-3">{label}</p>
       )}
@@ -282,7 +282,7 @@ function GuideContent() {
         </p>
       </div>
 
-      <div className="border-t border-zinc-100 pt-4 space-y-0">
+      <div className="border-t border-zinc-200 pt-4 space-y-0">
         {MOCK_GUIDE_ACTIONS.map((action, idx) => (
           <button
             key={action.title}
@@ -320,7 +320,7 @@ function DoItContent() {
         </button>
       </div>
 
-      <div className="border-t border-zinc-100 pt-4 space-y-3">
+      <div className="border-t border-zinc-200 pt-4 space-y-3">
         {MOCK_WALKTHROUGH_STEPS.map((step, idx) => {
           const isDone = step.status === "done";
           const isActive = step.status === "active";
@@ -389,7 +389,7 @@ function AnaContent() {
         ))}
       </div>
 
-      <div className="border-t border-zinc-100 pt-4 space-y-3">
+      <div className="border-t border-zinc-200 pt-4 space-y-3">
         <textarea
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -424,7 +424,7 @@ function FixContent() {
             key={issue.title}
             className={cn(
               "py-4",
-              idx < MOCK_ISSUES.length - 1 && "border-b border-zinc-100"
+              idx < MOCK_ISSUES.length - 1 && "border-b border-zinc-200"
             )}
           >
             <div className="flex items-start gap-3">
@@ -544,7 +544,7 @@ export function DrSagePanel({
             className="fixed right-0 top-0 bottom-0 z-50 w-[400px] flex flex-col bg-white shadow-sm border-l border-zinc-200"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100 shrink-0">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 shrink-0">
               <h2 className="text-sm font-semibold text-zinc-900">Dr. Sage</h2>
               <button
                 onClick={onToggle}
@@ -555,7 +555,7 @@ export function DrSagePanel({
             </div>
 
             {/* Tab navigation */}
-            <div className="px-5 border-b border-zinc-100 shrink-0 overflow-x-auto">
+            <div className="px-5 border-b border-zinc-200 shrink-0 overflow-x-auto">
               <div className="flex gap-4 min-w-max">
                 {TABS.map((tab) => {
                   const active = activeTab === tab.id;

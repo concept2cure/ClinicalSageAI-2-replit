@@ -811,7 +811,7 @@ export const ConvergentCanvas: React.FC<ConvergentCanvasProps> = ({
         {sidebarOpen && (
           <div className="w-72 bg-white border-r border-zinc-200 flex flex-col">
             {/* Header */}
-            <div className="h-14 flex items-center justify-between px-4 border-b border-zinc-100">
+            <div className="h-14 flex items-center justify-between px-4 border-b border-zinc-200">
               <h3 className="font-semibold text-zinc-900">Council</h3>
               <button
                 onClick={() => setSidebarOpen(false)}
@@ -837,7 +837,7 @@ export const ConvergentCanvas: React.FC<ConvergentCanvasProps> = ({
             </div>
 
             {/* Footer */}
-            <div className="p-3 border-t border-zinc-100">
+            <div className="p-3 border-t border-zinc-200">
               <button
                 onClick={onSettingsOpen}
                 className="w-full flex items-center gap-2 p-2 rounded-lg text-sm text-zinc-600 hover:bg-zinc-50 transition-colors"

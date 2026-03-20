@@ -394,8 +394,8 @@ export const zenClasses = {
   buttonIcon: 'p-2 text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 rounded-lg',
 
   // Cards
-  card: 'bg-white rounded-xl border border-zinc-100 shadow-sm',
-  cardHover: 'bg-white rounded-xl border border-zinc-100 shadow-sm hover:shadow-md hover:border-zinc-200 transition-all cursor-pointer',
+  card: 'bg-white rounded-xl border border-zinc-200 shadow-sm',
+  cardHover: 'bg-white rounded-xl border border-zinc-200 shadow-sm hover:shadow-md hover:border-zinc-200 transition-all cursor-pointer',
 
   // Input
   input: 'w-full rounded-lg border border-zinc-200 bg-white px-4 py-3 text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors',

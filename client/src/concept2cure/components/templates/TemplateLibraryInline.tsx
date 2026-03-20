@@ -327,7 +327,7 @@ export const TemplateLibraryInline: React.FC<TemplateLibraryInlineProps> = ({
               <button
                 key={t.id}
                 onClick={() => handleUse(t)}
-                className="group text-left p-4 rounded-lg border border-zinc-100 hover:border-zinc-300 bg-white transition-all"
+                className="group text-left p-4 rounded-lg border border-zinc-200 hover:border-zinc-300 bg-white transition-all"
               >
                 <div className="flex items-start gap-3">
                   <div className={cn('p-1.5 rounded-md flex-shrink-0', categoryColors[t.category])}>
@@ -376,7 +376,7 @@ export const TemplateLibraryInline: React.FC<TemplateLibraryInlineProps> = ({
               <button
                 key={t.id}
                 onClick={() => handleUse(t)}
-                className="group text-left p-4 rounded-lg border border-zinc-100 hover:border-blue-200 bg-white transition-all"
+                className="group text-left p-4 rounded-lg border border-zinc-200 hover:border-blue-200 bg-white transition-all"
               >
                 <div className="flex items-start gap-3">
                   <div className={cn('p-1.5 rounded-md flex-shrink-0', categoryColors[t.category])}>

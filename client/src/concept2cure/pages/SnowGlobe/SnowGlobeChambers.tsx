@@ -341,7 +341,7 @@ function FindingRow({ finding, isExpanded, onToggle }: {
       </button>
 
       {isExpanded && (
-        <div className="px-4 pb-4 pt-1 border-t border-zinc-100 bg-zinc-50/50 space-y-3">
+        <div className="px-4 pb-4 pt-1 border-t border-zinc-200 bg-zinc-50/50 space-y-3">
           <p className="text-sm text-zinc-700 leading-relaxed">{finding.summary}</p>
 
           <div className="flex flex-wrap gap-4 text-xs">
@@ -603,7 +603,7 @@ export default function SnowGlobeChambers({ programId, initialChamber }: SnowGlo
                   );
                 })}
               </div>
-              <div className="mt-3 pt-3 border-t border-zinc-100 text-xs text-zinc-500">
+              <div className="mt-3 pt-3 border-t border-zinc-200 text-xs text-zinc-500">
                 {chamberFindings.length} total findings in this chamber
               </div>
             </div>
@@ -638,7 +638,7 @@ export default function SnowGlobeChambers({ programId, initialChamber }: SnowGlo
 
           {/* Findings Table */}
           <div className="rounded-xl border bg-white overflow-hidden">
-            <div className="px-6 py-4 border-b border-zinc-100 flex items-center justify-between">
+            <div className="px-6 py-4 border-b border-zinc-200 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-zinc-600" />
                 <h3 className="font-semibold text-zinc-800">Findings</h3>
@@ -674,7 +674,7 @@ export default function SnowGlobeChambers({ programId, initialChamber }: SnowGlo
 
           {/* Remediation Actions */}
           <div className="rounded-xl border bg-white overflow-hidden">
-            <div className="px-6 py-4 border-b border-zinc-100 flex items-center gap-2">
+            <div className="px-6 py-4 border-b border-zinc-200 flex items-center gap-2">
               <Target className="h-5 w-5 text-zinc-600" />
               <h3 className="font-semibold text-zinc-800">Remediation Actions</h3>
               <span className="text-xs bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-full">
@@ -726,7 +726,7 @@ export default function SnowGlobeChambers({ programId, initialChamber }: SnowGlo
           <div className="rounded-xl border bg-white overflow-hidden">
             <button
               onClick={() => setShowInsights(!showInsights)}
-              className="w-full px-6 py-4 border-b border-zinc-100 flex items-center justify-between hover:bg-zinc-50 transition-colors"
+              className="w-full px-6 py-4 border-b border-zinc-200 flex items-center justify-between hover:bg-zinc-50 transition-colors"
             >
               <div className="flex items-center gap-2">
                 <Lightbulb className="h-5 w-5 text-amber-500" />
@@ -749,7 +749,7 @@ export default function SnowGlobeChambers({ programId, initialChamber }: SnowGlo
                   </div>
                   <div className="space-y-2">
                     {HISTORICAL_PRECEDENTS[activeChamber].map((p, i) => (
-                      <div key={i} className="flex items-start gap-3 p-3 bg-zinc-50 rounded-lg border border-zinc-100">
+                      <div key={i} className="flex items-start gap-3 p-3 bg-zinc-50 rounded-lg border border-zinc-200">
                         <BookOpen className="h-4 w-4 text-zinc-400 shrink-0 mt-0.5" />
                         <div className="flex-1">
                           <div className="text-sm font-medium text-zinc-700">{p.title}</div>

@@ -86,7 +86,7 @@ const PredicatePathfinder: React.FC<PredicatePathfinderProps> = ({ onSelectPredi
   return (
     <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b border-zinc-100">
+      <div className="p-4 border-b border-zinc-200">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="font-semibold text-zinc-900">Predicate Pathfinder</h3>
@@ -221,7 +221,7 @@ const MAUDEHazardMonitor: React.FC<MAUDEHazardMonitorProps> = ({ productCode }) 
   return (
     <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b border-zinc-100">
+      <div className="p-4 border-b border-zinc-200">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="font-semibold text-zinc-900">MAUDE Hazard Monitor</h3>
@@ -237,7 +237,7 @@ const MAUDEHazardMonitor: React.FC<MAUDEHazardMonitorProps> = ({ productCode }) 
       </div>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-4 gap-4 p-4 border-b border-zinc-100">
+      <div className="grid grid-cols-4 gap-4 p-4 border-b border-zinc-200">
         <div className="text-center">
           <div className="text-2xl font-bold text-zinc-900">
             {hazardAnalysis.summary.totalReports}
@@ -290,7 +290,7 @@ const MAUDEHazardMonitor: React.FC<MAUDEHazardMonitorProps> = ({ productCode }) 
 
       {/* Recommendations */}
       {hazardAnalysis.recommendations.length > 0 && (
-        <div className="p-4 border-t border-zinc-100 bg-amber-50">
+        <div className="p-4 border-t border-zinc-200 bg-amber-50">
           <h4 className="text-sm font-medium text-amber-900 mb-2">Recommendations</h4>
           <ul className="space-y-1">
             {hazardAnalysis.recommendations.map((rec, index) => (
@@ -330,7 +330,7 @@ const SubmissionTracker: React.FC = () => {
 
   return (
     <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
-      <div className="p-4 border-b border-zinc-100 flex items-center justify-between">
+      <div className="p-4 border-b border-zinc-200 flex items-center justify-between">
         <div>
           <h3 className="font-semibold text-zinc-900">Active Submissions</h3>
           <p className="text-sm text-zinc-500">{submissions.length} total</p>

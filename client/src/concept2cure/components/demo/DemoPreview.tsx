@@ -71,7 +71,7 @@ const MetricBox: React.FC<{ label: string; value: string; trend?: string }> = ({
 const TableRow: React.FC<{ cells: string[]; highlight?: boolean }> = ({ cells, highlight }) => (
   <tr className={highlight ? 'bg-violet-50/50' : ''}>
     {cells.map((c, i) => (
-      <td key={i} className="px-3 py-2 text-xs text-zinc-700 border-b border-zinc-100">{c}</td>
+      <td key={i} className="px-3 py-2 text-xs text-zinc-700 border-b border-zinc-200">{c}</td>
     ))}
   </tr>
 );
@@ -131,7 +131,7 @@ const SubPortfolioPreview: React.FC = () => (
         <MetricBox label="Approved" value="23" />
         <MetricBox label="Pipeline" value="8" />
       </div>
-      <div className="overflow-hidden rounded-lg border border-zinc-100">
+      <div className="overflow-hidden rounded-lg border border-zinc-200">
         <table className="w-full text-left">
           <thead><tr className="bg-zinc-50">
             <th className="px-3 py-2 text-[11px] font-medium text-zinc-500">Submission</th>
@@ -169,7 +169,7 @@ const Sub510kPreview: React.FC = () => (
           { name: 'PainFree TENS', code: 'QBF', match: '87%', manufacturer: 'MediPulse Ltd.' },
           { name: 'StimWave Pro', code: 'QBF', match: '82%', manufacturer: 'WaveTherapy Corp.' },
         ].map((p) => (
-          <div key={p.name} className="flex items-center justify-between p-3 bg-white border border-zinc-100 rounded-lg">
+          <div key={p.name} className="flex items-center justify-between p-3 bg-white border border-zinc-200 rounded-lg">
             <div>
               <p className="text-xs font-medium text-zinc-800">{p.name}</p>
               <p className="text-[11px] text-zinc-500">{p.manufacturer} — Product Code: {p.code}</p>
@@ -241,7 +241,7 @@ const SubMeetingsPreview: React.FC = () => (
         { type: 'EOP2', date: 'Jul 22, 2026', status: 'Drafting Package', icon: <Clock className="w-3 h-3 text-amber-500" /> },
         { type: 'Pre-NDA', date: 'Nov 10, 2026', status: 'Scheduled', icon: <Target className="w-3 h-3 text-blue-500" /> },
       ].map((m) => (
-        <div key={m.type} className="flex items-center justify-between p-3 border border-zinc-100 rounded-lg mb-2">
+        <div key={m.type} className="flex items-center justify-between p-3 border border-zinc-200 rounded-lg mb-2">
           <div className="flex items-center gap-2">
             {m.icon}
             <div>
@@ -280,7 +280,7 @@ const ResSearchPreview: React.FC = () => (
 const ResResultsPreview: React.FC = () => (
   <div className="space-y-4">
     <MockCard title="Structured Trial Results" icon={<Database className="w-4 h-4 text-blue-500" />}>
-      <div className="overflow-hidden rounded-lg border border-zinc-100">
+      <div className="overflow-hidden rounded-lg border border-zinc-200">
         <table className="w-full text-left">
           <thead><tr className="bg-zinc-50">
             <th className="px-3 py-2 text-[11px] font-medium text-zinc-500">Trial</th>
@@ -330,7 +330,7 @@ const ResPrecedentPreview: React.FC = () => (
         { name: 'Wegovy (semaglutide)', pathway: 'NDA — Priority', timeline: '6 months', outcome: 'Approved' },
         { name: 'Mounjaro (tirzepatide)', pathway: 'NDA — Priority', timeline: '8 months', outcome: 'Approved' },
       ].map((p) => (
-        <div key={p.name} className="flex items-center justify-between p-3 border border-zinc-100 rounded-lg mb-2">
+        <div key={p.name} className="flex items-center justify-between p-3 border border-zinc-200 rounded-lg mb-2">
           <div>
             <p className="text-xs font-medium text-zinc-800">{p.name}</p>
             <p className="text-[11px] text-zinc-500">{p.pathway} — {p.timeline} review</p>
@@ -497,7 +497,7 @@ const CMCBlueprintPreview: React.FC = () => (
 const CMCAnalyticalPreview: React.FC = () => (
   <div className="space-y-4">
     <MockCard title="Analytical Methods & Validation" icon={<Microscope className="w-4 h-4 text-blue-500" />}>
-      <div className="overflow-hidden rounded-lg border border-zinc-100">
+      <div className="overflow-hidden rounded-lg border border-zinc-200">
         <table className="w-full text-left">
           <thead><tr className="bg-zinc-50">
             <th className="px-3 py-2 text-[11px] font-medium text-zinc-500">Method</th>
@@ -724,7 +724,7 @@ const PMTasksPreview: React.FC = () => (
           <div key={c.col} className="bg-zinc-50 rounded-lg p-2">
             <p className="text-[11px] font-semibold text-zinc-600 mb-2">{c.col}</p>
             {c.items.map((item) => (
-              <div key={item} className="bg-white rounded p-1.5 mb-1 text-[11px] text-zinc-700 border border-zinc-100 shadow-sm">{item}</div>
+              <div key={item} className="bg-white rounded p-1.5 mb-1 text-[11px] text-zinc-700 border border-zinc-200 shadow-sm">{item}</div>
             ))}
           </div>
         ))}
@@ -782,7 +782,7 @@ const PMGapsPreview: React.FC = () => (
 const SecAuditPreview: React.FC = () => (
   <div className="space-y-4">
     <MockCard title="21 CFR Part 11 — Audit Trail" icon={<Shield className="w-4 h-4 text-blue-500" />}>
-      <div className="overflow-hidden rounded-lg border border-zinc-100">
+      <div className="overflow-hidden rounded-lg border border-zinc-200">
         <table className="w-full text-left">
           <thead><tr className="bg-zinc-50">
             <th className="px-3 py-2 text-[11px] font-medium text-zinc-500">Action</th>

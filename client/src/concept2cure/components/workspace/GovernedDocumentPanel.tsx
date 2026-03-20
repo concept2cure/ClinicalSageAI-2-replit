@@ -438,9 +438,9 @@ export function GovernedDocumentPanel({
 
   // ── Render ───────────────────────────────────────────────────────────
   return (
-    <div className="w-[200px] 2xl:w-[240px] border-l border-zinc-100 shrink-0 flex flex-col bg-white overflow-hidden">
+    <div className="w-[200px] 2xl:w-[240px] border-l border-zinc-200 shrink-0 flex flex-col bg-white overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-1.5 border-b border-zinc-100 bg-zinc-50/40">
+      <div className="flex items-center justify-between px-3 py-1.5 border-b border-zinc-200 bg-zinc-50/60">
         <div className="flex items-center gap-1.5">
           <Shield className="w-3 h-3 text-blue-600" />
           <span className="text-[11px] font-semibold text-zinc-700">{tailoring.panelTitle}</span>
@@ -454,7 +454,7 @@ export function GovernedDocumentPanel({
       </div>
 
       {/* Tab bar */}
-      <div className="flex border-b border-zinc-100">
+      <div className="flex border-b border-zinc-200">
         {(['status', 'audit', 'versions', 'snapshots', 'threads'] as const).map(tab => (
           <button
             key={tab}

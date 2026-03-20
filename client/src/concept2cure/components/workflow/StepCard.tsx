@@ -283,7 +283,7 @@ export const StepCard: React.FC<StepCardProps> = ({
       
       {/* Expanded Content */}
       {isExpanded && (
-        <div id={expandedId} className="border-t border-zinc-100">
+        <div id={expandedId} className="border-t border-zinc-200">
           {/* Preconditions */}
           {step.preconditions && step.preconditions.length > 0 && (
             <div className="p-4 bg-zinc-50">
@@ -329,7 +329,7 @@ export const StepCard: React.FC<StepCardProps> = ({
           
           {/* Linked Artifacts */}
           {step.linkedArtifactIds && step.linkedArtifactIds.length > 0 && (
-            <div className="p-4 border-t border-zinc-100">
+            <div className="p-4 border-t border-zinc-200">
               <h4 className="text-sm font-medium text-zinc-700 mb-2">
                 Linked Documents
               </h4>
@@ -402,7 +402,7 @@ export const StepCard: React.FC<StepCardProps> = ({
           )}
           
           {/* Actions */}
-          <div className="p-4 bg-zinc-50 border-t border-zinc-100 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="p-4 bg-zinc-50 border-t border-zinc-200 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <button
               onClick={onViewHistory}
               className="flex items-center gap-1.5 text-sm text-zinc-600 hover:text-zinc-900"

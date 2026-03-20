@@ -384,7 +384,7 @@ const UtilizationChart: React.FC<{
       </div>
       
       {/* Legend */}
-      <div className="flex items-center gap-4 mt-4 pt-4 border-t border-zinc-100">
+      <div className="flex items-center gap-4 mt-4 pt-4 border-t border-zinc-200">
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded bg-red-500" />
           <span className="text-xs text-zinc-500">&gt;100%</span>

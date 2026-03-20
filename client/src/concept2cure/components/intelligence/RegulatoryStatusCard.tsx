@@ -130,7 +130,7 @@ export function RegulatoryStatusCard({
   return (
     <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-zinc-100 bg-gradient-to-r from-indigo-50/60 to-violet-50/60">
+      <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-zinc-200 bg-gradient-to-r from-indigo-50/60 to-violet-50/60">
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
           <ShieldCheck className="w-4 h-4 text-indigo-600 shrink-0" />
           <span className="text-xs sm:text-sm font-semibold text-zinc-800 truncate">

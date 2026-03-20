@@ -207,7 +207,7 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
   return (
     <div className={cn('flex flex-col h-full', className)} data-testid="project-file-tree">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 h-8 border-b border-zinc-100 bg-zinc-50/60 shrink-0">
+      <div className="flex items-center justify-between px-3 h-8 border-b border-zinc-200 bg-zinc-50/60 shrink-0">
         <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
           Explorer
         </span>
@@ -336,7 +336,7 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
           role="menu"
           aria-label="File actions"
         >
-          <div className="px-3 py-1.5 border-b border-zinc-100">
+          <div className="px-3 py-1.5 border-b border-zinc-200">
             <p className="text-[11px] text-zinc-600 truncate">{contextMenu.artifact.title}</p>
             {contextMenu.artifact.ctdSection && (
               <p className="text-[11px] text-zinc-400 font-mono">

@@ -98,13 +98,13 @@ export function BeforeAfterSlider({
   return (
     <div
       className={cn(
-        'w-full bg-white border border-zinc-100 rounded-lg overflow-hidden',
+        'w-full bg-white border border-zinc-200 rounded-lg overflow-hidden',
         className
       )}
     >
       <div className="grid grid-cols-2 min-h-[320px]">
         {/* Before column */}
-        <div className="p-6 border-r border-zinc-100">
+        <div className="p-6 border-r border-zinc-200">
           <h3 className="text-sm font-medium text-zinc-400 mb-4">
             Before
           </h3>

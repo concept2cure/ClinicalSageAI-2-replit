@@ -297,7 +297,7 @@ const TeamPresenceSection: React.FC<{
       
       {/* Offline members collapsed */}
       {offlineMembers.length > 0 && (
-        <div className="mt-4 pt-4 border-t border-zinc-100">
+        <div className="mt-4 pt-4 border-t border-zinc-200">
           <p className="text-xs text-zinc-400 mb-2">{offlineMembers.length} offline</p>
           <div className="flex -space-x-1">
             {offlineMembers.slice(0, 8).map(member => (
@@ -313,7 +313,7 @@ const TeamPresenceSection: React.FC<{
       )}
       
       {/* Quick actions */}
-      <div className="mt-4 pt-4 border-t border-zinc-100 flex gap-2">
+      <div className="mt-4 pt-4 border-t border-zinc-200 flex gap-2">
         <button
           onClick={() => onStartCall?.(onlineMembers)}
           className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"

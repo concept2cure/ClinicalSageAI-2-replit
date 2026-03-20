@@ -127,15 +127,15 @@ export const ProofExplorer: React.FC<ProofExplorerProps> = ({ workflowRunId, cla
       </header>
 
       <section className="mt-6 grid gap-4 md:grid-cols-3">
-        <div className="rounded-xl border border-zinc-100 bg-zinc-50 p-4">
+        <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
           <p className="text-xs uppercase tracking-wide text-zinc-400">Execution Proof</p>
           <p className="mt-1 text-sm font-medium text-zinc-800">{proof.proof.pathProof?.proofId}</p>
         </div>
-        <div className="rounded-xl border border-zinc-100 bg-zinc-50 p-4">
+        <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
           <p className="text-xs uppercase tracking-wide text-zinc-400">Integrity Root</p>
           <p className="mt-1 text-sm font-medium text-zinc-800">{proof.proof.documentIntegrityProof.merkleRoot}</p>
         </div>
-        <div className="rounded-xl border border-zinc-100 bg-zinc-50 p-4">
+        <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
           <p className="text-xs uppercase tracking-wide text-zinc-400">Authorizations</p>
           <p className="mt-1 text-sm font-medium text-zinc-800">
             {proof.proof.authorizationProofs.length} proofs

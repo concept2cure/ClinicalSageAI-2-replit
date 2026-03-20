@@ -113,7 +113,7 @@ const RuleListItem: React.FC<RuleListItemProps> = ({ rule, isSelected, onSelect 
       'w-full text-left px-3 py-2.5 rounded-lg border transition-colors',
       isSelected
         ? 'bg-blue-50 border-blue-200 text-blue-900'
-        : 'bg-white border-zinc-100 hover:border-zinc-200 hover:bg-zinc-50'
+        : 'bg-white border-zinc-200 hover:border-zinc-200 hover:bg-zinc-50'
     )}
   >
     <div className="flex items-center gap-2 mb-1">
@@ -404,7 +404,7 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-2 pt-2 border-t border-zinc-100">
+      <div className="flex items-center gap-2 pt-2 border-t border-zinc-200">
         <button
           type="submit"
           disabled={isSaving || !form.name}
@@ -581,7 +581,7 @@ export const RulesManager: React.FC<RulesManagerProps> = ({ onBack }) => {
         {/* ── Left: Rules List ────────────────────────────────────────── */}
         <div className="w-72 border-r border-zinc-200 bg-white flex flex-col">
           {/* Search */}
-          <div className="p-3 border-b border-zinc-100">
+          <div className="p-3 border-b border-zinc-200">
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
               <input
@@ -841,7 +841,7 @@ export const RulesManager: React.FC<RulesManagerProps> = ({ onBack }) => {
 
               {/* Execution Log */}
               <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden">
-                <div className="px-4 py-3 border-b border-zinc-100">
+                <div className="px-4 py-3 border-b border-zinc-200">
                   <h3 className="text-sm font-semibold text-zinc-900">Recent Executions</h3>
                 </div>
                 <div className="divide-y divide-zinc-50">

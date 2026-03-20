@@ -244,7 +244,7 @@ export default function EvidenceBinderTable({ projectId }: EvidenceBinderTablePr
   return (
     <div className="space-y-4">
       <div className="border border-zinc-200 rounded-md">
-        <div className="flex flex-row items-center justify-between px-4 py-3 border-b border-zinc-100">
+        <div className="flex flex-row items-center justify-between px-4 py-3 border-b border-zinc-200">
           <div>
             <h3 className="text-lg font-semibold">Evidence Binder</h3>
             <p className="text-sm text-muted-foreground">

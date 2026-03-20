@@ -231,7 +231,7 @@ const DocumentUploadPanel: React.FC<{
       {uploadedFiles.length > 0 && (
         <div className="space-y-2">
           {uploadedFiles.map((file, i) => (
-            <div key={i} className="flex items-center gap-3 p-3 bg-white rounded-lg border border-zinc-100">
+            <div key={i} className="flex items-center gap-3 p-3 bg-white rounded-lg border border-zinc-200">
               <FileText className="w-4 h-4 text-zinc-500" />
               <span className="flex-1 text-sm text-zinc-700 truncate">{file.name}</span>
               {file.status === 'processing' && (
@@ -484,7 +484,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#FAFAF9]">
       {/* Header */}
-      <div className="flex-shrink-0 border-b border-zinc-100 bg-white/80 backdrop-blur-sm px-6 py-4">
+      <div className="flex-shrink-0 border-b border-zinc-200 bg-white/80 backdrop-blur-sm px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-sm">
@@ -891,7 +891,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead>
-                      <tr className="border-b border-zinc-100">
+                      <tr className="border-b border-zinc-200">
                         <th className="px-3 py-2 text-left font-medium text-zinc-600">Max Daily Dose</th>
                         <th className="px-3 py-2 text-right font-medium text-zinc-600">Reporting</th>
                         <th className="px-3 py-2 text-right font-medium text-zinc-600">Identification</th>

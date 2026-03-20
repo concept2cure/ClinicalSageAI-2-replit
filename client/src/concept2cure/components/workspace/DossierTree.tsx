@@ -488,7 +488,7 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
       onClick={closeContextMenu}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-3 h-8 border-b border-zinc-100 bg-zinc-50/60 shrink-0">
+      <div className="flex items-center justify-between px-3 h-8 border-b border-zinc-200 bg-zinc-50/60 shrink-0">
         <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
           eCTD Dossier
         </span>
@@ -520,7 +520,7 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
           role="menu"
           aria-label="Section actions"
         >
-          <div className="px-3 py-1.5 border-b border-zinc-100">
+          <div className="px-3 py-1.5 border-b border-zinc-200">
             <p className="text-[11px] text-zinc-400 font-mono">{contextMenu.ctdSection}</p>
             <p className="text-[11px] text-zinc-600 truncate">{contextMenu.label}</p>
             {metrics?.[contextMenu.ctdSection] && (

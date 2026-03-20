@@ -178,7 +178,7 @@ const SourceSuggestionCard: React.FC<{
         </div>
       </div>
       
-      <div className="flex items-center gap-2 mt-3 pt-3 border-t border-zinc-100">
+      <div className="flex items-center gap-2 mt-3 pt-3 border-t border-zinc-200">
         <button
           onClick={onLink}
           className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"

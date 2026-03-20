@@ -411,7 +411,7 @@ function ActiveAgentsStrip({ agents }: { agents: AgentNode[] }) {
         return (
           <div key={agent.id} className="flex items-start">
             {i > 0 && (
-              <div className="mt-3 w-6 border-t border-zinc-100" />
+              <div className="mt-3 w-6 border-t border-zinc-200" />
             )}
             <div
               className={cn(
@@ -863,7 +863,7 @@ export function AgentWorkflowMonitor({
         <WorkflowHeader run={run} onTogglePause={handleTogglePause} />
 
         {/* 2. Active Agents Strip */}
-        <div className="border-y border-zinc-100 py-3">
+        <div className="border-y border-zinc-200 py-3">
           <ActiveAgentsStrip agents={run.agents} />
         </div>
 

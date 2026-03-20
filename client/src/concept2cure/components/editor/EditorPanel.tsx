@@ -860,7 +860,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         {/* Filter controls (P5) */}
         {showFilters && artifacts.length > 0 && (
           <div
-            className="flex items-center gap-2 px-4 py-2 border-b border-zinc-100 bg-zinc-50/20 flex-wrap"
+            className="flex items-center gap-2 px-4 py-2 border-b border-zinc-200 bg-zinc-50/20 flex-wrap"
             data-testid="artifact-filters"
           >
             <select
@@ -915,7 +915,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         )}
 
         {/* New doc input */}
-        <div className="p-3 border-b border-zinc-100">
+        <div className="p-3 border-b border-zinc-200">
           <div className="flex gap-2">
             <input
               type="text"
@@ -945,7 +945,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           {loading ? (
             <div className="space-y-2 px-4 py-4">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="animate-pulse rounded-lg border border-zinc-100 p-3">
+                <div key={i} className="animate-pulse rounded-lg border border-zinc-200 p-3">
                   <div className="flex items-center justify-between mb-2">
                     <div className="h-3.5 bg-zinc-200 rounded w-3/5" />
                     <div className="h-4 bg-zinc-200 rounded-full w-16" />
@@ -1237,7 +1237,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   <Download className="w-3 h-3 text-zinc-400" />
                   PowerPoint (.pptx)
                 </button>
-                <div className="border-t border-zinc-100 my-1" />
+                <div className="border-t border-zinc-200 my-1" />
                 {/* Sign */}
                 <button
                   role="menuitem"
@@ -1277,7 +1277,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                         : 'Submit for Review'}
                   </button>
                 )}
-                <div className="border-t border-zinc-100 my-1" />
+                <div className="border-t border-zinc-200 my-1" />
                 <button
                   onClick={() => {
                     handleClaimCheck();
@@ -1394,7 +1394,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
       {/* CTD section inline input (from overflow) */}
       {showCtdInput && (
-        <div className="flex items-center gap-2 px-3 py-1.5 border-b border-zinc-100 bg-zinc-50/50">
+        <div className="flex items-center gap-2 px-3 py-1.5 border-b border-zinc-200 bg-zinc-50/50">
           <MapPin className="w-3.5 h-3.5 text-zinc-400" />
           <input
             type="text"
@@ -1421,7 +1421,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
       {/* ── Document Lifecycle Pipeline ──────────────────────────────── */}
       {activeArtifact && (
-        <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-zinc-100 bg-zinc-50/30">
+        <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-zinc-200 bg-zinc-50/30">
           {(['draft', 'review', 'approved', 'locked'] as const).map((stage, idx, arr) => {
             const currentStatus = activeArtifact.status || 'draft';
             const stageOrder = { draft: 0, review: 1, approved: 2, locked: 3 };
@@ -1618,7 +1618,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           </div>
         )}
         {activeInspector === 'compare' && projectId && activeArtifact && (
-          <div className="w-80 max-w-[35vw] shrink-0 border-l border-zinc-100 h-full transition-all duration-200">
+          <div className="w-80 max-w-[35vw] shrink-0 border-l border-zinc-200 h-full transition-all duration-200">
             <DocumentVersionCompare
               projectId={projectId}
               artifactId={activeArtifact.id}

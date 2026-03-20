@@ -220,7 +220,7 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
       {open && (
         <div className="absolute right-0 top-full mt-1 w-72 bg-white border border-zinc-200 rounded-lg shadow-xl z-50 overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100 bg-zinc-50/50">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200 bg-zinc-50/50">
             <span className="text-[11px] font-semibold text-zinc-700">Notifications</span>
             <div className="flex items-center gap-1">
               {unreadCount > 0 && (
@@ -236,7 +236,7 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
           </div>
 
           {/* Tabs */}
-          <div className="flex border-b border-zinc-100">
+          <div className="flex border-b border-zinc-200">
             {(['unread', 'all'] as const).map(t => (
               <button
                 key={t}

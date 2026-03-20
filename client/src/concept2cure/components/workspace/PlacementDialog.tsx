@@ -114,7 +114,7 @@ function SectionPicker({ selected, onSelect }: SectionPickerProps) {
   return (
     <div className="border border-zinc-200 rounded-lg overflow-hidden">
       {/* Search */}
-      <div className="flex items-center gap-2 px-2 py-1.5 border-b border-zinc-100 bg-zinc-50/60">
+      <div className="flex items-center gap-2 px-2 py-1.5 border-b border-zinc-200 bg-zinc-50/60">
         <Search className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
         <input
           type="text"
@@ -434,7 +434,7 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-zinc-100 bg-zinc-50/40">
+        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-zinc-200 bg-zinc-50/60">
           <button
             onClick={onClose}
             className="px-3 py-1.5 text-[12px] text-zinc-600 rounded-lg hover:bg-zinc-100 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"

@@ -208,7 +208,7 @@ export const GoldenDossierVerificationPanel: React.FC<GoldenDossierVerificationP
           );
 
           return (
-            <div key={key} className="border border-zinc-100 rounded-lg">
+            <div key={key} className="border border-zinc-200 rounded-lg">
               <button
                 onClick={() => toggleSection(key)}
                 className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-zinc-50 transition-colors rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
@@ -236,7 +236,7 @@ export const GoldenDossierVerificationPanel: React.FC<GoldenDossierVerificationP
 
         {/* Recommended actions */}
         {result.recommendedActions.length > 0 && (
-          <div className="border border-zinc-100 rounded-lg p-3">
+          <div className="border border-zinc-200 rounded-lg p-3">
             <p className="text-xs font-semibold text-zinc-700 mb-2">Recommended Actions</p>
             <ul className="space-y-1.5">
               {result.recommendedActions.map((action, i) => (
@@ -252,7 +252,7 @@ export const GoldenDossierVerificationPanel: React.FC<GoldenDossierVerificationP
         )}
 
         {/* Quick actions */}
-        <div className="border border-zinc-100 rounded-lg p-3">
+        <div className="border border-zinc-200 rounded-lg p-3">
           <p className="text-xs font-semibold text-zinc-700 mb-2">Quick Actions</p>
           <div className="flex flex-wrap gap-1.5">
             {onOpenEditor && artifactId && (
@@ -308,7 +308,7 @@ export const GoldenDossierVerificationPanel: React.FC<GoldenDossierVerificationP
 
 function PanelHeader({ onClose, title }: { onClose: () => void; title: string }) {
   return (
-    <div className="flex items-center gap-2 px-4 h-10 border-b border-zinc-100 shrink-0">
+    <div className="flex items-center gap-2 px-4 h-10 border-b border-zinc-200 shrink-0">
       <ShieldCheck className="w-4 h-4 text-emerald-500" />
       <h2 className="text-sm font-semibold text-zinc-800">{title}</h2>
       <button

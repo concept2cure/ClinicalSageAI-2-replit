@@ -400,7 +400,7 @@ const RulesActivityFeed: React.FC<RulesActivityFeedProps> = ({
           {logs.slice(0, 8).map(log => (
             <div
               key={log.id}
-              className="flex items-center gap-2 rounded-md border border-zinc-100 bg-white px-3 py-2"
+              className="flex items-center gap-2 rounded-md border border-zinc-200 bg-white px-3 py-2"
             >
               {log.success ? (
                 <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
@@ -649,7 +649,7 @@ export const MissionControl: React.FC<MissionControlProps> = ({ projectId }) => 
           <div className="lg:col-span-1 space-y-4">
             {/* Project Hierarchy */}
             <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
-              <div className="px-4 py-3 border-b border-zinc-100 flex items-center justify-between">
+              <div className="px-4 py-3 border-b border-zinc-200 flex items-center justify-between">
                 <h2 className="text-sm font-semibold text-zinc-900 flex items-center gap-1.5">
                   <GitBranch className="w-4 h-4 text-blue-600" />
                   Project Hierarchy
@@ -700,7 +700,7 @@ export const MissionControl: React.FC<MissionControlProps> = ({ projectId }) => 
             {/* Rollup Details (when a project is selected) */}
             {selectedProjectId && rollup && (
               <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
-                <div className="px-4 py-3 border-b border-zinc-100">
+                <div className="px-4 py-3 border-b border-zinc-200">
                   <h2 className="text-sm font-semibold text-zinc-900 flex items-center gap-1.5">
                     <BarChart3 className="w-4 h-4 text-violet-600" />
                     Rollup Summary
@@ -754,7 +754,7 @@ export const MissionControl: React.FC<MissionControlProps> = ({ projectId }) => 
           <div className="lg:col-span-2 space-y-4">
             {/* Sentinel Risk Panel */}
             <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
-              <div className="px-4 py-3 border-b border-zinc-100 flex items-center justify-between">
+              <div className="px-4 py-3 border-b border-zinc-200 flex items-center justify-between">
                 <h2 className="text-sm font-semibold text-zinc-900 flex items-center gap-1.5">
                   <Shield className="w-4 h-4 text-red-600" />
                   RI Sentinel — Active Findings
@@ -801,7 +801,7 @@ export const MissionControl: React.FC<MissionControlProps> = ({ projectId }) => 
 
             {/* Rules Engine Activity */}
             <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
-              <div className="px-4 py-3 border-b border-zinc-100 flex items-center justify-between">
+              <div className="px-4 py-3 border-b border-zinc-200 flex items-center justify-between">
                 <h2 className="text-sm font-semibold text-zinc-900 flex items-center gap-1.5">
                   <Zap className="w-4 h-4 text-violet-600" />
                   Rules Engine — Recent Activity

@@ -363,7 +363,7 @@ export const EvidenceManager: React.FC<EvidenceManagerProps> = ({ programId }) =
                     {selected.linkedArtifacts.map((art: any) => (
                       <div
                         key={art.id}
-                        className="flex items-center gap-2 p-2 rounded-lg bg-zinc-50 border border-zinc-100"
+                        className="flex items-center gap-2 p-2 rounded-lg bg-zinc-50 border border-zinc-200"
                       >
                         <FileText className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0" />
                         <span className="text-xs text-zinc-700 flex-1 truncate">

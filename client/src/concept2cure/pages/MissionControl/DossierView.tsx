@@ -147,7 +147,7 @@ export const DossierView: React.FC<DossierViewProps> = ({
               <div key={module.id}>
                 <button
                   onClick={() => toggleModule(module.id)}
-                  className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-zinc-50 border-b border-zinc-100"
+                  className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-zinc-50 border-b border-zinc-200"
                 >
                   {isExpanded ? (
                     <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
@@ -203,7 +203,7 @@ export const DossierView: React.FC<DossierViewProps> = ({
           {/* Unassigned artifacts */}
           {(artifactsByModule['unassigned'] || []).length > 0 && (
             <div>
-              <div className="px-3 py-2.5 border-b border-zinc-100">
+              <div className="px-3 py-2.5 border-b border-zinc-200">
                 <span className="text-sm font-medium text-zinc-500">Unassigned</span>
               </div>
               {artifactsByModule['unassigned'].map((art: any) => {

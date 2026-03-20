@@ -330,7 +330,7 @@ export const DecisionLog: React.FC<DecisionLogProps> = ({ programId }) => {
 
                         {/* Expanded details */}
                         {isExpanded && (
-                          <div className="mt-4 pt-4 border-t border-zinc-100 space-y-3">
+                          <div className="mt-4 pt-4 border-t border-zinc-200 space-y-3">
                             {decision.rationale && (
                               <div>
                                 <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1">

@@ -319,7 +319,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100 bg-gradient-to-r from-violet-50 to-purple-50">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 bg-gradient-to-r from-violet-50 to-purple-50">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center">
             <Sparkles className="w-4 h-4 text-white" />
@@ -428,7 +428,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
 
       {/* Suggestions */}
       {suggestions.length > 0 && showQuickPrompts && messages.length === 0 && (
-        <div className="px-4 pb-2 border-t border-zinc-100">
+        <div className="px-4 pb-2 border-t border-zinc-200">
           <p className="text-xs text-zinc-500 mb-2 mt-3">Suggested actions</p>
           <div className="space-y-2">
             {suggestions.map(suggestion => {
@@ -439,7 +439,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
                   onClick={suggestion.action}
                   className={cn(
                     'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl',
-                    'bg-zinc-50 border border-zinc-100',
+                    'bg-zinc-50 border border-zinc-200',
                     'hover:bg-violet-50 hover:border-violet-200 transition-colors',
                     'text-left group'
                   )}
@@ -487,7 +487,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
       )}
 
       {/* Input */}
-      <div className="p-4 border-t border-zinc-100">
+      <div className="p-4 border-t border-zinc-200">
         <div className="relative flex items-end gap-2 bg-zinc-50 rounded-xl px-3 py-2">
           <textarea
             ref={inputRef}

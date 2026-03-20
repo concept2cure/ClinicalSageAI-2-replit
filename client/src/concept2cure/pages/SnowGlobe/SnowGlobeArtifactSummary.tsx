@@ -272,7 +272,7 @@ export default function SnowGlobeArtifactSummary({
           </button>
 
           {findingsExpanded && (
-            <div className="mt-1 max-h-48 space-y-1 overflow-y-auto rounded-lg border border-zinc-100 bg-zinc-50/50 p-2">
+            <div className="mt-1 max-h-48 space-y-1 overflow-y-auto rounded-lg border border-zinc-200 bg-zinc-50/50 p-2">
               {findings.map((f) => {
                 const style = SEVERITY_STYLES[f.severity];
                 return (

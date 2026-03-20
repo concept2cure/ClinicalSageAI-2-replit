@@ -417,7 +417,7 @@ const FDAInteractionTimeline: React.FC<{
         ))}
         
         {completed.length > 0 && (
-          <div className="pt-2 border-t border-zinc-100">
+          <div className="pt-2 border-t border-zinc-200">
             <p className="text-xs text-zinc-500 mb-2">Completed ({completed.length})</p>
             {completed.slice(0, 2).map(interaction => (
               <div key={interaction.id} className="flex items-center gap-2 text-xs text-zinc-500 py-1">
@@ -657,7 +657,7 @@ export const BiotechProgramDashboard: React.FC<BiotechProgramDashboardProps> = (
             
             {/* Projected Timeline */}
             {(selectedProgram.projectedNDAFiling || selectedProgram.projectedApproval) && (
-              <div className="mt-6 pt-6 border-t border-zinc-100 flex items-center gap-8">
+              <div className="mt-6 pt-6 border-t border-zinc-200 flex items-center gap-8">
                 {selectedProgram.projectedNDAFiling && (
                   <div>
                     <p className="text-xs text-zinc-500">Projected NDA Filing</p>

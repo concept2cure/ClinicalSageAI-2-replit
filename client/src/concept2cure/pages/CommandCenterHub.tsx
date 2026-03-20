@@ -121,7 +121,7 @@ function Pill({ text, className }: { text: string; className?: string }) {
 
 function Card({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn('bg-white border border-zinc-100 rounded-lg p-4', className)}>
+    <div className={cn('bg-white border border-zinc-200 rounded-lg p-4', className)}>
       {children}
     </div>
   );
@@ -809,7 +809,7 @@ export function CommandCenterHub({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 bg-[#FAFAF9] flex flex-col">
       {/* ── Header ── */}
-      <div className="flex items-center justify-between px-6 py-3 border-b border-zinc-100 bg-white">
+      <div className="flex items-center justify-between px-6 py-3 border-b border-zinc-200 bg-white">
         <div className="flex items-center gap-3">
           <Target className="w-4 h-4 text-zinc-900" />
           <h1 className="text-sm font-semibold text-zinc-900">Command Center</h1>
@@ -829,7 +829,7 @@ export function CommandCenterHub({ onClose }: { onClose: () => void }) {
       </div>
 
       {/* ── Tab Navigation ── */}
-      <div className="flex items-center gap-1 px-6 py-2 border-b border-zinc-100 bg-white">
+      <div className="flex items-center gap-1 px-6 py-2 border-b border-zinc-200 bg-white">
         {TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.key;

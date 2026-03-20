@@ -364,7 +364,7 @@ export default function PackBuilderPanel({ projectId }: PackBuilderPanelProps) {
 
       {/* ── Pack History Table ─────────────────────────────────────────────── */}
       <div className="border border-zinc-200 rounded-md">
-        <div className="flex flex-row items-center justify-between px-4 py-3 border-b border-zinc-100">
+        <div className="flex flex-row items-center justify-between px-4 py-3 border-b border-zinc-200">
           <div>
             <h3 className="text-lg font-semibold">
               <Package className="inline mr-2 h-5 w-5" />

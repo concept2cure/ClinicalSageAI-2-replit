@@ -259,7 +259,7 @@ const PhaseGroup: React.FC<{
       {phase.isExpanded && (
         <div
           id={`phase-${phase.id}`}
-          className="mt-4 pl-4 border-l-2 border-zinc-100 ml-4"
+          className="mt-4 pl-4 border-l-2 border-zinc-200 ml-4"
         >
           {phase.steps.map((step, idx) => (
             <TimelineStep
@@ -416,7 +416,7 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
   return (
     <div className={cn("w-full", className)}>
       {/* Header with Progress */}
-      <div className="flex justify-between items-center mb-6 pb-4 border-b border-zinc-100">
+      <div className="flex justify-between items-center mb-6 pb-4 border-b border-zinc-200">
         <div>
           <h2 className="text-lg font-semibold text-zinc-900">
             Workflow Progress

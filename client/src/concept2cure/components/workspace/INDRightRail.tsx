@@ -128,7 +128,7 @@ export const INDRightRail: React.FC<INDRightRailProps> = ({
                   />
                 </div>
                 {csrResults.length > 0 && (
-                  <div className="space-y-1.5 pt-2 border-t border-zinc-100">
+                  <div className="space-y-1.5 pt-2 border-t border-zinc-200">
                     <span className="text-[11px] font-semibold text-zinc-500 uppercase">
                       Top CSR Matches
                     </span>
@@ -265,7 +265,7 @@ const GuidanceItem: React.FC<{ title: string; body: string }> = ({ title, body }
 );
 
 const BasisItem: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-  <div className="flex items-center justify-between py-1.5 border-b border-zinc-100 last:border-0">
+  <div className="flex items-center justify-between py-1.5 border-b border-zinc-200 last:border-0">
     <span className="text-xs text-zinc-700">{label}</span>
     <span className="text-[11px] text-zinc-400">{value}</span>
   </div>
@@ -294,7 +294,7 @@ const ReviewItem: React.FC<{
   };
   const cfg = statusConfig[status];
   return (
-    <div className="flex items-center justify-between py-1.5 border-b border-zinc-100 last:border-0">
+    <div className="flex items-center justify-between py-1.5 border-b border-zinc-200 last:border-0">
       <span className="text-xs text-zinc-700">{label}</span>
       <span className={cn('text-[11px] px-1.5 py-0.5 rounded font-medium', cfg.bg, cfg.text)}>
         {cfg.label}
@@ -323,7 +323,7 @@ const PlacementItem: React.FC<{ module: string; label: string; sections: string[
         <span className="text-[11px] text-zinc-400">{sections.length}</span>
       </button>
       {open && (
-        <div className="border-t border-zinc-100 px-2.5 py-1.5">
+        <div className="border-t border-zinc-200 px-2.5 py-1.5">
           {sections.map(s => (
             <div
               key={s}

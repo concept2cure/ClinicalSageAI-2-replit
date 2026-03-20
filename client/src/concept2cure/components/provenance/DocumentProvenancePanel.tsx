@@ -227,7 +227,7 @@ const Section: React.FC<{
 }> = ({ icon, title, badge, defaultOpen = true, children }) => {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="border-b border-zinc-100 last:border-b-0">
+    <div className="border-b border-zinc-200 last:border-b-0">
       <button
         onClick={() => setOpen(!open)}
         className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-zinc-50/50 transition-colors"
@@ -424,7 +424,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
   if (error || !data) {
     return (
       <div className="h-full flex flex-col bg-white border-l border-zinc-200">
-        <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200">
           <span className="text-xs font-semibold text-zinc-700">Document Provenance</span>
           <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600">
             <X className="w-4 h-4" />
@@ -455,7 +455,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
   return (
     <div className="h-full flex flex-col bg-white border-l border-zinc-200">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100 bg-gradient-to-r from-indigo-50/50 to-violet-50/50 shrink-0">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200 bg-gradient-to-r from-indigo-50/50 to-violet-50/50 shrink-0">
         <div className="flex items-center gap-2">
           <Fingerprint className="w-4 h-4 text-indigo-500" />
           <span className="text-xs font-bold text-zinc-800">Document Provenance</span>
@@ -466,7 +466,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
       </div>
 
       {/* Integrity badge */}
-      <div className="px-3 py-2 border-b border-zinc-100 bg-emerald-50/30">
+      <div className="px-3 py-2 border-b border-zinc-200 bg-emerald-50/30">
         <div className="flex items-center gap-2">
           <Shield className="w-3.5 h-3.5 text-emerald-600" />
           <span className="text-[11px] font-semibold text-emerald-800">Integrity Verified</span>
@@ -945,7 +945,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
 
       {/* Cross-panel actions */}
       {(onOpenCompare || onOpenAudit) && (
-        <div className="px-3 py-2 border-t border-zinc-100 bg-zinc-50/50 flex gap-2 shrink-0">
+        <div className="px-3 py-2 border-t border-zinc-200 bg-zinc-50/50 flex gap-2 shrink-0">
           {onOpenCompare && (
             <button
               onClick={onOpenCompare}
@@ -968,7 +968,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
       )}
 
       {/* Footer */}
-      <div className="px-3 py-2 border-t border-zinc-100 bg-zinc-50/30 shrink-0">
+      <div className="px-3 py-2 border-t border-zinc-200 bg-zinc-50/30 shrink-0">
         <p className="text-[11px] text-zinc-400 text-center">
           21 CFR Part 11 Compliant · Append-only audit trail · SHA-256 integrity
         </p>

@@ -694,7 +694,7 @@ function CapabilityCard({ cap }: { cap: AgentCapability }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 4 }}
       transition={{ duration: 0.15 }}
-      className="bg-white border border-zinc-100 rounded-lg p-5"
+      className="bg-white border border-zinc-200 rounded-lg p-5"
     >
       {/* Header row */}
       <div className="flex items-start justify-between gap-3 mb-2">

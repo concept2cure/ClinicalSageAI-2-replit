@@ -319,7 +319,7 @@ export const NextActionsPanel: React.FC<NextActionsPanelProps> = ({
       className
     )}>
       {/* Header */}
-      <div className="px-6 py-4 border-b border-zinc-100">
+      <div className="px-6 py-4 border-b border-zinc-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
@@ -359,7 +359,7 @@ export const NextActionsPanel: React.FC<NextActionsPanelProps> = ({
       
       {/* Footer - View All */}
       {totalCount > maxItems && (
-        <div className="px-6 py-3 bg-zinc-50 border-t border-zinc-100">
+        <div className="px-6 py-3 bg-zinc-50 border-t border-zinc-200">
           <button className="w-full flex items-center justify-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700">
             <Target size={16} />
             View all {totalCount} actions

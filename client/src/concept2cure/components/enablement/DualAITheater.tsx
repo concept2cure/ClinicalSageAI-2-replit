@@ -365,7 +365,7 @@ export function DualAITheater({
       )}
     >
       {/* Header */}
-      <div className="px-6 py-4 border-b border-zinc-100">
+      <div className="px-6 py-4 border-b border-zinc-200">
         <h3 className="text-sm font-medium text-zinc-900">{scenario.title}</h3>
         <p className="text-xs text-zinc-400 mt-0.5">{scenario.description}</p>
       </div>

@@ -220,7 +220,7 @@ export const SplitScreenLayout: React.FC = () => {
 
       {!artifactPanelVisible && (
         <div className="hidden lg:flex w-[360px] flex-col border-l border-zinc-200 bg-white animate-in fade-in slide-in-from-right-4">
-          <div className="border-b border-zinc-100 px-4 py-3">
+          <div className="border-b border-zinc-200 px-4 py-3">
             <div className="flex items-center gap-2 text-sm font-medium text-zinc-800">
               <Users className="h-4 w-4 text-zinc-500" />
               Agent Workspace
@@ -231,7 +231,7 @@ export const SplitScreenLayout: React.FC = () => {
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            <section className="rounded-xl border border-zinc-100 bg-zinc-50 p-3">
+            <section className="rounded-xl border border-zinc-200 bg-zinc-50 p-3">
               <div className="flex items-center gap-2 text-xs font-semibold text-zinc-600">
                 <ClipboardCheck className="h-3.5 w-3.5" />
                 Active Agents

@@ -386,7 +386,7 @@ function MemberCard({
       </div>
 
       {/* Stats row */}
-      <div className="flex items-center gap-4 mt-4 pt-3 border-t border-zinc-100">
+      <div className="flex items-center gap-4 mt-4 pt-3 border-t border-zinc-200">
         <div className="flex items-center gap-1.5 text-xs text-zinc-500">
           <Clock className="w-3.5 h-3.5" />
           <span>{member.lastActive}</span>
@@ -517,7 +517,7 @@ function InviteModal({ open, onClose }: { open: boolean; onClose: () => void }) 
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-zinc-100">
+        <div className="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-zinc-200">
           <button
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-50 rounded-xl transition-colors"
@@ -727,7 +727,7 @@ export default function TeamWorkspace({ programId }: TeamWorkspaceProps) {
                       <tr
                         key={role}
                         className={cn(
-                          'border-b border-zinc-100 hover:bg-zinc-50/50 transition-colors',
+                          'border-b border-zinc-200 hover:bg-zinc-50/50 transition-colors',
                           idx === ALL_ROLES.length - 1 && 'border-b-0',
                         )}
                       >

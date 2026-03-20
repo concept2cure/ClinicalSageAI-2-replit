@@ -514,7 +514,7 @@ export const RegulatoryCalendar: React.FC<RegulatoryCalendarProps> = ({
                   className={cn(
                     'min-h-[100px] p-1 text-left rounded-lg border transition-colors',
                     isSelected && 'border-blue-500 bg-blue-50',
-                    !isSelected && 'border-zinc-100 hover:border-zinc-200 hover:bg-zinc-50',
+                    !isSelected && 'border-zinc-200 hover:border-zinc-200 hover:bg-zinc-50',
                     hasPdufa && !isSelected && 'border-red-200 bg-red-50/50'
                   )}
                 >

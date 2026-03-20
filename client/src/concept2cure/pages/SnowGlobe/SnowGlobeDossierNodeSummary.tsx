@@ -345,7 +345,7 @@ export default function SnowGlobeDossierNodeSummary({
 
       {/* Quick remediation summary */}
       {remediationItems.length > 0 && (
-        <div className="mb-3 rounded-lg border border-zinc-100 bg-zinc-50/50 p-2.5">
+        <div className="mb-3 rounded-lg border border-zinc-200 bg-zinc-50/50 p-2.5">
           <div className="mb-1.5 flex items-center gap-1.5">
             <Wrench className="h-3 w-3 text-zinc-400" />
             <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">

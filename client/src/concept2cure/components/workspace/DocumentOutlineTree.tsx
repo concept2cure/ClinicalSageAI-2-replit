@@ -302,7 +302,7 @@ function TemplateStructureView({
   return (
     <div className="flex-1 overflow-y-auto py-1 zen-scroll">
       {templateNode && (
-        <div className="px-3 py-1.5 border-b border-zinc-100 bg-violet-50/30">
+        <div className="px-3 py-1.5 border-b border-zinc-200 bg-violet-50/30">
           <p className="text-[11px] text-violet-600 font-medium">{templateNode.label}</p>
           <p className="text-[11px] text-zinc-400">{templateNode.ctdSection}</p>
         </div>
@@ -348,7 +348,7 @@ function TemplateStructureView({
         );
       })}
       {/* Summary */}
-      <div className="px-3 py-2 border-t border-zinc-100 mt-1">
+      <div className="px-3 py-2 border-t border-zinc-200 mt-1">
         <div className="flex items-center justify-between text-[11px]">
           <span className="text-zinc-400">Present</span>
           <span className="font-medium text-emerald-600">
@@ -426,7 +426,7 @@ export const DocumentOutlineTree: React.FC<DocumentOutlineTreeProps> = ({
   if (outlineNodes.length === 0 && !hasTemplateStructure) {
     return (
       <div className={cn('flex flex-col h-full', className)} data-testid="document-outline-tree">
-        <div className="flex items-center px-3 h-8 border-b border-zinc-100 bg-zinc-50/60 shrink-0">
+        <div className="flex items-center px-3 h-8 border-b border-zinc-200 bg-zinc-50/60 shrink-0">
           <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
             Outline
           </span>
@@ -447,7 +447,7 @@ export const DocumentOutlineTree: React.FC<DocumentOutlineTreeProps> = ({
     <div className={cn('flex flex-col h-full', className)} data-testid="document-outline-tree">
       {/* Segmented mode toggle */}
       {hasTemplateStructure && (
-        <div className="flex border-b border-zinc-100 shrink-0 bg-zinc-50/40">
+        <div className="flex border-b border-zinc-200 shrink-0 bg-zinc-50/60">
           <button
             onClick={() => setSubview('outline')}
             className={cn(
@@ -476,7 +476,7 @@ export const DocumentOutlineTree: React.FC<DocumentOutlineTreeProps> = ({
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between px-3 h-8 border-b border-zinc-100 bg-zinc-50/60 shrink-0">
+      <div className="flex items-center justify-between px-3 h-8 border-b border-zinc-200 bg-zinc-50/60 shrink-0">
         <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
           {subview === 'structure' ? 'Template Structure' : 'Document Outline'}
         </span>
@@ -487,7 +487,7 @@ export const DocumentOutlineTree: React.FC<DocumentOutlineTreeProps> = ({
 
       {/* Document title */}
       {title && subview === 'outline' && (
-        <div className="px-3 py-1 border-b border-zinc-100">
+        <div className="px-3 py-1 border-b border-zinc-200">
           <p className="text-[11px] font-medium text-zinc-700 truncate">{title}</p>
         </div>
       )}

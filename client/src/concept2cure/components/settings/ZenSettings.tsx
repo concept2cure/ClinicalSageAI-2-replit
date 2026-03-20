@@ -81,7 +81,7 @@ interface SettingRowProps {
 }
 
 const SettingRow: React.FC<SettingRowProps> = ({ label, description, children }) => (
-  <div className="flex items-center justify-between py-4 border-b border-zinc-100 last:border-b-0">
+  <div className="flex items-center justify-between py-4 border-b border-zinc-200 last:border-b-0">
     <div className="flex-1 pr-4">
       <div className="text-sm font-medium text-zinc-900">{label}</div>
       {description && <div className="text-xs text-zinc-500 mt-0.5">{description}</div>}
@@ -178,7 +178,7 @@ const ProfileSection: React.FC = () => {
       />
 
       {/* Avatar */}
-      <div className="flex items-center gap-4 mb-6 pb-6 border-b border-zinc-100">
+      <div className="flex items-center gap-4 mb-6 pb-6 border-b border-zinc-200">
         <div className="relative">
           <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-2xl font-semibold">
             JD
@@ -561,7 +561,7 @@ const HelpSection: React.FC = () => {
         ))}
       </div>
 
-      <div className="text-center py-6 border-t border-zinc-100">
+      <div className="text-center py-6 border-t border-zinc-200">
         <p className="text-xs text-zinc-400 mb-2">Concept2Cure v3.0.0 • © 2026 Concept2Cure</p>
         <div className="flex justify-center gap-4 text-xs">
           <span className="text-zinc-400">Terms</span>

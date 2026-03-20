@@ -334,7 +334,7 @@ const QuestionsPanel: React.FC<{
       
       <div className="max-h-[500px] overflow-y-auto">
         {Object.entries(byTopic).map(([topic, questions]) => (
-          <div key={topic} className="border-b border-zinc-100 last:border-0">
+          <div key={topic} className="border-b border-zinc-200 last:border-0">
             <div className="px-4 py-2 bg-zinc-50">
               <span className={cn('px-2 py-0.5 text-xs font-medium rounded', TOPIC_CONFIG[topic as QuestionTopic].color)}>
                 {TOPIC_CONFIG[topic as QuestionTopic].label}
@@ -345,7 +345,7 @@ const QuestionsPanel: React.FC<{
               const isExpanded = expandedId === question.id;
               
               return (
-                <div key={question.id} className="border-t border-zinc-100">
+                <div key={question.id} className="border-t border-zinc-200">
                   <button
                     onClick={() => setExpandedId(isExpanded ? null : question.id)}
                     className="w-full p-4 text-left hover:bg-zinc-50 transition-colors"
@@ -603,7 +603,7 @@ const MeetingList: React.FC<{
               key={meeting.id}
               onClick={() => onMeetingSelect?.(meeting)}
               className={cn(
-                'w-full p-4 text-left border-b border-zinc-100 transition-colors',
+                'w-full p-4 text-left border-b border-zinc-200 transition-colors',
                 isActive ? 'bg-blue-50' : 'hover:bg-zinc-50'
               )}
             >

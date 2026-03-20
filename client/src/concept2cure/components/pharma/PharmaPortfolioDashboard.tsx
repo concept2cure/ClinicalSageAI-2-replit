@@ -438,7 +438,7 @@ const GlobalRegistrationMatrix: React.FC<{
             {products.map(product => (
               <tr
                 key={product.id}
-                className="border-t border-zinc-100 hover:bg-zinc-50 cursor-pointer"
+                className="border-t border-zinc-200 hover:bg-zinc-50 cursor-pointer"
                 onClick={() => onProductClick?.(product)}
               >
                 <td className="px-4 py-3 sticky left-0 bg-white">

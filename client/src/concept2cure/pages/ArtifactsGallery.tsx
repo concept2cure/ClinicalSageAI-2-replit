@@ -162,7 +162,7 @@ export const ArtifactsGallery: React.FC = () => {
         </div>
 
         {/* Export format capability bar */}
-        <div className="flex items-center gap-3 mb-6 py-3 px-4 bg-gradient-to-r from-zinc-50 to-violet-50/30 rounded-xl border border-zinc-100">
+        <div className="flex items-center gap-3 mb-6 py-3 px-4 bg-gradient-to-r from-zinc-50 to-violet-50/30 rounded-xl border border-zinc-200">
           <Sparkles className="w-4 h-4 text-violet-500 flex-shrink-0" />
           <span className="text-xs text-zinc-600">AnA can create &amp; export:</span>
           <div className="flex items-center gap-2">
@@ -321,7 +321,7 @@ export const ArtifactsGallery: React.FC = () => {
                     className="group p-4 rounded-xl border border-zinc-200 hover:border-zinc-300 hover:shadow-sm transition-all bg-white cursor-pointer"
                   >
                     {/* Preview area */}
-                    <div className="aspect-[4/3] rounded-lg bg-zinc-50 border border-zinc-100 flex items-center justify-center mb-3">
+                    <div className="aspect-[4/3] rounded-lg bg-zinc-50 border border-zinc-200 flex items-center justify-center mb-3">
                       <FileText className="w-8 h-8 text-zinc-200" />
                     </div>
 

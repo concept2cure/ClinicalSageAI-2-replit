@@ -292,7 +292,7 @@ const GuardrailCard: React.FC<{
 
       {/* Actions */}
       {guardrail.requiresJustification && (
-        <div className="flex items-center justify-between pt-2 border-t border-zinc-100">
+        <div className="flex items-center justify-between pt-2 border-t border-zinc-200">
           <span className="text-xs text-amber-600 font-medium flex items-center gap-1">
             <AlertTriangle className="w-3 h-3" />
             Justification Required
@@ -348,7 +348,7 @@ const ImpurityTable: React.FC<{
           {impurities.map(imp => {
             const statusConfig = STATUS_CONFIG[imp.status];
             return (
-              <tr key={imp.id} className="border-b border-zinc-100 hover:bg-zinc-50">
+              <tr key={imp.id} className="border-b border-zinc-200 hover:bg-zinc-50">
                 <td className="px-3 py-2">
                   <div>
                     <span className="font-medium text-zinc-800">{imp.name}</span>
@@ -434,7 +434,7 @@ const StabilityChart: React.FC<{
     </div>
     <div className="p-4 space-y-4">
       {conditions.map(cond => (
-        <div key={cond.id} className="border-b border-zinc-100 pb-4 last:border-0 last:pb-0">
+        <div key={cond.id} className="border-b border-zinc-200 pb-4 last:border-0 last:pb-0">
           <div className="flex items-center justify-between mb-2">
             <span className="font-medium text-zinc-700">{cond.condition}</span>
             <span className="text-xs text-zinc-500">
@@ -667,7 +667,7 @@ export const CMCWizard: React.FC<CMCWizardProps> = ({
                 {substance.specifications.map(spec => {
                   const statusConfig = STATUS_CONFIG[spec.status];
                   return (
-                    <tr key={spec.id} className="border-b border-zinc-100">
+                    <tr key={spec.id} className="border-b border-zinc-200">
                       <td className="px-3 py-2 font-medium text-zinc-800">{spec.parameter}</td>
                       <td className="px-3 py-2 text-zinc-600">{spec.method}</td>
                       <td className="px-3 py-2 font-mono text-zinc-600">{spec.acceptance}</td>

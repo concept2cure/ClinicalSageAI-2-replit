@@ -778,7 +778,7 @@ export default function ProgramWizard({ onComplete, onCancel }: ProgramWizardPro
           className="rounded-xl border border-zinc-200 bg-white overflow-hidden cursor-pointer hover:border-zinc-300 transition"
           onClick={() => goToStep(1)}
         >
-          <div className="px-4 py-2.5 bg-zinc-50 border-b border-zinc-100 flex items-center gap-2">
+          <div className="px-4 py-2.5 bg-zinc-50 border-b border-zinc-200 flex items-center gap-2">
             <FileText className="w-4 h-4 text-blue-500" />
             <span className="text-xs font-bold text-zinc-600 uppercase tracking-wider">Program Basics</span>
           </div>
@@ -801,7 +801,7 @@ export default function ProgramWizard({ onComplete, onCancel }: ProgramWizardPro
           className="rounded-xl border border-zinc-200 bg-white overflow-hidden cursor-pointer hover:border-zinc-300 transition"
           onClick={() => goToStep(2)}
         >
-          <div className="px-4 py-2.5 bg-zinc-50 border-b border-zinc-100 flex items-center gap-2">
+          <div className="px-4 py-2.5 bg-zinc-50 border-b border-zinc-200 flex items-center gap-2">
             <Target className="w-4 h-4 text-emerald-500" />
             <span className="text-xs font-bold text-zinc-600 uppercase tracking-wider">Regulatory Destination</span>
           </div>
@@ -818,7 +818,7 @@ export default function ProgramWizard({ onComplete, onCancel }: ProgramWizardPro
           className="rounded-xl border border-zinc-200 bg-white overflow-hidden cursor-pointer hover:border-zinc-300 transition"
           onClick={() => goToStep(3)}
         >
-          <div className="px-4 py-2.5 bg-zinc-50 border-b border-zinc-100 flex items-center gap-2">
+          <div className="px-4 py-2.5 bg-zinc-50 border-b border-zinc-200 flex items-center gap-2">
             <Shield className="w-4 h-4 text-violet-500" />
             <span className="text-xs font-bold text-zinc-600 uppercase tracking-wider">Team & Governance</span>
           </div>
@@ -897,7 +897,7 @@ export default function ProgramWizard({ onComplete, onCancel }: ProgramWizardPro
 
       {/* Footer Navigation */}
       {!launchSuccess && (
-        <div className="flex items-center justify-between mt-8 pt-5 border-t border-zinc-100">
+        <div className="flex items-center justify-between mt-8 pt-5 border-t border-zinc-200">
           <button
             type="button"
             onClick={step === 1 ? onCancel : goBack}

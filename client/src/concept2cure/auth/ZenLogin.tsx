@@ -1122,7 +1122,7 @@ export const ZenLogin: React.FC = () => {
       {/* Right panel — auth form */}
       <div className="flex-1 flex flex-col bg-white">
         {/* Mobile logo (shown on small screens only) */}
-        <div className="lg:hidden flex items-center gap-3 p-6 border-b border-zinc-100">
+        <div className="lg:hidden flex items-center gap-3 p-6 border-b border-zinc-200">
           <img src={concept2cureLogo} alt="Concept2Cure" className="h-10 w-auto rounded-lg" />
           <span className="text-lg font-semibold text-zinc-900">Concept2Cure</span>
         </div>
@@ -1170,7 +1170,7 @@ export const ZenLogin: React.FC = () => {
         </div>
 
         {/* Footer */}
-        <footer className="py-5 px-6 border-t border-zinc-100">
+        <footer className="py-5 px-6 border-t border-zinc-200">
           <div className="max-w-sm mx-auto flex items-center justify-between text-xs text-zinc-400">
             <span>© {new Date().getFullYear()} Concept2Cure Inc.</span>
             <div className="flex items-center gap-1">

@@ -663,7 +663,7 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
             {/* Tasks */}
             <div className="lg:col-span-2">
               <div className="border border-zinc-200 rounded-md">
-                <div className="px-4 py-3 pb-2 border-b border-zinc-100">
+                <div className="px-4 py-3 pb-2 border-b border-zinc-200">
                   <h3 className="text-base font-semibold flex items-center gap-2">
                     <ClipboardList className="h-4 w-4" />
                     My Tasks
@@ -701,7 +701,7 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
 
           {/* Workflow Snapshot */}
           <div className="border border-zinc-200 rounded-md">
-            <div className="px-4 py-3 pb-2 border-b border-zinc-100">
+            <div className="px-4 py-3 pb-2 border-b border-zinc-200">
               <h3 className="text-base font-semibold flex items-center gap-2">
                 <GitBranch className="h-4 w-4" />
                 Active Workflow Steps
@@ -732,7 +732,7 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
 
           {/* Relevant Submissions */}
           <div className="border border-zinc-200 rounded-md">
-            <div className="px-4 py-3 pb-2 border-b border-zinc-100">
+            <div className="px-4 py-3 pb-2 border-b border-zinc-200">
               <h3 className="text-base font-semibold flex items-center gap-2">
                 <Globe2 className="h-4 w-4" />
                 Relevant Submission Types

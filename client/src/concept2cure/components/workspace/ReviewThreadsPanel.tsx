@@ -387,7 +387,7 @@ export function ReviewThreadsPanel({
   return (
     <div className="flex flex-col h-full">
       {/* Sub-tab bar */}
-      <div className="flex border-b border-zinc-100 px-2">
+      <div className="flex border-b border-zinc-200 px-2">
         {(['threads', 'tasks'] as const).map(tab => (
           <button
             key={tab}
@@ -699,7 +699,7 @@ function ThreadCard({
     <div
       className={cn(
         'mb-2 rounded-lg border transition-colors',
-        isOpen ? 'border-zinc-200 bg-white' : 'border-zinc-100 bg-zinc-50/50'
+        isOpen ? 'border-zinc-200 bg-white' : 'border-zinc-200 bg-zinc-50/50'
       )}
     >
       {/* Header */}
@@ -765,7 +765,7 @@ function ThreadCard({
 
       {/* Expanded content */}
       {expanded && (
-        <div className="px-2 pb-2 border-t border-zinc-100">
+        <div className="px-2 pb-2 border-t border-zinc-200">
           {loadingComments ? (
             <div className="py-3 flex justify-center">
               <Loader2 className="w-3 h-3 animate-spin text-zinc-300" />
@@ -780,10 +780,10 @@ function ThreadCard({
                     className={cn(
                       'rounded p-1.5',
                       c.kind === 'system'
-                        ? 'bg-zinc-50 border border-zinc-100'
+                        ? 'bg-zinc-50 border border-zinc-200'
                         : c.kind === 'request_changes'
                           ? 'bg-amber-50 border border-amber-100'
-                          : 'bg-white border border-zinc-100'
+                          : 'bg-white border border-zinc-200'
                     )}
                   >
                     <div className="flex items-center gap-1 mb-0.5">
@@ -861,7 +861,7 @@ function ThreadCard({
               )}
 
               {/* Actions */}
-              <div className="flex gap-1.5 mt-2 pt-1.5 border-t border-zinc-100 flex-wrap">
+              <div className="flex gap-1.5 mt-2 pt-1.5 border-t border-zinc-200 flex-wrap">
                 {isOpen && onResolve && (
                   <button
                     onClick={onResolve}
@@ -1032,7 +1032,7 @@ function TaskCard({ task, onResolve, onReopen, taskTypeOptions }: TaskCardProps)
           ? isOverdue
             ? 'border-red-200 bg-red-50/30'
             : 'border-zinc-200 bg-white'
-          : 'border-zinc-100 bg-zinc-50/50'
+          : 'border-zinc-200 bg-zinc-50/50'
       )}
     >
       <div className="flex items-start gap-1.5">

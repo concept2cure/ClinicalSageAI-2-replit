@@ -132,7 +132,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
 
         {/* Citations */}
         {message.citations && message.citations.length > 0 && (
-          <div className="mt-3 pt-3 border-t border-zinc-100 space-y-2">
+          <div className="mt-3 pt-3 border-t border-zinc-200 space-y-2">
             <div className="text-xs font-medium text-zinc-500 flex items-center gap-1">
               <Quote className="w-3 h-3" />
               Sources
@@ -154,7 +154,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
 
         {/* Actions (for assistant messages) */}
         {!isUser && !message.isStreaming && (
-          <div className="flex items-center gap-1 mt-3 pt-2 border-t border-zinc-100">
+          <div className="flex items-center gap-1 mt-3 pt-2 border-t border-zinc-200">
             <button
               onClick={() => onCopy?.(message.content)}
               className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 transition-colors"
@@ -315,7 +315,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
     <div className="bg-white border border-zinc-200 rounded-2xl p-3 shadow-sm">
       {/* Attachments preview */}
       {attachments.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-3 pb-3 border-b border-zinc-100">
+        <div className="flex flex-wrap gap-2 mb-3 pb-3 border-b border-zinc-200">
           {attachments.map((file, index) => (
             <div
               key={index}

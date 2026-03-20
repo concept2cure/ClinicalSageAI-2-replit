@@ -786,7 +786,7 @@ export default function IntelligentReportGenerator() {
               </div>
 
               {/* Cryptographic Details */}
-              <div className="border-t border-zinc-100 px-6 py-4 bg-zinc-50">
+              <div className="border-t border-zinc-200 px-6 py-4 bg-zinc-50">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
                     <div className="text-xs text-zinc-500 flex items-center gap-1 mb-0.5">
@@ -861,7 +861,7 @@ export default function IntelligentReportGenerator() {
                     <FileSignature className="w-4 h-4 text-purple-500" />
                     Integrity Manifest
                   </button>
-                  <div className="mx-2 my-0.5 border-t border-zinc-100" />
+                  <div className="mx-2 my-0.5 border-t border-zinc-200" />
                   <button
                     onClick={() => setShowVisualGen(prev => !prev)}
                     className="flex items-center gap-2 w-full px-3 py-2 text-sm text-zinc-700 hover:bg-amber-50"
@@ -1091,7 +1091,7 @@ export default function IntelligentReportGenerator() {
                       </button>
 
                       {isExpanded && (
-                        <div className="border-t border-zinc-100 p-4 space-y-3">
+                        <div className="border-t border-zinc-200 p-4 space-y-3">
                           {/* Section Content */}
                           <div className="bg-zinc-50 rounded-lg p-3">
                             <div className="text-xs font-medium text-zinc-500 mb-1">Section Data</div>
@@ -1264,7 +1264,7 @@ export default function IntelligentReportGenerator() {
                           {selectedProvenance.reportedValue || '—'}
                         </div>
                       </div>
-                      <hr className="border-zinc-100" />
+                      <hr className="border-zinc-200" />
                       <div>
                         <div className="text-zinc-400 mb-0.5">Source Table</div>
                         <div className="text-indigo-600 font-mono font-medium">{selectedProvenance.sourceTable}</div>
@@ -1283,7 +1283,7 @@ export default function IntelligentReportGenerator() {
                           {selectedProvenance.sourceValue || '—'}
                         </div>
                       </div>
-                      <hr className="border-zinc-100" />
+                      <hr className="border-zinc-200" />
                       <div className="flex gap-3">
                         <div>
                           <div className="text-zinc-400 mb-0.5">Transformation</div>

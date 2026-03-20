@@ -788,7 +788,7 @@ export const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({
         className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-xl bg-white rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150"
       >
         {/* Search input */}
-        <div className="flex items-center gap-3 px-4 py-4 border-b border-zinc-100">
+        <div className="flex items-center gap-3 px-4 py-4 border-b border-zinc-200">
           <Search className="w-5 h-5 text-zinc-400 flex-shrink-0" />
           <span id="command-palette-title" className="sr-only">
             Command Palette
@@ -897,7 +897,7 @@ export const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-4 py-3 border-t border-zinc-100 bg-zinc-50">
+        <div className="flex items-center justify-between px-4 py-3 border-t border-zinc-200 bg-zinc-50">
           <div className="flex items-center gap-4 text-xs text-zinc-500">
             <span className="flex items-center gap-1">
               <kbd className="px-1.5 py-0.5 bg-zinc-200 rounded text-zinc-600">↑</kbd>

@@ -93,7 +93,7 @@ const SectionCard: React.FC<{
         )}
       </button>
       {(!collapsible || open) && (
-        <div className="px-5 pb-5 border-t border-zinc-100 pt-4">
+        <div className="px-5 pb-5 border-t border-zinc-200 pt-4">
           {children}
         </div>
       )}

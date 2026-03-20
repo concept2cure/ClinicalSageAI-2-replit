@@ -349,7 +349,7 @@ const TaskCard: React.FC<{
       </div>
       
       {/* Footer */}
-      <div className="flex items-center justify-between pt-3 border-t border-zinc-100">
+      <div className="flex items-center justify-between pt-3 border-t border-zinc-200">
         <div className="flex items-center gap-1.5">
           <Calendar className={cn(
             'w-3.5 h-3.5',

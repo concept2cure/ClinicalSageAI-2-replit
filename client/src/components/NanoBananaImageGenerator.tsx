@@ -192,7 +192,7 @@ const NanoBananaImageGenerator: React.FC<NanoBananaImageGeneratorProps> = ({
   return (
     <div className={cn('rounded-xl border border-zinc-200 bg-white overflow-hidden', className)}>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100 bg-gradient-to-r from-amber-50 to-orange-50">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 bg-gradient-to-r from-amber-50 to-orange-50">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-lg bg-amber-100 flex items-center justify-center">
             <ImageIcon className="w-4 h-4 text-amber-600" />

@@ -163,7 +163,7 @@ export const TemplateTree: React.FC<TemplateTreeProps> = ({
   return (
     <div className={cn('flex flex-col h-full', className)} data-testid="template-tree">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 h-8 border-b border-zinc-100 bg-zinc-50/60 shrink-0">
+      <div className="flex items-center justify-between px-3 h-8 border-b border-zinc-200 bg-zinc-50/60 shrink-0">
         <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
           Templates
         </span>
@@ -173,7 +173,7 @@ export const TemplateTree: React.FC<TemplateTreeProps> = ({
       </div>
 
       {/* Tip */}
-      <div className="px-3 py-2 border-b border-zinc-100 bg-violet-50/40">
+      <div className="px-3 py-2 border-b border-zinc-200 bg-violet-50/40">
         <p className="text-[11px] text-violet-600 leading-relaxed">
           Templates are pre-structured documents wired to CTD sections. Click + to create a new
           document from any template.

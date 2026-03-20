@@ -400,7 +400,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
       >
         <form onSubmit={handleSubmit}>
           {/* Header */}
-          <div className="px-6 py-4 border-b border-zinc-100">
+          <div className="px-6 py-4 border-b border-zinc-200">
             <h2 id="new-project-title" className="text-lg font-semibold text-zinc-900">
               New Project
             </h2>
@@ -542,7 +542,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-zinc-100 flex justify-end gap-3">
+          <div className="px-6 py-4 border-t border-zinc-200 flex justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
@@ -626,7 +626,7 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
         className="fixed inset-4 sm:inset-auto sm:top-[6%] sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-[560px] bg-white rounded-xl shadow-2xl z-50 flex flex-col max-h-[80vh] animate-in fade-in zoom-in-95 duration-150"
       >
         {/* Header */}
-        <div className="flex-shrink-0 px-4 py-3 border-b border-zinc-100">
+        <div className="flex-shrink-0 px-4 py-3 border-b border-zinc-200">
           <div className="flex items-center justify-between mb-2">
             <h2 id="project-switcher-title" className="text-sm font-semibold text-zinc-900">
               Switch Project
@@ -888,7 +888,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
       >
         <form onSubmit={handleSubmit}>
           {/* Header */}
-          <div className="px-6 py-4 border-b border-zinc-100">
+          <div className="px-6 py-4 border-b border-zinc-200">
             <h2 id="edit-project-title" className="text-lg font-semibold text-zinc-900">
               Edit Project
             </h2>
@@ -975,7 +975,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-zinc-100 flex justify-end gap-3">
+          <div className="px-6 py-4 border-t border-zinc-200 flex justify-end gap-3">
             <button
               type="button"
               onClick={onClose}

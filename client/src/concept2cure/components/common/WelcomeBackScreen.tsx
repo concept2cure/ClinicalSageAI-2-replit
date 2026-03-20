@@ -199,7 +199,7 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
   return (
     <div className="fixed inset-0 z-50 bg-white flex flex-col animate-in fade-in duration-300">
       {/* Header */}
-      <header className="flex-shrink-0 border-b border-zinc-100 bg-white/80 backdrop-blur">
+      <header className="flex-shrink-0 border-b border-zinc-200 bg-white/80 backdrop-blur">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center">
@@ -421,7 +421,7 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
       </main>
 
       {/* Footer */}
-      <footer className="flex-shrink-0 border-t border-zinc-100 bg-zinc-50/50">
+      <footer className="flex-shrink-0 border-t border-zinc-200 bg-zinc-50/50">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <p className="text-xs text-zinc-500">
             {projects.length} projects • Last login: Today at 9:14 AM

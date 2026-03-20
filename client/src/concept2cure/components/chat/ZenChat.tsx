@@ -341,7 +341,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     <div
       className={cn(
         'group py-6 px-4 sm:px-6',
-        !isUser && 'bg-white border-b border-zinc-100/80',
+        !isUser && 'bg-white border-b border-zinc-200/80',
         isUser && 'bg-zinc-50/60'
       )}
       onMouseEnter={() => setShowActions(true)}
@@ -875,7 +875,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const canSend = value.trim().length > 0 && !isGenerating;
 
   return (
-    <div className="border-t border-zinc-100 bg-white px-4 py-4">
+    <div className="border-t border-zinc-200 bg-white px-4 py-4">
       <div className="max-w-3xl mx-auto">
         <div
           className={cn(

@@ -521,7 +521,7 @@ const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between h-14 px-4 border-b border-zinc-100 bg-zinc-50/50">
+      <div className="flex items-center justify-between h-14 px-4 border-b border-zinc-200 bg-zinc-50/50">
         <div className="flex items-center gap-3">
           <button
             onClick={onClose}
@@ -651,7 +651,7 @@ function AnalyticsDashboardInline({ projects, onBack }: { projects: any[]; onBac
         {/* Metrics Grid */}
         <div className="grid grid-cols-4 gap-4 mb-8">
           {metrics.slice(0, 4).map(m => (
-            <div key={m.label} className="bg-zinc-50 rounded-xl p-4 border border-zinc-100">
+            <div key={m.label} className="bg-zinc-50 rounded-xl p-4 border border-zinc-200">
               <p className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">
                 {m.label}
               </p>
@@ -662,7 +662,7 @@ function AnalyticsDashboardInline({ projects, onBack }: { projects: any[]; onBac
 
         <div className="grid grid-cols-2 gap-6 mb-8">
           {/* Artifact Status Breakdown */}
-          <div className="bg-zinc-50 rounded-xl p-5 border border-zinc-100">
+          <div className="bg-zinc-50 rounded-xl p-5 border border-zinc-200">
             <p className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider mb-4">
               Artifact Pipeline
             </p>
@@ -712,7 +712,7 @@ function AnalyticsDashboardInline({ projects, onBack }: { projects: any[]; onBac
           </div>
 
           {/* Activity Chart */}
-          <div className="bg-zinc-50 rounded-xl p-5 border border-zinc-100">
+          <div className="bg-zinc-50 rounded-xl p-5 border border-zinc-200">
             <p className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider mb-4">
               Recent Activity
             </p>
@@ -740,7 +740,7 @@ function AnalyticsDashboardInline({ projects, onBack }: { projects: any[]; onBac
         </div>
 
         {/* Project List */}
-        <div className="bg-zinc-50 rounded-xl p-5 border border-zinc-100">
+        <div className="bg-zinc-50 rounded-xl p-5 border border-zinc-200">
           <p className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider mb-4">
             Project Summary
           </p>
@@ -753,7 +753,7 @@ function AnalyticsDashboardInline({ projects, onBack }: { projects: any[]; onBac
               {projects.map((p: any) => (
                 <div
                   key={p.id}
-                  className="flex items-center justify-between py-2 border-b border-zinc-100 last:border-0"
+                  className="flex items-center justify-between py-2 border-b border-zinc-200 last:border-0"
                 >
                   <div className="flex items-center gap-3">
                     <div
@@ -1708,7 +1708,7 @@ export const ZenApp: React.FC = () => {
     onBack: () => void;
     backLabel?: string;
   }) => (
-    <div className="flex items-center gap-3 px-4 h-12 border-b border-zinc-100 bg-white flex-shrink-0">
+    <div className="flex items-center gap-3 px-4 h-12 border-b border-zinc-200 bg-white flex-shrink-0">
       <button
         onClick={onBack}
         className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
@@ -2020,7 +2020,7 @@ export const ZenApp: React.FC = () => {
                   className="flex-shrink-0 w-[380px] flex flex-col border-l border-zinc-200 bg-white"
                   data-testid="module-assistant-panel"
                 >
-                  <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100 bg-zinc-50">
+                  <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200 bg-zinc-50">
                     <span className="text-sm font-medium text-zinc-700">AI Assistant</span>
                     <button
                       onClick={() => setModuleAssistantOpen(false)}
@@ -2182,7 +2182,7 @@ export const ZenApp: React.FC = () => {
           {/* ── IND Workspace (eCTD filing hub — dossier construction) ──────────── */}
           {!embeddedModule && layoutMode === 'ind-workspace' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-ind">
-              <div className="flex items-center gap-3 px-4 h-12 border-b border-zinc-100 bg-white flex-shrink-0">
+              <div className="flex items-center gap-3 px-4 h-12 border-b border-zinc-200 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('regulatory-workspace')}
                   className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
@@ -2359,7 +2359,7 @@ export const ZenApp: React.FC = () => {
               ) : (
                 <>
                   {/* Module 3 traceability bar */}
-                  <div className="flex items-center gap-2 px-4 py-2 border-b border-zinc-100 bg-zinc-50 flex-shrink-0">
+                  <div className="flex items-center gap-2 px-4 py-2 border-b border-zinc-200 bg-zinc-50 flex-shrink-0">
                     <span className="text-xs text-zinc-500 mr-2">Module 3 Actions:</span>
                     <button
                       onClick={() => {
@@ -2520,7 +2520,7 @@ export const ZenApp: React.FC = () => {
           {/* ── Submission Operations Workspace (split-pane: list | inspector) ── */}
           {!embeddedModule && layoutMode === 'submission-workspace' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-submission-ops">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('regulatory-workspace')}
                   className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
@@ -2605,7 +2605,7 @@ export const ZenApp: React.FC = () => {
           {!embeddedModule && layoutMode === 'author' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-author">
               {/* Author workspace routes to IND/eCTD/CMC/Clinical based on context */}
-              <div className="flex items-center gap-3 px-4 h-12 border-b border-zinc-100 bg-white flex-shrink-0">
+              <div className="flex items-center gap-3 px-4 h-12 border-b border-zinc-200 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
                   className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
@@ -2754,7 +2754,7 @@ export const ZenApp: React.FC = () => {
           {!embeddedModule && layoutMode === 'collaboration-hub' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-collaboration-hub">
               {/* Workspace header — breadcrumb pattern */}
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
                   className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
@@ -2790,7 +2790,7 @@ export const ZenApp: React.FC = () => {
           {/* ── Biostatistics Platform — power, endpoints, design ── */}
           {!embeddedModule && layoutMode === 'biostatistics' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-biostatistics">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
                   className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
@@ -2824,7 +2824,7 @@ export const ZenApp: React.FC = () => {
           {/* ── Training Center — onboarding, courses, guides ── */}
           {!embeddedModule && layoutMode === 'training-center' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-training-center">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
                   className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
@@ -2853,7 +2853,7 @@ export const ZenApp: React.FC = () => {
           {/* ── Agent Hub — Agent Swarm showcase, setup, monitoring ── */}
           {!embeddedModule && layoutMode === 'agent-hub' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-agent-hub">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
                   className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
@@ -2887,7 +2887,7 @@ export const ZenApp: React.FC = () => {
           {/* ── Document Sherpa — AI-guided authoring ── */}
           {!embeddedModule && layoutMode === 'document-sherpa' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-document-sherpa">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
                   className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
@@ -2921,7 +2921,7 @@ export const ZenApp: React.FC = () => {
           {/* ── Review Pulse — PM signals, readiness, risk ── */}
           {!embeddedModule && layoutMode === 'review-pulse' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-review-pulse">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
                   className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
@@ -2955,7 +2955,7 @@ export const ZenApp: React.FC = () => {
           {/* ── Client Onboarding — setup wizard, configuration ── */}
           {!embeddedModule && layoutMode === 'client-onboarding' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-client-onboarding">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
                   className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
@@ -2984,7 +2984,7 @@ export const ZenApp: React.FC = () => {
           {/* ── Knowledge Base — account-level skills, .MD upload, materials ── */}
           {!embeddedModule && layoutMode === 'knowledge-base' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-knowledge-base">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
                   className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
@@ -3032,7 +3032,7 @@ export const ZenApp: React.FC = () => {
           {/* ── Project Knowledge — project-level context, uploads, sources ── */}
           {!embeddedModule && layoutMode === 'project-knowledge' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-project-knowledge">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
                   className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
@@ -3075,7 +3075,7 @@ export const ZenApp: React.FC = () => {
 
           {!embeddedModule && layoutMode === 'legal-center' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-legal-center">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
                   className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
@@ -3102,7 +3102,7 @@ export const ZenApp: React.FC = () => {
           {/* ── Document Builder — CSR + CTD wizard across global agencies ── */}
           {!embeddedModule && layoutMode === 'document-builder' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-document-builder">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
                   className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
@@ -3154,7 +3154,7 @@ export const ZenApp: React.FC = () => {
             (riViewMode === 'intelligence' ? (
               <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-ri-copilot">
                 {/* Intelligence mode header */}
-                <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
+                <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
                   <button
                     onClick={() => setLayoutMode('projects')}
                     className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
@@ -3346,7 +3346,7 @@ export const ZenApp: React.FC = () => {
 
                 {/* Right sidebar: Claude.ai-style (Context, Instructions, Files) */}
                 {/* Desktop: static panel */}
-                <div className="w-72 xl:w-80 border-l border-zinc-100 bg-white flex-shrink-0 hidden lg:flex">
+                <div className="w-72 xl:w-80 border-l border-zinc-200 bg-white flex-shrink-0 hidden lg:flex">
                   <ProjectSidebar
                     projectId={activeProjectId ?? null}
                     projectType={activeProject?.type}
@@ -3360,7 +3360,7 @@ export const ZenApp: React.FC = () => {
                       onClick={() => setWorkspacePanelOpen(false)}
                     />
                     <div className="fixed right-0 top-0 bottom-0 w-80 bg-white border-l border-zinc-200 shadow-xl z-50 lg:hidden">
-                      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100">
+                      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200">
                         <span className="text-sm font-medium text-zinc-700">Project Context</span>
                         <button
                           onClick={() => setWorkspacePanelOpen(false)}

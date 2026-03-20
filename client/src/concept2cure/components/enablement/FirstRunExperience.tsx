@@ -337,7 +337,7 @@ function AgentTeamScreen({
           </div>
         ))}
 
-        <div className="border-t border-zinc-100 pt-5">
+        <div className="border-t border-zinc-200 pt-5">
           <p className="text-xs font-medium text-zinc-400 uppercase tracking-wide mb-2">
             Automation level
           </p>

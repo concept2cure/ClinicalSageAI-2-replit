@@ -350,7 +350,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       <div className="flex-shrink-0 border-t border-zinc-200 bg-white relative z-30">
         {/* Expanded conversation overlay (slides up from bottom) */}
         {hasMessages && (
-          <div className="max-h-[50vh] overflow-y-auto zen-scroll border-t border-zinc-100" style={{ scrollbarWidth: 'thin' }}>
+          <div className="max-h-[50vh] overflow-y-auto zen-scroll border-t border-zinc-200" style={{ scrollbarWidth: 'thin' }}>
             {messages.map(msg => {
               const isUser = msg.role === 'user';
               const htmlContent = !isUser ? renderMarkdown(msg.content) : '';
@@ -584,7 +584,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       </div>
 
       {/* ── Bottom input bar — always visible ── */}
-      <div className="flex-shrink-0 px-4 py-3 border-t border-zinc-100 bg-white">
+      <div className="flex-shrink-0 px-4 py-3 border-t border-zinc-200 bg-white">
         <div className="max-w-3xl mx-auto">
           {/* Clear conversation button */}
           {hasMessages && (
@@ -664,7 +664,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     </div>
                     {chatMode === 'deep-research' && <Check className="w-4 h-4 text-violet-600 ml-auto mt-0.5 flex-shrink-0" />}
                   </button>
-                  <div className="mx-2 my-0.5 border-t border-zinc-100" />
+                  <div className="mx-2 my-0.5 border-t border-zinc-200" />
                   <button
                     type="button"
                     onClick={() => { setChatMode('nano-banana'); setShowModeDropdown(false); }}

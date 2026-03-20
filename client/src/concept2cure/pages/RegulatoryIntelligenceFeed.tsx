@@ -142,7 +142,7 @@ function formatDate(isoDate: string): string {
 /** Skeleton placeholder for loading states */
 function SkeletonCard() {
   return (
-    <div className="bg-white rounded-xl border border-zinc-100 p-5 animate-pulse">
+    <div className="bg-white rounded-xl border border-zinc-200 p-5 animate-pulse">
       <div className="flex gap-4">
         <div className="w-1 rounded-full bg-zinc-200 shrink-0" />
         <div className="flex-1 space-y-3">
@@ -167,7 +167,7 @@ function SkeletonCard() {
 
 function SkeletonMetric() {
   return (
-    <div className="bg-white rounded-xl border border-zinc-100 p-4 animate-pulse">
+    <div className="bg-white rounded-xl border border-zinc-200 p-4 animate-pulse">
       <div className="h-4 w-20 rounded bg-zinc-200 mb-2" />
       <div className="h-7 w-12 rounded bg-zinc-200" />
     </div>
@@ -187,7 +187,7 @@ function MetricCard({
   accentColor: string;
 }) {
   return (
-    <div className="bg-white rounded-xl border border-zinc-100 p-4 flex items-center gap-3 min-w-0">
+    <div className="bg-white rounded-xl border border-zinc-200 p-4 flex items-center gap-3 min-w-0">
       <div className={`p-2 rounded-lg ${accentColor}`}>
         <Icon size={18} />
       </div>
@@ -213,7 +213,7 @@ function FeedCard({
     <button
       type="button"
       onClick={() => onClick(item)}
-      className="w-full text-left bg-white rounded-xl border border-zinc-100 hover:border-zinc-200 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+      className="w-full text-left bg-white rounded-xl border border-zinc-200 hover:border-zinc-200 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/20"
     >
       <div className="flex">
         {/* Impact color stripe */}
@@ -259,7 +259,7 @@ function FeedCard({
               {item.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-zinc-50 text-zinc-500 border border-zinc-100"
+                  className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-zinc-50 text-zinc-500 border border-zinc-200"
                 >
                   {tag}
                 </span>
@@ -676,7 +676,7 @@ const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#FAFAF9' }}>
       {/* ===================== HEADER ===================== */}
-      <header className="sticky top-0 z-30 border-b border-zinc-100 bg-[#FAFAF9]/80 backdrop-blur-md">
+      <header className="sticky top-0 z-30 border-b border-zinc-200 bg-[#FAFAF9]/80 backdrop-blur-md">
         <div className="max-w-[1440px] mx-auto px-6 py-4">
           {/* Title row */}
           <div className="flex items-center justify-between mb-4">
@@ -789,7 +789,7 @@ const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({
             {loading ? (
               Array.from({ length: 5 }).map((_, i) => <SkeletonCard key={i} />)
             ) : error ? (
-              <div className="bg-white rounded-xl border border-zinc-100 p-10 text-center">
+              <div className="bg-white rounded-xl border border-zinc-200 p-10 text-center">
                 <AlertTriangle size={28} className="mx-auto text-amber-400 mb-3" />
                 <p className="text-sm text-zinc-600 mb-1 font-medium">
                   Unable to load intelligence feed
@@ -804,7 +804,7 @@ const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({
                 </button>
               </div>
             ) : filteredItems.length === 0 ? (
-              <div className="bg-white rounded-xl border border-zinc-100 p-10 text-center">
+              <div className="bg-white rounded-xl border border-zinc-200 p-10 text-center">
                 <Search size={28} className="mx-auto text-zinc-300 mb-3" />
                 <p className="text-sm text-zinc-600 font-medium mb-1">
                   No items match your filters
@@ -828,7 +828,7 @@ const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({
           {/* Right sidebar (desktop only) */}
           <aside className="hidden lg:block w-72 xl:w-80 shrink-0 space-y-5">
             {/* Watchlist */}
-            <div className="bg-white rounded-xl border border-zinc-100 p-4">
+            <div className="bg-white rounded-xl border border-zinc-200 p-4">
               <div className="flex items-center gap-2 mb-3">
                 <Bookmark size={14} className="text-violet-500" />
                 <h2 className="text-sm font-semibold text-zinc-800">Your Watchlist</h2>
@@ -858,7 +858,7 @@ const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({
             </div>
 
             {/* PDUFA Dates */}
-            <div className="bg-white rounded-xl border border-zinc-100 p-4">
+            <div className="bg-white rounded-xl border border-zinc-200 p-4">
               <div className="flex items-center gap-2 mb-3">
                 <Clock size={14} className="text-blue-600" />
                 <h2 className="text-sm font-semibold text-zinc-800">

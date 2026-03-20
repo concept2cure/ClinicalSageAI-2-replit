@@ -139,7 +139,7 @@ function LearningPathsView() {
           return (
             <motion.div
               key={path.id || idx}
-              className="py-6 border-b border-zinc-100"
+              className="py-6 border-b border-zinc-200"
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.15, delay: idx * 0.04 }}
@@ -250,7 +250,7 @@ function AllModulesView() {
               transition={{ duration: 0.15, delay: idx * 0.03 }}
             >
               <div
-                className="bg-white rounded-lg border border-zinc-100 p-5 cursor-pointer shadow-sm"
+                className="bg-white rounded-lg border border-zinc-200 p-5 cursor-pointer shadow-sm"
                 onClick={() =>
                   setExpandedModule(isExpanded ? null : mod.id || String(idx))
                 }
@@ -283,7 +283,7 @@ function AllModulesView() {
                       transition={{ duration: 0.15 }}
                       className="overflow-hidden"
                     >
-                      <div className="mt-4 pt-4 border-t border-zinc-100 space-y-2">
+                      <div className="mt-4 pt-4 border-t border-zinc-200 space-y-2">
                         {(mod.lessons || []).map(
                           (
                             lesson: { title: string; description: string } | string,
@@ -362,7 +362,7 @@ function CertificationsView() {
         return (
           <motion.div
             key={cert.id || idx}
-            className="py-6 border-b border-zinc-100"
+            className="py-6 border-b border-zinc-200"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.15, delay: idx * 0.04 }}
@@ -540,7 +540,7 @@ function AiAgentsView() {
       </div>
 
       {/* Sub-navigation */}
-      <div className="flex items-center gap-6 mb-8 border-b border-zinc-100 pb-3">
+      <div className="flex items-center gap-6 mb-8 border-b border-zinc-200 pb-3">
         {([
           { key: 'showcase' as const, label: 'All Capabilities' },
           { key: 'setup' as const, label: 'Setup Wizard' },
@@ -621,7 +621,7 @@ export function EnablementCenter({
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-[#FAFAF9]">
       {/* Top bar */}
-      <header className="flex-shrink-0 h-12 border-b border-zinc-100 bg-white">
+      <header className="flex-shrink-0 h-12 border-b border-zinc-200 bg-white">
         <div className="flex items-center h-full px-6">
           {/* Back */}
           <button

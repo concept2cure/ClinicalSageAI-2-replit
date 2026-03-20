@@ -372,7 +372,7 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
               {destinations.length > 0 ? (
                 <div className="grid grid-cols-3 gap-4">
                   {destinations.map((d: any) => (
-                    <div key={d.id} className="p-3 rounded-lg bg-zinc-50 border border-zinc-100">
+                    <div key={d.id} className="p-3 rounded-lg bg-zinc-50 border border-zinc-200">
                       <div className="flex items-center gap-2 mb-1">
                         <Globe className="w-3.5 h-3.5 text-blue-500" />
                         <span className="text-sm font-medium text-zinc-800">{d.name}</span>
@@ -542,7 +542,7 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
                 Readiness Profile
               </h2>
               <ReadinessRadar readiness={readiness} />
-              <div className="mt-4 pt-3 border-t border-zinc-100 text-center">
+              <div className="mt-4 pt-3 border-t border-zinc-200 text-center">
                 <p className="text-xs text-zinc-500">Overall Confidence</p>
                 <p className={cn(
                   'text-2xl font-bold',

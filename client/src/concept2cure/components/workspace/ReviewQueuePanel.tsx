@@ -109,7 +109,7 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200">
         <div className="flex items-center gap-1.5">
           <Inbox className="w-3.5 h-3.5 text-blue-600" />
           <span className="text-[11px] font-semibold text-zinc-800">My Review Queue</span>

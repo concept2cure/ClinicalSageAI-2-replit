@@ -189,7 +189,7 @@ export function CapabilityConstellation({
   );
 
   return (
-    <div className={cn('w-full bg-white border border-zinc-100 rounded-lg p-6', className)}>
+    <div className={cn('w-full bg-white border border-zinc-200 rounded-lg p-6', className)}>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {clusterOrder.map((cluster) => {
           const nodes = clusters[cluster];

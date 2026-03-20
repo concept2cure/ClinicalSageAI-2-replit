@@ -879,7 +879,7 @@ export function PrecedentIntelligenceDashboard({
                       {strategyResult.supportingPrecedents.map((p, i) => (
                         <div
                           key={i}
-                          className="flex items-center gap-2 p-2 rounded text-xs border border-zinc-100 hover:bg-zinc-50"
+                          className="flex items-center gap-2 p-2 rounded text-xs border border-zinc-200 hover:bg-zinc-50"
                         >
                           <FileText className="w-3 h-3 text-zinc-400 flex-shrink-0" />
                           <span className="font-medium text-zinc-700">
@@ -916,7 +916,7 @@ export function PrecedentIntelligenceDashboard({
                       {strategyResult.alternativeStrategies.map((alt, i) => (
                         <div
                           key={i}
-                          className="p-3 rounded-lg border border-zinc-100 bg-zinc-50/50"
+                          className="p-3 rounded-lg border border-zinc-200 bg-zinc-50/50"
                         >
                           <div className="flex items-center justify-between mb-1">
                             <span className="text-sm font-medium text-zinc-800">

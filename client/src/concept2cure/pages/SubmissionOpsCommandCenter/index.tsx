@@ -360,7 +360,7 @@ export function SubmissionOpsCommandCenter({
       {/* ── HEADER ── */}
       <div
         data-testid="submission-ops-header"
-        className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white shrink-0"
+        className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white shrink-0"
       >
         {/* Package selector */}
         <div className="relative">
@@ -508,7 +508,7 @@ export function SubmissionOpsCommandCenter({
         {/* Drawer toolbar buttons */}
         <div
           data-testid="drawer-toolbar"
-          className="flex items-center gap-0.5 ml-1 border-l border-zinc-100 pl-2"
+          className="flex items-center gap-0.5 ml-1 border-l border-zinc-200 pl-2"
         >
           {(
             [
@@ -541,7 +541,7 @@ export function SubmissionOpsCommandCenter({
 
       {/* ── FILTER BAR (conditional) ── */}
       {filterOpen && (
-        <div className="flex items-center gap-3 px-3 h-8 border-b border-zinc-100 bg-zinc-50/50 shrink-0">
+        <div className="flex items-center gap-3 px-3 h-8 border-b border-zinc-200 bg-zinc-50/50 shrink-0">
           <span className="text-[11px] font-medium text-zinc-500">Severity:</span>
           {SEVERITY_LEVELS.map(s => (
             <button
@@ -602,7 +602,7 @@ export function SubmissionOpsCommandCenter({
                   {/* Group header */}
                   <button
                     onClick={() => toggleGroup(groupKey)}
-                    className="w-full flex items-center gap-1.5 px-3 py-1.5 bg-zinc-50/80 border-b border-zinc-100 hover:bg-zinc-100/60 sticky top-0 z-10"
+                    className="w-full flex items-center gap-1.5 px-3 py-1.5 bg-zinc-50/80 border-b border-zinc-200 hover:bg-zinc-100/60 sticky top-0 z-10"
                   >
                     {collapsedGroups.has(groupKey) ? (
                       <ChevronRight className="w-3 h-3 text-zinc-400" />
@@ -641,7 +641,7 @@ export function SubmissionOpsCommandCenter({
         {/* RIGHT: Inspector */}
         <div
           data-testid="inspector-panel"
-          className="w-[280px] 2xl:w-[320px] border-l border-zinc-100 shrink-0 bg-white flex flex-col min-h-0"
+          className="w-[280px] 2xl:w-[320px] border-l border-zinc-200 shrink-0 bg-white flex flex-col min-h-0"
         >
           <ScrollArea className="flex-1">
             {selectedItem && selectedItemKind === 'blocker' ? (
@@ -681,7 +681,7 @@ export function SubmissionOpsCommandCenter({
             <>
               <div
                 data-testid="drawer-header"
-                className="flex items-center gap-2 px-4 h-10 border-b border-zinc-100 shrink-0"
+                className="flex items-center gap-2 px-4 h-10 border-b border-zinc-200 shrink-0"
               >
                 {DRAWER_LABELS[activeDrawer]?.icon}
                 <span data-testid="drawer-title" className="text-sm font-semibold text-zinc-800">
@@ -931,7 +931,7 @@ function BlockerInspector({
       )}
 
       {/* Jump links */}
-      <div className="flex flex-col gap-1 pt-2 border-t border-zinc-100">
+      <div className="flex flex-col gap-1 pt-2 border-t border-zinc-200">
         {item.artifactId && onNavigateToArtifact && (
           <button
             onClick={() => onNavigateToArtifact(item.artifactId)}
@@ -1496,7 +1496,7 @@ function PoliciesMilestonesDrawer({ packageId }: { packageId?: string }) {
         ) : (
           <div className="space-y-2">
             {milestones.map((m: any, i: number) => (
-              <div key={i} className="flex items-center gap-2 py-2 border-b border-zinc-100">
+              <div key={i} className="flex items-center gap-2 py-2 border-b border-zinc-200">
                 <span
                   className={cn(
                     'w-2 h-2 rounded-full shrink-0',

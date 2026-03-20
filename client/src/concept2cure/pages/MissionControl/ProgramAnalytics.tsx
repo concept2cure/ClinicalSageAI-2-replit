@@ -483,7 +483,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
           </div>
 
           {/* Legend */}
-          <div className="flex items-center gap-4 pt-2 border-t border-zinc-100 text-xs text-zinc-400">
+          <div className="flex items-center gap-4 pt-2 border-t border-zinc-200 text-xs text-zinc-400">
             <span className="flex items-center gap-1">
               <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500" /> &ge;80%
             </span>
@@ -544,7 +544,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
           </div>
 
           {/* Legend */}
-          <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-zinc-100 text-xs text-zinc-400">
+          <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-zinc-200 text-xs text-zinc-400">
             {LIFECYCLE_STATES.map((state) => (
               <span key={state.key} className="flex items-center gap-1">
                 <span className={cn('w-2.5 h-2.5 rounded-sm', state.color)} />
@@ -596,7 +596,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
           </div>
 
           {/* Category breakdown */}
-          <div className="space-y-2 pt-2 border-t border-zinc-100">
+          <div className="space-y-2 pt-2 border-t border-zinc-200">
             <span className="text-xs font-medium text-zinc-500 uppercase tracking-wide">
               By Category
             </span>
@@ -772,7 +772,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
 
       {/* ── Nano Banana: Export Dashboard as Visual ── */}
       <div className="rounded-xl border border-zinc-200 bg-white">
-        <div className="px-4 py-3 border-b border-zinc-100">
+        <div className="px-4 py-3 border-b border-zinc-200">
           <h3 className="text-sm font-semibold text-zinc-800">Export as Visual or Deck</h3>
           <p className="text-xs text-zinc-500 mt-0.5">Use Nano Banana AI to generate infographics or a slide deck from your program analytics.</p>
         </div>

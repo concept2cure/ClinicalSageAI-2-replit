@@ -508,7 +508,7 @@ export const ProjectsSidebar: React.FC = () => {
       </div>
 
       {/* Search */}
-      <div className="p-3 border-b border-zinc-100">
+      <div className="p-3 border-b border-zinc-200">
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
           <input
@@ -561,7 +561,7 @@ export const ProjectsSidebar: React.FC = () => {
 
                 {/* Expanded conversations list */}
                 {activeProject?.id === project.id && expandedProjectId === project.id && (
-                  <div className="mt-1 ml-2 pl-3 border-l-2 border-zinc-100 space-y-0.5">
+                  <div className="mt-1 ml-2 pl-3 border-l-2 border-zinc-200 space-y-0.5">
                     {/* Project Knowledge Panel - Claude.ai parity */}
                     <div className="py-2">
                       <ProjectKnowledge project={activeProject} />

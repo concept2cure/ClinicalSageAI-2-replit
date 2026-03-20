@@ -385,7 +385,7 @@ export default function DocumentChangeImpact({ projectId, submissionType }: { pr
 
             {/* Affected Sections Table */}
             <div className="rounded-xl border border-zinc-200 bg-white overflow-hidden">
-              <div className="px-5 py-4 border-b border-zinc-100">
+              <div className="px-5 py-4 border-b border-zinc-200">
                 <h2 className="text-sm font-semibold text-zinc-800">
                   Affected Sections
                 </h2>
@@ -393,7 +393,7 @@ export default function DocumentChangeImpact({ projectId, submissionType }: { pr
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-zinc-100 bg-zinc-50/50">
+                    <tr className="border-b border-zinc-200 bg-zinc-50/50">
                       <th className="px-5 py-3 text-left font-medium text-zinc-500">
                         eCTD Section
                       </th>

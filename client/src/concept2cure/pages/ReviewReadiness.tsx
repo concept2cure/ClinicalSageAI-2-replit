@@ -361,7 +361,7 @@ function riskColor(score: number): string {
 
 function EmptyState({ icon: Icon, message, detail }: { icon: React.ElementType; message: string; detail: string }) {
   return (
-    <div className="bg-white border border-zinc-100 rounded-lg py-12 text-center">
+    <div className="bg-white border border-zinc-200 rounded-lg py-12 text-center">
       <Icon className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
       <p className="text-sm text-zinc-500">{message}</p>
       <p className="text-xs text-zinc-400 mt-1">{detail}</p>
@@ -427,7 +427,7 @@ function QualityCenterView({ qcSections }: { qcSections: QCSection[] }) {
       ) : (
         <>
           {/* Summary */}
-          <div className="bg-white border border-zinc-100 rounded-lg p-5">
+          <div className="bg-white border border-zinc-200 rounded-lg p-5">
             <div className="flex items-center gap-8">
               <div>
                 <p className="text-xs text-zinc-400 uppercase tracking-wide">Sections Checked</p>
@@ -448,10 +448,10 @@ function QualityCenterView({ qcSections }: { qcSections: QCSection[] }) {
           </div>
 
           {/* Table */}
-          <div className="bg-white border border-zinc-100 rounded-lg overflow-hidden">
+          <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-zinc-100">
+                <tr className="border-b border-zinc-200">
                   <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Section</th>
                   <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Status</th>
                   <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Issues</th>
@@ -527,7 +527,7 @@ function ComplianceView({ complianceRules }: { complianceRules: ComplianceRule[]
       </div>
 
       {/* Summary */}
-      <div className="bg-white border border-zinc-100 rounded-lg p-5">
+      <div className="bg-white border border-zinc-200 rounded-lg p-5">
         <div className="flex items-center gap-8">
           <div>
             <p className="text-xs text-zinc-400 uppercase tracking-wide">Rules Evaluated</p>
@@ -548,13 +548,13 @@ function ComplianceView({ complianceRules }: { complianceRules: ComplianceRule[]
       </div>
 
       {/* Compliance Rules */}
-      <div className="bg-white border border-zinc-100 rounded-lg overflow-hidden">
-        <div className="px-5 py-3 border-b border-zinc-100">
+      <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden">
+        <div className="px-5 py-3 border-b border-zinc-200">
           <h3 className="text-sm font-medium text-zinc-900">Compliance Rules</h3>
         </div>
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-zinc-100">
+            <tr className="border-b border-zinc-200">
               <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">ID</th>
               <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Category</th>
               <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Rule</th>
@@ -580,13 +580,13 @@ function ComplianceView({ complianceRules }: { complianceRules: ComplianceRule[]
       </div>
 
       {/* Multi-Agency Matrix */}
-      <div className="bg-white border border-zinc-100 rounded-lg overflow-hidden">
-        <div className="px-5 py-3 border-b border-zinc-100">
+      <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden">
+        <div className="px-5 py-3 border-b border-zinc-200">
           <h3 className="text-sm font-medium text-zinc-900">Multi-Agency Compliance Matrix</h3>
         </div>
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-zinc-100">
+            <tr className="border-b border-zinc-200">
               <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Requirement</th>
               <th className="text-center px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">FDA</th>
               <th className="text-center px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">EMA</th>
@@ -685,7 +685,7 @@ function SnowGlobeView() {
       </div>
 
       {/* Aggregate Summary */}
-      <div className="bg-white border border-zinc-100 rounded-lg p-5">
+      <div className="bg-white border border-zinc-200 rounded-lg p-5">
         <div className="flex items-center gap-8">
           <div>
             <p className="text-xs text-zinc-400 uppercase tracking-wide">Aggregate Risk</p>
@@ -712,7 +712,7 @@ function SnowGlobeView() {
       {/* Engine Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {simulations.map((engine, i) => (
-          <div key={i} className="bg-white border border-zinc-100 rounded-lg p-5">
+          <div key={i} className="bg-white border border-zinc-200 rounded-lg p-5">
             <div className="flex items-start justify-between">
               <div>
                 <h3 className="text-sm font-medium text-zinc-900">{engine.name}</h3>
@@ -744,7 +744,7 @@ function SnowGlobeView() {
       </div>
 
       {/* Trial Prediction (merged from ForesightAI) */}
-      <div className="bg-white border border-zinc-100 rounded-lg p-5 space-y-4">
+      <div className="bg-white border border-zinc-200 rounded-lg p-5 space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-sm font-medium text-zinc-900">Trial Prediction</h3>
@@ -781,7 +781,7 @@ function SnowGlobeView() {
       </div>
 
       {/* Monte Carlo Simulation */}
-      <div className="bg-white border border-zinc-100 rounded-lg p-5 space-y-4">
+      <div className="bg-white border border-zinc-200 rounded-lg p-5 space-y-4">
         <h3 className="text-sm font-medium text-zinc-900">Monte Carlo Simulation</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
@@ -813,7 +813,7 @@ function SnowGlobeView() {
       </div>
 
       {/* Recommended Endpoints */}
-      <div className="bg-white border border-zinc-100 rounded-lg p-5 space-y-3">
+      <div className="bg-white border border-zinc-200 rounded-lg p-5 space-y-3">
         <h3 className="text-sm font-medium text-zinc-900">Recommended Endpoints</h3>
         <div className="divide-y divide-zinc-50">
           {ANA_PREDICTION.endpoints.map((ep, i) => (
@@ -834,7 +834,7 @@ function SnowGlobeView() {
       </div>
 
       {/* Protocol Optimization */}
-      <div className="bg-white border border-zinc-100 rounded-lg p-5 space-y-3">
+      <div className="bg-white border border-zinc-200 rounded-lg p-5 space-y-3">
         <h3 className="text-sm font-medium text-zinc-900">Protocol Optimization</h3>
         <ul className="space-y-2">
           {ANA_PREDICTION.protocolFindings.map((finding, i) => (
@@ -911,7 +911,7 @@ function ReadinessScoreView({ readinessModules, summary }: { readinessModules: R
       ) : (
         <>
           {/* Main Score */}
-          <div className="bg-white border border-zinc-100 rounded-lg p-8 text-center">
+          <div className="bg-white border border-zinc-200 rounded-lg p-8 text-center">
             <p className="text-xs text-zinc-400 uppercase tracking-wide">Submission Readiness</p>
             <p className="text-6xl font-semibold text-zinc-900 mt-2">{overallReadiness}%</p>
             <p className="text-sm text-zinc-400 mt-2">
@@ -933,13 +933,13 @@ function ReadinessScoreView({ readinessModules, summary }: { readinessModules: R
           </div>
 
           {/* Module Breakdown */}
-          <div className="bg-white border border-zinc-100 rounded-lg overflow-hidden">
-            <div className="px-5 py-3 border-b border-zinc-100">
+          <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden">
+            <div className="px-5 py-3 border-b border-zinc-200">
               <h3 className="text-sm font-medium text-zinc-900">Module-by-Module Readiness</h3>
             </div>
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-zinc-100">
+                <tr className="border-b border-zinc-200">
                   <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Module</th>
                   <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Name</th>
                   <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Completeness</th>
@@ -978,7 +978,7 @@ function ReadinessScoreView({ readinessModules, summary }: { readinessModules: R
           </div>
 
           {/* Prediction Detail */}
-          <div className="bg-white border border-zinc-100 rounded-lg p-5">
+          <div className="bg-white border border-zinc-200 rounded-lg p-5">
             <h3 className="text-sm font-medium text-zinc-900">Filing Probability Model</h3>
             <p className="text-xs text-zinc-400 mt-1 mb-3">
               Predicted outcomes based on historical approval data for similar submissions.
@@ -1052,7 +1052,7 @@ function EvidenceConfidenceView({ evidenceSections }: { evidenceSections: Eviden
       </div>
 
       {/* Powered By */}
-      <div className="bg-white border border-zinc-100 rounded-lg p-5">
+      <div className="bg-white border border-zinc-200 rounded-lg p-5">
         <p className="text-xs text-zinc-400">
           Powered by Evidence Confidence Heatmap, Confidence Scoring Engine
         </p>
@@ -1066,10 +1066,10 @@ function EvidenceConfidenceView({ evidenceSections }: { evidenceSections: Eviden
         />
       ) : (
         /* Evidence Grid */
-        <div className="bg-white border border-zinc-100 rounded-lg overflow-hidden">
+        <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-zinc-100">
+              <tr className="border-b border-zinc-200">
                 <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Section</th>
                 <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Strength</th>
                 <th className="text-center px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Claims</th>
@@ -1163,7 +1163,7 @@ function AuditTrailView({ auditEntries }: { auditEntries: AuditEntry[] }) {
       </div>
 
       {/* Powered By */}
-      <div className="bg-white border border-zinc-100 rounded-lg p-5">
+      <div className="bg-white border border-zinc-200 rounded-lg p-5">
         <p className="text-xs text-zinc-400">
           Powered by Cognitive Audit Service, Provenance Trail
         </p>
@@ -1205,10 +1205,10 @@ function AuditTrailView({ auditEntries }: { auditEntries: AuditEntry[] }) {
           </div>
 
           {/* Audit Feed */}
-          <div className="bg-white border border-zinc-100 rounded-lg overflow-hidden">
+          <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-zinc-100">
+                <tr className="border-b border-zinc-200">
                   <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Timestamp</th>
                   <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">User</th>
                   <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Action</th>
@@ -1307,7 +1307,7 @@ function TraceabilityView({ traceability }: { traceability: TraceabilityClaim[] 
       ) : (
         <>
           {/* Summary */}
-          <div className="bg-white border border-zinc-100 rounded-lg p-5">
+          <div className="bg-white border border-zinc-200 rounded-lg p-5">
             <div className="flex items-center gap-8">
               <div>
                 <p className="text-xs text-zinc-400 uppercase tracking-wide">Coverage</p>
@@ -1326,7 +1326,7 @@ function TraceabilityView({ traceability }: { traceability: TraceabilityClaim[] 
 
           {/* Orphaned Claims */}
           {orphaned.length > 0 && (
-            <div className="bg-white border border-zinc-100 rounded-lg p-5">
+            <div className="bg-white border border-zinc-200 rounded-lg p-5">
               <h3 className="text-sm font-medium text-zinc-900">Orphaned Claims</h3>
               <p className="text-xs text-zinc-400 mt-1">Claims without supporting evidence links.</p>
               <ul className="mt-3 space-y-2">
@@ -1344,13 +1344,13 @@ function TraceabilityView({ traceability }: { traceability: TraceabilityClaim[] 
           )}
 
           {/* Full Matrix */}
-          <div className="bg-white border border-zinc-100 rounded-lg overflow-hidden">
-            <div className="px-5 py-3 border-b border-zinc-100">
+          <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden">
+            <div className="px-5 py-3 border-b border-zinc-200">
               <h3 className="text-sm font-medium text-zinc-900">Traceability Matrix</h3>
             </div>
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-zinc-100">
+                <tr className="border-b border-zinc-200">
                   <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Req ID</th>
                   <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Claim</th>
                   <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Evidence Links</th>
@@ -1463,7 +1463,7 @@ export function ReviewReadiness({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-[#FAFAF9]">
       {/* Top bar */}
-      <header className="flex-shrink-0 h-12 border-b border-zinc-100 bg-white">
+      <header className="flex-shrink-0 h-12 border-b border-zinc-200 bg-white">
         <div className="flex items-center h-full px-6">
           {/* Back */}
           <button

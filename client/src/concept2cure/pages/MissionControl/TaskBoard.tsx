@@ -346,7 +346,7 @@ function TaskCard({
       {/* Expanded detail */}
       {expanded && (
         <div
-          className="mt-3 pt-3 border-t border-zinc-100 space-y-3 text-sm"
+          className="mt-3 pt-3 border-t border-zinc-200 space-y-3 text-sm"
           onClick={(e) => e.stopPropagation()}
         >
           <p className="text-zinc-600">{task.description}</p>
@@ -914,7 +914,7 @@ export default function TaskBoard({ programId }: TaskBoardProps) {
                     <tr
                       onClick={() => setExpandedTaskId(isExpanded ? null : task.id)}
                       className={cn(
-                        'border-b border-zinc-100 cursor-pointer hover:bg-zinc-50 transition-colors',
+                        'border-b border-zinc-200 cursor-pointer hover:bg-zinc-50 transition-colors',
                         isExpanded && 'bg-zinc-50',
                       )}
                     >

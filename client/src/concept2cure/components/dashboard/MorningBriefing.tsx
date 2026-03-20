@@ -199,7 +199,7 @@ const PriorityItem: React.FC<{ priority: TodaysPriority }> = ({ priority }) => (
     'flex items-center gap-3 p-3 rounded-lg',
     priority.urgency === 'now' && 'bg-red-50 border border-red-100',
     priority.urgency === 'today' && 'bg-amber-50 border border-amber-100',
-    priority.urgency === 'this_week' && 'bg-zinc-50 border border-zinc-100'
+    priority.urgency === 'this_week' && 'bg-zinc-50 border border-zinc-200'
   )}>
     <div className={cn(
       'w-2 h-2 rounded-full flex-shrink-0',
@@ -397,7 +397,7 @@ export const MorningBriefing: React.FC<MorningBriefingProps> = ({
         </div>
         
         {/* ═══════ FOOTER ═══════ */}
-        <div className="p-4 bg-white border-t border-zinc-100 flex justify-center flex-shrink-0">
+        <div className="p-4 bg-white border-t border-zinc-200 flex justify-center flex-shrink-0">
           <button
             onClick={onClose}
             className={cn(

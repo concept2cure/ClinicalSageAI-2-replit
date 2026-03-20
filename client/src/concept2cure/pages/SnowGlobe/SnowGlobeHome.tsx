@@ -307,7 +307,7 @@ function SkeletonCard({ className }: { className?: string }) {
 
 function SkeletonRow() {
   return (
-    <div className="flex animate-pulse items-center gap-3 border-b border-zinc-100 px-4 py-3">
+    <div className="flex animate-pulse items-center gap-3 border-b border-zinc-200 px-4 py-3">
       <div className="h-5 w-16 rounded bg-zinc-200" />
       <div className="h-4 flex-1 rounded bg-zinc-100" />
       <div className="h-4 w-12 rounded bg-zinc-100" />
@@ -465,7 +465,7 @@ function FindingRow({ finding }: { finding: Finding }) {
   const chamber = CHAMBER_CONFIG[finding.chamber];
 
   return (
-    <div className="flex items-start gap-3 border-b border-zinc-100 px-4 py-3 last:border-b-0 hover:bg-zinc-50/50">
+    <div className="flex items-start gap-3 border-b border-zinc-200 px-4 py-3 last:border-b-0 hover:bg-zinc-50/50">
       {/* Severity badge */}
       <span
         className={cn(
@@ -502,7 +502,7 @@ function RemediationRow({ action }: { action: RemediationAction }) {
   const impactStyle = SEVERITY_STYLES[action.impact];
 
   return (
-    <div className="flex items-start gap-3 border-b border-zinc-100 px-4 py-3 last:border-b-0">
+    <div className="flex items-start gap-3 border-b border-zinc-200 px-4 py-3 last:border-b-0">
       {/* Priority number */}
       <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[11px] font-bold text-white">
         {action.priority}
@@ -949,7 +949,7 @@ export default function SnowGlobeHome({ programId }: SnowGlobeHomeProps) {
           --------------------------------------------------------------- */}
           <div className="rounded-xl border border-zinc-200 bg-white shadow-sm">
             {/* Panel header */}
-            <div className="flex items-center justify-between border-b border-zinc-100 px-4 py-3">
+            <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 text-amber-500" />
                 <h3 className="text-sm font-semibold text-zinc-800">
@@ -994,7 +994,7 @@ export default function SnowGlobeHome({ programId }: SnowGlobeHomeProps) {
           --------------------------------------------------------------- */}
           <div className="rounded-xl border border-zinc-200 bg-white shadow-sm">
             {/* Panel header */}
-            <div className="flex items-center justify-between border-b border-zinc-100 px-4 py-3">
+            <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                 <h3 className="text-sm font-semibold text-zinc-800">
@@ -1019,7 +1019,7 @@ export default function SnowGlobeHome({ programId }: SnowGlobeHomeProps) {
             </div>
 
             {/* Create memo button */}
-            <div className="border-t border-zinc-100 px-4 py-3">
+            <div className="border-t border-zinc-200 px-4 py-3">
               <button
                 onClick={handleCreateMemo}
                 className={cn(

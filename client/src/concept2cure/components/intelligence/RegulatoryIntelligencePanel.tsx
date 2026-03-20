@@ -226,7 +226,7 @@ export function RegulatoryIntelligencePanel({
   return (
     <div className="flex flex-col h-full bg-white border-l border-zinc-200">
       {/* Header */}
-      <div className="flex items-center justify-between px-2 sm:px-3 py-2 border-b border-zinc-100 bg-gradient-to-r from-indigo-50/80 to-violet-50/80 shrink-0">
+      <div className="flex items-center justify-between px-2 sm:px-3 py-2 border-b border-zinc-200 bg-gradient-to-r from-indigo-50/80 to-violet-50/80 shrink-0">
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
           <Brain className="w-4 h-4 text-indigo-600 shrink-0" />
           <span className="text-xs sm:text-sm font-semibold text-zinc-800 truncate">
@@ -241,7 +241,7 @@ export function RegulatoryIntelligencePanel({
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-zinc-100 shrink-0">
+      <div className="flex border-b border-zinc-200 shrink-0">
         {TABS.map(tab => {
           const Icon = tab.icon;
           return (
@@ -580,7 +580,7 @@ export function RegulatoryIntelligencePanel({
                       {predictionResult.similarTrials.slice(0, 3).map((t, i) => (
                         <div
                           key={i}
-                          className="flex items-center justify-between text-[11px] px-2 py-1 bg-white rounded border border-zinc-100"
+                          className="flex items-center justify-between text-[11px] px-2 py-1 bg-white rounded border border-zinc-200"
                         >
                           <span className="text-zinc-700 truncate">{t.name}</span>
                           <div className="flex items-center gap-2">
@@ -764,7 +764,7 @@ export function RegulatoryIntelligencePanel({
                       {precedentStrategy.data.alternativeStrategies.map((alt, i) => (
                         <div
                           key={i}
-                          className="flex items-center justify-between px-2 py-1.5 bg-zinc-50 rounded border border-zinc-100 text-[11px]"
+                          className="flex items-center justify-between px-2 py-1.5 bg-zinc-50 rounded border border-zinc-200 text-[11px]"
                         >
                           <span className="text-zinc-700">
                             {typeof alt === 'string' ? alt : alt.pathway || alt.name}
@@ -949,7 +949,7 @@ export function RegulatoryIntelligencePanel({
                   {csrSearch.data.map((csr, i) => (
                     <div
                       key={csr.id || i}
-                      className="p-2.5 border border-zinc-100 rounded-lg bg-zinc-50/50 hover:bg-zinc-50 transition-colors"
+                      className="p-2.5 border border-zinc-200 rounded-lg bg-zinc-50/50 hover:bg-zinc-50 transition-colors"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <span className="text-[11px] font-semibold text-zinc-800 leading-tight">
@@ -1007,7 +1007,7 @@ export function RegulatoryIntelligencePanel({
                       {evidenceSearch.data.map((csr, i) => (
                         <div
                           key={csr.id || i}
-                          className="p-2.5 border border-zinc-100 rounded-lg bg-zinc-50/50 hover:bg-zinc-50 transition-colors"
+                          className="p-2.5 border border-zinc-200 rounded-lg bg-zinc-50/50 hover:bg-zinc-50 transition-colors"
                         >
                           <div className="flex items-start justify-between gap-2">
                             <span className="text-[11px] font-semibold text-zinc-800 leading-tight">

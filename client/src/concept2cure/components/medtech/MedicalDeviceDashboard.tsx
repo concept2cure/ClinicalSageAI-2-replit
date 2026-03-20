@@ -408,7 +408,7 @@ const PredicatePathfinder: React.FC<{
               <div
                 key={candidate.id}
                 className={cn(
-                  'p-3 border-b border-zinc-100 hover:bg-zinc-50 transition-colors cursor-pointer',
+                  'p-3 border-b border-zinc-200 hover:bg-zinc-50 transition-colors cursor-pointer',
                   isSelected && 'bg-blue-50'
                 )}
               >
@@ -547,7 +547,7 @@ const MAUDEHazardMonitor: React.FC<{
             key={alert.id}
             onClick={() => onAlertClick?.(alert)}
             className={cn(
-              'w-full p-3 text-left border-b border-zinc-100 hover:bg-zinc-50 transition-colors',
+              'w-full p-3 text-left border-b border-zinc-200 hover:bg-zinc-50 transition-colors',
               alert.eventType === 'death' && 'border-l-4 border-l-red-500',
               alert.eventType === 'injury' && 'border-l-4 border-l-amber-500',
               alert.eventType === 'malfunction' && 'border-l-4 border-l-blue-500'
@@ -635,7 +635,7 @@ const ESTARProgressTracker: React.FC<{
           <div
             key={section.id}
             className={cn(
-              'px-4 py-2 border-b border-zinc-100 flex items-center justify-between',
+              'px-4 py-2 border-b border-zinc-200 flex items-center justify-between',
               section.status === 'complete' && 'bg-green-50',
               section.status === 'in_progress' && 'bg-blue-50'
             )}
@@ -802,7 +802,7 @@ const CERTracker: React.FC<{
 
       <div className="max-h-[250px] overflow-y-auto">
         {documents.map(doc => (
-          <div key={doc.id} className="p-3 border-b border-zinc-100 hover:bg-zinc-50">
+          <div key={doc.id} className="p-3 border-b border-zinc-200 hover:bg-zinc-50">
             <div className="flex items-start justify-between mb-2">
               <div>
                 <p className="text-sm font-medium text-zinc-900">{doc.deviceName}</p>

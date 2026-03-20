@@ -324,7 +324,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
   if (error || versions.length === 0) {
     return (
       <div className="h-full flex flex-col bg-white border-l border-zinc-200">
-        <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200">
           <span className="text-xs font-semibold text-zinc-700 flex items-center gap-1.5">
             <GitCompare className="w-4 h-4 text-purple-500" /> Version Compare
           </span>
@@ -348,7 +348,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
   return (
     <div className="h-full flex flex-col bg-white border-l border-zinc-200">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100 bg-gradient-to-r from-purple-50/50 to-indigo-50/50 shrink-0">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200 bg-gradient-to-r from-purple-50/50 to-indigo-50/50 shrink-0">
         <div className="flex items-center gap-2">
           <GitCompare className="w-4 h-4 text-purple-500" />
           <span className="text-xs font-bold text-zinc-800">Version Compare</span>
@@ -359,7 +359,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
       </div>
 
       {/* Version selectors */}
-      <div className="px-3 py-2 border-b border-zinc-100 bg-zinc-50/50">
+      <div className="px-3 py-2 border-b border-zinc-200 bg-zinc-50/50">
         <div className="text-[11px] text-zinc-500 mb-1 font-medium">{title}</div>
         <div className="flex items-center gap-2">
           {/* Version A selector */}
@@ -401,7 +401,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
 
       {/* Metadata delta header */}
       {selectedA && selectedB && (
-        <div className="px-3 py-2 border-b border-zinc-100 bg-white">
+        <div className="px-3 py-2 border-b border-zinc-200 bg-white">
           <div className="grid grid-cols-2 gap-2 text-[11px]">
             <div className="space-y-0.5">
               <div className="text-zinc-400 font-medium">Version A (v{selectedA.version})</div>
@@ -430,7 +430,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
               )}
             </div>
           </div>
-          <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-zinc-100">
+          <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-zinc-200">
             <DiffStats textA={textA} textB={textB} />
             <div className="flex items-center gap-1">
               {/* Rollback button */}
@@ -510,7 +510,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
 
       {/* Cross-panel actions */}
       {(onOpenAudit || onOpenProvenance) && (
-        <div className="px-3 py-1.5 border-t border-zinc-100 bg-zinc-50/50 flex gap-2 shrink-0">
+        <div className="px-3 py-1.5 border-t border-zinc-200 bg-zinc-50/50 flex gap-2 shrink-0">
           {onOpenProvenance && (
             <button
               onClick={onOpenProvenance}
@@ -531,7 +531,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
       )}
 
       {/* Footer */}
-      <div className="px-3 py-1.5 border-t border-zinc-100 bg-zinc-50/30 shrink-0">
+      <div className="px-3 py-1.5 border-t border-zinc-200 bg-zinc-50/30 shrink-0">
         <p className="text-[11px] text-zinc-400 text-center">
           {versions.length} version{versions.length !== 1 ? 's' : ''} · Real diff comparison ·
           SHA-256 integrity chain

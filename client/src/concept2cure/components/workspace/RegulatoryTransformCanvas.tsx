@@ -156,7 +156,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
   return (
     <div className="flex-1 flex flex-col bg-white min-h-0 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-2 px-4 h-10 border-b border-zinc-100 shrink-0">
+      <div className="flex items-center gap-2 px-4 h-10 border-b border-zinc-200 shrink-0">
         <Sparkles className="w-4 h-4 text-violet-500" />
         <h2 className="text-sm font-semibold text-zinc-800">Regulatory Transform Canvas</h2>
         {projectName && (
@@ -179,7 +179,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
         <div className="grid grid-cols-5 gap-px bg-zinc-100 min-h-full">
           {/* ── Lane 1: Inputs ── */}
           <div className="bg-white p-3 flex flex-col gap-3">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-700 pb-1 border-b border-zinc-100">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-700 pb-1 border-b border-zinc-200">
               <Database className="w-3.5 h-3.5 text-blue-500" />
               Inputs
             </div>
@@ -219,7 +219,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
 
           {/* ── Lane 2: Structured Transform ── */}
           <div className="bg-white p-3 flex flex-col gap-3">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-700 pb-1 border-b border-zinc-100">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-700 pb-1 border-b border-zinc-200">
               <Layers className="w-3.5 h-3.5 text-violet-500" />
               Structured Transform
             </div>
@@ -299,7 +299,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
 
           {/* ── Lane 3: Draft Output ── */}
           <div className="bg-white p-3 flex flex-col gap-3">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-700 pb-1 border-b border-zinc-100">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-700 pb-1 border-b border-zinc-200">
               <FileText className="w-3.5 h-3.5 text-emerald-500" />
               Draft Output
             </div>
@@ -344,7 +344,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
 
           {/* ── Lane 4: Governance ── */}
           <div className="bg-white p-3 flex flex-col gap-3">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-700 pb-1 border-b border-zinc-100">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-700 pb-1 border-b border-zinc-200">
               <ShieldCheck className="w-3.5 h-3.5 text-amber-500" />
               Governance
             </div>
@@ -359,7 +359,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
 
           {/* ── Lane 5: Downstream Actions ── */}
           <div className="bg-white p-3 flex flex-col gap-2">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-700 pb-1 border-b border-zinc-100">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-700 pb-1 border-b border-zinc-200">
               <ArrowRight className="w-3.5 h-3.5 text-blue-500" />
               Downstream Actions
             </div>
@@ -446,7 +446,7 @@ function ActionButton({
           ? 'bg-blue-600 text-white hover:bg-blue-700'
           : !disabled
             ? 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100 border border-zinc-200'
-            : 'bg-zinc-50 text-zinc-300 border border-zinc-100 cursor-not-allowed'
+            : 'bg-zinc-50 text-zinc-300 border border-zinc-200 cursor-not-allowed'
       )}
     >
       {icon}

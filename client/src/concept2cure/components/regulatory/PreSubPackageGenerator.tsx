@@ -666,7 +666,7 @@ export const PreSubPackageGenerator: React.FC<PreSubPackageGeneratorProps> = ({
             {/* Generate Tab */}
             <TabsContent value="generate" className="space-y-4 m-0">
               <div className="border border-zinc-200 rounded-md">
-                <div className="px-4 py-3 border-b border-zinc-100">
+                <div className="px-4 py-3 border-b border-zinc-200">
                   <h3 className="text-lg font-semibold">Package Summary</h3>
                   <p className="text-sm text-muted-foreground">
                     Review your pre-submission package before generating

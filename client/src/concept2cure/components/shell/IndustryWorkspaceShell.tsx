@@ -435,7 +435,7 @@ const Header: React.FC<{
                     key={notification.id}
                     onClick={() => onNotificationClick?.(notification)}
                     className={cn(
-                      'w-full p-3 text-left hover:bg-zinc-50 border-b border-zinc-100 last:border-b-0',
+                      'w-full p-3 text-left hover:bg-zinc-50 border-b border-zinc-200 last:border-b-0',
                       !notification.read && 'bg-blue-50'
                     )}
                   >

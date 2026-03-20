@@ -80,7 +80,7 @@ const ZenHeader: React.FC<ZenHeaderProps> = ({
   onProfileClick,
   isSidebarOpen,
 }) => (
-  <header className="h-12 flex items-center justify-between px-3 border-b border-zinc-100 bg-white/80 backdrop-blur-sm">
+  <header className="h-12 flex items-center justify-between px-3 border-b border-zinc-200 bg-white/80 backdrop-blur-sm">
     {/* Left section */}
     <div className="flex items-center gap-2">
       <button
@@ -231,7 +231,7 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
       {/* Sidebar header */}
       <div
         className={cn(
-          'flex items-center h-12 border-b border-zinc-100',
+          'flex items-center h-12 border-b border-zinc-200',
           isCollapsed ? 'justify-center px-2' : 'justify-between px-3'
         )}
       >
@@ -290,7 +290,7 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
 
       {/* Sidebar footer */}
       <div
-        className={cn('border-t border-zinc-100 p-2', isCollapsed && 'flex flex-col items-center')}
+        className={cn('border-t border-zinc-200 p-2', isCollapsed && 'flex flex-col items-center')}
       >
         <button
           className={cn(
@@ -318,7 +318,7 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
       {/* Sidebar */}
       <aside
         className={cn(
-          'bg-zinc-50 border-r border-zinc-100 h-full transition-all duration-200 ease-in-out',
+          'bg-zinc-50 border-r border-zinc-200 h-full transition-all duration-200 ease-in-out',
           // Desktop
           'hidden md:block',
           isCollapsed ? 'w-[60px]' : 'w-[260px]'
@@ -476,7 +476,7 @@ const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({ isOpen, onClose }
         className="fixed top-[20%] left-1/2 -translate-x-1/2 w-full max-w-lg bg-white rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150"
       >
         {/* Search input */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-zinc-100">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-zinc-200">
           <Search className="w-5 h-5 text-zinc-400" />
           <input
             type="text"

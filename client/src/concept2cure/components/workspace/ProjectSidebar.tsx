@@ -148,7 +148,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
   return (
     <div className={cn('flex flex-col h-full overflow-y-auto', className)} style={{ scrollbarWidth: 'thin' }}>
       {/* ── Project Context ── */}
-      <div className="px-4 py-4 border-b border-zinc-100">
+      <div className="px-4 py-4 border-b border-zinc-200">
         <div className="flex items-center justify-between mb-1">
           <h3 className="text-sm font-semibold text-zinc-900">Project Context</h3>
           <span className="flex items-center gap-1 text-[11px] text-zinc-400 bg-zinc-50 px-2 py-0.5 rounded-full">
@@ -162,7 +162,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
       </div>
 
       {/* ── Instructions ── */}
-      <div className="px-4 py-4 border-b border-zinc-100">
+      <div className="px-4 py-4 border-b border-zinc-200">
         <div className="flex items-center justify-between mb-1">
           <h3 className="text-sm font-semibold text-zinc-900">Instructions</h3>
           <button
