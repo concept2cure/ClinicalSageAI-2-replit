@@ -17,39 +17,14 @@ import { config } from '../config/environment';
 
 const router = Router();
 
-const isDev = process.env.NODE_ENV !== 'production';
-
-// Dev user response
-const devUserResponse = {
-  id: 1,
-  username: 'developer',
-  email: 'developer@trialsage.ai',
-  firstName: 'Dev',
-  lastName: 'User',
-  displayName: 'Dev User',
-  role: 'admin',
-  roles: ['admin', 'user'],
-  permissions: ['*'],
-  organizationId: '2',
-  organizationName: 'TrialSage Demo',
-  mfaEnabled: false,
-  mfaMethods: [],
-  mustChangePassword: false,
-  avatarUrl: null,
-  createdAt: new Date().toISOString(),
-  lastLoginAt: new Date().toISOString(),
-};
+// SECURITY: Dev user fallback removed for production readiness.
+// All requests must authenticate via JWT — no mock users.
 
 /**
  * GET /api/user (root - for legacy compatibility)
  * Get current user profile
  */
 router.get('/', async (req: Request, res: Response) => {
-  // Dev mode fallback - always return dev user
-  if (isDev) {
-    return res.json(devUserResponse);
-  }
-
   const authHeader = req.headers.authorization;
   const token = authHeader?.replace('Bearer ', '');
 
@@ -68,7 +43,7 @@ router.get('/', async (req: Request, res: Response) => {
       .limit(1);
 
     if (!user.length) {
-      return res.json(devUserResponse);
+      return res.status(404).json({ error: { code: 'USER_NOT_FOUND', message: 'User not found' } });
     }
 
     const userData = user[0];
@@ -85,7 +60,6 @@ router.get('/', async (req: Request, res: Response) => {
       organizationId: '2',
     });
   } catch (error) {
-    if (isDev) return res.json(devUserResponse);
     res.status(401).json({ error: { code: 'AUTH_005', message: 'Session expired' } });
   }
 });
@@ -98,11 +72,6 @@ router.get('/me', async (req: Request, res: Response) => {
   try {
     const authHeader = req.headers.authorization;
     const token = authHeader?.replace('Bearer ', '');
-
-    // Dev mode fallback
-    if (isDev && !token) {
-      return res.json(devUserResponse);
-    }
 
     if (!token) {
       return res.status(401).json({
@@ -123,7 +92,6 @@ router.get('/me', async (req: Request, res: Response) => {
       .limit(1);
 
     if (!user.length) {
-      if (isDev) return res.json(devUserResponse);
       return res.status(404).json({
         error: { code: 'USER_NOT_FOUND', message: 'User not found' },
       });
@@ -164,15 +132,12 @@ router.get('/me', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
-      if (isDev) return res.json(devUserResponse);
       return res.status(401).json({
         error: { code: 'AUTH_005', message: 'Session expired' },
       });
     }
 
-    console.error('[users] Get user error:', error);
-    if (isDev) return res.json(devUserResponse);
-
+    console.error('[users] Get user error:', error.message);
     res.status(500).json({
       error: { code: 'INTERNAL_ERROR', message: 'Failed to get user profile' },
     });
@@ -194,7 +159,6 @@ router.get('/:id(\\d+)', async (req: Request, res: Response) => {
       .limit(1);
 
     if (!user.length) {
-      if (isDev) return res.json(devUserResponse);
       return res.status(404).json({
         error: { code: 'USER_NOT_FOUND', message: 'User not found' },
       });
@@ -213,9 +177,7 @@ router.get('/:id(\\d+)', async (req: Request, res: Response) => {
       organizationId: '2',
     });
   } catch (error: any) {
-    console.error('[users] Get user by ID error:', error);
-    if (isDev) return res.json(devUserResponse);
-
+    console.error('[users] Get user by ID error:', error.message);
     res.status(500).json({
       error: { code: 'INTERNAL_ERROR', message: 'Failed to get user' },
     });
@@ -230,16 +192,6 @@ router.post('/login', async (req: Request, res: Response) => {
   const { username, password, email } = req.body;
   const loginEmail = email || username;
 
-  // Dev mode - accept any credentials
-  if (isDev) {
-    return res.json({
-      id: 1,
-      username: loginEmail?.split('@')[0] || 'developer',
-      email: loginEmail || 'developer@trialsage.ai',
-      role: 'admin',
-    });
-  }
-
   if (!loginEmail || !password) {
     return res.status(400).json({ message: 'Email/username and password required' });
   }
@@ -252,13 +204,8 @@ router.post('/login', async (req: Request, res: Response) => {
       .limit(1);
 
     if (!user.length) {
-      // In dev, still succeed
-      return res.json({
-        id: 1,
-        username: loginEmail.split('@')[0],
-        email: loginEmail,
-        role: 'user',
-      });
+      // Don't reveal whether the email exists
+      return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     const userData = user[0];
@@ -268,15 +215,9 @@ router.post('/login', async (req: Request, res: Response) => {
       email: userData.email,
       role: 'user',
     });
-  } catch (error) {
-    console.error('[users] Login error:', error);
-    // In dev mode, still succeed
-    res.json({
-      id: 1,
-      username: loginEmail?.split('@')[0] || 'developer',
-      email: loginEmail || 'developer@trialsage.ai',
-      role: 'admin',
-    });
+  } catch (error: any) {
+    console.error('[users] Login error:', error.message);
+    res.status(500).json({ message: 'Login failed' });
   }
 });
 

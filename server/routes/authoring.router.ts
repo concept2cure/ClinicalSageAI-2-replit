@@ -39,9 +39,10 @@ router.use(async (req: Request, res: Response, next: any) => {
       let claims: any = {};
       
       // ALWAYS verify JWT in production - no bypasses
-      const jwtSecret = process.env.AUTH_JWT_SECRET || 'default-dev-secret';
-      if (!jwtSecret || jwtSecret === 'default-dev-secret') {
-        console.warn('WARNING: Using default JWT secret. Set AUTH_JWT_SECRET for production!');
+      const jwtSecret = process.env.AUTH_JWT_SECRET || process.env.JWT_SECRET;
+      if (!jwtSecret) {
+        console.error('CRITICAL: AUTH_JWT_SECRET or JWT_SECRET must be set.');
+        return res.status(500).json({ error: 'Server misconfiguration: missing JWT secret' });
       }
       
       try {

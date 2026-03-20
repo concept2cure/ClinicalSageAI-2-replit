@@ -47,16 +47,26 @@ const config = {
       'https://app.clinicalsage.ai',
     ]),
 
-  // Rate Limits - relaxed for development
-  rateLimits: {
-    global: { windowMs: 60_000, max: 10000 }, // 10000/min global (dev)
-    api: { windowMs: 60_000, max: 1000 }, // 1000/min per IP (dev)
-    ai: { windowMs: 60_000, max: 100 }, // 100/min for AI endpoints (dev)
-    auth: { windowMs: 60_000, max: 100 }, // 100 auth attempts per minute (dev - was 5/15min)
-    write: { windowMs: 60_000, max: 500 }, // 500 writes/min (dev)
-    upload: { windowMs: 60_000, max: 100 }, // 100 uploads/min (dev)
-    export: { windowMs: 60_000, max: 50 }, // 50 exports/min (dev)
-  },
+  // Rate Limits — environment-aware
+  rateLimits: process.env.NODE_ENV === 'production'
+    ? {
+        global: { windowMs: 60_000, max: 300 },   // 300/min global
+        api: { windowMs: 60_000, max: 100 },       // 100/min per IP
+        ai: { windowMs: 60_000, max: 20 },         // 20/min for AI endpoints
+        auth: { windowMs: 15 * 60_000, max: 10 },  // 10 auth attempts per 15 min
+        write: { windowMs: 60_000, max: 60 },       // 60 writes/min
+        upload: { windowMs: 60_000, max: 20 },      // 20 uploads/min
+        export: { windowMs: 60_000, max: 10 },      // 10 exports/min
+      }
+    : {
+        global: { windowMs: 60_000, max: 10000 },
+        api: { windowMs: 60_000, max: 1000 },
+        ai: { windowMs: 60_000, max: 100 },
+        auth: { windowMs: 60_000, max: 100 },
+        write: { windowMs: 60_000, max: 500 },
+        upload: { windowMs: 60_000, max: 100 },
+        export: { windowMs: 60_000, max: 50 },
+      },
 
   // Request Size Limits
   maxBodySize: '50mb',
@@ -74,19 +84,27 @@ const config = {
 // SECURITY HEADERS (Helmet Configuration)
 // ============================================================================
 
-// In development, relax headers so the app can render
-// inside VS Code Simple Browser (iframe) and Vite HMR WebSocket can connect.
+// In development, use a permissive (but present) security policy.
+// CSP is set to report-only so issues are visible without breaking HMR/iframes.
 export const securityHeaders = config.isDevelopment
   ? helmet({
-      contentSecurityPolicy: false, // Disable CSP entirely in dev
+      contentSecurityPolicy: {
+        reportOnly: true, // Don't block, but log violations in browser console
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          connectSrc: ["'self'", 'ws:', 'wss:', 'http://localhost:*'],
+          imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
+          frameSrc: ["'self'"],
+        },
+      },
       crossOriginEmbedderPolicy: false,
       crossOriginOpenerPolicy: false, // Allow iframe embedding (Simple Browser)
       crossOriginResourcePolicy: false,
-      hsts: false, // No HSTS in dev
+      hsts: false, // No HSTS in dev (no TLS locally)
       frameguard: false, // Allow iframes (VS Code Simple Browser)
-      dnsPrefetchControl: false,
-      permittedCrossDomainPolicies: false,
-      xssFilter: false,
+      xssFilter: true, // Keep XSS filter active even in dev
     })
   : helmet({
       contentSecurityPolicy: {
@@ -125,14 +143,18 @@ export const securityHeaders = config.isDevelopment
 export function corsMiddleware(req: Request, res: Response, next: NextFunction) {
   const origin = req.headers.origin;
 
-  // Check if origin is allowed
-  if (origin && (config.allowedOrigins.includes(origin) || config.isDevelopment)) {
+  // Check if origin is allowed — always validate, even in development
+  if (origin && config.allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   } else if (!origin) {
-    // Allow requests without origin (same-origin, curl, etc.)
-    res.setHeader('Access-Control-Allow-Origin', '*');
-  } else if (config.isProduction) {
-    // Log unauthorized CORS attempt
+    // Same-origin requests, server-to-server, or curl — no wildcard in production
+    if (config.isProduction) {
+      // Don't set any CORS header — browser enforces same-origin by default
+    } else {
+      res.setHeader('Access-Control-Allow-Origin', 'http://localhost:5000');
+    }
+  } else {
+    // Log and block unauthorized CORS attempt in all environments
     console.warn(`[SECURITY] Blocked CORS request from unauthorized origin: ${origin}`);
     return res.status(403).json({
       error: 'Origin not allowed',
@@ -222,8 +244,8 @@ function sanitizeString(value: string): string {
       .replace(/'/g, '&#x27;')
       .replace(/\//g, '&#x2F;')
       .replace(/`/g, '&#96;')
-      // Remove potential SQL injection patterns
-      .replace(/('|--|;|\/\*|\*\/|xp_|UNION|SELECT|INSERT|UPDATE|DELETE|DROP|EXEC)/gi, '')
+      // NOTE: SQL keyword stripping removed — Drizzle ORM uses parameterized queries,
+      // making regex-based SQL keyword removal unnecessary and harmful to legitimate content.
   );
 }
 
@@ -472,11 +494,22 @@ export function requireJwtSecret(): void {
 // COMBINED SECURITY MIDDLEWARE STACK
 // ============================================================================
 
+// HTTPS enforcement for production — redirects HTTP to HTTPS
+export function enforceHttps(req: Request, res: Response, next: NextFunction) {
+  if (config.isProduction && req.header('x-forwarded-proto') !== 'https') {
+    return res.redirect(301, `https://${req.header('host')}${req.url}`);
+  }
+  next();
+}
+
 export function applySecurityMiddleware(app: any) {
   // Validate critical environment variables
   requireJwtSecret();
 
-  // Security headers (must be first)
+  // HTTPS enforcement (must be before everything else)
+  app.use(enforceHttps);
+
+  // Security headers (must be first after HTTPS)
   app.use(securityHeaders);
 
   // Request ID for correlation

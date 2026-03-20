@@ -13,6 +13,7 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 import {
   Sparkles,
   ArrowUp,
@@ -32,7 +33,8 @@ marked.setOptions({ breaks: true, gfm: true });
 
 const renderMarkdown = (content: string): string => {
   try {
-    return marked.parse(content) as string;
+    const raw = marked.parse(content) as string;
+    return DOMPurify.sanitize(raw);
   } catch {
     return content.replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }

@@ -29,6 +29,7 @@
  */
 
 import React, { useState, useCallback } from 'react';
+import DOMPurify from 'dompurify';
 import { cn } from '@/lib/utils';
 import {
   FileText,
@@ -554,7 +555,7 @@ const SectionEditor: React.FC<{
             {section.content ? (
               <div
                 className="text-zinc-700 leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: section.content }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(section.content) }}
               />
             ) : (
               <p className="text-zinc-400 italic">No content available</p>

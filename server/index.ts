@@ -307,18 +307,12 @@ app.get('/readyz', async (_req, res) => {
   }
 });
 
-// Health check endpoint with debug info
+// Health check endpoint — public, minimal info only
 app.get('/api/health', async (req: Request, res: Response) => {
-  debugLog('Health check endpoint called');
-  const healthData = {
+  res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
-    debug: DEBUG,
-    node_env: process.env.NODE_ENV,
-    port: PORT,
-  };
-  debugLog('Health response', healthData);
-  res.json(healthData);
+  });
 });
 
 // Server-authoritative timestamp.

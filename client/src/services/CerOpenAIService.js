@@ -7,13 +7,10 @@
 
 import OpenAI from 'openai';
 
-// Initialize OpenAI client with API key from environment variables
-const openai = new OpenAI({
-  apiKey: import.meta.env.VITE_OPENAI_API_KEY,
-  dangerouslyAllowBrowser: true, // For client-side usage - in production, proxy through backend
-  timeout: 60000, // 60 second timeout for API calls
-  maxRetries: 3, // Retry up to 3 times for failed requests
-});
+// SECURITY: OpenAI calls must go through the backend API gateway.
+// Direct client-side calls with API keys are forbidden in production.
+// This stub preserves the interface while routing through /api/ai/*.
+const openai = null; // Removed: never expose API keys in the browser bundle
 
 // Queue for managing concurrent OpenAI API requests to avoid rate limits
 // This is a simple implementation of request throttling

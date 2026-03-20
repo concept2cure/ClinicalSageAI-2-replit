@@ -24,6 +24,7 @@ import { useLocation } from 'wouter';
 import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 import {
   Sparkles,
   Copy,
@@ -47,10 +48,11 @@ import {
 // Configure marked for safe, clean HTML output
 marked.setOptions({ breaks: true, gfm: true });
 
-/** Render markdown string to safe HTML — synchronous */
+/** Render markdown string to sanitized HTML — synchronous */
 const renderMarkdown = (content: string): string => {
   try {
-    return marked.parse(content) as string;
+    const raw = marked.parse(content) as string;
+    return DOMPurify.sanitize(raw);
   } catch {
     return content.replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }

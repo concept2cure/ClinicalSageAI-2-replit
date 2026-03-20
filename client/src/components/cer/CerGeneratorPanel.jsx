@@ -445,16 +445,7 @@ const CerGeneratorPanel = ({ documentId }) => {
         return;
       }
 
-      // Check if we have OpenAI API key configured
-      if (!import.meta.env.VITE_OPENAI_API_KEY) {
-        toast({
-          title: 'API Key Missing',
-          description:
-            'OpenAI API key is required for report generation. Please check your configuration.',
-          variant: 'destructive',
-        });
-        return;
-      }
+      // API key check removed — all AI calls route through backend gateway
 
       // Verify we have enough selected high-quality references
       const highQualityRefs = literatureData.selectedReferences.filter(
