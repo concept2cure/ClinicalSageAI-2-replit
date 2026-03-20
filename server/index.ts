@@ -205,9 +205,9 @@ console.log('✅ Enterprise security and performance middleware enabled');
 app.use(httpLogger); // Add structured logging
 // Audit logging now handled by enterprise-security middleware
 
-// Body parsing with size limits
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+// Body parsing with size limits (5MB covers AI chat payloads; file uploads use multer separately)
+app.use(express.json({ limit: '5mb' }));
+app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // IMMUTABILITY POLICY ENFORCEMENT — 21 CFR Part 11 Compliance

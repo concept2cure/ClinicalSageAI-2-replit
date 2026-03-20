@@ -61,8 +61,12 @@ router.get('/health', async (_req: Request, res: Response) => {
   ];
   for (const table of enterpriseTables) {
     try {
-      await pool.query(`SELECT 1 FROM ${table} LIMIT 0`);
-      checks[table] = { ok: true, detail: 'exists' };
+      // Use information_schema lookup instead of string-interpolated SELECT
+      const r = await pool.query(
+        `SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1`,
+        [table]
+      );
+      checks[table] = { ok: r.rows.length > 0, detail: r.rows.length > 0 ? 'exists' : 'missing' };
     } catch {
       checks[table] = { ok: false, detail: 'missing' };
     }
@@ -131,7 +135,11 @@ router.post('/full-flow', async (req: Request, res: Response) => {
     const missing: string[] = [];
     for (const t of tables) {
       try {
-        await pool.query(`SELECT 1 FROM ${t} LIMIT 0`);
+        const r = await pool.query(
+          `SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1`,
+          [t]
+        );
+        if (!r.rows.length) missing.push(t);
       } catch {
         missing.push(t);
       }
@@ -370,8 +378,11 @@ router.post('/full-flow', async (req: Request, res: Response) => {
 
 async function tableExists(tableName: string): Promise<boolean> {
   try {
-    await pool.query(`SELECT 1 FROM ${tableName} LIMIT 0`);
-    return true;
+    const r = await pool.query(
+      `SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1`,
+      [tableName]
+    );
+    return r.rows.length > 0;
   } catch {
     return false;
   }

@@ -244,6 +244,20 @@ const analyticsApi = {
     const response = await apiRequest('GET', `/api/analytics/criteria-trends${queryString}`);
     return extractData(response);
   },
+
+  // Get benchmark data
+  getBenchmarkData: async (params: any = {}): Promise<ApiResponse<any>> => {
+    const queryString = buildQueryString(params);
+    const response = await apiRequest('GET', `/api/analytics/benchmarks${queryString}`);
+    return extractData(response);
+  },
+
+  // Get AI model data
+  getAiModelData: async (params: any = {}): Promise<ApiResponse<any>> => {
+    const queryString = buildQueryString(params);
+    const response = await apiRequest('GET', `/api/analytics/ai-models${queryString}`);
+    return extractData(response);
+  },
 };
 
 /**

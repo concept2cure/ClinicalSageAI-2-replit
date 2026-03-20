@@ -108,6 +108,7 @@ export async function checkPasswordHistory(
     const bcrypt = await import('bcryptjs');
 
     for (const oldHash of history.slice(0, PASSWORD_HISTORY_COUNT)) {
+      // NOTE: newPasswordHash should be the PLAINTEXT password for bcrypt.compare
       if (await bcrypt.compare(newPasswordHash, oldHash)) {
         return false; // Password was used recently
       }

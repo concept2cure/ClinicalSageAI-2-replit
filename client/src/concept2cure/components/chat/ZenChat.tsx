@@ -1273,9 +1273,21 @@ export const ZenChat: React.FC<ZenChatProps> = ({
 
       {/* Error banner */}
       {chatError && (
-        <div className="flex items-center justify-center gap-2 px-4 py-2 bg-red-50 border-b border-red-100 text-red-700 text-sm">
-          <AlertCircle className="w-4 h-4" />
-          <span>{chatError.message}</span>
+        <div className="flex items-center justify-between gap-2 px-4 py-2 bg-red-50 border-b border-red-100 text-red-700 text-sm">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <span>{chatError.message}</span>
+          </div>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            {(chatError as any).failedMessage && (
+              <button
+                onClick={() => streamMessage((chatError as any).failedMessage)}
+                className="text-xs underline hover:text-red-900"
+              >
+                Retry
+              </button>
+            )}
+          </div>
         </div>
       )}
 

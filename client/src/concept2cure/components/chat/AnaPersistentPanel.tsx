@@ -236,7 +236,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, userMsg]);
+    // Cap in-memory messages to prevent unbounded growth
+    setMessages(prev => [...prev.slice(-199), userMsg]);
     setInput('');
     setIsThinking(true);
 

@@ -6,14 +6,9 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import documentPreviewRouter from './documentPreview';
-// Generate UUID manually instead of using a package
-const uuidv4 = () => {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-    const r = (Math.random() * 16) | 0,
-      v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-};
+import { randomUUID } from 'crypto';
+// Use cryptographically secure UUID for regulatory document identifiers
+const uuidv4 = () => randomUUID();
 
 const router = Router();
 

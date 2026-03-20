@@ -333,6 +333,15 @@ router.post('/:submissionId/transition-to-ectd', async (req: Request, res: Respo
       });
     }
     
+    // SAFETY: Verify IND wizard is complete before transitioning
+    if (submission.indWizardStatus && submission.indWizardStatus !== 'completed') {
+      return res.status(409).json({
+        success: false,
+        error: 'IND Wizard must be completed before transitioning to eCTD Co-Author.',
+        currentStatus: submission.indWizardStatus,
+      });
+    }
+
     // Generate summary data from IND wizard
     const indStepData = submission.indStepData || {};
     

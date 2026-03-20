@@ -28,6 +28,7 @@ import {
   recordFailedLogin,
   resetFailedLogins,
   isPasswordExpired,
+  checkPasswordHistory,
 } from '../services/auth-security-service';
 
 import { config } from '../config/environment';
@@ -1307,6 +1308,15 @@ router.post('/password/change', async (req: Request, res: Response) => {
       return res.status(400).json({
         success: false,
         error: { code: 'AUTH_001', message: 'New password must be different from current password' },
+      });
+    }
+
+    // Check password history (pass plaintext for bcrypt.compare)
+    const historyOk = await checkPasswordHistory(userData.id, newPassword);
+    if (!historyOk) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'AUTH_001', message: 'This password was used recently. Please choose a different password.' },
       });
     }
 
