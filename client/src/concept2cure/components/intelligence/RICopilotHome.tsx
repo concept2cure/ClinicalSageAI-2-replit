@@ -261,7 +261,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
           <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-blue-50 flex items-center justify-center">
             <Brain className="w-8 h-8 text-blue-600" />
           </div>
-          <h2 className="text-xl font-semibold text-zinc-900 mb-2">RI Copilot</h2>
+          <h2 className="text-xl font-semibold text-zinc-900 mb-2">AnA Intelligence</h2>
           <p className="text-sm text-zinc-500 mb-2">
             Historical evidence, precedent intelligence, and regulatory reasoning.
           </p>
@@ -831,7 +831,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
           <div className="text-xs text-zinc-400 flex items-center gap-3 pb-4">
             <Globe className="w-3 h-3" />
             <span>
-              Evidence from Lumen Cortex · {csrResults.length} CSRs · {precedents.length} precedents
+              Evidence from AnA RI · {csrResults.length} CSRs · {precedents.length} precedents
               · Updated {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </span>
           </div>

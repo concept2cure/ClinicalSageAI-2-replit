@@ -90,7 +90,7 @@ const buildRegulatoryAnalysisResponse = (payload: any) => {
     lumen_intelligence_summary: {
       confidence_score: 92,
       generated_at: new Date().toISOString(),
-      source: 'lumen-cortex-compat',
+      source: 'ana-ri',
     },
   };
 };
@@ -169,10 +169,10 @@ router.get('/health', async (_req, res) => {
     const status = await lumenCortexService.verifyNeonConnection();
     res.json({ success: true, status });
   } catch (error) {
-    console.error('Lumen Cortex health check failed:', error);
+    console.error('AnA RI health check failed:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to verify Lumen Cortex connectivity',
+      error: 'Failed to verify AnA RI connectivity',
     });
   }
 });
@@ -182,7 +182,7 @@ router.post('/regulatory-analysis', requireAuth, async (req, res) => {
     const response = buildRegulatoryAnalysisResponse(req.body || {});
     res.json(response);
   } catch (error) {
-    console.error('Lumen Cortex regulatory analysis failed:', error);
+    console.error('AnA RI regulatory analysis failed:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to generate regulatory analysis',
@@ -195,7 +195,7 @@ router.post('/ich-e6r3-guidance', async (req, res) => {
     const response = buildIchGuidanceResponse(req.body || {});
     res.json(response);
   } catch (error) {
-    console.error('Lumen Cortex ICH guidance failed:', error);
+    console.error('AnA RI ICH guidance failed:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to generate ICH E6(R3) guidance',
@@ -217,7 +217,7 @@ router.get('/intelligence', async (_req, res) => {
       ],
     });
   } catch (error) {
-    console.error('Lumen Cortex intelligence feed failed:', error);
+    console.error('AnA RI intelligence feed failed:', error);
     res.status(500).json({ success: false, error: 'Failed to fetch intelligence feed' });
   }
 });

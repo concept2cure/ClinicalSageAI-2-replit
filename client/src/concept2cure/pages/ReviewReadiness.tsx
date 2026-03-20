@@ -4,7 +4,7 @@
  *
  * Surfaces quality, compliance, stress-testing, and readiness capabilities
  * for the Concept2Cure regulatory platform. Seven sub-views accessible via
- * tab navigation: Quality Center, Compliance, SnowGlobe, Readiness Score,
+ * tab navigation: Quality Center, Compliance, AnA Predictions, Readiness Score,
  * Evidence Confidence, Audit Trail, and Traceability.
  *
  * Design: Claude-style — warm white bg, clean zinc typography, generous whitespace.
@@ -124,7 +124,7 @@ interface TraceabilityClaim {
 const TAB_LABELS: { key: TabKey; label: string }[] = [
   { key: 'quality', label: 'Quality Center' },
   { key: 'compliance', label: 'Compliance' },
-  { key: 'snowglobe', label: 'AnA SnowGlobe' },
+  { key: 'snowglobe', label: 'AnA Predictions' },
   { key: 'readiness', label: 'Readiness Score' },
   { key: 'evidence', label: 'Evidence Confidence' },
   { key: 'audit', label: 'Audit Trail' },
@@ -636,7 +636,7 @@ function SnowGlobeView() {
     <div className="px-8 py-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-medium text-zinc-900">AnA SnowGlobe</h2>
+          <h2 className="text-lg font-medium text-zinc-900">AnA Predictions</h2>
           <p className="text-sm text-zinc-600 mt-1">
             Unified prediction engine. Stress-test submissions, forecast trial outcomes, and model regulatory risk.
           </p>
@@ -644,15 +644,15 @@ function SnowGlobeView() {
         <div className="flex items-center gap-2">
           <GenerateButton
             label="Generate Full Report"
-            produces="AnA SnowGlobe Prediction Report (PDF)"
+            produces="AnA Predictions Report (PDF)"
             isLoading={isGenerating}
             onClick={() => generate({
               endpoint: '/api/snowglobe/report',
               method: 'POST',
               body: { engines: 'all', includePredictions: true },
-              filename: 'AnA_SnowGlobe_Report.pdf',
+              filename: 'AnA_Predictions_Report.pdf',
               format: 'pdf',
-              title: 'AnA SnowGlobe Prediction Report',
+              title: 'AnA Predictions Report',
             })}
           />
           <GenerateButton
@@ -705,7 +705,7 @@ function SnowGlobeView() {
           </div>
         </div>
         <p className="text-xs text-zinc-400 mt-4">
-          Powered by AnA SnowGlobe — 6-engine simulation + Monte Carlo + ForesightAI + Endpoint Recommender
+          Powered by AnA Predictions — 6-engine simulation + Monte Carlo + AnA Predictions + Endpoint Recommender
         </p>
       </div>
 

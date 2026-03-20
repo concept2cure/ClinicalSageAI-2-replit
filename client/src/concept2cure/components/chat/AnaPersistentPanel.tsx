@@ -632,7 +632,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   <Sparkles className="w-3.5 h-3.5" />
                 )}
                 <span className="hidden sm:inline">
-                  {chatMode === 'deep-research' ? 'Deep Research' : chatMode === 'nano-banana' ? 'Nano Banana' : 'AnA'}
+                  {chatMode === 'deep-research' ? 'AnA Research' : chatMode === 'nano-banana' ? 'AnA Visual' : 'AnA RI'}
                 </span>
                 <ChevronDown className="w-3 h-3 opacity-50" />
               </button>
@@ -647,10 +647,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       chatMode === 'standard' && 'bg-zinc-50'
                     )}
                   >
-                    <MessageSquare className="w-4 h-4 mt-0.5 text-zinc-500 flex-shrink-0" />
+                    <MessageSquare className="w-4 h-4 mt-0.5 text-blue-600 flex-shrink-0" />
                     <div>
-                      <div className="text-sm font-medium text-zinc-900">AnA</div>
-                      <div className="text-xs text-zinc-500 leading-tight">Fast regulatory co-pilot for everyday questions</div>
+                      <div className="text-sm font-medium text-zinc-900">AnA RI</div>
+                      <div className="text-xs text-zinc-500 leading-tight">Regulatory intelligence co-pilot — drafting, analysis, guidance</div>
                     </div>
                     {chatMode === 'standard' && <Check className="w-4 h-4 text-blue-600 ml-auto mt-0.5 flex-shrink-0" />}
                   </button>
@@ -664,8 +664,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   >
                     <Zap className="w-4 h-4 mt-0.5 text-violet-600 flex-shrink-0" />
                     <div>
-                      <div className="text-sm font-medium text-zinc-900">Deep Research</div>
-                      <div className="text-xs text-zinc-500 leading-tight">Multi-source search across ClinicalTrials.gov, PubMed, FDA &amp; more</div>
+                      <div className="text-sm font-medium text-zinc-900">AnA Research</div>
+                      <div className="text-xs text-zinc-500 leading-tight">Deep multi-source search — ClinicalTrials.gov, PubMed, FDA, EMA</div>
                     </div>
                     {chatMode === 'deep-research' && <Check className="w-4 h-4 text-violet-600 ml-auto mt-0.5 flex-shrink-0" />}
                   </button>
@@ -680,8 +680,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   >
                     <ImageIcon className="w-4 h-4 mt-0.5 text-amber-600 flex-shrink-0" />
                     <div>
-                      <div className="text-sm font-medium text-zinc-900">Nano Banana</div>
-                      <div className="text-xs text-zinc-500 leading-tight">AI image generation, presentations &amp; visual design via Gemini</div>
+                      <div className="text-sm font-medium text-zinc-900">AnA Visual</div>
+                      <div className="text-xs text-zinc-500 leading-tight">AI-generated images, infographics, and presentation slides</div>
                     </div>
                     {chatMode === 'nano-banana' && <Check className="w-4 h-4 text-amber-600 ml-auto mt-0.5 flex-shrink-0" />}
                   </button>
@@ -697,7 +697,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               onKeyDown={handleKeyDown}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
-              placeholder={chatMode === 'deep-research' ? 'Ask a deep research question...' : chatMode === 'nano-banana' ? 'Describe an image, infographic, or presentation...' : 'Message AnA...'}
+              placeholder={chatMode === 'deep-research' ? 'Ask AnA Research a question — searches regulatory databases and literature...' : chatMode === 'nano-banana' ? 'Describe what you need — diagrams, charts, infographics, presentations...' : 'Ask AnA RI anything about your regulatory work...'}
               rows={1}
               className="flex-1 resize-none bg-transparent border-none outline-none text-zinc-900 placeholder:text-zinc-400 text-sm leading-6 min-h-[24px] max-h-[120px]"
             />

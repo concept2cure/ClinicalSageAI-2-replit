@@ -7,7 +7,7 @@
  * Claude.ai / ChatGPT style conversational interface.
  * Clean, focused, breathing room for thinking.
  *
- * Now connected to Lumen Cortex backend for real AI responses.
+ * Now connected to AnA RI backend for real AI responses.
  *
  * Design Philosophy:
  * - Content-first: Messages are the hero

@@ -154,7 +154,7 @@ export default function SnowGlobeArtifactSummary({
       >
         <div className="flex items-center gap-2 text-zinc-400">
           <Shield className="h-4 w-4" />
-          <span className="text-sm">Snow Globe Scores</span>
+          <span className="text-sm">AnA Prediction Scores</span>
         </div>
         <p className="mt-2 text-xs text-zinc-400">
           Select an artifact to view risk assessment.
@@ -196,7 +196,7 @@ export default function SnowGlobeArtifactSummary({
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Shield className="h-4 w-4 text-zinc-400" />
-          <span className="text-sm font-semibold text-zinc-800">Snow Globe Risk</span>
+          <span className="text-sm font-semibold text-zinc-800">AnA Prediction Risk</span>
         </div>
         <span
           className={cn(
@@ -304,7 +304,7 @@ export default function SnowGlobeArtifactSummary({
           'transition-colors hover:bg-zinc-100 active:bg-zinc-200',
         )}
       >
-        View in Snow Globe
+        View in AnA Predictions
         <ExternalLink className="h-3 w-3" />
       </button>
     </div>

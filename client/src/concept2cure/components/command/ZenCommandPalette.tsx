@@ -407,8 +407,8 @@ const createCommands = (onAction: (id: string) => void): CommandItem[] => [
   },
   {
     id: 'nav-snowglobe',
-    title: 'AnA Snow Globe',
-    subtitle: 'Prediction engine — stress tests, pre-agency scans, reviewer attack',
+    title: 'AnA Predictions',
+    subtitle: 'AnA RI prediction engine — stress tests, simulations, forecasts',
     icon: <Snowflake className="w-4 h-4 text-cyan-600" />,
     category: 'tools',
     action: () => onAction('nav-snowglobe'),
@@ -416,8 +416,8 @@ const createCommands = (onAction: (id: string) => void): CommandItem[] => [
   },
   {
     id: 'nav-snowglobe-chambers',
-    title: 'Snow Globe Chambers',
-    subtitle: 'Deep-dive into individual prediction engines',
+    title: 'AnA Prediction Chambers',
+    subtitle: 'Deep-dive into individual AnA RI prediction engines',
     icon: <Snowflake className="w-4 h-4 text-cyan-600" />,
     category: 'tools',
     action: () => onAction('nav-snowglobe-chambers'),
@@ -475,7 +475,7 @@ const createCommands = (onAction: (id: string) => void): CommandItem[] => [
   {
     id: 'go-agents',
     title: 'Go to AI Agents',
-    subtitle: 'Agent Swarm — 10 specialized agents',
+    subtitle: 'AnA RI automated agents',
     icon: <Target className="w-4 h-4 text-violet-600" />,
     category: 'ai',
     action: () => onAction('go-agents'),
@@ -492,8 +492,8 @@ const createCommands = (onAction: (id: string) => void): CommandItem[] => [
   },
   {
     id: 'go-document-sherpa',
-    title: 'Go to Document Sherpa',
-    subtitle: 'AI-guided document authoring',
+    title: 'Go to Guided Authoring',
+    subtitle: 'AnA RI guided document authoring',
     icon: <Compass className="w-4 h-4 text-emerald-600" />,
     category: 'tools',
     action: () => onAction('go-document-sherpa'),
@@ -650,7 +650,7 @@ const CATEGORY_LABELS: Record<CommandCategory, string> = {
   tools: 'Tools & Modules',
   projects: 'Projects',
   settings: 'Settings',
-  ai: 'RI Actions',
+  ai: 'AnA RI Actions',
 };
 
 const CATEGORY_ORDER: CommandCategory[] = ['recent', 'submissions', 'tools', 'ai', 'settings'];

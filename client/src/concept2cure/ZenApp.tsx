@@ -2905,7 +2905,7 @@ export const ZenApp: React.FC = () => {
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <Compass className="w-3.5 h-3.5 text-blue-500" />
-                <span className="text-xs font-medium text-zinc-800">Document Sherpa</span>
+                <span className="text-xs font-medium text-zinc-800">AnA Guided Authoring</span>
                 {activeProject && (
                   <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
                     {activeProject.name}

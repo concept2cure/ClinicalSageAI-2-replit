@@ -591,8 +591,8 @@ function ProgramSelector({
           Select a Program to Begin
         </h2>
         <p className="mt-2 max-w-md text-sm text-zinc-500">
-          Choose a regulatory program to load the Snow Globe prediction engine.
-          All chambers, scores, and scenarios will be scoped to the selected program.
+          Choose a regulatory program to load the AnA Predictions engine.
+          All prediction chambers, scores, and scenarios will be scoped to the selected program.
         </p>
       </div>
       <button
@@ -829,7 +829,7 @@ export default function SnowGlobeHome({ programId }: SnowGlobeHomeProps) {
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight text-zinc-900">
-                AnA Snow Globe
+                AnA Predictions
               </h1>
               <p className="text-sm text-zinc-500">
                 Prediction &amp; Intelligence Engine

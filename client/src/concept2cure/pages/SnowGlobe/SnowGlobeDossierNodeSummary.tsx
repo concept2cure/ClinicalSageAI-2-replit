@@ -285,7 +285,7 @@ export default function SnowGlobeDossierNodeSummary({
                 : 'Below threshold'}
           </p>
           <p className="text-xs leading-relaxed text-zinc-500">
-            Composite compliance across relevant Snow Globe engines for this dossier node.
+            Composite compliance across relevant AnA Predictions engines for this dossier node.
           </p>
         </div>
       </div>

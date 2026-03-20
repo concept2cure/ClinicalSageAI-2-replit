@@ -774,7 +774,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
       <div className="rounded-xl border border-zinc-200 bg-white">
         <div className="px-4 py-3 border-b border-zinc-200">
           <h3 className="text-sm font-semibold text-zinc-800">Export as Visual or Deck</h3>
-          <p className="text-xs text-zinc-500 mt-0.5">Use Nano Banana AI to generate infographics or a slide deck from your program analytics.</p>
+          <p className="text-xs text-zinc-500 mt-0.5">Use AnA Visual to generate infographics or a slide deck from your program analytics.</p>
         </div>
         <div className="p-4">
           <NanoBananaImageGenerator

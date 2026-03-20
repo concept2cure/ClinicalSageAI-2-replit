@@ -188,7 +188,7 @@ export default function SnowGlobeMissionControlCard({
       >
         <div className="flex items-center gap-2 text-zinc-400">
           <Sparkles className="h-4 w-4" />
-          <span className="text-sm">Snow Globe</span>
+          <span className="text-sm">AnA Predictions</span>
         </div>
         <p className="mt-3 text-xs text-zinc-400">
           Select a program to view prediction scores.
@@ -208,7 +208,7 @@ export default function SnowGlobeMissionControlCard({
       >
         <div className="mb-4 flex items-center gap-2">
           <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
-          <span className="text-sm text-zinc-400">Loading Snow Globe...</span>
+          <span className="text-sm text-zinc-400">Loading AnA Predictions...</span>
         </div>
         <div className="space-y-2">
           <div className="h-8 w-20 rounded bg-zinc-100" />
@@ -233,7 +233,7 @@ export default function SnowGlobeMissionControlCard({
           <div className="rounded-lg bg-blue-600 p-1.5">
             <Sparkles className="h-3.5 w-3.5 text-white" />
           </div>
-          <span className="text-sm font-semibold text-zinc-800">Snow Globe</span>
+          <span className="text-sm font-semibold text-zinc-800">AnA Predictions</span>
         </div>
         {compositeScore !== null && (
           <span
@@ -328,7 +328,7 @@ export default function SnowGlobeMissionControlCard({
           'transition-colors hover:bg-blue-100 active:bg-blue-200',
         )}
       >
-        Open Snow Globe
+        Open AnA Predictions
         <ArrowRight className="h-4 w-4" />
       </button>
     </div>
