@@ -34,6 +34,7 @@ import {
   getSectionRequirements,
   type SectionRequirement,
 } from '../../models/ctdHierarchy';
+import { ProjectDashboard } from './ProjectDashboard';
 import { RegulatoryTransformCanvas } from './RegulatoryTransformCanvas';
 import { GoldenDossierVerificationPanel } from './GoldenDossierVerificationPanel';
 import { ProgramTwinPanel } from './ProgramTwinPanel';
@@ -167,7 +168,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   const [loading, setLoading] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState<string>('drafts');
   const [selectedDocId, setSelectedDocId] = useState<string | undefined>();
-  const [mode, setMode] = useState<'browse' | 'edit'>('browse');
+  const [mode, setMode] = useState<'dashboard' | 'browse' | 'edit'>('dashboard');
   const [leftRailMode, setLeftRailMode] = useState<LeftRailMode>('files');
   const [selectedCtdSection, setSelectedCtdSection] = useState<string | undefined>();
 
@@ -733,7 +734,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
 
   const handleBackToList = useCallback(() => {
     setSelectedDocId(undefined);
-    setMode('browse');
+    setMode('dashboard');
   }, []);
 
   // Which docs to show in the center pane when browsing
@@ -796,15 +797,26 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         <span className="text-sm font-semibold text-zinc-900 truncate">
           {projectName || 'Untitled Project'}
         </span>
-        {mode === 'edit' && selectedDocId && (
+        {(mode === 'edit' || mode === 'browse') && (
           <>
             <span className="text-zinc-300">/</span>
             <button
-              onClick={handleBackToList}
+              onClick={() => { setSelectedDocId(undefined); setMode('dashboard'); }}
               className="text-xs text-blue-600 hover:text-blue-800 font-medium"
             >
-              Back to files
+              Dashboard
             </button>
+            {mode === 'edit' && selectedDocId && (
+              <>
+                <span className="text-zinc-300">/</span>
+                <button
+                  onClick={() => setMode('browse')}
+                  className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  Files
+                </button>
+              </>
+            )}
           </>
         )}
         {/* View toggle — push to right */}
@@ -1025,7 +1037,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
 
       {/* ── 3-pane body ───────────────────────────────────────────────────── */}
       <div className="flex-1 flex min-h-0">
-        {/* Left: Tree panel with mode toggle */}
+        {/* Left: Tree panel with mode toggle — hidden in dashboard mode for full-width layout */}
+        {mode !== 'dashboard' && (
         <div className="w-[200px] 2xl:w-[240px] border-r border-zinc-200 shrink-0 flex flex-col bg-white">
           {/* Mode toggle tabs */}
           <div className="flex border-b border-zinc-200 shrink-0 bg-zinc-50/60">
@@ -1197,6 +1210,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             </button>
           </div>
         </div>
+        )}
 
         {/* Center + Right: Content area */}
         <div className="flex-1 flex flex-col min-w-0 min-h-0">
@@ -1336,6 +1350,26 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 }}
               />
             </div>
+          ) : mode === 'dashboard' ? (
+            <ProjectDashboard
+              projectId={projectId}
+              projectName={projectName || 'Untitled Project'}
+              projectType={projectType}
+              submissionType={submissionType}
+              artifacts={artifacts}
+              onOpenDocument={(docId: string) => {
+                setSelectedDocId(docId);
+                setMode('edit');
+                setShowGovernedPanel(true);
+              }}
+              onCreateDocument={() => setShowNewDoc(true)}
+              onOpenEditor={() => setMode('browse')}
+              onOpenDossier={() => {
+                setLeftRailMode('dossier');
+                setMode('browse');
+              }}
+              onOpenIntelligence={onSwitchToIntelligence}
+            />
           ) : mode === 'browse' ? (
             <DocumentListPane
               folderLabel={browseLabel}

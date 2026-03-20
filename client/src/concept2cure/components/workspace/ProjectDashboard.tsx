@@ -1,0 +1,529 @@
+/**
+ * ProjectDashboard — The primary landing view when a user opens a project.
+ *
+ * Surfaces document pipeline health, recent activity, quick actions,
+ * and CTD section coverage. All data is derived from the `artifacts` prop;
+ * no additional API calls are required.
+ */
+
+import React, { useMemo } from 'react';
+import { cn } from '@/lib/utils';
+import {
+  FileText,
+  FilePlus,
+  FolderOpen,
+  Brain,
+  PenLine,
+  History,
+  PackageCheck,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  Lock,
+  ChevronRight,
+  BarChart3,
+  Activity,
+  Layers,
+} from 'lucide-react';
+
+// ── Types ────────────────────────────────────────────────────────────────────
+
+interface Artifact {
+  id: string;
+  title: string;
+  status?: string;
+  ctdSection?: string;
+  type?: string;
+  updatedAt?: string;
+  version?: number;
+}
+
+interface ProjectDashboardProps {
+  projectId: string;
+  projectName: string;
+  projectType?: string;
+  submissionType?: string;
+  artifacts: Artifact[];
+  onOpenDocument: (docId: string) => void;
+  onCreateDocument: () => void;
+  onOpenEditor: () => void;
+  onOpenDossier: () => void;
+  onOpenIntelligence?: () => void;
+}
+
+// ── Status helpers ───────────────────────────────────────────────────────────
+
+type PipelineStatus = 'draft' | 'review' | 'approved' | 'locked';
+
+function normalizeStatus(raw?: string): PipelineStatus {
+  if (!raw) return 'draft';
+  const s = raw.toLowerCase().trim();
+  if (s === 'in_review' || s === 'in review' || s === 'review' || s === 'pending_review') return 'review';
+  if (s === 'approved' || s === 'final') return 'approved';
+  if (s === 'locked' || s === 'published') return 'locked';
+  return 'draft';
+}
+
+const STATUS_CONFIG: Record<PipelineStatus, { label: string; color: string; bg: string; dot: string; border: string }> = {
+  draft:    { label: 'Draft',      color: 'text-amber-700',   bg: 'bg-amber-50',    dot: 'bg-amber-500',   border: 'border-amber-200' },
+  review:   { label: 'In Review',  color: 'text-blue-700',    bg: 'bg-blue-50',     dot: 'bg-blue-500',    border: 'border-blue-200' },
+  approved: { label: 'Approved',   color: 'text-green-700',   bg: 'bg-green-50',    dot: 'bg-green-500',   border: 'border-green-200' },
+  locked:   { label: 'Published',  color: 'text-emerald-800', bg: 'bg-emerald-50',  dot: 'bg-emerald-600', border: 'border-emerald-200' },
+};
+
+// ── CTD Module metadata ──────────────────────────────────────────────────────
+
+const CTD_MODULES: { key: string; label: string; description: string }[] = [
+  { key: '1', label: 'Module 1', description: 'Administrative Information' },
+  { key: '2', label: 'Module 2', description: 'Common Technical Document Summaries' },
+  { key: '3', label: 'Module 3', description: 'Quality' },
+  { key: '4', label: 'Module 4', description: 'Nonclinical Study Reports' },
+  { key: '5', label: 'Module 5', description: 'Clinical Study Reports' },
+];
+
+// ── Relative time ────────────────────────────────────────────────────────────
+
+function relativeTime(dateStr?: string): string {
+  if (!dateStr) return '--';
+  const now = Date.now();
+  const then = new Date(dateStr).getTime();
+  if (isNaN(then)) return '--';
+  const diffMs = now - then;
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return 'Just now';
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}h ago`;
+  const diffDay = Math.floor(diffHr / 24);
+  if (diffDay < 30) return `${diffDay}d ago`;
+  const diffMo = Math.floor(diffDay / 30);
+  return `${diffMo}mo ago`;
+}
+
+// ── Component ────────────────────────────────────────────────────────────────
+
+export function ProjectDashboard({
+  projectId,
+  projectName,
+  projectType,
+  submissionType,
+  artifacts,
+  onOpenDocument,
+  onCreateDocument,
+  onOpenEditor,
+  onOpenDossier,
+  onOpenIntelligence,
+}: ProjectDashboardProps) {
+
+  // ── Derived data ───────────────────────────────────────────────────────────
+
+  const stats = useMemo(() => {
+    const counts: Record<PipelineStatus, number> = { draft: 0, review: 0, approved: 0, locked: 0 };
+    artifacts.forEach((a) => {
+      counts[normalizeStatus(a.status)]++;
+    });
+
+    const total = artifacts.length;
+    const ready = counts.approved + counts.locked;
+    const completionPct = total > 0 ? Math.round((ready / total) * 100) : 0;
+
+    // Last activity
+    let lastActivity: string | undefined;
+    artifacts.forEach((a) => {
+      if (a.updatedAt && (!lastActivity || a.updatedAt > lastActivity)) {
+        lastActivity = a.updatedAt;
+      }
+    });
+
+    // Recent documents sorted by updatedAt desc
+    const recent = [...artifacts]
+      .sort((a, b) => {
+        const ta = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+        const tb = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+        return tb - ta;
+      })
+      .slice(0, 8);
+
+    // CTD module coverage
+    const ctdMap: Record<string, Artifact[]> = {};
+    artifacts.forEach((a) => {
+      if (a.ctdSection) {
+        const moduleKey = a.ctdSection.charAt(0);
+        if (!ctdMap[moduleKey]) ctdMap[moduleKey] = [];
+        ctdMap[moduleKey].push(a);
+      }
+    });
+
+    return { counts, total, ready, completionPct, lastActivity, recent, ctdMap };
+  }, [artifacts]);
+
+  // ── Pipeline metric card ───────────────────────────────────────────────────
+
+  function PipelineCard({ status, count }: { status: PipelineStatus; count: number }) {
+    const cfg = STATUS_CONFIG[status];
+    return (
+      <div className={cn(
+        'flex flex-col items-center justify-center rounded-xl border px-4 py-5 transition-shadow hover:shadow-sm',
+        cfg.bg, cfg.border,
+      )}>
+        <span className={cn('text-2xl font-bold tabular-nums', cfg.color)}>{count}</span>
+        <span className={cn('mt-1 text-xs font-medium', cfg.color)}>{cfg.label}</span>
+      </div>
+    );
+  }
+
+  // ── Quick action card ──────────────────────────────────────────────────────
+
+  function ActionCard({
+    icon: Icon,
+    title,
+    subtitle,
+    onClick,
+  }: {
+    icon: React.ElementType;
+    title: string;
+    subtitle: string;
+    onClick?: () => void;
+  }) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className={cn(
+          'flex flex-col items-start gap-1.5 rounded-xl border border-zinc-200 bg-white p-4',
+          'text-left transition-all hover:border-zinc-300 hover:shadow-sm hover:bg-zinc-50/50',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40',
+        )}
+      >
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-100 text-zinc-600">
+          <Icon className="h-4.5 w-4.5" size={18} />
+        </div>
+        <span className="text-sm font-semibold text-zinc-900">{title}</span>
+        <span className="text-xs text-zinc-500 leading-snug">{subtitle}</span>
+      </button>
+    );
+  }
+
+  // ── Render ─────────────────────────────────────────────────────────────────
+
+  const barTotal = stats.total || 1; // avoid div-by-zero
+
+  return (
+    <div className="mx-auto w-full max-w-6xl space-y-8 px-2 py-6 sm:px-6 lg:px-8">
+
+      {/* ── 1. Hero Header ──────────────────────────────────────────────────── */}
+      <section className="space-y-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold tracking-tight text-zinc-900">{projectName}</h1>
+            <div className="flex flex-wrap items-center gap-2">
+              {projectType && (
+                <span className="inline-flex items-center rounded-md bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-200">
+                  {projectType}
+                </span>
+              )}
+              {submissionType && (
+                <span className="inline-flex items-center rounded-md bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600 ring-1 ring-inset ring-zinc-200">
+                  {submissionType}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Primary actions */}
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={onCreateDocument}
+              className={cn(
+                'inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white',
+                'shadow-sm transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40',
+              )}
+            >
+              <FilePlus size={16} />
+              New Document
+            </button>
+            <button
+              type="button"
+              onClick={onOpenDossier}
+              className={cn(
+                'inline-flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700',
+                'shadow-sm transition-colors hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40',
+              )}
+            >
+              <FolderOpen size={16} />
+              Open Dossier
+            </button>
+            {onOpenIntelligence && (
+              <button
+                type="button"
+                onClick={onOpenIntelligence}
+                className={cn(
+                  'inline-flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700',
+                  'shadow-sm transition-colors hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40',
+                )}
+              >
+                <Brain size={16} />
+                AI Intelligence
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Stat chips */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700">
+            <FileText size={13} />
+            {stats.total} document{stats.total !== 1 ? 's' : ''}
+          </div>
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700">
+            <BarChart3 size={13} />
+            {stats.completionPct}% ready
+          </div>
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700">
+            <Activity size={13} />
+            Last activity: {relativeTime(stats.lastActivity)}
+          </div>
+        </div>
+      </section>
+
+      {/* ── 2. Document Pipeline ────────────────────────────────────────────── */}
+      <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
+        <h2 className="mb-5 text-sm font-semibold uppercase tracking-wider text-zinc-500">
+          Document Pipeline
+        </h2>
+
+        {/* Metric cards */}
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <PipelineCard status="draft" count={stats.counts.draft} />
+          <PipelineCard status="review" count={stats.counts.review} />
+          <PipelineCard status="approved" count={stats.counts.approved} />
+          <PipelineCard status="locked" count={stats.counts.locked} />
+        </div>
+
+        {/* Stacked progress bar */}
+        <div className="mt-5">
+          <div className="flex h-3 w-full overflow-hidden rounded-full bg-zinc-100">
+            {stats.counts.locked > 0 && (
+              <div
+                className="bg-emerald-600 transition-all"
+                style={{ width: `${(stats.counts.locked / barTotal) * 100}%` }}
+                title={`${stats.counts.locked} Published`}
+              />
+            )}
+            {stats.counts.approved > 0 && (
+              <div
+                className="bg-green-500 transition-all"
+                style={{ width: `${(stats.counts.approved / barTotal) * 100}%` }}
+                title={`${stats.counts.approved} Approved`}
+              />
+            )}
+            {stats.counts.review > 0 && (
+              <div
+                className="bg-blue-500 transition-all"
+                style={{ width: `${(stats.counts.review / barTotal) * 100}%` }}
+                title={`${stats.counts.review} In Review`}
+              />
+            )}
+            {stats.counts.draft > 0 && (
+              <div
+                className="bg-amber-400 transition-all"
+                style={{ width: `${(stats.counts.draft / barTotal) * 100}%` }}
+                title={`${stats.counts.draft} Draft`}
+              />
+            )}
+          </div>
+          <p className="mt-2 text-xs text-zinc-500">
+            {stats.ready} of {stats.total} document{stats.total !== 1 ? 's' : ''} ready for submission
+          </p>
+        </div>
+      </section>
+
+      {/* ── 3. Recent Activity + Quick Actions ──────────────────────────────── */}
+      <section className="grid gap-6 lg:grid-cols-5">
+
+        {/* Left — Recent Documents (3 cols) */}
+        <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-zinc-500">
+            Recent Documents
+          </h2>
+
+          {stats.recent.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <FileText className="mb-3 h-10 w-10 text-zinc-300" />
+              <p className="text-sm text-zinc-500">No documents yet</p>
+              <button
+                type="button"
+                onClick={onCreateDocument}
+                className="mt-3 text-sm font-medium text-blue-600 hover:text-blue-700"
+              >
+                Create your first document
+              </button>
+            </div>
+          ) : (
+            <ul className="divide-y divide-zinc-100">
+              {stats.recent.map((artifact) => {
+                const pStatus = normalizeStatus(artifact.status);
+                const cfg = STATUS_CONFIG[pStatus];
+                return (
+                  <li key={artifact.id}>
+                    <button
+                      type="button"
+                      onClick={() => onOpenDocument(artifact.id)}
+                      className={cn(
+                        'group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left',
+                        'transition-colors hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40',
+                      )}
+                    >
+                      {/* Status dot */}
+                      <span className={cn('h-2 w-2 flex-shrink-0 rounded-full', cfg.dot)} />
+
+                      {/* Title & metadata */}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-zinc-900 group-hover:text-blue-700">
+                          {artifact.title}
+                        </p>
+                        <div className="mt-0.5 flex items-center gap-2">
+                          {artifact.ctdSection && (
+                            <span className="inline-flex items-center rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600">
+                              {artifact.ctdSection}
+                            </span>
+                          )}
+                          {artifact.version != null && (
+                            <span className="text-[10px] text-zinc-400">v{artifact.version}</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Relative time */}
+                      <span className="flex-shrink-0 text-xs text-zinc-400">
+                        {relativeTime(artifact.updatedAt)}
+                      </span>
+
+                      <ChevronRight size={14} className="flex-shrink-0 text-zinc-300 group-hover:text-zinc-500 transition-colors" />
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+
+        {/* Right — Quick Actions (2 cols) */}
+        <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-2">
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-zinc-500">
+            Quick Actions
+          </h2>
+          <div className="grid grid-cols-2 gap-3">
+            <ActionCard
+              icon={FilePlus}
+              title="Create Document"
+              subtitle="Start a new regulatory document"
+              onClick={onCreateDocument}
+            />
+            <ActionCard
+              icon={PenLine}
+              title="Open Editor"
+              subtitle="Continue editing documents"
+              onClick={onOpenEditor}
+            />
+            <ActionCard
+              icon={FolderOpen}
+              title="View Dossier"
+              subtitle="Browse the CTD dossier tree"
+              onClick={onOpenDossier}
+            />
+            <ActionCard
+              icon={Brain}
+              title="AI Intelligence"
+              subtitle="Regulatory insights and analysis"
+              onClick={onOpenIntelligence}
+            />
+            <ActionCard
+              icon={History}
+              title="Version History"
+              subtitle={`${stats.total} document${stats.total !== 1 ? 's' : ''} tracked`}
+            />
+            <ActionCard
+              icon={PackageCheck}
+              title="Export Package"
+              subtitle={`${stats.counts.approved + stats.counts.locked} approved for export`}
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* ── 4. Document Health Overview — CTD Coverage ──────────────────────── */}
+      <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
+        <h2 className="mb-5 text-sm font-semibold uppercase tracking-wider text-zinc-500">
+          CTD Section Coverage
+        </h2>
+
+        <div className="space-y-4">
+          {CTD_MODULES.map((mod) => {
+            const docs = stats.ctdMap[mod.key] || [];
+            const docCount = docs.length;
+            // Compute an approximate coverage bar based on fraction of total docs
+            // Cap at 100% for visual purposes
+            const pct = stats.total > 0 ? Math.min(Math.round((docCount / Math.max(stats.total * 0.3, 1)) * 100), 100) : 0;
+            const hasContent = docCount > 0;
+
+            return (
+              <div key={mod.key} className="flex items-center gap-4">
+                {/* Module label */}
+                <div className="w-44 flex-shrink-0">
+                  <p className={cn(
+                    'text-sm font-medium',
+                    hasContent ? 'text-zinc-900' : 'text-zinc-400',
+                  )}>
+                    {mod.label}
+                  </p>
+                  <p className={cn(
+                    'text-xs',
+                    hasContent ? 'text-zinc-500' : 'text-zinc-300',
+                  )}>
+                    {mod.description}
+                  </p>
+                </div>
+
+                {/* Count badge */}
+                <div className="w-16 flex-shrink-0 text-right">
+                  <span className={cn(
+                    'inline-flex min-w-[1.5rem] items-center justify-center rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums',
+                    hasContent
+                      ? 'bg-blue-50 text-blue-700'
+                      : 'bg-zinc-50 text-zinc-300',
+                  )}>
+                    {docCount}
+                  </span>
+                </div>
+
+                {/* Progress bar */}
+                <div className="flex-1">
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-100">
+                    <div
+                      className={cn(
+                        'h-full rounded-full transition-all',
+                        hasContent ? 'bg-blue-500' : 'bg-zinc-100',
+                      )}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Empty state hint */}
+        {stats.total === 0 && (
+          <p className="mt-4 text-center text-xs text-zinc-400">
+            Assign CTD sections to documents to see coverage here.
+          </p>
+        )}
+      </section>
+    </div>
+  );
+}
+
+export default ProjectDashboard;

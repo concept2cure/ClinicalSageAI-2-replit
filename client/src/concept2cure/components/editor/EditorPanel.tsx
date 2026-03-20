@@ -1212,44 +1212,19 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
         <div className="flex-1" />
 
-        {/* Right: PINNED inspector toggles + overflow */}
-        <div className="flex items-center gap-1.5">
-          {(
-            [
-              { id: 'intelligence' as const, icon: Brain, label: 'Intel' },
-              { id: 'health' as const, icon: ShieldCheck, label: 'Health' },
-              { id: 'versions' as const, icon: GitCompare, label: 'History' },
-              { id: 'batch-ai' as const, icon: Layers, label: 'Batch' },
-              { id: 'crossref' as const, icon: Link2, label: 'XRef' },
-              { id: 'comments' as const, icon: MessageSquare, label: 'Notes' },
-              { id: 'review' as const, icon: Eye, label: 'Review' },
-              { id: 'dataroom' as const, icon: Database, label: 'Data' },
-              { id: 'inconsistency' as const, icon: Zap, label: 'Impact' },
-              { id: 'provenance' as const, icon: ShieldCheck, label: 'Prov' },
-              { id: 'compare' as const, icon: GitCompare, label: 'Diff' },
-              { id: 'audit' as const, icon: ClipboardList, label: 'Audit' },
-            ] as const
-          ).map(({ id, icon: Icon, label }) => (
-            <button
-              key={id}
-              data-testid={`inspector-${id}`}
-              onClick={() => toggleInspector(id)}
-              className={cn(
-                'px-2.5 py-1.5 text-xs rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
-                activeInspector === id
-                  ? 'bg-zinc-900 text-white font-medium'
-                  : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800'
-              )}
-            >
-              <Icon className="w-3.5 h-3.5 shrink-0" />
-              <span className="hidden lg:inline">{label}</span>
-            </button>
-          ))}
+        {/* Keyboard shortcuts */}
+        <button
+          onClick={() => setShowShortcuts(true)}
+          className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors"
+          title="Keyboard shortcuts (Ctrl+Shift+/)"
+        >
+          <Keyboard className="w-4 h-4" />
+        </button>
 
-          <span className="w-px h-5 bg-zinc-200 mx-1" />
+        <span className="w-px h-5 bg-zinc-200 mx-0.5" />
 
-          {/* Overflow: Save, Export, Sign, Review, CTD, Audit export */}
-          <div className="relative">
+        {/* Overflow: Save, Export, Sign, Review, CTD, Audit export */}
+        <div className="relative">
             <button
               onClick={() => setOverflowOpen(!overflowOpen)}
               aria-label="More actions"
@@ -1384,6 +1359,36 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               </div>
             )}
           </div>
+      </div>
+
+      {/* ── Ribbon toolbar — categorized inspector panels ──────────────────── */}
+      <div className="flex items-center gap-0.5 h-9 px-3 border-b border-zinc-100 bg-zinc-50/40 shrink-0 overflow-x-auto">
+        {/* AI & Intelligence */}
+        <div className="flex items-center gap-0.5 pr-2 mr-2 border-r border-zinc-200">
+          <button data-testid="ribbon-intelligence" onClick={() => toggleInspector('intelligence')} className={cn('px-2.5 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'intelligence' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Brain className="w-3.5 h-3.5" />AI Intelligence</button>
+          <button data-testid="ribbon-batch-ai" onClick={() => toggleInspector('batch-ai')} className={cn('px-2.5 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'batch-ai' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Layers className="w-3.5 h-3.5" />Batch AI</button>
+          <button data-testid="ribbon-health" onClick={() => toggleInspector('health')} className={cn('px-2.5 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'health' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><ShieldCheck className="w-3.5 h-3.5" />Doc Health</button>
+        </div>
+
+        {/* Review & Collaboration */}
+        <div className="flex items-center gap-0.5 pr-2 mr-2 border-r border-zinc-200">
+          <button data-testid="ribbon-comments" onClick={() => toggleInspector('comments')} className={cn('px-2.5 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'comments' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><MessageSquare className="w-3.5 h-3.5" />Comments</button>
+          <button data-testid="ribbon-review" onClick={() => toggleInspector('review')} className={cn('px-2.5 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'review' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Eye className="w-3.5 h-3.5" />Review Mode</button>
+          <button data-testid="ribbon-versions" onClick={() => toggleInspector('versions')} className={cn('px-2.5 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'versions' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><GitCompare className="w-3.5 h-3.5" />Version History</button>
+          <button data-testid="ribbon-compare" onClick={() => toggleInspector('compare')} className={cn('px-2.5 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'compare' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><GitCompare className="w-3.5 h-3.5" />Compare</button>
+        </div>
+
+        {/* Compliance & References */}
+        <div className="flex items-center gap-0.5 pr-2 mr-2 border-r border-zinc-200">
+          <button data-testid="ribbon-crossref" onClick={() => toggleInspector('crossref')} className={cn('px-2.5 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'crossref' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Link2 className="w-3.5 h-3.5" />Cross-Refs</button>
+          <button data-testid="ribbon-inconsistency" onClick={() => toggleInspector('inconsistency')} className={cn('px-2.5 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'inconsistency' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Zap className="w-3.5 h-3.5" />Inconsistencies</button>
+          <button data-testid="ribbon-dataroom" onClick={() => toggleInspector('dataroom')} className={cn('px-2.5 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'dataroom' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Database className="w-3.5 h-3.5" />Data Room</button>
+        </div>
+
+        {/* Audit & Provenance */}
+        <div className="flex items-center gap-0.5">
+          <button data-testid="ribbon-provenance" onClick={() => toggleInspector('provenance')} className={cn('px-2.5 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'provenance' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><ShieldCheck className="w-3.5 h-3.5" />Provenance</button>
+          <button data-testid="ribbon-audit" onClick={() => toggleInspector('audit')} className={cn('px-2.5 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'audit' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><ClipboardList className="w-3.5 h-3.5" />Audit Trail</button>
         </div>
       </div>
 
