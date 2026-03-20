@@ -203,6 +203,11 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const [provenanceCount, setProvenanceCount] = useState(0);
   const [integrityVerified, setIntegrityVerified] = useState<boolean | null>(null);
 
+  // ── Auto-save (debounced 5s after last edit) ──────────────────────────
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
+  const lastSavedContentRef = useRef<string>('');
+
   // ── Artifact list filters (P5) ────────────────────────────────────────
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterType, setFilterType] = useState<string>('all');
@@ -454,6 +459,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           const updated = payload.data ?? payload;
           setActiveArtifact(updated);
           setSaveStatus('saved');
+          setIsDirty(false);
+          lastSavedContentRef.current = content;
           pushToast(`Saved at ${new Date().toLocaleTimeString()}`, 'success');
           loadArtifacts();
           setTimeout(() => setSaveStatus('idle'), 3000);
@@ -500,6 +507,51 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [activeArtifact, handleSave]);
+
+  // ── Auto-save: reset dirty state when switching documents ─────────────
+  useEffect(() => {
+    setIsDirty(false);
+    lastSavedContentRef.current = activeArtifact?.content || '';
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+      autoSaveTimerRef.current = null;
+    }
+  }, [activeArtifact?.id]);
+
+  // ── Auto-save: debounced save 5s after last edit ──────────────────────
+  const triggerAutoSave = useCallback(
+    (html: string) => {
+      if (!activeArtifact || activeArtifact.status === 'locked') return;
+      if (html === lastSavedContentRef.current) return;
+
+      setIsDirty(true);
+
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+      autoSaveTimerRef.current = setTimeout(() => {
+        handleSave(html, {});
+        autoSaveTimerRef.current = null;
+      }, 5000);
+    },
+    [activeArtifact, handleSave],
+  );
+
+  // Cleanup auto-save timer on unmount
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+  }, []);
+
+  // Warn user before closing with unsaved changes
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [isDirty]);
 
   // ── Create new document ──────────────────────────────────────────────────
   const handleCreateNew = useCallback(async () => {
@@ -1145,10 +1197,16 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         >
           {activeArtifact?.status || 'draft'}
         </span>
-        {saveStatus === 'saved' && (
+        {saveStatus === 'saved' && !isDirty && (
           <span className="flex items-center gap-1 text-xs text-emerald-600 font-medium shrink-0 animate-in fade-in duration-200">
             <Check className="w-3.5 h-3.5" />
             Saved
+          </span>
+        )}
+        {isDirty && saveStatus !== 'error' && (
+          <span className="flex items-center gap-1 text-xs text-amber-600 font-medium shrink-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+            Unsaved
           </span>
         )}
         {saveStatus === 'error' && (
@@ -1721,6 +1779,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             }}
             onLiveContentChange={html => {
               onContentChange?.(html, activeArtifact?.title || '');
+              triggerAutoSave(html);
             }}
           />
         </div>
