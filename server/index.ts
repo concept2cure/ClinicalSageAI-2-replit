@@ -6486,6 +6486,15 @@ async function startServer() {
     console.error('❌ Failed to mount Approval Workflow routes:', error);
   }
 
+  // ── Inline Annotations — sentence/selection-level approvals on documents ──
+  try {
+    const inlineAnnotationRoutes = await import('./routes/inline-annotations');
+    app.use('/api/inline-annotations', inlineAnnotationRoutes.default);
+    console.log('✅ Inline Annotations routes mounted at /api/inline-annotations');
+  } catch (error) {
+    console.error('❌ Failed to mount Inline Annotations routes:', error);
+  }
+
   // ── Decision Lineage — immutable audit-ready decision & data lineage ──────
   try {
     const decisionLineageRoutes = await import('./routes/decision-lineage');
