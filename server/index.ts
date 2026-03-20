@@ -6461,6 +6461,21 @@ async function startServer() {
   }
 
   // ──────────────────────────────────────────────────────────────────────────
+  // TASK MANAGEMENT — Cross-module unified task system
+  // ──────────────────────────────────────────────────────────────────────────
+  try {
+    const taskMgmtRoutes = await import('./routes/taskManagement.routes');
+    app.use('/api/task-management', taskMgmtRoutes.default);
+    console.log('✅ Task Management routes mounted at /api/task-management');
+
+    const unifiedTaskRoutes = await import('./routes/unifiedTasks.routes');
+    app.use('/api/unified-tasks', unifiedTaskRoutes.default);
+    console.log('✅ Unified Tasks routes mounted at /api/unified-tasks');
+  } catch (error) {
+    console.error('❌ Failed to mount Task Management routes:', error);
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
   // C2C MISSING ROUTES — stub endpoints for notifications, sections, predicates
   // Must be registered BEFORE the catch-all 404 handler
   // ──────────────────────────────────────────────────────────────────────────
