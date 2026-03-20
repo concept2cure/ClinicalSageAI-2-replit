@@ -8,10 +8,6 @@ import {
   HeadingLevel,
   TextRun,
   AlignmentType,
-  TabStopPosition,
-  TabStopType,
-  NumberFormat,
-  LevelFormat,
   convertInchesToTwip,
 } from 'docx';
 import { stylePacks, StylePack } from './stylePacks/config';
