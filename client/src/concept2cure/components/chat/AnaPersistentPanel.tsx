@@ -111,7 +111,6 @@ const SCREEN_LABELS: Record<string, string> = {
   biostatistics: 'Biostatistics',
   'agent-hub': 'Agent Hub',
   snowglobe: 'SnowGlobe',
-  'document-sherpa': 'Document Sherpa',
   'review-pulse': 'Review Pulse',
   'legal-center': 'Legal Center',
   'training-center': 'Training Center',
@@ -380,26 +379,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       return;
     }
 
-    // Standard chat mode — route to Cortex unified chat
+    // Standard chat mode — route to appropriate endpoint
     try {
       let data: any;
-      const response = await fetch('/api/cortex/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: text,
-          chatMode,
-          project_id: contextProfile?.projectId || undefined,
-          submission_type: contextProfile?.productType || undefined,
-          context: {
-            screen: contextProfile?.screenName,
-            project: contextProfile?.activeProject,
-            projectId: contextProfile?.projectId,
-            productType: contextProfile?.productType,
-            userRole: contextProfile?.userRole,
-          },
-        }),
-      });
 
       if (chatMode === 'nano-banana') {
         // Route to Nano Banana (Gemini image gen) endpoint
@@ -439,13 +421,15 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           pptx: data.pptx,
         }]);
       } else {
-        // Standard / Deep Research → Lumen Cortex
-        const response = await fetch('/api/lumen-cortex/chat', {
+        // Standard mode → Cortex unified chat
+        const response = await fetch('/api/cortex/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             message: text,
             chatMode,
+            project_id: contextProfile?.projectId || undefined,
+            submission_type: contextProfile?.productType || undefined,
             context: {
               screen: contextProfile?.screenName,
               project: contextProfile?.activeProject,
@@ -467,7 +451,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         setMessages(prev => [...prev, {
           id: `a-${Date.now()}`,
           role: 'assistant',
-          content: data.response || data.message || 'I can help with that. Could you share more details?',
+          content: data.response || data.answer || 'I\'m here to help with your regulatory work. What would you like to work on?',
           timestamp: new Date(),
           demo: data.demo || false,
         }]);

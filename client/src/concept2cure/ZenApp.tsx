@@ -112,7 +112,6 @@ import {
   Brain,
   Snowflake,
   Bot,
-  Compass,
   Activity,
   Rocket,
   FileStack,
@@ -305,11 +304,6 @@ const AgentShowcasePage = lazy(() =>
   import('./components/enablement/AgentShowcase').then(m => ({ default: m.AgentShowcase }))
 );
 
-// Document Sherpa — proactive AI-guided document authoring
-const DocumentSherpaPage = lazy(() =>
-  import('./components/intelligentDocs/DocumentSherpa').then(m => ({ default: m.DocumentSherpa }))
-);
-
 // Review Pulse — PM orchestration, signals, readiness tracking
 const ReviewPulseDashboardPage = lazy(() =>
   import('./components/workspace/ReviewPulseDashboard').then(m => ({
@@ -436,7 +430,6 @@ type LayoutMode =
   | 'biostatistics'
   | 'training-center'
   | 'agent-hub'
-  | 'document-sherpa'
   | 'review-pulse'
   | 'client-onboarding'
   | 'knowledge-base'
@@ -1445,7 +1438,6 @@ export const ZenApp: React.FC = () => {
       const MODULE_ROUTES: Record<string, LayoutMode> = {
         'go-copilot': 'regulatory-workspace',
         'go-author': 'author',
-        'go-document-sherpa': 'document-sherpa',
         'go-collaboration': 'collaboration-hub',
         'go-inbox': 'user-inbox',
         'go-branding': 'client-branding',
@@ -1850,7 +1842,6 @@ export const ZenApp: React.FC = () => {
               biostatistics: 'biostatistics',
               'training-center': 'training-center',
               'agent-hub': 'agent-hub',
-              'document-sherpa': 'document-sherpa',
               'review-pulse': 'review-pulse',
               'client-onboarding': 'client-onboarding',
               'knowledge-base': 'knowledge-base',
@@ -1996,9 +1987,6 @@ export const ZenApp: React.FC = () => {
               break;
             case 'agent-hub':
               setLayoutMode('agent-hub');
-              break;
-            case 'document-sherpa':
-              setLayoutMode('document-sherpa');
               break;
             case 'snowglobe':
               setLayoutMode('snowglobe');
@@ -3130,40 +3118,6 @@ export const ZenApp: React.FC = () => {
                 >
                   <AgentShowcasePage />
                   <IntegrationsPage />
-                </Suspense>
-              </ErrorBoundary>
-            </div>
-          )}
-
-          {/* ── Document Sherpa — AI-guided authoring ── */}
-          {!embeddedModule && layoutMode === 'document-sherpa' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-document-sherpa">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
-                <button
-                  onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Home</span>
-                </button>
-                <span className="text-zinc-200">&middot;</span>
-                <Compass className="w-3.5 h-3.5 text-blue-500" />
-                <span className="text-xs font-medium text-zinc-800">Document Sherpa</span>
-                {activeProject && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
-                    {activeProject.name}
-                  </span>
-                )}
-              </div>
-              <ErrorBoundary>
-                <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
-                    </div>
-                  }
-                >
-                  <DocumentSherpaPage />
                 </Suspense>
               </ErrorBoundary>
             </div>

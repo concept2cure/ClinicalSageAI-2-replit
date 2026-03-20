@@ -33,7 +33,6 @@ import {
   BookOpen,
   Snowflake,
   Bot,
-  Compass,
   Activity,
   Upload,
   FileStack,
@@ -458,13 +457,6 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               subtitle="Dossier · eCTD · CMC"
               active={activeNavId === 'author'}
               onClick={() => onNavigate?.('author')}
-            />
-            <NavItem
-              icon={<Compass className="w-3.5 h-3.5" />}
-              label="Document Sherpa"
-              subtitle="Guided authoring · AI assist"
-              active={activeNavId === 'document-sherpa'}
-              onClick={() => onNavigate?.('document-sherpa')}
             />
             <NavItem
               icon={<PenLine className="w-3.5 h-3.5" />}

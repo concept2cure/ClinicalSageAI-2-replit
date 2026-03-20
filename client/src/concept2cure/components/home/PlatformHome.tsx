@@ -14,7 +14,6 @@ import {
   Users,
   FlaskConical,
   Bot,
-  Compass,
   Activity,
   Scale,
   Snowflake,
@@ -60,7 +59,6 @@ export interface PlatformHomeProps {
 const QUICK_ACTIONS = [
   { id: 'new-project', label: 'New Project', subtitle: 'Start a submission', icon: Plus, color: 'text-blue-600', bg: 'bg-blue-50', action: 'new-project' },
   { id: 'copilot', label: 'AI Copilot', subtitle: 'Chat with AnA', icon: Sparkles, color: 'text-violet-600', bg: 'bg-violet-50', action: 'assistant' },
-  { id: 'sherpa', label: 'Document Sherpa', subtitle: 'AI-guided authoring', icon: Compass, color: 'text-emerald-600', bg: 'bg-emerald-50', action: 'document-sherpa' },
   { id: 'collab', label: 'Collaboration', subtitle: 'Team workspace', icon: Users, color: 'text-amber-600', bg: 'bg-amber-50', action: 'collaboration-hub' },
   { id: 'biostat', label: 'Biostatistics', subtitle: 'Statistical analysis', icon: FlaskConical, color: 'text-teal-600', bg: 'bg-teal-50', action: 'biostatistics' },
   { id: 'agents', label: 'Agent Swarm', subtitle: 'AI agent fleet', icon: Bot, color: 'text-rose-600', bg: 'bg-rose-50', action: 'agent-hub' },
@@ -69,7 +67,6 @@ const QUICK_ACTIONS = [
 const MODULE_CATALOG = [
   { id: 'regulatory-workspace', label: 'Regulatory Workspace', subtitle: 'Full submission environment', icon: FileText, color: 'text-blue-600' },
   { id: 'ectd-coauthor', label: 'eCTD Co-Author', subtitle: 'Document authoring', icon: PenLine, color: 'text-violet-600' },
-  { id: 'document-sherpa', label: 'Document Sherpa', subtitle: 'AI-guided documents', icon: Compass, color: 'text-emerald-600' },
   { id: 'review-pulse', label: 'Review Pulse', subtitle: 'PM orchestration', icon: Activity, color: 'text-pink-600' },
   { id: 'intelligence-hub', label: 'Intelligence Hub', subtitle: 'Evidence & insights', icon: Search, color: 'text-blue-600' },
   { id: 'review-readiness', label: 'Review Readiness', subtitle: 'Submission QC', icon: ShieldCheck, color: 'text-emerald-600' },

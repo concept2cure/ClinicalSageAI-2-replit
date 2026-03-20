@@ -491,15 +491,6 @@ const createCommands = (onAction: (id: string) => void): CommandItem[] => [
     keywords: ['collaborate', 'thread', 'review', 'team', 'discuss'],
   },
   {
-    id: 'go-document-sherpa',
-    title: 'Go to Document Sherpa',
-    subtitle: 'AI-guided document authoring',
-    icon: <Compass className="w-4 h-4 text-emerald-600" />,
-    category: 'tools',
-    action: () => onAction('go-document-sherpa'),
-    keywords: ['sherpa', 'guide', 'authoring', 'proactive'],
-  },
-  {
     id: 'go-review-pulse',
     title: 'Go to Review Pulse',
     subtitle: 'PM signals, readiness, risk tracking',

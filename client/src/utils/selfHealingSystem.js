@@ -182,11 +182,8 @@ class SelfHealingSystem {
   }
 
   resetToKnownGoodState() {
-    // Reset to a known good application state
-    if (window.location.pathname !== '/client-portal') {
-      console.log('🔄 Resetting to safe state: client portal');
-      window.location.href = '/client-portal';
-    }
+    // Disabled — hard redirects cause disruptive page flashing for users
+    console.warn('[SelfHealing] State inconsistency detected — skipping hard reset');
   }
 
   setupErrorBoundaryMonitoring() {
