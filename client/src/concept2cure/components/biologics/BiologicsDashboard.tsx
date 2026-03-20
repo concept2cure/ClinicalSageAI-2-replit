@@ -109,7 +109,7 @@ export default function BiologicsDashboard() {
       fetchPathway();
       fetchExpedited();
     }
-  }, [productType, modalityType, selectedAgencies]);
+  }, [productType, modalityType, selectedAgencies, indication]);
 
   function toggleAgency(agency: string) {
     setSelectedAgencies((prev) =>

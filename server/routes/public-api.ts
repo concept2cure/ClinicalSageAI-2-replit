@@ -395,12 +395,20 @@ router.get('/precedent/search', requireScope('precedent:read'), requireQuota('ap
       }).catch(() => {});
     }
 
-    const precedents = await precedentEngine.search({
+    let precedents = await precedentEngine.search({
       indication: indication as string,
       submissionType: submissionType || 'NDA',
       query: indication as string,
-      limit,
+      limit: limit * 2, // Over-fetch to allow agency filtering
     });
+
+    // Filter by agency if provided
+    if (agency) {
+      precedents = precedents.filter((p: any) =>
+        !p.agency || p.agency.toLowerCase().includes((agency as string).toLowerCase())
+      );
+    }
+    precedents = precedents.slice(0, limit);
 
     return res.json({
       query: { indication, agency, submissionType },
@@ -422,7 +430,8 @@ router.get('/precedent/search', requireScope('precedent:read'), requireQuota('ap
 
 router.get('/trial-design/suggest', requireScope('trial-design:read'), requireQuota('api_trial_design'), async (req: ApiRequest, res: Response) => {
   try {
-    const { indication, phase, primaryEndpoint } = req.query;
+    const { indication, phase, primaryEndpoint, submissionType } = req.query;
+    const resolvedSubmissionType = sanitizeQueryParam(submissionType) || 'NDA';
 
     if (req.apiOrganizationId) {
       recordUsage(req.apiOrganizationId, 0, 'api_trial_design', 1, {
@@ -433,7 +442,7 @@ router.get('/trial-design/suggest', requireScope('trial-design:read'), requireQu
     // Combine precedent strategy + endpoint recommendations for trial design suggestions
     const [strategy, endpointRecs] = await Promise.all([
       precedentEngine.recommendStrategy({
-        submissionType: 'NDA',
+        submissionType: resolvedSubmissionType,
         indication: indication as string,
         query: primaryEndpoint as string,
       }),
@@ -448,6 +457,7 @@ router.get('/trial-design/suggest', requireScope('trial-design:read'), requireQu
       indication: indication || null,
       phase: phase || null,
       primaryEndpoint: primaryEndpoint || null,
+      submissionType: resolvedSubmissionType,
       strategy,
       recommendedEndpoints: endpointRecs,
       _apiVersion: 'v1',

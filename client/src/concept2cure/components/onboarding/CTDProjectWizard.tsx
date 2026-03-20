@@ -98,8 +98,11 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
   const [uploading, setUploading] = useState(false);
   const [activeModule, setActiveModule] = useState(1);
 
+  const [createError, setCreateError] = useState<string | null>(null);
+
   // Step 1 → 2: Create project on backend
   async function handleCreateProject() {
+    setCreateError(null);
     try {
       const res = await fetch('/api/ctd/projects', {
         method: 'POST',
@@ -110,11 +113,14 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
       if (res.ok) {
         const data = await res.json();
         setProjectId(data.projectId);
+        setStep(3);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        setCreateError(errData.error || `Server error (${res.status}). Please try again.`);
       }
-    } catch {
-      // Continue anyway — wizard can work in preview mode
+    } catch (err) {
+      setCreateError('Network error — could not create project. Check your connection and try again.');
     }
-    setStep(3);
   }
 
   // File upload with auto-detect
@@ -493,10 +499,15 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
                 </div>
               ))}
             </div>
-          ) : (
+          ) : validationResult ? (
             <div className="text-center text-green-600 py-8">
               <CheckCircle size={32} className="mx-auto mb-2" />
               <p className="text-sm">All required sections are present. Ready to activate.</p>
+            </div>
+          ) : (
+            <div className="text-center text-gray-400 py-8">
+              <AlertTriangle size={32} className="mx-auto mb-2" />
+              <p className="text-sm">Validation has not been run yet. Click &ldquo;Run Compliance Check&rdquo; above.</p>
             </div>
           )}
         </div>
@@ -536,9 +547,20 @@ export default function CTDProjectWizard({ onComplete }: { onComplete?: () => vo
       )}
 
       {/* Navigation */}
+      {/* Error message */}
+      {createError && (
+        <div className="mt-4 flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <AlertTriangle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-red-800">Project creation failed</p>
+            <p className="text-xs text-red-600 mt-0.5">{createError}</p>
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-between mt-6">
         <button
-          onClick={() => setStep(Math.max(1, step - 1))}
+          onClick={() => { setStep(Math.max(1, step - 1)); setCreateError(null); }}
           disabled={step === 1}
           className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 disabled:opacity-30"
         >
