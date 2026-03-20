@@ -1228,6 +1228,16 @@ try {
   console.error('❌ Failed to mount CERV2 document routes:', error);
 }
 
+// Mount Document Comment CRUD routes
+try {
+  const commentModule = await import('./routes/comment-routes');
+  const commentRoutes = commentModule.default;
+  app.use('/api/comments', commentRoutes);
+  console.log('✅ Document comment CRUD routes mounted successfully');
+} catch (error) {
+  console.error('❌ Failed to mount comment routes:', error);
+}
+
 // Mount PubMed Literature Search routes (PRODUCTION with real NCBI API)
 try {
   const pubmedModule = await import('./routes/pubmed');

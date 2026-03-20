@@ -1,7 +1,19 @@
 import fs from 'fs/promises';
 import PDFDocument from 'pdfkit';
 import { Cluster } from 'puppeteer-cluster';
-import { Document, Packer, Paragraph, HeadingLevel } from 'docx';
+import {
+  Document,
+  Packer,
+  Paragraph,
+  HeadingLevel,
+  TextRun,
+  AlignmentType,
+  TabStopPosition,
+  TabStopType,
+  NumberFormat,
+  LevelFormat,
+  convertInchesToTwip,
+} from 'docx';
 import { stylePacks, StylePack } from './stylePacks/config';
 
 const MAX_CONTENT_CHARS = 500000;
@@ -443,27 +455,188 @@ export async function renderPdfForDocType(docType: string, content: any, packKey
   return renderHtmlToPdf(await renderHtmlWithStylePack(html, pack));
 }
 
+/**
+ * Convert TipTap editor nodes into rich DOCX paragraphs with proper formatting.
+ */
+function editorNodeToDocxParagraphs(node: any): Paragraph[] {
+  if (!node) return [];
+
+  if (node.type === 'heading') {
+    const text = nodeToText(node).trim();
+    const level = node.attrs?.level || 2;
+    const headingMap: Record<number, typeof HeadingLevel[keyof typeof HeadingLevel]> = {
+      1: HeadingLevel.HEADING_1,
+      2: HeadingLevel.HEADING_2,
+      3: HeadingLevel.HEADING_3,
+      4: HeadingLevel.HEADING_4,
+    };
+    return [
+      new Paragraph({
+        text,
+        heading: headingMap[level] || HeadingLevel.HEADING_2,
+        spacing: { before: 240, after: 120 },
+      }),
+    ];
+  }
+
+  if (node.type === 'paragraph') {
+    const runs = (node.content || []).map((child: any) => {
+      if (child.type === 'text') {
+        const marks = child.marks || [];
+        const bold = marks.some((m: any) => m.type === 'bold');
+        const italic = marks.some((m: any) => m.type === 'italic');
+        const underline = marks.some((m: any) => m.type === 'underline');
+        return new TextRun({
+          text: child.text || '',
+          bold,
+          italics: italic,
+          underline: underline ? {} : undefined,
+          size: 22, // 11pt
+        });
+      }
+      return new TextRun({ text: nodeToText(child), size: 22 });
+    });
+
+    if (runs.length === 0) {
+      return [new Paragraph({ spacing: { after: 100 } })]; // empty line
+    }
+
+    return [
+      new Paragraph({
+        children: runs,
+        spacing: { after: 120 },
+      }),
+    ];
+  }
+
+  if (node.type === 'bulletList') {
+    const items = (node.content || []).flatMap((item: any) => {
+      const text = nodeToText(item).trim();
+      if (!text) return [];
+      return [
+        new Paragraph({
+          children: [new TextRun({ text: `\u2022  ${text}`, size: 22 })],
+          indent: { left: convertInchesToTwip(0.5) },
+          spacing: { after: 60 },
+        }),
+      ];
+    });
+    return items;
+  }
+
+  if (node.type === 'orderedList') {
+    let idx = 1;
+    const items = (node.content || []).flatMap((item: any) => {
+      const text = nodeToText(item).trim();
+      if (!text) return [];
+      return [
+        new Paragraph({
+          children: [new TextRun({ text: `${idx++}.  ${text}`, size: 22 })],
+          indent: { left: convertInchesToTwip(0.5) },
+          spacing: { after: 60 },
+        }),
+      ];
+    });
+    return items;
+  }
+
+  // Fallback: render as plain paragraph
+  if (Array.isArray(node.content)) {
+    return node.content.flatMap(editorNodeToDocxParagraphs);
+  }
+
+  const text = nodeToText(node).trim();
+  if (text) {
+    return [new Paragraph({ children: [new TextRun({ text, size: 22 })], spacing: { after: 120 } })];
+  }
+  return [];
+}
+
 export async function renderDocxForDocType(docType: string, content: any) {
-  const sections = extractSectionsFromEditor(content);
+  const editorContent = Array.isArray(content?.content) ? content.content : [];
   const paragraphs: Paragraph[] = [];
 
-  for (const section of sections) {
-    paragraphs.push(new Paragraph({ text: section.title, heading: HeadingLevel.HEADING_1 }));
-    const lines = (section.text || '')
-      .split('\n')
-      .map(line => line.trim())
-      .filter(Boolean);
-    if (lines.length === 0) {
-      paragraphs.push(
-        new Paragraph({ text: 'Section content not found in the current document.' })
-      );
-    } else {
-      lines.forEach(line => paragraphs.push(new Paragraph(line)));
+  // Title page
+  paragraphs.push(
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: docType === 'cerv2_510k'
+            ? '510(k) Premarket Notification'
+            : docType === 'cerv2_pma'
+              ? 'Premarket Approval Application'
+              : docType === 'cerv2_cer'
+                ? 'Clinical Evaluation Report'
+                : 'Regulatory Submission Document',
+          bold: true,
+          size: 48,
+        }),
+      ],
+      alignment: AlignmentType.CENTER,
+      spacing: { before: 2400, after: 480 },
+    })
+  );
+  paragraphs.push(
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: `Generated: ${new Date().toISOString().split('T')[0]}`,
+          size: 22,
+          color: '666666',
+        }),
+      ],
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 120 },
+    })
+  );
+  paragraphs.push(
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: 'Generated by Concept2Cure Platform',
+          size: 20,
+          color: '999999',
+          italics: true,
+        }),
+      ],
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 600 },
+    })
+  );
+
+  // Convert each editor node into DOCX paragraphs with formatting
+  for (const node of editorContent) {
+    paragraphs.push(...editorNodeToDocxParagraphs(node));
+  }
+
+  // If no content was extracted, add fallback sections
+  if (editorContent.length === 0) {
+    const sections = extractSectionsFromEditor(content);
+    for (const section of sections) {
+      paragraphs.push(new Paragraph({ text: section.title, heading: HeadingLevel.HEADING_1 }));
+      const lines = (section.text || '').split('\n').map(l => l.trim()).filter(Boolean);
+      if (lines.length === 0) {
+        paragraphs.push(new Paragraph({ text: 'Section content not found in the current document.' }));
+      } else {
+        lines.forEach(line => paragraphs.push(new Paragraph({ children: [new TextRun({ text: line, size: 22 })] })));
+      }
     }
   }
 
   const doc = new Document({
-    sections: [{ children: paragraphs }],
+    sections: [{
+      properties: {
+        page: {
+          margin: {
+            top: convertInchesToTwip(1),
+            right: convertInchesToTwip(1),
+            bottom: convertInchesToTwip(1),
+            left: convertInchesToTwip(1),
+          },
+        },
+      },
+      children: paragraphs,
+    }],
   });
 
   return Packer.toBuffer(doc);

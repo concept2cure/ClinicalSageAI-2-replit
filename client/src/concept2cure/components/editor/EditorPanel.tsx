@@ -59,6 +59,7 @@ import { KeyboardShortcutsOverlay } from './KeyboardShortcuts';
 import { CommentThreadPanel } from './CommentThread';
 import { ReviewModePanel } from './ReviewMode';
 import type { CommentThread } from './extensions/CommentMark';
+import { useComments } from '../../hooks/useComments';
 
 // ── Auth helper (same pattern as useProjects) ────────────────────────────────
 function getAuthHeaders(): Record<string, string> {
@@ -220,8 +221,16 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   // ── Keyboard shortcuts overlay ──────────────────────────────────────
   const [showShortcuts, setShowShortcuts] = useState(false);
 
-  // ── Comments state ──────────────────────────────────────────────────
-  const [comments, setComments] = useState<CommentThread[]>([]);
+  // ── Comments state (persisted via API) ──────────────────────────────
+  const {
+    comments,
+    setComments,
+    loadComments: loadCommentsFromServer,
+    createComment: createCommentOnServer,
+    updateComment: updateCommentOnServer,
+    deleteComment: deleteCommentOnServer,
+    addReply: addReplyOnServer,
+  } = useComments();
 
   // ── Review mode state ───────────────────────────────────────────────
   const [isReviewMode, setIsReviewMode] = useState(false);
@@ -351,8 +360,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   );
 
   const handleSubmitComment = useCallback(
-    (text: string) => {
+    async (text: string) => {
       if (!text.trim()) return;
+      // Update local state immediately (optimistic)
       setComments(prev => {
         const copy = [...prev];
         const last = copy[copy.length - 1];
@@ -363,10 +373,21 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       });
       setShowNewCommentDialog(false);
       setPendingCommentText('');
-      setPendingCommentHighlight('');
       pushToast('Comment added', 'success');
+
+      // Persist to server
+      if (activeArtifact?.id) {
+        const docId = Number(activeArtifact.id);
+        if (Number.isFinite(docId)) {
+          await createCommentOnServer(docId, {
+            content: text.trim(),
+            highlightedText: pendingCommentHighlight || undefined,
+          });
+        }
+      }
+      setPendingCommentHighlight('');
     },
-    [pushToast]
+    [pushToast, activeArtifact, pendingCommentHighlight, createCommentOnServer]
   );
 
   const handleClaimCheck = useCallback(() => {
@@ -436,6 +457,16 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   useEffect(() => {
     loadArtifacts();
   }, [loadArtifacts]);
+
+  // ── Load comments from DB when artifact changes ──────────────────────────
+  useEffect(() => {
+    if (activeArtifact?.id) {
+      const docId = Number(activeArtifact.id);
+      if (Number.isFinite(docId)) {
+        loadCommentsFromServer(docId);
+      }
+    }
+  }, [activeArtifact?.id, loadCommentsFromServer]);
 
   // ── Fetch trust indicators when artifact selected ─────────────────────────
   useEffect(() => {
@@ -2159,10 +2190,12 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               currentUserId="current-user"
               onResolve={(commentId) => {
                 setComments(prev => prev.map(c => c.id === commentId ? { ...c, resolved: true } : c));
+                updateCommentOnServer(commentId, { status: 'resolved' });
                 pushToast('Comment resolved', 'success');
               }}
               onReopen={(commentId) => {
                 setComments(prev => prev.map(c => c.id === commentId ? { ...c, resolved: false } : c));
+                updateCommentOnServer(commentId, { status: 'open' });
               }}
               onReply={(commentId, text) => {
                 setComments(prev => prev.map(c => c.id === commentId ? {
@@ -2175,9 +2208,11 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                     createdAt: new Date().toISOString(),
                   }],
                 } : c));
+                addReplyOnServer(commentId, text);
               }}
               onDelete={(commentId) => {
                 setComments(prev => prev.filter(c => c.id !== commentId));
+                deleteCommentOnServer(commentId);
                 pushToast('Comment deleted', 'success');
               }}
               onNavigateToComment={(commentId) => {

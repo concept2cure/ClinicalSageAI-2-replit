@@ -580,6 +580,81 @@ router.post(
   }
 );
 
+// ── POST /ectd ─────────────────────────────────────────────────────────────────
+// Phase 7.5: eCTD submission package assembly (PDF + XML backbone)
+router.post(
+  '/ectd',
+  authMiddleware,
+  requireEditorAccess,
+  exportRateLimiter,
+  async (req: Request, res: Response) => {
+    try {
+      const { generatePDF, assembleECTDPackage } = await import(
+        '../services/documentExportService'
+      );
+
+      const projectId = Number(req.body.projectId);
+      const organizationId = Number(
+        req.header('x-organization-id') || req.header('x-org-id') || '0'
+      );
+      const userId = Number((req as any).userId || (req as any).user?.id || 0);
+
+      if (!Number.isFinite(projectId) || !projectId) {
+        return res.status(400).json({ error: 'projectId is required' });
+      }
+
+      const submissionType = req.body.submissionType || '510K';
+      const sequenceNumber = req.body.sequenceNumber || '0000';
+      const region = req.body.region || 'us';
+
+      // First generate the PDF
+      const pdfResult = await generatePDF({
+        projectId,
+        organizationId,
+        userId,
+        includeBookmarks: true,
+        includeTOC: true,
+        includeMetadata: true,
+        includeWatermark: req.body.watermark,
+        pageSize: req.body.pageSize || 'letter',
+      });
+
+      // Then assemble the eCTD package
+      const ectdResult = await assembleECTDPackage({
+        projectId,
+        organizationId,
+        userId,
+        sequenceNumber,
+        submissionType,
+        lifecycleOperation: req.body.lifecycleOperation || 'new',
+        region,
+      });
+
+      return res.json({
+        success: pdfResult.success && ectdResult.success,
+        pdf: {
+          filename: pdfResult.filename,
+          pageCount: pdfResult.pageCount,
+          fileSize: pdfResult.fileSize,
+          checksums: pdfResult.checksums,
+          validationReport: pdfResult.validationReport,
+        },
+        ectd: {
+          packageId: ectdResult.packageId,
+          fileCount: ectdResult.files.length,
+          files: ectdResult.files.map(f => ({ path: f.path, title: f.title, size: f.size })),
+          totalSize: ectdResult.totalSize,
+          validationReport: ectdResult.validationReport,
+          indexXmlPreview: ectdResult.indexXml.slice(0, 500) + '...',
+        },
+      });
+    } catch (err: any) {
+      console.error('[CERV2 Export] eCTD assembly error:', err);
+      res.status(500).json({ error: 'eCTD package assembly failed', message: err.message });
+    }
+  }
+);
+
 // ── GET /health ────────────────────────────────────────────────────────────────
 // Phase 7.4: Health check for export service
 router.get('/health', (_req: Request, res: Response) => {
@@ -591,6 +666,7 @@ router.get('/health', (_req: Request, res: Response) => {
       'POST /pdf',
       'POST /docx',
       'POST /zip',
+      'POST /ectd',
       'POST /ai-to-editor',
       'GET  /mock/:docType',
       'GET  /mock/:docType/docx',
