@@ -31,6 +31,8 @@ import { isFeatureEnabled } from '@/flags/featureFlags';
 
 // Lazy-load CERV2Page only when a project 510k route is hit (standalone mode)
 const CERV2Page = lazy(() => import('@/pages/csr/CERV2Page'));
+// Lazy-load PMA Workspace for standalone mode
+const PMAWorkspacePage = lazy(() => import('../components/pma/PMAWorkspace'));
 
 // DTC Landing Page — public, renders at / for unauthenticated users
 const LandingPage = lazy(() => import('../pages/LandingPage'));
@@ -58,6 +60,25 @@ const Project510kBridge: React.FC = () => {
       }
     >
       <CERV2Page projectId={projectId} />
+    </Suspense>
+  );
+};
+
+/**
+ * Bridge that extracts :projectId from URL and renders PMAWorkspace with it.
+ */
+const ProjectPMABridge: React.FC = () => {
+  const [, params] = useRoute('/concept2cure/project/:projectId/pma');
+  const projectId = params?.projectId ?? null;
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#FAFAF9]">
+          <p className="text-sm text-zinc-400">Loading PMA workspace…</p>
+        </div>
+      }
+    >
+      <PMAWorkspacePage projectId={projectId || ''} projectName="PMA Submission" />
     </Suspense>
   );
 };
@@ -345,6 +366,19 @@ export const ZenRouter: React.FC = () => {
                 <PageTransition>
                   <ProtectedRoute>
                     <Project510kBridge />
+                  </ProtectedRoute>
+                </PageTransition>
+              )}
+            </Route>
+          )}
+
+          {/* Project-scoped PMA workspace (standalone mode) */}
+          {!isFeatureEnabled('EMBED_MODULES_IN_SHELL') && (
+            <Route path="/concept2cure/project/:projectId/pma">
+              {() => (
+                <PageTransition>
+                  <ProtectedRoute>
+                    <ProjectPMABridge />
                   </ProtectedRoute>
                 </PageTransition>
               )}

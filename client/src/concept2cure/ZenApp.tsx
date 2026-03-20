@@ -57,6 +57,8 @@ import { isFeatureEnabled } from '@/flags/featureFlags';
 
 // Lazy-load CERV2Page for embedded module rendering inside the shell
 const EmbeddedCERV2Page = lazy(() => import('@/pages/csr/CERV2Page'));
+// Lazy-load PMA Workspace for embedded module rendering
+const EmbeddedPMAWorkspace = lazy(() => import('./components/pma/PMAWorkspace'));
 // DTC Landing Page (public, no auth)
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 // Full Document Builder wizard (CSR + CTD across global agencies)
@@ -814,9 +816,11 @@ export const ZenApp: React.FC = () => {
   // When EMBED_MODULES_IN_SHELL is enabled and URL has /project/:id/510k,
   // render CERV2Page inside the shell frame instead of as a standalone page.
   // ─────────────────────────────────────────────────────────────────────────────
-  const urlModuleSegment = (routeParams as Record<string, string> | null)?.['rest*'] ?? null; // e.g. '510k'
+  const urlModuleSegment = (routeParams as Record<string, string> | null)?.['rest*'] ?? null; // e.g. '510k', 'pma'
   const embedModulesEnabled = isFeatureEnabled('EMBED_MODULES_IN_SHELL');
-  const embeddedModule = embedModulesEnabled && urlModuleSegment === '510k' ? '510k' : null;
+  const embeddedModule =
+    embedModulesEnabled && urlModuleSegment === '510k' ? '510k' :
+    embedModulesEnabled && urlModuleSegment === 'pma' ? 'pma' : null;
 
   // ─────────────────────────────────────────────────────────────────────────────
   // DATA HOOKS (Connected to Cortex + Data Layer)
@@ -1866,6 +1870,15 @@ export const ZenApp: React.FC = () => {
                 setLayoutMode('projects');
               }
               break;
+            case 'pma-workspace':
+              if (embeddedModule !== null || !isFeatureEnabled('EMBED_MODULES_IN_SHELL')) {
+                setLayoutMode('projects');
+              } else if (activeProjectId) {
+                navigate(`/concept2cure/project/${activeProjectId}/pma`);
+              } else {
+                setLayoutMode('projects');
+              }
+              break;
             case 'cer-generator':
               window.location.href = '/cerv2?mode=cer';
               break;
@@ -2039,6 +2052,74 @@ export const ZenApp: React.FC = () => {
                       submissionType={activeProject?.type || '510K'}
                       threadId={activeThreadId}
                       greeting="How can I help with your 510(k) submission?"
+                      onNavigate={() => {}}
+                      onNewProject={() => {}}
+                      onThreadChange={handleThreadChange}
+                    />
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* ── Embedded PMA Module Host ── */}
+          {embeddedModule === 'pma' && urlProjectId && (
+            <>
+              <div
+                className={cn(
+                  'flex-1 flex flex-col min-h-0 overflow-hidden',
+                  moduleAssistantOpen && 'mr-0'
+                )}
+              >
+                <ErrorBoundary>
+                  <Suspense fallback={<ModuleLoadingFallback />}>
+                    <EmbeddedPMAWorkspace
+                      embedded={true}
+                      projectId={urlProjectId}
+                      projectName={activeProject?.name}
+                      onBackToProject={() => navigate(`/concept2cure/project/${urlProjectId}`)}
+                    />
+                  </Suspense>
+                </ErrorBoundary>
+              </div>
+
+              {/* Assistant toggle for PMA */}
+              {!moduleAssistantOpen && (
+                <button
+                  onClick={() => setModuleAssistantOpen(true)}
+                  className="flex-shrink-0 w-10 flex flex-col items-center justify-center gap-1 bg-zinc-50 hover:bg-zinc-100 border-l border-zinc-200 transition-colors"
+                  title="Open AI Assistant"
+                >
+                  <MessageSquare className="w-4 h-4 text-zinc-500" />
+                  <span
+                    className="text-[10px] text-zinc-400 writing-mode-vertical"
+                    style={{ writingMode: 'vertical-rl' }}
+                  >
+                    Assistant
+                  </span>
+                </button>
+              )}
+
+              {moduleAssistantOpen && (
+                <div
+                  className="flex-shrink-0 w-[380px] flex flex-col border-l border-zinc-200 bg-white"
+                >
+                  <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100 bg-zinc-50">
+                    <span className="text-sm font-medium text-zinc-700">AI Assistant</span>
+                    <button
+                      onClick={() => setModuleAssistantOpen(false)}
+                      className="p-1 rounded hover:bg-zinc-200 text-zinc-400 hover:text-zinc-600"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="flex-1 min-h-0 overflow-hidden">
+                    <ZenChat
+                      projectId={activeProjectId || urlProjectId}
+                      projectName={activeProject?.name}
+                      submissionType="PMA"
+                      threadId={activeThreadId}
+                      greeting="How can I help with your PMA submission?"
                       onNavigate={() => {}}
                       onNewProject={() => {}}
                       onThreadChange={handleThreadChange}

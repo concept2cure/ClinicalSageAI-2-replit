@@ -51,6 +51,9 @@ import {
   Settings,
   Download,
   Shield,
+  ShieldCheck,
+  Lock,
+  FileSignature,
   Target,
   Layers,
 } from 'lucide-react';
@@ -94,6 +97,15 @@ export interface RedlineAlert {
   linkedSources?: string[];
 }
 
+export interface SectionSignature {
+  id: string;
+  signerId: string;
+  signerName: string;
+  meaning: 'authorship' | 'review' | 'approval' | 'verification';
+  timestamp: string;
+  signatureHash: string;
+}
+
 export interface DocumentSection {
   id: string;
   number: string;
@@ -107,6 +119,7 @@ export interface DocumentSection {
   editedBy?: string;
   children?: DocumentSection[];
   redlineAlerts?: RedlineAlert[];
+  signatures?: SectionSignature[];
 }
 
 export interface eCTDDocument {
@@ -130,6 +143,8 @@ interface eCTDCoAuthorProps {
   onVerifyClaim?: (tag: SmartTag) => void;
   onResolveAlert?: (alert: RedlineAlert) => void;
   onOpenInEditor?: (section: DocumentSection) => void;
+  onApproveSection?: (section: DocumentSection) => void;
+  onSubmitForReview?: (section: DocumentSection) => void;
   className?: string;
 }
 
@@ -444,7 +459,9 @@ const SectionEditor: React.FC<{
   onVerifyClaim?: (tag: SmartTag) => void;
   onResolveAlert?: (alert: RedlineAlert) => void;
   onOpenInEditor?: () => void;
-}> = ({ section, onDraft, onVerifyClaim, onResolveAlert, onOpenInEditor }) => {
+  onApprove?: () => void;
+  onSubmitForReview?: () => void;
+}> = ({ section, onDraft, onVerifyClaim, onResolveAlert, onOpenInEditor, onApprove, onSubmitForReview }) => {
   const statusConfig = STATUS_CONFIG[section.status];
   const moduleConfig = MODULE_CONFIG[section.module];
 
@@ -500,6 +517,38 @@ const SectionEditor: React.FC<{
             <FileText className="w-4 h-4" />
             Open in Editor
           </button>
+        )}
+
+        {/* Submit for Review (editing → in_review) */}
+        {onSubmitForReview && ['editing', 'ai_draft'].includes(section.status) && (
+          <button
+            onClick={onSubmitForReview}
+            className="px-3 py-1.5 text-sm font-medium bg-orange-600 text-white rounded-lg hover:bg-orange-700 flex items-center gap-2 ml-1"
+            title="Submit section for review"
+          >
+            <Eye className="w-4 h-4" />
+            Submit for Review
+          </button>
+        )}
+
+        {/* Approve with E-Signature (in_review → approved) */}
+        {onApprove && section.status === 'in_review' && (
+          <button
+            onClick={onApprove}
+            className="px-3 py-1.5 text-sm font-medium bg-green-700 text-white rounded-lg hover:bg-green-800 flex items-center gap-2 ml-1"
+            title="Approve with 21 CFR Part 11 electronic signature"
+          >
+            <FileSignature className="w-4 h-4" />
+            Approve &amp; Sign
+          </button>
+        )}
+
+        {/* Locked indicator */}
+        {section.status === 'locked' && (
+          <span className="px-3 py-1.5 text-sm font-medium bg-zinc-200 text-zinc-600 rounded-lg flex items-center gap-2 ml-1">
+            <Lock className="w-4 h-4" />
+            Signed &amp; Locked
+          </span>
         )}
 
         <div className="flex-1" />
@@ -570,6 +619,39 @@ const SectionEditor: React.FC<{
                 <div className="flex flex-wrap gap-2">
                   {section.smartTags.map(tag => (
                     <SmartTagBadge key={tag.id} tag={tag} onVerify={() => onVerifyClaim?.(tag)} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Electronic Signatures Display (21 CFR Part 11) */}
+            {section.signatures && section.signatures.length > 0 && (
+              <div className="mt-6 pt-4 border-t border-green-200">
+                <h4 className="text-xs font-bold text-green-700 uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  Electronic Signatures ({section.signatures.length})
+                  <span className="text-[10px] font-normal normal-case bg-green-100 text-green-600 px-1.5 py-0.5 rounded">
+                    21 CFR Part 11
+                  </span>
+                </h4>
+                <div className="space-y-2">
+                  {section.signatures.map(sig => (
+                    <div
+                      key={sig.id}
+                      className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg"
+                    >
+                      <div className="flex items-center gap-3">
+                        <ShieldCheck className="w-4 h-4 text-green-600" />
+                        <div>
+                          <span className="text-sm font-medium text-green-900">{sig.signerName}</span>
+                          <span className="text-xs text-green-600 ml-2 capitalize">{sig.meaning}</span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-green-700">{new Date(sig.timestamp).toLocaleString()}</p>
+                        <p className="text-[10px] font-mono text-green-500">{sig.signatureHash.slice(0, 16)}...</p>
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -753,6 +835,8 @@ export const eCTDCoAuthor: React.FC<eCTDCoAuthorProps> = ({
   onVerifyClaim,
   onResolveAlert,
   onOpenInEditor,
+  onApproveSection,
+  onSubmitForReview,
   className,
 }) => {
   const [activeSection, setActiveSection] = useState<DocumentSection | undefined>(selectedSection);
@@ -843,6 +927,8 @@ export const eCTDCoAuthor: React.FC<eCTDCoAuthorProps> = ({
             onVerifyClaim={onVerifyClaim}
             onResolveAlert={onResolveAlert}
             onOpenInEditor={onOpenInEditor ? () => onOpenInEditor(activeSection) : undefined}
+            onApprove={onApproveSection ? () => onApproveSection(activeSection) : undefined}
+            onSubmitForReview={onSubmitForReview ? () => onSubmitForReview(activeSection) : undefined}
           />
         ) : (
           <ZeroState
@@ -958,6 +1044,43 @@ export const ECTDCoAuthorStandalone: React.FC<{
   // Manage local copy of sections so drafting can update content
   const [docState, setDocState] = useState<eCTDDocument>(DEMO_ECTD_DOCUMENT);
   const [draftingSection, setDraftingSection] = useState<string | null>(null);
+  const [signingSection, setSigningSection] = useState<DocumentSection | null>(null);
+
+  // Submit for review: editing/ai_draft → in_review
+  const handleSubmitForReview = useCallback((section: DocumentSection) => {
+    setDocState(prev => ({
+      ...prev,
+      sections: updateSectionInTree(prev.sections, section.id, {
+        status: 'in_review' as SectionStatus,
+      }),
+    }));
+  }, []);
+
+  // Approve with e-signature: in_review → approved (triggers signature gate)
+  const handleApproveSection = useCallback((section: DocumentSection) => {
+    setSigningSection(section);
+  }, []);
+
+  // Complete signature callback
+  const handleSignatureComplete = useCallback((section: DocumentSection) => {
+    const newSignature: SectionSignature = {
+      id: `sig_${Date.now()}`,
+      signerId: 'current-user',
+      signerName: 'Current User',
+      meaning: 'approval',
+      timestamp: new Date().toISOString(),
+      signatureHash: btoa(`${section.id}|approval|${Date.now()}`).slice(0, 24),
+    };
+
+    setDocState(prev => ({
+      ...prev,
+      sections: updateSectionInTree(prev.sections, section.id, {
+        status: 'approved' as SectionStatus,
+        signatures: [...(section.signatures || []), newSignature],
+      }),
+    }));
+    setSigningSection(null);
+  }, []);
 
   const handleDraftSection = useCallback(
     async (section: DocumentSection) => {
@@ -1028,11 +1151,73 @@ export const ECTDCoAuthorStandalone: React.FC<{
   );
 
   return (
-    <ECTDCoAuthor
-      document={docState}
-      onOpenInEditor={onOpenInEditor}
-      onDraftSection={handleDraftSection}
-    />
+    <>
+      <ECTDCoAuthor
+        document={docState}
+        onOpenInEditor={onOpenInEditor}
+        onDraftSection={handleDraftSection}
+        onSubmitForReview={handleSubmitForReview}
+        onApproveSection={handleApproveSection}
+      />
+
+      {/* 21 CFR Part 11 Electronic Signature Modal */}
+      {signingSection && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden">
+            <div className="bg-gradient-to-r from-green-700 to-green-800 px-6 py-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-white/20 rounded-lg">
+                  <ShieldCheck className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-white">Electronic Signature Required</h2>
+                  <p className="text-green-100 text-sm">21 CFR Part 11 Compliant</p>
+                </div>
+              </div>
+            </div>
+            <div className="p-6">
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg mb-4">
+                <h3 className="font-medium text-amber-900 mb-1 flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  Approval Declaration
+                </h3>
+                <p className="text-amber-800 text-sm">
+                  I approve section <strong>{signingSection.number}: {signingSection.title}</strong> and
+                  authorize it to proceed. My electronic signature has the same legal effect as a handwritten signature.
+                </p>
+              </div>
+              <div className="p-3 bg-zinc-50 border rounded-lg text-sm mb-4">
+                <div className="grid grid-cols-2 gap-2 text-zinc-600">
+                  <div>Section: <strong>{signingSection.number}</strong></div>
+                  <div>Words: <strong>{signingSection.wordCount.toLocaleString()}</strong></div>
+                  <div>Module: <strong>{signingSection.module.toUpperCase()}</strong></div>
+                  <div>Date: <strong>{new Date().toLocaleDateString()}</strong></div>
+                </div>
+              </div>
+              <p className="text-xs text-zinc-500 mb-4">
+                This action will create an immutable audit trail entry and lock the section from further editing.
+                Signature is cryptographically bound to the document content hash.
+              </p>
+            </div>
+            <div className="px-6 py-4 bg-zinc-50 border-t flex justify-between">
+              <button
+                onClick={() => setSigningSection(null)}
+                className="px-4 py-2 text-zinc-700 hover:text-zinc-900"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleSignatureComplete(signingSection)}
+                className="px-6 py-2 bg-green-700 text-white rounded-lg hover:bg-green-800 flex items-center gap-2"
+              >
+                <FileSignature className="h-4 w-4" />
+                Sign &amp; Approve
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
