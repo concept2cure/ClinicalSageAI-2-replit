@@ -401,6 +401,12 @@ const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({ isOpen, onClose }
       action: () => {},
     },
     {
+      id: 'pma',
+      title: 'Start PMA submission',
+      icon: <FileText className="w-4 h-4" />,
+      action: () => {},
+    },
+    {
       id: 'ind',
       title: 'Start IND submission',
       icon: <FileText className="w-4 h-4" />,

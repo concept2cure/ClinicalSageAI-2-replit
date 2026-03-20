@@ -11,13 +11,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 import type { DemoChoice } from './demo-content';
 
 marked.setOptions({ breaks: true, gfm: true });
 
 const renderMarkdown = (content: string): string => {
   try {
-    return marked.parse(content) as string;
+    const raw = marked.parse(content) as string;
+    return DOMPurify.sanitize(raw);
   } catch {
     return content.replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }

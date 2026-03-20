@@ -20,9 +20,30 @@ export const httpLogger = pinoHttp({
     `ERR ${req.method} ${req.url} ${res.statusCode}: ${err?.message}`,
 });
 
-// centralized error handler
-export function errorHandler(err: any, _req: any, res: any, _next: any) {
-  logger.error({ err }, 'unhandled_error');
-  const code = err?.status || 500;
-  res.status(code).json({ error: err?.message || 'Internal Server Error' });
+// Centralized error handler — consistent { error: { code, message, ... } } format
+export function errorHandler(err: any, req: any, res: any, next: any) {
+  if (res.headersSent) {
+    return next(err);
+  }
+
+  const statusCode = err?.statusCode || err?.status || 500;
+  const errorCode = err?.code || (statusCode >= 500 ? 'SERVER_ERROR' : 'CLIENT_ERROR');
+  const message = statusCode >= 500 && process.env.NODE_ENV === 'production'
+    ? 'Internal server error'
+    : (err?.message || 'Internal server error');
+
+  if (statusCode >= 500) {
+    logger.error({ err, path: req.path, method: req.method }, 'unhandled_error');
+  } else {
+    logger.warn({ path: req.path, method: req.method, code: errorCode, message }, 'client_error');
+  }
+
+  res.status(statusCode).json({
+    error: {
+      code: errorCode,
+      message,
+      path: req.path,
+      timestamp: new Date().toISOString(),
+    },
+  });
 }

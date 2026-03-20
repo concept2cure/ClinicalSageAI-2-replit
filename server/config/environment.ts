@@ -84,16 +84,14 @@ const getJwtSecret = (): string => {
   const secret = process.env[envVar];
 
   if (!secret) {
-    // Fall back to generic JWT_SECRET before using hardcoded default
+    // Fall back to generic JWT_SECRET
     if (process.env.JWT_SECRET) {
       return process.env.JWT_SECRET;
     }
-    // In development, use a default secret to avoid blocking the app
-    if (ENV === 'development') {
-      console.warn(`${envVar} not found, using default development secret`);
-      return 'trialsage-dev-secret-key-change-in-production';
-    }
-    throw new Error(`Missing required environment variable: ${envVar}`);
+    throw new Error(
+      `Missing required environment variable: ${envVar} (or JWT_SECRET). ` +
+      `Set a secure random string of at least 32 characters.`
+    );
   }
 
   return secret;

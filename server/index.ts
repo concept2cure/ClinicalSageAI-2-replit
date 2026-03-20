@@ -307,18 +307,12 @@ app.get('/readyz', async (_req, res) => {
   }
 });
 
-// Health check endpoint with debug info
+// Health check endpoint — public, minimal info only
 app.get('/api/health', async (req: Request, res: Response) => {
-  debugLog('Health check endpoint called');
-  const healthData = {
+  res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
-    debug: DEBUG,
-    node_env: process.env.NODE_ENV,
-    port: PORT,
-  };
-  debugLog('Health response', healthData);
-  res.json(healthData);
+  });
 });
 
 // Server-authoritative timestamp.
@@ -820,6 +814,8 @@ try {
 // Mount AI Assistance routes
 try {
   app.use('/api/ai-assistance', aiCircuitBreaker, aiAssistanceRoutes);
+  // Also mount at /api/ai so the client aiService.js endpoints (/api/ai/assist, /api/ai/verify, /api/ai/health) resolve
+  app.use('/api/ai', aiCircuitBreaker, aiAssistanceRoutes);
   // Initialize the AI provider router and inject into AI assistance module
   aiProviderRouter = getAIRouter(pool);
   if (aiProviderRouter) {
@@ -6172,6 +6168,16 @@ async function startServer() {
     console.log('✅ AI Completion routes mounted at /api/ai/completion');
   } catch (error) {
     console.error('Failed to mount AI completion routes:', error);
+  }
+
+  try {
+    const csrBuilderRoutes = await import('./routes/csr-builder-routes');
+    app.use('/api/csr-builder', csrBuilderRoutes.default);
+    // Also mount at /api/csr for client backward-compatibility (narrative, signals, benefit-risk)
+    app.use('/api/csr', csrBuilderRoutes.default);
+    console.log('✅ CSR Builder routes mounted at /api/csr-builder and /api/csr');
+  } catch (error) {
+    console.error('Failed to mount CSR builder routes:', error);
   }
 
   try {

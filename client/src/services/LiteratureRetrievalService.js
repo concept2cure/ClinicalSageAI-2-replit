@@ -13,13 +13,9 @@
 
 import OpenAI from 'openai';
 
-// Initialize OpenAI client with robust configuration
-const openai = new OpenAI({
-  apiKey: import.meta.env.VITE_OPENAI_API_KEY,
-  dangerouslyAllowBrowser: true, // For client-side usage - in production, proxy through backend
-  timeout: 60000, // 60 second timeout
-  maxRetries: 3, // Retry up to 3 times
-});
+// SECURITY: OpenAI calls must go through the backend API gateway.
+// Direct client-side calls with API keys are forbidden in production.
+const openai = null; // Removed: never expose API keys in the browser bundle
 
 // PubMed API base URL
 const PUBMED_API_BASE = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
