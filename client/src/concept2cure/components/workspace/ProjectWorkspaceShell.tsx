@@ -758,29 +758,29 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   return (
     <div className="flex-1 flex flex-col min-h-0" data-testid="project-workspace-shell">
       {/* ── Compact breadcrumb bar ────────────────────────────────────────── */}
-      <div className="flex items-center gap-2 px-3 h-8 border-b border-zinc-200 bg-white shrink-0">
+      <div className="flex items-center gap-3 px-4 h-11 border-b border-zinc-200 bg-white shrink-0">
         <button
           onClick={onBackToProjects}
-          className="flex items-center gap-1 text-[11px] text-zinc-400 hover:text-zinc-700 transition-colors"
+          className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-800 transition-colors"
         >
-          <ChevronLeft className="w-3.5 h-3.5" />
+          <ChevronLeft className="w-4 h-4" />
           <span>Projects</span>
         </button>
-        <span className="text-zinc-200 text-xs">·</span>
+        <span className="text-zinc-300">/</span>
         {projectType && (
-          <span className="text-[11px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-semibold">
+          <span className="text-xs px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-600 font-semibold">
             {projectType}
           </span>
         )}
-        <span className="text-[12px] font-semibold text-zinc-800 truncate">
+        <span className="text-sm font-semibold text-zinc-900 truncate">
           {projectName || 'Untitled Project'}
         </span>
         {mode === 'edit' && selectedDocId && (
           <>
-            <span className="text-zinc-200 text-xs">·</span>
+            <span className="text-zinc-300">/</span>
             <button
               onClick={handleBackToList}
-              className="text-[11px] text-blue-600 hover:text-blue-700 font-medium"
+              className="text-xs text-blue-600 hover:text-blue-800 font-medium"
             >
               Back to files
             </button>
@@ -788,15 +788,15 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         )}
         {/* View toggle — push to right */}
         {onSwitchToIntelligence && (
-          <div className="ml-auto flex items-center rounded-md border border-zinc-200 overflow-hidden">
+          <div className="ml-auto flex items-center rounded-lg border border-zinc-200 overflow-hidden">
             <button
               onClick={onSwitchToIntelligence}
-              className="px-2 py-0.5 text-[11px] font-medium text-zinc-500 hover:bg-zinc-50 transition-colors flex items-center gap-1"
+              className="px-3 py-1.5 text-xs font-medium text-zinc-500 hover:bg-zinc-50 transition-colors flex items-center gap-1.5"
             >
-              <Brain className="w-3 h-3" />
+              <Brain className="w-3.5 h-3.5" />
               Intelligence
             </button>
-            <button className="px-2 py-0.5 text-[11px] font-medium bg-blue-100 text-blue-700 transition-colors">
+            <button className="px-3 py-1.5 text-xs font-medium bg-zinc-900 text-white transition-colors">
               Documents
             </button>
           </div>
@@ -805,38 +805,38 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
 
       {/* ── Pending move banner ───────────────────────────────────────────── */}
       {pendingMove && (
-        <div className="flex items-center gap-2 px-3 h-8 border-b border-amber-200 bg-amber-50 shrink-0">
-          <Scissors className="w-3.5 h-3.5 text-amber-600" />
-          <span className="text-[11px] text-amber-800 font-medium truncate">
+        <div className="flex items-center gap-2.5 px-4 h-10 border-b border-amber-200 bg-amber-50 shrink-0">
+          <Scissors className="w-4 h-4 text-amber-600" />
+          <span className="text-xs text-amber-900 font-medium truncate">
             Moving: {pendingMove.artifact.title}
           </span>
           {pendingMove.fromSection && (
-            <span className="text-[11px] text-amber-600">from {pendingMove.fromSection}</span>
+            <span className="text-xs text-amber-700">from {pendingMove.fromSection}</span>
           )}
           {pendingMove.targetSection ? (
             <>
-              <span className="text-[11px] text-amber-500">→</span>
-              <span className="text-[11px] text-amber-700 font-medium">
+              <span className="text-xs text-amber-500">→</span>
+              <span className="text-xs text-amber-800 font-semibold">
                 {pendingMove.targetSection}
               </span>
             </>
           ) : (
-            <span className="text-[11px] text-amber-500 ml-1">
+            <span className="text-xs text-amber-600 ml-1">
               Select a dossier section to paste
             </span>
           )}
           {pendingMove.artifact.status === 'approved' && (
-            <span className="text-[11px] px-1 rounded bg-amber-100 text-amber-700 font-medium">
+            <span className="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-medium">
               ⚠ Approved
             </span>
           )}
           <button
             onClick={handleCancelMove}
-            className="ml-auto text-[11px] text-amber-700 hover:text-red-600 font-medium flex items-center gap-0.5"
+            className="ml-auto text-xs text-amber-800 hover:text-red-600 font-medium flex items-center gap-1"
           >
-            <X className="w-3 h-3" />
+            <X className="w-3.5 h-3.5" />
             Cancel
-            <kbd className="ml-1 text-[11px] px-1 py-px rounded bg-amber-200/60 text-amber-700 font-mono">
+            <kbd className="ml-1 text-xs px-1.5 py-0.5 rounded bg-amber-200/60 text-amber-800 font-mono">
               Esc
             </kbd>
           </button>
@@ -845,31 +845,31 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
 
       {/* ── Persistent context band (browse mode — selected doc reminder) */}
       {mode === 'browse' && activeArtifact && (
-        <div className="flex items-center gap-2 px-3 h-7 border-b border-blue-100 bg-blue-50/40 shrink-0">
-          <FileText className="w-3 h-3 text-blue-400" />
-          <span className="text-[11px] text-blue-700 font-medium truncate">
+        <div className="flex items-center gap-2.5 px-4 h-9 border-b border-blue-100 bg-blue-50/40 shrink-0">
+          <FileText className="w-3.5 h-3.5 text-blue-500" />
+          <span className="text-xs text-blue-800 font-medium truncate">
             {activeArtifact.title}
           </span>
           {activeArtifact.ctdSection && (
-            <span className="text-[11px] px-1 py-px rounded bg-blue-50/60 text-blue-500 font-medium">
+            <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100/60 text-blue-600 font-medium">
               {activeArtifact.ctdSection}
             </span>
           )}
           <span
             className={cn(
-              'text-[11px] px-1 py-px rounded font-medium',
+              'text-xs px-1.5 py-0.5 rounded font-medium',
               activeArtifact.status === 'locked'
-                ? 'bg-red-50/60 text-red-500'
+                ? 'bg-red-100/60 text-red-600'
                 : activeArtifact.status === 'approved'
-                  ? 'bg-green-50/60 text-green-500'
-                  : 'bg-zinc-100/60 text-zinc-400'
+                  ? 'bg-green-100/60 text-green-600'
+                  : 'bg-zinc-100 text-zinc-500'
             )}
           >
             {activeArtifact.status || 'draft'}
           </span>
           <button
             onClick={() => setMode('edit')}
-            className="ml-auto text-[11px] text-blue-500 hover:text-blue-700 font-medium"
+            className="ml-auto text-xs text-blue-600 hover:text-blue-800 font-medium"
           >
             Open →
           </button>
@@ -878,15 +878,15 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
 
       {/* ── Doc-aware header (shown when editing) ─────────────────────────── */}
       {mode === 'edit' && activeArtifact && (
-        <div className="flex items-center gap-2 px-3 h-8 border-b border-zinc-200 bg-zinc-50/60 shrink-0">
-          <FileText className="w-3.5 h-3.5 text-zinc-400" />
-          <span className="text-[11px] font-medium text-zinc-700 truncate">
+        <div className="flex items-center gap-2.5 px-4 h-10 border-b border-zinc-200 bg-zinc-50/60 shrink-0">
+          <FileText className="w-4 h-4 text-zinc-500" />
+          <span className="text-xs font-semibold text-zinc-800 truncate">
             {activeArtifact.title}
           </span>
           {activeArtifact.ctdSection && (
             <>
-              <span className="text-zinc-200 text-xs">·</span>
-              <span className="text-[11px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 font-medium">
+              <span className="text-zinc-300">/</span>
+              <span className="text-xs px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 font-medium">
                 {activeArtifact.ctdSection} — {getSectionLabel(activeArtifact.ctdSection)}
               </span>
             </>

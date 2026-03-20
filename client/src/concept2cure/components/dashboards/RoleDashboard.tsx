@@ -265,12 +265,12 @@ const COLOR_TEXT_700: Record<string, string> = {
 
 const MetricCard: React.FC<MetricCardProps> = ({ metric, colorClass }) => {
   return (
-    <div className="border border-zinc-200 rounded-xl shadow-sm bg-white">
-      <div className="p-4">
+    <div className="border border-zinc-200 rounded-xl shadow-sm bg-white hover:shadow-md transition-shadow">
+      <div className="p-5">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-xs text-zinc-500 font-medium">{metric.label}</p>
-            <p className={cn('text-2xl font-bold mt-1', COLOR_TEXT_700[colorClass] || 'text-zinc-700')}>
+            <p className="text-xs text-zinc-500 font-medium tracking-wide">{metric.label}</p>
+            <p className={cn('text-3xl font-bold mt-1.5', COLOR_TEXT_700[colorClass] || 'text-zinc-800')}>
               {typeof metric.value === 'number' && metric.value % 1 !== 0
                 ? metric.value.toFixed(1)
                 : metric.value}
@@ -285,7 +285,7 @@ const MetricCard: React.FC<MetricCardProps> = ({ metric, colorClass }) => {
           {metric.trend && (
             <div
               className={cn(
-                'flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full',
+                'flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full',
                 metric.trend === 'up' && 'bg-green-100 text-green-700',
                 metric.trend === 'down' && 'bg-red-100 text-red-700',
                 metric.trend === 'stable' && 'bg-zinc-100 text-zinc-700'
@@ -293,7 +293,7 @@ const MetricCard: React.FC<MetricCardProps> = ({ metric, colorClass }) => {
             >
               <TrendingUp
                 className={cn(
-                  'h-3 w-3',
+                  'h-3.5 w-3.5',
                   metric.trend === 'down' && 'rotate-180',
                   metric.trend === 'stable' && 'rotate-90'
                 )}
@@ -303,12 +303,12 @@ const MetricCard: React.FC<MetricCardProps> = ({ metric, colorClass }) => {
           )}
         </div>
         {metric.target && (
-          <div className="mt-3">
-            <div className="flex items-center justify-between text-xs text-zinc-500 mb-1">
+          <div className="mt-4">
+            <div className="flex items-center justify-between text-xs text-zinc-500 mb-1.5">
               <span>Target: {metric.target}</span>
-              <span>{Math.round((metric.value / metric.target) * 100)}%</span>
+              <span className="font-medium">{Math.round((metric.value / metric.target) * 100)}%</span>
             </div>
-            <Progress value={(metric.value / metric.target) * 100} className="h-1.5" />
+            <Progress value={(metric.value / metric.target) * 100} className="h-2" />
           </div>
         )}
       </div>
@@ -651,8 +651,8 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
         <div className="p-6 space-y-6">
           {/* Metrics Grid */}
           <div>
-            <h2 className="text-sm font-semibold text-zinc-700 mb-3">Key Metrics</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <h2 className="text-base font-semibold text-zinc-800 mb-4">Key Metrics</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {metrics.map(metric => (
                 <MetricCard key={metric.id} metric={metric} colorClass={roleConfig.color} />
               ))}
@@ -700,8 +700,8 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
           </div>
 
           {/* Workflow Snapshot */}
-          <div className="border border-zinc-200 rounded-md">
-            <div className="px-4 py-3 pb-2 border-b border-zinc-200">
+          <div className="border border-zinc-200 rounded-xl shadow-sm bg-white">
+            <div className="px-5 py-4 border-b border-zinc-200">
               <h3 className="text-base font-semibold flex items-center gap-2">
                 <GitBranch className="h-4 w-4" />
                 Active Workflow Steps
@@ -710,7 +710,7 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
                 Proof-backed execution trail for the current workflow run
               </p>
             </div>
-            <div className="px-4 py-3 space-y-3">
+            <div className="px-5 py-4 space-y-3">
               {activeWorkflowSteps.map(step => (
                 <StepCard
                   key={step.id}
@@ -731,17 +731,17 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
           </div>
 
           {/* Relevant Submissions */}
-          <div className="border border-zinc-200 rounded-md">
-            <div className="px-4 py-3 pb-2 border-b border-zinc-200">
+          <div className="border border-zinc-200 rounded-xl shadow-sm bg-white">
+            <div className="px-5 py-4 border-b border-zinc-200">
               <h3 className="text-base font-semibold flex items-center gap-2">
-                <Globe2 className="h-4 w-4" />
+                <Globe2 className="h-4 w-4 text-zinc-500" />
                 Relevant Submission Types
               </h3>
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-zinc-500 mt-0.5">
                 Submission types most relevant to your role
               </p>
             </div>
-            <div className="px-4 py-3">
+            <div className="px-5 py-4">
               <div className="flex flex-wrap gap-2">
                 {roleConfig.relevantSubmissions.map(type => (
                   <Badge key={type} variant="outline" className="text-xs">

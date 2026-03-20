@@ -139,7 +139,7 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
                 <button
                   key={t.id}
                   onClick={() => onNavigate('ai-copilot')}
-                  className="w-full group flex items-center gap-3 px-4 py-3 rounded-xl bg-white border border-zinc-200 hover:border-blue-200 hover:shadow-sm transition-all text-left"
+                  className="w-full group flex items-center gap-3 px-4 py-3 rounded-xl bg-white border border-zinc-200 hover:border-blue-200 hover:shadow-md transition-all text-left"
                 >
                   <MessageSquare className="w-4 h-4 text-violet-500 flex-shrink-0" />
                   <span className="text-sm font-medium text-zinc-900 truncate flex-1">{t.title}</span>
@@ -153,7 +153,7 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
                 <button
                   key={a.id}
                   onClick={() => onNavigate('author')}
-                  className="w-full group flex items-center gap-3 px-4 py-3 rounded-xl bg-white border border-zinc-200 hover:border-blue-200 hover:shadow-sm transition-all text-left"
+                  className="w-full group flex items-center gap-3 px-4 py-3 rounded-xl bg-white border border-zinc-200 hover:border-blue-200 hover:shadow-md transition-all text-left"
                 >
                   <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />
                   <span className="text-sm font-medium text-zinc-900 truncate flex-1">{a.title || a.type}</span>
@@ -211,7 +211,7 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
                 <button
                   key={project.id}
                   onClick={() => onProjectClick(project.id)}
-                  className="w-full group flex items-center gap-3 px-4 py-3.5 rounded-xl bg-white border border-zinc-200 hover:border-blue-200 hover:shadow-sm transition-all text-left"
+                  className="w-full group flex items-center gap-3 px-4 py-3.5 rounded-xl bg-white border border-zinc-200 hover:border-blue-200 hover:shadow-md transition-all text-left"
                 >
                   <span className={cn('w-2 h-2 rounded-full flex-shrink-0', TYPE_COLORS[project.type] ?? 'bg-zinc-400')} />
                   <span className="text-xs font-semibold text-zinc-500 w-10 flex-shrink-0">{project.type}</span>
@@ -265,7 +265,7 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
                 <button
                   key={mod.id}
                   onClick={() => onNavigate(mod.id)}
-                  className="flex items-center gap-2.5 p-3 rounded-xl bg-white border border-zinc-200 hover:shadow-sm transition-all text-left"
+                  className="flex items-center gap-2.5 p-3.5 rounded-xl bg-white border border-zinc-200 hover:border-blue-200 hover:shadow-md transition-all text-left"
                 >
                   <mod.icon className={cn('w-4 h-4 flex-shrink-0', mod.color)} />
                   <span className="text-sm text-zinc-700">{mod.label}</span>
