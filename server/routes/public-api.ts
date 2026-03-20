@@ -16,11 +16,14 @@
 
 import { Router, Request, Response, NextFunction } from 'express';
 import { validateApiKey } from '../services/api-key-service.js';
-import { recordUsage } from '../services/usage-metering.js';
+import { recordUsage, checkQuota } from '../services/usage-metering.js';
 import { csrSearchService } from '../services/csr-search-service.js';
 import { getRegulatoryPathwayIntelligence } from '../services/regulatory-pathway-intelligence.js';
 import { getEndpointRecommenderService } from '../services/endpoint-recommender-service.js';
 import { precedentEngine } from '../services/precedent-engine.js';
+
+// In-memory sliding window rate limiter per API key
+const rateLimitWindows = new Map<number, { count: number; resetAt: number }>();
 
 const router = Router();
 
@@ -54,6 +57,33 @@ async function requireApiKey(req: ApiRequest, res: Response, next: NextFunction)
     });
   }
 
+  // Sliding window rate limit: 60 requests per minute per API key
+  const keyId = result.keyId!;
+  const now = Date.now();
+  const WINDOW_MS = 60_000;
+  const MAX_REQUESTS = 60;
+
+  let window = rateLimitWindows.get(keyId);
+  if (!window || now >= window.resetAt) {
+    window = { count: 0, resetAt: now + WINDOW_MS };
+    rateLimitWindows.set(keyId, window);
+  }
+
+  window.count++;
+
+  // Set rate limit headers on every response
+  res.setHeader('X-RateLimit-Limit', MAX_REQUESTS);
+  res.setHeader('X-RateLimit-Remaining', Math.max(0, MAX_REQUESTS - window.count));
+  res.setHeader('X-RateLimit-Reset', Math.ceil(window.resetAt / 1000));
+
+  if (window.count > MAX_REQUESTS) {
+    return res.status(429).json({
+      error: 'Rate limit exceeded',
+      message: `Maximum ${MAX_REQUESTS} requests per minute. Retry after ${Math.ceil((window.resetAt - now) / 1000)}s.`,
+      retryAfter: Math.ceil((window.resetAt - now) / 1000),
+    });
+  }
+
   req.apiOrganizationId = result.organizationId;
   req.apiScopes = result.scopes;
   req.apiKeyId = result.keyId;
@@ -69,6 +99,35 @@ function requireScope(scope: string) {
         available: req.apiScopes,
       });
     }
+    next();
+  };
+}
+
+function requireQuota(featureId: string) {
+  return async (req: ApiRequest, res: Response, next: NextFunction) => {
+    if (!req.apiOrganizationId) {
+      return next();
+    }
+
+    try {
+      const quota = await checkQuota(req.apiOrganizationId, featureId);
+      if (!quota.allowed) {
+        return res.status(403).json({
+          error: 'Quota exceeded',
+          feature: featureId,
+          remaining: quota.remaining,
+          limit: quota.limit,
+          upgradeRequired: quota.upgradeRequired || null,
+          message: quota.limit === 0
+            ? `This feature requires a ${quota.upgradeRequired || 'paid'} plan.`
+            : 'Monthly quota exhausted. Upgrade your plan or wait for the next billing cycle.',
+        });
+      }
+    } catch {
+      // Quota check failure should not block the request — log and continue
+      console.warn('[public-api] Quota check failed for org', req.apiOrganizationId, featureId);
+    }
+
     next();
   };
 }
@@ -171,7 +230,7 @@ router.use(requireApiKey);
 // GET /api/v1/csr/search — Search CSR Knowledge Base
 // ============================================================================
 
-router.get('/csr/search', requireScope('csr:read'), async (req: ApiRequest, res: Response) => {
+router.get('/csr/search', requireScope('csr:read'), requireQuota('api_csr_search'), async (req: ApiRequest, res: Response) => {
   try {
     const { indication, phase, endpoint, sponsor, limit = '20' } = req.query;
 
@@ -208,7 +267,7 @@ router.get('/csr/search', requireScope('csr:read'), async (req: ApiRequest, res:
 // GET /api/v1/regulatory/pathways — Regulatory Pathway Recommendations
 // ============================================================================
 
-router.get('/regulatory/pathways', requireScope('regulatory:read'), async (req: ApiRequest, res: Response) => {
+router.get('/regulatory/pathways', requireScope('regulatory:read'), requireQuota('api_regulatory_pathways'), async (req: ApiRequest, res: Response) => {
   try {
     const { productType, indication, targetAgencies } = req.query;
 
@@ -247,7 +306,7 @@ router.get('/regulatory/pathways', requireScope('regulatory:read'), async (req: 
 // GET /api/v1/endpoints/recommend — Endpoint Recommendations
 // ============================================================================
 
-router.get('/endpoints/recommend', requireScope('endpoints:read'), async (req: ApiRequest, res: Response) => {
+router.get('/endpoints/recommend', requireScope('endpoints:read'), requireQuota('api_endpoint_recommend'), async (req: ApiRequest, res: Response) => {
   try {
     const { indication, phase, therapeuticArea } = req.query;
 
@@ -283,7 +342,7 @@ router.get('/endpoints/recommend', requireScope('endpoints:read'), async (req: A
 // GET /api/v1/precedent/search — Regulatory Precedent Search
 // ============================================================================
 
-router.get('/precedent/search', requireScope('precedent:read'), async (req: ApiRequest, res: Response) => {
+router.get('/precedent/search', requireScope('precedent:read'), requireQuota('api_precedent_search'), async (req: ApiRequest, res: Response) => {
   try {
     const { indication, agency, submissionType, limit = '10' } = req.query;
 
@@ -318,7 +377,7 @@ router.get('/precedent/search', requireScope('precedent:read'), async (req: ApiR
 // GET /api/v1/trial-design/suggest — Trial Design Suggestions
 // ============================================================================
 
-router.get('/trial-design/suggest', requireScope('trial-design:read'), async (req: ApiRequest, res: Response) => {
+router.get('/trial-design/suggest', requireScope('trial-design:read'), requireQuota('api_trial_design'), async (req: ApiRequest, res: Response) => {
   try {
     const { indication, phase, primaryEndpoint } = req.query;
 

@@ -345,9 +345,28 @@ router.patch('/me/notifications', async (req: Request, res: Response) => {
 /**
  * GET /api/users/:id
  * Get user by ID (only matches numeric IDs)
+ * Requires authentication — user can only fetch users within their own org
  */
 router.get('/:id(\\d+)', async (req: Request, res: Response) => {
   try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '');
+
+    if (isDev && !token) {
+      return res.json(devUserResponse);
+    }
+
+    if (!token) {
+      return res.status(401).json({
+        error: { code: 'AUTH_006', message: 'No token provided' },
+      });
+    }
+
+    const decoded = jwt.verify(token, config.jwt.secret) as {
+      userId: string;
+      organizationId?: string;
+    };
+
     const { id } = req.params;
 
     const user = await db
@@ -357,13 +376,21 @@ router.get('/:id(\\d+)', async (req: Request, res: Response) => {
       .limit(1);
 
     if (!user.length) {
-      if (isDev) return res.json(devUserResponse);
       return res.status(404).json({
         error: { code: 'USER_NOT_FOUND', message: 'User not found' },
       });
     }
 
     const userData = user[0];
+
+    // Tenant isolation: only return user if they belong to the same org
+    const requestorOrgId = decoded.organizationId || '2';
+    const targetOrgId = userData.organizationId?.toString() || '2';
+    if (requestorOrgId !== targetOrgId) {
+      return res.status(404).json({
+        error: { code: 'USER_NOT_FOUND', message: 'User not found' },
+      });
+    }
 
     res.json({
       id: userData.id.toString(),
@@ -373,9 +400,15 @@ router.get('/:id(\\d+)', async (req: Request, res: Response) => {
       displayName:
         `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || userData.email,
       roles: ['user'],
-      organizationId: '2',
+      organizationId: targetOrgId,
     });
   } catch (error: any) {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+      if (isDev) return res.json(devUserResponse);
+      return res.status(401).json({
+        error: { code: 'AUTH_005', message: 'Session expired' },
+      });
+    }
     console.error('[users] Get user by ID error:', error);
     if (isDev) return res.json(devUserResponse);
 
@@ -415,30 +448,57 @@ router.post('/login', async (req: Request, res: Response) => {
       .limit(1);
 
     if (!user.length) {
-      // In dev, still succeed
-      return res.json({
-        id: 1,
-        username: loginEmail.split('@')[0],
-        email: loginEmail,
-        role: 'user',
+      // Use constant-time comparison to prevent timing attacks
+      await bcrypt.hash(password, 12);
+      return res.status(401).json({
+        error: { code: 'AUTH_001', message: 'Invalid email or password' },
       });
     }
 
     const userData = user[0];
+
+    // Verify password
+    if (!userData.passwordHash) {
+      return res.status(401).json({
+        error: { code: 'AUTH_001', message: 'Invalid email or password' },
+      });
+    }
+
+    const passwordValid = await bcrypt.compare(password, userData.passwordHash);
+    if (!passwordValid) {
+      return res.status(401).json({
+        error: { code: 'AUTH_001', message: 'Invalid email or password' },
+      });
+    }
+
+    // Generate JWT
+    const token = jwt.sign(
+      {
+        userId: String(userData.id),
+        email: userData.email,
+        organizationId: userData.organizationId ? String(userData.organizationId) : '2',
+      },
+      config.jwt.secret,
+      { expiresIn: '24h' }
+    );
+
+    // Update last login
+    db.update(users)
+      .set({ lastLogin: new Date() })
+      .where(eq(users.id, userData.id))
+      .catch(() => {});
+
     res.json({
       id: userData.id,
       username: userData.email?.split('@')[0] || 'user',
       email: userData.email,
       role: 'user',
+      token,
     });
   } catch (error) {
     console.error('[users] Login error:', error);
-    // In dev mode, still succeed
-    res.json({
-      id: 1,
-      username: loginEmail?.split('@')[0] || 'developer',
-      email: loginEmail || 'developer@trialsage.ai',
-      role: 'admin',
+    res.status(500).json({
+      error: { code: 'INTERNAL_ERROR', message: 'Login failed' },
     });
   }
 });
