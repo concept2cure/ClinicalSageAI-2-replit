@@ -310,7 +310,8 @@ export async function draftCSRSection(
 export async function compareWithExistingCSRs(
   indication: string,
   phase: string,
-  endpoint: string
+  endpoint: string,
+  organizationId?: number
 ): Promise<Array<{
   studyId: string;
   title: string;
@@ -322,15 +323,23 @@ export async function compareWithExistingCSRs(
   similarity: number;
 }>> {
   try {
-    const result = await pool.query(
-      `SELECT id, title, phase, indication, sample_size, primary_endpoint, outcome
-       FROM csr_reports
-       WHERE LOWER(indication) LIKE $1
-       OR LOWER(primary_endpoint) LIKE $2
-       ORDER BY created_at DESC
-       LIMIT 20`,
-      [`%${indication.toLowerCase()}%`, `%${endpoint.toLowerCase()}%`]
-    );
+    // Tenant-scoped query with proper parenthesization
+    const query = organizationId
+      ? `SELECT id, title, phase, indication, sample_size, primary_endpoint, outcome
+         FROM csr_reports
+         WHERE (LOWER(indication) LIKE $1 OR LOWER(primary_endpoint) LIKE $2)
+         AND organization_id = $3
+         ORDER BY created_at DESC
+         LIMIT 20`
+      : `SELECT id, title, phase, indication, sample_size, primary_endpoint, outcome
+         FROM csr_reports
+         WHERE (LOWER(indication) LIKE $1 OR LOWER(primary_endpoint) LIKE $2)
+         ORDER BY created_at DESC
+         LIMIT 20`;
+    const params = organizationId
+      ? [`%${indication.toLowerCase()}%`, `%${endpoint.toLowerCase()}%`, organizationId]
+      : [`%${indication.toLowerCase()}%`, `%${endpoint.toLowerCase()}%`];
+    const result = await pool.query(query, params);
 
     return (result.rows || []).map((row: Record<string, unknown>) => ({
       studyId: String(row.id || ''),

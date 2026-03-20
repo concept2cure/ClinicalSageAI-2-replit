@@ -22,44 +22,51 @@ const router = Router();
 // Validation schemas
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ICH E3 valid section numbers
+const VALID_SECTION_NUMBERS = [
+  '1', '2', '2.1', '2.2', '2.3', '2.4', '2.5', '2.6', '2.7', '2.8', '2.9', '2.10',
+  '3', '4', '5', '6', '7', '8', '8.1', '8.2',
+  '9', '9.1', '9.2', '9.3', '9.4', '9.5', '9.6', '9.7',
+  '10', '10.1', '10.2', '11', '11.1', '11.2', '11.3', '11.4',
+  '12', '12.1', '12.2', '12.3', '12.4', '12.5', '13', '14', '15', '16',
+] as const;
+
 const studyInfoSchema = z.object({
-  title: z.string().min(1),
-  protocolNumber: z.string().min(1),
-  phase: z.string().min(1),
-  indication: z.string().min(1),
-  sponsor: z.string().min(1),
-  investigationalProduct: z.string().min(1),
-  comparator: z.string().optional(),
-  studyDesign: z.string().min(1),
-  primaryEndpoint: z.string().min(1),
-  secondaryEndpoints: z.array(z.string()).optional(),
-  sampleSize: z.number().optional(),
-  treatmentDuration: z.string().optional(),
-  targetAgencies: z.array(z.string()).optional(),
+  title: z.string().min(1).max(500),
+  protocolNumber: z.string().min(1).max(100),
+  phase: z.string().min(1).max(50),
+  indication: z.string().min(1).max(500),
+  sponsor: z.string().min(1).max(300),
+  investigationalProduct: z.string().min(1).max(300),
+  comparator: z.string().max(300).optional(),
+  studyDesign: z.string().min(1).max(500),
+  primaryEndpoint: z.string().min(1).max(500),
+  secondaryEndpoints: z.array(z.string().max(500)).max(20).optional(),
+  sampleSize: z.number().int().positive().max(1000000).optional(),
+  treatmentDuration: z.string().max(200).optional(),
+  targetAgencies: z.array(z.string().max(50)).max(10).optional(),
 });
 
 const buildRequestSchema = z.object({
-  organizationId: z.number().default(1),
-  userId: z.number().default(1),
   projectId: z.number().optional(),
   studyInfo: studyInfoSchema,
   sectionsToGenerate: z.array(z.string()).optional(),
 });
 
 const draftSectionSchema = z.object({
-  sectionNumber: z.string().min(1),
+  sectionNumber: z.enum(VALID_SECTION_NUMBERS),
   studyInfo: studyInfoSchema,
 });
 
 const compareSchema = z.object({
-  indication: z.string().min(1),
-  phase: z.string().min(1),
-  endpoint: z.string().min(1),
+  indication: z.string().min(1).max(500),
+  phase: z.string().min(1).max(50),
+  endpoint: z.string().min(1).max(500),
 });
 
 const safetySchema = z.object({
-  drugName: z.string().min(1),
-  indication: z.string().min(1),
+  drugName: z.string().min(1).max(300),
+  indication: z.string().min(1).max(500),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -92,7 +99,17 @@ router.post('/build', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Invalid request', details: validation.error.errors });
     }
 
-    const job = await launchCSRBuild(validation.data);
+    // Use auth context for org/user IDs instead of user-supplied values
+    const authUser = (req as any).user || {};
+    const tenantCtx = (req as any).tenantContext || {};
+    const organizationId = tenantCtx.organizationId || authUser.organizationId || 1;
+    const userId = authUser.id || authUser.userId || 1;
+
+    const job = await launchCSRBuild({
+      organizationId,
+      userId,
+      ...validation.data,
+    });
 
     res.json({
       success: true,

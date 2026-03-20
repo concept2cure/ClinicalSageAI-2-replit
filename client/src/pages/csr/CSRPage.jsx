@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Loader2, Search, BarChart3, FileText, AlertTriangle, TrendingUp } from 'lucide-react';
+import DOMPurify from 'dompurify';
 import {
   generateNarrative,
   detectSignals,
@@ -612,7 +613,7 @@ const CSRPage = () => {
                   <div className="p-4 border rounded bg-white">
                     <div
                       className="prose max-w-none"
-                      dangerouslySetInnerHTML={{ __html: narrativeResult.replace(/\n/g, '<br/>') }}
+                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(narrativeResult.replace(/\n/g, '<br/>')) }}
                     />
                   </div>
                 ) : (
