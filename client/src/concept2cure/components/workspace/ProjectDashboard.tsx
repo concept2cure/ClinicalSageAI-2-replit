@@ -209,6 +209,7 @@ export function ProjectDashboard({
   const barTotal = stats.total || 1; // avoid div-by-zero
 
   return (
+    <div className="flex-1 overflow-y-auto">
     <div className="mx-auto w-full max-w-6xl space-y-8 px-2 py-6 sm:px-6 lg:px-8">
 
       {/* ── 1. Hero Header ──────────────────────────────────────────────────── */}
@@ -423,8 +424,8 @@ export function ProjectDashboard({
             />
             <ActionCard
               icon={PenLine}
-              title="Open Editor"
-              subtitle="Continue editing documents"
+              title="All Documents"
+              subtitle="Browse and edit all documents"
               onClick={onOpenEditor}
             />
             <ActionCard
@@ -443,11 +444,13 @@ export function ProjectDashboard({
               icon={History}
               title="Version History"
               subtitle={`${stats.total} document${stats.total !== 1 ? 's' : ''} tracked`}
+              onClick={onOpenEditor}
             />
             <ActionCard
               icon={PackageCheck}
               title="Export Package"
               subtitle={`${stats.counts.approved + stats.counts.locked} approved for export`}
+              onClick={onOpenEditor}
             />
           </div>
         </div>
@@ -522,6 +525,7 @@ export function ProjectDashboard({
           </p>
         )}
       </section>
+    </div>
     </div>
   );
 }
