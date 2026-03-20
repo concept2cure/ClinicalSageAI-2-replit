@@ -11,7 +11,7 @@ import { eq } from 'drizzle-orm';
 
 const router = Router();
 
-const isDev = process.env.NODE_ENV !== 'production';
+const isDev = process.env.NODE_ENV === 'development';
 
 /**
  * GET /api/collaboration/activities

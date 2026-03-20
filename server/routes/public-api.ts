@@ -233,8 +233,34 @@ router.get('/docs', (_req: Request, res: Response) => {
   });
 });
 
+// ============================================================================
+// REQUEST LOGGING & INPUT SANITIZATION
+// ============================================================================
+
+function sanitizeQueryParam(value: unknown, maxLen = 500): string | undefined {
+  if (value === undefined || value === null) return undefined;
+  const str = String(value).trim();
+  if (str.length === 0) return undefined;
+  // Truncate excessively long inputs
+  return str.length > maxLen ? str.slice(0, maxLen) : str;
+}
+
+function parsePositiveInt(value: unknown, defaultVal: number, max = 100): number {
+  const num = parseInt(String(value), 10);
+  if (isNaN(num) || num < 1) return defaultVal;
+  return Math.min(num, max);
+}
+
 // Apply API key auth to all subsequent routes
 router.use(requireApiKey);
+
+// Log every authenticated API request for observability
+router.use((req: ApiRequest, _res: Response, next: NextFunction) => {
+  console.log(
+    `[public-api] ${req.method} ${req.path} org=${req.apiOrganizationId} key=${req.apiKeyId}`,
+  );
+  next();
+});
 
 // ============================================================================
 // GET /api/v1/csr/search — Search CSR Knowledge Base
@@ -242,7 +268,11 @@ router.use(requireApiKey);
 
 router.get('/csr/search', requireScope('csr:read'), requireQuota('api_csr_search'), async (req: ApiRequest, res: Response) => {
   try {
-    const { indication, phase, endpoint, sponsor, limit = '20' } = req.query;
+    const indication = sanitizeQueryParam(req.query.indication);
+    const phase = sanitizeQueryParam(req.query.phase);
+    const endpoint = sanitizeQueryParam(req.query.endpoint);
+    const sponsor = sanitizeQueryParam(req.query.sponsor);
+    const limit = parsePositiveInt(req.query.limit, 20, 100);
 
     // Record usage
     if (req.apiOrganizationId) {
@@ -255,15 +285,15 @@ router.get('/csr/search', requireScope('csr:read'), requireQuota('api_csr_search
     const searchResults = await csrSearchService.searchCSRs({
       indication: indication as string,
       phase: phase as string,
-      query_text: endpoint as string || sponsor as string,
-      limit: parseInt(limit as string, 10),
+      query_text: endpoint || sponsor || '',
+      limit,
     });
 
     return res.json({
       results: searchResults.csrs,
       query: { indication, phase, endpoint, sponsor },
       total: searchResults.results_count,
-      limit: parseInt(limit as string, 10),
+      limit,
       _apiVersion: 'v1',
     });
   } catch (error: unknown) {
@@ -354,7 +384,10 @@ router.get('/endpoints/recommend', requireScope('endpoints:read'), requireQuota(
 
 router.get('/precedent/search', requireScope('precedent:read'), requireQuota('api_precedent_search'), async (req: ApiRequest, res: Response) => {
   try {
-    const { indication, agency, submissionType, limit = '10' } = req.query;
+    const indication = sanitizeQueryParam(req.query.indication);
+    const agency = sanitizeQueryParam(req.query.agency);
+    const submissionType = sanitizeQueryParam(req.query.submissionType);
+    const limit = parsePositiveInt(req.query.limit, 10, 50);
 
     if (req.apiOrganizationId) {
       recordUsage(req.apiOrganizationId, 0, 'api_precedent_search', 1, {
@@ -364,16 +397,16 @@ router.get('/precedent/search', requireScope('precedent:read'), requireQuota('ap
 
     const precedents = await precedentEngine.search({
       indication: indication as string,
-      submissionType: (submissionType as string) || 'NDA',
+      submissionType: submissionType || 'NDA',
       query: indication as string,
-      limit: parseInt(limit as string, 10),
+      limit,
     });
 
     return res.json({
       query: { indication, agency, submissionType },
       precedents,
       total: precedents.length,
-      limit: parseInt(limit as string, 10),
+      limit,
       _apiVersion: 'v1',
     });
   } catch (error: unknown) {

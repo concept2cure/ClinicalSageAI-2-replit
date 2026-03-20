@@ -17,9 +17,10 @@ import { config } from '../config/environment';
 
 const router = Router();
 
-const isDev = process.env.NODE_ENV !== 'production';
+// Dev mode requires explicit opt-in via NODE_ENV=development (not just "not production")
+const isDev = process.env.NODE_ENV === 'development';
 
-// Dev user response
+// Dev user response — uses 'user' role (not admin) to match least-privilege principle
 const devUserResponse = {
   id: 1,
   username: 'developer',
@@ -27,9 +28,9 @@ const devUserResponse = {
   firstName: 'Dev',
   lastName: 'User',
   displayName: 'Dev User',
-  role: 'admin',
-  roles: ['admin', 'user'],
-  permissions: ['*'],
+  role: 'user',
+  roles: ['user'],
+  permissions: [],
   organizationId: '2',
   organizationName: 'TrialSage Demo',
   mfaEnabled: false,
