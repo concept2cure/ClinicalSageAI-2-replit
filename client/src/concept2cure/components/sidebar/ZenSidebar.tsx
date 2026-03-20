@@ -47,6 +47,7 @@ import {
   Globe,
   Key,
   Inbox,
+  Palette,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -622,6 +623,14 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               subtitle="Context · Uploads · Sources"
               active={activeNavId === 'project-knowledge'}
               onClick={() => onNavigate?.('project-knowledge')}
+            />
+            <NavItem
+              icon={<Palette className="w-3.5 h-3.5" />}
+              label="Branding & Templates"
+              subtitle="Logo · Letterhead · Templates"
+              active={activeNavId === 'client-branding'}
+              accentColor="violet"
+              onClick={() => onNavigate?.('client-branding')}
             />
             <NavItem
               icon={<Key className="w-3.5 h-3.5" />}

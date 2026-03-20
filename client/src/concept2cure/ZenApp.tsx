@@ -268,6 +268,9 @@ const CollaborationHubPage = lazy(() =>
 // User Inbox — personal command center with worklist, approvals, alerts
 const UserInboxPage = lazy(() => import('./pages/UserInbox'));
 
+// Client Branding — logo, letterhead, templates, brand settings
+const ClientBrandingSettings = lazy(() => import('./components/settings/ClientBrandingSettings'));
+
 // Biostatistics Platform — statistical analysis, power calculations, endpoints
 const BiostatPlatformDashboard = lazy(
   () => import('@/components/biostat/BiostatPlatformDashboard')
@@ -423,7 +426,8 @@ type LayoutMode =
   | 'deep-research'
   | 'report-engine'
   | 'about-training'
-  | 'user-inbox';
+  | 'user-inbox'
+  | 'client-branding';
 
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
@@ -1414,6 +1418,7 @@ export const ZenApp: React.FC = () => {
         'go-document-sherpa': 'document-sherpa',
         'go-collaboration': 'collaboration-hub',
         'go-inbox': 'user-inbox',
+        'go-branding': 'client-branding',
         'go-agents': 'agent-hub',
         'go-snowglobe': 'snowglobe',
         'go-review-pulse': 'review-pulse',
@@ -1811,6 +1816,7 @@ export const ZenApp: React.FC = () => {
               'client-intelligence': 'client-intelligence',
               'collaboration-hub': 'collaboration-hub',
               'user-inbox': 'user-inbox',
+              'client-branding': 'client-branding',
               biostatistics: 'biostatistics',
               'training-center': 'training-center',
               'agent-hub': 'agent-hub',
@@ -1939,6 +1945,9 @@ export const ZenApp: React.FC = () => {
               break;
             case 'user-inbox':
               setLayoutMode('user-inbox');
+              break;
+            case 'client-branding':
+              setLayoutMode('client-branding');
               break;
             case 'biostatistics':
               setLayoutMode('biostatistics');
@@ -2880,6 +2889,25 @@ export const ZenApp: React.FC = () => {
                   <UserInboxPage />
                 </Suspense>
               </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── Client Branding — logo, letterhead, templates ── */}
+          {!embeddedModule && layoutMode === 'client-branding' && (
+            <div className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-[#FAFAF9]" data-testid="workspace-client-branding">
+              <div className="p-6">
+                <ErrorBoundary>
+                  <Suspense
+                    fallback={
+                      <div className="flex-1 flex items-center justify-center">
+                        <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                      </div>
+                    }
+                  >
+                    <ClientBrandingSettings />
+                  </Suspense>
+                </ErrorBoundary>
+              </div>
             </div>
           )}
 

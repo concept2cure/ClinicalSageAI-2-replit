@@ -6486,6 +6486,15 @@ async function startServer() {
     console.error('❌ Failed to mount Approval Workflow routes:', error);
   }
 
+  // ── Client Branding — logo, letterhead, templates, brand settings ──────────
+  try {
+    const clientBrandingRoutes = await import('./routes/client-branding');
+    app.use('/api/client-branding', clientBrandingRoutes.default);
+    console.log('✅ Client Branding routes mounted at /api/client-branding');
+  } catch (error) {
+    console.error('❌ Failed to mount Client Branding routes:', error);
+  }
+
   // ── Inline Annotations — sentence/selection-level approvals on documents ──
   try {
     const inlineAnnotationRoutes = await import('./routes/inline-annotations');
