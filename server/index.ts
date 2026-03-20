@@ -6486,6 +6486,15 @@ async function startServer() {
     console.error('❌ Failed to mount Approval Workflow routes:', error);
   }
 
+  // ── Decision Lineage — immutable audit-ready decision & data lineage ──────
+  try {
+    const decisionLineageRoutes = await import('./routes/decision-lineage');
+    app.use('/api/decision-lineage', decisionLineageRoutes.default);
+    console.log('✅ Decision Lineage routes mounted at /api/decision-lineage');
+  } catch (error) {
+    console.error('❌ Failed to mount Decision Lineage routes:', error);
+  }
+
   // ──────────────────────────────────────────────────────────────────────────
   // C2C MISSING ROUTES — stub endpoints for notifications, sections, predicates
   // Must be registered BEFORE the catch-all 404 handler

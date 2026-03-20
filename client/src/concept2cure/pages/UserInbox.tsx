@@ -30,7 +30,9 @@ import {
   BarChart3,
   Sparkles,
   UserPlus,
+  GitBranch,
 } from 'lucide-react';
+import DecisionLineageMap from '../components/audit/DecisionLineageMap';
 import {
   useApprovalRequests,
   useDecideApproval,
@@ -39,7 +41,7 @@ import {
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-type InboxSection = 'overview' | 'approvals' | 'tasks' | 'alerts';
+type InboxSection = 'overview' | 'approvals' | 'tasks' | 'alerts' | 'lineage';
 
 // ── Component ────────────────────────────────────────────────────────────────
 
@@ -107,6 +109,7 @@ const UserInbox: React.FC<{ onNavigate?: (mode: string) => void }> = ({ onNaviga
     { key: 'approvals', label: 'Approvals', icon: Shield, badge: pendingApprovals.length || undefined },
     { key: 'tasks', label: 'My Tasks', icon: ListTodo },
     { key: 'alerts', label: 'Alerts', icon: Bell },
+    { key: 'lineage', label: 'Decision Lineage', icon: GitBranch },
   ];
 
   return (
@@ -182,6 +185,15 @@ const UserInbox: React.FC<{ onNavigate?: (mode: string) => void }> = ({ onNaviga
 
           {activeSection === 'alerts' && (
             <AlertsSection />
+          )}
+
+          {activeSection === 'lineage' && (
+            <div className="bg-white rounded-xl border overflow-hidden" style={{ minHeight: '500px' }}>
+              <DecisionLineageMap
+                entityType="organization"
+                entityId={1}
+              />
+            </div>
           )}
         </div>
       </div>
