@@ -1049,7 +1049,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   return (
     <div className="flex flex-col h-full bg-white">
       {/* ── Document toolbar ───────────────────────────────────────────── */}
-      <div className="flex items-center h-10 px-3 border-b border-zinc-200 bg-white shrink-0 gap-2">
+      <div className="flex items-center h-12 px-4 border-b border-zinc-200 bg-white shrink-0 gap-2.5">
         {/* Left: back + title + status */}
         <button
           onClick={() => {
@@ -1057,18 +1057,18 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             setShowArtifactList(true);
             setAiResult(null);
           }}
-          className="text-xs text-zinc-400 hover:text-zinc-700 shrink-0 px-1.5 py-0.5 rounded hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+          className="text-xs text-zinc-500 hover:text-zinc-800 shrink-0 px-2 py-1 rounded-md hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
         >
           ← Docs
         </button>
-        <span className="text-zinc-400 text-xs">/</span>
-        <span className="text-sm font-semibold text-zinc-900 truncate max-w-[260px]">
+        <span className="text-zinc-300">/</span>
+        <span className="text-sm font-semibold text-zinc-900 truncate max-w-[280px]">
           {activeArtifact?.title}
         </span>
         {activeArtifact?.ctdSection && (
           <button
             onClick={() => setShowCtdInput(prev => !prev)}
-            className="text-[11px] px-1.5 py-0.5 rounded bg-violet-50 text-violet-600 font-semibold shrink-0 ring-1 ring-violet-200/60 hover:bg-violet-100 transition-colors cursor-pointer"
+            className="text-xs px-2 py-0.5 rounded-md bg-violet-50 text-violet-700 font-semibold shrink-0 ring-1 ring-violet-200/60 hover:bg-violet-100 transition-colors cursor-pointer"
             title="Edit CTD section placement"
           >
             CTD {activeArtifact.ctdSection}
@@ -1076,37 +1076,37 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         )}
         <span
           className={cn(
-            'text-[11px] px-1.5 py-0.5 rounded font-semibold shrink-0 uppercase tracking-wide',
+            'text-xs px-2 py-0.5 rounded-md font-semibold shrink-0 uppercase tracking-wide',
             activeArtifact?.status === 'approved'
-              ? 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200'
+              ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
               : activeArtifact?.status === 'locked'
-                ? 'bg-red-50 text-red-600 ring-1 ring-red-200'
+                ? 'bg-red-50 text-red-700 ring-1 ring-red-200'
                 : activeArtifact?.status === 'review'
-                  ? 'bg-amber-50 text-amber-600 ring-1 ring-amber-200'
-                  : 'bg-zinc-100 text-zinc-500'
+                  ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'
+                  : 'bg-zinc-100 text-zinc-600'
           )}
         >
           {activeArtifact?.status || 'draft'}
         </span>
         {saveStatus === 'saved' && (
-          <span className="flex items-center gap-0.5 text-[11px] text-emerald-600 font-medium shrink-0 animate-in fade-in duration-200">
-            <Check className="w-3 h-3" />
+          <span className="flex items-center gap-1 text-xs text-emerald-600 font-medium shrink-0 animate-in fade-in duration-200">
+            <Check className="w-3.5 h-3.5" />
             Saved
           </span>
         )}
         {saveStatus === 'error' && (
-          <span className="flex items-center gap-0.5 text-[11px] text-red-600 font-medium shrink-0">
-            <AlertCircle className="w-3 h-3" />
+          <span className="flex items-center gap-1 text-xs text-red-600 font-medium shrink-0">
+            <AlertCircle className="w-3.5 h-3.5" />
             Error
           </span>
         )}
 
         {/* Trust indicators strip — clickable pills */}
         {activeArtifact && (
-          <div className="flex items-center gap-1.5 ml-1">
+          <div className="flex items-center gap-2 ml-2">
             <button
               onClick={() => toggleInspector('compare')}
-              className="text-[11px] text-zinc-400 tabular-nums font-medium hover:text-blue-600 transition-colors cursor-pointer"
+              className="text-xs text-zinc-500 tabular-nums font-medium hover:text-blue-600 transition-colors cursor-pointer"
               title="Open version compare"
             >
               v{activeArtifact.version}
@@ -1114,7 +1114,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             {signatures.length > 0 && (
               <button
                 onClick={() => toggleInspector('audit')}
-                className="text-[11px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600 font-semibold ring-1 ring-emerald-200/60 tabular-nums hover:bg-emerald-100 transition-colors cursor-pointer"
+                className="text-xs px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-semibold ring-1 ring-emerald-200/60 tabular-nums hover:bg-emerald-100 transition-colors cursor-pointer"
                 title="View signatures in audit trail"
               >
                 {signatures.length} sig{signatures.length !== 1 ? 's' : ''}
@@ -1123,7 +1123,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             {provenanceCount > 0 && (
               <button
                 onClick={() => toggleInspector('provenance')}
-                className="text-[11px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 font-semibold ring-1 ring-blue-200/60 tabular-nums hover:bg-blue-100 transition-colors cursor-pointer"
+                className="text-xs px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 font-semibold ring-1 ring-blue-200/60 tabular-nums hover:bg-blue-100 transition-colors cursor-pointer"
                 title="Open provenance timeline"
               >
                 {provenanceCount} event{provenanceCount !== 1 ? 's' : ''}
@@ -1148,7 +1148,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         <div className="flex-1" />
 
         {/* Right: PINNED inspector toggles + overflow */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
           {(
             [
               { id: 'intelligence' as const, icon: Brain, label: 'Intel' },
@@ -1164,10 +1164,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               data-testid={`inspector-${id}`}
               onClick={() => toggleInspector(id)}
               className={cn(
-                'px-2 py-1 text-[11px] rounded-md transition-colors flex items-center gap-1 whitespace-nowrap focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
+                'px-2.5 py-1.5 text-xs rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
                 activeInspector === id
-                  ? 'bg-blue-100 text-blue-700 font-semibold'
-                  : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700'
+                  ? 'bg-zinc-900 text-white font-medium'
+                  : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800'
               )}
             >
               <Icon className="w-3.5 h-3.5 shrink-0" />
@@ -1175,7 +1175,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             </button>
           ))}
 
-          <span className="w-px h-4 bg-zinc-200 mx-0.5" />
+          <span className="w-px h-5 bg-zinc-200 mx-1" />
 
           {/* Overflow: Save, Export, Sign, Review, CTD, Audit export */}
           <div className="relative">
@@ -1183,9 +1183,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               onClick={() => setOverflowOpen(!overflowOpen)}
               aria-label="More actions"
               aria-expanded={overflowOpen}
-              className="px-1.5 py-1 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-md focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+              className="px-2 py-1.5 text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
             >
-              <ChevronDown className="w-3.5 h-3.5" />
+              <ChevronDown className="w-4 h-4" />
             </button>
             {overflowOpen && (
               <div
@@ -1211,7 +1211,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   Save
                 </button>
                 {/* Export submenu */}
-                <div className="px-3 py-1 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">Export</div>
+                <div className="px-3 py-1.5 text-xs font-semibold text-zinc-400 uppercase tracking-wider">Export</div>
                 <button
                   role="menuitem"
                   onClick={() => { handleExportDocx(); setOverflowOpen(false); }}

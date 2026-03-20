@@ -161,21 +161,14 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   useEffect(() => {
     if (!isThinking) return;
     const ANA_THINKING_MESSAGES = [
-      'Reviewing your regulatory landscape...',
-      'Cross-referencing guidance documents...',
-      'Checking the latest FDA updates...',
-      'Let me dig into the CTD modules for you...',
-      'Analyzing your submission strategy...',
-      'Running compliance checks...',
-      'Connecting the regulatory dots...',
-      'Almost there — dotting the i\'s on 21 CFR Part 11...',
-      'Warming up the ELSA engines... no, not that one ❄️',
-      'Consulting my regulatory crystal ball...',
-      'Searching through 65 ICH guidelines...',
-      'Making sure everything is submission-ready...',
-      'Checking predicate devices and precedents...',
-      'Let it flow, let it flow... through the review process 🏔️',
-      'Building your regulatory snowglobe of insights...',
+      'Analyzing your request...',
+      'Reviewing regulatory guidance...',
+      'Cross-referencing documents...',
+      'Checking FDA requirements...',
+      'Researching ICH guidelines...',
+      'Reviewing compliance standards...',
+      'Preparing your response...',
+      'Searching regulatory databases...',
     ];
     setThinkingMsg(ANA_THINKING_MESSAGES[Math.floor(Math.random() * ANA_THINKING_MESSAGES.length)]);
     const interval = setInterval(() => {
