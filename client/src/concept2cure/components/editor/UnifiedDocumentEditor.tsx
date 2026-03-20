@@ -12,22 +12,25 @@
  * - 21 CFR Part 11 compliant audit trail
  */
 
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import { BubbleMenu } from '@tiptap/react/menus';
-import { FloatingMenu } from '@tiptap/extension-floating-menu';
 import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
 import { TextStyle } from '@tiptap/extension-text-style';
 import Color from '@tiptap/extension-color';
 import Placeholder from '@tiptap/extension-placeholder';
 import CharacterCount from '@tiptap/extension-character-count';
+import Underline_ from '@tiptap/extension-underline';
 import { Table } from '@tiptap/extension-table';
 import TableRow from '@tiptap/extension-table-row';
 import TableCell from '@tiptap/extension-table-cell';
 import TableHeader from '@tiptap/extension-table-header';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
+import { SearchAndReplace } from './extensions/SearchAndReplace';
+import { createSlashCommandExtension } from './extensions/SlashCommandMenu';
+import { CommentMark, type CommentThread } from './extensions/CommentMark';
 import {
   Bold,
   Italic,
@@ -58,6 +61,17 @@ import {
   FileText,
   Search,
   X,
+  Sparkles,
+  Maximize2,
+  Minimize2,
+  MessageSquare,
+  Eye,
+  Layers,
+  Clock,
+  ChevronDown,
+  Palette,
+  Replace,
+  Type,
 } from 'lucide-react';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -102,6 +116,19 @@ export interface DocumentVersion {
   hash: string;
 }
 
+export interface TemplateSection {
+  key: string;
+  label: string;
+  required: boolean;
+}
+
+export interface Collaborator {
+  id: string;
+  name: string;
+  color: string;
+  avatar?: string;
+}
+
 export interface UnifiedDocumentEditorProps {
   documentId?: string;
   initialContent?: string;
@@ -114,11 +141,19 @@ export interface UnifiedDocumentEditorProps {
   onSave?: (content: string, metadata: Record<string, unknown>) => Promise<void>;
   onLinkSource?: (selectedText: string, range: { from: number; to: number }) => void;
   onVersionChange?: (version: DocumentVersion) => void;
+  /** AI action callback — surfaces AI actions from toolbar/slash/bubble to parent */
+  onAIAction?: (action: string, selectedText: string) => void;
+  /** Add comment callback */
+  onAddComment?: (commentId: string, text: string, range: { from: number; to: number }) => void;
   sources?: DocumentSource[];
   traceabilityLinks?: TraceabilityLink[];
   complianceIssues?: ComplianceIssue[];
   complianceScore?: number;
   versions?: DocumentVersion[];
+  /** Template sections for template/content toggle view */
+  templateStructure?: TemplateSection[];
+  /** Active collaborators in this document */
+  collaborators?: Collaborator[];
   className?: string;
   /** Live content callback for outline sync */
   onLiveContentChange?: (html: string) => void;
@@ -202,9 +237,12 @@ interface ToolbarProps {
   isSaving: boolean;
   isLocked: boolean;
   onToggleLock: () => void;
+  onAIAction?: (action: string, selectedText: string) => void;
+  showFindReplace: boolean;
+  onToggleFindReplace: () => void;
 }
 
-const Toolbar: React.FC<ToolbarProps> = ({ editor, onSave, isSaving, isLocked, onToggleLock }) => {
+const Toolbar: React.FC<ToolbarProps> = ({ editor, onSave, isSaving, isLocked, onToggleLock, onAIAction, showFindReplace, onToggleFindReplace }) => {
   if (!editor) return null;
 
   const ToolButton: React.FC<{
@@ -354,6 +392,17 @@ const Toolbar: React.FC<ToolbarProps> = ({ editor, onSave, isSaving, isLocked, o
         <TableIcon className="w-4 h-4" />
       </ToolButton>
 
+      <div className="w-px h-6 bg-zinc-300 mx-1" />
+
+      {/* Find & Replace toggle */}
+      <ToolButton
+        onClick={onToggleFindReplace}
+        isActive={showFindReplace}
+        title="Find & Replace (Ctrl+F)"
+      >
+        <Search className="w-4 h-4" />
+      </ToolButton>
+
       <div className="flex-1" />
 
       {/* Lock / Save */}
@@ -372,6 +421,250 @@ const Toolbar: React.FC<ToolbarProps> = ({ editor, onSave, isSaving, isLocked, o
         <Save className="w-4 h-4" />
         {isSaving ? 'Saving...' : 'Save'}
       </button>
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AI Smart Actions Toolbar (Sprint 1A — ARTOS/Weave competitive parity)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const AI_TOOLBAR_ACTIONS = [
+  { id: 'rewrite', label: 'Rewrite', icon: Sparkles, description: 'Improve clarity & precision' },
+  { id: 'expand', label: 'Expand', icon: Maximize2, description: 'Add detail & evidence' },
+  { id: 'summarize', label: 'Summarize', icon: Minimize2, description: 'Executive summary' },
+  { id: 'regulatory-tone', label: 'Regulatory Tone', icon: FileCheck, description: 'FDA/EMA language' },
+  { id: 'add-references', label: 'Add References', icon: BookOpen, description: 'Insert citations' },
+];
+
+interface SmartToolbarProps {
+  onAIAction?: (action: string, selectedText: string) => void;
+  disabled?: boolean;
+}
+
+const SmartToolbar: React.FC<SmartToolbarProps> = ({ onAIAction, disabled }) => (
+  <div className="flex items-center gap-1 px-2 py-1.5 border-b border-zinc-200 bg-gradient-to-r from-purple-50/50 to-blue-50/50">
+    <Sparkles className="w-3.5 h-3.5 text-purple-500 mr-1" />
+    <span className="text-[10px] font-semibold text-purple-600 mr-2 uppercase tracking-wider">AI</span>
+    {AI_TOOLBAR_ACTIONS.map(action => (
+      <button
+        key={action.id}
+        onClick={() => onAIAction?.(action.id, '')}
+        disabled={disabled}
+        title={action.description}
+        className="flex items-center gap-1 px-2 py-1 text-[11px] rounded-md hover:bg-purple-100 text-zinc-600 hover:text-purple-700 transition-colors disabled:opacity-40"
+      >
+        <action.icon className="w-3.5 h-3.5" />
+        {action.label}
+      </button>
+    ))}
+  </div>
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Find & Replace Bar (Sprint 1B)
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface FindReplaceBarProps {
+  editor: ReturnType<typeof useEditor>;
+  onClose: () => void;
+}
+
+const FindReplaceBar: React.FC<FindReplaceBarProps> = ({ editor, onClose }) => {
+  const [findText, setFindText] = useState('');
+  const [replaceText, setReplaceText] = useState('');
+  const findInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    findInputRef.current?.focus();
+  }, []);
+
+  const handleFind = useCallback((value: string) => {
+    setFindText(value);
+    if (editor) {
+      (editor.commands as Record<string, (arg: string) => boolean>).setSearchTerm(value);
+    }
+  }, [editor]);
+
+  const handleReplace = useCallback(() => {
+    if (editor) {
+      (editor.commands as Record<string, (arg: string) => boolean>).setReplaceTerm(replaceText);
+      (editor.commands as Record<string, () => boolean>).replaceCurrent();
+    }
+  }, [editor, replaceText]);
+
+  const handleReplaceAll = useCallback(() => {
+    if (editor) {
+      (editor.commands as Record<string, (arg: string) => boolean>).setReplaceTerm(replaceText);
+      (editor.commands as Record<string, () => boolean>).replaceAll();
+    }
+  }, [editor, replaceText]);
+
+  const results = editor?.storage?.searchAndReplace?.results ?? [];
+  const currentIndex = editor?.storage?.searchAndReplace?.currentIndex ?? -1;
+
+  return (
+    <div className="flex items-center gap-2 px-3 py-2 border-b border-zinc-200 bg-amber-50/50">
+      <Search className="w-4 h-4 text-zinc-400 flex-shrink-0" />
+      <input
+        ref={findInputRef}
+        type="text"
+        value={findText}
+        onChange={e => handleFind(e.target.value)}
+        placeholder="Find..."
+        className="w-40 px-2 py-1 text-xs bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+        onKeyDown={e => {
+          if (e.key === 'Enter') (editor?.commands as Record<string, () => boolean>)?.nextMatch?.();
+          if (e.key === 'Escape') onClose();
+        }}
+      />
+      <span className="text-[10px] text-zinc-500 min-w-[50px]">
+        {results.length > 0 ? `${currentIndex + 1}/${results.length}` : 'No results'}
+      </span>
+      <button onClick={() => (editor?.commands as Record<string, () => boolean>)?.prevMatch?.()} className="p-1 hover:bg-zinc-200 rounded" title="Previous">
+        <ChevronDown className="w-3.5 h-3.5 rotate-180 text-zinc-600" />
+      </button>
+      <button onClick={() => (editor?.commands as Record<string, () => boolean>)?.nextMatch?.()} className="p-1 hover:bg-zinc-200 rounded" title="Next">
+        <ChevronDown className="w-3.5 h-3.5 text-zinc-600" />
+      </button>
+      <div className="w-px h-5 bg-zinc-300" />
+      <Replace className="w-4 h-4 text-zinc-400 flex-shrink-0" />
+      <input
+        type="text"
+        value={replaceText}
+        onChange={e => setReplaceText(e.target.value)}
+        placeholder="Replace..."
+        className="w-32 px-2 py-1 text-xs bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+      />
+      <button onClick={handleReplace} className="px-2 py-1 text-[10px] bg-white border border-zinc-200 rounded hover:bg-zinc-100">
+        Replace
+      </button>
+      <button onClick={handleReplaceAll} className="px-2 py-1 text-[10px] bg-white border border-zinc-200 rounded hover:bg-zinc-100">
+        All
+      </button>
+      <button onClick={onClose} className="p-1 hover:bg-zinc-200 rounded ml-auto">
+        <X className="w-3.5 h-3.5 text-zinc-500" />
+      </button>
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Source Tracer Popover (Sprint 2B — ARTOS-inspired)
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface SourceTracerPopoverProps {
+  source: DocumentSource | null;
+  position: { x: number; y: number } | null;
+  onClose: () => void;
+  onOpenSource?: (sourceId: string) => void;
+}
+
+const SourceTracerPopover: React.FC<SourceTracerPopoverProps> = ({
+  source,
+  position,
+  onClose,
+  onOpenSource,
+}) => {
+  if (!source || !position) return null;
+  return (
+    <div
+      className="fixed z-50 bg-white border border-blue-200 rounded-lg shadow-xl p-3 w-72"
+      style={{ top: position.y + 8, left: position.x }}
+    >
+      <div className="flex items-start justify-between gap-2 mb-2">
+        <div className="flex items-center gap-2">
+          <FileText className="w-4 h-4 text-blue-500" />
+          <span className="text-xs font-semibold text-zinc-800">{source.title}</span>
+        </div>
+        <button onClick={onClose} className="p-0.5 hover:bg-zinc-100 rounded">
+          <X className="w-3 h-3 text-zinc-400" />
+        </button>
+      </div>
+      <div className="flex items-center gap-2 text-[10px] text-zinc-500 mb-2">
+        <span className="px-1.5 py-0.5 bg-zinc-100 rounded">{source.documentType}</span>
+        <span>v{source.version}</span>
+        <span className="flex items-center gap-1">
+          <CheckCircle className="w-3 h-3 text-emerald-500" />
+          Hash verified
+        </span>
+      </div>
+      {source.excerpt && (
+        <p className="text-[10px] text-zinc-600 bg-zinc-50 p-2 rounded mb-2 line-clamp-3">
+          {source.excerpt}
+        </p>
+      )}
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => onOpenSource?.(source.id)}
+          className="flex items-center gap-1 px-2 py-1 text-[10px] text-blue-600 hover:bg-blue-50 rounded"
+        >
+          <ExternalLink className="w-3 h-3" />
+          Open full source
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Status Bar (Sprint 1A — word count, reading time, compliance)
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface StatusBarProps {
+  editor: ReturnType<typeof useEditor>;
+  complianceScore?: number;
+  collaborators?: Collaborator[];
+}
+
+const StatusBar: React.FC<StatusBarProps> = ({ editor, complianceScore, collaborators }) => {
+  if (!editor) return null;
+  const words = editor.storage.characterCount?.words?.() ?? 0;
+  const chars = editor.storage.characterCount?.characters?.() ?? 0;
+  const readingTime = Math.max(1, Math.ceil(words / 200));
+
+  return (
+    <div className="flex items-center gap-4 px-4 py-1.5 border-t border-zinc-200 bg-zinc-50 text-[10px] text-zinc-500">
+      <span>{words.toLocaleString()} words</span>
+      <span>{chars.toLocaleString()} chars</span>
+      <span className="flex items-center gap-1">
+        <Clock className="w-3 h-3" />
+        {readingTime} min read
+      </span>
+      {complianceScore !== undefined && (
+        <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full ${
+          complianceScore >= 90 ? 'bg-emerald-100 text-emerald-700' :
+          complianceScore >= 70 ? 'bg-amber-100 text-amber-700' :
+          'bg-red-100 text-red-700'
+        }`}>
+          <FileCheck className="w-3 h-3" />
+          {complianceScore}% compliant
+        </span>
+      )}
+      <div className="flex-1" />
+      {collaborators && collaborators.length > 0 && (
+        <div className="flex items-center gap-1">
+          <Users className="w-3 h-3" />
+          <span>{collaborators.length} editing</span>
+          <div className="flex -space-x-1.5 ml-1">
+            {collaborators.slice(0, 4).map(c => (
+              <div
+                key={c.id}
+                title={c.name}
+                className="w-5 h-5 rounded-full border-2 border-white flex items-center justify-center text-[8px] font-bold text-white"
+                style={{ backgroundColor: c.color }}
+              >
+                {c.name.charAt(0).toUpperCase()}
+              </div>
+            ))}
+            {collaborators.length > 4 && (
+              <div className="w-5 h-5 rounded-full bg-zinc-300 border-2 border-white flex items-center justify-center text-[8px] font-bold text-zinc-600">
+                +{collaborators.length - 4}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -683,11 +976,15 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
   onSave,
   onLinkSource,
   onVersionChange,
+  onAIAction,
+  onAddComment,
   sources = [],
   traceabilityLinks = [],
   complianceIssues = [],
   complianceScore = 100,
   versions = [],
+  templateStructure,
+  collaborators,
   className = '',
   onLiveContentChange,
 }) => {
@@ -699,6 +996,20 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
   const [linkModalOpen, setLinkModalOpen] = useState(false);
   const [selectedTextForLink, setSelectedTextForLink] = useState('');
   const [selectedRange, setSelectedRange] = useState<{ from: number; to: number } | null>(null);
+  // Sprint 1 state
+  const [showFindReplace, setShowFindReplace] = useState(false);
+  const [viewMode, setViewMode] = useState<'content' | 'template'>('content');
+  // Sprint 2 state — Source Tracer popover
+  const [tracerSource, setTracerSource] = useState<DocumentSource | null>(null);
+  const [tracerPosition, setTracerPosition] = useState<{ x: number; y: number } | null>(null);
+  // Sprint 3 state — Inline comments
+  const [comments, setComments] = useState<CommentThread[]>([]);
+
+  // Slash command extension (memoized to avoid re-creation)
+  const slashCommandExt = useMemo(
+    () => createSlashCommandExtension(onAIAction),
+    [onAIAction]
+  );
 
   const editor = useEditor({
     extensions: [
@@ -707,8 +1018,9 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
       Highlight.configure({ multicolor: true }),
       TextStyle,
       Color,
+      Underline_,
       Placeholder.configure({
-        placeholder: 'Start writing your regulatory document...',
+        placeholder: 'Start writing your regulatory document... Type "/" for commands',
       }),
       CharacterCount,
       Table.configure({ resizable: true }),
@@ -718,6 +1030,9 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
       TaskList,
       TaskItem.configure({ nested: true }),
       TraceabilityMark,
+      CommentMark,
+      SearchAndReplace,
+      slashCommandExt,
     ],
     content: initialContent,
     editable: !isLocked,
@@ -725,6 +1040,86 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
       onLiveContentChange?.(editor.getHTML());
     },
   });
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault();
+        setShowFindReplace(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
+  // Close Find/Replace clears search
+  const handleCloseFindReplace = useCallback(() => {
+    setShowFindReplace(false);
+    if (editor) {
+      (editor.commands as Record<string, () => boolean>).clearSearch?.();
+    }
+  }, [editor]);
+
+  // Source Tracer click handler — detect clicks on traceability marks
+  useEffect(() => {
+    if (!editor) return;
+    const handleClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      const traceEl = target.closest('[data-traceability]');
+      if (traceEl) {
+        const sourceId = traceEl.getAttribute('data-source-id') ||
+          (traceEl as HTMLElement).dataset.sourceId;
+        // Find the source
+        const matched = sources.find(s => s.id === sourceId);
+        if (matched) {
+          const rect = traceEl.getBoundingClientRect();
+          setTracerSource(matched);
+          setTracerPosition({ x: rect.left, y: rect.bottom });
+        }
+      } else {
+        // Click outside tracer — close it
+        setTracerSource(null);
+        setTracerPosition(null);
+      }
+    };
+    const editorEl = editor.view.dom;
+    editorEl.addEventListener('click', handleClick);
+    return () => editorEl.removeEventListener('click', handleClick);
+  }, [editor, sources]);
+
+  // Add comment handler
+  const handleAddComment = useCallback(() => {
+    if (!editor) return;
+    const { from, to } = editor.state.selection;
+    const selectedText = editor.state.doc.textBetween(from, to, ' ');
+    if (!selectedText.trim()) return;
+
+    const commentId = `comment-${Date.now()}`;
+    editor
+      .chain()
+      .focus()
+      .setTextSelection({ from, to })
+      .setMark('comment', {
+        commentId,
+        authorId: 'current-user',
+        authorName: 'You',
+        createdAt: new Date().toISOString(),
+      })
+      .run();
+
+    const newComment: CommentThread = {
+      id: commentId,
+      text: '',
+      authorId: 'current-user',
+      authorName: 'You',
+      createdAt: new Date().toISOString(),
+      resolved: false,
+      replies: [],
+    };
+    setComments(prev => [...prev, newComment]);
+    onAddComment?.(commentId, selectedText, { from, to });
+  }, [editor, onAddComment]);
 
   // Update editor editable state when lock changes
   useEffect(() => {
@@ -831,11 +1226,57 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
                   {submissionType}
                 </span>
               )}
-              <span>{editor.storage.characterCount.words()} words</span>
             </div>
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {/* Template/Content Toggle (Weave-inspired) */}
+          {templateStructure && templateStructure.length > 0 && (
+            <div className="flex items-center bg-zinc-100 rounded-lg p-0.5">
+              <button
+                onClick={() => setViewMode('content')}
+                className={`px-2.5 py-1 text-[10px] font-medium rounded-md transition-colors ${
+                  viewMode === 'content'
+                    ? 'bg-white text-zinc-800 shadow-sm'
+                    : 'text-zinc-500 hover:text-zinc-700'
+                }`}
+              >
+                <Eye className="w-3 h-3 inline mr-1" />
+                Content
+              </button>
+              <button
+                onClick={() => setViewMode('template')}
+                className={`px-2.5 py-1 text-[10px] font-medium rounded-md transition-colors ${
+                  viewMode === 'template'
+                    ? 'bg-white text-zinc-800 shadow-sm'
+                    : 'text-zinc-500 hover:text-zinc-700'
+                }`}
+              >
+                <Layers className="w-3 h-3 inline mr-1" />
+                Template
+              </button>
+            </div>
+          )}
+          {/* Collaborator Avatars */}
+          {collaborators && collaborators.length > 0 && (
+            <div className="flex -space-x-1.5 mr-1">
+              {collaborators.slice(0, 3).map(c => (
+                <div
+                  key={c.id}
+                  title={c.name}
+                  className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-[9px] font-bold text-white"
+                  style={{ backgroundColor: c.color }}
+                >
+                  {c.name.charAt(0).toUpperCase()}
+                </div>
+              ))}
+              {collaborators.length > 3 && (
+                <div className="w-6 h-6 rounded-full bg-zinc-300 border-2 border-white flex items-center justify-center text-[9px] font-bold text-zinc-600">
+                  +{collaborators.length - 3}
+                </div>
+              )}
+            </div>
+          )}
           {/* Panel Toggles */}
           {showTraceability && (
             <button
@@ -866,56 +1307,203 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
         </div>
       </div>
 
-      {/* Toolbar */}
+      {/* Formatting Toolbar */}
       <Toolbar
         editor={editor}
         onSave={handleSave}
         isSaving={isSaving}
         isLocked={isLocked}
         onToggleLock={() => setIsLocked(!isLocked)}
+        onAIAction={onAIAction}
+        showFindReplace={showFindReplace}
+        onToggleFindReplace={() => setShowFindReplace(prev => !prev)}
       />
+
+      {/* AI Smart Actions Row */}
+      <SmartToolbar onAIAction={onAIAction} disabled={isLocked} />
+
+      {/* Find & Replace Bar */}
+      {showFindReplace && (
+        <FindReplaceBar editor={editor} onClose={handleCloseFindReplace} />
+      )}
 
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
         {/* Editor */}
         <div className="flex-1 overflow-y-auto">
-          {/* Bubble Menu for Selection Actions */}
+          {/* Enhanced Bubble Menu for Selection Actions */}
           {editor && (
             <BubbleMenu
               editor={editor}
               tippyOptions={{ duration: 100 }}
-              className="bg-zinc-800 rounded-lg shadow-lg px-2 py-1 flex items-center gap-1"
+              className="bg-zinc-800 rounded-lg shadow-xl px-1.5 py-1 flex items-center gap-0.5 flex-wrap max-w-md"
             >
+              {/* Formatting */}
               <button
                 onClick={() => editor.chain().focus().toggleBold().run()}
                 className={`p-1.5 rounded hover:bg-zinc-700 ${editor.isActive('bold') ? 'text-blue-400' : 'text-white'}`}
+                title="Bold"
               >
-                <Bold className="w-4 h-4" />
+                <Bold className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={() => editor.chain().focus().toggleItalic().run()}
                 className={`p-1.5 rounded hover:bg-zinc-700 ${editor.isActive('italic') ? 'text-blue-400' : 'text-white'}`}
+                title="Italic"
               >
-                <Italic className="w-4 h-4" />
+                <Italic className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => editor.chain().focus().toggleUnderline().run()}
+                className={`p-1.5 rounded hover:bg-zinc-700 ${editor.isActive('underline') ? 'text-blue-400' : 'text-white'}`}
+                title="Underline"
+              >
+                <Underline className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => editor.chain().focus().toggleStrike().run()}
+                className={`p-1.5 rounded hover:bg-zinc-700 ${editor.isActive('strike') ? 'text-blue-400' : 'text-white'}`}
+                title="Strikethrough"
+              >
+                <Strikethrough className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={() => editor.chain().focus().toggleHighlight().run()}
                 className={`p-1.5 rounded hover:bg-zinc-700 ${editor.isActive('highlight') ? 'text-blue-400' : 'text-white'}`}
+                title="Highlight"
               >
-                <span className="w-4 h-4 bg-yellow-400 rounded text-xs flex items-center justify-center font-bold text-black">
+                <span className="w-3.5 h-3.5 bg-yellow-400 rounded text-[8px] flex items-center justify-center font-bold text-black">
                   H
                 </span>
               </button>
-              <div className="w-px h-4 bg-zinc-600 mx-1" />
+              {/* Color palette */}
+              {['#ef4444', '#3b82f6', '#10b981', '#f59e0b'].map(color => (
+                <button
+                  key={color}
+                  onClick={() => editor.chain().focus().setColor(color).run()}
+                  className="p-1 rounded hover:bg-zinc-700"
+                  title={`Text color`}
+                >
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
+                </button>
+              ))}
+              <button
+                onClick={() => editor.chain().focus().unsetColor().run()}
+                className="p-1 rounded hover:bg-zinc-700 text-zinc-400"
+                title="Reset color"
+              >
+                <X className="w-3 h-3" />
+              </button>
+              <div className="w-px h-4 bg-zinc-600 mx-0.5" />
+              {/* Source link */}
               <button
                 onClick={handleLinkToSource}
                 className="p-1.5 rounded hover:bg-zinc-700 text-white flex items-center gap-1"
                 title="Link to Source"
               >
-                <Link className="w-4 h-4" />
-                <span className="text-xs">Link</span>
+                <Link className="w-3.5 h-3.5" />
+                <span className="text-[10px]">Source</span>
+              </button>
+              <div className="w-px h-4 bg-zinc-600 mx-0.5" />
+              {/* AI Actions on selection */}
+              <button
+                onClick={() => {
+                  const { from, to } = editor.state.selection;
+                  const text = editor.state.doc.textBetween(from, to, ' ');
+                  onAIAction?.('rewrite', text);
+                }}
+                className="p-1.5 rounded hover:bg-purple-700 text-purple-300 flex items-center gap-1"
+                title="AI Rewrite Selection"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span className="text-[10px]">Rewrite</span>
+              </button>
+              <button
+                onClick={() => {
+                  const { from, to } = editor.state.selection;
+                  const text = editor.state.doc.textBetween(from, to, ' ');
+                  onAIAction?.('regulatory-tone', text);
+                }}
+                className="p-1.5 rounded hover:bg-purple-700 text-purple-300"
+                title="Regulatory Tone"
+              >
+                <FileCheck className="w-3.5 h-3.5" />
+              </button>
+              <div className="w-px h-4 bg-zinc-600 mx-0.5" />
+              {/* Comment */}
+              <button
+                onClick={handleAddComment}
+                className="p-1.5 rounded hover:bg-zinc-700 text-amber-300 flex items-center gap-1"
+                title="Add Comment"
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                <span className="text-[10px]">Comment</span>
               </button>
             </BubbleMenu>
+          )}
+
+          {/* Template View Overlay */}
+          {viewMode === 'template' && templateStructure && (
+            <div className="absolute inset-0 bg-white/95 z-10 overflow-y-auto p-6">
+              <div className="max-w-3xl mx-auto">
+                <div className="flex items-center gap-2 mb-4">
+                  <Layers className="w-5 h-5 text-blue-500" />
+                  <h2 className="font-semibold text-zinc-800">Template Structure</h2>
+                  <span className="text-xs text-zinc-500 ml-auto">
+                    {templateStructure.filter(s => {
+                      const html = editor?.getHTML() || '';
+                      return html.toLowerCase().includes(s.label.toLowerCase());
+                    }).length}/{templateStructure.length} sections filled
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {templateStructure.map(section => {
+                    const html = editor?.getHTML() || '';
+                    const isFilled = html.toLowerCase().includes(section.label.toLowerCase());
+                    return (
+                      <div
+                        key={section.key}
+                        className={`flex items-center gap-3 p-3 rounded-lg border transition-colors cursor-pointer ${
+                          isFilled
+                            ? 'bg-emerald-50 border-emerald-200'
+                            : 'bg-zinc-50 border-zinc-200 hover:border-blue-300'
+                        }`}
+                        onClick={() => {
+                          setViewMode('content');
+                          // Scroll to section heading if exists
+                          const el = document.getElementById(`outline-${section.key.toLowerCase().replace(/\s+/g, '-')}`);
+                          el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }}
+                      >
+                        {isFilled ? (
+                          <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                        ) : (
+                          <div className="w-4 h-4 rounded-full border-2 border-zinc-300 flex-shrink-0" />
+                        )}
+                        <div className="flex-1">
+                          <span className="text-sm font-medium text-zinc-800">{section.label}</span>
+                          {section.required && (
+                            <span className="ml-2 text-[10px] text-red-500 font-medium">Required</span>
+                          )}
+                        </div>
+                        {!isFilled && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onAIAction?.('generate-section', section.label);
+                            }}
+                            className="flex items-center gap-1 px-2 py-1 text-[10px] bg-purple-100 text-purple-600 rounded hover:bg-purple-200"
+                          >
+                            <Sparkles className="w-3 h-3" />
+                            Generate
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
           )}
 
           {/* Editor Content */}
@@ -952,6 +1540,13 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
         )}
       </div>
 
+      {/* Status Bar */}
+      <StatusBar
+        editor={editor}
+        complianceScore={complianceScore}
+        collaborators={collaborators}
+      />
+
       {/* Link Source Modal */}
       <LinkSourceModal
         isOpen={linkModalOpen}
@@ -959,6 +1554,13 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
         sources={sources}
         onClose={() => setLinkModalOpen(false)}
         onLink={handleSourceSelected}
+      />
+
+      {/* Source Tracer Popover (Sprint 2B) */}
+      <SourceTracerPopover
+        source={tracerSource}
+        position={tracerPosition}
+        onClose={() => { setTracerSource(null); setTracerPosition(null); }}
       />
     </div>
   );

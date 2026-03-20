@@ -29,7 +29,7 @@
 
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
-import { eq, desc, and, isNull, inArray, or, sql } from 'drizzle-orm';
+import { eq, ne, desc, and, isNull, inArray, or, sql } from 'drizzle-orm';
 import { db, pool } from '../db';
 import { createScopedLogger } from '../utils/logger';
 import * as metricsModule from '../metrics.js';
@@ -1618,6 +1618,172 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
     }
     logger.error('AI edit failed', { error: error.message });
     return sendError(res, 500, 'AI editing failed');
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INCONSISTENCY INTELLIGENCE (Sprint 2C — ARTOS-inspired)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/concept2cure/ai/check-inconsistency
+ * Cross-section change impact detection. When content changes in one section,
+ * identifies other sections in the same project that may need updating.
+ */
+router.post('/ai/check-inconsistency', async (req: Request, res: Response) => {
+  try {
+    const userId = getUserId(req);
+    const { changedText, changedSectionTitle, projectId, artifactId } = req.body;
+
+    if (!changedText || !projectId) {
+      return sendError(res, 400, 'changedText and projectId are required');
+    }
+
+    // Fetch all other artifacts in the project
+    const allArtifacts = await db
+      .select()
+      .from(concept2cureArtifacts)
+      .where(
+        and(
+          eq(concept2cureArtifacts.projectId, projectId),
+          ne(concept2cureArtifacts.id, artifactId || '')
+        )
+      );
+
+    if (allArtifacts.length === 0) {
+      return sendSuccess(res, { sections: [] });
+    }
+
+    // Build context of other sections (limit to first 500 chars each)
+    const otherSections = allArtifacts.slice(0, 10).map((a: any) => ({
+      id: a.id,
+      title: a.title,
+      excerpt: (a.content || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 500),
+    }));
+
+    const prompt = `You are a regulatory document consistency checker. A user changed content in the section "${changedSectionTitle || 'Unknown'}".
+
+Changed content:
+"${changedText.slice(0, 1500)}"
+
+Other sections in the same project:
+${otherSections.map((s: any) => `- [${s.id}] "${s.title}": ${s.excerpt}`).join('\n')}
+
+Identify which other sections (if any) reference similar data points, claims, or statistics as the changed content and may need updating for consistency. Return a JSON array of affected sections:
+[{ "artifactId": "...", "artifactTitle": "...", "affectedText": "relevant excerpt", "reason": "why it may be inconsistent", "severity": "high|medium|low" }]
+
+If no sections are affected, return an empty array []. Only return the JSON array, nothing else.`;
+
+    const { getGateway } = await import('../services/ai-gateway/gateway.js');
+    const gw = getGateway();
+    if (gw.getEnabledProviders().length === 0) {
+      return sendError(res, 503, 'AI service not configured — set ANTHROPIC_API_KEY');
+    }
+
+    const gwResponse = await gw.route({
+      taskType: 'document_analysis',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.2,
+      maxTokens: 2000,
+      callerModule: 'concept2cure/inconsistency-check',
+    });
+
+    let sections = [];
+    try {
+      const content = gwResponse.content || '[]';
+      const jsonMatch = content.match(/\[[\s\S]*\]/);
+      sections = jsonMatch ? JSON.parse(jsonMatch[0]) : [];
+    } catch {
+      sections = [];
+    }
+
+    logger.info('Inconsistency check completed', { userId, projectId, affectedCount: sections.length });
+    return sendSuccess(res, { sections });
+  } catch (error: any) {
+    logger.error('Inconsistency check failed', { error: error.message });
+    return sendError(res, 500, 'Inconsistency analysis failed');
+  }
+});
+
+/**
+ * POST /api/concept2cure/ai/extract-metadata
+ * AI-powered metadata extraction from source documents.
+ * Extracts study endpoints, sample sizes, key findings, p-values.
+ */
+router.post('/ai/extract-metadata', async (req: Request, res: Response) => {
+  try {
+    const userId = getUserId(req);
+    const { projectId, artifactId } = req.body;
+
+    if (!projectId || !artifactId) {
+      return sendError(res, 400, 'projectId and artifactId are required');
+    }
+
+    // Fetch the artifact content
+    const [artifact] = await db
+      .select()
+      .from(concept2cureArtifacts)
+      .where(
+        and(
+          eq(concept2cureArtifacts.id, artifactId),
+          eq(concept2cureArtifacts.projectId, projectId)
+        )
+      );
+
+    if (!artifact) {
+      return sendError(res, 404, 'Artifact not found');
+    }
+
+    const plainContent = ((artifact as any).content || '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 3000);
+
+    const prompt = `Extract key metadata from this regulatory/clinical document. Return a JSON object with these fields (use null for missing):
+{
+  "studyType": "e.g. Phase III RCT, observational, meta-analysis",
+  "endpoints": ["primary endpoint", "secondary endpoints..."],
+  "sampleSize": "N=...",
+  "keyFindings": ["finding 1", "finding 2"],
+  "pValues": ["p<0.001 for primary endpoint", ...],
+  "therapeuticArea": "e.g. oncology, cardiology",
+  "phase": "e.g. Phase I, Phase II, Phase III"
+}
+
+Document content:
+"${plainContent}"
+
+Return only the JSON object, nothing else.`;
+
+    const { getGateway } = await import('../services/ai-gateway/gateway.js');
+    const gw2 = getGateway();
+    if (gw2.getEnabledProviders().length === 0) {
+      return sendError(res, 503, 'AI service not configured — set ANTHROPIC_API_KEY');
+    }
+
+    const gwResponse = await gw2.route({
+      taskType: 'document_analysis',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.1,
+      maxTokens: 1000,
+      callerModule: 'concept2cure/extract-metadata',
+    });
+
+    let metadata = {};
+    try {
+      const content = gwResponse.content || '{}';
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      metadata = jsonMatch ? JSON.parse(jsonMatch[0]) : {};
+    } catch {
+      metadata = {};
+    }
+
+    logger.info('Metadata extraction completed', { userId, projectId, artifactId });
+    return sendSuccess(res, metadata);
+  } catch (error: any) {
+    logger.error('Metadata extraction failed', { error: error.message });
+    return sendError(res, 500, 'Metadata extraction failed');
   }
 });
 

@@ -32,6 +32,10 @@ import {
   MapPin,
   PenTool,
   Filter,
+  Database,
+  Zap,
+  ArrowRight,
+  Users,
 } from 'lucide-react';
 import { useClaimCheck, type ClaimCheckResult } from '../../hooks/usePrecedentEngine';
 import { RegulatoryIntelligencePanel } from '../intelligence/RegulatoryIntelligencePanel';
@@ -39,6 +43,8 @@ import { useGenerateDocx, downloadBlob } from '../../hooks/useDocumentFactory';
 import DocumentProvenancePanel from '../provenance/DocumentProvenancePanel';
 import DocumentVersionCompare from '../provenance/DocumentVersionCompare';
 import DocumentAuditReport from '../provenance/DocumentAuditReport';
+import DataRoomPanel from './DataRoomPanel';
+import InconsistencyPanel from './InconsistencyPanel';
 
 // ── Auth helper (same pattern as useProjects) ────────────────────────────────
 function getAuthHeaders(): Record<string, string> {
@@ -140,7 +146,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const claimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Single secondary inspector panel (only one open at a time) ────────
-  type InspectorPanel = 'intelligence' | 'provenance' | 'compare' | 'audit';
+  type InspectorPanel = 'intelligence' | 'provenance' | 'compare' | 'audit' | 'dataroom' | 'inconsistency';
   const [activeInspector, setActiveInspector] = useState<InspectorPanel | null>(null);
   const toggleInspector = useCallback((panel: InspectorPanel) => {
     setActiveInspector(prev => (prev === panel ? null : panel));
@@ -1146,6 +1152,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           {(
             [
               { id: 'intelligence' as const, icon: Brain, label: 'Intel' },
+              { id: 'dataroom' as const, icon: Database, label: 'Data' },
+              { id: 'inconsistency' as const, icon: Zap, label: 'Impact' },
               { id: 'provenance' as const, icon: ShieldCheck, label: 'Prov' },
               { id: 'compare' as const, icon: GitCompare, label: 'Diff' },
               { id: 'audit' as const, icon: ClipboardList, label: 'Audit' },
@@ -1467,6 +1475,64 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         </div>
       )}
 
+      {/* ── Document Lifecycle Pipeline (Sprint 3A) ───────────────────── */}
+      {activeArtifact && (
+        <div className="flex items-center gap-1 px-3 py-1.5 border-b border-zinc-100 bg-gradient-to-r from-zinc-50/50 to-white">
+          {(['draft', 'review', 'approved', 'locked'] as const).map((stage, idx, arr) => {
+            const currentStatus = activeArtifact.status || 'draft';
+            const stageOrder = { draft: 0, review: 1, approved: 2, locked: 3 };
+            const currentOrder = stageOrder[currentStatus as keyof typeof stageOrder] ?? 0;
+            const stageIdx = stageOrder[stage];
+            const isCompleted = stageIdx < currentOrder;
+            const isCurrent = stage === currentStatus;
+            const stageLabels: Record<string, string> = {
+              draft: 'Draft',
+              review: 'In Review',
+              approved: 'Approved',
+              locked: 'Published',
+            };
+            const stageColors: Record<string, string> = {
+              draft: 'bg-zinc-200 text-zinc-600',
+              review: 'bg-amber-100 text-amber-700',
+              approved: 'bg-emerald-100 text-emerald-700',
+              locked: 'bg-blue-100 text-blue-700',
+            };
+            return (
+              <React.Fragment key={stage}>
+                <button
+                  onClick={() => {
+                    if (stage !== currentStatus && !changingStatus) {
+                      handleStatusChange(stage);
+                    }
+                  }}
+                  disabled={changingStatus}
+                  className={cn(
+                    'flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium transition-all',
+                    isCurrent
+                      ? `${stageColors[stage]} ring-1 ring-current/20 shadow-sm`
+                      : isCompleted
+                        ? 'bg-emerald-50 text-emerald-500'
+                        : 'bg-zinc-50 text-zinc-400 hover:bg-zinc-100'
+                  )}
+                >
+                  {isCompleted ? (
+                    <CheckCircle className="w-3 h-3" />
+                  ) : isCurrent ? (
+                    <div className="w-2 h-2 rounded-full bg-current animate-pulse" />
+                  ) : (
+                    <div className="w-2 h-2 rounded-full border border-current" />
+                  )}
+                  {stageLabels[stage]}
+                </button>
+                {idx < arr.length - 1 && (
+                  <ArrowRight className={cn('w-3 h-3', isCompleted ? 'text-emerald-400' : 'text-zinc-300')} />
+                )}
+              </React.Fragment>
+            );
+          })}
+        </div>
+      )}
+
       {/* ── Main canvas: Editor + optional single inspector drawer ──────── */}
       <div className="flex-1 min-h-0 overflow-hidden flex">
         {/* Editor — always fills available width */}
@@ -1517,13 +1583,17 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             showTraceability={false}
             isReadOnly={activeArtifact?.status === 'locked'}
             onSave={handleSave}
+            onAIAction={(action, selectedText) => {
+              if (action === 'link-source') {
+                // Slash command triggered source link — just notify
+                pushToast('Select text first, then use Link to Source in the bubble menu', 'info');
+                return;
+              }
+              handleAIEdit(action as 'rewrite' | 'expand' | 'summarize' | 'regulatory-tone' | 'add-references');
+            }}
             onLiveContentChange={html => {
               onContentChange?.(html, activeArtifact?.title || '');
             }}
-            transition-all
-            duration-200
-            animate-in
-            slide-in-from-right-4
           />
         </div>
 
@@ -1601,6 +1671,38 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               onOpenCompare={openCompare}
               onExportAsArtifact={handleExportAudit}
               exportingAudit={exportingAudit}
+            />
+          </div>
+        )}
+        {/* Sprint 2A: Data Room Panel */}
+        {activeInspector === 'dataroom' && projectId && (
+          <div className="w-72 shrink-0 border-l border-zinc-100 h-full transition-all duration-200">
+            <DataRoomPanel
+              projectId={projectId}
+              onSourceSelect={(source) => {
+                pushToast(`Viewing source: ${source.title}`, 'info');
+              }}
+              onUpload={() => {
+                pushToast('Upload source files from the Project sidebar', 'info');
+              }}
+            />
+          </div>
+        )}
+        {/* Sprint 2C: Inconsistency Intelligence Panel */}
+        {activeInspector === 'inconsistency' && projectId && activeArtifact && (
+          <div className="w-72 shrink-0 border-l border-zinc-100 h-full transition-all duration-200">
+            <InconsistencyPanel
+              projectId={projectId}
+              activeArtifactId={activeArtifact.id}
+              activeArtifactTitle={activeArtifact.title}
+              activeContent={activeArtifact.content}
+              onNavigateToArtifact={(artifactId) => {
+                const target = artifacts.find(a => a.id === artifactId);
+                if (target) {
+                  setActiveArtifact(target);
+                  pushToast(`Navigated to: ${target.title}`, 'info');
+                }
+              }}
             />
           </div>
         )}

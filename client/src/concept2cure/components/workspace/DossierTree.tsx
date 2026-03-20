@@ -319,18 +319,36 @@ function DossierNodeRow({
         {/* Status */}
         <StatusIndicator status={status} />
 
-        {/* Completion mini-bar (from backend metrics) */}
-        {metrics?.[node.ctdSection] && metrics[node.ctdSection].artifactCount > 0 && (
-          <span
-            className="shrink-0 w-[28px] h-[4px] bg-zinc-100 rounded-full overflow-hidden"
-            title={`${metrics[node.ctdSection].completionPercent}% complete`}
-          >
-            <span
-              className="block h-full bg-blue-500 rounded-full"
-              style={{ width: `${Math.min(100, metrics[node.ctdSection].completionPercent)}%` }}
-            />
-          </span>
-        )}
+        {/* Completion mini-bar with color-coded status (enhanced Sprint 3B) */}
+        {metrics?.[node.ctdSection] && metrics[node.ctdSection].artifactCount > 0 && (() => {
+          const m = metrics[node.ctdSection];
+          const pct = Math.min(100, m.completionPercent);
+          const approved = m.approvedCount ?? 0;
+          const total = m.artifactCount;
+          // Color: green if all approved, amber if in progress, red if none started
+          const barColor = approved === total && total > 0
+            ? 'bg-emerald-500'
+            : (m.reviewCount ?? 0) > 0 || (m.draftCount ?? 0) > 0
+              ? 'bg-amber-400'
+              : 'bg-red-400';
+          // Status dot
+          const dotColor = approved === total && total > 0
+            ? 'bg-emerald-500'
+            : (m.draftCount ?? 0) > 0 || (m.reviewCount ?? 0) > 0
+              ? 'bg-amber-400'
+              : 'bg-red-400';
+          return (
+            <span className="flex items-center gap-1 shrink-0" title={`${pct}% complete — ${approved}/${total} approved`}>
+              <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', dotColor)} />
+              <span className="w-[28px] h-[4px] bg-zinc-100 rounded-full overflow-hidden">
+                <span
+                  className={cn('block h-full rounded-full', barColor)}
+                  style={{ width: `${pct}%` }}
+                />
+              </span>
+            </span>
+          );
+        })()}
 
         {/* Evidence/precedent chips */}
         {metrics?.[node.ctdSection] && metrics[node.ctdSection].evidenceCount > 0 && (
