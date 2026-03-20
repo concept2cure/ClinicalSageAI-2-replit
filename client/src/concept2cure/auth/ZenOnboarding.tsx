@@ -41,34 +41,17 @@ interface OnboardingPreferences {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const LogoIcon = () => (
-  <svg viewBox="0 0 40 40" className="w-12 h-12" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle
-      cx="20"
-      cy="20"
-      r="18"
-      stroke="currentColor"
-      strokeWidth="2"
-      className="text-blue-600"
+  <div className="relative w-12 h-12 rounded-xl overflow-hidden shadow-md">
+    <img
+      src="/src/assets/concept2cure-logo.jpg"
+      alt="Concept2Cure"
+      className="w-full h-full object-cover object-center"
     />
-    <path
-      d="M12 14C16 14 18 18 20 20C22 22 24 26 28 26"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      className="text-blue-600"
+    <div
+      className="absolute inset-0 pointer-events-none"
+      style={{ background: 'radial-gradient(circle at center, transparent 40%, #faf9f5 100%)' }}
     />
-    <path
-      d="M28 14C24 14 22 18 20 20C18 22 16 26 12 26"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      className="text-violet-500"
-    />
-    <circle cx="14" cy="14" r="2" fill="currentColor" className="text-blue-600" />
-    <circle cx="26" cy="14" r="2" fill="currentColor" className="text-violet-500" />
-    <circle cx="14" cy="26" r="2" fill="currentColor" className="text-violet-500" />
-    <circle cx="26" cy="26" r="2" fill="currentColor" className="text-blue-600" />
-  </svg>
+  </div>
 );
 
 const SparklesIcon = () => (
@@ -663,7 +646,7 @@ export const ZenOnboarding: React.FC = () => {
   // ─────────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9] flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-[#faf9f5] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-xl">
         {renderProgress()}
 

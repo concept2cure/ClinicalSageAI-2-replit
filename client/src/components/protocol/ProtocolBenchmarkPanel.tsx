@@ -229,12 +229,12 @@ export default function ProtocolBenchmarkPanel({
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
               <XAxis dataKey="name" />
-              <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />
-              <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
+              <YAxis yAxisId="left" orientation="left" stroke="#6a9bcc" />
+              <YAxis yAxisId="right" orientation="right" stroke="#92a87a" />
               <Tooltip />
               <Legend />
-              <Bar yAxisId="left" dataKey="Sample Size" fill="#8884d8" />
-              <Bar yAxisId="left" dataKey="Duration (weeks)" fill="#82ca9d" />
+              <Bar yAxisId="left" dataKey="Sample Size" fill="#6a9bcc" />
+              <Bar yAxisId="left" dataKey="Duration (weeks)" fill="#92a87a" />
               <Bar yAxisId="right" dataKey="Dropout Rate (%)" fill="#ffc658" />
             </BarChart>
           </ResponsiveContainer>

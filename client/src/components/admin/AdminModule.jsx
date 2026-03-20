@@ -1,7 +1,7 @@
 /**
  * Admin Module
  *
- * Main component for the Admin module of the TrialSage platform.
+ * Main component for the Admin module of the Concept2Cure platform.
  * This module provides administration features for the multi-tenant environment,
  * allowing CRO master accounts to manage their biotech client organizations.
  */

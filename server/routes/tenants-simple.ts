@@ -121,7 +121,9 @@ router.post('/', async (req, res) => {
     const validatedData = createTenantSchema.parse(req.body);
     console.log('Validated data:', validatedData);
 
-    const apiKey = 'dev-api-key-' + Math.random().toString(36).substring(2, 15);
+    // SECURITY: Use crypto.randomBytes for API key generation (not Math.random)
+    const crypto = await import('crypto');
+    const apiKey = 'c2c_' + crypto.randomBytes(24).toString('base64url');
 
     // Use postgres to create tenant
     const result = await sql`

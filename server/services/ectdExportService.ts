@@ -205,6 +205,7 @@ function generateIndexXml(opts: {
   Sequence: ${opts.sequenceNumber}
   Generated: ${opts.generatedAt}
   Generator: Concept2Cure.RI eCTD Export Service
+  Generator: Concept2Cure eCTD Export Service
 -->
 <ectd:ectd xmlns:ectd="http://www.ich.org/ectd"
            xmlns:xlink="http://www.w3.org/1999/xlink"

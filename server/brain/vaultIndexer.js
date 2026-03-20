@@ -49,7 +49,7 @@ async function buildIndex() {
           id: 'sample-doc-1',
           path: 'sample.pdf',
           title: 'Sample Regulatory Document',
-          author: 'TrialSage',
+          author: 'Concept2Cure',
           date: '2025-04-29',
           type: 'guidance',
         },

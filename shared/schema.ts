@@ -17313,8 +17313,7 @@ export type SubmissionTwinAssessment = InferSelectModel<typeof submissionTwinAss
 
 // ============================================================
 // INTELLIGENT REPORT ENGINE — Immutable Records & Quasi-Indemnification
-// ============================================================
-
+// =====================================================
 /** Report domain categories across the entire platform */
 export const reportDomainEnum = pgEnum('report_domain', [
   'regulatory_submission',   // eCTD, IND, NDA, BLA, 510k, PMA, CER
@@ -17869,3 +17868,73 @@ export const insertGapAnalysisResultSchema = createInsertSchemaOmit(gapAnalysisR
 });
 export type GapAnalysisResult = InferSelectModel<typeof gapAnalysisResults>;
 export type InsertGapAnalysisResult = z.infer<typeof insertGapAnalysisResultSchema>;
+=======
+// BILLING: API USAGE TRACKING
+// ============================================================
+
+export const apiUsageLogs = pgTable('api_usage_logs', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id').references(() => organizations.id).notNull(),
+  userId: integer('user_id'),
+  module: text('module').notNull(), // '510k', 'cer', 'ectd', 'cmc', 'ai_assistance', 'vault'
+  endpoint: text('endpoint'),
+  requestCount: integer('request_count').default(1).notNull(),
+  tokensUsed: integer('tokens_used').default(0).notNull(),
+  costCents: integer('cost_cents').default(0).notNull(), // cost in cents
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  orgDateIdx: index('api_usage_org_date_idx').on(table.organizationId, table.createdAt),
+  moduleIdx: index('api_usage_module_idx').on(table.module),
+}));
+
+export type ApiUsageLog = InferSelectModel<typeof apiUsageLogs>;
+
+// ============================================================
+// BILLING: BUDGETS & SPENDING LIMITS
+// ============================================================
+
+export const billingBudgets = pgTable('billing_budgets', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id').references(() => organizations.id).notNull().unique(),
+  monthlyBudgetCents: integer('monthly_budget_cents'), // null = no budget set
+  hardLimitEnabled: boolean('hard_limit_enabled').default(false).notNull(),
+  alertThresholds: json('alert_thresholds').$type<Array<{
+    threshold: number; // 50, 75, 90, 100
+    emailEnabled: boolean;
+    inAppEnabled: boolean;
+  }>>().default([
+    { threshold: 50, emailEnabled: false, inAppEnabled: true },
+    { threshold: 75, emailEnabled: true, inAppEnabled: true },
+    { threshold: 90, emailEnabled: true, inAppEnabled: true },
+    { threshold: 100, emailEnabled: true, inAppEnabled: true },
+  ]),
+  notifyEmails: json('notify_emails').$type<string[]>().default([]),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export type BillingBudget = InferSelectModel<typeof billingBudgets>;
+
+// ============================================================
+// BILLING: ALERTS & NOTIFICATIONS
+// ============================================================
+
+export const billingAlerts = pgTable('billing_alerts', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id').references(() => organizations.id).notNull(),
+  type: text('type').notNull(), // 'budget_warning', 'budget_exceeded', 'payment_failed', 'plan_change', 'invoice_ready'
+  threshold: integer('threshold'), // percentage threshold that triggered this alert (50, 75, 90, 100)
+  message: text('message').notNull(),
+  metadata: json('metadata'),
+  emailSent: boolean('email_sent').default(false).notNull(),
+  acknowledged: boolean('acknowledged').default(false).notNull(),
+  acknowledgedAt: timestamp('acknowledged_at'),
+  acknowledgedBy: integer('acknowledged_by'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  orgIdx: index('billing_alerts_org_idx').on(table.organizationId),
+  typeIdx: index('billing_alerts_type_idx').on(table.type),
+}));
+
+export type BillingAlert = InferSelectModel<typeof billingAlerts>;

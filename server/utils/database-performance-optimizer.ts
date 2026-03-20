@@ -1,5 +1,5 @@
 /**
- * Database Performance Optimizer for TrialSage
+ * Database Performance Optimizer for Concept2Cure
  *
  * Provides utilities for monitoring and optimizing database performance
  * including index management and query analysis

@@ -1,5 +1,5 @@
 /**
- * TrialSage Cookie Management Module
+ * Concept2Cure Cookie Management Module
  *
  * Provides secure cookie management functions with enhanced security features
  * for storing session data, tokens, and user preferences.

@@ -55,7 +55,7 @@ const HeroWithPersonas = ({ t }) => {
       icon: Building,
       headline: t('From Concepts to Cures — in Half the Time'),
       subhead: t(
-        'TrialSage automates regulatory writing, submission assembly, and ESG delivery across FDA, EMA, PMDA, and more. Cut costs. Launch faster. Stay compliant.'
+        'Concept2Cure automates regulatory writing, submission assembly, and ESG delivery across FDA, EMA, PMDA, and more. Cut costs. Launch faster. Stay compliant.'
       ),
       cta: [
         {
@@ -100,7 +100,7 @@ const HeroWithPersonas = ({ t }) => {
       icon: Users,
       headline: t('Faster Documents, Smoother Approvals, Fewer Vendors'),
       subhead: t(
-        'TrialSage centralizes protocol authoring, team reviews, and submission packaging into one platform — no handoffs, no delays.'
+        'Concept2Cure centralizes protocol authoring, team reviews, and submission packaging into one platform — no handoffs, no delays.'
       ),
       cta: [
         { label: t('Launch a New Study'), to: '/new-study', variant: 'primary', icon: PlayCircle },
@@ -145,7 +145,7 @@ const HeroWithPersonas = ({ t }) => {
       icon: TrendingUp,
       headline: t('AI for Biotech That Actually Moves the Needle'),
       subhead: t(
-        'TrialSage automates the painful parts of development — INDs, CERs, CSRs — so your pipeline gets to patients sooner.'
+        'Concept2Cure automates the painful parts of development — INDs, CERs, CSRs — so your pipeline gets to patients sooner.'
       ),
       cta: [
         {
@@ -264,7 +264,7 @@ const HeroWithPersonas = ({ t }) => {
                     <div className="h-5 w-5 rounded-md bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-white font-bold text-xs">
                       T
                     </div>
-                    <span className="font-semibold text-sm">TrialSage Platform</span>
+                    <span className="font-semibold text-sm">Concept2Cure Platform</span>
                   </div>
                 </div>
 

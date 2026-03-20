@@ -1,5 +1,5 @@
 /**
- * Database Configuration for TrialSage
+ * Database Configuration for Concept2Cure
  *
  * Provides a centralized database connection with Drizzle ORM
  * integration for type-safe database operations.

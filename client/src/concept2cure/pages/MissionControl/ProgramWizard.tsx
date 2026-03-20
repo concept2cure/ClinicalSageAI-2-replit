@@ -738,7 +738,7 @@ export default function ProgramWizard({ onComplete, onCancel }: ProgramWizardPro
                   key={i}
                   className="absolute w-2 h-2 rounded-full animate-ping"
                   style={{
-                    backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'][i % 6],
+                    backgroundColor: ['#6a9bcc', '#788c5d', '#f59e0b', '#ef4444', '#6a9bcc', '#06b6d4'][i % 6],
                     transform: `rotate(${i * 30}deg) translateY(-40px)`,
                     animationDelay: `${i * 0.1}s`,
                     animationDuration: '1.5s',

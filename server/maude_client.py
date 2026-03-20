@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-MAUDE Client for LumenTrialGuide.AI
+MAUDE Client for Concept2Cure
 
 This module provides functions to query the FDA's Manufacturer and User Facility 
 Device Experience (MAUDE) database for medical device complaints and adverse events.

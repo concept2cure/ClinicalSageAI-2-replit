@@ -273,6 +273,8 @@ class TestMetadataNormalization:
         assert doc.core_properties.modified.replace(tzinfo=None) == _EPOCH
         assert doc.core_properties.author == "Concept2Cure.RI"
         assert doc.core_properties.last_modified_by == "Concept2Cure.RI"
+        assert doc.core_properties.author == "Concept2Cure"
+        assert doc.core_properties.last_modified_by == "Concept2Cure"
         assert doc.core_properties.revision == 1
 
 

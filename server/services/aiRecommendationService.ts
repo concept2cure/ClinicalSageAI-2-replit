@@ -54,7 +54,7 @@ export class AiRecommendationService {
       messages: [
         {
           role: 'system',
-          content: `You are an AI learning assistant for a regulatory affairs platform called TrialSage. 
+          content: `You are an AI learning assistant for a regulatory affairs platform called Concept2Cure. 
           Your task is to analyze user activity data and generate actionable insights that will help 
           the user improve their regulatory documentation skills and workflow efficiency. 
           Provide highly specific, domain-relevant insights based on patterns you observe in their usage.`,

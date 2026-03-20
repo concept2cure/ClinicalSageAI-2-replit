@@ -101,6 +101,28 @@ router.get('/:id', validateTenantAccessMiddleware, async (req, res) => {
   const tenantId = parseInt(req.params.id);
 
   try {
+    // For development, return mock data
+    if (process.env.NODE_ENV === 'development' && tenantId === 1) {
+      return res.json({
+        id: 1,
+        name: 'Acme Medical Devices',
+        slug: 'acme-medical',
+        domain: 'acme-medical.example.com',
+        logo: null,
+        apiKey: process.env.ACME_DEV_API_KEY || '[REDACTED-USE-ENV-VAR]',
+        tier: 'professional',
+        maxUsers: 10,
+        maxProjects: 20,
+        maxStorage: 50,
+        status: 'active',
+        settings: {
+          brandColor: '#c15f3c',
+          enableNotifications: true,
+          allowGuests: false,
+        },
+      });
+    }
+
     const tenant = await db
       .select()
       .from(organizations)

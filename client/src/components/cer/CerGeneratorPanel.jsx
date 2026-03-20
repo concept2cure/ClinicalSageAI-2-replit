@@ -1183,9 +1183,9 @@ const CerGeneratorPanel = ({ documentId }) => {
                         style={{
                           borderColor:
                             complianceResults.complianceScore > 90
-                              ? '#10b981'
+                              ? '#788c5d'
                               : complianceResults.complianceScore > 70
-                                ? '#60a5fa'
+                                ? '#8bb4d9'
                                 : complianceResults.complianceScore > 50
                                   ? '#f59e0b'
                                   : '#ef4444',

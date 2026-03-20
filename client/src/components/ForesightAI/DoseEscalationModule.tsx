@@ -300,7 +300,7 @@ export default function DoseEscalationModule({ organizationId }: { organizationI
                   <Line 
                     type="monotone" 
                     dataKey={() => 0.25} 
-                    stroke="#3b82f6" 
+                    stroke="#6a9bcc" 
                     strokeDasharray="5 5"
                     name="Target DLT Rate (25%)"
                   />
@@ -323,7 +323,7 @@ export default function DoseEscalationModule({ organizationId }: { organizationI
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="patientsEnrolled" fill="#3b82f6" name="Patients Enrolled" />
+                  <Bar dataKey="patientsEnrolled" fill="#6a9bcc" name="Patients Enrolled" />
                   <Bar dataKey="dltsObserved" fill="#ef4444" name="DLTs Observed" />
                 </BarChart>
               </ResponsiveContainer>

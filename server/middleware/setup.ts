@@ -1,5 +1,5 @@
 /**
- * Middleware Setup for TrialSage
+ * Middleware Setup for Concept2Cure
  *
  * This file sets up all the middleware for the Express application
  * in the proper order.

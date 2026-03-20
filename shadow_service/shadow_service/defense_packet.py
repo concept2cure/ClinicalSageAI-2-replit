@@ -118,6 +118,7 @@ async def build_defense_packet(program_id: UUID) -> io.BytesIO:
         "program_id": str(program_id),
         "generated_at": now.isoformat(),
         "generator": "Concept2Cure.RI Defense Packet v1.0.0",
+        "generator": "Concept2Cure Defense Packet v1.0.0",
         "counts": {
             "claims_total": len(claims),
             "claims_active": len(active_claims),

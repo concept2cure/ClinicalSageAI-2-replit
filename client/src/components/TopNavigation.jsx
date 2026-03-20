@@ -10,7 +10,7 @@ export default function TopNavigation() {
         <div className="flex items-center space-x-2 mb-2 md:mb-0">
           <Link to="/">
             <img
-              src="/src/assets/concept2cure-logo.svg"
+              src="/src/assets/concept2cure-logo.jpg"
               alt="Concept2Cure"
               className="h-10 w-auto"
             />

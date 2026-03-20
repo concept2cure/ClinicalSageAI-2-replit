@@ -362,6 +362,7 @@ router.get('/mock/:docType/zip', async (req: Request, res: Response) => {
             version: mockDoc.version,
             exportedAt: new Date().toISOString(),
             generator: 'Concept2Cure.RI CERV2 Mock Export',
+            generator: 'Concept2Cure CERV2 Mock Export',
           },
           null,
           2

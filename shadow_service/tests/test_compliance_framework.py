@@ -18,6 +18,7 @@ import json
 # Import the FastAPI app
 import sys
 sys.path.insert(0, '/workspaces/Concept2Cure.RI-2-replit/shadow_service')
+sys.path.insert(0, '/workspaces/Concept2Cure-2-replit/shadow_service')
 from shadow_service.main import app
 
 

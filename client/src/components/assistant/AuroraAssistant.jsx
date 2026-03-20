@@ -508,10 +508,10 @@ export default function AuroraAssistant({ isOpen, onClose, selectedModule }) {
                                       className="h-3 w-3 rounded-full mr-1"
                                       style={{
                                         backgroundColor: [
-                                          '#818cf8',
-                                          '#a78bfa',
+                                          '#e6957a',
+                                          '#8bb4d9',
                                           '#f87171',
-                                          '#60a5fa',
+                                          '#8bb4d9',
                                         ][i],
                                       }}
                                     />

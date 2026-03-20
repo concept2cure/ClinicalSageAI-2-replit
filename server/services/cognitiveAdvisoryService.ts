@@ -16,7 +16,7 @@
  * 5. Proactive Risk Alerts - Warns before problems occur
  * 6. Real-World Evidence - Integrates CSR, FDA, clinical trial intelligence
  *
- * @author TrialSage AI Team
+ * @author Concept2Cure AI Team
  * @version 2.0.0 - Project Cortex
  */
 

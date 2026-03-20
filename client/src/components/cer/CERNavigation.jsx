@@ -60,11 +60,11 @@ export default function CERNavigation({ activeTab, onTabChange }) {
       {rows.map((row, rowIndex) => (
         <div
           key={rowIndex}
-          className={`overflow-x-auto whitespace-nowrap bg-white border-b border-[#E1DFDD] py-2 ${rowIndex === rows.length - 1 ? 'mb-4' : ''}`}
+          className={`overflow-x-auto whitespace-nowrap bg-white border-b border-[#e8e6dc] py-2 ${rowIndex === rows.length - 1 ? 'mb-4' : ''}`}
         >
           <div className="flex items-center px-6">
             <div className="flex items-center mr-4 flex-shrink-0">
-              <span className="text-xs font-medium text-[#605E5C]">{row.label}</span>
+              <span className="text-xs font-medium text-[#6b6963]">{row.label}</span>
             </div>
 
             <div className="inline-flex items-center">
@@ -77,8 +77,8 @@ export default function CERNavigation({ activeTab, onTabChange }) {
                     font-normal text-xs sm:text-sm flex items-center
                     ${
                       activeTab === tab.id
-                        ? 'border-[#0F6CBD] text-[#0F6CBD]'
-                        : 'border-transparent text-[#616161] hover:text-[#0F6CBD]'
+                        ? 'border-[#d97757] text-[#d97757]'
+                        : 'border-transparent text-[#616161] hover:text-[#d97757]'
                     }
                   `}
                 >

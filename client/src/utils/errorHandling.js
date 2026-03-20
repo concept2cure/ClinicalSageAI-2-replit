@@ -1,7 +1,7 @@
 /**
- * TrialSage Error Handling Utilities
+ * Concept2Cure Error Handling Utilities
  *
- * This module provides enhanced error handling utilities for the TrialSage application,
+ * This module provides enhanced error handling utilities for the Concept2Cure application,
  * ensuring production-ready error resilience, graceful failure modes, and proper
  * user feedback for API and service operations.
  */

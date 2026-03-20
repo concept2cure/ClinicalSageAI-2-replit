@@ -102,6 +102,15 @@ const getJwtSecret = (): string => {
       `Sessions will NOT survive restarts. Set JWT_SECRET to fix.`
     );
     return ephemeral;
+    // SECURITY: Never use hardcoded secrets in any environment.
+    // Generate a random ephemeral secret for development only.
+    if (ENV === 'development') {
+      const crypto = require('crypto');
+      const ephemeral = crypto.randomBytes(64).toString('hex');
+      console.warn(`[SECURITY] ${envVar} not set. Using ephemeral random secret (sessions will not persist across restarts).`);
+      return ephemeral;
+    }
+    throw new Error(`[SECURITY] Missing required environment variable: ${envVar}. Server cannot start without a JWT secret in ${ENV} mode.`);
   }
 
   return secret;

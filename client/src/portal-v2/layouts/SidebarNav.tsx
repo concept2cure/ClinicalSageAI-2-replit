@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Sidebar Navigation
+ * Concept2Cure Client Portal V2 - Sidebar Navigation
  *
  * Enterprise navigation sidebar with:
  * - Module groups organized by category
@@ -377,7 +377,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
       >
         {!isCollapsed && (
           <div className="flex items-center gap-2">
-            <img src="/src/assets/concept2cure-icon.svg" alt="Concept2Cure" className="h-8 w-8 rounded-lg" />
+            <img src="/src/assets/concept2cure-logo.jpg" alt="Concept2Cure" className="h-8 w-8 rounded-lg" />
             <div>
               <div className="text-sm font-bold text-gray-900">Concept2Cure</div>
               <div className="text-xs text-muted-foreground">Client Portal</div>

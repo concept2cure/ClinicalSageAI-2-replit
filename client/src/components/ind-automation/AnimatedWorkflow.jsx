@@ -103,12 +103,12 @@ const AnimatedWorkflow = ({ currentStage = 'forms', completedStages = [] }) => {
         <path
           d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3Z"
           fill="#e3f2fd"
-          stroke="#2196f3"
+          stroke="#6a9bcc"
           strokeWidth="1.5"
         />
-        <path d="M8 7H16" stroke="#2196f3" strokeWidth="1.5" strokeLinecap="round" />
-        <path d="M8 11H16" stroke="#2196f3" strokeWidth="1.5" strokeLinecap="round" />
-        <path d="M8 15H12" stroke="#2196f3" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M8 7H16" stroke="#6a9bcc" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M8 11H16" stroke="#6a9bcc" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M8 15H12" stroke="#6a9bcc" strokeWidth="1.5" strokeLinecap="round" />
       </svg>
     ),
     module: (
@@ -152,27 +152,27 @@ const AnimatedWorkflow = ({ currentStage = 'forms', completedStages = [] }) => {
         <path
           d="M20.5 7.27685L12 12L3.5 7.27685L12 2.5L20.5 7.27685Z"
           fill="#e8f5e9"
-          stroke="#4caf50"
+          stroke="#788c5d"
           strokeWidth="1.5"
           strokeLinejoin="round"
         />
         <path
           d="M3.5 7.27686V16.7231L12 21.5L20.5 16.7231V7.27686"
-          stroke="#4caf50"
+          stroke="#788c5d"
           strokeWidth="1.5"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
         <path
           d="M12 12V21.5"
-          stroke="#4caf50"
+          stroke="#788c5d"
           strokeWidth="1.5"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
         <path
           d="M7.5 4.88844L16.5 9.66528"
-          stroke="#4caf50"
+          stroke="#788c5d"
           strokeWidth="1.5"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -190,21 +190,21 @@ const AnimatedWorkflow = ({ currentStage = 'forms', completedStages = [] }) => {
         <path
           d="M12 21.5C17.2467 21.5 21.5 17.2467 21.5 12C21.5 6.75329 17.2467 2.5 12 2.5C6.75329 2.5 2.5 6.75329 2.5 12C2.5 17.2467 6.75329 21.5 12 21.5Z"
           fill="#e1f5fe"
-          stroke="#03a9f4"
+          stroke="#6a9bcc"
           strokeWidth="1.5"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
         <path
           d="M12 16V8"
-          stroke="#03a9f4"
+          stroke="#6a9bcc"
           strokeWidth="1.5"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
         <path
           d="M9 11L12 8L15 11"
-          stroke="#03a9f4"
+          stroke="#6a9bcc"
           strokeWidth="1.5"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -288,9 +288,9 @@ const AnimatedWorkflow = ({ currentStage = 'forms', completedStages = [] }) => {
             scale: currentStage === stage ? 1.1 : 1,
             opacity: currentStage === stage || completedStages.includes(stage) ? 1 : 0.7,
             backgroundColor: completedStages.includes(stage)
-              ? '#10b981'
+              ? '#788c5d'
               : currentStage === stage
-                ? '#3b82f6'
+                ? '#6a9bcc'
                 : '#ffffff',
           }}
           style={{

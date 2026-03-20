@@ -138,7 +138,7 @@ const TooltipExample = () => {
                 content={
                   <div className="space-y-2">
                     <p>
-                      TrialSage's learning tools help you navigate complex regulatory requirements:
+                      Concept2Cure's learning tools help you navigate complex regulatory requirements:
                     </p>
                     <ul className="list-disc list-inside space-y-1 text-xs">
                       <li>Contextual tooltips explain concepts within their usage context</li>

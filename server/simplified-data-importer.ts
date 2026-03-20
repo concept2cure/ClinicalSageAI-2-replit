@@ -1,5 +1,5 @@
 /**
- * Simplified Data Importer for TrialSage
+ * Simplified Data Importer for Concept2Cure
  *
  * This module provides functions for importing clinical trial data
  * and CSR reports into the database.

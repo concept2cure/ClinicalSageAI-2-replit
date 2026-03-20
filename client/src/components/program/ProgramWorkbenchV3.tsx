@@ -422,17 +422,17 @@ const MilestoneCard: React.FC<MilestoneCardProps> = memo(({ milestone, index }) 
         {/* Progress ring */}
         <div className="relative w-12 h-12 flex-shrink-0">
           <svg className="w-12 h-12 transform -rotate-90">
-            <circle cx="24" cy="24" r="20" fill="none" stroke="#f3f4f6" strokeWidth="4" />
+            <circle cx="24" cy="24" r="20" fill="none" stroke="#f4f3ee" strokeWidth="4" />
             <circle
               cx="24"
               cy="24"
               r="20"
               fill="none"
               stroke={
-                milestone.status === 'completed' ? '#059669' :
+                milestone.status === 'completed' ? '#647746' :
                 milestone.status === 'at_risk' ? '#d97706' :
                 milestone.status === 'blocked' ? '#dc2626' :
-                '#2563eb'
+                '#5585b3'
               }
               strokeWidth="4"
               strokeDasharray={`${(milestone.progress / 100) * 125.6} 125.6`}
@@ -561,9 +561,9 @@ const TimelineVisualization: React.FC<TimelineVisualizationProps> = memo(({ mile
   };
 
   const statusColors: Record<MilestoneStatus, string> = {
-    completed: '#059669',
-    in_progress: '#2563eb',
-    upcoming: '#9ca3af',
+    completed: '#647746',
+    in_progress: '#5585b3',
+    upcoming: '#b0aea5',
     at_risk: '#d97706',
     blocked: '#dc2626',
   };

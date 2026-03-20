@@ -91,10 +91,10 @@ const toastStyles = {
     fontWeight: 500,
   },
   info: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#6a9bcc',
   },
   success: {
-    backgroundColor: '#10b981',
+    backgroundColor: '#788c5d',
   },
   error: {
     backgroundColor: '#ef4444',

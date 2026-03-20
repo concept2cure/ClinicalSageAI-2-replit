@@ -32,7 +32,7 @@ import {
 import { computeRedirect } from './redirectUtils';
 
 // Brand logo
-import concept2cureLogo from '@/assets/concept2cure-logo.svg';
+import { C2CLogo } from '@/concept2cure/components/brand/C2CLogo';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -49,13 +49,9 @@ interface AuthError {
 // ICONS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// Logo rendered from actual brand asset
+// Logo rendered from original uploaded brand asset with gradient soft blend
 const BrandLogo = () => (
-  <img
-    src={concept2cureLogo}
-    alt="Concept2Cure"
-    className="h-16 w-auto object-contain drop-shadow-lg"
-  />
+  <C2CLogo variant="login" />
 );
 
 const MicrosoftIcon = () => (
@@ -222,7 +218,7 @@ const MfaCodeInput: React.FC<MfaInputProps> = ({ value, onChange, error }) => {
               ${
                 error
                   ? 'border-red-300 bg-red-50 focus:border-red-500'
-                  : 'border-zinc-200 bg-white focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]'
+                  : 'border-zinc-200 bg-white focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(217,119,87,0.1)]'
               }
             `}
             autoComplete="one-time-code"
@@ -626,7 +622,7 @@ export const ZenLogin: React.FC = () => {
             ${
               error?.field === 'email'
                 ? 'border-red-300 bg-red-50 focus:border-red-500'
-                : 'border-zinc-200 bg-white focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]'
+                : 'border-zinc-200 bg-white focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(217,119,87,0.1)]'
             }
           `}
         />
@@ -676,6 +672,10 @@ export const ZenLogin: React.FC = () => {
       {import.meta.env.DEV && <div className="space-y-2">
         <button
           onClick={() => setShowPersonas(!showPersonas)}
+      {/* Quick Demo Access — only visible in development */}
+      {(import.meta.env.DEV || import.meta.env.VITE_SHOW_DEMO_LOGIN === 'true') && (
+        <button
+          onClick={handleDemoLogin}
           disabled={isLoading}
           className={`
             w-full py-3 px-4
@@ -747,6 +747,23 @@ export const ZenLogin: React.FC = () => {
           </motion.div>
         )}
       </div>}
+          {isLoading ? (
+            <SpinnerIcon />
+          ) : (
+            <>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 10V3L4 14h7v7l9-11h-7z"
+                />
+              </svg>
+              Demo Access (Dev Only)
+            </>
+          )}
+        </button>
+      )}
 
       {/* SSO Buttons */}
       <div className="grid grid-cols-2 gap-3">
@@ -827,7 +844,7 @@ export const ZenLogin: React.FC = () => {
               ${
                 error?.field === 'password'
                   ? 'border-red-300 bg-red-50 focus:border-red-500'
-                  : 'border-zinc-200 bg-white focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]'
+                  : 'border-zinc-200 bg-white focus:border-blue-500 focus:shadow-[0_0_0_3px_rgba(217,119,87,0.1)]'
               }
             `}
           />
@@ -1215,12 +1232,7 @@ export const ZenLogin: React.FC = () => {
           {/* Top — logo */}
           <div>
             <div className="flex items-center gap-3">
-              <img
-                src={concept2cureLogo}
-                alt="Concept2Cure"
-                className="h-12 w-auto rounded-lg shadow-lg"
-              />
-              <span className="text-xl font-semibold text-white tracking-tight">Concept2Cure</span>
+              <C2CLogo size="lg" />
             </div>
           </div>
 
@@ -1266,8 +1278,7 @@ export const ZenLogin: React.FC = () => {
       <div className="flex-1 flex flex-col bg-white">
         {/* Mobile logo (shown on small screens only) */}
         <div className="lg:hidden flex items-center gap-3 p-6 border-b border-zinc-100">
-          <img src={concept2cureLogo} alt="Concept2Cure" className="h-10 w-auto rounded-lg" />
-          <span className="text-lg font-semibold text-zinc-900">Concept2Cure</span>
+          <C2CLogo size="md" />
         </div>
 
         <div className="flex-1 flex items-center justify-center px-6 py-12 sm:px-12">

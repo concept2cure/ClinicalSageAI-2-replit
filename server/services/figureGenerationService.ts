@@ -658,7 +658,7 @@ function buildPlaceholderFigure(
                   {
                     label: request.title,
                     data: [0, 0, 0],
-                    backgroundColor: ['#6366f1', '#8b5cf6', '#a78bfa'],
+                    backgroundColor: ['#d97757', '#6a9bcc', '#8bb4d9'],
                   },
                 ],
               },

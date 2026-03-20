@@ -1,7 +1,7 @@
 /**
  * Innovation Platform Components Index
  * 
- * Exports all 8 innovative platform features for the TrialSage platform.
+ * Exports all 8 innovative platform features for the Concept2Cure platform.
  */
 
 // Feature 1: Regulatory Delta Radar

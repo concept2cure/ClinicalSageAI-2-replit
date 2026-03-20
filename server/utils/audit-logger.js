@@ -86,7 +86,7 @@ export function logAction({
       details,
       ipAddress,
       userAgent,
-      application: 'TrialSage Vault',
+      application: 'Concept2Cure Vault',
       version: process.env.APP_VERSION || '1.0.0',
     });
   } catch (error) {
@@ -123,7 +123,7 @@ export function logSecurityEvent({
       severity,
       details,
       ipAddress,
-      application: 'TrialSage Vault',
+      application: 'Concept2Cure Vault',
       version: process.env.APP_VERSION || '1.0.0',
     });
   } catch (error) {
@@ -149,7 +149,7 @@ export function logSystemEvent({ event, component, severity = 'info', details })
       component,
       severity,
       details,
-      application: 'TrialSage Vault',
+      application: 'Concept2Cure Vault',
       version: process.env.APP_VERSION || '1.0.0',
     });
   } catch (error) {

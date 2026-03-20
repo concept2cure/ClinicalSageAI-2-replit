@@ -1,5 +1,5 @@
 /**
- * TrialSage Design System - Conversation Bubble
+ * Concept2Cure Design System - Conversation Bubble
  *
  * Elegant message bubbles for AI assistant and chat interfaces.
  * Inspired by Claude.AI's clean, readable conversation style.

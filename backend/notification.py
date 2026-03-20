@@ -1,5 +1,5 @@
 """
-Email Notification Module for LumenTrialGuide.AI
+Email Notification Module for Concept2Cure
 
 This module provides email notification capabilities for the application,
 particularly for notifying users when long-running tasks are completed.
@@ -129,10 +129,10 @@ class EmailNotifier:
             """
             
         body += """
-        Thank you for using LumenTrialGuide.AI!
+        Thank you for using Concept2Cure!
 
         Best regards,
-        The LumenTrialGuide.AI Team
+        The Concept2Cure Team
         """
         
         html_body = f"""
@@ -141,9 +141,9 @@ class EmailNotifier:
             <style>
                 body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
                 .container {{ width: 100%; max-width: 600px; margin: 0 auto; }}
-                .header {{ background-color: #4f46e5; color: white; padding: 20px; text-align: center; }}
+                .header {{ background-color: #c15f3c; color: white; padding: 20px; text-align: center; }}
                 .content {{ padding: 20px; }}
-                .button {{ display: inline-block; background-color: #4f46e5; color: white; 
+                .button {{ display: inline-block; background-color: #c15f3c; color: white; 
                           padding: 10px 20px; text-decoration: none; border-radius: 4px; }}
                 .footer {{ font-size: 12px; color: #666; padding: 20px; text-align: center; }}
             </style>
@@ -165,10 +165,10 @@ class EmailNotifier:
             """
             
         html_body += """
-                    <p>Thank you for using LumenTrialGuide.AI!</p>
+                    <p>Thank you for using Concept2Cure!</p>
                 </div>
                 <div class="footer">
-                    <p>© 2025 LumenTrialGuide.AI. All rights reserved.</p>
+                    <p>© 2025 Concept2Cure. All rights reserved.</p>
                 </div>
             </div>
         </body>

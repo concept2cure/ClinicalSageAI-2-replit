@@ -1,7 +1,7 @@
 /**
  * Notification Center
  *
- * This component provides a notification center for the TrialSage platform.
+ * This component provides a notification center for the Concept2Cure platform.
  */
 
 import React, { useState, useEffect } from 'react';

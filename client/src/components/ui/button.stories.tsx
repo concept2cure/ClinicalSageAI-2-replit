@@ -4,7 +4,7 @@ import { Button } from './button';
 /**
  * # Button Component
  *
- * The Button component is the primary interactive element in TrialSage.
+ * The Button component is the primary interactive element in Concept2Cure.
  * It follows 21 CFR Part 11 accessibility guidelines and supports multiple variants.
  *
  * ## Usage Guidelines
@@ -56,7 +56,7 @@ const meta: Meta<typeof Button> = {
     layout: 'centered',
     docs: {
       description: {
-        component: 'A versatile button component following the TrialSage design system.',
+        component: 'A versatile button component following the Concept2Cure design system.',
       },
     },
   },

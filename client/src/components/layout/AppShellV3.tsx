@@ -103,12 +103,15 @@ interface LogoProps {
   collapsed?: boolean;
 }
 
-// Concept2Cure Logo
-import concept2cureIcon from '@/assets/concept2cure-icon.svg';
+// Concept2Cure Logo — original uploaded brand asset
+import concept2cureLogo from '@/assets/concept2cure-logo.jpg';
 
 const Logo: React.FC<LogoProps> = memo(({ collapsed }) => (
   <div className="flex items-center gap-3 px-4 py-5">
-    <img src={concept2cureIcon} alt="Concept2Cure" className="w-9 h-9 rounded-xl object-cover shadow-lg" />
+    <div className="relative w-9 h-9 rounded-xl overflow-hidden shadow-lg flex-shrink-0">
+      <img src={concept2cureLogo} alt="Concept2Cure" className="w-full h-full object-cover object-center" />
+      <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at center, transparent 50%, var(--color-bg, #faf9f5) 100%)' }} />
+    </div>
     <AnimatePresence>
       {!collapsed && (
         <motion.div

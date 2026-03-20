@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - MFA Setup & Management
+ * Concept2Cure Client Portal V2 - MFA Setup & Management
  *
  * Multi-factor authentication setup wizard supporting:
  * - TOTP (Google Authenticator, Authy)
@@ -937,9 +937,9 @@ export const MfaSetupWizard: React.FC<{
     if (printWindow) {
       printWindow.document.write(`
         <html>
-          <head><title>TrialSage Backup Codes</title></head>
+          <head><title>Concept2Cure Backup Codes</title></head>
           <body style="font-family: monospace; padding: 20px;">
-            <h2>TrialSage Backup Codes</h2>
+            <h2>Concept2Cure Backup Codes</h2>
             <p>Keep these codes in a safe place. Each code can only be used once.</p>
             <ul style="list-style: none; padding: 0;">
               ${state.backupCodes.map(c => `<li style="padding: 5px 0;">${c.code}</li>`).join('')}

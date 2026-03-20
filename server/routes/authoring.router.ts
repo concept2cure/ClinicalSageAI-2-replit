@@ -43,22 +43,21 @@ router.use(async (req: Request, res: Response, next: any) => {
       if (!jwtSecret) {
         console.error('CRITICAL: AUTH_JWT_SECRET or JWT_SECRET must be set.');
         return res.status(500).json({ error: 'Server misconfiguration: missing JWT secret' });
+      // SECURITY: Use the same JWT secret as the main auth system
+      const jwtSecret = process.env.AUTH_JWT_SECRET || process.env.JWT_SECRET;
+      if (!jwtSecret) {
+        console.error('[SECURITY] No JWT secret configured. Rejecting request.');
+        return res.status(500).json({ error: 'Server authentication not configured' });
       }
-      
+
       try {
         const secret = new TextEncoder().encode(jwtSecret);
         const { payload } = await jose.jwtVerify(token, secret);
         claims = payload || {};
       } catch (jwtError) {
-        // In production, invalid tokens are rejected
-        if (process.env.NODE_ENV === 'production') {
-          return res.status(401).json({ error: 'Invalid authentication token' });
-        }
-        // Development mode fallback only
-        console.warn('JWT verification failed in dev mode:', jwtError);
-        if (jose) {
-          claims = jose.decodeJwt(token) || {};
-        }
+        // SECURITY: Always reject invalid tokens in ALL environments.
+        // Never fall back to decodeJwt (unverified) — that bypasses signature validation.
+        return res.status(401).json({ error: 'Invalid authentication token' });
       }
       
       // Validate and sanitize claims

@@ -88,6 +88,16 @@ const config = {
       export: { windowMs: 60_000, max: 10 * m },       // 10/min prod, 100/min dev
     };
   })(),
+  // Rate Limits - relaxed for development
+  rateLimits: {
+    global: { windowMs: 60_000, max: 10000 }, // 10000/min global (dev)
+    api: { windowMs: 60_000, max: 1000 }, // 1000/min per IP (dev)
+    ai: { windowMs: 60_000, max: 100 }, // 100/min for AI endpoints (dev)
+    auth: { windowMs: 15 * 60_000, max: process.env.NODE_ENV === 'production' ? 10 : 100 }, // 10 per 15 min (prod), 100/min (dev)
+    write: { windowMs: 60_000, max: 500 }, // 500 writes/min (dev)
+    upload: { windowMs: 60_000, max: 100 }, // 100 uploads/min (dev)
+    export: { windowMs: 60_000, max: 50 }, // 50 exports/min (dev)
+  },
 
   // Request Size Limits
   maxBodySize: '50mb',

@@ -48,7 +48,7 @@ import {
  * Enterprise DocuShare Vault Component
  *
  * A comprehensive showcase of DocuShare's enterprise document management capabilities
- * with integration across all TrialSage modules.
+ * with integration across all Concept2Cure modules.
  */
 export default function EnterpriseDocuShareVault() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -315,7 +315,7 @@ export default function EnterpriseDocuShareVault() {
                   <BarChart4 className="h-5 w-5 text-indigo-600" />
                   Documents by Module
                 </CardTitle>
-                <CardDescription>Document distribution across TrialSage modules</CardDescription>
+                <CardDescription>Document distribution across Concept2Cure modules</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -543,7 +543,7 @@ export default function EnterpriseDocuShareVault() {
                   Module Integrations
                 </CardTitle>
                 <CardDescription>
-                  DocuShare integration status across TrialSage modules
+                  DocuShare integration status across Concept2Cure modules
                 </CardDescription>
               </CardHeader>
               <CardContent>

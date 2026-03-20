@@ -74,12 +74,12 @@
 }
 
 [data-radix-select-item]:hover {
-  background-color: #f9fafb !important;
+  background-color: var(--color-gray-50) !important;
 }
 
 [data-radix-select-item]:focus {
-  background-color: #eff6ff !important;
-  color: #1e40af !important;
+  background-color: #faf0ec !important;
+  color: var(--color-primary-dark) !important;
 }
 
 /* Fix for popover transparency issue (date picker calendar) - comprehensive fix */
@@ -88,7 +88,7 @@
 .rdp {
   background-color: white !important;
   background: white !important;
-  border: 1px solid #e5e7eb !important;
+  border: 1px solid #e8e6dc !important;
   border-radius: 0.375rem !important;
   box-shadow:
     0 10px 15px -3px rgba(0, 0, 0, 0.1),
@@ -97,12 +97,12 @@
   z-index: 9999 !important;
 }
 
-/* SharePoint/OneDrive Styles */
+/* Navigation & Command Bar Styles — Anthropic Warm */
 .sp-command-bar {
   display: flex;
   align-items: center;
   padding: 0.5rem 1rem;
-  background: #faf9f8;
+  background: var(--color-gray-50);
   gap: 0.25rem;
 }
 
@@ -113,37 +113,38 @@
   padding: 0.5rem 0.75rem;
   background: transparent;
   border: none;
-  border-radius: 2px;
+  border-radius: 6px;
   font-size: 14px;
-  font-family: 'Segoe UI', system-ui, sans-serif;
-  color: #323130;
+  font-family: 'Poppins', Arial, sans-serif;
+  color: var(--color-gray-800);
   cursor: pointer;
-  transition: background 0.1s;
+  transition: background 0.15s ease;
 }
 
 .sp-command-button:hover:not(:disabled) {
-  background: #f3f2f1;
+  background: var(--color-gray-100);
 }
 
 .sp-command-button:active:not(:disabled) {
-  background: #edebe9;
+  background: var(--color-gray-200);
 }
 
 .sp-command-button:disabled {
-  color: #a19f9d;
+  color: var(--color-gray-400);
   cursor: not-allowed;
 }
 
-/* SharePoint Hub Navigation Bar */
+/* Hub Navigation Bar — Anthropic dark warm */
 .sp-hub-nav {
   height: 48px;
-  background: #323130;
+  background: var(--color-gray-900);
   display: flex;
   align-items: center;
   padding: 0 16px;
-  color: white;
+  color: var(--color-gray-50);
   font-size: 14px;
-  border-bottom: 1px solid #201f1e;
+  font-family: 'Poppins', Arial, sans-serif;
+  border-bottom: 1px solid var(--color-gray-800);
 }
 
 .sp-hub-nav-logo {
@@ -173,28 +174,30 @@
 .sp-hub-nav-search {
   width: 320px;
   height: 32px;
-  background: #484644;
-  border: 1px solid #484644;
-  border-radius: 2px;
+  background: var(--color-gray-700);
+  border: 1px solid var(--color-gray-700);
+  border-radius: 6px;
   padding: 0 8px;
-  color: white;
+  color: var(--color-gray-50);
   margin-right: 16px;
+  font-family: 'Poppins', Arial, sans-serif;
 }
 
 .sp-hub-nav-search::placeholder {
-  color: #c8c6c4;
+  color: var(--color-gray-400);
 }
 
 .sp-hub-nav-profile {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #0078d4;
+  background: var(--color-primary);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   font-weight: 600;
+  font-family: 'Poppins', Arial, sans-serif;
   cursor: pointer;
 }
 
@@ -203,8 +206,8 @@
   display: flex;
   align-items: center;
   padding: 8px 16px;
-  background: #f3f2f1;
-  border-bottom: 1px solid #edebe9;
+  background: var(--color-gray-100);
+  border-bottom: 1px solid var(--color-gray-200);
   font-size: 14px;
   min-height: 40px;
 }
@@ -218,21 +221,21 @@
   border-radius: 2px;
   transition: background 0.2s;
   cursor: pointer;
-  color: #605e5c;
+  color: var(--color-gray-600);
 }
 
 .sp-breadcrumb-home:hover {
-  background: #e1dfdd;
+  background: var(--color-gray-300);
 }
 
 .sp-breadcrumb-separator {
-  color: #605e5c;
+  color: var(--color-gray-600);
   margin: 0 8px;
   font-weight: normal;
 }
 
 .sp-breadcrumb-item {
-  color: #605e5c;
+  color: var(--color-gray-600);
   text-decoration: none;
   transition: color 0.2s;
   cursor: pointer;
@@ -243,12 +246,12 @@
 }
 
 .sp-breadcrumb-item:hover {
-  color: #323130;
+  color: var(--color-gray-800);
   text-decoration: underline;
 }
 
 .sp-breadcrumb-item.current {
-  color: #323130;
+  color: var(--color-gray-800);
   font-weight: 600;
   cursor: default;
 }
@@ -263,7 +266,7 @@
   left: 0;
   margin-top: 4px;
   background: white;
-  border: 1px solid #e1dfdd;
+  border: 1px solid var(--color-gray-300);
   box-shadow: 0 3.2px 7.2px rgba(0, 0, 0, 0.132);
   border-radius: 2px;
   min-width: 200px;
@@ -277,20 +280,20 @@
 
 .sp-breadcrumb-dropdown-item {
   padding: 8px 12px;
-  color: #323130;
+  color: var(--color-gray-800);
   cursor: pointer;
   transition: background 0.2s;
 }
 
 .sp-breadcrumb-dropdown-item:hover {
-  background: #f3f2f1;
+  background: var(--color-gray-100);
 }
 
 /* SharePoint Folder Tree Navigation */
 .sp-folder-nav {
   width: 280px;
   background: white;
-  border-right: 1px solid #edebe9;
+  border-right: 1px solid var(--color-gray-200);
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -298,10 +301,10 @@
 
 .sp-folder-nav-header {
   padding: 16px;
-  border-bottom: 1px solid #edebe9;
+  border-bottom: 1px solid var(--color-gray-200);
   font-weight: 600;
   font-size: 14px;
-  color: #323130;
+  color: var(--color-gray-800);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -320,13 +323,13 @@
   cursor: pointer;
   transition: background 0.2s;
   font-size: 14px;
-  color: #323130;
+  color: var(--color-gray-800);
   user-select: none;
   position: relative;
 }
 
 .sp-folder-item:hover {
-  background: #f3f2f1;
+  background: var(--color-gray-100);
 }
 
 .sp-folder-item.selected {
@@ -355,7 +358,7 @@
   height: 16px;
   margin-right: 8px;
   flex-shrink: 0;
-  color: #c8c6c4;
+  color: var(--color-gray-400);
 }
 
 .sp-folder-item.folder .sp-folder-item-icon {
@@ -370,7 +373,7 @@
 }
 
 .sp-folder-item-count {
-  color: #605e5c;
+  color: var(--color-gray-600);
   font-size: 12px;
   margin-left: 8px;
 }
@@ -378,7 +381,7 @@
 /* SharePoint Quick Access Panel */
 .sp-quick-access {
   padding: 16px;
-  border-bottom: 1px solid #edebe9;
+  border-bottom: 1px solid var(--color-gray-200);
 }
 
 .sp-quick-access-section {
@@ -388,7 +391,7 @@
 .sp-quick-access-title {
   font-size: 12px;
   font-weight: 600;
-  color: #605e5c;
+  color: var(--color-gray-600);
   text-transform: uppercase;
   margin-bottom: 8px;
   display: flex;
@@ -408,7 +411,7 @@
 }
 
 .sp-quick-access-item:hover {
-  background: #f3f2f1;
+  background: var(--color-gray-100);
 }
 
 .sp-quick-access-item-icon {
@@ -419,7 +422,7 @@
 
 .sp-quick-access-item-name {
   font-size: 13px;
-  color: #323130;
+  color: var(--color-gray-800);
   flex: 1;
   white-space: nowrap;
   overflow: hidden;
@@ -430,7 +433,7 @@
 .sp-properties-panel {
   width: 320px;
   background: white;
-  border-left: 1px solid #edebe9;
+  border-left: 1px solid var(--color-gray-200);
   display: flex;
   flex-direction: column;
   transition:
@@ -445,7 +448,7 @@
 
 .sp-properties-panel-header {
   padding: 16px;
-  border-bottom: 1px solid #edebe9;
+  border-bottom: 1px solid var(--color-gray-200);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -454,7 +457,7 @@
 .sp-properties-panel-title {
   font-size: 14px;
   font-weight: 600;
-  color: #323130;
+  color: var(--color-gray-800);
 }
 
 .sp-properties-panel-close {
@@ -469,7 +472,7 @@
 }
 
 .sp-properties-panel-close:hover {
-  background: #f3f2f1;
+  background: var(--color-gray-100);
 }
 
 .sp-properties-panel-content {
@@ -485,7 +488,7 @@
 .sp-properties-section-title {
   font-size: 12px;
   font-weight: 600;
-  color: #605e5c;
+  color: var(--color-gray-600);
   text-transform: uppercase;
   margin-bottom: 12px;
 }
@@ -498,13 +501,13 @@
 
 .sp-property-label {
   font-size: 12px;
-  color: #605e5c;
+  color: var(--color-gray-600);
   margin-bottom: 4px;
 }
 
 .sp-property-value {
   font-size: 14px;
-  color: #323130;
+  color: var(--color-gray-800);
   padding: 4px 8px;
   border: 1px solid transparent;
   border-radius: 2px;
@@ -516,12 +519,12 @@
 }
 
 .sp-property-value.editable:hover {
-  border-color: #c8c6c4;
-  background: #faf9f8;
+  border-color: var(--color-gray-400);
+  background: var(--color-gray-50);
 }
 
 .sp-property-value.editing {
-  border-color: #0078d4;
+  border-color: var(--color-primary);
   background: white;
   outline: none;
 }
@@ -531,7 +534,7 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: #faf9f8;
+  background: var(--color-gray-50);
 }
 
 .sp-layout-body {
@@ -565,8 +568,8 @@
 .sp-loading-spinner {
   width: 32px;
   height: 32px;
-  border: 2px solid #edebe9;
-  border-top-color: #0078d4;
+  border: 2px solid var(--color-gray-200);
+  border-top-color: var(--color-primary);
   border-radius: 50%;
   animation: sp-spin 0.6s linear infinite;
 }
@@ -590,20 +593,20 @@
 .sp-empty-state-icon {
   width: 48px;
   height: 48px;
-  color: #c8c6c4;
+  color: var(--color-gray-400);
   margin-bottom: 16px;
 }
 
 .sp-empty-state-title {
   font-size: 16px;
   font-weight: 600;
-  color: #323130;
+  color: var(--color-gray-800);
   margin-bottom: 8px;
 }
 
 .sp-empty-state-description {
   font-size: 14px;
-  color: #605e5c;
+  color: var(--color-gray-600);
 }
 
 /* SharePoint-style table hover and selection */
@@ -612,7 +615,7 @@
 }
 
 .sp-table-row:hover {
-  background: #f3f2f1;
+  background: var(--color-gray-100);
 }
 
 .sp-table-row.selected {
@@ -627,21 +630,21 @@
 input[type='checkbox'].sp-checkbox {
   width: 16px;
   height: 16px;
-  border: 1px solid #605e5c;
+  border: 1px solid var(--color-gray-600);
   border-radius: 2px;
   cursor: pointer;
 }
 
 input[type='checkbox'].sp-checkbox:checked {
-  background: #0078d4;
-  border-color: #0078d4;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
 }
 
 /* SharePoint-style context menu */
 .sp-context-menu {
   position: absolute;
   background: white;
-  border: 1px solid #e1dfdd;
+  border: 1px solid var(--color-gray-300);
   box-shadow:
     0 3.2px 7.2px 0 rgba(0, 0, 0, 0.132),
     0 0.6px 1.8px 0 rgba(0, 0, 0, 0.108);
@@ -656,7 +659,7 @@ input[type='checkbox'].sp-checkbox:checked {
   gap: 8px;
   padding: 6px 8px;
   font-size: 14px;
-  color: #323130;
+  color: var(--color-gray-800);
   cursor: pointer;
   border: none;
   background: none;
@@ -665,12 +668,12 @@ input[type='checkbox'].sp-checkbox:checked {
 }
 
 .sp-context-menu-item:hover {
-  background: #f3f2f1;
+  background: var(--color-gray-100);
 }
 
 .sp-context-menu-divider {
   height: 1px;
-  background: #e1dfdd;
+  background: var(--color-gray-300);
   margin: 4px 0;
 }
 
@@ -715,8 +718,8 @@ input[type='checkbox'].sp-checkbox:checked {
 
 .rdp-day:hover,
 .rdp-day_button:hover {
-  background-color: #f3f4f6 !important;
-  background: #f3f4f6 !important;
+  background-color: #f4f3ee !important;
+  background: #f4f3ee !important;
 }
 
 /* Fix calendar header */
@@ -760,7 +763,7 @@ input[type='checkbox'].sp-checkbox:checked {
 /* Fix for tab list spacing */
 .cer-tabs .cer-tabs-list {
   margin-bottom: 1rem;
-  border-bottom: 1px solid #e1dfdd;
+  border-bottom: 1px solid var(--color-gray-300);
 }
 
 /* SOTA panel specific styles */
@@ -775,7 +778,7 @@ input[type='checkbox'].sp-checkbox:checked {
   display: flex;
   align-items: center;
   background-color: #f5f5f5;
-  border: 1px solid #e1dfdd;
+  border: 1px solid var(--color-gray-300);
   border-radius: 0.25rem;
   padding: 0.25rem 0.5rem;
   font-size: 0.75rem;
@@ -854,6 +857,73 @@ input[type='checkbox'].sp-checkbox:checked {
   /* Semantic background tokens — Claude warm */
   --background: 45 33% 97%;
   --foreground: 50 5% 8%;
+  /* ═══════════════════════════════════════════════════════════════
+     ANTHROPIC AUTHENTIC COLOR PALETTE
+     Warm, humanistic design — terracotta, cream, earthy tones
+     ═══════════════════════════════════════════════════════════════ */
+
+  /* Primary Brand Colors */
+  --color-primary: #d97757;           /* Terracotta orange — Anthropic signature */
+  --color-primary-dark: #c15f3c;      /* Crail — deeper terracotta */
+  --color-primary-light: #e6957a;     /* Lighter terracotta */
+  --color-primary-glow: rgba(217, 119, 87, 0.2);
+  --color-secondary: #6a9bcc;         /* Anthropic blue — secondary accent */
+  --color-secondary-dark: #5585b3;
+  --color-secondary-light: #8bb4d9;
+  --color-secondary-glow: rgba(106, 155, 204, 0.2);
+  --color-accent: #788c5d;            /* Anthropic green — tertiary */
+  --color-accent-dark: #647746;
+  --color-accent-light: #92a87a;
+  --color-accent-glow: rgba(120, 140, 93, 0.2);
+  --color-highlight: #788c5d;         /* Earthy green */
+  --color-highlight-glow: rgba(120, 140, 93, 0.2);
+
+  /* Status Colors — Warm tones */
+  --color-success: #788c5d;
+  --gradient-success: linear-gradient(135deg, #788c5d 0%, #647746 100%);
+  --color-warning: #d97706;
+  --gradient-warning: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  --color-error: #dc3545;
+  --gradient-error: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  --color-info: #6a9bcc;
+  --gradient-info: linear-gradient(135deg, #6a9bcc 0%, #5585b3 100%);
+
+  /* Dark Mode — Warm evening tones (NOT cold indigo) */
+  --dark-bg-primary: #1c1917;         /* Stone-900 warm dark */
+  --dark-bg-secondary: #292524;       /* Stone-800 */
+  --dark-bg-tertiary: #44403c;        /* Stone-700 */
+  --dark-surface: rgba(255, 255, 255, 0.03);
+  --dark-surface-hover: rgba(255, 255, 255, 0.06);
+  --dark-glow: rgba(217, 119, 87, 0.15);
+
+  /* Warm Neutral Palette — Anthropic warm grays */
+  --color-gray-50: #faf9f5;           /* Warm cream */
+  --color-gray-100: #f4f3ee;          /* Pampas */
+  --color-gray-200: #e8e6dc;          /* Light warm gray */
+  --color-gray-300: #d6d3c8;          /* Mid-light warm gray */
+  --color-gray-400: #b0aea5;          /* Cloudy — Anthropic mid gray */
+  --color-gray-500: #8a8880;
+  --color-gray-600: #6b6963;
+  --color-gray-700: #4a4a46;
+  --color-gray-800: #2d2d2a;
+  --color-gray-900: #141413;          /* Anthropic dark */
+  --color-gray-950: #0a0a09;
+  --color-bg: #faf9f5;               /* Warm cream — NOT pure white */
+  --color-surface: #ffffff;
+
+  /* Typography tokens */
+  --color-text-primary: #141413;      /* Anthropic dark */
+  --color-text-secondary: #4a4a46;    /* Warm gray */
+  --color-text-tertiary: #6b6963;
+  --color-text-inverse: #faf9f5;      /* Warm light */
+  --color-text-code: #141413;
+  --color-link: #6a9bcc;             /* Anthropic blue */
+  --color-link-hover: #5585b3;
+  --color-link-visited: #8b7ec8;
+
+  /* Semantic background tokens (HSL for Tailwind) */
+  --background: 45 33% 97%;          /* Warm cream */
+  --foreground: 60 3% 8%;            /* Anthropic dark */
   --card: 0 0% 100%;
   --card-foreground: 50 5% 8%;
   --popover: 0 0% 100%;
@@ -928,6 +998,54 @@ input[type='checkbox'].sp-checkbox:checked {
   --shadow-3d: 0 1px 3px rgba(0, 0, 0, 0.05);
   --shadow-sharepoint: 0 1px 3px rgba(0, 0, 0, 0.05);
   --shadow-sharepoint-hover: 0 4px 6px rgba(0, 0, 0, 0.06);
+  --muted: 45 20% 96%;
+  --muted-foreground: 40 5% 35%;
+  --secondary: 45 20% 96%;
+  --accent: 45 20% 96%;
+  --sidebar-background: 45 33% 97%;
+  --sidebar-accent: 45 20% 96%;
+  --sidebar-border: 42 18% 90%;
+
+  /* Anthropic Gradients — Warm, earthy */
+  --gradient-primary: linear-gradient(135deg, #d97757 0%, #c15f3c 100%);
+  --gradient-secondary: linear-gradient(135deg, #6a9bcc 0%, #5585b3 100%);
+  --gradient-accent: linear-gradient(135deg, #788c5d 0%, #647746 100%);
+  --gradient-premium: linear-gradient(135deg, #d97757 0%, #c15f3c 100%);
+  --gradient-warm: linear-gradient(135deg, #d97757 0%, #c15f3c 100%);
+  --gradient-cool: linear-gradient(135deg, #6a9bcc 0%, #5585b3 100%);
+  --gradient-sunset: linear-gradient(135deg, #d97757 0%, #d97706 100%);
+  --gradient-ocean: linear-gradient(135deg, #6a9bcc 0%, #5585b3 100%);
+  --gradient-aurora: linear-gradient(135deg, #788c5d 0%, #6a9bcc 100%);
+  --gradient-dark: linear-gradient(135deg, #2d2d2a 0%, #141413 100%);
+  --gradient-mesh: none;
+  --gradient-mesh-dark: none;
+
+  /* Glass Morphism — Warm tint */
+  --glass-bg: rgba(250, 249, 245, 0.05);
+  --glass-bg-solid: rgba(250, 249, 245, 0.92);
+  --glass-bg-medium: rgba(250, 249, 245, 0.7);
+  --glass-bg-heavy: rgba(250, 249, 245, 0.95);
+  --glass-border: rgba(176, 174, 165, 0.15);
+  --glass-border-light: rgba(176, 174, 165, 0.25);
+  --glass-blur: blur(10px);
+  --glass-blur-heavy: blur(20px);
+  --glass-blur-ultra: blur(40px);
+
+  /* Shadow Collection — Warm, subtle */
+  --shadow-xs: 0 1px 2px rgba(20, 20, 19, 0.04);
+  --shadow-sm: 0 1px 3px rgba(20, 20, 19, 0.06), 0 1px 2px rgba(20, 20, 19, 0.04);
+  --shadow-md: 0 4px 6px rgba(20, 20, 19, 0.06), 0 2px 4px rgba(20, 20, 19, 0.04);
+  --shadow-lg: 0 10px 15px rgba(20, 20, 19, 0.06), 0 4px 6px rgba(20, 20, 19, 0.04);
+  --shadow-xl: 0 20px 25px rgba(20, 20, 19, 0.08), 0 8px 10px rgba(20, 20, 19, 0.04);
+  --shadow-2xl: 0 25px 50px rgba(20, 20, 19, 0.12);
+  --shadow-3xl: 0 35px 60px rgba(20, 20, 19, 0.15);
+  --shadow-inner: inset 0 1px 2px 0 rgba(20, 20, 19, 0.04);
+  --shadow-glow-primary: 0 0 20px rgba(217, 119, 87, 0.15);
+  --shadow-glow-secondary: 0 0 20px rgba(106, 155, 204, 0.15);
+  --shadow-glow-accent: 0 0 20px rgba(120, 140, 93, 0.15);
+  --shadow-3d: 0 2px 4px rgba(20, 20, 19, 0.06);
+  --shadow-sharepoint: 0 2px 4px rgba(20, 20, 19, 0.06);
+  --shadow-sharepoint-hover: 0 4px 8px rgba(20, 20, 19, 0.08);
 
   /* Modern Spacing Scale */
   --space-xs: 0.25rem;
@@ -946,6 +1064,8 @@ input[type='checkbox'].sp-checkbox:checked {
     'Helvetica Neue',
     Arial,
     sans-serif;
+  /* Typography — Anthropic Authentic */
+  font-family: 'Lora', Georgia, serif;
   line-height: 1.5;
   font-weight: 400;
   font-synthesis: none;
@@ -953,17 +1073,18 @@ input[type='checkbox'].sp-checkbox:checked {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-feature-settings: 'kern';
+  font-feature-settings: 'liga', 'kern';
   font-variant-ligatures: common-ligatures;
 
   /* Typography Scale */
-  --font-size-xs: 0.75rem; /* 12px */
-  --font-size-sm: 0.875rem; /* 14px */
-  --font-size-base: 1rem; /* 16px */
-  --font-size-lg: 1.125rem; /* 18px */
-  --font-size-xl: 1.25rem; /* 20px */
-  --font-size-2xl: 1.5rem; /* 24px */
-  --font-size-3xl: 1.875rem; /* 30px */
-  --font-size-4xl: 2.25rem; /* 36px */
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+  --font-size-4xl: 2.25rem;
 
   /* Line Heights */
   --line-height-tight: 1.25;
@@ -992,6 +1113,7 @@ body {
     'Helvetica Neue',
     Arial,
     sans-serif;
+  font-family: 'Lora', Georgia, serif;
 }
 
 #root {
@@ -1055,6 +1177,21 @@ h5,
 h6,
 strong {
   color: var(--color-text-primary);
+  font-family: 'Poppins', Arial, sans-serif;
+}
+
+/* UI elements use Poppins for clarity */
+button,
+input,
+select,
+textarea,
+label,
+nav,
+.btn,
+[role="button"],
+[role="tab"],
+[role="menuitem"] {
+  font-family: 'Poppins', Arial, sans-serif;
 }
 
 a {
@@ -1086,7 +1223,7 @@ kbd {
 }
 
 a:hover {
-  color: #0f172a;
+  color: #141413;
 }
 
 /* Font Sizing System - Based on Professional Design System */
@@ -1221,10 +1358,10 @@ a:hover {
 @keyframes glow-pulse {
   0%,
   100% {
-    box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 0 20px rgba(217, 119, 87, 0.3);
   }
   50% {
-    box-shadow: 0 0 40px rgba(99, 102, 241, 0.5);
+    box-shadow: 0 0 40px rgba(217, 119, 87, 0.5);
   }
 }
 
@@ -1331,7 +1468,7 @@ a:hover {
   background: #ffffff;
   border-radius: 2px;
   box-shadow: 0 1.6px 3.6px rgba(0, 0, 0, 0.13);
-  border: 1px solid #edebe9;
+  border: 1px solid var(--color-gray-200);
   transition: all 0.2s ease;
   position: relative;
   overflow: visible;
@@ -1339,7 +1476,7 @@ a:hover {
 
 .card:hover {
   box-shadow: 0 3.2px 7.2px rgba(0, 0, 0, 0.13);
-  border-color: #c8c6c4;
+  border-color: var(--color-gray-400);
 }
 
 .card-3d {
@@ -1405,13 +1542,13 @@ a:hover {
 
 /* Enhanced tab styling */
 [role='tablist'] {
-  background-color: #f8fafc;
+  background-color: #faf9f5;
   border-radius: 0.5rem;
   padding: 0.25rem;
   display: flex;
   flex-wrap: wrap;
   gap: 0.25rem;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e8e6dc;
 }
 
 [role='tab'] {
@@ -1420,7 +1557,7 @@ a:hover {
   font-weight: 500;
   font-size: 0.875rem;
   transition: all 0.2s ease;
-  color: #64748b;
+  color: #8a8880;
   background-color: transparent;
   border: none;
   cursor: pointer;
@@ -1432,14 +1569,14 @@ a:hover {
 
 [role='tab'][data-state='active'] {
   background-color: white;
-  color: #1e40af;
+  color: #c15f3c;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   font-weight: 600;
 }
 
 [role='tab']:hover:not([data-state='active']) {
   background-color: rgba(241, 245, 249, 0.7);
-  color: #334155;
+  color: #4a4a46;
 }
 
 [role='tabpanel'] {
@@ -1454,8 +1591,8 @@ div.command-dialog,
 div.dialog-content,
 div.dropdown-menu-content {
   --bg-color: white;
-  --text-color: #1a202c;
-  --border-color: #e2e8f0;
+  --text-color: #141413;
+  --border-color: #e8e6dc;
   --shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.15);
 
   background-color: var(--bg-color) !important;
@@ -1473,7 +1610,7 @@ div.dropdown-menu-content {
   border: 1px solid rgba(226, 232, 240, 1) !important;
   background-color: white !important;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
-  color: #334155 !important;
+  color: #4a4a46 !important;
   font-weight: 500 !important;
 }
 
@@ -1481,7 +1618,7 @@ div.dropdown-menu-content {
 .select-item,
 .dropdown-menu-item,
 .command-item {
-  color: #111827 !important;
+  color: #141413 !important;
   background-color: transparent !important;
   cursor: pointer !important;
   padding: 0.5rem 0.75rem !important;
@@ -1497,15 +1634,15 @@ div.dropdown-menu-content {
 .select-item:hover,
 .dropdown-menu-item:hover,
 .command-item:hover {
-  background-color: #f1f5f9 !important;
-  color: #0f172a !important;
+  background-color: #f4f3ee !important;
+  color: #141413 !important;
 }
 
 /* Selected/Checked state */
 .select-item[data-state='checked'],
 .dropdown-menu-item[data-state='checked'] {
-  background-color: #e0f2fe !important;
-  color: #1e40af !important;
+  background-color: #faf0ec !important;
+  color: #c15f3c !important;
   font-weight: 500 !important;
 }
 
@@ -1547,7 +1684,7 @@ div.dropdown-menu-content {
   padding: 0.5rem 0.75rem !important;
   font-size: 0.75rem !important;
   font-weight: 600 !important;
-  color: #6b7280 !important;
+  color: #8a8880 !important;
   letter-spacing: 0.05em !important;
   text-transform: uppercase !important;
 }
@@ -1614,7 +1751,7 @@ div.dropdown-menu-content {
 
 .editor-pane {
   flex: 7;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #e8e6dc;
   border-radius: 8px;
   min-height: 600px;
   padding: 24px;
@@ -1624,11 +1761,11 @@ div.dropdown-menu-content {
 
 .copilot-pane {
   flex: 3;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #e8e6dc;
   border-radius: 8px;
   min-height: 600px;
   padding: 24px;
-  background: #fafafa;
+  background: #faf9f5;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 */
@@ -1637,15 +1774,15 @@ div.dropdown-menu-content {
   margin-top: 16px;
   text-align: right;
   font-size: 12px;
-  color: #666;
+  color: #8a8880;
   padding: 16px 0;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid #e8e6dc;
 }
 
 /* AI Copilot Panel */
 .ai-copilot-panel {
-  font-family: sans-serif;
-  color: #333;
+  font-family: 'Poppins', Arial, sans-serif;
+  color: #141413;
 }
 
 .ai-copilot-panel h2 {
@@ -1707,7 +1844,7 @@ div.dropdown-menu-content {
   margin: 8px 0;
 }
 .utnv4-breadcrumbs a {
-  color: #0078d4;
+  color: var(--color-primary);
   text-decoration: none;
   margin: 0 3px;
 }
@@ -1734,8 +1871,8 @@ div.dropdown-menu-content {
   font-weight: 500;
 }
 .utnv4-tabs .active a {
-  border-bottom: 2px solid #0078d4;
-  color: #0078d4;
+  border-bottom: 2px solid var(--color-primary);
+  color: var(--color-primary);
 }
 
 /* Coauthor styles moved to CoAuthor.css */
@@ -1808,13 +1945,13 @@ div.dropdown-menu-content {
 
 .markdown-content h1 {
   font-size: 1.5em;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e8e6dc;
   padding-bottom: 0.3em;
 }
 
 .markdown-content h2 {
   font-size: 1.3em;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e8e6dc;
   padding-bottom: 0.2em;
 }
 
@@ -1861,7 +1998,7 @@ div.dropdown-menu-content {
 
 /* Code blocks */
 .markdown-content pre {
-  background-color: #f1f5f9;
+  background-color: #f4f3ee;
   border-radius: 0.375rem;
   padding: 1em;
   overflow-x: auto;
@@ -1874,7 +2011,7 @@ div.dropdown-menu-content {
 }
 
 .markdown-content code {
-  background-color: #f1f5f9;
+  background-color: #f4f3ee;
   border-radius: 0.25rem;
   padding: 0.2em 0.4em;
   font-family:
@@ -1891,10 +2028,10 @@ div.dropdown-menu-content {
 
 /* Blockquotes */
 .markdown-content blockquote {
-  border-left: 4px solid #e2e8f0;
+  border-left: 4px solid #e8e6dc;
   padding-left: 1em;
   margin: 1em 0;
-  color: #64748b;
+  color: #8a8880;
 }
 
 /* Tables */
@@ -1907,24 +2044,24 @@ div.dropdown-menu-content {
 
 .markdown-content th,
 .markdown-content td {
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e8e6dc;
   padding: 0.5em 0.75em;
   text-align: left;
 }
 
 .markdown-content th {
-  background-color: #f8fafc;
+  background-color: #faf9f5;
   font-weight: 600;
 }
 
 .markdown-content tr:nth-of-type(even) {
-  background-color: #f8fafc;
+  background-color: #faf9f5;
 }
 
 /* Horizontal rule */
 .markdown-content hr {
   border: none;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid #e8e6dc;
   margin: 1.5em 0;
 }
 
@@ -1945,9 +2082,9 @@ div.dropdown-menu-content {
 
 /* SharePoint Button Styles */
 .btn-sharepoint {
-  background: #0078d4;
+  background: var(--color-primary);
   color: white;
-  border: 1px solid #0078d4;
+  border: 1px solid var(--color-primary);
   border-radius: 2px;
   padding: 5px 16px;
   font-weight: 400;
@@ -1957,7 +2094,7 @@ div.dropdown-menu-content {
   overflow: hidden;
   transition: all 0.1s ease;
   box-shadow: none;
-  font-family: 'Segoe UI', sans-serif;
+  font-family: 'Poppins', Arial, sans-serif;
   height: 32px;
   display: inline-flex;
   align-items: center;
@@ -1965,8 +2102,8 @@ div.dropdown-menu-content {
 }
 
 .btn-sharepoint:hover {
-  background: #106ebe;
-  border-color: #106ebe;
+  background: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
 }
 
 .btn-sharepoint:active {
@@ -1976,8 +2113,8 @@ div.dropdown-menu-content {
 
 .btn-sharepoint-secondary {
   background: white;
-  color: #323130;
-  border: 1px solid #c8c6c4;
+  color: var(--color-gray-800);
+  border: 1px solid var(--color-gray-400);
   border-radius: 2px;
   padding: 5px 16px;
   font-weight: 400;
@@ -1985,7 +2122,7 @@ div.dropdown-menu-content {
   cursor: pointer;
   transition: all 0.1s ease;
   box-shadow: none;
-  font-family: 'Segoe UI', sans-serif;
+  font-family: 'Poppins', Arial, sans-serif;
   height: 32px;
   display: inline-flex;
   align-items: center;
@@ -1993,14 +2130,14 @@ div.dropdown-menu-content {
 }
 
 .btn-sharepoint-secondary:hover {
-  background: #f3f2f1;
+  background: var(--color-gray-100);
   border-color: #979593;
 }
 
 /* SharePoint Command Bar */
 .sp-command-bar {
   background: #ffffff;
-  border-bottom: 1px solid #edebe9;
+  border-bottom: 1px solid var(--color-gray-200);
   padding: 8px 16px;
   display: flex;
   align-items: center;
@@ -2009,7 +2146,7 @@ div.dropdown-menu-content {
 
 .sp-command-button {
   background: transparent;
-  color: #323130;
+  color: var(--color-gray-800);
   border: none;
   border-radius: 2px;
   padding: 6px 8px;
@@ -2024,38 +2161,38 @@ div.dropdown-menu-content {
 }
 
 .sp-command-button:hover {
-  background: #f3f2f1;
+  background: var(--color-gray-100);
 }
 
 .sp-command-button:active {
-  background: #edebe9;
+  background: var(--color-gray-200);
 }
 
 /* SharePoint List View */
 .sp-list-header {
-  background: #faf9f8;
-  border-bottom: 1px solid #edebe9;
+  background: var(--color-gray-50);
+  border-bottom: 1px solid var(--color-gray-200);
   padding: 8px 16px;
   font-weight: 600;
   font-size: 12px;
   text-transform: uppercase;
-  color: #605e5c;
+  color: var(--color-gray-600);
 }
 
 .sp-list-row {
   background: white;
-  border-bottom: 1px solid #f3f2f1;
+  border-bottom: 1px solid var(--color-gray-100);
   padding: 12px 16px;
   transition: background 0.1s ease;
 }
 
 .sp-list-row:hover {
-  background: #faf9f8;
+  background: var(--color-gray-50);
 }
 
 .sp-list-row.selected {
   background: #e1f5fe;
-  border-left: 3px solid #0078d4;
+  border-left: 3px solid var(--color-primary);
 }
 
 /* SharePoint Document Icon */
@@ -2065,7 +2202,7 @@ div.dropdown-menu-content {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #f3f2f1;
+  background: var(--color-gray-100);
   border-radius: 2px;
 }
 
@@ -2075,24 +2212,24 @@ div.dropdown-menu-content {
   align-items: center;
   padding: 8px 0;
   font-size: 14px;
-  color: #323130;
+  color: var(--color-gray-800);
 }
 
 .sp-breadcrumb-item {
   display: inline-flex;
   align-items: center;
-  color: #323130;
+  color: var(--color-gray-800);
   text-decoration: none;
 }
 
 .sp-breadcrumb-item:hover {
-  color: #0078d4;
+  color: var(--color-primary);
   text-decoration: underline;
 }
 
 .sp-breadcrumb-separator {
   margin: 0 8px;
-  color: #c8c6c4;
+  color: var(--color-gray-400);
 }
 
 /* Modern Progress Rings */
@@ -2165,7 +2302,7 @@ div.dropdown-menu-content {
 
 /* Skeleton Loaders */
 .skeleton {
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background: linear-gradient(90deg, #f4f3ee 25%, #e8e6dc 50%, #f4f3ee 75%);
   background-size: 200% 100%;
   animation: loading 1.5s infinite;
   border-radius: 8px;
@@ -2475,7 +2612,7 @@ div.dropdown-menu-content {
     --color-gray-600: #d4d4d8;
     --color-gray-700: #e4e4e7;
     --color-gray-800: #f4f4f5;
-    --color-gray-900: #fafafa;
+    --color-gray-900: #faf9f5;
   }
 
   body {
@@ -2668,7 +2805,7 @@ button:focus-visible,
 
   /* Loading skeleton shimmer */
   .skeleton-shimmer {
-    background: linear-gradient(90deg, #f3f4f6 0%, #e5e7eb 50%, #f3f4f6 100%);
+    background: linear-gradient(90deg, #f4f3ee 0%, #e8e6dc 50%, #f4f3ee 100%);
     background-size: 200% 100%;
     animation: shimmer 1.5s ease-in-out infinite;
   }

@@ -1,5 +1,6 @@
 /**
  * Central type exports for Concept2Cure.RI server types
+ * Central type exports for Concept2Cure server types
  * Import from this file for all server-side type definitions
  */
 

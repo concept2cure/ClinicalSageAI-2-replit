@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Password Reset Flow
+ * Concept2Cure Client Portal V2 - Password Reset Flow
  *
  * Secure password reset with:
  * - Email verification with expiring tokens

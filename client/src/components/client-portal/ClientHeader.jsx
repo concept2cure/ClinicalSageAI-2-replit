@@ -52,7 +52,7 @@ const ClientHeader = ({ organization, stats, user }) => {
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-2xl font-bold tracking-tight mb-1 mt-1 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-              Welcome to TrialSage, {orgData.name}
+              Welcome to Concept2Cure, {orgData.name}
             </h1>
             <p className="text-muted-foreground text-sm">
               Last login: {formatLastLogin(statsData.lastLogin)}

@@ -23,7 +23,7 @@
  * @module server/services/citationEnforcementService
  * @version 1.0.0
  * @compliance 21 CFR Part 11
- * @author TrialSage AI Team
+ * @author Concept2Cure AI Team
  */
 
 import { Pool } from 'pg';

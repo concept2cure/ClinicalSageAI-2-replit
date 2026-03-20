@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Top Bar Navigation
+ * Concept2Cure Client Portal V2 - Top Bar Navigation
  *
  * Enterprise-grade top navigation with:
  * - Organization/workspace context display

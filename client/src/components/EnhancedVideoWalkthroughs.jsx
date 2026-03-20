@@ -12,7 +12,7 @@ export default function EnhancedVideoWalkthroughs() {
 
   const videos = {
     hero: {
-      title: 'Why TrialSage Exists',
+      title: 'Why Concept2Cure Exists',
       description:
         'From concept to clinic in half the time with AI-powered regulatory intelligence.',
       src: '', // Will be populated with actual video later
@@ -24,13 +24,13 @@ export default function EnhancedVideoWalkthroughs() {
       
 But static PDFs, siloed platforms, and manual processes still waste months of your team's time.
 
-TrialSage changes everything — by unifying IND automation, real-time CSR analytics, automated CER generation, and predictive risk modeling in one platform.
+Concept2Cure changes everything — by unifying IND automation, real-time CSR analytics, automated CER generation, and predictive risk modeling in one platform.
 
 Imagine compressing 14 months of work into just 6 months — without a single surprise.
 
 With AI copilots built for regulatory experts, you file faster, smarter, and with total confidence.
 
-Ready to lead the future of clinical development? Book your strategy demo with TrialSage today.`,
+Ready to lead the future of clinical development? Book your strategy demo with Concept2Cure today.`,
       ctaText: 'Book Your Strategy Demo',
       ctaLink: '/contact',
       color: 'bg-gradient-to-r from-blue-600 to-indigo-700',
@@ -79,7 +79,7 @@ Run what-if protocol simulations to forecast timelines and outcomes before you i
 
 Get automated alerts when thresholds are breached — so you can act before issues escalate.
 
-From data chaos to total visibility — ClinOps on TrialSage gives you the insight to lead.
+From data chaos to total visibility — ClinOps on Concept2Cure gives you the insight to lead.
 
 Explore ClinOps Advantage — request your personalized walkthrough today.`,
       ctaText: 'Request Personalized Walkthrough',
@@ -160,9 +160,9 @@ Explore ClinOps Advantage — request your personalized walkthrough today.`,
     <div className="bg-gray-900 text-white py-20">
       <Container>
         <div className="text-center mb-16">
-          <h2 className="text-5xl font-bold mb-6">See TrialSage in Action</h2>
+          <h2 className="text-5xl font-bold mb-6">See Concept2Cure in Action</h2>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-4">
-            Watch guided demonstrations of our platform's core capabilities and see how TrialSage
+            Watch guided demonstrations of our platform's core capabilities and see how Concept2Cure
             accelerates clinical development
           </p>
           <div className="bg-blue-900/30 border border-blue-500/40 rounded-lg py-3 px-5 text-blue-300 text-sm inline-block">

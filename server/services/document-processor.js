@@ -1,7 +1,7 @@
 /**
  * Document Processor Service
  *
- * This service provides advanced document processing capabilities for the TrialSage platform,
+ * This service provides advanced document processing capabilities for the Concept2Cure platform,
  * including PDF extraction, text analysis, and document transformation.
  * It integrates with AI services for intelligent document processing.
  */

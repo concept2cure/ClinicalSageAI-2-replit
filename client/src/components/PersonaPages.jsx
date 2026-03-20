@@ -30,7 +30,7 @@ export default function PersonaPages() {
   return (
     <Container className="py-20">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold gradient-heading">TrialSage Personas</h1>
+        <h1 className="text-3xl font-bold gradient-heading">Concept2Cure Personas</h1>
         <Link href="/">
           <Button variant="outline" className="flex items-center gap-2">
             <span>← Back to Home</span>

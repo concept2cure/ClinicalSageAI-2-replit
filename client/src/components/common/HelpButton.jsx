@@ -35,7 +35,7 @@ const HelpButton = ({
           <DialogHeader>
             <div className="flex justify-between items-center">
               <DialogTitle className="text-xl font-semibold">
-                TrialSage Platform Guide & Tutorials
+                Concept2Cure Platform Guide & Tutorials
               </DialogTitle>
               <Button
                 variant="ghost"

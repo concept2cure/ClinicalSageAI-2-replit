@@ -57,20 +57,20 @@ async def root():
         <title>TrialSage™ Clinical Trial Intelligence Platform</title>
         <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { font-family: 'Segoe UI', system-ui, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+            body { font-family: 'Poppins', system-ui, sans-serif; background: linear-gradient(135deg, #d97757 0%, #c15f3c 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
             .container { background: white; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); padding: 40px; max-width: 800px; width: 90%; }
             .header { text-align: center; margin-bottom: 40px; }
             .logo { font-size: 2.5rem; font-weight: bold; color: #4a5568; margin-bottom: 10px; }
-            .beta-badge { background: #667eea; color: white; padding: 4px 12px; border-radius: 12px; font-size: 0.8rem; margin-left: 10px; }
+            .beta-badge { background: #d97757; color: white; padding: 4px 12px; border-radius: 12px; font-size: 0.8rem; margin-left: 10px; }
             .subtitle { color: #718096; font-size: 1.1rem; margin-bottom: 20px; }
             .status { background: #48bb78; color: white; padding: 8px 16px; border-radius: 20px; font-size: 0.9rem; display: inline-block; }
             .services { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 30px; }
-            .service-card { background: #f7fafc; padding: 20px; border-radius: 12px; border-left: 4px solid #667eea; transition: transform 0.2s; }
+            .service-card { background: #f7fafc; padding: 20px; border-radius: 12px; border-left: 4px solid #d97757; transition: transform 0.2s; }
             .service-card:hover { transform: translateY(-2px); }
             .service-title { font-weight: bold; color: #2d3748; margin-bottom: 8px; }
             .service-desc { color: #4a5568; font-size: 0.9rem; }
             .api-links { margin-top: 30px; text-align: center; }
-            .api-link { display: inline-block; margin: 0 10px; padding: 10px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; transition: background 0.2s; }
+            .api-link { display: inline-block; margin: 0 10px; padding: 10px 20px; background: #d97757; color: white; text-decoration: none; border-radius: 8px; transition: background 0.2s; }
             .api-link:hover { background: #5a67d8; }
             .footer { text-align: center; margin-top: 30px; color: #718096; font-size: 0.9rem; }
         </style>

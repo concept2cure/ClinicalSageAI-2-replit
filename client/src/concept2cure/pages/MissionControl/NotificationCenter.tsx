@@ -440,7 +440,7 @@ export const NotificationCenter: React.FC = () => {
   /* ------ Render ------ */
 
   return (
-    <div className="flex-1 flex flex-col bg-[#FAFAF9] overflow-hidden">
+    <div className="flex-1 flex flex-col bg-[#faf9f5] overflow-hidden">
       {/* Header */}
       <div className="border-b bg-white px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">

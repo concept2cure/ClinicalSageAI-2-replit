@@ -1,4 +1,4 @@
-// API Response types for TrialSage application
+// API Response types for Concept2Cure application
 
 // Protocol Optimizer API responses
 interface ProtocolOptimizationResponse {

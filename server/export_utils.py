@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Export Utilities for LumenTrialGuide.AI
+Export Utilities for Concept2Cure
 
 This module provides shared functionality for various export operations
 including automatically generating trial strategy decks alongside
@@ -79,7 +79,7 @@ def auto_generate_trial_strategy_deck(session_id: str, persona: str = "general")
         f"Protocol Improvement Suggestions: {suggestions}\n"
         f"AI Confidence: High\n\n"
         f"All insights generated using CSR-backed evidence, semantic alignment, "
-        f"and protocol validation tools built into LumenTrialGuide.AI."
+        f"and protocol validation tools built into Concept2Cure."
     )
     
     tf1 = slide1.shapes.add_textbox(Inches(0.5), Inches(1.3), Inches(9), Inches(5)).text_frame

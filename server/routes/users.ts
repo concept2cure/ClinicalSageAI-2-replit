@@ -1,5 +1,5 @@
 /**
- * Users Routes - TrialSage V2
+ * Users Routes - Concept2Cure V2
  *
  * Provides user-related endpoints for the portal.
  *
@@ -33,7 +33,7 @@ const devUserResponse = {
   roles: ['user'],
   permissions: [],
   organizationId: '2',
-  organizationName: 'TrialSage Demo',
+  organizationName: 'Concept2Cure Demo',
   mfaEnabled: false,
   mfaMethods: [],
   mustChangePassword: false,
@@ -122,7 +122,7 @@ router.get('/me', async (req: Request, res: Response) => {
     const userData = user[0];
 
     // Get organization name
-    let orgName = 'TrialSage Demo';
+    let orgName = 'Concept2Cure Demo';
     if (decoded.organizationId) {
       const org = await db
         .select()

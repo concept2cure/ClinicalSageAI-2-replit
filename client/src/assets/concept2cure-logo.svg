@@ -61,7 +61,7 @@
   </g>
 
   <!-- Brand Text -->
-  <text x="200" y="210" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif"
+  <text x="200" y="210" text-anchor="middle" font-family="system-ui, -apple-system, 'Poppins', sans-serif"
         font-size="28" font-weight="700" fill="white" letter-spacing="0.5">
     Concept2Cure
   </text>

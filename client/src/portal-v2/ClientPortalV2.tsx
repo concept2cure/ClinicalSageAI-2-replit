@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Main Entry Point
+ * Concept2Cure Client Portal V2 - Main Entry Point
  *
  * Central router and provider setup for the Client Portal V2.
  * This component serves as the root of the portal module system.

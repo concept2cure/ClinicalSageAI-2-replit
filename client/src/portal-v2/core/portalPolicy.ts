@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Policy Engine
+ * Concept2Cure Client Portal V2 - Policy Engine
  *
  * Role-based experience configuration with feature flags,
  * notification preferences, and branding customization.

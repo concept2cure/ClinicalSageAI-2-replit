@@ -1,11 +1,11 @@
-// --- TrialSage Vault™ Concierge AI Assistant (Enterprise-Grade, Secure, Hallucination-Protected) ---
+// --- Concept2Cure Vault™ Concierge AI Assistant (Enterprise-Grade, Secure, Hallucination-Protected) ---
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 
 /**
- * VaultConciergeAI - Sophisticated AI assistant for TrialSage Vault™
+ * VaultConciergeAI - Sophisticated AI assistant for Concept2Cure Vault™
  *
  * Features:
  * - Microsoft 365-style UI with sophisticated animations
@@ -46,7 +46,7 @@ export default function VaultConciergeAI() {
 
     // Initial suggestions
     setSuggestions([
-      'What is TrialSage Vault?',
+      'What is Concept2Cure Vault?',
       'How does AI tagging work?',
       'How is Vault different from competitors?',
       'Tell me about compliance features',

@@ -1,5 +1,5 @@
 """
-Celery Configuration for LumenTrialGuide.AI
+Celery Configuration for Concept2Cure
 
 This module sets up Celery with Redis as both the message broker
 and result backend, enabling robust task management for long-running

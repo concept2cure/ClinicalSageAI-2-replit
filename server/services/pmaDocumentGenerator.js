@@ -68,7 +68,7 @@ class PMADocumentGenerator {
         size: 'LETTER',
         info: {
           Title: `PMA Submission - ${deviceData.deviceName}`,
-          Author: 'TrialSage Regulatory Platform',
+          Author: 'Concept2Cure Regulatory Platform',
           Subject: 'FDA PMA Premarket Approval',
           Keywords: 'PMA, FDA, Medical Device, Class III, Regulatory'
         }

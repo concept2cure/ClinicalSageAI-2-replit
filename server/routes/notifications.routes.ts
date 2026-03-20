@@ -413,7 +413,7 @@ router.post('/test', async (req: Request, res: Response) => {
       type: 'in-app' as const,
       recipient: req.body.userId || 'test-user',
       subject: 'Test Notification',
-      message: 'This is a test notification from the TrialSage notification system.',
+      message: 'This is a test notification from the Concept2Cure notification system.',
       priority: 'medium' as const,
     };
     

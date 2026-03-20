@@ -161,7 +161,7 @@ export default function DigestDashboard() {
                 <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-medium">No Recent Activity</h3>
                 <p className="text-sm text-muted-foreground max-w-md mt-2">
-                  There is no activity to report in your weekly digest. As you use TrialSage to analyze protocols and generate reports, your activity will appear here.
+                  There is no activity to report in your weekly digest. As you use Concept2Cure to analyze protocols and generate reports, your activity will appear here.
                 </p>
               </div>
             )}

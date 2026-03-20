@@ -1,5 +1,5 @@
 /**
- * TrialSage Client Portal V2 - Regulatory Compliance Engine
+ * Concept2Cure Client Portal V2 - Regulatory Compliance Engine
  *
  * 21 CFR Part 11, EU Annex 11, GCP, and ALCOA+ compliant
  * configuration and validation systems.

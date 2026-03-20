@@ -1,7 +1,7 @@
 import { apiRequest, extractData } from './queryClient';
 
 /**
- * TrialSage API Connector
+ * Concept2Cure API Connector
  *
  * This service provides a centralized interface for all API calls to the backend services.
  * It follows a modular structure based on the different service domains.

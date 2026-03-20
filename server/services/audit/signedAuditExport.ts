@@ -265,6 +265,7 @@ export async function generateSignedAuditExport(
     exportedBy: request.exportedBy,
     exportedByRole: request.exportedByRole || 'unknown',
     exportSource: 'Concept2Cure.RI / Concept2Cure Platform',
+    exportSource: 'Concept2Cure / Concept2Cure Platform',
     queryFilters: {
       organizationId: request.organizationId,
       startDate: request.startDate,

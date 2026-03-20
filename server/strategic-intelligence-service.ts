@@ -144,7 +144,7 @@ export class StrategicIntelligenceService {
       },
       competitiveAnalysis: {
         summary:
-          'For First-in-Human IND Readiness, TrialSage outperforms competitors with its comprehensive regulatory intelligence covering 8 global regions (vs. 2-4 regions for competitors) and academic knowledge integration. While Medidata offers strong data management and Veeva provides robust document control, only TrialSage delivers AI-powered field-level protocol optimization with explainable recommendations tied directly to regulatory precedents and CSR outcomes. This results in 38% cost savings and 5-week timeline reduction compared to traditional approaches, with significantly lower implementation complexity.',
+          'For First-in-Human IND Readiness, Concept2Cure outperforms competitors with its comprehensive regulatory intelligence covering 8 global regions (vs. 2-4 regions for competitors) and academic knowledge integration. While Medidata offers strong data management and Veeva provides robust document control, only Concept2Cure delivers AI-powered field-level protocol optimization with explainable recommendations tied directly to regulatory precedents and CSR outcomes. This results in 38% cost savings and 5-week timeline reduction compared to traditional approaches, with significantly lower implementation complexity.',
         advantages: [
           'Complete global regulatory coverage (8 regions vs. 2-4 for competitors)',
           'AI-driven field-level optimization with regulatory precedent justification',
@@ -244,7 +244,7 @@ export class StrategicIntelligenceService {
       },
       competitiveAnalysis: {
         summary:
-          "In Adaptive Protocol Design, TrialSage's key advantage over competitors is its advanced statistical simulation capabilities combined with version-aware protocol tracking. While Medidata offers strong synthetic control arms and Clario provides endpoint expertise, only TrialSage delivers comprehensive academic knowledge integration and explainable AI recommendations for adaptive design parameters. The platform's permanent knowledge retention ensures that each adaptive design builds upon institutional learning, unlike competitors where insights aren't retained between sessions. This results in a 22% improvement in success probability and 60% cost reduction compared to specialized statistical consultants.",
+          "In Adaptive Protocol Design, Concept2Cure's key advantage over competitors is its advanced statistical simulation capabilities combined with version-aware protocol tracking. While Medidata offers strong synthetic control arms and Clario provides endpoint expertise, only Concept2Cure delivers comprehensive academic knowledge integration and explainable AI recommendations for adaptive design parameters. The platform's permanent knowledge retention ensures that each adaptive design builds upon institutional learning, unlike competitors where insights aren't retained between sessions. This results in a 22% improvement in success probability and 60% cost reduction compared to specialized statistical consultants.",
         advantages: [
           'Advanced statistical simulation with transparent model documentation',
           'Version-aware protocol tracking not available in competitor platforms',
@@ -344,7 +344,7 @@ export class StrategicIntelligenceService {
       },
       competitiveAnalysis: {
         summary:
-          "For Endpoint Selection & Optimization, TrialSage delivers unmatched competitive intelligence through its comprehensive CSR database with advanced semantic search capabilities. While competitors offer basic benchmarking, only TrialSage provides field-specific endpoint optimization with regulatory precedent matching across 8 global regions. The platform's Hugging Face integration enables deeper analysis of endpoint selection impact on trial success, with permanent knowledge retention to build organizational expertise. This delivers 3-week timeline acceleration and $22,000 cost savings compared to traditional approaches, with higher confidence in regulatory acceptance.",
+          "For Endpoint Selection & Optimization, Concept2Cure delivers unmatched competitive intelligence through its comprehensive CSR database with advanced semantic search capabilities. While competitors offer basic benchmarking, only Concept2Cure provides field-specific endpoint optimization with regulatory precedent matching across 8 global regions. The platform's Hugging Face integration enables deeper analysis of endpoint selection impact on trial success, with permanent knowledge retention to build organizational expertise. This delivers 3-week timeline acceleration and $22,000 cost savings compared to traditional approaches, with higher confidence in regulatory acceptance.",
         advantages: [
           'Comprehensive endpoint database from global regulatory sources',
           'Field-level analysis of endpoint selection on success probability',

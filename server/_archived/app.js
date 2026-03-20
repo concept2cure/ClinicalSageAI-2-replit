@@ -1,7 +1,7 @@
 /**
- * TrialSage Express Server
+ * Concept2Cure Express Server
  *
- * This is the main entry point for the TrialSage server application.
+ * This is the main entry point for the Concept2Cure server application.
  * It sets up Express with middleware and registers all API routes.
  */
 

@@ -8,23 +8,43 @@
       href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
       rel="stylesheet"
     />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <style>
+      body { font-family: 'Lora', Georgia, serif; }
+      h1, h2, h3, h4, h5, h6, button, label, nav, input, select { font-family: 'Poppins', Arial, sans-serif; }
       .btn-primary {
-        @apply bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded;
+        background-color: #d97757;
+        color: white;
+        font-weight: 700;
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        transition: background-color 0.2s;
       }
+      .btn-primary:hover { background-color: #c15f3c; }
       .btn-secondary {
-        @apply bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded;
+        background-color: #e8e6dc;
+        color: #141413;
+        font-weight: 700;
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        transition: background-color 0.2s;
       }
+      .btn-secondary:hover { background-color: #d6d3c8; }
       .card {
-        @apply bg-white rounded-lg shadow-md p-6;
+        background: white;
+        border-radius: 0.75rem;
+        box-shadow: 0 1px 3px rgba(20,20,19,0.06);
+        padding: 1.5rem;
       }
       .loading {
         display: inline-block;
         width: 20px;
         height: 20px;
-        border: 3px solid rgba(0, 0, 0, 0.3);
+        border: 3px solid rgba(20, 20, 19, 0.15);
         border-radius: 50%;
-        border-top-color: #000;
+        border-top-color: #d97757;
         animation: spin 1s ease-in-out infinite;
       }
       @keyframes spin {
@@ -34,41 +54,36 @@
       }
     </style>
   </head>
-  <body class="bg-gray-100 min-h-screen flex flex-col">
-    <header class="bg-gradient-to-r from-blue-600 to-indigo-800 text-white shadow-md">
-      <div class="container mx-auto py-6 px-4">
-        <div class="flex flex-col md:flex-row justify-between items-center">
-          <div class="flex items-center mb-4 md:mb-0">
-            <h1 class="text-3xl font-bold mr-2">Concept2Cure</h1>
-            <span class="bg-blue-500 text-xs px-2 py-1 rounded-full">BETA</span>
+  <body style="background-color: #faf9f5; min-height: 100vh; display: flex; flex-direction: column;">
+    <header style="background: linear-gradient(135deg, #d97757, #c15f3c); color: white; box-shadow: 0 2px 8px rgba(20,20,19,0.1);">
+      <div style="max-width: 1200px; margin: 0 auto; padding: 1.5rem 1rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+            <h1 style="font-size: 1.875rem; font-weight: 700; margin-right: 0.5rem;">Concept2Cure</h1>
+            <span style="background: rgba(255,255,255,0.2); font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 9999px;">BETA</span>
           </div>
           <div>
-            <span class="text-blue-200">Powered by OpenAI GPT-4o</span>
+            <span style="color: rgba(255,255,255,0.8); font-size: 0.875rem;">AI-Powered Regulatory Intelligence</span>
           </div>
         </div>
-        <p class="mt-2 text-xl">Clinical Trial Intelligence Platform</p>
+        <p style="margin-top: 0.5rem; font-size: 1.25rem; color: rgba(255,255,255,0.9);">Clinical Trial Intelligence Platform</p>
       </div>
     </header>
 
-    <main class="container mx-auto flex-1 p-4">
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <main style="max-width: 1200px; margin: 0 auto; flex: 1; padding: 1rem;">
+      <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1.5rem;">
         <!-- Sidebar -->
-        <div class="lg:col-span-1">
-          <div class="card mb-6">
-            <h2 class="text-xl font-bold mb-4">Generate Protocol</h2>
-            <form id="protocol-form" class="space-y-4">
+        <div>
+          <div class="card" style="margin-bottom: 1.5rem;">
+            <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; color: #141413;">Generate Protocol</h2>
+            <form id="protocol-form" style="display: flex; flex-direction: column; gap: 1rem;">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Indication</label>
-                <input
-                  type="text"
-                  id="indication"
-                  class="w-full p-2 border rounded"
-                  placeholder="e.g., NASH, Alzheimer's, NSCLC"
-                />
+                <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #6b6963; margin-bottom: 0.25rem;">Indication</label>
+                <input type="text" id="indication" style="width: 100%; padding: 0.5rem; border: 1px solid #e8e6dc; border-radius: 0.375rem; font-family: 'Poppins', Arial, sans-serif;" placeholder="e.g., NASH, Alzheimer's, NSCLC" />
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Phase</label>
-                <select id="phase" class="w-full p-2 border rounded">
+                <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #6b6963; margin-bottom: 0.25rem;">Phase</label>
+                <select id="phase" style="width: 100%; padding: 0.5rem; border: 1px solid #e8e6dc; border-radius: 0.375rem; font-family: 'Poppins', Arial, sans-serif;">
                   <option value="Phase I">Phase I</option>
                   <option value="Phase II" selected>Phase II</option>
                   <option value="Phase III">Phase III</option>
@@ -76,71 +91,41 @@
                 </select>
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1"
-                  >Primary Endpoint (optional)</label
-                >
-                <input
-                  type="text"
-                  id="endpoint"
-                  class="w-full p-2 border rounded"
-                  placeholder="e.g., Overall Survival"
-                />
+                <label style="display: block; font-size: 0.875rem; font-weight: 500; color: #6b6963; margin-bottom: 0.25rem;">Primary Endpoint (optional)</label>
+                <input type="text" id="endpoint" style="width: 100%; padding: 0.5rem; border: 1px solid #e8e6dc; border-radius: 0.375rem; font-family: 'Poppins', Arial, sans-serif;" placeholder="e.g., Overall Survival" />
               </div>
-              <button
-                type="submit"
-                id="generate-btn"
-                class="btn-primary w-full flex items-center justify-center"
-              >
+              <button type="submit" id="generate-btn" class="btn-primary" style="width: 100%; display: flex; align-items: center; justify-content: center;">
                 <span>Generate Protocol</span>
               </button>
             </form>
           </div>
 
-          <div class="card mb-6">
-            <h2 class="text-xl font-bold mb-4">Weekly Intelligence</h2>
-            <p class="text-gray-600 mb-4">
-              Generate a comprehensive intelligence brief with protocol, IND modules, and risk
-              analysis.
-            </p>
-            <button
-              id="weekly-report-btn"
-              class="btn-primary w-full flex items-center justify-center"
-            >
+          <div class="card" style="margin-bottom: 1.5rem;">
+            <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; color: #141413;">Weekly Intelligence</h2>
+            <p style="color: #6b6963; margin-bottom: 1rem; font-size: 0.875rem;">Generate a comprehensive intelligence brief with protocol, IND modules, and risk analysis.</p>
+            <button id="weekly-report-btn" class="btn-primary" style="width: 100%; display: flex; align-items: center; justify-content: center;">
               <span>Generate Weekly Report</span>
             </button>
           </div>
 
-          <div class="card mb-6">
-            <h2 class="text-xl font-bold mb-4">Latest Report</h2>
-            <p class="text-gray-600 mb-4">View or download the most recent intelligence report.</p>
-            <div class="flex space-x-2">
-              <button
-                id="view-report-btn"
-                class="btn-secondary flex-1 flex items-center justify-center"
-              >
+          <div class="card" style="margin-bottom: 1.5rem;">
+            <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; color: #141413;">Latest Report</h2>
+            <p style="color: #6b6963; margin-bottom: 1rem; font-size: 0.875rem;">View or download the most recent intelligence report.</p>
+            <div style="display: flex; gap: 0.5rem;">
+              <button id="view-report-btn" class="btn-secondary" style="flex: 1; display: flex; align-items: center; justify-content: center;">
                 <span>View</span>
               </button>
-              <a
-                href="/static/latest_report.pdf"
-                target="_blank"
-                id="download-report-btn"
-                class="btn-primary flex-1 flex items-center justify-center"
-              >
+              <a href="/static/latest_report.pdf" target="_blank" id="download-report-btn" class="btn-primary" style="flex: 1; display: flex; align-items: center; justify-content: center; text-decoration: none;">
                 <span>Download</span>
               </a>
             </div>
           </div>
 
-          <div class="card" id="follow-up-container" style="display: none">
-            <h2 class="text-xl font-bold mb-4">Follow-up Questions</h2>
-            <div class="space-y-4">
-              <textarea
-                id="follow-up-question"
-                rows="3"
-                class="w-full p-2 border rounded"
-                placeholder="Ask a follow-up question about the protocol..."
-              ></textarea>
-              <button id="ask-btn" class="btn-primary w-full flex items-center justify-center">
+          <div class="card" id="follow-up-container" style="display: none;">
+            <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; color: #141413;">Follow-up Questions</h2>
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+              <textarea id="follow-up-question" rows="3" style="width: 100%; padding: 0.5rem; border: 1px solid #e8e6dc; border-radius: 0.375rem; font-family: 'Lora', Georgia, serif;" placeholder="Ask a follow-up question about the protocol..."></textarea>
+              <button id="ask-btn" class="btn-primary" style="width: 100%; display: flex; align-items: center; justify-content: center;">
                 <span>Ask Question</span>
               </button>
             </div>
@@ -148,100 +133,57 @@
         </div>
 
         <!-- Main Content -->
-        <div class="lg:col-span-2">
-          <div id="loading-container" style="display: none" class="card mb-6">
-            <div class="flex items-center justify-center flex-col p-12">
-              <div class="loading mb-4"></div>
-              <p class="text-gray-600 text-center">Generating intelligence...</p>
-              <p class="text-gray-500 text-sm text-center mt-2">
-                This may take up to a minute as we analyze clinical trial data.
-              </p>
+        <div>
+          <div id="loading-container" style="display: none;" class="card" style="margin-bottom: 1.5rem;">
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem;">
+              <div class="loading" style="margin-bottom: 1rem;"></div>
+              <p style="color: #6b6963; text-align: center;">Generating intelligence...</p>
+              <p style="color: #8a8880; font-size: 0.875rem; text-align: center; margin-top: 0.5rem;">This may take up to a minute as we analyze clinical trial data.</p>
             </div>
           </div>
 
-          <div id="protocol-container" style="display: none" class="card mb-6">
-            <div class="flex justify-between items-center mb-4">
-              <h2 class="text-xl font-bold">Protocol Design</h2>
-              <div class="tabs flex space-x-2">
-                <button
-                  data-tab="protocol"
-                  class="tab-btn bg-blue-600 text-white px-3 py-1 rounded text-sm"
-                >
-                  Protocol
-                </button>
-                <button
-                  data-tab="ind"
-                  class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm"
-                >
-                  IND 2.5
-                </button>
-                <button
-                  data-tab="risk"
-                  class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm"
-                >
-                  Risk
-                </button>
-                <button
-                  data-tab="evidence"
-                  class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm"
-                >
-                  Evidence
-                </button>
+          <div id="protocol-container" style="display: none;" class="card" style="margin-bottom: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+              <h2 style="font-size: 1.25rem; font-weight: 700; color: #141413;">Protocol Design</h2>
+              <div style="display: flex; gap: 0.5rem;">
+                <button data-tab="protocol" class="tab-btn" style="background: #d97757; color: white; padding: 0.25rem 0.75rem; border-radius: 0.375rem; font-size: 0.875rem; border: none; cursor: pointer;">Protocol</button>
+                <button data-tab="ind" class="tab-btn" style="background: #e8e6dc; color: #4a4a46; padding: 0.25rem 0.75rem; border-radius: 0.375rem; font-size: 0.875rem; border: none; cursor: pointer;">IND 2.5</button>
+                <button data-tab="risk" class="tab-btn" style="background: #e8e6dc; color: #4a4a46; padding: 0.25rem 0.75rem; border-radius: 0.375rem; font-size: 0.875rem; border: none; cursor: pointer;">Risk</button>
+                <button data-tab="evidence" class="tab-btn" style="background: #e8e6dc; color: #4a4a46; padding: 0.25rem 0.75rem; border-radius: 0.375rem; font-size: 0.875rem; border: none; cursor: pointer;">Evidence</button>
               </div>
             </div>
-
-            <div class="tab-content" id="protocol-tab">
-              <div id="protocol-content" class="prose max-w-none"></div>
-            </div>
-
-            <div class="tab-content" id="ind-tab" style="display: none">
-              <div id="ind-content" class="prose max-w-none"></div>
-            </div>
-
-            <div class="tab-content" id="risk-tab" style="display: none">
-              <div id="risk-content" class="prose max-w-none"></div>
-            </div>
-
-            <div class="tab-content" id="evidence-tab" style="display: none">
-              <h3 class="text-lg font-bold mb-2">Evidence Base</h3>
-              <ul id="citations-list" class="list-disc pl-5 mb-4"></ul>
-
-              <h3 class="text-lg font-bold mb-2">Supporting Quotes</h3>
-              <div id="quotes-content" class="prose max-w-none"></div>
+            <div class="tab-content" id="protocol-tab"><div id="protocol-content"></div></div>
+            <div class="tab-content" id="ind-tab" style="display: none;"><div id="ind-content"></div></div>
+            <div class="tab-content" id="risk-tab" style="display: none;"><div id="risk-content"></div></div>
+            <div class="tab-content" id="evidence-tab" style="display: none;">
+              <h3 style="font-size: 1.125rem; font-weight: 700; margin-bottom: 0.5rem; color: #141413;">Evidence Base</h3>
+              <ul id="citations-list" style="list-style: disc; padding-left: 1.25rem; margin-bottom: 1rem;"></ul>
+              <h3 style="font-size: 1.125rem; font-weight: 700; margin-bottom: 0.5rem; color: #141413;">Supporting Quotes</h3>
+              <div id="quotes-content"></div>
             </div>
           </div>
 
-          <div id="follow-up-response-container" style="display: none" class="card mb-6">
-            <h2 class="text-xl font-bold mb-4">Response</h2>
-            <div id="follow-up-response" class="prose max-w-none"></div>
+          <div id="follow-up-response-container" style="display: none;" class="card" style="margin-bottom: 1.5rem;">
+            <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; color: #141413;">Response</h2>
+            <div id="follow-up-response"></div>
           </div>
 
-          <div id="report-preview-container" style="display: none" class="card">
-            <h2 class="text-xl font-bold mb-4">Report Preview</h2>
-            <iframe
-              id="pdf-preview"
-              src=""
-              width="100%"
-              height="500"
-              style="border: 1px solid #ddd"
-            ></iframe>
+          <div id="report-preview-container" style="display: none;" class="card">
+            <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; color: #141413;">Report Preview</h2>
+            <iframe id="pdf-preview" src="" width="100%" height="500" style="border: 1px solid #e8e6dc;"></iframe>
           </div>
         </div>
       </div>
     </main>
 
-    <footer class="bg-gray-800 text-white py-6 mt-8">
-      <div class="container mx-auto px-4">
-        <div class="flex flex-col md:flex-row justify-between items-center">
-          <div class="mb-4 md:mb-0">
-            <h2 class="text-xl font-bold">Concept2Cure</h2>
-            <p class="mt-1 text-gray-400 text-sm">
-              © 2026 Concept2Cure. All rights reserved.
-            </p>
-          </div>
-          <div>
-            <p class="text-gray-400 text-sm">Powered by OpenAI Assistants API</p>
-          </div>
+    <footer style="background: #141413; color: #faf9f5; padding: 1.5rem 0; margin-top: 2rem;">
+      <div style="max-width: 1200px; margin: 0 auto; padding: 0 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+        <div>
+          <h2 style="font-size: 1.25rem; font-weight: 700;">Concept2Cure</h2>
+          <p style="margin-top: 0.25rem; color: #8a8880; font-size: 0.875rem;">© 2026 Concept2Cure. All rights reserved.</p>
+        </div>
+        <div>
+          <p style="color: #8a8880; font-size: 0.875rem;">AI-Powered Regulatory Intelligence</p>
         </div>
       </div>
     </footer>

@@ -606,7 +606,7 @@ const CsrSimilarityScatterplot = ({
     ? data.filter(item => item.category === selectedCategory)
     : data;
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+  const COLORS = ['#6a9bcc', '#788c5d', '#d97706', '#d97757', '#6a9bcc'];
 
   return (
     <div className="w-full h-full">
@@ -643,7 +643,7 @@ const CsrSimilarityScatterplot = ({
               return null;
             }}
           />
-          <Scatter name="CSR Documents" data={filteredData} fill="#8884d8">
+          <Scatter name="CSR Documents" data={filteredData} fill="#6a9bcc">
             {filteredData.map((entry, index) => (
               <Cell 
                 key={`cell-${index}`} 
@@ -1414,7 +1414,7 @@ const CsrIntelligenceInsights = () => {
                           cy="75" 
                           r="60" 
                           fill="none" 
-                          stroke="#e5e7eb" 
+                          stroke="#e8e6dc" 
                           strokeWidth="15" 
                         />
                         {/* Progress circle - using strokeDasharray and strokeDashoffset */}

@@ -127,6 +127,31 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
         logger.debug('Authenticated via DEV_API_KEY (non-production)');
         return next();
       }
+    // SECURITY: Only allowed in development/test environments, never in production
+    const devApiKey = process.env.DEV_API_KEY;
+    if (devApiKey && apiKey === devApiKey) {
+      if (process.env.NODE_ENV === 'production') {
+        logger.warn('[SECURITY] DEV_API_KEY used in production — rejecting. Remove DEV_API_KEY from production environment.');
+        return res.status(401).json({ error: 'Invalid authentication' });
+      }
+      req.userId = 1;
+      req.userRole = 'admin';
+      req.userEmail = 'dev@example.com';
+      req.tenantId = 1;
+      req.user = {
+        id: 1,
+        userId: 1,
+        email: 'dev@example.com',
+        role: 'admin',
+        organizationId: '1',
+      };
+      req.tenantContext = {
+        organizationId: 1,
+        userId: 1,
+        role: 'admin',
+      };
+      logger.debug('Authenticated via DEV_API_KEY (non-production)');
+      return next();
     }
 
     // No valid authentication

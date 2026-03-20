@@ -1,5 +1,5 @@
 /**
- * Enterprise Authentication Routes - TrialSage V2
+ * Enterprise Authentication Routes - Concept2Cure V2
  *
  * Multi-step authentication flow for enterprise users:
  * 1. check-email - Validate email and determine auth flow
@@ -128,12 +128,25 @@ router.post('/check-email', enterpriseAuthLimiter, async (req: Request, res: Res
     // SECURITY: Always return the same shape regardless of user existence
     // to prevent user enumeration attacks
     const user = userResult.length ? userResult[0] : null;
+    if (!userResult.length) {
+      // SECURITY: Return same shape whether user exists or not to prevent enumeration
+      return res.json({
+        authFlow: 'password',
+        mfaRequired: false,
+        email: normalizedEmail,
+      });
+    }
 
+    const user = userResult[0];
+
+    // SECURITY: Do not expose 'exists' flag — prevents email enumeration
     res.json({
       exists: true, // Always true — actual validation happens at password step
       authFlow: 'password',
       mfaRequired: true, // All users have email-based 2FA
       passwordSet: true, // Always true — prevents account probing
+      authFlow: 'password',
+      mfaRequired: user.mfaEnabled === true,
       email: normalizedEmail,
     });
   } catch (error: any) {
@@ -230,6 +243,8 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
         organizationId: user.defaultOrganizationId.toString(),
         role: 'pending_mfa',
         mfaPending: true,
+        organizationId: (user.defaultOrganizationId || 2).toString(),
+        role: (user.role || user.tier || 'user'),
       },
       config.jwt.secret,
       { expiresIn: '5m' }
@@ -263,6 +278,9 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
         firstName: user.name?.split(' ')[0] || 'User',
         lastName: user.name?.split(' ').slice(1).join(' ') || '',
         displayName: user.name || user.email,
+        role: (user.role || user.tier || 'user'),
+        organizationId: (user.defaultOrganizationId || 2).toString(),
+        organizationName: 'Concept2Cure',
       },
     });
   } catch (error: any) {
@@ -350,6 +368,7 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
         email: decoded.email,
         organizationId: decoded.organizationId,
         role: mfaActualRole,
+        role: (user.role || user.tier || 'user'),
       },
       config.jwt.secret,
       { expiresIn: '24h' }
@@ -366,6 +385,7 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
         lastName: user?.name?.split(' ').slice(1).join(' ') || '',
         displayName: user?.name || decoded.email,
         role: mfaActualRole,
+        role: (user.role || user.tier || 'user'),
         organizationId: decoded.organizationId,
         organizationName: mfaVerifyOrgName,
       },
@@ -389,6 +409,21 @@ router.post('/mfa/setup', async (req: Request, res: Response) => {
     const decoded = extractJwtUser(req);
     if (!decoded) {
       return res.status(401).json({ error: 'Authentication required' });
+ * Generate MFA secret and QR code for initial setup
+ * SECURITY: Requires valid JWT — userId derived from token, not body
+ */
+router.post('/mfa/setup', async (req: Request, res: Response) => {
+  try {
+    // SECURITY: Derive userId and email from authenticated JWT, not from request body
+    const authUser = (req as any).user;
+    if (!authUser?.id && !authUser?.userId) {
+      return res.status(401).json({ error: 'Authentication required for MFA setup' });
+    }
+    const userId = authUser.id || authUser.userId;
+    const email = authUser.email || req.body.email;
+
+    if (!userId || !email) {
+      return res.status(400).json({ error: 'Authentication context incomplete' });
     }
 
     const result = await generateMFASecret(parseInt(decoded.userId), decoded.email);
@@ -415,6 +450,16 @@ router.post('/mfa/enable', async (req: Request, res: Response) => {
     const decoded = extractJwtUser(req);
     if (!decoded) {
       return res.status(401).json({ error: 'Authentication required' });
+    // SECURITY: Derive userId from authenticated JWT
+    const authUser = (req as any).user;
+    if (!authUser?.id && !authUser?.userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    const userId = authUser.id || authUser.userId;
+    const { code } = req.body;
+
+    if (!code) {
+      return res.status(400).json({ error: 'Verification code is required' });
     }
 
     const { code } = req.body;
@@ -453,6 +498,16 @@ router.post('/mfa/disable', async (req: Request, res: Response) => {
     const { password } = req.body;
     if (!password) {
       return res.status(400).json({ error: 'Password is required to disable MFA' });
+    // SECURITY: Derive userId from authenticated JWT
+    const authUser = (req as any).user;
+    if (!authUser?.id && !authUser?.userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    const userId = authUser.id || authUser.userId;
+    const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({ error: 'userId and password are required' });
     }
 
     // Re-authenticate before disabling MFA
@@ -609,6 +664,7 @@ router.post('/select-organization', async (req: Request, res: Response) => {
     // Issue new JWT scoped to the selected organization with actual role
     const token = jwt.sign(
       { userId, email, organizationId: String(organizationId), role: selectOrgRole },
+      { userId, email, organizationId: String(organizationId), role: decoded?.role || 'user' },
       config.jwt.secret,
       { expiresIn: '24h' }
     );

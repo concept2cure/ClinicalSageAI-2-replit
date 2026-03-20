@@ -1,0 +1,24 @@
+{
+  "name": "Concept2Cure — AI-Powered Regulatory Intelligence",
+  "short_name": "Concept2Cure",
+  "description": "End-to-end regulatory submission management, intelligent document authoring, and compliance analysis powered by AI for life sciences professionals.",
+  "start_url": "/concept2cure",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#d97757",
+  "background_color": "#faf9f5",
+  "icons": [
+    {
+      "src": "/src/assets/concept2cure-logo.jpg",
+      "sizes": "720x960",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "/src/assets/concept2cure-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "categories": ["medical", "business", "productivity"],
+  "lang": "en-US"
+}

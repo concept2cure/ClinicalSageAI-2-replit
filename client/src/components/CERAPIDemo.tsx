@@ -906,7 +906,7 @@ const CERAPIDemo: React.FC = () => {
                                 <XAxis dataKey="name" angle={-45} textAnchor="end" height={60} />
                                 <YAxis />
                                 <Tooltip />
-                                <Bar dataKey="count" fill="#8884d8" />
+                                <Bar dataKey="count" fill="#6a9bcc" />
                               </RechartsBarChart>
                             </ResponsiveContainer>
                           </div>
@@ -925,7 +925,7 @@ const CERAPIDemo: React.FC = () => {
                                 <XAxis dataKey="month" />
                                 <YAxis />
                                 <Tooltip />
-                                <Line type="monotone" dataKey="events" stroke="#8884d8" activeDot={{ r: 8 }} />
+                                <Line type="monotone" dataKey="events" stroke="#6a9bcc" activeDot={{ r: 8 }} />
                               </LineChart>
                             </ResponsiveContainer>
                           </div>

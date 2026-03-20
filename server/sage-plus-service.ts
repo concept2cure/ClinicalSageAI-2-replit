@@ -1,7 +1,7 @@
 /**
  * SagePlus Service
  *
- * Provides advanced regulatory writing and analytics capabilities for TrialSage.
+ * Provides advanced regulatory writing and analytics capabilities for Concept2Cure.
  */
 import { createContextLogger } from './utils/logger';
 import { pool, query } from './db';

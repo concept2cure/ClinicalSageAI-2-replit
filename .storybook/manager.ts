@@ -16,7 +16,7 @@ const concept2CureRITheme = create({
   appBorderRadius: 8,
 
   // Typography
-  fontBase: '"Inter", "Segoe UI", Roboto, sans-serif',
+  fontBase: '"Inter", "Poppins", Roboto, sans-serif',
   fontCode: '"Fira Code", "Monaco", monospace',
 
   // Text colors
