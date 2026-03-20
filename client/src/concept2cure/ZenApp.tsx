@@ -265,6 +265,12 @@ const CollaborationHubPage = lazy(() =>
   import('./pages/MissionControl/CollaborationHub').then(m => ({ default: m.default }))
 );
 
+// User Inbox — personal command center with worklist, approvals, alerts
+const UserInboxPage = lazy(() => import('./pages/UserInbox'));
+
+// Client Branding — logo, letterhead, templates, brand settings
+const ClientBrandingSettings = lazy(() => import('./components/settings/ClientBrandingSettings'));
+
 // Biostatistics Platform — statistical analysis, power calculations, endpoints
 const BiostatPlatformDashboard = lazy(
   () => import('@/components/biostat/BiostatPlatformDashboard')
@@ -313,6 +319,15 @@ const PlatformHome = lazy(() => import('./components/home/PlatformHome'));
 
 // Artifacts Gallery — Claude.ai-style browsable artifact gallery
 const ArtifactsGalleryPage = lazy(() => import('./pages/ArtifactsGallery'));
+
+// Platform Admin — API keys, tenant management, billing, security (Regulatory Command Center)
+const PlatformAdminPage = lazy(() => import('./components/control-plane/CommandCenter'));
+
+// Biologics Dashboard — biologic/biosimilar pathway intelligence, comparability, expedited programs
+const BiologicsDashboardPage = lazy(() => import('./components/biologics/BiologicsDashboard'));
+
+// CTD Onboarding Wizard — client CTD ingestion pipeline (5-step wizard)
+const CTDOnboardingWizardPage = lazy(() => import('./components/onboarding/CTDProjectWizard'));
 
 // Project Sidebar — Claude.ai-style right sidebar (Context, Instructions, Files)
 import { ProjectSidebar } from './components/workspace/ProjectSidebar';
@@ -404,10 +419,15 @@ type LayoutMode =
   | 'project-knowledge'
   | 'legal-center'
   | 'artifacts'
+  | 'platform-admin'
+  | 'biologics-dashboard'
+  | 'ctd-onboarding'
   | 'document-builder'
   | 'deep-research'
   | 'report-engine'
-  | 'about-training';
+  | 'about-training'
+  | 'user-inbox'
+  | 'client-branding';
 
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
@@ -1397,6 +1417,8 @@ export const ZenApp: React.FC = () => {
         'go-author': 'author',
         'go-document-sherpa': 'document-sherpa',
         'go-collaboration': 'collaboration-hub',
+        'go-inbox': 'user-inbox',
+        'go-branding': 'client-branding',
         'go-agents': 'agent-hub',
         'go-snowglobe': 'snowglobe',
         'go-review-pulse': 'review-pulse',
@@ -1793,6 +1815,8 @@ export const ZenApp: React.FC = () => {
               'enablement-center': 'enablement-center',
               'client-intelligence': 'client-intelligence',
               'collaboration-hub': 'collaboration-hub',
+              'user-inbox': 'user-inbox',
+              'client-branding': 'client-branding',
               biostatistics: 'biostatistics',
               'training-center': 'training-center',
               'agent-hub': 'agent-hub',
@@ -1919,6 +1943,12 @@ export const ZenApp: React.FC = () => {
             case 'collaboration-hub':
               setLayoutMode('collaboration-hub');
               break;
+            case 'user-inbox':
+              setLayoutMode('user-inbox');
+              break;
+            case 'client-branding':
+              setLayoutMode('client-branding');
+              break;
             case 'biostatistics':
               setLayoutMode('biostatistics');
               break;
@@ -1951,6 +1981,15 @@ export const ZenApp: React.FC = () => {
               break;
             case 'artifacts':
               setLayoutMode('artifacts');
+              break;
+            case 'platform-admin':
+              setLayoutMode('platform-admin');
+              break;
+            case 'biologics-dashboard':
+              setLayoutMode('biologics-dashboard');
+              break;
+            case 'ctd-onboarding':
+              setLayoutMode('ctd-onboarding');
               break;
             case 'deep-research':
               setLayoutMode('deep-research');
@@ -2728,6 +2767,57 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
+          {/* ── Platform Admin — API keys, users, billing, modules (Regulatory Command Center) ── */}
+          {!embeddedModule && layoutMode === 'platform-admin' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-platform-admin">
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
+                    </div>
+                  }
+                >
+                  <PlatformAdminPage />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── Biologics Dashboard — biologic/biosimilar pathway intelligence ── */}
+          {!embeddedModule && layoutMode === 'biologics-dashboard' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-biologics">
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
+                    </div>
+                  }
+                >
+                  <BiologicsDashboardPage />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── CTD Onboarding — client CTD ingestion wizard ── */}
+          {!embeddedModule && layoutMode === 'ctd-onboarding' && (
+            <div className="flex-1 flex flex-col min-h-0 p-6" data-testid="workspace-ctd-onboarding">
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
+                    </div>
+                  }
+                >
+                  <CTDOnboardingWizardPage onComplete={() => setLayoutMode('projects')} />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
           {/* ── Client Intelligence — company persona, document ingestion, memory ── */}
           {!embeddedModule && layoutMode === 'client-intelligence' && (
             <div
@@ -2782,6 +2872,42 @@ export const ZenApp: React.FC = () => {
                   />
                 </Suspense>
               </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── User Inbox — personal command center with worklist, approvals, alerts ── */}
+          {!embeddedModule && layoutMode === 'user-inbox' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-user-inbox">
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                    </div>
+                  }
+                >
+                  <UserInboxPage />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── Client Branding — logo, letterhead, templates ── */}
+          {!embeddedModule && layoutMode === 'client-branding' && (
+            <div className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-[#FAFAF9]" data-testid="workspace-client-branding">
+              <div className="p-6">
+                <ErrorBoundary>
+                  <Suspense
+                    fallback={
+                      <div className="flex-1 flex items-center justify-center">
+                        <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                      </div>
+                    }
+                  >
+                    <ClientBrandingSettings />
+                  </Suspense>
+                </ErrorBoundary>
+              </div>
             </div>
           )}
 

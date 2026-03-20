@@ -24,6 +24,7 @@ import { useLocation } from 'wouter';
 import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 import {
   Sparkles,
   Copy,
@@ -47,10 +48,16 @@ import {
 // Configure marked for safe, clean HTML output
 marked.setOptions({ breaks: true, gfm: true });
 
-/** Render markdown string to safe HTML — synchronous */
+/** Render markdown string to safe HTML — sanitized to prevent XSS */
 const renderMarkdown = (content: string): string => {
   try {
-    return marked.parse(content) as string;
+    const rawHtml = marked.parse(content) as string;
+    return DOMPurify.sanitize(rawHtml, {
+      ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'b', 'i', 'u', 'a', 'ul', 'ol', 'li',
+        'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'pre', 'code',
+        'table', 'thead', 'tbody', 'tr', 'th', 'td', 'span', 'div', 'hr', 'sup', 'sub'],
+      ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'id'],
+    });
   } catch {
     return content.replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
@@ -1109,8 +1116,10 @@ export const ZenChat: React.FC<ZenChatProps> = ({
     try {
       // Use streaming for better UX
       streamMessage(messageText);
-    } catch {
-      // Error state is managed by the streaming hook
+    } catch (err) {
+      console.error('Failed to send message:', err);
+      // Restore the input so user doesn't lose their message
+      setInput(messageText);
     }
   };
 
@@ -1232,8 +1241,8 @@ export const ZenChat: React.FC<ZenChatProps> = ({
         } else {
           onActionRun?.({ id: runId, intent, label, status: 'failed', ts: Date.now() });
         }
-      } catch {
-        // Fire-and-forget — silently ignore network errors
+      } catch (err) {
+        console.error('Action card execution failed:', err);
         onActionRun?.({ id: runId, intent, label, status: 'failed', ts: Date.now() });
       }
     },
@@ -1264,9 +1273,21 @@ export const ZenChat: React.FC<ZenChatProps> = ({
 
       {/* Error banner */}
       {chatError && (
-        <div className="flex items-center justify-center gap-2 px-4 py-2 bg-red-50 border-b border-red-100 text-red-700 text-sm">
-          <AlertCircle className="w-4 h-4" />
-          <span>{chatError.message}</span>
+        <div className="flex items-center justify-between gap-2 px-4 py-2 bg-red-50 border-b border-red-100 text-red-700 text-sm">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <span>{chatError.message}</span>
+          </div>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            {(chatError as any).failedMessage && (
+              <button
+                onClick={() => streamMessage((chatError as any).failedMessage)}
+                className="text-xs underline hover:text-red-900"
+              >
+                Retry
+              </button>
+            )}
+          </div>
         </div>
       )}
 
@@ -1297,7 +1318,9 @@ export const ZenChat: React.FC<ZenChatProps> = ({
                 userInitials={userInitials}
                 onCopy={() => handleCopy(message.content)}
                 onRegenerate={message.role === 'assistant' ? handleRegenerate : undefined}
-                onFeedback={() => {}}
+                onFeedback={(positive: boolean) => {
+                  console.info(`[chat-feedback] messageId=${message.id} positive=${positive}`);
+                }}
                 onNavigate={handleNavigate}
                 onSaveArtifact={handleSaveArtifact}
                 onExportDocxArtifact={handleExportDocxArtifact}

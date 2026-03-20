@@ -151,6 +151,10 @@ export default function UserManagementPage() {
         organizationId: currentOrganization?.id || '',
       });
     },
+    onError: (error: Error) => {
+      console.error('Failed to invite user:', error);
+      alert(`Failed to invite user: ${error.message}`);
+    },
   });
 
   // Update user mutation
@@ -168,6 +172,10 @@ export default function UserManagementPage() {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       setShowEditDialog(false);
       setSelectedUser(null);
+    },
+    onError: (error: Error) => {
+      console.error('Failed to update user:', error);
+      alert(`Failed to update user: ${error.message}`);
     },
   });
 

@@ -30,12 +30,14 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Valid numeric submission ID required' });
   }
 
-  // Organization ID: pull from auth context, body, or default to 1
+  // SECURITY: Always derive org from authenticated context — never from body
   const organizationId =
     (req as any).organizationId ||
-    (req as any).user?.organizationId ||
-    req.body?.organizationId ||
-    1;
+    (req as any).user?.organizationId;
+
+  if (!organizationId) {
+    return res.status(403).json({ error: 'Organization context required' });
+  }
 
   const {
     region = 'FDA',

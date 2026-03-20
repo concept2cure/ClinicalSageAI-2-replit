@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Authentication and Authorization Middleware
  *
@@ -82,7 +81,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
         req.userId = parseInt(decoded.userId) || decoded.userId;
         req.userRole = decoded.role || 'user';
         req.userEmail = decoded.email;
-        req.tenantId = parseInt(decoded.organizationId || '1') || 1;
+        req.tenantId = decoded.organizationId ? parseInt(decoded.organizationId) : 0;
         // SECURITY: Set req.user with organizationId from JWT so that
         // downstream tenant middleware (tenantContextMiddleware,
         // tenantIsolationMiddleware) derives org context from the token.
@@ -91,10 +90,10 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
           userId: req.userId,
           email: decoded.email,
           role: decoded.role || 'user',
-          organizationId: decoded.organizationId || '1',
+          organizationId: decoded.organizationId || null,
         };
         req.tenantContext = {
-          organizationId: parseInt(decoded.organizationId || '1') || 1,
+          organizationId: decoded.organizationId ? parseInt(decoded.organizationId) : 0,
           userId: req.userId,
           role: decoded.role || 'user',
         };

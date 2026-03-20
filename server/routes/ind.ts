@@ -241,6 +241,27 @@ router.delete('/applications/:id', async (req: Request, res: Response) => {
     const { organizationId } = tenantHeaders(req);
     const { id } = req.params;
 
+    // SAFETY: Only allow deletion of draft applications
+    const checkParams: unknown[] = [id];
+    let checkSql = 'SELECT id, status FROM ind_applications WHERE id = $1';
+    if (organizationId) {
+      checkParams.push(organizationId);
+      checkSql += ` AND organization_id = $${checkParams.length}`;
+    }
+
+    const existing = await query(checkSql, checkParams);
+    if (!existing.rows.length) {
+      return res.status(404).json({ success: false, error: 'IND application not found' });
+    }
+
+    const app = existing.rows[0];
+    if (app.status && app.status !== 'draft') {
+      return res.status(409).json({
+        success: false,
+        error: `Cannot delete application in "${app.status}" status. Only draft applications can be deleted.`,
+      });
+    }
+
     const params: unknown[] = [id];
     let sql = 'DELETE FROM ind_applications WHERE id = $1';
     if (organizationId) {
@@ -250,10 +271,6 @@ router.delete('/applications/:id', async (req: Request, res: Response) => {
     sql += ' RETURNING id';
 
     const result = await query(sql, params);
-    if (!result.rows.length) {
-      return res.status(404).json({ success: false, error: 'IND application not found' });
-    }
-
     res.json({ success: true, deleted: result.rows[0].id });
   } catch (err: any) {
     sendError(res, 500, 'Failed to delete IND application', err);

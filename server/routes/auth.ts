@@ -20,14 +20,16 @@ import {
   organizations,
   organizationUsers,
 } from '../../shared/schema';
-import { sendPasswordResetEmail } from '../services/emailService';
+import { sendPasswordResetEmail, sendLoginOtpEmail } from '../services/emailService';
 import * as mfaService from '../services/mfaService';
+import * as emailOtpService from '../services/emailOtpService';
 import {
   validatePasswordPolicy,
   isAccountLocked,
   recordFailedLogin,
   resetFailedLogins,
   isPasswordExpired,
+  checkPasswordHistory,
 } from '../services/auth-security-service';
 
 import { config } from '../config/environment';
@@ -105,6 +107,14 @@ const signupSchema = z.object({
  * Guard: ensure database is available before any DB query.
  * Returns 503 if the pool didn't initialize (e.g. missing DATABASE_URL).
  */
+/** Mask an email for display: j***@example.com */
+function maskEmail(email: string): string {
+  const [local, domain] = email.split('@');
+  if (!domain) return '***@***';
+  const visible = local.slice(0, Math.min(2, local.length));
+  return `${visible}${'*'.repeat(Math.max(0, local.length - 2))}@${domain}`;
+}
+
 function requireDb(res: Response): boolean {
   if (!db) {
     res.status(503).json({
@@ -271,7 +281,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
           code: 'AUTH_002',
           message: 'Account temporarily locked due to too many failed attempts. Try again later.',
         },
-        lockedUntil: lockStatus.lockedUntil?.toISOString(),
+        // SECURITY: Don't leak exact lockout timestamp
       });
     }
 
@@ -290,8 +300,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       return res.status(401).json({
         success: false,
         error: { code: 'AUTH_001', message: 'Invalid credentials' },
-        remainingAttempts: failResult.remainingAttempts,
-        accountLocked: failResult.locked,
+        // SECURITY: Don't leak remainingAttempts or locked status (enables enumeration)
       });
     }
 
@@ -343,20 +352,23 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
         ? ['admin', 'user']
         : [userRole, 'user'].filter((v, i, a) => a.indexOf(v) === i);
 
-    // ── MFA Check ──────────────────────────────────────────────────────
-    // If the user has MFA enabled, return a short-lived challenge token
-    // instead of the full JWT. The client must complete /mfa/verify first.
-    const userHasMfa = userData.mfaEnabled === true;
+    // ── Two-Factor Authentication ──────────────────────────────────────
+    // Email OTP is the default 2FA method for all users (zero setup).
+    // Users with TOTP (authenticator app) enabled get that as primary.
+    const mfaMethod = (userData as any).mfaMethod || 'email';
+    const hasTotpSetup = userData.mfaEnabled === true && mfaMethod === 'totp';
 
-    if (userHasMfa) {
-      const challengeToken = mfaService.createMfaChallengeToken(
-        userData.id,
-        userData.email,
-        organizationId.toString(),
-        organization?.uuid || null,
-        jwtRole,
-      );
+    // Always require 2FA — issue challenge token
+    const challengeToken = mfaService.createMfaChallengeToken(
+      userData.id,
+      userData.email,
+      organizationId.toString(),
+      organization?.uuid || null,
+      jwtRole,
+    );
 
+    if (hasTotpSetup) {
+      // TOTP users get the authenticator app flow
       return res.json({
         success: true,
         mfaRequired: true,
@@ -365,50 +377,25 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       });
     }
 
-    // ── Update last login timestamp ──────────────────────────────────
-    await db.update(users).set({ lastLogin: new Date() }).where(eq(users.id, userData.id));
+    // Default: Email OTP — generate code and send to user's email
+    {
+      const otp = await emailOtpService.createEmailOtp(userData.id);
+      const maskedEmail = maskEmail(userData.email);
 
-    // ── No MFA — issue full tokens ─────────────────────────────────────
-    const accessToken = jwt.sign(
-      {
-        userId: userData.id.toString(),
-        email: userData.email,
-        organizationId: organizationId.toString(),
-        organizationUuid: organization?.uuid || null,
-        role: jwtRole,
-      },
-      config.jwt.secret,
-      { expiresIn: JWT_EXPIRES_IN }
-    );
+      // Send the code (async, don't block response)
+      sendLoginOtpEmail(userData.email, otp).catch(err => {
+        console.error('[auth] Failed to send login OTP email:', err);
+      });
 
-    const refreshToken = jwt.sign(
-      { userId: userData.id.toString(), email: userData.email, type: 'refresh' },
-      config.jwt.secret,
-      { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
-    );
+      return res.json({
+        success: true,
+        mfaRequired: true,
+        challengeId: challengeToken,
+        mfaMethods: [{ type: 'email', isEnabled: true, isPrimary: true }],
+        maskedEmail,
+      });
+    }
 
-    res.json({
-      success: true,
-      accessToken,
-      refreshToken,
-      expiresIn: 86400,
-      user: {
-        id: userData.id.toString(),
-        email: userData.email,
-        firstName,
-        lastName,
-        displayName,
-        roles,
-        permissions: [],
-        organizationId: organizationId.toString(),
-        organizationName: organization?.name || 'Organization',
-        organizationUuid: organization?.uuid || null,
-        mfaEnabled: false,
-        mfaMethods: [],
-        mustChangePassword: false,
-      },
-      mfaRequired: false,
-    });
   } catch (error: any) {
     console.error('[auth] Login error:', error);
     res.status(500).json({
@@ -432,7 +419,8 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
       });
     }
 
-    const { email, password, companyName, industryMode, firstName, lastName } = parsed.data;
+    const { password, companyName, industryMode, firstName, lastName } = parsed.data;
+    const email = parsed.data.email.trim().toLowerCase();
 
     // Enforce enterprise password policy (NIST 800-63B)
     const policyResult = validatePasswordPolicy(password);
@@ -446,9 +434,10 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
     if (!requireDb(res)) return;
     const existing = await db.select().from(users).where(eq(users.email, email)).limit(1);
     if (existing.length) {
+      // SECURITY: Return generic message to prevent email enumeration
       return res.status(409).json({
         success: false,
-        error: { code: 'AUTH_002', message: 'Email already registered' },
+        error: { code: 'AUTH_002', message: 'Unable to create account. Please try a different email or contact support.' },
       });
     }
 
@@ -528,7 +517,6 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
         name: result.org.name,
         uuid: result.org.uuid,
         industryMode: result.org.industryMode,
-        stripeCustomerId: result.org.stripeCustomerId,
       },
       user: {
         id: result.user.id,
@@ -793,17 +781,30 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
 
     const userId = parseInt(challenge.userId);
 
-    // Verify the TOTP code
-    const isValid = await mfaService.verifyToken(userId, code);
+    // Verify the code — try email OTP first (default), then TOTP
+    const verificationMethod = method || 'email';
+    let isValid = false;
+
+    if (verificationMethod === 'email') {
+      isValid = await emailOtpService.verifyEmailOtp(userId, code);
+    }
+
+    // Fall back to TOTP verification (for users with authenticator apps)
+    if (!isValid) {
+      isValid = await mfaService.verifyToken(userId, code);
+    }
+
     if (!isValid) {
       return res.status(401).json({
         success: false,
-        error: { code: 'AUTH_004', message: 'Invalid verification code' },
+        error: { code: 'AUTH_004', message: 'Invalid or expired verification code' },
       });
     }
 
-    // MFA verified — issue full tokens
+    // MFA verified — update last login and issue full tokens
     if (!requireDb(res)) return;
+
+    await db.update(users).set({ lastLogin: new Date() }).where(eq(users.id, userId));
 
     const [userData] = await db
       .select()
@@ -875,7 +876,7 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
         organizationName: mfaOrgName,
         organizationUuid: challenge.organizationUuid,
         mfaEnabled: true,
-        mfaMethods: [{ type: 'totp', isEnabled: true, isPrimary: true }],
+        mfaMethods: [{ type: verificationMethod, isEnabled: true, isPrimary: true }],
         mustChangePassword: false,
       },
       mfaRequired: false,
@@ -885,6 +886,54 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       error: { code: 'AUTH_010', message: 'MFA verification failed' },
+    });
+  }
+});
+
+/**
+ * POST /api/auth/mfa/resend
+ * Resend the email OTP code. Requires the active challenge token.
+ * Rate limited to prevent abuse.
+ */
+router.post('/mfa/resend', mfaLimiter, async (req: Request, res: Response) => {
+  try {
+    const { challengeId } = req.body;
+
+    if (!challengeId) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'MFA_001', message: 'Challenge token is required' },
+      });
+    }
+
+    const challenge = mfaService.verifyMfaChallengeToken(challengeId);
+    if (!challenge) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'MFA_002', message: 'Invalid or expired challenge. Please log in again.' },
+      });
+    }
+
+    const userId = parseInt(challenge.userId);
+
+    // Generate a new OTP and send it
+    const otp = await emailOtpService.createEmailOtp(userId);
+    const maskedEmail = maskEmail(challenge.email);
+
+    sendLoginOtpEmail(challenge.email, otp).catch(err => {
+      console.error('[auth] Failed to resend login OTP email:', err);
+    });
+
+    res.json({
+      success: true,
+      message: 'A new verification code has been sent to your email.',
+      maskedEmail,
+    });
+  } catch (error: any) {
+    console.error('[auth] MFA resend error:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: 'AUTH_010', message: 'Failed to resend code' },
     });
   }
 });
@@ -1307,6 +1356,15 @@ router.post('/password/change', async (req: Request, res: Response) => {
       return res.status(400).json({
         success: false,
         error: { code: 'AUTH_001', message: 'New password must be different from current password' },
+      });
+    }
+
+    // Check password history (pass plaintext for bcrypt.compare)
+    const historyOk = await checkPasswordHistory(userData.id, newPassword);
+    if (!historyOk) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'AUTH_001', message: 'This password was used recently. Please choose a different password.' },
       });
     }
 

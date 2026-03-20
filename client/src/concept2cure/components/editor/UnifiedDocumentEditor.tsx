@@ -58,7 +58,10 @@ import {
   FileText,
   Search,
   X,
+  Shield,
+  MessageSquare as MessageSquareIcon,
 } from 'lucide-react';
+import InlineApprovalPanel from './InlineApprovalPanel';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -699,6 +702,9 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
   const [linkModalOpen, setLinkModalOpen] = useState(false);
   const [selectedTextForLink, setSelectedTextForLink] = useState('');
   const [selectedRange, setSelectedRange] = useState<{ from: number; to: number } | null>(null);
+  const [approvalPanelOpen, setApprovalPanelOpen] = useState(false);
+  const [approvalSelectedText, setApprovalSelectedText] = useState('');
+  const [approvalSelectionRange, setApprovalSelectionRange] = useState<{ from: number; to: number } | null>(null);
 
   const editor = useEditor({
     extensions: [
@@ -757,6 +763,17 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
       setIsSaving(false);
     }
   }, [editor, onSave, documentId, documentTitle, documentType, submissionType]);
+
+  const handleRequestApproval = useCallback(() => {
+    if (!editor) return;
+    const { from, to } = editor.state.selection;
+    const selectedText = editor.state.doc.textBetween(from, to, ' ');
+    if (selectedText.trim()) {
+      setApprovalSelectedText(selectedText);
+      setApprovalSelectionRange({ from, to });
+      setApprovalPanelOpen(true);
+    }
+  }, [editor]);
 
   const handleLinkToSource = useCallback(() => {
     if (!editor) return;
@@ -915,6 +932,22 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
                 <Link className="w-4 h-4" />
                 <span className="text-xs">Link</span>
               </button>
+              <div className="w-px h-4 bg-zinc-600 mx-1" />
+              <button
+                onClick={handleRequestApproval}
+                className="p-1.5 rounded hover:bg-zinc-700 text-white flex items-center gap-1"
+                title="Request Approval / Annotate"
+              >
+                <Shield className="w-4 h-4" />
+                <span className="text-xs">Approve</span>
+              </button>
+              <button
+                onClick={handleRequestApproval}
+                className="p-1.5 rounded hover:bg-zinc-700 text-white flex items-center gap-1"
+                title="Comment on Selection"
+              >
+                <MessageSquareIcon className="w-4 h-4" />
+              </button>
             </BubbleMenu>
           )}
 
@@ -960,6 +993,33 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
         onClose={() => setLinkModalOpen(false)}
         onLink={handleSourceSelected}
       />
+
+      {/* Inline Approval Panel — sentence/selection-level annotations */}
+      {approvalPanelOpen && approvalSelectionRange && (
+        <div className="fixed z-50 top-1/3 right-8 shadow-2xl">
+          <InlineApprovalPanel
+            documentId={documentId ? Number(documentId) : 1}
+            selectedText={approvalSelectedText}
+            selectionRange={approvalSelectionRange}
+            onClose={() => {
+              setApprovalPanelOpen(false);
+              setApprovalSelectedText('');
+              setApprovalSelectionRange(null);
+            }}
+            onAnnotationCreated={(annotation) => {
+              // Optionally highlight the annotated text
+              if (editor && approvalSelectionRange) {
+                editor
+                  .chain()
+                  .focus()
+                  .setTextSelection(approvalSelectionRange)
+                  .setHighlight({ color: '#dbeafe' })
+                  .run();
+              }
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 };

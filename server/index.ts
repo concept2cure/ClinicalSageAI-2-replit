@@ -205,9 +205,9 @@ console.log('✅ Enterprise security and performance middleware enabled');
 app.use(httpLogger); // Add structured logging
 // Audit logging now handled by enterprise-security middleware
 
-// Body parsing with size limits
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+// Body parsing with size limits (5MB covers AI chat payloads; file uploads use multer separately)
+app.use(express.json({ limit: '5mb' }));
+app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // IMMUTABILITY POLICY ENFORCEMENT — 21 CFR Part 11 Compliance
@@ -464,27 +464,16 @@ app.get('/api/csr', (req: Request, res: Response) => {
 // Direct mount /api/projects here to ensure it works
 app.get('/api/projects', async (req, res) => {
   try {
-    // Check multiple sources for organization/workspace context
+    // SECURITY: Always derive organization from authenticated JWT context
     const client_workspace_id =
       req.query.client_workspace_id || req.headers['x-client-workspace-id'];
-    let organization_id = req.query.organization_id || req.headers['x-organization-id'];
+    const organization_id = (req as any).tenantContext?.organizationId
+      || (req as any).organizationId
+      || (req as any).user?.organizationId;
 
-    // Try to get organization from JWT token
     if (!organization_id) {
-      const authHeader = req.headers.authorization;
-      if (authHeader && authHeader.startsWith('Bearer ')) {
-        try {
-          const token = authHeader.substring(7);
-          const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
-          organization_id = payload.organizationId;
-        } catch (e) {
-          // Token parsing failed, use default
-        }
-      }
+      return res.status(403).json({ error: 'Organization context required' });
     }
-
-    // Default to org 2 (Concept2Cure) if no org specified
-    organization_id = organization_id || '2';
 
     if (!pool) {
       // Return empty array if database not available
@@ -1682,6 +1671,51 @@ try {
   console.log('✅ AI Drafting API routes mounted successfully');
 } catch (error) {
   console.error('❌ Failed to mount AI Drafting routes:', error);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PLATFORM CONTROL PLANE & EXTERNAL API ROUTES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Mount API Key Management routes (CRUD for organization API keys)
+try {
+  const apiKeysModule = await import('./routes/api-keys.js');
+  const apiKeysRoutes = apiKeysModule.default;
+  app.use('/api/api-keys', apiKeysRoutes);
+  console.log('✅ API Key Management routes mounted successfully');
+} catch (error) {
+  console.error('❌ Failed to mount API Key routes:', error);
+}
+
+// Mount Public API routes (external programmatic access via API keys)
+try {
+  const publicApiModule = await import('./routes/public-api.js');
+  const publicApiRoutes = publicApiModule.default;
+  app.use('/api/v1', publicApiRoutes);
+  console.log('✅ Public API v1 routes mounted (CSR, Regulatory, Endpoints, Precedent, Trial Design)');
+} catch (error) {
+  console.error('❌ Failed to mount Public API routes:', error);
+}
+
+// Mount CTD Onboarding Pipeline routes (client CTD project ingestion)
+try {
+  const ctdOnboardingModule = await import('./routes/ctd-onboarding.js');
+  const ctdOnboardingRoutes = ctdOnboardingModule.default;
+  app.use('/api/ctd', ctdOnboardingRoutes);
+  console.log('✅ CTD Onboarding Pipeline routes mounted (projects, upload, validation, gaps)');
+} catch (error) {
+  console.error('❌ Failed to mount CTD Onboarding routes:', error);
+}
+
+// Mount Biologics Intelligence routes (biologic/biosimilar pathways, comparability)
+try {
+  const biologicsModule = await import('./routes/biologics-routes.js');
+  const biologicsRoutes = biologicsModule.default;
+  app.use('/api/biologics', biologicsRoutes);
+  // Combination product routes are co-mounted under /api/biologics/combination-products
+  console.log('✅ Biologics Intelligence & Combination Product routes mounted');
+} catch (error) {
+  console.error('❌ Failed to mount Biologics routes:', error);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -6413,6 +6447,59 @@ async function startServer() {
     console.log('✅ Snow Globe routes mounted at /api/snowglobe');
   } catch (error) {
     console.error('❌ Failed to mount Mission Control routes:', error);
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // TASK MANAGEMENT — Cross-module unified task system
+  // ──────────────────────────────────────────────────────────────────────────
+  try {
+    const taskMgmtRoutes = await import('./routes/taskManagement.routes');
+    app.use('/api/task-management', taskMgmtRoutes.default);
+    console.log('✅ Task Management routes mounted at /api/task-management');
+
+    const unifiedTaskRoutes = await import('./routes/unifiedTasks.routes');
+    app.use('/api/unified-tasks', unifiedTaskRoutes.default);
+    console.log('✅ Unified Tasks routes mounted at /api/unified-tasks');
+  } catch (error) {
+    console.error('❌ Failed to mount Task Management routes:', error);
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // APPROVAL WORKFLOW — Accept/deny/delegate approval chains
+  // ──────────────────────────────────────────────────────────────────────────
+  try {
+    const approvalWorkflowRoutes = await import('./routes/approval-workflow');
+    app.use('/api/approval-workflows', approvalWorkflowRoutes.default);
+    console.log('✅ Approval Workflow routes mounted at /api/approval-workflows');
+  } catch (error) {
+    console.error('❌ Failed to mount Approval Workflow routes:', error);
+  }
+
+  // ── Client Branding — logo, letterhead, templates, brand settings ──────────
+  try {
+    const clientBrandingRoutes = await import('./routes/client-branding');
+    app.use('/api/client-branding', clientBrandingRoutes.default);
+    console.log('✅ Client Branding routes mounted at /api/client-branding');
+  } catch (error) {
+    console.error('❌ Failed to mount Client Branding routes:', error);
+  }
+
+  // ── Inline Annotations — sentence/selection-level approvals on documents ──
+  try {
+    const inlineAnnotationRoutes = await import('./routes/inline-annotations');
+    app.use('/api/inline-annotations', inlineAnnotationRoutes.default);
+    console.log('✅ Inline Annotations routes mounted at /api/inline-annotations');
+  } catch (error) {
+    console.error('❌ Failed to mount Inline Annotations routes:', error);
+  }
+
+  // ── Decision Lineage — immutable audit-ready decision & data lineage ──────
+  try {
+    const decisionLineageRoutes = await import('./routes/decision-lineage');
+    app.use('/api/decision-lineage', decisionLineageRoutes.default);
+    console.log('✅ Decision Lineage routes mounted at /api/decision-lineage');
+  } catch (error) {
+    console.error('❌ Failed to mount Decision Lineage routes:', error);
   }
 
   // ──────────────────────────────────────────────────────────────────────────

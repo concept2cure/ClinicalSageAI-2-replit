@@ -2454,8 +2454,12 @@ export const users = pgTable('users', {
   mfaEnabled: boolean('mfa_enabled').default(false),
   mfaSecret: text('mfa_secret'), // encrypted TOTP secret
   mfaBackupCodes: json('mfa_backup_codes'), // encrypted backup codes array
-  mfaMethod: text('mfa_method').default('totp'), // totp, sms, email
+  mfaMethod: text('mfa_method').default('email'), // totp, sms, email
   mfaVerifiedAt: timestamp('mfa_verified_at'),
+  // Email OTP fields (for email-based 2FA)
+  emailOtpHash: text('email_otp_hash'),
+  emailOtpExpiresAt: timestamp('email_otp_expires_at'),
+  emailOtpAttempts: integer('email_otp_attempts').default(0),
   // Account lockout fields
   failedLoginAttempts: integer('failed_login_attempts').default(0),
   lockedUntil: timestamp('locked_until'),

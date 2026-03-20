@@ -11,15 +11,16 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { db } from '../db';
 import { eq } from 'drizzle-orm';
-import { users, organizations } from '../../shared/schema';
+import { users, organizations, notificationPreferences } from '../../shared/schema';
 
 import { config } from '../config/environment';
 
 const router = Router();
 
-const isDev = process.env.NODE_ENV !== 'production';
+// Dev mode requires explicit opt-in via NODE_ENV=development (not just "not production")
+const isDev = process.env.NODE_ENV === 'development';
 
-// Dev user response
+// Dev user response — uses 'user' role (not admin) to match least-privilege principle
 const devUserResponse = {
   id: 1,
   username: 'developer',
@@ -27,9 +28,9 @@ const devUserResponse = {
   firstName: 'Dev',
   lastName: 'User',
   displayName: 'Dev User',
-  role: 'admin',
-  roles: ['admin', 'user'],
-  permissions: ['*'],
+  role: 'user',
+  roles: ['user'],
+  permissions: [],
   organizationId: '2',
   organizationName: 'TrialSage Demo',
   mfaEnabled: false,
@@ -151,16 +152,21 @@ router.get('/me', async (req: Request, res: Response) => {
       lastName: userData.lastName || '',
       displayName:
         `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || userData.email,
+      title: userData.title || '',
+      department: userData.department || '',
+      bio: userData.bio || '',
+      avatar: userData.avatar || null,
+      preferences: userData.preferences || {},
       roles: ['user'],
       permissions: [],
       organizationId: decoded.organizationId || '2',
       organizationName: orgName,
-      mfaEnabled: false,
+      mfaEnabled: userData.mfaEnabled || false,
       mfaMethods: [],
-      mustChangePassword: false,
-      avatarUrl: null,
+      mustChangePassword: userData.mustChangePassword || false,
+      avatarUrl: userData.avatar || null,
       createdAt: userData.createdAt?.toISOString() || new Date().toISOString(),
-      lastLoginAt: new Date().toISOString(),
+      lastLoginAt: userData.lastLogin?.toISOString() || new Date().toISOString(),
     });
   } catch (error: any) {
     if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
@@ -180,11 +186,188 @@ router.get('/me', async (req: Request, res: Response) => {
 });
 
 /**
+ * PATCH /api/users/me
+ * Update current user profile
+ */
+router.patch('/me', async (req: Request, res: Response) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '');
+
+    if (isDev && !token) {
+      return res.json({ success: true, message: 'Profile updated (dev mode)' });
+    }
+
+    if (!token) {
+      return res.status(401).json({ error: { code: 'AUTH_006', message: 'No token provided' } });
+    }
+
+    const decoded = jwt.verify(token, config.jwt.secret) as { userId: string };
+    const userId = parseInt(decoded.userId);
+
+    const { name, title, department, bio, avatar, preferences } = req.body;
+
+    const updateFields: Record<string, unknown> = { updatedAt: new Date() };
+    if (name !== undefined) updateFields.name = name;
+    if (title !== undefined) updateFields.title = title;
+    if (department !== undefined) updateFields.department = department;
+    if (bio !== undefined) updateFields.bio = bio;
+    if (avatar !== undefined) updateFields.avatar = avatar;
+    if (preferences !== undefined) updateFields.preferences = preferences;
+
+    const [updated] = await db
+      .update(users)
+      .set(updateFields)
+      .where(eq(users.id, userId))
+      .returning();
+
+    if (!updated) {
+      return res.status(404).json({ error: { code: 'USER_NOT_FOUND', message: 'User not found' } });
+    }
+
+    res.json({
+      success: true,
+      user: {
+        id: updated.id.toString(),
+        email: updated.email,
+        name: updated.name,
+        title: updated.title,
+        department: updated.department,
+        bio: updated.bio,
+        avatar: updated.avatar,
+        preferences: updated.preferences,
+      },
+    });
+  } catch (error: unknown) {
+    console.error('[users] Update profile error:', error);
+    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Failed to update profile' } });
+  }
+});
+
+/**
+ * GET /api/users/me/notifications
+ * Get notification preferences for current user
+ */
+router.get('/me/notifications', async (req: Request, res: Response) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '');
+
+    if (isDev && !token) {
+      return res.json({ emailMentions: true, emailApprovals: true, inAppMentions: true, inAppApprovals: true, toastEnabled: true, soundEnabled: false });
+    }
+
+    if (!token) {
+      return res.status(401).json({ error: { code: 'AUTH_006', message: 'No token provided' } });
+    }
+
+    const decoded = jwt.verify(token, config.jwt.secret) as { userId: string };
+    const userId = parseInt(decoded.userId);
+
+    const prefs = await db
+      .select()
+      .from(notificationPreferences)
+      .where(eq(notificationPreferences.userId, userId))
+      .limit(1);
+
+    if (!prefs.length) {
+      return res.json({
+        emailMentions: true,
+        emailApprovals: true,
+        emailCompliance: true,
+        emailSystem: true,
+        emailDigest: 'weekly',
+        inAppMentions: true,
+        inAppApprovals: true,
+        inAppCompliance: true,
+        inAppSystem: true,
+        toastEnabled: true,
+        toastDuration: 5000,
+        soundEnabled: false,
+        timezone: 'America/New_York',
+      });
+    }
+
+    res.json(prefs[0]);
+  } catch (error: unknown) {
+    console.error('[users] Get notifications error:', error);
+    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Failed to get notification preferences' } });
+  }
+});
+
+/**
+ * PATCH /api/users/me/notifications
+ * Update notification preferences
+ */
+router.patch('/me/notifications', async (req: Request, res: Response) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '');
+
+    if (isDev && !token) {
+      return res.json({ success: true, message: 'Notification preferences updated (dev mode)' });
+    }
+
+    if (!token) {
+      return res.status(401).json({ error: { code: 'AUTH_006', message: 'No token provided' } });
+    }
+
+    const decoded = jwt.verify(token, config.jwt.secret) as { userId: string };
+    const userId = parseInt(decoded.userId);
+
+    const updates = req.body;
+    updates.updatedAt = new Date();
+
+    // Upsert notification preferences
+    const existing = await db
+      .select({ id: notificationPreferences.id })
+      .from(notificationPreferences)
+      .where(eq(notificationPreferences.userId, userId))
+      .limit(1);
+
+    if (existing.length) {
+      await db
+        .update(notificationPreferences)
+        .set(updates)
+        .where(eq(notificationPreferences.userId, userId));
+    } else {
+      await db
+        .insert(notificationPreferences)
+        .values({ userId, ...updates });
+    }
+
+    res.json({ success: true, message: 'Notification preferences updated' });
+  } catch (error: unknown) {
+    console.error('[users] Update notifications error:', error);
+    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Failed to update notification preferences' } });
+  }
+});
+
+/**
  * GET /api/users/:id
  * Get user by ID (only matches numeric IDs)
+ * Requires authentication — user can only fetch users within their own org
  */
 router.get('/:id(\\d+)', async (req: Request, res: Response) => {
   try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '');
+
+    if (isDev && !token) {
+      return res.json(devUserResponse);
+    }
+
+    if (!token) {
+      return res.status(401).json({
+        error: { code: 'AUTH_006', message: 'No token provided' },
+      });
+    }
+
+    const decoded = jwt.verify(token, config.jwt.secret) as {
+      userId: string;
+      organizationId?: string;
+    };
+
     const { id } = req.params;
 
     const user = await db
@@ -194,13 +377,21 @@ router.get('/:id(\\d+)', async (req: Request, res: Response) => {
       .limit(1);
 
     if (!user.length) {
-      if (isDev) return res.json(devUserResponse);
       return res.status(404).json({
         error: { code: 'USER_NOT_FOUND', message: 'User not found' },
       });
     }
 
     const userData = user[0];
+
+    // Tenant isolation: only return user if they belong to the same org
+    const requestorOrgId = decoded.organizationId || '2';
+    const targetOrgId = userData.organizationId?.toString() || '2';
+    if (requestorOrgId !== targetOrgId) {
+      return res.status(404).json({
+        error: { code: 'USER_NOT_FOUND', message: 'User not found' },
+      });
+    }
 
     res.json({
       id: userData.id.toString(),
@@ -210,9 +401,15 @@ router.get('/:id(\\d+)', async (req: Request, res: Response) => {
       displayName:
         `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || userData.email,
       roles: ['user'],
-      organizationId: '2',
+      organizationId: targetOrgId,
     });
   } catch (error: any) {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+      if (isDev) return res.json(devUserResponse);
+      return res.status(401).json({
+        error: { code: 'AUTH_005', message: 'Session expired' },
+      });
+    }
     console.error('[users] Get user by ID error:', error);
     if (isDev) return res.json(devUserResponse);
 
@@ -252,30 +449,57 @@ router.post('/login', async (req: Request, res: Response) => {
       .limit(1);
 
     if (!user.length) {
-      // In dev, still succeed
-      return res.json({
-        id: 1,
-        username: loginEmail.split('@')[0],
-        email: loginEmail,
-        role: 'user',
+      // Use constant-time comparison to prevent timing attacks
+      await bcrypt.hash(password, 12);
+      return res.status(401).json({
+        error: { code: 'AUTH_001', message: 'Invalid email or password' },
       });
     }
 
     const userData = user[0];
+
+    // Verify password
+    if (!userData.passwordHash) {
+      return res.status(401).json({
+        error: { code: 'AUTH_001', message: 'Invalid email or password' },
+      });
+    }
+
+    const passwordValid = await bcrypt.compare(password, userData.passwordHash);
+    if (!passwordValid) {
+      return res.status(401).json({
+        error: { code: 'AUTH_001', message: 'Invalid email or password' },
+      });
+    }
+
+    // Generate JWT
+    const token = jwt.sign(
+      {
+        userId: String(userData.id),
+        email: userData.email,
+        organizationId: userData.organizationId ? String(userData.organizationId) : '2',
+      },
+      config.jwt.secret,
+      { expiresIn: '24h' }
+    );
+
+    // Update last login
+    db.update(users)
+      .set({ lastLogin: new Date() })
+      .where(eq(users.id, userData.id))
+      .catch(() => {});
+
     res.json({
       id: userData.id,
       username: userData.email?.split('@')[0] || 'user',
       email: userData.email,
       role: 'user',
+      token,
     });
   } catch (error) {
     console.error('[users] Login error:', error);
-    // In dev mode, still succeed
-    res.json({
-      id: 1,
-      username: loginEmail?.split('@')[0] || 'developer',
-      email: loginEmail || 'developer@trialsage.ai',
-      role: 'admin',
+    res.status(500).json({
+      error: { code: 'INTERNAL_ERROR', message: 'Login failed' },
     });
   }
 });

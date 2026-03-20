@@ -180,7 +180,7 @@ router.post('/:projectId/compile', async (req: Request, res: Response) => {
          status, xml_backbone, compiled_at, version)
          VALUES ($1, $2, $3, $4, $5, NOW(), '1.0')`,
         [
-          1, // Default org
+          (req as any).organizationId || (req as any).user?.organizationId || 1,
           `IND Compilation — Project ${projectId}`,
           submissionType,
           hasBlockingErrors ? 'failed' : 'completed',

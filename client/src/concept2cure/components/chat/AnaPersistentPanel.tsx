@@ -13,6 +13,7 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 import {
   Sparkles,
   ArrowUp,
@@ -32,7 +33,13 @@ marked.setOptions({ breaks: true, gfm: true });
 
 const renderMarkdown = (content: string): string => {
   try {
-    return marked.parse(content) as string;
+    const rawHtml = marked.parse(content) as string;
+    return DOMPurify.sanitize(rawHtml, {
+      ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'b', 'i', 'u', 'a', 'ul', 'ol', 'li',
+        'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'pre', 'code',
+        'table', 'thead', 'tbody', 'tr', 'th', 'td', 'span', 'div', 'hr', 'sup', 'sub'],
+      ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'id'],
+    });
   } catch {
     return content.replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
@@ -229,7 +236,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, userMsg]);
+    // Cap in-memory messages to prevent unbounded growth
+    setMessages(prev => [...prev.slice(-199), userMsg]);
     setInput('');
     setIsThinking(true);
 
@@ -294,6 +302,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             })),
           }),
         });
+        if (!response.ok) {
+          throw new Error(`Request failed (${response.status})`);
+        }
         data = await response.json();
 
         setMessages(prev => [...prev, {
@@ -301,14 +312,16 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           role: 'assistant',
           content: data.response || data.message || 'I can help with that. Could you share more details?',
           timestamp: new Date(),
+          demo: data.demo || false,
         }]);
       }
-    } catch {
+    } catch (err: any) {
       setMessages(prev => [...prev, {
         id: `a-${Date.now()}`,
         role: 'assistant',
-        content: `I understand you'd like help with that. Let me know what specific aspect you'd like to explore and I'll provide guidance.`,
+        content: `Sorry, I encountered an error processing your request. Please try again.`,
         timestamp: new Date(),
+        isError: true,
       }]);
     } finally {
       setIsThinking(false);
@@ -547,8 +560,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           <button onClick={() => handleCopy(msg.id, msg.content)} className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors" title="Copy">
                             {copiedId === msg.id ? <Check className="w-3 h-3 text-green-600" /> : <Copy className="w-3 h-3" />}
                           </button>
-                          <button className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors" title="Good"><ThumbsUp className="w-3 h-3" /></button>
-                          <button className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors" title="Bad"><ThumbsDown className="w-3 h-3" /></button>
+                          <button onClick={() => console.info(`[chat-feedback] messageId=${msg.id} positive=true`)} className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors" title="Good"><ThumbsUp className="w-3 h-3" /></button>
+                          <button onClick={() => console.info(`[chat-feedback] messageId=${msg.id} positive=false`)} className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors" title="Bad"><ThumbsDown className="w-3 h-3" /></button>
                         </div>
                       )}
                     </div>

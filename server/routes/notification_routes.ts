@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { db } from '../db';
 import { logExportAction, getExportLogs } from '../export_logger';
+import { authMiddleware } from '../auth';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -29,7 +30,7 @@ export default function registerNotificationRoutes(app: Express): void {
   /**
    * Send a weekly digest email to the user
    */
-  app.post('/api/notify/send-weekly-digest', async (req: Request, res: Response) => {
+  app.post('/api/notify/send-weekly-digest', authMiddleware, async (req: Request, res: Response) => {
     try {
       const { user_id, user_email } = req.body;
 
@@ -88,7 +89,7 @@ export default function registerNotificationRoutes(app: Express): void {
   /**
    * Get digest data for a specific user
    */
-  app.post('/api/digest/get-data', async (req: Request, res: Response) => {
+  app.post('/api/digest/get-data', authMiddleware, async (req: Request, res: Response) => {
     try {
       const { user_id } = req.body;
 
@@ -122,7 +123,7 @@ export default function registerNotificationRoutes(app: Express): void {
   /**
    * Save user preferences for weekly digest
    */
-  app.post('/api/user/save-digest-prefs', async (req: Request, res: Response) => {
+  app.post('/api/user/save-digest-prefs', authMiddleware, async (req: Request, res: Response) => {
     try {
       const { user_id, prefs } = req.body;
 
@@ -156,7 +157,7 @@ export default function registerNotificationRoutes(app: Express): void {
   /**
    * Get user preferences for weekly digest
    */
-  app.get('/api/user/preferences', async (req: Request, res: Response) => {
+  app.get('/api/user/preferences', authMiddleware, async (req: Request, res: Response) => {
     try {
       const user_id = req.query.user_id as string;
 
@@ -186,7 +187,7 @@ export default function registerNotificationRoutes(app: Express): void {
   /**
    * Send a notification when a protocol comparison is ready
    */
-  app.post('/api/notify/send-comparison-notification', async (req: Request, res: Response) => {
+  app.post('/api/notify/send-comparison-notification', authMiddleware, async (req: Request, res: Response) => {
     try {
       const { user_id, user_email, protocol_id, version, file_path } = req.body;
 
