@@ -74,7 +74,7 @@ const TAB_CONFIG: { key: ThreadTab; label: string; icon: React.ElementType }[] =
   { key: 'escalated', label: 'Escalated', icon: AlertCircle },
 ];
 
-const CURRENT_USER = 'current-user';
+const CURRENT_USER = 'Sarah Chen';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 

@@ -954,7 +954,7 @@ export default function IntelligentReportGenerator() {
             {showVisualGen && (
               <div className="mt-4">
                 <NanoBananaImageGenerator
-                  context={`${selectedDomain?.label || 'Regulatory'} report: ${reportTitle || 'compliance report'} — compliance score ${generatedReport.complianceScore}%, ${selectedBodies.map(b => b.code).join(', ')} targeting`}
+                  context={`${selectedDomain?.label || 'Regulatory'} report: ${reportTitle || 'compliance report'} — compliance score ${generatedReport.complianceScore}%, ${selectedBody || 'multi-agency'} targeting`}
                   mode="infographic"
                   promptSuffix="Regulatory compliance infographic. Publication-ready, professional, data-rich."
                 />
