@@ -198,8 +198,8 @@ export const ZenSignup: React.FC = () => {
         }
         if (!formData.jobTitle.trim()) newErrors.jobTitle = 'Job title is required';
         if (!formData.password) newErrors.password = 'Password is required';
-        if (formData.password && formData.password.length < 8) {
-          newErrors.password = 'Password must be at least 8 characters';
+        if (formData.password && formData.password.length < 12) {
+          newErrors.password = 'Password must be at least 12 characters';
         }
         if (formData.password !== formData.confirmPassword) {
           newErrors.confirmPassword = 'Passwords do not match';
@@ -317,6 +317,8 @@ export const ZenSignup: React.FC = () => {
       setStep('submitted');
     } catch (error) {
       console.error('Signup error:', error);
+      const message = error instanceof Error ? error.message : 'Signup failed. Please try again.';
+      setErrors(prev => ({ ...prev, general: message }));
     } finally {
       setIsLoading(false);
     }
@@ -700,6 +702,12 @@ export const ZenSignup: React.FC = () => {
           </span>
         </label>
       </div>
+
+      {errors.general && (
+        <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
+          {errors.general}
+        </div>
+      )}
 
       <button
         onClick={handleSubmit}

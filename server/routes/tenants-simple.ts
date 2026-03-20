@@ -4,8 +4,12 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import postgres from 'postgres';
+import { authMiddleware } from '../auth';
 
 const router = Router();
+
+// SECURITY: All tenant management endpoints require authentication
+router.use(authMiddleware);
 
 /**
  * Clean a database URL by removing common wrapper artifacts

@@ -10,9 +10,13 @@ import {
   users,
 } from '@shared/schema';
 import { eq, and, sql, count } from 'drizzle-orm';
+import { authMiddleware } from '../auth';
 
 // Create a new router for client endpoints
 const router = Router();
+
+// SECURITY: All client endpoints require authentication
+router.use(authMiddleware);
 
 // Helper: compute real workspace metrics from DB
 async function getWorkspaceMetrics(workspaceId: number): Promise<{
@@ -42,14 +46,20 @@ async function getWorkspaceMetrics(workspaceId: number): Promise<{
 // Note: We now save clients directly to the database
 
 /**
- * Get ALL clients from ALL organizations (user preference)
+ * Get all clients for the authenticated user's organization
  * API: GET /api/clients/all
+ * SECURITY: Scoped to user's organizationId from JWT
  */
 router.get('/all', async (req, res) => {
   try {
-    console.log('Fetching ALL client workspaces from ALL organizations');
+    // SECURITY: Scope to authenticated user's organization (tenant isolation)
+    const userOrgId = req.user?.organizationId ? parseInt(String(req.user.organizationId)) : null;
+    if (!userOrgId) {
+      return res.status(403).json({ success: false, error: 'Organization context required' });
+    }
 
-    // Fetch ALL client workspaces from database regardless of organization
+    console.log(`Fetching client workspaces for organization: ${userOrgId}`);
+
     const clients = await db
       .select({
         id: clientWorkspaces.id,
@@ -69,7 +79,8 @@ router.get('/all', async (req, res) => {
         organizationName: organizations.name,
       })
       .from(clientWorkspaces)
-      .leftJoin(organizations, eq(clientWorkspaces.organizationId, organizations.id));
+      .leftJoin(organizations, eq(clientWorkspaces.organizationId, organizations.id))
+      .where(eq(clientWorkspaces.organizationId, userOrgId));
 
     console.log(`Found ${clients.length} total client workspaces across all organizations`);
 

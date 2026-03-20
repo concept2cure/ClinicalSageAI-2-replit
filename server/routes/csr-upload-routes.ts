@@ -6,8 +6,12 @@ import { sql } from 'drizzle-orm';
 import { db } from '../db';
 import { csrExtractorService } from '../services/csr-extractor-service';
 import { clinicalIntelligenceService } from '../services/clinical-intelligence-service';
+import { authMiddleware } from '../auth';
 
 const router = Router();
+
+// SECURITY: All CSR upload/processing endpoints require authentication
+router.use(authMiddleware);
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({

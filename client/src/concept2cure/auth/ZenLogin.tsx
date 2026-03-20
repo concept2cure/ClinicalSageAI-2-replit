@@ -38,7 +38,7 @@ import concept2cureLogo from '@/assets/concept2cure-logo.svg';
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-type AuthStep = 'email' | 'password' | 'mfa' | 'success' | 'forgot-password' | 'reset-sent';
+type AuthStep = 'email' | 'password' | 'mfa' | 'mfa-recovery' | 'success' | 'forgot-password' | 'reset-sent';
 
 interface AuthError {
   field?: 'email' | 'password' | 'mfa';
@@ -255,6 +255,7 @@ export const ZenLogin: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [mfaCode, setMfaCode] = useState('');
+  const [recoveryCode, setRecoveryCode] = useState('');
   const [mfaMethod, setMfaMethod] = useState<MfaMethod['type']>('totp');
   const [availableMfaMethods, setAvailableMfaMethods] = useState<MfaMethod[]>([]);
   const [rememberMe, setRememberMe] = useState(false);
@@ -388,6 +389,44 @@ export const ZenLogin: React.FC = () => {
       setIsLoading(false);
     }
   }, [mfaCode, mfaMethod, setLocation, verifyMfa]);
+
+  const handleRecoveryCodeVerify = useCallback(async () => {
+    const code = recoveryCode.trim();
+    if (!code || code.length < 8) {
+      setError({ field: 'mfa', message: 'Please enter a valid recovery code' });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const result = await verifyMfa({
+        method: 'recovery_code',
+        code,
+      });
+
+      if (!result.success) {
+        setError({
+          field: 'mfa',
+          message: result.error?.message || 'Invalid recovery code. Please try again.',
+        });
+        return;
+      }
+
+      setStep('success');
+      setTimeout(() => {
+        setLocation(
+          computeRedirect(undefined, undefined, () => authService.getUser && authService.getUser())
+        );
+      }, 1000);
+    } catch {
+      setError({
+        field: 'mfa',
+        message: 'Invalid recovery code. Please try again.',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [recoveryCode, setLocation, verifyMfa]);
 
   const handleForgotPassword = useCallback(async () => {
     if (!email.trim() || !validateEmail(email)) {
@@ -928,9 +967,87 @@ export const ZenLogin: React.FC = () => {
 
       <p className="text-center text-sm text-zinc-500">
         Having trouble?{' '}
-        <button className="text-blue-600 hover:text-blue-700 font-medium">
+        <button
+          onClick={() => { setError(null); setStep('mfa-recovery'); }}
+          className="text-blue-600 hover:text-blue-700 font-medium"
+        >
           Use a recovery code
         </button>
+      </p>
+    </motion.div>
+  );
+
+  const renderMfaRecoveryStep = () => (
+    <motion.div
+      key="mfa-recovery"
+      variants={inputVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      className="space-y-6"
+    >
+      <button
+        onClick={() => { setError(null); setRecoveryCode(''); setStep('mfa'); }}
+        className="flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-800"
+      >
+        <ArrowLeftIcon />
+        Back to authenticator
+      </button>
+
+      <div className="text-center space-y-2">
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-amber-100 mb-2">
+          <ShieldIcon />
+        </div>
+        <h3 className="text-lg font-semibold text-zinc-900">Recovery code</h3>
+        <p className="text-sm text-zinc-600">
+          Enter one of the recovery codes you saved when setting up two-factor authentication.
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <label htmlFor="recovery-code" className="block text-sm font-medium text-zinc-700">
+          Recovery code
+        </label>
+        <input
+          id="recovery-code"
+          type="text"
+          value={recoveryCode}
+          onChange={e => { setRecoveryCode(e.target.value); setError(null); }}
+          placeholder="e.g. ABCD-1234-EFGH"
+          autoFocus
+          className={`
+            w-full px-4 py-3 rounded-xl border text-base font-mono tracking-wide
+            transition-all duration-200
+            ${error?.field === 'mfa'
+              ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+              : 'border-zinc-200 focus:ring-blue-500 focus:border-blue-500'}
+            focus:outline-none focus:ring-2
+          `}
+        />
+        {error?.field === 'mfa' && (
+          <p className="text-sm text-red-600">{error.message}</p>
+        )}
+      </div>
+
+      <button
+        onClick={handleRecoveryCodeVerify}
+        disabled={isLoading || recoveryCode.trim().length < 8}
+        className={`
+          w-full py-3 px-4
+          flex items-center justify-center gap-2
+          text-base font-medium text-white
+          bg-blue-600 hover:bg-blue-700
+          rounded-xl
+          transition-all duration-200
+          disabled:opacity-50 disabled:cursor-not-allowed
+          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+        `}
+      >
+        {isLoading ? <SpinnerIcon /> : 'Verify recovery code'}
+      </button>
+
+      <p className="text-center text-xs text-zinc-400">
+        Each recovery code can only be used once. If you have used all your codes, contact your administrator.
       </p>
     </motion.div>
   );
@@ -1149,6 +1266,7 @@ export const ZenLogin: React.FC = () => {
               {step === 'email' && renderEmailStep()}
               {step === 'password' && renderPasswordStep()}
               {step === 'mfa' && renderMfaStep()}
+              {step === 'mfa-recovery' && renderMfaRecoveryStep()}
               {step === 'forgot-password' && renderForgotPasswordStep()}
               {step === 'reset-sent' && renderResetSentStep()}
               {step === 'success' && renderSuccessStep()}

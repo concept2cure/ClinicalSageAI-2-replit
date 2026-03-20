@@ -1167,4 +1167,113 @@ router.get('/command-center', async (req: Request, res: Response) => {
   }
 });
 
+// ============================================================
+// PACKAGE PUBLISH / LOCK (CRITICAL SAFETY GATE)
+// ============================================================
+
+/**
+ * POST /api/submission-ops/packages/:packageId/publish
+ *
+ * Locks a submission package for regulatory export.
+ * SAFETY GATES:
+ * 1. All critical/high blockers must be resolved
+ * 2. Readiness score must meet threshold
+ * 3. Requires explicit confirmation header
+ * 4. Creates audit trail entry
+ */
+router.post('/packages/:packageId/publish', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
+
+    // Gate 1: Require explicit confirmation header
+    const confirmation = req.headers['x-confirm-publish'] as string;
+    if (confirmation !== 'confirmed') {
+      return res.status(400).json({
+        error: 'Publication requires explicit confirmation',
+        hint: 'Set header x-confirm-publish: confirmed',
+        gate: 'confirmation',
+      });
+    }
+
+    // Resolve package
+    const [pkg] = await db
+      .select()
+      .from(c2cSubmissionPackages)
+      .where(
+        and(
+          eq(c2cSubmissionPackages.packageId, req.params.packageId),
+          eq(c2cSubmissionPackages.orgId, orgId)
+        )
+      );
+
+    if (!pkg) return res.status(404).json({ error: 'Package not found' });
+
+    // Gate 2: Check for open critical/high blockers
+    const [criticalBlockers] = await db
+      .select({ count: count() })
+      .from(c2cBlockers)
+      .where(
+        and(
+          eq(c2cBlockers.packageDbId, pkg.id),
+          eq(c2cBlockers.orgId, orgId),
+          eq(c2cBlockers.status, 'open'),
+          inArray(c2cBlockers.severity, ['critical', 'high'])
+        )
+      );
+
+    if ((criticalBlockers?.count ?? 0) > 0) {
+      return res.status(409).json({
+        error: `Cannot publish: ${criticalBlockers.count} critical/high blocker(s) remain open`,
+        gate: 'blockers',
+        openBlockers: criticalBlockers.count,
+      });
+    }
+
+    // Gate 3: Check readiness (compute fresh)
+    const readiness = await computePackageReadiness(db, pkg.id, orgId);
+    const readinessThreshold = 80;
+
+    if (readiness.overallScore < readinessThreshold) {
+      return res.status(409).json({
+        error: `Package readiness score ${readiness.overallScore}% is below the ${readinessThreshold}% threshold`,
+        gate: 'readiness',
+        readinessScore: readiness.overallScore,
+        threshold: readinessThreshold,
+        details: readiness,
+      });
+    }
+
+    // All gates passed — lock the package
+    const [updated] = await db
+      .update(c2cSubmissionPackages)
+      .set({
+        status: 'locked',
+        updatedAt: new Date(),
+      })
+      .where(eq(c2cSubmissionPackages.id, pkg.id))
+      .returning();
+
+    // Create audit trail snapshot
+    await db.insert(c2cReadinessSnapshots).values({
+      snapshotId: `snap_${randomUUID()}`,
+      orgId,
+      packageDbId: pkg.id,
+      overallScore: readiness.overallScore,
+      sectionScores: readiness.sectionScores || {},
+      computedAt: new Date(),
+      computedById: userId,
+    });
+
+    res.json({
+      success: true,
+      message: 'Package locked for submission',
+      data: updated,
+      readiness,
+    });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 export default router;

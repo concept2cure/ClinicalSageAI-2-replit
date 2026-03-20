@@ -179,6 +179,9 @@ export function useCortexChat(options: UseCortexChatOptions = {}): UseCortexChat
 
   const streamMessage = useCallback(
     (content: string) => {
+      // Prevent concurrent streaming — ignore if already streaming
+      if (isStreaming) return;
+
       setIsStreaming(true);
       setError(null);
       streamingMessageRef.current = '';
