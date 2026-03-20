@@ -2169,8 +2169,9 @@ export const ZenApp: React.FC = () => {
             >
               <Suspense
                 fallback={
-                  <div className="flex-1 flex items-center justify-center bg-white">
-                    <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto" />
+                  <div className="flex-1 flex flex-col items-center justify-center bg-white gap-3">
+                    <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
+                    <span className="text-sm text-zinc-400">Loading...</span>
                   </div>
                 }
               >

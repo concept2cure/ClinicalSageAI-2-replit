@@ -265,8 +265,8 @@ const COLOR_TEXT_700: Record<string, string> = {
 
 const MetricCard: React.FC<MetricCardProps> = ({ metric, colorClass }) => {
   return (
-    <div className="border border-zinc-200 rounded-md">
-      <div className="p-3">
+    <div className="border border-zinc-200 rounded-xl shadow-sm bg-white">
+      <div className="p-4">
         <div className="flex items-start justify-between">
           <div>
             <p className="text-xs text-zinc-500 font-medium">{metric.label}</p>
@@ -619,14 +619,14 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
   return (
     <div className={cn('h-full flex flex-col', className)}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b bg-white">
-        <div className="flex items-center gap-3">
-          <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center', COLOR_BG_100[roleConfig.color] || 'bg-zinc-100')}>
+      <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 bg-white">
+        <div className="flex items-center gap-4">
+          <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', COLOR_BG_100[roleConfig.color] || 'bg-zinc-100')}>
             <RoleIcon className={cn('h-5 w-5', COLOR_TEXT_600[roleConfig.color] || 'text-zinc-600')} />
           </div>
           <div>
             <h1 className="text-lg font-semibold text-zinc-900">{roleConfig.title}</h1>
-            <p className="text-xs text-zinc-500">{roleConfig.description}</p>
+            <p className="text-sm text-zinc-500">{roleConfig.description}</p>
           </div>
         </div>
         <Select value={currentRole} onValueChange={v => handleRoleChange(v as UserRole)}>
@@ -648,7 +648,7 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
 
       {/* Content */}
       <ScrollArea className="flex-1">
-        <div className="p-4 space-y-6">
+        <div className="p-6 space-y-6">
           {/* Metrics Grid */}
           <div>
             <h2 className="text-sm font-semibold text-zinc-700 mb-3">Key Metrics</h2>
@@ -662,14 +662,14 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Tasks */}
             <div className="lg:col-span-2">
-              <div className="border border-zinc-200 rounded-md">
-                <div className="px-4 py-3 pb-2 border-b border-zinc-200">
+              <div className="border border-zinc-200 rounded-xl shadow-sm bg-white">
+                <div className="px-5 py-3.5 border-b border-zinc-200">
                   <h3 className="text-base font-semibold flex items-center gap-2">
-                    <ClipboardList className="h-4 w-4" />
+                    <ClipboardList className="h-4 w-4 text-zinc-500" />
                     My Tasks
                   </h3>
                 </div>
-                <div className="px-4 py-3">
+                <div className="px-5 py-4">
                   {isLoadingOps && (
                     <div className="flex items-center gap-2 p-4 text-sm text-zinc-500">
                       <Loader2 className="w-4 h-4 animate-spin" />
