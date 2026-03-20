@@ -65,6 +65,12 @@ interface AnaPersistentPanelProps {
     screenName?: string;
     activeProject?: string;
     projectId?: string;
+    /** Currently active document title (from editor) */
+    activeDocumentTitle?: string;
+    /** Brief excerpt of active document content (first ~300 chars, HTML stripped) */
+    activeDocumentExcerpt?: string;
+    /** CTD section of active document */
+    activeDocumentCtdSection?: string;
   };
   /** Suggested actions shown as quick-start chips when conversation is empty */
   suggestedActions?: SuggestedAction[];
@@ -181,6 +187,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     if (greeting) return greeting;
     const hour = new Date().getHours();
     const timeGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+    if (contextProfile?.activeDocumentTitle) {
+      return `${timeGreeting}. Working on "${contextProfile.activeDocumentTitle}"${contextProfile.activeDocumentCtdSection ? ` (CTD ${contextProfile.activeDocumentCtdSection})` : ''}. How can I help?`;
+    }
     if (contextProfile?.activeProject) {
       return `${timeGreeting}! Ready to make progress on ${contextProfile.activeProject}. What shall we tackle?`;
     }
@@ -280,6 +289,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               projectId: contextProfile?.projectId,
               productType: contextProfile?.productType,
               userRole: contextProfile?.userRole,
+              activeDocument: contextProfile?.activeDocumentTitle || undefined,
+              activeDocumentExcerpt: contextProfile?.activeDocumentExcerpt || undefined,
+              activeDocumentCtdSection: contextProfile?.activeDocumentCtdSection || undefined,
             },
             conversationHistory: messages.slice(-10).map(m => ({
               role: m.role,
@@ -393,7 +405,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             )}>
               <div className="flex items-center gap-1.5 flex-shrink-0 self-center">
                 <Sparkles className="w-4 h-4 text-violet-500" />
-                {screenLabel && <span className="text-[11px] text-zinc-400 font-medium hidden sm:inline">{screenLabel}</span>}
+                {screenLabel && <span className="text-xs text-zinc-400 font-medium hidden sm:inline">{screenLabel}</span>}
               </div>
               <textarea ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)} placeholder="Message AnA..." rows={1} className="flex-1 resize-none bg-transparent border-none outline-none text-zinc-900 placeholder:text-zinc-400 text-sm leading-6 min-h-[24px] max-h-[120px]" />
               {hasMessages && (

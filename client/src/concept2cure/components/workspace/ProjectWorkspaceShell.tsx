@@ -139,6 +139,8 @@ interface ProjectWorkspaceShellProps {
   /** Open a specific existing artifact directly (no creation) */
   openArtifactId?: string;
   onOpenArtifactConsumed?: () => void;
+  /** Callback when the active document changes — used for chat context awareness */
+  onActiveDocumentChange?: (doc: { title: string; ctdSection?: string; excerpt: string } | null) => void;
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -158,6 +160,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   onInitialContentConsumed,
   openArtifactId,
   onOpenArtifactConsumed,
+  onActiveDocumentChange,
 }) => {
   // ── Local state ──────────────────────────────────────────────────────────
   const [artifacts, setArtifacts] = useState<TreeArtifact[]>([]);
@@ -591,6 +594,24 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   const activeArtifactRef = useRef(activeArtifact);
   activeArtifactRef.current = activeArtifact;
 
+  // Bubble active document context up for chat awareness
+  useEffect(() => {
+    if (!onActiveDocumentChange) return;
+    if (activeArtifact) {
+      const plainText = (activeDocContent || '')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      onActiveDocumentChange({
+        title: activeArtifact.title,
+        ctdSection: activeArtifact.ctdSection,
+        excerpt: plainText.slice(0, 300),
+      });
+    } else {
+      onActiveDocumentChange(null);
+    }
+  }, [activeArtifact?.id, activeArtifact?.title, activeDocContent, onActiveDocumentChange]);
+
   // ── Phase 4 panel openers ──────────────────────────────────────────────
   const openTransformCanvas = useCallback(
     (ctdSection?: string, templateKey?: string, artifactId?: string, artifactTitle?: string) => {
@@ -894,7 +915,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           {activeArtifact.templateId && (
             <>
               <span className="text-zinc-200 text-xs">·</span>
-              <span className="text-[11px] px-1.5 py-0.5 rounded bg-violet-50 text-violet-700">
+              <span className="text-xs px-2 py-0.5 rounded-md bg-violet-50 text-violet-700">
                 Template: {activeArtifact.templateId}
               </span>
             </>
@@ -902,7 +923,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           <span className="text-zinc-200 text-xs">·</span>
           <span
             className={cn(
-              'text-[11px] px-1.5 py-0.5 rounded font-medium',
+              'text-xs px-1.5 py-0.5 rounded font-medium',
               activeArtifact.status === 'locked'
                 ? 'bg-red-50 text-red-700'
                 : activeArtifact.status === 'approved'
@@ -915,17 +936,17 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             {activeArtifact.status || 'draft'}
           </span>
           {activeArtifact.version && (
-            <span className="text-[11px] text-zinc-400 ml-0.5">v{activeArtifact.version}</span>
+            <span className="text-xs text-zinc-400 ml-0.5">v{activeArtifact.version}</span>
           )}
           {/* Doc-level actions */}
           <div className="ml-auto flex items-center gap-1">
             {activeArtifact.status !== 'locked' && (
               <button
                 onClick={() => handleCutDocument(activeArtifact)}
-                className="p-1 text-zinc-400 hover:text-zinc-600 rounded hover:bg-zinc-100"
+                className="p-1.5 text-zinc-400 hover:text-zinc-600 rounded-md hover:bg-zinc-100"
                 title="Cut — move to another section"
               >
-                <Scissors className="w-3 h-3" />
+                <Scissors className="w-3.5 h-3.5" />
               </button>
             )}
             <button
@@ -935,25 +956,25 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                   activeArtifact.ctdSection ? 'relocate' : 'place'
                 )
               }
-              className="p-1 text-zinc-400 hover:text-zinc-600 rounded hover:bg-zinc-100"
+              className="p-1.5 text-zinc-400 hover:text-zinc-600 rounded-md hover:bg-zinc-100"
               title={activeArtifact.ctdSection ? 'Relocate in dossier' : 'Place in dossier'}
             >
-              <MapPin className="w-3 h-3" />
+              <MapPin className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => handleCopyCtdPath(activeArtifact)}
-              className="p-1 text-zinc-400 hover:text-zinc-600 rounded hover:bg-zinc-100"
+              className="p-1.5 text-zinc-400 hover:text-zinc-600 rounded-md hover:bg-zinc-100"
               title="Copy CTD path"
             >
-              <Copy className="w-3 h-3" />
+              <Copy className="w-3.5 h-3.5" />
             </button>
-            <span className="w-px h-4 bg-zinc-200 mx-0.5" />
+            <span className="w-px h-4 bg-zinc-200 mx-1" />
             <button
               onClick={() => openVerification(activeArtifact.id)}
-              className="p-1 text-zinc-400 hover:text-emerald-600 rounded hover:bg-emerald-50"
+              className="p-1.5 text-zinc-400 hover:text-emerald-600 rounded-md hover:bg-emerald-50"
               title="Verify document"
             >
-              <ShieldCheck className="w-3 h-3" />
+              <ShieldCheck className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() =>
@@ -964,38 +985,38 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                   activeArtifact.title
                 )
               }
-              className="p-1 text-zinc-400 hover:text-violet-600 rounded hover:bg-violet-50"
+              className="p-1.5 text-zinc-400 hover:text-violet-600 rounded-md hover:bg-violet-50"
               title="Transform Canvas"
             >
-              <Sparkles className="w-3 h-3" />
+              <Sparkles className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={openProgramTwin}
-              className="p-1 text-zinc-400 hover:text-blue-600 rounded hover:bg-blue-50"
+              className="p-1.5 text-zinc-400 hover:text-blue-600 rounded-md hover:bg-blue-50"
               title="Program Twin"
             >
-              <Target className="w-3 h-3" />
+              <Target className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() =>
                 openSubmissionApps(activeArtifact.ctdSection, activeArtifact.templateId)
               }
-              className="p-1 text-zinc-400 hover:text-orange-600 rounded hover:bg-orange-50"
+              className="p-1.5 text-zinc-400 hover:text-orange-600 rounded-md hover:bg-orange-50"
               title="Submission Apps"
             >
-              <AppWindow className="w-3 h-3" />
+              <AppWindow className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={openReviewPulse}
               className={cn(
-                'p-1 rounded',
+                'p-1.5 rounded-md',
                 phase4Panel === 'pulse'
                   ? 'text-rose-600 bg-rose-50'
                   : 'text-zinc-400 hover:text-rose-600 hover:bg-rose-50'
               )}
               title="Review Pulse"
             >
-              <Activity className="w-3 h-3" />
+              <Activity className="w-3.5 h-3.5" />
             </button>
             <NotificationCenter projectId={projectId} industryMode={industryMode} />
           </div>
@@ -1029,7 +1050,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 onClick={() => !tab.disabled && setLeftRailMode(tab.key)}
                 disabled={tab.disabled}
                 className={cn(
-                  'flex-1 flex items-center justify-center gap-1 py-2 text-[11px] font-medium transition-colors',
+                  'flex-1 flex items-center justify-center gap-1 py-2.5 text-xs font-medium transition-colors',
                   leftRailMode === tab.key
                     ? 'text-zinc-900 bg-white border-b-2 border-zinc-900'
                     : tab.disabled
@@ -1053,24 +1074,24 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             >
               <div className="flex items-center gap-1.5 mb-0.5">
                 <FileText className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                <span className="text-[11px] font-medium text-zinc-700 truncate flex-1">
+                <span className="text-xs font-medium text-zinc-700 truncate flex-1">
                   {activeArtifact.title}
                 </span>
               </div>
-              <div className="flex items-center gap-1 flex-wrap">
+              <div className="flex items-center gap-1.5 flex-wrap">
                 {activeArtifact.ctdSection && (
-                  <span className="text-[11px] px-1 rounded bg-blue-50 text-blue-700 font-medium">
+                  <span className="text-xs px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-700 font-medium">
                     {activeArtifact.ctdSection}
                   </span>
                 )}
                 {activeArtifact.templateId && (
-                  <span className="text-[11px] px-1 rounded bg-violet-50 text-violet-700">
+                  <span className="text-xs px-1.5 py-0.5 rounded-md bg-violet-50 text-violet-700">
                     {activeArtifact.templateId.replace('tpl-', '')}
                   </span>
                 )}
                 <span
                   className={cn(
-                    'text-[11px] px-1 rounded font-medium',
+                    'text-xs px-1.5 py-0.5 rounded-md font-medium',
                     activeArtifact.status === 'locked'
                       ? 'bg-red-50 text-red-700'
                       : activeArtifact.status === 'approved'
@@ -1083,7 +1104,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                   {activeArtifact.status || 'draft'}
                 </span>
                 {activeArtifact.version && (
-                  <span className="text-[11px] text-zinc-400">v{activeArtifact.version}</span>
+                  <span className="text-xs text-zinc-400">v{activeArtifact.version}</span>
                 )}
               </div>
             </div>
@@ -1145,7 +1166,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               />
             ) : (
               <div className="flex-1 flex items-center justify-center p-4">
-                <p className="text-[11px] text-zinc-400 text-center">
+                <p className="text-xs text-zinc-400 text-center">
                   Open a document to view its outline
                 </p>
               </div>
@@ -1164,7 +1185,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             <button
               onClick={openReviewPulse}
               className={cn(
-                'w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-[11px] font-medium transition-colors',
+                'w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-xs font-medium transition-colors',
                 phase4Panel === 'pulse'
                   ? 'text-rose-700 bg-rose-50'
                   : 'text-zinc-500 hover:text-rose-600 hover:bg-rose-50'
@@ -1195,13 +1216,13 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                   }
                 }}
                 placeholder="New document title..."
-                className="flex-1 px-2 py-1 text-[12px] border border-zinc-200 rounded focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                className="flex-1 px-2 py-1 text-sm border border-zinc-200 rounded focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                 autoFocus
               />
               <button
                 onClick={handleCreateNew}
                 disabled={creatingNew || !newDocTitle.trim()}
-                className="px-2.5 py-1 text-[11px] bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-60 font-medium flex items-center gap-1"
+                className="px-2.5 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-60 font-medium flex items-center gap-1"
               >
                 {creatingNew ? (
                   <Loader2 className="w-3 h-3 animate-spin" />
@@ -1215,7 +1236,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                   setShowNewDoc(false);
                   setNewDocTitle('');
                 }}
-                className="px-2 py-1 text-[11px] text-zinc-500 hover:text-zinc-700"
+                className="px-2 py-1 text-xs text-zinc-500 hover:text-zinc-700"
               >
                 Cancel
               </button>
@@ -1436,7 +1457,7 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
       <div className="flex items-center justify-between px-3 py-1.5 border-b border-zinc-200 bg-zinc-50/60">
         <div className="flex items-center gap-1.5">
           <Info className="w-3 h-3 text-blue-600" />
-          <span className="text-[11px] font-semibold text-zinc-700">Section Requirements</span>
+          <span className="text-xs font-semibold text-zinc-700">Section Requirements</span>
         </div>
         <button
           onClick={onClose}
@@ -1445,23 +1466,23 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
           <X className="w-3 h-3" />
         </button>
       </div>
-      <div className="p-2.5 space-y-2.5 text-[11px]">
+      <div className="p-2.5 space-y-2.5 text-xs">
         {/* Section */}
         <div>
-          <div className="text-[11px] text-zinc-400 uppercase tracking-wide mb-0.5">Section</div>
+          <div className="text-xs text-zinc-400 uppercase tracking-wide mb-0.5">Section</div>
           <div className="font-semibold text-zinc-800">{reqs.ctdSection}</div>
           <div className="text-zinc-600 mt-0.5">{reqs.label}</div>
         </div>
 
         {/* Description */}
         <div>
-          <div className="text-[11px] text-zinc-400 uppercase tracking-wide mb-0.5">Description</div>
+          <div className="text-xs text-zinc-400 uppercase tracking-wide mb-0.5">Description</div>
           <p className="text-zinc-600 leading-relaxed">{reqs.description}</p>
         </div>
 
         {/* Expected doc types */}
         <div>
-          <div className="text-[11px] text-zinc-400 uppercase tracking-wide mb-0.5">
+          <div className="text-xs text-zinc-400 uppercase tracking-wide mb-0.5">
             Expected Documents
           </div>
           <ul className="space-y-0.5">
@@ -1479,12 +1500,12 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
           {reqs.optional ? (
             <>
               <Info className="w-3 h-3 text-blue-500" />
-              <span className="text-[11px] text-blue-700 font-medium">Optional section</span>
+              <span className="text-xs text-blue-700 font-medium">Optional section</span>
             </>
           ) : (
             <>
               <AlertTriangle className="w-3 h-3 text-amber-500" />
-              <span className="text-[11px] text-amber-700 font-medium">Required section</span>
+              <span className="text-xs text-amber-700 font-medium">Required section</span>
             </>
           )}
         </div>
@@ -1492,7 +1513,7 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
         {/* Templates available */}
         {reqs.starterTemplatesAvailable.length > 0 && (
           <div>
-            <div className="text-[11px] text-zinc-400 uppercase tracking-wide mb-0.5">
+            <div className="text-xs text-zinc-400 uppercase tracking-wide mb-0.5">
               Starter Templates
             </div>
             {reqs.starterTemplatesAvailable.map((t, i) => (
@@ -1507,11 +1528,11 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
         {/* Common missing blocks */}
         {reqs.commonMissingBlocks.length > 0 && (
           <div>
-            <div className="text-[11px] text-zinc-400 uppercase tracking-wide mb-0.5">
+            <div className="text-xs text-zinc-400 uppercase tracking-wide mb-0.5">
               Expected Content Blocks
             </div>
             {reqs.commonMissingBlocks.map((b, i) => (
-              <div key={i} className="text-zinc-500 text-[11px] py-0.5">
+              <div key={i} className="text-zinc-500 text-xs py-0.5">
                 • {b}
               </div>
             ))}
@@ -1523,7 +1544,7 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
           <div>
             <button
               onClick={() => setShowChildren(!showChildren)}
-              className="flex items-center gap-1 text-[11px] text-zinc-400 uppercase tracking-wide mb-0.5 hover:text-zinc-600"
+              className="flex items-center gap-1 text-xs text-zinc-400 uppercase tracking-wide mb-0.5 hover:text-zinc-600"
             >
               {showChildren ? (
                 <ChevronDown className="w-2.5 h-2.5" />
@@ -1535,12 +1556,12 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
             {showChildren && (
               <div className="space-y-0.5 mt-0.5">
                 {reqs.requiredChildren.map((c, i) => (
-                  <div key={i} className="text-zinc-600 text-[11px]">
+                  <div key={i} className="text-zinc-600 text-xs">
                     ▸ {c}
                   </div>
                 ))}
                 {reqs.optionalChildren.map((c, i) => (
-                  <div key={i} className="text-zinc-400 text-[11px] italic">
+                  <div key={i} className="text-zinc-400 text-xs italic">
                     ▹ {c}
                   </div>
                 ))}
@@ -1552,7 +1573,7 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
         {/* Current metrics */}
         {metrics && (
           <div>
-            <div className="text-[11px] text-zinc-400 uppercase tracking-wide mb-0.5">
+            <div className="text-xs text-zinc-400 uppercase tracking-wide mb-0.5">
               Current Status
             </div>
             <div className="space-y-1">
@@ -1587,17 +1608,17 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
               </div>
               {/* Warning signals */}
               {metrics.artifactCount > 0 && metrics.evidenceCount === 0 && (
-                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 text-[11px]">
+                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 text-xs">
                   <AlertTriangle className="w-2.5 h-2.5" /> No evidence linked
                 </div>
               )}
               {metrics.artifactCount > 0 && metrics.precedentCount === 0 && (
-                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 text-[11px]">
+                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 text-xs">
                   <AlertTriangle className="w-2.5 h-2.5" /> No precedents
                 </div>
               )}
               {metrics.artifactCount === 0 && reqs.hasTemplates && (
-                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 text-[11px]">
+                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 text-xs">
                   <Info className="w-2.5 h-2.5" /> Template available, no doc created
                 </div>
               )}

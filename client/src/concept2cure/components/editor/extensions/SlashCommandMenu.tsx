@@ -217,7 +217,7 @@ export const SlashCommandList = React.forwardRef<
     >
       {Object.entries(grouped).map(([category, categoryItems]) => (
         <div key={category}>
-          <div className="px-3 py-1.5 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider bg-zinc-50">
+          <div className="px-3 py-1.5 text-xs font-semibold text-zinc-400 uppercase tracking-wider bg-zinc-50">
             {categoryLabels[category] || category}
           </div>
           {categoryItems.map((item) => {

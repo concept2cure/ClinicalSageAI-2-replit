@@ -666,7 +666,7 @@ export const ZenLogin: React.FC = () => {
                 <span className="text-lg">{persona.icon}</span>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium text-zinc-900 truncate">{persona.name}</div>
-                  <div className="text-[13px] text-zinc-500 truncate">{persona.title}</div>
+                  <div className="text-sm text-zinc-500 truncate">{persona.title}</div>
                 </div>
                 <span className={`
                   text-xs font-medium px-2 py-0.5 rounded-full

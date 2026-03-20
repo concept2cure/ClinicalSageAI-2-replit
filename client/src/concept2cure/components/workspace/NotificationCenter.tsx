@@ -221,12 +221,12 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
         <div className="absolute right-0 top-full mt-1 w-72 bg-white border border-zinc-200 rounded-lg shadow-xl z-50 overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200 bg-zinc-50/50">
-            <span className="text-[11px] font-semibold text-zinc-700">Notifications</span>
+            <span className="text-xs font-semibold text-zinc-700">Notifications</span>
             <div className="flex items-center gap-1">
               {unreadCount > 0 && (
                 <button
                   onClick={markAllRead}
-                  className="text-[11px] text-blue-600 hover:text-blue-700 flex items-center gap-0.5"
+                  className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-0.5"
                   title="Mark all read"
                 >
                   <CheckCheck className="w-3 h-3" />
@@ -242,7 +242,7 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
                 key={t}
                 onClick={() => setTab(t)}
                 className={cn(
-                  'flex-1 py-1 text-[11px] font-medium capitalize',
+                  'flex-1 py-1 text-xs font-medium capitalize',
                   tab === t
                     ? 'text-blue-600 border-b-2 border-blue-600'
                     : 'text-zinc-400 hover:text-zinc-600'
@@ -260,7 +260,7 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
                 <Loader2 className="w-4 h-4 animate-spin text-zinc-400" />
               </div>
             ) : notifications.length === 0 ? (
-              <p className="text-[11px] text-zinc-400 text-center py-6">
+              <p className="text-xs text-zinc-400 text-center py-6">
                 {tab === 'unread' ? 'No unread notifications' : 'No notifications'}
               </p>
             ) : (
@@ -274,10 +274,10 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
                 >
                   <div className="mt-0.5 shrink-0">{getNotifIcon(n.notificationType)}</div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-medium text-zinc-800 truncate">{n.title}</p>
-                    <p className="text-[11px] text-zinc-500 line-clamp-2">{n.body}</p>
+                    <p className="text-xs font-medium text-zinc-800 truncate">{n.title}</p>
+                    <p className="text-xs text-zinc-500 line-clamp-2">{n.body}</p>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className="text-[11px] text-zinc-400">{formatTimeAgo(n.createdAt)}</span>
+                      <span className="text-xs text-zinc-400">{formatTimeAgo(n.createdAt)}</span>
                       {n.severity === 'critical' && (
                         <span className="text-[7px] bg-red-100 text-red-700 px-1 rounded font-medium">
                           {tailoring.severityLabels.critical?.toUpperCase() || 'CRITICAL'}

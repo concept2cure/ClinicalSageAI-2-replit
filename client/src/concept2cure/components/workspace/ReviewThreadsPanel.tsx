@@ -393,7 +393,7 @@ export function ReviewThreadsPanel({
             key={tab}
             onClick={() => setSubTab(tab)}
             className={cn(
-              'flex-1 py-1.5 text-[11px] font-medium capitalize transition-colors flex items-center justify-center gap-1',
+              'flex-1 py-1.5 text-xs font-medium capitalize transition-colors flex items-center justify-center gap-1',
               subTab === tab
                 ? 'text-blue-600 border-b-2 border-blue-600'
                 : 'text-zinc-400 hover:text-zinc-600'
@@ -405,7 +405,7 @@ export function ReviewThreadsPanel({
               <ListTodo className="w-3 h-3" />
             )}
             {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            <span className="text-[11px] text-zinc-400 ml-0.5">
+            <span className="text-xs text-zinc-400 ml-0.5">
               ({tab === 'threads' ? openThreads.length : openTasks.length})
             </span>
           </button>
@@ -418,7 +418,7 @@ export function ReviewThreadsPanel({
             {/* New thread button */}
             <button
               onClick={() => setShowNewThread(!showNewThread)}
-              className="w-full flex items-center gap-1.5 px-2 py-1.5 text-[11px] font-medium text-blue-600 hover:bg-blue-50 rounded transition-colors mb-2"
+              className="w-full flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 rounded transition-colors mb-2"
             >
               <Plus className="w-3 h-3" />
               New Thread
@@ -432,14 +432,14 @@ export function ReviewThreadsPanel({
                   value={newThreadTitle}
                   onChange={e => setNewThreadTitle(e.target.value)}
                   placeholder="Thread title..."
-                  className="w-full px-2 py-1 text-[11px] bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+                  className="w-full px-2 py-1 text-xs bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
                   maxLength={500}
                 />
                 <div className="flex gap-1.5">
                   <select
                     value={newThreadPriority}
                     onChange={e => setNewThreadPriority(e.target.value)}
-                    className="flex-1 px-1.5 py-1 text-[11px] bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+                    className="flex-1 px-1.5 py-1 text-xs bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
                   >
                     <option value="">Priority...</option>
                     {Object.entries(tailoring.priorityLabels).map(([val, label]) => (
@@ -451,7 +451,7 @@ export function ReviewThreadsPanel({
                   <select
                     value={newThreadAnchorType}
                     onChange={e => setNewThreadAnchorType(e.target.value)}
-                    className="flex-1 px-1.5 py-1 text-[11px] bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+                    className="flex-1 px-1.5 py-1 text-xs bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
                   >
                     <option value="">Anchor...</option>
                     {tailoring.anchorTypes.map(a => (
@@ -467,23 +467,23 @@ export function ReviewThreadsPanel({
                     value={newThreadAnchorLabel}
                     onChange={e => setNewThreadAnchorLabel(e.target.value)}
                     placeholder="Anchor label (e.g. section name)..."
-                    className="w-full px-2 py-1 text-[11px] bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+                    className="w-full px-2 py-1 text-xs bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
                   />
                 )}
                 <div className="flex items-center gap-1.5">
-                  <label className="text-[11px] text-zinc-400 shrink-0">Due</label>
+                  <label className="text-xs text-zinc-400 shrink-0">Due</label>
                   <input
                     type="date"
                     value={newThreadDueAt}
                     onChange={e => setNewThreadDueAt(e.target.value)}
-                    className="flex-1 px-2 py-1 text-[11px] bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+                    className="flex-1 px-2 py-1 text-xs bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
                   />
                 </div>
                 <textarea
                   value={newThreadComment}
                   onChange={e => setNewThreadComment(e.target.value)}
                   placeholder={tailoring.threadPlaceholder}
-                  className="w-full px-2 py-1 text-[11px] bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400 resize-none"
+                  className="w-full px-2 py-1 text-xs bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400 resize-none"
                   rows={2}
                   maxLength={10000}
                 />
@@ -498,14 +498,14 @@ export function ReviewThreadsPanel({
                       setNewThreadAnchorLabel('');
                       setNewThreadDueAt('');
                     }}
-                    className="px-2 py-0.5 text-[11px] text-zinc-500 hover:bg-zinc-200 rounded"
+                    className="px-2 py-0.5 text-xs text-zinc-500 hover:bg-zinc-200 rounded"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleCreateThread}
                     disabled={creating || !newThreadTitle.trim()}
-                    className="px-2 py-0.5 text-[11px] bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-60 flex items-center gap-1"
+                    className="px-2 py-0.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-60 flex items-center gap-1"
                   >
                     {creating ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : null}
                     Create
@@ -516,7 +516,7 @@ export function ReviewThreadsPanel({
 
             {/* Open threads */}
             {openThreads.length === 0 && resolvedThreads.length === 0 && (
-              <p className="text-[11px] text-zinc-400 text-center py-4">No review threads yet</p>
+              <p className="text-xs text-zinc-400 text-center py-4">No review threads yet</p>
             )}
 
             {openThreads.map(thread => (
@@ -553,7 +553,7 @@ export function ReviewThreadsPanel({
             {/* Resolved threads section */}
             {resolvedThreads.length > 0 && (
               <div className="mt-3">
-                <p className="text-[11px] text-zinc-400 font-medium mb-1.5 px-1">
+                <p className="text-xs text-zinc-400 font-medium mb-1.5 px-1">
                   Resolved ({resolvedThreads.length})
                 </p>
                 {resolvedThreads.map(thread => (
@@ -593,7 +593,7 @@ export function ReviewThreadsPanel({
           /* Tasks sub-tab */
           <div className="p-2">
             {openTasks.length === 0 && closedTasks.length === 0 && (
-              <p className="text-[11px] text-zinc-400 text-center py-4">No review tasks yet</p>
+              <p className="text-xs text-zinc-400 text-center py-4">No review tasks yet</p>
             )}
 
             {openTasks.map(task => (
@@ -607,7 +607,7 @@ export function ReviewThreadsPanel({
 
             {closedTasks.length > 0 && (
               <div className="mt-3">
-                <p className="text-[11px] text-zinc-400 font-medium mb-1.5 px-1">
+                <p className="text-xs text-zinc-400 font-medium mb-1.5 px-1">
                   Resolved ({closedTasks.length})
                 </p>
                 {closedTasks.map(task => (
@@ -712,14 +712,14 @@ function ThreadCard({
         <div className="flex-1 min-w-0">
           <p
             className={cn(
-              'text-[11px] font-medium truncate',
+              'text-xs font-medium truncate',
               isOpen ? 'text-zinc-800' : 'text-zinc-500 line-through'
             )}
           >
             {thread.title}
           </p>
           <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-            <span className="text-[11px] text-zinc-400">{thread.createdByName}</span>
+            <span className="text-xs text-zinc-400">{thread.createdByName}</span>
             {thread.priority && thread.priority !== 'medium' && (
               <span
                 className={cn(
@@ -733,14 +733,14 @@ function ThreadCard({
               </span>
             )}
             {thread.anchorLabel && (
-              <span className="text-[11px] text-violet-500 bg-violet-50 px-1 rounded">
+              <span className="text-xs text-violet-500 bg-violet-50 px-1 rounded">
                 {thread.anchorLabel}
               </span>
             )}
             {thread.dueAt && isOpen && (
               <span
                 className={cn(
-                  'text-[11px] flex items-center gap-0.5',
+                  'text-xs flex items-center gap-0.5',
                   isDueOverdue
                     ? 'text-red-600 font-medium'
                     : isDueSoon
@@ -752,7 +752,7 @@ function ThreadCard({
                 {isDueOverdue ? 'Overdue' : formatTime(thread.dueAt)}
               </span>
             )}
-            <span className="text-[11px] text-zinc-400">
+            <span className="text-xs text-zinc-400">
               {thread.commentCount} {thread.commentCount === 1 ? 'comment' : 'comments'}
             </span>
           </div>
@@ -788,7 +788,7 @@ function ThreadCard({
                   >
                     <div className="flex items-center gap-1 mb-0.5">
                       <User className="w-2.5 h-2.5 text-zinc-400" />
-                      <span className="text-[11px] font-medium text-zinc-700">{c.authorName}</span>
+                      <span className="text-xs font-medium text-zinc-700">{c.authorName}</span>
                       {c.kind === 'request_changes' && (
                         <span className="text-[7px] bg-amber-200 text-amber-800 px-1 rounded font-medium">
                           CHANGES REQUESTED
@@ -799,11 +799,11 @@ function ThreadCard({
                           SYSTEM
                         </span>
                       )}
-                      <span className="text-[11px] text-zinc-400 ml-auto">
+                      <span className="text-xs text-zinc-400 ml-auto">
                         {formatTime(c.createdAt)}
                       </span>
                     </div>
-                    <p className="text-[11px] text-zinc-600 whitespace-pre-wrap">{c.body}</p>
+                    <p className="text-xs text-zinc-600 whitespace-pre-wrap">{c.body}</p>
                   </div>
                 ))}
               </div>
@@ -818,7 +818,7 @@ function ThreadCard({
                         value={replyBody}
                         onChange={e => onSetReplyBody(e.target.value)}
                         placeholder="Reply..."
-                        className="flex-1 px-2 py-1 text-[11px] bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+                        className="flex-1 px-2 py-1 text-xs bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
                         maxLength={10000}
                         onKeyDown={e => {
                           if (e.key === 'Enter' && !e.shiftKey) {
@@ -851,7 +851,7 @@ function ThreadCard({
                   ) : (
                     <button
                       onClick={() => onSetReplyTarget(thread.threadId)}
-                      className="flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-700"
+                      className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
                     >
                       <CornerDownRight className="w-3 h-3" />
                       Reply
@@ -865,7 +865,7 @@ function ThreadCard({
                 {isOpen && onResolve && (
                   <button
                     onClick={onResolve}
-                    className="flex items-center gap-1 text-[11px] text-emerald-600 hover:text-emerald-700"
+                    className="flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-700"
                   >
                     <CheckCircle2 className="w-3 h-3" />
                     Resolve
@@ -874,7 +874,7 @@ function ThreadCard({
                 {!isOpen && onReopen && (
                   <button
                     onClick={onReopen}
-                    className="flex items-center gap-1 text-[11px] text-amber-600 hover:text-amber-700"
+                    className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-700"
                   >
                     <RotateCcw className="w-3 h-3" />
                     Reopen
@@ -885,7 +885,7 @@ function ThreadCard({
                     onClick={() =>
                       onShowNewTask(showNewTask === thread.threadId ? null : thread.threadId)
                     }
-                    className="flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-700"
+                    className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
                   >
                     <ListTodo className="w-3 h-3" />
                     Create Task
@@ -894,7 +894,7 @@ function ThreadCard({
                 {isOpen && onRequestChanges && (
                   <button
                     onClick={() => setShowRequestChanges(!showRequestChanges)}
-                    className="flex items-center gap-1 text-[11px] text-amber-600 hover:text-amber-700"
+                    className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-700"
                   >
                     <AlertTriangle className="w-3 h-3" />
                     Request Changes
@@ -905,20 +905,20 @@ function ThreadCard({
               {/* Create Task from Thread form */}
               {showNewTask === thread.threadId && onCreateTask && (
                 <div className="mt-2 p-1.5 bg-blue-50 rounded border border-blue-100 space-y-1.5">
-                  <p className="text-[11px] font-medium text-blue-700">Create linked task</p>
+                  <p className="text-xs font-medium text-blue-700">Create linked task</p>
                   <input
                     type="text"
                     value={newTaskTitle || ''}
                     onChange={e => onSetNewTaskTitle?.(e.target.value)}
                     placeholder="Task title..."
-                    className="w-full px-1.5 py-0.5 text-[11px] bg-white border border-blue-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+                    className="w-full px-1.5 py-0.5 text-xs bg-white border border-blue-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
                     maxLength={500}
                   />
                   <div className="flex gap-1">
                     <select
                       value={newTaskType || 'follow_up'}
                       onChange={e => onSetNewTaskType?.(e.target.value)}
-                      className="flex-1 px-1.5 py-0.5 text-[11px] bg-white border border-blue-200 rounded"
+                      className="flex-1 px-1.5 py-0.5 text-xs bg-white border border-blue-200 rounded"
                     >
                       {(
                         taskTypeOptions || [
@@ -936,21 +936,21 @@ function ThreadCard({
                       type="date"
                       value={newTaskDueAt || ''}
                       onChange={e => onSetNewTaskDueAt?.(e.target.value)}
-                      className="flex-1 px-1.5 py-0.5 text-[11px] bg-white border border-blue-200 rounded"
+                      className="flex-1 px-1.5 py-0.5 text-xs bg-white border border-blue-200 rounded"
                       title="Task due date"
                     />
                   </div>
                   <div className="flex gap-1 justify-end">
                     <button
                       onClick={() => onShowNewTask?.(null)}
-                      className="px-1.5 py-0.5 text-[11px] text-zinc-500 hover:bg-zinc-100 rounded"
+                      className="px-1.5 py-0.5 text-xs text-zinc-500 hover:bg-zinc-100 rounded"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={() => onCreateTask(thread.threadId)}
                       disabled={creatingTask || !(newTaskTitle || '').trim()}
-                      className="px-1.5 py-0.5 text-[11px] bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-60 flex items-center gap-0.5"
+                      className="px-1.5 py-0.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-60 flex items-center gap-0.5"
                     >
                       {creatingTask && <Loader2 className="w-2 h-2 animate-spin" />}
                       Create
@@ -962,12 +962,12 @@ function ThreadCard({
               {/* Request Changes form */}
               {showRequestChanges && onRequestChanges && (
                 <div className="mt-2 p-1.5 bg-amber-50 rounded border border-amber-100 space-y-1.5">
-                  <p className="text-[11px] font-medium text-amber-700">Request Changes</p>
+                  <p className="text-xs font-medium text-amber-700">Request Changes</p>
                   <textarea
                     value={requestChangesBody}
                     onChange={e => setRequestChangesBody(e.target.value)}
                     placeholder="Describe the required changes..."
-                    className="w-full px-1.5 py-0.5 text-[11px] bg-white border border-amber-200 rounded focus:outline-none focus:ring-1 focus:ring-amber-400 resize-none"
+                    className="w-full px-1.5 py-0.5 text-xs bg-white border border-amber-200 rounded focus:outline-none focus:ring-1 focus:ring-amber-400 resize-none"
                     rows={2}
                     maxLength={10000}
                   />
@@ -977,7 +977,7 @@ function ThreadCard({
                         setShowRequestChanges(false);
                         setRequestChangesBody('');
                       }}
-                      className="px-1.5 py-0.5 text-[11px] text-zinc-500 hover:bg-zinc-100 rounded"
+                      className="px-1.5 py-0.5 text-xs text-zinc-500 hover:bg-zinc-100 rounded"
                     >
                       Cancel
                     </button>
@@ -988,7 +988,7 @@ function ThreadCard({
                         setShowRequestChanges(false);
                       }}
                       disabled={!requestChangesBody.trim()}
-                      className="px-1.5 py-0.5 text-[11px] bg-amber-600 text-white rounded hover:bg-amber-700 disabled:opacity-60"
+                      className="px-1.5 py-0.5 text-xs bg-amber-600 text-white rounded hover:bg-amber-700 disabled:opacity-60"
                     >
                       Submit
                     </button>
@@ -1042,21 +1042,21 @@ function TaskCard({ task, onResolve, onReopen, taskTypeOptions }: TaskCardProps)
         <div className="flex-1 min-w-0">
           <p
             className={cn(
-              'text-[11px] font-medium',
+              'text-xs font-medium',
               isActive ? 'text-zinc-800' : 'text-zinc-500 line-through'
             )}
           >
             {task.title}
           </p>
           <div className="flex items-center gap-1.5 mt-0.5">
-            <span className="text-[11px] bg-zinc-100 text-zinc-500 px-1 rounded">{typeLabel}</span>
+            <span className="text-xs bg-zinc-100 text-zinc-500 px-1 rounded">{typeLabel}</span>
             {task.assignedToName && (
-              <span className="text-[11px] text-zinc-400">→ {task.assignedToName}</span>
+              <span className="text-xs text-zinc-400">→ {task.assignedToName}</span>
             )}
             {task.dueAt && (
               <span
                 className={cn(
-                  'text-[11px] flex items-center gap-0.5',
+                  'text-xs flex items-center gap-0.5',
                   isOverdue ? 'text-red-600 font-medium' : 'text-zinc-400'
                 )}
               >
@@ -1065,14 +1065,14 @@ function TaskCard({ task, onResolve, onReopen, taskTypeOptions }: TaskCardProps)
               </span>
             )}
           </div>
-          {task.description && <p className="text-[11px] text-zinc-500 mt-1">{task.description}</p>}
+          {task.description && <p className="text-xs text-zinc-500 mt-1">{task.description}</p>}
         </div>
       </div>
       <div className="flex gap-1.5 mt-1.5 pl-4">
         {isActive && onResolve && (
           <button
             onClick={onResolve}
-            className="flex items-center gap-1 text-[11px] text-emerald-600 hover:text-emerald-700"
+            className="flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-700"
           >
             <CheckCircle2 className="w-3 h-3" />
             Resolve
@@ -1081,7 +1081,7 @@ function TaskCard({ task, onResolve, onReopen, taskTypeOptions }: TaskCardProps)
         {!isActive && onReopen && (
           <button
             onClick={onReopen}
-            className="flex items-center gap-1 text-[11px] text-amber-600 hover:text-amber-700"
+            className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-700"
           >
             <RotateCcw className="w-3 h-3" />
             Reopen

@@ -208,7 +208,7 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
     <div className={cn('flex flex-col h-full', className)} data-testid="project-file-tree">
       {/* Header */}
       <div className="flex items-center justify-between px-3 h-8 border-b border-zinc-200 bg-zinc-50/60 shrink-0">
-        <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
+        <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
           Explorer
         </span>
         {onCreateNew && (
@@ -257,15 +257,15 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
                 ) : (
                   <Folder className="w-3.5 h-3.5 shrink-0 text-zinc-400" />
                 )}
-                <span className="text-[12px] font-medium truncate flex-1">{folder.label}</span>
+                <span className="text-sm font-medium truncate flex-1">{folder.label}</span>
                 {count > 0 && (
-                  <span className="text-[11px] text-zinc-400 tabular-nums shrink-0">{count}</span>
+                  <span className="text-xs text-zinc-400 tabular-nums shrink-0">{count}</span>
                 )}
               </button>
 
               {/* Children (files) */}
               {isExpanded && folder.children.length === 0 && (
-                <p className="pl-7 pr-2 py-1.5 text-[11px] text-zinc-400 italic">No documents</p>
+                <p className="pl-7 pr-2 py-1.5 text-xs text-zinc-400 italic">No documents</p>
               )}
               {isExpanded &&
                 folder.children.map(a => {
@@ -290,7 +290,7 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
                           isSelected ? 'text-blue-600' : 'text-zinc-400'
                         )}
                       />
-                      <span className="text-[12px] truncate flex-1 leading-snug">{a.title}</span>
+                      <span className="text-sm truncate flex-1 leading-snug">{a.title}</span>
                       <StatusIcon status={a.status} />
                     </button>
                   );
@@ -303,11 +303,11 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
         {artifacts.length === 0 && (
           <div className="px-4 py-6 text-center">
             <FileText className="w-5 h-5 text-zinc-200 mx-auto mb-2" />
-            <p className="text-[11px] text-zinc-400">No documents yet.</p>
+            <p className="text-xs text-zinc-400">No documents yet.</p>
             {onCreateNew && (
               <button
                 onClick={onCreateNew}
-                className="mt-2 text-[11px] text-blue-600 hover:text-blue-700 font-medium"
+                className="mt-2 text-xs text-blue-600 hover:text-blue-700 font-medium"
               >
                 Create first document
               </button>
@@ -318,7 +318,7 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
 
       {/* Pending cut/paste banner */}
       {pendingMove && (
-        <div className="px-3 py-1.5 border-t border-amber-200 bg-amber-50 text-[11px] text-amber-700 flex items-center gap-1.5 shrink-0">
+        <div className="px-3 py-1.5 border-t border-amber-200 bg-amber-50 text-xs text-amber-700 flex items-center gap-1.5 shrink-0">
           <Scissors className="w-3 h-3" />
           <span className="truncate flex-1">Cut: {pendingMove.artifact.title}</span>
         </div>
@@ -337,9 +337,9 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
           aria-label="File actions"
         >
           <div className="px-3 py-1.5 border-b border-zinc-200">
-            <p className="text-[11px] text-zinc-600 truncate">{contextMenu.artifact.title}</p>
+            <p className="text-xs text-zinc-600 truncate">{contextMenu.artifact.title}</p>
             {contextMenu.artifact.ctdSection && (
-              <p className="text-[11px] text-zinc-400 font-mono">
+              <p className="text-xs text-zinc-400 font-mono">
                 {contextMenu.artifact.ctdSection}
               </p>
             )}
@@ -350,7 +350,7 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
                 onCutDocument(contextMenu.artifact);
                 closeContextMenu();
               }}
-              className="w-full text-left px-3 py-1.5 text-[12px] text-zinc-700 hover:bg-zinc-50 transition-colors flex items-center gap-2 focus-visible:outline-none"
+              className="w-full text-left px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50 transition-colors flex items-center gap-2 focus-visible:outline-none"
               role="menuitem"
             >
               <Scissors className="w-3 h-3" />
@@ -363,7 +363,7 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
                 onOpenPlacement(contextMenu.artifact);
                 closeContextMenu();
               }}
-              className="w-full text-left px-3 py-1.5 text-[12px] text-zinc-700 hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-2 focus-visible:outline-none"
+              className="w-full text-left px-3 py-1.5 text-sm text-zinc-700 hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-2 focus-visible:outline-none"
               role="menuitem"
             >
               <MapPin className="w-3 h-3" />
@@ -376,7 +376,7 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
                 onCopyCtdPath(contextMenu.artifact);
                 closeContextMenu();
               }}
-              className="w-full text-left px-3 py-1.5 text-[12px] text-zinc-700 hover:bg-zinc-50 transition-colors flex items-center gap-2 focus-visible:outline-none"
+              className="w-full text-left px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50 transition-colors flex items-center gap-2 focus-visible:outline-none"
               role="menuitem"
             >
               <Copy className="w-3 h-3" />
@@ -389,7 +389,7 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
                 onPasteHere(contextMenu.artifact.ctdSection || '');
                 closeContextMenu();
               }}
-              className="w-full text-left px-3 py-1.5 text-[12px] text-amber-700 hover:bg-amber-50 transition-colors flex items-center gap-2 focus-visible:outline-none"
+              className="w-full text-left px-3 py-1.5 text-sm text-amber-700 hover:bg-amber-50 transition-colors flex items-center gap-2 focus-visible:outline-none"
               role="menuitem"
             >
               <ClipboardPaste className="w-3 h-3" />

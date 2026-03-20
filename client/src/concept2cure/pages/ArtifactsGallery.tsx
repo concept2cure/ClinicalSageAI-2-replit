@@ -166,11 +166,11 @@ export const ArtifactsGallery: React.FC = () => {
           <Sparkles className="w-4 h-4 text-violet-500 flex-shrink-0" />
           <span className="text-xs text-zinc-600">AnA can create &amp; export:</span>
           <div className="flex items-center gap-2">
-            <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-700">DOCX</span>
-            <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-700">PDF</span>
-            <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-orange-100 text-orange-700">PPTX</span>
-            <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">Markdown</span>
-            <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-zinc-200 text-zinc-700">HTML</span>
+            <span className="text-xs font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-700">DOCX</span>
+            <span className="text-xs font-bold px-2 py-0.5 rounded bg-red-100 text-red-700">PDF</span>
+            <span className="text-xs font-bold px-2 py-0.5 rounded bg-orange-100 text-orange-700">PPTX</span>
+            <span className="text-xs font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">Markdown</span>
+            <span className="text-xs font-bold px-2 py-0.5 rounded bg-zinc-200 text-zinc-700">HTML</span>
           </div>
           <span className="text-xs text-zinc-400 ml-auto hidden sm:block">Ask AnA to draft any document type</span>
         </div>
@@ -242,7 +242,7 @@ export const ArtifactsGallery: React.FC = () => {
                         <div className="flex items-center gap-1">
                           {template.formats?.map(fmt => (
                             <span key={fmt} className={cn(
-                              'text-[11px] font-bold px-1.5 py-0.5 rounded uppercase',
+                              'text-xs font-bold px-1.5 py-0.5 rounded uppercase',
                               fmt === 'DOCX' ? 'bg-blue-50 text-blue-600' :
                               fmt === 'PDF' ? 'bg-red-50 text-red-600' :
                               fmt === 'PPTX' ? 'bg-orange-50 text-orange-600' :
@@ -252,7 +252,7 @@ export const ArtifactsGallery: React.FC = () => {
                             </span>
                           ))}
                         </div>
-                        <span className="flex items-center gap-1 text-[11px] font-medium text-violet-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="flex items-center gap-1 text-xs font-medium text-violet-600 opacity-0 group-hover:opacity-100 transition-opacity">
                           <Sparkles className="w-3 h-3" />
                           Create with AnA
                         </span>
@@ -331,11 +331,11 @@ export const ArtifactsGallery: React.FC = () => {
                     </h3>
                     <div className="flex items-center gap-2 mt-1">
                       {artifact.projectName && (
-                        <span className="text-[11px] text-zinc-400 truncate">{artifact.projectName}</span>
+                        <span className="text-xs text-zinc-400 truncate">{artifact.projectName}</span>
                       )}
                       {artifact.status && (
                         <span className={cn(
-                          'text-[11px] px-1.5 py-0.5 rounded-full font-medium capitalize',
+                          'text-xs px-1.5 py-0.5 rounded-full font-medium capitalize',
                           artifact.status === 'approved' ? 'bg-emerald-50 text-emerald-600' :
                           artifact.status === 'locked' ? 'bg-blue-50 text-blue-600' :
                           artifact.status === 'review' ? 'bg-violet-50 text-violet-600' :
@@ -350,7 +350,7 @@ export const ArtifactsGallery: React.FC = () => {
                     {artifact.createdAt && (
                       <div className="flex items-center gap-1 mt-1.5">
                         <Clock className="w-3 h-3 text-zinc-400" />
-                        <span className="text-[11px] text-zinc-400">
+                        <span className="text-xs text-zinc-400">
                           {new Date(artifact.createdAt).toLocaleDateString()}
                         </span>
                       </div>
@@ -373,7 +373,7 @@ export const ArtifactsGallery: React.FC = () => {
                             a.click(); URL.revokeObjectURL(url);
                           });
                         }}
-                        className="px-1.5 py-0.5 text-[11px] font-medium text-zinc-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                        className="px-1.5 py-0.5 text-xs font-medium text-zinc-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
                         title="Export as Word"
                       >
                         DOCX
@@ -393,7 +393,7 @@ export const ArtifactsGallery: React.FC = () => {
                             a.click(); URL.revokeObjectURL(url);
                           });
                         }}
-                        className="px-1.5 py-0.5 text-[11px] font-medium text-zinc-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                        className="px-1.5 py-0.5 text-xs font-medium text-zinc-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
                         title="Export as PDF"
                       >
                         PDF
@@ -413,7 +413,7 @@ export const ArtifactsGallery: React.FC = () => {
                             a.click(); URL.revokeObjectURL(url);
                           });
                         }}
-                        className="px-1.5 py-0.5 text-[11px] font-medium text-zinc-500 hover:text-orange-600 hover:bg-orange-50 rounded transition-colors"
+                        className="px-1.5 py-0.5 text-xs font-medium text-zinc-500 hover:text-orange-600 hover:bg-orange-50 rounded transition-colors"
                         title="Export as PowerPoint"
                       >
                         PPTX

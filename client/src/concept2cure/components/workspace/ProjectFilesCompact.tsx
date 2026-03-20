@@ -53,14 +53,14 @@ export const ProjectFilesCompact: React.FC<ProjectFilesCompactProps> = ({
     <div className="flex flex-col h-full">
       {/* Header row */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200 flex-shrink-0">
-        <p className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
+        <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
           Files
           {docs.length > 0 && <span className="ml-1.5 text-zinc-400">({docs.length})</span>}
         </p>
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={!projectId || isUploading}
-          className="flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium text-blue-600 hover:bg-blue-50 disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+          className="flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium text-blue-600 hover:bg-blue-50 disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
         >
           {isUploading ? (
             <Loader2 className="w-3 h-3 animate-spin" />
@@ -93,7 +93,7 @@ export const ProjectFilesCompact: React.FC<ProjectFilesCompactProps> = ({
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={!projectId || isUploading}
-              className="mt-2 text-[11px] text-blue-600 hover:underline disabled:opacity-40"
+              className="mt-2 text-xs text-blue-600 hover:underline disabled:opacity-40"
             >
               Upload your first file
             </button>
@@ -109,7 +109,7 @@ export const ProjectFilesCompact: React.FC<ProjectFilesCompactProps> = ({
                 <span className="flex-1 text-xs text-zinc-700 truncate min-w-0" title={doc.name}>
                   {doc.name}
                 </span>
-                <span className="text-[11px] text-zinc-400 flex-shrink-0 tabular-nums">
+                <span className="text-xs text-zinc-400 flex-shrink-0 tabular-nums">
                   {formatBytes(doc.size)}
                 </span>
                 <button
@@ -134,7 +134,7 @@ export const ProjectFilesCompact: React.FC<ProjectFilesCompactProps> = ({
         <div className="flex-shrink-0 border-t border-zinc-200 px-3 py-1.5">
           <button
             onClick={onOpenFullManager}
-            className="text-[11px] text-zinc-500 hover:text-zinc-700 hover:underline transition-colors"
+            className="text-xs text-zinc-500 hover:text-zinc-700 hover:underline transition-colors"
           >
             Open full manager →
           </button>

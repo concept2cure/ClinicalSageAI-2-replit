@@ -195,7 +195,7 @@ const IssueCard: React.FC<IssueCardProps> = ({ issue, onResolve }) => {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-sm font-medium">{issue.title}</span>
-              <Badge variant="outline" className="text-[11px]">
+              <Badge variant="outline" className="text-xs">
                 {CATEGORY_LABELS[issue.category]}
               </Badge>
             </div>

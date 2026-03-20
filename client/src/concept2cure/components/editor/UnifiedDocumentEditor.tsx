@@ -340,7 +340,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ editor, onSave, isSaving, isLocked, o
         isActive={editor.isActive('highlight')}
         title="Highlight"
       >
-        <span className="w-4 h-4 bg-yellow-300 rounded text-[11px] flex items-center justify-center font-bold">
+        <span className="w-4 h-4 bg-yellow-300 rounded text-xs flex items-center justify-center font-bold">
           H
         </span>
       </ToolButton>
@@ -438,7 +438,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ editor, onSave, isSaving, isLocked, o
                   <action.icon className="w-4 h-4 text-purple-500 shrink-0" />
                   <div>
                     <div className="font-medium text-xs">{action.label}</div>
-                    <div className="text-[11px] text-zinc-400">{action.description}</div>
+                    <div className="text-xs text-zinc-400">{action.description}</div>
                   </div>
                 </button>
               ))}
@@ -489,14 +489,14 @@ interface SmartToolbarProps {
 const SmartToolbar: React.FC<SmartToolbarProps> = ({ onAIAction, disabled }) => (
   <div className="flex items-center gap-1 px-2 py-1.5 border-b border-zinc-200 bg-gradient-to-r from-purple-50/50 to-blue-50/50">
     <Sparkles className="w-3.5 h-3.5 text-purple-500 mr-1" />
-    <span className="text-[11px] font-semibold text-purple-600 mr-2 uppercase tracking-wider">AI</span>
+    <span className="text-xs font-semibold text-purple-600 mr-2 uppercase tracking-wider">AI</span>
     {AI_TOOLBAR_ACTIONS.map(action => (
       <button
         key={action.id}
         onClick={() => onAIAction?.(action.id, '')}
         disabled={disabled}
         title={action.description}
-        className="flex items-center gap-1 px-2 py-1 text-[11px] rounded-md hover:bg-purple-100 text-zinc-600 hover:text-purple-700 transition-colors disabled:opacity-40"
+        className="flex items-center gap-1 px-2 py-1 text-xs rounded-md hover:bg-purple-100 text-zinc-600 hover:text-purple-700 transition-colors disabled:opacity-40"
       >
         <action.icon className="w-3.5 h-3.5" />
         {action.label}
@@ -562,7 +562,7 @@ const FindReplaceBar: React.FC<FindReplaceBarProps> = ({ editor, onClose }) => {
           if (e.key === 'Escape') onClose();
         }}
       />
-      <span className="text-[11px] text-zinc-500 min-w-[50px]">
+      <span className="text-xs text-zinc-500 min-w-[50px]">
         {results.length > 0 ? `${currentIndex + 1}/${results.length}` : 'No results'}
       </span>
       <button onClick={() => (editor?.commands as Record<string, () => boolean>)?.prevMatch?.()} className="p-1 hover:bg-zinc-200 rounded" title="Previous">
@@ -580,10 +580,10 @@ const FindReplaceBar: React.FC<FindReplaceBarProps> = ({ editor, onClose }) => {
         placeholder="Replace..."
         className="w-32 px-2 py-1 text-xs bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
       />
-      <button onClick={handleReplace} className="px-2 py-1 text-[11px] bg-white border border-zinc-200 rounded hover:bg-zinc-100">
+      <button onClick={handleReplace} className="px-2 py-1 text-xs bg-white border border-zinc-200 rounded hover:bg-zinc-100">
         Replace
       </button>
-      <button onClick={handleReplaceAll} className="px-2 py-1 text-[11px] bg-white border border-zinc-200 rounded hover:bg-zinc-100">
+      <button onClick={handleReplaceAll} className="px-2 py-1 text-xs bg-white border border-zinc-200 rounded hover:bg-zinc-100">
         All
       </button>
       <button onClick={onClose} className="p-1 hover:bg-zinc-200 rounded ml-auto">
@@ -625,7 +625,7 @@ const SourceTracerPopover: React.FC<SourceTracerPopoverProps> = ({
           <X className="w-3 h-3 text-zinc-400" />
         </button>
       </div>
-      <div className="flex items-center gap-2 text-[11px] text-zinc-500 mb-2">
+      <div className="flex items-center gap-2 text-xs text-zinc-500 mb-2">
         <span className="px-1.5 py-0.5 bg-zinc-100 rounded">{source.documentType}</span>
         <span>v{source.version}</span>
         <span className="flex items-center gap-1">
@@ -668,7 +668,7 @@ const StatusBar: React.FC<StatusBarProps> = ({ editor, complianceScore, collabor
   const readingTime = Math.max(1, Math.ceil(words / 200));
 
   return (
-    <div className="flex items-center gap-4 px-4 py-1.5 border-t border-zinc-200 bg-zinc-50 text-[11px] text-zinc-500">
+    <div className="flex items-center gap-4 px-4 py-1.5 border-t border-zinc-200 bg-zinc-50 text-xs text-zinc-500">
       <span>{words.toLocaleString()} words</span>
       <span>{chars.toLocaleString()} chars</span>
       <span className="flex items-center gap-1">
@@ -695,14 +695,14 @@ const StatusBar: React.FC<StatusBarProps> = ({ editor, complianceScore, collabor
               <div
                 key={c.id}
                 title={c.name}
-                className="w-5 h-5 rounded-full border-2 border-white flex items-center justify-center text-[11px] font-bold text-white"
+                className="w-5 h-5 rounded-full border-2 border-white flex items-center justify-center text-xs font-bold text-white"
                 style={{ backgroundColor: c.color }}
               >
                 {c.name.charAt(0).toUpperCase()}
               </div>
             ))}
             {collaborators.length > 4 && (
-              <div className="w-5 h-5 rounded-full bg-zinc-300 border-2 border-white flex items-center justify-center text-[11px] font-bold text-zinc-600">
+              <div className="w-5 h-5 rounded-full bg-zinc-300 border-2 border-white flex items-center justify-center text-xs font-bold text-zinc-600">
                 +{collaborators.length - 4}
               </div>
             )}
@@ -1310,14 +1310,14 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
                   <div
                     key={c.id}
                     title={c.name}
-                    className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-[11px] font-bold text-white"
+                    className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-xs font-bold text-white"
                     style={{ backgroundColor: c.color }}
                   >
                     {c.name.charAt(0).toUpperCase()}
                   </div>
                 ))}
                 {collaborators.length > 3 && (
-                  <div className="w-6 h-6 rounded-full bg-zinc-300 border-2 border-white flex items-center justify-center text-[11px] font-bold text-zinc-600">
+                  <div className="w-6 h-6 rounded-full bg-zinc-300 border-2 border-white flex items-center justify-center text-xs font-bold text-zinc-600">
                     +{collaborators.length - 3}
                   </div>
                 )}
@@ -1416,7 +1416,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
                 className={`p-1.5 rounded hover:bg-zinc-700 ${editor.isActive('highlight') ? 'text-blue-400' : 'text-white'}`}
                 title="Highlight"
               >
-                <span className="w-3.5 h-3.5 bg-yellow-400 rounded text-[11px] flex items-center justify-center font-bold text-black">
+                <span className="w-3.5 h-3.5 bg-yellow-400 rounded text-xs flex items-center justify-center font-bold text-black">
                   H
                 </span>
               </button>
@@ -1446,7 +1446,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
                 title="Link to Source"
               >
                 <Link className="w-3.5 h-3.5" />
-                <span className="text-[11px]">Source</span>
+                <span className="text-xs">Source</span>
               </button>
               <div className="w-px h-4 bg-zinc-600 mx-0.5" />
               {/* AI Actions on selection */}
@@ -1460,7 +1460,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
                 title="AI Rewrite Selection"
               >
                 <Sparkles className="w-3.5 h-3.5" />
-                <span className="text-[11px]">Rewrite</span>
+                <span className="text-xs">Rewrite</span>
               </button>
               <button
                 onClick={() => {
@@ -1481,7 +1481,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
                 title="Add Comment"
               >
                 <MessageSquare className="w-3.5 h-3.5" />
-                <span className="text-[11px]">Comment</span>
+                <span className="text-xs">Comment</span>
               </button>
             </BubbleMenu>
           )}
@@ -1527,7 +1527,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
                         <div className="flex-1">
                           <span className="text-sm font-medium text-zinc-800">{section.label}</span>
                           {section.required && (
-                            <span className="ml-2 text-[11px] text-red-500 font-medium">Required</span>
+                            <span className="ml-2 text-xs text-red-500 font-medium">Required</span>
                           )}
                         </div>
                         {!isFilled && (
@@ -1536,7 +1536,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
                               e.stopPropagation();
                               onAIAction?.('generate-section', section.label);
                             }}
-                            className="flex items-center gap-1 px-2 py-1 text-[11px] bg-purple-100 text-purple-600 rounded hover:bg-purple-200"
+                            className="flex items-center gap-1 px-2 py-1 text-xs bg-purple-100 text-purple-600 rounded hover:bg-purple-200"
                           >
                             <Sparkles className="w-3 h-3" />
                             Generate

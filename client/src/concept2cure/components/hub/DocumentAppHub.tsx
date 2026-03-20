@@ -191,7 +191,7 @@ export const DocumentAppHub: React.FC<DocumentAppHubProps> = ({
                       </div>
                       {app.badge && (
                         <span
-                          className={`text-[11px] font-bold px-1.5 py-0.5 rounded ${app.badgeColor || 'bg-zinc-100 text-zinc-500'}`}
+                          className={`text-xs font-bold px-1.5 py-0.5 rounded ${app.badgeColor || 'bg-zinc-100 text-zinc-500'}`}
                         >
                           {app.badge}
                         </span>

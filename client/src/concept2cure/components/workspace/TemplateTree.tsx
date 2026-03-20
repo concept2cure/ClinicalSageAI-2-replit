@@ -82,18 +82,18 @@ function TemplateNodeRow({
         )}
 
         {/* CTD section badge */}
-        <span className="text-[11px] text-zinc-400 font-mono shrink-0 min-w-[28px]">
+        <span className="text-xs text-zinc-400 font-mono shrink-0 min-w-[28px]">
           {node.ctdSection}
         </span>
 
         {/* Label */}
-        <span className="text-[12px] truncate flex-1 leading-snug">{node.label}</span>
+        <span className="text-sm truncate flex-1 leading-snug">{node.label}</span>
 
         {/* Template type badge */}
         {node.templateType && node.templateType !== 'starter' && (
           <span
             className={cn(
-              'text-[11px] px-1 rounded shrink-0 font-medium',
+              'text-xs px-1 rounded shrink-0 font-medium',
               node.templateType === 'subsection'
                 ? 'bg-blue-50 text-blue-600'
                 : 'bg-amber-50 text-amber-600'
@@ -164,17 +164,17 @@ export const TemplateTree: React.FC<TemplateTreeProps> = ({
     <div className={cn('flex flex-col h-full', className)} data-testid="template-tree">
       {/* Header */}
       <div className="flex items-center justify-between px-3 h-8 border-b border-zinc-200 bg-zinc-50/60 shrink-0">
-        <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
+        <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
           Templates
         </span>
-        <span className="text-[11px] text-zinc-400 tabular-nums">
+        <span className="text-xs text-zinc-400 tabular-nums">
           {IND_TEMPLATES.length} groups
         </span>
       </div>
 
       {/* Tip */}
       <div className="px-3 py-2 border-b border-zinc-200 bg-violet-50/40">
-        <p className="text-[11px] text-violet-600 leading-relaxed">
+        <p className="text-xs text-violet-600 leading-relaxed">
           Templates are pre-structured documents wired to CTD sections. Click + to create a new
           document from any template.
         </p>

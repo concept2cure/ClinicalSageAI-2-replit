@@ -124,7 +124,7 @@ const ZenHeader: React.FC<ZenHeaderProps> = ({
       </button>
       <button onClick={onProfileClick} className={zenClasses.buttonIcon} aria-label="Profile">
         <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center">
-          <span className="text-[11px] font-medium text-white">U</span>
+          <span className="text-xs font-medium text-white">U</span>
         </div>
       </button>
     </div>

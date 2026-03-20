@@ -377,7 +377,7 @@ export function PrecedentIntelligenceDashboard({
                                 {p.deviceName || p.clearanceNumber || 'Unnamed'}
                               </span>
                               {p.clearanceNumber && (
-                                <Badge variant="outline" className="text-[11px] flex-shrink-0">
+                                <Badge variant="outline" className="text-xs flex-shrink-0">
                                   {p.clearanceNumber}
                                 </Badge>
                               )}
@@ -397,7 +397,7 @@ export function PrecedentIntelligenceDashboard({
                               <Badge
                                 variant="secondary"
                                 className={cn(
-                                  'text-[11px]',
+                                  'text-xs',
                                   p.decisionOutcome === 'cleared' &&
                                     'bg-emerald-50 text-emerald-700',
                                   p.decisionOutcome === 'approved' &&
@@ -409,7 +409,7 @@ export function PrecedentIntelligenceDashboard({
                               </Badge>
                             )}
                             {p.confidenceScore != null && (
-                              <span className="text-[11px] text-zinc-400">
+                              <span className="text-xs text-zinc-400">
                                 {Math.round(p.confidenceScore * 100)}% conf
                               </span>
                             )}
@@ -582,7 +582,7 @@ export function PrecedentIntelligenceDashboard({
                                 {d.dimension}
                               </span>
                               <span className="text-zinc-500 truncate flex-1">{d.userValue}</span>
-                              <Badge variant="outline" className="text-[11px]">
+                              <Badge variant="outline" className="text-xs">
                                 {d.impact}
                               </Badge>
                             </div>
@@ -610,7 +610,7 @@ export function PrecedentIntelligenceDashboard({
                                 <Badge
                                   variant="outline"
                                   className={cn(
-                                    'text-[11px] ml-auto',
+                                    'text-xs ml-auto',
                                     d.impact === 'high' && 'border-red-200 text-red-600'
                                   )}
                                 >
@@ -735,7 +735,7 @@ export function PrecedentIntelligenceDashboard({
                             <span className="font-medium text-zinc-800">{f.factor}</span>
                             <p className="text-zinc-500 mt-0.5">{f.detail}</p>
                           </div>
-                          <Badge variant="outline" className="ml-auto flex-shrink-0 text-[11px]">
+                          <Badge variant="outline" className="ml-auto flex-shrink-0 text-xs">
                             {f.severity}
                           </Badge>
                         </div>
@@ -886,14 +886,14 @@ export function PrecedentIntelligenceDashboard({
                             {p.deviceName || p.clearanceNumber}
                           </span>
                           {p.clearanceNumber && (
-                            <Badge variant="outline" className="text-[11px]">
+                            <Badge variant="outline" className="text-xs">
                               {p.clearanceNumber}
                             </Badge>
                           )}
                           {p.decisionOutcome && (
                             <Badge
                               variant="secondary"
-                              className="text-[11px] ml-auto bg-emerald-50 text-emerald-700"
+                              className="text-xs ml-auto bg-emerald-50 text-emerald-700"
                             >
                               {p.decisionOutcome}
                             </Badge>

@@ -218,12 +218,12 @@ export const ArtifactGraph: React.FC<ArtifactGraphProps> = ({
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-zinc-800 truncate">{artifact.title}</p>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="text-[11px] font-mono text-zinc-500">{artifact.code}</span>
-                            <span className={cn('text-[11px] px-1.5 py-0.5 rounded-full', colors.bg, colors.text)}>
+                            <span className="text-xs font-mono text-zinc-500">{artifact.code}</span>
+                            <span className={cn('text-xs px-1.5 py-0.5 rounded-full', colors.bg, colors.text)}>
                               {artifact.lifecycleState}
                             </span>
                             {artifact.requirementLevel === 'required' && (
-                              <span className="text-[11px] text-red-600 font-medium">required</span>
+                              <span className="text-xs text-red-600 font-medium">required</span>
                             )}
                           </div>
                         </div>

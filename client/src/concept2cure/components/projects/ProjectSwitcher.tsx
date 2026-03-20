@@ -660,7 +660,7 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
                 key={tab}
                 onClick={() => setFilter(tab)}
                 className={cn(
-                  'px-2.5 py-1 text-[11px] font-medium rounded transition-colors capitalize focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
+                  'px-2.5 py-1 text-xs font-medium rounded transition-colors capitalize focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
                   filter === tab ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:bg-zinc-100'
                 )}
                 aria-pressed={filter === tab}
@@ -686,7 +686,7 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
               {starredProjects.length > 0 && (
                 <>
                   <div className="px-4 pt-2 pb-1">
-                    <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
+                    <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
                       Starred
                     </span>
                   </div>
@@ -708,7 +708,7 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
                         <TypeIcon className={cn('w-4 h-4 shrink-0', tc.color)} />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-[12px] font-medium text-zinc-900 truncate">
+                            <span className="text-sm font-medium text-zinc-900 truncate">
                               {project.name}
                             </span>
                             {project.starred && (
@@ -719,14 +719,14 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
                             )}
                           </div>
                           {project.description && (
-                            <span className="text-[11px] text-zinc-400 truncate block">
+                            <span className="text-xs text-zinc-400 truncate block">
                               {project.description}
                             </span>
                           )}
                         </div>
                         <span
                           className={cn(
-                            'text-[11px] font-semibold px-1.5 py-0.5 rounded',
+                            'text-xs font-semibold px-1.5 py-0.5 rounded',
                             tc.bgColor,
                             tc.color
                           )}
@@ -745,7 +745,7 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
                 <>
                   {starredProjects.length > 0 && (
                     <div className="px-4 pt-2 pb-1">
-                      <span className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
+                      <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
                         All Projects
                       </span>
                     </div>
@@ -768,7 +768,7 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
                         <TypeIcon className={cn('w-4 h-4 shrink-0', tc.color)} />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-[12px] font-medium text-zinc-900 truncate">
+                            <span className="text-sm font-medium text-zinc-900 truncate">
                               {project.name}
                             </span>
                             {project.id === activeProjectId && (
@@ -776,14 +776,14 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
                             )}
                           </div>
                           {project.description && (
-                            <span className="text-[11px] text-zinc-400 truncate block">
+                            <span className="text-xs text-zinc-400 truncate block">
                               {project.description}
                             </span>
                           )}
                         </div>
                         <span
                           className={cn(
-                            'text-[11px] font-semibold px-1.5 py-0.5 rounded',
+                            'text-xs font-semibold px-1.5 py-0.5 rounded',
                             tc.bgColor,
                             tc.color
                           )}

@@ -292,7 +292,7 @@ const SectionTreeItem: React.FC<{
         </span>
         
         {section.comments.filter(c => c.status === 'open').length > 0 && (
-          <span className="px-1.5 py-0.5 text-[11px] font-medium bg-amber-100 text-amber-700 rounded">
+          <span className="px-1.5 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded">
             {section.comments.filter(c => c.status === 'open').length}
           </span>
         )}

@@ -159,7 +159,7 @@ function ComplianceGauge({ score }: { score: number }) {
         <span className={cn('text-lg font-bold tabular-nums', getGaugeColor(score))}>
           {Math.round(score)}
         </span>
-        <span className="text-[11px] font-medium text-zinc-400">/ 100</span>
+        <span className="text-xs font-medium text-zinc-400">/ 100</span>
       </div>
     </div>
   );
@@ -284,7 +284,7 @@ export default function SnowGlobeDossierNodeSummary({
                 ? 'Needs attention'
                 : 'Below threshold'}
           </p>
-          <p className="text-[11px] leading-relaxed text-zinc-500">
+          <p className="text-xs leading-relaxed text-zinc-500">
             Composite compliance across relevant Snow Globe engines for this dossier node.
           </p>
         </div>
@@ -293,12 +293,12 @@ export default function SnowGlobeDossierNodeSummary({
       {/* Relevant engine scores */}
       {relevantScores.length > 0 && (
         <div className="mb-3 space-y-1.5">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
             Engine Scores
           </span>
           {relevantScores.map(({ engine, score }) => (
             <div key={engine} className="flex items-center gap-2">
-              <span className="w-28 truncate text-[11px] text-zinc-500">
+              <span className="w-28 truncate text-xs text-zinc-500">
                 {CHAMBER_LABELS[engine]}
               </span>
               <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-100">
@@ -307,7 +307,7 @@ export default function SnowGlobeDossierNodeSummary({
                   style={{ width: `${Math.min(score, 100)}%` }}
                 />
               </div>
-              <span className="w-7 text-right text-[11px] font-medium tabular-nums text-zinc-500">
+              <span className="w-7 text-right text-xs font-medium tabular-nums text-zinc-500">
                 {Math.round(score)}
               </span>
             </div>
@@ -327,7 +327,7 @@ export default function SnowGlobeDossierNodeSummary({
             <span
               key={sev}
               className={cn(
-                'rounded px-1.5 py-0.5 text-[11px] font-semibold uppercase',
+                'rounded px-1.5 py-0.5 text-xs font-semibold uppercase',
                 style.badge,
               )}
             >
@@ -336,7 +336,7 @@ export default function SnowGlobeDossierNodeSummary({
           );
         })}
         {totalFindings === 0 && (
-          <span className="flex items-center gap-1 text-[11px] text-emerald-600">
+          <span className="flex items-center gap-1 text-xs text-emerald-600">
             <CheckCircle2 className="h-3 w-3" />
             No active findings
           </span>
@@ -348,17 +348,17 @@ export default function SnowGlobeDossierNodeSummary({
         <div className="mb-3 rounded-lg border border-zinc-200 bg-zinc-50/50 p-2.5">
           <div className="mb-1.5 flex items-center gap-1.5">
             <Wrench className="h-3 w-3 text-zinc-400" />
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+            <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
               Top Remediation
             </span>
           </div>
           <div className="space-y-1">
             {remediationItems.map((item) => (
               <div key={item.id} className="flex items-start gap-2">
-                <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[11px] font-bold text-white">
+                <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
                   {item.priority}
                 </span>
-                <p className="line-clamp-1 text-[11px] leading-snug text-zinc-600">
+                <p className="line-clamp-1 text-xs leading-snug text-zinc-600">
                   {item.title}
                 </p>
               </div>

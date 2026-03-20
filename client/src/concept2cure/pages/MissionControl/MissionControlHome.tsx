@@ -121,7 +121,7 @@ function ReadinessRadar({ readiness, className }: { readiness: Record<string, nu
                 {value}
               </span>
             </div>
-            <p className="text-[11px] font-medium text-zinc-500 leading-tight">{axis.label}</p>
+            <p className="text-xs font-medium text-zinc-500 leading-tight">{axis.label}</p>
           </div>
         );
       })}
@@ -594,7 +594,7 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
                       <div className="w-1.5 h-1.5 rounded-full bg-zinc-300 mt-1.5 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
                         <p className="text-xs text-zinc-700 truncate">{p.changeDescription}</p>
-                        <p className="text-[11px] text-zinc-400">
+                        <p className="text-xs text-zinc-400">
                           {new Date(p.createdAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
@@ -669,7 +669,7 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
                     <Icon className={cn('w-4 h-4', `text-${item.color}-600`)} />
                   </div>
                   <span className="text-xs font-medium text-zinc-800 leading-tight">{item.label}</span>
-                  <span className="text-[11px] text-zinc-400 leading-tight">{item.desc}</span>
+                  <span className="text-xs text-zinc-400 leading-tight">{item.desc}</span>
                 </button>
               );
             })}
@@ -685,7 +685,7 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
             <Bell className="w-4 h-4 text-amber-600" />
             <div className="text-left">
               <span className="text-xs font-medium text-zinc-800">Notifications</span>
-              <span className="text-[11px] text-zinc-400 block">Alerts & action items</span>
+              <span className="text-xs text-zinc-400 block">Alerts & action items</span>
             </div>
             <ChevronRight className="w-3.5 h-3.5 text-zinc-400 ml-auto" />
           </button>
@@ -696,7 +696,7 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
             <MessageSquare className="w-4 h-4 text-blue-600" />
             <div className="text-left">
               <span className="text-xs font-medium text-zinc-800">Collaboration Hub</span>
-              <span className="text-[11px] text-zinc-400 block">Threads & discussions</span>
+              <span className="text-xs text-zinc-400 block">Threads & discussions</span>
             </div>
             <ChevronRight className="w-3.5 h-3.5 text-zinc-400 ml-auto" />
           </button>

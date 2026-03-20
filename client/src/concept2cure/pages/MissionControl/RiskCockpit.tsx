@@ -219,13 +219,13 @@ export const RiskCockpit: React.FC<RiskCockpitProps> = ({ programId }) => {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             <p className="text-sm font-medium text-zinc-800">{risk.title}</p>
-                            <span className={cn('text-[11px] px-1.5 py-0.5 rounded-full', sevColors.bg, sevColors.text)}>
+                            <span className={cn('text-xs px-1.5 py-0.5 rounded-full', sevColors.bg, sevColors.text)}>
                               {risk.severity}
                             </span>
-                            <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-600">
+                            <span className="text-xs px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-600">
                               {risk.status}
                             </span>
-                            <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-500 capitalize">
+                            <span className="text-xs px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-500 capitalize">
                               {risk.category}
                             </span>
                           </div>

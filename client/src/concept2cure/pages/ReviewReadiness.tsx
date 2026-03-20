@@ -771,7 +771,7 @@ function SnowGlobeView() {
                 )} />
                 <span className="text-xs text-zinc-600">{rf.factor}</span>
                 <span className={cn(
-                  'text-[11px] font-medium uppercase ml-auto shrink-0',
+                  'text-xs font-medium uppercase ml-auto shrink-0',
                   rf.impact === 'high' ? 'text-red-500' : rf.impact === 'medium' ? 'text-amber-500' : 'text-zinc-400',
                 )}>{rf.impact}</span>
               </div>
@@ -820,10 +820,10 @@ function SnowGlobeView() {
             <div key={i} className="flex items-center justify-between py-2 first:pt-0 last:pb-0">
               <div>
                 <p className="text-xs font-medium text-zinc-900">{ep.name}</p>
-                <p className="text-[11px] text-zinc-400">{ep.recommendation}</p>
+                <p className="text-xs text-zinc-400">{ep.recommendation}</p>
               </div>
               <span className={cn(
-                'text-[11px] font-medium px-2 py-0.5 rounded-full',
+                'text-xs font-medium px-2 py-0.5 rounded-full',
                 ep.type === 'Primary' ? 'bg-blue-50 text-blue-600' :
                 ep.type === 'Co-primary' ? 'bg-indigo-50 text-indigo-600' :
                 'bg-zinc-100 text-zinc-500',

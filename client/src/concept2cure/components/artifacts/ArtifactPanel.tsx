@@ -349,7 +349,7 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ artifact }) => {
                 {artifact.published && (
                   <>
                     <span>•</span>
-                    <Badge variant="secondary" className="text-[11px]">
+                    <Badge variant="secondary" className="text-xs">
                       Published
                     </Badge>
                   </>

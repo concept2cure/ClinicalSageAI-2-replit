@@ -267,7 +267,7 @@ export default function SnowGlobeMissionControlCard({
       <div className="mb-4 space-y-1.5">
         {engineScores.map(({ chamber, label, value }) => (
           <div key={chamber} className="flex items-center gap-2">
-            <span className="w-28 truncate text-[11px] text-zinc-500">{label}</span>
+            <span className="w-28 truncate text-xs text-zinc-500">{label}</span>
             <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-100">
               {value !== null && (
                 <div
@@ -276,7 +276,7 @@ export default function SnowGlobeMissionControlCard({
                 />
               )}
             </div>
-            <span className="w-7 text-right text-[11px] font-medium tabular-nums text-zinc-500">
+            <span className="w-7 text-right text-xs font-medium tabular-nums text-zinc-500">
               {value !== null ? value : '--'}
             </span>
           </div>
@@ -288,7 +288,7 @@ export default function SnowGlobeMissionControlCard({
         <div className="mb-4">
           <div className="mb-2 flex items-center gap-1.5">
             <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+            <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
               Top Findings
             </span>
           </div>
@@ -299,7 +299,7 @@ export default function SnowGlobeMissionControlCard({
                 <div key={f.id} className="flex items-start gap-2">
                   <span
                     className={cn(
-                      'mt-0.5 shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold uppercase',
+                      'mt-0.5 shrink-0 rounded px-1.5 py-0.5 text-xs font-semibold uppercase',
                       sev.badge,
                     )}
                   >

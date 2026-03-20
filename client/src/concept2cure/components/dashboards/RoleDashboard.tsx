@@ -368,7 +368,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskClick }) => {
                 <span className="text-sm font-medium text-zinc-900 truncate">{task.title}</span>
                 <Badge
                   variant="outline"
-                  className={cn('text-[11px] shrink-0', priorityColors[task.priority])}
+                  className={cn('text-xs shrink-0', priorityColors[task.priority])}
                 >
                   {task.priority}
                 </Badge>

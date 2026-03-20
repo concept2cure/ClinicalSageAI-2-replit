@@ -728,7 +728,7 @@ function TimelineBar({ weeks, readiness }: { weeks: number; readiness: number })
         {markers.map((w) => (
           <span
             key={w}
-            className="absolute text-[11px] text-zinc-400 -translate-x-1/2"
+            className="absolute text-xs text-zinc-400 -translate-x-1/2"
             style={{ left: `${(w / maxWeeks) * 100}%` }}
           >
             {w === 0 ? 'Now' : `Wk ${w}`}

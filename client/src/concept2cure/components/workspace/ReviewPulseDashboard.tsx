@@ -114,8 +114,8 @@ const StatCard: React.FC<{
   <div className="flex items-center gap-2 px-3 py-1.5 border border-zinc-200 rounded bg-zinc-50/50 min-w-0">
     <Icon className={cn('w-3.5 h-3.5 shrink-0', color)} />
     <span className="text-sm font-bold tabular-nums text-zinc-900">{value}</span>
-    <span className="text-[11px] text-zinc-500 truncate">{label}</span>
-    {subtext && <span className="text-[11px] text-zinc-400 ml-auto">{subtext}</span>}
+    <span className="text-xs text-zinc-500 truncate">{label}</span>
+    {subtext && <span className="text-xs text-zinc-400 ml-auto">{subtext}</span>}
   </div>
 );
 
@@ -130,7 +130,7 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
   return (
     <span
       className={cn(
-        'inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border',
+        'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border',
         c.bg,
         c.text
       )}

@@ -640,7 +640,7 @@ const SectionRow: React.FC<{
 
         {/* Required badge */}
         {section.required && isLeaf && (
-          <span className="text-[11px] px-1.5 py-0.5 bg-red-50 text-red-600 rounded font-medium flex-shrink-0">
+          <span className="text-xs px-1.5 py-0.5 bg-red-50 text-red-600 rounded font-medium flex-shrink-0">
             REQ
           </span>
         )}
@@ -652,7 +652,7 @@ const SectionRow: React.FC<{
               e.stopPropagation();
               onDraftAI(section.code, section.title);
             }}
-            className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-[11px] px-1.5 py-0.5 bg-violet-50 text-violet-600 rounded hover:bg-violet-100 flex-shrink-0"
+            className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-xs px-1.5 py-0.5 bg-violet-50 text-violet-600 rounded hover:bg-violet-100 flex-shrink-0"
           >
             <Sparkles className="w-3 h-3" />
             Draft
@@ -661,7 +661,7 @@ const SectionRow: React.FC<{
 
         {/* Hours estimate */}
         {isLeaf && section.estimatedHours > 0 && (
-          <span className="text-[11px] text-zinc-400 tabular-nums flex-shrink-0">
+          <span className="text-xs text-zinc-400 tabular-nums flex-shrink-0">
             {section.estimatedHours}h
           </span>
         )}
@@ -897,7 +897,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-sm font-semibold text-zinc-900">{projectName}</h1>
-              <p className="text-[11px] text-zinc-400 mt-0.5">
+              <p className="text-xs text-zinc-400 mt-0.5">
                 IND Application • eCTD 4.0 • {requiredLeaves} required sections • ~{totalHours}h
                 estimated
               </p>
@@ -934,13 +934,13 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                 )}
                 {compileMutation.isPending ? 'Compiling…' : 'Compile eCTD'}
                 {ectdStatus && (
-                  <span className="ml-1 px-1.5 py-0.5 text-[11px] bg-white/20 rounded">
+                  <span className="ml-1 px-1.5 py-0.5 text-xs bg-white/20 rounded">
                     {ectdStatus.overallReadiness}%
                   </span>
                 )}
               </button>
               {!canCompileEctd && (
-                <span className="text-[11px] text-zinc-500">IND + eCTD module access required</span>
+                <span className="text-xs text-zinc-500">IND + eCTD module access required</span>
               )}
               {onNavigateToCoAuthor && (
                 <button
@@ -959,10 +959,10 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
             {modules.map(mod => (
               <div key={mod.code}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[11px] font-medium text-zinc-600 truncate">
+                  <span className="text-xs font-medium text-zinc-600 truncate">
                     {mod.code.toUpperCase()}
                   </span>
-                  <span className="text-[11px] text-zinc-400 tabular-nums">
+                  <span className="text-xs text-zinc-400 tabular-nums">
                     {moduleProgress(mod)}%
                   </span>
                 </div>
@@ -1003,7 +1003,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                 key={f.id}
                 onClick={() => setFilter(f.id)}
                 className={cn(
-                  'px-2 py-1 text-[11px] rounded-md transition-colors',
+                  'px-2 py-1 text-xs rounded-md transition-colors',
                   filter === f.id ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:bg-zinc-100'
                 )}
               >
@@ -1013,7 +1013,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
           </div>
 
           {/* Summary chips */}
-          <div className="ml-auto flex items-center gap-2 text-[11px]">
+          <div className="ml-auto flex items-center gap-2 text-xs">
             <span className="flex items-center gap-1 text-emerald-600">
               <CheckCircle2 className="w-3 h-3" /> {counts.approved + counts.locked}
             </span>
@@ -1089,11 +1089,11 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                   <div className="flex items-center gap-3">
                     <span className="font-mono text-xs text-zinc-500">{section.code}</span>
                     <span className="font-medium text-sm text-zinc-800">{section.title}</span>
-                    <span className={cn('text-[11px] px-2 py-0.5 rounded-full', cfg.bg, cfg.color)}>
+                    <span className={cn('text-xs px-2 py-0.5 rounded-full', cfg.bg, cfg.color)}>
                       {cfg.label}
                     </span>
                     {section.required && (
-                      <span className="text-[11px] px-1.5 py-0.5 bg-red-50 text-red-600 rounded">
+                      <span className="text-xs px-1.5 py-0.5 bg-red-50 text-red-600 rounded">
                         Required
                       </span>
                     )}
@@ -1239,7 +1239,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                             style={{ width: `${m.completionPct}%` }}
                           />
                         </div>
-                        <span className="text-[11px] tabular-nums text-zinc-500 w-16 text-right">
+                        <span className="text-xs tabular-nums text-zinc-500 w-16 text-right">
                           {m.completedRequired}/{m.requiredSections}
                         </span>
                         {m.ready ? (
@@ -1360,7 +1360,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                             </span>
                             {v.message}
                             {v.fix && (
-                              <span className="block text-[11px] mt-0.5 opacity-75">
+                              <span className="block text-xs mt-0.5 opacity-75">
                                 Fix: {v.fix}
                               </span>
                             )}

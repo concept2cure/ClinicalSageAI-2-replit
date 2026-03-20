@@ -39,7 +39,7 @@ const MockCard: React.FC<{
 
 const StatusBadge: React.FC<{ status: string; color: string }> = ({ status, color }) => (
   <span className={cn(
-    'inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium',
+    'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
     color,
   )}>
     {status}
@@ -63,8 +63,8 @@ const ProgressBar: React.FC<{ label: string; value: number; color?: string }> = 
 const MetricBox: React.FC<{ label: string; value: string; trend?: string }> = ({ label, value, trend }) => (
   <div className="bg-zinc-50 rounded-lg p-3 text-center">
     <p className="text-lg font-bold text-zinc-900">{value}</p>
-    <p className="text-[11px] text-zinc-500 mt-0.5">{label}</p>
-    {trend && <p className="text-[11px] text-emerald-600 mt-0.5">{trend}</p>}
+    <p className="text-xs text-zinc-500 mt-0.5">{label}</p>
+    {trend && <p className="text-xs text-emerald-600 mt-0.5">{trend}</p>}
   </div>
 );
 
@@ -96,7 +96,7 @@ const HeroPreview: React.FC = () => (
     </div>
     <div className="grid grid-cols-3 gap-2 mt-4 w-full max-w-lg">
       {['15+ Submission Types', '12+ AI Agents', '102 CMC Endpoints'].map((s) => (
-        <div key={s} className="bg-violet-50 rounded-lg py-2 px-3 text-[11px] font-medium text-violet-700 text-center">{s}</div>
+        <div key={s} className="bg-violet-50 rounded-lg py-2 px-3 text-xs font-medium text-violet-700 text-center">{s}</div>
       ))}
     </div>
   </div>
@@ -134,11 +134,11 @@ const SubPortfolioPreview: React.FC = () => (
       <div className="overflow-hidden rounded-lg border border-zinc-200">
         <table className="w-full text-left">
           <thead><tr className="bg-zinc-50">
-            <th className="px-3 py-2 text-[11px] font-medium text-zinc-500">Submission</th>
-            <th className="px-3 py-2 text-[11px] font-medium text-zinc-500">Type</th>
-            <th className="px-3 py-2 text-[11px] font-medium text-zinc-500">Agency</th>
-            <th className="px-3 py-2 text-[11px] font-medium text-zinc-500">Status</th>
-            <th className="px-3 py-2 text-[11px] font-medium text-zinc-500">Readiness</th>
+            <th className="px-3 py-2 text-xs font-medium text-zinc-500">Submission</th>
+            <th className="px-3 py-2 text-xs font-medium text-zinc-500">Type</th>
+            <th className="px-3 py-2 text-xs font-medium text-zinc-500">Agency</th>
+            <th className="px-3 py-2 text-xs font-medium text-zinc-500">Status</th>
+            <th className="px-3 py-2 text-xs font-medium text-zinc-500">Readiness</th>
           </tr></thead>
           <tbody>
             <TableRow cells={['NeuroStim Pro', '510(k)', 'FDA', 'Drafting', '72%']} highlight />
@@ -172,7 +172,7 @@ const Sub510kPreview: React.FC = () => (
           <div key={p.name} className="flex items-center justify-between p-3 bg-white border border-zinc-200 rounded-lg">
             <div>
               <p className="text-xs font-medium text-zinc-800">{p.name}</p>
-              <p className="text-[11px] text-zinc-500">{p.manufacturer} — Product Code: {p.code}</p>
+              <p className="text-xs text-zinc-500">{p.manufacturer} — Product Code: {p.code}</p>
             </div>
             <StatusBadge status={`${p.match} match`} color="bg-emerald-50 text-emerald-700" />
           </div>
@@ -182,7 +182,7 @@ const Sub510kPreview: React.FC = () => (
     <MockCard title="SE Comparison Matrix" icon={<Layers className="w-4 h-4 text-violet-500" />}>
       <div className="grid grid-cols-3 gap-2">
         {['Intended Use', 'Technology', 'Performance', 'Biocompat.', 'Software', 'Labeling'].map((d) => (
-          <div key={d} className="flex items-center gap-1 text-[11px] text-zinc-600">
+          <div key={d} className="flex items-center gap-1 text-xs text-zinc-600">
             <CheckCircle className="w-3 h-3 text-emerald-500" /> {d}
           </div>
         ))}
@@ -203,7 +203,7 @@ const SubINDPreview: React.FC = () => (
       ].map((m) => (
         <div key={m.mod} className="mb-3">
           <ProgressBar label={`${m.mod}: ${m.name}`} value={m.progress} />
-          <p className="text-[11px] text-zinc-400 mt-0.5 pl-1">{m.items}</p>
+          <p className="text-xs text-zinc-400 mt-0.5 pl-1">{m.items}</p>
         </div>
       ))}
     </MockCard>
@@ -225,7 +225,7 @@ const SubGlobalPreview: React.FC = () => (
               <p className="text-xs font-medium text-zinc-800">{a.agency}</p>
               <StatusBadge status={a.status} color={a.color} />
             </div>
-            <p className="text-[11px] text-zinc-500">{a.type} — Region-specific Module 1</p>
+            <p className="text-xs text-zinc-500">{a.type} — Region-specific Module 1</p>
           </div>
         ))}
       </div>
@@ -246,10 +246,10 @@ const SubMeetingsPreview: React.FC = () => (
             {m.icon}
             <div>
               <p className="text-xs font-medium text-zinc-800">{m.type} Meeting</p>
-              <p className="text-[11px] text-zinc-500">{m.date}</p>
+              <p className="text-xs text-zinc-500">{m.date}</p>
             </div>
           </div>
-          <span className="text-[11px] text-zinc-600">{m.status}</span>
+          <span className="text-xs text-zinc-600">{m.status}</span>
         </div>
       ))}
     </MockCard>
@@ -270,7 +270,7 @@ const ResSearchPreview: React.FC = () => (
           <StatusBadge key={s} status={s} color="bg-blue-50 text-blue-700" />
         ))}
       </div>
-      <div className="flex items-center gap-2 text-[11px] text-emerald-600">
+      <div className="flex items-center gap-2 text-xs text-emerald-600">
         <Activity className="w-3 h-3" /> 847 results synthesized across 4 sources
       </div>
     </MockCard>
@@ -283,10 +283,10 @@ const ResResultsPreview: React.FC = () => (
       <div className="overflow-hidden rounded-lg border border-zinc-200">
         <table className="w-full text-left">
           <thead><tr className="bg-zinc-50">
-            <th className="px-3 py-2 text-[11px] font-medium text-zinc-500">Trial</th>
-            <th className="px-3 py-2 text-[11px] font-medium text-zinc-500">Phase</th>
-            <th className="px-3 py-2 text-[11px] font-medium text-zinc-500">Enrollment</th>
-            <th className="px-3 py-2 text-[11px] font-medium text-zinc-500">Primary Endpoint</th>
+            <th className="px-3 py-2 text-xs font-medium text-zinc-500">Trial</th>
+            <th className="px-3 py-2 text-xs font-medium text-zinc-500">Phase</th>
+            <th className="px-3 py-2 text-xs font-medium text-zinc-500">Enrollment</th>
+            <th className="px-3 py-2 text-xs font-medium text-zinc-500">Primary Endpoint</th>
           </tr></thead>
           <tbody>
             <TableRow cells={['NCT05678901', 'Phase 3', '3,200', '% weight reduction at 68 wk']} highlight />
@@ -313,7 +313,7 @@ const ResIntelligencePreview: React.FC = () => (
             <p className="text-xs font-medium text-zinc-800">{a.title}</p>
             <div className="flex gap-2 mt-1">
               <StatusBadge status={a.type} color={a.severity} />
-              <span className="text-[11px] text-zinc-400">{a.date}</span>
+              <span className="text-xs text-zinc-400">{a.date}</span>
             </div>
           </div>
         </div>
@@ -333,7 +333,7 @@ const ResPrecedentPreview: React.FC = () => (
         <div key={p.name} className="flex items-center justify-between p-3 border border-zinc-200 rounded-lg mb-2">
           <div>
             <p className="text-xs font-medium text-zinc-800">{p.name}</p>
-            <p className="text-[11px] text-zinc-500">{p.pathway} — {p.timeline} review</p>
+            <p className="text-xs text-zinc-500">{p.pathway} — {p.timeline} review</p>
           </div>
           <StatusBadge status={p.outcome} color="bg-emerald-50 text-emerald-700" />
         </div>
@@ -411,7 +411,7 @@ const DocTemplatesPreview: React.FC = () => (
         ].map((t) => (
           <div key={t.agency} className="p-3 bg-zinc-50 rounded-lg">
             <p className="text-xs font-semibold text-zinc-800 mb-1">{t.agency}</p>
-            <p className="text-[11px] text-zinc-500">{t.types}</p>
+            <p className="text-xs text-zinc-500">{t.types}</p>
           </div>
         ))}
       </div>
@@ -500,9 +500,9 @@ const CMCAnalyticalPreview: React.FC = () => (
       <div className="overflow-hidden rounded-lg border border-zinc-200">
         <table className="w-full text-left">
           <thead><tr className="bg-zinc-50">
-            <th className="px-3 py-2 text-[11px] font-medium text-zinc-500">Method</th>
-            <th className="px-3 py-2 text-[11px] font-medium text-zinc-500">Status</th>
-            <th className="px-3 py-2 text-[11px] font-medium text-zinc-500">ICH Q2</th>
+            <th className="px-3 py-2 text-xs font-medium text-zinc-500">Method</th>
+            <th className="px-3 py-2 text-xs font-medium text-zinc-500">Status</th>
+            <th className="px-3 py-2 text-xs font-medium text-zinc-500">ICH Q2</th>
           </tr></thead>
           <tbody>
             <TableRow cells={['HPLC Assay', 'Validated', 'Compliant']} />
@@ -528,7 +528,7 @@ const CMCManufacturingPreview: React.FC = () => (
         <div key={s.step} className="flex items-center justify-between p-2 border-b border-zinc-50 last:border-0">
           <div>
             <p className="text-xs text-zinc-800">{s.step}</p>
-            <p className="text-[11px] text-zinc-500">Scale: {s.scale}</p>
+            <p className="text-xs text-zinc-500">Scale: {s.scale}</p>
           </div>
           <StatusBadge status={s.status} color={s.status === 'Production' ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700'} />
         </div>
@@ -553,7 +553,7 @@ const CMCReadinessPreview: React.FC = () => (
         ].map((g) => (
           <div key={g.gap} className="flex items-start gap-2 p-2 bg-zinc-50 rounded-lg">
             <AlertTriangle className={cn('w-3 h-3 mt-0.5', g.critical ? 'text-red-500' : 'text-amber-500')} />
-            <span className="text-[11px] text-zinc-700">{g.gap}</span>
+            <span className="text-xs text-zinc-700">{g.gap}</span>
           </div>
         ))}
       </div>
@@ -580,7 +580,7 @@ const AISwarmPreview: React.FC = () => (
         ].map((a) => (
           <div key={a.name} className="p-2 bg-zinc-50 rounded-lg text-center">
             <Bot className={cn('w-4 h-4 mx-auto mb-1', a.status === 'Running' ? 'text-violet-500' : a.status === 'Complete' ? 'text-emerald-500' : 'text-zinc-400')} />
-            <p className="text-[11px] font-medium text-zinc-700 truncate">{a.name}</p>
+            <p className="text-xs font-medium text-zinc-700 truncate">{a.name}</p>
             <StatusBadge status={a.status} color={a.status === 'Running' ? 'bg-violet-50 text-violet-700' : a.status === 'Complete' ? 'bg-emerald-50 text-emerald-700' : 'bg-zinc-100 text-zinc-500'} />
           </div>
         ))}
@@ -600,9 +600,9 @@ const AISnowglobePreview: React.FC = () => (
           <div key={s.scenario} className="p-3 border border-zinc-200 rounded-lg">
             <p className="text-xs font-medium text-zinc-800 mb-2">{s.scenario}</p>
             <div className="space-y-1">
-              <p className="text-[11px] text-zinc-600">Approval probability: <span className="font-bold text-violet-700">{s.probability}</span></p>
-              <p className="text-[11px] text-zinc-600">Est. timeline: {s.timeline}</p>
-              <p className="text-[11px] text-zinc-600">Risk: {s.risk}</p>
+              <p className="text-xs text-zinc-600">Approval probability: <span className="font-bold text-violet-700">{s.probability}</span></p>
+              <p className="text-xs text-zinc-600">Est. timeline: {s.timeline}</p>
+              <p className="text-xs text-zinc-600">Risk: {s.risk}</p>
             </div>
           </div>
         ))}
@@ -625,7 +625,7 @@ const AIReviewPulsePreview: React.FC = () => (
           { finding: 'Cross-reference mismatch in Section 2.7', severity: 'Medium' },
           { finding: 'Biostatistics SAP needs update for endpoint change', severity: 'High' },
         ].map((f) => (
-          <div key={f.finding} className="flex items-center gap-2 p-2 bg-zinc-50 rounded-lg text-[11px]">
+          <div key={f.finding} className="flex items-center gap-2 p-2 bg-zinc-50 rounded-lg text-xs">
             <AlertTriangle className={cn('w-3 h-3', f.severity === 'High' ? 'text-red-500' : 'text-amber-500')} />
             <span className="text-zinc-700 flex-1">{f.finding}</span>
             <StatusBadge status={f.severity} color={f.severity === 'High' ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700'} />
@@ -643,7 +643,7 @@ const AIDualPreview: React.FC = () => (
         <p className="text-xs text-zinc-600 mb-2">Regulatory strategy & authoring co-pilot</p>
         <div className="space-y-1">
           {['Submission strategy', 'Document co-writing', 'Regulatory Q&A', 'Compliance checking'].map((f) => (
-            <div key={f} className="flex items-center gap-1 text-[11px] text-zinc-600">
+            <div key={f} className="flex items-center gap-1 text-xs text-zinc-600">
               <CheckCircle className="w-3 h-3 text-violet-500" /> {f}
             </div>
           ))}
@@ -653,7 +653,7 @@ const AIDualPreview: React.FC = () => (
         <p className="text-xs text-zinc-600 mb-2">Contextual training & enablement</p>
         <div className="space-y-1">
           {['Just-in-time training', 'Contextual help', 'Certification programs', 'Role-specific guides'].map((f) => (
-            <div key={f} className="flex items-center gap-1 text-[11px] text-zinc-600">
+            <div key={f} className="flex items-center gap-1 text-xs text-zinc-600">
               <CheckCircle className="w-3 h-3 text-emerald-500" /> {f}
             </div>
           ))}
@@ -704,7 +704,7 @@ const PMTimelinesPreview: React.FC = () => (
           <div className={cn('w-3 h-3 rounded-full border-2', m.status === 'complete' ? 'bg-emerald-500 border-emerald-500' : m.status === 'current' ? 'bg-violet-500 border-violet-500' : 'bg-white border-zinc-300')} />
           <div className="flex-1 flex justify-between">
             <span className="text-xs text-zinc-700">{m.milestone}</span>
-            <span className="text-[11px] text-zinc-500">{m.date}</span>
+            <span className="text-xs text-zinc-500">{m.date}</span>
           </div>
         </div>
       ))}
@@ -722,9 +722,9 @@ const PMTasksPreview: React.FC = () => (
           { col: 'Done', items: ['Cover letter', 'Form 1571'] },
         ].map((c) => (
           <div key={c.col} className="bg-zinc-50 rounded-lg p-2">
-            <p className="text-[11px] font-semibold text-zinc-600 mb-2">{c.col}</p>
+            <p className="text-xs font-semibold text-zinc-600 mb-2">{c.col}</p>
             {c.items.map((item) => (
-              <div key={item} className="bg-white rounded p-1.5 mb-1 text-[11px] text-zinc-700 border border-zinc-200 shadow-sm">{item}</div>
+              <div key={item} className="bg-white rounded p-1.5 mb-1 text-xs text-zinc-700 border border-zinc-200 shadow-sm">{item}</div>
             ))}
           </div>
         ))}
@@ -744,8 +744,8 @@ const PMDecisionsPreview: React.FC = () => (
         <div key={d.decision} className="p-2 border-b border-zinc-50 last:border-0">
           <p className="text-xs text-zinc-800">{d.decision}</p>
           <div className="flex gap-2 mt-1">
-            <span className="text-[11px] text-zinc-400">{d.date}</span>
-            <span className="text-[11px] text-emerald-600">{d.signers} sign-offs</span>
+            <span className="text-xs text-zinc-400">{d.date}</span>
+            <span className="text-xs text-emerald-600">{d.signers} sign-offs</span>
           </div>
         </div>
       ))}
@@ -768,7 +768,7 @@ const PMGapsPreview: React.FC = () => (
         <div key={g.gap} className="flex items-start gap-2 p-2 bg-zinc-50 rounded-lg mb-1">
           <AlertTriangle className={cn('w-3 h-3 mt-0.5', g.severity === 'Critical' ? 'text-red-500' : 'text-amber-500')} />
           <div>
-            <p className="text-[11px] font-medium text-zinc-700">{g.module}: {g.gap}</p>
+            <p className="text-xs font-medium text-zinc-700">{g.module}: {g.gap}</p>
             <StatusBadge status={g.severity} color={g.severity === 'Critical' ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700'} />
           </div>
         </div>
@@ -785,10 +785,10 @@ const SecAuditPreview: React.FC = () => (
       <div className="overflow-hidden rounded-lg border border-zinc-200">
         <table className="w-full text-left">
           <thead><tr className="bg-zinc-50">
-            <th className="px-3 py-2 text-[11px] font-medium text-zinc-500">Action</th>
-            <th className="px-3 py-2 text-[11px] font-medium text-zinc-500">User</th>
-            <th className="px-3 py-2 text-[11px] font-medium text-zinc-500">Timestamp</th>
-            <th className="px-3 py-2 text-[11px] font-medium text-zinc-500">Hash</th>
+            <th className="px-3 py-2 text-xs font-medium text-zinc-500">Action</th>
+            <th className="px-3 py-2 text-xs font-medium text-zinc-500">User</th>
+            <th className="px-3 py-2 text-xs font-medium text-zinc-500">Timestamp</th>
+            <th className="px-3 py-2 text-xs font-medium text-zinc-500">Hash</th>
           </tr></thead>
           <tbody>
             <TableRow cells={['Document approved', 'Dr. Smith', '14:32:01 UTC', 'a7f3...8c21']} />
@@ -816,9 +816,9 @@ const SecRBACPreview: React.FC = () => (
           <div key={r.role} className="flex items-center justify-between p-2 bg-zinc-50 rounded-lg">
             <div>
               <p className="text-xs font-medium text-zinc-800">{r.role}</p>
-              <p className="text-[11px] text-zinc-500">{r.access}</p>
+              <p className="text-xs text-zinc-500">{r.access}</p>
             </div>
-            <span className="text-[11px] text-zinc-400">{r.count} users</span>
+            <span className="text-xs text-zinc-400">{r.count} users</span>
           </div>
         ))}
       </div>
@@ -863,7 +863,7 @@ const SecGovernancePreview: React.FC = () => (
             <CheckCircle className="w-3 h-3 text-emerald-500" />
             <div>
               <p className="text-xs font-medium text-zinc-800">{s.standard}</p>
-              <p className="text-[11px] text-emerald-600">{s.status}</p>
+              <p className="text-xs text-emerald-600">{s.status}</p>
             </div>
           </div>
         ))}
@@ -887,7 +887,7 @@ const CollabHubPreview: React.FC = () => (
             {t.unread && <div className="w-2 h-2 rounded-full bg-violet-500" />}
             <div>
               <p className="text-xs text-zinc-800">{t.thread}</p>
-              <p className="text-[11px] text-zinc-400">{t.replies} replies — {t.last}</p>
+              <p className="text-xs text-zinc-400">{t.replies} replies — {t.last}</p>
             </div>
           </div>
           <ArrowRight className="w-3 h-3 text-zinc-400" />
@@ -908,7 +908,7 @@ const CollabReviewPreview: React.FC = () => (
         <div key={r.doc} className="flex items-center justify-between p-2 border-b border-zinc-50 last:border-0">
           <div>
             <p className="text-xs text-zinc-800">{r.doc}</p>
-            <p className="text-[11px] text-zinc-500">{r.reviewer} — Due: {r.due}</p>
+            <p className="text-xs text-zinc-500">{r.reviewer} — Due: {r.due}</p>
           </div>
           <StatusBadge status={r.sla} color={r.sla === 'Escalated' ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700'} />
         </div>
@@ -922,7 +922,7 @@ const CollabReportsPreview: React.FC = () => (
     <MockCard title="Report Center" icon={<BarChart3 className="w-4 h-4 text-violet-500" />}>
       <div className="grid grid-cols-3 gap-2 mb-3">
         {['PDF', 'Word', 'eCTD XML'].map((f) => (
-          <div key={f} className="bg-zinc-50 rounded-lg py-2 text-center text-[11px] font-medium text-zinc-600">{f} Export</div>
+          <div key={f} className="bg-zinc-50 rounded-lg py-2 text-center text-xs font-medium text-zinc-600">{f} Export</div>
         ))}
       </div>
       <div className="space-y-1">
@@ -932,7 +932,7 @@ const CollabReportsPreview: React.FC = () => (
           'Risk Assessment Summary',
           'Team Productivity Metrics',
         ].map((r) => (
-          <div key={r} className="flex items-center gap-2 p-2 bg-zinc-50 rounded-lg text-[11px] text-zinc-700">
+          <div key={r} className="flex items-center gap-2 p-2 bg-zinc-50 rounded-lg text-xs text-zinc-700">
             <FileText className="w-3 h-3 text-zinc-400" /> {r}
           </div>
         ))}
@@ -980,7 +980,7 @@ const CollabAcademyPreview: React.FC = () => (
         { course: 'Regulatory Strategy 101', role: 'Strategist', progress: 0, duration: '2h' },
       ].map((c) => (
         <div key={c.course} className="mb-2">
-          <div className="flex justify-between text-[11px] mb-0.5">
+          <div className="flex justify-between text-xs mb-0.5">
             <span className="text-zinc-700">{c.course}</span>
             <span className="text-zinc-400">{c.duration}</span>
           </div>
@@ -1009,14 +1009,14 @@ const NanoBananaOverviewPreview: React.FC = () => (
         <div key={c.title} className={cn('rounded-xl border p-3 text-center', c.color)}>
           <div className="text-lg font-bold text-zinc-900">{c.metric}</div>
           <div className="text-xs font-medium text-zinc-700">{c.title}</div>
-          <div className="text-[11px] text-zinc-500">{c.desc}</div>
+          <div className="text-xs text-zinc-500">{c.desc}</div>
         </div>
       ))}
     </div>
     <MockCard title="Style Options" icon={<Sparkles className="w-4 h-4 text-amber-500" />}>
       <div className="flex flex-wrap gap-1.5">
         {['Infographic', 'Illustration', 'Photorealistic', 'Slide Visual'].map(s => (
-          <span key={s} className="px-2 py-1 text-[11px] font-medium rounded-full bg-amber-100 text-amber-700 border border-amber-200">{s}</span>
+          <span key={s} className="px-2 py-1 text-xs font-medium rounded-full bg-amber-100 text-amber-700 border border-amber-200">{s}</span>
         ))}
       </div>
     </MockCard>
@@ -1035,14 +1035,14 @@ const NanoBananaGeneratePreview: React.FC = () => (
   <div className="space-y-4">
     <MockCard title="Image Generation" icon={<Sparkles className="w-4 h-4 text-amber-500" />}>
       <div className="bg-zinc-50 rounded-lg p-3 mb-3">
-        <div className="text-[11px] text-zinc-400 mb-1">Prompt</div>
+        <div className="text-xs text-zinc-400 mb-1">Prompt</div>
         <div className="text-xs text-zinc-700 italic">"Infographic showing IND submission timeline with Phase 1-3 milestones, FDA review gates, and approval pathway"</div>
       </div>
       <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg p-6 flex items-center justify-center border border-amber-200">
         <div className="text-center">
           <div className="text-3xl mb-1">🖼️</div>
           <div className="text-xs font-medium text-amber-700">4096 x 4096 Generated</div>
-          <div className="text-[11px] text-amber-500">11.4s · SynthID watermarked</div>
+          <div className="text-xs text-amber-500">11.4s · SynthID watermarked</div>
         </div>
       </div>
     </MockCard>
@@ -1056,7 +1056,7 @@ const NanoBananaGeneratePreview: React.FC = () => (
           <Lock className="w-3 h-3 text-blue-500 mt-0.5 shrink-0" />
           <div>
             <div className="text-xs font-medium text-zinc-800">{c.label}</div>
-            <div className="text-[11px] text-zinc-500">{c.desc}</div>
+            <div className="text-xs text-zinc-500">{c.desc}</div>
           </div>
         </div>
       ))}

@@ -342,16 +342,16 @@ export const TemplateLibraryInline: React.FC<TemplateLibraryInlineProps> = ({
                     </div>
                     <div className="flex items-center gap-2 mt-2">
                       {t.ctdSection && (
-                        <Badge variant="outline" className="text-[11px] px-1 py-0 border-blue-200 text-blue-500">
+                        <Badge variant="outline" className="text-xs px-1 py-0 border-blue-200 text-blue-500">
                           {t.ctdSection}
                         </Badge>
                       )}
                       {t.submissionTypes.slice(0, 3).map((st) => (
-                        <Badge key={st} variant="outline" className="text-[11px] px-1 py-0 border-zinc-200 text-zinc-400">
+                        <Badge key={st} variant="outline" className="text-xs px-1 py-0 border-zinc-200 text-zinc-400">
                           {st}
                         </Badge>
                       ))}
-                      <span className="text-[11px] text-zinc-400 ml-auto flex items-center gap-0.5">
+                      <span className="text-xs text-zinc-400 ml-auto flex items-center gap-0.5">
                         <Download className="h-2.5 w-2.5" />
                         {t.usageCount.toLocaleString()}
                       </span>

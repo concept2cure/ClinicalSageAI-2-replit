@@ -97,7 +97,7 @@ const AlertCard: React.FC<AlertCardProps> = ({
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className={cn("text-[11px] font-bold px-1.5 py-0.5 rounded", config.badge)}>
+            <span className={cn("text-xs font-bold px-1.5 py-0.5 rounded", config.badge)}>
               {priority}
             </span>
             <span className="text-xs text-zinc-500">{source}</span>
@@ -168,7 +168,7 @@ const PriorityItem: React.FC<PriorityItemProps> = ({
         </div>
       </div>
       <div className={cn(
-        "px-2 py-0.5 rounded text-[11px] font-bold text-white",
+        "px-2 py-0.5 rounded text-xs font-bold text-white",
         config.color
       )}>
         {config.label}

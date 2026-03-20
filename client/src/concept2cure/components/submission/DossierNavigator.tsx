@@ -709,14 +709,14 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
                                     <FileText className="w-3 h-3 text-blue-400" />
                                     <span className="truncate flex-1">{art.title}</span>
                                     <span className={cn(
-                                      'px-1.5 py-0.5 rounded text-[11px] font-medium',
+                                      'px-1.5 py-0.5 rounded text-xs font-medium',
                                       art.status === 'draft' && 'bg-blue-50 text-blue-600',
                                       art.status === 'review' && 'bg-amber-50 text-amber-600',
                                       (art.status === 'approved' || art.status === 'locked') && 'bg-emerald-50 text-emerald-600',
                                     )}>
                                       {art.status}
                                     </span>
-                                    <span className="text-[11px] text-zinc-400">v{art.version}</span>
+                                    <span className="text-xs text-zinc-400">v{art.version}</span>
                                   </div>
                                 ))}
                               </React.Fragment>

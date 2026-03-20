@@ -190,7 +190,7 @@ export const GoldenDossierVerificationPanel: React.FC<GoldenDossierVerificationP
           </div>
           <div className="text-right">
             <p className="text-lg font-bold">{result.score}%</p>
-            <p className="text-[11px] uppercase tracking-wider opacity-60">Score</p>
+            <p className="text-xs uppercase tracking-wider opacity-60">Score</p>
           </div>
         </div>
 
@@ -221,7 +221,7 @@ export const GoldenDossierVerificationPanel: React.FC<GoldenDossierVerificationP
                 )}
                 {sectionIcon}
                 <span className="text-xs font-semibold text-zinc-700 flex-1">{label}</span>
-                <span className="text-[11px] text-zinc-400">{findings.length} check(s)</span>
+                <span className="text-xs text-zinc-400">{findings.length} check(s)</span>
               </button>
               {expanded && (
                 <div className="px-3 pb-2 space-y-1">
@@ -240,8 +240,8 @@ export const GoldenDossierVerificationPanel: React.FC<GoldenDossierVerificationP
             <p className="text-xs font-semibold text-zinc-700 mb-2">Recommended Actions</p>
             <ul className="space-y-1.5">
               {result.recommendedActions.map((action, i) => (
-                <li key={i} className="flex items-center gap-2 text-[11px] text-zinc-600">
-                  <span className="w-4 h-4 rounded-full bg-blue-100 text-blue-600 text-[11px] font-bold flex items-center justify-center shrink-0">
+                <li key={i} className="flex items-center gap-2 text-xs text-zinc-600">
+                  <span className="w-4 h-4 rounded-full bg-blue-100 text-blue-600 text-xs font-bold flex items-center justify-center shrink-0">
                     {i + 1}
                   </span>
                   {action}
@@ -332,8 +332,8 @@ function FindingRow({ finding }: { finding: Finding }) {
   return (
     <div className="flex items-start gap-1.5 py-0.5">
       {icon[finding.status]}
-      <span className="text-[11px] text-zinc-600 flex-1">{finding.message}</span>
-      <span className="text-[11px] px-1 py-0.5 rounded bg-zinc-50 text-zinc-400 shrink-0">
+      <span className="text-xs text-zinc-600 flex-1">{finding.message}</span>
+      <span className="text-xs px-1 py-0.5 rounded bg-zinc-50 text-zinc-400 shrink-0">
         {finding.confidence}
       </span>
     </div>
@@ -352,7 +352,7 @@ function QuickActionBtn({
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium bg-zinc-50 text-zinc-600 hover:bg-zinc-100 border border-zinc-200 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+      className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-zinc-50 text-zinc-600 hover:bg-zinc-100 border border-zinc-200 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
     >
       {icon}
       {label}

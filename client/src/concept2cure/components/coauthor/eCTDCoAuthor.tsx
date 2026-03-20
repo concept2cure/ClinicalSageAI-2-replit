@@ -304,7 +304,7 @@ const OutlineTree: React.FC<{
 
               {/* Alerts Badge */}
               {section.redlineAlerts && section.redlineAlerts.length > 0 && (
-                <span className="px-1.5 py-0.5 text-[11px] font-bold bg-red-100 text-red-700 rounded">
+                <span className="px-1.5 py-0.5 text-xs font-bold bg-red-100 text-red-700 rounded">
                   {section.redlineAlerts.length}
                 </span>
               )}
@@ -372,7 +372,7 @@ const SmartTagBadge: React.FC<{
     >
       {c.icon}
       {tag.text}
-      {tag.pageRef && <span className="text-[11px] opacity-75">p.{tag.pageRef}</span>}
+      {tag.pageRef && <span className="text-xs opacity-75">p.{tag.pageRef}</span>}
       {!tag.isVerified && <AlertTriangle className="w-3 h-3 text-amber-500 ml-1" />}
     </span>
   );
@@ -403,7 +403,7 @@ const RedlineAlertPanel: React.FC<{
             <div className="flex items-start justify-between mb-2">
               <span
                 className={cn(
-                  'px-2 py-0.5 text-[11px] font-bold rounded uppercase',
+                  'px-2 py-0.5 text-xs font-bold rounded uppercase',
                   alert.severity === 'critical' && 'bg-red-600 text-white',
                   alert.severity === 'warning' && 'bg-amber-500 text-white',
                   alert.severity === 'info' && 'bg-blue-500 text-white'

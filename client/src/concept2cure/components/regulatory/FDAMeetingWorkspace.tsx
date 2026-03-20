@@ -283,13 +283,13 @@ const MeetingTimeline: React.FC<{
                   {isComplete ? '✓' : idx + 1}
                 </div>
                 <p className={cn(
-                  'text-[11px] mt-2 text-center max-w-[80px]',
+                  'text-xs mt-2 text-center max-w-[80px]',
                   isComplete ? 'text-zinc-700 font-medium' : 'text-zinc-400'
                 )}>
                   {milestone.label}
                 </p>
                 {milestone.date && (
-                  <p className="text-[11px] text-zinc-400">{formatDate(milestone.date)}</p>
+                  <p className="text-xs text-zinc-400">{formatDate(milestone.date)}</p>
                 )}
               </div>
             );

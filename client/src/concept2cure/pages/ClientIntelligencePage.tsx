@@ -163,7 +163,7 @@ const TextArea: React.FC<{
 }> = ({ label, value, onChange, placeholder, rows = 4, hint }) => (
   <div>
     <label className="block text-xs font-medium text-zinc-600 mb-1">{label}</label>
-    {hint && <p className="text-[11px] text-zinc-400 mb-1.5">{hint}</p>}
+    {hint && <p className="text-xs text-zinc-400 mb-1.5">{hint}</p>}
     <textarea
       value={value}
       onChange={e => onChange(e.target.value)}
@@ -353,7 +353,7 @@ export default function ClientIntelligencePage() {
               {tab.icon}
               {tab.label}
               {tab.badge && (
-                <span className="px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-600 text-[11px] font-semibold">
+                <span className="px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-600 text-xs font-semibold">
                   {tab.badge}
                 </span>
               )}
@@ -616,7 +616,7 @@ export default function ClientIntelligencePage() {
                             <p className="text-sm font-medium text-zinc-800 truncate">
                               {doc.fileName}
                             </p>
-                            <div className="flex items-center gap-3 text-[11px] text-zinc-400">
+                            <div className="flex items-center gap-3 text-xs text-zinc-400">
                               <span>{doc.fileType?.toUpperCase()}</span>
                               {doc.fileSizeBytes && (
                                 <span>{(doc.fileSizeBytes / 1024).toFixed(0)} KB</span>
@@ -630,7 +630,7 @@ export default function ClientIntelligencePage() {
                             </div>
                           </div>
                           <span
-                            className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+                            className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
                               doc.processingStatus === 'completed'
                                 ? 'bg-emerald-100 text-emerald-700'
                                 : doc.processingStatus === 'failed'
@@ -705,7 +705,7 @@ export default function ClientIntelligencePage() {
                     return (
                       <span
                         key={cat}
-                        className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-zinc-100 text-zinc-600"
+                        className="px-2.5 py-1 rounded-full text-xs font-medium bg-zinc-100 text-zinc-600"
                       >
                         {cat === 'all' ? 'All' : cat.charAt(0).toUpperCase() + cat.slice(1)} ({count})
                       </span>
@@ -744,7 +744,7 @@ export default function ClientIntelligencePage() {
                           <p className="text-xs text-zinc-600 leading-relaxed mb-2">
                             {entry.content}
                           </p>
-                          <div className="flex items-center gap-3 text-[11px] text-zinc-400">
+                          <div className="flex items-center gap-3 text-xs text-zinc-400">
                             <span className="px-1.5 py-0.5 rounded bg-zinc-100 font-medium">
                               {entry.category}
                             </span>
@@ -829,14 +829,14 @@ export default function ClientIntelligencePage() {
                             )}
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-zinc-700">{item.label}</p>
-                              <p className="text-[11px] text-zinc-400">{item.description}</p>
+                              <p className="text-xs text-zinc-400">{item.description}</p>
                             </div>
                             <div className="flex items-center gap-2 flex-shrink-0">
-                              <span className="text-[11px] text-zinc-400">
+                              <span className="text-xs text-zinc-400">
                                 {item.fileTypes.map(t => t.toUpperCase()).join(', ')}
                               </span>
                               <span
-                                className={`px-1.5 py-0.5 rounded text-[11px] font-semibold ${
+                                className={`px-1.5 py-0.5 rounded text-xs font-semibold ${
                                   item.priority === 'required'
                                     ? 'bg-amber-100 text-amber-700'
                                     : item.priority === 'recommended'

@@ -652,7 +652,7 @@ function AnalyticsDashboardInline({ projects, onBack }: { projects: any[]; onBac
         <div className="grid grid-cols-4 gap-4 mb-8">
           {metrics.slice(0, 4).map(m => (
             <div key={m.label} className="bg-zinc-50 rounded-xl p-4 border border-zinc-200">
-              <p className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">
+              <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
                 {m.label}
               </p>
               <p className={cn('text-2xl font-semibold mt-1', m.color)}>{m.value}</p>
@@ -663,7 +663,7 @@ function AnalyticsDashboardInline({ projects, onBack }: { projects: any[]; onBac
         <div className="grid grid-cols-2 gap-6 mb-8">
           {/* Artifact Status Breakdown */}
           <div className="bg-zinc-50 rounded-xl p-5 border border-zinc-200">
-            <p className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider mb-4">
+            <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-4">
               Artifact Pipeline
             </p>
             {summary.total === 0 ? (
@@ -713,7 +713,7 @@ function AnalyticsDashboardInline({ projects, onBack }: { projects: any[]; onBac
 
           {/* Activity Chart */}
           <div className="bg-zinc-50 rounded-xl p-5 border border-zinc-200">
-            <p className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider mb-4">
+            <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-4">
               Recent Activity
             </p>
             {activityByDay.length === 0 ? (
@@ -725,12 +725,12 @@ function AnalyticsDashboardInline({ projects, onBack }: { projects: any[]; onBac
                   const height = Math.max(8, (count / maxCount) * 100);
                   return (
                     <div key={day} className="flex-1 flex flex-col items-center gap-1">
-                      <span className="text-[11px] text-zinc-500">{count}</span>
+                      <span className="text-xs text-zinc-500">{count}</span>
                       <div
                         className="w-full bg-zinc-900 rounded-t"
                         style={{ height: `${height}%` }}
                       />
-                      <span className="text-[11px] text-zinc-400">{day}</span>
+                      <span className="text-xs text-zinc-400">{day}</span>
                     </div>
                   );
                 })}
@@ -741,7 +741,7 @@ function AnalyticsDashboardInline({ projects, onBack }: { projects: any[]; onBac
 
         {/* Project List */}
         <div className="bg-zinc-50 rounded-xl p-5 border border-zinc-200">
-          <p className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider mb-4">
+          <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-4">
             Project Summary
           </p>
           {projects.length === 0 ? (
@@ -949,6 +949,13 @@ export const ZenApp: React.FC = () => {
   );
   const [activeConversationId, setActiveConversationId] = useState<string | undefined>();
   const [activeThreadId, setActiveThreadId] = useState<string | undefined>();
+
+  // Active document context — bubbled up from workspace for chat awareness
+  const [activeDocContext, setActiveDocContext] = useState<{
+    title: string;
+    ctdSection?: string;
+    excerpt: string;
+  } | null>(null);
 
   // Sherpa project detail view state
   const [sherpaDetailProjectId, setSherpaDetailProjectId] = useState<string | null>(null);
@@ -2006,7 +2013,7 @@ export const ZenApp: React.FC = () => {
                 >
                   <MessageSquare className="w-4 h-4 text-zinc-500" />
                   <span
-                    className="text-[11px] text-zinc-400 writing-mode-vertical"
+                    className="text-xs text-zinc-400 writing-mode-vertical"
                     style={{ writingMode: 'vertical-rl' }}
                   >
                     Assistant
@@ -2635,7 +2642,7 @@ export const ZenApp: React.FC = () => {
                         key={tab.key}
                         onClick={() => setLayoutMode(tab.key as LayoutMode)}
                         className={cn(
-                          'px-2.5 py-1 text-[11px] font-medium transition-colors',
+                          'px-2.5 py-1 text-xs font-medium transition-colors',
                           layoutMode === tab.key
                             ? 'bg-zinc-100 text-zinc-900'
                             : 'text-zinc-500 hover:bg-zinc-50'
@@ -2767,7 +2774,7 @@ export const ZenApp: React.FC = () => {
                 <MessageSquare className="w-3.5 h-3.5 text-blue-500" />
                 <span className="text-xs font-medium text-zinc-800">Collaboration</span>
                 {activeProject && (
-                  <span className="text-[11px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
                     {activeProject.name}
                   </span>
                 )}
@@ -2803,7 +2810,7 @@ export const ZenApp: React.FC = () => {
                 <FlaskConical className="w-3.5 h-3.5 text-emerald-500" />
                 <span className="text-xs font-medium text-zinc-800">Biostatistics</span>
                 {activeProject && (
-                  <span className="text-[11px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
                     {activeProject.name}
                   </span>
                 )}
@@ -2866,7 +2873,7 @@ export const ZenApp: React.FC = () => {
                 <Bot className="w-3.5 h-3.5 text-violet-500" />
                 <span className="text-xs font-medium text-zinc-800">AI Agents</span>
                 {activeProject && (
-                  <span className="text-[11px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
                     {activeProject.name}
                   </span>
                 )}
@@ -2900,7 +2907,7 @@ export const ZenApp: React.FC = () => {
                 <Compass className="w-3.5 h-3.5 text-blue-500" />
                 <span className="text-xs font-medium text-zinc-800">Document Sherpa</span>
                 {activeProject && (
-                  <span className="text-[11px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
                     {activeProject.name}
                   </span>
                 )}
@@ -2934,7 +2941,7 @@ export const ZenApp: React.FC = () => {
                 <Activity className="w-3.5 h-3.5 text-blue-500" />
                 <span className="text-xs font-medium text-zinc-800">Review Pulse</span>
                 {activeProject && (
-                  <span className="text-[11px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
                     {activeProject.name}
                   </span>
                 )}
@@ -3045,7 +3052,7 @@ export const ZenApp: React.FC = () => {
                 <FileStack className="w-3.5 h-3.5 text-blue-500" />
                 <span className="text-xs font-medium text-zinc-800">Project Knowledge</span>
                 {activeProject && (
-                  <span className="text-[11px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
                     {activeProject.name}
                   </span>
                 )}
@@ -3167,7 +3174,7 @@ export const ZenApp: React.FC = () => {
                   <Brain className="w-3.5 h-3.5 text-blue-500" />
                   <span className="text-xs font-medium text-zinc-800">RI Copilot</span>
                   {activeProject && (
-                    <span className="text-[11px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
+                    <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
                       {activeProject.name}
                     </span>
                   )}
@@ -3177,7 +3184,7 @@ export const ZenApp: React.FC = () => {
                         data-testid="view-toggle-intelligence"
                         onClick={() => setRiViewMode('intelligence')}
                         className={cn(
-                          'px-2 py-0.5 text-[11px] font-medium transition-colors',
+                          'px-2 py-0.5 text-xs font-medium transition-colors',
                           'bg-blue-100 text-blue-700'
                         )}
                       >
@@ -3186,7 +3193,7 @@ export const ZenApp: React.FC = () => {
                       <button
                         data-testid="view-toggle-editor"
                         onClick={() => setRiViewMode('editor')}
-                        className="px-2 py-0.5 text-[11px] font-medium text-zinc-500 hover:bg-zinc-50 transition-colors"
+                        className="px-2 py-0.5 text-xs font-medium text-zinc-500 hover:bg-zinc-50 transition-colors"
                       >
                         Documents
                       </button>
@@ -3233,6 +3240,7 @@ export const ZenApp: React.FC = () => {
                 onInitialContentConsumed={() => setPendingEditorContent(null)}
                 openArtifactId={openArtifactId}
                 onOpenArtifactConsumed={() => setOpenArtifactId(undefined)}
+                onActiveDocumentChange={setActiveDocContext}
               />
             ))}
           {/* Rules Engine Manager */}
@@ -3331,6 +3339,9 @@ export const ZenApp: React.FC = () => {
                     screenName: 'regulatory-workspace',
                     activeProject: activeProject?.name,
                     projectId: activeProjectId,
+                    activeDocumentTitle: activeDocContext?.title,
+                    activeDocumentExcerpt: activeDocContext?.excerpt,
+                    activeDocumentCtdSection: activeDocContext?.ctdSection,
                   }}
                   greeting={
                     platformGreeting?.text ||
@@ -3434,6 +3445,9 @@ export const ZenApp: React.FC = () => {
               screenName: layoutMode,
               activeProject: activeProject?.name,
               projectId: activeProjectId,
+              activeDocumentTitle: activeDocContext?.title,
+              activeDocumentExcerpt: activeDocContext?.excerpt,
+              activeDocumentCtdSection: activeDocContext?.ctdSection,
             }}
             greeting={
               layoutMode === 'deep-research'

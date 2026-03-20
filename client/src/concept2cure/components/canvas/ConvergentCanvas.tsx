@@ -206,7 +206,7 @@ const ContextRibbon: React.FC<ContextRibbonProps> = ({
             <FileText className="w-3.5 h-3.5 text-zinc-400" />
             <span className="font-medium text-zinc-700">{context.projectName}</span>
             {context.projectType && (
-              <span className="px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-600 text-[11px] font-medium">
+              <span className="px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-600 text-xs font-medium">
                 {context.projectType}
               </span>
             )}

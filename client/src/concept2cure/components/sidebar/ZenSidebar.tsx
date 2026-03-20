@@ -89,7 +89,7 @@ const WorkspaceGroup: React.FC<{
       <button
         onClick={() => setOpen(o => !o)}
         aria-expanded={open}
-        className="w-full flex items-center gap-1.5 px-3 py-2 text-[11px] font-semibold text-zinc-500 uppercase tracking-wider hover:text-zinc-400 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded transition-colors"
+        className="w-full flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-zinc-500 uppercase tracking-wider hover:text-zinc-400 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded transition-colors"
       >
         <ChevronDown
           className={cn(
@@ -127,7 +127,7 @@ const NavItem: React.FC<{
       onClick={onClick}
       aria-current={active ? 'page' : undefined}
       className={cn(
-        'w-full flex items-center gap-2.5 mx-1 pl-5 pr-3 py-[6px] text-[13px] transition-all duration-150 rounded-md focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
+        'w-full flex items-center gap-2.5 mx-1 pl-5 pr-3 py-[6px] text-sm transition-all duration-150 rounded-md focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
         active
           ? accent
             ? `${accent.bg} ${accent.text} font-medium`
@@ -153,11 +153,11 @@ const NavItem: React.FC<{
       <div className="flex-1 min-w-0 text-left">
         <span className="block truncate">{label}</span>
         {subtitle && (
-          <span className="block text-[11px] text-zinc-500 truncate leading-tight">{subtitle}</span>
+          <span className="block text-xs text-zinc-500 truncate leading-tight">{subtitle}</span>
         )}
       </div>
       {badge && (
-        <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-medium leading-none flex-shrink-0">
+        <span className="text-xs px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-medium leading-none flex-shrink-0">
           {badge}
         </span>
       )}
@@ -390,7 +390,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <div className="px-2 pb-1.5 flex-shrink-0">
           <button
             onClick={onNewChat}
-            className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg bg-white/10 text-white text-[13px] font-medium hover:bg-white/15 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+            className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg bg-white/10 text-white text-sm font-medium hover:bg-white/15 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
           >
             <Plus className="w-3.5 h-3.5 flex-shrink-0" />
             New workspace thread
@@ -401,7 +401,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <div className="px-2 pb-1.5 flex-shrink-0">
           <button
             onClick={onOpenProjects}
-            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-zinc-400 hover:bg-white/8 hover:text-zinc-200 text-[13px] focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-zinc-400 hover:bg-white/8 hover:text-zinc-200 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
           >
             <FolderOpen className="w-3.5 h-3.5 flex-shrink-0 text-zinc-500" />
             My projects
@@ -600,20 +600,20 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <div className="flex-shrink-0 border-t border-zinc-800 p-2">
           <button
             onClick={onOpenSettings}
-            className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-zinc-400 hover:bg-white/10 hover:text-zinc-200 text-[13px] focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+            className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-zinc-400 hover:bg-white/10 hover:text-zinc-200 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
           >
             <div className="w-7 h-7 rounded-full bg-violet-500/20 flex items-center justify-center flex-shrink-0">
-              <span className="text-[11px] font-bold text-violet-400 leading-none">
+              <span className="text-xs font-bold text-violet-400 leading-none">
                 {avatarInitial}
               </span>
             </div>
             {!isCollapsed && (
               <div className="flex-1 min-w-0 text-left">
-                <p className="text-[13px] font-medium text-zinc-200 truncate leading-tight">
+                <p className="text-sm font-medium text-zinc-200 truncate leading-tight">
                   {displayName}
                 </p>
                 {userEmail && (
-                  <p className="text-[11px] text-zinc-500 truncate leading-tight">{userEmail}</p>
+                  <p className="text-xs text-zinc-500 truncate leading-tight">{userEmail}</p>
                 )}
               </div>
             )}

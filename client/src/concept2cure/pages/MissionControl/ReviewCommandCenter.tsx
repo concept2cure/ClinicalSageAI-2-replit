@@ -183,9 +183,9 @@ export const ReviewCommandCenter: React.FC<ReviewCommandCenterProps> = ({
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-zinc-800 truncate">{artifact.title}</p>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[11px] font-mono text-zinc-500">{artifact.code}</span>
+                        <span className="text-xs font-mono text-zinc-500">{artifact.code}</span>
                         <span className={cn(
-                          'text-[11px] px-1.5 py-0.5 rounded-full',
+                          'text-xs px-1.5 py-0.5 rounded-full',
                           artifact.lifecycleState === 'in-review' ? 'bg-blue-100 text-blue-700' :
                           artifact.lifecycleState === 'revision-needed' ? 'bg-orange-100 text-orange-700' :
                           'bg-amber-100 text-amber-700'
@@ -291,10 +291,10 @@ export const ReviewCommandCenter: React.FC<ReviewCommandCenterProps> = ({
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
                                 <span className="text-sm font-medium text-zinc-800">{review.reviewer}</span>
-                                <span className={cn('text-[11px] px-1.5 py-0.5 rounded-full', verdictColors.bg, verdictColors.text)}>
+                                <span className={cn('text-xs px-1.5 py-0.5 rounded-full', verdictColors.bg, verdictColors.text)}>
                                   {review.verdict}
                                 </span>
-                                <span className="text-[11px] text-zinc-400 ml-auto">
+                                <span className="text-xs text-zinc-400 ml-auto">
                                   {review.reviewedAt ? new Date(review.reviewedAt).toLocaleDateString() : '—'}
                                 </span>
                               </div>
@@ -322,10 +322,10 @@ export const ReviewCommandCenter: React.FC<ReviewCommandCenterProps> = ({
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-medium text-zinc-800">{comment.author}</span>
-                              <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-600">
+                              <span className="text-xs px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-600">
                                 {COLLAB_TYPE_LABELS[comment.type] || comment.type}
                               </span>
-                              <span className="text-[11px] text-zinc-400 ml-auto">
+                              <span className="text-xs text-zinc-400 ml-auto">
                                 {comment.createdAt ? new Date(comment.createdAt).toLocaleDateString() : '—'}
                               </span>
                             </div>

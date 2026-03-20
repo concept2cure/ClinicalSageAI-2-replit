@@ -235,7 +235,7 @@ const Section: React.FC<{
         <span className="text-zinc-500">{icon}</span>
         <span className="text-xs font-semibold text-zinc-700 flex-1">{title}</span>
         {badge !== undefined && (
-          <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-500 font-medium">
+          <span className="text-xs px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-500 font-medium">
             {badge}
           </span>
         )}
@@ -257,8 +257,8 @@ const Row: React.FC<{ label: string; value: React.ReactNode; mono?: boolean }> =
   mono,
 }) => (
   <div className="flex items-start gap-2 py-1">
-    <span className="text-[11px] text-zinc-400 w-24 shrink-0">{label}</span>
-    <span className={`text-[11px] text-zinc-700 break-all ${mono ? 'font-mono' : ''}`}>
+    <span className="text-xs text-zinc-400 w-24 shrink-0">{label}</span>
+    <span className={`text-xs text-zinc-700 break-all ${mono ? 'font-mono' : ''}`}>
       {value || '—'}
     </span>
   </div>
@@ -469,25 +469,25 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
       <div className="px-3 py-2 border-b border-zinc-200 bg-emerald-50/30">
         <div className="flex items-center gap-2">
           <Shield className="w-3.5 h-3.5 text-emerald-600" />
-          <span className="text-[11px] font-semibold text-emerald-800">Integrity Verified</span>
-          <span className="text-[11px] font-mono text-emerald-600 ml-auto">
+          <span className="text-xs font-semibold text-emerald-800">Integrity Verified</span>
+          <span className="text-xs font-mono text-emerald-600 ml-auto">
             SHA-256: {truncHash(compliance.contentHash)}
           </span>
         </div>
         <div className="flex items-center gap-3 mt-1">
-          <span className="text-[11px] text-zinc-500">
+          <span className="text-xs text-zinc-500">
             v{editHistory.currentVersion} · {editHistory.totalVersions} version
             {editHistory.totalVersions !== 1 ? 's' : ''}
           </span>
           {compliance.signatures.length > 0 && (
-            <span className="text-[11px] text-indigo-600 flex items-center gap-0.5">
+            <span className="text-xs text-indigo-600 flex items-center gap-0.5">
               <CheckCircle className="w-3 h-3" />
               {compliance.signatures.length} signature
               {compliance.signatures.length !== 1 ? 's' : ''}
             </span>
           )}
           {compliance.lockStatus.isLocked && (
-            <span className="text-[11px] text-red-600 flex items-center gap-0.5">
+            <span className="text-xs text-red-600 flex items-center gap-0.5">
               <Lock className="w-3 h-3" /> Locked
             </span>
           )}
@@ -508,7 +508,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
               label="Status"
               value={
                 <span
-                  className={`inline-block px-1.5 py-0.5 rounded text-[11px] font-medium ${statusColor(id.status)}`}
+                  className={`inline-block px-1.5 py-0.5 rounded text-xs font-medium ${statusColor(id.status)}`}
                 >
                   {id.status}
                 </span>
@@ -530,7 +530,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
           defaultOpen={sourceInputs.length > 0}
         >
           {sourceInputs.length === 0 ? (
-            <p className="text-[11px] text-zinc-400">
+            <p className="text-xs text-zinc-400">
               No source inputs recorded. Source data (CSR references, prior submissions) will appear
               here once linked.
             </p>
@@ -540,20 +540,20 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
                 <div key={si.eventId} className="bg-zinc-50 rounded-md p-2">
                   <div className="flex items-center gap-1.5 mb-1">
                     <Database className="w-3 h-3 text-blue-500" />
-                    <span className="text-[11px] font-medium text-zinc-700">
+                    <span className="text-xs font-medium text-zinc-700">
                       {actionLabel(si.action)}
                     </span>
-                    <span className="text-[11px] text-zinc-400 ml-auto">
+                    <span className="text-xs text-zinc-400 ml-auto">
                       {formatRelative(si.timestamp)}
                     </span>
                   </div>
-                  {si.description && <p className="text-[11px] text-zinc-500">{si.description}</p>}
+                  {si.description && <p className="text-xs text-zinc-500">{si.description}</p>}
                   {si.details && Object.keys(si.details).length > 0 && (
                     <details className="mt-1">
-                      <summary className="text-[11px] text-indigo-500 cursor-pointer">
+                      <summary className="text-xs text-indigo-500 cursor-pointer">
                         View data fields
                       </summary>
-                      <div className="mt-1 text-[11px] font-mono text-zinc-500 bg-white rounded p-1.5 max-h-24 overflow-y-auto">
+                      <div className="mt-1 text-xs font-mono text-zinc-500 bg-white rounded p-1.5 max-h-24 overflow-y-auto">
                         {JSON.stringify(si.details, null, 2)}
                       </div>
                     </details>
@@ -573,7 +573,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
         >
           {generationLineage.events.length === 0 &&
           generationLineage.transformations.length === 0 ? (
-            <p className="text-[11px] text-zinc-400">
+            <p className="text-xs text-zinc-400">
               No generation events recorded. AI-assisted edits, template expansions, and content
               transforms will be logged here.
             </p>
@@ -587,32 +587,32 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
                     ) : (
                       <PenTool className="w-3 h-3 text-blue-500" />
                     )}
-                    <span className="text-[11px] font-medium text-zinc-700">
+                    <span className="text-xs font-medium text-zinc-700">
                       {actionLabel(ge.action)}
                     </span>
-                    <span className="text-[11px] text-zinc-400 ml-auto">
+                    <span className="text-xs text-zinc-400 ml-auto">
                       {formatRelative(ge.timestamp)}
                     </span>
                   </div>
                   {ge.actorName && (
-                    <div className="flex items-center gap-1 text-[11px] text-zinc-500">
+                    <div className="flex items-center gap-1 text-xs text-zinc-500">
                       <User className="w-3 h-3" /> {ge.actorName}
                     </div>
                   )}
                   {ge.description && (
-                    <p className="text-[11px] text-zinc-500 mt-0.5">{ge.description}</p>
+                    <p className="text-xs text-zinc-500 mt-0.5">{ge.description}</p>
                   )}
                   {ge.backendRoute && (
-                    <div className="flex items-center gap-1 text-[11px] text-zinc-400 mt-0.5 font-mono">
+                    <div className="flex items-center gap-1 text-xs text-zinc-400 mt-0.5 font-mono">
                       <Server className="w-3 h-3" /> {ge.backendRoute}
                     </div>
                   )}
                   {ge.details && Object.keys(ge.details).length > 0 && (
                     <details className="mt-1">
-                      <summary className="text-[11px] text-violet-500 cursor-pointer">
+                      <summary className="text-xs text-violet-500 cursor-pointer">
                         View generation details
                       </summary>
-                      <div className="mt-1 text-[11px] font-mono text-zinc-500 bg-white rounded p-1.5 max-h-32 overflow-y-auto">
+                      <div className="mt-1 text-xs font-mono text-zinc-500 bg-white rounded p-1.5 max-h-32 overflow-y-auto">
                         {JSON.stringify(ge.details, null, 2)}
                       </div>
                     </details>
@@ -623,15 +623,15 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
                 <div key={t.eventId} className="bg-amber-50/50 rounded-md p-2">
                   <div className="flex items-center gap-1.5">
                     <Activity className="w-3 h-3 text-amber-500" />
-                    <span className="text-[11px] font-medium text-zinc-700">
+                    <span className="text-xs font-medium text-zinc-700">
                       {actionLabel(t.action)}
                     </span>
-                    <span className="text-[11px] text-zinc-400 ml-auto">
+                    <span className="text-xs text-zinc-400 ml-auto">
                       {formatRelative(t.timestamp)}
                     </span>
                   </div>
                   {t.description && (
-                    <p className="text-[11px] text-zinc-500 mt-0.5">{t.description}</p>
+                    <p className="text-xs text-zinc-500 mt-0.5">{t.description}</p>
                   )}
                 </div>
               ))}
@@ -657,24 +657,24 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
               >
                 <div className="flex flex-col items-center">
                   <span
-                    className={`text-[11px] font-bold ${
+                    className={`text-xs font-bold ${
                       v.version === editHistory.currentVersion ? 'text-blue-600' : 'text-zinc-400'
                     }`}
                   >
                     v{v.version}
                   </span>
                   {v.version === editHistory.currentVersion && (
-                    <span className="text-[11px] text-blue-500">current</span>
+                    <span className="text-xs text-blue-500">current</span>
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-[11px] font-mono text-zinc-500">
+                  <div className="text-xs font-mono text-zinc-500">
                     {truncHash(v.contentHash)}
                   </div>
                   {v.changeDescription && (
-                    <p className="text-[11px] text-zinc-600 mt-0.5">{v.changeDescription}</p>
+                    <p className="text-xs text-zinc-600 mt-0.5">{v.changeDescription}</p>
                   )}
-                  <div className="text-[11px] text-zinc-400 flex items-center gap-1 mt-0.5">
+                  <div className="text-xs text-zinc-400 flex items-center gap-1 mt-0.5">
                     <Clock className="w-3 h-3" /> {formatRelative(v.createdAt)}
                   </div>
                 </div>
@@ -693,7 +693,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
         >
           {/* Integrity */}
           <div className="mb-2">
-            <div className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wide mb-1">
+            <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-1">
               Integrity
             </div>
             <Row
@@ -719,7 +719,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
               <button
                 onClick={handleVerifyIntegrity}
                 disabled={verifyingIntegrity}
-                className="flex items-center gap-1 px-2 py-1 text-[11px] rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-60 font-medium"
+                className="flex items-center gap-1 px-2 py-1 text-xs rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-60 font-medium"
               >
                 {verifyingIntegrity ? (
                   <Loader2 className="w-3 h-3 animate-spin" />
@@ -730,7 +730,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
               </button>
               {integrityResult && (
                 <div
-                  className={`mt-1.5 p-2 rounded text-[11px] ${integrityResult.verified ? 'bg-emerald-50 border border-emerald-200' : 'bg-red-50 border border-red-200'}`}
+                  className={`mt-1.5 p-2 rounded text-xs ${integrityResult.verified ? 'bg-emerald-50 border border-emerald-200' : 'bg-red-50 border border-red-200'}`}
                 >
                   <div className="flex items-center gap-1.5 font-semibold">
                     {integrityResult.verified ? (
@@ -761,12 +761,12 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
 
           {/* Version Chain */}
           <div className="mb-2">
-            <div className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wide mb-1">
+            <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-1">
               Hash Chain
             </div>
             <div className="space-y-0.5">
               {compliance.versionChain.map((vc, i) => (
-                <div key={i} className="flex items-center gap-1.5 text-[11px]">
+                <div key={i} className="flex items-center gap-1.5 text-xs">
                   <Hash className="w-3 h-3 text-zinc-400" />
                   <span className="font-mono text-zinc-500">{truncHash(vc.hash)}</span>
                   <span className="text-zinc-400">→</span>
@@ -779,7 +779,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
           {/* Signatures */}
           {compliance.signatures.length > 0 && (
             <div className="mb-2">
-              <div className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wide mb-1">
+              <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-1">
                 Electronic Signatures
               </div>
               <div className="space-y-1.5">
@@ -787,15 +787,15 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
                   <div key={sig.signatureId} className="bg-indigo-50/50 rounded-md p-2">
                     <div className="flex items-center gap-1.5">
                       <CheckCircle className="w-3 h-3 text-indigo-500" />
-                      <span className="text-[11px] font-medium text-zinc-700">
+                      <span className="text-xs font-medium text-zinc-700">
                         {sig.signerName}
                       </span>
-                      <span className={`text-[11px] px-1 rounded ${statusColor(sig.type)}`}>
+                      <span className={`text-xs px-1 rounded ${statusColor(sig.type)}`}>
                         {sig.type}
                       </span>
                     </div>
-                    <p className="text-[11px] text-zinc-500 mt-0.5">{sig.purpose}</p>
-                    <div className="text-[11px] text-zinc-400 mt-0.5">
+                    <p className="text-xs text-zinc-500 mt-0.5">{sig.purpose}</p>
+                    <div className="text-xs text-zinc-400 mt-0.5">
                       {sig.authenticationMethod}
                       {sig.secondFactorVerified && ' + 2FA'}
                       {' · '}
@@ -810,13 +810,13 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
           {/* Export Events */}
           {compliance.exportEvents.length > 0 && (
             <div>
-              <div className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wide mb-1">
+              <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-1">
                 Exports
               </div>
               {compliance.exportEvents.map(exp => (
                 <div
                   key={exp.eventId}
-                  className="flex items-center gap-1.5 text-[11px] text-zinc-500 py-0.5"
+                  className="flex items-center gap-1.5 text-xs text-zinc-500 py-0.5"
                 >
                   <Download className="w-3 h-3 text-zinc-400" />
                   {actionLabel(exp.action)}
@@ -853,13 +853,13 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
           </div>
           {placement.events.length > 0 && (
             <div>
-              <div className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wide mb-1">
+              <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mb-1">
                 Placement Events
               </div>
               {placement.events.map(pe => (
                 <div
                   key={pe.eventId}
-                  className="flex items-center gap-1.5 text-[11px] text-zinc-500 py-0.5"
+                  className="flex items-center gap-1.5 text-xs text-zinc-500 py-0.5"
                 >
                   <Layers className="w-3 h-3 text-zinc-400" />
                   {pe.description || actionLabel(pe.action)}
@@ -884,12 +884,12 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
               onChange={e => setNewComment(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleAddComment()}
               placeholder="Add a review comment..."
-              className="flex-1 px-2 py-1 text-[11px] border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-indigo-300"
+              className="flex-1 px-2 py-1 text-xs border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-indigo-300"
             />
             <button
               onClick={handleAddComment}
               disabled={addingComment || !newComment.trim()}
-              className="px-2 py-1 text-[11px] rounded bg-indigo-50 text-indigo-700 hover:bg-indigo-100 disabled:opacity-60 flex items-center gap-0.5"
+              className="px-2 py-1 text-xs rounded bg-indigo-50 text-indigo-700 hover:bg-indigo-100 disabled:opacity-60 flex items-center gap-0.5"
             >
               {addingComment ? (
                 <Loader2 className="w-3 h-3 animate-spin" />
@@ -900,11 +900,11 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
           </div>
 
           {commentsLoading ? (
-            <div className="flex items-center gap-1 text-[11px] text-zinc-400">
+            <div className="flex items-center gap-1 text-xs text-zinc-400">
               <Loader2 className="w-3 h-3 animate-spin" /> Loading comments…
             </div>
           ) : comments.length === 0 ? (
-            <p className="text-[11px] text-zinc-400">
+            <p className="text-xs text-zinc-400">
               No review comments yet. Add a comment to initiate the regulatory review workflow.
             </p>
           ) : (
@@ -912,7 +912,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
               {comments.map(c => (
                 <div
                   key={c.commentId}
-                  className={`p-2 rounded text-[11px] ${c.status === 'resolved' ? 'bg-zinc-50' : 'bg-amber-50 border border-amber-100'}`}
+                  className={`p-2 rounded text-xs ${c.status === 'resolved' ? 'bg-zinc-50' : 'bg-amber-50 border border-amber-100'}`}
                 >
                   <div className="flex items-start justify-between gap-1">
                     <div className="flex-1 min-w-0">
@@ -929,7 +929,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
                       ) : (
                         <button
                           onClick={() => handleResolveComment(c.commentId)}
-                          className="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-[11px] font-medium"
+                          className="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-medium"
                         >
                           Resolve
                         </button>
@@ -949,7 +949,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
           {onOpenCompare && (
             <button
               onClick={onOpenCompare}
-              className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-[11px] rounded bg-purple-50 text-purple-700 hover:bg-purple-100 font-medium"
+              className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs rounded bg-purple-50 text-purple-700 hover:bg-purple-100 font-medium"
             >
               <GitBranch className="w-3 h-3" />
               Compare Versions
@@ -958,7 +958,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
           {onOpenAudit && (
             <button
               onClick={onOpenAudit}
-              className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-[11px] rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-medium"
+              className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-medium"
             >
               <Shield className="w-3 h-3" />
               Audit Report
@@ -969,7 +969,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
 
       {/* Footer */}
       <div className="px-3 py-2 border-t border-zinc-200 bg-zinc-50/30 shrink-0">
-        <p className="text-[11px] text-zinc-400 text-center">
+        <p className="text-xs text-zinc-400 text-center">
           21 CFR Part 11 Compliant · Append-only audit trail · SHA-256 integrity
         </p>
       </div>

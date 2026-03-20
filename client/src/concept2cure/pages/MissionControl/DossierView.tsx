@@ -161,7 +161,7 @@ export const DossierView: React.FC<DossierViewProps> = ({
                   )}
                   <span className="text-sm font-medium text-zinc-800 flex-1">{module.label}</span>
                   {modArts.length > 0 && (
-                    <span className="text-[11px] text-zinc-500">
+                    <span className="text-xs text-zinc-500">
                       {completeness?.approved || 0}/{modArts.length}
                     </span>
                   )}
@@ -169,7 +169,7 @@ export const DossierView: React.FC<DossierViewProps> = ({
                 {isExpanded && (
                   <div className="bg-zinc-50/50">
                     {modArts.length === 0 ? (
-                      <p className="px-9 py-2 text-[11px] text-zinc-400 italic">No artifacts</p>
+                      <p className="px-9 py-2 text-xs text-zinc-400 italic">No artifacts</p>
                     ) : (
                       modArts.map((art: any) => {
                         const lc = LIFECYCLE_COLORS[art.lifecycleState] || LIFECYCLE_COLORS.planned;
@@ -187,7 +187,7 @@ export const DossierView: React.FC<DossierViewProps> = ({
                           >
                             <Icon className={cn('w-3.5 h-3.5 flex-shrink-0', lc.text)} />
                             <span className="text-xs text-zinc-700 truncate flex-1">{art.title}</span>
-                            <span className={cn('text-[11px] px-1 py-0.5 rounded', lc.bg, lc.text)}>
+                            <span className={cn('text-xs px-1 py-0.5 rounded', lc.bg, lc.text)}>
                               {art.lifecycleState}
                             </span>
                           </button>

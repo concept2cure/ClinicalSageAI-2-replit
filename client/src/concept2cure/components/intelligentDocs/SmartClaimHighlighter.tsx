@@ -93,7 +93,7 @@ export const ClaimIndicator: React.FC<{
       <button
         onClick={onClick}
         title={config.tooltip}
-        className={`inline-flex items-center justify-center w-4 h-4 ml-0.5 rounded-full text-white text-[11px] font-bold ${config.color} hover:opacity-90 transition-opacity shadow-sm`}
+        className={`inline-flex items-center justify-center w-4 h-4 ml-0.5 rounded-full text-white text-xs font-bold ${config.color} hover:opacity-90 transition-opacity shadow-sm`}
         data-testid={`button-claim-indicator-${claim.id}`}
       >
         {config.label}

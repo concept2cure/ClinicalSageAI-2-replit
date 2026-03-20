@@ -226,12 +226,12 @@ function FeedCard({
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <div className="flex items-center gap-2">
               <span
-                className={`inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded-full ${AGENCY_BADGE_STYLES[item.agency]}`}
+                className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full ${AGENCY_BADGE_STYLES[item.agency]}`}
               >
                 {item.agency}
               </span>
               <span
-                className={`inline-flex items-center text-[11px] font-medium px-2 py-0.5 rounded-full ring-1 ring-inset ${IMPACT_BADGE_STYLES[item.impactLevel]}`}
+                className={`inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-full ring-1 ring-inset ${IMPACT_BADGE_STYLES[item.impactLevel]}`}
               >
                 {item.impactLevel.charAt(0).toUpperCase() + item.impactLevel.slice(1)}
               </span>
@@ -259,7 +259,7 @@ function FeedCard({
               {item.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-zinc-50 text-zinc-500 border border-zinc-200"
+                  className="text-xs font-medium px-2 py-0.5 rounded-full bg-zinc-50 text-zinc-500 border border-zinc-200"
                 >
                   {tag}
                 </span>
@@ -325,7 +325,7 @@ function WatchlistItem({ item }: { item: IntelligenceItem }) {
           <p className="text-xs font-medium text-zinc-800 line-clamp-2 leading-snug">
             {item.title}
           </p>
-          <p className="text-[11px] text-zinc-400 mt-1">
+          <p className="text-xs text-zinc-400 mt-1">
             {item.agency} &middot; {relativeTime(item.date)}
           </p>
         </div>
@@ -340,7 +340,7 @@ function PDUFAItem({ pdufa }: { pdufa: PDUFADate }) {
     <div className="py-3 border-b border-zinc-50 last:border-0">
       <div className="flex items-start gap-3">
         <div className="w-10 text-center shrink-0">
-          <p className="text-[11px] font-semibold text-blue-600 uppercase">
+          <p className="text-xs font-semibold text-blue-600 uppercase">
             {new Date(pdufa.date).toLocaleDateString('en-US', { month: 'short' })}
           </p>
           <p className="text-lg font-bold text-zinc-800 leading-tight">
@@ -349,8 +349,8 @@ function PDUFAItem({ pdufa }: { pdufa: PDUFADate }) {
         </div>
         <div className="min-w-0">
           <p className="text-xs font-semibold text-zinc-800">{pdufa.drug}</p>
-          <p className="text-[11px] text-zinc-500">{pdufa.sponsor}</p>
-          <p className="text-[11px] text-zinc-400 mt-0.5 line-clamp-1">{pdufa.indication}</p>
+          <p className="text-xs text-zinc-500">{pdufa.sponsor}</p>
+          <p className="text-xs text-zinc-400 mt-0.5 line-clamp-1">{pdufa.indication}</p>
         </div>
       </div>
     </div>
@@ -684,7 +684,7 @@ const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({
               <h1 className="text-xl font-semibold text-zinc-900 tracking-tight">
                 Regulatory Intelligence
               </h1>
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700">
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700">
                 <Radio size={11} className="animate-pulse" />
                 Live
               </span>

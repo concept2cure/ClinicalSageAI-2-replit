@@ -131,7 +131,7 @@ const PredicatePathfinder: React.FC<PredicatePathfinderProps> = ({ onSelectPredi
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-medium text-blue-600">{predicate.kNumber}</span>
                       <span className={cn(
-                        "px-1.5 py-0.5 rounded text-[11px] font-medium",
+                        "px-1.5 py-0.5 rounded text-xs font-medium",
                         predicate.decisionType === 'SE' 
                           ? "bg-emerald-100 text-emerald-700"
                           : "bg-red-100 text-red-700"
@@ -139,7 +139,7 @@ const PredicatePathfinder: React.FC<PredicatePathfinderProps> = ({ onSelectPredi
                         {predicate.decisionType}
                       </span>
                       {predicate.similarityScore && (
-                        <span className="px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 text-[11px] font-medium">
+                        <span className="px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 text-xs font-medium">
                           {Math.round(predicate.similarityScore * 100)}% match
                         </span>
                       )}

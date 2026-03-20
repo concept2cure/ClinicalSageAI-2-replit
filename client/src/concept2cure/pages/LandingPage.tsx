@@ -548,7 +548,7 @@ function PlatformMockup() {
         </div>
         <div>
           <div className="text-xs font-semibold text-zinc-900">AnA 1.0</div>
-          <div className="text-[11px] text-zinc-500">AI Co-Pilot Active</div>
+          <div className="text-xs text-zinc-500">AI Co-Pilot Active</div>
         </div>
       </motion.div>
       <motion.div
@@ -562,7 +562,7 @@ function PlatformMockup() {
         </div>
         <div>
           <div className="text-xs font-semibold text-zinc-900">Part 11 Verified</div>
-          <div className="text-[11px] text-zinc-500">Audit trail active</div>
+          <div className="text-xs text-zinc-500">Audit trail active</div>
         </div>
       </motion.div>
     </div>
@@ -941,7 +941,7 @@ export const LandingPage: React.FC = () => {
                 variants={fadeIn}
                 className="relative px-3 py-2.5 rounded-lg bg-white/5 border border-white/10 text-xs text-zinc-500 text-center"
               >
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500/80 flex items-center justify-center text-[11px] text-white">&#10005;</span>
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500/80 flex items-center justify-center text-xs text-white">&#10005;</span>
                 {tool}
               </motion.div>
             ))}
@@ -1003,7 +1003,7 @@ export const LandingPage: React.FC = () => {
                     </div>
                     <div className="text-right">
                       <div className="text-lg font-bold text-blue-600">{f.stat}</div>
-                      <div className="text-[11px] text-zinc-500 uppercase tracking-wide">{f.statLabel}</div>
+                      <div className="text-xs text-zinc-500 uppercase tracking-wide">{f.statLabel}</div>
                     </div>
                   </div>
                   <h3 className="text-lg font-semibold text-zinc-900 mb-2">{f.title}</h3>
@@ -1101,7 +1101,7 @@ export const LandingPage: React.FC = () => {
                     <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
                     <span className="text-xs font-semibold text-zinc-900">{agent.name}</span>
                   </div>
-                  <p className="text-[11px] text-zinc-500 leading-relaxed">{agent.desc}</p>
+                  <p className="text-xs text-zinc-500 leading-relaxed">{agent.desc}</p>
                 </motion.div>
               ))}
             </motion.div>
@@ -1134,7 +1134,7 @@ export const LandingPage: React.FC = () => {
                   </div>
                   <div>
                     <div className="font-semibold text-sm">AnA SnowGlobe</div>
-                    <div className="text-[11px] text-indigo-300">Predictive Intelligence Engine</div>
+                    <div className="text-xs text-indigo-300">Predictive Intelligence Engine</div>
                   </div>
                 </div>
                 <p className="text-xs text-indigo-200 leading-relaxed">
@@ -1152,7 +1152,7 @@ export const LandingPage: React.FC = () => {
                   </div>
                   <div>
                     <div className="font-semibold text-sm text-zinc-900">Dr. Sage</div>
-                    <div className="text-[11px] text-zinc-500">Academy &amp; Contextual Guidance</div>
+                    <div className="text-xs text-zinc-500">Academy &amp; Contextual Guidance</div>
                   </div>
                 </div>
                 <p className="text-xs text-zinc-600 leading-relaxed">

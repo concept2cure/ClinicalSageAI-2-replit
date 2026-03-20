@@ -128,7 +128,7 @@ function Card({ children, className }: { children: React.ReactNode; className?: 
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <p className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider mb-3">{children}</p>;
+  return <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-3">{children}</p>;
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -312,7 +312,7 @@ function DashboardView({ programs, riskSignals, summary, isLoading }: {
               ))}
             </div>
           )}
-          <p className="text-[11px] text-zinc-400 mt-3">Powered by Mission Control + Submission Readiness Twin</p>
+          <p className="text-xs text-zinc-400 mt-3">Powered by Mission Control + Submission Readiness Twin</p>
         </div>
       </div>
     </div>
@@ -435,7 +435,7 @@ function SubmissionsView({ programs }: { programs: any[] }) {
           )}
         </>
       )}
-      <p className="text-[11px] text-zinc-400">Powered by Submission Ops Command Center</p>
+      <p className="text-xs text-zinc-400">Powered by Submission Ops Command Center</p>
     </div>
   );
 }
@@ -484,14 +484,14 @@ function WorkflowsView({ firstProjectId }: { firstProjectId: string | null }) {
               <div key={col.key}>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-medium text-zinc-600">{col.label}</span>
-                  <span className="text-[11px] text-zinc-400 bg-zinc-50 px-1.5 py-0.5 rounded">{colTasks.length}</span>
+                  <span className="text-xs text-zinc-400 bg-zinc-50 px-1.5 py-0.5 rounded">{colTasks.length}</span>
                 </div>
                 <div className="space-y-2">
                   {colTasks.map((t) => (
                     <Card key={t.id} className="p-3">
                       <p className="text-xs font-medium text-zinc-900 mb-2 leading-snug">{t.title}</p>
                       <div className="flex items-center justify-between">
-                        <span className="text-[11px] text-zinc-400">{t.assignee}</span>
+                        <span className="text-xs text-zinc-400">{t.assignee}</span>
                         <Pill text={t.priority} className={SEVERITY_STYLES[t.priority]} />
                       </div>
                     </Card>
@@ -503,7 +503,7 @@ function WorkflowsView({ firstProjectId }: { firstProjectId: string | null }) {
         </div>
       )}
 
-      <p className="text-[11px] text-zinc-400">Powered by Workflow Engine + Task Management + Automation</p>
+      <p className="text-xs text-zinc-400">Powered by Workflow Engine + Task Management + Automation</p>
     </div>
   );
 }
@@ -536,7 +536,7 @@ function VaultView({ documents }: { documents: any[] }) {
         ].map(s => (
           <Card key={s.label} className="p-3 text-center">
             <div className={cn('text-lg font-semibold', s.color)}>{s.value}</div>
-            <div className="text-[11px] text-zinc-400 uppercase tracking-wider">{s.label}</div>
+            <div className="text-xs text-zinc-400 uppercase tracking-wider">{s.label}</div>
           </Card>
         ))}
       </div>
@@ -549,7 +549,7 @@ function VaultView({ documents }: { documents: any[] }) {
         </Card>
       ) : (
         <Card className="p-0">
-          <div className="grid grid-cols-[1fr_100px_60px_100px_100px_100px] gap-2 px-4 py-2 border-b border-zinc-50 text-[11px] text-zinc-400 uppercase tracking-wider font-medium">
+          <div className="grid grid-cols-[1fr_100px_60px_100px_100px_100px] gap-2 px-4 py-2 border-b border-zinc-50 text-xs text-zinc-400 uppercase tracking-wider font-medium">
             <span>Name</span><span>Type</span><span>Ver</span><span>Status</span><span>Modified</span><span>Owner</span>
           </div>
           {documents.map((d) => (
@@ -604,7 +604,7 @@ function VaultView({ documents }: { documents: any[] }) {
           </div>
         </Card>
       )}
-      <p className="text-[11px] text-zinc-400">21 CFR Part 11 Compliant · SHA-256 Content Hashing · Full Audit Trail</p>
+      <p className="text-xs text-zinc-400">21 CFR Part 11 Compliant · SHA-256 Content Hashing · Full Audit Trail</p>
     </div>
   );
 }
@@ -628,7 +628,7 @@ function NegotiationsView() {
         <p className="text-xs text-zinc-400 mt-1">Use AnA to schedule and track agency interactions.</p>
       </Card>
 
-      <p className="text-[11px] text-zinc-400">Powered by Regulatory Negotiation Logbook</p>
+      <p className="text-xs text-zinc-400">Powered by Regulatory Negotiation Logbook</p>
     </div>
   );
 }
@@ -670,7 +670,7 @@ function TeamView({ activities }: { activities: { time: string; user: string; ac
                     <p className="text-xs text-zinc-600">
                       <span className="font-medium text-zinc-900">{a.user}</span> {a.action}
                     </p>
-                    <p className="text-[11px] text-zinc-400">{a.time}</p>
+                    <p className="text-xs text-zinc-400">{a.time}</p>
                   </div>
                 </div>
               ))}
@@ -678,7 +678,7 @@ function TeamView({ activities }: { activities: { time: string; user: string; ac
           )}
         </Card>
       </div>
-      <p className="text-[11px] text-zinc-400">Powered by Collaboration Hub + Team Workspace</p>
+      <p className="text-xs text-zinc-400">Powered by Collaboration Hub + Team Workspace</p>
     </div>
   );
 }
@@ -726,7 +726,7 @@ function AnalyticsView({ programs, summary }: {
       <div className="grid grid-cols-5 gap-4">
         {portfolio.map((m) => (
           <Card key={m.label}>
-            <p className="text-[11px] text-zinc-400 uppercase tracking-wider mb-1">{m.label}</p>
+            <p className="text-xs text-zinc-400 uppercase tracking-wider mb-1">{m.label}</p>
             <p className="text-xl font-semibold text-zinc-900">{m.value}</p>
           </Card>
         ))}
@@ -778,7 +778,7 @@ function AnalyticsView({ programs, summary }: {
         </Card>
       </div>
 
-      <p className="text-[11px] text-zinc-400">Powered by Program Analytics + Portfolio Analytics + Reports</p>
+      <p className="text-xs text-zinc-400">Powered by Program Analytics + Portfolio Analytics + Reports</p>
     </div>
   );
 }

@@ -283,21 +283,21 @@ export const EvidenceManager: React.FC<EvidenceManagerProps> = ({ programId }) =
                             <p className="text-sm font-medium text-zinc-800 truncate">{ev.title}</p>
                           </div>
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-600">
+                            <span className="text-xs px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-600">
                               {TYPE_LABELS[ev.type] || ev.type}
                             </span>
-                            <span className={cn('text-[11px] px-1.5 py-0.5 rounded-full', sColors.bg, sColors.text)}>
+                            <span className={cn('text-xs px-1.5 py-0.5 rounded-full', sColors.bg, sColors.text)}>
                               {ev.strength}
                             </span>
                             {artCount > 0 && (
-                              <span className="text-[11px] text-zinc-500 flex items-center gap-0.5">
+                              <span className="text-xs text-zinc-500 flex items-center gap-0.5">
                                 <Link2 className="w-2.5 h-2.5" />
                                 {artCount}
                               </span>
                             )}
                           </div>
                           {ev.source && (
-                            <p className="text-[11px] text-zinc-400 mt-1 truncate">{ev.source}</p>
+                            <p className="text-xs text-zinc-400 mt-1 truncate">{ev.source}</p>
                           )}
                         </div>
                         <ChevronRight className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0 mt-1" />

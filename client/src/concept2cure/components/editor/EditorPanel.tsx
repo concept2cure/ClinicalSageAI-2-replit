@@ -908,14 +908,14 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 Clear
               </button>
             )}
-            <span className="text-[11px] text-zinc-400 ml-auto">
+            <span className="text-xs text-zinc-400 ml-auto">
               {filtered.length} of {artifacts.length}
             </span>
           </div>
         )}
 
-        {/* New doc input */}
-        <div className="p-3 border-b border-zinc-200">
+        {/* New doc creation — enhanced with quick templates */}
+        <div className="p-3 border-b border-zinc-200 space-y-2.5">
           <div className="flex gap-2">
             <input
               type="text"
@@ -923,12 +923,12 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               onChange={e => setNewDocTitle(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleCreateNew()}
               placeholder="New document title..."
-              className="flex-1 px-3 py-1.5 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+              className="flex-1 px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/30"
             />
             <button
               onClick={handleCreateNew}
               disabled={creatingNew || !newDocTitle.trim()}
-              className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60 flex items-center gap-1"
+              className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60 flex items-center gap-1.5 shadow-sm"
             >
               {creatingNew ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -937,6 +937,24 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               )}
               Create
             </button>
+          </div>
+          {/* Quick-start templates */}
+          <div className="flex flex-wrap gap-1.5">
+            {[
+              { label: 'Clinical Study Report', prefix: 'CSR' },
+              { label: 'Regulatory Narrative', prefix: 'RN' },
+              { label: 'Module 2.5 Overview', prefix: 'M2.5' },
+              { label: 'Device Description', prefix: 'DD' },
+              { label: 'Risk Analysis', prefix: 'RA' },
+            ].map(tpl => (
+              <button
+                key={tpl.prefix}
+                onClick={() => setNewDocTitle(tpl.label)}
+                className="text-xs px-2.5 py-1 rounded-md border border-zinc-200 text-zinc-500 hover:border-blue-200 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+              >
+                {tpl.prefix}: {tpl.label}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -1005,7 +1023,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                     <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
                       <span
                         className={cn(
-                          'inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wide',
+                          'inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wide',
                           a.status === 'approved'
                             ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
                             : a.status === 'locked'
@@ -1024,15 +1042,15 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   {/* Metadata row */}
                   <div className="flex items-center gap-1.5 mt-1.5">
                     {a.ctdSection && (
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-violet-50 text-violet-600 text-[11px] font-semibold ring-1 ring-violet-200/60 tracking-wide">
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-violet-50 text-violet-600 text-xs font-semibold ring-1 ring-violet-200/60 tracking-wide">
                         CTD {a.ctdSection}
                       </span>
                     )}
-                    <span className="text-[11px] text-zinc-400">{a.type?.replace(/_/g, ' ')}</span>
+                    <span className="text-xs text-zinc-400">{a.type?.replace(/_/g, ' ')}</span>
                     <span className="text-zinc-400">&middot;</span>
-                    <span className="text-[11px] text-zinc-400 tabular-nums">v{a.version}</span>
+                    <span className="text-xs text-zinc-400 tabular-nums">v{a.version}</span>
                     <span className="text-zinc-400">&middot;</span>
-                    <span className="text-[11px] text-zinc-400 tabular-nums">
+                    <span className="text-xs text-zinc-400 tabular-nums">
                       {new Date(a.updatedAt || a.createdAt).toLocaleDateString()}
                     </span>
                   </div>
@@ -1103,43 +1121,51 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
         {/* Trust indicators strip — clickable pills */}
         {activeArtifact && (
-          <div className="flex items-center gap-2 ml-2">
+          <div className="flex items-center gap-1.5 ml-3">
             <button
               onClick={() => toggleInspector('compare')}
-              className="text-xs text-zinc-500 tabular-nums font-medium hover:text-blue-600 transition-colors cursor-pointer"
-              title="Open version compare"
+              className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-zinc-100 text-zinc-600 font-medium tabular-nums hover:bg-zinc-200 transition-colors cursor-pointer"
+              title="Open version compare — click to see all versions"
             >
+              <GitCompare className="w-3 h-3" />
               v{activeArtifact.version}
             </button>
             {signatures.length > 0 && (
               <button
                 onClick={() => toggleInspector('audit')}
-                className="text-xs px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-semibold ring-1 ring-emerald-200/60 tabular-nums hover:bg-emerald-100 transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 font-semibold ring-1 ring-emerald-200/60 tabular-nums hover:bg-emerald-100 transition-colors cursor-pointer"
                 title="View signatures in audit trail"
               >
+                <PenTool className="w-3 h-3" />
                 {signatures.length} sig{signatures.length !== 1 ? 's' : ''}
               </button>
             )}
             {provenanceCount > 0 && (
               <button
                 onClick={() => toggleInspector('provenance')}
-                className="text-xs px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 font-semibold ring-1 ring-blue-200/60 tabular-nums hover:bg-blue-100 transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 font-semibold ring-1 ring-blue-200/60 tabular-nums hover:bg-blue-100 transition-colors cursor-pointer"
                 title="Open provenance timeline"
               >
+                <ShieldCheck className="w-3 h-3" />
                 {provenanceCount} event{provenanceCount !== 1 ? 's' : ''}
               </button>
             )}
             {integrityVerified !== null && (
               <button
                 onClick={() => toggleInspector('audit')}
-                className={`text-[11px] px-1.5 py-0.5 rounded font-semibold ring-1 cursor-pointer transition-colors ${integrityVerified ? 'bg-emerald-50 text-emerald-600 ring-emerald-200/60 hover:bg-emerald-100' : 'bg-red-50 text-red-600 ring-red-200/60 hover:bg-red-100'}`}
-                title={
+                className={cn(
+                  'inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg font-semibold ring-1 cursor-pointer transition-colors',
                   integrityVerified
-                    ? 'Integrity verified — view audit'
-                    : 'Integrity modified — view audit'
-                }
+                    ? 'bg-emerald-50 text-emerald-600 ring-emerald-200/60 hover:bg-emerald-100'
+                    : 'bg-red-50 text-red-600 ring-red-200/60 hover:bg-red-100'
+                )}
+                title={integrityVerified ? 'Integrity verified — view audit' : 'Integrity modified — view audit'}
               >
-                {integrityVerified ? '✓ verified' : '✗ modified'}
+                {integrityVerified ? (
+                  <><CheckCircle className="w-3 h-3" /> Verified</>
+                ) : (
+                  <><AlertTriangle className="w-3 h-3" /> Modified</>
+                )}
               </button>
             )}
           </div>
@@ -1316,31 +1342,87 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         </div>
       </div>
 
-      {/* ── Contextual banners (only when relevant) ──────────────────────── */}
+      {/* ── AI Suggestion Diff Panel ──────────────────────────────────────── */}
       {aiResult && (
-        <div className="border-b border-amber-200 bg-amber-50/80 px-3 py-2">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-semibold text-amber-800 flex items-center gap-1">
-              <Sparkles className="w-3 h-3" /> RI Suggestion
-            </span>
-            <div className="flex gap-1.5">
-              <button
-                onClick={handleAcceptAI}
-                className="px-2 py-0.5 text-[11px] bg-emerald-600 text-white rounded hover:bg-emerald-700"
-              >
-                Accept
-              </button>
+        <div className="border-b border-violet-200 bg-gradient-to-r from-violet-50/80 to-blue-50/60">
+          {/* Header bar */}
+          <div className="flex items-center justify-between px-4 py-2.5 border-b border-violet-100">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-md bg-violet-100 flex items-center justify-center">
+                <Sparkles className="w-3.5 h-3.5 text-violet-600" />
+              </div>
+              <span className="text-sm font-semibold text-violet-900">AI Suggestion</span>
+              <span className="text-xs text-violet-500 ml-1">Review changes before applying</span>
+            </div>
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => setAiResult(null)}
-                className="px-2 py-0.5 text-[11px] bg-zinc-200 text-zinc-600 rounded hover:bg-zinc-300"
+                className="px-3 py-1.5 text-xs font-medium text-zinc-600 bg-white border border-zinc-200 rounded-lg hover:bg-zinc-50 transition-colors"
               >
                 Dismiss
               </button>
+              <button
+                onClick={handleAcceptAI}
+                className="px-4 py-1.5 text-xs font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm flex items-center gap-1.5"
+              >
+                <Check className="w-3.5 h-3.5" />
+                Apply Changes
+              </button>
             </div>
           </div>
-          <div className="text-xs text-amber-900 max-h-24 overflow-y-auto whitespace-pre-wrap leading-relaxed">
-            {aiResult}
+          {/* Diff content */}
+          <div className="flex gap-0 max-h-64 overflow-hidden">
+            {/* Current content */}
+            <div className="flex-1 border-r border-violet-100 overflow-hidden">
+              <div className="px-3 py-1.5 bg-red-50/60 border-b border-red-100">
+                <span className="text-xs font-medium text-red-700 flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-red-400" /> Current
+                </span>
+              </div>
+              <div className="px-4 py-3 text-sm text-zinc-700 overflow-y-auto max-h-48 zen-scroll leading-relaxed">
+                {activeArtifact?.content
+                  ? activeArtifact.content
+                      .replace(/<[^>]+>/g, ' ')
+                      .replace(/\s+/g, ' ')
+                      .trim()
+                      .slice(0, 800)
+                  : 'No content yet'}
+                {(activeArtifact?.content?.length ?? 0) > 800 && (
+                  <span className="text-zinc-400"> ...</span>
+                )}
+              </div>
+            </div>
+            {/* Suggested content */}
+            <div className="flex-1 overflow-hidden">
+              <div className="px-3 py-1.5 bg-emerald-50/60 border-b border-emerald-100">
+                <span className="text-xs font-medium text-emerald-700 flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400" /> Suggested
+                </span>
+              </div>
+              <div className="px-4 py-3 text-sm text-zinc-700 overflow-y-auto max-h-48 zen-scroll leading-relaxed">
+                {aiResult.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 800)}
+                {aiResult.length > 800 && <span className="text-zinc-400"> ...</span>}
+              </div>
+            </div>
           </div>
+        </div>
+      )}
+
+      {/* ── AI Loading Indicator ──────────────────────────────────────────── */}
+      {aiLoading && (
+        <div className="border-b border-violet-200 bg-violet-50/60 px-4 py-3 flex items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
+            <div className="w-2 h-2 rounded-full bg-violet-400 animate-pulse [animation-delay:150ms]" />
+            <div className="w-2 h-2 rounded-full bg-violet-400 animate-pulse [animation-delay:300ms]" />
+          </div>
+          <span className="text-sm text-violet-700 font-medium">Generating AI suggestion...</span>
+          <button
+            onClick={() => setAiLoading(false)}
+            className="ml-auto text-xs text-violet-500 hover:text-violet-700"
+          >
+            Cancel
+          </button>
         </div>
       )}
 
@@ -1381,7 +1463,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           )}
           Claim Check — {claimResult.supported ? 'Supported by Precedents' : 'Needs Evidence'}
           {claimResult.warnings?.length > 0 && (
-            <span className="text-[11px] opacity-70">({claimResult.warnings.length} warnings)</span>
+            <span className="text-xs opacity-70">({claimResult.warnings.length} warnings)</span>
           )}
           <button
             onClick={() => setClaimResult(null)}
@@ -1421,7 +1503,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
       {/* ── Document Lifecycle Pipeline ──────────────────────────────── */}
       {activeArtifact && (
-        <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-zinc-200 bg-zinc-50/30">
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-zinc-200 bg-zinc-50/30">
           {(['draft', 'review', 'approved', 'locked'] as const).map((stage, idx, arr) => {
             const currentStatus = activeArtifact.status || 'draft';
             const stageOrder = { draft: 0, review: 1, approved: 2, locked: 3 };
@@ -1431,67 +1513,83 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             const isCurrent = stage === currentStatus;
             const stageLabels: Record<string, string> = {
               draft: 'Draft',
-              review: 'Review',
+              review: 'In Review',
               approved: 'Approved',
               locked: 'Published',
             };
+            const stageDescriptions: Record<string, string> = {
+              draft: 'Document is being authored',
+              review: 'Submitted for peer/regulatory review',
+              approved: 'Content approved by reviewer',
+              locked: 'Locked for submission — read only',
+            };
             const stageColors: Record<string, string> = {
-              draft: 'bg-zinc-200 text-zinc-700',
-              review: 'bg-amber-100 text-amber-700',
-              approved: 'bg-emerald-100 text-emerald-700',
-              locked: 'bg-blue-100 text-blue-700',
+              draft: 'bg-zinc-100 text-zinc-700 border-zinc-200',
+              review: 'bg-amber-50 text-amber-700 border-amber-200',
+              approved: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+              locked: 'bg-blue-50 text-blue-700 border-blue-200',
             };
             return (
               <React.Fragment key={stage}>
                 <button
                   onClick={() => {
                     if (stage !== currentStatus && !changingStatus) {
-                      handleStatusChange(stage);
+                      if (stage === 'locked' || stage === 'approved') {
+                        if (confirm(`${stageLabels[stage]}: ${stageDescriptions[stage]}. Proceed?`)) {
+                          handleStatusChange(stage);
+                        }
+                      } else {
+                        handleStatusChange(stage);
+                      }
                     }
                   }}
                   disabled={changingStatus}
+                  title={stageDescriptions[stage]}
                   className={cn(
-                    'flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition-all',
+                    'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all border',
                     isCurrent
-                      ? `${stageColors[stage]} ring-1 ring-current/20 shadow-sm`
+                      ? `${stageColors[stage]} shadow-sm`
                       : isCompleted
-                        ? 'bg-emerald-50 text-emerald-500'
-                        : 'bg-zinc-50 text-zinc-400 hover:bg-zinc-100'
+                        ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                        : 'bg-white text-zinc-400 border-zinc-200 hover:bg-zinc-50 hover:text-zinc-600'
                   )}
                 >
                   {isCompleted ? (
-                    <CheckCircle className="w-3 h-3" />
+                    <CheckCircle className="w-3.5 h-3.5" />
                   ) : isCurrent ? (
-                    <div className="w-2 h-2 rounded-full bg-current animate-pulse" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-current animate-pulse" />
                   ) : (
-                    <div className="w-2 h-2 rounded-full border border-current" />
+                    <div className="w-2.5 h-2.5 rounded-full border-2 border-current" />
                   )}
                   {stageLabels[stage]}
                 </button>
                 {idx < arr.length - 1 && (
-                  <ArrowRight className={cn('w-3 h-3', isCompleted ? 'text-emerald-400' : 'text-zinc-200')} />
+                  <div className={cn(
+                    'w-6 h-px',
+                    isCompleted ? 'bg-emerald-300' : 'bg-zinc-200'
+                  )} />
                 )}
               </React.Fragment>
             );
           })}
-          {/* Claim status + last updated (merged from old micro-bar) */}
-          <div className="flex items-center gap-2 ml-auto text-[11px] text-zinc-400">
+          {/* Claim status + last updated */}
+          <div className="flex items-center gap-3 ml-auto text-xs text-zinc-400">
             {claimStatus === 'checking' && (
-              <span className="text-blue-500 flex items-center gap-1">
+              <span className="text-blue-500 flex items-center gap-1.5 bg-blue-50 px-2.5 py-1 rounded-md">
                 <Loader2 className="w-3 h-3 animate-spin" /> Checking claims
               </span>
             )}
             {claimStatus === 'supported' && (
-              <span className="text-emerald-600 font-medium flex items-center gap-1">
+              <span className="text-emerald-600 font-medium flex items-center gap-1.5 bg-emerald-50 px-2.5 py-1 rounded-md">
                 <CheckCircle className="w-3 h-3" /> Claims supported
               </span>
             )}
             {claimStatus === 'needs-evidence' && (
-              <span className="text-amber-600 font-medium flex items-center gap-1">
+              <span className="text-amber-600 font-medium flex items-center gap-1.5 bg-amber-50 px-2.5 py-1 rounded-md">
                 <AlertTriangle className="w-3 h-3" /> Needs evidence
               </span>
             )}
-            <span className="tabular-nums">
+            <span className="tabular-nums text-zinc-500">
               {new Date(activeArtifact.updatedAt || activeArtifact.createdAt).toLocaleString(
                 undefined,
                 { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }
