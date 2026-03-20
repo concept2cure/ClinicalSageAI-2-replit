@@ -22,8 +22,6 @@
  * @license Proprietary - Concept2Cure Inc.
  */
 
-import type OpenAI from 'openai';
-import { getOpenAIClient } from './openai-client';
 import Anthropic from '@anthropic-ai/sdk';
 import pg from 'pg';
 import { randomUUID } from 'node:crypto';

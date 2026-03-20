@@ -13,9 +13,9 @@
  * @compliance FDA 21 CFR Part 11 — all figure generation is audited
  */
 
-import { getOpenAIClient } from './openai-client';
 import { pool } from '../db.js';
 import crypto from 'crypto';
+import { ai } from '../lib/unified-ai-client';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -276,9 +276,8 @@ export async function generateFigure(
       return buildPlaceholderFigure(request, figureId, figureNumber, format);
     }
 
-    const openai = getOpenAIClient();
     const model = process.env.OPENAI_MODEL || 'gpt-4o';
-    const completion = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model,
       temperature: 0.1,
       max_tokens: 4000,
@@ -288,7 +287,7 @@ export async function generateFigure(
       ],
     });
 
-    const content = completion.choices[0]?.message?.content || '';
+    const content = aiResult.content || '';
     const tokensUsed = completion.usage?.total_tokens;
 
     // 6. Build figure spec
@@ -370,10 +369,9 @@ export async function autoInsertFigures(params: {
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) return results;
 
-    const openai = getOpenAIClient();
     const model = process.env.OPENAI_MODEL || 'gpt-4o';
 
-    const analysis = await openai.chat.completions.create({
+    const analysis = await ai.chat({
       model,
       temperature: 0.1,
       max_tokens: 2000,

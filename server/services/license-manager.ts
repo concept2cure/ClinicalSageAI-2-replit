@@ -233,6 +233,16 @@ export const FEATURE_TIER_MAP: Record<string, string> = {
   ema_connector: 'standard',
   pubmed_connector: 'free',
   clinical_trials_gov: 'free',
+  ana_platform_control: 'standard',       // Ana agentic platform control
+  ana_settings_management: 'standard',     // Ana can manage org settings
+  ana_project_management: 'standard',      // Ana can create/configure projects
+  ana_module_control: 'standard',          // Ana can toggle feature modules
+  ana_onboarding: 'standard',             // Ana can run org onboarding
+  ana_compliance_config: 'standard',       // Ana can set compliance defaults
+  ana_ai_config: 'standard',              // Ana can configure AI behavior
+  ana_usage_analysis: 'standard',          // Ana can analyze usage & recommend
+  safety_narrative: 'standard',
+  intelligent_reports: 'standard',
 
   // Professional tier (Growth $1,499/mo)
   ctd_builder: 'professional',
@@ -243,12 +253,18 @@ export const FEATURE_TIER_MAP: Record<string, string> = {
   nmpa_connector: 'professional',
   document_builder: 'professional',
   biostatistics: 'professional',
+  statistical_defensibility: 'professional',
+  cmc_blueprint: 'professional',
+  ana_proactive_mode: 'professional',      // Ana proactive regulatory alerts
+  ana_auto_remediate: 'professional',      // Ana auto-fix detected issues
 
   // Enterprise tier
   unlimited_research: 'enterprise',
   api_access: 'enterprise',
   sso: 'enterprise',
   custom_integrations: 'enterprise',
+  ana_autonomous_actions: 'enterprise',    // Full autonomous agentic control
+  electronic_signatures: 'enterprise',
 };
 
 /**

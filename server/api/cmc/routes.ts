@@ -596,4 +596,66 @@ router.put('/comparability-studies/:id', async (req, res) => {
   }
 });
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// ENHANCED BLUEPRINT GENERATION (CMCHub)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * POST /api/cmc/generate-enhanced-blueprint
+ * Generate ICH Q-series compliant Module 3.2.S/P section content
+ */
+router.post('/generate-enhanced-blueprint', async (req: express.Request, res: express.Response) => {
+  try {
+    const { projectId, section, drugSubstance, drugProduct, submissionType } = req.body;
+
+    if (!section) {
+      return res.status(400).json({ success: false, error: 'section is required' });
+    }
+
+    // Build prompt context from drug substance/product form data
+    const dsInfo = drugSubstance
+      ? `Drug Substance: ${drugSubstance.name || 'N/A'}, INN: ${drugSubstance.inn || 'N/A'}, Route: ${drugSubstance.route || 'N/A'}, Dosage Form: ${drugSubstance.dosageForm || 'N/A'}`
+      : 'Drug substance information not provided.';
+    const dpInfo = drugProduct
+      ? `Drug Product: ${drugProduct.name || 'N/A'}, Strength: ${drugProduct.strength || 'N/A'}, Container: ${drugProduct.container || 'N/A'}`
+      : 'Drug product information not provided.';
+
+    const { ai: aiClient } = await import('../../lib/unified-ai-client.js');
+
+    const result = await aiClient.chat(
+      [
+        {
+          role: 'system',
+          content: `You are a CMC regulatory writer generating Module 3 content for an ${submissionType || 'IND'} submission following ICH Q1-Q14 guidelines. Generate a compliant draft for section ${section} with regulatory-grade technical language. Include relevant specifications, acceptance criteria, and cross-references to ICH guidelines where applicable.`,
+        },
+        {
+          role: 'user',
+          content: `Generate section ${section} content.
+
+${dsInfo}
+${dpInfo}
+Submission Type: ${submissionType || 'IND'}
+Project ID: ${projectId || 'N/A'}
+
+Write a comprehensive draft for this CMC section following ICH guidelines.`,
+        },
+      ],
+      { taskType: 'regulatory_review', temperature: 0.3, maxTokens: 3000, callerModule: 'cmc-blueprint-generator' }
+    );
+
+    res.json({
+      success: true,
+      data: {
+        section,
+        content: result.content || '',
+        wordCount: (result.content || '').split(/\s+/).length,
+        submissionType: submissionType || 'IND',
+      },
+    });
+  } catch (error: any) {
+    console.error('CMC blueprint generation error:', error);
+    res.status(500).json({ success: false, error: error.message || 'Generation failed' });
+  }
+});
+
 export default router;

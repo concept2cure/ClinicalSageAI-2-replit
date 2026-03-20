@@ -15,7 +15,6 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
-import { ai } from '../lib/unified-ai-client';
 import { createScopedLogger } from '../utils/logger';
 import { requireAuth } from '../middleware/auth.js';
 import { buildContextAwarePrompt } from '../services/lumen-context-builder.js';
@@ -31,6 +30,7 @@ import { pool } from '../db.js';
 import jwt from 'jsonwebtoken';
 import { getTool, toOpenAITools, fromOpenAIName, logToolRun } from '../services/toolRegistry';
 import '../services/tools/index'; // ensure tools are registered
+import { ai } from '../lib/unified-ai-client';
 
 const logger = createScopedLogger('cortex-unified');
 const router = Router();
@@ -187,7 +187,7 @@ function ensureChatGateway() {
  */
 router.post('/chat', requireAuth, async (req: Request, res: Response) => {
   try {
-    const { message, thread_id, project_id, submission_type, system_prompt, stream, section_code } =
+    const { message, thread_id, project_id, submission_type, system_prompt, stream, section_code, chatMode, context: clientContext } =
       req.body || {};
 
     if (!message || typeof message !== 'string') {
@@ -208,14 +208,28 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
     }
 
     // Build context-aware system prompt (with optional section-specific guidance)
-    const { systemPrompt, context } = await buildContextAwarePrompt({
+    // Augment with chatMode and client context when sent from AnaPersistentPanel
+    let modePrefix = '';
+    if (chatMode === 'standard' || !chatMode) {
+      // Standard AnA co-pilot mode — inject screen context if available
+      if (clientContext?.screen) {
+        modePrefix = `The user is currently on the "${clientContext.screen}" screen.`;
+        if (clientContext.project) modePrefix += ` Active project: ${clientContext.project}.`;
+        if (clientContext.userRole) modePrefix += ` User role: ${clientContext.userRole}.`;
+        modePrefix += '\nAdapt your responses to be relevant to their current workflow context.\n\n';
+      }
+    }
+
+    const { systemPrompt: baseSystemPrompt, context } = await buildContextAwarePrompt({
       projectId: numericProjectId,
       organizationId,
       userId,
-      submissionType: submission_type,
+      submissionType: submission_type || clientContext?.productType,
       customSystemPrompt: system_prompt,
       sectionCode: section_code || undefined,
     });
+
+    const systemPrompt = modePrefix ? `${modePrefix}${baseSystemPrompt}` : baseSystemPrompt;
 
     // Get or create thread (prefix 'cortex' to distinguish from legacy chat)
     const threadId = await getOrCreateThread(thread_id, userId, 'cortex');
@@ -307,9 +321,13 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
       try {
         const openaiTools = toOpenAITools();
 
-        // ── Phase 1: Non-streaming call with tool schemas via unified AI client
-        const initialResponse = await ai.chat(aiMessages, {
-          maxTokens: 4000,
+        // ── Phase 1: Non-streaming call with tool schemas ──────────────────
+        const initialCompletion = await ai.chat({
+          model: 'gpt-4o-mini',
+          messages: aiMessages as any,
+          tools: openaiTools.length > 0 ? (openaiTools as any) : undefined,
+          tool_choice: openaiTools.length > 0 ? 'auto' : undefined,
+          max_tokens: 4000,
           temperature: 0.7,
           callerModule: 'cortex-unified/chat-stream',
         });
@@ -435,9 +453,12 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
             }
           }
 
-          // ── Phase 3: Get final LLM response with tool results ─────────
-          const finalContent = await ai.complete(aiMessages, {
-            maxTokens: 4000,
+          // ── Phase 3: Stream the final LLM response with tool results ───
+          const finalCompletion = await ai.chat({
+            model: 'gpt-4o-mini',
+            messages: aiMessages as any,
+            stream: true,
+            max_tokens: 4000,
             temperature: 0.4,
             callerModule: 'cortex-unified/chat-stream-final',
           });

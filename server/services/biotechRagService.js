@@ -13,7 +13,6 @@ import {
 import { eq, and, sql, desc, inArray, like, ilike, or } from 'drizzle-orm';
 import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
-import { getOpenAIClient } from './openai-client';
 import pdfParse from 'pdf-parse';
 import mammoth from 'mammoth';
 import * as cheerio from 'cheerio';
@@ -21,7 +20,7 @@ import * as cheerio from 'cheerio';
 // Initialize OpenAI if API key is available
 let openai = null;
 try {
-  openai = getOpenAIClient();
+
 } catch (error) {
   console.log('OpenAI initialization failed, using fallback embeddings');
 }
@@ -33,6 +32,7 @@ class FallbackEmbeddings {
     this.idf = new Map();
     this.dimensions = 384; // Smaller than OpenAI for efficiency
   }
+import { ai } from '../lib/unified-ai-client';
 
   async generateEmbedding(text) {
     // Simple tokenization
@@ -878,7 +878,7 @@ class BiotechRagService {
       const systemPrompt = `You are a biotech AI assistant specializing in pharmaceutical research, clinical trials, and regulatory affairs. 
       Answer questions based on the provided context. Be precise and cite relevant information.`;
 
-      const response = await openai.chat.completions.create({
+      const aiResult = await ai.chat({
         model: options.model || 'gpt-4-turbo-preview',
         messages: [
           { role: 'system', content: systemPrompt },
@@ -889,7 +889,7 @@ class BiotechRagService {
       });
 
       return {
-        answer: response.choices[0].message.content,
+        answer: aiResult.content,
         confidence: 0.9,
         model: response.model,
         usage: response.usage

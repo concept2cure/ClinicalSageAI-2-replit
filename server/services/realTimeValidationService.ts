@@ -13,7 +13,6 @@
  * - Cross-reference validation
  */
 
-import { ai } from '../lib/unified-ai-client';
 import { EventEmitter } from 'events';
 import { generateUUID } from '../utils/id-generator';
 import { db } from '../db';
@@ -42,6 +41,7 @@ interface Suggestion {
   confidence: number;
   reasoning: string;
 }
+import { ai } from '../lib/unified-ai-client';
 
 class RealTimeValidationService extends EventEmitter {
   private validationCache: Map<string, ValidationResult>;
@@ -52,6 +52,7 @@ class RealTimeValidationService extends EventEmitter {
   constructor() {
     super();
 
+    // Initialize OpenAI client
     this.validationCache = new Map();
     this.debounceTimers = new Map();
 
@@ -360,7 +361,9 @@ class RealTimeValidationService extends EventEmitter {
     documentType: string
   ): Promise<{ issues: ValidationIssue[]; suggestions: Suggestion[] }> {
     try {
-      const text = await ai.complete([
+      const completion = await this.ai.chat({
+        model: 'gpt-4o',
+        messages: [
           {
             role: 'system',
             content: `You are a regulatory document validation expert. Analyze the following ${documentType} content for:
@@ -379,7 +382,7 @@ class RealTimeValidationService extends EventEmitter {
           },
         ], { jsonMode: true, temperature: 0.3, maxTokens: 1000, callerModule: 'realTimeValidation/analyzeContentWithAI' });
 
-      const result = JSON.parse(text || '{}');
+      const result = JSON.parse(aiResult.content || '{}');
 
       // Map AI results to our format
       const issues: ValidationIssue[] = (result.issues || []).map((issue: any) => ({

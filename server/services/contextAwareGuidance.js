@@ -3,10 +3,8 @@
  * Provides intelligent, proactive assistance based on current eCTD module/section
  */
 
-import { getOpenAIClient } from './openai-client';
 import { logger } from '../utils/logger.js';
-
-const openai = getOpenAIClient();
+import { ai } from '../lib/unified-ai-client';
 
 // eCTD Module Context Definitions
 const ECTD_MODULE_CONTEXTS = {
@@ -212,7 +210,7 @@ Return as JSON with structured recommendations.
     `;
 
     try {
-      const response = await openai.chat.completions.create({
+      const aiResult = await ai.chat({
         model: 'gpt-4o',
         messages: [
           {
@@ -229,7 +227,7 @@ Return as JSON with structured recommendations.
         temperature: 0.3,
       });
 
-      return JSON.parse(response.choices[0].message.content);
+      return JSON.parse(aiResult.content);
     } catch (error) {
       logger.error('Proactive guidance generation error:', error);
       return {
@@ -265,7 +263,7 @@ Return JSON with specific line-by-line suggestions.
     `;
 
     try {
-      const response = await openai.chat.completions.create({
+      const aiResult = await ai.chat({
         model: 'gpt-4o',
         messages: [
           {
@@ -282,7 +280,7 @@ Return JSON with specific line-by-line suggestions.
         temperature: 0.2,
       });
 
-      return JSON.parse(response.choices[0].message.content);
+      return JSON.parse(aiResult.content);
     } catch (error) {
       logger.error('Inline recommendations error:', error);
       return this.getTemplateRecommendations(context);

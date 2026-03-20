@@ -92,6 +92,16 @@ const getJwtSecret = (): string => {
       `Missing required environment variable: ${envVar} (or JWT_SECRET). ` +
       `Set a secure random string of at least 32 characters.`
     );
+    if (ENV === 'production') {
+      throw new Error(`[FATAL] Missing required JWT secret in production. Set ${envVar} or JWT_SECRET.`);
+    }
+    // Development/staging: generate a random ephemeral secret and warn loudly
+    const ephemeral = require('crypto').randomBytes(48).toString('base64url');
+    console.warn(
+      `⚠️  ${envVar} not found — using random ephemeral JWT secret. ` +
+      `Sessions will NOT survive restarts. Set JWT_SECRET to fix.`
+    );
+    return ephemeral;
   }
 
   return secret;

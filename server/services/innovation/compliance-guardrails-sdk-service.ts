@@ -14,7 +14,6 @@
  */
 
 import { Pool } from 'pg';
-import { ai } from '../../lib/unified-ai-client';
 import crypto from 'crypto';
 
 // Types
@@ -26,6 +25,7 @@ export interface GuardrailRule {
   description: string;
   category: 'content' | 'structure' | 'formatting' | 'reference' | 'regulatory' | 'data_integrity' | 'technical';
   severity: 'error' | 'warning' | 'info';
+import { ai } from '../../lib/unified-ai-client';
   applicableTo?: string[];
   submissionTypes?: string[];
   modulePaths?: string[];

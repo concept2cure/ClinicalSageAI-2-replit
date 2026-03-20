@@ -24,7 +24,6 @@ import path from 'path';
 import multer from 'multer';
 import { TextProcessor } from '../utils/textProcessing.js';
 import { pool as dbPool } from '../utils/database.js';
-import { getOpenAIClient } from './openai-client';
 // import PDFParser from 'pdf-parse';
 // import mammoth from 'mammoth';
 import ExcelJS from 'exceljs';
@@ -254,9 +253,9 @@ const REGULATORY_CONFIG = {
     qms: /^\s*COMPLAINT HANDLING|DEVIATION MANAGEMENT|CAPA PROCEDURE|AUDIT REPORT\s*$/gim,
   },
 };
+import { ai } from '../lib/unified-ai-client';
 
 // Initialize services
-const openai = getOpenAIClient();
 const textProcessor = new TextProcessor();
 
 const ALLOWED_MIME_TYPES = new Set([
@@ -849,7 +848,7 @@ export class UnifiedDocumentIngestion {
         Format as structured JSON with clear categories.
       `;
 
-      const response = await openai.chat.completions.create({
+      const aiResult = await ai.chat({
         model: 'gpt-4o',
         messages: [
           {
@@ -867,10 +866,10 @@ export class UnifiedDocumentIngestion {
       });
 
       try {
-        return JSON.parse(response.choices[0].message.content);
+        return JSON.parse(aiResult.content);
       } catch (parseError) {
         return {
-          rawAnalysis: response.choices[0].message.content,
+          rawAnalysis: aiResult.content,
           classification: 'Unknown',
           confidence: 0.5,
         };

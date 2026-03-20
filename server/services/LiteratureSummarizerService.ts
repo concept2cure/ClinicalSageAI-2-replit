@@ -7,17 +7,16 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import { getOpenAIClient } from './openai-client';
 import { pool } from '../db/setupLiterature';
 import literatureAggregator, { LiteratureEntry } from './LiteratureAggregatorService';
 import dotenv from 'dotenv';
+import { ai } from '../lib/unified-ai-client';
 
 // Load environment variables
 dotenv.config();
 
 // Initialize OpenAI client
-let openai: ReturnType<typeof getOpenAIClient> | null = null;
-try { openai = getOpenAIClient(); } catch {}
+
 
 // Summary types and their descriptions
 const SUMMARY_TYPES = {
@@ -240,7 +239,7 @@ Generate a well-structured, comprehensive summary that:
       `;
 
       // Call OpenAI API
-      const response = await openai.chat.completions.create({
+      const aiResult = await ai.chat({
         model: 'gpt-4o', // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
         messages: [
           {
@@ -257,7 +256,7 @@ Generate a well-structured, comprehensive summary that:
         temperature: 0.3,
       });
 
-      return response.choices[0].message.content || 'Error generating summary.';
+      return aiResult.content || 'Error generating summary.';
     } catch (error) {
       console.error('Error generating summary with AI:', error);
       return `Error generating summary: ${error instanceof Error ? error.message : String(error)}`;

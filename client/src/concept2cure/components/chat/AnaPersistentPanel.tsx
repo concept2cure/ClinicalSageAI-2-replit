@@ -167,7 +167,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   const [thinkingMsg, setThinkingMsg] = useState('');
   useEffect(() => {
     if (!isThinking) return;
-    const ANA_THINKING_MESSAGES = [
+    const STANDARD_THINKING = [
       'Reviewing your regulatory landscape...',
       'Cross-referencing guidance documents...',
       'Checking the latest FDA updates...',
@@ -184,6 +184,19 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       'Let it flow, let it flow... through the review process 🏔️',
       'Building your regulatory snowglobe of insights...',
     ];
+    const DEEP_RESEARCH_THINKING = [
+      'Querying ClinicalTrials.gov for matching studies...',
+      'Searching PubMed for relevant literature...',
+      'Checking FDA approval histories...',
+      'Scanning EMA assessment reports...',
+      'Aggregating results across data sources...',
+      'Cross-referencing regulatory precedents...',
+      'Building the competitive landscape...',
+      'Claude is synthesizing findings into a briefing...',
+      'Analyzing evidence coverage gaps...',
+      'Ranking results by regulatory relevance...',
+    ];
+    const ANA_THINKING_MESSAGES = chatMode === 'deep-research' ? DEEP_RESEARCH_THINKING : STANDARD_THINKING;
     setThinkingMsg(ANA_THINKING_MESSAGES[Math.floor(Math.random() * ANA_THINKING_MESSAGES.length)]);
     const interval = setInterval(() => {
       setThinkingMsg(ANA_THINKING_MESSAGES[Math.floor(Math.random() * ANA_THINKING_MESSAGES.length)]);
@@ -241,8 +254,152 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     setInput('');
     setIsThinking(true);
 
+    // Deep Research mode — launch a job and stream progress
+    if (chatMode === 'deep-research') {
+      try {
+        // Launch job
+        const launchRes = await fetch('/api/deep-research/jobs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query: { indication: text, keywords: text.split(/\s+/).filter(w => w.length > 3) },
+            connectorIds: ['clinical_trials_gov', 'pubmed', 'fda_drugs', 'ema_epar'],
+            depth: 'standard',
+            projectId: contextProfile?.projectId || null,
+          }),
+        });
+
+        if (!launchRes.ok) {
+          const err = await launchRes.json().catch(() => ({ error: 'Failed to launch research job' }));
+          throw new Error(err.error || `HTTP ${launchRes.status}`);
+        }
+
+        const job = await launchRes.json();
+        const jobId = job.id;
+
+        // Add progress message that we'll update
+        const progressMsgId = `dr-${Date.now()}`;
+        setMessages(prev => [...prev, {
+          id: progressMsgId,
+          role: 'assistant',
+          content: `**Deep Research initiated** — searching ClinicalTrials.gov, PubMed, FDA, EMA...\n\nProgress: 0%`,
+          timestamp: new Date(),
+        }]);
+
+        // Stream progress via SSE
+        const eventSource = new EventSource(`/api/deep-research/jobs/${jobId}/stream`);
+
+        eventSource.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+
+            if (data.error) {
+              eventSource.close();
+              setMessages(prev => prev.map(m =>
+                m.id === progressMsgId
+                  ? { ...m, content: `**Deep Research failed:** ${data.error}` }
+                  : m
+              ));
+              setIsThinking(false);
+              return;
+            }
+
+            const statusLabel = data.status === 'synthesizing' ? 'Synthesizing findings with Claude...' : 'Searching data sources...';
+            setMessages(prev => prev.map(m =>
+              m.id === progressMsgId
+                ? { ...m, content: `**Deep Research in progress** — ${statusLabel}\n\nProgress: ${data.progress}%` }
+                : m
+            ));
+
+            if (data.status === 'complete' || data.status === 'failed') {
+              eventSource.close();
+
+              // Fetch final results
+              fetch(`/api/deep-research/jobs/${jobId}`)
+                .then(r => r.json())
+                .then(finalJob => {
+                  const synthesis = finalJob.synthesis || 'Research complete. No synthesis available.';
+                  const totalResults = finalJob.results?.totalResults || 0;
+                  setMessages(prev => prev.map(m =>
+                    m.id === progressMsgId
+                      ? { ...m, content: `**Deep Research complete** — ${totalResults} sources analyzed\n\n---\n\n${synthesis}` }
+                      : m
+                  ));
+                })
+                .catch(() => {
+                  setMessages(prev => prev.map(m =>
+                    m.id === progressMsgId
+                      ? { ...m, content: `**Deep Research complete** — results are available in the research dashboard.` }
+                      : m
+                  ));
+                })
+                .finally(() => setIsThinking(false));
+              return;
+            }
+          } catch {
+            // Parse error — ignore
+          }
+        };
+
+        eventSource.onerror = () => {
+          eventSource.close();
+          // SSE disconnected — poll for final state
+          fetch(`/api/deep-research/jobs/${jobId}`)
+            .then(r => r.json())
+            .then(finalJob => {
+              if (finalJob.status === 'complete') {
+                const synthesis = finalJob.synthesis || 'Research complete.';
+                const totalResults = finalJob.results?.totalResults || 0;
+                setMessages(prev => prev.map(m =>
+                  m.id === progressMsgId
+                    ? { ...m, content: `**Deep Research complete** — ${totalResults} sources analyzed\n\n---\n\n${synthesis}` }
+                    : m
+                ));
+              } else {
+                setMessages(prev => prev.map(m =>
+                  m.id === progressMsgId
+                    ? { ...m, content: `**Deep Research** — Job #${jobId} is still running. Check the research dashboard for results.` }
+                    : m
+                ));
+              }
+            })
+            .catch(() => {})
+            .finally(() => setIsThinking(false));
+        };
+
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+        setMessages(prev => [...prev, {
+          id: `a-${Date.now()}`,
+          role: 'assistant',
+          content: `**Deep Research could not be launched:** ${errorMsg}\n\nThis may be due to quota limits or missing permissions. Try again or switch to standard mode.`,
+          timestamp: new Date(),
+        }]);
+        setIsThinking(false);
+      }
+      return;
+    }
+
+    // Standard chat mode — route to Cortex unified chat
     try {
       let data: any;
+      const response = await fetch('/api/cortex/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: text,
+          chatMode,
+          project_id: contextProfile?.projectId || undefined,
+          submission_type: contextProfile?.productType || undefined,
+          context: {
+            screen: contextProfile?.screenName,
+            project: contextProfile?.activeProject,
+            projectId: contextProfile?.projectId,
+            productType: contextProfile?.productType,
+            userRole: contextProfile?.userRole,
+          },
+        }),
+      });
 
       if (chatMode === 'nano-banana') {
         // Route to Nano Banana (Gemini image gen) endpoint
@@ -326,7 +483,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     } finally {
       setIsThinking(false);
     }
-  }, [input, isThinking, messages, contextProfile]);
+  }, [input, isThinking, messages, contextProfile, chatMode]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {

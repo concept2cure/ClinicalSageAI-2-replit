@@ -2,15 +2,13 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import pdfParse from 'pdf-parse';
-import { getOpenAIClient } from '../services/openai-client';
+import { ai } from '../lib/unified-ai-client';
 
 // Get the directory path for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // 1) Configure OpenAI
-const openai = getOpenAIClient();
-
 // 2) Paths
 const METADATA_FILE = path.join(__dirname, '../vault/metadata.json');
 const OUTPUT_FILE = path.join(__dirname, 'embeddings.json');

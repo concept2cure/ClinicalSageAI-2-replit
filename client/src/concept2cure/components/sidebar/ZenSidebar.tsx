@@ -574,6 +574,14 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               accentColor="indigo"
               onClick={() => onNavigate?.('report-engine')}
             />
+            <NavItem
+              icon={<Shield className="w-3.5 h-3.5" />}
+              label="Safety Narrative"
+              subtitle="ICH E3 · SAE · Benefit-Risk"
+              active={activeNavId === 'safety-narrative'}
+              accentColor="rose"
+              onClick={() => onNavigate?.('safety-narrative')}
+            />
           </WorkspaceGroup>
 
           {/* ── MANAGE — operations & governance ──────────────────── */}
@@ -585,6 +593,20 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               active={activeNavId === 'user-inbox'}
               accentColor="amber"
               onClick={() => onNavigate?.('user-inbox')}
+              icon={<Activity className="w-3.5 h-3.5" />}
+              label="Ana Dashboard"
+              subtitle="Intelligence · Gaps · Impact"
+              active={activeNavId === 'ana-dashboard'}
+              accentColor="violet"
+              onClick={() => onNavigate?.('ana-dashboard')}
+            />
+            <NavItem
+              icon={<Settings className="w-3.5 h-3.5" />}
+              label="Platform Control"
+              subtitle="Settings · Modules · Onboarding"
+              active={activeNavId === 'ana-platform-control'}
+              accentColor="indigo"
+              onClick={() => onNavigate?.('ana-platform-control')}
             />
             <NavItem
               icon={<Building2 className="w-3.5 h-3.5" />}

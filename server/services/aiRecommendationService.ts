@@ -1,5 +1,4 @@
 // server/services/aiRecommendationService.ts
-import { getOpenAIClient } from './openai-client';
 import { storage } from '../storage';
 import {
   InsertAiInsight,
@@ -10,10 +9,9 @@ import {
 } from '../../shared/schema';
 
 // Initialize OpenAI client
-const openai = getOpenAIClient();
-
 // The newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const MODEL = 'gpt-4o';
+import { ai } from '../lib/unified-ai-client';
 
 export class AiRecommendationService {
   /**
@@ -51,7 +49,7 @@ export class AiRecommendationService {
   ): Promise<InsertAiInsight[]> {
     const prompt = this.buildInsightPrompt(user, activity, progress);
 
-    const response = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: MODEL,
       messages: [
         {
@@ -71,7 +69,7 @@ export class AiRecommendationService {
     });
 
     // Parse the insights from the response
-    const responseContent = response.choices[0].message.content;
+    const responseContent = aiResult.content;
     const parsedResponse = responseContent ? JSON.parse(responseContent) : { insights: [] };
 
     // Convert to the InsertAiInsight format
@@ -155,7 +153,7 @@ export class AiRecommendationService {
 
       const prompt = this.buildModuleScoringPrompt(user, modules);
 
-      const response = await openai.chat.completions.create({
+      const aiResult = await ai.chat({
         model: MODEL,
         messages: [
           {
@@ -173,7 +171,7 @@ export class AiRecommendationService {
       });
 
       // Parse the scored modules from the response
-      const responseContent = response.choices[0].message.content;
+      const responseContent = aiResult.content;
       const parsedResponse = responseContent ? JSON.parse(responseContent) : { scoredModules: [] };
 
       return parsedResponse.scoredModules;
@@ -293,7 +291,7 @@ export class AiRecommendationService {
 
       const prompt = this.buildLearningPathPrompt(user, modules, progress);
 
-      const response = await openai.chat.completions.create({
+      const aiResult = await ai.chat({
         model: MODEL,
         messages: [
           {
@@ -311,7 +309,7 @@ export class AiRecommendationService {
       });
 
       // Parse the learning path from the response
-      const responseContent = response.choices[0].message.content;
+      const responseContent = aiResult.content;
       return responseContent ? JSON.parse(responseContent) : { learningPath: [] };
     } catch (error) {
       console.error('Error generating learning path:', error);

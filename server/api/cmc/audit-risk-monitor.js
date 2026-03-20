@@ -11,7 +11,6 @@ import { checkForOpenAIKey } from '../../utils/api-security.js';
 import { validateRequestBody } from '../../utils/validation.js';
 import { documentAuditSchema } from './types.js';
 import { rateLimit } from 'express-rate-limit';
-import { getOpenAIClient } from '../../services/openai-client';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -26,6 +25,7 @@ const auditMonitoringLimiter = rateLimit({
   legacyHeaders: false,
   message: 'Too many audit monitoring requests, please try again after a minute',
 });
+import { ai } from '../../lib/unified-ai-client';
 
 // Create router
 const router = express.Router();
@@ -67,8 +67,6 @@ const upload = multer({
 });
 
 // Get OpenAI client
-const openai = getOpenAIClient();
-
 // Get current directory
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -137,7 +135,7 @@ router.post('/analyze', checkForOpenAIKey, auditMonitoringLimiter, async (req, r
       },
     ];
 
-    const response = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4o',
       messages: messages,
       temperature: 0.3,
@@ -145,7 +143,7 @@ router.post('/analyze', checkForOpenAIKey, auditMonitoringLimiter, async (req, r
     });
 
     // Get the risk analysis
-    const riskAnalysis = response.choices[0].message.content;
+    const riskAnalysis = aiResult.content;
 
     // Generate specific findings based on FDA 483 patterns
     const findingsPrompt = `Based on your risk analysis of this ${documentType} document:
@@ -160,7 +158,7 @@ router.post('/analyze', checkForOpenAIKey, auditMonitoringLimiter, async (req, r
     
     Present these findings in a structured, itemized format suitable for a regulatory inspection report.`;
 
-    const findingsResponse = await openai.chat.completions.create({
+    const findingsResponse = await ai.chat({
       model: 'gpt-4o',
       messages: [
         {
@@ -191,7 +189,7 @@ router.post('/analyze', checkForOpenAIKey, auditMonitoringLimiter, async (req, r
     
     Format as a Q&A preparation guide for a regulatory inspection.`;
 
-    const questionsResponse = await openai.chat.completions.create({
+    const questionsResponse = await ai.chat({
       model: 'gpt-4o',
       messages: [
         {
@@ -223,7 +221,7 @@ router.post('/analyze', checkForOpenAIKey, auditMonitoringLimiter, async (req, r
     
     Format as an actionable remediation plan that could be implemented by a regulatory affairs team.`;
 
-    const remediationResponse = await openai.chat.completions.create({
+    const remediationResponse = await ai.chat({
       model: 'gpt-4o',
       messages: [
         {
@@ -340,7 +338,7 @@ router.post('/analyze-collection', checkForOpenAIKey, auditMonitoringLimiter, as
       },
     ];
 
-    const response = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4o',
       messages: messages,
       temperature: 0.3,
@@ -348,7 +346,7 @@ router.post('/analyze-collection', checkForOpenAIKey, auditMonitoringLimiter, as
     });
 
     // Get the cross-document risk analysis
-    const crossDocumentAnalysis = response.choices[0].message.content;
+    const crossDocumentAnalysis = aiResult.content;
 
     // Generate a consistency matrix
     const consistencyPrompt = `Based on your cross-document analysis:
@@ -361,7 +359,7 @@ router.post('/analyze-collection', checkForOpenAIKey, auditMonitoringLimiter, as
     
     Format as a structured matrix or table showing document relationship strengths and issues.`;
 
-    const consistencyResponse = await openai.chat.completions.create({
+    const consistencyResponse = await ai.chat({
       model: 'gpt-4o',
       messages: [
         {
@@ -392,7 +390,7 @@ router.post('/analyze-collection', checkForOpenAIKey, auditMonitoringLimiter, as
     
     Format as a formal submission readiness assessment report section.`;
 
-    const readinessResponse = await openai.chat.completions.create({
+    const readinessResponse = await ai.chat({
       model: 'gpt-4o',
       messages: [
         {
@@ -494,7 +492,7 @@ router.post(
     
     Format as a detailed Q&A preparation guide that regulatory affairs professionals can use to prepare for an inspection.`;
 
-      const simulationResponse = await openai.chat.completions.create({
+      const simulationResponse = await ai.chat({
         model: 'gpt-4o',
         messages: [
           {
@@ -522,7 +520,7 @@ router.post(
     
     Format as practical guidance for inspection preparation.`;
 
-      const bestPracticesResponse = await openai.chat.completions.create({
+      const bestPracticesResponse = await ai.chat({
         model: 'gpt-4o',
         messages: [
           {
@@ -622,7 +620,7 @@ router.post('/upload', checkForOpenAIKey, upload.single('document'), async (req,
     
     File name: ${file.originalname}`;
 
-    const extractionResponse = await openai.chat.completions.create({
+    const extractionResponse = await ai.chat({
       model: 'gpt-4o',
       messages: [
         {

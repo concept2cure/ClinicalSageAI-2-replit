@@ -3724,6 +3724,34 @@ export const insertSimpleDocumentVersionSchema = createInsertSchemaOmit(simpleDo
 export type SimpleDocumentVersion = InferSelectModel<typeof simpleDocumentVersions>;
 export type InsertSimpleDocumentVersion = z.infer<typeof insertSimpleDocumentVersionSchema>;
 
+// ============================================================================
+// DRAFTING TASKS (persistent storage for AI document generation)
+// ============================================================================
+
+export const draftingTasks = pgTable('drafting_tasks', {
+  id: serial('id').primaryKey(),
+  taskId: text('task_id').notNull().unique(),
+  projectId: text('project_id').notNull(),
+  ectdSection: text('ectd_section').notNull(),
+  documentTitle: text('document_title').notNull(),
+  template: text('template'),
+  status: text('status').notNull().default('PENDING'), // PENDING, IN_PROGRESS, COMPLETED, FAILED
+  draftContent: text('draft_content'),
+  errorMessage: text('error_message'),
+  createdById: integer('created_by_id').references(() => users.id),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const insertDraftingTaskSchema = createInsertSchemaOmit(draftingTasks, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type DraftingTask = InferSelectModel<typeof draftingTasks>;
+export type InsertDraftingTask = z.infer<typeof insertDraftingTaskSchema>;
+
 /**
  * CER Approvals Table
  *
@@ -17811,3 +17839,33 @@ export type EvidenceComplianceScore = InferSelectModel<typeof evidenceCompliance
 export type InsertEvidenceComplianceScore = z.infer<typeof insertEvidenceScoreSchema>;
 export type EvidenceChangeEvent = InferSelectModel<typeof evidenceChangeEvents>;
 export type InsertEvidenceChangeEvent = z.infer<typeof insertEvidenceChangeEventSchema>;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GAP ANALYSIS RESULTS TABLE
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Persisted gap analysis results for audit trail and trend tracking.
+ * Each row represents one gap analysis run.
+ */
+export const gapAnalysisResults = pgTable('gap_analysis_results', {
+  id: serial('id').primaryKey(),
+  organizationId: text('organization_id').notNull(),
+  userId: text('user_id').notNull(),
+  submissionType: text('submission_type').notNull(),
+  projectId: text('project_id'),
+  overallReadiness: integer('overall_readiness').notNull(),
+  totalRequired: integer('total_required').notNull(),
+  completedCount: integer('completed_count').notNull(),
+  gapsSnapshot: json('gaps_snapshot').notNull(),
+  recommendations: json('recommendations').notNull(),
+  uploadedDocuments: json('uploaded_documents'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const insertGapAnalysisResultSchema = createInsertSchemaOmit(gapAnalysisResults, {
+  id: true,
+  createdAt: true,
+});
+export type GapAnalysisResult = InferSelectModel<typeof gapAnalysisResults>;
+export type InsertGapAnalysisResult = z.infer<typeof insertGapAnalysisResultSchema>;

@@ -9,7 +9,7 @@
  * with inconsistent persistence and no unified interface.
  */
 
-import OpenAI from 'openai';
+import { ai } from '../lib/unified-ai-client';
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
 import { createHash } from 'crypto';
@@ -177,15 +177,7 @@ const SAFETY_EXTRACTION_SCHEMA = {
 // ============================================================
 
 class UnifiedExtractionService {
-  private openai: OpenAI | null = null;
   private static readonly VERSION = '1.0.0';
-
-  private getOpenAI(): OpenAI {
-    if (!this.openai) {
-      this.openai = new OpenAI();
-    }
-    return this.openai;
-  }
 
   /**
    * Main entry point: extract structured atoms from a regulatory document.
@@ -479,21 +471,23 @@ Extract structured data. Return valid JSON:
   // ============================================================
 
   private async callLLMExtraction(systemPrompt: string, content: string): Promise<any> {
-    const openai = this.getOpenAI();
     const truncated = content.slice(0, 60000);
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      response_format: { type: 'json_object' },
-      messages: [
+    const result = await ai.chat(
+      [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: `Extract from this document:\n\n${truncated}` },
       ],
-      temperature: 0.1,
-      max_tokens: 8000,
-    });
+      {
+        taskType: 'structured_output',
+        jsonMode: true,
+        temperature: 0.1,
+        maxTokens: 8000,
+        callerModule: 'unified-extraction-service',
+      }
+    );
 
-    const text = response.choices[0]?.message?.content;
+    const text = result.content;
     if (!text) return {};
 
     try {

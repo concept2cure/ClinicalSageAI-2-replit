@@ -7,12 +7,10 @@
  */
 
 import axios from 'axios';
-import { getOpenAIClient } from './openai-client';
 import { storage } from '../storage.js';
+import { ai } from '../lib/unified-ai-client';
 
 // Initialize OpenAI with API key from environment variable
-const openai = getOpenAIClient();
-
 /**
  * Search PubMed for scientific literature
  * @param {Object} params - Search parameters
@@ -98,7 +96,7 @@ async function scorePapersForRelevance(papers, deviceInfo) {
     }));
 
     // Generate relevance scores with GPT-4o
-    const response = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4o', // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       messages: [
         {
@@ -136,7 +134,7 @@ async function scorePapersForRelevance(papers, deviceInfo) {
     });
 
     // Parse the response
-    const content = response.choices[0].message.content;
+    const content = aiResult.content;
     const scoreData = JSON.parse(content);
 
     // Apply scores to papers
@@ -198,7 +196,7 @@ URL: ${paper.url}
     }
 
     // Generate literature review with GPT-4o
-    const response = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4o', // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       messages: [
         {
@@ -238,7 +236,7 @@ URL: ${paper.url}
       max_tokens: 4000,
     });
 
-    const content = response.choices[0].message.content;
+    const content = aiResult.content;
 
     return {
       title: 'Literature Review',
@@ -276,7 +274,7 @@ URL: ${paper.url}
 async function analyzePaper(text, context) {
   try {
     // Generate AI analysis
-    const response = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4o', // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       messages: [
         {
@@ -313,7 +311,7 @@ async function analyzePaper(text, context) {
       temperature: 0.3,
     });
 
-    const analysis = JSON.parse(response.choices[0].message.content);
+    const analysis = JSON.parse(aiResult.content);
 
     return {
       ...analysis,
@@ -361,7 +359,7 @@ URL: ${paper.url}`;
     }
 
     // Generate citations with GPT-4o
-    const response = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4o', // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       messages: [
         {
@@ -395,7 +393,7 @@ URL: ${paper.url}`;
       temperature: 0.2,
     });
 
-    const citationData = JSON.parse(response.choices[0].message.content);
+    const citationData = JSON.parse(aiResult.content);
 
     return {
       citations: citationData.citations || [],

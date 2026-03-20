@@ -20,8 +20,8 @@
  */
 
 import { pool } from '../db.js';
-import { getOpenAIClient } from './openai-client';
 import crypto from 'crypto';
+import { ai } from '../lib/unified-ai-client';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -229,8 +229,6 @@ export function getProjectExtractionJobs(projectId: number): ExtractionJob[] {
 // PIPELINE PROCESSOR
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const openai = getOpenAIClient();
-
 async function processQueue(): Promise<void> {
   if (isProcessing) return;
   isProcessing = true;
@@ -374,7 +372,7 @@ async function extractTables(
 
   try {
     // Use AI to detect and extract tables from text
-    const response = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: process.env.OPENAI_MODEL || 'gpt-4o',
       temperature: 0.1,
       response_format: { type: 'json_object' },
@@ -393,7 +391,7 @@ Return empty tables array if no tables found.`,
       ],
     });
 
-    const parsed = JSON.parse(response.choices[0]?.message?.content || '{"tables":[]}');
+    const parsed = JSON.parse(aiResult.content || '{"tables":[]}');
     return (parsed.tables || []).map((t: any, i: number) => ({
       id: crypto.randomUUID(),
       title: t.title || `Table ${i + 1}`,
@@ -416,7 +414,7 @@ async function classifyAndEnrich(
   entities: ExtractedEntity[];
 }> {
   try {
-    const response = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: process.env.OPENAI_MODEL || 'gpt-4o',
       temperature: 0.1,
       response_format: { type: 'json_object' },
@@ -452,7 +450,7 @@ Return JSON:
       ],
     });
 
-    const parsed = JSON.parse(response.choices[0]?.message?.content || '{}');
+    const parsed = JSON.parse(aiResult.content || '{}');
 
     const metadata: DocumentMetadata = {
       documentType: parsed.metadata?.documentType || 'Other',

@@ -11,7 +11,6 @@ import { checkForOpenAIKey } from '../../utils/api-security.js';
 import { validateRequestBody } from '../../utils/validation.js';
 import { changeImpactSchema } from './types.js';
 import { rateLimit } from 'express-rate-limit';
-import { getOpenAIClient } from '../../services/openai-client';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -25,13 +24,12 @@ const impactSimulationLimiter = rateLimit({
   legacyHeaders: false,
   message: 'Too many impact simulation requests, please try again after a minute',
 });
+import { ai } from '../../lib/unified-ai-client';
 
 // Create router
 const router = express.Router();
 
 // Get OpenAI client
-const openai = getOpenAIClient();
-
 // Get current directory
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -107,7 +105,7 @@ router.post('/simulate', checkForOpenAIKey, impactSimulationLimiter, async (req,
       },
     ];
 
-    const response = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4o',
       messages: messages,
       temperature: 0.3,
@@ -115,7 +113,7 @@ router.post('/simulate', checkForOpenAIKey, impactSimulationLimiter, async (req,
     });
 
     // Get the response
-    const impactAnalysis = response.choices[0].message.content;
+    const impactAnalysis = aiResult.content;
 
     // Structure the results
     const impactResult = {
@@ -199,7 +197,7 @@ router.post('/market-report', checkForOpenAIKey, impactSimulationLimiter, async 
       },
     ];
 
-    const response = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4o',
       messages: messages,
       temperature: 0.3,
@@ -207,7 +205,7 @@ router.post('/market-report', checkForOpenAIKey, impactSimulationLimiter, async 
     });
 
     // Get the response
-    const marketReport = response.choices[0].message.content;
+    const marketReport = aiResult.content;
 
     // Update the simulation results with the market report
     simulationData.marketReports = simulationData.marketReports || {};

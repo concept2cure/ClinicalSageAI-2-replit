@@ -14,7 +14,7 @@
 
 import { db } from '../db';
 import { eq, and, sql } from 'drizzle-orm';
-import OpenAI from 'openai';
+import { ai } from '../lib/unified-ai-client';
 
 // ---------------------------------------------------------------------------
 // Interfaces
@@ -219,11 +219,6 @@ const SECTION_CODES: Record<string, { code: string; title: string }> = {
 // ---------------------------------------------------------------------------
 
 class SafetyNarrativeService {
-  private openai: OpenAI;
-
-  constructor() {
-    this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  }
 
   // -------------------------------------------------------------------------
   // 1. Aggregate Safety Narrative
@@ -321,18 +316,15 @@ ${labSummaryLines}
 
 Generate the complete safety narrative following ICH E3 Section 12 conventions. Return valid JSON only.`;
 
-    const response = await this.openai.chat.completions.create({
-      model: 'gpt-4o',
-      temperature: 0.2,
-      max_tokens: 8000,
-      messages: [
+    const aiResult = await ai.chat(
+      [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ],
-      response_format: { type: 'json_object' },
-    });
+      { taskType: 'regulatory_review', jsonMode: true, temperature: 0.2, maxTokens: 8000, callerModule: 'safety-narrative-service' }
+    );
 
-    const raw = response.choices[0]?.message?.content ?? '{}';
+    const raw = aiResult.content ?? '{}';
     const parsed = JSON.parse(raw) as {
       sections: Array<{ sectionCode: string; title: string; content: string }>;
       keyFindings: string[];
@@ -424,17 +416,15 @@ ${labValuesStr}
 
 Write the complete SAE narrative in regulatory format.`;
 
-    const response = await this.openai.chat.completions.create({
-      model: 'gpt-4o',
-      temperature: 0.15,
-      max_tokens: 2000,
-      messages: [
+    const aiResult = await ai.chat(
+      [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ],
-    });
+      { taskType: 'regulatory_review', temperature: 0.15, maxTokens: 2000, callerModule: 'safety-narrative-service' }
+    );
 
-    return (response.choices[0]?.message?.content ?? '').trim();
+    return (aiResult.content ?? '').trim();
   }
 
   // -------------------------------------------------------------------------
@@ -488,18 +478,15 @@ CONTEXT:
 
 Return valid JSON only.`;
 
-    const response = await this.openai.chat.completions.create({
-      model: 'gpt-4o',
-      temperature: 0.2,
-      max_tokens: 4000,
-      messages: [
+    const aiResult = await ai.chat(
+      [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ],
-      response_format: { type: 'json_object' },
-    });
+      { taskType: 'regulatory_review', jsonMode: true, temperature: 0.2, maxTokens: 4000, callerModule: 'safety-narrative-service' }
+    );
 
-    const raw = response.choices[0]?.message?.content ?? '{}';
+    const raw = aiResult.content ?? '{}';
     const parsed = JSON.parse(raw) as BenefitRiskNarrative;
 
     return {
@@ -554,17 +541,15 @@ ${signalDescriptions}
 
 Write the complete signal assessment narrative. Include an introductory sentence and a concluding summary paragraph that synthesises the overall signal landscape.`;
 
-    const response = await this.openai.chat.completions.create({
-      model: 'gpt-4o',
-      temperature: 0.2,
-      max_tokens: 4000,
-      messages: [
+    const aiResult = await ai.chat(
+      [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ],
-    });
+      { taskType: 'regulatory_review', temperature: 0.2, maxTokens: 4000, callerModule: 'safety-narrative-service' }
+    );
 
-    return (response.choices[0]?.message?.content ?? '').trim();
+    return (aiResult.content ?? '').trim();
   }
 
   // -------------------------------------------------------------------------
@@ -611,17 +596,15 @@ ${studyDescriptions}
 
 Write the complete integrated safety narrative.`;
 
-    const response = await this.openai.chat.completions.create({
-      model: 'gpt-4o',
-      temperature: 0.2,
-      max_tokens: 4000,
-      messages: [
+    const aiResult = await ai.chat(
+      [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ],
-    });
+      { taskType: 'regulatory_review', temperature: 0.2, maxTokens: 4000, callerModule: 'safety-narrative-service' }
+    );
 
-    return (response.choices[0]?.message?.content ?? '').trim();
+    return (aiResult.content ?? '').trim();
   }
 
   // -------------------------------------------------------------------------

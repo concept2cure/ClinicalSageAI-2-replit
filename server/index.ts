@@ -53,10 +53,39 @@ import { authMiddleware } from './auth.js';
 // Import database and schema for workflow persistence
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { and, eq, desc } from 'drizzle-orm';
-import { fda510kStageProgress, fda510kProjects, projects } from '@shared/schema';
+import { fda510kStageProgress, fda510kProjects, projects, draftingTasks } from '@shared/schema';
 
-// Debug mode configuration
-const DEBUG = process.env.DEBUG || process.env.NODE_ENV === 'development';
+// ============================================================================
+// STARTUP ENVIRONMENT VALIDATION
+// ============================================================================
+(() => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  const required: string[] = ['DATABASE_URL', 'DATABASE_NEON_NEW_SECRET'].some(k => process.env[k])
+    ? [] // At least one DB URL is set
+    : ['DATABASE_URL']; // None set — require DATABASE_URL
+
+  if (isProduction) {
+    required.push('JWT_SECRET');
+  }
+
+  const missing = required.filter(k => !process.env[k]);
+  if (missing.length > 0) {
+    console.error(`[FATAL] Missing required environment variables: ${missing.join(', ')}`);
+    process.exit(1);
+  }
+
+  // Warn about recommended vars in production
+  if (isProduction) {
+    const recommended = ['ANTHROPIC_API_KEY', 'SENTRY_DSN', 'REDIS_URL'];
+    const missingRecommended = recommended.filter(k => !process.env[k]);
+    if (missingRecommended.length > 0) {
+      console.warn(`⚠️  Recommended env vars not set: ${missingRecommended.join(', ')}`);
+    }
+  }
+})();
+
+// Debug mode configuration — disabled in production
+const DEBUG = process.env.NODE_ENV !== 'production' && (process.env.DEBUG || process.env.NODE_ENV === 'development');
 const debugLog = (message: string, data?: any) => {
   if (DEBUG) {
     console.log(`[DEBUG ${new Date().toISOString()}] ${message}`, data || '');
@@ -1310,6 +1339,46 @@ try {
   console.log('✅ Deep Research API routes mounted (connectors, jobs, usage)');
 } catch (error) {
   console.error('❌ Failed to mount Deep Research routes:', error);
+}
+
+// Mount Intelligent Report Engine routes (immutable reports, provenance, sealing)
+try {
+  const intelligentReportsModule = await import('./routes/intelligent-reports.js');
+  const intelligentReportsRouter = intelligentReportsModule.default;
+  app.use('/api/intelligent-reports', intelligentReportsRouter);
+  console.log('✅ Intelligent Report Engine routes mounted (generate, seal, verify, export)');
+} catch (error) {
+  console.error('❌ Failed to mount Intelligent Report Engine routes:', error);
+}
+
+// Mount Safety Narrative Service routes (aggregate narratives, SAE, benefit-risk)
+try {
+  const safetyNarrativeModule = await import('./routes/safety-narrative.js');
+  const safetyNarrativeRouter = safetyNarrativeModule.default;
+  app.use('/api/safety-narratives', safetyNarrativeRouter);
+  console.log('✅ Safety Narrative Service routes mounted (aggregate, SAE, benefit-risk, signals)');
+} catch (error) {
+  console.error('❌ Failed to mount Safety Narrative routes:', error);
+}
+
+// Mount Statistical Defensibility Service routes (study design assessment)
+try {
+  const statDefModule = await import('./routes/statistical-defensibility.js');
+  const statDefRouter = statDefModule.default;
+  app.use('/api/statistical-defensibility', statDefRouter);
+  console.log('✅ Statistical Defensibility routes mounted (assess, consistency, endpoint-quality, sample-size, multiplicity, reviewer-risks)');
+} catch (error) {
+  console.error('❌ Failed to mount Statistical Defensibility routes:', error);
+}
+
+// Mount Conversation Health Monitoring route
+try {
+  const convHealthModule = await import('./routes/conversation-health.js');
+  const convHealthRouter = convHealthModule.default;
+  app.use('/api/conversation-health', convHealthRouter);
+  console.log('✅ Conversation Health Monitoring route mounted');
+} catch (error) {
+  console.error('❌ Failed to mount Conversation Health routes:', error);
 }
 
 // Mount stability routes
@@ -3214,6 +3283,24 @@ For "${query}", I suggest consulting the latest ICH guidelines and FDA guidance 
 console.log('✅ Basic API routes mounted');
 debugLog('Debug mode enabled - enhanced logging active');
 
+// Mount AnA Features routes (change-impact, gap-analysis, memory)
+try {
+  const anaFeaturesModule = await import('./routes/ana-features');
+  app.use('/api/ana', anaFeaturesModule.default);
+  console.log('✅ AnA Features API routes mounted (/api/ana)');
+} catch (error) {
+  console.error('❌ Failed to mount AnA Features routes:', error);
+}
+
+// Mount Ana Platform Control routes (agentic settings, modules, onboarding)
+try {
+  const anaPlatformModule = await import('./routes/ana-platform-control');
+  app.use('/api/ana/platform', anaPlatformModule.default);
+  console.log('✅ Ana Platform Control routes mounted (/api/ana/platform)');
+} catch (error) {
+  console.error('❌ Failed to mount Ana Platform Control routes:', error);
+}
+
 // Mount Lumen Cortex Chat routes
 import chatRoutes from './routes/chat';
 app.use('/api/chat', chatRoutes);
@@ -3298,26 +3385,29 @@ app.post('/api/510k-workflow/:projectId', async (req, res) => {
   try {
     const storage = await getStorage();
 
-    // Track workflow action for 21 CFR Part 11 compliance - TEMPORARILY DISABLED FOR TESTING
-    // TODO: Fix electronic_signature column issue in device_audit_trail table
-    /*
-    const trackingResult = await FDA510kComplianceTracker.trackWorkflowAction({
-      workflowId: `WF_${projectId}_${Date.now()}`,
-      projectId,
-      stage,
-      section,
-      action: 'SAVE',
-      userId: parseInt(req.headers['x-user-id'] as string || '1'),
-      organizationId: parseInt(organizationId),
-      data,
-      metadata: {
-        ipAddress: req.ip,
-        userAgent: req.headers['user-agent'],
-        sessionId: req.headers['x-session-id'] as string
-      }
-    });
-    */
-    const trackingResult = { success: true }; // Dummy result while audit is disabled
+    // Track workflow action for 21 CFR Part 11 compliance
+    // Re-enabled after 0008_ga_hardening migration adds missing columns
+    let trackingResult: { success: boolean } = { success: true };
+    try {
+      trackingResult = await FDA510kComplianceTracker.trackWorkflowAction({
+        workflowId: `WF_${projectId}_${Date.now()}`,
+        projectId,
+        stage,
+        section,
+        action: 'SAVE',
+        userId: parseInt(req.headers['x-user-id'] as string || '1'),
+        organizationId: parseInt(organizationId),
+        data,
+        metadata: {
+          ipAddress: req.ip,
+          userAgent: req.headers['user-agent'],
+          sessionId: req.headers['x-session-id'] as string
+        }
+      });
+    } catch (auditErr) {
+      console.warn('[510k-workflow] Audit trail write failed (migration pending?):', (auditErr as Error).message);
+      // Non-blocking: workflow continues even if audit fails during migration window
+    }
 
     // For now, we'll use the project ID directly as the workflow ID
     // since we're working with project-based workflows
@@ -3442,23 +3532,24 @@ app.post('/api/510k-workflow/:projectId', async (req, res) => {
       console.log(`Saved section data for section: ${section}`);
     }
 
-    // Track document version for compliance - TEMPORARILY DISABLED FOR TESTING
-    // TODO: Fix version_label column issue in document versions table
-    /*
-    await FDA510kComplianceTracker.createDocumentVersion({
-      documentId: `510K_${projectId}`,
-      projectId,
-      userId: parseInt(req.headers['x-user-id'] as string || '1'),
-      organizationId: parseInt(organizationId),
-      content: data,
-      changeDescription: `Updated ${stage} - ${section || 'default'}`,
-      metadata: {
-        stage,
-        section,
-        completedSteps: req.body.completedSteps || []
-      }
-    });
-    */
+    // Track document version for compliance — re-enabled after 0008_ga_hardening migration
+    try {
+      await FDA510kComplianceTracker.createDocumentVersion({
+        documentId: `510K_${projectId}`,
+        projectId,
+        userId: parseInt(req.headers['x-user-id'] as string || '1'),
+        organizationId: parseInt(organizationId),
+        content: data,
+        changeDescription: `Updated ${stage} - ${section || 'default'}`,
+        metadata: {
+          stage,
+          section,
+          completedSteps: req.body.completedSteps || []
+        }
+      });
+    } catch (versionErr) {
+      console.warn('[510k-workflow] Document version tracking failed (migration pending?):', (versionErr as Error).message);
+    }
 
     // Trigger automatic document generation via DocumentOrchestrationService
     let autoPopulated = false;
@@ -5673,7 +5764,7 @@ app.put('/api/cro/milestones/:id', async (req: Request, res: Response) => {
   }
 });
 
-// Create AI Document API endpoint
+// Create AI Document API endpoint — database-persisted
 app.post('/api/v1/drafting/start_task', async (req: Request, res: Response) => {
   try {
     const { project_id, ectd_section, document_title, template } = req.body;
@@ -5684,29 +5775,33 @@ app.post('/api/v1/drafting/start_task', async (req: Request, res: Response) => {
       });
     }
 
-    // Generate unique task ID
     const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    // Simulate document generation process
+    // Generate document content
     const generatedContent = await generateDocumentContent(ectd_section, document_title, template);
 
-    // Store task in memory (in production, this would be in database)
-    const task = {
-      id: taskId,
-      project_id,
-      ectd_section,
-      document_title,
-      template,
-      status: 'COMPLETED',
-      draft_content: generatedContent,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-
-    // In production, store in database
-    // For now, we'll store in memory with a timeout
-    (global as any).draftingTasks = (global as any).draftingTasks || {};
-    (global as any).draftingTasks[taskId] = task;
+    // Persist task to database
+    try {
+      await db.insert(draftingTasks).values({
+        taskId,
+        projectId: project_id,
+        ectdSection: ectd_section,
+        documentTitle: document_title,
+        template: template || null,
+        status: 'COMPLETED',
+        draftContent: generatedContent,
+        createdById: (req as any).user?.id || null,
+      });
+    } catch (dbError) {
+      // Fallback: if table doesn't exist yet (pre-migration), use in-memory
+      console.warn('[drafting] DB insert failed, using in-memory fallback:', (dbError as Error).message);
+      (global as any).draftingTasks = (global as any).draftingTasks || {};
+      (global as any).draftingTasks[taskId] = {
+        id: taskId, project_id, ectd_section, document_title, template,
+        status: 'COMPLETED', draft_content: generatedContent,
+        created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+      };
+    }
 
     res.status(202).json({ task_id: taskId });
   } catch (error) {
@@ -5715,19 +5810,37 @@ app.post('/api/v1/drafting/start_task', async (req: Request, res: Response) => {
   }
 });
 
-// Get task status endpoint
+// Get task status endpoint — database-backed with in-memory fallback
 app.get('/api/v1/drafting/task_status/:task_id', async (req: Request, res: Response) => {
   try {
     const { task_id } = req.params;
 
-    (global as any).draftingTasks = (global as any).draftingTasks || {};
-    const task = (global as any).draftingTasks[task_id];
-
-    if (!task) {
-      return res.status(404).json({ error: 'Task not found' });
+    // Try database first
+    try {
+      const [task] = await db.select().from(draftingTasks).where(eq(draftingTasks.taskId, task_id));
+      if (task) {
+        return res.json({
+          id: task.taskId,
+          project_id: task.projectId,
+          ectd_section: task.ectdSection,
+          document_title: task.documentTitle,
+          template: task.template,
+          status: task.status,
+          draft_content: task.draftContent,
+          created_at: task.createdAt?.toISOString(),
+          updated_at: task.updatedAt?.toISOString(),
+        });
+      }
+    } catch {
+      // DB query failed — fall through to in-memory
     }
 
-    res.json(task);
+    // Fallback to in-memory
+    const memTask = (global as any).draftingTasks?.[task_id];
+    if (!memTask) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+    res.json(memTask);
   } catch (error) {
     console.error('Get task status error:', error);
     res.status(500).json({ error: 'Failed to get task status' });

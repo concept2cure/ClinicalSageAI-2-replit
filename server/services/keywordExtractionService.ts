@@ -17,8 +17,8 @@
  */
 
 import { pool } from '../db.js';
-import { getOpenAIClient } from './openai-client';
 import crypto from 'crypto';
+import { ai } from '../lib/unified-ai-client';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -95,8 +95,6 @@ export interface KeywordConsistencyCheck {
 // KEYWORD EXTRACTION
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const openai = getOpenAIClient();
-
 /**
  * Extract domain-specific keywords from regulatory content.
  */
@@ -165,7 +163,7 @@ async function extractKeywordsViaAI(
   maxKeywords: number
 ): Promise<Partial<ExtractedKeyword>[]> {
   try {
-    const response = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: process.env.OPENAI_MODEL || 'gpt-4o',
       temperature: 0.1,
       response_format: { type: 'json_object' },
@@ -191,7 +189,7 @@ Focus on terms that would need source traceability in a regulatory submission. M
       ],
     });
 
-    const parsed = JSON.parse(response.choices[0]?.message?.content || '{"keywords":[]}');
+    const parsed = JSON.parse(aiResult.content || '{"keywords":[]}');
     return (parsed.keywords || []).map((k: any) => ({
       term: k.term,
       normalizedTerm: k.term?.toLowerCase().trim(),

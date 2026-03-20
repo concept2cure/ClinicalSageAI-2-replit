@@ -107,7 +107,7 @@ export async function justifyEndpointChoice(
 
   try {
     // Call GPT-4 with the prepared evidence
-    const completion = await openai.chat.completions.create({
+    const aiResult = await ai.chat({
       model: 'gpt-4o', // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       messages: [
         { role: 'system', content: systemPrompt },
@@ -121,7 +121,7 @@ export async function justifyEndpointChoice(
     });
 
     // Extract and parse response
-    const justificationText = completion.choices[0].message.content;
+    const justificationText = aiResult.content;
 
     // Simple extraction of sections
     const summaryMatch = justificationText.match(/## Summary([\s\S]*?)(?=## |$)/);

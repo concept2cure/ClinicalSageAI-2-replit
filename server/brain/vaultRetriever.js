@@ -8,6 +8,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { ai } from '../lib/unified-ai-client';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const VAULT_DIR = path.join(__dirname, '../../server/vault');
@@ -88,7 +89,7 @@ export async function retrieveContext(query, k = 5) {
 
     let openai;
     try {
-      openai = getOpenAIClient();
+
     } catch {
       console.warn('No OpenAI API key found, using fallback');
       return mockRetrieveContext(query, k);

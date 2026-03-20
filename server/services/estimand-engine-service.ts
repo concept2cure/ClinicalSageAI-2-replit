@@ -352,11 +352,15 @@ Respond in JSON with this exact structure:
   "regulatoryConsiderations": "<FDA/EMA/PMDA perspective on this approach>"
 }`;
 
-    const content = await ai.complete(
-      [{ role: 'user', content: prompt }],
-      { jsonMode: true, temperature: 0.3, maxTokens: 2000 }
-    );
+    const aiResult = await ai.chat({
+      model: 'gpt-4o',
+      messages: [{ role: 'user', content: prompt }],
+      response_format: { type: 'json_object' },
+      temperature: 0.3,
+      max_tokens: 2000,
+    });
 
+    const content = aiResult.content;
     if (!content) {
       throw new Error('Empty response from AI');
     }
