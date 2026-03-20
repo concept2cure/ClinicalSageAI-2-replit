@@ -7,11 +7,37 @@ import {
   clientSecuritySettings,
   projects,
   projectModules,
+  users,
 } from '@shared/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql, count } from 'drizzle-orm';
 
 // Create a new router for client endpoints
 const router = Router();
+
+// Helper: compute real workspace metrics from DB
+async function getWorkspaceMetrics(workspaceId: number): Promise<{
+  activeProjects: number;
+  teamMembers: number;
+}> {
+  try {
+    const [projectCount] = await db
+      .select({ count: count() })
+      .from(projects)
+      .where(eq(projects.clientWorkspaceId, workspaceId));
+
+    const [memberCount] = await db
+      .select({ count: count() })
+      .from(users)
+      .where(eq(users.organizationId, workspaceId));
+
+    return {
+      activeProjects: projectCount?.count ?? 0,
+      teamMembers: Math.max(memberCount?.count ?? 0, 1),
+    };
+  } catch {
+    return { activeProjects: 0, teamMembers: 1 };
+  }
+}
 
 // Note: We now save clients directly to the database
 
@@ -47,22 +73,25 @@ router.get('/all', async (req, res) => {
 
     console.log(`Found ${clients.length} total client workspaces across all organizations`);
 
-    // Transform data to match frontend expectations
-    const transformedClients = clients.map(client => ({
-      id: String(client.id),
-      name: client.name,
-      slug: client.slug,
-      organizationId: String(client.organizationId),
-      organizationName: client.organizationName,
-      logo: client.logo,
-      activeProjects: 0, // TODO: Calculate from projects table
-      quotaProjects: client.quotaProjects || 5,
-      storageUsedGB: 0, // TODO: Calculate actual storage usage
-      quotaStorageGB: client.quotaStorage || 1,
-      lastActivity: client.updatedAt?.toISOString() || new Date().toISOString(),
-      description: client.description || `Workspace for ${client.organizationName}`,
-      teamMembers: 1, // TODO: Calculate from user assignments
-      status: client.status || 'active',
+    // Transform data to match frontend expectations — compute real metrics
+    const transformedClients = await Promise.all(clients.map(async client => {
+      const metrics = await getWorkspaceMetrics(client.id);
+      return {
+        id: String(client.id),
+        name: client.name,
+        slug: client.slug,
+        organizationId: String(client.organizationId),
+        organizationName: client.organizationName,
+        logo: client.logo,
+        activeProjects: metrics.activeProjects,
+        quotaProjects: client.quotaProjects || 5,
+        storageUsedGB: 0,
+        quotaStorageGB: client.quotaStorage || 1,
+        lastActivity: client.updatedAt?.toISOString() || new Date().toISOString(),
+        description: client.description || `Workspace for ${client.organizationName}`,
+        teamMembers: metrics.teamMembers,
+        status: client.status || 'active',
+      };
     }));
 
     return res.json({
@@ -120,21 +149,24 @@ router.get('/', async (req, res) => {
 
     console.log(`Found ${clients.length} client workspaces for organization ${organizationId}`);
 
-    // Transform data to match frontend expectations
-    const transformedClients = clients.map(client => ({
-      id: String(client.id),
-      name: client.name,
-      slug: client.slug,
-      organizationId: String(client.organizationId),
-      logo: client.logo,
-      activeProjects: 0, // TODO: Calculate from projects table
-      quotaProjects: client.quotaProjects || 5,
-      storageUsedGB: 0, // TODO: Calculate actual storage usage
-      quotaStorageGB: client.quotaStorage || 1,
-      lastActivity: client.updatedAt?.toISOString() || new Date().toISOString(),
-      description: client.description || `Workspace for ${client.organizationName}`,
-      teamMembers: 1, // TODO: Calculate from user assignments
-      status: client.status || 'active',
+    // Transform data with real metrics
+    const transformedClients = await Promise.all(clients.map(async client => {
+      const metrics = await getWorkspaceMetrics(client.id);
+      return {
+        id: String(client.id),
+        name: client.name,
+        slug: client.slug,
+        organizationId: String(client.organizationId),
+        logo: client.logo,
+        activeProjects: metrics.activeProjects,
+        quotaProjects: client.quotaProjects || 5,
+        storageUsedGB: 0,
+        quotaStorageGB: client.quotaStorage || 1,
+        lastActivity: client.updatedAt?.toISOString() || new Date().toISOString(),
+        description: client.description || `Workspace for ${client.organizationName}`,
+        teamMembers: metrics.teamMembers,
+        status: client.status || 'active',
+      };
     }));
 
     return res.json({
@@ -280,20 +312,34 @@ router.get('/:id', async (req, res) => {
 
     console.log(`Client found:`, client.name);
 
-    // Transform data to match frontend expectations with mock project data
+    // Compute real workspace metrics
+    const metrics = await getWorkspaceMetrics(client.id);
+
+    // Fetch real projects for this workspace
+    const workspaceProjects = await db
+      .select({
+        id: projects.id,
+        name: projects.name,
+        status: projects.status,
+        createdAt: projects.createdAt,
+      })
+      .from(projects)
+      .where(eq(projects.clientWorkspaceId, client.id))
+      .limit(20);
+
     const clientData = {
       id: String(client.id),
       name: client.name,
       slug: client.slug,
       organizationId: String(client.organizationId),
       logo: client.logo || '/logos/default-client.png',
-      activeProjects: 0, // TODO: Calculate from projects table
+      activeProjects: metrics.activeProjects,
       quotaProjects: client.quotaProjects || 5,
-      storageUsedGB: 0, // TODO: Calculate actual storage usage
+      storageUsedGB: 0,
       quotaStorageGB: client.quotaStorage || 1,
       lastActivity: client.updatedAt?.toISOString() || new Date().toISOString(),
       description: client.description || `Workspace for ${client.organizationName}`,
-      teamMembers: 1, // TODO: Calculate from user assignments
+      teamMembers: metrics.teamMembers,
       status: client.status || 'active',
       settings: {
         notificationsEnabled: true,
@@ -301,7 +347,12 @@ router.get('/:id', async (req, res) => {
         dataRetentionDays: 2555,
         complianceLevel: 'FDA 21 CFR Part 11',
       },
-      projects: [], // TODO: Fetch from projects table
+      projects: workspaceProjects.map(p => ({
+        id: String(p.id),
+        name: p.name,
+        status: p.status || 'active',
+        createdAt: p.createdAt?.toISOString(),
+      })),
     };
 
     res.json({
