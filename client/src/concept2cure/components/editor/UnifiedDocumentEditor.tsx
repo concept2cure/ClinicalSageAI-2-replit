@@ -32,6 +32,8 @@ import { SearchAndReplace } from './extensions/SearchAndReplace';
 import { createSlashCommandExtension } from './extensions/SlashCommandMenu';
 import { CommentMark, type CommentThread } from './extensions/CommentMark';
 import { AIAutocomplete } from './extensions/AIAutocomplete';
+import { GlossaryTooltip } from './extensions/GlossaryTooltip';
+import { CitationMark, CitationPlugin } from './extensions/CitationPlugin';
 import {
   Bold,
   Italic,
@@ -1088,6 +1090,12 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
           submissionType: submissionType,
           ctdSection: undefined,
         },
+      }),
+      CitationMark,
+      CitationPlugin,
+      GlossaryTooltip.configure({
+        enabled: true,
+        customTerms: [],
       }),
     ],
     content: initialContent,

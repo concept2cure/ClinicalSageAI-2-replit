@@ -1741,6 +1741,232 @@ router.post('/ai/compliance-scan', async (req: Request, res: Response) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// AI CITATION SEARCH (Sprint 1B — Smart Citation Insertion)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/concept2cure/ai/citation-search
+ * Search for citable references across project artifacts and CSR database.
+ * Returns formatted citations with metadata for insertion.
+ */
+router.post('/ai/citation-search', async (req: Request, res: Response) => {
+  try {
+    const { query, projectId, limit = 10 } = req.body;
+    if (!query || typeof query !== 'string' || query.length < 2) {
+      return sendError(res, 400, 'query is required (min 2 chars)');
+    }
+
+    const results: Array<{
+      id: string;
+      title: string;
+      authors: string;
+      year: string;
+      sourceType: string;
+      excerpt: string;
+      citationText: string;
+    }> = [];
+
+    // Search project artifacts if projectId provided
+    if (projectId) {
+      try {
+        const artifactResult = await pool.query(
+          `SELECT id, title, content, type, created_at
+           FROM concept2cure_artifacts
+           WHERE project_id = $1
+             AND (title ILIKE $2 OR content ILIKE $2)
+           ORDER BY updated_at DESC
+           LIMIT $3`,
+          [projectId, `%${query}%`, Math.min(limit, 20)]
+        );
+        for (const row of artifactResult.rows) {
+          const year = new Date(row.created_at).getFullYear().toString();
+          const plainText = (row.content || '').replace(/<[^>]+>/g, ' ').trim();
+          results.push({
+            id: `artifact-${row.id}`,
+            title: row.title,
+            authors: 'Project Team',
+            year,
+            sourceType: row.type || 'document',
+            excerpt: plainText.slice(0, 200),
+            citationText: `[Project Team, ${year}]`,
+          });
+        }
+      } catch {
+        // Non-fatal — continue with other sources
+      }
+    }
+
+    // Search CSR knowledge base
+    try {
+      const csrResult = await pool.query(
+        `SELECT id, title, sponsor, indication, phase, approval_date
+         FROM csr_reports
+         WHERE title ILIKE $1 OR sponsor ILIKE $1 OR indication ILIKE $1
+         ORDER BY approval_date DESC NULLS LAST
+         LIMIT $2`,
+        [`%${query}%`, Math.min(limit, 20)]
+      );
+      for (const row of csrResult.rows) {
+        const year = row.approval_date
+          ? new Date(row.approval_date).getFullYear().toString()
+          : 'N/A';
+        results.push({
+          id: `csr-${row.id}`,
+          title: row.title,
+          authors: row.sponsor || 'Unknown',
+          year,
+          sourceType: `CSR Phase ${row.phase || '?'}`,
+          excerpt: `${row.indication || ''} — ${row.sponsor || ''}`.trim(),
+          citationText: `[${row.sponsor || 'Unknown'}, ${year}]`,
+        });
+      }
+    } catch {
+      // CSR table may not exist — non-fatal
+    }
+
+    return sendSuccess(res, { results: results.slice(0, limit), total: results.length });
+  } catch (error: any) {
+    logger.error('Citation search failed', { error: error.message });
+    return sendError(res, 500, 'Citation search failed');
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AI BATCH SECTION EDIT (Sprint 1D — Batch AI Operations)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/concept2cure/ai/batch-edit
+ * Process multiple document sections with an AI action in sequence.
+ * Accepts array of sections, returns array of results.
+ */
+router.post('/ai/batch-edit', async (req: Request, res: Response) => {
+  try {
+    const { sections, action, submissionType } = req.body;
+    if (!sections || !Array.isArray(sections) || sections.length === 0) {
+      return sendError(res, 400, 'sections array is required');
+    }
+    if (!action || typeof action !== 'string') {
+      return sendError(res, 400, 'action is required');
+    }
+
+    const { getGateway } = await import('../services/ai-gateway/gateway.js');
+    const gw = getGateway();
+    if (gw.getEnabledProviders().length === 0) {
+      return sendError(res, 503, 'AI service not configured');
+    }
+
+    const actionPrompts: Record<string, string> = {
+      'rewrite': 'Rewrite this section for clarity, precision, and professional regulatory language. Maintain all factual content.',
+      'expand': 'Expand this section with more detail, evidence references, and supporting data. Keep regulatory tone.',
+      'summarize': 'Create a concise executive summary of this section. Keep key data points and conclusions.',
+      'regulatory-tone': 'Rewrite in formal FDA/EMA regulatory submission language. Use "shall" for requirements, "should" for recommendations.',
+      'add-references': 'Add reference placeholders [Ref X] where claims need supporting evidence. Note what type of reference is needed.',
+    };
+
+    const systemPrompt = [
+      actionPrompts[action] || `Apply the "${action}" transformation to this text.`,
+      submissionType ? `Submission type: ${submissionType}.` : '',
+      'Return ONLY the transformed text — no preamble, no explanation.',
+    ].filter(Boolean).join(' ');
+
+    const results = [];
+    for (const section of sections.slice(0, 20)) {
+      try {
+        const text = (section.content || '').replace(/<[^>]+>/g, ' ').trim().slice(0, 3000);
+        if (text.length < 10) {
+          results.push({ sectionTitle: section.title, result: section.content, error: null });
+          continue;
+        }
+
+        const gwResponse = await gw.route({
+          taskType: 'document_drafting',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: `Section: ${section.title || 'Untitled'}\n\n${text}` },
+          ],
+          temperature: 0.4,
+          maxTokens: 2000,
+          callerModule: 'concept2cure/ai-batch-edit',
+        });
+
+        results.push({
+          sectionTitle: section.title,
+          result: (gwResponse.content || '').trim(),
+          error: null,
+        });
+      } catch (err: any) {
+        results.push({
+          sectionTitle: section.title,
+          result: section.content,
+          error: err.message,
+        });
+      }
+    }
+
+    return sendSuccess(res, { results, processedCount: results.length });
+  } catch (error: any) {
+    logger.error('Batch edit failed', { error: error.message });
+    return sendError(res, 500, 'Batch edit failed');
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CROSS-REFERENCE VALIDATION (Sprint 2C)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/concept2cure/ai/validate-references
+ * Validate cross-references found in document content against project artifacts.
+ */
+router.post('/ai/validate-references', async (req: Request, res: Response) => {
+  try {
+    const { references, projectId } = req.body;
+    if (!references || !Array.isArray(references)) {
+      return sendError(res, 400, 'references array is required');
+    }
+
+    const validatedRefs = [];
+
+    for (const ref of references.slice(0, 50)) {
+      let status: 'valid' | 'broken' | 'unlinked' = 'unlinked';
+      let targetTitle = '';
+
+      if (projectId && ref.targetSection) {
+        try {
+          const result = await pool.query(
+            `SELECT id, title FROM concept2cure_artifacts
+             WHERE project_id = $1
+               AND (ctd_section ILIKE $2 OR title ILIKE $3)
+             LIMIT 1`,
+            [projectId, `%${ref.targetSection}%`, `%${ref.targetSection}%`]
+          );
+          if (result.rows.length > 0) {
+            status = 'valid';
+            targetTitle = result.rows[0].title;
+          } else {
+            status = 'broken';
+          }
+        } catch {
+          status = 'unlinked';
+        }
+      }
+
+      validatedRefs.push({
+        ...ref,
+        status,
+        targetTitle,
+      });
+    }
+
+    return sendSuccess(res, { references: validatedRefs });
+  } catch (error: any) {
+    logger.error('Reference validation failed', { error: error.message });
+    return sendError(res, 500, 'Reference validation failed');
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // INCONSISTENCY INTELLIGENCE (Sprint 2C — ARTOS-inspired)
 // ─────────────────────────────────────────────────────────────────────────────
 

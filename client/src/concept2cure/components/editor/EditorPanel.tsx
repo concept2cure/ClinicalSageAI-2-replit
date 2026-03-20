@@ -36,6 +36,11 @@ import {
   Zap,
   ArrowRight,
   Users,
+  MessageSquare,
+  Eye,
+  Link2,
+  Layers,
+  Keyboard,
 } from 'lucide-react';
 import { useClaimCheck, type ClaimCheckResult } from '../../hooks/usePrecedentEngine';
 import { RegulatoryIntelligencePanel } from '../intelligence/RegulatoryIntelligencePanel';
@@ -47,6 +52,13 @@ import DataRoomPanel from './DataRoomPanel';
 import InconsistencyPanel from './InconsistencyPanel';
 import { DocumentHealth } from './DocumentHealth';
 import { VersionTimeline } from './VersionTimeline';
+import { BatchAIPanel } from './BatchAIPanel';
+import { DocumentDiff } from './DocumentDiff';
+import { CrossReferencePanel } from './CrossReferencePanel';
+import { KeyboardShortcutsOverlay } from './KeyboardShortcuts';
+import { CommentThreadPanel } from './CommentThread';
+import { ReviewModePanel } from './ReviewMode';
+import type { CommentThread } from './extensions/CommentMark';
 
 // ── Auth helper (same pattern as useProjects) ────────────────────────────────
 function getAuthHeaders(): Record<string, string> {
@@ -148,7 +160,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const claimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Single secondary inspector panel (only one open at a time) ────────
-  type InspectorPanel = 'intelligence' | 'provenance' | 'compare' | 'audit' | 'dataroom' | 'inconsistency' | 'health' | 'versions';
+  type InspectorPanel = 'intelligence' | 'provenance' | 'compare' | 'audit' | 'dataroom' | 'inconsistency' | 'health' | 'versions' | 'batch-ai' | 'crossref' | 'comments' | 'review';
   const [activeInspector, setActiveInspector] = useState<InspectorPanel | null>(null);
   const toggleInspector = useCallback((panel: InspectorPanel) => {
     setActiveInspector(prev => (prev === panel ? null : panel));
@@ -199,6 +211,25 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
   // ── Overflow menu (editor toolbar) ────────────────────────────────────
   const [overflowOpen, setOverflowOpen] = useState(false);
+
+  // ── Keyboard shortcuts overlay ──────────────────────────────────────
+  const [showShortcuts, setShowShortcuts] = useState(false);
+
+  // ── Comments state ──────────────────────────────────────────────────
+  const [comments, setComments] = useState<CommentThread[]>([]);
+
+  // ── Review mode state ───────────────────────────────────────────────
+  const [isReviewMode, setIsReviewMode] = useState(false);
+  const [trackedChanges, setTrackedChanges] = useState<Array<{
+    id: string;
+    type: 'addition' | 'deletion' | 'modification';
+    originalText: string;
+    newText: string;
+    author: string;
+    timestamp: string;
+    accepted?: boolean;
+    rejected?: boolean;
+  }>>([]);
 
   const handleClaimCheck = useCallback(() => {
     if (!activeArtifact?.content) return;
@@ -454,10 +485,16 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         e.preventDefault();
         if (activeArtifact) handleSave(activeArtifact.content, {});
       }
+      // Ctrl+Shift+/ or Ctrl+? — show keyboard shortcuts
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === '/' || e.key === '?')) {
+        e.preventDefault();
+        setShowShortcuts(prev => !prev);
+      }
       // Escape — close menus
       if (e.key === 'Escape') {
         setOverflowOpen(false);
         setAiMenuOpen(false);
+        setShowShortcuts(false);
       }
     };
     window.addEventListener('keydown', handler);
@@ -1182,6 +1219,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               { id: 'intelligence' as const, icon: Brain, label: 'Intel' },
               { id: 'health' as const, icon: ShieldCheck, label: 'Health' },
               { id: 'versions' as const, icon: GitCompare, label: 'History' },
+              { id: 'batch-ai' as const, icon: Layers, label: 'Batch' },
+              { id: 'crossref' as const, icon: Link2, label: 'XRef' },
+              { id: 'comments' as const, icon: MessageSquare, label: 'Notes' },
+              { id: 'review' as const, icon: Eye, label: 'Review' },
               { id: 'dataroom' as const, icon: Database, label: 'Data' },
               { id: 'inconsistency' as const, icon: Zap, label: 'Impact' },
               { id: 'provenance' as const, icon: ShieldCheck, label: 'Prov' },
@@ -1810,7 +1851,114 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             />
           </div>
         )}
+        {/* Batch AI Operations Panel */}
+        {activeInspector === 'batch-ai' && activeArtifact && (
+          <div className="w-96 shrink-0 border-l border-zinc-200 h-full transition-all duration-200">
+            <BatchAIPanel
+              content={activeArtifact.content || ''}
+              submissionType={submissionType}
+              onApply={(newContent) => {
+                setActiveArtifact(prev => prev ? { ...prev, content: newContent } : null);
+                pushToast('Batch AI changes applied', 'success');
+              }}
+              onClose={() => setActiveInspector(null)}
+            />
+          </div>
+        )}
+        {/* Cross-Reference Manager */}
+        {activeInspector === 'crossref' && activeArtifact && (
+          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-200">
+            <CrossReferencePanel
+              content={activeArtifact.content || ''}
+              projectId={projectId}
+              artifacts={artifacts.map(a => ({
+                id: a.id,
+                title: a.title,
+                ctdSection: a.ctdSection,
+                content: a.content,
+              }))}
+              onInsertReference={(refText) => {
+                pushToast(`Reference inserted: ${refText}`, 'success');
+              }}
+              onNavigateToSection={(sectionId) => {
+                const target = artifacts.find(a => a.id === sectionId);
+                if (target) {
+                  setActiveArtifact(target);
+                  pushToast(`Navigated to: ${target.title}`, 'info');
+                }
+              }}
+              onClose={() => setActiveInspector(null)}
+            />
+          </div>
+        )}
+        {/* Threaded Comments Panel */}
+        {activeInspector === 'comments' && activeArtifact && (
+          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-200">
+            <CommentThreadPanel
+              comments={comments}
+              currentUserId="current-user"
+              onResolve={(commentId) => {
+                setComments(prev => prev.map(c => c.id === commentId ? { ...c, resolved: true } : c));
+                pushToast('Comment resolved', 'success');
+              }}
+              onReopen={(commentId) => {
+                setComments(prev => prev.map(c => c.id === commentId ? { ...c, resolved: false } : c));
+              }}
+              onReply={(commentId, text) => {
+                setComments(prev => prev.map(c => c.id === commentId ? {
+                  ...c,
+                  replies: [...c.replies, {
+                    id: `reply-${Date.now()}`,
+                    text,
+                    authorId: 'current-user',
+                    authorName: 'You',
+                    createdAt: new Date().toISOString(),
+                  }],
+                } : c));
+              }}
+              onDelete={(commentId) => {
+                setComments(prev => prev.filter(c => c.id !== commentId));
+                pushToast('Comment deleted', 'success');
+              }}
+              onNavigateToComment={(commentId) => {
+                pushToast(`Navigating to comment ${commentId}`, 'info');
+              }}
+              onClose={() => setActiveInspector(null)}
+            />
+          </div>
+        )}
+        {/* Review Mode Panel */}
+        {activeInspector === 'review' && activeArtifact && (
+          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-200">
+            <ReviewModePanel
+              isReviewMode={isReviewMode}
+              onToggleReviewMode={() => setIsReviewMode(prev => !prev)}
+              changes={trackedChanges}
+              onAcceptChange={(changeId) => {
+                setTrackedChanges(prev => prev.map(c => c.id === changeId ? { ...c, accepted: true } : c));
+              }}
+              onRejectChange={(changeId) => {
+                setTrackedChanges(prev => prev.map(c => c.id === changeId ? { ...c, rejected: true } : c));
+              }}
+              onAcceptAll={() => {
+                setTrackedChanges(prev => prev.map(c => ({ ...c, accepted: true })));
+                pushToast('All changes accepted', 'success');
+              }}
+              onRejectAll={() => {
+                setTrackedChanges(prev => prev.map(c => ({ ...c, rejected: true })));
+                pushToast('All changes rejected', 'info');
+              }}
+              onCompleteReview={(status, reviewComments) => {
+                pushToast(`Review completed: ${status}`, 'success');
+              }}
+              onClose={() => setActiveInspector(null)}
+            />
+          </div>
+        )}
       </div>
+
+      {/* ── Keyboard Shortcuts Overlay ── */}
+      <KeyboardShortcutsOverlay isOpen={showShortcuts} onClose={() => setShowShortcuts(false)} />
 
       {/* ── Toast notifications ── */}
       {toasts.length > 0 && (
