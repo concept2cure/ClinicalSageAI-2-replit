@@ -45,6 +45,7 @@ import {
   ClipboardList,
   Shield,
   Globe,
+  Key,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -527,6 +528,14 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               accentColor="blue"
               onClick={() => onNavigate?.('cmc')}
             />
+            <NavItem
+              icon={<FlaskConical className="w-3.5 h-3.5" />}
+              label="Biologics Intelligence"
+              subtitle="BLA · Biosimilar · ATMP"
+              active={activeNavId === 'biologics-dashboard'}
+              accentColor="violet"
+              onClick={() => onNavigate?.('biologics-dashboard')}
+            />
           </WorkspaceGroup>
 
           {/* ── ASSURE — quality & compliance ─────────────────────── */}
@@ -594,6 +603,22 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               subtitle="Context · Uploads · Sources"
               active={activeNavId === 'project-knowledge'}
               onClick={() => onNavigate?.('project-knowledge')}
+            />
+            <NavItem
+              icon={<Key className="w-3.5 h-3.5" />}
+              label="Platform Admin"
+              subtitle="API Keys · Users · Billing"
+              active={activeNavId === 'platform-admin'}
+              accentColor="indigo"
+              onClick={() => onNavigate?.('platform-admin')}
+            />
+            <NavItem
+              icon={<Globe className="w-3.5 h-3.5" />}
+              label="CTD Onboarding"
+              subtitle="Ingest · Validate · Learn"
+              active={activeNavId === 'ctd-onboarding'}
+              accentColor="emerald"
+              onClick={() => onNavigate?.('ctd-onboarding')}
             />
           </WorkspaceGroup>
 

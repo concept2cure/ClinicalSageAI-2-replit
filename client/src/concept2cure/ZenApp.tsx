@@ -314,6 +314,15 @@ const PlatformHome = lazy(() => import('./components/home/PlatformHome'));
 // Artifacts Gallery — Claude.ai-style browsable artifact gallery
 const ArtifactsGalleryPage = lazy(() => import('./pages/ArtifactsGallery'));
 
+// Platform Admin — API keys, tenant management, billing, security (Regulatory Command Center)
+const PlatformAdminPage = lazy(() => import('./components/control-plane/CommandCenter'));
+
+// Biologics Dashboard — biologic/biosimilar pathway intelligence, comparability, expedited programs
+const BiologicsDashboardPage = lazy(() => import('./components/biologics/BiologicsDashboard'));
+
+// CTD Onboarding Wizard — client CTD ingestion pipeline (5-step wizard)
+const CTDOnboardingWizardPage = lazy(() => import('./components/onboarding/CTDProjectWizard'));
+
 // Project Sidebar — Claude.ai-style right sidebar (Context, Instructions, Files)
 import { ProjectSidebar } from './components/workspace/ProjectSidebar';
 
@@ -404,6 +413,9 @@ type LayoutMode =
   | 'project-knowledge'
   | 'legal-center'
   | 'artifacts'
+  | 'platform-admin'
+  | 'biologics-dashboard'
+  | 'ctd-onboarding'
   | 'document-builder'
   | 'deep-research'
   | 'report-engine'
@@ -1952,6 +1964,15 @@ export const ZenApp: React.FC = () => {
             case 'artifacts':
               setLayoutMode('artifacts');
               break;
+            case 'platform-admin':
+              setLayoutMode('platform-admin');
+              break;
+            case 'biologics-dashboard':
+              setLayoutMode('biologics-dashboard');
+              break;
+            case 'ctd-onboarding':
+              setLayoutMode('ctd-onboarding');
+              break;
             case 'deep-research':
               setLayoutMode('deep-research');
               break;
@@ -2723,6 +2744,57 @@ export const ZenApp: React.FC = () => {
                   }
                 >
                   <CommandCenterHub onClose={() => setLayoutMode('projects')} />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── Platform Admin — API keys, users, billing, modules (Regulatory Command Center) ── */}
+          {!embeddedModule && layoutMode === 'platform-admin' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-platform-admin">
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
+                    </div>
+                  }
+                >
+                  <PlatformAdminPage />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── Biologics Dashboard — biologic/biosimilar pathway intelligence ── */}
+          {!embeddedModule && layoutMode === 'biologics-dashboard' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-biologics">
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
+                    </div>
+                  }
+                >
+                  <BiologicsDashboardPage />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── CTD Onboarding — client CTD ingestion wizard ── */}
+          {!embeddedModule && layoutMode === 'ctd-onboarding' && (
+            <div className="flex-1 flex flex-col min-h-0 p-6" data-testid="workspace-ctd-onboarding">
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
+                    </div>
+                  }
+                >
+                  <CTDOnboardingWizardPage onComplete={() => setLayoutMode('projects')} />
                 </Suspense>
               </ErrorBoundary>
             </div>

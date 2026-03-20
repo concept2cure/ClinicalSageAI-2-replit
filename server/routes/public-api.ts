@@ -17,6 +17,10 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { validateApiKey } from '../services/api-key-service.js';
 import { recordUsage } from '../services/usage-metering.js';
+import { csrSearchService } from '../services/csr-search-service.js';
+import { getRegulatoryPathwayIntelligence } from '../services/regulatory-pathway-intelligence.js';
+import { getEndpointRecommenderService } from '../services/endpoint-recommender-service.js';
+import { precedentEngine } from '../services/precedent-engine.js';
 
 const router = Router();
 
@@ -88,12 +92,18 @@ router.get('/csr/search', requireScope('csr:read'), async (req: ApiRequest, res:
       }).catch(() => {});
     }
 
-    return res.json({
-      results: [],
-      query: { indication, phase, endpoint, sponsor },
-      total: 0,
+    const searchResults = await csrSearchService.searchCSRs({
+      indication: indication as string,
+      phase: phase as string,
+      query_text: endpoint as string || sponsor as string,
       limit: parseInt(limit as string, 10),
-      _note: 'Results populated from CSR knowledge base. Ingest CSRs to build intelligence.',
+    });
+
+    return res.json({
+      results: searchResults.csrs,
+      query: { indication, phase, endpoint, sponsor },
+      total: searchResults.results_count,
+      limit: parseInt(limit as string, 10),
       _apiVersion: 'v1',
     });
   } catch (error: unknown) {
@@ -121,17 +131,18 @@ router.get('/regulatory/pathways', requireScope('regulatory:read'), async (req: 
       ? (targetAgencies as string).split(',').map((a) => a.trim())
       : ['FDA'];
 
+    const engine = getRegulatoryPathwayIntelligence();
+    const recommendations = engine.recommendPathway({
+      productType: (productType as 'drug' | 'biologic' | 'device' | 'biosimilar' | 'generic' | 'combination') || 'drug',
+      indication: (indication as string) || 'general',
+      targetAgencies: agencies,
+    });
+
     return res.json({
       productType: productType || 'drug',
       indication: indication || null,
       agencies,
-      recommendations: agencies.map((agency) => ({
-        agency,
-        recommendedPathway: getDefaultPathway(productType as string, agency),
-        expeditedOptions: getExpeditedOptions(agency),
-        estimatedTimeline: getTimelineEstimate(agency),
-        requiredDocuments: getRequiredDocs(productType as string, agency),
-      })),
+      recommendations,
       _apiVersion: 'v1',
     });
   } catch (error: unknown) {
@@ -155,12 +166,19 @@ router.get('/endpoints/recommend', requireScope('endpoints:read'), async (req: A
       }).catch(() => {});
     }
 
+    const recommender = getEndpointRecommenderService();
+    const recommendations = await recommender.getComprehensiveEndpointRecommendations(
+      (indication as string) || 'general',
+      phase as string,
+      10,
+      therapeuticArea as string,
+    );
+
     return res.json({
       indication: indication || null,
       phase: phase || null,
       therapeuticArea: therapeuticArea || null,
-      recommendations: [],
-      _note: 'Endpoint recommendations powered by cross-study CSR analytics.',
+      recommendations,
       _apiVersion: 'v1',
     });
   } catch (error: unknown) {
@@ -184,12 +202,18 @@ router.get('/precedent/search', requireScope('precedent:read'), async (req: ApiR
       }).catch(() => {});
     }
 
+    const precedents = await precedentEngine.search({
+      indication: indication as string,
+      submissionType: (submissionType as string) || 'NDA',
+      query: indication as string,
+      limit: parseInt(limit as string, 10),
+    });
+
     return res.json({
       query: { indication, agency, submissionType },
-      precedents: [],
-      total: 0,
+      precedents,
+      total: precedents.length,
       limit: parseInt(limit as string, 10),
-      _note: 'Precedent search draws from ingested CSR and regulatory intelligence data.',
       _apiVersion: 'v1',
     });
   } catch (error: unknown) {
@@ -213,12 +237,26 @@ router.get('/trial-design/suggest', requireScope('trial-design:read'), async (re
       }).catch(() => {});
     }
 
+    // Combine precedent strategy + endpoint recommendations for trial design suggestions
+    const [strategy, endpointRecs] = await Promise.all([
+      precedentEngine.recommendStrategy({
+        submissionType: 'NDA',
+        indication: indication as string,
+        query: primaryEndpoint as string,
+      }),
+      getEndpointRecommenderService().getComprehensiveEndpointRecommendations(
+        (indication as string) || 'general',
+        phase as string,
+        5,
+      ),
+    ]);
+
     return res.json({
       indication: indication || null,
       phase: phase || null,
       primaryEndpoint: primaryEndpoint || null,
-      suggestions: [],
-      _note: 'Trial design suggestions informed by CSR knowledge base cross-study analytics.',
+      strategy,
+      recommendedEndpoints: endpointRecs,
       _apiVersion: 'v1',
     });
   } catch (error: unknown) {
@@ -227,52 +265,5 @@ router.get('/trial-design/suggest', requireScope('trial-design:read'), async (re
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
-
-// ============================================================================
-// HELPER FUNCTIONS
-// ============================================================================
-
-function getDefaultPathway(productType: string, agency: string): string {
-  const pathways: Record<string, Record<string, string>> = {
-    drug: { FDA: 'NDA (505(b)(1))', EMA: 'MAA (Centralised)', PMDA: 'JNDA', NMPA: 'NDA', HealthCanada: 'NDS' },
-    biologic: { FDA: 'BLA (351(a))', EMA: 'MAA (Centralised)', PMDA: 'JNDA (Biologic)', NMPA: 'BLA' },
-    biosimilar: { FDA: 'BLA 351(k)', EMA: 'MAA (Art. 10(4))', PMDA: 'Biosimilar Application' },
-    device: { FDA: '510(k) or PMA', EMA: 'MDR CE Marking', PMDA: 'Shonin', NMPA: 'NMPA Registration' },
-    combination: { FDA: 'NDA/BLA + 510(k) (OCP)', EMA: 'MAA + MDR', PMDA: 'Combination Application' },
-  };
-  return pathways[productType]?.[agency] || pathways.drug?.[agency] || 'Standard Application';
-}
-
-function getExpeditedOptions(agency: string): string[] {
-  const options: Record<string, string[]> = {
-    FDA: ['Fast Track', 'Breakthrough Therapy', 'Accelerated Approval', 'Priority Review', 'RMAT'],
-    EMA: ['PRIME', 'Accelerated Assessment', 'Conditional Marketing Authorization', 'Orphan Designation'],
-    PMDA: ['SAKIGAKE', 'Conditional Early Approval', 'Priority Review'],
-    NMPA: ['Priority Review', 'Breakthrough Therapy', 'Conditional Approval'],
-    HealthCanada: ['Priority Review', 'NOC/c'],
-  };
-  return options[agency] || ['Standard Review'];
-}
-
-function getTimelineEstimate(agency: string): string {
-  const timelines: Record<string, string> = {
-    FDA: '10-12 months (standard), 6-8 months (priority)',
-    EMA: '12-15 months (standard), 150 days (accelerated)',
-    PMDA: '12 months (standard), 6 months (priority)',
-    NMPA: '12-18 months (standard)',
-    HealthCanada: '12 months (standard), 6 months (priority)',
-  };
-  return timelines[agency] || '12 months (standard)';
-}
-
-function getRequiredDocs(productType: string, agency: string): string[] {
-  const baseDocs = ['Module 1: Administrative', 'Module 2: Summaries', 'Module 3: Quality (CMC)'];
-  if (productType === 'device') {
-    return agency === 'FDA'
-      ? ['510(k) Summary', 'Device Description', 'Predicate Comparison', 'Performance Data', 'Biocompatibility', 'Labeling']
-      : ['Technical Documentation', 'Clinical Evaluation Report', 'Risk Management File', 'IFU'];
-  }
-  return [...baseDocs, 'Module 4: Nonclinical', 'Module 5: Clinical'];
-}
 
 export default router;
