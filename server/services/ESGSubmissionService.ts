@@ -319,25 +319,14 @@ class ESGSubmissionService {
    * Simulate ESG submission for test mode
    */
   private simulateESGSubmission(packageId: string): ESGResponse {
-    // Simulate different responses randomly for testing
-    const responses = [
-      {
-        transactionId: `TEST-TXN-${Date.now()}`,
-        acknowledgmentNumber: `TEST-ACK-${Math.random().toString(36).substr(2, 9)}`,
-        status: 'accepted' as const,
-        message: 'Test submission accepted successfully',
-        timestamp: new Date()
-      },
-      {
-        transactionId: `TEST-TXN-${Date.now()}`,
-        status: 'processing' as const,
-        message: 'Test submission is being processed',
-        timestamp: new Date()
-      }
-    ];
-
-    // Return a random response for testing
-    return responses[Math.floor(Math.random() * responses.length)];
+    // Deterministic test response — always returns 'accepted' for reliable testing
+    return {
+      transactionId: `TEST-TXN-${Date.now()}`,
+      acknowledgmentNumber: `TEST-ACK-${packageId.replace(/[^a-z0-9]/gi, '').slice(0, 9)}`,
+      status: 'accepted' as const,
+      message: 'Test submission accepted successfully',
+      timestamp: new Date(),
+    };
   }
 
   /**

@@ -464,8 +464,8 @@ export async function generateEctdPackage(
         if (docResult.rows.length > 0 && (docResult.rows[0].content || docResult.rows[0].file_content)) {
           documentContent = docResult.rows[0].content || docResult.rows[0].file_content;
         }
-      } catch {
-        // Document retrieval failed — will generate structured placeholder
+      } catch (docErr: any) {
+        console.warn(`[eCTD Export] Document retrieval failed for granule ${granule.granuleId}: ${docErr.message}`);
       }
     }
 
@@ -474,6 +474,8 @@ export async function generateEctdPackage(
       documentContent = granule.metadata.content;
     }
 
+    // Use .txt extension for placeholder content (not .pdf) to avoid FDA ESG rejection
+    const isPlaceholder = !documentContent;
     const fileContent = documentContent || generateStructuredDocument({
       sectionCode: granule.granuleId,
       title: granule.granuleName,
