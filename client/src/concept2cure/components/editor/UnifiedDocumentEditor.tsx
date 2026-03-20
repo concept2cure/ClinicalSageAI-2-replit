@@ -664,16 +664,29 @@ interface StatusBarProps {
   collaborators?: Collaborator[];
 }
 
+// Common regulatory document word count targets
+const WORD_COUNT_TARGETS: Record<string, number> = {
+  'Clinical Study Report': 25000,
+  'Module 2.5 Overview': 5000,
+  'Risk Analysis': 3000,
+  'Device Description': 4000,
+  'Regulatory Narrative': 8000,
+};
+
 const StatusBar: React.FC<StatusBarProps> = ({ editor, complianceScore, collaborators }) => {
   if (!editor) return null;
   const words = editor.storage.characterCount?.words?.() ?? 0;
   const chars = editor.storage.characterCount?.characters?.() ?? 0;
   const readingTime = Math.max(1, Math.ceil(words / 200));
 
+  // Simple page estimate (250 words per page)
+  const pages = Math.max(1, Math.ceil(words / 250));
+
   return (
     <div className="flex items-center gap-4 px-4 py-1.5 border-t border-zinc-200 bg-zinc-50 text-xs text-zinc-500">
       <span>{words.toLocaleString()} words</span>
       <span>{chars.toLocaleString()} chars</span>
+      <span>~{pages} pg{pages !== 1 ? 's' : ''}</span>
       <span className="flex items-center gap-1">
         <Clock className="w-3 h-3" />
         {readingTime} min read

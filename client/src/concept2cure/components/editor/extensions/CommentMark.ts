@@ -14,6 +14,7 @@ export interface CommentThread {
   authorName: string;
   createdAt: string;
   resolved: boolean;
+  highlightedText?: string;
   replies: Array<{
     id: string;
     text: string;
