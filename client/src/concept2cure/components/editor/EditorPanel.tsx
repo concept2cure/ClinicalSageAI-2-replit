@@ -227,6 +227,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const [signatures, setSignatures] = useState<SignatureInfo[]>([]);
   const [provenanceCount, setProvenanceCount] = useState(0);
   const [integrityVerified, setIntegrityVerified] = useState<boolean | null>(null);
+  const [trustLoadFailed, setTrustLoadFailed] = useState(false);
 
   // ── Auto-save (debounced 5s after last edit) ──────────────────────────
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -528,43 +529,47 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       setSignatures([]);
       setProvenanceCount(0);
       setIntegrityVerified(null);
+      setTrustLoadFailed(false);
       return;
     }
+    let cancelled = false;
+    setTrustLoadFailed(false);
     const headers = getAuthHeaders();
+
+    const handleError = () => {
+      if (!cancelled) setTrustLoadFailed(true);
+    };
+
     // Fetch signatures
     fetch(`/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/signatures`, {
       headers,
     })
-      .then(r => (r.ok ? r.json() : null))
-      .then(d => {
-        if (d) setSignatures(d.data ?? d ?? []);
-      })
-      .catch(() => setSignatures([]));
+      .then(r => (r.ok ? r.json() : Promise.reject(new Error(`${r.status}`))))
+      .then(d => { if (!cancelled) setSignatures(d.data ?? d ?? []); })
+      .catch(() => { if (!cancelled) { setSignatures([]); handleError(); } });
     // Fetch provenance count
     fetch(`/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/provenance`, {
       headers,
     })
-      .then(r => (r.ok ? r.json() : null))
+      .then(r => (r.ok ? r.json() : Promise.reject(new Error(`${r.status}`))))
       .then(d => {
-        if (d) {
+        if (!cancelled && d) {
           const prov = d.data ?? d;
           const events = prov?.reviewHistory?.length ?? prov?.events?.length ?? 0;
           setProvenanceCount(events);
         }
       })
-      .catch(() => setProvenanceCount(0));
+      .catch(() => { if (!cancelled) { setProvenanceCount(0); handleError(); } });
     // Fetch integrity verification
     fetch(
       `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/verify-integrity`,
-      {
-        headers,
-      }
+      { headers },
     )
-      .then(r => (r.ok ? r.json() : null))
-      .then(d => {
-        if (d) setIntegrityVerified((d.data ?? d)?.verified ?? null);
-      })
-      .catch(() => setIntegrityVerified(null));
+      .then(r => (r.ok ? r.json() : Promise.reject(new Error(`${r.status}`))))
+      .then(d => { if (!cancelled && d) setIntegrityVerified((d.data ?? d)?.verified ?? null); })
+      .catch(() => { if (!cancelled) { setIntegrityVerified(null); handleError(); } });
+
+    return () => { cancelled = true; };
   }, [projectId, activeArtifact?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Auto-create artifact from initial content (eCTD handoff) ──────────────
@@ -1599,6 +1604,14 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   <><AlertTriangle className="w-3 h-3" /> Modified</>
                 )}
               </button>
+            )}
+            {trustLoadFailed && (
+              <span
+                className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-lg bg-amber-50 text-amber-600 font-medium ring-1 ring-amber-200/60"
+                title="Some trust indicators failed to load — data may be incomplete"
+              >
+                <AlertTriangle className="w-3 h-3" /> Partial
+              </span>
             )}
           </div>
         )}

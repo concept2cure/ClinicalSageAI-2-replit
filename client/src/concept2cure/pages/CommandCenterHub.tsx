@@ -12,6 +12,7 @@ import { useDeliverable } from '@/concept2cure/hooks/useDeliverable';
 import { useProjects } from '@/concept2cure/hooks/useProjects';
 import { useProjectTasks } from '@/concept2cure/hooks/useProjectTasks';
 import { useQuery } from '@tanstack/react-query';
+import { queryKeys } from '@/concept2cure/hooks/queryKeys';
 import { GenerateButton, ExportButton, RunButton } from '@/concept2cure/components/ui/ActionButton';
 import {
   Activity,
@@ -140,23 +141,23 @@ function useCommandCenterData() {
 
   // Fetch artifact summary
   const { data: artifactSummary } = useQuery({
-    queryKey: ['/api/concept2cure/projects/all/artifacts-summary'],
+    queryKey: [...queryKeys.projects.artifactsSummary()],
   });
 
   // Fetch all artifacts across projects
   const { data: artifactsData } = useQuery({
-    queryKey: ['/api/concept2cure/artifacts'],
+    queryKey: [...queryKeys.artifacts.all],
   });
 
   // Fetch audit logs for activity feed
   const { data: auditData } = useQuery({
-    queryKey: ['/api/concept2cure/audit-logs', { limit: 20 }],
+    queryKey: [...queryKeys.auditLogs.list({ limit: 20 })],
     queryFn: () => fetch('/api/concept2cure/audit-logs?limit=20').then(r => r.json()),
   });
 
   // Fetch pending reviews
   const { data: reviewsData } = useQuery({
-    queryKey: ['/api/concept2cure/reviews/pending'],
+    queryKey: [...queryKeys.reviews.pending()],
   });
 
   // Transform projects into programs format

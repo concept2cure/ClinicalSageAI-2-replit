@@ -48,6 +48,7 @@ import { useProjects } from './hooks/useProjects';
 import { useCortexThreads, useCortexHealth } from './hooks/useCortex';
 import { usePlatformContext } from './hooks/useLicense';
 import { useWorkspaceSummary } from './hooks/useWorkspaceSummary';
+import { queryKeys } from './hooks/queryKeys';
 
 import { WorkspaceReadinessStrip } from './components/workspace/WorkspaceReadinessStrip';
 import { ProjectWorkspaceShell } from './components/workspace/ProjectWorkspaceShell';
@@ -605,12 +606,12 @@ const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
 
 function AnalyticsDashboardInline({ projects, onBack }: { projects: any[]; onBack: () => void }) {
   const { data: summaryRaw } = useQuery({
-    queryKey: ['/api/concept2cure/projects/all/artifacts-summary'],
+    queryKey: [...queryKeys.projects.artifactsSummary()],
   });
   const summary = (summaryRaw as any)?.data || { total: 0, draft: 0, review: 0, approved: 0 };
 
   const { data: auditRaw } = useQuery({
-    queryKey: ['/api/concept2cure/audit-logs', { limit: 30 }],
+    queryKey: [...queryKeys.auditLogs.list({ limit: 30 })],
     queryFn: () => fetch('/api/concept2cure/audit-logs?limit=30').then(r => r.json()),
   });
   const auditLogs = (auditRaw as any)?.data?.logs || [];
@@ -1169,7 +1170,7 @@ export const ZenApp: React.FC = () => {
 
   // Project-scoped artifacts for the Outputs tab (must come after activeProjectId is declared)
   const { data: projectArtifacts = [] } = useQuery({
-    queryKey: ['project-artifacts', activeProjectId],
+    queryKey: [...queryKeys.projects.artifacts(activeProjectId!)],
     queryFn: async () => {
       if (!activeProjectId) return [];
       const token =

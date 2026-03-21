@@ -28,6 +28,7 @@ import {
   usePDUFADates,
 } from '@/concept2cure/hooks/useRegulatoryIntelligence';
 import { useQuery } from '@tanstack/react-query';
+import { queryKeys } from '@/concept2cure/hooks/queryKeys';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -324,12 +325,12 @@ function EvidenceHub() {
 
   // Fetch artifacts from API for evidence hub
   const { data: artifactsResponse } = useQuery({
-    queryKey: ['/api/concept2cure/artifacts'],
+    queryKey: [...queryKeys.artifacts.all],
   });
 
   // Fetch audit logs for additional evidence/activity context
   const { data: auditResponse } = useQuery({
-    queryKey: ['/api/concept2cure/audit-logs', { limit: 30 }],
+    queryKey: [...queryKeys.auditLogs.list({ limit: 30 })],
     queryFn: () => fetch('/api/concept2cure/audit-logs?limit=30').then(r => r.json()),
   });
 
@@ -464,7 +465,7 @@ function PrecedentFinder() {
 
   // Fetch precedent/predicate data from API
   const { data: precedentsResponse } = useQuery({
-    queryKey: ['/api/concept2cure/precedents'],
+    queryKey: [...queryKeys.precedents.all],
     queryFn: () => fetch('/api/concept2cure/precedents').then(r => r.json()),
   });
 

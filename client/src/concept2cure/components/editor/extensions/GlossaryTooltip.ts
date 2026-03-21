@@ -492,17 +492,23 @@ const BUILT_IN_GLOSSARY: GlossaryEntry[] = [
 // Tooltip DOM helpers
 // ---------------------------------------------------------------------------
 
-let activeTooltip: HTMLElement | null = null;
-
-function removeTooltip(): void {
-  if (activeTooltip && activeTooltip.parentNode) {
-    activeTooltip.parentNode.removeChild(activeTooltip);
-  }
-  activeTooltip = null;
+interface TooltipManager {
+  active: HTMLElement | null;
+  remove(): void;
+  create(entry: GlossaryEntry, rect: DOMRect): HTMLElement;
 }
 
-function createTooltip(entry: GlossaryEntry, rect: DOMRect): HTMLElement {
-  removeTooltip();
+function createTooltipManager(): TooltipManager {
+  const mgr: TooltipManager = {
+    active: null,
+    remove() {
+      if (mgr.active && mgr.active.parentNode) {
+        mgr.active.parentNode.removeChild(mgr.active);
+      }
+      mgr.active = null;
+    },
+    create(entry: GlossaryEntry, rect: DOMRect): HTMLElement {
+      mgr.remove();
 
   const tooltip = document.createElement('div');
   tooltip.className = 'glossary-tooltip';
@@ -616,11 +622,14 @@ function createTooltip(entry: GlossaryEntry, rect: DOMRect): HTMLElement {
     inner.style.top = `${top}px`;
   }
 
-  // Auto-dismiss on mouse leave from tooltip
-  tooltip.addEventListener('mouseleave', removeTooltip);
+      // Auto-dismiss on mouse leave from tooltip
+      tooltip.addEventListener('mouseleave', () => mgr.remove());
 
-  activeTooltip = tooltip;
-  return tooltip;
+      mgr.active = tooltip;
+      return tooltip;
+    },
+  };
+  return mgr;
 }
 
 function escapeHtml(text: string): string {
@@ -743,6 +752,8 @@ function createGlossaryPlugin(allTerms: GlossaryEntry[]): Plugin {
     },
 
     view(editorView) {
+      const tooltips = createTooltipManager();
+
       // Bind hover events to the editor DOM
       const handleMouseOver = (event: Event) => {
         const target = event.target as HTMLElement;
@@ -755,7 +766,7 @@ function createGlossaryPlugin(allTerms: GlossaryEntry[]): Plugin {
         if (!entry) return;
 
         const rect = target.getBoundingClientRect();
-        createTooltip(entry, rect);
+        tooltips.create(entry, rect);
       };
 
       const handleMouseOut = (event: Event) => {
@@ -764,15 +775,15 @@ function createGlossaryPlugin(allTerms: GlossaryEntry[]): Plugin {
 
         // Small delay so user can move to the tooltip itself
         setTimeout(() => {
-          if (activeTooltip) {
-            const tooltipRect = activeTooltip.querySelector('.glossary-tooltip-inner')?.getBoundingClientRect();
+          if (tooltips.active) {
+            const tooltipRect = tooltips.active.querySelector('.glossary-tooltip-inner')?.getBoundingClientRect();
             // Keep tooltip if the mouse is currently over it
             if (tooltipRect) {
               // We rely on the tooltip's own mouseleave to dismiss
               return;
             }
           }
-          removeTooltip();
+          tooltips.remove();
         }, 150);
       };
 
@@ -801,7 +812,7 @@ function createGlossaryPlugin(allTerms: GlossaryEntry[]): Plugin {
           editorView.dom.removeEventListener('mouseover', handleMouseOver);
           editorView.dom.removeEventListener('mouseout', handleMouseOut);
           if (debounceTimer) clearTimeout(debounceTimer);
-          removeTooltip();
+          tooltips.remove();
         },
       };
     },

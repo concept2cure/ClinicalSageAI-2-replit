@@ -10,6 +10,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
+import { useVisibleInterval } from './useVisibleInterval';
 import regulatoryIntelligenceService, {
   type RegulatoryAlert,
   type RegulatoryStats,
@@ -51,12 +52,13 @@ export interface MorningBriefingData {
 }
 
 export function useMorningBriefing(userId: string) {
+  const interval = useVisibleInterval(10 * 60 * 1000);
   return useQuery<MorningBriefingData>({
     queryKey: regulatoryQueryKeys.briefing(userId),
     queryFn: () => regulatoryIntelligenceService.getMorningBriefing(userId),
     staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnWindowFocus: true,
-    refetchInterval: 10 * 60 * 1000, // Refresh every 10 minutes
+    refetchOnWindowFocus: false,
+    refetchInterval: interval, // pauses when tab is hidden
   });
 }
 

@@ -16,6 +16,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
+import { useVisibleInterval } from './useVisibleInterval';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SHARED UTILITIES
@@ -549,10 +550,11 @@ export function useRuleTemplates(options?: Partial<UseQueryOptions<RuleTemplate[
 
 /** Fetch sentinel status overview */
 export function useSentinelStatus(options?: Partial<UseQueryOptions<SentinelStatusOverview>>) {
+  const interval = useVisibleInterval(30_000);
   return useQuery({
     queryKey: sentinelKeys.status(),
     queryFn: () => apiFetch<SentinelStatusOverview>('/api/sentinel/status'),
-    refetchInterval: 30_000, // auto-refresh every 30s
+    refetchInterval: interval, // pauses when tab is hidden
     ...options,
   });
 }

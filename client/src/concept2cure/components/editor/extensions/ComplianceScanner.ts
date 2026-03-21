@@ -374,8 +374,6 @@ function buildDecorations(issues: ComplianceIssue[]): DecorationSet {
 
 // ── TipTap Extension ───────────────────────────────────────────────────────────
 
-let scanTimer: ReturnType<typeof setTimeout> | null = null;
-
 export const ComplianceScanner = Extension.create<ComplianceScannerOptions, ComplianceScannerStorage>({
   name: 'complianceScanner',
 
@@ -520,6 +518,8 @@ export const ComplianceScanner = Extension.create<ComplianceScannerOptions, Comp
         },
 
         view(editorView) {
+          let scanTimer: ReturnType<typeof setTimeout> | null = null;
+
           return {
             update(view, prevState) {
               const storage = extension.storage as ComplianceScannerStorage;

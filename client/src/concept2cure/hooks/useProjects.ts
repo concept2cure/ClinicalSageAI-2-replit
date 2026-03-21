@@ -16,6 +16,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Project, Conversation, SubmissionType } from '../types';
+import { queryKeys } from './queryKeys';
 
 /** Storage key for localStorage fallback */
 const STORAGE_KEY = 'concept2cure_projects';
@@ -207,7 +208,7 @@ export function useProjects() {
    * Falls back to localStorage if API is unavailable
    */
   const projectsQuery = useQuery({
-    queryKey: ['concept2cure-projects'],
+    queryKey: [...queryKeys.projects.all],
     queryFn: async () => {
       if (USE_API) {
         try {
@@ -257,7 +258,7 @@ export function useProjects() {
       return newProject;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['concept2cure-projects'] });
+      queryClient.invalidateQueries({ queryKey: [...queryKeys.projects.all] });
     },
   });
 
@@ -284,7 +285,7 @@ export function useProjects() {
       return updatedProject;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['concept2cure-projects'] });
+      queryClient.invalidateQueries({ queryKey: [...queryKeys.projects.all] });
     },
   });
 
@@ -306,7 +307,7 @@ export function useProjects() {
       saveStoredProjects(filtered);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['concept2cure-projects'] });
+      queryClient.invalidateQueries({ queryKey: [...queryKeys.projects.all] });
     },
   });
 
@@ -362,7 +363,7 @@ export function useProjects() {
       return newConversation;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['concept2cure-projects'] });
+      queryClient.invalidateQueries({ queryKey: [...queryKeys.projects.all] });
     },
   });
 
@@ -398,7 +399,7 @@ export function useProjects() {
       return conversation;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['concept2cure-projects'] });
+      queryClient.invalidateQueries({ queryKey: [...queryKeys.projects.all] });
     },
   });
 
@@ -420,7 +421,7 @@ export function useProjects() {
 // Hook for single project
 export function useProject(projectId: string | null) {
   return useQuery({
-    queryKey: ['concept2cure-project', projectId],
+    queryKey: [...queryKeys.projects.detail(projectId!)],
     queryFn: async () => {
       if (!projectId) return null;
 

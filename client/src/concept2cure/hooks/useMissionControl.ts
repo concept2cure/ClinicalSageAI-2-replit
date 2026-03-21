@@ -8,6 +8,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useVisibleInterval } from './useVisibleInterval';
 
 const BASE = '/api/mission-control';
 
@@ -214,11 +215,12 @@ export function useDependencies(programId: number | null) {
 }
 
 export function useStaleDependencies(programId: number | null) {
+  const interval = useVisibleInterval(60_000);
   return useQuery({
     queryKey: ['mc-stale-deps', programId],
     queryFn: () => api<any[]>(`/programs/${programId}/dependencies/stale`),
     enabled: !!programId,
-    refetchInterval: 60_000,
+    refetchInterval: interval,
   });
 }
 

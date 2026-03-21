@@ -42,9 +42,6 @@ export interface AIAutocompleteStorage {
 
 const autocompletePluginKey = new PluginKey('aiAutocomplete');
 
-let abortController: AbortController | null = null;
-let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-
 function getAuthHeaders(): Record<string, string> {
   const token =
     typeof sessionStorage !== 'undefined'
@@ -186,6 +183,9 @@ export const AIAutocomplete = Extension.create<AIAutocompleteOptions, AIAutocomp
           },
         },
         view() {
+          let abortController: AbortController | null = null;
+          let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
           return {
             update: (view) => {
               const storage = extension.storage;

@@ -36,6 +36,7 @@ import { useDeliverable } from '@/concept2cure/hooks/useDeliverable';
 import { GenerateButton, ExportButton, RunButton } from '@/concept2cure/components/ui/ActionButton';
 import { useProjects } from '@/concept2cure/hooks/useProjects';
 import { useQuery } from '@tanstack/react-query';
+import { queryKeys } from '@/concept2cure/hooks/queryKeys';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -1404,26 +1405,26 @@ export function ReviewReadiness({ onClose }: { onClose: () => void }) {
 
   // Fetch real artifact summary
   const { data: summaryRaw } = useQuery({
-    queryKey: ['/api/concept2cure/projects/all/artifacts-summary'],
+    queryKey: [...queryKeys.projects.artifactsSummary()],
   });
   const summary = (summaryRaw as any)?.data || { total: 0, draft: 0, review: 0, approved: 0 };
 
   // Fetch all artifacts for quality checks
   const { data: artifactsRaw } = useQuery({
-    queryKey: ['/api/concept2cure/artifacts'],
+    queryKey: [...queryKeys.artifacts.all],
   });
   const artifacts = (artifactsRaw as any)?.data || [];
 
   // Fetch real audit logs
   const { data: auditRaw } = useQuery({
-    queryKey: ['/api/concept2cure/audit-logs', { limit: 50 }],
+    queryKey: [...queryKeys.auditLogs.list({ limit: 50 })],
     queryFn: () => fetch('/api/concept2cure/audit-logs?limit=50').then(r => r.json()),
   });
   const auditLogs = (auditRaw as any)?.data?.logs || [];
 
   // Fetch pending reviews
   const { data: reviewsRaw } = useQuery({
-    queryKey: ['/api/concept2cure/reviews/pending'],
+    queryKey: [...queryKeys.reviews.pending()],
   });
   const pendingReviews = (reviewsRaw as any)?.data?.assignments || [];
 
