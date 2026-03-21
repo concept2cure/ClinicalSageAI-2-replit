@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { toast } from '@/hooks/use-toast';
 
 export default function ApprovalsTab({ processId }: { processId: string }) {
-  const [stage, setStage] = useState<'QUAL' | 'VALIDATED'>('QUAL');
+  type ApprovalStage = 'QUAL' | 'VALIDATED';
+  const [stage, setStage] = useState<ApprovalStage>('QUAL');
   const [reason, setReason] = useState('');
 
   async function sign() {
@@ -21,10 +23,10 @@ export default function ApprovalsTab({ processId }: { processId: string }) {
 
     const d = await r.json();
     if (r.ok) {
-      alert('Approval recorded');
+      toast({ title: 'Approval Recorded', description: 'Electronic signature has been recorded successfully.' });
       setReason('');
     } else {
-      alert(d.error || 'Failed');
+      toast({ title: 'Approval Failed', description: d.error || 'Failed to record approval', variant: 'destructive' });
     }
   }
 
@@ -39,7 +41,7 @@ export default function ApprovalsTab({ processId }: { processId: string }) {
           <select
             className="border rounded px-2 py-1"
             value={stage}
-            onChange={e => setStage(e.target.value as any)}
+            onChange={e => setStage(e.target.value as ApprovalStage)}
           >
             <option value="QUAL">QUAL</option>
             <option value="VALIDATED">VALIDATED</option>

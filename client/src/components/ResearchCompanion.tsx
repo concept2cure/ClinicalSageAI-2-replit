@@ -90,7 +90,7 @@ export default function ResearchCompanion({
   }, [isVisible]);
 
   const generateUniqueId = () => {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    return crypto.randomUUID();
   };
 
   const getMessageColor = (role: string) => {
@@ -180,8 +180,8 @@ export default function ResearchCompanion({
         "I'm here to help with your clinical research questions. I can provide information on CSR structure, protocol design, regulatory requirements, or statistical methods. How can I assist you with your current work?";
     }
 
-    // Add references if relevant
-    const includeReferences = Math.random() > 0.5;
+    // Always include references for substantive responses
+    const includeReferences = true;
     const responseMessage: Partial<Message> = {
       references: includeReferences
         ? [

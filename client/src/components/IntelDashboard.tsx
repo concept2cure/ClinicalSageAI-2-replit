@@ -48,13 +48,7 @@ export default function IntelDashboard() {
   const pdfRef = useRef(null);
 
   useEffect(() => {
-    // Pre-populate with mock data for demo purposes
-    setSuccessMetrics({
-      trialSuccess: 68,
-      timeReduction: 42,
-      costSavings: 35,
-      regulatoryApproval: 89
-    });
+    setSuccessMetrics(null);
   }, []);
 
   const fetchIntel = async () => {
@@ -78,13 +72,12 @@ export default function IntelDashboard() {
       if (!res.ok) throw new Error("Failed to fetch intelligence brief");
       
       const data = await res.json();
-      setBrief(data.brief || 'Intelligence brief generation is ready using OpenAI with persistent contexts. Enter a valid indication and click "Generate Insight Brief" to see real results.');
+      setBrief(data.brief || '');
       toast({
         title: "Intelligence Brief Generated",
         description: "Weekly intelligence brief has been successfully generated",
         });
     } catch (error) {
-      console.error("Error fetching intel:", error);
       toast({
         title: "Error",
         description: "Failed to generate intelligence brief. Please try again.",
@@ -103,38 +96,12 @@ export default function IntelDashboard() {
       if (!res.ok) throw new Error("Failed to fetch KPI dashboard");
       
       const data = await res.json();
-      setMetrics(data.global_kpis || {
-        reportsByPhase: { "Phase 1": 143, "Phase 2": 205, "Phase 3": 176, "Phase 4": 89 },
-        topIndications: [
-          { name: "Oncology", count: 198 },
-          { name: "Immunology", count: 156 },
-          { name: "Neurology", count: 124 },
-          { name: "Cardiology", count: 112 },
-          { name: "Infectious Disease", count: 103 }
-        ],
-        metrics: {
-          commonAdverseEvents: [
-            { name: "Nausea", frequency: "28%" },
-            { name: "Fatigue", frequency: "24%" },
-            { name: "Headache", frequency: "21%" },
-            { name: "Diarrhea", frequency: "19%" },
-            { name: "Vomiting", frequency: "15%" }
-          ],
-          commonEndpoints: [
-            "Overall Survival (OS)",
-            "Progression-Free Survival (PFS)",
-            "Objective Response Rate (ORR)",
-            "Disease-Free Survival (DFS)",
-            "Health-Related Quality of Life (HRQoL)"
-          ]
-        }
-      });
+      setMetrics(data.global_kpis || null);
       toast({
         title: "KPI Dashboard Updated",
         description: "Global key performance indicators have been refreshed",
         });
     } catch (error) {
-      console.error("Error fetching KPI:", error);
       toast({
         title: "Error",
         description: "Failed to load KPI dashboard. Please try again.",
@@ -178,10 +145,8 @@ export default function IntelDashboard() {
           recommendation: data.recommendation,
           thread_id: data.thread_id,
           citations: data.citations || [],
-          ind_module_2_5: data.ind_module_2_5 || { 
-            content: "IND Module 2.5 generation in progress. This will be available in future iterations."
-          },
-          risk_summary: data.risk_summary || "Risk analysis in progress. This will be available in future iterations."
+          ind_module_2_5: data.ind_module_2_5 || null,
+          risk_summary: data.risk_summary || null
         });
         
         // Save the thread ID for future conversations
@@ -262,7 +227,6 @@ export default function IntelDashboard() {
         description: "Your follow-up question has been processed",
         });
     } catch (error) {
-      console.error("Error with follow-up:", error);
       toast({
         title: "Error",
         description: "Failed to process your follow-up question. Please try again.",
@@ -273,9 +237,9 @@ export default function IntelDashboard() {
     }
   };
 
-  const formatBarData = (obj) => {
+  const formatBarData = (obj: Record<string, number> | null | undefined): Array<{ name: string; count: number }> => {
     if (!obj) return [];
-    return Object.entries(obj).map(([name, value]) => ({ name, count: value }));
+    return Object.entries(obj).map(([name, value]) => ({ name, count: value as number }));
   };
 
   const exportPDF = () => {
