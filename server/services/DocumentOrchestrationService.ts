@@ -732,8 +732,11 @@ class DocumentOrchestrationService {
     organizationId: string
   ): Promise<any> {
     // Handle both string and numeric IDs safely
-    const userIdStr = userId || '1';
-    const userIdNum = isNaN(parseInt(userIdStr)) ? 1 : parseInt(userIdStr);
+    if (!userId) {
+      throw new Error('User context required');
+    }
+    const userIdStr = userId;
+    const userIdNum = parseInt(userIdStr);
 
     // Get current document
     const [currentDoc] = await db!

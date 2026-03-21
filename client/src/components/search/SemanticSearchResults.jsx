@@ -16,6 +16,7 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { InlineAIButton } from '../../concept2cure/components/ui/InlineAIButton';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -323,6 +324,13 @@ export default function SemanticSearchResults({
                 </div>
 
                 <div className="flex gap-1">
+                  <InlineAIButton
+                    actionType="summarize_selection"
+                    content={`${document.title}\n\n${document.content || ''}`}
+                    projectId={1}
+                    module="search"
+                    size="sm"
+                  />
                   <Button
                     variant="ghost"
                     size="sm"

@@ -22,8 +22,11 @@ const router = express.Router();
 
 // Middleware to extract tenant and user info
 const extractTenantUser = (req, res, next) => {
-  req.tenantId = req.headers['x-tenant-id'] || req.query.tenantId || 1; // Default for demo
-  req.userId = req.headers['x-user-id'] || req.query.userId || 1; // Default for demo
+  req.tenantId = req.headers['x-tenant-id'] || req.query.tenantId;
+  if (!req.tenantId) {
+    return res.status(401).json({ error: 'Tenant context required' });
+  }
+  req.userId = req.headers['x-user-id'] || req.query.userId;
   next();
 };
 

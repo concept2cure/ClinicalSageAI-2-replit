@@ -64,6 +64,14 @@ const EmbeddedPMAWorkspace = lazy(() => import('./components/pma/PMAWorkspace'))
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 // Full Document Builder wizard (CSR + CTD across global agencies)
 const FullDocumentBuilder = lazy(() => import('./components/builder/FullDocumentBuilder'));
+
+// ── Shell-embedded dashboard modules (previously standalone routes) ──
+const EmbeddedECTDSubmissionDashboard = lazy(() => import('./pages/ECTDSubmissionDashboard'));
+const EmbeddedPharmacovigilanceDashboard = lazy(() => import('./pages/PharmacovigilanceDashboard'));
+const EmbeddedDocumentArtifactsHub = lazy(() => import('./pages/DocumentArtifactsHub'));
+const EmbeddedHAQManagerDashboard = lazy(() => import('./pages/HAQManagerDashboard'));
+const EmbeddedINDAutoDraftDashboard = lazy(() => import('./pages/INDAutoDraftDashboard'));
+const EmbeddedClinicalOperationsDashboard = lazy(() => import('./pages/ClinicalOperationsDashboard'));
 import {
   X,
   ChevronLeft,
@@ -847,10 +855,26 @@ export const ZenApp: React.FC = () => {
   // ─────────────────────────────────────────────────────────────────────────────
   // URL-DRIVEN PROJECT IDENTITY
   // ─────────────────────────────────────────────────────────────────────────────
-  const [, navigate] = useLocation();
+  const [currentPath, navigate] = useLocation();
   const [, routeParams] = useRoute('/concept2cure/project/:projectId/:rest*');
   const [, routeParamsExact] = useRoute('/concept2cure/project/:projectId');
   const urlProjectId = routeParams?.projectId ?? routeParamsExact?.projectId ?? null;
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // SHELL-EMBEDDED DASHBOARD DETECTION
+  // These routes render their dashboard inside the ZenApp shell so they get
+  // persistent AI access (AnaPersistentPanel, DrSage, Command Palette, etc.)
+  // ─────────────────────────────────────────────────────────────────────────────
+  type ShellDashboard = 'ectd-agent' | 'pharmacovigilance' | 'documents' | 'haq-manager' | 'ind-autodraft' | 'clinical-operations';
+  const shellDashboardMap: Record<string, ShellDashboard> = {
+    '/concept2cure/ectd-agent': 'ectd-agent',
+    '/concept2cure/pharmacovigilance': 'pharmacovigilance',
+    '/concept2cure/documents': 'documents',
+    '/concept2cure/haq-manager': 'haq-manager',
+    '/concept2cure/ind-autodraft': 'ind-autodraft',
+    '/concept2cure/clinical-operations': 'clinical-operations',
+  };
+  const activeShellDashboard: ShellDashboard | null = shellDashboardMap[currentPath] ?? null;
 
   // ─────────────────────────────────────────────────────────────────────────────
   // EMBEDDED MODULE DETECTION

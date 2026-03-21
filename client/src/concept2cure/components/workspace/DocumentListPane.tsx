@@ -24,6 +24,7 @@ import {
 import { getSectionLabel } from '../../models/ctdHierarchy';
 import type { PlacementOperation } from './PlacementDialog';
 import type { TreeArtifact } from './ProjectFileTree';
+import { InlineAIMenu } from '../ui/InlineAIMenu';
 
 interface DocumentListPaneProps {
   folderLabel: string;
@@ -235,6 +236,15 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
                                 <Copy className="w-3 h-3" />
                               </button>
                             )}
+                            <span onClick={e => e.stopPropagation()}>
+                              <InlineAIMenu
+                                content={`${doc.title}${doc.ctdSection ? ` | CTD ${doc.ctdSection}` : ''} | Status: ${doc.status || 'draft'} | Version: v${doc.version}`}
+                                title={doc.title}
+                                projectId={1}
+                                actions={['summarize_selection', 'explain_selection', 'extract_structured_data']}
+                                variant="icon"
+                              />
+                            </span>
                           </div>
                         </td>
                       )}

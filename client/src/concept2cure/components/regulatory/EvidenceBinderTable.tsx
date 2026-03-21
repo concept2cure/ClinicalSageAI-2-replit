@@ -56,6 +56,7 @@ import {
   Loader2,
   AlertTriangle,
 } from 'lucide-react';
+import { InlineAIButton } from '../ui/InlineAIButton';
 import {
   fetchBinderClaims,
   upsertClaim,
@@ -299,7 +300,23 @@ export default function EvidenceBinderTable({ projectId }: EvidenceBinderTablePr
                         <TableCell>
                           <Badge variant="outline">{claim.evidence?.length ?? 0}</Badge>
                         </TableCell>
-                        <TableCell className="text-right space-x-1">
+                        <TableCell className="text-right space-x-1" onClick={e => e.stopPropagation()}>
+                          <InlineAIButton
+                            actionType="explain_selection"
+                            content={`Claim: ${claim.title}\n\nDescription: ${claim.description || ''}\nKey: ${claim.claim_key}\nStatus: ${claim.status}\nScope: ${packScopeLabel(claim.pack_scope)}`}
+                            projectId={projectId || '1'}
+                            module="regulatory"
+                            size="sm"
+                            label="Explain"
+                          />
+                          <InlineAIButton
+                            actionType="extract_structured_data"
+                            content={`Claim: ${claim.title}\n\nDescription: ${claim.description || ''}\nKey: ${claim.claim_key}\nStatus: ${claim.status}\nScope: ${packScopeLabel(claim.pack_scope)}\nEvidence count: ${claim.evidence?.length ?? 0}`}
+                            projectId={projectId || '1'}
+                            module="regulatory"
+                            size="sm"
+                            label="Extract"
+                          />
                           <Button
                             size="sm"
                             variant="outline"

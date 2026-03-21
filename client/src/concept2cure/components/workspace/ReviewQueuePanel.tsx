@@ -17,6 +17,7 @@ import {
   Inbox,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { InlineAIButton } from '../ui/InlineAIButton';
 
 function getAuthHeaders(): Record<string, string> {
   const token =

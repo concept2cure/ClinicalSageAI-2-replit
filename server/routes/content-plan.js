@@ -11,7 +11,10 @@ const router = express.Router();
 router.get('/:projectId', async (req, res) => {
   try {
     const { projectId } = req.params;
-    const organizationId = req.headers['x-organization-id'] || '7';
+    const organizationId = req.headers['x-organization-id'];
+    if (!organizationId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
 
     // Default content plan structure for 510(k) submission
     const defaultSections = [
@@ -199,7 +202,10 @@ router.put('/:projectId/section/:sectionId', async (req, res) => {
   try {
     const { projectId, sectionId } = req.params;
     const { owner, dueDate, status, completionPercentage } = req.body;
-    const organizationId = req.headers['x-organization-id'] || '7';
+    const organizationId = req.headers['x-organization-id'];
+    if (!organizationId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
 
     // Upsert section status
     await db.query(
@@ -236,7 +242,10 @@ router.post('/:projectId/section/:sectionId/evidence', async (req, res) => {
   try {
     const { projectId, sectionId } = req.params;
     const { evidenceId, evidenceType, source } = req.body;
-    const organizationId = req.headers['x-organization-id'] || '7';
+    const organizationId = req.headers['x-organization-id'];
+    if (!organizationId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
 
     await db.query(
       `

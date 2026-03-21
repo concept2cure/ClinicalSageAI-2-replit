@@ -3466,7 +3466,7 @@ app.post('/api/510k-workflow/:projectId', async (req, res) => {
         stage,
         section,
         action: 'SAVE',
-        userId: parseInt(req.headers['x-user-id'] as string || '1'),
+        userId: parseInt(req.headers['x-user-id'] as string || ''),
         organizationId: parseInt(organizationId),
         data,
         metadata: {
@@ -3608,7 +3608,7 @@ app.post('/api/510k-workflow/:projectId', async (req, res) => {
       await FDA510kComplianceTracker.createDocumentVersion({
         documentId: `510K_${projectId}`,
         projectId,
-        userId: parseInt(req.headers['x-user-id'] as string || '1'),
+        userId: parseInt(req.headers['x-user-id'] as string || ''),
         organizationId: parseInt(organizationId),
         content: data,
         changeDescription: `Updated ${stage} - ${section || 'default'}`,
@@ -3628,7 +3628,7 @@ app.post('/api/510k-workflow/:projectId', async (req, res) => {
       const orchestrationService = new DocumentOrchestrationService();
       const orchestrationResult = await orchestrationService.orchestrateDocumentGeneration(
         projectId,
-        (req.headers['x-user-id'] as string) || '1',
+        (req.headers['x-user-id'] as string),
         organizationId
       );
       autoPopulated = true;
