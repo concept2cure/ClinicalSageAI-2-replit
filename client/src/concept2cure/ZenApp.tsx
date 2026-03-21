@@ -29,11 +29,9 @@ import React, { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspens
 import { useQuery } from '@tanstack/react-query';
 import { useLocation, useRoute } from 'wouter';
 import { cn } from '@/lib/utils';
-import { LoadingState } from './components/ui/enterprise';
 import { ZenSidebar } from './components/sidebar/ZenSidebar';
 import { ZenChat } from './components/chat/ZenChat';
 import { ZenCommandPalette } from './components/command/ZenCommandPalette';
-import { GlobalDocumentSearch } from './components/workspace/GlobalDocumentSearch';
 import { ZenSettings } from './components/settings/ZenSettings';
 import {
   ProjectSwitcher,
@@ -50,12 +48,10 @@ import { useCortexThreads, useCortexHealth } from './hooks/useCortex';
 import { usePlatformContext } from './hooks/useLicense';
 import { useWorkspaceSummary } from './hooks/useWorkspaceSummary';
 import { useProjectTasks } from './hooks/useProjectTasks';
-import { queryKeys } from './hooks/queryKeys';
 
 import { WorkspaceReadinessStrip } from './components/workspace/WorkspaceReadinessStrip';
 import { ProjectWorkspaceShell } from './components/workspace/ProjectWorkspaceShell';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { motion, AnimatePresence } from 'framer-motion';
 import type { IndustryMode } from './types/workspace';
 import ProductAuditQuestionnaire from '../components/ProductAuditQuestionnaire';
 import { isFeatureEnabled } from '@/flags/featureFlags';
@@ -82,6 +78,7 @@ import {
   Folder,
   ShieldCheck,
   WifiOff,
+  Loader2,
   FileText,
   Plus,
   ArrowLeft,
@@ -115,19 +112,17 @@ import {
   Brain,
   Snowflake,
   Bot,
-  Compass,
   Activity,
   Rocket,
   FileStack,
   Users,
-  Search,
-  BarChart3,
-  GraduationCap,
 } from 'lucide-react';
 
-// Loading fallback — canonical accessible loading state
+// Minimal loading fallback — no spinner, just a white screen to avoid flash
 const ModuleLoadingFallback = () => (
-  <LoadingState size="page" label="Loading module…" />
+  <div className="flex-1 flex items-center justify-center bg-white">
+    <div className="w-6 h-6 rounded-full border-2 border-zinc-200 border-t-zinc-400 animate-spin" />
+  </div>
 );
 
 // Utility: instantly redirect dead layout modes to regulatory-workspace
@@ -136,13 +131,6 @@ const RedirectToWorkspace: React.FC<{ onRedirect: () => void }> = ({ onRedirect 
     onRedirect();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   return null;
-};
-
-// Page transition wrapper — smooth fade+slide for layout mode changes
-const pageTransitionVariants = {
-  initial: { opacity: 0, y: 8 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.18, ease: [0.2, 0, 0, 1] } },
-  exit: { opacity: 0, y: -8, transition: { duration: 0.12, ease: [0.4, 0, 1, 1] } },
 };
 
 // Lazy load the Convergent Canvas for the Sherpa System
@@ -169,14 +157,6 @@ const SnowGlobeChambers = lazy(() => import('./pages/SnowGlobe/SnowGlobeChambers
 // About & Training Center (with Dr. Sage FDA Reviewer AI)
 const AboutTrainingCenter = lazy(() =>
   import('./pages/AboutTrainingCenter').then(m => ({ default: m.AboutTrainingCenter }))
-);
-
-// Lazy load submission/template components
-const SubmissionBuilderPage = lazy(() =>
-  import('./components/submission/SubmissionBuilder').then(m => ({ default: m.SubmissionBuilder }))
-);
-const TemplateLibraryPage = lazy(() =>
-  import('./components/submission/TemplateLibrary').then(m => ({ default: m.TemplateLibrary }))
 );
 
 // Lazy load Phase 7 Mission Control components
@@ -319,22 +299,7 @@ const IntegrationsPage = lazy(() =>
   import('./pages/IntegrationsPage')
 );
 
-// Agent Hub — Agent Swarm showcase, setup wizard, monitoring
-const AgentShowcasePage = lazy(() =>
-  import('./components/enablement/AgentShowcase').then(m => ({ default: m.AgentShowcase }))
-);
-
-// Document Sherpa — proactive AI-guided document authoring
-const DocumentSherpaPage = lazy(() =>
-  import('./components/intelligentDocs/DocumentSherpa').then(m => ({ default: m.DocumentSherpa }))
-);
-
-// Review Pulse — PM orchestration, signals, readiness tracking
-const ReviewPulseDashboardPage = lazy(() =>
-  import('./components/workspace/ReviewPulseDashboard').then(m => ({
-    default: m.ReviewPulseDashboard,
-  }))
-);
+// Agent Hub and Review Pulse removed — shell-only modules not demo-ready
 
 // Client Onboarding — setup wizard, configuration
 const OnboardingWizardPage = lazy(
@@ -454,9 +419,6 @@ type LayoutMode =
   | 'templates'
   | 'biostatistics'
   | 'training-center'
-  | 'agent-hub'
-  | 'document-sherpa'
-  | 'review-pulse'
   | 'client-onboarding'
   | 'knowledge-base'
   | 'project-knowledge'
@@ -470,13 +432,11 @@ type LayoutMode =
   | 'report-engine'
   | 'about-training'
   | 'user-inbox'
-  | 'client-branding'
+  | 'client-branding';
   | 'ana-dashboard'
   | 'safety-narrative'
-  | 'ana-platform-control'
-  | 'integrations'
-  | 'submission-builder'
-  | 'template-library';
+  | 'ana-platform-control';
+  | 'integrations';
 
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
@@ -589,11 +549,11 @@ const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between h-14 px-4 border-b border-zinc-200 bg-zinc-50/50">
+      <div className="flex items-center justify-between h-14 px-4 border-b border-zinc-100 bg-zinc-50/50">
         <div className="flex items-center gap-3">
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200/50 transition-colors duration-150"
+            className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200/50 transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -605,14 +565,14 @@ const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
         <div className="flex items-center gap-1">
           <button
             onClick={onToggleFullscreen}
-            className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200/50 transition-colors duration-150"
+            className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200/50 transition-colors"
             title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
           >
             {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           </button>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200/50 transition-colors duration-150"
+            className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200/50 transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -624,7 +584,9 @@ const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
         <ErrorBoundary>
           <Suspense
             fallback={
-              <LoadingState size="page" />
+              <div className="flex items-center justify-center h-full">
+                <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
+              </div>
             }
           >
             {PANEL_COMPONENTS[panel] ? (
@@ -635,7 +597,7 @@ const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
             ) : (
               <div className="flex items-center justify-center h-full text-center p-8">
                 <div>
-                  <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-zinc-100 flex items-center justify-center">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-zinc-100 flex items-center justify-center">
                     <Icon className="w-8 h-8 text-zinc-500" />
                   </div>
                   <h3 className="text-lg font-semibold text-zinc-900 mb-2">{config.title}</h3>
@@ -656,12 +618,12 @@ const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
 
 function AnalyticsDashboardInline({ projects, onBack }: { projects: any[]; onBack: () => void }) {
   const { data: summaryRaw } = useQuery({
-    queryKey: [...queryKeys.projects.artifactsSummary()],
+    queryKey: ['/api/concept2cure/projects/all/artifacts-summary'],
   });
   const summary = (summaryRaw as any)?.data || { total: 0, draft: 0, review: 0, approved: 0 };
 
   const { data: auditRaw } = useQuery({
-    queryKey: [...queryKeys.auditLogs.list({ limit: 30 })],
+    queryKey: ['/api/concept2cure/audit-logs', { limit: 30 }],
     queryFn: () => fetch('/api/concept2cure/audit-logs?limit=30').then(r => r.json()),
   });
   const auditLogs = (auditRaw as any)?.data?.logs || [];
@@ -706,7 +668,7 @@ function AnalyticsDashboardInline({ projects, onBack }: { projects: any[]; onBac
           </div>
           <button
             onClick={onBack}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-100 text-zinc-700 text-sm font-medium hover:bg-zinc-200 transition-colors duration-150"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-100 text-zinc-700 text-sm font-medium hover:bg-zinc-200 transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
             Back
@@ -716,8 +678,8 @@ function AnalyticsDashboardInline({ projects, onBack }: { projects: any[]; onBac
         {/* Metrics Grid */}
         <div className="grid grid-cols-4 gap-4 mb-8">
           {metrics.slice(0, 4).map(m => (
-            <div key={m.label} className="bg-zinc-50 rounded-xl p-4 border border-zinc-200">
-              <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+            <div key={m.label} className="bg-zinc-50 rounded-xl p-4 border border-zinc-100">
+              <p className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">
                 {m.label}
               </p>
               <p className={cn('text-2xl font-semibold mt-1', m.color)}>{m.value}</p>
@@ -727,8 +689,8 @@ function AnalyticsDashboardInline({ projects, onBack }: { projects: any[]; onBac
 
         <div className="grid grid-cols-2 gap-6 mb-8">
           {/* Artifact Status Breakdown */}
-          <div className="bg-zinc-50 rounded-xl p-5 border border-zinc-200">
-            <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-4">
+          <div className="bg-zinc-50 rounded-xl p-5 border border-zinc-100">
+            <p className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider mb-4">
               Artifact Pipeline
             </p>
             {summary.total === 0 ? (
@@ -766,7 +728,7 @@ function AnalyticsDashboardInline({ projects, onBack }: { projects: any[]; onBac
                     </div>
                     <div className="h-2 bg-zinc-200 rounded-full">
                       <div
-                        className={cn('h-2 rounded-full transition-all duration-150', item.color)}
+                        className={cn('h-2 rounded-full transition-all', item.color)}
                         style={{ width: `${item.pct}%` }}
                       />
                     </div>
@@ -777,8 +739,8 @@ function AnalyticsDashboardInline({ projects, onBack }: { projects: any[]; onBac
           </div>
 
           {/* Activity Chart */}
-          <div className="bg-zinc-50 rounded-xl p-5 border border-zinc-200">
-            <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-4">
+          <div className="bg-zinc-50 rounded-xl p-5 border border-zinc-100">
+            <p className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider mb-4">
               Recent Activity
             </p>
             {activityByDay.length === 0 ? (
@@ -790,12 +752,12 @@ function AnalyticsDashboardInline({ projects, onBack }: { projects: any[]; onBac
                   const height = Math.max(8, (count / maxCount) * 100);
                   return (
                     <div key={day} className="flex-1 flex flex-col items-center gap-1">
-                      <span className="text-xs text-zinc-500">{count}</span>
+                      <span className="text-[10px] text-zinc-500">{count}</span>
                       <div
                         className="w-full bg-zinc-900 rounded-t"
                         style={{ height: `${height}%` }}
                       />
-                      <span className="text-xs text-zinc-400">{day}</span>
+                      <span className="text-[10px] text-zinc-400">{day}</span>
                     </div>
                   );
                 })}
@@ -805,8 +767,8 @@ function AnalyticsDashboardInline({ projects, onBack }: { projects: any[]; onBac
         </div>
 
         {/* Project List */}
-        <div className="bg-zinc-50 rounded-xl p-5 border border-zinc-200">
-          <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-4">
+        <div className="bg-zinc-50 rounded-xl p-5 border border-zinc-100">
+          <p className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider mb-4">
             Project Summary
           </p>
           {projects.length === 0 ? (
@@ -818,7 +780,7 @@ function AnalyticsDashboardInline({ projects, onBack }: { projects: any[]; onBac
               {projects.map((p: any) => (
                 <div
                   key={p.id}
-                  className="flex items-center justify-between py-2 border-b border-zinc-200 last:border-0"
+                  className="flex items-center justify-between py-2 border-b border-zinc-100 last:border-0"
                 >
                   <div className="flex items-center gap-3">
                     <div
@@ -941,9 +903,6 @@ export const ZenApp: React.FC = () => {
       product: p.product,
       region: p.region,
       lastUpdated: p.updatedAt,
-      createdAt: p.createdAt,
-      status: p.status ?? 'active',
-      submissionType: p.submissionType,
       conversationCount: p.conversations?.length ?? 0,
       starred: p.starred ?? false,
       archived: p.archived ?? false,
@@ -963,7 +922,6 @@ export const ZenApp: React.FC = () => {
 
   // Modals
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
-  const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [projectSwitcherOpen, setProjectSwitcherOpen] = useState(false);
   const [newProjectOpen, setNewProjectOpen] = useState(false);
@@ -1020,13 +978,6 @@ export const ZenApp: React.FC = () => {
   );
   const [activeConversationId, setActiveConversationId] = useState<string | undefined>();
   const [activeThreadId, setActiveThreadId] = useState<string | undefined>();
-
-  // Active document context — bubbled up from workspace for chat awareness
-  const [activeDocContext, setActiveDocContext] = useState<{
-    title: string;
-    ctdSection?: string;
-    excerpt: string;
-  } | null>(null);
 
   // Sherpa project detail view state
   const [sherpaDetailProjectId, setSherpaDetailProjectId] = useState<string | null>(null);
@@ -1222,7 +1173,7 @@ export const ZenApp: React.FC = () => {
 
   // Project-scoped artifacts for the Outputs tab (must come after activeProjectId is declared)
   const { data: projectArtifacts = [] } = useQuery({
-    queryKey: [...queryKeys.projects.artifacts(activeProjectId!)],
+    queryKey: ['project-artifacts', activeProjectId],
     queryFn: async () => {
       if (!activeProjectId) return [];
       const token =
@@ -1379,12 +1330,6 @@ export const ZenApp: React.FC = () => {
         setCommandPaletteOpen(true);
       }
 
-      // Global document search: ⌘Shift+F or Ctrl+Shift+F
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'F') {
-        e.preventDefault();
-        setGlobalSearchOpen(true);
-      }
-
       // New chat: ⌘N or Ctrl+N
       if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
         e.preventDefault();
@@ -1481,13 +1426,10 @@ export const ZenApp: React.FC = () => {
       const MODULE_ROUTES: Record<string, LayoutMode> = {
         'go-copilot': 'regulatory-workspace',
         'go-author': 'author',
-        'go-document-sherpa': 'document-sherpa',
         'go-collaboration': 'collaboration-hub',
         'go-inbox': 'user-inbox',
         'go-branding': 'client-branding',
-        'go-agents': 'agent-hub',
         'go-snowglobe': 'snowglobe',
-        'go-review-pulse': 'review-pulse',
         'go-intelligence': 'intelligence-hub',
         'go-biostatistics': 'biostatistics',
         'go-review-readiness': 'review-readiness',
@@ -1794,10 +1736,10 @@ export const ZenApp: React.FC = () => {
     onBack: () => void;
     backLabel?: string;
   }) => (
-    <div className="flex items-center gap-3 px-4 h-12 border-b border-zinc-200 bg-white flex-shrink-0">
+    <div className="flex items-center gap-3 px-4 h-12 border-b border-zinc-100 bg-white flex-shrink-0">
       <button
         onClick={onBack}
-        className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition-colors duration-150"
+        className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
       >
         <ChevronLeft className="w-4 h-4" />
         <span>{backLabel || 'Back'}</span>
@@ -1885,9 +1827,6 @@ export const ZenApp: React.FC = () => {
               'client-branding': 'client-branding',
               biostatistics: 'biostatistics',
               'training-center': 'training-center',
-              'agent-hub': 'agent-hub',
-              'document-sherpa': 'document-sherpa',
-              'review-pulse': 'review-pulse',
               'client-onboarding': 'client-onboarding',
               'knowledge-base': 'knowledge-base',
               'project-knowledge': 'project-knowledge',
@@ -1907,7 +1846,7 @@ export const ZenApp: React.FC = () => {
         }}
         onNewChat={handleNewChat}
         onOpenProjects={() => setProjectSwitcherOpen(true)}
-        onOpenSearch={() => setGlobalSearchOpen(true)}
+        onOpenSearch={() => setCommandPaletteOpen(true)}
         onOpenSettings={() => setSettingsOpen(true)}
         onDeleteConversation={handleDeleteConversation}
         onToggleStar={handleToggleConversationStar}
@@ -2030,17 +1969,8 @@ export const ZenApp: React.FC = () => {
             case 'training-center':
               setLayoutMode('training-center');
               break;
-            case 'agent-hub':
-              setLayoutMode('agent-hub');
-              break;
-            case 'document-sherpa':
-              setLayoutMode('document-sherpa');
-              break;
             case 'snowglobe':
               setLayoutMode('snowglobe');
-              break;
-            case 'review-pulse':
-              setLayoutMode('review-pulse');
               break;
             case 'client-onboarding':
               setLayoutMode('client-onboarding');
@@ -2085,11 +2015,6 @@ export const ZenApp: React.FC = () => {
               setLayoutMode('ana-platform-control');
             case 'integrations':
               setLayoutMode('integrations');
-            case 'submission-builder':
-              setLayoutMode('submission-builder');
-              break;
-            case 'template-library':
-              setLayoutMode('template-library');
               break;
             default:
               break;
@@ -2101,16 +2026,8 @@ export const ZenApp: React.FC = () => {
 
       {/* Main area — no top bar, exactly like Claude.ai */}
       <div className="flex-1 flex flex-col min-w-0 min-h-0">
-        {/* Content Area — AnimatePresence for smooth layout transitions */}
-        <AnimatePresence mode="wait">
-        <motion.div
-          key={embeddedModule || layoutMode}
-          variants={pageTransitionVariants}
-          initial="initial"
-          animate="animate"
-          exit="exit"
-          className="flex-1 flex min-w-0 min-h-0"
-        >
+        {/* Content Area */}
+        <div className="flex-1 flex min-w-0 min-h-0">
           {/* ── Embedded Module Host ── */}
           {embeddedModule === '510k' && urlProjectId && (
             <>
@@ -2136,13 +2053,13 @@ export const ZenApp: React.FC = () => {
               {!moduleAssistantOpen && (
                 <button
                   onClick={() => setModuleAssistantOpen(true)}
-                  className="flex-shrink-0 w-10 flex flex-col items-center justify-center gap-1 bg-zinc-50 hover:bg-zinc-100 border-l border-zinc-200 transition-colors duration-150"
+                  className="flex-shrink-0 w-10 flex flex-col items-center justify-center gap-1 bg-zinc-50 hover:bg-zinc-100 border-l border-zinc-200 transition-colors"
                   title="Open AI Assistant"
                   data-testid="module-assistant-toggle"
                 >
                   <MessageSquare className="w-4 h-4 text-zinc-500" />
                   <span
-                    className="text-xs text-zinc-400 writing-mode-vertical"
+                    className="text-[10px] text-zinc-400 writing-mode-vertical"
                     style={{ writingMode: 'vertical-rl' }}
                   >
                     Assistant
@@ -2156,7 +2073,7 @@ export const ZenApp: React.FC = () => {
                   className="flex-shrink-0 w-[380px] flex flex-col border-l border-zinc-200 bg-white"
                   data-testid="module-assistant-panel"
                 >
-                  <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200 bg-zinc-50">
+                  <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100 bg-zinc-50">
                     <span className="text-sm font-medium text-zinc-700">AI Assistant</span>
                     <button
                       onClick={() => setModuleAssistantOpen(false)}
@@ -2373,7 +2290,9 @@ export const ZenApp: React.FC = () => {
             >
               <Suspense
                 fallback={
-                  <LoadingState size="page" />
+                  <div className="flex-1 flex items-center justify-center bg-white">
+                    <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto" />
+                  </div>
                 }
               >
                 <AboutTrainingCenter />
@@ -2384,10 +2303,10 @@ export const ZenApp: React.FC = () => {
           {/* ── IND Workspace (eCTD filing hub — dossier construction) ──────────── */}
           {!embeddedModule && layoutMode === 'ind-workspace' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-ind">
-              <div className="flex items-center gap-3 px-4 h-12 border-b border-zinc-200 bg-white flex-shrink-0">
+              <div className="flex items-center gap-3 px-4 h-12 border-b border-zinc-100 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('regulatory-workspace')}
-                  className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition-colors duration-150"
+                  className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
                 >
                   <ChevronLeft className="w-4 h-4" />
                   <span>Chat</span>
@@ -2403,9 +2322,9 @@ export const ZenApp: React.FC = () => {
               </div>
               {/* No-project guard */}
               {!activeProjectId ? (
-                <div className="flex-1 flex items-center justify-center bg-zinc-50/30 p-8">
+                <div className="flex-1 flex items-center justify-center bg-zinc-50/50 p-8">
                   <div className="max-w-md text-center">
-                    <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-violet-50 flex items-center justify-center">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-violet-50 flex items-center justify-center">
                       <ShieldCheck className="w-8 h-8 text-violet-600" />
                     </div>
                     <h2 className="text-xl font-semibold text-zinc-900 mb-2">IND Workspace</h2>
@@ -2478,9 +2397,9 @@ export const ZenApp: React.FC = () => {
                 onBack={() => setLayoutMode('regulatory-workspace')}
               />
               {!activeProjectId ? (
-                <div className="flex-1 flex items-center justify-center bg-zinc-50/30 p-8">
+                <div className="flex-1 flex items-center justify-center bg-zinc-50/50 p-8">
                   <div className="max-w-md text-center">
-                    <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-blue-50 flex items-center justify-center">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-blue-50 flex items-center justify-center">
                       <FolderOpen className="w-8 h-8 text-blue-600" />
                     </div>
                     <h2 className="text-xl font-semibold text-zinc-900 mb-2">eCTD Co-Author</h2>
@@ -2540,9 +2459,9 @@ export const ZenApp: React.FC = () => {
                 onBack={() => setLayoutMode('regulatory-workspace')}
               />
               {!activeProjectId ? (
-                <div className="flex-1 flex items-center justify-center bg-zinc-50/30 p-8">
+                <div className="flex-1 flex items-center justify-center bg-zinc-50/50 p-8">
                   <div className="max-w-md text-center">
-                    <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-teal-50 flex items-center justify-center">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-teal-50 flex items-center justify-center">
                       <FolderOpen className="w-8 h-8 text-teal-600" />
                     </div>
                     <h2 className="text-xl font-semibold text-zinc-900 mb-2">CMC Platform</h2>
@@ -2561,8 +2480,8 @@ export const ZenApp: React.FC = () => {
               ) : (
                 <>
                   {/* Module 3 traceability bar */}
-                  <div className="flex items-center gap-2 px-4 py-2 border-b border-zinc-200 bg-zinc-50 flex-shrink-0">
-                    <span className="text-xs text-zinc-500 mr-2">Module 3 Actions:</span>
+                  <div className="flex items-center gap-3 px-4 py-2.5 border-b border-zinc-100 bg-zinc-50 flex-shrink-0">
+                    <span className="text-xs font-medium text-zinc-600 mr-3">CTD Module 3 — Quality</span>
                     <button
                       onClick={() => {
                         setPendingEditorContent({
@@ -2581,7 +2500,7 @@ export const ZenApp: React.FC = () => {
                         setRiViewMode('editor');
                         setLayoutMode('regulatory-workspace');
                       }}
-                      className="text-xs px-2.5 py-1 rounded bg-white border border-zinc-200 text-zinc-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-colors duration-150"
+                      className="text-xs px-3 py-1.5 rounded-md bg-white border border-zinc-200 text-zinc-700 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-colors font-medium shadow-sm"
                     >
                       Draft 3.2.S (Drug Substance)
                     </button>
@@ -2604,7 +2523,7 @@ export const ZenApp: React.FC = () => {
                         setRiViewMode('editor');
                         setLayoutMode('regulatory-workspace');
                       }}
-                      className="text-xs px-2.5 py-1 rounded bg-white border border-zinc-200 text-zinc-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-colors duration-150"
+                      className="text-xs px-3 py-1.5 rounded-md bg-white border border-zinc-200 text-zinc-700 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-colors font-medium shadow-sm"
                     >
                       Draft 3.2.P (Drug Product)
                     </button>
@@ -2622,7 +2541,7 @@ export const ZenApp: React.FC = () => {
                         setRiViewMode('editor');
                         setLayoutMode('regulatory-workspace');
                       }}
-                      className="text-xs px-2.5 py-1 rounded bg-white border border-zinc-200 text-zinc-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-colors duration-150"
+                      className="text-xs px-3 py-1.5 rounded-md bg-white border border-zinc-200 text-zinc-700 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-colors font-medium shadow-sm"
                     >
                       Draft 3.2.A (Appendices)
                     </button>
@@ -2693,7 +2612,9 @@ export const ZenApp: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense
                     fallback={
-                      <LoadingState size="page" />
+                      <div className="flex-1 flex items-center justify-center bg-white h-full">
+                        <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
+                      </div>
                     }
                   >
                     <TemplateLibraryInline
@@ -2720,22 +2641,22 @@ export const ZenApp: React.FC = () => {
           {/* ── Submission Operations Workspace (split-pane: list | inspector) ── */}
           {!embeddedModule && layoutMode === 'submission-workspace' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-submission-ops">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('regulatory-workspace')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                   <span>Workspace</span>
                 </button>
                 <span className="text-zinc-200">·</span>
                 <ShieldCheck className="w-3.5 h-3.5 text-violet-500" />
-                <span className="text-xs font-medium text-zinc-900">
+                <span className="text-xs font-medium text-zinc-800">
                   {submissionWorkspaceLabel} — Submission Ops
                 </span>
               </div>
               {!activeProjectId ? (
-                <div className="flex-1 flex items-center justify-center bg-zinc-50/30 p-8">
+                <div className="flex-1 flex items-center justify-center bg-zinc-50/50 p-8">
                   <div className="max-w-md text-center">
                     <ShieldCheck className="w-10 h-10 mx-auto mb-3 text-violet-400" />
                     <h2 className="text-lg font-semibold text-zinc-900 mb-2">
@@ -2746,7 +2667,7 @@ export const ZenApp: React.FC = () => {
                     </p>
                     <button
                       onClick={() => setProjectSwitcherOpen(true)}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-600 text-white text-sm font-medium hover:bg-violet-700 transition-colors duration-150"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-600 text-white text-sm font-medium hover:bg-violet-700 transition-colors"
                     >
                       Select Project
                     </button>
@@ -2756,7 +2677,9 @@ export const ZenApp: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense
                     fallback={
-                      <LoadingState size="page" />
+                      <div className="flex-1 flex items-center justify-center">
+                        <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                      </div>
                     }
                   >
                     <SubmissionOpsCommandCenter
@@ -2775,22 +2698,15 @@ export const ZenApp: React.FC = () => {
           {/* ── Enablement Center — Dr. Sage + AnA 1.0 dual-AI hub ── */}
           {!embeddedModule && layoutMode === 'enablement-center' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-enablement-center">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
-                <button
-                  onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Home</span>
-                </button>
-                <span className="text-zinc-200">&middot;</span>
-                <GraduationCap className="w-3.5 h-3.5 text-blue-500" />
-                <span className="text-xs font-medium text-zinc-900">Academy</span>
-              </div>
               <ErrorBoundary>
                 <Suspense
                   fallback={
-                    <LoadingState size="page" label="Loading Enablement Center…" />
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <div className="text-center">
+                        <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-3" />
+                        <p className="text-sm text-zinc-500">Loading Enablement Center...</p>
+                      </div>
+                    </div>
                   }
                 >
                   <EnablementCenter
@@ -2810,10 +2726,10 @@ export const ZenApp: React.FC = () => {
           {!embeddedModule && layoutMode === 'author' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-author">
               {/* Author workspace routes to IND/eCTD/CMC/Clinical based on context */}
-              <div className="flex items-center gap-3 px-4 h-12 border-b border-zinc-200 bg-white flex-shrink-0">
+              <div className="flex items-center gap-3 px-4 h-12 border-b border-zinc-100 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition-colors duration-150"
+                  className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
                 >
                   <ChevronLeft className="w-4 h-4" />
                   <span>Home</span>
@@ -2839,7 +2755,7 @@ export const ZenApp: React.FC = () => {
                         key={tab.key}
                         onClick={() => setLayoutMode(tab.key as LayoutMode)}
                         className={cn(
-                          'px-2.5 py-1 text-xs font-medium transition-colors duration-150',
+                          'px-2.5 py-1 text-[11px] font-medium transition-colors',
                           layoutMode === tab.key
                             ? 'bg-zinc-100 text-zinc-900'
                             : 'text-zinc-500 hover:bg-zinc-50'
@@ -2856,7 +2772,9 @@ export const ZenApp: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense
                     fallback={
-                      <LoadingState size="page" />
+                      <div className="flex-1 flex items-center justify-center bg-white">
+                        <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
+                      </div>
                     }
                   >
                     <INDWorkspace
@@ -2885,27 +2803,12 @@ export const ZenApp: React.FC = () => {
           {/* ── Intelligence Hub — research, evidence, predictions ── */}
           {!embeddedModule && layoutMode === 'intelligence-hub' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-intelligence-hub">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
-                <button
-                  onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Home</span>
-                </button>
-                <span className="text-zinc-200">&middot;</span>
-                <Search className="w-3.5 h-3.5 text-violet-500" />
-                <span className="text-xs font-medium text-zinc-900">Regulatory Intelligence</span>
-                {activeProject && (
-                  <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
-                    {activeProject.name}
-                  </span>
-                )}
-              </div>
               <ErrorBoundary>
                 <Suspense
                   fallback={
-                    <LoadingState size="page" />
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
+                    </div>
                   }
                 >
                   <IntelligenceHub onClose={() => setLayoutMode('projects')} />
@@ -2917,30 +2820,15 @@ export const ZenApp: React.FC = () => {
           {/* ── Review & Readiness — quality, compliance, stress-testing ── */}
           {!embeddedModule && layoutMode === 'review-readiness' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-review-readiness">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
-                <button
-                  onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Home</span>
-                </button>
-                <span className="text-zinc-200">&middot;</span>
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                <span className="text-xs font-medium text-zinc-900">Review & Compliance</span>
-                {activeProject && (
-                  <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
-                    {activeProject.name}
-                  </span>
-                )}
-              </div>
               <ErrorBoundary>
                 <Suspense
                   fallback={
-                    <LoadingState size="page" />
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
+                    </div>
                   }
                 >
-                  <ReviewReadiness onClose={() => setLayoutMode('projects')} projectId={activeProjectId} />
+                  <ReviewReadiness onClose={() => setLayoutMode('projects')} />
                 </Suspense>
               </ErrorBoundary>
             </div>
@@ -2949,27 +2837,12 @@ export const ZenApp: React.FC = () => {
           {/* ── Command Center — operations, submissions, governance ── */}
           {!embeddedModule && layoutMode === 'command-center' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-command-center">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
-                <button
-                  onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Home</span>
-                </button>
-                <span className="text-zinc-200">&middot;</span>
-                <BarChart3 className="w-3.5 h-3.5 text-zinc-500" />
-                <span className="text-xs font-medium text-zinc-900">Operations Center</span>
-                {activeProject && (
-                  <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
-                    {activeProject.name}
-                  </span>
-                )}
-              </div>
               <ErrorBoundary>
                 <Suspense
                   fallback={
-                    <LoadingState size="page" />
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
+                    </div>
                   }
                 >
                   <CommandCenterHub onClose={() => setLayoutMode('projects')} />
@@ -3035,22 +2908,12 @@ export const ZenApp: React.FC = () => {
               className="flex-1 flex flex-col min-h-0"
               data-testid="workspace-client-intelligence"
             >
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
-                <button
-                  onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Home</span>
-                </button>
-                <span className="text-zinc-200">&middot;</span>
-                <Brain className="w-3.5 h-3.5 text-blue-500" />
-                <span className="text-xs font-medium text-zinc-900">Client Intelligence</span>
-              </div>
               <ErrorBoundary>
                 <Suspense
                   fallback={
-                    <LoadingState size="page" />
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
+                    </div>
                   }
                 >
                   <ClientIntelligencePage />
@@ -3063,19 +2926,19 @@ export const ZenApp: React.FC = () => {
           {!embeddedModule && layoutMode === 'collaboration-hub' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-collaboration-hub">
               {/* Workspace header — breadcrumb pattern */}
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                   <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <MessageSquare className="w-3.5 h-3.5 text-blue-500" />
-                <span className="text-xs font-medium text-zinc-900">Collaboration</span>
+                <span className="text-xs font-medium text-zinc-800">Collaboration</span>
                 {activeProject && (
-                  <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
                     {activeProject.name}
                   </span>
                 )}
@@ -3083,7 +2946,9 @@ export const ZenApp: React.FC = () => {
               <ErrorBoundary>
                 <Suspense
                   fallback={
-                    <LoadingState size="page" />
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                    </div>
                   }
                 >
                   <CollaborationHubPage
@@ -3133,19 +2998,19 @@ export const ZenApp: React.FC = () => {
           {/* ── Biostatistics Platform — power, endpoints, design ── */}
           {!embeddedModule && layoutMode === 'biostatistics' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-biostatistics">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                   <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <FlaskConical className="w-3.5 h-3.5 text-emerald-500" />
-                <span className="text-xs font-medium text-zinc-900">Biostatistics</span>
+                <span className="text-xs font-medium text-zinc-800">Biostatistics</span>
                 {activeProject && (
-                  <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
                     {activeProject.name}
                   </span>
                 )}
@@ -3153,7 +3018,9 @@ export const ZenApp: React.FC = () => {
               <ErrorBoundary>
                 <Suspense
                   fallback={
-                    <LoadingState size="page" />
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                    </div>
                   }
                 >
                   <BiostatPlatformDashboard />
@@ -3165,22 +3032,24 @@ export const ZenApp: React.FC = () => {
           {/* ── Training Center — onboarding, courses, guides ── */}
           {!embeddedModule && layoutMode === 'training-center' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-training-center">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                   <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <BookOpen className="w-3.5 h-3.5 text-violet-500" />
-                <span className="text-xs font-medium text-zinc-900">Training Center</span>
+                <span className="text-xs font-medium text-zinc-800">Training Center</span>
               </div>
               <ErrorBoundary>
                 <Suspense
                   fallback={
-                    <LoadingState size="page" />
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                    </div>
                   }
                 >
                   <TrainingManagementPage />
@@ -3189,57 +3058,27 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
-          {/* ── Agent Hub — Agent Swarm showcase, setup, monitoring ── */}
-          {!embeddedModule && layoutMode === 'agent-hub' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-agent-hub">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
-                <button
-                  onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Home</span>
-                </button>
-                <span className="text-zinc-200">&middot;</span>
-                <Bot className="w-3.5 h-3.5 text-violet-500" />
-                <span className="text-xs font-medium text-zinc-900">AI Agents</span>
-                {activeProject && (
-                  <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
-                    {activeProject.name}
-                  </span>
-                )}
-              </div>
-              <ErrorBoundary>
-                <Suspense
-                  fallback={
-                    <LoadingState size="page" />
-                  }
-                >
-                  <AgentShowcasePage />
-                </Suspense>
-              </ErrorBoundary>
-            </div>
-          )}
-
-          {/* ── Enterprise Integrations — connectors & API management ── */}
+          {/* Enterprise Integrations — connectors & API management */}
           {!embeddedModule && layoutMode === 'integrations' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-integrations">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                   <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
-                <Layers className="w-3.5 h-3.5 text-violet-500" />
-                <span className="text-xs font-medium text-zinc-900">Integrations</span>
+                <Link2 className="w-3.5 h-3.5 text-blue-500" />
+                <span className="text-xs font-medium text-zinc-800">Integrations</span>
               </div>
               <ErrorBoundary>
                 <Suspense
                   fallback={
-                    <LoadingState size="page" />
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                    </div>
                   }
                 >
                   <IntegrationsPage />
@@ -3248,89 +3087,28 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
-          {/* ── Document Sherpa — AI-guided authoring ── */}
-          {!embeddedModule && layoutMode === 'document-sherpa' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-document-sherpa">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
-                <button
-                  onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Home</span>
-                </button>
-                <span className="text-zinc-200">&middot;</span>
-                <Compass className="w-3.5 h-3.5 text-blue-500" />
-                <span className="text-xs font-medium text-zinc-900">AnA Guided Authoring</span>
-                {activeProject && (
-                  <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
-                    {activeProject.name}
-                  </span>
-                )}
-              </div>
-              <ErrorBoundary>
-                <Suspense
-                  fallback={
-                    <LoadingState size="page" />
-                  }
-                >
-                  <DocumentSherpaPage />
-                </Suspense>
-              </ErrorBoundary>
-            </div>
-          )}
-
-          {/* ── Review Pulse — PM signals, readiness, risk ── */}
-          {!embeddedModule && layoutMode === 'review-pulse' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-review-pulse">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
-                <button
-                  onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Home</span>
-                </button>
-                <span className="text-zinc-200">&middot;</span>
-                <Activity className="w-3.5 h-3.5 text-blue-500" />
-                <span className="text-xs font-medium text-zinc-900">Review Pulse</span>
-                {activeProject && (
-                  <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
-                    {activeProject.name}
-                  </span>
-                )}
-              </div>
-              <ErrorBoundary>
-                <Suspense
-                  fallback={
-                    <LoadingState size="page" />
-                  }
-                >
-                  <ReviewPulseDashboardPage />
-                </Suspense>
-              </ErrorBoundary>
-            </div>
-          )}
 
           {/* ── Client Onboarding — setup wizard, configuration ── */}
           {!embeddedModule && layoutMode === 'client-onboarding' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-client-onboarding">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                   <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <Rocket className="w-3.5 h-3.5 text-blue-500" />
-                <span className="text-xs font-medium text-zinc-900">Client Onboarding</span>
+                <span className="text-xs font-medium text-zinc-800">Client Onboarding</span>
               </div>
               <ErrorBoundary>
                 <Suspense
                   fallback={
-                    <LoadingState size="page" />
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                    </div>
                   }
                 >
                   <OnboardingWizardPage />
@@ -3342,17 +3120,17 @@ export const ZenApp: React.FC = () => {
           {/* ── Knowledge Base — account-level skills, .MD upload, materials ── */}
           {!embeddedModule && layoutMode === 'knowledge-base' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-knowledge-base">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                   <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <Upload className="w-3.5 h-3.5 text-emerald-500" />
-                <span className="text-xs font-medium text-zinc-900">Knowledge Base</span>
+                <span className="text-xs font-medium text-zinc-800">Knowledge Base</span>
               </div>
               <div className="flex-1 overflow-y-auto p-6">
                 <div className="max-w-3xl mx-auto">
@@ -3390,19 +3168,19 @@ export const ZenApp: React.FC = () => {
           {/* ── Project Knowledge — project-level context, uploads, sources ── */}
           {!embeddedModule && layoutMode === 'project-knowledge' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-project-knowledge">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                   <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <FileStack className="w-3.5 h-3.5 text-blue-500" />
-                <span className="text-xs font-medium text-zinc-900">Project Knowledge</span>
+                <span className="text-xs font-medium text-zinc-800">Project Knowledge</span>
                 {activeProject && (
-                  <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
                     {activeProject.name}
                   </span>
                 )}
@@ -3410,7 +3188,9 @@ export const ZenApp: React.FC = () => {
               <ErrorBoundary>
                 <Suspense
                   fallback={
-                    <LoadingState size="page" />
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                    </div>
                   }
                 >
                   <ProjectKnowledgePanel projectId={activeProjectId || null} />
@@ -3419,51 +3199,35 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
+          {/* ── Legal Center — IP, contracts, regulatory law ── */}
           {/* Artifacts Gallery — browsable outputs and templates */}
           {!embeddedModule && layoutMode === 'artifacts' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-artifacts">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
-                <button
-                  onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Home</span>
-                </button>
-                <span className="text-zinc-200">&middot;</span>
-                <Layers className="w-3.5 h-3.5 text-violet-500" />
-                <span className="text-xs font-medium text-zinc-900">Documents & Artifacts</span>
-                {activeProject && (
-                  <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
-                    {activeProject.name}
-                  </span>
-                )}
-              </div>
               <Suspense fallback={<ModuleLoadingFallback />}>
                 <ArtifactsGalleryPage />
               </Suspense>
             </div>
           )}
 
-          {/* ── Legal Center — IP, contracts, regulatory law ── */}
-
           {!embeddedModule && layoutMode === 'legal-center' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-legal-center">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                   <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <Scale className="w-3.5 h-3.5 text-blue-500" />
-                <span className="text-xs font-medium text-zinc-900">Legal Center</span>
+                <span className="text-xs font-medium text-zinc-800">Legal Center</span>
               </div>
               <Suspense
                 fallback={
-                  <LoadingState size="page" />
+                  <div className="flex-1 flex items-center justify-center">
+                    <Loader2 className="w-5 h-5 animate-spin text-zinc-300" />
+                  </div>
                 }
               >
                 <LegalCenterPage onClose={() => setLayoutMode('projects')} />
@@ -3474,21 +3238,23 @@ export const ZenApp: React.FC = () => {
           {/* ── Document Builder — CSR + CTD wizard across global agencies ── */}
           {!embeddedModule && layoutMode === 'document-builder' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-document-builder">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                   <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <BookOpen className="w-3.5 h-3.5 text-violet-500" />
-                <span className="text-xs font-medium text-zinc-900">Document Builder</span>
+                <span className="text-xs font-medium text-zinc-800">Document Builder</span>
               </div>
               <Suspense
                 fallback={
-                  <LoadingState size="page" />
+                  <div className="flex-1 flex items-center justify-center">
+                    <Loader2 className="w-5 h-5 animate-spin text-zinc-300" />
+                  </div>
                 }
               >
                 <FullDocumentBuilder />
@@ -3501,7 +3267,9 @@ export const ZenApp: React.FC = () => {
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-report-engine">
               <Suspense
                 fallback={
-                  <LoadingState size="page" />
+                  <div className="flex-1 flex items-center justify-center">
+                    <Loader2 className="w-5 h-5 animate-spin text-zinc-300" />
+                  </div>
                 }
               >
                 <IntelligentReportGenerator />
@@ -3514,23 +3282,6 @@ export const ZenApp: React.FC = () => {
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-ana-dashboard">
               <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-zinc-300" /></div>}>
                 <AnaDashboardPage projectId={activeProjectId} />
-              </Suspense>
-            </div>
-          )}
-
-          {/* ── Submission Builder — eCTD module assembler ────────────────── */}
-          {!embeddedModule && layoutMode === 'submission-builder' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-submission-builder">
-              <Suspense
-                fallback={
-                  <LoadingState size="page" />
-                }
-              >
-                <SubmissionBuilderPage
-                  projectId={activeProjectId || ''}
-                  projectName={activeProject?.name}
-                  onClose={() => setLayoutMode('regulatory-workspace')}
-                />
               </Suspense>
             </div>
           )}
@@ -3553,21 +3304,6 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
-          {/* ── Template Library — regulatory document templates ─────────── */}
-          {!embeddedModule && layoutMode === 'template-library' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-template-library">
-              <Suspense
-                fallback={
-                  <LoadingState size="page" />
-                }
-              >
-                <TemplateLibraryPage
-                  onClose={() => setLayoutMode('regulatory-workspace')}
-                />
-              </Suspense>
-            </div>
-          )}
-
           {/* Precedent Intelligence — disabled (consolidated into Intelligence Hub) */}
 
           {/* Redirect deprecated routes to unified workspace */}
@@ -3581,19 +3317,19 @@ export const ZenApp: React.FC = () => {
             (riViewMode === 'intelligence' ? (
               <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-ri-copilot">
                 {/* Intelligence mode header */}
-                <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
+                <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
                   <button
                     onClick={() => setLayoutMode('projects')}
-                    className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
+                    className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
                   >
                     <ChevronLeft className="w-3.5 h-3.5" />
                     <span>Home</span>
                   </button>
                   <span className="text-zinc-200">·</span>
                   <Brain className="w-3.5 h-3.5 text-blue-500" />
-                  <span className="text-xs font-medium text-zinc-900">RI Copilot</span>
+                  <span className="text-xs font-medium text-zinc-800">RI Copilot</span>
                   {activeProject && (
-                    <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
                       {activeProject.name}
                     </span>
                   )}
@@ -3603,7 +3339,7 @@ export const ZenApp: React.FC = () => {
                         data-testid="view-toggle-intelligence"
                         onClick={() => setRiViewMode('intelligence')}
                         className={cn(
-                          'px-2 py-0.5 text-xs font-medium transition-colors duration-150',
+                          'px-2 py-0.5 text-[11px] font-medium transition-colors',
                           'bg-blue-100 text-blue-700'
                         )}
                       >
@@ -3612,7 +3348,7 @@ export const ZenApp: React.FC = () => {
                       <button
                         data-testid="view-toggle-editor"
                         onClick={() => setRiViewMode('editor')}
-                        className="px-2 py-0.5 text-xs font-medium text-zinc-500 hover:bg-zinc-50 transition-colors duration-150"
+                        className="px-2 py-0.5 text-[11px] font-medium text-zinc-500 hover:bg-zinc-50 transition-colors"
                       >
                         Documents
                       </button>
@@ -3622,7 +3358,9 @@ export const ZenApp: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense
                     fallback={
-                      <LoadingState size="page" />
+                      <div className="flex-1 flex items-center justify-center">
+                        <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                      </div>
                     }
                   >
                     <RICopilotHome
@@ -3657,7 +3395,6 @@ export const ZenApp: React.FC = () => {
                 onInitialContentConsumed={() => setPendingEditorContent(null)}
                 openArtifactId={openArtifactId}
                 onOpenArtifactConsumed={() => setOpenArtifactId(undefined)}
-                onActiveDocumentChange={setActiveDocContext}
               />
             ))}
           {/* Rules Engine Manager */}
@@ -3678,7 +3415,9 @@ export const ZenApp: React.FC = () => {
           {!embeddedModule && layoutMode === 'projects' && (
             <Suspense
               fallback={
-                <LoadingState size="page" />
+                <div className="flex-1 flex items-center justify-center">
+                  <Loader2 className="w-5 h-5 animate-spin text-zinc-300" />
+                </div>
               }
             >
               <PlatformHome
@@ -3728,12 +3467,12 @@ export const ZenApp: React.FC = () => {
                     <button
                       onClick={() => setEditProjectOpen(true)}
                       title="Project settings"
-                      className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors duration-150"
+                      className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors"
                     >
                       <PenLine className="w-4 h-4" />
                     </button>
                     <button
-                      className="p-1.5 text-zinc-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors duration-150"
+                      className="p-1.5 text-zinc-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors"
                       title="Star project"
                     >
                       <Star className="w-4 h-4" />
@@ -3754,9 +3493,6 @@ export const ZenApp: React.FC = () => {
                     screenName: 'regulatory-workspace',
                     activeProject: activeProject?.name,
                     projectId: activeProjectId,
-                    activeDocumentTitle: activeDocContext?.title,
-                    activeDocumentExcerpt: activeDocContext?.excerpt,
-                    activeDocumentCtdSection: activeDocContext?.ctdSection,
                   }}
                   greeting={
                     platformGreeting?.text ||
@@ -3773,7 +3509,7 @@ export const ZenApp: React.FC = () => {
 
                 {/* Right sidebar: Claude.ai-style (Context, Instructions, Files) */}
                 {/* Desktop: static panel */}
-                <div className="w-72 xl:w-80 border-l border-zinc-200 bg-white flex-shrink-0 hidden lg:flex">
+                <div className="w-72 xl:w-80 border-l border-zinc-100 bg-white flex-shrink-0 hidden lg:flex">
                   <ProjectSidebar
                     projectId={activeProjectId ?? null}
                     projectType={activeProject?.type}
@@ -3786,8 +3522,8 @@ export const ZenApp: React.FC = () => {
                       className="fixed inset-0 bg-black/30 z-40 lg:hidden"
                       onClick={() => setWorkspacePanelOpen(false)}
                     />
-                    <div className="fixed right-0 top-0 bottom-0 w-80 bg-white border-l border-zinc-200 shadow-lg z-50 lg:hidden">
-                      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200">
+                    <div className="fixed right-0 top-0 bottom-0 w-80 bg-white border-l border-zinc-200 shadow-xl z-50 lg:hidden">
+                      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100">
                         <span className="text-sm font-medium text-zinc-700">Project Context</span>
                         <button
                           onClick={() => setWorkspacePanelOpen(false)}
@@ -3806,7 +3542,7 @@ export const ZenApp: React.FC = () => {
                 {/* Mobile toggle button */}
                 <button
                   onClick={() => setWorkspacePanelOpen(true)}
-                  className="fixed right-4 bottom-4 z-30 lg:hidden w-10 h-10 bg-zinc-900 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-zinc-800 transition-colors duration-150"
+                  className="fixed right-4 bottom-4 z-30 lg:hidden w-10 h-10 bg-zinc-900 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-zinc-800 transition-colors"
                   title="Project context"
                 >
                   <FileText className="w-4 h-4" />
@@ -3819,7 +3555,9 @@ export const ZenApp: React.FC = () => {
               <ErrorBoundary>
                 <Suspense
                   fallback={
-                    <LoadingState size="page" />
+                    <div className="flex-1 flex items-center justify-center">
+                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                    </div>
                   }
                 >
                   <EditorPanel
@@ -3842,8 +3580,7 @@ export const ZenApp: React.FC = () => {
               }
             />
           )}
-        </motion.div>
-        </AnimatePresence>
+        </div>
 
         {/* AnA — THE single chat surface
             workspace/regulatory-workspace: rendered inline above (mode="full")
@@ -3859,9 +3596,6 @@ export const ZenApp: React.FC = () => {
               screenName: layoutMode,
               activeProject: activeProject?.name,
               projectId: activeProjectId,
-              activeDocumentTitle: activeDocContext?.title,
-              activeDocumentExcerpt: activeDocContext?.excerpt,
-              activeDocumentCtdSection: activeDocContext?.ctdSection,
             }}
             greeting={
               layoutMode === 'deep-research'
@@ -3892,19 +3626,6 @@ export const ZenApp: React.FC = () => {
         isOpen={commandPaletteOpen}
         onClose={() => setCommandPaletteOpen(false)}
         onAction={handleCommandAction}
-      />
-
-      {/* Global Document Search */}
-      <GlobalDocumentSearch
-        isOpen={globalSearchOpen}
-        onClose={() => setGlobalSearchOpen(false)}
-        onOpenDocument={(projId, docId) => {
-          // Navigate to the project and open the document
-          setActiveProjectId(projId);
-          setLayoutMode('project');
-          // The document ID will be picked up by the workspace shell
-          setGlobalSearchOpen(false);
-        }}
       />
 
       {/* Settings */}

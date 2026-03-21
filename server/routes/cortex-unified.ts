@@ -632,10 +632,31 @@ function generateContextAwareDemoResponse(
   message: string,
   context: import('../services/lumen-context-builder.js').LumenContext
 ): string {
-  const lower = message.toLowerCase();
+  const lower = message.toLowerCase().trim();
   const projectName = context.project?.name || 'your project';
   const subType = context.project?.submissionType || 'regulatory submission';
   const progress = context.project?.progress || 0;
+  const userName = context.userName || '';
+
+  // Greetings
+  if (/^(hi|hello|hey|good\s*(morning|afternoon|evening)|howdy|greetings|yo)\b/i.test(lower)) {
+    const greeting = userName ? `Hello, ${userName}!` : 'Hello!';
+    return `## ${greeting}
+
+Welcome to **${projectName}**. I'm AnA, your regulatory intelligence co-pilot.
+
+${progress > 0
+    ? `Your **${subType}** is at **${progress}%** progress.${context.documents ? ` You have ${context.documents.completedDocuments}/${context.documents.totalDocuments} documents completed.` : ''}`
+    : `I see you're working on a **${subType}**. Let's make progress together.`
+  }
+
+### What I can help with right now
+- **Draft** any CTD module section or regulatory document
+- **Review** your existing documents for compliance gaps
+- **Strategize** your submission timeline and approach
+
+What would you like to work on?`;
+  }
 
   if (lower.includes('status') || lower.includes('progress') || lower.includes('where')) {
     return `## ${projectName} — Status Overview

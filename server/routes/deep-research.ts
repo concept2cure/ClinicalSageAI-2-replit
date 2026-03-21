@@ -296,16 +296,16 @@ router.post('/document/generate', requireTier('standard'), async (req: Request, 
                 content: `Generate Section ${tmpl.number}: ${tmpl.title}
 
 Study: ${studyInfo.title}
-Protocol: ${studyInfo.protocol || 'Not specified'}
+Protocol: ${studyInfo.protocolNumber || studyInfo.protocol || 'Not specified'}
 Phase: ${studyInfo.phase || 'Not specified'}
 Indication: ${studyInfo.indication || 'Not specified'}
 Sponsor: ${studyInfo.sponsor || 'Not specified'}
-Product: ${studyInfo.product || 'Not specified'}
-Design: ${studyInfo.design || 'Not specified'}
+Product: ${studyInfo.investigationalProduct || studyInfo.product || 'Not specified'}
+Design: ${studyInfo.studyDesign || studyInfo.design || 'Not specified'}
 Primary Endpoint: ${studyInfo.primaryEndpoint || 'Not specified'}
 Secondary Endpoints: ${Array.isArray(studyInfo.secondaryEndpoints) ? studyInfo.secondaryEndpoints.join(', ') : studyInfo.secondaryEndpoints || 'Not specified'}
 Sample Size: ${studyInfo.sampleSize || 'Not specified'}
-Duration: ${studyInfo.treatmentDuration || 'Not specified'}
+Duration: ${studyInfo.treatmentDuration || studyInfo.duration || 'Not specified'}
 
 Write the section content.`,
               },

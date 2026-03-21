@@ -37,48 +37,35 @@ function ensureGateway() {
 }
 
 // System prompt for regulatory AI assistant
-const REGULATORY_SYSTEM_PROMPT = `You are AnA (Audit & Narrative Assistant), a regulatory intelligence co-pilot for life sciences professionals. You combine the knowledge of a senior FDA reviewer, ICH expert, and regulatory affairs VP.
+const REGULATORY_SYSTEM_PROMPT = `You are AnA (Audit & Narrative Assistant), an expert RI Co-pilot for regulatory affairs in the life sciences industry. You specialize in:
 
-## Your role
-Help users move their regulatory submissions forward. Every response should leave the user knowing exactly what to do next.
+- FDA 510(k) medical device submissions
+- IND (Investigational New Drug) applications
+- Clinical trial design and protocol optimization
+- 21 CFR Part 11 compliance
+- EU MDR (Medical Device Regulation)
+- Clinical Evaluation Reports (CER)
+- eCTD submissions
+- CMC (Chemistry, Manufacturing, Controls)
 
-## Core expertise
-- FDA submissions: 510(k), IND, NDA, BLA, PMA, De Novo, EUA
-- EU submissions: MAA, CE marking, EU MDR, EU IVDR
-- ICH guidelines (CTD/eCTD structure, E6 GCP, E8/E9 clinical design)
-- Clinical trial design, protocols, and CSR writing
-- CMC documentation (drug substance, drug product, stability)
-- 21 CFR Part 11 compliance, quality systems, design controls
+You provide:
+1. Clear, actionable regulatory guidance
+2. Risk assessments and gap analyses
+3. Document review and improvement suggestions
+4. Submission strategy recommendations
+5. Timeline and milestone planning
 
-## How you respond
+Always cite relevant FDA guidance documents, ISO standards, or regulations when applicable. Be precise, professional, and thorough in your responses. If you're unsure about something, say so and suggest where the user might find authoritative information.
 
-**Always be specific and actionable.** Don't just explain — generate the actual content, outline, or analysis the user needs.
+When users send casual greetings (hello, hi, hey, etc.), respond warmly and personally. Use their name if available, reference their current project context, and suggest 2-3 specific ways you can help. Never respond to greetings with generic prompts like "Could you share more details?" — be a warm, knowledgeable colleague who proactively offers relevant assistance.
 
-When a user asks about a document:
-→ Draft it. Don't describe what it should contain — write the first version.
+When instructed to generate content (draft a document, build a section, create a table), execute immediately. Do not ask for clarification unless truly ambiguous — use your regulatory expertise and available project context to produce the best possible output.
 
-When a user asks about strategy:
-→ Give a concrete recommendation with reasoning, not a list of "things to consider."
-
-When a user describes their situation:
-→ Identify the 2-3 most important next steps and explain why, in priority order.
-
-**After every substantive response, suggest the logical next action:**
-- "Next, you'll want to draft the [specific section]. Want me to start that?"
-- "The next step is usually [action]. Should I help with that now?"
-- "Based on this, I'd recommend [action] before moving on. Ready?"
-
-**Cite regulations.** Reference specific FDA guidance documents, 21 CFR sections, ICH guidelines, or ISO standards when relevant. Use format: (21 CFR 312.23(a)(6)) or (ICH M4E(R2)).
-
-**Structure your responses clearly:**
-- Use headers for sections
-- Use bullet points for lists
-- Bold key terms and regulatory references
-- Keep paragraphs short and scannable
-
-**Never say "it depends" without then giving your actual recommendation** based on common scenarios.
-
-**If you're uncertain**, say so honestly and point to the specific guidance document or expert type the user should consult.`;
+Format your responses with clear structure using:
+- Headers for main sections
+- Bullet points for lists
+- **Bold** for key terms
+- Code blocks for regulatory references`;
 
 // ── Provenance helpers ─────────────────────────────────────────────────────
 
@@ -234,7 +221,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       } catch (e: any) {
         // ai_threads table might not exist yet — skip check
         if (e?.code !== '42P01')
-          console.warn('[AnA RI] Thread ownership check failed:', e.message);
+          console.warn('[Lumen Cortex] Thread ownership check failed:', e.message);
       }
     }
 
@@ -248,7 +235,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
         );
       } catch (e: any) {
         if (e?.code !== '42P01') throw e;
-        console.warn('[AnA RI] ai_threads table missing — provenance disabled');
+        console.warn('[Lumen Cortex] ai_threads table missing — provenance disabled');
       }
     }
 
@@ -263,7 +250,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
         );
       } catch (e: any) {
         if (e?.code !== '42P01')
-          console.warn('[AnA RI] ai_messages insert failed:', e.message);
+          console.warn('[Lumen Cortex] ai_messages insert failed:', e.message);
       }
     }
 
@@ -281,7 +268,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       const embeddingService = getEmbeddingService(pool);
       // Bail early if org UUID is provided but clearly invalid
       if (orgUuid && !/^[0-9a-f-]{36}$/i.test(orgUuid)) {
-        console.warn('[AnA RI] Invalid org UUID, skipping retrieval');
+        console.warn('[Lumen Cortex] Invalid org UUID, skipping retrieval');
       } else {
         const searchResults = await embeddingService.searchHybrid(message, 5, 0.7, orgUuid);
         sources = searchResults.map(r => ({
@@ -354,13 +341,13 @@ const sendMessageHandler = async (req: Request, res: Response) => {
             }
           } catch (e: any) {
             if (e?.code !== '42P01')
-              console.warn('[AnA RI] Retrieval persist failed:', e.message);
+              console.warn('[Lumen Cortex] Retrieval persist failed:', e.message);
           }
         }
       }
     } catch (srcErr: any) {
       // Non-fatal — chat still works, just without grounded evidence
-      console.warn('[AnA RI] Source retrieval failed:', srcErr.message);
+      console.warn('[Lumen Cortex] Source retrieval failed:', srcErr.message);
     }
 
     // ── STEP 5: BUILD EVIDENCE-GROUNDED PROMPT ─────────────────────────
@@ -406,14 +393,14 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       ];
 
       console.log(
-        `[AnA RI] Sending through AI Gateway (${sources.length} sources retrieved)...`
+        `[Lumen Cortex] Sending through AI Gateway (${sources.length} sources retrieved)...`
       );
 
       const gwResponse: GatewayResponse = await gw.route({
         taskType: 'chat',
         messages: gwMessages,
         temperature: 0.7,
-        maxTokens: 4096,
+        maxTokens: 2000,
         callerModule: 'lumen-cortex-chat',
         organizationId: numericOrgId ?? undefined,
         userId,
@@ -432,10 +419,10 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       latencyMs = gwResponse.latencyMs;
 
       console.log(
-        `[AnA RI] AI Gateway response via ${model} (${latencyMs}ms, req=${gwResponse.requestId})`
+        `[Lumen Cortex] AI Gateway response via ${model} (${latencyMs}ms, req=${gwResponse.requestId})`
       );
     } catch (gwError: any) {
-      console.error('[AnA RI] AI Gateway call failed:', gwError.message);
+      console.error('[Lumen Cortex] AI Gateway call failed:', gwError.message);
       return res.status(503).json({
         error: 'AI provider call failed',
         code: 'AI_PROVIDER_UNAVAILABLE',
@@ -479,7 +466,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
         );
       } catch (e: any) {
         if (e?.code !== '42P01')
-          console.warn('[AnA RI] Generation persist failed:', e.message);
+          console.warn('[Lumen Cortex] Generation persist failed:', e.message);
       }
     }
 
@@ -585,7 +572,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
           });
           continue; // skip fallback below
         } catch (e: any) {
-          if (e?.code !== '42P01') console.warn('[AnA RI] Claim persist failed:', e.message);
+          if (e?.code !== '42P01') console.warn('[Lumen Cortex] Claim persist failed:', e.message);
         }
       }
 

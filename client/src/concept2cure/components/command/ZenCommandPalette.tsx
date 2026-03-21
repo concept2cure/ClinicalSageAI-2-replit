@@ -19,7 +19,6 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import {
   Search,
@@ -62,9 +61,7 @@ import {
   Users,
   BarChart3,
   Snowflake,
-  Clock,
 } from 'lucide-react';
-import { getRecentDocuments, type RecentDocument } from '../../hooks/useRecentDocuments';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -322,7 +319,7 @@ const createCommands = (onAction: (id: string) => void): CommandItem[] => [
     id: 'nav-route-planner',
     title: 'Route Planner',
     subtitle: 'Plan regulatory submission pathways & timelines',
-    icon: <Compass className="w-4 h-4 text-blue-600" />,
+    icon: <Compass className="w-4 h-4 text-indigo-600" />,
     category: 'tools',
     action: () => onAction('nav-route-planner'),
     keywords: ['route', 'plan', 'pathway', 'submission', 'timeline', 'destination'],
@@ -410,8 +407,8 @@ const createCommands = (onAction: (id: string) => void): CommandItem[] => [
   },
   {
     id: 'nav-snowglobe',
-    title: 'AnA Predictions',
-    subtitle: 'AnA RI prediction engine — stress tests, simulations, forecasts',
+    title: 'AnA Snow Globe',
+    subtitle: 'Prediction engine — stress tests, pre-agency scans, reviewer attack',
     icon: <Snowflake className="w-4 h-4 text-cyan-600" />,
     category: 'tools',
     action: () => onAction('nav-snowglobe'),
@@ -419,8 +416,8 @@ const createCommands = (onAction: (id: string) => void): CommandItem[] => [
   },
   {
     id: 'nav-snowglobe-chambers',
-    title: 'AnA Prediction Chambers',
-    subtitle: 'Deep-dive into individual AnA RI prediction engines',
+    title: 'Snow Globe Chambers',
+    subtitle: 'Deep-dive into individual prediction engines',
     icon: <Snowflake className="w-4 h-4 text-cyan-600" />,
     category: 'tools',
     action: () => onAction('nav-snowglobe-chambers'),
@@ -478,7 +475,7 @@ const createCommands = (onAction: (id: string) => void): CommandItem[] => [
   {
     id: 'go-agents',
     title: 'Go to AI Agents',
-    subtitle: 'AnA RI automated agents',
+    subtitle: 'Agent Swarm — 10 specialized agents',
     icon: <Target className="w-4 h-4 text-violet-600" />,
     category: 'ai',
     action: () => onAction('go-agents'),
@@ -492,24 +489,6 @@ const createCommands = (onAction: (id: string) => void): CommandItem[] => [
     category: 'tools',
     action: () => onAction('go-collaboration'),
     keywords: ['collaborate', 'thread', 'review', 'team', 'discuss'],
-  },
-  {
-    id: 'go-document-sherpa',
-    title: 'Go to Guided Authoring',
-    subtitle: 'AnA RI guided document authoring',
-    icon: <Compass className="w-4 h-4 text-emerald-600" />,
-    category: 'tools',
-    action: () => onAction('go-document-sherpa'),
-    keywords: ['sherpa', 'guide', 'authoring', 'proactive'],
-  },
-  {
-    id: 'go-review-pulse',
-    title: 'Go to Review Pulse',
-    subtitle: 'PM signals, readiness, risk tracking',
-    icon: <Activity className="w-4 h-4 text-blue-600" />,
-    category: 'tools',
-    action: () => onAction('go-review-pulse'),
-    keywords: ['pulse', 'review', 'signal', 'readiness', 'risk', 'pm'],
   },
   {
     id: 'go-intelligence',
@@ -653,7 +632,7 @@ const CATEGORY_LABELS: Record<CommandCategory, string> = {
   tools: 'Tools & Modules',
   projects: 'Projects',
   settings: 'Settings',
-  ai: 'AnA RI Actions',
+  ai: 'RI Actions',
 };
 
 const CATEGORY_ORDER: CommandCategory[] = ['recent', 'submissions', 'tools', 'ai', 'settings'];
@@ -672,29 +651,15 @@ export const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  // Get commands (static + dynamic recent documents)
-  const commands = useMemo(() => {
-    const handler = (id: string) => {
-      onAction(id);
-      onClose();
-    };
-    const staticCmds = createCommands(handler);
-
-    // Inject recent documents at the top of the 'recent' category
-    const recentDocs = getRecentDocuments(5);
-    const recentDocCmds: CommandItem[] = recentDocs.map(doc => ({
-      id: `recent-doc-${doc.id}`,
-      title: doc.title,
-      subtitle: doc.ctdSection ? `CTD ${doc.ctdSection}` : doc.projectName || 'Recent document',
-      icon: <Clock className="w-4 h-4 text-zinc-500" />,
-      category: 'recent' as CommandCategory,
-      action: () => handler(`open-document:${doc.id}:${doc.projectId}`),
-      keywords: ['recent', 'document', doc.title.toLowerCase(), doc.ctdSection || ''].filter(Boolean),
-    }));
-
-    // Place recent doc commands before the static ones
-    return [...recentDocCmds, ...staticCmds];
-  }, [onAction, onClose]);
+  // Get commands
+  const commands = useMemo(
+    () =>
+      createCommands(id => {
+        onAction(id);
+        onClose();
+      }),
+    [onAction, onClose]
+  );
 
   // Filter commands based on query
   const filteredCommands = useMemo(() => {
@@ -778,6 +743,8 @@ export const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({
     [flatList, selectedIndex, onClose]
   );
 
+  if (!isOpen) return null;
+
   // Pre-compute category start indices for absolute item indexing
   const categoryOffsets = new Map<CommandCategory, number>();
   let offset = 0;
@@ -787,33 +754,23 @@ export const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({
   }
 
   return (
-    <AnimatePresence>
-    {isOpen && (
     <>
       {/* Backdrop */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.15 }}
+      <div
         className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
         onClick={onClose}
         aria-hidden="true"
       />
 
       {/* Dialog */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: -10 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: -10 }}
-        transition={{ duration: 0.15, ease: [0.2, 0, 0, 1] }}
+      <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="command-palette-title"
-        className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-xl bg-white rounded-xl shadow-lg overflow-hidden z-50"
+        className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-xl bg-white rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150"
       >
         {/* Search input */}
-        <div className="flex items-center gap-3 px-4 py-4 border-b border-zinc-200">
+        <div className="flex items-center gap-3 px-4 py-4 border-b border-zinc-100">
           <Search className="w-5 h-5 text-zinc-400 flex-shrink-0" />
           <span id="command-palette-title" className="sr-only">
             Command Palette
@@ -844,7 +801,7 @@ export const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({
         >
           {flatList.length === 0 ? (
             <div className="px-4 py-12 text-center" role="status">
-              <Search className="w-10 h-10 text-zinc-400 mx-auto mb-3" />
+              <Search className="w-10 h-10 text-zinc-300 mx-auto mb-3" />
               <p className="text-sm text-zinc-500">No commands found for "{query}"</p>
             </div>
           ) : (
@@ -922,7 +879,7 @@ export const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-4 py-3 border-t border-zinc-200 bg-zinc-50">
+        <div className="flex items-center justify-between px-4 py-3 border-t border-zinc-100 bg-zinc-50">
           <div className="flex items-center gap-4 text-xs text-zinc-500">
             <span className="flex items-center gap-1">
               <kbd className="px-1.5 py-0.5 bg-zinc-200 rounded text-zinc-600">↑</kbd>
@@ -939,10 +896,8 @@ export const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({
             <span>K to open</span>
           </div>
         </div>
-      </motion.div>
+      </div>
     </>
-    )}
-    </AnimatePresence>
   );
 };
 

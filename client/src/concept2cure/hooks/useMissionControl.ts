@@ -314,8 +314,16 @@ export function useCreateRisk() {
 export function useCollaboration(targetType: string, targetId: number | null) {
   return useQuery({
     queryKey: ['mc-collab', targetType, targetId],
-    queryFn: () => api<any[]>(`/collaboration?targetType=${targetType}&targetId=${targetId}`),
-    enabled: !!targetId,
+    queryFn: () => {
+      // When called with 'program' targetType, use programId filter to get all threads for that program
+      if (targetType === 'program') {
+        const params = targetId ? `?programId=${targetId}` : '';
+        return api<any[]>(`/collaboration${params}`);
+      }
+      return api<any[]>(`/collaboration?targetType=${targetType}&targetId=${targetId}`);
+    },
+    // Always enabled for program-level queries (shows all org threads), require targetId for artifact-level
+    enabled: targetType === 'program' || !!targetId,
   });
 }
 
