@@ -593,7 +593,7 @@ const FindReplaceBar: React.FC<FindReplaceBarProps> = ({ editor, onClose }) => {
       <button onClick={handleReplaceAll} className="px-2 py-1 text-xs bg-white border border-zinc-200 rounded hover:bg-zinc-100">
         All
       </button>
-      <button onClick={onClose} className="p-1 hover:bg-zinc-200 rounded ml-auto">
+      <button onClick={onClose} aria-label="Close find and replace" title="Close" className="p-1 hover:bg-zinc-200 rounded ml-auto focus-visible:ring-2 focus-visible:ring-blue-500 outline-none">
         <X className="w-3.5 h-3.5 text-zinc-500" />
       </button>
     </div>
@@ -628,7 +628,7 @@ const SourceTracerPopover: React.FC<SourceTracerPopoverProps> = ({
           <FileText className="w-4 h-4 text-blue-500" />
           <span className="text-xs font-semibold text-zinc-900">{source.title}</span>
         </div>
-        <button onClick={onClose} className="p-0.5 hover:bg-zinc-100 rounded">
+        <button onClick={onClose} aria-label="Close source details" title="Close" className="p-0.5 hover:bg-zinc-100 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none">
           <X className="w-3 h-3 text-zinc-400" />
         </button>
       </div>

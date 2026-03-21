@@ -236,7 +236,7 @@ export function RegulatoryIntelligencePanel({
           </span>
         </div>
         {onClose && (
-          <button onClick={onClose} className="p-1 rounded hover:bg-zinc-200/50 text-zinc-400">
+          <button onClick={onClose} aria-label="Close regulatory intelligence" title="Close" className="p-1 rounded hover:bg-zinc-200/50 text-zinc-400 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none">
             <X className="w-3.5 h-3.5" />
           </button>
         )}

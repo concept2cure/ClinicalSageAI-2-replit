@@ -439,12 +439,15 @@ function AddTaskModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Add task"
         className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 p-6 space-y-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-zinc-900">Add Task</h3>
-          <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600">
+          <button onClick={onClose} aria-label="Close" title="Close" className="text-zinc-400 hover:text-zinc-600 p-1 rounded-md focus-visible:ring-2 focus-visible:ring-blue-500 outline-none">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -452,20 +455,23 @@ function AddTaskModal({
         <form onSubmit={handleSubmit} className="space-y-3">
           {/* Title */}
           <div>
-            <label className="block text-xs font-medium text-zinc-600 mb-1">Title *</label>
+            <label htmlFor="task-title" className="block text-xs font-medium text-zinc-600 mb-1">Title *</label>
             <input
+              id="task-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
               placeholder="Task title"
               required
+              autoFocus
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-medium text-zinc-600 mb-1">Description</label>
+            <label htmlFor="task-desc" className="block text-xs font-medium text-zinc-600 mb-1">Description</label>
             <textarea
+              id="task-desc"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 outline-none resize-none"
@@ -477,8 +483,9 @@ function AddTaskModal({
           {/* Row: Priority + Status */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-zinc-600 mb-1">Priority</label>
+              <label htmlFor="task-priority" className="block text-xs font-medium text-zinc-600 mb-1">Priority</label>
               <select
+                id="task-priority"
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as TaskPriority)}
                 className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
@@ -489,8 +496,9 @@ function AddTaskModal({
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-zinc-600 mb-1">Status</label>
+              <label htmlFor="task-status" className="block text-xs font-medium text-zinc-600 mb-1">Status</label>
               <select
+                id="task-status"
                 value={status}
                 onChange={(e) => setStatus(e.target.value as TaskStatus)}
                 className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
@@ -505,8 +513,9 @@ function AddTaskModal({
           {/* Row: Assignee + Due Date */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-zinc-600 mb-1">Assignee</label>
+              <label htmlFor="task-assignee" className="block text-xs font-medium text-zinc-600 mb-1">Assignee</label>
               <input
+                id="task-assignee"
                 value={assignee}
                 onChange={(e) => setAssignee(e.target.value)}
                 className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
@@ -514,8 +523,9 @@ function AddTaskModal({
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-zinc-600 mb-1">Due Date</label>
+              <label htmlFor="task-due-date" className="block text-xs font-medium text-zinc-600 mb-1">Due Date</label>
               <input
+                id="task-due-date"
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
@@ -526,8 +536,9 @@ function AddTaskModal({
 
           {/* Module */}
           <div>
-            <label className="block text-xs font-medium text-zinc-600 mb-1">Module</label>
+            <label htmlFor="task-module" className="block text-xs font-medium text-zinc-600 mb-1">Module</label>
             <select
+              id="task-module"
               value={module}
               onChange={(e) => setModule(e.target.value as TaskModule)}
               className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"

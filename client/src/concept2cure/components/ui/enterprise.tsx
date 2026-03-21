@@ -18,7 +18,7 @@
  * - Buttons: rounded-lg, px-4 py-2, text-sm font-medium
  */
 
-import React from 'react';
+import React, { useEffect, useRef, useId } from 'react';
 import { cn } from '@/lib/utils';
 import { LucideIcon, ChevronRight } from 'lucide-react';
 
@@ -596,13 +596,13 @@ export function PageTitle({ children, className }: TextProps) {
   return <h1 className={cn('text-xl font-semibold tracking-tight text-zinc-900', className)}>{children}</h1>;
 }
 
-/** Section heading — text-lg font-semibold */
-export function Heading({ children, className, as: Tag = 'div' }: TextProps) {
+/** Section heading — text-lg font-semibold. Defaults to h2 for proper document outline. */
+export function Heading({ children, className, as: Tag = 'h2' }: TextProps) {
   return <Tag className={cn('text-lg font-semibold text-zinc-900', className)}>{children}</Tag>;
 }
 
-/** Sub heading — text-base font-semibold */
-export function SubHeading({ children, className, as: Tag = 'div' }: TextProps) {
+/** Sub heading — text-base font-semibold. Defaults to h3 for proper document outline. */
+export function SubHeading({ children, className, as: Tag = 'h3' }: TextProps) {
   return <Tag className={cn('text-base font-semibold text-zinc-900', className)}>{children}</Tag>;
 }
 
@@ -621,9 +621,9 @@ export function Caption({ children, className, as: Tag = 'p' }: TextProps) {
   return <Tag className={cn('text-xs text-zinc-500', className)}>{children}</Tag>;
 }
 
-/** Overline — text-xs uppercase tracking-wider */
+/** Overline — text-xs uppercase tracking-wider. Uses zinc-500 for WCAG AA contrast. */
 export function Overline({ children, className, as: Tag = 'span' }: TextProps) {
-  return <Tag className={cn('text-xs font-medium text-zinc-400 uppercase tracking-wider', className)}>{children}</Tag>;
+  return <Tag className={cn('text-xs font-medium text-zinc-500 uppercase tracking-wider', className)}>{children}</Tag>;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -635,13 +635,20 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   error?: string;
 }
 
-export function Input({ icon: Icon, error, className, ...props }: InputProps) {
+export function Input({ icon: Icon, error, className, id: providedId, ...props }: InputProps) {
+  const autoId = useId();
+  const inputId = providedId ?? autoId;
+  const errorId = error ? `${inputId}-error` : undefined;
+
   return (
     <div className="relative">
       {Icon && (
         <Icon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
       )}
       <input
+        id={inputId}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={errorId}
         className={cn(
           'w-full rounded-lg border bg-white px-4 py-2.5 text-sm text-zinc-900',
           'placeholder:text-zinc-400',
@@ -654,7 +661,7 @@ export function Input({ icon: Icon, error, className, ...props }: InputProps) {
         )}
         {...props}
       />
-      {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
+      {error && <p id={errorId} role="alert" className="text-xs text-red-600 mt-1">{error}</p>}
     </div>
   );
 }
@@ -668,6 +675,8 @@ interface ModalOverlayProps {
   onClose?: () => void;
   /** Max width of the modal container */
   size?: 'sm' | 'md' | 'lg' | 'xl';
+  /** Accessible label for the dialog */
+  ariaLabel?: string;
   className?: string;
 }
 
@@ -678,7 +687,53 @@ const modalSizes = {
   xl: 'max-w-4xl',
 };
 
-export function ModalOverlay({ children, onClose, size = 'md', className }: ModalOverlayProps) {
+export function ModalOverlay({ children, onClose, size = 'md', ariaLabel, className }: ModalOverlayProps) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  // ESC to close + focus trap
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    // Move focus into dialog on mount
+    const previousFocus = document.activeElement as HTMLElement | null;
+    const firstFocusable = dialog.querySelector<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    );
+    (firstFocusable ?? dialog).focus();
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        onClose?.();
+        return;
+      }
+      // Trap Tab within dialog
+      if (e.key === 'Tab') {
+        const focusables = dialog.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        );
+        if (focusables.length === 0) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      // Restore focus on unmount
+      previousFocus?.focus();
+    };
+  }, [onClose]);
+
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh] px-4">
       {/* Backdrop */}
@@ -689,6 +744,11 @@ export function ModalOverlay({ children, onClose, size = 'md', className }: Moda
       />
       {/* Content */}
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={ariaLabel}
+        tabIndex={-1}
         className={cn(
           'relative w-full bg-white rounded-xl shadow-lg border border-zinc-200 overflow-hidden',
           'animate-in fade-in zoom-in-95 duration-150',

@@ -278,6 +278,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <button
           onClick={onNewChat}
           aria-label="New chat"
+          title="New chat"
           className="w-9 h-9 rounded-lg bg-white/10 text-white flex items-center justify-center hover:bg-white/20 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150"
         >
           <Plus className="w-4 h-4" />
@@ -285,6 +286,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <button
           onClick={onOpenProjects}
           aria-label="Projects"
+          title="Projects"
           className="w-9 h-9 rounded-lg text-zinc-400 flex items-center justify-center hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150"
         >
           <FolderOpen className="w-4 h-4" />
@@ -295,6 +297,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <button
           onClick={() => onNavigate?.('ai-copilot')}
           aria-label="Ask AnA"
+          title="Ask AnA"
           className={cn(
             'w-9 h-9 rounded-lg flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150',
             activeNavId === 'ai-copilot' ? 'bg-violet-500/15 text-violet-400' : 'text-zinc-400 hover:bg-white/10'
@@ -305,6 +308,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <button
           onClick={() => onNavigate?.('author')}
           aria-label="Draft Sections"
+          title="Draft Sections"
           className={cn(
             'w-9 h-9 rounded-lg flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150',
             activeNavId === 'author' ? 'bg-emerald-500/15 text-emerald-400' : 'text-zinc-400 hover:bg-white/10'
@@ -315,6 +319,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <button
           onClick={() => onNavigate?.('intelligence-hub')}
           aria-label="Find Evidence"
+          title="Find Evidence"
           className={cn(
             'w-9 h-9 rounded-lg flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150',
             activeNavId === 'intelligence-hub' ? 'bg-blue-500/15 text-blue-400' : 'text-zinc-400 hover:bg-white/10'
@@ -325,6 +330,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <button
           onClick={() => onNavigate?.('review-readiness')}
           aria-label="Check Compliance"
+          title="Check Compliance"
           className={cn(
             'w-9 h-9 rounded-lg flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150',
             activeNavId === 'review-readiness' ? 'bg-blue-500/15 text-blue-400' : 'text-zinc-400 hover:bg-white/10'
@@ -335,6 +341,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <button
           onClick={() => onNavigate?.('artifacts')}
           aria-label="Documents"
+          title="Documents"
           className={cn(
             'w-9 h-9 rounded-lg flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150',
             activeNavId === 'artifacts' ? 'bg-violet-500/15 text-violet-400' : 'text-zinc-400 hover:bg-white/10'
@@ -346,6 +353,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <button
           onClick={onToggleCollapse}
           aria-label="Expand sidebar"
+          title="Expand sidebar"
           className="mt-auto w-9 h-9 rounded-lg text-zinc-500 flex items-center justify-center hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150"
         >
           <ChevronRight className="w-4 h-4" />
@@ -353,6 +361,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <button
           onClick={onOpenSettings}
           aria-label="Settings"
+          title="Settings"
           className="w-9 h-9 rounded-lg text-zinc-500 flex items-center justify-center hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150"
         >
           <Settings className="w-4 h-4" />

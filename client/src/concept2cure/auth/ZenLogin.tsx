@@ -256,6 +256,7 @@ export const ZenLogin: React.FC = () => {
   const [password, setPassword] = useState('');
   const [mfaCode, setMfaCode] = useState('');
   const [mfaMethod, setMfaMethod] = useState<MfaMethod['type']>('totp');
+  const [useRecoveryCode, setUseRecoveryCode] = useState(false);
   const [availableMfaMethods, setAvailableMfaMethods] = useState<MfaMethod[]>([]);
   const [rememberMe, setRememberMe] = useState(false);
 
@@ -352,8 +353,12 @@ export const ZenLogin: React.FC = () => {
   }, [email, password, setLocation, login, rememberMe]);
 
   const handleMfaVerify = useCallback(async () => {
-    if (mfaCode.length !== 6) {
+    if (!useRecoveryCode && mfaCode.length !== 6) {
       setError({ field: 'mfa', message: 'Please enter the full 6-digit code' });
+      return;
+    }
+    if (useRecoveryCode && mfaCode.trim().length === 0) {
+      setError({ field: 'mfa', message: 'Please enter your recovery code' });
       return;
     }
 
@@ -361,8 +366,8 @@ export const ZenLogin: React.FC = () => {
 
     try {
       const result = await verifyMfa({
-        method: mfaMethod,
-        code: mfaCode,
+        method: useRecoveryCode ? 'recovery' as any : mfaMethod,
+        code: mfaCode.trim(),
       });
 
       if (!result.success) {
@@ -873,45 +878,78 @@ export const ZenLogin: React.FC = () => {
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 mb-2">
           <ShieldIcon />
         </div>
-        <h3 className="text-lg font-semibold text-zinc-900">Two-factor authentication</h3>
-        <p className="text-sm text-zinc-600">Enter the 6-digit code from your authenticator app</p>
+        <h3 className="text-lg font-semibold text-zinc-900">
+          {useRecoveryCode ? 'Recovery code' : 'Two-factor authentication'}
+        </h3>
+        <p className="text-sm text-zinc-600">
+          {useRecoveryCode
+            ? 'Enter one of the recovery codes you saved when setting up MFA'
+            : 'Enter the 6-digit code from your authenticator app'}
+        </p>
       </div>
 
-      {availableMfaMethods.length > 0 && (
+      {useRecoveryCode ? (
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-zinc-700">Verification method</label>
-          <div className="flex flex-wrap gap-2">
-            {availableMfaMethods.map(method => (
-              <button
-                key={method.type}
-                type="button"
-                onClick={() => setMfaMethod(method.type)}
-                className={`
-                  px-3 py-1.5 text-sm rounded-full border
-                  transition-all duration-150
-                  ${
-                    mfaMethod === method.type
-                      ? 'border-blue-500 bg-blue-50 text-blue-700'
-                      : 'border-zinc-200 text-zinc-600 hover:border-zinc-300'
-                  }
-                `}
-              >
-                {method.type.replace('_', ' ')}
-              </button>
-            ))}
-          </div>
+          <label htmlFor="recovery-code" className="block text-sm font-medium text-zinc-700">Recovery code</label>
+          <input
+            id="recovery-code"
+            type="text"
+            value={mfaCode}
+            onChange={(e) => setMfaCode(e.target.value)}
+            placeholder="xxxx-xxxx-xxxx"
+            autoComplete="off"
+            autoFocus
+            className={`
+              w-full px-4 py-3 text-center text-base font-mono tracking-wider
+              border rounded-xl bg-white
+              focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none
+              transition-colors duration-150
+              ${error?.field === 'mfa' ? 'border-red-300' : 'border-zinc-200'}
+            `}
+          />
+          {error?.field === 'mfa' && (
+            <p className="text-sm text-red-600">{error.message}</p>
+          )}
         </div>
-      )}
+      ) : (
+        <>
+          {availableMfaMethods.length > 0 && (
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-zinc-700">Verification method</label>
+              <div className="flex flex-wrap gap-2">
+                {availableMfaMethods.map(method => (
+                  <button
+                    key={method.type}
+                    type="button"
+                    onClick={() => setMfaMethod(method.type)}
+                    className={`
+                      px-3 py-1.5 text-sm rounded-full border
+                      transition-all duration-150
+                      ${
+                        mfaMethod === method.type
+                          ? 'border-blue-500 bg-blue-50 text-blue-700'
+                          : 'border-zinc-200 text-zinc-600 hover:border-zinc-300'
+                      }
+                    `}
+                  >
+                    {method.type.replace('_', ' ')}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
-      <MfaCodeInput
-        value={mfaCode}
-        onChange={setMfaCode}
-        error={error?.field === 'mfa' ? error.message : undefined}
-      />
+          <MfaCodeInput
+            value={mfaCode}
+            onChange={setMfaCode}
+            error={error?.field === 'mfa' ? error.message : undefined}
+          />
+        </>
+      )}
 
       <button
         onClick={handleMfaVerify}
-        disabled={isLoading || mfaCode.length !== 6}
+        disabled={isLoading || (!useRecoveryCode && mfaCode.length !== 6) || (useRecoveryCode && mfaCode.trim().length === 0)}
         className={`
           w-full py-3 px-4
           flex items-center justify-center gap-2
@@ -927,10 +965,26 @@ export const ZenLogin: React.FC = () => {
       </button>
 
       <p className="text-center text-sm text-zinc-500">
-        Having trouble?{' '}
-        <button className="text-blue-600 hover:text-blue-700 font-medium">
-          Use a recovery code
-        </button>
+        {useRecoveryCode ? (
+          <button
+            type="button"
+            onClick={() => { setUseRecoveryCode(false); setMfaCode(''); setError(null); }}
+            className="text-blue-600 hover:text-blue-700 font-medium focus-visible:ring-2 focus-visible:ring-blue-500 rounded outline-none"
+          >
+            Use authenticator app instead
+          </button>
+        ) : (
+          <>
+            Having trouble?{' '}
+            <button
+              type="button"
+              onClick={() => { setUseRecoveryCode(true); setMfaCode(''); setError(null); }}
+              className="text-blue-600 hover:text-blue-700 font-medium focus-visible:ring-2 focus-visible:ring-blue-500 rounded outline-none"
+            >
+              Use a recovery code
+            </button>
+          </>
+        )}
       </p>
     </motion.div>
   );

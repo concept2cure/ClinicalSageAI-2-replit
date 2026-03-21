@@ -1169,13 +1169,21 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   if (!projectId) {
     return (
       <div className="flex items-center justify-center h-full text-zinc-400">
-        <div className="text-center max-w-[280px]">
-          <FileText className="w-10 h-10 mx-auto mb-3 text-zinc-200" />
-          <p className="text-sm font-medium text-zinc-500 mb-1">No project selected</p>
-          <p className="text-xs text-zinc-400 leading-relaxed">
-            Select a project from the sidebar to access its regulatory documents, version history,
+        <div className="text-center max-w-[320px]">
+          <FileText className="w-10 h-10 mx-auto mb-3 text-zinc-300" />
+          <p className="text-sm font-medium text-zinc-600 mb-1">No project selected</p>
+          <p className="text-xs text-zinc-500 leading-relaxed mb-4">
+            Select a project to access its regulatory documents, version history,
             and audit trail.
           </p>
+          {onNavigateToProject && (
+            <button
+              onClick={onNavigateToProject}
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none"
+            >
+              Go to Projects
+            </button>
+          )}
         </div>
       </div>
     );
@@ -1394,11 +1402,19 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   ? 'Start your submission dossier'
                   : 'No documents match your filters'}
               </p>
-              <p className="text-xs text-zinc-400 max-w-[260px] leading-relaxed">
+              <p className="text-xs text-zinc-500 max-w-[260px] leading-relaxed">
                 {artifacts.length === 0
                   ? 'Create your first regulatory document above, or use Intelligence to generate one from precedent data.'
-                  : 'Try broadening your filter criteria or clearing all filters.'}
+                  : `${artifacts.length} document${artifacts.length !== 1 ? 's' : ''} hidden by filters.`}
               </p>
+              {artifacts.length > 0 && (
+                <button
+                  onClick={() => { setFilterStatus('all'); setFilterType('all'); setFilterCtd('all'); }}
+                  className="mt-3 px-3 py-1.5 text-xs font-medium text-zinc-600 bg-zinc-100 rounded-lg hover:bg-zinc-200 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
+                >
+                  Clear all filters
+                </button>
+              )}
               {artifacts.length === 0 && (
                 <button
                   onClick={() => {

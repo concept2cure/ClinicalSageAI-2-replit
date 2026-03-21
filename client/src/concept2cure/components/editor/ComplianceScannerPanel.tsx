@@ -192,7 +192,7 @@ export function ComplianceScannerPanel({
               <RefreshCw className={cn('w-3.5 h-3.5 text-zinc-500', isScanning && 'animate-spin')} />
             </button>
             {onClose && (
-              <button onClick={onClose} className="p-1.5 rounded-md hover:bg-white/60 transition-colors duration-150">
+              <button onClick={onClose} aria-label="Close compliance scanner" title="Close" className="p-1.5 rounded-md hover:bg-white/60 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none">
                 <X className="w-3.5 h-3.5 text-zinc-500" />
               </button>
             )}

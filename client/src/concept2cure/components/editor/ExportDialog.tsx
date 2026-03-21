@@ -141,7 +141,7 @@ export function ExportDialog({
             <h2 className="text-sm font-semibold text-zinc-900">Export Document</h2>
             <p className="text-xs text-zinc-500 mt-0.5 truncate max-w-[300px]">{documentTitle}</p>
           </div>
-          <button onClick={onClose} className="p-1.5 text-zinc-400 hover:text-zinc-600 rounded-md hover:bg-zinc-100">
+          <button onClick={onClose} aria-label="Close export dialog" title="Close" className="p-1.5 text-zinc-400 hover:text-zinc-600 rounded-md hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none">
             <X className="w-4 h-4" />
           </button>
         </div>

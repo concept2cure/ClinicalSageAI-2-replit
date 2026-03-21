@@ -183,7 +183,7 @@ const ProfileSection: React.FC = () => {
           <div className="w-14 h-14 rounded-lg bg-blue-600 flex items-center justify-center text-white text-base font-semibold">
             JD
           </div>
-          <button className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-white border border-zinc-200 shadow-sm flex items-center justify-center hover:bg-zinc-50 transition-colors duration-150">
+          <button aria-label="Change profile picture" title="Change profile picture" className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-white border border-zinc-200 shadow-sm flex items-center justify-center hover:bg-zinc-50 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none">
             <Camera className="w-4 h-4 text-zinc-600" />
           </button>
         </div>

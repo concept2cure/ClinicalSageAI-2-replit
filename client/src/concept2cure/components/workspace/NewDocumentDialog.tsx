@@ -231,7 +231,7 @@ export function NewDocumentDialog({
               </p>
             </div>
           </div>
-          <button onClick={handleClose} className="p-1.5 text-zinc-400 hover:text-zinc-600">
+          <button onClick={handleClose} aria-label="Close dialog" title="Close" className="p-1.5 text-zinc-400 hover:text-zinc-600 rounded-md hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none">
             <X className="h-4 w-4" />
           </button>
         </div>
