@@ -24,7 +24,10 @@ import {
   BarChart3,
   Activity,
   Layers,
+  Package,
+  BookOpen,
 } from 'lucide-react';
+import { ActivityFeed, generateActivityFromArtifacts } from './ActivityFeed';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -49,6 +52,8 @@ interface ProjectDashboardProps {
   onOpenEditor: () => void;
   onOpenDossier: () => void;
   onOpenIntelligence?: () => void;
+  onOpenSubmissions?: () => void;
+  onOpenTemplates?: () => void;
 }
 
 // ── Status helpers ───────────────────────────────────────────────────────────
@@ -113,6 +118,8 @@ export function ProjectDashboard({
   onOpenEditor,
   onOpenDossier,
   onOpenIntelligence,
+  onOpenSubmissions,
+  onOpenTemplates,
 }: ProjectDashboardProps) {
 
   // ── Derived data ───────────────────────────────────────────────────────────
@@ -154,7 +161,12 @@ export function ProjectDashboard({
       }
     });
 
-    return { counts, total, ready, completionPct, lastActivity, recent, ctdMap };
+    // Activity feed from artifacts
+    const activityItems = generateActivityFromArtifacts(artifacts as Array<{
+      id: string; title: string; status?: string; updatedAt?: string; createdAt?: string; version?: number;
+    }>);
+
+    return { counts, total, ready, completionPct, lastActivity, recent, ctdMap, activityItems };
   }, [artifacts]);
 
   // ── Pipeline metric card ───────────────────────────────────────────────────
@@ -474,20 +486,34 @@ export function ProjectDashboard({
               onClick={onOpenIntelligence}
             />
             <ActionCard
-              icon={History}
-              title="Version History"
-              subtitle={`${stats.total} document${stats.total !== 1 ? 's' : ''} tracked`}
-              onClick={onOpenEditor}
+              icon={Package}
+              title="Submissions"
+              subtitle="eCTD builder and packaging"
+              onClick={onOpenSubmissions}
             />
             <ActionCard
-              icon={PackageCheck}
-              title="Export Package"
-              subtitle={`${stats.counts.approved + stats.counts.locked} approved for export`}
-              onClick={onOpenEditor}
+              icon={BookOpen}
+              title="Templates"
+              subtitle="Regulatory document templates"
+              onClick={onOpenTemplates}
             />
           </div>
         </div>
       </section>
+
+      {/* ── 3A. Activity Feed ─────────────────────────────────────────────── */}
+      {stats.activityItems.length > 0 && (
+        <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-zinc-500">
+            Recent Activity
+          </h2>
+          <ActivityFeed
+            activities={stats.activityItems}
+            onOpenDocument={onOpenDocument}
+            maxItems={10}
+          />
+        </section>
+      )}
 
       {/* ── 3B. Getting Started — type-specific workflow guidance ──────────── */}
       {stats.total < 5 && (

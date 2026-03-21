@@ -58,6 +58,7 @@ import { CrossReferencePanel } from './CrossReferencePanel';
 import { KeyboardShortcutsOverlay } from './KeyboardShortcuts';
 import { CommentThreadPanel } from './CommentThread';
 import { ReviewModePanel } from './ReviewMode';
+import { DocumentStatusTimeline } from './DocumentStatusTimeline';
 import type { CommentThread } from './extensions/CommentMark';
 import { useComments } from '../../hooks/useComments';
 import { getCurrentUser } from '../../utils/getCurrentUser';
@@ -1419,20 +1420,12 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             CTD {activeArtifact.ctdSection}
           </button>
         )}
-        <span
-          className={cn(
-            'text-xs px-2 py-0.5 rounded-md font-semibold shrink-0 uppercase tracking-wide',
-            activeArtifact?.status === 'approved'
-              ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
-              : activeArtifact?.status === 'locked'
-                ? 'bg-red-50 text-red-700 ring-1 ring-red-200'
-                : activeArtifact?.status === 'review'
-                  ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'
-                  : 'bg-zinc-100 text-zinc-600'
-          )}
-        >
-          {activeArtifact?.status || 'draft'}
-        </span>
+        <DocumentStatusTimeline
+          currentStatus={activeArtifact?.status || 'draft'}
+          documentTitle={activeArtifact?.title}
+          onChangeStatus={(newStatus) => handleStatusChange(newStatus)}
+          compact
+        />
         {saveStatus === 'saved' && !isDirty && (
           <span className="flex items-center gap-1 text-xs text-emerald-600 font-medium shrink-0 animate-in fade-in duration-200">
             <Check className="w-3.5 h-3.5" />

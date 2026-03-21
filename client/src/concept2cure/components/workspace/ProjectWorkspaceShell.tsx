@@ -75,6 +75,8 @@ const ENABLE_GOVERNED_DND = false;
 // Lazy-load the existing EditorPanel
 const EditorPanel = lazy(() => import('../editor/EditorPanel').then(m => ({ default: m.default })));
 
+import { NewDocumentDialog } from './NewDocumentDialog';
+
 // ── Auth helper ──────────────────────────────────────────────────────────────
 function getAuthHeaders(): Record<string, string> {
   const token =
@@ -142,6 +144,8 @@ interface ProjectWorkspaceShellProps {
   onOpenArtifactConsumed?: () => void;
   /** Callback when the active document changes — used for chat context awareness */
   onActiveDocumentChange?: (doc: { title: string; ctdSection?: string; excerpt: string } | null) => void;
+  /** Navigate to a different layout mode (e.g., submission-builder, template-library) */
+  onNavigate?: (mode: string) => void;
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -162,6 +166,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   openArtifactId,
   onOpenArtifactConsumed,
   onActiveDocumentChange,
+  onNavigate,
 }) => {
   // ── Local state ──────────────────────────────────────────────────────────
   const [artifacts, setArtifacts] = useState<TreeArtifact[]>([]);
@@ -174,6 +179,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
 
   // New document creation
   const [showNewDoc, setShowNewDoc] = useState(false);
+  const [showNewDocDialog, setShowNewDocDialog] = useState(false);
   const [newDocTitle, setNewDocTitle] = useState('');
   const [creatingNew, setCreatingNew] = useState(false);
 
@@ -442,6 +448,74 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     },
     [projectId, loadArtifacts, pushShellToast]
   );
+
+  // ── Create from dialog (blank or template) ─────────────────────────────
+  const handleDialogCreateBlank = useCallback(async (title: string, ctdSection?: string) => {
+    if (!projectId) return;
+    setCreatingNew(true);
+    try {
+      const res = await fetch(`/api/concept2cure/projects/${projectId}/artifacts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        body: JSON.stringify({
+          title,
+          content: '<p>Begin editing your document here...</p>',
+          type: 'regulatory_document',
+          category: 'document',
+          ...(ctdSection ? { ctdSection } : {}),
+        }),
+      });
+      if (res.ok) {
+        const payload = await res.json();
+        const created = payload.data ?? payload;
+        setShowNewDocDialog(false);
+        await loadArtifacts();
+        setSelectedDocId(created.id);
+        setMode('edit');
+        pushShellToast(`Created "${title}"`, 'success');
+      } else {
+        pushShellToast('Document creation failed', 'error');
+      }
+    } catch {
+      pushShellToast('Network error — document not created', 'error');
+    } finally {
+      setCreatingNew(false);
+    }
+  }, [projectId, loadArtifacts, pushShellToast]);
+
+  const handleDialogCreateFromTemplate = useCallback(async (templateId: string, title: string, ctdSection?: string) => {
+    if (!projectId) return;
+    setCreatingNew(true);
+    try {
+      const res = await fetch(`/api/concept2cure/projects/${projectId}/artifacts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        body: JSON.stringify({
+          title,
+          content: `<h1>${title}</h1><p>Generated from template <code>${templateId}</code>${ctdSection ? ` for CTD section ${ctdSection}` : ''}.</p>`,
+          type: 'regulatory_document',
+          category: 'document',
+          ...(ctdSection ? { ctdSection } : {}),
+          templateId,
+        }),
+      });
+      if (res.ok) {
+        const payload = await res.json();
+        const created = payload.data ?? payload;
+        setShowNewDocDialog(false);
+        await loadArtifacts();
+        setSelectedDocId(created.id);
+        setMode('edit');
+        pushShellToast(`Created "${title}" from template`, 'success');
+      } else {
+        pushShellToast('Template creation failed', 'error');
+      }
+    } catch {
+      pushShellToast('Network error', 'error');
+    } finally {
+      setCreatingNew(false);
+    }
+  }, [projectId, loadArtifacts, pushShellToast]);
 
   // ── Placement confirmation handler ───────────────────────────────────────
   const handlePlacementConfirm = useCallback(
@@ -1362,13 +1436,15 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 setMode('edit');
                 setShowGovernedPanel(true);
               }}
-              onCreateDocument={() => setShowNewDoc(true)}
+              onCreateDocument={() => setShowNewDocDialog(true)}
               onOpenEditor={() => setMode('browse')}
               onOpenDossier={() => {
                 setLeftRailMode('dossier');
                 setMode('browse');
               }}
               onOpenIntelligence={onSwitchToIntelligence}
+              onOpenSubmissions={onNavigate ? () => onNavigate('submission-builder') : undefined}
+              onOpenTemplates={onNavigate ? () => onNavigate('template-library') : undefined}
             />
           ) : mode === 'browse' ? (
             <DocumentListPane
@@ -1446,6 +1522,17 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           loading={placementLoading}
         />
       )}
+
+      {/* ── New Document Dialog ── */}
+      <NewDocumentDialog
+        isOpen={showNewDocDialog}
+        onClose={() => setShowNewDocDialog(false)}
+        onCreateBlank={handleDialogCreateBlank}
+        onCreateFromTemplate={handleDialogCreateFromTemplate}
+        onAIGenerate={handleDialogCreateFromTemplate}
+        submissionType={submissionType}
+        isCreating={creatingNew}
+      />
 
       {/* ── Toast notifications ── */}
       {shellToasts.length > 0 && (
