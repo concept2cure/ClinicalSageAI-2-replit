@@ -67,6 +67,30 @@
  *   ✅ <motion.div aria-hidden="true" />  // backdrops
  *   ✅ <motion.div role="dialog" aria-modal="true" />  // modals
  *   ❌ <motion.div onClick={onClose} />  // no semantic meaning
+ *
+ * ──────────────────────────────────────────────────────────────────────────
+ * RULE 11: Firebase is a delivery layer, not a data store
+ *
+ *   Firebase may ONLY:
+ *   - Stream workflow run updates (read-only projection)
+ *   - Stream validation results
+ *   - Stream readiness status
+ *   - Support UI state synchronization (presence, cursors, locks)
+ *   - Deliver notifications/events
+ *
+ *   Firebase must NEVER:
+ *   - Store authoritative workflow state
+ *   - Replace backend APIs for governed operations
+ *   - Write documents or artifact data directly
+ *   - Be read by backend services to make decisions
+ *
+ *   Source of truth: PostgreSQL (workflow_runs, approval_checkpoints, etc.)
+ *   Firebase data: cache/projection — clients must tolerate stale reads
+ *   Fallback: REST API polling when Firebase is unavailable
+ *
+ *   Backend writes:  server/services/firebase-projection.ts (ONLY writer)
+ *   Client reads:    hooks/useWorkflowStream.ts (read-only listeners)
+ *   Collaboration:   hooks/useRealtimeCollaboration.ts (ephemeral only)
  */
 
 // ── Utility types ─────────────────────────────────────────────────────────────
