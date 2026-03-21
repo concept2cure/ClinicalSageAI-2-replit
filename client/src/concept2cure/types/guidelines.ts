@@ -143,6 +143,73 @@ export interface FirestoreLockDoc {
   readonly expiresAt: number;
 }
 
+// ── Phase 3 Orchestration Constraints ──────────────────────────────────────────
+//
+// The following constraints are NON-NEGOTIABLE for all Phase 3 orchestration work.
+// They exist to keep the system inspectable, trustworthy, and enterprise-safe.
+//
+// ────────────────────────────────────────────────────────────────────────────────
+// CONSTRAINT 1: Workflow Run Persistence
+//   Every orchestration workflow MUST create a persisted workflow run record.
+//   See: shared/schema/orchestration.ts → workflowRuns
+//   Required fields: runId, workflowType, triggerSource, scope, steps executed,
+//   objects touched, outputs created, blockers, final status, timestamps, attribution.
+//
+// CONSTRAINT 2: Human Approval Checkpoints
+//   No workflow may auto-promote, auto-route, or overwrite governed documents
+//   without a configurable approval gate. Step statuses: proposed → awaiting_review
+//   → approved → executed (or failed / skipped).
+//   See: shared/schema/orchestration.ts → approvalCheckpoints
+//
+// CONSTRAINT 3: Diff & Review Surface
+//   All revision-producing workflows MUST generate a structured diff summary
+//   showing: what changed, why, evidence sources, validation findings addressed.
+//   See: shared/schema/orchestration.ts → DiffSummary, DiffChange
+//
+// CONSTRAINT 4: Rules-Driven Readiness
+//   Readiness MUST be rules-driven, not just AI-interpreted. Distinguish:
+//     - Rules-based missing items (readiness_rules registry)
+//     - Validation-derived blockers (deterministic checks)
+//     - AI-inferred recommendations (LLM reasoning, requires confidence level)
+//   See: shared/schema/orchestration.ts → readinessRules, readinessEvaluations
+//
+// CONSTRAINT 5: Deterministic / LLM Separation
+//   Orchestration step execution MUST be deterministic where possible.
+//   LLM reasoning for: summarization, prioritization, recommendation, gap interpretation.
+//   Deterministic services for: routing, promotion, validation, status changes,
+//   object lookup, permission checks.
+//   See: server/services/orchestration-engine.ts → StepHandler.stepType
+//
+// CONSTRAINT 6: Confidence & Evidence Contract
+//   Every recommendation MUST declare: evidence source(s), whether rules/validation/AI,
+//   confidence level if inferred, suggested action, human review requirement.
+//   See: shared/schema/orchestration.ts → EvidencedRecommendation, EvidenceSource
+//
+// CONSTRAINT 7: Resume / Retry Behavior
+//   Workflow runs MUST support: pause, retry failed step, resume from last
+//   successful step, cancel safely.
+//   See: server/services/orchestration-engine.ts → resumeRun, retryStep
+//
+// CONSTRAINT 8: Project Intelligence Summary
+//   A stable, persisted object per project that tracks: current blockers, recent
+//   changes, important decisions, unresolved risks, readiness status, last workflow
+//   outcomes, next recommended actions.
+//   See: shared/schema/orchestration.ts → projectIntelligenceSummaries
+//
+// CONSTRAINT 9: Single Anchor Workspace
+//   Phase 3 MUST ship one primary readiness workspace as the anchor experience.
+//   All orchestration, blockers, recommendations, and workflow runs viewable from there.
+//
+// CONSTRAINT 10: Scope Discipline
+//   Phase 3 targets TWO high-value regulated flows first:
+//     1. Dossier / submission readiness review
+//     2. Draft → validate → review → route
+//   Do NOT generalize to all project types until these are working end-to-end.
+//   See: server/services/orchestration-engine.ts → SUBMISSION_READINESS_REVIEW,
+//        DRAFT_VALIDATE_REVIEW_ROUTE
+//
+// ────────────────────────────────────────────────────────────────────────────────
+
 // ── Animation constants (shared across ZenTransitions) ────────────────────────
 
 /** Standard ease curve matching Apple HIG motion design */
