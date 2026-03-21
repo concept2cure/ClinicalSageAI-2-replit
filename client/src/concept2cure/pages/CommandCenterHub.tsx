@@ -8,7 +8,7 @@
  */
 import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import { LIFECYCLE, toLifecycleStage } from '@/concept2cure/components/ui/enterprise';
+import { LIFECYCLE, toLifecycleStage, SEVERITY } from '@/concept2cure/components/ui/enterprise';
 import { useDeliverable } from '@/concept2cure/hooks/useDeliverable';
 import { useProjects } from '@/concept2cure/hooks/useProjects';
 import { useProjectTasks } from '@/concept2cure/hooks/useProjectTasks';
@@ -70,10 +70,10 @@ const TABS: Tab[] = [
 // ═══════════════════════════════════════════════════════════════════
 
 const SEVERITY_STYLES = {
-  critical: 'text-red-600 bg-red-50',
-  high: 'text-orange-600 bg-orange-50',
-  medium: 'text-amber-600 bg-amber-50',
-  low: 'text-zinc-500 bg-zinc-50',
+  critical: `${SEVERITY.critical.text} ${SEVERITY.critical.bg}`,
+  high: `${SEVERITY.high.text} ${SEVERITY.high.bg}`,
+  medium: `${SEVERITY.medium.text} ${SEVERITY.medium.bg}`,
+  low: `${SEVERITY.low.text} ${SEVERITY.low.bg}`,
 };
 
 // Status dots derived from canonical lifecycle where possible

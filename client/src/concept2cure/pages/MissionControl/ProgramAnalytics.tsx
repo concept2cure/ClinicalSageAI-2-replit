@@ -6,6 +6,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { SEVERITY } from '../../components/ui/enterprise';
 import NanoBananaImageGenerator from '@/components/NanoBananaImageGenerator';
 import {
   BarChart3,
@@ -98,10 +99,10 @@ const RISK_CATEGORIES = [
 ] as const;
 
 const SEVERITY_CONFIG: Record<string, { bg: string; text: string; dot: string }> = {
-  critical: { bg: 'bg-red-50', text: 'text-red-700', dot: 'bg-red-500' },
-  high: { bg: 'bg-orange-50', text: 'text-orange-700', dot: 'bg-orange-500' },
-  medium: { bg: 'bg-amber-50', text: 'text-amber-700', dot: 'bg-amber-500' },
-  low: { bg: 'bg-blue-50', text: 'text-blue-700', dot: 'bg-blue-500' },
+  critical: { bg: SEVERITY.critical.bg, text: SEVERITY.critical.text, dot: SEVERITY.critical.dot },
+  high:     { bg: SEVERITY.high.bg,     text: SEVERITY.high.text,     dot: SEVERITY.high.dot },
+  medium:   { bg: SEVERITY.medium.bg,   text: SEVERITY.medium.text,   dot: SEVERITY.medium.dot },
+  low:      { bg: SEVERITY.low.bg,      text: SEVERITY.low.text,      dot: SEVERITY.low.dot },
 };
 
 const ACTION_ICONS: Record<string, typeof Activity> = {

@@ -7,6 +7,7 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { SEVERITY } from '@/concept2cure/components/ui/enterprise';
 import {
   Search,
   Filter,
@@ -84,17 +85,17 @@ const THERAPEUTIC_AREAS = [
 ];
 
 const IMPACT_STRIPE_COLORS: Record<ImpactLevel, string> = {
-  critical: 'bg-red-500',
-  high: 'bg-amber-500',
-  medium: 'bg-blue-500',
-  low: 'bg-zinc-400',
+  critical: SEVERITY.critical.dot,
+  high: SEVERITY.high.dot,
+  medium: SEVERITY.medium.dot,
+  low: SEVERITY.low.dot,
 };
 
 const IMPACT_BADGE_STYLES: Record<ImpactLevel, string> = {
-  critical: 'bg-red-50 text-red-700 ring-red-200',
-  high: 'bg-amber-50 text-amber-700 ring-amber-200',
-  medium: 'bg-blue-50 text-blue-700 ring-blue-200',
-  low: 'bg-zinc-50 text-zinc-600 ring-zinc-200',
+  critical: `${SEVERITY.critical.bg} ${SEVERITY.critical.text} ring-red-200`,
+  high: `${SEVERITY.high.bg} ${SEVERITY.high.text} ring-amber-200`,
+  medium: `${SEVERITY.medium.bg} ${SEVERITY.medium.text} ring-blue-200`,
+  low: `${SEVERITY.low.bg} ${SEVERITY.low.text} ring-zinc-200`,
 };
 
 const AGENCY_BADGE_STYLES: Record<Agency, string> = {

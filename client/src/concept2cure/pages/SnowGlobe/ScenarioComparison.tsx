@@ -10,6 +10,7 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
+import { SEVERITY } from '../../components/ui/enterprise';
 import {
   AlertTriangle,
   ArrowDownRight,
@@ -90,10 +91,10 @@ const SCORE_DEFS: ScoreDef[] = [
 ];
 
 const SEVERITY_CONFIG: Record<Severity, { bg: string; text: string; border: string; order: number }> = {
-  critical: { bg: 'bg-red-500/10', text: 'text-red-400', border: 'border-red-500/30', order: 0 },
-  high: { bg: 'bg-orange-500/10', text: 'text-orange-400', border: 'border-orange-500/30', order: 1 },
-  medium: { bg: 'bg-yellow-500/10', text: 'text-yellow-400', border: 'border-yellow-500/30', order: 2 },
-  low: { bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-500/30', order: 3 },
+  critical: { bg: SEVERITY.critical.bg, text: SEVERITY.critical.text, border: SEVERITY.critical.border, order: SEVERITY.critical.order },
+  high:     { bg: SEVERITY.high.bg,     text: SEVERITY.high.text,     border: SEVERITY.high.border,     order: SEVERITY.high.order },
+  medium:   { bg: SEVERITY.medium.bg,   text: SEVERITY.medium.text,   border: SEVERITY.medium.border,   order: SEVERITY.medium.order },
+  low:      { bg: SEVERITY.low.bg,      text: SEVERITY.low.text,      border: SEVERITY.low.border,      order: SEVERITY.low.order },
 };
 
 // =============================================================================

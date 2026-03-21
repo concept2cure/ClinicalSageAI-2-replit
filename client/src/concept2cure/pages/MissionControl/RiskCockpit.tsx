@@ -8,6 +8,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { SEVERITY } from '../../components/ui/enterprise';
 import {
   AlertTriangle,
   Shield,
@@ -30,10 +31,10 @@ interface RiskCockpitProps {
 }
 
 const SEVERITY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  critical: { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200' },
-  high: { bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200' },
-  medium: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
-  low: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' },
+  critical: { bg: SEVERITY.critical.bg, text: SEVERITY.critical.text, border: SEVERITY.critical.border },
+  high:     { bg: SEVERITY.high.bg,     text: SEVERITY.high.text,     border: SEVERITY.high.border },
+  medium:   { bg: SEVERITY.medium.bg,   text: SEVERITY.medium.text,   border: SEVERITY.medium.border },
+  low:      { bg: SEVERITY.low.bg,      text: SEVERITY.low.text,      border: SEVERITY.low.border },
 };
 
 const STATUS_ICONS: Record<string, typeof Clock> = {

@@ -12,6 +12,7 @@
  */
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { SEVERITY } from '@/concept2cure/components/ui/enterprise';
 import {
   CheckCircle2,
   AlertCircle,
@@ -242,10 +243,10 @@ function StatusPill({ status }: { status: GapStatus }) {
 
 function PriorityBadge({ priority }: { priority: Priority }) {
   const config: Record<Priority, { bg: string; text: string }> = {
-    critical: { bg: 'bg-red-100', text: 'text-red-800' },
-    high: { bg: 'bg-orange-100', text: 'text-orange-800' },
-    medium: { bg: 'bg-amber-100', text: 'text-amber-800' },
-    low: { bg: 'bg-zinc-100', text: 'text-zinc-600' },
+    critical: { bg: SEVERITY.critical.bg, text: SEVERITY.critical.text },
+    high:     { bg: SEVERITY.high.bg,     text: SEVERITY.high.text },
+    medium:   { bg: SEVERITY.medium.bg,   text: SEVERITY.medium.text },
+    low:      { bg: SEVERITY.low.bg,      text: SEVERITY.low.text },
   };
   const { bg, text } = config[priority];
   return (

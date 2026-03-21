@@ -9,6 +9,7 @@
 
 import React, { useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { SEVERITY } from '../../components/ui/enterprise';
 import {
   AlertTriangle,
   ArrowRight,
@@ -67,17 +68,17 @@ const CHAMBER_LABELS: Record<ChamberKey, string> = {
 };
 
 const SEVERITY_STYLES: Record<Severity, { badge: string; label: string }> = {
-  critical: { badge: 'bg-red-100 text-red-700', label: 'Critical' },
-  high: { badge: 'bg-orange-100 text-orange-700', label: 'High' },
-  medium: { badge: 'bg-yellow-100 text-yellow-700', label: 'Medium' },
-  low: { badge: 'bg-emerald-100 text-emerald-700', label: 'Low' },
+  critical: { badge: `${SEVERITY.critical.bg} ${SEVERITY.critical.text}`, label: SEVERITY.critical.label },
+  high:     { badge: `${SEVERITY.high.bg} ${SEVERITY.high.text}`,         label: SEVERITY.high.label },
+  medium:   { badge: `${SEVERITY.medium.bg} ${SEVERITY.medium.text}`,     label: SEVERITY.medium.label },
+  low:      { badge: `${SEVERITY.low.bg} ${SEVERITY.low.text}`,           label: SEVERITY.low.label },
 };
 
 const SEVERITY_ORDER: Record<string, number> = {
-  critical: 0,
-  high: 1,
-  medium: 2,
-  low: 3,
+  critical: SEVERITY.critical.order,
+  high: SEVERITY.high.order,
+  medium: SEVERITY.medium.order,
+  low: SEVERITY.low.order,
 };
 
 /** Maps chamber keys to score keys used by the API. */

@@ -13,7 +13,7 @@
 
 import React, { useState, useMemo, useCallback, DragEvent } from 'react';
 import { cn } from '@/lib/utils';
-import { LIFECYCLE } from '../../components/ui/enterprise';
+import { LIFECYCLE, SEVERITY } from '../../components/ui/enterprise';
 import {
   LayoutGrid,
   Search,
@@ -80,10 +80,10 @@ const STATUS_META: Record<TaskStatus, { label: string; headerColor: string; dotC
 const COLUMN_ORDER: TaskStatus[] = ['backlog', 'todo', 'in_progress', 'review', 'done'];
 
 const PRIORITY_CONFIG: Record<TaskPriority, { label: string; bg: string; text: string; sortVal: number }> = {
-  critical: { label: 'Critical', bg: 'bg-red-100',    text: 'text-red-700',    sortVal: 0 },
-  high:     { label: 'High',     bg: 'bg-orange-100', text: 'text-orange-700', sortVal: 1 },
-  medium:   { label: 'Medium',   bg: 'bg-amber-100',  text: 'text-amber-700',  sortVal: 2 },
-  low:      { label: 'Low',      bg: 'bg-blue-100',   text: 'text-blue-700',   sortVal: 3 },
+  critical: { label: SEVERITY.critical.label, bg: SEVERITY.critical.bg,  text: SEVERITY.critical.text, sortVal: SEVERITY.critical.order },
+  high:     { label: SEVERITY.high.label,     bg: SEVERITY.high.bg,      text: SEVERITY.high.text,     sortVal: SEVERITY.high.order },
+  medium:   { label: SEVERITY.medium.label,   bg: SEVERITY.medium.bg,    text: SEVERITY.medium.text,   sortVal: SEVERITY.medium.order },
+  low:      { label: SEVERITY.low.label,      bg: SEVERITY.low.bg,       text: SEVERITY.low.text,      sortVal: SEVERITY.low.order },
 };
 
 const MODULE_CONFIG: Record<TaskModule, { bg: string; text: string }> = {

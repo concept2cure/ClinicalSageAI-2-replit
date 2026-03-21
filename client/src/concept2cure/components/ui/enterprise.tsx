@@ -1135,5 +1135,51 @@ export function LoadingState({ label = 'Loading', size = 'section', className }:
   );
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// CANONICAL SEVERITY / PRIORITY
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Single source of truth for severity/priority/impact colors across the entire
+// platform. Every risk cockpit, alert feed, gap analysis, CAPA, inspection
+// readiness, and program analytics panel MUST derive colors from here.
+//
+// Four levels: critical → high → medium → low
+// Consistent palette: red → orange → amber → blue
+
+export type SeverityLevel = 'critical' | 'high' | 'medium' | 'low';
+
+interface SeverityConfig {
+  label: string;
+  /** Pill variant from StatusPill */
+  variant: 'danger' | 'warning' | 'warning' | 'info';
+  /** Background for cards / badges */
+  bg: string;
+  /** Text color */
+  text: string;
+  /** Dot / indicator color */
+  dot: string;
+  /** Border color */
+  border: string;
+  /** Sort order (0 = most severe) */
+  order: number;
+}
+
+export const SEVERITY: Record<SeverityLevel, SeverityConfig> = {
+  critical: { label: 'Critical', variant: 'danger',  bg: 'bg-red-50',    text: 'text-red-700',    dot: 'bg-red-500',    border: 'border-red-200',    order: 0 },
+  high:     { label: 'High',     variant: 'warning', bg: 'bg-orange-50', text: 'text-orange-700', dot: 'bg-orange-500', border: 'border-orange-200', order: 1 },
+  medium:   { label: 'Medium',   variant: 'warning', bg: 'bg-amber-50',  text: 'text-amber-700',  dot: 'bg-amber-500',  border: 'border-amber-200',  order: 2 },
+  low:      { label: 'Low',      variant: 'info',    bg: 'bg-blue-50',   text: 'text-blue-700',   dot: 'bg-blue-500',   border: 'border-blue-200',   order: 3 },
+};
+
+/** Normalise any severity/priority/impact string to a canonical level */
+export function toSeverityLevel(raw: string): SeverityLevel {
+  const s = raw.toLowerCase().replace(/[_-]/g, '');
+  if (s === 'critical' || s === 'p0' || s === 'blocker') return 'critical';
+  if (s === 'high' || s === 'major' || s === 'p1' || s === 'urgent') return 'high';
+  if (s === 'medium' || s === 'moderate' || s === 'p2' || s === 'minor') return 'medium';
+  if (s === 'low' || s === 'info' || s === 'p3' || s === 'trivial' || s === 'observation') return 'low';
+  return 'medium'; // safe default
+}
+
 // Re-export for convenience
 export { cn };

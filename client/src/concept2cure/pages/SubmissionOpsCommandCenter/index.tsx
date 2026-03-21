@@ -7,6 +7,7 @@
  */
 import React, { useState, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
+import { SEVERITY } from '../../components/ui/enterprise';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -65,10 +66,10 @@ const STATE_DOT: Record<string, string> = {
 };
 
 const SEVERITY_FG: Record<string, string> = {
-  critical: 'text-red-600',
-  high: 'text-orange-600',
-  medium: 'text-amber-600',
-  low: 'text-zinc-500',
+  critical: SEVERITY.critical.text,
+  high: SEVERITY.high.text,
+  medium: SEVERITY.medium.text,
+  low: SEVERITY.low.text,
 };
 
 type DrawerKind =

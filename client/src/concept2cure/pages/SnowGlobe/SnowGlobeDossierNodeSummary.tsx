@@ -10,6 +10,7 @@
 
 import React, { useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { SEVERITY } from '../../components/ui/enterprise';
 import {
   AlertTriangle,
   ArrowRight,
@@ -91,10 +92,10 @@ const RELEVANT_ENGINES: ChamberKey[] = [
 ];
 
 const SEVERITY_STYLES: Record<Severity, { badge: string; label: string; order: number }> = {
-  critical: { badge: 'bg-red-100 text-red-700', label: 'Critical', order: 0 },
-  high: { badge: 'bg-orange-100 text-orange-700', label: 'High', order: 1 },
-  medium: { badge: 'bg-yellow-100 text-yellow-700', label: 'Medium', order: 2 },
-  low: { badge: 'bg-emerald-100 text-emerald-700', label: 'Low', order: 3 },
+  critical: { badge: `${SEVERITY.critical.bg} ${SEVERITY.critical.text}`, label: SEVERITY.critical.label, order: SEVERITY.critical.order },
+  high:     { badge: `${SEVERITY.high.bg} ${SEVERITY.high.text}`,         label: SEVERITY.high.label,     order: SEVERITY.high.order },
+  medium:   { badge: `${SEVERITY.medium.bg} ${SEVERITY.medium.text}`,     label: SEVERITY.medium.label,   order: SEVERITY.medium.order },
+  low:      { badge: `${SEVERITY.low.bg} ${SEVERITY.low.text}`,           label: SEVERITY.low.label,      order: SEVERITY.low.order },
 };
 
 // =============================================================================

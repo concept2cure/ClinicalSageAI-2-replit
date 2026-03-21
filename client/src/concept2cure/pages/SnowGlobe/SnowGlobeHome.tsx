@@ -18,6 +18,7 @@
 
 import React, { useState, useMemo, useCallback, lazy, Suspense } from 'react';
 import { cn } from '@/lib/utils';
+import { SEVERITY } from '../../components/ui/enterprise';
 
 const ScenarioComparison = lazy(() => import('./ScenarioComparison'));
 import {
@@ -180,24 +181,24 @@ const SEVERITY_STYLES: Record<
   { dot: string; badge: string; label: string }
 > = {
   critical: {
-    dot: 'bg-red-500',
-    badge: 'bg-red-100 text-red-700 border-red-200',
-    label: 'Critical',
+    dot: SEVERITY.critical.dot,
+    badge: `${SEVERITY.critical.bg} ${SEVERITY.critical.text} ${SEVERITY.critical.border}`,
+    label: SEVERITY.critical.label,
   },
   high: {
-    dot: 'bg-orange-500',
-    badge: 'bg-orange-100 text-orange-700 border-orange-200',
-    label: 'High',
+    dot: SEVERITY.high.dot,
+    badge: `${SEVERITY.high.bg} ${SEVERITY.high.text} ${SEVERITY.high.border}`,
+    label: SEVERITY.high.label,
   },
   medium: {
-    dot: 'bg-yellow-500',
-    badge: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-    label: 'Medium',
+    dot: SEVERITY.medium.dot,
+    badge: `${SEVERITY.medium.bg} ${SEVERITY.medium.text} ${SEVERITY.medium.border}`,
+    label: SEVERITY.medium.label,
   },
   low: {
-    dot: 'bg-emerald-500',
-    badge: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-    label: 'Low',
+    dot: SEVERITY.low.dot,
+    badge: `${SEVERITY.low.bg} ${SEVERITY.low.text} ${SEVERITY.low.border}`,
+    label: SEVERITY.low.label,
   },
 };
 
@@ -208,10 +209,10 @@ const EFFORT_STYLES: Record<EffortLevel, { badge: string; label: string }> = {
 };
 
 const SEVERITY_ORDER: Record<string, number> = {
-  critical: 0,
-  high: 1,
-  medium: 2,
-  low: 3,
+  critical: SEVERITY.critical.order,
+  high: SEVERITY.high.order,
+  medium: SEVERITY.medium.order,
+  low: SEVERITY.low.order,
 };
 
 // =============================================================================

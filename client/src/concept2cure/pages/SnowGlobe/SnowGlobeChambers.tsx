@@ -10,6 +10,7 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
+import { SEVERITY } from '../../components/ui/enterprise';
 import {
   AlertTriangle,
   BookOpen,
@@ -158,10 +159,10 @@ const CHAMBERS: ChamberDef[] = [
 ];
 
 const SEVERITY_STYLES: Record<Severity, { dot: string; badge: string; label: string }> = {
-  critical: { dot: 'bg-red-500', badge: 'bg-red-100 text-red-700 border-red-200', label: 'Critical' },
-  high: { dot: 'bg-orange-500', badge: 'bg-orange-100 text-orange-700 border-orange-200', label: 'High' },
-  medium: { dot: 'bg-yellow-500', badge: 'bg-yellow-100 text-yellow-700 border-yellow-200', label: 'Medium' },
-  low: { dot: 'bg-emerald-500', badge: 'bg-emerald-100 text-emerald-700 border-emerald-200', label: 'Low' },
+  critical: { dot: SEVERITY.critical.dot, badge: `${SEVERITY.critical.bg} ${SEVERITY.critical.text} ${SEVERITY.critical.border}`, label: SEVERITY.critical.label },
+  high:     { dot: SEVERITY.high.dot,     badge: `${SEVERITY.high.bg} ${SEVERITY.high.text} ${SEVERITY.high.border}`,             label: SEVERITY.high.label },
+  medium:   { dot: SEVERITY.medium.dot,   badge: `${SEVERITY.medium.bg} ${SEVERITY.medium.text} ${SEVERITY.medium.border}`,       label: SEVERITY.medium.label },
+  low:      { dot: SEVERITY.low.dot,      badge: `${SEVERITY.low.bg} ${SEVERITY.low.text} ${SEVERITY.low.border}`,                label: SEVERITY.low.label },
 };
 
 const EFFORT_STYLES: Record<EffortLevel, { badge: string; label: string }> = {
@@ -170,7 +171,7 @@ const EFFORT_STYLES: Record<EffortLevel, { badge: string; label: string }> = {
   high: { badge: 'bg-red-100 text-red-700', label: 'High Effort' },
 };
 
-const SEVERITY_ORDER: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
+const SEVERITY_ORDER: Record<string, number> = { critical: SEVERITY.critical.order, high: SEVERITY.high.order, medium: SEVERITY.medium.order, low: SEVERITY.low.order };
 
 const HISTORICAL_PRECEDENTS: Record<ChamberKey, Array<{ title: string; outcome: string; year: number }>> = {
   agency_screen: [
