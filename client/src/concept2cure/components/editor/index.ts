@@ -33,6 +33,7 @@ export { SearchAndReplace } from './extensions/SearchAndReplace';
 export { GlossaryTooltip } from './extensions/GlossaryTooltip';
 export { CitationPlugin, CitationMark, CitationSearchPanel } from './extensions/CitationPlugin';
 export { ComplianceScanner } from './extensions/ComplianceScanner';
+export { ComplianceScannerPanel } from './ComplianceScannerPanel';
 
 // Document control
 export { DocumentWatermark, WatermarkSettings, getWatermarkForStatus } from './DocumentWatermark';

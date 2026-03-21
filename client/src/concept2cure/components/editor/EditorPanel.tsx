@@ -70,6 +70,8 @@ import { DocumentWatermark } from './DocumentWatermark';
 import { useDocumentCollaboration } from '../../hooks/useDocumentCollaboration';
 import { SignatureWorkflow, SignatureList } from './SignatureWorkflow';
 import { SubmissionReadinessValidator } from '../submission/SubmissionReadinessValidator';
+import { ComplianceScannerPanel } from './ComplianceScannerPanel';
+import { AnAMemory } from '../intelligence/AnAMemory';
 import { getCurrentUser } from '../../utils/getCurrentUser';
 
 // ── Auth helper (same pattern as useProjects) ────────────────────────────────
@@ -182,7 +184,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const claimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Single secondary inspector panel (only one open at a time) ────────
-  type InspectorPanel = 'intelligence' | 'provenance' | 'compare' | 'audit' | 'dataroom' | 'inconsistency' | 'health' | 'versions' | 'batch-ai' | 'crossref' | 'comments' | 'review' | 'reviewers' | 'submission-readiness';
+  type InspectorPanel = 'intelligence' | 'provenance' | 'compare' | 'audit' | 'dataroom' | 'inconsistency' | 'health' | 'versions' | 'batch-ai' | 'crossref' | 'comments' | 'review' | 'reviewers' | 'submission-readiness' | 'compliance-scanner' | 'ana-memory';
   const [activeInspector, setActiveInspector] = useState<InspectorPanel | null>(null);
   const toggleInspector = useCallback((panel: InspectorPanel) => {
     setActiveInspector(prev => (prev === panel ? null : panel));
@@ -1750,6 +1752,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             <button data-testid="ribbon-intelligence" onClick={() => toggleInspector('intelligence')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'intelligence' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Brain className="w-3.5 h-3.5" />Intelligence</button>
             <button data-testid="ribbon-batch-ai" onClick={() => toggleInspector('batch-ai')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'batch-ai' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Layers className="w-3.5 h-3.5" />Batch AI</button>
             <button data-testid="ribbon-health" onClick={() => toggleInspector('health')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'health' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><ShieldCheck className="w-3.5 h-3.5" />Health</button>
+            <button data-testid="ribbon-compliance" onClick={() => toggleInspector('compliance-scanner')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'compliance-scanner' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><AlertTriangle className="w-3.5 h-3.5" />Compliance</button>
+            <button data-testid="ribbon-memory" onClick={() => toggleInspector('ana-memory')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'ana-memory' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Brain className="w-3.5 h-3.5" />Memory</button>
           </div>
           <span className="text-[9px] font-medium uppercase tracking-widest text-zinc-400 mt-0.5">AI</span>
         </div>
@@ -2494,6 +2498,30 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   setActiveInspector(null);
                 }
               }}
+              onClose={() => setActiveInspector(null)}
+            />
+          </div>
+        )}
+        {/* Compliance Scanner Panel */}
+        {activeInspector === 'compliance-scanner' && (
+          <div className="w-96 shrink-0 border-l border-zinc-200 h-full transition-all duration-200">
+            <ComplianceScannerPanel
+              issues={[]}
+              isScanning={false}
+              lastScanTime={Date.now()}
+              onNavigateToIssue={() => {}}
+              onFixIssue={() => {}}
+              onRescan={() => {}}
+              onClose={() => setActiveInspector(null)}
+            />
+          </div>
+        )}
+        {/* AnA Memory Panel */}
+        {activeInspector === 'ana-memory' && projectId && (
+          <div className="w-96 shrink-0 border-l border-zinc-200 h-full transition-all duration-200">
+            <AnAMemory
+              projectId={projectId}
+              projectName={projectName}
               onClose={() => setActiveInspector(null)}
             />
           </div>
