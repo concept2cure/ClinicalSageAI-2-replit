@@ -472,7 +472,7 @@ export class FirebaseProjectionPublisher {
           correlationId,
           payload: {
             workflowType: event.workflowType,
-            displayName: event.workflowType,
+            displayName: event.displayName,
             status: 'running',
             triggerSource: 'system',
           },
@@ -491,7 +491,7 @@ export class FirebaseProjectionPublisher {
           payload: {
             stepIndex: event.stepIndex,
             stepName: event.stepName,
-            stepType: 'deterministic', // Engine event doesn't carry this; safe default
+            stepType: event.stepType,
             status: 'running',
           },
         });
@@ -508,8 +508,8 @@ export class FirebaseProjectionPublisher {
           correlationId,
           payload: {
             stepIndex: event.stepIndex,
-            stepName: '',
-            stepType: 'deterministic',
+            stepName: event.stepName,
+            stepType: event.stepType,
             status: event.status,
           },
         });
@@ -526,7 +526,7 @@ export class FirebaseProjectionPublisher {
           correlationId,
           payload: {
             stepIndex: event.stepIndex,
-            stepName: '',
+            stepName: event.stepName,
             stepType: 'deterministic',
             status: 'awaiting_review',
           },
@@ -543,8 +543,8 @@ export class FirebaseProjectionPublisher {
           actorId: 'orchestration_engine',
           correlationId,
           payload: {
-            workflowType: '',
-            displayName: '',
+            workflowType: event.workflowType,
+            displayName: event.workflowType,
             status: event.status,
             triggerSource: 'system',
           },
@@ -561,8 +561,8 @@ export class FirebaseProjectionPublisher {
           actorId: 'orchestration_engine',
           correlationId,
           payload: {
-            workflowType: '',
-            displayName: '',
+            workflowType: event.workflowType,
+            displayName: event.workflowType,
             status: 'failed',
             triggerSource: 'system',
             errorMessage: event.error,
@@ -572,11 +572,12 @@ export class FirebaseProjectionPublisher {
         break;
 
       case 'run_paused':
+        // No dedicated pause event type — use cancelled as closest match
         await this.publishWorkflowEvent({
           tenantId,
           projectId,
           workflowRunId: event.runId,
-          eventType: 'workflow.run.cancelled', // Closest match for pause
+          eventType: 'workflow.run.cancelled',
           actorType: 'system',
           actorId: 'orchestration_engine',
           correlationId,
@@ -609,7 +610,7 @@ export class FirebaseProjectionPublisher {
         break;
 
       case 'approval_resolved':
-        // Handled via direct publishWorkflowEvent calls from approval service
+        // Handled via direct publishWorkflowEvent calls from approval route
         break;
     }
   }

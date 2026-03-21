@@ -352,9 +352,7 @@ export function useProjectIntelligenceStream({
       const db = getFirestoreDb();
       if (!db) return;
 
-      // Intelligence uses tenant-scoped path — currently no canonical path in FirestorePaths
-      // so we construct it following the same pattern
-      const intelPath = `tenants/${tenantId}/projects/${projectId}/intelligence/summary`;
+      const intelPath = FirestorePaths.intelligenceCurrent(tenantId, projectId);
       const intelRef = doc(db, intelPath);
       const unsub = onSnapshot(intelRef, (snap) => {
         if (snap.exists()) {

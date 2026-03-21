@@ -334,6 +334,9 @@ export const FirestorePaths = {
   recommendationsCurrent: (tenantId: number, projectId: number) =>
     `tenants/${tenantId}/projects/${projectId}/recommendations/current`,
 
+  intelligenceCurrent: (tenantId: number, projectId: number) =>
+    `tenants/${tenantId}/projects/${projectId}/intelligence/summary`,
+
   // ── Collections (for queries) ──────────────────────────────────────
   projectEventsCollection: (tenantId: number, projectId: number) =>
     `tenants/${tenantId}/projects/${projectId}/events`,

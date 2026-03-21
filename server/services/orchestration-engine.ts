@@ -136,15 +136,15 @@ export interface StepResult {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export type EngineEvent =
-  | { readonly type: 'run_started'; readonly runId: string; readonly workflowType: string }
-  | { readonly type: 'step_started'; readonly runId: string; readonly stepIndex: number; readonly stepName: string }
-  | { readonly type: 'step_completed'; readonly runId: string; readonly stepIndex: number; readonly status: string }
-  | { readonly type: 'approval_required'; readonly runId: string; readonly stepIndex: number; readonly gateType: string }
+  | { readonly type: 'run_started'; readonly runId: string; readonly workflowType: string; readonly displayName: string }
+  | { readonly type: 'step_started'; readonly runId: string; readonly stepIndex: number; readonly stepName: string; readonly stepType: 'deterministic' | 'ai_reasoning' }
+  | { readonly type: 'step_completed'; readonly runId: string; readonly stepIndex: number; readonly stepName: string; readonly stepType: 'deterministic' | 'ai_reasoning'; readonly status: string }
+  | { readonly type: 'approval_required'; readonly runId: string; readonly stepIndex: number; readonly stepName: string; readonly gateType: string }
   | { readonly type: 'approval_resolved'; readonly runId: string; readonly stepIndex: number; readonly decision: string }
   | { readonly type: 'run_paused'; readonly runId: string; readonly reason: string }
   | { readonly type: 'run_resumed'; readonly runId: string; readonly fromStep: number }
-  | { readonly type: 'run_completed'; readonly runId: string; readonly status: string }
-  | { readonly type: 'run_failed'; readonly runId: string; readonly error: string; readonly stepIndex: number };
+  | { readonly type: 'run_completed'; readonly runId: string; readonly workflowType: string; readonly status: string }
+  | { readonly type: 'run_failed'; readonly runId: string; readonly workflowType: string; readonly error: string; readonly stepIndex: number };
 
 export type EngineEventListener = (event: EngineEvent) => void;
 
@@ -198,6 +198,11 @@ export class OrchestrationEngine {
     this.listeners.push(listener);
   }
 
+  removeEventListener(listener: EngineEventListener): void {
+    const idx = this.listeners.indexOf(listener);
+    if (idx >= 0) this.listeners.splice(idx, 1);
+  }
+
   private emit(event: EngineEvent): void {
     for (const listener of this.listeners) {
       listener(event);
@@ -243,7 +248,7 @@ export class OrchestrationEngine {
       diffSummaries: [],
     };
 
-    this.emit({ type: 'run_started', runId: ctx.runId, workflowType: params.workflowType });
+    this.emit({ type: 'run_started', runId: ctx.runId, workflowType: params.workflowType, displayName: definition.displayName });
 
     return this.executeFrom(ctx, definition, 0);
   }
@@ -315,7 +320,7 @@ export class OrchestrationEngine {
         continue;
       }
 
-      this.emit({ type: 'step_started', runId: ctx.runId, stepIndex: i, stepName: stepDef.stepName });
+      this.emit({ type: 'step_started', runId: ctx.runId, stepIndex: i, stepName: stepDef.stepName, stepType: stepDef.stepType });
 
       const startTime = Date.now();
       let result: StepResult;
@@ -357,7 +362,7 @@ export class OrchestrationEngine {
         };
         steps.push(failedRecord);
 
-        this.emit({ type: 'run_failed', runId: ctx.runId, error: lastError, stepIndex: i });
+        this.emit({ type: 'run_failed', runId: ctx.runId, workflowType: ctx.workflowType, error: lastError, stepIndex: i });
 
         return {
           runId: ctx.runId,
@@ -398,7 +403,7 @@ export class OrchestrationEngine {
         };
         steps.push(failedRecord);
 
-        this.emit({ type: 'run_failed', runId: ctx.runId, error: result.error ?? 'Step failed', stepIndex: i });
+        this.emit({ type: 'run_failed', runId: ctx.runId, workflowType: ctx.workflowType, error: result.error ?? 'Step failed', stepIndex: i });
 
         return {
           runId: ctx.runId,
@@ -431,6 +436,7 @@ export class OrchestrationEngine {
           type: 'approval_required',
           runId: ctx.runId,
           stepIndex: i,
+          stepName: stepDef.stepName,
           gateType: stepDef.approvalGate?.gateType ?? 'manual',
         });
 
@@ -460,10 +466,10 @@ export class OrchestrationEngine {
       };
       steps.push(completedRecord);
 
-      this.emit({ type: 'step_completed', runId: ctx.runId, stepIndex: i, status: 'executed' });
+      this.emit({ type: 'step_completed', runId: ctx.runId, stepIndex: i, stepName: stepDef.stepName, stepType: stepDef.stepType, status: 'executed' });
     }
 
-    this.emit({ type: 'run_completed', runId: ctx.runId, status: 'completed' });
+    this.emit({ type: 'run_completed', runId: ctx.runId, workflowType: ctx.workflowType, status: 'completed' });
 
     return {
       runId: ctx.runId,

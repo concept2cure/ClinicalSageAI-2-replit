@@ -24,7 +24,7 @@ import {
   readinessEvaluations,
   projectIntelligenceSummaries,
 } from '../../shared/schema/orchestration.js';
-import { OrchestrationEngine } from '../services/orchestration-engine.js';
+import { OrchestrationEngine, type EngineEventListener } from '../services/orchestration-engine.js';
 import { getFirebasePublisher } from '../services/firebase-projection.js';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -39,7 +39,6 @@ let _engine: OrchestrationEngine | null = null;
 function getEngine(): OrchestrationEngine {
   if (!_engine) {
     _engine = new OrchestrationEngine();
-    // Register pre-built workflow definitions will be done by domain modules
   }
   return _engine;
 }
@@ -67,11 +66,14 @@ const startRunSchema = z.object({
   projectId: z.number().int().positive().optional(),
   programId: z.string().optional(),
   moduleScope: z.string().optional(),
-  triggerSource: z.enum(['user_initiated', 'scheduled', 'event_driven', 'api_call']).default('user_initiated'),
+  triggerSource: z.enum(['user_action', 'schedule', 'api_call', 'event_hook', 'ai_recommendation']).default('user_action'),
   input: z.record(z.unknown()).optional(),
 });
 
 router.post('/runs', async (req: Request, res: Response) => {
+  let firebaseListener: EngineEventListener | null = null;
+  const engine = getEngine();
+
   try {
     const tenantId = getTenantId(req);
     if (!tenantId) {
@@ -85,18 +87,17 @@ router.post('/runs', async (req: Request, res: Response) => {
 
     const { workflowType, projectId, programId, moduleScope, triggerSource, input } = parsed.data;
     const userId = getUserId(req);
-    const engine = getEngine();
     const correlationId = uuidv4();
 
-    // Wire Firebase projection publisher for this run
+    // Wire Firebase projection publisher for this run (scoped listener, removed after run)
     const publisher = getFirebasePublisher();
     if (projectId) {
-      const handler = publisher.createEngineEventHandler({
+      firebaseListener = publisher.createEngineEventHandler({
         tenantId,
         projectId,
         correlationId,
       });
-      engine.addEventListener(handler);
+      engine.addEventListener(firebaseListener);
     }
 
     // Execute the workflow
@@ -111,6 +112,17 @@ router.post('/runs', async (req: Request, res: Response) => {
       initialInput: input,
     });
 
+    // Remove the per-request listener to prevent unbounded accumulation
+    if (firebaseListener) {
+      engine.removeEventListener(firebaseListener);
+      firebaseListener = null;
+    }
+
+    // Derive values from RunResult (context holds accumulated state)
+    const stepsExecuted = result.stepsExecuted;
+    const totalSteps = stepsExecuted.length + (result.status === 'completed' ? 0 : 1); // approximate from executed
+    const completedCount = stepsExecuted.filter(s => s.status === 'executed').length;
+
     // Persist the run record to PostgreSQL (source of truth)
     try {
       await db.insert(workflowRuns).values({
@@ -119,18 +131,18 @@ router.post('/runs', async (req: Request, res: Response) => {
         projectId: projectId ?? null,
         programId: programId ?? null,
         workflowType,
-        displayName: result.workflowType,
+        displayName: workflowType,
         triggerSource,
         triggeredBy: userId,
         status: result.status,
-        stepsExecuted: result.steps as Record<string, unknown>[],
-        objectsTouched: result.objectsTouched as Record<string, unknown>[],
-        outputsCreated: result.outputsCreated as Record<string, unknown>[],
-        blockers: result.blockers as Record<string, unknown>[],
-        recommendations: result.recommendations as Record<string, unknown>[],
-        diffSummaries: result.diffSummaries as Record<string, unknown>[],
-        currentStepIndex: result.steps.length - 1,
-        totalSteps: result.totalSteps,
+        stepsExecuted: stepsExecuted as unknown as Record<string, unknown>[],
+        objectsTouched: result.context.objectsTouched as unknown as Record<string, unknown>[],
+        outputsCreated: result.context.outputsCreated as unknown as Record<string, unknown>[],
+        blockers: result.context.blockers as unknown as Record<string, unknown>[],
+        recommendations: result.context.recommendations as unknown as Record<string, unknown>[],
+        diffSummaries: result.context.diffSummaries as unknown as Record<string, unknown>[],
+        currentStepIndex: stepsExecuted.length > 0 ? stepsExecuted.length - 1 : 0,
+        totalSteps,
         startedAt: new Date(),
         completedAt: result.status === 'completed' || result.status === 'failed' ? new Date() : null,
         errorMessage: result.errorMessage ?? null,
@@ -140,19 +152,22 @@ router.post('/runs', async (req: Request, res: Response) => {
       });
     } catch (dbErr) {
       console.error('[orchestration] Failed to persist run record:', dbErr);
-      // Run still executed — log but don't fail the response
     }
 
     return res.status(201).json({
       runId: result.runId,
       status: result.status,
-      workflowType: result.workflowType,
-      totalSteps: result.totalSteps,
-      stepsCompleted: result.steps.filter(s => s.status === 'executed').length,
-      blockerCount: result.blockers.length,
-      outputCount: result.outputsCreated.length,
+      workflowType: result.context.workflowType,
+      totalSteps,
+      stepsCompleted: completedCount,
+      blockerCount: result.context.blockers.length,
+      outputCount: result.context.outputsCreated.length,
     });
   } catch (err) {
+    // Clean up listener on error path too
+    if (firebaseListener) {
+      engine.removeEventListener(firebaseListener);
+    }
     const message = err instanceof Error ? err.message : String(err);
     console.error('[orchestration] startRun failed:', message);
     return res.status(500).json({ error: 'Workflow execution failed', message });
