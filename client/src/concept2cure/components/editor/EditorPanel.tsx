@@ -60,6 +60,7 @@ import { CommentThreadPanel } from './CommentThread';
 import { ReviewModePanel } from './ReviewMode';
 import type { CommentThread } from './extensions/CommentMark';
 import { useComments } from '../../hooks/useComments';
+import { getCurrentUser } from '../../utils/getCurrentUser';
 
 // ── Auth helper (same pattern as useProjects) ────────────────────────────────
 function getAuthHeaders(): Record<string, string> {
@@ -68,6 +69,7 @@ function getAuthHeaders(): Record<string, string> {
     localStorage.getItem('trialsage_access_token');
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
+
 
 // ── Types ────────────────────────────────────────────────────────────────────
 interface Artifact {
@@ -251,6 +253,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const [showNewCommentDialog, setShowNewCommentDialog] = useState(false);
   const [pendingCommentHighlight, setPendingCommentHighlight] = useState('');
   const pendingCommentClientIdRef = useRef<string>('');
+  const [cancelCommentId, setCancelCommentId] = useState<string | null>(null);
 
   // ── Review mode: snapshot content when entering review mode ─────────
   const handleToggleReviewMode = useCallback(() => {
@@ -340,6 +343,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   // ── Comment creation: show dialog to enter comment text ─────────────
   const handleAddCommentFromEditor = useCallback(
     (commentId: string, highlightedText: string, range: { from: number; to: number }) => {
+      const user = getCurrentUser();
       pendingCommentClientIdRef.current = commentId;
       setPendingCommentHighlight(highlightedText);
       setShowNewCommentDialog(true);
@@ -349,8 +353,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         {
           id: commentId,
           text: '',
-          authorId: 'current-user',
-          authorName: 'You',
+          authorId: user.id,
+          authorName: user.name,
           createdAt: new Date().toISOString(),
           resolved: false,
           highlightedText,
@@ -400,6 +404,22 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     },
     [pushToast, activeArtifact, pendingCommentHighlight, createCommentOnServer]
   );
+
+  /** Cancel comment: remove from state and tell the editor to remove the mark */
+  const handleCancelComment = useCallback(() => {
+    const clientId = pendingCommentClientIdRef.current;
+    setShowNewCommentDialog(false);
+    setPendingCommentText('');
+    setPendingCommentHighlight('');
+    setComments(prev => prev.filter(c => c.text !== ''));
+    // Trigger CommentMark removal in UnifiedDocumentEditor
+    if (clientId) {
+      setCancelCommentId(clientId);
+      // Reset after a tick so the effect fires even if the same ID is cancelled twice
+      setTimeout(() => setCancelCommentId(null), 50);
+    }
+    pendingCommentClientIdRef.current = '';
+  }, []);
 
   const handleClaimCheck = useCallback(() => {
     if (!activeArtifact?.content) return;
@@ -2002,6 +2022,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               handleAIEdit(action as 'rewrite' | 'expand' | 'summarize' | 'regulatory-tone' | 'add-references');
             }}
             onAddComment={handleAddCommentFromEditor}
+            cancelCommentId={cancelCommentId}
             onLiveContentChange={html => {
               onContentChange?.(html, activeArtifact?.title || '');
               triggerAutoSave(html);
@@ -2198,7 +2219,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-200">
             <CommentThreadPanel
               comments={comments}
-              currentUserId="current-user"
+              currentUserId={getCurrentUser().id}
               onResolve={(commentId) => {
                 setComments(prev => prev.map(c => c.id === commentId ? { ...c, resolved: true } : c));
                 updateCommentOnServer(commentId, { status: 'resolved' });
@@ -2209,13 +2230,14 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 updateCommentOnServer(commentId, { status: 'open' });
               }}
               onReply={(commentId, text) => {
+                const user = getCurrentUser();
                 setComments(prev => prev.map(c => c.id === commentId ? {
                   ...c,
                   replies: [...c.replies, {
                     id: `reply-${Date.now()}`,
                     text,
-                    authorId: 'current-user',
-                    authorName: 'You',
+                    authorId: user.id,
+                    authorName: user.name,
                     createdAt: new Date().toISOString(),
                   }],
                 } : c));
@@ -2265,8 +2287,17 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 setTrackedChanges(prev => prev.map(c => ({ ...c, rejected: true })));
                 pushToast('All changes rejected', 'info');
               }}
-              onCompleteReview={(status, reviewComments) => {
-                pushToast(`Review completed: ${status}`, 'success');
+              onCompleteReview={async (status, reviewComments) => {
+                // Map review outcome to artifact status
+                const newStatus = status === 'approved' ? 'approved' : 'review';
+                await handleStatusChange(newStatus, reviewComments);
+                setIsReviewMode(false);
+                pushToast(
+                  status === 'approved'
+                    ? 'Review approved — document status updated'
+                    : 'Changes requested — returned to review',
+                  'success'
+                );
               }}
               onClose={() => setActiveInspector(null)}
             />
@@ -2297,10 +2328,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   handleSubmitComment(pendingCommentText);
                 }
                 if (e.key === 'Escape') {
-                  setShowNewCommentDialog(false);
-                  setPendingCommentText('');
-                  // Remove the empty pending comment
-                  setComments(prev => prev.filter(c => c.text !== ''));
+                  handleCancelComment();
                 }
               }}
               placeholder="Type your comment…"
@@ -2311,11 +2339,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               <span className="text-[10px] text-zinc-400">Ctrl+Enter to submit</span>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => {
-                    setShowNewCommentDialog(false);
-                    setPendingCommentText('');
-                    setComments(prev => prev.filter(c => c.text !== ''));
-                  }}
+                  onClick={handleCancelComment}
                   className="px-3 py-1.5 text-xs text-zinc-500 hover:text-zinc-700 rounded-md hover:bg-zinc-100"
                 >
                   Cancel

@@ -31,6 +31,7 @@ import TaskItem from '@tiptap/extension-task-item';
 import { SearchAndReplace } from './extensions/SearchAndReplace';
 import { createSlashCommandExtension } from './extensions/SlashCommandMenu';
 import { CommentMark, type CommentThread } from './extensions/CommentMark';
+import { getCurrentUser } from '../../utils/getCurrentUser';
 import { AIAutocomplete } from './extensions/AIAutocomplete';
 import { GlossaryTooltip } from './extensions/GlossaryTooltip';
 import { CitationMark, CitationPlugin } from './extensions/CitationPlugin';
@@ -150,6 +151,8 @@ export interface UnifiedDocumentEditorProps {
   onAIAction?: (action: string, selectedText: string) => void;
   /** Add comment callback */
   onAddComment?: (commentId: string, text: string, range: { from: number; to: number }) => void;
+  /** When set, the CommentMark with this ID will be removed from the editor content */
+  cancelCommentId?: string | null;
   sources?: DocumentSource[];
   traceabilityLinks?: TraceabilityLink[];
   complianceIssues?: ComplianceIssue[];
@@ -1039,6 +1042,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
   onVersionChange,
   onAIAction,
   onAddComment,
+  cancelCommentId,
   sources = [],
   traceabilityLinks = [],
   complianceIssues = [],
@@ -1172,6 +1176,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
     const selectedText = editor.state.doc.textBetween(from, to, ' ');
     if (!selectedText.trim()) return;
 
+    const user = getCurrentUser();
     const commentId = `comment-${Date.now()}`;
     editor
       .chain()
@@ -1179,8 +1184,8 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
       .setTextSelection({ from, to })
       .setMark('comment', {
         commentId,
-        authorId: 'current-user',
-        authorName: 'You',
+        authorId: user.id,
+        authorName: user.name,
         createdAt: new Date().toISOString(),
       })
       .run();
@@ -1188,8 +1193,8 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
     const newComment: CommentThread = {
       id: commentId,
       text: '',
-      authorId: 'current-user',
-      authorName: 'You',
+      authorId: user.id,
+      authorName: user.name,
       createdAt: new Date().toISOString(),
       resolved: false,
       replies: [],
@@ -1197,6 +1202,24 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
     setComments(prev => [...prev, newComment]);
     onAddComment?.(commentId, selectedText, { from, to });
   }, [editor, onAddComment]);
+
+  // Remove a CommentMark from the editor when a comment is cancelled
+  useEffect(() => {
+    if (!editor || !cancelCommentId) return;
+    const { doc, tr } = editor.state;
+    let removed = false;
+    doc.descendants((node, pos) => {
+      node.marks.forEach(mark => {
+        if (mark.type.name === 'comment' && mark.attrs.commentId === cancelCommentId) {
+          tr.removeMark(pos, pos + node.nodeSize, mark);
+          removed = true;
+        }
+      });
+    });
+    if (removed) {
+      editor.view.dispatch(tr);
+    }
+  }, [editor, cancelCommentId]);
 
   // Update editor editable state when lock changes
   useEffect(() => {
