@@ -203,6 +203,45 @@ export async function enqueueAction(
 }
 
 // ---------------------------------------------------------------------------
+// Job cancellation
+// ---------------------------------------------------------------------------
+
+/**
+ * Cancel a queued action by job ID.
+ * Only waiting/delayed jobs can be cancelled. Active jobs cannot be interrupted.
+ */
+export async function cancelQueuedAction(
+  jobId: string
+): Promise<{ success: boolean; status: string; message: string }> {
+  if (!actionQueue) {
+    return { success: false, status: 'unavailable', message: 'Queue not available' };
+  }
+
+  const job = await actionQueue.getJob(jobId);
+  if (!job) {
+    return { success: false, status: 'not_found', message: `Job ${jobId} not found` };
+  }
+
+  const state = await job.getState();
+  if (state === 'completed' || state === 'failed') {
+    return { success: false, status: 'terminal', message: `Job already ${state}` };
+  }
+
+  if (state === 'active') {
+    return { success: false, status: 'active', message: 'Cannot cancel an active job. Wait for completion or timeout.' };
+  }
+
+  try {
+    await job.remove();
+    inFlightJobs.delete(jobId);
+    logger.info(`Job cancelled`, { jobId, previousState: state });
+    return { success: true, status: 'cancelled', message: `Job ${jobId} cancelled` };
+  } catch (err: any) {
+    return { success: false, status: 'error', message: err.message };
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Status polling
 // ---------------------------------------------------------------------------
 

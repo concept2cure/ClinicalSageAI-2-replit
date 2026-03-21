@@ -320,13 +320,24 @@ export async function dispatchAction(
     ]);
   }
 
-  // 3. Circuit breaker check
+  // 3. DB pre-flight check (lightweight, only for write actions)
+  if (WRITE_ACTIONS.has(request.actionType)) {
+    try {
+      await (db as any).execute({ sql: 'SELECT 1' });
+    } catch (dbErr: any) {
+      return buildErrorResponse(request, actionId, options, [
+        { code: 'DB_UNAVAILABLE', message: 'Database is temporarily unavailable. Please retry.' },
+      ]);
+    }
+  }
+
+  // 4. Circuit breaker check
   const circuitError = checkCircuitBreaker(request.actionType);
   if (circuitError) {
     return buildErrorResponse(request, actionId, options, [circuitError]);
   }
 
-  // 4. Idempotency check (for non-read actions with same params)
+  // 5. Idempotency check (for non-read actions with same params)
   if (!options.forceExecution && request.actionType !== 'run_validation') {
     const idempotencyKey = computeIdempotencyKey(request, options.user.userId);
     const cached = getCachedResponse(idempotencyKey);
@@ -335,7 +346,7 @@ export async function dispatchAction(
     }
   }
 
-  // 5. Validate request (fast pre-check)
+  // 6. Validate request (fast pre-check)
   if (handler.validate) {
     const validationErrors = handler.validate(request);
     if (validationErrors.length > 0) {
@@ -343,7 +354,7 @@ export async function dispatchAction(
     }
   }
 
-  // 6. Build execution context (with transaction-capable DB)
+  // 7. Build execution context (with transaction-capable DB)
   const executionContext: AIActionExecutionContext = {
     user: {
       userId: options.user.userId,
@@ -358,7 +369,7 @@ export async function dispatchAction(
     sessionId: options.sessionId,
   };
 
-  // 7. Concurrency limit (per-org backpressure)
+  // 8. Concurrency limit (per-org backpressure)
   const slot = await acquireConcurrencySlot(options.user.organizationId);
   if (!slot) {
     return buildErrorResponse(request, actionId, options, [
@@ -366,7 +377,7 @@ export async function dispatchAction(
     ]);
   }
 
-  // 8. Execute with timeout, retry, and distributed lock (for write actions)
+  // 9. Execute with timeout, retry, and distributed lock (for write actions)
   let response: AIActionResponse;
   const timeoutMs = getTimeoutMs(request.actionType);
   try {

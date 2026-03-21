@@ -253,33 +253,99 @@ router.get('/jobs/:jobId', async (req: Request, res: Response) => {
 });
 
 // ---------------------------------------------------------------------------
+// DELETE /api/ai-actions/jobs/:jobId — Cancel a queued job
+// ---------------------------------------------------------------------------
+
+router.delete('/jobs/:jobId', async (req: Request, res: Response) => {
+  try {
+    getUserId(req);
+  } catch {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  const { cancelQueuedAction } = await import('../services/ai-actions/action-queue');
+  const result = await cancelQueuedAction(req.params.jobId);
+
+  if (!result.success) {
+    return res.status(result.status === 'not_found' ? 404 : 409).json(result);
+  }
+  return res.json(result);
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/ai-actions/history — Query action audit history
+// ---------------------------------------------------------------------------
+
+router.get('/history', async (req: Request, res: Response) => {
+  let organizationId: number;
+  try {
+    organizationId = getOrganizationId(req);
+    getUserId(req);
+  } catch (err: any) {
+    return res.status(401).json({ error: err.message });
+  }
+
+  const { getActionHistory } = await import('../services/ai-actions/action-history');
+  const limit = Math.min(parseInt(req.query.limit as string) || 50, 200);
+  const offset = parseInt(req.query.offset as string) || 0;
+  const actionType = req.query.actionType as string | undefined;
+  const projectId = req.query.projectId ? Number(req.query.projectId) : undefined;
+
+  const history = await getActionHistory(organizationId, { limit, offset, actionType, projectId });
+  return res.json({ success: true, ...history });
+});
+
+// ---------------------------------------------------------------------------
 // GET /api/ai-actions/stream — SSE stream for real-time job updates
 // ---------------------------------------------------------------------------
 
 router.get('/stream', handleSSEStream);
 
 // ---------------------------------------------------------------------------
-// GET /api/ai-actions/health — Deep health check + metrics
+// GET /api/ai-actions/health — Deep health check with dependency probes
 // ---------------------------------------------------------------------------
 
-router.get('/health', async (_req: Request, res: Response) => {
-  const [dispatchMetrics, queueMetrics, concurrencyMetrics, redisHealth] = await Promise.all([
+router.get('/health', async (req: Request, res: Response) => {
+  const [dispatchMetrics, queueMetrics, concurrencyMetrics, redisHealth, dbHealth] = await Promise.all([
     Promise.resolve(getActionMetrics()),
     getQueueMetrics(),
     getConcurrencyMetrics(),
     getRedisHealth(),
+    checkDatabaseHealth(),
   ]);
 
   const avgLatency = dispatchMetrics.totalExecutions > 0
     ? Math.round(dispatchMetrics.totalDurationMs / dispatchMetrics.totalExecutions)
     : 0;
 
-  const healthy = true; // Could be derived from dependency checks
+  // Derive health status from dependency checks
+  const dbOk = dbHealth.available;
+  const redisOk = redisHealth.available;
+  const status = !dbOk ? 'unhealthy' : !redisOk ? 'degraded' : 'healthy';
+  const httpStatus = status === 'unhealthy' ? 503 : 200;
 
-  return res.status(healthy ? 200 : 503).json({
-    status: healthy ? 'healthy' : 'degraded',
+  // Require auth for detailed metrics (unauthenticated gets basic health only)
+  let isAuthenticated = false;
+  try { getUserId(req); isAuthenticated = true; } catch { /* ok */ }
+
+  const basicHealth = {
+    status,
     registeredActions: getRegisteredActions().length,
-    uptime: process.uptime(),
+    uptime: Math.round(process.uptime()),
+    dependencies: {
+      database: { available: dbOk, latencyMs: dbHealth.latencyMs },
+      redis: { available: redisOk, latencyMs: redisHealth.latencyMs },
+    },
+    timestamp: new Date().toISOString(),
+  };
+
+  if (!isAuthenticated) {
+    return res.status(httpStatus).json(basicHealth);
+  }
+
+  // Authenticated: return full metrics
+  return res.status(httpStatus).json({
+    ...basicHealth,
     dispatcher: {
       totalExecutions: dispatchMetrics.totalExecutions,
       successRate: dispatchMetrics.totalExecutions > 0
@@ -302,8 +368,22 @@ router.get('/health', async (_req: Request, res: Response) => {
     sse: {
       activeConnections: getSSEConnectionCount(),
     },
-    timestamp: new Date().toISOString(),
   });
 });
+
+// ---------------------------------------------------------------------------
+// Database health probe
+// ---------------------------------------------------------------------------
+
+async function checkDatabaseHealth(): Promise<{ available: boolean; latencyMs: number | null }> {
+  try {
+    const { db } = await import('../db');
+    const start = Date.now();
+    await (db as any).execute({ sql: 'SELECT 1' });
+    return { available: true, latencyMs: Date.now() - start };
+  } catch {
+    return { available: false, latencyMs: null };
+  }
+}
 
 export default router;
