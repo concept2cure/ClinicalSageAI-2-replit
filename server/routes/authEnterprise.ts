@@ -243,7 +243,7 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
         organizationId: user.defaultOrganizationId.toString(),
         role: 'pending_mfa',
         mfaPending: true,
-        organizationId: (user.defaultOrganizationId || 2).toString(),
+        organizationId: user.defaultOrganizationId.toString(),
         role: (user.role || user.tier || 'user'),
       },
       config.jwt.secret,
@@ -279,7 +279,7 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
         lastName: user.name?.split(' ').slice(1).join(' ') || '',
         displayName: user.name || user.email,
         role: (user.role || user.tier || 'user'),
-        organizationId: (user.defaultOrganizationId || 2).toString(),
+        organizationId: user.defaultOrganizationId.toString(),
         organizationName: 'Concept2Cure',
       },
     });

@@ -738,7 +738,7 @@ function getClientWorkspaceId(req: Request): number {
         : parseInt(String(ctx.clientWorkspaceId), 10);
     if (!isNaN(id)) return id;
   }
-  return 1; // Default workspace for development
+  throw new Error('Client workspace context required');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

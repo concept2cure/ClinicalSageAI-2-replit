@@ -104,7 +104,10 @@ router.post('/chat/actions/run', async (req: Request, res: Response) => {
   };
   const action = body.intent || body.action || '';
   const params = body.params || {};
-  const orgId: string = (req as any).organizationId || '1';
+  const orgId: string = (req as any).organizationId;
+  if (!orgId) {
+    return res.status(401).json({ ok: false, error: 'Organization context required' });
+  }
   const userId: string = (req as any).userId || null;
 
   if (!action) {

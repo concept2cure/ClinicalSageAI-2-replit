@@ -321,7 +321,7 @@ export class TemplateService {
         isDefault: false,
         version: templateData.version || '1.0',
         usageCount: 0,
-        createdBy: templateData.createdBy || 1,
+        createdBy: templateData.createdBy,
         tags: templateData.tags || [],
       };
 

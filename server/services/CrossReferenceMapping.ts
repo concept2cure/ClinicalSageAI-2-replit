@@ -950,7 +950,7 @@ Date: ${data.signature_date}
     try {
       // Store in fda510kDataMappings table
       await db!.insert(fda510kDataMappings).values({
-        organizationId: smartLinks.organizationId || 1,
+        organizationId: smartLinks.organizationId,
         mappingCode: `SMART_LINK_${projectId}_${Date.now()}`,
         mappingName: `Smart Links for Project ${projectId}`,
         sourceType: 'workflow_data',

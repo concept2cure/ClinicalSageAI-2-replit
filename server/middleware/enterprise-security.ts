@@ -43,28 +43,6 @@ const config = {
       'https://app.trialsage.com',
       'https://concept2cure-ri.ai',
       'https://app.concept2cure-ri.ai',
-    ]),
-
-  // Rate Limits — environment-aware
-  rateLimits: process.env.NODE_ENV === 'production'
-    ? {
-        global: { windowMs: 60_000, max: 300 },   // 300/min global
-        api: { windowMs: 60_000, max: 100 },       // 100/min per IP
-        ai: { windowMs: 60_000, max: 20 },         // 20/min for AI endpoints
-        auth: { windowMs: 15 * 60_000, max: 10 },  // 10 auth attempts per 15 min
-        write: { windowMs: 60_000, max: 60 },       // 60 writes/min
-        upload: { windowMs: 60_000, max: 20 },      // 20 uploads/min
-        export: { windowMs: 60_000, max: 10 },      // 10 exports/min
-      }
-    : {
-        global: { windowMs: 60_000, max: 10000 },
-        api: { windowMs: 60_000, max: 1000 },
-        ai: { windowMs: 60_000, max: 100 },
-        auth: { windowMs: 60_000, max: 100 },
-        write: { windowMs: 60_000, max: 500 },
-        upload: { windowMs: 60_000, max: 100 },
-        export: { windowMs: 60_000, max: 50 },
-      },
       'https://clinicalsage.ai',
       'https://app.clinicalsage.ai',
     ])
@@ -74,7 +52,7 @@ const config = {
         : []
     ),
 
-  // Rate Limits - production-safe defaults, relaxed in dev via multiplier
+  // Rate Limits — environment-aware (single canonical definition)
   rateLimits: (() => {
     const isDev = process.env.NODE_ENV !== 'production';
     const m = isDev ? 10 : 1; // 10x multiplier in development only
@@ -88,16 +66,6 @@ const config = {
       export: { windowMs: 60_000, max: 10 * m },       // 10/min prod, 100/min dev
     };
   })(),
-  // Rate Limits - relaxed for development
-  rateLimits: {
-    global: { windowMs: 60_000, max: 10000 }, // 10000/min global (dev)
-    api: { windowMs: 60_000, max: 1000 }, // 1000/min per IP (dev)
-    ai: { windowMs: 60_000, max: 100 }, // 100/min for AI endpoints (dev)
-    auth: { windowMs: 15 * 60_000, max: process.env.NODE_ENV === 'production' ? 10 : 100 }, // 10 per 15 min (prod), 100/min (dev)
-    write: { windowMs: 60_000, max: 500 }, // 500 writes/min (dev)
-    upload: { windowMs: 60_000, max: 100 }, // 100 uploads/min (dev)
-    export: { windowMs: 60_000, max: 50 }, // 50 exports/min (dev)
-  },
 
   // Request Size Limits
   maxBodySize: '50mb',

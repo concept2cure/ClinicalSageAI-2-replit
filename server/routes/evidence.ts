@@ -166,7 +166,10 @@ router.get('/', validateQuery(queryParamsSchema), async (req: Request, res: Resp
       sortBy,
       sortOrder,
     } = req.query as z.infer<typeof queryParamsSchema>;
-    const tenantId = (req as any).tenantContext?.tenantId || 1;
+    const tenantId = (req as any).tenantContext?.tenantId;
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Tenant context required' });
+    }
 
     // Mock response - replace with actual DB query
     const evidence = [
@@ -317,7 +320,10 @@ router.get('/:id', async (req: Request, res: Response) => {
 router.post('/', validateBody(createEvidenceSchema), async (req: Request, res: Response) => {
   try {
     const data = req.body;
-    const tenantId = (req as any).tenantContext?.tenantId || 1;
+    const tenantId = (req as any).tenantContext?.tenantId;
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Tenant context required' });
+    }
     const userId = (req as any).user?.id || 'system';
 
     // Generate code if not provided
@@ -492,7 +498,10 @@ router.get('/:id/links', async (req: Request, res: Response) => {
 router.post('/links', validateBody(createLinkSchema), async (req: Request, res: Response) => {
   try {
     const data = req.body;
-    const tenantId = (req as any).tenantContext?.tenantId || 1;
+    const tenantId = (req as any).tenantContext?.tenantId;
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Tenant context required' });
+    }
     const userId = (req as any).user?.id || 'system';
 
     const link = {
@@ -589,7 +598,10 @@ router.get('/search', async (req: Request, res: Response) => {
 router.get('/stats', async (req: Request, res: Response) => {
   try {
     const { programId } = req.query;
-    const tenantId = (req as any).tenantContext?.tenantId || 1;
+    const tenantId = (req as any).tenantContext?.tenantId;
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Tenant context required' });
+    }
 
     const stats = {
       total: 156,

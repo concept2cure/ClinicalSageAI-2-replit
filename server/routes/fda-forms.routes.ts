@@ -13,6 +13,15 @@ import FDAFormGenerator from '../services/FDAFormGenerator';
 import { FDAFormsRegistryClass } from '../config/FDAFormsRegistry';
 
 const router = Router();
+
+function requireOrgId(req: Request, res: Response): number | null {
+  const orgId = parseInt(req.headers['x-organization-id'] as string || '');
+  if (!orgId) {
+    res.status(401).json({ error: 'Organization context required' });
+    return null;
+  }
+  return orgId;
+}
 const formsRegistry = new FDAFormsRegistryClass();
 
 // Get forms registry
@@ -38,7 +47,10 @@ router.get('/registry', async (req: Request, res: Response) => {
 // Get available FDA forms for a project
 router.get('/project/:projectId/forms', async (req: Request, res: Response) => {
   const { projectId } = req.params;
-  const organizationId = parseInt(req.headers['x-organization-id'] as string || '1');
+  const organizationId = parseInt(req.headers['x-organization-id'] as string || '');
+  if (!organizationId) {
+    return res.status(401).json({ error: 'Organization context required' });
+  }
 
   try {
     // Fetch existing generated forms
@@ -105,8 +117,8 @@ router.get('/project/:projectId/forms', async (req: Request, res: Response) => {
 // Generate a specific FDA form
 router.post('/project/:projectId/generate/:formType', async (req: Request, res: Response) => {
   const { projectId, formType } = req.params;
-  const organizationId = parseInt(req.headers['x-organization-id'] as string || '1');
-  const userId = req.headers['x-user-id'] as string || '1';
+  const organizationId = parseInt(req.headers['x-organization-id'] as string || '');
+  const userId = req.headers['x-user-id'] as string;
 
   try {
     const formGenerator = new FDAFormGenerator();
@@ -208,8 +220,8 @@ router.post('/project/:projectId/generate/:formType', async (req: Request, res: 
 // Generate all FDA forms for a project
 router.post('/project/:projectId/generate-all', async (req: Request, res: Response) => {
   const { projectId } = req.params;
-  const organizationId = parseInt(req.headers['x-organization-id'] as string || '1');
-  const userId = req.headers['x-user-id'] as string || '1';
+  const organizationId = parseInt(req.headers['x-organization-id'] as string || '');
+  const userId = req.headers['x-user-id'] as string;
 
   try {
     const orchestrationService = new DocumentOrchestrationService();
@@ -262,8 +274,8 @@ router.get('/registry', async (req: Request, res: Response) => {
 // Generate any SMART form from registry
 router.post('/project/:projectId/generate-smart/:formId', async (req: Request, res: Response) => {
   const { projectId, formId } = req.params;
-  const organizationId = parseInt(req.headers['x-organization-id'] as string || '1');
-  const userId = req.headers['x-user-id'] as string || '1';
+  const organizationId = parseInt(req.headers['x-organization-id'] as string || '');
+  const userId = req.headers['x-user-id'] as string;
 
   try {
     const formGenerator = new FDAFormGenerator();
@@ -346,8 +358,8 @@ router.post('/project/:projectId/generate-smart/:formId', async (req: Request, r
 // Auto-generate forms when workflow is updated
 router.post('/project/:projectId/auto-generate', async (req: Request, res: Response) => {
   const { projectId } = req.params;
-  const organizationId = parseInt(req.headers['x-organization-id'] as string || '1');
-  const userId = req.headers['x-user-id'] as string || '1';
+  const organizationId = parseInt(req.headers['x-organization-id'] as string || '');
+  const userId = req.headers['x-user-id'] as string;
 
   try {
     const formGenerator = new FDAFormGenerator();
@@ -455,7 +467,7 @@ router.post('/project/:projectId/auto-generate', async (req: Request, res: Respo
 // Get a specific generated form
 router.get('/project/:projectId/form/:formType', async (req: Request, res: Response) => {
   const { projectId, formType } = req.params;
-  const organizationId = parseInt(req.headers['x-organization-id'] as string || '1');
+  const organizationId = parseInt(req.headers['x-organization-id'] as string || '');
 
   try {
     const form = await db

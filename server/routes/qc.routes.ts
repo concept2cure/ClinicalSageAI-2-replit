@@ -25,9 +25,12 @@ const router = Router();
 router.get('/specifications', async (req: Request, res: Response) => {
   try {
     const { organizationId, clientWorkspaceId } = req.query;
+    if (!Number(organizationId)) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
     const specifications = await storage.getQcSpecifications({
-      organizationId: Number(organizationId) || 1,
-      clientWorkspaceId: Number(clientWorkspaceId) || 1,
+      organizationId: Number(organizationId),
+      clientWorkspaceId: Number(clientWorkspaceId),
     });
     res.json(specifications);
   } catch (error) {
@@ -107,8 +110,8 @@ router.get('/oos-investigations', async (req: Request, res: Response) => {
   try {
     const { organizationId, clientWorkspaceId, status, priority } = req.query;
     const investigations = await storage.getOosInvestigations({
-      organizationId: Number(organizationId) || 1,
-      clientWorkspaceId: Number(clientWorkspaceId) || 1,
+      organizationId: Number(organizationId),
+      clientWorkspaceId: Number(clientWorkspaceId),
       status: status as string,
       priority: priority as string,
     });
@@ -213,8 +216,8 @@ router.get('/batch-releases', async (req: Request, res: Response) => {
   try {
     const { organizationId, clientWorkspaceId, releaseStatus } = req.query;
     const releases = await storage.getBatchReleases({
-      organizationId: Number(organizationId) || 1,
-      clientWorkspaceId: Number(clientWorkspaceId) || 1,
+      organizationId: Number(organizationId),
+      clientWorkspaceId: Number(clientWorkspaceId),
       releaseStatus: releaseStatus as string,
     });
     res.json(releases);
@@ -334,8 +337,8 @@ router.get('/deviations', async (req: Request, res: Response) => {
   try {
     const { organizationId, clientWorkspaceId, deviationType, severity } = req.query;
     const deviations = await storage.getQcDeviations({
-      organizationId: Number(organizationId) || 1,
-      clientWorkspaceId: Number(clientWorkspaceId) || 1,
+      organizationId: Number(organizationId),
+      clientWorkspaceId: Number(clientWorkspaceId),
       deviationType: deviationType as string,
       severity: severity as string,
     });
@@ -414,7 +417,7 @@ router.get('/deviations/trending', async (req: Request, res: Response) => {
   try {
     const { organizationId, startDate, endDate, category } = req.query;
     const trending = await storage.getDeviationTrending({
-      organizationId: Number(organizationId) || 1,
+      organizationId: Number(organizationId),
       startDate: startDate as string,
       endDate: endDate as string,
       category: category as string,
@@ -434,8 +437,8 @@ router.get('/microbiological-tests', async (req: Request, res: Response) => {
   try {
     const { organizationId, clientWorkspaceId, testType, sampleType } = req.query;
     const tests = await storage.getMicrobiologicalTests({
-      organizationId: Number(organizationId) || 1,
-      clientWorkspaceId: Number(clientWorkspaceId) || 1,
+      organizationId: Number(organizationId),
+      clientWorkspaceId: Number(clientWorkspaceId),
       testType: testType as string,
       sampleType: sampleType as string,
     });
@@ -488,7 +491,7 @@ router.get('/microbiological-tests/environmental-monitoring/schedule', async (re
   try {
     const { organizationId, startDate, endDate } = req.query;
     const schedule = await storage.getEnvironmentalMonitoringSchedule({
-      organizationId: Number(organizationId) || 1,
+      organizationId: Number(organizationId),
       startDate: startDate as string,
       endDate: endDate as string,
     });
@@ -538,8 +541,8 @@ router.get('/reference-standards', async (req: Request, res: Response) => {
   try {
     const { organizationId, clientWorkspaceId, status, standardType } = req.query;
     const standards = await storage.getReferenceStandards({
-      organizationId: Number(organizationId) || 1,
-      clientWorkspaceId: Number(clientWorkspaceId) || 1,
+      organizationId: Number(organizationId),
+      clientWorkspaceId: Number(clientWorkspaceId),
       status: status as string,
       standardType: standardType as string,
     });
@@ -609,7 +612,7 @@ router.get('/reference-standards/expiring', async (req: Request, res: Response) 
   try {
     const { organizationId, daysAhead } = req.query;
     const standards = await storage.getExpiringStandards({
-      organizationId: Number(organizationId) || 1,
+      organizationId: Number(organizationId),
       daysAhead: Number(daysAhead) || 30,
     });
     res.json(standards);

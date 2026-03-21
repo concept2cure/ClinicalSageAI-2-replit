@@ -16,6 +16,15 @@ import { Router, Request, Response } from 'express';
 
 const router = Router();
 
+function requireOrgId(req: Request, res: Response): number | null {
+  const orgId = (req as any).user?.organizationId;
+  if (!orgId) {
+    res.status(401).json({ error: 'Organization context required' });
+    return null;
+  }
+  return orgId;
+}
+
 // Lazy-import services to avoid startup crashes if deps are missing
 async function getSvc<T>(path: string): Promise<T> {
   return (await import(path)) as T;
@@ -45,7 +54,7 @@ router.post('/figures/generate', async (req: Request, res: Response) => {
       title: title || `${figureType} Figure`,
       dataSource,
       options,
-      organizationId: user?.organizationId || 1,
+      organizationId: user?.organizationId,
       userId: user?.id || user?.userId || 0,
     });
 
@@ -74,7 +83,7 @@ router.post('/figures/auto-insert', async (req: Request, res: Response) => {
       projectId,
       sectionType || 'general',
       content,
-      user?.organizationId || 1,
+      user?.organizationId,
       user?.id || user?.userId || 0
     );
 
@@ -106,7 +115,7 @@ router.post('/export/pdf', async (req: Request, res: Response) => {
 
     const result = await converter.generatePDF(
       projectId,
-      user?.organizationId || 1,
+      user?.organizationId,
       title || 'Document Export',
       options || {}
     );
@@ -133,7 +142,7 @@ router.post('/export/ectd', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'projectId and applicationNumber are required' });
     }
 
-    const result = await packager.assembleECTDPackage(projectId, user?.organizationId || 1, {
+    const result = await packager.assembleECTDPackage(projectId, user?.organizationId, {
       applicationNumber,
       sequenceNumber: sequenceNumber || '0000',
       region: region || 'us',
@@ -170,7 +179,7 @@ router.post('/traceability/map', async (req: Request, res: Response) => {
       sentences,
       sources || [],
       documentId || 'inline',
-      user?.organizationId || 1
+      user?.organizationId
     );
 
     res.json({ success: true, sentences: sentences.length, traceLinks });
@@ -198,7 +207,7 @@ router.post('/traceability/click-through', async (req: Request, res: Response) =
       sentences,
       sources || [],
       'click-through',
-      (req as any).user?.organizationId || 1
+      (req as any).user?.organizationId
     );
     const result = svc.resolveClickThrough(charOffset, sentences, traceLinks);
 
@@ -228,7 +237,7 @@ router.post('/traceability/report', async (req: Request, res: Response) => {
       sentences,
       sources || [],
       documentId || 'report',
-      user?.organizationId || 1
+      user?.organizationId
     );
     const report = svc.generateTraceabilityReport(documentId || 'report', sentences, traceLinks);
 
@@ -257,7 +266,7 @@ router.post('/keywords/extract', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'content is required' });
     }
 
-    const keywords = await svc.extractKeywords(content, user?.organizationId || 1, {
+    const keywords = await svc.extractKeywords(content, user?.organizationId, {
       linkSources: linkSources !== false,
     });
 
@@ -288,7 +297,7 @@ router.post('/keywords/consistency', async (req: Request, res: Response) => {
         title: d.title || 'Untitled',
         content: d.content,
       })),
-      user?.organizationId || 1
+      user?.organizationId
     );
 
     res.json({ success: true, consistency: result });
@@ -321,7 +330,7 @@ router.post('/extraction/queue', async (req: Request, res: Response) => {
       fileContent,
       fileType,
       projectId: projectId || 0,
-      organizationId: user?.organizationId || 1,
+      organizationId: user?.organizationId,
       userId: user?.id || user?.userId || 0,
       priority: priority || 5,
     });
@@ -384,7 +393,7 @@ router.post('/confidence/compute', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'evidenceId is required' });
     }
 
-    const score = await svc.computeEvidenceConfidence(evidenceId, user?.organizationId || 1);
+    const score = await svc.computeEvidenceConfidence(evidenceId, user?.organizationId);
 
     res.json({ success: true, score });
   } catch (error: any) {
@@ -403,7 +412,7 @@ router.post('/confidence/batch', async (req: Request, res: Response) => {
     const { limit, onlyUnscored } = req.body;
     const user = (req as any).user;
 
-    const result = await svc.batchComputeConfidence(user?.organizationId || 1, {
+    const result = await svc.batchComputeConfidence(user?.organizationId, {
       limit: limit || 500,
       onlyUnscored: onlyUnscored !== false,
     });
@@ -432,7 +441,7 @@ router.post('/verification/verify-claim', async (req: Request, res: Response) =>
     const result = await svc.verifyClaim(
       claimText,
       sourceEvidenceIds || [],
-      user?.organizationId || 1,
+      user?.organizationId,
       options || {}
     );
 
@@ -460,7 +469,7 @@ router.post('/verification/batch-verify', async (req: Request, res: Response) =>
     const result = await svc.batchVerifyDocument(
       content,
       projectId || 0,
-      user?.organizationId || 1
+      user?.organizationId
     );
 
     res.json({ success: true, verification: result });

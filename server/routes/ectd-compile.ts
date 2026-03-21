@@ -109,7 +109,10 @@ router.post('/:projectId/compile', async (req: Request, res: Response) => {
 
     // Derive org from auth context
     const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId ||
-      (req as any).organizationId || (req as any).user?.organizationId || 1;
+      (req as any).organizationId || (req as any).user?.organizationId;
+    if (!orgId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
 
     // 1. Gather all project sections from DB (with org filter)
     const sectionsResult = await pool.query(
@@ -184,7 +187,7 @@ router.post('/:projectId/compile', async (req: Request, res: Response) => {
          status, xml_backbone, compiled_at, version)
          VALUES ($1, $2, $3, $4, $5, NOW(), '1.0')`,
         [
-          (req as any).organizationId || (req as any).user?.organizationId || 1,
+          (req as any).organizationId || (req as any).user?.organizationId || orgId,
           orgId,
           `IND Compilation — Project ${projectId}`,
           submissionType,

@@ -40,7 +40,10 @@ router.get('/workspace/summary', async (req: Request, res: Response) => {
   const userId: string = (req as any).userId;
   // Derive orgId from JWT only — never trust query params for multi-tenant security.
   // The client must authenticate with a valid token; the org is embedded in the JWT.
-  const orgId: string = (req as any).organizationId || '1';
+  const orgId: string = (req as any).organizationId;
+  if (!orgId) {
+    return res.status(401).json({ error: 'Organization context required' });
+  }
 
   try {
     // ── 1. Org details ──────────────────────────────────────────────────────

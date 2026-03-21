@@ -64,12 +64,18 @@ class DocumentOrchestrationService {
       // Keep projectId as number for database queries
       const projectIdNum = parseInt(projectId);
       // Keep user and org IDs as strings to support UUIDs and other formats
-      const userIdStr = userId || '1';
-      const orgIdStr = organizationId || '1';
-      
+      if (!userId) {
+        throw new Error('User context required');
+      }
+      if (!organizationId) {
+        throw new Error('Organization context required');
+      }
+      const userIdStr = userId;
+      const orgIdStr = organizationId;
+
       // For database operations that expect numbers, convert when needed
-      const userIdNum = isNaN(parseInt(userIdStr)) ? 1 : parseInt(userIdStr);
-      const orgIdNum = isNaN(parseInt(orgIdStr)) ? 1 : parseInt(orgIdStr);
+      const userIdNum = parseInt(userIdStr);
+      const orgIdNum = parseInt(orgIdStr);
 
       // 1. Fetch project and all workflow data
       const project = await this.fetchProject(projectIdNum);
@@ -788,10 +794,16 @@ class DocumentOrchestrationService {
     organizationId: string
   ): Promise<any> {
     // Handle both string and numeric IDs safely
-    const userIdStr = userId || '1';
-    const orgIdStr = organizationId || '1';
-    const userIdNum = isNaN(parseInt(userIdStr)) ? 1 : parseInt(userIdStr);
-    const orgIdNum = isNaN(parseInt(orgIdStr)) ? 1 : parseInt(orgIdStr);
+    if (!userId) {
+      throw new Error('User context required');
+    }
+    if (!organizationId) {
+      throw new Error('Organization context required');
+    }
+    const userIdStr = userId;
+    const orgIdStr = organizationId;
+    const userIdNum = parseInt(userIdStr);
+    const orgIdNum = parseInt(orgIdStr);
 
     // Get current document
     const [currentDoc] = await db!

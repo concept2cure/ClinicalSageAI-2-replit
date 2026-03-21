@@ -206,9 +206,15 @@ process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 // Add process-level error handlers to prevent crashes on recoverable errors
+let unhandledRejectionCount = 0;
 process.on('unhandledRejection', (reason, promise) => {
   console.error('🚨 Unhandled Rejection at:', promise, 'reason:', reason);
-  // Don't exit - log and continue for client stability
+  unhandledRejectionCount++;
+  // If repeated rejections occur (likely systemic issue), exit gracefully
+  if (unhandledRejectionCount >= 10) {
+    console.error('🚨 Too many unhandled rejections — shutting down');
+    process.exit(1);
+  }
 });
 
 process.on('uncaughtException', (error) => {
@@ -251,16 +257,13 @@ console.log('✅ Enterprise security and performance middleware enabled');
 app.use(httpLogger); // Add structured logging
 // Audit logging now handled by enterprise-security middleware
 
-// Body parsing with size limits (5MB covers AI chat payloads; file uploads use multer separately)
-app.use(express.json({ limit: '5mb' }));
-app.use(express.urlencoded({ extended: true, limit: '5mb' }));
+// Body parsing with size limits
+// 50MB needed for large document uploads via JSON (base64-encoded); file uploads use multer separately
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // Cookie parsing (required for CSRF double-submit pattern)
 import cookieParser from 'cookie-parser';
 app.use(cookieParser());
-
-// Body parsing with size limits
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // CSRF protection (double-submit cookie pattern)
 import { csrfProtection } from './middleware/csrf.js';
@@ -321,32 +324,36 @@ import { ensureCoreTables } from './db/ensureCoreTables';
 // Create Drizzle ORM instance for database queries
 const db = drizzle(pool);
 
-// Test database connection and ensure core tables exist
-pool
-  .connect()
-  .then(async client => {
+// Test database connection and ensure core tables exist (awaited at startup)
+async function verifyDatabaseConnection() {
+  try {
+    const client = await pool.connect();
     console.log('✅ Database connection successful');
     client.release();
-
-    // Enterprise: Verify all core tables exist on startup
-    try {
-      const result = await ensureCoreTables(process.env.DATABASE_URL);
-      if (result.success) {
-        console.log(`✅ All ${result.existingTables.length} core database tables verified`);
-      } else if (result.missingCritical.length > 0) {
-        console.error('❌ CRITICAL: Missing tables:', result.missingCritical.join(', '));
-        console.error('   Run: npm run db:push to sync schema');
-      } else if (result.errors.length > 0) {
-        console.error('⚠️ Table verification errors:', result.errors);
-      }
-    } catch (err: any) {
-      console.error('⚠️ Core table verification failed:', err.message);
-      // Non-fatal: app continues but may have issues with missing tables
-    }
-  })
-  .catch(err => {
+  } catch (err: any) {
     console.error('❌ Database connection failed:', err.message);
-  });
+    if (process.env.NODE_ENV === 'production') {
+      console.error('   Fatal in production — exiting');
+      process.exit(1);
+    }
+    return; // Non-fatal in dev
+  }
+
+  // Enterprise: Verify all core tables exist on startup
+  try {
+    const result = await ensureCoreTables(process.env.DATABASE_URL);
+    if (result.success) {
+      console.log(`✅ All ${result.existingTables.length} core database tables verified`);
+    } else if (result.missingCritical.length > 0) {
+      console.error('❌ CRITICAL: Missing tables:', result.missingCritical.join(', '));
+      console.error('   Run: npm run db:push to sync schema');
+    } else if (result.errors.length > 0) {
+      console.error('⚠️ Table verification errors:', result.errors);
+    }
+  } catch (err: any) {
+    console.error('⚠️ Core table verification failed:', err.message);
+  }
+}
 
 // Simple storage client for now - in production this would be cloud storage
 const storageClient = {
@@ -654,7 +661,10 @@ app.post('/api/device-projects', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'state must be a JSON object' });
     }
 
-    const client_workspace_id = Number(bodyWsId || 1);
+    const client_workspace_id = Number(bodyWsId);
+    if (!client_workspace_id) {
+      return res.status(400).json({ error: 'clientWorkspaceId is required' });
+    }
 
     const [row] = await db
       .insert(projects)
@@ -2695,11 +2705,14 @@ app.get('/api/audit/events', async (req: Request, res: Response) => {
 app.post('/api/audit/events', async (req: Request, res: Response) => {
   try {
     const body = req.body || {};
+    if (!body.organizationId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
     const result = await pool.query(
       `INSERT INTO audit_events (organization_id, event_type, entity_type, entity_id, user_id, user_name, user_role, ip_address, timestamp, reason, metadata, regulatory_significant, gxp_relevant, created_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), $9, $10, $11, $12, NOW()) RETURNING id`,
       [
-        body.organizationId || 1,
+        body.organizationId,
         body.eventType || body.event_type || 'general',
         body.entityType || body.entity_type || 'system',
         body.entityId || body.entity_id || 0,
@@ -2742,7 +2755,7 @@ app.post('/api/audit/events/batch', async (req: Request, res: Response) => {
           `INSERT INTO audit_events (organization_id, event_type, entity_type, entity_id, user_id, user_name, user_role, ip_address, timestamp, reason, metadata, regulatory_significant, gxp_relevant, created_at)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), $9, $10, $11, $12, NOW()) RETURNING id`,
           [
-            evt.organizationId || 1,
+            evt.organizationId,
             evt.eventType || evt.action || 'general',
             evt.entityType || 'document',
             evt.entityId || 0,
@@ -2784,7 +2797,7 @@ app.post('/api/audit/signatures', async (req: Request, res: Response) => {
        signature_status, signed_by, signed_date, signature_meaning, reason, metadata, regulatory_significant, gxp_relevant, created_at)
        VALUES ($1, 'signature.create', $2, $3, $4, $5, $6, NOW(), 'signed', $5, NOW(), $7, $8, $9, true, true, NOW()) RETURNING id`,
       [
-        body.organizationId || 1,
+        body.organizationId,
         body.entityType || 'document',
         body.entityId || 0,
         body.userId || 0,
@@ -3691,7 +3704,10 @@ app.get('/api/510k-workflow/:projectId/stage-data', async (req, res) => {
 
 // GET all 510k workflows
 app.get('/api/510k-workflow', async (req, res) => {
-  const organizationId = req.query.organizationId || req.headers['x-organization-id'] || '1';
+  const organizationId = req.query.organizationId || req.headers['x-organization-id'];
+  if (!organizationId) {
+    return res.status(401).json({ error: 'Organization context required' });
+  }
 
   try {
     // For now, return empty workflows array to avoid database errors
@@ -6155,6 +6171,9 @@ app.post('/api/workflow/progression/create', async (req: Request, res: Response)
 async function startServer() {
   debugLog('Starting server initialization...');
 
+  // Verify database connection before mounting routes
+  await verifyDatabaseConnection();
+
   try {
     const redisReady = await initializeRedisRateLimiter();
     if (redisReady) {
@@ -6811,9 +6830,14 @@ async function startServer() {
       req.tenantContext?.organizationId ||
       req.organizationId ||
       req.user?.organizationId ||
-      req.user?.tenantId ||
-      '1';
-    const orgId: number = parseInt(String(rawOrgId), 10) || 1;
+      req.user?.tenantId;
+    if (!rawOrgId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
+    const orgId: number = parseInt(String(rawOrgId), 10);
+    if (!orgId) {
+      return res.status(401).json({ error: 'Invalid organization ID' });
+    }
     const {
       name,
       type = 'ind',
@@ -6885,9 +6909,14 @@ async function startServer() {
       req.tenantContext?.organizationId ||
       req.organizationId ||
       req.user?.organizationId ||
-      req.user?.tenantId ||
-      '1';
-    const orgId: number = parseInt(String(rawOrgId), 10) || 1;
+      req.user?.tenantId;
+    if (!rawOrgId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
+    const orgId: number = parseInt(String(rawOrgId), 10);
+    if (!orgId) {
+      return res.status(401).json({ error: 'Invalid organization ID' });
+    }
     try {
       const r = await pool.query(
         `SELECT * FROM (SELECT id::text, name, 'ind' AS type, status, updated_at FROM ind_projects WHERE organization_id = $1 UNION ALL SELECT id::text, COALESCE(device_name,'Unnamed') AS name, '510k' AS type, NULL AS status, updated_at FROM fda_510k_projects WHERE organization_id = $1 UNION ALL SELECT id::text, name, 'cer' AS type, status, updated_at FROM cer_projects WHERE organization_id = $1) p ORDER BY updated_at DESC NULLS LAST`,

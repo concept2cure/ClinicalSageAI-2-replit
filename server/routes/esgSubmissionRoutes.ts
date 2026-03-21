@@ -13,8 +13,11 @@ const esgService = new ESGSubmissionService();
 router.post('/api/510k/:projectId/esg/submit', async (req, res) => {
   try {
     const { projectId } = req.params;
-    const userId = parseInt(req.headers['x-user-id'] as string || '1');
-    const organizationId = parseInt(req.headers['x-organization-id'] as string || '1');
+    const userId = parseInt(req.headers['x-user-id'] as string || '');
+    const organizationId = parseInt(req.headers['x-organization-id'] as string || '');
+    if (!organizationId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
 
     // Submit to FDA ESG
     const response = await esgService.submitToFDA(

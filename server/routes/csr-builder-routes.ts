@@ -37,8 +37,14 @@ try {
 function getAuthContext(req: Request) {
   const authUser = (req as Record<string, unknown>).user as Record<string, unknown> | undefined;
   const tenantCtx = (req as Record<string, unknown>).tenantContext as Record<string, unknown> | undefined;
-  const organizationId = Number(tenantCtx?.organizationId || authUser?.organizationId) || 1;
-  const userId = Number(authUser?.id || authUser?.userId) || 1;
+  const organizationId = Number(tenantCtx?.organizationId || authUser?.organizationId);
+  if (!organizationId) {
+    throw new Error('Organization context required');
+  }
+  const userId = Number(authUser?.id || authUser?.userId);
+  if (!userId) {
+    throw new Error('User context required');
+  }
   return { organizationId, userId };
 }
 

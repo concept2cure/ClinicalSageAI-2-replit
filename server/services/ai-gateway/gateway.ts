@@ -971,18 +971,21 @@ export class AIGateway {
     // Mark unhealthy after 3 consecutive failures
     if (health.consecutiveFailures >= 3) {
       health.healthy = false;
+      // Exponential backoff: 60s, 120s, 240s, max 5min
+      const backoffRound = Math.floor(health.consecutiveFailures / 3) - 1;
+      const backoffMs = Math.min(300_000, 60_000 * Math.pow(2, backoffRound));
       console.warn(
-        `[AI Gateway] Provider ${provider} marked unhealthy after ${health.consecutiveFailures} failures`
+        `[AI Gateway] Provider ${provider} marked unhealthy after ${health.consecutiveFailures} failures — recovery in ${backoffMs / 1000}s`
       );
 
-      // Auto-recover after 60 seconds
       setTimeout(() => {
-        if (health.consecutiveFailures >= 3) {
+        // Only recover if no new successes have already reset it
+        if (!health.healthy) {
           health.healthy = true;
           health.consecutiveFailures = 0;
-          console.log(`[AI Gateway] Provider ${provider} auto-recovered`);
+          console.log(`[AI Gateway] Provider ${provider} auto-recovered after ${backoffMs / 1000}s backoff`);
         }
-      }, 60000);
+      }, backoffMs);
     }
   }
 

@@ -36,8 +36,14 @@ router.use(requireAdminRole);
 
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const organizationId = Number(req.tenantId) || 1;
-    const userId = Number(req.userId) || 1;
+    const organizationId = Number(req.tenantId);
+    if (!organizationId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
+    const userId = Number(req.userId);
+    if (!userId) {
+      return res.status(401).json({ error: 'User context required' });
+    }
     const { name, scopes, expiresAt, rateLimit, metadata } = req.body;
 
     // Validate required fields
@@ -107,7 +113,10 @@ router.post('/', async (req: Request, res: Response) => {
 
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const organizationId = Number(req.tenantId) || 1;
+    const organizationId = Number(req.tenantId);
+    if (!organizationId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
     const keys = await listApiKeys(organizationId);
 
     return res.json({
@@ -127,7 +136,10 @@ router.get('/', async (req: Request, res: Response) => {
 
 router.delete('/:id', async (req: Request, res: Response) => {
   try {
-    const organizationId = Number(req.tenantId) || 1;
+    const organizationId = Number(req.tenantId);
+    if (!organizationId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
     const keyId = parseInt(req.params.id, 10);
 
     if (isNaN(keyId)) {
@@ -156,7 +168,10 @@ router.delete('/:id', async (req: Request, res: Response) => {
 
 router.get('/:id/usage', async (req: Request, res: Response) => {
   try {
-    const organizationId = Number(req.tenantId) || 1;
+    const organizationId = Number(req.tenantId);
+    if (!organizationId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
     const keyId = parseInt(req.params.id, 10);
 
     if (isNaN(keyId)) {

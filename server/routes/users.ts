@@ -148,7 +148,7 @@ router.get('/me', async (req: Request, res: Response) => {
       preferences: userData.preferences || {},
       roles: ['user'],
       permissions: [],
-      organizationId: decoded.organizationId || '2',
+      organizationId: decoded.organizationId,
       organizationName: orgName,
       mfaEnabled: userData.mfaEnabled || false,
       mfaMethods: [],
@@ -371,8 +371,8 @@ router.get('/:id(\\d+)', async (req: Request, res: Response) => {
     const userData = user[0];
 
     // Tenant isolation: only return user if they belong to the same org
-    const requestorOrgId = decoded.organizationId || '2';
-    const targetOrgId = userData.organizationId?.toString() || '2';
+    const requestorOrgId = decoded.organizationId;
+    const targetOrgId = userData.organizationId?.toString();
     if (requestorOrgId !== targetOrgId) {
       return res.status(404).json({
         error: { code: 'USER_NOT_FOUND', message: 'User not found' },

@@ -227,6 +227,9 @@ router.patch('/settings', async (req: Request, res: Response) => {
 router.post('/upload-logo', async (req: Request, res: Response) => {
   const { organizationId, logoBase64, fileName } = req.body;
   const orgId = Number(organizationId);
+  if (!orgId) {
+    return res.status(401).json({ error: 'Organization context required' });
+  }
 
   if (!logoBase64) {
     return res.status(400).json({ error: 'logoBase64 is required' });
@@ -277,6 +280,9 @@ router.get('/logo/:orgId', (req: Request, res: Response) => {
 router.post('/upload-letterhead', async (req: Request, res: Response) => {
   const { organizationId, letterheadBase64, fileName } = req.body;
   const orgId = Number(organizationId);
+  if (!orgId) {
+    return res.status(401).json({ error: 'Organization context required' });
+  }
 
   if (!letterheadBase64) {
     return res.status(400).json({ error: 'letterheadBase64 is required' });
@@ -303,6 +309,9 @@ router.post('/upload-letterhead', async (req: Request, res: Response) => {
 // List all custom templates for the organization.
 router.get('/templates', (req: Request, res: Response) => {
   const orgId = Number(req.query.organizationId);
+  if (!orgId) {
+    return res.status(401).json({ error: 'Organization context required' });
+  }
   const category = req.query.category as string | undefined;
   let templates = templateStore.get(orgId) || [];
 
@@ -318,6 +327,9 @@ router.get('/templates', (req: Request, res: Response) => {
 router.get('/templates/:id', (req: Request, res: Response) => {
   const templateId = parseInt(req.params.id, 10);
   const orgId = Number(req.query.organizationId);
+  if (!orgId) {
+    return res.status(401).json({ error: 'Organization context required' });
+  }
   const templates = templateStore.get(orgId) || [];
   const template = templates.find(t => t.id === templateId);
 
@@ -346,6 +358,9 @@ router.post('/templates', async (req: Request, res: Response) => {
   }
 
   const orgId = Number(organizationId);
+  if (!orgId) {
+    return res.status(401).json({ error: 'Organization context required' });
+  }
   const template: ClientTemplate = {
     id: nextTemplateId++,
     organizationId: orgId,
@@ -385,6 +400,9 @@ router.post('/templates', async (req: Request, res: Response) => {
 router.patch('/templates/:id', async (req: Request, res: Response) => {
   const templateId = parseInt(req.params.id, 10);
   const orgId = Number(req.body.organizationId);
+  if (!orgId) {
+    return res.status(401).json({ error: 'Organization context required' });
+  }
   const templates = templateStore.get(orgId) || [];
   const template = templates.find(t => t.id === templateId);
 
@@ -415,6 +433,9 @@ router.patch('/templates/:id', async (req: Request, res: Response) => {
 router.delete('/templates/:id', async (req: Request, res: Response) => {
   const templateId = parseInt(req.params.id, 10);
   const orgId = Number(req.query.organizationId);
+  if (!orgId) {
+    return res.status(401).json({ error: 'Organization context required' });
+  }
   const templates = templateStore.get(orgId) || [];
   const template = templates.find(t => t.id === templateId);
 
@@ -439,6 +460,9 @@ router.delete('/templates/:id', async (req: Request, res: Response) => {
 router.post('/render-template/:id', (req: Request, res: Response) => {
   const templateId = parseInt(req.params.id, 10);
   const orgId = Number(req.body.organizationId);
+  if (!orgId) {
+    return res.status(401).json({ error: 'Organization context required' });
+  }
   const values = req.body.values || {};
 
   const templates = templateStore.get(orgId) || [];
