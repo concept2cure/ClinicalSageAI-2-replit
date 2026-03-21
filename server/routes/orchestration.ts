@@ -134,11 +134,17 @@ router.get('/templates', (_req: Request, res: Response) => {
 // ---------------------------------------------------------------------------
 
 router.get('/executions/:id', (req: Request, res: Response) => {
-  const execution = getWorkflowExecution(req.params.id);
-  if (!execution) {
-    return res.status(404).json({ error: 'Workflow execution not found' });
+  try {
+    const orgId = getOrganizationId(req);
+    const execution = getWorkflowExecution(req.params.id);
+    if (!execution || execution.organizationId !== orgId) {
+      return res.status(404).json({ error: 'Workflow execution not found' });
+    }
+    res.json(execution);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Failed to fetch execution';
+    res.status(500).json({ error: message });
   }
-  res.json(execution);
 });
 
 // ---------------------------------------------------------------------------
@@ -187,13 +193,14 @@ router.post('/readiness', async (req: Request, res: Response) => {
     const orgId = getOrganizationId(req);
     const body = req.body as ReadinessRequest;
 
-    if (!body.projectId) {
-      return res.status(400).json({ error: 'projectId is required' });
+    const projectId = typeof body.projectId === 'number' ? body.projectId : parseInt(String(body.projectId), 10);
+    if (!Number.isInteger(projectId) || projectId <= 0) {
+      return res.status(400).json({ error: 'projectId must be a positive integer' });
     }
 
     const payload = await assembleCrossObjectPayload({
       organizationId: orgId,
-      projectId: body.projectId,
+      projectId,
       module: body.module,
     });
 
@@ -215,13 +222,14 @@ router.post('/recommendations', async (req: Request, res: Response) => {
     const orgId = getOrganizationId(req);
     const body = req.body as RecommendationRequest;
 
-    if (!body.projectId) {
-      return res.status(400).json({ error: 'projectId is required' });
+    const projectId = typeof body.projectId === 'number' ? body.projectId : parseInt(String(body.projectId), 10);
+    if (!Number.isInteger(projectId) || projectId <= 0) {
+      return res.status(400).json({ error: 'projectId must be a positive integer' });
     }
 
     const payload = await assembleCrossObjectPayload({
       organizationId: orgId,
-      projectId: body.projectId,
+      projectId,
       module: body.module,
     });
 
@@ -243,11 +251,12 @@ router.post('/continuity', async (req: Request, res: Response) => {
     const orgId = getOrganizationId(req);
     const body = req.body as ContinuityRequest;
 
-    if (!body.projectId) {
-      return res.status(400).json({ error: 'projectId is required' });
+    const projectId = typeof body.projectId === 'number' ? body.projectId : parseInt(String(body.projectId), 10);
+    if (!Number.isInteger(projectId) || projectId <= 0) {
+      return res.status(400).json({ error: 'projectId must be a positive integer' });
     }
 
-    const snapshot = await generateContinuitySnapshot(orgId, body.projectId);
+    const snapshot = await generateContinuitySnapshot(orgId, projectId);
     res.json(snapshot);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Continuity snapshot failed';

@@ -23,7 +23,9 @@ import { generateRecommendations } from './recommendation-engine';
 import type {
   ProjectContinuitySnapshot,
   ContinuityChange,
+  CrossObjectReasoningPayload,
   ReadinessBlocker,
+  ReadinessAssessment,
   Recommendation,
 } from '../../../shared/types/orchestration';
 
@@ -197,8 +199,8 @@ async function detectChanges(
         });
       }
     }
-  } catch {
-    // Fail silently — continuity is best-effort
+  } catch (err) {
+    console.warn('[Continuity] Change detection failed:', err instanceof Error ? err.message : err);
   }
 
   return changes.slice(0, 20); // Cap at 20 changes
@@ -220,7 +222,7 @@ function determineTrajectory(
 }
 
 function identifyNewlyReady(
-  payload: any,
+  payload: CrossObjectReasoningPayload,
   previousSnapshot?: ProjectContinuitySnapshot
 ): Array<{ type: string; id: number; title: string }> {
   if (!previousSnapshot) return [];
@@ -245,7 +247,7 @@ function identifyNewlyReady(
 }
 
 function identifyNeedsAttention(
-  readiness: any
+  readiness: ReadinessAssessment
 ): Array<{ type: string; id: number; title: string; reason: string }> {
   const items: Array<{ type: string; id: number; title: string; reason: string }> = [];
 
@@ -262,8 +264,8 @@ function identifyNeedsAttention(
 }
 
 function buildSummary(
-  payload: any,
-  readiness: any,
+  payload: CrossObjectReasoningPayload,
+  readiness: ReadinessAssessment,
   changes: ContinuityChange[],
   trajectory: string
 ): string {

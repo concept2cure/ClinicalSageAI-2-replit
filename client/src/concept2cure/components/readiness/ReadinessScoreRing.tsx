@@ -33,7 +33,7 @@ export function ReadinessScoreRing({
   const color = STATUS_COLORS[status] || STATUS_COLORS.not_started;
 
   return (
-    <div className="flex flex-col items-center gap-1">
+    <div className="relative flex flex-col items-center gap-1">
       <svg width={size} height={size} className="transform -rotate-90">
         <circle
           cx={size / 2}

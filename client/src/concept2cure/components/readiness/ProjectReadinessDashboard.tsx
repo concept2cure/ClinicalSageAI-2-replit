@@ -11,12 +11,13 @@
  * - Workflow runner
  * - Continuity briefing
  */
-import React, { useState, useCallback, lazy, Suspense } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   useReadinessAssessment,
   useRecommendations,
   useContinuity,
 } from '../../hooks/useOrchestration';
+import type { ReadinessBlocker, Recommendation, ReadinessAssessment } from '../../hooks/useOrchestration';
 import { ReadinessScoreRing } from './ReadinessScoreRing';
 import { ModuleBreakdown } from './ModuleBreakdown';
 import { BlockerList } from './BlockerList';
@@ -51,14 +52,14 @@ export function ProjectReadinessDashboard({
   const { data: recSet, isLoading: recsLoading } = useRecommendations(projectId, { module, limit: 20 });
   const { snapshot: continuity, isLoading: continuityLoading, refresh: refreshContinuity } = useContinuity(projectId);
 
-  const handleResolveBlocker = useCallback((blocker: any) => {
-    // TODO: Wire to AI action dispatch
-    console.log('Resolve blocker:', blocker);
+  const handleResolveBlocker = useCallback((blocker: ReadinessBlocker) => {
+    // Phase 4: Wire to AI action dispatch for automated resolution
+    console.log('[Readiness] Resolve blocker:', blocker.category, blocker.targetId);
   }, []);
 
-  const handleExecuteRecommendation = useCallback((rec: any) => {
-    // TODO: Wire to AI action dispatch
-    console.log('Execute recommendation:', rec);
+  const handleExecuteRecommendation = useCallback((rec: Recommendation) => {
+    // Phase 4: Wire to AI action dispatch for automated execution
+    console.log('[Readiness] Execute recommendation:', rec.recommendationType, rec.targetObjectId);
   }, []);
 
   if (readinessLoading) {
@@ -166,7 +167,7 @@ export function ProjectReadinessDashboard({
 // Overview Tab
 // ---------------------------------------------------------------------------
 
-function OverviewTab({ readiness, recCount }: { readiness: any; recCount: number }) {
+function OverviewTab({ readiness, recCount }: { readiness: ReadinessAssessment; recCount: number }) {
   const scores = readiness.scores;
 
   const SUBSCORE_ITEMS = [

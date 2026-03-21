@@ -33,7 +33,7 @@ export function WorkflowRunner({ projectId, module, onComplete }: WorkflowRunner
     const result = await execute({
       templateId: selectedTemplate,
       projectId,
-      module: module as any,
+      module,
     });
     if (result && onComplete) {
       onComplete(result);

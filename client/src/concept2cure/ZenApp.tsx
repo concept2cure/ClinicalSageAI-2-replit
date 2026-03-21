@@ -2247,7 +2247,7 @@ export const ZenApp: React.FC = () => {
                     {activeShellDashboard === 'haq-manager' && <EmbeddedHAQManagerDashboard />}
                     {activeShellDashboard === 'ind-autodraft' && <EmbeddedINDAutoDraftDashboard />}
                     {activeShellDashboard === 'clinical-operations' && <EmbeddedClinicalOperationsDashboard />}
-                    {activeShellDashboard === 'readiness' && <EmbeddedReadinessDashboard projectId={selectedProjectId ?? 1} projectName={selectedProject?.name} />}
+                    {activeShellDashboard === 'readiness' && activeProjectId && <EmbeddedReadinessDashboard projectId={parseInt(activeProjectId, 10) || 1} projectName={activeProject?.name} />}
                   </Suspense>
                 </ErrorBoundary>
               </div>

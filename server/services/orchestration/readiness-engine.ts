@@ -253,7 +253,7 @@ function computeDocumentInventory(
       type: d.type,
       status: d.status,
       module: d.module,
-      isDrafted: d.status !== 'draft' || true,
+      isDrafted: d.status !== 'draft',
       isValidated: !!val,
       isRouted: d.isRouted,
       isApproved: d.status === 'approved' || d.status === 'published',

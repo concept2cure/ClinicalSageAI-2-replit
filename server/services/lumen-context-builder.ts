@@ -726,9 +726,9 @@ ${moduleIntel.workflowStages.map((s, i) => `${i + 1}. **${s.name}** (${s.estimat
   // Inject readiness and recommendation context when project is active
   if (context.project?.id && organizationId) {
     try {
-      const { assembleCrossObjectPayload } = await import('./orchestration/cross-object-resolver.js');
-      const { computeReadinessAssessment } = await import('./orchestration/readiness-engine.js');
-      const { generateRecommendations } = await import('./orchestration/recommendation-engine.js');
+      const { assembleCrossObjectPayload } = await import('./orchestration/cross-object-resolver');
+      const { computeReadinessAssessment } = await import('./orchestration/readiness-engine');
+      const { generateRecommendations } = await import('./orchestration/recommendation-engine');
 
       const payload = await assembleCrossObjectPayload({
         organizationId,
@@ -749,8 +749,9 @@ ${recSet.recommendations.slice(0, 5).map((r, i) => `${i + 1}. [${r.severity.toUp
 
 When the user asks about readiness, blockers, gaps, or what to do next, reference this data.
 You can suggest running orchestration workflows: submission_readiness_review, draft_validate_route, project_blocker_scan.`);
-    } catch {
+    } catch (err) {
       // Non-blocking — readiness intelligence is best-effort
+      console.warn('[Lumen] Phase 3 readiness intelligence unavailable:', err instanceof Error ? err.message : err);
     }
   }
 

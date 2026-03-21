@@ -139,7 +139,8 @@ async function resolveProjectSnapshot(
       blockedTasks: 0,
       overdueTasks: 0,
     };
-  } catch {
+  } catch (err) {
+    console.warn('[Cross-Object Resolver] Failed to resolve project snapshot:', err instanceof Error ? err.message : err);
     return {
       id: projectId,
       name: 'Project',
@@ -184,7 +185,8 @@ async function resolveDocuments(
       isRouted: !!(a as any).ctdSection,
       routedTo: (a as any).ctdSection,
     }));
-  } catch {
+  } catch (err) {
+    console.warn('[Cross-Object Resolver] Resolver query failed:', err instanceof Error ? err.message : err);
     return [];
   }
 }
@@ -218,7 +220,8 @@ async function resolveArtifacts(
       ctdSection: (a as any).ctdSection,
       lastModified: a.updatedAt?.toISOString(),
     }));
-  } catch {
+  } catch (err) {
+    console.warn('[Cross-Object Resolver] Resolver query failed:', err instanceof Error ? err.message : err);
     return [];
   }
 }
@@ -263,7 +266,8 @@ async function resolveValidations(
           findings,
         };
       });
-  } catch {
+  } catch (err) {
+    console.warn('[Cross-Object Resolver] Resolver query failed:', err instanceof Error ? err.message : err);
     return [];
   }
 }
@@ -297,7 +301,8 @@ async function resolveTasks(
       isBlocked: (log.newValue as any)?.status === 'blocked',
       isOverdue: false,
     }));
-  } catch {
+  } catch (err) {
+    console.warn('[Cross-Object Resolver] Resolver query failed:', err instanceof Error ? err.message : err);
     return [];
   }
 }
@@ -357,7 +362,8 @@ async function resolveModulePlacements(
     }
 
     return result;
-  } catch {
+  } catch (err) {
+    console.warn('[Cross-Object Resolver] Resolver query failed:', err instanceof Error ? err.message : err);
     return [];
   }
 }
@@ -400,7 +406,8 @@ async function resolveRecentActions(
           userId: log.userId ?? 0,
         };
       });
-  } catch {
+  } catch (err) {
+    console.warn('[Cross-Object Resolver] Resolver query failed:', err instanceof Error ? err.message : err);
     return [];
   }
 }
@@ -436,7 +443,8 @@ async function resolveEvidence(
         linkedDocumentId: nv?.documentId,
       };
     });
-  } catch {
+  } catch (err) {
+    console.warn('[Cross-Object Resolver] Resolver query failed:', err instanceof Error ? err.message : err);
     return [];
   }
 }

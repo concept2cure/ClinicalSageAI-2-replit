@@ -27,6 +27,7 @@ import type {
   WorkflowResult,
   WorkflowBlocker,
   WorkflowAuditEntry,
+  CrossObjectReasoningPayload,
 } from '../../../shared/types/orchestration';
 import type { AIActionRequest, AIActionResponse } from '../../../shared/types/ai-actions';
 
@@ -250,7 +251,7 @@ export async function executeWorkflow(
   execution.totalDurationMs = Date.now() - new Date(execution.startedAt).getTime();
 
   // Aggregate results
-  execution.result = aggregateResults(execution, stepResults, allBlockers, crossObjectPayload);
+  execution.result = await aggregateResults(execution, stepResults, allBlockers, crossObjectPayload);
 
   addAuditEntry(
     execution,
@@ -273,7 +274,7 @@ export async function executeWorkflow(
 async function executeOrchestratorStep(
   stepId: string,
   request: WorkflowExecutionRequest,
-  crossObjectPayload: any,
+  crossObjectPayload: CrossObjectReasoningPayload,
   previousResults: Record<string, unknown>[],
   blockers: WorkflowBlocker[]
 ): Promise<Record<string, unknown>> {
@@ -416,12 +417,12 @@ async function executeOrchestratorStep(
 // Result Aggregation
 // ---------------------------------------------------------------------------
 
-function aggregateResults(
+async function aggregateResults(
   execution: WorkflowExecution,
   stepResults: Record<string, unknown>[],
   blockers: WorkflowBlocker[],
-  crossObjectPayload: any
-): WorkflowResult {
+  crossObjectPayload: CrossObjectReasoningPayload
+): Promise<WorkflowResult> {
   const completedSteps = execution.steps.filter((s) => s.status === 'completed').length;
   const failedSteps = execution.steps.filter((s) => s.status === 'failed').length;
 
@@ -460,8 +461,8 @@ function aggregateResults(
     }
   }
 
-  // Generate recommendations
-  const { generateRecommendations: genRecs } = require('./recommendation-engine');
+  // Generate recommendations (dynamic import to avoid circular deps in ESM)
+  const { generateRecommendations: genRecs } = await import('./recommendation-engine');
   const recSet = genRecs(crossObjectPayload, { projectId: execution.projectId, limit: 10 });
 
   return {

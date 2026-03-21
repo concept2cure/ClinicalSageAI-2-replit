@@ -28,6 +28,7 @@ import type {
   RecommendationRequest,
 } from '../../../shared/types/orchestration';
 import type { AIActionType } from '../../../shared/types/ai-actions';
+import type { WorkflowTemplateId } from '../../../shared/types/orchestration';
 
 // ---------------------------------------------------------------------------
 // Configuration
@@ -393,7 +394,7 @@ function deriveNextBestAction(
       evidence: ['All analyzers returned no critical or high findings'],
       suggestedAction: 'Run submission readiness review workflow',
       actionPayload: {
-        actionType: 'submission_readiness_review' as unknown as AIActionType,
+        actionType: 'submission_readiness_review' as WorkflowTemplateId,
         payload: { projectId: payload.scope.projectId },
       },
       confidence: 0.7,
@@ -433,7 +434,7 @@ interface MakeRecommendationParams {
   evidence: string[];
   suggestedAction: string;
   actionPayload?: {
-    actionType: AIActionType;
+    actionType: AIActionType | WorkflowTemplateId;
     payload: Record<string, unknown>;
   };
   confidence: number;
