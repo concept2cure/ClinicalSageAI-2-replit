@@ -15,6 +15,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { toast } from '@/hooks/use-toast';
 import {
   Select,
   SelectContent,
@@ -331,15 +332,15 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
       });
 
       if (response.ok) {
-        alert('Draft saved successfully!');
+        toast({ title: 'Draft Saved', description: 'Policy draft saved successfully' });
         setEditMode(false);
         loadVersions(activeRegion);
       } else {
         const error = await response.json();
-        alert(`Validation failed: ${error.details?.[0] || error.error}`);
+        toast({ title: 'Validation Failed', description: error.details?.[0] || error.error, variant: 'destructive' });
       }
     } catch (error: any) {
-      alert(`Error: ${error.message}`);
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -355,12 +356,12 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
       });
 
       if (response.ok) {
-        alert(`Version ${version} activated!`);
+        toast({ title: 'Version Activated', description: `Version ${version} is now active` });
         loadPolicy(activeRegion);
         loadVersions(activeRegion);
       }
     } catch (error) {
-      alert('Failed to activate version');
+      toast({ title: 'Error', description: 'Failed to activate version', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -436,9 +437,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
   const applyAiRecommendation = async (recommendation: AIRecommendation) => {
     setLoading(true);
     setTimeout(() => {
-      alert(
-        `Applied AI recommendation: ${recommendation.title}. Policy will be updated and deployed across all integrated systems.`
-      );
+      toast({ title: 'Recommendation Applied', description: `${recommendation.title} — policy will be updated and deployed across all integrated systems` });
       setLoading(false);
     }, 1000);
   };

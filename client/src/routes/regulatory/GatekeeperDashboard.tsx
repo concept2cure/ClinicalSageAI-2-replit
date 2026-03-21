@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Shield,
@@ -90,9 +91,8 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
 
       // Copy to clipboard
       navigator.clipboard.writeText(digest.message);
-      alert('Slack digest copied to clipboard!');
+      toast({ title: 'Copied', description: 'Slack digest copied to clipboard' });
     } catch (error) {
-      console.error('Failed to generate digest:', error);
     }
   };
 
