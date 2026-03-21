@@ -152,6 +152,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onClose,
   const [projectName, setProjectName] = useState('');
   const [projectDescription, setProjectDescription] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   const selectedTypeOption = submissionTypes.find(t => t.type === selectedType);
 
@@ -166,12 +167,14 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onClose,
     if (!selectedType || !projectName.trim()) return;
 
     setIsCreating(true);
+    setCreateError(null);
     try {
       const project = await createProject(projectName.trim(), selectedType, projectDescription.trim() || undefined);
       setCreatedProject({ id: project.id, type: selectedType });
       setStep('success' as any);
     } catch (error) {
-      console.error('Failed to create project:', error);
+      const message = error instanceof Error ? error.message : 'Failed to create project. Please try again.';
+      setCreateError(message);
     } finally {
       setIsCreating(false);
     }
@@ -190,6 +193,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onClose,
     setProjectName('');
     setProjectDescription('');
     setCreatedProject(null);
+    setCreateError(null);
     onClose();
   };
 
@@ -359,6 +363,11 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onClose,
               <Button variant="outline" onClick={handleBack}>
                 Back
               </Button>
+              {createError && (
+                <div role="alert" className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                  {createError}
+                </div>
+              )}
               <Button onClick={handleCreate} disabled={!projectName.trim() || isCreating}>
                 {isCreating ? (
                   <>

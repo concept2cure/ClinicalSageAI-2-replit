@@ -153,6 +153,8 @@ const ProfileSection: React.FC = () => {
     }
   }, []);
 
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle');
+
   const handleSave = () => {
     const normalizeList = (value: string) =>
       value
@@ -168,6 +170,8 @@ const ProfileSection: React.FC = () => {
     };
 
     localStorage.setItem('concept2cure_user_profile', JSON.stringify(profile));
+    setSaveStatus('saved');
+    setTimeout(() => setSaveStatus('idle'), 2000);
   };
 
   return (
@@ -249,9 +253,13 @@ const ProfileSection: React.FC = () => {
 
       <button
         onClick={handleSave}
-        className="mt-6 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors duration-150"
+        className={`mt-6 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-150 ${
+          saveStatus === 'saved'
+            ? 'bg-emerald-600 text-white'
+            : 'bg-blue-600 text-white hover:bg-blue-700'
+        }`}
       >
-        Save Changes
+        {saveStatus === 'saved' ? 'Saved' : 'Save Changes'}
       </button>
     </div>
   );

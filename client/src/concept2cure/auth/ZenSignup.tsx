@@ -316,7 +316,8 @@ export const ZenSignup: React.FC = () => {
 
       setStep('submitted');
     } catch (error) {
-      console.error('Signup error:', error);
+      const message = error instanceof Error ? error.message : 'Something went wrong. Please try again.';
+      setErrors({ submit: message });
     } finally {
       setIsLoading(false);
     }
@@ -701,6 +702,11 @@ export const ZenSignup: React.FC = () => {
         </label>
       </div>
 
+      {errors.submit && (
+        <div role="alert" className="mt-2 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
+          {errors.submit}
+        </div>
+      )}
       <button
         onClick={handleSubmit}
         disabled={isLoading}
