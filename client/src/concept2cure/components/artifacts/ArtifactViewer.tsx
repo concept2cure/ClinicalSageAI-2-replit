@@ -15,6 +15,7 @@
 
 import React, { useState, useCallback, useRef } from 'react';
 import { cn } from '@/lib/utils';
+import { LIFECYCLE, toLifecycleStage } from '../ui/enterprise';
 import {
   X,
   Maximize2,
@@ -105,20 +106,18 @@ interface ArtifactViewerProps {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const StatusBadge: React.FC<{ status: ArtifactStatus }> = ({ status }) => {
-  const config = {
-    draft: { bg: 'bg-zinc-100', text: 'text-zinc-600', icon: Edit3 },
-    review: { bg: 'bg-amber-100', text: 'text-amber-700', icon: Eye },
-    approved: { bg: 'bg-emerald-100', text: 'text-emerald-700', icon: CheckCircle },
-    published: { bg: 'bg-blue-100', text: 'text-blue-700', icon: Check },
-    archived: { bg: 'bg-zinc-100', text: 'text-zinc-500', icon: Clock },
+  // Icons per status (visual only — colors come from canonical lifecycle)
+  const ICONS: Record<string, React.ElementType> = {
+    draft: Edit3, review: Eye, approved: CheckCircle, published: Check, archived: Clock,
   };
-
-  const { bg, text, icon: Icon } = config[status];
+  const Icon = ICONS[status] ?? Edit3;
+  const stage = toLifecycleStage(status);
+  const lc = LIFECYCLE[stage];
 
   return (
-    <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium', bg, text)}>
+    <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium', lc.bg, lc.text)}>
       <Icon className="w-3 h-3" />
-      {status.charAt(0).toUpperCase() + status.slice(1)}
+      {lc.label}
     </span>
   );
 };

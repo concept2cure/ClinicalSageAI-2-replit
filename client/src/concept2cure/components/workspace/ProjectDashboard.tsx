@@ -59,24 +59,27 @@ interface ProjectDashboardProps {
   onOpenTemplates?: () => void;
 }
 
-// ── Status helpers ───────────────────────────────────────────────────────────
+// ── Status helpers (canonical lifecycle) ─────────────────────────────────────
 
+import { LIFECYCLE, toLifecycleStage, type ArtifactLifecycleStage } from '../ui/enterprise';
+
+/** Dashboard pipeline statuses — simplified view of canonical lifecycle */
 type PipelineStatus = 'draft' | 'review' | 'approved' | 'locked';
 
 function normalizeStatus(raw?: string): PipelineStatus {
   if (!raw) return 'draft';
-  const s = raw.toLowerCase().trim();
-  if (s === 'in_review' || s === 'in review' || s === 'review' || s === 'pending_review') return 'review';
-  if (s === 'approved' || s === 'final') return 'approved';
-  if (s === 'locked' || s === 'published') return 'locked';
-  return 'draft';
+  const stage = toLifecycleStage(raw);
+  if (stage === 'not_started' || stage === 'draft') return 'draft';
+  if (stage === 'in_review') return 'review';
+  if (stage === 'approved') return 'approved';
+  return 'locked'; // published, superseded, archived
 }
 
 const STATUS_CONFIG: Record<PipelineStatus, { label: string; color: string; bg: string; dot: string; border: string }> = {
-  draft:    { label: 'Draft',      color: 'text-amber-700',   bg: 'bg-amber-50',    dot: 'bg-amber-500',   border: 'border-amber-200' },
-  review:   { label: 'In Review',  color: 'text-blue-700',    bg: 'bg-blue-50',     dot: 'bg-blue-500',    border: 'border-blue-200' },
-  approved: { label: 'Approved',   color: 'text-green-700',   bg: 'bg-green-50',    dot: 'bg-green-500',   border: 'border-green-200' },
-  locked:   { label: 'Published',  color: 'text-emerald-800', bg: 'bg-emerald-50',  dot: 'bg-emerald-600', border: 'border-emerald-200' },
+  draft:    { label: LIFECYCLE.draft.label,     color: LIFECYCLE.draft.text,     bg: LIFECYCLE.draft.bg,     dot: LIFECYCLE.draft.dot,     border: LIFECYCLE.draft.border },
+  review:   { label: LIFECYCLE.in_review.label,  color: LIFECYCLE.in_review.text,  bg: LIFECYCLE.in_review.bg,  dot: LIFECYCLE.in_review.dot,  border: LIFECYCLE.in_review.border },
+  approved: { label: LIFECYCLE.approved.label,   color: LIFECYCLE.approved.text,   bg: LIFECYCLE.approved.bg,   dot: LIFECYCLE.approved.dot,   border: LIFECYCLE.approved.border },
+  locked:   { label: LIFECYCLE.published.label,  color: LIFECYCLE.published.text,  bg: LIFECYCLE.published.bg,  dot: LIFECYCLE.published.dot,  border: LIFECYCLE.published.border },
 };
 
 // ── CTD Module metadata ──────────────────────────────────────────────────────

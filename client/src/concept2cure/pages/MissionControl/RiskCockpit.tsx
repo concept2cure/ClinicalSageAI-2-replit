@@ -203,9 +203,15 @@ export const RiskCockpit: React.FC<RiskCockpitProps> = ({ programId }) => {
             </div>
             {risks.length === 0 ? (
               <div className="p-12 text-center">
-                <Shield className="w-10 h-10 text-zinc-200 mx-auto mb-3" />
-                <p className="text-sm text-zinc-500">No risks registered</p>
-                <p className="text-xs text-zinc-400 mt-1">Add risks to track regulatory, clinical, and operational concerns.</p>
+                <Shield className="w-10 h-10 text-zinc-300 mx-auto mb-3" />
+                <p className="text-sm font-medium text-zinc-700">No risks registered</p>
+                <p className="text-xs text-zinc-500 mt-1">Track regulatory, clinical, and operational concerns.</p>
+                <button
+                  onClick={() => setShowAddRisk(true)}
+                  className="mt-4 px-4 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors duration-150"
+                >
+                  Add Your First Risk
+                </button>
               </div>
             ) : (
               <div className="divide-y">

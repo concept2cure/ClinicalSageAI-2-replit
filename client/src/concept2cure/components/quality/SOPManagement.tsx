@@ -14,6 +14,7 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
+import { LIFECYCLE, toLifecycleStage } from '../ui/enterprise';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -163,13 +164,14 @@ const CATEGORIES: { value: SOPCategory; label: string }[] = [
   { value: 'guideline', label: 'Guideline' },
 ];
 
+// Colors from canonical lifecycle — SOP-specific labels preserved
 const STATUS_CONFIG: Record<SOPStatus, { label: string; color: string; icon: React.ElementType }> = {
-  draft: { label: 'Draft', color: 'bg-zinc-100 text-zinc-700', icon: Edit },
-  review: { label: 'Under Review', color: 'bg-amber-100 text-amber-700', icon: Clock },
-  approved: { label: 'Approved', color: 'bg-blue-100 text-blue-700', icon: CheckCircle2 },
-  effective: { label: 'Effective', color: 'bg-green-100 text-green-700', icon: FileCheck },
-  superseded: { label: 'Superseded', color: 'bg-purple-100 text-purple-700', icon: History },
-  retired: { label: 'Retired', color: 'bg-red-100 text-red-700', icon: Archive },
+  draft:      { label: 'Draft',         color: `${LIFECYCLE.draft.bg} ${LIFECYCLE.draft.text}`,             icon: Edit },
+  review:     { label: 'Under Review',  color: `${LIFECYCLE.in_review.bg} ${LIFECYCLE.in_review.text}`,    icon: Clock },
+  approved:   { label: 'Approved',      color: `${LIFECYCLE.approved.bg} ${LIFECYCLE.approved.text}`,      icon: CheckCircle2 },
+  effective:  { label: 'Effective',     color: `${LIFECYCLE.published.bg} ${LIFECYCLE.published.text}`,    icon: FileCheck },
+  superseded: { label: 'Superseded',    color: `${LIFECYCLE.superseded.bg} ${LIFECYCLE.superseded.text}`,  icon: History },
+  retired:    { label: 'Retired',       color: `${LIFECYCLE.archived.bg} ${LIFECYCLE.archived.text}`,      icon: Archive },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

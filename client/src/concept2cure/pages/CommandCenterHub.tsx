@@ -256,9 +256,9 @@ function DashboardView({ programs, riskSignals, summary, isLoading }: {
           <SectionLabel>Active Programs</SectionLabel>
           {programs.length === 0 ? (
             <Card className="py-12 text-center">
-              <Package className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
-              <p className="text-sm text-zinc-500">No programs yet</p>
-              <p className="text-xs text-zinc-400 mt-1">Create projects to see your active regulatory programs here.</p>
+              <Package className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+              <p className="text-sm font-medium text-zinc-700">No programs yet</p>
+              <p className="text-xs text-zinc-500 mt-1">Create a project from the sidebar to see active regulatory programs here.</p>
             </Card>
           ) : (
             <Card className="p-0 divide-y divide-zinc-50">
@@ -294,9 +294,9 @@ function DashboardView({ programs, riskSignals, summary, isLoading }: {
           <SectionLabel>Risk Signals</SectionLabel>
           {riskSignals.length === 0 ? (
             <Card className="py-12 text-center">
-              <CheckCircle2 className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
-              <p className="text-sm text-zinc-500">No risk signals</p>
-              <p className="text-xs text-zinc-400 mt-1">Pending reviews and risks will appear here.</p>
+              <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
+              <p className="text-sm font-medium text-zinc-700">No active risk signals</p>
+              <p className="text-xs text-zinc-500 mt-1">When reviews are pending or risks are flagged, they'll appear here.</p>
             </Card>
           ) : (
             <div className="space-y-2">

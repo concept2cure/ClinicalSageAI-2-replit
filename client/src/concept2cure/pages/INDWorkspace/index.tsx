@@ -44,6 +44,7 @@ import {
 } from 'lucide-react';
 import { useModules, useEctdCompile, useEctdStatus } from '../../hooks/useModules';
 import type { CompilationResult } from '../../hooks/useModules';
+import { LIFECYCLE } from '../../components/ui/enterprise';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -534,20 +535,16 @@ function moduleProgress(mod: CTDSection): number {
   return Math.round((done / leaves.length) * 100);
 }
 
+// Colors from canonical lifecycle — icons are domain-specific
 const STATUS_CONFIG: Record<
   SectionStatus,
   { icon: typeof CheckCircle2; color: string; bg: string; label: string }
 > = {
-  not_started: { icon: Circle, color: 'text-zinc-400', bg: 'bg-zinc-100', label: 'Not Started' },
-  drafting: { icon: Clock, color: 'text-violet-500', bg: 'bg-violet-50', label: 'Drafting' },
-  review: { icon: AlertTriangle, color: 'text-amber-500', bg: 'bg-amber-50', label: 'In Review' },
-  approved: {
-    icon: CheckCircle2,
-    color: 'text-emerald-500',
-    bg: 'bg-emerald-50',
-    label: 'Approved',
-  },
-  locked: { icon: CheckCircle2, color: 'text-emerald-700', bg: 'bg-emerald-100', label: 'Locked' },
+  not_started: { icon: Circle, color: LIFECYCLE.not_started.text, bg: LIFECYCLE.not_started.bg, label: LIFECYCLE.not_started.label },
+  drafting: { icon: Clock, color: LIFECYCLE.draft.text, bg: LIFECYCLE.draft.bg, label: 'Drafting' },
+  review: { icon: AlertTriangle, color: LIFECYCLE.in_review.text, bg: LIFECYCLE.in_review.bg, label: LIFECYCLE.in_review.label },
+  approved: { icon: CheckCircle2, color: LIFECYCLE.approved.text, bg: LIFECYCLE.approved.bg, label: LIFECYCLE.approved.label },
+  locked: { icon: CheckCircle2, color: LIFECYCLE.published.text, bg: LIFECYCLE.published.bg, label: 'Locked' },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════

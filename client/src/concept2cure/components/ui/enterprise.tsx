@@ -908,5 +908,232 @@ export function TabBar({ tabs, activeTab, onTabChange, className }: TabBarProps)
   );
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// CANONICAL ARTIFACT LIFECYCLE
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// ONE lifecycle. ONE color map. Used EVERYWHERE.
+//
+// Domain-specific extensions (SOP effective/retired, 510k RTA_HOLD, etc.)
+// map INTO these canonical stages — they don't replace them.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/** The universal artifact lifecycle stages */
+export type ArtifactLifecycleStage =
+  | 'not_started'
+  | 'draft'
+  | 'in_review'
+  | 'approved'
+  | 'published'
+  | 'superseded'
+  | 'archived';
+
+/** Visual config for each lifecycle stage */
+export interface LifecycleStageConfig {
+  label: string;
+  variant: StatusVariant;
+  bg: string;
+  text: string;
+  dot: string;
+  border: string;
+  /** Sort order for consistent ordering */
+  order: number;
+}
+
+export const LIFECYCLE: Record<ArtifactLifecycleStage, LifecycleStageConfig> = {
+  not_started: {
+    label: 'Not Started',
+    variant: 'default',
+    bg: 'bg-zinc-50',
+    text: 'text-zinc-600',
+    dot: 'bg-zinc-400',
+    border: 'border-zinc-200',
+    order: 0,
+  },
+  draft: {
+    label: 'Draft',
+    variant: 'warning',
+    bg: 'bg-amber-50',
+    text: 'text-amber-700',
+    dot: 'bg-amber-500',
+    border: 'border-amber-200',
+    order: 1,
+  },
+  in_review: {
+    label: 'In Review',
+    variant: 'info',
+    bg: 'bg-blue-50',
+    text: 'text-blue-700',
+    dot: 'bg-blue-500',
+    border: 'border-blue-200',
+    order: 2,
+  },
+  approved: {
+    label: 'Approved',
+    variant: 'success',
+    bg: 'bg-emerald-50',
+    text: 'text-emerald-700',
+    dot: 'bg-emerald-500',
+    border: 'border-emerald-200',
+    order: 3,
+  },
+  published: {
+    label: 'Published',
+    variant: 'success',
+    bg: 'bg-emerald-50',
+    text: 'text-emerald-800',
+    dot: 'bg-emerald-600',
+    border: 'border-emerald-300',
+    order: 4,
+  },
+  superseded: {
+    label: 'Superseded',
+    variant: 'purple',
+    bg: 'bg-purple-50',
+    text: 'text-purple-700',
+    dot: 'bg-purple-500',
+    border: 'border-purple-200',
+    order: 5,
+  },
+  archived: {
+    label: 'Archived',
+    variant: 'default',
+    bg: 'bg-zinc-50',
+    text: 'text-zinc-500',
+    dot: 'bg-zinc-400',
+    border: 'border-zinc-200',
+    order: 6,
+  },
+};
+
+/**
+ * Map any domain-specific status string to the canonical lifecycle stage.
+ * Handles hyphens, underscores, uppercase, and domain-specific values.
+ */
+export function toLifecycleStage(status: string): ArtifactLifecycleStage {
+  const s = status.toLowerCase().replace(/-/g, '_');
+  // Direct matches
+  if (s in LIFECYCLE) return s as ArtifactLifecycleStage;
+  // Domain-specific mappings
+  const MAP: Record<string, ArtifactLifecycleStage> = {
+    // Authoring/IND stages
+    drafting: 'draft',
+    first_draft: 'draft',
+    outline: 'draft',
+    not_started: 'not_started',
+    // Review variants
+    review: 'in_review',
+    in_review: 'in_review',
+    internal_review: 'in_review',
+    cross_functional_review: 'in_review',
+    sme_review: 'in_review',
+    qa_compliance_review: 'in_review',
+    sponsor_review: 'in_review',
+    author_self_check: 'in_review',
+    internal_functional_review: 'in_review',
+    under_review: 'in_review',
+    pending_approval: 'in_review',
+    sponsor_approval_pending: 'in_review',
+    revision: 'in_review',
+    changes_requested: 'in_review',
+    final_qc: 'in_review',
+    final_approval: 'in_review',
+    qc: 'in_review',
+    // Approval variants
+    approved: 'approved',
+    locked: 'approved',
+    effective: 'approved',
+    ready: 'approved',
+    final: 'approved',
+    ready_for_submission: 'approved',
+    // Published variants
+    published: 'published',
+    publishing_prep: 'published',
+    submitted: 'published',
+    // Terminal variants
+    superseded: 'superseded',
+    retired: 'superseded',
+    reopened: 'draft',
+    // Archived
+    archived: 'archived',
+  };
+  return MAP[s] ?? 'not_started';
+}
+
+/**
+ * Get the StatusPill variant for any domain-specific status string.
+ */
+export function lifecycleVariant(status: string): StatusVariant {
+  return LIFECYCLE[toLifecycleStage(status)].variant;
+}
+
+/**
+ * Get the display label for any domain-specific status string.
+ */
+export function lifecycleLabel(status: string): string {
+  return LIFECYCLE[toLifecycleStage(status)].label;
+}
+
+/**
+ * Render a StatusPill for any artifact status.
+ * Drop-in replacement for ad-hoc status badges across the app.
+ */
+export function LifecyclePill({ status, dot, className }: {
+  status: string;
+  dot?: boolean;
+  className?: string;
+}) {
+  const stage = toLifecycleStage(status);
+  const config = LIFECYCLE[stage];
+  return (
+    <StatusPill
+      label={config.label}
+      variant={config.variant}
+      dot={dot}
+      className={className}
+    />
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// LOADING STATE — accessible, consistent loading indicator
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface LoadingStateProps {
+  /** What is loading — shown to screen readers and as visible text */
+  label?: string;
+  /** Compact: inline spinner. Full: centered section with text. */
+  size?: 'compact' | 'section' | 'page';
+  className?: string;
+}
+
+export function LoadingState({ label = 'Loading', size = 'section', className }: LoadingStateProps) {
+  if (size === 'compact') {
+    return (
+      <span role="status" className={cn('inline-flex items-center gap-2 text-xs text-zinc-500', className)}>
+        <span className="w-3.5 h-3.5 rounded-full border-2 border-zinc-200 border-t-zinc-500 animate-spin" />
+        <span>{label}</span>
+      </span>
+    );
+  }
+
+  if (size === 'page') {
+    return (
+      <div role="status" className={cn('flex-1 flex flex-col items-center justify-center bg-white gap-3 min-h-[300px]', className)}>
+        <div className="w-6 h-6 rounded-full border-2 border-zinc-200 border-t-zinc-500 animate-spin" />
+        <span className="text-sm text-zinc-500">{label}</span>
+      </div>
+    );
+  }
+
+  // section (default)
+  return (
+    <div role="status" className={cn('flex flex-col items-center justify-center py-12 gap-3', className)}>
+      <div className="w-5 h-5 rounded-full border-2 border-zinc-200 border-t-zinc-500 animate-spin" />
+      <span className="text-sm text-zinc-500">{label}</span>
+    </div>
+  );
+}
+
 // Re-export for convenience
 export { cn };

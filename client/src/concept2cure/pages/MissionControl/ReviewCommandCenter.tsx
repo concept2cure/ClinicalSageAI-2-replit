@@ -163,8 +163,9 @@ export const ReviewCommandCenter: React.FC<ReviewCommandCenterProps> = ({
           <div className="divide-y">
             {reviewableArtifacts.length === 0 && (
               <div className="p-6 text-center">
-                <CheckCircle2 className="w-8 h-8 text-emerald-300 mx-auto mb-2" />
-                <p className="text-xs text-zinc-500">No artifacts pending review</p>
+                <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
+                <p className="text-sm font-medium text-zinc-700">All clear</p>
+                <p className="text-xs text-zinc-500 mt-1">No artifacts pending review. Check the Dossier View for submission readiness.</p>
               </div>
             )}
             {reviewableArtifacts.map((artifact: any) => {

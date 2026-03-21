@@ -19,13 +19,15 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { LIFECYCLE, toLifecycleStage } from '../ui/enterprise';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
-type LifecycleStage = 'draft' | 'in_review' | 'approved' | 'published';
+/** The 4 visible timeline stages (subset of canonical lifecycle) */
+type TimelineStage = 'draft' | 'in_review' | 'approved' | 'published';
 
 interface StageInfo {
-  stage: LifecycleStage;
+  stage: TimelineStage;
   label: string;
   icon: React.ElementType;
   color: string;
@@ -35,7 +37,7 @@ interface StageInfo {
 }
 
 interface StatusEvent {
-  stage: LifecycleStage;
+  stage: TimelineStage;
   timestamp?: string;
   actor?: string;
   note?: string;
@@ -49,62 +51,66 @@ interface DocumentStatusTimelineProps {
   author?: string;
   /** History of status transitions */
   statusHistory?: StatusEvent[];
-  onChangeStatus?: (newStatus: LifecycleStage) => void;
+  onChangeStatus?: (newStatus: TimelineStage) => void;
   compact?: boolean;
 }
 
 // ── Stage definitions ───────────────────────────────────────────────────────
 
+// Colors derived from canonical LIFECYCLE — single source of truth
 const STAGES: StageInfo[] = [
   {
     stage: 'draft',
-    label: 'Draft',
+    label: LIFECYCLE.draft.label,
     icon: PenLine,
     color: 'text-zinc-400',
-    activeColor: 'text-amber-600',
-    activeBg: 'bg-amber-50 border-amber-200',
-    completedColor: 'text-emerald-500',
+    activeColor: LIFECYCLE.draft.text,
+    activeBg: `${LIFECYCLE.draft.bg} ${LIFECYCLE.draft.border}`,
+    completedColor: LIFECYCLE.approved.text,
   },
   {
     stage: 'in_review',
-    label: 'In Review',
+    label: LIFECYCLE.in_review.label,
     icon: Eye,
     color: 'text-zinc-400',
-    activeColor: 'text-blue-600',
-    activeBg: 'bg-blue-50 border-blue-200',
-    completedColor: 'text-emerald-500',
+    activeColor: LIFECYCLE.in_review.text,
+    activeBg: `${LIFECYCLE.in_review.bg} ${LIFECYCLE.in_review.border}`,
+    completedColor: LIFECYCLE.approved.text,
   },
   {
     stage: 'approved',
-    label: 'Approved',
+    label: LIFECYCLE.approved.label,
     icon: CheckCircle,
     color: 'text-zinc-400',
-    activeColor: 'text-green-600',
-    activeBg: 'bg-green-50 border-green-200',
-    completedColor: 'text-emerald-500',
+    activeColor: LIFECYCLE.approved.text,
+    activeBg: `${LIFECYCLE.approved.bg} ${LIFECYCLE.approved.border}`,
+    completedColor: LIFECYCLE.approved.text,
   },
   {
     stage: 'published',
-    label: 'Published',
+    label: LIFECYCLE.published.label,
     icon: Lock,
     color: 'text-zinc-400',
-    activeColor: 'text-emerald-700',
-    activeBg: 'bg-emerald-50 border-emerald-200',
-    completedColor: 'text-emerald-500',
+    activeColor: LIFECYCLE.published.text,
+    activeBg: `${LIFECYCLE.published.bg} ${LIFECYCLE.published.border}`,
+    completedColor: LIFECYCLE.approved.text,
   },
 ];
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
-function normalizeStatus(raw: string): LifecycleStage {
-  const s = raw.toLowerCase().trim();
-  if (s === 'in_review' || s === 'in review' || s === 'review' || s === 'pending_review') return 'in_review';
-  if (s === 'approved' || s === 'final') return 'approved';
-  if (s === 'locked' || s === 'published') return 'published';
-  return 'draft';
+/** Map any status string to a timeline-visible stage via canonical lifecycle */
+function normalizeStatus(raw: string): TimelineStage {
+  const canonical = toLifecycleStage(raw);
+  // Map canonical stages to the 4 visible timeline stages
+  if (canonical === 'not_started' || canonical === 'draft') return 'draft';
+  if (canonical === 'in_review') return 'in_review';
+  if (canonical === 'approved') return 'approved';
+  // published, superseded, archived all show as "published" in the timeline
+  return 'published';
 }
 
-function stageIndex(stage: LifecycleStage): number {
+function stageIndex(stage: TimelineStage): number {
   return STAGES.findIndex(s => s.stage === stage);
 }
 

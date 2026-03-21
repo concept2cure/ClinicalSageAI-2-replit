@@ -8,6 +8,7 @@
 
 import React, { useState, useMemo, lazy, Suspense } from 'react';
 import { cn } from '@/lib/utils';
+import { LIFECYCLE, toLifecycleStage } from '../../components/ui/enterprise';
 
 const SnowGlobeDossierNodeSummary = lazy(() => import('../SnowGlobe/SnowGlobeDossierNodeSummary'));
 import {
@@ -35,14 +36,15 @@ interface DossierViewProps {
   onDraftWithAI?: (artifactId: number, title: string) => void;
 }
 
+// Colors from canonical lifecycle — domain icons preserved
 const LIFECYCLE_COLORS: Record<string, { bg: string; text: string; icon: typeof Clock }> = {
-  planned: { bg: 'bg-zinc-100', text: 'text-zinc-600', icon: Clock },
-  drafting: { bg: 'bg-amber-100', text: 'text-amber-700', icon: Pencil },
-  'in-review': { bg: 'bg-blue-100', text: 'text-blue-700', icon: Eye },
-  'revision-needed': { bg: 'bg-orange-100', text: 'text-orange-700', icon: AlertTriangle },
-  approved: { bg: 'bg-emerald-100', text: 'text-emerald-700', icon: CheckCircle2 },
-  locked: { bg: 'bg-violet-100', text: 'text-violet-700', icon: Lock },
-  exported: { bg: 'bg-teal-100', text: 'text-teal-700', icon: ExternalLink },
+  planned:           { bg: LIFECYCLE.not_started.bg, text: LIFECYCLE.not_started.text, icon: Clock },
+  drafting:          { bg: LIFECYCLE.draft.bg,       text: LIFECYCLE.draft.text,       icon: Pencil },
+  'in-review':       { bg: LIFECYCLE.in_review.bg,   text: LIFECYCLE.in_review.text,   icon: Eye },
+  'revision-needed': { bg: LIFECYCLE.in_review.bg,   text: LIFECYCLE.in_review.text,   icon: AlertTriangle },
+  approved:          { bg: LIFECYCLE.approved.bg,     text: LIFECYCLE.approved.text,    icon: CheckCircle2 },
+  locked:            { bg: LIFECYCLE.published.bg,    text: LIFECYCLE.published.text,   icon: Lock },
+  exported:          { bg: LIFECYCLE.published.bg,    text: LIFECYCLE.published.text,   icon: ExternalLink },
 };
 
 // Standard eCTD/CTD module structure
