@@ -32,3 +32,14 @@ export { CommentMark } from './extensions/CommentMark';
 export { SearchAndReplace } from './extensions/SearchAndReplace';
 export { GlossaryTooltip } from './extensions/GlossaryTooltip';
 export { CitationPlugin, CitationMark, CitationSearchPanel } from './extensions/CitationPlugin';
+
+// Document control
+export { DocumentWatermark, WatermarkSettings, getWatermarkForStatus } from './DocumentWatermark';
+export type { DocumentWatermarkProps, WatermarkSettingsProps } from './DocumentWatermark';
+
+// Collaboration
+export { CollaborationPresence, CollaborationCursors } from './CollaborationPresence';
+
+// E-Signatures (21 CFR Part 11)
+export { SignatureWorkflow, SignatureList } from './SignatureWorkflow';
+export type { SignatureWorkflowProps, SignatureListProps } from './SignatureWorkflow';

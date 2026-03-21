@@ -65,6 +65,11 @@ import type { CommentThread } from './extensions/CommentMark';
 import { useComments } from '../../hooks/useComments';
 import { recordDocumentAccess } from '../../hooks/useRecentDocuments';
 import { ReviewerAssignment } from './ReviewerAssignment';
+import { CollaborationPresence, CollaborationCursors } from './CollaborationPresence';
+import { DocumentWatermark } from './DocumentWatermark';
+import { useDocumentCollaboration } from '../../hooks/useDocumentCollaboration';
+import { SignatureWorkflow, SignatureList } from './SignatureWorkflow';
+import { SubmissionReadinessValidator } from '../submission/SubmissionReadinessValidator';
 import { getCurrentUser } from '../../utils/getCurrentUser';
 
 // ── Auth helper (same pattern as useProjects) ────────────────────────────────
@@ -152,6 +157,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
   const [activeArtifact, setActiveArtifact] = useState<Artifact | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // ── Real-time collaboration ────────────────────────────────────────────
+  const currentUser = getCurrentUser();
+  const collaboration = useDocumentCollaboration(activeArtifact?.id || null);
   const [, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle');
   const [aiLoading, setAiLoading] = useState(false);
@@ -173,7 +182,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const claimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Single secondary inspector panel (only one open at a time) ────────
-  type InspectorPanel = 'intelligence' | 'provenance' | 'compare' | 'audit' | 'dataroom' | 'inconsistency' | 'health' | 'versions' | 'batch-ai' | 'crossref' | 'comments' | 'review' | 'reviewers';
+  type InspectorPanel = 'intelligence' | 'provenance' | 'compare' | 'audit' | 'dataroom' | 'inconsistency' | 'health' | 'versions' | 'batch-ai' | 'crossref' | 'comments' | 'review' | 'reviewers' | 'submission-readiness';
   const [activeInspector, setActiveInspector] = useState<InspectorPanel | null>(null);
   const toggleInspector = useCallback((panel: InspectorPanel) => {
     setActiveInspector(prev => (prev === panel ? null : panel));
@@ -187,6 +196,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   // ── Sign/Approve state ────────────────────────────────────────────────
   const [signing, setSigning] = useState(false);
   const [signResult, setSignResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [showSignatureDialog, setShowSignatureDialog] = useState(false);
 
   // ── Status change state ───────────────────────────────────────────────
   const [changingStatus, setChangingStatus] = useState(false);
@@ -1529,6 +1539,16 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           </span>
         )}
 
+        {/* Live collaboration presence */}
+        {activeArtifact && (
+          <CollaborationPresence
+            isConnected={collaboration.isConnected}
+            collaborators={collaboration.collaborators}
+            typingUsers={collaboration.typingUsers}
+            currentUserId={currentUser.id}
+          />
+        )}
+
         {/* Trust indicators strip — clickable pills */}
         {activeArtifact && (
           <div className="flex items-center gap-1.5 ml-3">
@@ -1645,18 +1665,18 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   Markdown (.md)
                 </button>
                 <div className="border-t border-zinc-200 my-1" />
-                {/* Sign */}
+                {/* Sign — opens Part 11 compliant dialog */}
                 <button
                   role="menuitem"
                   onClick={() => {
-                    handleSignApprove();
+                    setShowSignatureDialog(true);
                     setOverflowOpen(false);
                   }}
-                  disabled={signing || !activeArtifact}
+                  disabled={!activeArtifact}
                   className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 disabled:opacity-60 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
                 >
                   <PenTool className="w-3 h-3 text-zinc-400" />
-                  Sign & Approve
+                  Sign & Approve (Part 11)
                 </button>
                 {/* Status change — forward transitions only; regressions use lock overlay / GovernedDocumentPanel */}
                 {activeArtifact?.status !== 'locked' && (
@@ -1761,6 +1781,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           <div className="flex items-center gap-0.5">
             <button data-testid="ribbon-provenance" onClick={() => toggleInspector('provenance')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'provenance' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><ShieldCheck className="w-3.5 h-3.5" />Provenance</button>
             <button data-testid="ribbon-audit" onClick={() => toggleInspector('audit')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'audit' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><ClipboardList className="w-3.5 h-3.5" />Audit Trail</button>
+            <button data-testid="ribbon-submission" onClick={() => toggleInspector('submission-readiness')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'submission-readiness' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Shield className="w-3.5 h-3.5" />Submission</button>
           </div>
           <span className="text-[9px] font-medium uppercase tracking-widest text-zinc-400 mt-0.5">Audit</span>
         </div>
@@ -2062,6 +2083,16 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               </div>
             </div>
           )}
+          {/* Document watermark overlay (DRAFT, UNDER REVIEW, etc.) */}
+          <DocumentWatermark
+            status={activeArtifact?.status || 'draft'}
+            enabled={activeArtifact?.status !== 'approved'}
+          />
+          {/* Live collaboration cursors */}
+          <CollaborationCursors
+            cursors={collaboration.cursors}
+            currentUserId={currentUser.id}
+          />
           {/* Guided empty state for new/blank documents */}
           {activeArtifact && (!activeArtifact.content || activeArtifact.content.replace(/<[^>]*>/g, '').trim().length < 10) && activeArtifact.status !== 'locked' && (
             <div className="absolute inset-x-0 top-0 z-10 flex items-start justify-center pt-20 pointer-events-none">
@@ -2136,6 +2167,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               onContentChange?.(html, activeArtifact?.title || '');
               triggerAutoSave(html);
               computeTrackedChanges(html);
+              // Broadcast collaboration typing
+              collaboration.emitTypingStart();
+              collaboration.setPresence('editing');
             }}
           />
         </div>
@@ -2439,6 +2473,31 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             />
           </div>
         )}
+        {/* Submission Readiness Validator Panel */}
+        {activeInspector === 'submission-readiness' && projectId && (
+          <div className="w-96 shrink-0 border-l border-zinc-200 h-full transition-all duration-200">
+            <SubmissionReadinessValidator
+              projectId={projectId}
+              submissionType={submissionType}
+              artifacts={artifacts.map(a => ({
+                id: a.id,
+                title: a.title,
+                status: a.status,
+                ctdSection: a.ctdSection,
+                content: a.content,
+                type: a.type,
+              }))}
+              onNavigateToArtifact={(artifactId) => {
+                const target = artifacts.find(a => a.id === artifactId);
+                if (target) {
+                  setActiveArtifact(target);
+                  setActiveInspector(null);
+                }
+              }}
+              onClose={() => setActiveInspector(null)}
+            />
+          </div>
+        )}
       </div>
 
       {/* ── Export Dialog ── */}
@@ -2615,6 +2674,33 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             </div>
           ))}
         </div>
+      )}
+
+      {/* Part 11 Electronic Signature Dialog */}
+      {activeArtifact && (
+        <SignatureWorkflow
+          open={showSignatureDialog}
+          onClose={() => setShowSignatureDialog(false)}
+          documentId={activeArtifact.id}
+          documentTitle={activeArtifact.title}
+          documentVersion={activeArtifact.version}
+          documentContent={activeArtifact.content || ''}
+          documentStatus={activeArtifact.status}
+          onSignatureComplete={(sig) => {
+            setSignatures(prev => [...prev, {
+              signatureId: sig.id,
+              signatureType: sig.meaning,
+              signerName: sig.signerName,
+              signerEmail: '',
+              signerRole: sig.signerTitle,
+              signedAt: sig.signedAt,
+              signatureHash: sig.signatureHash,
+              status: 'valid',
+            }]);
+            pushToast('Electronic signature applied successfully', 'success');
+            loadArtifacts();
+          }}
+        />
       )}
     </div>
   );
