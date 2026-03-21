@@ -43,6 +43,7 @@ import {
   type PrecedentRecord,
   type CompareResult,
 } from '../../hooks/usePrecedentEngine';
+import { AlertFeed } from './AlertFeed';
 
 // ── Props ────────────────────────────────────────────────────────────────────
 export interface RegulatoryIntelligencePanelProps {
@@ -59,7 +60,7 @@ export interface RegulatoryIntelligencePanelProps {
   onCreateDocument?: (content: string, title: string, ctdSection?: string) => void;
 }
 
-type Tab = 'insights' | 'precedents' | 'risk' | 'strategy' | 'evidence';
+type Tab = 'insights' | 'precedents' | 'risk' | 'strategy' | 'evidence' | 'alerts';
 
 const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: 'insights', label: 'Insights', icon: Brain },
@@ -67,6 +68,7 @@ const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: 'risk', label: 'Risk', icon: ShieldAlert },
   { id: 'strategy', label: 'Strategy', icon: Target },
   { id: 'evidence', label: 'Evidence', icon: FileCheck },
+  { id: 'alerts', label: 'Alerts', icon: ShieldAlert },
 ];
 
 // ── Helper: Score Bar ────────────────────────────────────────────────────────
@@ -1100,6 +1102,14 @@ export function RegulatoryIntelligencePanel({
               </div>
             )}
           </div>
+        )}
+
+        {/* ── Alerts tab ──────────────────────────────────────────────────── */}
+        {activeTab === 'alerts' && (
+          <AlertFeed
+            therapeuticArea={therapeuticArea}
+            compact
+          />
         )}
       </div>
     </div>

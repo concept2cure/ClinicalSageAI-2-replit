@@ -35,6 +35,7 @@ import { getCurrentUser } from '../../utils/getCurrentUser';
 import { AIAutocomplete } from './extensions/AIAutocomplete';
 import { GlossaryTooltip } from './extensions/GlossaryTooltip';
 import { CitationMark, CitationPlugin } from './extensions/CitationPlugin';
+import { ComplianceScanner } from './extensions/ComplianceScanner';
 import {
   Bold,
   Italic,
@@ -1113,6 +1114,14 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
       GlossaryTooltip.configure({
         enabled: true,
         customTerms: [],
+      }),
+      ComplianceScanner.configure({
+        enabled: true,
+        delay: 2000,
+        context: {
+          documentType: documentType,
+          submissionType: submissionType,
+        },
       }),
     ],
     content: initialContent,

@@ -32,6 +32,7 @@ export { CommentMark } from './extensions/CommentMark';
 export { SearchAndReplace } from './extensions/SearchAndReplace';
 export { GlossaryTooltip } from './extensions/GlossaryTooltip';
 export { CitationPlugin, CitationMark, CitationSearchPanel } from './extensions/CitationPlugin';
+export { ComplianceScanner } from './extensions/ComplianceScanner';
 
 // Document control
 export { DocumentWatermark, WatermarkSettings, getWatermarkForStatus } from './DocumentWatermark';
