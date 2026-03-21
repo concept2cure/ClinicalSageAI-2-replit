@@ -18,6 +18,8 @@ import { generateUUID } from '../../utils/id-generator';
 import { db } from '../../db';
 import { regulatoryAuditLogs } from '../../../shared/schema';
 import { checkActionPermission } from './shared-utils';
+import { acquireLock } from './distributed-lock';
+import { acquireConcurrencySlot } from './concurrency-limiter';
 import type {
   AIActionType,
   AIActionRequest,
@@ -200,6 +202,15 @@ const DEFAULT_TIMEOUT_MS = 30_000;      // 30s for most actions
 const AI_CALL_TIMEOUT_MS = 120_000;     // 2min for actions that call AI
 const AI_ACTIONS = new Set(['refine_with_validation']);
 
+/** Actions that mutate state and need distributed locking. */
+const WRITE_ACTIONS = new Set([
+  'promote_artifact',
+  'save_document_version',
+  'refine_with_validation',
+  'route_document_to_module',
+  'attach_sources_to_document',
+]);
+
 function getTimeoutMs(actionType: string): number {
   return AI_ACTIONS.has(actionType) ? AI_CALL_TIMEOUT_MS : DEFAULT_TIMEOUT_MS;
 }
@@ -346,25 +357,55 @@ export async function dispatchAction(
     sessionId: options.sessionId,
   };
 
-  // 7. Execute with timeout and retry
+  // 7. Concurrency limit (per-org backpressure)
+  const slot = await acquireConcurrencySlot(options.user.organizationId);
+  if (!slot) {
+    return buildErrorResponse(request, actionId, options, [
+      { code: 'CONCURRENCY_LIMIT', message: 'Too many concurrent actions for your organization. Please retry shortly.' },
+    ]);
+  }
+
+  // 8. Execute with timeout, retry, and distributed lock (for write actions)
   let response: AIActionResponse;
   const timeoutMs = getTimeoutMs(request.actionType);
   try {
-    response = await executeWithRetry(handler, request, executionContext, timeoutMs);
-    recordCircuitSuccess(request.actionType);
-  } catch (err) {
-    recordCircuitFailure(request.actionType);
-    if (err instanceof AIActionHandlerError) {
-      response = buildErrorResponse(request, actionId, options, [
-        { code: err.code, message: err.message, details: err.details },
-      ]);
-    } else {
-      const message = err instanceof Error ? err.message : 'Unknown execution error';
-      console.error(`[AI Actions] Handler error for ${request.actionType}:`, err);
-      response = buildErrorResponse(request, actionId, options, [
-        { code: 'HANDLER_ERROR', message },
+    // Acquire distributed lock for mutation actions that target a specific entity
+    const needsLock = WRITE_ACTIONS.has(request.actionType) && request.targetId;
+    const lockResource = needsLock
+      ? `${request.targetType}:${request.targetId}`
+      : null;
+    const lock = lockResource
+      ? await acquireLock(lockResource, actionId, timeoutMs + 5000)
+      : null;
+
+    if (needsLock && !lock) {
+      slot.release();
+      return buildErrorResponse(request, actionId, options, [
+        { code: 'LOCK_CONTENTION', message: `Another operation is in progress on ${request.targetType} ${request.targetId}. Please retry.` },
       ]);
     }
+
+    try {
+      response = await executeWithRetry(handler, request, executionContext, timeoutMs);
+      recordCircuitSuccess(request.actionType);
+    } catch (err) {
+      recordCircuitFailure(request.actionType);
+      if (err instanceof AIActionHandlerError) {
+        response = buildErrorResponse(request, actionId, options, [
+          { code: err.code, message: err.message, details: err.details },
+        ]);
+      } else {
+        const message = err instanceof Error ? err.message : 'Unknown execution error';
+        console.error(`[AI Actions] Handler error for ${request.actionType}:`, err);
+        response = buildErrorResponse(request, actionId, options, [
+          { code: 'HANDLER_ERROR', message },
+        ]);
+      }
+    } finally {
+      if (lock) await lock.release();
+    }
+  } finally {
+    await slot.release();
   }
 
   // 8. Compute audit data and attach provenance

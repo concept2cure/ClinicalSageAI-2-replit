@@ -177,10 +177,21 @@ async function gracefulShutdown(signal: string) {
     console.error('❌ Error closing Redis rate limiter:', error.message);
   }
 
-  // 4. Cleanup performance resources
+  // 4. Drain AI action queue and close Redis
+  try {
+    const { drainActionQueue, closeAllSSEConnections, closeRedis } = await import('./services/ai-actions/index');
+    closeAllSSEConnections();
+    await drainActionQueue(10_000);
+    await closeRedis();
+    console.log('AI Actions infrastructure shut down');
+  } catch (error: any) {
+    console.error('Error shutting down AI Actions:', error.message);
+  }
+
+  // 5. Cleanup performance resources
   cleanupPerformance();
 
-  // 5. Close database pool
+  // 6. Close database pool
   try {
     if (pool) await pool.end();
     console.log('✅ Database connections closed');
@@ -3358,9 +3369,18 @@ console.log('✅ Concept2Cure API routes mounted successfully');
 // Mount AI Actions unified execution API (Phase 1 — conversational OS spine)
 try {
   // Initialize action registry and handlers BEFORE mounting routes
-  // (handlers must be registered synchronously before any request can be dispatched)
-  await import('./services/ai-actions/index');
+  const aiActions = await import('./services/ai-actions/index');
   console.log('✅ AI Action handlers registered');
+
+  // Initialize HA infrastructure (Redis, queue, SSE broadcaster)
+  const redisOk = await aiActions.initializeRedis();
+  console.log(redisOk ? '✅ AI Actions Redis connected' : '⚠️  AI Actions Redis unavailable (in-memory fallback)');
+
+  const queueOk = await aiActions.initializeActionQueue();
+  console.log(queueOk ? '✅ AI Actions async queue initialized' : '⚠️  AI Actions queue unavailable (sync fallback)');
+
+  aiActions.initializeSSEBroadcaster();
+
   const aiActionsRoutes = (await import('./routes/ai-actions')).default;
   app.use('/api/ai-actions', aiActionsRoutes);
   console.log('✅ AI Actions API routes mounted at /api/ai-actions');

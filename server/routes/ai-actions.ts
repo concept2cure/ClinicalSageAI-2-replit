@@ -17,6 +17,15 @@ import {
   isValidActionType,
   isValidSourceSurface,
 } from '../services/ai-actions';
+import {
+  shouldQueueAction,
+  enqueueAction,
+  getQueuedActionStatus,
+  getQueueMetrics,
+} from '../services/ai-actions/action-queue';
+import { getConcurrencyMetrics } from '../services/ai-actions/concurrency-limiter';
+import { getRedisHealth } from '../services/ai-actions/redis-manager';
+import { handleSSEStream, getSSEConnectionCount } from '../services/ai-actions/sse-stream';
 import type { AIActionRequest, AIActionResponse, AIActionSourceSurface } from '../../shared/types/ai-actions';
 
 const router = Router();
@@ -153,20 +162,44 @@ router.post('/execute', async (req: Request, res: Response) => {
       },
     };
 
-    // 4. Dispatch
-    const response = await dispatchAction(actionRequest, {
+    const dispatchOptions = {
       ipAddress: req.ip || req.socket.remoteAddress || '0.0.0.0',
       sessionId: req.sessionId,
       user: actionRequest.requestedBy!,
-    });
+    };
 
-    // 5. Return with appropriate HTTP status
+    // 4. Route long-running actions to async queue if available
+    const async = body.async === true || shouldQueueAction(actionRequest.actionType);
+    if (async && body.async !== false) {
+      const { jobId, queued, response: syncResponse } = await enqueueAction(actionRequest, dispatchOptions);
+
+      if (!queued && syncResponse) {
+        // Queue unavailable — fell back to sync execution
+        return res.status(syncResponse.success ? 200 : 400).json(syncResponse);
+      }
+
+      return res.status(202).json({
+        success: true,
+        queued: true,
+        jobId,
+        statusUrl: `/api/ai-actions/jobs/${jobId}`,
+        streamUrl: `/api/ai-actions/stream?jobId=${jobId}`,
+        message: `Action '${actionRequest.actionType}' enqueued for async processing`,
+      });
+    }
+
+    // 5. Synchronous dispatch
+    const response = await dispatchAction(actionRequest, dispatchOptions);
+
+    // 6. Return with appropriate HTTP status
     const httpStatus = response.success
       ? 200
       : response.errors.some(e => e.code === 'UNKNOWN_ACTION') ? 404
       : response.errors.some(e => e.code === 'PERMISSION_DENIED') ? 403
       : response.errors.some(e => e.code === 'CIRCUIT_OPEN') ? 503
       : response.errors.some(e => e.code === 'ACTION_TIMEOUT') ? 504
+      : response.errors.some(e => e.code === 'CONCURRENCY_LIMIT') ? 429
+      : response.errors.some(e => e.code === 'LOCK_CONTENTION') ? 409
       : 400;
     return res.status(httpStatus).json(response);
   } catch (err: any) {
@@ -200,29 +233,74 @@ router.get('/types', (req: Request, res: Response) => {
 });
 
 // ---------------------------------------------------------------------------
-// GET /api/ai-actions/health — Health check + metrics
+// GET /api/ai-actions/jobs/:jobId — Poll async job status
 // ---------------------------------------------------------------------------
 
-router.get('/health', (_req: Request, res: Response) => {
-  const metrics = getActionMetrics();
-  const avgLatency = metrics.totalExecutions > 0
-    ? Math.round(metrics.totalDurationMs / metrics.totalExecutions)
+router.get('/jobs/:jobId', async (req: Request, res: Response) => {
+  try {
+    getUserId(req);
+  } catch {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  const result = await getQueuedActionStatus(req.params.jobId);
+  const httpStatus = result.status === 'completed' ? 200
+    : result.status === 'failed' ? 422
+    : result.status === 'active' ? 200
+    : 200;
+
+  return res.status(httpStatus).json(result);
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/ai-actions/stream — SSE stream for real-time job updates
+// ---------------------------------------------------------------------------
+
+router.get('/stream', handleSSEStream);
+
+// ---------------------------------------------------------------------------
+// GET /api/ai-actions/health — Deep health check + metrics
+// ---------------------------------------------------------------------------
+
+router.get('/health', async (_req: Request, res: Response) => {
+  const [dispatchMetrics, queueMetrics, concurrencyMetrics, redisHealth] = await Promise.all([
+    Promise.resolve(getActionMetrics()),
+    getQueueMetrics(),
+    getConcurrencyMetrics(),
+    getRedisHealth(),
+  ]);
+
+  const avgLatency = dispatchMetrics.totalExecutions > 0
+    ? Math.round(dispatchMetrics.totalDurationMs / dispatchMetrics.totalExecutions)
     : 0;
 
-  return res.json({
-    status: 'healthy',
+  const healthy = true; // Could be derived from dependency checks
+
+  return res.status(healthy ? 200 : 503).json({
+    status: healthy ? 'healthy' : 'degraded',
     registeredActions: getRegisteredActions().length,
-    metrics: {
-      totalExecutions: metrics.totalExecutions,
-      successRate: metrics.totalExecutions > 0
-        ? `${((metrics.successCount / metrics.totalExecutions) * 100).toFixed(1)}%`
+    uptime: process.uptime(),
+    dispatcher: {
+      totalExecutions: dispatchMetrics.totalExecutions,
+      successRate: dispatchMetrics.totalExecutions > 0
+        ? `${((dispatchMetrics.successCount / dispatchMetrics.totalExecutions) * 100).toFixed(1)}%`
         : 'N/A',
       avgLatencyMs: avgLatency,
-      circuitBreakerTrips: metrics.circuitBreakerTrips,
-      idempotentHits: metrics.idempotentHits,
-      timeouts: metrics.timeouts,
-      retries: metrics.retries,
-      byAction: metrics.byAction,
+      circuitBreakerTrips: dispatchMetrics.circuitBreakerTrips,
+      idempotentHits: dispatchMetrics.idempotentHits,
+      timeouts: dispatchMetrics.timeouts,
+      retries: dispatchMetrics.retries,
+      byAction: dispatchMetrics.byAction,
+    },
+    queue: queueMetrics || { status: 'unavailable (no Redis)' },
+    concurrency: concurrencyMetrics,
+    redis: {
+      available: redisHealth.available,
+      latencyMs: redisHealth.latencyMs,
+      ...(redisHealth.info || {}),
+    },
+    sse: {
+      activeConnections: getSSEConnectionCount(),
     },
     timestamp: new Date().toISOString(),
   });
