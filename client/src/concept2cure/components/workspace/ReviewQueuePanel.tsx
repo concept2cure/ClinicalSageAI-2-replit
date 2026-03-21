@@ -196,6 +196,22 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
                       <span className="text-[8px] text-zinc-400 ml-auto shrink-0">
                         {formatTime(t.updatedAt)}
                       </span>
+                      <span className="flex items-center gap-0.5 shrink-0" onClick={e => e.stopPropagation()}>
+                        <InlineAIButton
+                          actionType="summarize_selection"
+                          content={`Thread: ${t.title}. Artifact: ${t.artifactTitle}. Status: ${t.status}. Priority: ${t.priority || 'normal'}. Created by: ${t.createdByName}. Updated: ${t.updatedAt}`}
+                          projectId={t.projectId}
+                          label="Summarize"
+                          size="sm"
+                        />
+                        <InlineAIButton
+                          actionType="create_followup_task"
+                          content={`Thread: ${t.title}. Artifact: ${t.artifactTitle}. Status: ${t.status}. Priority: ${t.priority || 'normal'}. Created by: ${t.createdByName}`}
+                          projectId={t.projectId}
+                          label="Follow-up"
+                          size="sm"
+                        />
+                      </span>
                       <ChevronRight className="w-3 h-3 text-zinc-300 shrink-0" />
                     </div>
                   </button>
@@ -227,6 +243,22 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
                       )}
                       <span className="text-[8px] text-zinc-400 ml-auto shrink-0">
                         {formatTime(t.updatedAt)}
+                      </span>
+                      <span className="flex items-center gap-0.5 shrink-0" onClick={e => e.stopPropagation()}>
+                        <InlineAIButton
+                          actionType="summarize_selection"
+                          content={`Task: ${t.title}. ${t.description || ''} Type: ${t.taskType}. Status: ${t.status}. Artifact: ${t.artifactTitle}. Created by: ${t.createdByName}${t.dueAt ? `. Due: ${t.dueAt}` : ''}`}
+                          projectId={t.projectId}
+                          label="Summarize"
+                          size="sm"
+                        />
+                        <InlineAIButton
+                          actionType="create_followup_task"
+                          content={`Task: ${t.title}. ${t.description || ''} Type: ${t.taskType}. Status: ${t.status}. Artifact: ${t.artifactTitle}. Created by: ${t.createdByName}`}
+                          projectId={t.projectId}
+                          label="Follow-up"
+                          size="sm"
+                        />
                       </span>
                       <ChevronRight className="w-3 h-3 text-zinc-300 shrink-0" />
                     </div>
