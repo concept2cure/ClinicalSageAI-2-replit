@@ -1582,9 +1582,11 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
         </div>
         <button
           onClick={onClose}
-          className="p-0.5 text-zinc-400 hover:text-zinc-600 rounded hover:bg-zinc-100"
+          className="p-1.5 text-zinc-400 hover:text-zinc-600 rounded hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
+          aria-label="Close panel"
+          title="Close"
         >
-          <X className="w-3 h-3" />
+          <X className="w-3.5 h-3.5" />
         </button>
       </div>
       <div className="p-2.5 space-y-2.5 text-xs">

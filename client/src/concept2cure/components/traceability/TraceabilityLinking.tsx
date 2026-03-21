@@ -199,8 +199,9 @@ const SourceDocumentCard: React.FC<SourceDocumentCardProps> = ({
               </code>
               <button
                 onClick={() => navigator.clipboard.writeText(source.hash)}
-                className="p-0.5 hover:bg-zinc-200 rounded"
+                className="p-1.5 hover:bg-zinc-200 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                 title="Copy hash"
+                aria-label="Copy hash"
               >
                 <Copy className="w-3 h-3" />
               </button>

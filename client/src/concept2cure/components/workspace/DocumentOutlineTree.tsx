@@ -338,10 +338,11 @@ function TemplateStructureView({
             {!present && onCreateSubsection && (
               <button
                 onClick={() => onCreateSubsection(item.key, item.label)}
-                className="p-0.5 text-zinc-400 hover:text-violet-600 rounded hover:bg-blue-50 shrink-0"
+                className="p-1.5 text-zinc-400 hover:text-violet-600 rounded hover:bg-blue-50 shrink-0 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                 title={`Create "${item.label}" section`}
+                aria-label={`Create "${item.label}" section`}
               >
-                <Plus className="w-3 h-3" />
+                <Plus className="w-3.5 h-3.5" />
               </button>
             )}
           </div>

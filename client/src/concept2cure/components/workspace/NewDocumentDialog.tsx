@@ -7,7 +7,7 @@
  * 2. Enter details: title, CTD section, document type
  */
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   FileText,
   Plus,
@@ -206,11 +206,21 @@ export function NewDocumentDialog({
     }
   }, [mode, title, ctdSection, selectedTemplate, onCreateBlank, onCreateFromTemplate, onAIGenerate]);
 
+  // Escape key to close dialog
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') handleClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, handleClose]);
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="w-full max-w-2xl rounded-xl bg-white shadow-lg border border-zinc-200 overflow-hidden">
+      <div role="dialog" aria-modal="true" aria-label="Create new document" className="w-full max-w-2xl rounded-xl bg-white shadow-lg border border-zinc-200 overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100">
           <div className="flex items-center gap-3">

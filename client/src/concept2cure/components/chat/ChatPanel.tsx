@@ -338,9 +338,11 @@ const ChatInput: React.FC<ChatInputProps> = ({
                 <span className="truncate max-w-[150px]">{file.name}</span>
                 <button
                   onClick={() => removeAttachment(index)}
-                  className="p-0.5 hover:bg-zinc-200 rounded"
+                  className="p-1.5 hover:bg-zinc-200 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
+                  aria-label="Remove attachment"
+                  title="Remove"
                 >
-                  <X className="h-3 w-3 text-zinc-500" />
+                  <X className="h-3.5 w-3.5 text-zinc-500" />
                 </button>
               </div>
             ))}

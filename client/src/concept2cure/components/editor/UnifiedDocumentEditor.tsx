@@ -628,7 +628,7 @@ const SourceTracerPopover: React.FC<SourceTracerPopoverProps> = ({
           <FileText className="w-4 h-4 text-blue-500" />
           <span className="text-xs font-semibold text-zinc-900">{source.title}</span>
         </div>
-        <button onClick={onClose} aria-label="Close source details" title="Close" className="p-0.5 hover:bg-zinc-100 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none">
+        <button onClick={onClose} aria-label="Close source details" title="Close" className="p-1.5 hover:bg-zinc-100 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none">
           <X className="w-3 h-3 text-zinc-400" />
         </button>
       </div>

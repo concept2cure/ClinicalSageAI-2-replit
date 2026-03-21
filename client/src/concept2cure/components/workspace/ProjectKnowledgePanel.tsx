@@ -289,11 +289,16 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
                         </span>
                       )}
                       <button
-                        onClick={() => removeDocument(doc.id)}
-                        className="flex-shrink-0 opacity-0 group-hover:opacity-100 p-1 rounded text-zinc-400 hover:text-red-500 hover:bg-red-50 transition-all duration-150"
+                        onClick={() => {
+                          if (window.confirm(`Remove "${doc.name}" from project knowledge?`)) {
+                            removeDocument(doc.id);
+                          }
+                        }}
+                        className="flex-shrink-0 opacity-0 group-hover:opacity-100 p-1.5 rounded text-zinc-400 hover:text-red-500 hover:bg-red-50 transition-all duration-150 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                         title="Remove file"
+                        aria-label={`Remove ${doc.name}`}
                       >
-                        <X className="w-3 h-3" />
+                        <X className="w-3.5 h-3.5" />
                       </button>
                     </li>
                   );

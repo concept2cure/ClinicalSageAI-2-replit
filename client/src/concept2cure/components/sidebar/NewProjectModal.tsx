@@ -278,6 +278,9 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onClose,
                 placeholder={`e.g., ${selectedTypeOption.type === '510K' ? 'Glucose Monitor XYZ' : 'Drug Candidate ABC'}`}
                 value={projectName}
                 onChange={e => setProjectName(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && projectName.trim() && !isCreating) handleCreate();
+                }}
                 autoFocus
               />
             </div>

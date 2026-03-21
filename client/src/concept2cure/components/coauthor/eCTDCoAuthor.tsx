@@ -274,7 +274,7 @@ const OutlineTree: React.FC<{
                     e.stopPropagation();
                     setExpanded(prev => ({ ...prev, [section.id]: !isExpanded }));
                   }}
-                  className="p-0.5 hover:bg-zinc-200 rounded"
+                  className="p-1 hover:bg-zinc-200 rounded"
                 >
                   {isExpanded ? (
                     <ChevronDown className="w-3 h-3 text-zinc-400" />

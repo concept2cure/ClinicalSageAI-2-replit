@@ -313,7 +313,7 @@ const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
             e.stopPropagation();
             onToggle();
           }}
-          className="p-0.5 hover:bg-zinc-200 rounded"
+          className="p-1 hover:bg-zinc-200 rounded"
         >
           {isExpanded ? (
             <ChevronDown className="w-4 h-4 text-zinc-500" />

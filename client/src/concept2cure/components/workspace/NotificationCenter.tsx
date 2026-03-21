@@ -302,10 +302,11 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
                           e.stopPropagation();
                           markRead(n.notificationId);
                         }}
-                        className="p-0.5 text-zinc-400 hover:text-blue-600 rounded"
+                        className="p-1.5 text-zinc-400 hover:text-blue-600 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                         title="Mark read"
+                        aria-label="Mark as read"
                       >
-                        <Check className="w-3 h-3" />
+                        <Check className="w-3.5 h-3.5" />
                       </button>
                     )}
                     <button
@@ -313,10 +314,11 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
                         e.stopPropagation();
                         dismiss(n.notificationId);
                       }}
-                      className="p-0.5 text-zinc-400 hover:text-red-500 rounded"
+                      className="p-1.5 text-zinc-400 hover:text-red-500 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                       title="Dismiss"
+                      aria-label="Dismiss notification"
                     >
-                      <X className="w-3 h-3" />
+                      <X className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>

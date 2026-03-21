@@ -460,10 +460,15 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
 
                         {/* Delete */}
                         <button
-                          onClick={() => deleteMemory(memory.id)}
+                          onClick={() => {
+                            if (window.confirm('Delete this memory entry? This cannot be undone.')) {
+                              deleteMemory(memory.id);
+                            }
+                          }}
                           disabled={isDeleting}
                           className="opacity-0 group-hover:opacity-100 rounded-lg p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 transition-all disabled:opacity-60"
                           title="Remove memory"
+                          aria-label="Delete memory entry"
                         >
                           {isDeleting ? (
                             <Loader2 className="h-4 w-4 animate-spin" />

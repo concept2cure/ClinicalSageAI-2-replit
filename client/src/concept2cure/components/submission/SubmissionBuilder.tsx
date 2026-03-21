@@ -275,7 +275,7 @@ function TreeNodeRow({
       >
         {hasChildren ? (
           <button
-            className="p-0.5 hover:bg-slate-100 rounded shrink-0"
+            className="p-1 hover:bg-slate-100 rounded shrink-0"
             onClick={(e) => { e.stopPropagation(); onToggle(node.id); }}
           >
             {isExpanded
