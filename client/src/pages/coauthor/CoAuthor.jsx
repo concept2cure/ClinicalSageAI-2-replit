@@ -1142,7 +1142,7 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
 
           if (ingestResponse.ok) {
             const result = await ingestResponse.json();
-            console.log(`✅ UDI tracking enabled for section ${sectionId}:`, result.udi);
+
             newDocument.udi = result.udi; // Store UDI with document
           }
         } catch (udiError) {
@@ -2146,7 +2146,7 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
   // Use shared data from submission center
   React.useEffect(() => {
     if (sharedData && Object.keys(sharedData).length > 0) {
-      console.log('eCTD Co-Author received shared data:', sharedData);
+
 
       // Update IND data with shared data
       setIndData(prev => ({
@@ -2530,9 +2530,9 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
 
         if (isAuthenticated) {
           setGoogleUserInfo(googleAuthService.getCurrentUser());
-          console.log('User is authenticated with Google');
+
         } else {
-          console.log('User is not authenticated with Google');
+
         }
       } catch (error) {
         console.error('Error checking Google authentication:', error);
@@ -2611,7 +2611,7 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
         setAutoSaveStatus('saving');
         setTimeout(() => {
           setAutoSaveStatus('saved');
-          console.log('Auto-saved document:', selectedDocument.title);
+
         }, 1000);
       }
     }, 30000); // Auto-save every 30 seconds
@@ -2939,7 +2939,7 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
       timestamp: new Date().toISOString(),
       user: authenticatedUser?.display_name || authenticatedUser?.username || 'Unknown User',
     };
-    console.log('Audit trail entry:', auditEntry);
+
 
     toast({
       title: 'Status Updated',
@@ -2969,7 +2969,7 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
       }
 
       setLastSaveTime(new Date());
-      console.log('Document saved to vault');
+
     } catch (error) {
       console.error('Error saving to vault:', error);
     }
@@ -3634,7 +3634,7 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
           return;
         }
       } catch (error) {
-        console.log('Backend API not available, using mock data:', error);
+
       }
 
       // For development, we'll use the registry in the component
@@ -3712,11 +3712,11 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
           setTemplates(processedTemplates);
         } else {
           // If no templates, keep using the mock data
-          console.log('No templates found in API response, using default data');
+
         }
       } else {
         // If API fails, we'll keep using the mock data
-        console.log('Using default template data - API returned:', response.status);
+
       }
     } catch (error) {
       console.error('Error fetching templates:', error);
@@ -3885,11 +3885,11 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
           : `Creating embeddings for document "${metadata.title}" (${metadata.version})...`,
       });
 
-      console.log(`${isUpdate ? 'Updating' : 'Creating'} embeddings for document:`, metadata.title);
+
 
       // Break document into semantic chunks for embedding
       const chunks = chunkDocumentContent(documentContent);
-      console.log(`Document chunked into ${chunks.length} semantic sections`);
+
 
       // Track embedding progress
       let completedEmbeddings = 0;
@@ -4639,22 +4639,12 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
 
         // Store the document ID for future reference
         if (result.documentId) {
-          console.log('Imported document ID:', result.documentId);
+
           // Could navigate to the document or refresh the document list
         }
 
-        // Log component breakdown for debugging
-        if (result.components) {
-          console.log('Component breakdown:', {
-            total: result.components.total,
-            byType: result.components.byType,
-            headings: result.components.headings,
-            paragraphs: result.components.paragraphs,
-            tables: result.components.tables,
-            lists: result.components.lists,
-            figures: result.components.figures,
-          });
-        }
+
+
 
         // Refresh the component list if CCMS is open
         if (window.refreshCCMSComponents) {
@@ -4718,7 +4708,7 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
         description: `${documentContent.title} downloaded successfully`,
       });
 
-      console.log('Word document exported successfully via backend API');
+
     } catch (error) {
       console.error('Error exporting to Word:', error);
       toast({
@@ -4872,7 +4862,7 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
       // Save the PDF
       doc.save(`${documentContent.title.replace(/[^a-z0-9]/gi, '_')}_${new Date().getTime()}.pdf`);
 
-      console.log('PDF document exported successfully');
+
     } catch (error) {
       console.error('Error exporting to PDF:', error);
       toast({
@@ -5025,7 +5015,7 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
         try {
           // Since we're working within a single file, we'll handle the eCTD backbone generation directly
           // In a production environment, this would be a proper backend endpoint
-          console.log('Generating eCTD backbone for region:', exportRegion);
+
 
           // Mock eCTD XML backbone data generation
           const generateEctdBackbone = (metadata, region, module) => {
@@ -8941,7 +8931,7 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                 onResolveComment={handleResolveComment}
                 onMentionUser={userId => {
                   // Handle @mention
-                  console.log('Mentioned user:', userId);
+
                 }}
               />
             )}
@@ -10056,7 +10046,7 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
                               timestamp: new Date().toISOString(),
                             });
 
-                            console.log('Document saved to VAULT:', result);
+
 
                             toast({
                               title: 'Document Saved',
@@ -14817,7 +14807,7 @@ ${templateDetails ? `<h3>Template: ${templateDetails.name}</h3>` : ''}
             onClose={() => setShowImportFromINDDialog(false)}
             targetDocumentId={selectedDocument?.id}
             onImportComplete={result => {
-              console.log('Import completed:', result);
+
               // Refresh the document content
               if (selectedDocument?.id) {
                 queryClient.invalidateQueries([`/api/coauthor/documents/${selectedDocument.id}`]);

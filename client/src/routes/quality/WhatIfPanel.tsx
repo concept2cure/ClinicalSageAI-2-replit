@@ -4,17 +4,16 @@ import { Button } from '@/components/ui/button';
 import InfoTip from '@/components/InfoTip';
 
 export default function WhatIfPanel({ batchId }: { batchId: string }) {
-  const [tests, setTests] = useState<any[]>([]);
-  const [rows, setRows] = useState<
-    { test_id: string; name: string; value?: string; pass?: boolean }[]
-  >([]);
+  interface TestRecord { test_id: string; name: string; value?: string; pass?: boolean }
+  const [tests, setTests] = useState<TestRecord[]>([]);
+  const [rows, setRows] = useState<TestRecord[]>([]);
 
   useEffect(() => {
     (async () => {
       const s = await fetch(`/api/quality/batches/${batchId}/summary`).then(r => r.json());
       setTests(s.tests || []);
       setRows(
-        (s.tests || []).map((t: any) => ({
+        (s.tests || []).map((t: { test_id: string; name: string }) => ({
           test_id: t.test_id,
           name: t.name,
           value: '',
@@ -24,9 +23,9 @@ export default function WhatIfPanel({ batchId }: { batchId: string }) {
     })();
   }, [batchId]);
 
-  function update(i: number, key: 'value' | 'pass', val: any) {
+  function update(i: number, key: 'value' | 'pass', val: string | boolean | undefined) {
     const copy = [...rows];
-    (copy[i] as any)[key] = val;
+    copy[i] = { ...copy[i], [key]: val };
     setRows(copy);
   }
 

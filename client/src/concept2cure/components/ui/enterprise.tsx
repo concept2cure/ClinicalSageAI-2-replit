@@ -27,13 +27,13 @@ import { LucideIcon, ChevronRight } from 'lucide-react';
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface EnterpriseCardProps {
-  children: React.ReactNode;
-  className?: string;
+  readonly children: React.ReactNode;
+  readonly className?: string;
   /** Adds hover shadow + pointer cursor */
-  interactive?: boolean;
+  readonly interactive?: boolean;
   /** Removes padding — useful when child sections handle their own padding */
-  noPadding?: boolean;
-  onClick?: () => void;
+  readonly noPadding?: boolean;
+  readonly onClick?: () => void;
 }
 
 export function EnterpriseCard({
@@ -65,15 +65,15 @@ export function EnterpriseCard({
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface CardHeaderProps {
-  icon?: LucideIcon;
-  iconClassName?: string;
-  title: string;
-  subtitle?: string;
+  readonly icon?: LucideIcon;
+  readonly iconClassName?: string;
+  readonly title: string;
+  readonly subtitle?: string;
   /** Right-side slot for badges, buttons, etc. */
-  actions?: React.ReactNode;
+  readonly actions?: React.ReactNode;
   /** Size variant */
-  size?: 'sm' | 'md' | 'lg';
-  className?: string;
+  readonly size?: 'sm' | 'md' | 'lg';
+  readonly className?: string;
 }
 
 export function CardHeader({
@@ -114,12 +114,12 @@ export function CardHeader({
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface CardSectionProps {
-  children: React.ReactNode;
-  className?: string;
+  readonly children: React.ReactNode;
+  readonly className?: string;
   /** Background tint (default: transparent) */
-  tint?: 'none' | 'muted' | 'accent' | 'success' | 'warning' | 'danger';
+  readonly tint?: 'none' | 'muted' | 'accent' | 'success' | 'warning' | 'danger';
   /** Show top border */
-  border?: boolean;
+  readonly border?: boolean;
 }
 
 const tintMap = {
@@ -149,14 +149,14 @@ export function CardSection({ children, className, tint = 'none', border = true 
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface SectionHeaderProps {
-  title: string;
-  subtitle?: string;
-  icon?: LucideIcon;
-  iconClassName?: string;
-  actions?: React.ReactNode;
-  className?: string;
+  readonly title: string;
+  readonly subtitle?: string;
+  readonly icon?: LucideIcon;
+  readonly iconClassName?: string;
+  readonly actions?: React.ReactNode;
+  readonly className?: string;
   /** Heading level (visual only, always renders as div for flexibility) */
-  level?: 1 | 2 | 3;
+  readonly level?: 1 | 2 | 3;
 }
 
 export function SectionHeader({
@@ -195,10 +195,10 @@ export function SectionHeader({
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface IconBoxProps {
-  icon: LucideIcon;
+  readonly icon: LucideIcon;
   /** Tailwind bg/text classes for theming. Default: bg-blue-100 text-blue-600 */
-  className?: string;
-  size?: 'sm' | 'md' | 'lg';
+  readonly className?: string;
+  readonly size?: 'sm' | 'md' | 'lg';
 }
 
 const iconBoxSizes = {
@@ -227,11 +227,11 @@ export function IconBox({ icon: Icon, className, size = 'md' }: IconBoxProps) {
 type StatusVariant = 'default' | 'info' | 'success' | 'warning' | 'danger' | 'purple' | 'active';
 
 interface StatusPillProps {
-  label: string;
-  variant?: StatusVariant;
-  className?: string;
+  readonly label: string;
+  readonly variant?: StatusVariant;
+  readonly className?: string;
   /** Show a pulsing dot indicator */
-  dot?: boolean;
+  readonly dot?: boolean;
 }
 
 const statusVariants: Record<StatusVariant, string> = {
@@ -276,12 +276,12 @@ type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'success' | 
 type ButtonSize = 'sm' | 'md' | 'lg';
 
 interface EnterpriseButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: ButtonVariant;
-  size?: ButtonSize;
-  icon?: LucideIcon;
-  iconRight?: LucideIcon;
-  loading?: boolean;
-  fullWidth?: boolean;
+  readonly variant?: ButtonVariant;
+  readonly size?: ButtonSize;
+  readonly icon?: LucideIcon;
+  readonly iconRight?: LucideIcon;
+  readonly loading?: boolean;
+  readonly fullWidth?: boolean;
 }
 
 const buttonVariantStyles: Record<ButtonVariant, string> = {
@@ -347,12 +347,12 @@ export function EnterpriseButton({
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface MetricCardProps {
-  label: string;
-  value: string | number;
-  icon?: LucideIcon;
-  iconClassName?: string;
-  change?: { value: string; positive?: boolean };
-  className?: string;
+  readonly label: string;
+  readonly value: string | number;
+  readonly icon?: LucideIcon;
+  readonly iconClassName?: string;
+  readonly change?: { readonly value: string; readonly positive?: boolean };
+  readonly className?: string;
 }
 
 export function MetricCard({ label, value, icon: Icon, iconClassName, change, className }: MetricCardProps) {
@@ -380,9 +380,9 @@ export function MetricCard({ label, value, icon: Icon, iconClassName, change, cl
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface DataRowProps {
-  label: string;
-  value: React.ReactNode;
-  className?: string;
+  readonly label: string;
+  readonly value: React.ReactNode;
+  readonly className?: string;
 }
 
 export function DataRow({ label, value, className }: DataRowProps) {
@@ -399,11 +399,11 @@ export function DataRow({ label, value, className }: DataRowProps) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface EmptyStateProps {
-  icon: LucideIcon;
-  title: string;
-  description?: string;
-  action?: React.ReactNode;
-  className?: string;
+  readonly icon: LucideIcon;
+  readonly title: string;
+  readonly description?: string;
+  readonly action?: React.ReactNode;
+  readonly className?: string;
 }
 
 export function EmptyState({ icon: Icon, title, description, action, className }: EmptyStateProps) {
@@ -426,10 +426,10 @@ export function EmptyState({ icon: Icon, title, description, action, className }
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface ActionBarProps {
-  children: React.ReactNode;
+  readonly children: React.ReactNode;
   /** Left-side slot (e.g., secondary actions) */
-  left?: React.ReactNode;
-  className?: string;
+  readonly left?: React.ReactNode;
+  readonly className?: string;
 }
 
 export function ActionBar({ children, left, className }: ActionBarProps) {
@@ -449,16 +449,16 @@ export function ActionBar({ children, left, className }: ActionBarProps) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface ListItemProps {
-  icon?: LucideIcon;
-  iconClassName?: string;
-  title: string;
-  subtitle?: string;
-  meta?: React.ReactNode;
-  actions?: React.ReactNode;
-  onClick?: () => void;
-  className?: string;
+  readonly icon?: LucideIcon;
+  readonly iconClassName?: string;
+  readonly title: string;
+  readonly subtitle?: string;
+  readonly meta?: React.ReactNode;
+  readonly actions?: React.ReactNode;
+  readonly onClick?: () => void;
+  readonly className?: string;
   /** Show chevron indicator */
-  chevron?: boolean;
+  readonly chevron?: boolean;
 }
 
 export function ListItem({
@@ -501,8 +501,8 @@ export function ListItem({
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface DividerProps {
-  label?: string;
-  className?: string;
+  readonly label?: string;
+  readonly className?: string;
 }
 
 export function Divider({ label, className }: DividerProps) {
@@ -523,12 +523,12 @@ export function Divider({ label, className }: DividerProps) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface ProgressBarProps {
-  value: number;
-  max?: number;
-  variant?: 'default' | 'success' | 'warning' | 'danger';
-  size?: 'sm' | 'md';
-  showLabel?: boolean;
-  className?: string;
+  readonly value: number;
+  readonly max?: number;
+  readonly variant?: 'default' | 'success' | 'warning' | 'danger';
+  readonly size?: 'sm' | 'md';
+  readonly showLabel?: boolean;
+  readonly className?: string;
 }
 
 const progressVariants = {
@@ -572,12 +572,12 @@ export function ProgressBar({
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface SkeletonProps {
-  className?: string;
+  readonly className?: string;
 }
 
 export function Skeleton({ className }: SkeletonProps) {
   return (
-    <div className={cn('animate-pulse rounded-md bg-zinc-200', className)} />
+    <div role="status" aria-label="Loading" className={cn('animate-pulse rounded-md bg-zinc-200', className)} />
   );
 }
 
@@ -586,9 +586,9 @@ export function Skeleton({ className }: SkeletonProps) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface TextProps {
-  children: React.ReactNode;
-  className?: string;
-  as?: 'p' | 'span' | 'div' | 'label';
+  readonly children: React.ReactNode;
+  readonly className?: string;
+  readonly as?: 'p' | 'span' | 'div' | 'label';
 }
 
 /** Page title — text-xl font-semibold tracking-tight */
@@ -631,8 +631,8 @@ export function Overline({ children, className, as: Tag = 'span' }: TextProps) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  icon?: LucideIcon;
-  error?: string;
+  readonly icon?: LucideIcon;
+  readonly error?: string;
 }
 
 export function Input({ icon: Icon, error, className, id: providedId, ...props }: InputProps) {
@@ -671,13 +671,13 @@ export function Input({ icon: Icon, error, className, id: providedId, ...props }
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface ModalOverlayProps {
-  children: React.ReactNode;
-  onClose?: () => void;
+  readonly children: React.ReactNode;
+  readonly onClose?: () => void;
   /** Max width of the modal container */
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  readonly size?: 'sm' | 'md' | 'lg' | 'xl';
   /** Accessible label for the dialog */
-  ariaLabel?: string;
-  className?: string;
+  readonly ariaLabel?: string;
+  readonly className?: string;
 }
 
 const modalSizes = {
@@ -767,10 +767,10 @@ export function ModalOverlay({ children, onClose, size = 'md', ariaLabel, classN
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface PageLayoutProps {
-  children: React.ReactNode;
+  readonly children: React.ReactNode;
   /** Max content width */
-  size?: 'narrow' | 'normal' | 'wide' | 'full';
-  className?: string;
+  readonly size?: 'narrow' | 'normal' | 'wide' | 'full';
+  readonly className?: string;
 }
 
 const layoutSizes = {
@@ -793,10 +793,10 @@ export function PageLayout({ children, size = 'normal', className }: PageLayoutP
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface PageHeaderProps {
-  title: string;
-  subtitle?: string;
-  actions?: React.ReactNode;
-  className?: string;
+  readonly title: string;
+  readonly subtitle?: string;
+  readonly actions?: React.ReactNode;
+  readonly className?: string;
 }
 
 export function PageHeader({ title, subtitle, actions, className }: PageHeaderProps) {
@@ -816,17 +816,17 @@ export function PageHeader({ title, subtitle, actions, className }: PageHeaderPr
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface Stat {
-  label: string;
-  value: string | number;
-  icon?: LucideIcon;
-  iconClassName?: string;
-  valueClassName?: string;
+  readonly label: string;
+  readonly value: string | number;
+  readonly icon?: LucideIcon;
+  readonly iconClassName?: string;
+  readonly valueClassName?: string;
 }
 
 interface StatRowProps {
-  stats: Stat[];
-  columns?: 2 | 3 | 4 | 5 | 6;
-  className?: string;
+  readonly stats: readonly Stat[];
+  readonly columns?: 2 | 3 | 4 | 5 | 6;
+  readonly className?: string;
 }
 
 const colMap = {
@@ -860,17 +860,17 @@ export function StatRow({ stats, columns = 4, className }: StatRowProps) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface Tab {
-  id: string;
-  label: string;
-  icon?: LucideIcon;
-  count?: number;
+  readonly id: string;
+  readonly label: string;
+  readonly icon?: LucideIcon;
+  readonly count?: number;
 }
 
 interface TabBarProps {
-  tabs: Tab[];
-  activeTab: string;
-  onTabChange: (id: string) => void;
-  className?: string;
+  readonly tabs: readonly Tab[];
+  readonly activeTab: string;
+  readonly onTabChange: (id: string) => void;
+  readonly className?: string;
 }
 
 export function TabBar({ tabs, activeTab, onTabChange, className }: TabBarProps) {
@@ -1101,10 +1101,10 @@ export function LifecyclePill({ status, dot, className }: {
 
 interface LoadingStateProps {
   /** What is loading — shown to screen readers and as visible text */
-  label?: string;
+  readonly label?: string;
   /** Compact: inline spinner. Full: centered section with text. */
-  size?: 'compact' | 'section' | 'page';
-  className?: string;
+  readonly size?: 'compact' | 'section' | 'page';
+  readonly className?: string;
 }
 
 export function LoadingState({ label = 'Loading', size = 'section', className }: LoadingStateProps) {
@@ -1149,19 +1149,19 @@ export function LoadingState({ label = 'Loading', size = 'section', className }:
 export type SeverityLevel = 'critical' | 'high' | 'medium' | 'low';
 
 interface SeverityConfig {
-  label: string;
+  readonly label: string;
   /** Pill variant from StatusPill */
-  variant: 'danger' | 'warning' | 'warning' | 'info';
+  readonly variant: 'danger' | 'warning' | 'warning' | 'info';
   /** Background for cards / badges */
-  bg: string;
+  readonly bg: string;
   /** Text color */
-  text: string;
+  readonly text: string;
   /** Dot / indicator color */
-  dot: string;
+  readonly dot: string;
   /** Border color */
-  border: string;
+  readonly border: string;
   /** Sort order (0 = most severe) */
-  order: number;
+  readonly order: number;
 }
 
 export const SEVERITY: Record<SeverityLevel, SeverityConfig> = {
