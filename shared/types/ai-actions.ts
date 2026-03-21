@@ -20,7 +20,16 @@ export type AIActionType =
   | 'route_document_to_module'
   | 'export_document'
   | 'attach_sources_to_document'
-  | 'refine_with_validation'; // Phase 2: add 'assign_task', 'compile_dossier', etc.
+  | 'refine_with_validation'
+  // Phase 2 — inline AI actions
+  | 'summarize_selection'
+  | 'explain_selection'
+  | 'rewrite_selection'
+  | 'extract_structured_data'
+  | 'compare_selection'
+  | 'refine_with_validation_findings'
+  | 'create_followup_task'
+  | 'attach_selection_as_source';
 
 /** Target entity types that actions can operate on. */
 export type AIActionTargetType =
@@ -38,6 +47,9 @@ export type AIActionSourceSurface =
   | 'command_palette'     // ⌘K
   | 'workflow_trigger'    // Automated workflow
   | 'chat_action'         // Chat action dispatch
+  | 'inline_menu'         // Phase 2: InlineAIMenu on tables/forms
+  | 'inline_button'       // Phase 2: InlineAIButton on rows/cards
+  | 'validation_surface'  // Phase 2: Validation findings refinement
   | 'api';                // Direct API call
 
 /** Module types aligned with existing moduleTypeEnum. */

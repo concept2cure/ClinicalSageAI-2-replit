@@ -41,6 +41,7 @@ import './handlers/refine-with-validation';
 import './handlers/route-document';
 import './handlers/export-document';
 import './handlers/attach-sources';
+import './handlers/register-inline-ai'; // Phase 2: inline AI actions
 
 // Re-export shared types for convenience
 export type {
