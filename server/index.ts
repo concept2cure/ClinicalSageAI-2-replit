@@ -3147,6 +3147,11 @@ import concept2cureRoutes from './routes/concept2cure';
 app.use('/api/concept2cure', concept2cureRoutes);
 console.log('✅ Concept2Cure API routes mounted successfully');
 
+// Mount Phase 3 Orchestration Engine routes
+import orchestrationRoutes from './routes/orchestration';
+app.use('/api/orchestration', orchestrationRoutes);
+console.log('✅ Orchestration Engine API routes mounted successfully');
+
 // Mount Client Intelligence Memory routes
 import clientIntelligenceRoutes from './routes/client-intelligence';
 app.use('/api/client-intelligence', clientIntelligenceRoutes);
@@ -5921,9 +5926,11 @@ async function startServer() {
 
   // Initialize Firebase Projection Publisher (Phase 3 real-time events)
   try {
+    const { getFirestoreAdmin } = await import('./services/firebase-admin.js');
     const { initFirebasePublisher } = await import('./services/firebase-projection.js');
-    const publisher = await initFirebasePublisher();
-    if (publisher) {
+    const firestoreDb = await getFirestoreAdmin();
+    const publisher = initFirebasePublisher(firestoreDb);
+    if (firestoreDb) {
       console.log('✅ Firebase projection publisher initialized');
     } else {
       console.log('⚠️ Firebase projection publisher disabled (no credentials configured)');
