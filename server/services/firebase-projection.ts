@@ -156,7 +156,7 @@ export class FirebaseProjectionPublisher {
       actorType: params.actorType,
       actorId: params.actorId,
       correlationId: params.correlationId,
-      payload: params.payload as Record<string, unknown>,
+      payload: params.payload as unknown as Record<string, unknown>,
     });
   }
 
@@ -187,7 +187,7 @@ export class FirebaseProjectionPublisher {
       actorType: 'ai_reasoning',
       actorId: params.actorId,
       correlationId: params.correlationId,
-      payload: params.payload as Record<string, unknown>,
+      payload: params.payload as unknown as Record<string, unknown>,
     });
   }
 
@@ -218,7 +218,7 @@ export class FirebaseProjectionPublisher {
       actorType: 'ai_deterministic',
       actorId: params.actorId,
       correlationId: params.correlationId,
-      payload: params.payload as Record<string, unknown>,
+      payload: params.payload as unknown as Record<string, unknown>,
     });
   }
 
@@ -256,7 +256,7 @@ export class FirebaseProjectionPublisher {
       actorType: params.actorType,
       actorId: params.actorId,
       correlationId: params.correlationId,
-      payload: params.payload as Record<string, unknown>,
+      payload: params.payload as unknown as Record<string, unknown>,
     });
   }
 
@@ -291,7 +291,7 @@ export class FirebaseProjectionPublisher {
       actorType: 'system',
       actorId: params.actorId,
       correlationId: params.correlationId,
-      payload: params.payload as Record<string, unknown>,
+      payload: params.payload as unknown as Record<string, unknown>,
     });
   }
 
@@ -323,7 +323,7 @@ export class FirebaseProjectionPublisher {
       actorType: params.actorType,
       actorId: params.actorId,
       correlationId: params.correlationId,
-      payload: params.payload as Record<string, unknown>,
+      payload: params.payload as unknown as Record<string, unknown>,
     });
   }
 
