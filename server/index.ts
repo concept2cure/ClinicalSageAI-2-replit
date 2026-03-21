@@ -5919,6 +5919,19 @@ async function startServer() {
     console.error('⚠️ Auth schema bootstrap warning:', error.message);
   }
 
+  // Initialize Firebase Projection Publisher (Phase 3 real-time events)
+  try {
+    const { initFirebasePublisher } = await import('./services/firebase-projection.js');
+    const publisher = await initFirebasePublisher();
+    if (publisher) {
+      console.log('✅ Firebase projection publisher initialized');
+    } else {
+      console.log('⚠️ Firebase projection publisher disabled (no credentials configured)');
+    }
+  } catch (error: any) {
+    console.error('⚠️ Firebase projection publisher initialization warning:', error.message);
+  }
+
   // Start Python backend first
   debugLog('Initializing Python backend...');
   await startPythonBackend();

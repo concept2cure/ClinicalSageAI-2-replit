@@ -14,17 +14,14 @@
  * ║  - If Firebase is unavailable, the UI polls the REST API instead   ║
  * ╚══════════════════════════════════════════════════════════════════════╝
  *
- * Firestore collections (all written by the backend orchestration engine):
- *   workflow_runs/{runId}                     — run status + progress
- *   workflow_runs/{runId}/steps/{stepIndex}   — per-step status
- *   workflow_runs/{runId}/approvals/{gateId}  — approval gate status
- *   projects/{projectId}/readiness            — latest readiness snapshot
- *   projects/{projectId}/intelligence         — project intelligence summary
+ * Firestore paths use the tenant-scoped canonical builders from
+ * shared/types/firebase-events.ts (FirestorePaths) for consistency
+ * between server publisher and client subscribers.
  *
  * @module client/src/concept2cure/hooks/useWorkflowStream
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getFirestoreDb, isFirebaseConfigured } from '../config/firebase';
 import {
   doc,
@@ -34,6 +31,7 @@ import {
   orderBy,
   type Unsubscribe,
 } from 'firebase/firestore';
+import { FirestorePaths } from '../../../../shared/types/firebase-events';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES — Read-only projections of backend state
@@ -106,6 +104,8 @@ export interface IntelligenceProjection {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface UseWorkflowRunStreamOptions {
+  readonly tenantId: number;
+  readonly projectId: number;
   readonly runId: string | null;
   /** Polling interval in ms when Firebase is unavailable (default: 5000) */
   readonly pollIntervalMs?: number;
@@ -120,6 +120,8 @@ export interface UseWorkflowRunStreamReturn {
 }
 
 export function useWorkflowRunStream({
+  tenantId,
+  projectId,
   runId,
   pollIntervalMs = 5_000,
 }: UseWorkflowRunStreamOptions): UseWorkflowRunStreamReturn {
@@ -138,15 +140,16 @@ export function useWorkflowRunStream({
       return;
     }
 
-    // ── Firebase path: real-time streaming ─────────────────────────────
+    // ── Firebase path: real-time streaming (tenant-scoped) ──────────────
     if (isFirebaseConfigured()) {
       const db = getFirestoreDb();
       if (!db) return;
 
       const unsubs: Unsubscribe[] = [];
 
-      // Stream run document
-      const runRef = doc(db, 'workflow_runs', runId);
+      // Stream workflow run projection doc using canonical path
+      const currentPath = FirestorePaths.workflowRunCurrent(tenantId, projectId, runId);
+      const runRef = doc(db, currentPath);
       unsubs.push(
         onSnapshot(runRef, (snap) => {
           if (snap.exists()) {
@@ -155,24 +158,53 @@ export function useWorkflowRunStream({
         })
       );
 
-      // Stream steps sub-collection
-      const stepsRef = collection(db, 'workflow_runs', runId, 'steps');
-      const stepsQuery = query(stepsRef, orderBy('stepIndex', 'asc'));
+      // Stream workflow run events (ordered by time) for step/approval state
+      const eventsPath = FirestorePaths.workflowRunEventsCollection(tenantId, projectId, runId);
+      const eventsRef = collection(db, eventsPath);
+      const eventsQuery = query(eventsRef, orderBy('occurredAt', 'asc'));
       unsubs.push(
-        onSnapshot(stepsQuery, (snap) => {
-          const result: WorkflowStepProjection[] = [];
-          snap.forEach((d) => result.push(d.data() as WorkflowStepProjection));
-          setSteps(result);
-        })
-      );
+        onSnapshot(eventsQuery, (snap) => {
+          const stepMap = new Map<number, WorkflowStepProjection>();
+          const gateMap = new Map<string, ApprovalGateProjection>();
 
-      // Stream approval gates sub-collection
-      const approvalsRef = collection(db, 'workflow_runs', runId, 'approvals');
-      unsubs.push(
-        onSnapshot(approvalsRef, (snap) => {
-          const result: ApprovalGateProjection[] = [];
-          snap.forEach((d) => result.push({ gateId: d.id, ...d.data() } as ApprovalGateProjection));
-          setApprovalGates(result);
+          snap.forEach((d) => {
+            const data = d.data();
+            const eventType = data.eventType as string;
+
+            // Build step projections from step events
+            if (eventType.startsWith('workflow.step.') && data.payload) {
+              const p = data.payload as Record<string, unknown>;
+              const idx = p.stepIndex as number;
+              stepMap.set(idx, {
+                stepIndex: idx,
+                stepName: (p.stepName as string) ?? '',
+                stepType: (p.stepType as 'deterministic' | 'ai_reasoning') ?? 'deterministic',
+                status: (p.status as WorkflowStepProjection['status']) ?? 'proposed',
+                durationMs: p.durationMs as number | undefined,
+                error: p.error as string | undefined,
+              });
+            }
+
+            // Build approval gate projections from awaiting_approval events
+            if (eventType === 'workflow.step.awaiting_approval' && data.payload) {
+              const p = data.payload as Record<string, unknown>;
+              const gateId = `gate-${p.stepIndex}`;
+              gateMap.set(gateId, {
+                gateId,
+                stepIndex: p.stepIndex as number,
+                stepName: (p.stepName as string) ?? '',
+                gateType: 'manual',
+                status: 'awaiting_review',
+                protectedAction: '',
+                requiredApproverRoles: [],
+                approvalsReceived: 0,
+                approvalsRequired: 1,
+              });
+            }
+          });
+
+          setSteps(Array.from(stepMap.values()).sort((a, b) => a.stepIndex - b.stepIndex));
+          setApprovalGates(Array.from(gateMap.values()));
         })
       );
 
@@ -206,7 +238,7 @@ export function useWorkflowRunStream({
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
-  }, [runId, pollIntervalMs]);
+  }, [tenantId, projectId, runId, pollIntervalMs]);
 
   return {
     run,
@@ -222,6 +254,7 @@ export function useWorkflowRunStream({
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface UseReadinessStreamOptions {
+  readonly tenantId: number;
   readonly projectId: number | null;
   readonly pollIntervalMs?: number;
 }
@@ -232,6 +265,7 @@ export interface UseReadinessStreamReturn {
 }
 
 export function useReadinessStream({
+  tenantId,
   projectId,
   pollIntervalMs = 10_000,
 }: UseReadinessStreamOptions): UseReadinessStreamReturn {
@@ -248,7 +282,9 @@ export function useReadinessStream({
       const db = getFirestoreDb();
       if (!db) return;
 
-      const readinessRef = doc(db, 'projects', String(projectId), 'readiness', 'latest');
+      // Use canonical tenant-scoped path from FirestorePaths
+      const readinessPath = FirestorePaths.readinessCurrent(tenantId, projectId);
+      const readinessRef = doc(db, readinessPath);
       const unsub = onSnapshot(readinessRef, (snap) => {
         if (snap.exists()) {
           setReadiness(snap.data() as ReadinessProjection);
@@ -278,7 +314,7 @@ export function useReadinessStream({
     interval = setInterval(() => void poll(), pollIntervalMs);
 
     return () => { if (interval) clearInterval(interval); };
-  }, [projectId, pollIntervalMs]);
+  }, [tenantId, projectId, pollIntervalMs]);
 
   return { readiness, isStreaming };
 }
@@ -288,6 +324,7 @@ export function useReadinessStream({
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface UseProjectIntelligenceStreamOptions {
+  readonly tenantId: number;
   readonly projectId: number | null;
   readonly pollIntervalMs?: number;
 }
@@ -298,6 +335,7 @@ export interface UseProjectIntelligenceStreamReturn {
 }
 
 export function useProjectIntelligenceStream({
+  tenantId,
   projectId,
   pollIntervalMs = 15_000,
 }: UseProjectIntelligenceStreamOptions): UseProjectIntelligenceStreamReturn {
@@ -314,7 +352,10 @@ export function useProjectIntelligenceStream({
       const db = getFirestoreDb();
       if (!db) return;
 
-      const intelRef = doc(db, 'projects', String(projectId), 'intelligence', 'summary');
+      // Intelligence uses tenant-scoped path — currently no canonical path in FirestorePaths
+      // so we construct it following the same pattern
+      const intelPath = `tenants/${tenantId}/projects/${projectId}/intelligence/summary`;
+      const intelRef = doc(db, intelPath);
       const unsub = onSnapshot(intelRef, (snap) => {
         if (snap.exists()) {
           setIntelligence(snap.data() as IntelligenceProjection);
@@ -344,7 +385,7 @@ export function useProjectIntelligenceStream({
     interval = setInterval(() => void poll(), pollIntervalMs);
 
     return () => { if (interval) clearInterval(interval); };
-  }, [projectId, pollIntervalMs]);
+  }, [tenantId, projectId, pollIntervalMs]);
 
   return { intelligence, isStreaming };
 }
