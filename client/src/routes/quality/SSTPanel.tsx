@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import InfoTip from '@/components/InfoTip';
+import { toast } from '@/hooks/use-toast';
 
 export default function SSTPanel({ testId }: { testId: string }) {
   const [json, setJson] = useState<string>('{"plates": 5000, "tailing": 1.2, "r2": 0.9999}');
@@ -20,10 +21,10 @@ export default function SSTPanel({ testId }: { testId: string }) {
         body: JSON.stringify({ payload_json: payload, pass: true }),
       });
       const d = await r.json();
-      if (!r.ok) return alert(d.error || 'SST failed');
+      if (!r.ok) { toast({ title: 'SST Error', description: d.error || 'SST recording failed', variant: 'destructive' }); return; }
       load();
     } catch {
-      alert('Invalid JSON');
+      toast({ title: 'Invalid Input', description: 'Please enter valid JSON', variant: 'destructive' });
     }
   }
   useEffect(() => {

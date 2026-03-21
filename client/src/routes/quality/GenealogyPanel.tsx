@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { toast } from '@/hooks/use-toast';
 
 export default function GenealogyPanel({ batchId }: { batchId: string }) {
   const [items, setItems] = useState<any[]>([]);
@@ -27,19 +28,18 @@ export default function GenealogyPanel({ batchId }: { batchId: string }) {
       const data = await r.json();
       setItems(Array.isArray(data) ? data : []);
     } catch (e) {
-      console.error('Failed to load genealogy:', e);
       setItems([]);
     }
   }
 
   async function add() {
-    if (!form.parent_code) return alert('Parent code required');
+    if (!form.parent_code) { toast({ title: 'Input Required', description: 'Parent code is required', variant: 'destructive' }); return; }
     const r = await fetch(`/api/quality/batches/${batchId}/genealogy`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form),
     });
-    if (!r.ok) return alert('Failed to add');
+    if (!r.ok) { toast({ title: 'Error', description: 'Failed to add genealogy entry', variant: 'destructive' }); return; }
     setForm({ parent_type: 'RAW', parent_code: '', parent_lot: '', qty: '', unit: 'kg', note: '' });
     load();
   }

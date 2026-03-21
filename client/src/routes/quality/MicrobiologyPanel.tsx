@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Microscope, AlertTriangle, CheckCircle } from 'lucide-react';
 import InfoTip from '@/components/InfoTip';
+import { toast } from '@/hooks/use-toast';
 
 interface MicrobiologyPanelProps {
   testId: string;
@@ -28,15 +29,14 @@ export default function MicrobiologyPanel({ testId }: MicrobiologyPanelProps) {
 
       if (!response.ok) {
         const error = await response.json();
-        alert(`Evaluation failed: ${error.error || 'Unknown error'}`);
+        toast({ title: 'Evaluation Failed', description: error.error || 'Unknown error', variant: 'destructive' });
         return;
       }
 
       const data = await response.json();
       setResult(data);
     } catch (e) {
-      console.error('Microbiology evaluation failed:', e);
-      alert('Failed to evaluate microbiology result');
+      toast({ title: 'Error', description: 'Failed to evaluate microbiology result', variant: 'destructive' });
     } finally {
       setLoading(false);
     }

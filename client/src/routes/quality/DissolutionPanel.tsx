@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import InfoTip from '@/components/InfoTip';
+import { toast } from '@/hooks/use-toast';
 
 export default function DissolutionPanel({ testId, Q = 80 }: { testId: string; Q?: number }) {
   const [s1, setS1] = useState('');
@@ -14,14 +15,14 @@ export default function DissolutionPanel({ testId, Q = 80 }: { testId: string; Q
       .split(/[,\s]+/)
       .filter(Boolean)
       .map(Number);
-    if (vals.length === 0) return alert('Enter values');
+    if (vals.length === 0) { toast({ title: 'Input Required', description: 'Enter dissolution values', variant: 'destructive' }); return; }
     const r = await fetch(`/api/quality/tests/${testId}/dissolution`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ values: vals, Q }),
     });
     const d = await r.json();
-    if (!r.ok) return alert(d.error || 'Failed');
+    if (!r.ok) { toast({ title: 'Error', description: d.error || 'Dissolution evaluation failed', variant: 'destructive' }); return; }
     setResult(d.outcome);
   }
   return (
