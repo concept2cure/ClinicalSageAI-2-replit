@@ -22,6 +22,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { LIFECYCLE } from '../ui/enterprise';
 import {
   ChevronRight,
   ChevronDown,
@@ -210,24 +211,24 @@ const getStatusConfig = (status?: DocumentStatus['status']) => {
     case 'published':
       return {
         icon: CheckCircle,
-        color: 'text-emerald-600',
-        bg: 'bg-emerald-100',
+        color: LIFECYCLE.published.text,
+        bg: LIFECYCLE.published.bg,
         label: 'Published',
       };
     case 'final':
-      return { icon: Check, color: 'text-emerald-600', bg: 'bg-emerald-50', label: 'Final' };
+      return { icon: Check, color: LIFECYCLE.approved.text, bg: LIFECYCLE.approved.bg, label: 'Final' };
     case 'qc':
-      return { icon: Eye, color: 'text-violet-600', bg: 'bg-violet-50', label: 'QC Review' };
+      return { icon: Eye, color: LIFECYCLE.in_review.text, bg: LIFECYCLE.in_review.bg, label: 'QC Review' };
     case 'review':
-      return { icon: Eye, color: 'text-amber-600', bg: 'bg-amber-50', label: 'Under Review' };
+      return { icon: Eye, color: LIFECYCLE.in_review.text, bg: LIFECYCLE.in_review.bg, label: 'Under Review' };
     case 'drafting':
-      return { icon: Edit3, color: 'text-blue-600', bg: 'bg-blue-50', label: 'Drafting' };
+      return { icon: Edit3, color: LIFECYCLE.draft.text, bg: LIFECYCLE.draft.bg, label: 'Drafting' };
     case 'not_started':
-      return { icon: Circle, color: 'text-zinc-400', bg: 'bg-zinc-50', label: 'Not Started' };
+      return { icon: Circle, color: LIFECYCLE.not_started.text, bg: LIFECYCLE.not_started.bg, label: 'Not Started' };
     case 'not_required':
-      return { icon: Lock, color: 'text-zinc-400', bg: 'bg-zinc-50', label: 'Not Required' };
+      return { icon: Lock, color: LIFECYCLE.archived.text, bg: LIFECYCLE.archived.bg, label: 'Not Required' };
     default:
-      return { icon: Circle, color: 'text-zinc-400', bg: 'bg-zinc-50', label: 'Pending' };
+      return { icon: Circle, color: LIFECYCLE.not_started.text, bg: LIFECYCLE.not_started.bg, label: 'Pending' };
   }
 };
 

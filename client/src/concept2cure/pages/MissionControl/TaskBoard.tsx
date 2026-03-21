@@ -13,6 +13,7 @@
 
 import React, { useState, useMemo, useCallback, DragEvent } from 'react';
 import { cn } from '@/lib/utils';
+import { LIFECYCLE } from '../../components/ui/enterprise';
 import {
   LayoutGrid,
   Search,
@@ -69,11 +70,11 @@ interface Task {
 }
 
 const STATUS_META: Record<TaskStatus, { label: string; headerColor: string; dotColor: string }> = {
-  backlog:     { label: 'Backlog',     headerColor: 'bg-zinc-600',   dotColor: 'bg-zinc-400' },
-  todo:        { label: 'To Do',       headerColor: 'bg-blue-600',   dotColor: 'bg-blue-500' },
-  in_progress: { label: 'In Progress', headerColor: 'bg-amber-500',  dotColor: 'bg-amber-500' },
-  review:      { label: 'Review',      headerColor: 'bg-violet-600', dotColor: 'bg-violet-500' },
-  done:        { label: 'Done',        headerColor: 'bg-emerald-600', dotColor: 'bg-emerald-500' },
+  backlog:     { label: 'Backlog',     headerColor: 'bg-zinc-600',   dotColor: LIFECYCLE.not_started.dot },
+  todo:        { label: 'To Do',       headerColor: 'bg-blue-600',   dotColor: LIFECYCLE.draft.dot },
+  in_progress: { label: 'In Progress', headerColor: 'bg-amber-500',  dotColor: LIFECYCLE.draft.dot },
+  review:      { label: 'Review',      headerColor: 'bg-violet-600', dotColor: LIFECYCLE.in_review.dot },
+  done:        { label: 'Done',        headerColor: 'bg-emerald-600', dotColor: LIFECYCLE.approved.dot },
 };
 
 const COLUMN_ORDER: TaskStatus[] = ['backlog', 'todo', 'in_progress', 'review', 'done'];

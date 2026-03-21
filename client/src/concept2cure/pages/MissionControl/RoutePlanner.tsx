@@ -8,6 +8,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { LIFECYCLE } from '../../components/ui/enterprise';
 import {
   Compass,
   Globe,
@@ -53,11 +54,11 @@ const DESTINATION_TYPES: Record<string, { label: string; color: string; authorit
 };
 
 const ROUTE_STATUS_COLORS: Record<string, string> = {
-  planned: 'bg-zinc-100 text-zinc-600',
-  active: 'bg-blue-100 text-blue-700',
-  submitted: 'bg-emerald-100 text-emerald-700',
-  'under-review': 'bg-amber-100 text-amber-700',
-  approved: 'bg-emerald-200 text-emerald-800',
+  planned: `${LIFECYCLE.not_started.bg} ${LIFECYCLE.not_started.text}`,
+  active: `${LIFECYCLE.draft.bg} ${LIFECYCLE.draft.text}`,
+  submitted: `${LIFECYCLE.in_review.bg} ${LIFECYCLE.in_review.text}`,
+  'under-review': `${LIFECYCLE.in_review.bg} ${LIFECYCLE.in_review.text}`,
+  approved: `${LIFECYCLE.approved.bg} ${LIFECYCLE.approved.text}`,
   rejected: 'bg-red-100 text-red-700',
 };
 

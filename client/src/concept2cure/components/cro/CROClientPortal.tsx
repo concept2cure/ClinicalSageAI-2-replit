@@ -32,6 +32,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { LIFECYCLE } from '../ui/enterprise';
 import {
   Building2,
   FileText,
@@ -208,14 +209,14 @@ const DELIVERABLE_CONFIG: Record<DeliverableType, { label: string; shortLabel: s
 };
 
 const STATUS_CONFIG: Record<DeliverableStatus, { label: string; color: string; bgColor: string }> = {
-  not_started: { label: 'Not Started', color: 'text-zinc-500', bgColor: 'bg-zinc-100' },
-  in_progress: { label: 'In Progress', color: 'text-blue-600', bgColor: 'bg-blue-100' },
-  internal_review: { label: 'Internal Review', color: 'text-violet-600', bgColor: 'bg-violet-100' },
-  client_review: { label: 'Client Review', color: 'text-amber-600', bgColor: 'bg-amber-100' },
-  revision: { label: 'Revision', color: 'text-orange-600', bgColor: 'bg-orange-100' },
-  final_qc: { label: 'Final QC', color: 'text-cyan-600', bgColor: 'bg-cyan-100' },
-  delivered: { label: 'Delivered', color: 'text-green-600', bgColor: 'bg-green-100' },
-  accepted: { label: 'Accepted', color: 'text-green-700', bgColor: 'bg-green-200' },
+  not_started: { label: 'Not Started', color: LIFECYCLE.not_started.text, bgColor: LIFECYCLE.not_started.bg },
+  in_progress: { label: 'In Progress', color: LIFECYCLE.draft.text, bgColor: LIFECYCLE.draft.bg },
+  internal_review: { label: 'Internal Review', color: LIFECYCLE.in_review.text, bgColor: LIFECYCLE.in_review.bg },
+  client_review: { label: 'Client Review', color: LIFECYCLE.in_review.text, bgColor: LIFECYCLE.in_review.bg },
+  revision: { label: 'Revision', color: LIFECYCLE.draft.text, bgColor: LIFECYCLE.draft.bg },
+  final_qc: { label: 'Final QC', color: LIFECYCLE.in_review.text, bgColor: LIFECYCLE.in_review.bg },
+  delivered: { label: 'Delivered', color: LIFECYCLE.approved.text, bgColor: LIFECYCLE.approved.bg },
+  accepted: { label: 'Accepted', color: LIFECYCLE.published.text, bgColor: LIFECYCLE.published.bg },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════

@@ -9,6 +9,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { LIFECYCLE } from '../../components/ui/enterprise';
 import {
   Building2,
   Calendar,
@@ -79,10 +80,10 @@ const TYPE_COLORS: Record<string, { bg: string; text: string; border: string; do
 };
 
 const STATUS_STYLE: Record<string, { bg: string; text: string }> = {
-  planned:   { bg: 'bg-blue-50',    text: 'text-blue-700' },
-  submitted: { bg: 'bg-amber-50',   text: 'text-amber-700' },
-  completed: { bg: 'bg-emerald-50', text: 'text-emerald-700' },
-  cancelled: { bg: 'bg-zinc-100',   text: 'text-zinc-500' },
+  planned:   { bg: LIFECYCLE.draft.bg,        text: LIFECYCLE.draft.text },
+  submitted: { bg: LIFECYCLE.in_review.bg,    text: LIFECYCLE.in_review.text },
+  completed: { bg: LIFECYCLE.approved.bg,     text: LIFECYCLE.approved.text },
+  cancelled: { bg: LIFECYCLE.archived.bg,     text: LIFECYCLE.archived.text },
 };
 
 const AUTHORITY_STYLE: Record<string, { bg: string; text: string }> = {

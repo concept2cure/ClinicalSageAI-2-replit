@@ -14,6 +14,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { LIFECYCLE } from '../ui/enterprise';
 
 interface TrackedChange {
   id: string;
@@ -55,10 +56,10 @@ const statusLabels: Record<ReviewAssignment['status'], string> = {
 };
 
 const statusColors: Record<ReviewAssignment['status'], string> = {
-  pending: 'text-slate-500 bg-slate-100',
-  'in-progress': 'text-blue-600 bg-blue-100',
-  completed: 'text-green-600 bg-green-100',
-  'changes-requested': 'text-amber-600 bg-amber-100',
+  pending: `${LIFECYCLE.not_started.text} ${LIFECYCLE.not_started.bg}`,
+  'in-progress': `${LIFECYCLE.in_review.text} ${LIFECYCLE.in_review.bg}`,
+  completed: `${LIFECYCLE.approved.text} ${LIFECYCLE.approved.bg}`,
+  'changes-requested': `${LIFECYCLE.draft.text} ${LIFECYCLE.draft.bg}`,
 };
 
 function formatTimestamp(ts: string): string {

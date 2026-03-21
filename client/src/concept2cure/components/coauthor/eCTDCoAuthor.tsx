@@ -30,6 +30,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
+import { LIFECYCLE } from '../ui/enterprise';
 import {
   FileText,
   Sparkles,
@@ -163,44 +164,44 @@ const STATUS_CONFIG: Record<
 > = {
   empty: {
     label: 'Empty',
-    color: 'text-zinc-400',
-    bgColor: 'bg-zinc-50',
+    color: LIFECYCLE.not_started.text,
+    bgColor: LIFECYCLE.not_started.bg,
     icon: <div className="w-3 h-3 rounded-full border border-dashed border-zinc-300" />,
   },
   ai_drafting: {
     label: 'RI Drafting...',
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50',
+    color: LIFECYCLE.in_review.text,
+    bgColor: LIFECYCLE.in_review.bg,
     icon: <Sparkles className="w-3 h-3 animate-pulse" />,
   },
   ai_draft: {
     label: 'RI Draft',
-    color: 'text-violet-600',
-    bgColor: 'bg-violet-50',
+    color: LIFECYCLE.superseded.text,
+    bgColor: LIFECYCLE.superseded.bg,
     icon: <Sparkles className="w-3 h-3" />,
   },
   editing: {
     label: 'Editing',
-    color: 'text-amber-600',
-    bgColor: 'bg-amber-50',
+    color: LIFECYCLE.draft.text,
+    bgColor: LIFECYCLE.draft.bg,
     icon: <Edit3 className="w-3 h-3" />,
   },
   in_review: {
     label: 'In Review',
-    color: 'text-orange-600',
-    bgColor: 'bg-orange-50',
+    color: LIFECYCLE.in_review.text,
+    bgColor: LIFECYCLE.in_review.bg,
     icon: <Eye className="w-3 h-3" />,
   },
   approved: {
     label: 'Approved',
-    color: 'text-green-600',
-    bgColor: 'bg-green-50',
+    color: LIFECYCLE.approved.text,
+    bgColor: LIFECYCLE.approved.bg,
     icon: <CheckCircle className="w-3 h-3" />,
   },
   locked: {
     label: 'Locked',
-    color: 'text-zinc-600',
-    bgColor: 'bg-zinc-100',
+    color: LIFECYCLE.published.text,
+    bgColor: LIFECYCLE.published.bg,
     icon: <Shield className="w-3 h-3" />,
   },
 };

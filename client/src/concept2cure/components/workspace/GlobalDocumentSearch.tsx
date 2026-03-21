@@ -20,6 +20,7 @@ import {
   AlertTriangle,
   Lock,
 } from 'lucide-react';
+import { LIFECYCLE, toLifecycleStage } from '../ui/enterprise';
 import { cn } from '@/lib/utils';
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -63,10 +64,10 @@ const STATUS_ICONS: Record<string, React.ElementType> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  draft: 'text-amber-600 bg-amber-50',
-  review: 'text-blue-600 bg-blue-50',
-  approved: 'text-emerald-600 bg-emerald-50',
-  locked: 'text-zinc-600 bg-zinc-100',
+  draft: `${LIFECYCLE.draft.text} ${LIFECYCLE.draft.bg}`,
+  review: `${LIFECYCLE.in_review.text} ${LIFECYCLE.in_review.bg}`,
+  approved: `${LIFECYCLE.approved.text} ${LIFECYCLE.approved.bg}`,
+  locked: `${LIFECYCLE.archived.text} ${LIFECYCLE.archived.bg}`,
 };
 
 function normalizeStatus(raw?: string): string {

@@ -11,6 +11,7 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
+import { LIFECYCLE } from '../ui/enterprise';
 import {
   ChevronRight,
   Package,
@@ -135,21 +136,21 @@ const STATUS_CONFIG: Record<
   DossierNodeStatus,
   { icon: React.ReactNode; color: string; label: string }
 > = {
-  empty: { icon: <Circle className="w-3 h-3" />, color: 'text-zinc-400', label: 'Empty' },
-  draft_present: { icon: <Clock className="w-3 h-3" />, color: 'text-amber-500', label: 'Draft' },
-  under_review: { icon: <Eye className="w-3 h-3" />, color: 'text-blue-500', label: 'Review' },
+  empty: { icon: <Circle className="w-3 h-3" />, color: LIFECYCLE.not_started.text, label: 'Empty' },
+  draft_present: { icon: <Clock className="w-3 h-3" />, color: LIFECYCLE.draft.text, label: 'Draft' },
+  under_review: { icon: <Eye className="w-3 h-3" />, color: LIFECYCLE.in_review.text, label: 'Review' },
   approved: {
     icon: <CheckCircle2 className="w-3 h-3" />,
-    color: 'text-emerald-500',
+    color: LIFECYCLE.approved.text,
     label: 'Approved',
   },
-  locked: { icon: <Lock className="w-3 h-3" />, color: 'text-red-500', label: 'Locked' },
+  locked: { icon: <Lock className="w-3 h-3" />, color: LIFECYCLE.published.text, label: 'Locked' },
   missing_evidence: {
     icon: <AlertCircle className="w-3 h-3" />,
     color: 'text-orange-500',
     label: 'Missing Evidence',
   },
-  ready: { icon: <ShieldCheck className="w-3 h-3" />, color: 'text-emerald-600', label: 'Ready' },
+  ready: { icon: <ShieldCheck className="w-3 h-3" />, color: LIFECYCLE.approved.text, label: 'Ready' },
 };
 
 function StatusIndicator({ status }: { status: DossierNodeStatus }) {
