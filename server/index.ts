@@ -3355,6 +3355,21 @@ import concept2cureRoutes from './routes/concept2cure';
 app.use('/api/concept2cure', concept2cureRoutes);
 console.log('✅ Concept2Cure API routes mounted successfully');
 
+// Mount AI Actions unified execution API (Phase 1 — conversational OS spine)
+try {
+  // Initialize action registry and handlers (side-effect imports)
+  import('./services/ai-actions/index').then(() => {
+    console.log('✅ AI Action handlers registered');
+  }).catch(err => {
+    console.error('⚠️ AI Action handler registration failed (non-fatal):', err.message);
+  });
+  const aiActionsRoutes = (await import('./routes/ai-actions')).default;
+  app.use('/api/ai-actions', aiActionsRoutes);
+  console.log('✅ AI Actions API routes mounted at /api/ai-actions');
+} catch (error: any) {
+  console.error('❌ Failed to mount AI Actions routes:', error.message);
+}
+
 // Mount Client Intelligence Memory routes
 import clientIntelligenceRoutes from './routes/client-intelligence';
 app.use('/api/client-intelligence', clientIntelligenceRoutes);
