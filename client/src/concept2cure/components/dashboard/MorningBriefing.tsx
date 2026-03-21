@@ -39,6 +39,7 @@ import {
   Activity,
   ExternalLink,
 } from 'lucide-react';
+import { EnterpriseButton, Overline, Caption } from '../ui/enterprise';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -142,7 +143,7 @@ const AlertCard: React.FC<{
       onClick={onClick}
       className={cn(
         'w-full flex gap-4 p-4 rounded-xl bg-white border border-zinc-200 shadow-sm',
-        'hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group text-left',
+        'hover:shadow-sm hover:border-zinc-300 transition-all cursor-pointer group text-left',
         'border-l-4',
         priority.border
       )}
@@ -282,7 +283,7 @@ export const MorningBriefing: React.FC<MorningBriefingProps> = ({
           <div className="grid grid-cols-4 gap-3 p-4 bg-zinc-50 border-b border-zinc-200 flex-shrink-0">
             <div className="text-center p-2">
               <p className="text-2xl font-semibold text-zinc-900">{statsSnapshot.projectsActive}</p>
-              <p className="text-xs text-zinc-500 uppercase tracking-wide">Active Projects</p>
+              <Caption as="p" className="uppercase tracking-wide">Active Projects</Caption>
             </div>
             <div className="text-center p-2">
               <p className={cn(
@@ -291,7 +292,7 @@ export const MorningBriefing: React.FC<MorningBriefingProps> = ({
               )}>
                 {statsSnapshot.deadlinesThisWeek}
               </p>
-              <p className="text-xs text-zinc-500 uppercase tracking-wide">Deadlines This Week</p>
+              <Caption as="p" className="uppercase tracking-wide">Deadlines This Week</Caption>
             </div>
             <div className="text-center p-2">
               <p className={cn(
@@ -300,7 +301,7 @@ export const MorningBriefing: React.FC<MorningBriefingProps> = ({
               )}>
                 {statsSnapshot.pendingReviews}
               </p>
-              <p className="text-xs text-zinc-500 uppercase tracking-wide">Pending Reviews</p>
+              <Caption as="p" className="uppercase tracking-wide">Pending Reviews</Caption>
             </div>
             <div className="text-center p-2">
               <p className={cn(
@@ -309,7 +310,7 @@ export const MorningBriefing: React.FC<MorningBriefingProps> = ({
               )}>
                 {statsSnapshot.riskItems}
               </p>
-              <p className="text-xs text-zinc-500 uppercase tracking-wide">Risk Items</p>
+              <Caption as="p" className="uppercase tracking-wide">Risk Items</Caption>
             </div>
           </div>
         )}
@@ -322,9 +323,7 @@ export const MorningBriefing: React.FC<MorningBriefingProps> = ({
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <AlertTriangle className="w-4 h-4 text-red-500" />
-                  <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest">
-                    Critical Updates
-                  </h3>
+                  <Overline>Critical Updates</Overline>
                   <span className="px-2 py-0.5 text-xs font-semibold bg-red-100 text-red-700 rounded-full">
                     {criticalAlerts.length}
                   </span>
@@ -349,9 +348,7 @@ export const MorningBriefing: React.FC<MorningBriefingProps> = ({
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <Clock className="w-4 h-4 text-blue-500" />
-                  <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest">
-                    Today's Priorities
-                  </h3>
+                  <Overline>Today's Priorities</Overline>
                 </div>
                 <div className="space-y-2">
                   {priorities.slice(0, 5).map(priority => (
@@ -366,9 +363,7 @@ export const MorningBriefing: React.FC<MorningBriefingProps> = ({
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <Bell className="w-4 h-4 text-zinc-500" />
-                  <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-widest">
-                    Other Updates
-                  </h3>
+                  <Overline>Other Updates</Overline>
                 </div>
                 <div className="space-y-3">
                   {otherAlerts.slice(0, 5).map(alert => (
@@ -398,17 +393,9 @@ export const MorningBriefing: React.FC<MorningBriefingProps> = ({
         
         {/* ═══════ FOOTER ═══════ */}
         <div className="p-4 bg-white border-t border-zinc-200 flex justify-center flex-shrink-0">
-          <button
-            onClick={onClose}
-            className={cn(
-              'px-6 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150',
-              'bg-zinc-900 text-white shadow-sm',
-              'hover:bg-zinc-800',
-              'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none'
-            )}
-          >
+          <EnterpriseButton variant="primary" size="lg" onClick={onClose} className="bg-zinc-900 hover:bg-zinc-800 px-6">
             Enter Workspace
-          </button>
+          </EnterpriseButton>
         </div>
       </div>
     </div>

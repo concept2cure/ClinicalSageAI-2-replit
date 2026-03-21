@@ -18,11 +18,9 @@ import {
   Sparkles,
   FileText,
   MessageSquare,
-  FolderOpen,
   ArrowRight,
   Star,
   PenLine,
-  Search,
   ShieldCheck,
   Clock,
   FolderKanban,
@@ -37,14 +35,20 @@ import {
   Compass,
   Activity,
   FlaskConical,
-  Scale,
 } from 'lucide-react';
 import {
+  PageLayout,
+  PageHeader,
+  StatRow,
   EnterpriseCard,
   EnterpriseButton,
   StatusPill,
   IconBox,
   EmptyState,
+  Heading,
+  Overline,
+  Caption,
+  ListItem,
 } from '../ui/enterprise';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -85,12 +89,14 @@ const TYPE_BADGE: Record<string, { bg: string; text: string }> = {
   MAA: { bg: 'bg-blue-100', text: 'text-blue-700' },
 };
 
-const STATUS_STYLE: Record<string, { bg: string; text: string; dot: string }> = {
-  active: { bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-500' },
-  completed: { bg: 'bg-zinc-100', text: 'text-zinc-600', dot: 'bg-zinc-400' },
-  review: { bg: 'bg-amber-50', text: 'text-amber-700', dot: 'bg-amber-500' },
-  draft: { bg: 'bg-sky-50', text: 'text-sky-700', dot: 'bg-sky-500' },
-};
+function getStatusVariant(status?: string): 'success' | 'default' | 'warning' | 'info' {
+  if (!status) return 'info';
+  const lower = status.toLowerCase().trim();
+  if (lower.includes('review')) return 'warning';
+  if (lower.includes('complete')) return 'default';
+  if (lower.includes('active')) return 'success';
+  return 'info';
+}
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -132,14 +138,6 @@ function getTypeBadge(type?: string) {
   return TYPE_BADGE[upper] ?? { bg: 'bg-zinc-100', text: 'text-zinc-600' };
 }
 
-function getStatusStyle(status?: string) {
-  if (!status) return STATUS_STYLE.draft;
-  const lower = status.toLowerCase().trim();
-  if (lower.includes('review')) return STATUS_STYLE.review;
-  if (lower.includes('complete')) return STATUS_STYLE.completed;
-  if (lower.includes('active')) return STATUS_STYLE.active;
-  return STATUS_STYLE.draft;
-}
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
@@ -209,43 +207,31 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
   ];
 
   return (
-    <div className="flex-1 overflow-y-auto zen-scroll bg-zinc-50/50">
-      <div className="max-w-7xl mx-auto px-5 py-8 space-y-8">
-
+    <PageLayout size="wide" className="flex-1 overflow-y-auto zen-scroll bg-zinc-50/50">
         {/* ── Welcome Header ── */}
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-xl font-semibold text-zinc-900 tracking-tight">
-              {greeting}{firstName ? `, ${firstName}` : ''}
-            </h1>
-            <p className="mt-1 text-sm text-zinc-500">{formatDate()}</p>
-          </div>
-          <EnterpriseButton variant="primary" icon={Plus} onClick={onNewProject}>
-            New Project
-          </EnterpriseButton>
-        </div>
+        <PageHeader
+          title={`${greeting}${firstName ? `, ${firstName}` : ''}`}
+          subtitle={formatDate()}
+          actions={
+            <EnterpriseButton variant="primary" icon={Plus} onClick={onNewProject}>
+              New Project
+            </EnterpriseButton>
+          }
+        />
 
         {/* ── Portfolio Metrics ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          {metrics.map(m => (
-            <EnterpriseCard key={m.label} className="px-5 py-4">
-              <div className="flex items-center gap-2 mb-1">
-                <m.icon className={cn('h-4 w-4', m.color)} />
-                <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                  {m.label}
-                </span>
-              </div>
-              <span className={cn('text-2xl font-semibold tabular-nums', m.color)}>{m.value}</span>
-            </EnterpriseCard>
-          ))}
-        </div>
+        <StatRow stats={metrics.map(m => ({
+          label: m.label,
+          value: m.value,
+          icon: m.icon,
+          iconClassName: m.color,
+          valueClassName: m.color,
+        }))} columns={5} />
 
         {/* ── Quick Actions ── */}
         <section>
-          <h2 className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-3">
-            Quick Actions
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <Overline className="mb-3">Quick Actions</Overline>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {quickActions.map(action => (
               <EnterpriseCard
                 key={action.id}
@@ -254,8 +240,8 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
                 className="group flex flex-col"
               >
                 <IconBox icon={action.icon} className={action.iconClass} />
-                <div className="mt-3 text-sm font-semibold text-zinc-900">{action.label}</div>
-                <div className="text-xs text-zinc-500 mt-0.5">{action.description}</div>
+                <p className="mt-3 text-sm font-semibold text-zinc-900">{action.label}</p>
+                <Caption className="mt-0.5">{action.description}</Caption>
               </EnterpriseCard>
             ))}
           </div>
@@ -264,38 +250,34 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
         {/* ── Recent Activity ── */}
         {hasRecent && (
           <section>
-            <h2 className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+            <Overline className="mb-3 flex items-center gap-1.5">
               <Clock className="w-3.5 h-3.5" />
               Recent Activity
-            </h2>
+            </Overline>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {recentThreads.map((t: any) => (
-                <button
+                <ListItem
                   key={t.id}
+                  icon={MessageSquare}
+                  iconClassName="bg-violet-50 text-violet-500"
+                  title={t.title}
+                  subtitle={t.updatedAt ? formatRelativeTime(t.updatedAt) : 'Conversation'}
                   onClick={() => onNavigate('ai-copilot')}
-                  className="w-full group flex items-center gap-3 px-4 py-3 rounded-xl bg-white border border-zinc-200 hover:border-zinc-300 hover:shadow-sm transition-all duration-150 text-left focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none"
-                >
-                  <IconBox icon={MessageSquare} size="sm" className="bg-violet-50 text-violet-500" />
-                  <div className="flex-1 min-w-0">
-                    <span className="text-sm font-medium text-zinc-900 truncate block">{t.title}</span>
-                    <span className="text-xs text-zinc-400">{t.updatedAt ? formatRelativeTime(t.updatedAt) : 'Conversation'}</span>
-                  </div>
-                  <ArrowRight className="w-3.5 h-3.5 text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex-shrink-0" />
-                </button>
+                  chevron
+                  className="bg-white border border-zinc-200 rounded-xl hover:border-zinc-300 hover:shadow-sm"
+                />
               ))}
               {recentArtifacts.map((a: any) => (
-                <button
+                <ListItem
                   key={a.id}
+                  icon={FileText}
+                  iconClassName="bg-blue-50 text-blue-500"
+                  title={a.title || a.type}
+                  subtitle={a.status || 'Document'}
                   onClick={() => onNavigate('author')}
-                  className="w-full group flex items-center gap-3 px-4 py-3 rounded-xl bg-white border border-zinc-200 hover:border-zinc-300 hover:shadow-sm transition-all duration-150 text-left focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none"
-                >
-                  <IconBox icon={FileText} size="sm" className="bg-blue-50 text-blue-500" />
-                  <div className="flex-1 min-w-0">
-                    <span className="text-sm font-medium text-zinc-900 truncate block">{a.title || a.type}</span>
-                    <span className="text-xs text-zinc-400">{a.status || 'Document'}</span>
-                  </div>
-                  <ArrowRight className="w-3.5 h-3.5 text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex-shrink-0" />
-                </button>
+                  chevron
+                  className="bg-white border border-zinc-200 rounded-xl hover:border-zinc-300 hover:shadow-sm"
+                />
               ))}
             </div>
           </section>
@@ -304,11 +286,11 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
         {/* ── Projects Grid ── */}
         <section>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-zinc-900">Projects</h2>
+            <Heading>Projects</Heading>
             {sortedProjects.length > 0 && (
-              <span className="text-xs text-zinc-400 tabular-nums">
+              <Caption as="span" className="tabular-nums">
                 {sortedProjects.length} project{sortedProjects.length !== 1 ? 's' : ''}
-              </span>
+              </Caption>
             )}
           </div>
 
@@ -329,8 +311,6 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
               {sortedProjects.map(project => {
                 const typeColor = getTypeBadge(project.type);
-                const statusColor = getStatusStyle(project.status);
-
                 return (
                   <EnterpriseCard
                     key={project.id}
@@ -364,16 +344,14 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
 
                     <div className="flex items-center gap-2 flex-wrap">
                       {project.status && (
-                        <span className={cn(
-                          'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium',
-                          statusColor.bg, statusColor.text,
-                        )}>
-                          <span className={cn('h-1.5 w-1.5 rounded-full', statusColor.dot)} />
-                          {project.status}
-                        </span>
+                        <StatusPill
+                          label={project.status}
+                          variant={getStatusVariant(project.status)}
+                          dot
+                        />
                       )}
                       {project.submissionType && (
-                        <span className="text-xs text-zinc-400">{project.submissionType}</span>
+                        <Caption as="span">{project.submissionType}</Caption>
                       )}
                     </div>
 
@@ -392,31 +370,27 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
 
         {/* ── Platform Capabilities ── */}
         <section>
-          <h2 className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-3">
-            Platform Capabilities
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <Overline className="mb-3">Platform Capabilities</Overline>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {capabilities.map(cap => (
-              <button
+              <EnterpriseCard
                 key={cap.id}
+                interactive
                 onClick={() => onNavigate(cap.id)}
-                className="group rounded-xl border border-zinc-200 bg-white px-4 py-3.5 hover:shadow-sm hover:border-zinc-300 transition-all duration-150 text-left focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none"
+                className="group"
               >
                 <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-lg bg-zinc-100 flex items-center justify-center flex-shrink-0 group-hover:bg-zinc-50 transition-colors duration-150">
-                    <cap.icon className={cn('h-4 w-4', cap.color)} />
-                  </div>
+                  <IconBox icon={cap.icon} size="sm" className={cn('bg-zinc-100', cap.color, 'group-hover:bg-zinc-50 transition-colors duration-150')} />
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-zinc-900 leading-tight">{cap.label}</p>
-                    <p className="text-xs text-zinc-500 mt-0.5 leading-tight">{cap.description}</p>
+                    <Caption className="mt-0.5 leading-tight">{cap.description}</Caption>
                   </div>
                 </div>
-              </button>
+              </EnterpriseCard>
             ))}
           </div>
         </section>
-      </div>
-    </div>
+    </PageLayout>
   );
 };
 

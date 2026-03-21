@@ -14,6 +14,18 @@ import {
   ArrowRight,
   Briefcase,
 } from 'lucide-react';
+import {
+  PageLayout,
+  PageHeader,
+  EnterpriseCard,
+  EnterpriseButton,
+  EmptyState,
+  StatRow,
+  Heading,
+  Caption,
+  IconBox,
+  StatusPill,
+} from '../ui/enterprise';
 
 interface OperationsCommandCenterProps {
   projects: Array<{
@@ -39,11 +51,11 @@ const TYPE_COLORS: Record<string, { bg: string; text: string }> = {
   PMA: { bg: 'bg-red-100', text: 'text-red-700' },
 };
 
-const STATUS_COLORS: Record<string, { bg: string; text: string; dot: string }> = {
-  active: { bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-500' },
-  completed: { bg: 'bg-zinc-100', text: 'text-zinc-600', dot: 'bg-zinc-400' },
-  review: { bg: 'bg-amber-50', text: 'text-amber-700', dot: 'bg-amber-500' },
-  draft: { bg: 'bg-sky-50', text: 'text-sky-700', dot: 'bg-sky-500' },
+const STATUS_VARIANT: Record<string, 'success' | 'default' | 'warning' | 'info'> = {
+  active: 'success',
+  completed: 'default',
+  review: 'warning',
+  draft: 'info',
 };
 
 function getGreeting(): string {
@@ -71,17 +83,16 @@ function formatRelativeTime(dateStr?: string): string {
 
 function getTypeColor(type?: string) {
   if (!type) return { bg: 'bg-zinc-100', text: 'text-zinc-600' };
-  const upper = type.toUpperCase().trim();
-  return TYPE_COLORS[upper] ?? { bg: 'bg-zinc-100', text: 'text-zinc-600' };
+  return TYPE_COLORS[type.toUpperCase().trim()] ?? { bg: 'bg-zinc-100', text: 'text-zinc-600' };
 }
 
-function getStatusColor(status?: string) {
-  if (!status) return STATUS_COLORS.draft;
+function getStatusVariant(status?: string): 'success' | 'default' | 'warning' | 'info' {
+  if (!status) return 'info';
   const lower = status.toLowerCase().trim();
-  if (lower.includes('review')) return STATUS_COLORS.review;
-  if (lower.includes('complete')) return STATUS_COLORS.completed;
-  if (lower.includes('active')) return STATUS_COLORS.active;
-  return STATUS_COLORS.draft;
+  if (lower.includes('review')) return 'warning';
+  if (lower.includes('complete')) return 'default';
+  if (lower.includes('active')) return 'success';
+  return 'info';
 }
 
 function formatDate(): string {
@@ -99,10 +110,6 @@ export function OperationsCommandCenter({
   onCreateProject,
   userName,
 }: OperationsCommandCenterProps) {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token');
-
   const sortedProjects = useMemo(
     () =>
       [...projects].sort((a, b) => {
@@ -113,171 +120,70 @@ export function OperationsCommandCenter({
     [projects],
   );
 
-  const metrics = useMemo(() => {
+  const stats = useMemo(() => {
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
 
-    const total = projects.length;
-    const active = projects.filter(
-      (p) => p.status?.toLowerCase() === 'active',
-    ).length;
-    const inReview = projects.filter((p) =>
-      p.status?.toLowerCase().includes('review'),
-    ).length;
-    const completed = projects.filter(
-      (p) => p.status?.toLowerCase() === 'completed',
-    ).length;
-    const thisMonth = projects.filter((p) => {
-      if (!p.createdAt) return false;
-      const d = new Date(p.createdAt);
-      return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-    }).length;
-
     return [
-      { label: 'Total Projects', value: total, icon: FolderKanban, color: 'text-zinc-700' },
-      { label: 'Active', value: active, icon: Briefcase, color: 'text-emerald-600' },
-      { label: 'In Review', value: inReview, icon: FileSearch, color: 'text-amber-600' },
-      { label: 'Completed', value: completed, icon: CheckCircle2, color: 'text-zinc-500' },
-      { label: 'This Month', value: thisMonth, icon: CalendarDays, color: 'text-sky-600' },
+      { label: 'Total', value: projects.length, icon: FolderKanban, iconClassName: 'text-zinc-500' },
+      { label: 'Active', value: projects.filter((p) => p.status?.toLowerCase() === 'active').length, icon: Briefcase, iconClassName: 'text-emerald-600', valueClassName: 'text-emerald-600' },
+      { label: 'In Review', value: projects.filter((p) => p.status?.toLowerCase().includes('review')).length, icon: FileSearch, iconClassName: 'text-amber-600', valueClassName: 'text-amber-600' },
+      { label: 'Completed', value: projects.filter((p) => p.status?.toLowerCase() === 'completed').length, icon: CheckCircle2, iconClassName: 'text-zinc-400' },
+      { label: 'This Month', value: projects.filter((p) => { if (!p.createdAt) return false; const d = new Date(p.createdAt); return d.getMonth() === currentMonth && d.getFullYear() === currentYear; }).length, icon: CalendarDays, iconClassName: 'text-sky-600', valueClassName: 'text-sky-600' },
     ];
   }, [projects]);
 
   const quickLinks = [
-    {
-      label: 'Regulatory Intelligence',
-      description: 'AI-powered regulatory insights',
-      icon: Brain,
-    },
-    {
-      label: 'Document Templates',
-      description: 'Pre-built submission templates',
-      icon: FileText,
-    },
-    {
-      label: 'Analytics Dashboard',
-      description: 'Portfolio metrics and trends',
-      icon: BarChart2,
-    },
-    {
-      label: 'Knowledge Base',
-      description: 'Guidance documents and SOPs',
-      icon: BookOpen,
-    },
+    { label: 'Regulatory Intelligence', description: 'AI-powered regulatory insights', icon: Brain },
+    { label: 'Document Templates', description: 'Pre-built submission templates', icon: FileText },
+    { label: 'Analytics Dashboard', description: 'Portfolio metrics and trends', icon: BarChart2 },
+    { label: 'Knowledge Base', description: 'Guidance documents and SOPs', icon: BookOpen },
   ];
 
   return (
-    <div className="min-h-full w-full max-w-7xl mx-auto px-6 py-8 space-y-8">
+    <PageLayout size="wide">
       {/* ── Welcome Header ── */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-zinc-900 tracking-tight">
-            {getGreeting()}, {userName || 'there'}
-          </h1>
-          <p className="mt-1 text-sm text-zinc-500">{formatDate()}</p>
-        </div>
-        <button
-          onClick={onCreateProject}
-          className={cn(
-            'inline-flex items-center gap-2 rounded-lg px-5 py-2.5',
-            'bg-zinc-900 text-white text-sm font-medium',
-            'hover:bg-zinc-800 active:bg-zinc-950',
-            'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none',
-            'transition-colors duration-150 shadow-sm',
-          )}
-        >
-          <Plus className="h-4 w-4" />
-          New Project
-        </button>
-      </div>
+      <PageHeader
+        title={`${getGreeting()}, ${userName || 'there'}`}
+        subtitle={formatDate()}
+        actions={
+          <EnterpriseButton variant="primary" icon={Plus} size="lg" onClick={onCreateProject} className="bg-zinc-900 hover:bg-zinc-800">
+            New Project
+          </EnterpriseButton>
+        }
+      />
 
       {/* ── Portfolio Overview ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-        {metrics.map((m) => (
-          <div
-            key={m.label}
-            className={cn(
-              'rounded-xl border border-zinc-200 bg-white px-5 py-4',
-              'flex flex-col gap-1',
-            )}
-          >
-            <div className="flex items-center gap-2">
-              <m.icon className={cn('h-4 w-4', m.color)} />
-              <span className="text-xs font-medium text-zinc-500 uppercase tracking-wide">
-                {m.label}
-              </span>
-            </div>
-            <span className={cn('text-2xl font-semibold', m.color)}>{m.value}</span>
-          </div>
-        ))}
-      </div>
+      <StatRow stats={stats} columns={5} />
 
       {/* ── Projects Grid ── */}
       <div>
-        <h2 className="text-lg font-semibold text-zinc-900 mb-4">Projects</h2>
+        <Heading className="mb-4">Projects</Heading>
         {sortedProjects.length === 0 ? (
-          <div
-            className={cn(
-              'rounded-xl border border-dashed border-zinc-300 bg-zinc-50',
-              'flex flex-col items-center justify-center py-16 text-center',
-            )}
-          >
-            <FolderKanban className="h-10 w-10 text-zinc-300 mb-3" />
-            <p className="text-sm font-medium text-zinc-500">No projects yet</p>
-            <p className="text-xs text-zinc-400 mt-1">
-              Create your first project to get started.
-            </p>
-            <button
-              onClick={onCreateProject}
-              className={cn(
-                'mt-4 inline-flex items-center gap-2 rounded-lg px-4 py-2',
-                'bg-zinc-900 text-white text-sm font-medium',
-                'hover:bg-zinc-800 transition-colors duration-150',
-                'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none',
-              )}
-            >
-              <Plus className="h-4 w-4" />
-              New Project
-            </button>
-          </div>
+          <EmptyState
+            icon={FolderKanban}
+            title="No projects yet"
+            description="Create your first project to get started."
+            action={
+              <EnterpriseButton variant="primary" icon={Plus} onClick={onCreateProject} className="bg-zinc-900 hover:bg-zinc-800">
+                New Project
+              </EnterpriseButton>
+            }
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {sortedProjects.map((project) => {
               const typeColor = getTypeColor(project.type);
-              const statusColor = getStatusColor(project.status);
-
               return (
-                <button
-                  key={project.id}
-                  onClick={() => onSelectProject(project.id)}
-                  className={cn(
-                    'rounded-xl border border-zinc-200 bg-white p-5 text-left shadow-sm',
-                    'hover:shadow-md hover:border-zinc-300',
-                    'transition-all duration-150',
-                    'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none',
-                    'group',
-                  )}
-                >
+                <EnterpriseCard key={project.id} interactive onClick={() => onSelectProject(project.id)} className="group">
                   <div className="flex items-start justify-between mb-3">
                     {project.type ? (
-                      <span
-                        className={cn(
-                          'inline-flex items-center rounded-lg px-2.5 py-0.5 text-xs font-semibold',
-                          typeColor.bg,
-                          typeColor.text,
-                        )}
-                      >
-                        {project.type.toUpperCase()}
-                      </span>
+                      <StatusPill label={project.type.toUpperCase()} className={cn(typeColor.bg, typeColor.text, 'rounded-lg')} />
                     ) : (
                       <span />
                     )}
-                    <ArrowRight
-                      className={cn(
-                        'h-4 w-4 text-zinc-300 group-hover:text-zinc-500',
-                        'transition-colors duration-150',
-                      )}
-                    />
+                    <ArrowRight className="h-4 w-4 text-zinc-300 group-hover:text-zinc-500 transition-colors duration-150" />
                   </div>
 
                   <h3 className="text-sm font-semibold text-zinc-900 leading-snug line-clamp-2 mb-2">
@@ -286,19 +192,10 @@ export function OperationsCommandCenter({
 
                   <div className="flex items-center gap-3 flex-wrap">
                     {project.status && (
-                      <span
-                        className={cn(
-                          'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium',
-                          statusColor.bg,
-                          statusColor.text,
-                        )}
-                      >
-                        <span className={cn('h-1.5 w-1.5 rounded-full', statusColor.dot)} />
-                        {project.status}
-                      </span>
+                      <StatusPill label={project.status} variant={getStatusVariant(project.status)} dot />
                     )}
                     {project.submissionType && (
-                      <span className="text-xs text-zinc-400">{project.submissionType}</span>
+                      <Caption as="span">{project.submissionType}</Caption>
                     )}
                   </div>
 
@@ -308,7 +205,7 @@ export function OperationsCommandCenter({
                       <span>Updated {formatRelativeTime(project.updatedAt)}</span>
                     </div>
                   )}
-                </button>
+                </EnterpriseCard>
               );
             })}
           </div>
@@ -317,33 +214,22 @@ export function OperationsCommandCenter({
 
       {/* ── Quick Access Bar ── */}
       <div>
-        <h2 className="text-lg font-semibold text-zinc-900 mb-4">Quick Access</h2>
+        <Heading className="mb-4">Quick Access</Heading>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {quickLinks.map((link) => (
-            <div
-              key={link.label}
-              className={cn(
-                'rounded-xl border border-zinc-200 bg-white px-5 py-4 shadow-sm',
-                'hover:shadow-md hover:border-zinc-300',
-                'transition-all duration-150 cursor-pointer',
-                'group',
-              )}
-            >
-              <div
-                className={cn(
-                  'h-9 w-9 rounded-lg bg-zinc-100 flex items-center justify-center mb-3',
-                  'group-hover:bg-zinc-200 transition-colors duration-150',
-                )}
-              >
-                <link.icon className="h-4 w-4 text-zinc-600" />
-              </div>
+            <EnterpriseCard key={link.label} interactive className="group">
+              <IconBox
+                icon={link.icon}
+                size="sm"
+                className="bg-zinc-100 text-zinc-600 group-hover:bg-zinc-200 transition-colors duration-150 mb-3"
+              />
               <p className="text-sm font-semibold text-zinc-900">{link.label}</p>
-              <p className="text-xs text-zinc-400 mt-0.5">{link.description}</p>
-            </div>
+              <Caption className="mt-0.5">{link.description}</Caption>
+            </EnterpriseCard>
           ))}
         </div>
       </div>
-    </div>
+    </PageLayout>
   );
 }
 

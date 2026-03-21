@@ -414,10 +414,10 @@ export const zenClasses = {
   cardSectionMuted: 'px-5 py-4 border-t border-zinc-100 bg-zinc-50',
 
   // ─── Icon Boxes ──────────────────────────────────────────────────────────────
-  // RULE: Icon containers use these exact sizes. Never w-14, w-16, etc.
+  // RULE: 3 sizes only. rounded-md (sm), rounded-lg (md, lg). Never rounded-xl.
   iconBoxSm: 'w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0',
   iconBoxMd: 'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0',
-  iconBoxLg: 'w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0',
+  iconBoxLg: 'w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0',
 
   // ─── Status Pills ───────────────────────────────────────────────────────────
   // RULE: All badges use this base + a color combo

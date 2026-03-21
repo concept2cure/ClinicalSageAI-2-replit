@@ -581,5 +581,272 @@ export function Skeleton({ className }: SkeletonProps) {
   );
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// TEXT — semantic typography components
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface TextProps {
+  children: React.ReactNode;
+  className?: string;
+  as?: 'p' | 'span' | 'div' | 'label';
+}
+
+/** Page title — text-xl font-semibold tracking-tight */
+export function PageTitle({ children, className }: TextProps) {
+  return <h1 className={cn('text-xl font-semibold tracking-tight text-zinc-900', className)}>{children}</h1>;
+}
+
+/** Section heading — text-lg font-semibold */
+export function Heading({ children, className, as: Tag = 'div' }: TextProps) {
+  return <Tag className={cn('text-lg font-semibold text-zinc-900', className)}>{children}</Tag>;
+}
+
+/** Sub heading — text-base font-semibold */
+export function SubHeading({ children, className, as: Tag = 'div' }: TextProps) {
+  return <Tag className={cn('text-base font-semibold text-zinc-900', className)}>{children}</Tag>;
+}
+
+/** Label — text-sm font-medium text-zinc-700 */
+export function Label({ children, className, as: Tag = 'label' }: TextProps) {
+  return <Tag className={cn('text-sm font-medium text-zinc-700', className)}>{children}</Tag>;
+}
+
+/** Body — text-sm text-zinc-600 */
+export function Body({ children, className, as: Tag = 'p' }: TextProps) {
+  return <Tag className={cn('text-sm text-zinc-600 leading-relaxed', className)}>{children}</Tag>;
+}
+
+/** Caption — text-xs text-zinc-500 */
+export function Caption({ children, className, as: Tag = 'p' }: TextProps) {
+  return <Tag className={cn('text-xs text-zinc-500', className)}>{children}</Tag>;
+}
+
+/** Overline — text-xs uppercase tracking-wider */
+export function Overline({ children, className, as: Tag = 'span' }: TextProps) {
+  return <Tag className={cn('text-xs font-medium text-zinc-400 uppercase tracking-wider', className)}>{children}</Tag>;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// INPUT — consistent form input
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  icon?: LucideIcon;
+  error?: string;
+}
+
+export function Input({ icon: Icon, error, className, ...props }: InputProps) {
+  return (
+    <div className="relative">
+      {Icon && (
+        <Icon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+      )}
+      <input
+        className={cn(
+          'w-full rounded-lg border bg-white px-4 py-2.5 text-sm text-zinc-900',
+          'placeholder:text-zinc-400',
+          'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 outline-none',
+          'transition-colors duration-150',
+          'disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-zinc-50',
+          Icon && 'pl-10',
+          error ? 'border-red-300 focus-visible:ring-red-500' : 'border-zinc-200',
+          className,
+        )}
+        {...props}
+      />
+      {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MODAL OVERLAY — consistent backdrop + centered container
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface ModalOverlayProps {
+  children: React.ReactNode;
+  onClose?: () => void;
+  /** Max width of the modal container */
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+  className?: string;
+}
+
+const modalSizes = {
+  sm: 'max-w-sm',
+  md: 'max-w-lg',
+  lg: 'max-w-2xl',
+  xl: 'max-w-4xl',
+};
+
+export function ModalOverlay({ children, onClose, size = 'md', className }: ModalOverlayProps) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh] px-4">
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black/40 backdrop-blur-sm"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      {/* Content */}
+      <div
+        className={cn(
+          'relative w-full bg-white rounded-xl shadow-lg border border-zinc-200 overflow-hidden',
+          'animate-in fade-in zoom-in-95 duration-150',
+          modalSizes[size],
+          className,
+        )}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PAGE LAYOUT — consistent page-level structure
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface PageLayoutProps {
+  children: React.ReactNode;
+  /** Max content width */
+  size?: 'narrow' | 'normal' | 'wide' | 'full';
+  className?: string;
+}
+
+const layoutSizes = {
+  narrow: 'max-w-3xl',
+  normal: 'max-w-5xl',
+  wide: 'max-w-7xl',
+  full: '',
+};
+
+export function PageLayout({ children, size = 'normal', className }: PageLayoutProps) {
+  return (
+    <div className={cn('min-h-full w-full mx-auto px-6 py-6 space-y-6', layoutSizes[size], className)}>
+      {children}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PAGE HEADER — title + subtitle + actions, consistent across all pages
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface PageHeaderProps {
+  title: string;
+  subtitle?: string;
+  actions?: React.ReactNode;
+  className?: string;
+}
+
+export function PageHeader({ title, subtitle, actions, className }: PageHeaderProps) {
+  return (
+    <div className={cn('flex items-start justify-between gap-4', className)}>
+      <div>
+        <h1 className="text-xl font-semibold text-zinc-900 tracking-tight">{title}</h1>
+        {subtitle && <p className="mt-1 text-sm text-zinc-500">{subtitle}</p>}
+      </div>
+      {actions && <div className="flex items-center gap-2 flex-shrink-0">{actions}</div>}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// STAT ROW — horizontal strip of metrics
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface Stat {
+  label: string;
+  value: string | number;
+  icon?: LucideIcon;
+  iconClassName?: string;
+  valueClassName?: string;
+}
+
+interface StatRowProps {
+  stats: Stat[];
+  columns?: 2 | 3 | 4 | 5 | 6;
+  className?: string;
+}
+
+const colMap = {
+  2: 'grid-cols-2',
+  3: 'grid-cols-3',
+  4: 'grid-cols-2 sm:grid-cols-4',
+  5: 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5',
+  6: 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-6',
+};
+
+export function StatRow({ stats, columns = 4, className }: StatRowProps) {
+  return (
+    <div className={cn('grid gap-4', colMap[columns], className)}>
+      {stats.map((s) => (
+        <div key={s.label} className="rounded-xl border border-zinc-200 bg-white px-5 py-4 shadow-sm">
+          <div className="flex items-center gap-2">
+            {s.icon && <s.icon className={cn('h-4 w-4', s.iconClassName || 'text-zinc-500')} />}
+            <span className="text-xs font-medium text-zinc-500 uppercase tracking-wide">{s.label}</span>
+          </div>
+          <span className={cn('text-2xl font-semibold mt-1 block', s.valueClassName || 'text-zinc-900')}>
+            {s.value}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TAB BAR — consistent horizontal tab strip
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface Tab {
+  id: string;
+  label: string;
+  icon?: LucideIcon;
+  count?: number;
+}
+
+interface TabBarProps {
+  tabs: Tab[];
+  activeTab: string;
+  onTabChange: (id: string) => void;
+  className?: string;
+}
+
+export function TabBar({ tabs, activeTab, onTabChange, className }: TabBarProps) {
+  return (
+    <div className={cn('flex items-center gap-1 border-b border-zinc-200', className)}>
+      {tabs.map((tab) => {
+        const active = tab.id === activeTab;
+        const Icon = tab.icon;
+        return (
+          <button
+            key={tab.id}
+            onClick={() => onTabChange(tab.id)}
+            className={cn(
+              'inline-flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium -mb-px border-b-2 transition-colors duration-150',
+              'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none',
+              active
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:border-zinc-300',
+            )}
+          >
+            {Icon && <Icon size={16} />}
+            {tab.label}
+            {tab.count != null && (
+              <span className={cn(
+                'text-xs rounded-full px-1.5 py-0.5 font-medium',
+                active ? 'bg-blue-100 text-blue-700' : 'bg-zinc-100 text-zinc-500',
+              )}>
+                {tab.count}
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 // Re-export for convenience
 export { cn };
