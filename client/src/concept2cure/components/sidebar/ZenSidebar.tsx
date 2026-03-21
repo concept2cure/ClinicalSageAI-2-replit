@@ -34,6 +34,8 @@ import {
   Activity,
   Upload,
   Layers,
+  Package,
+  BookOpen,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -520,6 +522,22 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               active={activeNavId === 'artifacts'}
               accentColor="violet"
               onClick={() => onNavigate?.('artifacts')}
+            />
+            <NavItem
+              icon={<Package className="w-3.5 h-3.5" />}
+              label="Submissions"
+              subtitle="eCTD builder · Packaging"
+              active={activeNavId === 'submission-builder'}
+              accentColor="indigo"
+              onClick={() => onNavigate?.('submission-builder')}
+            />
+            <NavItem
+              icon={<BookOpen className="w-3.5 h-3.5" />}
+              label="Templates"
+              subtitle="Regulatory templates"
+              active={activeNavId === 'template-library'}
+              accentColor="violet"
+              onClick={() => onNavigate?.('template-library')}
             />
             <NavItem
               icon={<Upload className="w-3.5 h-3.5" />}

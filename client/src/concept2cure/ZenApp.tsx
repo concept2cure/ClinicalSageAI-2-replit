@@ -160,6 +160,14 @@ const AboutTrainingCenter = lazy(() =>
   import('./pages/AboutTrainingCenter').then(m => ({ default: m.AboutTrainingCenter }))
 );
 
+// Lazy load submission/template components
+const SubmissionBuilderPage = lazy(() =>
+  import('./components/submission/SubmissionBuilder').then(m => ({ default: m.SubmissionBuilder }))
+);
+const TemplateLibraryPage = lazy(() =>
+  import('./components/submission/TemplateLibrary').then(m => ({ default: m.TemplateLibrary }))
+);
+
 // Lazy load Phase 7 Mission Control components
 const MissionControl = lazy(() =>
   import('./pages/MissionControl').then(m => ({ default: m.MissionControl }))
@@ -411,7 +419,9 @@ type LayoutMode =
   | 'document-builder'
   | 'deep-research'
   | 'report-engine'
-  | 'about-training';
+  | 'about-training'
+  | 'submission-builder'
+  | 'template-library';
 
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
@@ -1976,6 +1986,12 @@ export const ZenApp: React.FC = () => {
             case 'report-engine':
               setLayoutMode('report-engine');
               break;
+            case 'submission-builder':
+              setLayoutMode('submission-builder');
+              break;
+            case 'template-library':
+              setLayoutMode('template-library');
+              break;
             default:
               break;
           }
@@ -3244,6 +3260,42 @@ export const ZenApp: React.FC = () => {
                 }
               >
                 <IntelligentReportGenerator />
+              </Suspense>
+            </div>
+          )}
+
+          {/* ── Submission Builder — eCTD module assembler ────────────────── */}
+          {!embeddedModule && layoutMode === 'submission-builder' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-submission-builder">
+              <Suspense
+                fallback={
+                  <div className="flex-1 flex items-center justify-center">
+                    <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
+                  </div>
+                }
+              >
+                <SubmissionBuilderPage
+                  projectId={activeProjectId || ''}
+                  projectName={activeProject?.name}
+                  onClose={() => setLayoutMode('regulatory-workspace')}
+                />
+              </Suspense>
+            </div>
+          )}
+
+          {/* ── Template Library — regulatory document templates ─────────── */}
+          {!embeddedModule && layoutMode === 'template-library' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-template-library">
+              <Suspense
+                fallback={
+                  <div className="flex-1 flex items-center justify-center">
+                    <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
+                  </div>
+                }
+              >
+                <TemplateLibraryPage
+                  onClose={() => setLayoutMode('regulatory-workspace')}
+                />
               </Suspense>
             </div>
           )}
