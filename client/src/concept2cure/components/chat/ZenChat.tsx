@@ -201,8 +201,6 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
   return (
     <div className="mt-2 p-3 bg-zinc-50 border border-zinc-200 rounded-xl">
       <div className="flex items-center gap-2 mb-2">
-        <FileText className="w-4 h-4 text-[#D97757]" />
-        <span className="text-sm font-medium text-zinc-800 truncate flex-1">
         <FileText className="w-4 h-4 text-violet-500" />
         <span className="text-sm font-medium text-zinc-900 truncate flex-1">
           {artifact.title}
@@ -217,8 +215,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
             'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors duration-150',
             isSaved
               ? 'bg-green-50 text-green-700 border border-green-200'
-              : 'bg-[#FBF0EB] text-[#C4623F] border border-[#F5E0D6] hover:bg-[#F5E0D6]'
-              : 'bg-violet-50 text-violet-700 border border-blue-200 hover:bg-violet-100'
+              : 'bg-violet-50 text-violet-700 border border-violet-200 hover:bg-violet-100'
           )}
         >
           {isSaving ? (
@@ -249,7 +246,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
                   onClick={() => { onExportDocx(artifact); setShowExportMenu(false); }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
                 >
-                  <FileText className="w-4 h-4 text-[#D97757]" />
+                  <FileText className="w-4 h-4 text-violet-500" />
                   <div className="text-left">
                     <div className="font-medium text-xs">Word Document (.docx)</div>
                     <div className="text-xs text-zinc-400">MS Word, Google Docs compatible</div>
@@ -653,8 +650,6 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
         {/* Continue previous work — only if there's context */}
         {(nextTask || lastWork) && (
-          <div className="mb-6 rounded-xl border border-blue-200 bg-blue-50/50 p-4">
-            <div className="text-xs font-semibold text-[#C4623F] uppercase tracking-wide mb-2">
           <div className="mb-8 rounded-xl border border-blue-200 bg-blue-50/40 p-4">
             <div className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-2">
               Pick up where you left off
@@ -662,7 +657,6 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             {nextTask && (
               <button
                 onClick={() => onSuggestionClick(nextTask.taskTitle)}
-                className="block w-full text-left text-sm font-medium text-[#141413] hover:text-[#C4623F] transition-colors"
                 className="w-full flex items-center gap-3 text-left text-sm font-medium text-blue-900 hover:text-blue-700 transition-colors py-1"
               >
                 <ArrowUp className="w-3.5 h-3.5 rotate-45 flex-shrink-0" />
@@ -672,7 +666,6 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             {lastWork && (
               <button
                 onClick={() => onSuggestionClick(`Continue: ${lastWork.contextTitle}`)}
-                className="block w-full text-left text-xs text-[#D97757] mt-1 hover:text-[#A5512F] transition-colors"
                 className="w-full flex items-center gap-3 text-left text-sm text-blue-700 hover:text-blue-900 transition-colors py-1"
               >
                 <ArrowUp className="w-3.5 h-3.5 rotate-45 flex-shrink-0" />
@@ -719,14 +712,11 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                 className="w-full group flex items-center gap-4 p-4 rounded-xl border border-zinc-200 bg-white hover:border-blue-200 hover:shadow-sm text-left transition-all duration-150"
               >
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold text-zinc-900 group-hover:text-[#A5512F] mb-0.5">
-                    {p.label}
                   <div className="text-sm font-medium text-zinc-900 group-hover:text-blue-900">
                     {item.title}
                   </div>
                   <div className="text-xs text-zinc-500 mt-0.5">{item.description}</div>
                 </div>
-                <ArrowUp className="w-4 h-4 text-zinc-300 group-hover:text-[#E8967A] flex-shrink-0 mt-0.5 rotate-45" />
                 <ArrowUp className="w-4 h-4 text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 rotate-45" />
               </button>
             ))}

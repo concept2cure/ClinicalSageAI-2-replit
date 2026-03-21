@@ -674,10 +674,6 @@ export const ZenLogin: React.FC = () => {
         </div>
       </div>
 
-      {/* Quick Demo Access (dev-only) */}
-      {import.meta.env.DEV && <div className="space-y-2">
-        <button
-          onClick={() => setShowPersonas(!showPersonas)}
       {/* Quick Demo Access — only visible in development */}
       {(import.meta.env.DEV || import.meta.env.VITE_SHOW_DEMO_LOGIN === 'true') && (
         <button
@@ -693,66 +689,6 @@ export const ZenLogin: React.FC = () => {
             disabled:opacity-60 disabled:cursor-not-allowed
           `}
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M13 10V3L4 14h7v7l9-11h-7z"
-            />
-          </svg>
-          Quick Demo Access
-          <svg
-            className={`w-4 h-4 transition-transform duration-200 ${showPersonas ? 'rotate-180' : ''}`}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-
-        {showPersonas && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="space-y-1.5 overflow-hidden"
-          >
-            {demoPersonas.map((persona) => (
-              <button
-                key={persona.email}
-                onClick={() => handleDemoLogin(persona.email)}
-                disabled={isLoading}
-                className={`
-                  w-full py-2.5 px-4
-                  flex items-center gap-3
-                  text-left text-sm
-                  bg-white border border-zinc-200 rounded-lg
-                  hover:bg-zinc-50 hover:border-zinc-300
-                  transition-all duration-150
-                  disabled:opacity-60 disabled:cursor-not-allowed
-                `}
-              >
-                <span className="text-lg">{persona.icon}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-zinc-900 truncate">{persona.name}</div>
-                  <div className="text-sm text-zinc-500 truncate">{persona.title}</div>
-                </div>
-                <span className={`
-                  text-xs font-medium px-2 py-0.5 rounded-full
-                  ${persona.role === 'Admin' ? 'bg-purple-100 text-purple-700' :
-                    persona.role === 'Editor' ? 'bg-blue-100 text-blue-700' :
-                    'bg-zinc-100 text-zinc-600'}
-                `}>
-                  {persona.role}
-                </span>
-              </button>
-            ))}
-            <p className="text-xs text-center text-zinc-400 pt-1">Password: demo123</p>
-          </motion.div>
-        )}
-      </div>}
           {isLoading ? (
             <SpinnerIcon />
           ) : (
@@ -961,22 +897,6 @@ export const ZenLogin: React.FC = () => {
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 mb-2">
           <ShieldIcon />
         </div>
-        <h3 className="text-lg font-semibold text-zinc-900">Check your email</h3>
-        {mfaMethod === 'email' ? (
-          <p className="text-sm text-zinc-600">
-            We sent a 6-digit verification code to{' '}
-            <span className="font-medium text-zinc-800">{maskedEmail || email}</span>
-          </p>
-        ) : (
-          <p className="text-sm text-zinc-600">Enter the 6-digit code from your authenticator app</p>
-        )}
-      </div>
-
-      <MfaCodeInput
-        value={mfaCode}
-        onChange={setMfaCode}
-        error={error?.field === 'mfa' ? error.message : undefined}
-      />
         <h3 className="text-lg font-semibold text-zinc-900">
           {useRecoveryCode ? 'Recovery code' : 'Two-factor authentication'}
         </h3>
@@ -1163,8 +1083,6 @@ export const ZenLogin: React.FC = () => {
         {isLoading ? <SpinnerIcon /> : 'Verify recovery code'}
       </button>
 
-      <p className="text-center text-xs text-zinc-400">
-        Each recovery code can only be used once. If you have used all your codes, contact your administrator.
       <p className="text-center text-sm text-zinc-500">
         {useRecoveryCode ? (
           <button
@@ -1372,11 +1290,8 @@ export const ZenLogin: React.FC = () => {
       {/* Right panel — auth form */}
       <div className="flex-1 flex flex-col bg-white">
         {/* Mobile logo (shown on small screens only) */}
-        <div className="lg:hidden flex items-center gap-3 p-6 border-b border-zinc-100">
-          <C2CLogo size="md" />
         <div className="lg:hidden flex items-center gap-3 p-6 border-b border-zinc-200">
-          <img src={concept2cureLogo} alt="Concept2Cure" className="h-10 w-auto rounded-lg" />
-          <span className="text-lg font-semibold text-zinc-900">Concept2Cure</span>
+          <C2CLogo size="md" />
         </div>
 
         <div className="flex-1 flex items-center justify-center px-6 py-12 sm:px-12">

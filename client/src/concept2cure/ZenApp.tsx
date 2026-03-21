@@ -470,11 +470,11 @@ type LayoutMode =
   | 'report-engine'
   | 'about-training'
   | 'user-inbox'
-  | 'client-branding';
+  | 'client-branding'
   | 'ana-dashboard'
   | 'safety-narrative'
-  | 'ana-platform-control';
-  | 'integrations';
+  | 'ana-platform-control'
+  | 'integrations'
   | 'submission-builder'
   | 'template-library';
 
@@ -3192,10 +3192,6 @@ export const ZenApp: React.FC = () => {
           {/* ── Agent Hub — Agent Swarm showcase, setup, monitoring ── */}
           {!embeddedModule && layoutMode === 'agent-hub' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-agent-hub">
-          {/* Enterprise Integrations — connectors & API management */}
-          {!embeddedModule && layoutMode === 'integrations' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-integrations">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
               <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
@@ -3212,11 +3208,6 @@ export const ZenApp: React.FC = () => {
                     {activeProject.name}
                   </span>
                 )}
-                  <span>Projects</span>
-                </button>
-                <span className="text-zinc-200">&middot;</span>
-                <Link2 className="w-3.5 h-3.5 text-blue-500" />
-                <span className="text-xs font-medium text-zinc-800">Integrations</span>
               </div>
               <ErrorBoundary>
                 <Suspense
@@ -3225,6 +3216,32 @@ export const ZenApp: React.FC = () => {
                   }
                 >
                   <AgentShowcasePage />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── Enterprise Integrations — connectors & API management ── */}
+          {!embeddedModule && layoutMode === 'integrations' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-integrations">
+              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
+                <button
+                  onClick={() => setLayoutMode('projects')}
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Home</span>
+                </button>
+                <span className="text-zinc-200">&middot;</span>
+                <Layers className="w-3.5 h-3.5 text-violet-500" />
+                <span className="text-xs font-medium text-zinc-900">Integrations</span>
+              </div>
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <LoadingState size="page" />
+                  }
+                >
                   <IntegrationsPage />
                 </Suspense>
               </ErrorBoundary>
@@ -3497,6 +3514,10 @@ export const ZenApp: React.FC = () => {
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-ana-dashboard">
               <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-zinc-300" /></div>}>
                 <AnaDashboardPage projectId={activeProjectId} />
+              </Suspense>
+            </div>
+          )}
+
           {/* ── Submission Builder — eCTD module assembler ────────────────── */}
           {!embeddedModule && layoutMode === 'submission-builder' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-submission-builder">
@@ -3528,6 +3549,10 @@ export const ZenApp: React.FC = () => {
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-ana-platform-control">
               <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-zinc-300" /></div>}>
                 <AnaPlatformControlPage />
+              </Suspense>
+            </div>
+          )}
+
           {/* ── Template Library — regulatory document templates ─────────── */}
           {!embeddedModule && layoutMode === 'template-library' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-template-library">
