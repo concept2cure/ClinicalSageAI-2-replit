@@ -32,6 +32,7 @@ import { cn } from '@/lib/utils';
 import { ZenSidebar } from './components/sidebar/ZenSidebar';
 import { ZenChat } from './components/chat/ZenChat';
 import { ZenCommandPalette } from './components/command/ZenCommandPalette';
+import { GlobalDocumentSearch } from './components/workspace/GlobalDocumentSearch';
 import { ZenSettings } from './components/settings/ZenSettings';
 import {
   ProjectSwitcher,
@@ -909,6 +910,7 @@ export const ZenApp: React.FC = () => {
 
   // Modals
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [projectSwitcherOpen, setProjectSwitcherOpen] = useState(false);
   const [newProjectOpen, setNewProjectOpen] = useState(false);
@@ -1322,6 +1324,12 @@ export const ZenApp: React.FC = () => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         setCommandPaletteOpen(true);
+      }
+
+      // Global document search: ⌘Shift+F or Ctrl+Shift+F
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'F') {
+        e.preventDefault();
+        setGlobalSearchOpen(true);
       }
 
       // New chat: ⌘N or Ctrl+N
@@ -1842,7 +1850,7 @@ export const ZenApp: React.FC = () => {
         }}
         onNewChat={handleNewChat}
         onOpenProjects={() => setProjectSwitcherOpen(true)}
-        onOpenSearch={() => setCommandPaletteOpen(true)}
+        onOpenSearch={() => setGlobalSearchOpen(true)}
         onOpenSettings={() => setSettingsOpen(true)}
         onDeleteConversation={handleDeleteConversation}
         onToggleStar={handleToggleConversationStar}
@@ -3629,6 +3637,19 @@ export const ZenApp: React.FC = () => {
         isOpen={commandPaletteOpen}
         onClose={() => setCommandPaletteOpen(false)}
         onAction={handleCommandAction}
+      />
+
+      {/* Global Document Search */}
+      <GlobalDocumentSearch
+        isOpen={globalSearchOpen}
+        onClose={() => setGlobalSearchOpen(false)}
+        onOpenDocument={(projId, docId) => {
+          // Navigate to the project and open the document
+          setActiveProjectId(projId);
+          setLayoutMode('project');
+          // The document ID will be picked up by the workspace shell
+          setGlobalSearchOpen(false);
+        }}
       />
 
       {/* Settings */}

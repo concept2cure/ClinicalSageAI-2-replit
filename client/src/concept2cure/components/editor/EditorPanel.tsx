@@ -997,8 +997,15 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     }
   }, [projectId, activeArtifact, loadArtifacts]);
 
-  // ── Status change ────────────────────────────────────────────────────
-  const handleStatusChange = useCallback(
+  // ── Quality gate confirmation dialog state ──────────────────────────
+  const [qualityGateDialog, setQualityGateDialog] = useState<{
+    show: boolean;
+    targetStatus: string;
+    warnings: string[];
+  }>({ show: false, targetStatus: '', warnings: [] });
+
+  // ── Status change (with optional quality gate) ─────────────────────
+  const executeStatusChange = useCallback(
     async (newStatus: string, reason?: string) => {
       if (!projectId || !activeArtifact) return;
       setChangingStatus(true);
@@ -1021,7 +1028,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           loadArtifacts();
           pushToast(`Status → ${newStatus}`, 'success', () => {
             // Undo: revert to previous status
-            handleStatusChange(previousStatus);
+            executeStatusChange(previousStatus);
           });
         } else {
           const err = await res.json().catch(() => ({ message: 'Status change failed' }));
@@ -1034,6 +1041,48 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       }
     },
     [projectId, activeArtifact, loadArtifacts]
+  );
+
+  const handleStatusChange = useCallback(
+    async (newStatus: string, reason?: string) => {
+      if (!activeArtifact) return;
+
+      // Quality gate: run checks when advancing to review or approved
+      const isAdvancing = (newStatus === 'review' || newStatus === 'approved') &&
+        (activeArtifact.status === 'draft' || activeArtifact.status === 'review');
+
+      if (isAdvancing && activeArtifact.content) {
+        const content = activeArtifact.content.replace(/<[^>]*>/g, '');
+        const warnings: string[] = [];
+
+        // Check document length
+        const wordCount = content.split(/\s+/).filter(Boolean).length;
+        if (wordCount < 50) warnings.push(`Document is very short (${wordCount} words) — consider expanding before review.`);
+
+        // Check for placeholder text
+        if (/\[.*?\]|TODO|TBD|FIXME|lorem ipsum/i.test(content)) {
+          warnings.push('Document may contain placeholder text (e.g., [brackets], TODO, TBD).');
+        }
+
+        // Check CTD section assignment
+        if (!activeArtifact.ctdSection) {
+          warnings.push('No CTD section assigned — reviewers won\'t know the dossier placement.');
+        }
+
+        // Check for headings (structure)
+        if (!/<h[1-6]/i.test(activeArtifact.content)) {
+          warnings.push('No headings found — document lacks structure for regulatory review.');
+        }
+
+        if (warnings.length > 0) {
+          setQualityGateDialog({ show: true, targetStatus: newStatus, warnings });
+          return; // Don't proceed until user confirms
+        }
+      }
+
+      await executeStatusChange(newStatus, reason);
+    },
+    [activeArtifact, executeStatusChange]
   );
 
   // ── CTD Section assignment ───────────────────────────────────────────
@@ -2387,6 +2436,47 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           </div>
         )}
       </div>
+
+      {/* ── Quality Gate Dialog ── */}
+      {qualityGateDialog.show && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <AlertTriangle className="w-5 h-5 text-amber-500" />
+              <h3 className="text-sm font-semibold text-zinc-800">Quality Check — Review Before Proceeding</h3>
+            </div>
+            <p className="text-xs text-zinc-500 mb-3">
+              The following issues were detected. You can proceed anyway or go back to fix them.
+            </p>
+            <ul className="space-y-2 mb-4">
+              {qualityGateDialog.warnings.map((w, i) => (
+                <li key={i} className="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                  {w}
+                </li>
+              ))}
+            </ul>
+            <div className="flex items-center justify-end gap-2">
+              <button
+                onClick={() => setQualityGateDialog({ show: false, targetStatus: '', warnings: [] })}
+                className="px-3 py-1.5 text-xs font-medium text-zinc-600 bg-zinc-100 rounded-lg hover:bg-zinc-200 transition-colors"
+              >
+                Go Back & Fix
+              </button>
+              <button
+                onClick={() => {
+                  const target = qualityGateDialog.targetStatus;
+                  setQualityGateDialog({ show: false, targetStatus: '', warnings: [] });
+                  executeStatusChange(target);
+                }}
+                className="px-3 py-1.5 text-xs font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 transition-colors"
+              >
+                Proceed Anyway
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── New Comment Dialog ── */}
       {showNewCommentDialog && (

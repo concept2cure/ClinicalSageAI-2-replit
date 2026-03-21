@@ -26,6 +26,9 @@ import {
   Layers,
   Package,
   BookOpen,
+  Shield,
+  TrendingUp,
+  AlertTriangle,
 } from 'lucide-react';
 import { ActivityFeed, generateActivityFromArtifacts } from './ActivityFeed';
 
@@ -166,7 +169,23 @@ export function ProjectDashboard({
       id: string; title: string; status?: string; updatedAt?: string; createdAt?: string; version?: number;
     }>);
 
-    return { counts, total, ready, completionPct, lastActivity, recent, ctdMap, activityItems };
+    // Compliance risk metrics (computed from artifact data)
+    const withCtd = artifacts.filter(a => a.ctdSection).length;
+    const ctdCoverage = total > 0 ? Math.round((withCtd / total) * 100) : 0;
+    const reviewCycle = counts.review > 0 ? Math.round((counts.review / total) * 100) : 0;
+    const approvalRate = total > 0 ? Math.round(((counts.approved + counts.locked) / total) * 100) : 0;
+    // Risk score: higher = more risk. Based on % drafts + % missing CTD sections
+    const riskScore = total > 0
+      ? Math.max(0, Math.min(100, Math.round(
+          (counts.draft / total) * 40 +
+          ((total - withCtd) / total) * 30 +
+          (counts.review > 0 ? 15 : 0) +
+          (total < 3 ? 15 : 0)
+        )))
+      : 0;
+    const riskLevel = riskScore >= 60 ? 'high' : riskScore >= 30 ? 'medium' : 'low';
+
+    return { counts, total, ready, completionPct, lastActivity, recent, ctdMap, activityItems, ctdCoverage, reviewCycle, approvalRate, riskScore, riskLevel };
   }, [artifacts]);
 
   // ── Pipeline metric card ───────────────────────────────────────────────────
@@ -384,6 +403,62 @@ export function ProjectDashboard({
           </p>
         </div>
       </section>
+
+      {/* ── 2B. Compliance & Readiness ──────────────────────────────────────── */}
+      {stats.total > 0 && (
+        <section className="grid gap-4 sm:grid-cols-4">
+          {/* Risk Score */}
+          <div className={cn(
+            'flex flex-col items-center justify-center rounded-xl border p-5 transition-shadow hover:shadow-sm',
+            stats.riskLevel === 'high' ? 'bg-red-50 border-red-200' :
+            stats.riskLevel === 'medium' ? 'bg-amber-50 border-amber-200' :
+            'bg-emerald-50 border-emerald-200',
+          )}>
+            <Shield size={18} className={cn(
+              stats.riskLevel === 'high' ? 'text-red-500' :
+              stats.riskLevel === 'medium' ? 'text-amber-500' :
+              'text-emerald-500',
+            )} />
+            <span className={cn(
+              'text-2xl font-bold tabular-nums mt-1',
+              stats.riskLevel === 'high' ? 'text-red-700' :
+              stats.riskLevel === 'medium' ? 'text-amber-700' :
+              'text-emerald-700',
+            )}>
+              {100 - stats.riskScore}
+            </span>
+            <span className={cn(
+              'text-xs font-medium mt-0.5',
+              stats.riskLevel === 'high' ? 'text-red-600' :
+              stats.riskLevel === 'medium' ? 'text-amber-600' :
+              'text-emerald-600',
+            )}>
+              Readiness Score
+            </span>
+          </div>
+
+          {/* CTD Coverage */}
+          <div className="flex flex-col items-center justify-center rounded-xl border border-zinc-200 bg-white p-5 hover:shadow-sm transition-shadow">
+            <Layers size={18} className="text-indigo-500" />
+            <span className="text-2xl font-bold tabular-nums text-zinc-800 mt-1">{stats.ctdCoverage}%</span>
+            <span className="text-xs font-medium text-zinc-500 mt-0.5">CTD Coverage</span>
+          </div>
+
+          {/* Approval Rate */}
+          <div className="flex flex-col items-center justify-center rounded-xl border border-zinc-200 bg-white p-5 hover:shadow-sm transition-shadow">
+            <TrendingUp size={18} className="text-green-500" />
+            <span className="text-2xl font-bold tabular-nums text-zinc-800 mt-1">{stats.approvalRate}%</span>
+            <span className="text-xs font-medium text-zinc-500 mt-0.5">Approval Rate</span>
+          </div>
+
+          {/* In Review */}
+          <div className="flex flex-col items-center justify-center rounded-xl border border-zinc-200 bg-white p-5 hover:shadow-sm transition-shadow">
+            <AlertTriangle size={18} className={stats.reviewCycle > 30 ? 'text-amber-500' : 'text-blue-500'} />
+            <span className="text-2xl font-bold tabular-nums text-zinc-800 mt-1">{stats.counts.review}</span>
+            <span className="text-xs font-medium text-zinc-500 mt-0.5">Awaiting Review</span>
+          </div>
+        </section>
+      )}
 
       {/* ── 3. Recent Activity + Quick Actions ──────────────────────────────── */}
       <section className="grid gap-6 lg:grid-cols-5">
