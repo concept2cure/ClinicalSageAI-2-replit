@@ -1196,7 +1196,7 @@ function TrainingTab() {
                           <Clock className="w-3 h-3" />{mod.duration}
                         </span>
                       </div>
-                      <ChevronDown className={cn('w-4 h-4 text-zinc-400 transition-transform', isExpanded && 'rotate-180')} />
+                      <ChevronDown className={cn('w-4 h-4 text-zinc-400 transition-transform duration-150', isExpanded && 'rotate-180')} />
                     </div>
                   </div>
 

@@ -377,7 +377,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
                 {actionInfo?.icon}
                 {actionInfo?.label ?? 'Select an action…'}
               </span>
-              <ChevronDown className={cn('w-4 h-4 transition-transform', actionMenuOpen && 'rotate-180')} />
+              <ChevronDown className={cn('w-4 h-4 transition-transform duration-150', actionMenuOpen && 'rotate-180')} />
             </button>
 
             {actionMenuOpen && (
@@ -550,7 +550,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
                           )}
                           <ChevronDown
                             className={cn(
-                              'w-3.5 h-3.5 text-zinc-500 transition-transform',
+                              'w-3.5 h-3.5 text-zinc-500 transition-transform duration-150',
                               isExpanded && 'rotate-180',
                             )}
                           />

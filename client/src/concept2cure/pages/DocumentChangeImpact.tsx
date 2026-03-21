@@ -232,7 +232,7 @@ export default function DocumentChangeImpact({ projectId, submissionType }: { pr
         </div>
 
         {/* Guidance Selector */}
-        <div className="rounded-xl border border-zinc-200 bg-white p-6 mb-6">
+        <div className="rounded-xl border border-zinc-200 bg-white p-5 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Guidance Dropdown */}
             <div>
@@ -457,7 +457,7 @@ export default function DocumentChangeImpact({ projectId, submissionType }: { pr
             </div>
 
             {/* AnA Recommendations */}
-            <div className="rounded-xl border border-blue-200 bg-violet-50/40 p-6">
+            <div className="rounded-xl border border-blue-200 bg-blue-50/40 p-5">
               <div className="flex items-center gap-2 mb-4">
                 <Sparkles className="h-4 w-4 text-violet-600" />
                 <h2 className="text-sm font-semibold text-violet-900">
@@ -477,7 +477,7 @@ export default function DocumentChangeImpact({ projectId, submissionType }: { pr
             </div>
 
             {/* Timeline Comparison */}
-            <div className="rounded-xl border border-zinc-200 bg-white p-6">
+            <div className="rounded-xl border border-zinc-200 bg-white p-5">
               <div className="flex items-center gap-2 mb-5">
                 <CalendarDays className="h-4 w-4 text-zinc-500" />
                 <h2 className="text-sm font-semibold text-zinc-900">

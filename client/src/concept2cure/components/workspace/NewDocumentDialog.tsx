@@ -210,7 +210,7 @@ export function NewDocumentDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="w-full max-w-2xl rounded-xl bg-white shadow-2xl border border-zinc-200 overflow-hidden">
+      <div className="w-full max-w-2xl rounded-xl bg-white shadow-lg border border-zinc-200 overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100">
           <div className="flex items-center gap-3">

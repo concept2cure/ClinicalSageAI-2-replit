@@ -3530,7 +3530,7 @@ export const ZenApp: React.FC = () => {
                       className="fixed inset-0 bg-black/30 z-40 lg:hidden"
                       onClick={() => setWorkspacePanelOpen(false)}
                     />
-                    <div className="fixed right-0 top-0 bottom-0 w-80 bg-white border-l border-zinc-200 shadow-xl z-50 lg:hidden">
+                    <div className="fixed right-0 top-0 bottom-0 w-80 bg-white border-l border-zinc-200 shadow-lg z-50 lg:hidden">
                       <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200">
                         <span className="text-sm font-medium text-zinc-700">Project Context</span>
                         <button

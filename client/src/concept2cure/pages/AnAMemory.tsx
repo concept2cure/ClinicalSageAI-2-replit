@@ -292,7 +292,7 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
         {!loading && (
           <div className="space-y-6">
             {/* Project Context Card */}
-            <div className="rounded-xl border border-zinc-200 bg-white p-6">
+            <div className="rounded-xl border border-zinc-200 bg-white p-5">
               <div className="flex items-center gap-2 mb-5">
                 <Tag className="h-4 w-4 text-zinc-500" />
                 <h2 className="text-sm font-semibold text-zinc-900">

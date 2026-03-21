@@ -202,7 +202,7 @@ const IssueCard: React.FC<IssueCardProps> = ({ issue, onResolve }) => {
             <p className="text-xs text-zinc-500 mt-1">{issue.description}</p>
           </div>
           <ChevronRight
-            className={cn('h-4 w-4 text-zinc-400 transition-transform', isExpanded && 'rotate-90')}
+            className={cn('h-4 w-4 text-zinc-400 transition-transform duration-150', isExpanded && 'rotate-90')}
           />
         </div>
       </div>

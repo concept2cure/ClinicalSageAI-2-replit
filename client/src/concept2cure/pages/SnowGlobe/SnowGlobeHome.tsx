@@ -1093,7 +1093,7 @@ export default function SnowGlobeHome({ programId }: SnowGlobeHomeProps) {
       {/* Scenario Comparison Modal Overlay */}
       {showComparison && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="w-full max-w-5xl max-h-[90vh] overflow-y-auto bg-white rounded-xl shadow-2xl border border-zinc-200">
+          <div className="w-full max-w-5xl max-h-[90vh] overflow-y-auto bg-white rounded-xl shadow-lg border border-zinc-200">
             <Suspense fallback={<div className="flex items-center justify-center p-12"><Loader2 className="h-8 w-8 animate-spin text-zinc-400" /></div>}>
               <ScenarioComparison
                 programId={programId}

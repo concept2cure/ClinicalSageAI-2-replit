@@ -698,13 +698,13 @@ export const LandingPage: React.FC = () => {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
               </span>
-              See It In Action <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              See It In Action <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform duration-150" />
             </button>
             <button
               onClick={() => setLocation('/concept2cure/signup')}
               className="group px-8 py-3.5 text-base font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition-all flex items-center gap-2"
             >
-              Start Free Trial <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              Start Free Trial <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform duration-150" />
             </button>
           </motion.div>
 
@@ -882,7 +882,7 @@ export const LandingPage: React.FC = () => {
             >
               <SparklesIcon className="w-4 h-4" />
               Try the Interactive Demo
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform duration-150" />
             </button>
           </motion.div>
         </div>
@@ -1065,7 +1065,7 @@ export const LandingPage: React.FC = () => {
               onClick={() => setLocation('/concept2cure/demo')}
               className="group inline-flex items-center gap-2 px-6 py-3 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-md"
             >
-              Explore All Modules <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              Explore All Modules <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform duration-150" />
             </button>
           </motion.div>
         </div>
@@ -1499,7 +1499,7 @@ export const LandingPage: React.FC = () => {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-500" />
               </span>
-              See the Demo <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              See the Demo <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform duration-150" />
             </button>
             <button
               onClick={() => setLocation('/concept2cure/signup')}

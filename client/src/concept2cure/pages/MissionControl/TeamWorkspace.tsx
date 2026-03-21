@@ -445,7 +445,7 @@ function InviteModal({ open, onClose }: { open: boolean; onClose: () => void }) 
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 p-6">
+      <div className="relative bg-white rounded-xl shadow-lg w-full max-w-lg mx-4 p-6">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">

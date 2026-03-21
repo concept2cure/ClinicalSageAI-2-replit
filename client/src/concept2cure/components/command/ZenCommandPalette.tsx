@@ -801,7 +801,7 @@ export const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby="command-palette-title"
-        className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-xl bg-white rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150"
+        className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-xl bg-white rounded-xl shadow-lg overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150"
       >
         {/* Search input */}
         <div className="flex items-center gap-3 px-4 py-4 border-b border-zinc-200">

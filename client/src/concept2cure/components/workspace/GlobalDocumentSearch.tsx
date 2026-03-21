@@ -168,7 +168,7 @@ export function GlobalDocumentSearch({ isOpen, onClose, onOpenDocument }: Global
       <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50" onClick={onClose} />
 
       {/* Dialog */}
-      <div className="fixed top-[10%] left-1/2 -translate-x-1/2 w-full max-w-2xl bg-white rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
+      <div className="fixed top-[10%] left-1/2 -translate-x-1/2 w-full max-w-2xl bg-white rounded-xl shadow-lg overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
         {/* Search input */}
         <div className="flex items-center gap-3 px-4 py-4 border-b border-zinc-200">
           <Search className="w-5 h-5 text-zinc-400 shrink-0" />

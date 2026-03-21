@@ -626,7 +626,7 @@ export function SignatureWorkflow({
 
     return (
       <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-        <div className="w-full max-w-lg mx-4 bg-white rounded-xl shadow-2xl overflow-hidden">
+        <div className="w-full max-w-lg mx-4 bg-white rounded-xl shadow-lg overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 bg-zinc-50">
             <div className="flex items-center gap-3">
@@ -792,7 +792,7 @@ export function SignatureWorkflow({
 
     return (
       <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-        <div className="w-full max-w-md mx-4 bg-white border-2 border-emerald-200 rounded-xl shadow-2xl overflow-hidden">
+        <div className="w-full max-w-md mx-4 bg-white border-2 border-emerald-200 rounded-xl shadow-lg overflow-hidden">
           {/* Certificate header */}
           <div className="px-5 py-4 border-b border-emerald-100 bg-emerald-50 text-center">
             <div className="flex items-center justify-center w-12 h-12 mx-auto rounded-full bg-emerald-100 border border-emerald-200 mb-2">

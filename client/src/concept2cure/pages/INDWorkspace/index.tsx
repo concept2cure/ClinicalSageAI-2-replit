@@ -1162,7 +1162,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
       {/* eCTD Compile Dialog */}
       {showCompileDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[85vh] overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-lg mx-4 max-h-[85vh] overflow-y-auto">
             {/* Dialog Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200">
               <div className="flex items-center gap-2">

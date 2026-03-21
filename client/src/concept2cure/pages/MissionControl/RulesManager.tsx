@@ -355,7 +355,7 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
         >
           <div
             className={cn(
-              'absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform',
+              'absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-150',
               form.isActive ? 'translate-x-5' : 'translate-x-0.5'
             )}
           />

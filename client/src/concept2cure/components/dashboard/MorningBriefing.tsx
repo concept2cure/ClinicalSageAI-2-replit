@@ -256,7 +256,7 @@ export const MorningBriefing: React.FC<MorningBriefingProps> = ({
       'bg-zinc-900/60 backdrop-blur-sm animate-in fade-in duration-500',
       className
     )}>
-      <div className="bg-white w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden border border-zinc-200 transform transition-all scale-100 max-h-[90vh] flex flex-col">
+      <div className="bg-white w-full max-w-2xl rounded-xl shadow-lg overflow-hidden border border-zinc-200 transform transition-all scale-100 max-h-[90vh] flex flex-col">
         {/* ═══════ HEADER ═══════ */}
         <div className="h-44 bg-zinc-900 relative p-8 flex flex-col justify-end flex-shrink-0">
           {/* Close Button */}

@@ -396,7 +396,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
         onKeyDown={e => {
           if (e.key === 'Escape') onClose();
         }}
-        className="fixed top-[10%] left-1/2 -translate-x-1/2 w-full max-w-lg bg-white rounded-xl shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150"
+        className="fixed top-[10%] left-1/2 -translate-x-1/2 w-full max-w-lg bg-white rounded-xl shadow-lg z-50 animate-in fade-in zoom-in-95 duration-150"
       >
         <form onSubmit={handleSubmit}>
           {/* Header */}
@@ -623,7 +623,7 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
         onKeyDown={e => {
           if (e.key === 'Escape') onClose();
         }}
-        className="fixed inset-4 sm:inset-auto sm:top-[6%] sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-[560px] bg-white rounded-xl shadow-2xl z-50 flex flex-col max-h-[80vh] animate-in fade-in zoom-in-95 duration-150"
+        className="fixed inset-4 sm:inset-auto sm:top-[6%] sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-[560px] bg-white rounded-xl shadow-lg z-50 flex flex-col max-h-[80vh] animate-in fade-in zoom-in-95 duration-150"
       >
         {/* Header */}
         <div className="flex-shrink-0 px-4 py-3 border-b border-zinc-200">
@@ -884,7 +884,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
         onKeyDown={e => {
           if (e.key === 'Escape') onClose();
         }}
-        className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-xl shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150"
+        className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-xl shadow-lg z-50 animate-in fade-in zoom-in-95 duration-150"
       >
         <form onSubmit={handleSubmit}>
           {/* Header */}

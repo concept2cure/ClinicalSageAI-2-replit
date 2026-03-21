@@ -353,7 +353,7 @@ export function ProjectDashboard({
       </section>
 
       {/* ── 2. Document Pipeline ────────────────────────────────────────────── */}
-      <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
+      <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
         <h2 className="mb-5 text-sm font-semibold uppercase tracking-wider text-zinc-500">
           Document Pipeline
         </h2>
@@ -464,7 +464,7 @@ export function ProjectDashboard({
       <section className="grid gap-6 lg:grid-cols-5">
 
         {/* Left — Recent Documents (3 cols) */}
-        <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-3">
+        <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm lg:col-span-3">
           <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-zinc-500">
             Recent Documents
           </h2>
@@ -531,7 +531,7 @@ export function ProjectDashboard({
         </div>
 
         {/* Right — Quick Actions (2 cols) */}
-        <div className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm lg:col-span-2">
+        <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm lg:col-span-2">
           <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-zinc-500">
             Quick Actions
           </h2>
@@ -578,7 +578,7 @@ export function ProjectDashboard({
 
       {/* ── 3A. Activity Feed ─────────────────────────────────────────────── */}
       {stats.activityItems.length > 0 && (
-        <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
+        <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
           <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-zinc-500">
             Recent Activity
           </h2>
@@ -620,7 +620,7 @@ export function ProjectDashboard({
       )}
 
       {/* ── 4. Document Health Overview — CTD Coverage ──────────────────────── */}
-      <section className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
+      <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
         <h2 className="mb-5 text-sm font-semibold uppercase tracking-wider text-zinc-500">
           CTD Section Coverage
         </h2>

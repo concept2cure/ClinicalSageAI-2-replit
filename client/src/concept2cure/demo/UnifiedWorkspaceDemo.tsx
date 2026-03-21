@@ -544,7 +544,7 @@ export const UnifiedWorkspaceDemo: React.FC = () => {
       {/* Quick Start Wizard Modal */}
       {showWizard && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-2xl w-[800px] h-[600px] overflow-hidden">
+          <div className="bg-white rounded-xl shadow-lg w-[800px] h-[600px] overflow-hidden">
             <QuickStartWizard
               onComplete={handleWizardComplete}
               onCancel={() => setShowWizard(false)}

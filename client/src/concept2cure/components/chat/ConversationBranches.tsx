@@ -276,7 +276,7 @@ const BranchNode: React.FC<BranchNodeProps> = ({
           >
             <ChevronRight
               className={cn(
-                'h-4 w-4 text-zinc-400 transition-transform',
+                'h-4 w-4 text-zinc-400 transition-transform duration-150',
                 isExpanded && 'rotate-90'
               )}
             />

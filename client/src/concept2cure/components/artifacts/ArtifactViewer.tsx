@@ -211,7 +211,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
   return (
     <div
       className={cn(
-        'flex flex-col bg-white rounded-xl shadow-2xl overflow-hidden',
+        'flex flex-col bg-white rounded-xl shadow-lg overflow-hidden',
         isFullscreen
           ? 'fixed inset-4 z-50'
           : 'relative max-h-[80vh]',

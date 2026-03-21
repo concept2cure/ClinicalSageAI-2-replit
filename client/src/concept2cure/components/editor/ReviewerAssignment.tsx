@@ -303,7 +303,7 @@ export function ReviewerAssignment({
           >
             <Plus className="h-3 w-3" />
             Add Reviewer
-            <ChevronDown className={cn('h-3 w-3 ml-auto transition-transform', showAddDropdown && 'rotate-180')} />
+            <ChevronDown className={cn('h-3 w-3 ml-auto transition-transform duration-150', showAddDropdown && 'rotate-180')} />
           </button>
 
           {showAddDropdown && (

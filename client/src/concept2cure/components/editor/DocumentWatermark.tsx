@@ -291,7 +291,7 @@ export function WatermarkSettings({
         >
           <span
             className={[
-              'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
+              'inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-150',
               enabled ? 'translate-x-6' : 'translate-x-1',
             ].join(' ')}
           />

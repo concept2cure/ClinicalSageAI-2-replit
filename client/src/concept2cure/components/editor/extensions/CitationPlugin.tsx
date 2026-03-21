@@ -400,7 +400,7 @@ export function CitationSearchPanel({
   return (
     <div
       className={cn(
-        'fixed z-50 bg-white border border-zinc-200 rounded-xl shadow-2xl',
+        'fixed z-50 bg-white border border-zinc-200 rounded-xl shadow-lg',
         'w-[420px] max-h-[480px] flex flex-col overflow-hidden',
         'animate-in fade-in slide-in-from-top-2 duration-150'
       )}

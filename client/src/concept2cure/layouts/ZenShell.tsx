@@ -473,7 +473,7 @@ const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({ isOpen, onClose }
         role="dialog"
         aria-modal="true"
         aria-label="Command palette"
-        className="fixed top-[20%] left-1/2 -translate-x-1/2 w-full max-w-lg bg-white rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150"
+        className="fixed top-[20%] left-1/2 -translate-x-1/2 w-full max-w-lg bg-white rounded-xl shadow-lg overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150"
       >
         {/* Search input */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-zinc-200">

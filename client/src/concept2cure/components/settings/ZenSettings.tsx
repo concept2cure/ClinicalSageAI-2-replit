@@ -180,7 +180,7 @@ const ProfileSection: React.FC = () => {
       {/* Avatar */}
       <div className="flex items-center gap-4 mb-6 pb-6 border-b border-zinc-200">
         <div className="relative">
-          <div className="w-14 h-14 rounded-lg bg-blue-600 flex items-center justify-center text-white text-2xl font-semibold">
+          <div className="w-14 h-14 rounded-lg bg-blue-600 flex items-center justify-center text-white text-base font-semibold">
             JD
           </div>
           <button className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-white border border-zinc-200 shadow-sm flex items-center justify-center hover:bg-zinc-50 transition-colors duration-150">
@@ -603,7 +603,7 @@ export const ZenSettings: React.FC<ZenSettingsProps> = ({ isOpen, onClose }) => 
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50" onClick={onClose} />
 
       {/* Modal */}
-      <div className="fixed inset-4 sm:inset-auto sm:top-[5%] sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-4xl sm:h-[90vh] bg-white rounded-xl shadow-2xl overflow-hidden z-50 flex animate-in fade-in zoom-in-95 duration-150">
+      <div className="fixed inset-4 sm:inset-auto sm:top-[5%] sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-4xl sm:h-[90vh] bg-white rounded-xl shadow-lg overflow-hidden z-50 flex animate-in fade-in zoom-in-95 duration-150">
         {/* Sidebar */}
         <div className="w-56 bg-zinc-50 border-r border-zinc-200 flex flex-col">
           {/* Header */}

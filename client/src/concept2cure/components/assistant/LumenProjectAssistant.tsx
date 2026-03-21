@@ -298,7 +298,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
           'bg-violet-600',
           'shadow-sm',
           'flex items-center justify-center',
-          'hover:scale-105 transition-transform',
+          'hover:scale-105 transition-transform duration-150',
           className
         )}
       >
@@ -312,7 +312,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
       className={cn(
         'flex flex-col bg-white rounded-xl overflow-hidden',
         position === 'floating' &&
-          'fixed bottom-6 right-6 z-50 w-96 max-h-[500px] shadow-2xl border border-zinc-200',
+          'fixed bottom-6 right-6 z-50 w-96 max-h-[500px] shadow-lg border border-zinc-200',
         position === 'sidebar' && 'h-full border-l border-zinc-200',
         position === 'inline' && 'border border-zinc-200',
         className

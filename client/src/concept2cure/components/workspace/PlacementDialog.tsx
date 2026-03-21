@@ -240,7 +240,7 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
       role="presentation"
     >
       <div
-        className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        className="bg-white rounded-xl shadow-lg w-full max-w-lg mx-4 overflow-hidden animate-in fade-in zoom-in-95 duration-200"
         onClick={e => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
