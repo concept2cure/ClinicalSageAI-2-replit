@@ -340,7 +340,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
   return (
     <div className="h-full flex flex-col bg-white border-l border-zinc-200 print:border-0">
       {/* Header — hidden on print */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200 bg-gradient-to-r from-emerald-50/50 to-blue-50/50 shrink-0 print:hidden">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200 bg-zinc-50 shrink-0 print:hidden">
         <div className="flex items-center gap-2">
           <Shield className="w-4 h-4 text-emerald-600" />
           <span className="text-xs font-semibold text-zinc-900">
@@ -369,7 +369,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
             <button
               onClick={onExportAsArtifact}
               disabled={exportingAudit}
-              className="px-2 py-0.5 text-xs rounded bg-indigo-100 text-indigo-700 hover:bg-indigo-200 disabled:opacity-60"
+              className="px-2 py-0.5 text-xs rounded bg-blue-100 text-blue-700 hover:bg-blue-200 disabled:opacity-60"
               title="Save as inspection-ready artifact"
             >
               {exportingAudit ? (

@@ -319,7 +319,7 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
                             if (e.key === 'Escape') cancelEdit();
                           }}
                           autoFocus
-                          className="flex-1 rounded border border-zinc-300 bg-white px-2 py-1 text-sm text-zinc-900 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                          className="flex-1 rounded border border-zinc-300 bg-white px-2 py-1 text-sm text-zinc-900 focus:border-blue-400 focus-visible:ring-2 outline-none focus:ring-blue-100"
                         />
                         <button
                           onClick={saveEdit}
@@ -495,7 +495,7 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
                       e.target.value as Exclude<MemoryCategory, 'All'>
                     )
                   }
-                  className="rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-700 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 sm:w-36"
+                  className="rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-700 focus:border-blue-400 focus-visible:ring-2 outline-none focus:ring-blue-100 sm:w-36"
                 >
                   <option value="Preferences">Preferences</option>
                   <option value="Facts">Facts</option>
@@ -515,7 +515,7 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
                     }
                   }}
                   placeholder="e.g., Prefers Module 2.5 summaries under 15 pages..."
-                  className="flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                  className="flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-400 focus-visible:ring-2 outline-none focus:ring-blue-100"
                 />
 
                 {/* Add button */}

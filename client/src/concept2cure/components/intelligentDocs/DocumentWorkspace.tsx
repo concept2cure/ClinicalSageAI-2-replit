@@ -135,7 +135,7 @@ const SourceSuggestionCard: React.FC<{
       case 'predicate_device': return <Target className="w-4 h-4 text-blue-500" />;
       case 'literature': return <BookOpen className="w-4 h-4 text-green-500" />;
       case 'test_report': return <FileText className="w-4 h-4 text-orange-500" />;
-      case 'regulatory_document': return <Shield className="w-4 h-4 text-indigo-500" />;
+      case 'regulatory_document': return <Shield className="w-4 h-4 text-blue-500" />;
       default: return <Database className="w-4 h-4 text-zinc-500" />;
     }
   };
@@ -302,7 +302,7 @@ const CommandCenterPanel: React.FC<{
             <span>{complianceScore}%</span>
           </div>
           <div className="mt-1 h-2 rounded-full bg-white/70">
-            <div className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500" style={{ width: `${complianceScore}%` }} />
+            <div className="h-2 rounded-full bg-blue-500" style={{ width: `${complianceScore}%` }} />
           </div>
         </div>
       </div>
@@ -336,11 +336,11 @@ const CommandCenterPanel: React.FC<{
         </button>
         <button
           onClick={onOpenBridges}
-          className="p-3 rounded-xl border border-zinc-200 bg-white hover:border-indigo-300 transition-colors text-left shadow-sm hover:shadow"
+          className="p-3 rounded-xl border border-zinc-200 bg-white hover:border-blue-300 transition-colors text-left shadow-sm hover:shadow"
           data-testid="button-command-sync-data"
         >
           <div className="flex items-center gap-2">
-            <Database className="w-4 h-4 text-indigo-500" />
+            <Database className="w-4 h-4 text-blue-500" />
             <span className="text-sm font-medium text-zinc-900">Sync Data</span>
           </div>
           <p className="text-xs text-zinc-500 mt-1">
@@ -552,7 +552,7 @@ const SherpaGuidanceCard: React.FC<{
   const { color, badge } = priorityConfig[guidance.priority];
   
   return (
-    <div className={`p-4 rounded-lg border-2 ${color} ${isNextBest ? 'bg-blue-50' : 'bg-white'}`}>
+    <div className={`p-4 rounded-lg border ${color} ${isNextBest ? 'bg-blue-50' : 'bg-white'}`}>
       {isNextBest && (
         <div className="flex items-center gap-2 mb-3">
           <Sparkles className="w-4 h-4 text-blue-500" />
@@ -1142,7 +1142,7 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
   const complianceStatus = state.document?.complianceStatus || 'needs-attention';
 
   return (
-    <div className={`flex h-full bg-gradient-to-b from-zinc-50 to-zinc-100 ${className}`}>
+    <div className={`flex h-full bg-zinc-50 ${className}`}>
       {/* ─────────────────────────────────────────────────────────────────── */}
       {/* Main Editor Area */}
       {/* ─────────────────────────────────────────────────────────────────── */}
@@ -1201,7 +1201,7 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
           <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-sm border border-zinc-200/80 min-h-[640px]">
             <EditorContent 
               editor={editor} 
-              className="prose prose-slate max-w-none p-8 focus:outline-none"
+              className="prose prose-slate max-w-none p-8 outline-none"
             />
           </div>
         </div>

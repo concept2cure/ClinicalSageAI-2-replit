@@ -125,7 +125,7 @@ const ACTOR_CONFIG = {
   },
   both: {
     label: 'Dr. Sage + AnA 1.0',
-    bg: 'bg-gradient-to-r from-blue-100 to-violet-100 text-indigo-700',
+    bg: 'bg-blue-50 text-blue-700',
     icons: [Bot, Brain],
   },
 } as const;
@@ -323,8 +323,8 @@ export function WorkflowEngine({
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-100">
-              <Zap className="h-4 w-4 text-indigo-600" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100">
+              <Zap className="h-4 w-4 text-blue-600" />
             </div>
             <div>
               <CardTitle className="text-base">{title}</CardTitle>

@@ -159,7 +159,7 @@ export function CollaborationCursors({
         return (
           <div
             key={cursor.userId}
-            className="absolute transition-all duration-150 ease-out"
+            className="absolute transition-all duration-150"
             style={{ left: cursor.x, top: cursor.y }}
           >
             {/* Cursor line */}

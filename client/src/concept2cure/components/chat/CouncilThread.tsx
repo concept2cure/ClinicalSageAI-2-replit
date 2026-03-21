@@ -151,9 +151,9 @@ const AGENTS: Record<
   PATHFINDER: {
     name: 'CERV2',
     title: 'Regulatory Pathfinder',
-    color: 'text-indigo-700',
-    bgColor: 'bg-indigo-100',
-    bubbleColor: 'bg-indigo-50 border border-indigo-200 text-indigo-900',
+    color: 'text-blue-700',
+    bgColor: 'bg-blue-100',
+    bubbleColor: 'bg-blue-50 border border-blue-200 text-blue-900',
     icon: <ShieldCheck className="w-4 h-4" />,
   },
   VAULT: {
@@ -398,7 +398,7 @@ export const CouncilThread: React.FC<CouncilThreadProps> = ({
     <div className={cn('space-y-6 p-4', className)}>
       {messages.length === 0 ? (
         <div className="text-center py-12">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
+          <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-blue-100 flex items-center justify-center">
             <Sparkles className="w-8 h-8 text-blue-600" />
           </div>
           <h3 className="text-lg font-semibold text-zinc-900 mb-1">Your Sherpa Team is Ready</h3>

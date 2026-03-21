@@ -348,7 +348,7 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
   return (
     <div className="h-full flex flex-col bg-white border-l border-zinc-200">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200 bg-gradient-to-r from-purple-50/50 to-indigo-50/50 shrink-0">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200 bg-zinc-50 shrink-0">
         <div className="flex items-center gap-2">
           <GitCompare className="w-4 h-4 text-purple-500" />
           <span className="text-xs font-semibold text-zinc-900">Version Compare</span>

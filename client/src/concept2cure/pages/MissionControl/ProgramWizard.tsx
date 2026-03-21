@@ -447,7 +447,7 @@ export default function ProgramWizard({ onComplete, onCancel }: ProgramWizardPro
                 type="button"
                 onClick={() => update('customerTrack', track.value)}
                 className={cn(
-                  'flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all duration-200',
+                  'flex items-start gap-3 p-4 rounded-xl border text-left transition-all duration-150',
                   selected
                     ? 'border-blue-500 bg-blue-50/60 ring-2 ring-blue-500/20'
                     : 'border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50',
@@ -511,7 +511,7 @@ export default function ProgramWizard({ onComplete, onCancel }: ProgramWizardPro
                 type="button"
                 onClick={() => update('destinationType', dt.value)}
                 className={cn(
-                  'flex flex-col items-center gap-1 p-3.5 rounded-xl border-2 transition-all duration-200',
+                  'flex flex-col items-center gap-1 p-3.5 rounded-xl border-2 transition-all duration-150',
                   selected
                     ? 'border-blue-500 bg-blue-50/60 ring-2 ring-blue-500/20'
                     : 'border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50',
@@ -666,7 +666,7 @@ export default function ProgramWizard({ onComplete, onCancel }: ProgramWizardPro
                 type="button"
                 onClick={() => update('complianceLevel', cl.value)}
                 className={cn(
-                  'flex items-center gap-3 w-full p-3.5 rounded-xl border-2 text-left transition-all duration-200',
+                  'flex items-center gap-3 w-full p-3.5 rounded-xl border-2 text-left transition-all duration-150',
                   selected
                     ? 'border-blue-500 bg-blue-50/60 ring-2 ring-blue-500/20'
                     : 'border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50',
@@ -701,7 +701,7 @@ export default function ProgramWizard({ onComplete, onCancel }: ProgramWizardPro
           type="button"
           onClick={() => update('autoScaffold', !state.autoScaffold)}
           className={cn(
-            'w-10 h-6 rounded-full relative transition-colors duration-200 shrink-0',
+            'w-10 h-6 rounded-full relative transition-colors duration-150 shrink-0',
             state.autoScaffold ? 'bg-blue-500' : 'bg-zinc-300',
           )}
         >

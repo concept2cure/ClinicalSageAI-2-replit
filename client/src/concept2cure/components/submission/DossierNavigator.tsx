@@ -579,7 +579,7 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
           </div>
           <div className="h-2 bg-zinc-100 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-blue-500 to-violet-500 rounded-full transition-all duration-150"
+              className="h-full bg-blue-600 rounded-full transition-all duration-150"
               style={{ width: `${overallProgress.percent}%` }}
             />
           </div>

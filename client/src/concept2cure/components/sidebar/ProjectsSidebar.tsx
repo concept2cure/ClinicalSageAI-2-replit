@@ -481,7 +481,7 @@ export const ProjectsSidebar: React.FC = () => {
       {/* Header */}
       <div className="flex h-14 items-center justify-between border-b border-zinc-200/50 px-4">
         <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center shadow-sm">
+          <div className="h-8 w-8 rounded-xl bg-violet-600 flex items-center justify-center shadow-sm">
             <Sparkles className="h-4 w-4 text-white" />
           </div>
           <span className="font-semibold text-zinc-900">Concept2Cure</span>

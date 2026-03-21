@@ -359,7 +359,7 @@ export const ReviewCommandCenter: React.FC<ReviewCommandCenterProps> = ({
                     onChange={e => setNewComment(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleAddComment()}
                     placeholder="Add a comment..."
-                    className="flex-1 text-sm px-3 py-1.5 border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
+                    className="flex-1 text-sm px-3 py-1.5 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                   />
                   <button
                     onClick={handleAddComment}

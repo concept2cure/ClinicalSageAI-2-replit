@@ -352,7 +352,7 @@ export function CrossReferencePanel({
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 bg-zinc-50">
         <div className="flex items-center gap-2">
-          <Link2 className="w-4 h-4 text-indigo-600" />
+          <Link2 className="w-4 h-4 text-blue-600" />
           <span className="text-sm font-semibold text-zinc-900">
             Cross-Reference Manager
           </span>
@@ -361,8 +361,8 @@ export function CrossReferencePanel({
           <button
             onClick={() => setShowInsertForm((v) => !v)}
             className={cn(
-              'p-1.5 rounded-md text-zinc-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors',
-              showInsertForm && 'text-indigo-600 bg-indigo-50'
+              'p-1.5 rounded-md text-zinc-500 hover:text-blue-600 hover:bg-blue-50 transition-colors',
+              showInsertForm && 'text-blue-600 bg-blue-50'
             )}
             title="Insert Reference"
           >
@@ -371,7 +371,7 @@ export function CrossReferencePanel({
           <button
             onClick={scanDocument}
             disabled={isScanning}
-            className="p-1.5 rounded-md text-zinc-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors disabled:opacity-50"
+            className="p-1.5 rounded-md text-zinc-500 hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-50"
             title="Scan Document"
           >
             <RefreshCw
@@ -392,7 +392,7 @@ export function CrossReferencePanel({
 
       {/* Insert Reference Form */}
       {showInsertForm && (
-        <div className="px-4 py-3 border-b border-zinc-200 bg-indigo-50/50 space-y-2">
+        <div className="px-4 py-3 border-b border-zinc-200 bg-blue-50/50 space-y-2">
           <div className="text-xs font-medium text-zinc-700">
             Insert Cross-Reference
           </div>
@@ -407,7 +407,7 @@ export function CrossReferencePanel({
                   setInsertModule(e.target.value);
                   setInsertSection('');
                 }}
-                className="w-full text-xs border border-zinc-300 rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-400 focus:border-indigo-400"
+                className="w-full text-xs border border-zinc-300 rounded-md px-2 py-1.5 bg-white focus-visible:ring-2 focus-visible:ring-blue-500 outline-none focus:border-blue-400"
               >
                 <option value="">Select module...</option>
                 <option value="1">Module 1 — Administrative</option>
@@ -426,7 +426,7 @@ export function CrossReferencePanel({
                 value={insertSection}
                 onChange={(e) => setInsertSection(e.target.value)}
                 placeholder="e.g. 3.2"
-                className="w-full text-xs border border-zinc-300 rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-400 focus:border-indigo-400"
+                className="w-full text-xs border border-zinc-300 rounded-md px-2 py-1.5 bg-white focus-visible:ring-2 focus-visible:ring-blue-500 outline-none focus:border-blue-400"
               />
             </div>
           </div>
@@ -452,7 +452,7 @@ export function CrossReferencePanel({
           <button
             onClick={handleInsertReference}
             disabled={!insertModule}
-            className="w-full text-xs font-medium py-1.5 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150"
+            className="w-full text-xs font-medium py-1.5 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150"
           >
             Insert Reference
           </button>
@@ -525,7 +525,7 @@ export function CrossReferencePanel({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Filter references..."
-              className="w-full text-xs border border-zinc-200 rounded-md pl-7 pr-2 py-1.5 bg-zinc-50 focus:outline-none focus:ring-1 focus:ring-indigo-400 focus:border-indigo-400"
+              className="w-full text-xs border border-zinc-200 rounded-md pl-7 pr-2 py-1.5 bg-zinc-50 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none focus:border-blue-400"
             />
           </div>
         </div>
@@ -546,7 +546,7 @@ export function CrossReferencePanel({
             <button
               onClick={scanDocument}
               disabled={isScanning}
-              className="flex items-center gap-2 text-xs font-medium px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors duration-150"
+              className="flex items-center gap-2 text-xs font-medium px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors duration-150"
             >
               <RefreshCw
                 className={cn('w-3.5 h-3.5', isScanning && 'animate-spin')}
@@ -556,7 +556,7 @@ export function CrossReferencePanel({
           </div>
         ) : isScanning ? (
           <div className="flex flex-col items-center justify-center h-full">
-            <RefreshCw className="w-8 h-8 text-indigo-400 animate-spin mb-3" />
+            <RefreshCw className="w-8 h-8 text-blue-400 animate-spin mb-3" />
             <p className="text-sm text-zinc-500">Scanning document...</p>
           </div>
         ) : filteredReferences.length === 0 ? (
@@ -627,7 +627,7 @@ export function CrossReferencePanel({
                     {ref.targetArtifactId && onNavigateToSection && (
                       <button
                         onClick={() => onNavigateToSection(ref.targetArtifactId!)}
-                        className="flex items-center gap-1 text-[11px] text-indigo-600 hover:text-indigo-800 transition-colors duration-150"
+                        className="flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-800 transition-colors duration-150"
                       >
                         <ArrowRight className="w-3 h-3" />
                         Go to section
@@ -659,7 +659,7 @@ export function CrossReferencePanel({
                             onInsertReference(refText, sugSection);
                           }
                         }}
-                        className="flex items-center gap-1 text-[11px] text-indigo-600 hover:text-indigo-800 transition-colors duration-150"
+                        className="flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-800 transition-colors duration-150"
                       >
                         <RefreshCw className="w-3 h-3" />
                         Fix reference
@@ -683,7 +683,7 @@ export function CrossReferencePanel({
             <button
               onClick={scanDocument}
               disabled={isScanning}
-              className="flex items-center gap-1 text-indigo-500 hover:text-indigo-700 transition-colors disabled:opacity-50"
+              className="flex items-center gap-1 text-blue-500 hover:text-blue-700 transition-colors disabled:opacity-50"
             >
               <RefreshCw
                 className={cn('w-3 h-3', isScanning && 'animate-spin')}

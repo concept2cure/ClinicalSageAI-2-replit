@@ -1234,7 +1234,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     return (
       <div className="flex flex-col h-full bg-white">
         {/* Header */}
-        <div className="flex items-center justify-between h-14 px-5 border-b border-zinc-200/80 bg-gradient-to-r from-zinc-50 to-white">
+        <div className="flex items-center justify-between h-14 px-5 border-b border-zinc-200/80 bg-zinc-50">
           <div className="flex items-baseline gap-2">
             <h3 className="text-base font-semibold text-zinc-900 tracking-tight">Documents</h3>
             {artifacts.length > 0 && (
@@ -1793,7 +1793,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
       {/* ── AI Suggestion Diff Panel ──────────────────────────────────────── */}
       {aiResult && (
-        <div className="border-b border-violet-200 bg-gradient-to-r from-violet-50/80 to-blue-50/60">
+        <div className="border-b border-violet-200 bg-zinc-50">
           {/* Header bar */}
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-violet-100">
             <div className="flex items-center gap-2">
@@ -2067,7 +2067,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   value={unlockReason}
                   onChange={e => setUnlockReason(e.target.value)}
                   placeholder="Reason for unlocking (min 5 chars)"
-                  className="w-full px-2 py-1.5 text-xs border border-red-200 rounded-md mb-2 focus:outline-none focus:ring-2 focus:ring-red-400"
+                  className="w-full px-2 py-1.5 text-xs border border-red-200 rounded-md mb-2 focus-visible:ring-2 outline-none focus:ring-red-400"
                 />
                 <button
                   onClick={() => {
@@ -2220,7 +2220,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           </div>
         )}
         {activeInspector === 'provenance' && projectId && activeArtifact && (
-          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-200">
+          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-150">
             <DocumentProvenancePanel
               projectId={projectId}
               artifactId={activeArtifact.id}
@@ -2231,7 +2231,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           </div>
         )}
         {activeInspector === 'compare' && projectId && activeArtifact && (
-          <div className="w-80 max-w-[35vw] shrink-0 border-l border-zinc-200 h-full transition-all duration-200">
+          <div className="w-80 max-w-[35vw] shrink-0 border-l border-zinc-200 h-full transition-all duration-150">
             <DocumentVersionCompare
               projectId={projectId}
               artifactId={activeArtifact.id}
@@ -2243,7 +2243,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           </div>
         )}
         {activeInspector === 'audit' && projectId && activeArtifact && (
-          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-200">
+          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-150">
             <DocumentAuditReport
               projectId={projectId}
               artifactId={activeArtifact.id}
@@ -2257,7 +2257,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         )}
         {/* Sprint 2A: Data Room Panel */}
         {activeInspector === 'dataroom' && projectId && (
-          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-200">
+          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-150">
             <DataRoomPanel
               projectId={projectId}
               onSourceSelect={(source) => {
@@ -2271,7 +2271,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         )}
         {/* Sprint 2C: Inconsistency Intelligence Panel */}
         {activeInspector === 'inconsistency' && projectId && activeArtifact && (
-          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-200">
+          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-150">
             <InconsistencyPanel
               projectId={projectId}
               activeArtifactId={activeArtifact.id}
@@ -2289,7 +2289,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         )}
         {/* Document Health Panel */}
         {activeInspector === 'health' && activeArtifact && (
-          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-200">
+          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-150">
             <DocumentHealth
               content={activeArtifact.content || ''}
               documentType={activeArtifact.type}
@@ -2313,7 +2313,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         )}
         {/* Version History Timeline */}
         {activeInspector === 'versions' && activeArtifact && (
-          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-200">
+          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-150">
             <VersionTimeline
               versions={(activeArtifact.versions || []).map((v, i) => ({
                 id: `v-${v.version || i}`,
@@ -2333,7 +2333,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         )}
         {/* Batch AI Operations Panel */}
         {activeInspector === 'batch-ai' && activeArtifact && (
-          <div className="w-96 shrink-0 border-l border-zinc-200 h-full transition-all duration-200">
+          <div className="w-96 shrink-0 border-l border-zinc-200 h-full transition-all duration-150">
             <BatchAIPanel
               content={activeArtifact.content || ''}
               submissionType={submissionType}
@@ -2347,7 +2347,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         )}
         {/* Cross-Reference Manager */}
         {activeInspector === 'crossref' && activeArtifact && (
-          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-200">
+          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-150">
             <CrossReferencePanel
               content={activeArtifact.content || ''}
               projectId={projectId}
@@ -2373,7 +2373,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         )}
         {/* Threaded Comments Panel */}
         {activeInspector === 'comments' && activeArtifact && (
-          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-200">
+          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-150">
             <CommentThreadPanel
               comments={comments}
               currentUserId={getCurrentUser().id}
@@ -2425,7 +2425,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         )}
         {/* Reviewer Assignment Panel */}
         {activeInspector === 'reviewers' && activeArtifact && (
-          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-200 overflow-y-auto">
+          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-150 overflow-y-auto">
             <ReviewerAssignment
               documentId={activeArtifact.id}
               documentTitle={activeArtifact.title}
@@ -2442,7 +2442,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         )}
         {/* Review Mode Panel */}
         {activeInspector === 'review' && activeArtifact && (
-          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-200">
+          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-150">
             <ReviewModePanel
               isReviewMode={isReviewMode}
               onToggleReviewMode={handleToggleReviewMode}
@@ -2479,7 +2479,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         )}
         {/* Submission Readiness Validator Panel */}
         {activeInspector === 'submission-readiness' && projectId && (
-          <div className="w-96 shrink-0 border-l border-zinc-200 h-full transition-all duration-200">
+          <div className="w-96 shrink-0 border-l border-zinc-200 h-full transition-all duration-150">
             <SubmissionReadinessValidator
               projectId={projectId}
               submissionType={submissionType}
@@ -2504,7 +2504,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         )}
         {/* Compliance Scanner Panel */}
         {activeInspector === 'compliance-scanner' && (
-          <div className="w-96 shrink-0 border-l border-zinc-200 h-full transition-all duration-200">
+          <div className="w-96 shrink-0 border-l border-zinc-200 h-full transition-all duration-150">
             <ComplianceScannerPanel
               issues={[]}
               isScanning={false}
@@ -2518,7 +2518,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         )}
         {/* AnA Memory Panel */}
         {activeInspector === 'ana-memory' && projectId && (
-          <div className="w-96 shrink-0 border-l border-zinc-200 h-full transition-all duration-200">
+          <div className="w-96 shrink-0 border-l border-zinc-200 h-full transition-all duration-150">
             <AnAMemory
               projectId={projectId}
               projectName={projectName}

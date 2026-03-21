@@ -99,7 +99,7 @@ const ToggleSwitch: React.FC<ToggleSwitchProps> = ({ enabled, onChange }) => (
   <button
     onClick={() => onChange(!enabled)}
     className={cn(
-      'relative w-11 h-6 rounded-full transition-colors duration-200',
+      'relative w-11 h-6 rounded-full transition-colors duration-150',
       enabled ? 'bg-blue-600' : 'bg-zinc-300'
     )}
   >
@@ -180,7 +180,7 @@ const ProfileSection: React.FC = () => {
       {/* Avatar */}
       <div className="flex items-center gap-4 mb-6 pb-6 border-b border-zinc-200">
         <div className="relative">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-2xl font-semibold">
+          <div className="w-14 h-14 rounded-lg bg-blue-600 flex items-center justify-center text-white text-2xl font-semibold">
             JD
           </div>
           <button className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-white border border-zinc-200 shadow-sm flex items-center justify-center hover:bg-zinc-50 transition-colors duration-150">
@@ -421,7 +421,7 @@ const AppearanceSection: React.FC = () => {
               key={id}
               onClick={() => setTheme(id)}
               className={cn(
-                'flex-1 flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all',
+                'flex-1 flex flex-col items-center gap-2 p-4 rounded-xl border transition-all',
                 theme === id
                   ? 'border-blue-500 bg-blue-50'
                   : 'border-zinc-200 hover:border-zinc-300'

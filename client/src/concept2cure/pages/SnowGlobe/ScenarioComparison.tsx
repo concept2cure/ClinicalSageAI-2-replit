@@ -559,7 +559,7 @@ export default function ScenarioComparison({
             'border border-zinc-700 bg-zinc-800/80 text-zinc-400',
             'hover:bg-blue-500/10 hover:border-blue-500/30 hover:text-blue-400',
             'disabled:opacity-30 disabled:cursor-not-allowed',
-            'transition-all duration-200',
+            'transition-all duration-150',
           )}
           title="Swap scenarios"
         >

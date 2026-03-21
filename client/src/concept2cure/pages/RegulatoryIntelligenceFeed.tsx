@@ -893,7 +893,7 @@ const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({
             </div>
 
             {/* AI Insight CTA */}
-            <div className="bg-gradient-to-br from-violet-50 to-blue-50 rounded-xl border border-violet-100/60 p-4">
+            <div className="bg-zinc-50 rounded-xl border border-violet-100/60 p-4">
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-6 h-6 rounded-lg bg-violet-100 flex items-center justify-center">
                   <TrendingUp size={13} className="text-violet-600" />

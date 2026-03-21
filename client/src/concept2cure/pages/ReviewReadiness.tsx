@@ -825,7 +825,7 @@ function SnowGlobeView() {
               <span className={cn(
                 'text-xs font-medium px-2 py-0.5 rounded-full',
                 ep.type === 'Primary' ? 'bg-blue-50 text-blue-600' :
-                ep.type === 'Co-primary' ? 'bg-indigo-50 text-indigo-600' :
+                ep.type === 'Co-primary' ? 'bg-blue-50 text-blue-600' :
                 'bg-zinc-100 text-zinc-500',
               )}>{ep.type}</span>
             </div>
@@ -1184,7 +1184,7 @@ function AuditTrailView({ auditEntries }: { auditEntries: AuditEntry[] }) {
               <select
                 value={filterUser}
                 onChange={(e) => setFilterUser(e.target.value)}
-                className="text-sm border border-zinc-200 rounded-md px-3 py-1.5 text-zinc-700 bg-white focus:outline-none focus:ring-1 focus:ring-zinc-300"
+                className="text-sm border border-zinc-200 rounded-md px-3 py-1.5 text-zinc-700 bg-white focus-visible:ring-2 outline-none focus:ring-zinc-300"
               >
                 <option value="">All users</option>
                 {users.map((u) => (
@@ -1195,7 +1195,7 @@ function AuditTrailView({ auditEntries }: { auditEntries: AuditEntry[] }) {
             <select
               value={filterAction}
               onChange={(e) => setFilterAction(e.target.value)}
-              className="text-sm border border-zinc-200 rounded-md px-3 py-1.5 text-zinc-700 bg-white focus:outline-none focus:ring-1 focus:ring-zinc-300"
+              className="text-sm border border-zinc-200 rounded-md px-3 py-1.5 text-zinc-700 bg-white focus-visible:ring-2 outline-none focus:ring-zinc-300"
             >
               <option value="">All actions</option>
               {actions.map((a) => (

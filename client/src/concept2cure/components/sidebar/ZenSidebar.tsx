@@ -272,7 +272,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         role="navigation"
         aria-label="Main sidebar"
       >
-        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center shadow-sm flex-shrink-0">
+        <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center shadow-sm flex-shrink-0">
           <Sparkles className="w-4 h-4 text-white" />
         </div>
         <button
@@ -374,7 +374,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         {/* Brand header */}
         <div className="flex items-center justify-between px-3 h-11 flex-shrink-0">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center">
+            <div className="w-6 h-6 rounded-md bg-blue-600 flex items-center justify-center">
               <Sparkles className="w-3 h-3 text-white" />
             </div>
             <span className="font-semibold text-white text-sm">Concept2Cure</span>

@@ -236,7 +236,7 @@ const ModuleConnectionCard: React.FC<ModuleConnectionCardProps> = ({
     slate: 'bg-zinc-500',
     red: 'bg-red-500',
     amber: 'bg-amber-500',
-    indigo: 'bg-indigo-500',
+    indigo: 'bg-blue-500',
   };
 
   const Icon = config.icon;
@@ -376,7 +376,7 @@ const DataFlowDiagram: React.FC<{
   const totalSources = connections.reduce((sum, c) => sum + c.itemCount, 0);
 
   return (
-    <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+    <div className="p-6 bg-blue-50 rounded-xl border border-blue-200">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="font-semibold text-zinc-900">Data Flow Overview</h3>

@@ -923,7 +923,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                   'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors',
                   ectdStatus?.submissionReady
                     ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-                    : 'bg-indigo-600 text-white hover:bg-indigo-700',
+                    : 'bg-blue-600 text-white hover:bg-blue-700',
                   (compileMutation.isPending || !canCompileEctd) && 'opacity-60 cursor-not-allowed'
                 )}
               >
@@ -982,7 +982,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search sections..."
-              className="w-full pl-8 pr-3 py-1.5 text-xs border border-zinc-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full pl-8 pr-3 py-1.5 text-xs border border-zinc-200 rounded-md focus-visible:ring-2 outline-none focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
 
@@ -1166,7 +1166,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
             {/* Dialog Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200">
               <div className="flex items-center gap-2">
-                <Package className="w-5 h-5 text-indigo-600" />
+                <Package className="w-5 h-5 text-blue-600" />
                 <h2 className="text-base font-semibold text-zinc-900">Compile eCTD Package</h2>
               </div>
               <button
@@ -1267,7 +1267,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                       }
                     }}
                     disabled={compileMutation.isPending || !canCompileEctd}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors disabled:opacity-60"
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-60"
                   >
                     {compileMutation.isPending ? (
                       <>

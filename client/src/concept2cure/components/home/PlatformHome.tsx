@@ -1,14 +1,14 @@
 /**
- * Platform Home — Premium Operations Command Center
+ * Platform Home — Enterprise Operations Dashboard
  *
- * Enterprise-grade landing dashboard with:
+ * Primary landing dashboard with:
  * 1. Portfolio metrics overview (total, active, review, completed)
  * 2. Quick-start actions (new submission, AI copilot, authoring)
  * 3. Project cards with type badges, status indicators, relative times
  * 4. Recent activity feed (conversations + documents)
  * 5. Quick access to platform capabilities
  *
- * Design: Full-width professional dashboard, not a narrow single-column.
+ * Uses Zen design system + enterprise primitives for GA-quality consistency.
  */
 
 import React, { useMemo } from 'react';
@@ -39,6 +39,13 @@ import {
   FlaskConical,
   Scale,
 } from 'lucide-react';
+import {
+  EnterpriseCard,
+  EnterpriseButton,
+  StatusPill,
+  IconBox,
+  EmptyState,
+} from '../ui/enterprise';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -75,7 +82,7 @@ const TYPE_BADGE: Record<string, { bg: string; text: string }> = {
   BLA: { bg: 'bg-orange-100', text: 'text-orange-700' },
   PMA: { bg: 'bg-red-100', text: 'text-red-700' },
   CER: { bg: 'bg-pink-100', text: 'text-pink-700' },
-  MAA: { bg: 'bg-indigo-100', text: 'text-indigo-700' },
+  MAA: { bg: 'bg-blue-100', text: 'text-blue-700' },
 };
 
 const STATUS_STYLE: Record<string, { bg: string; text: string; dot: string }> = {
@@ -84,6 +91,8 @@ const STATUS_STYLE: Record<string, { bg: string; text: string; dot: string }> = 
   review: { bg: 'bg-amber-50', text: 'text-amber-700', dot: 'bg-amber-500' },
   draft: { bg: 'bg-sky-50', text: 'text-sky-700', dot: 'bg-sky-500' },
 };
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
 function getGreeting(): string {
   const h = new Date().getHours();
@@ -182,186 +191,80 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
   }, [activeProjects]);
 
   const quickActions = [
-    {
-      id: 'new-project',
-      label: 'New Submission',
-      description: 'Create IND, NDA, 510(k), BLA, PMA, or MAA',
-      icon: Plus,
-      color: 'text-blue-600',
-      bg: 'bg-blue-50',
-      border: 'border-blue-200',
-    },
-    {
-      id: 'assistant',
-      label: 'Ask AnA',
-      description: 'Regulatory guidance & precedent analysis',
-      icon: Sparkles,
-      color: 'text-violet-600',
-      bg: 'bg-violet-50',
-      border: 'border-violet-200',
-    },
-    {
-      id: 'author',
-      label: 'Draft Document',
-      description: 'CTD sections, clinical reports, narratives',
-      icon: PenLine,
-      color: 'text-emerald-600',
-      bg: 'bg-emerald-50',
-      border: 'border-emerald-200',
-    },
-    {
-      id: 'document-sherpa',
-      label: 'AnA Sherpa',
-      description: 'AI-guided step-by-step authoring',
-      icon: Compass,
-      color: 'text-amber-600',
-      bg: 'bg-amber-50',
-      border: 'border-amber-200',
-    },
+    { id: 'new-project', label: 'New Submission', description: 'Create IND, NDA, 510(k), BLA, PMA, or MAA', icon: Plus, iconClass: 'bg-blue-100 text-blue-600' },
+    { id: 'assistant', label: 'Ask AnA', description: 'Regulatory guidance & precedent analysis', icon: Sparkles, iconClass: 'bg-violet-100 text-violet-600' },
+    { id: 'author', label: 'Draft Document', description: 'CTD sections, clinical reports, narratives', icon: PenLine, iconClass: 'bg-emerald-100 text-emerald-600' },
+    { id: 'document-sherpa', label: 'AnA Sherpa', description: 'AI-guided step-by-step authoring', icon: Compass, iconClass: 'bg-amber-100 text-amber-600' },
   ];
 
   const capabilities = [
-    {
-      id: 'intelligence-hub',
-      label: 'Regulatory Intelligence',
-      description: 'AI-powered regulatory insights & evidence',
-      icon: Brain,
-      color: 'text-blue-600',
-    },
-    {
-      id: 'review-readiness',
-      label: 'Review & Compliance',
-      description: 'Quality checks, readiness assessments',
-      icon: ShieldCheck,
-      color: 'text-emerald-600',
-    },
-    {
-      id: 'biostatistics',
-      label: 'Biostatistics',
-      description: 'Power analysis, endpoints, study design',
-      icon: FlaskConical,
-      color: 'text-teal-600',
-    },
-    {
-      id: 'command-center',
-      label: 'Operations Center',
-      description: 'Submissions, governance, pipeline',
-      icon: BarChart2,
-      color: 'text-zinc-600',
-    },
-    {
-      id: 'collaboration-hub',
-      label: 'Collaboration',
-      description: 'Team workspace, threads, decisions',
-      icon: MessageSquare,
-      color: 'text-amber-600',
-    },
-    {
-      id: 'knowledge-base',
-      label: 'Knowledge Base',
-      description: 'Documents, SOPs, guidance library',
-      icon: BookOpen,
-      color: 'text-violet-600',
-    },
-    {
-      id: 'agent-hub',
-      label: 'AI Agents',
-      description: 'Autonomous regulatory AI workforce',
-      icon: Bot,
-      color: 'text-pink-600',
-    },
-    {
-      id: 'review-pulse',
-      label: 'Review Pulse',
-      description: 'PM signals, risk tracking, readiness',
-      icon: Activity,
-      color: 'text-red-500',
-    },
+    { id: 'intelligence-hub', label: 'Regulatory Intelligence', description: 'AI-powered regulatory insights & evidence', icon: Brain, color: 'text-blue-600' },
+    { id: 'review-readiness', label: 'Review & Compliance', description: 'Quality checks, readiness assessments', icon: ShieldCheck, color: 'text-emerald-600' },
+    { id: 'biostatistics', label: 'Biostatistics', description: 'Power analysis, endpoints, study design', icon: FlaskConical, color: 'text-teal-600' },
+    { id: 'command-center', label: 'Operations Center', description: 'Submissions, governance, pipeline', icon: BarChart2, color: 'text-zinc-600' },
+    { id: 'collaboration-hub', label: 'Collaboration', description: 'Team workspace, threads, decisions', icon: MessageSquare, color: 'text-amber-600' },
+    { id: 'knowledge-base', label: 'Knowledge Base', description: 'Documents, SOPs, guidance library', icon: BookOpen, color: 'text-violet-600' },
+    { id: 'agent-hub', label: 'AI Agents', description: 'Autonomous regulatory AI workforce', icon: Bot, color: 'text-pink-600' },
+    { id: 'review-pulse', label: 'Review Pulse', description: 'PM signals, risk tracking, readiness', icon: Activity, color: 'text-red-500' },
   ];
 
   return (
-    <div className="flex-1 overflow-y-auto zen-scroll bg-zinc-50/30">
-      <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+    <div className="flex-1 overflow-y-auto zen-scroll bg-zinc-50/50">
+      <div className="max-w-7xl mx-auto px-5 py-8 space-y-8">
 
         {/* ── Welcome Header ── */}
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-zinc-900 tracking-tight">
+            <h1 className="text-xl font-semibold text-zinc-900 tracking-tight">
               {greeting}{firstName ? `, ${firstName}` : ''}
             </h1>
             <p className="mt-1 text-sm text-zinc-500">{formatDate()}</p>
           </div>
-          <button
-            onClick={onNewProject}
-            className={cn(
-              'inline-flex items-center gap-2 rounded-xl px-5 py-2.5',
-              'bg-zinc-900 text-white text-sm font-medium',
-              'hover:bg-zinc-800 active:bg-zinc-950',
-              'transition-colors shadow-sm',
-            )}
-          >
-            <Plus className="h-4 w-4" />
+          <EnterpriseButton variant="primary" icon={Plus} onClick={onNewProject}>
             New Project
-          </button>
+          </EnterpriseButton>
         </div>
 
         {/* ── Portfolio Metrics ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {metrics.map(m => (
-            <div
-              key={m.label}
-              className="rounded-xl border border-zinc-200 bg-white px-5 py-4 flex flex-col gap-1"
-            >
-              <div className="flex items-center gap-2">
+            <EnterpriseCard key={m.label} className="px-5 py-4">
+              <div className="flex items-center gap-2 mb-1">
                 <m.icon className={cn('h-4 w-4', m.color)} />
-                <span className="text-xs font-medium text-zinc-500 uppercase tracking-wide">
+                <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
                   {m.label}
                 </span>
               </div>
-              <span className={cn('text-2xl font-semibold', m.color)}>{m.value}</span>
-            </div>
+              <span className={cn('text-2xl font-semibold tabular-nums', m.color)}>{m.value}</span>
+            </EnterpriseCard>
           ))}
         </div>
 
         {/* ── Quick Actions ── */}
-        <div>
-          <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">
+        <section>
+          <h2 className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-3">
             Quick Actions
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {quickActions.map(action => (
-              <button
+              <EnterpriseCard
                 key={action.id}
-                onClick={() =>
-                  action.id === 'new-project' ? onNewProject() : onNavigate(action.id)
-                }
-                className={cn(
-                  'group flex flex-col p-4 rounded-xl bg-white border border-zinc-200',
-                  'hover:shadow-md transition-all text-left',
-                  `hover:${action.border}`,
-                )}
+                interactive
+                onClick={() => action.id === 'new-project' ? onNewProject() : onNavigate(action.id)}
+                className="group flex flex-col"
               >
-                <div
-                  className={cn(
-                    'w-10 h-10 rounded-xl flex items-center justify-center mb-3',
-                    action.bg,
-                  )}
-                >
-                  <action.icon className={cn('w-5 h-5', action.color)} />
-                </div>
-                <div className="text-sm font-semibold text-zinc-900 group-hover:text-blue-900">
-                  {action.label}
-                </div>
+                <IconBox icon={action.icon} className={action.iconClass} />
+                <div className="mt-3 text-sm font-semibold text-zinc-900">{action.label}</div>
                 <div className="text-xs text-zinc-500 mt-0.5">{action.description}</div>
-              </button>
+              </EnterpriseCard>
             ))}
           </div>
-        </div>
+        </section>
 
         {/* ── Recent Activity ── */}
         {hasRecent && (
-          <div>
-            <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+          <section>
+            <h2 className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
               <Clock className="w-3.5 h-3.5" />
               Recent Activity
             </h2>
@@ -370,122 +273,85 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
                 <button
                   key={t.id}
                   onClick={() => onNavigate('ai-copilot')}
-                  className="w-full group flex items-center gap-3 px-4 py-3 rounded-xl bg-white border border-zinc-200 hover:border-violet-200 hover:shadow-md transition-all text-left"
+                  className="w-full group flex items-center gap-3 px-4 py-3 rounded-xl bg-white border border-zinc-200 hover:border-zinc-300 hover:shadow-sm transition-all duration-150 text-left focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-violet-50 flex items-center justify-center flex-shrink-0">
-                    <MessageSquare className="w-4 h-4 text-violet-500" />
-                  </div>
+                  <IconBox icon={MessageSquare} size="sm" className="bg-violet-50 text-violet-500" />
                   <div className="flex-1 min-w-0">
-                    <span className="text-sm font-medium text-zinc-900 truncate block">
-                      {t.title}
-                    </span>
-                    <span className="text-xs text-zinc-400">
-                      {t.updatedAt
-                        ? formatRelativeTime(t.updatedAt)
-                        : 'Conversation'}
-                    </span>
+                    <span className="text-sm font-medium text-zinc-900 truncate block">{t.title}</span>
+                    <span className="text-xs text-zinc-400">{t.updatedAt ? formatRelativeTime(t.updatedAt) : 'Conversation'}</span>
                   </div>
-                  <ArrowRight className="w-3.5 h-3.5 text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                  <ArrowRight className="w-3.5 h-3.5 text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex-shrink-0" />
                 </button>
               ))}
               {recentArtifacts.map((a: any) => (
                 <button
                   key={a.id}
                   onClick={() => onNavigate('author')}
-                  className="w-full group flex items-center gap-3 px-4 py-3 rounded-xl bg-white border border-zinc-200 hover:border-blue-200 hover:shadow-md transition-all text-left"
+                  className="w-full group flex items-center gap-3 px-4 py-3 rounded-xl bg-white border border-zinc-200 hover:border-zinc-300 hover:shadow-sm transition-all duration-150 text-left focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
-                    <FileText className="w-4 h-4 text-blue-500" />
-                  </div>
+                  <IconBox icon={FileText} size="sm" className="bg-blue-50 text-blue-500" />
                   <div className="flex-1 min-w-0">
-                    <span className="text-sm font-medium text-zinc-900 truncate block">
-                      {a.title || a.type}
-                    </span>
+                    <span className="text-sm font-medium text-zinc-900 truncate block">{a.title || a.type}</span>
                     <span className="text-xs text-zinc-400">{a.status || 'Document'}</span>
                   </div>
-                  <ArrowRight className="w-3.5 h-3.5 text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                  <ArrowRight className="w-3.5 h-3.5 text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex-shrink-0" />
                 </button>
               ))}
             </div>
-          </div>
+          </section>
         )}
 
         {/* ── Projects Grid ── */}
-        <div>
+        <section>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-zinc-900">Projects</h2>
             {sortedProjects.length > 0 && (
-              <span className="text-xs text-zinc-400">
+              <span className="text-xs text-zinc-400 tabular-nums">
                 {sortedProjects.length} project{sortedProjects.length !== 1 ? 's' : ''}
               </span>
             )}
           </div>
 
           {sortedProjects.length === 0 ? (
-            <div
-              className={cn(
-                'rounded-xl border border-dashed border-zinc-300 bg-zinc-50',
-                'flex flex-col items-center justify-center py-16 text-center',
-              )}
-            >
-              <FolderKanban className="h-10 w-10 text-zinc-300 mb-3" />
-              <p className="text-sm font-medium text-zinc-500">No projects yet</p>
-              <p className="text-xs text-zinc-400 mt-1">
-                Create your first regulatory submission to get started.
-              </p>
-              <button
-                onClick={onNewProject}
-                className={cn(
-                  'mt-4 inline-flex items-center gap-2 rounded-xl px-4 py-2',
-                  'bg-zinc-900 text-white text-sm font-medium',
-                  'hover:bg-zinc-800 transition-colors',
-                )}
-              >
-                <Plus className="h-4 w-4" />
-                New Project
-              </button>
-            </div>
+            <EnterpriseCard className="border-dashed">
+              <EmptyState
+                icon={FolderKanban}
+                title="No projects yet"
+                description="Create your first regulatory submission to get started."
+                action={
+                  <EnterpriseButton variant="primary" icon={Plus} onClick={onNewProject}>
+                    New Project
+                  </EnterpriseButton>
+                }
+              />
+            </EnterpriseCard>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
               {sortedProjects.map(project => {
                 const typeColor = getTypeBadge(project.type);
                 const statusColor = getStatusStyle(project.status);
 
                 return (
-                  <button
+                  <EnterpriseCard
                     key={project.id}
+                    interactive
                     onClick={() => onProjectClick(project.id)}
-                    className={cn(
-                      'rounded-xl border border-zinc-200 bg-white p-5 text-left',
-                      'hover:shadow-md hover:border-zinc-300',
-                      'transition-all duration-200 ease-out',
-                      'focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:ring-offset-2',
-                      'group',
-                    )}
+                    className="group"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-2">
                         {project.type && (
-                          <span
-                            className={cn(
-                              'inline-flex items-center rounded-lg px-2.5 py-0.5 text-xs font-semibold',
-                              typeColor.bg,
-                              typeColor.text,
-                            )}
-                          >
-                            {project.type.toUpperCase()}
-                          </span>
+                          <StatusPill
+                            label={project.type.toUpperCase()}
+                            variant="info"
+                            className={cn(typeColor.bg, typeColor.text)}
+                          />
                         )}
                         {project.starred && (
                           <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
                         )}
                       </div>
-                      <ArrowRight
-                        className={cn(
-                          'h-4 w-4 text-zinc-300 group-hover:text-zinc-500',
-                          'transition-colors',
-                        )}
-                      />
+                      <ArrowRight className="h-4 w-4 text-zinc-300 group-hover:text-zinc-500 transition-colors duration-150" />
                     </div>
 
                     <h3 className="text-sm font-semibold text-zinc-900 leading-snug line-clamp-2 mb-1.5">
@@ -493,49 +359,40 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
                     </h3>
 
                     {project.description && (
-                      <p className="text-xs text-zinc-500 line-clamp-1 mb-2">
-                        {project.description}
-                      </p>
+                      <p className="text-xs text-zinc-500 line-clamp-1 mb-2">{project.description}</p>
                     )}
 
-                    <div className="flex items-center gap-3 flex-wrap">
+                    <div className="flex items-center gap-2 flex-wrap">
                       {project.status && (
-                        <span
-                          className={cn(
-                            'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium',
-                            statusColor.bg,
-                            statusColor.text,
-                          )}
-                        >
-                          <span
-                            className={cn('h-1.5 w-1.5 rounded-full', statusColor.dot)}
-                          />
+                        <span className={cn(
+                          'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium',
+                          statusColor.bg, statusColor.text,
+                        )}>
+                          <span className={cn('h-1.5 w-1.5 rounded-full', statusColor.dot)} />
                           {project.status}
                         </span>
                       )}
                       {project.submissionType && (
-                        <span className="text-xs text-zinc-400">
-                          {project.submissionType}
-                        </span>
+                        <span className="text-xs text-zinc-400">{project.submissionType}</span>
                       )}
                     </div>
 
                     {project.lastUpdated && (
-                      <div className="mt-3 flex items-center gap-1.5 text-xs text-zinc-400">
+                      <div className="mt-3 pt-3 border-t border-zinc-100 flex items-center gap-1.5 text-xs text-zinc-400">
                         <Clock className="h-3 w-3" />
                         <span>Updated {formatRelativeTime(project.lastUpdated)}</span>
                       </div>
                     )}
-                  </button>
+                  </EnterpriseCard>
                 );
               })}
             </div>
           )}
-        </div>
+        </section>
 
         {/* ── Platform Capabilities ── */}
-        <div>
-          <h2 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">
+        <section>
+          <h2 className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-3">
             Platform Capabilities
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -543,35 +400,21 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
               <button
                 key={cap.id}
                 onClick={() => onNavigate(cap.id)}
-                className={cn(
-                  'rounded-xl border border-zinc-200 bg-white px-4 py-3.5',
-                  'hover:shadow-md hover:border-zinc-300',
-                  'transition-all duration-200 ease-out text-left',
-                  'group',
-                )}
+                className="group rounded-xl border border-zinc-200 bg-white px-4 py-3.5 hover:shadow-sm hover:border-zinc-300 transition-all duration-150 text-left focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none"
               >
                 <div className="flex items-center gap-3">
-                  <div
-                    className={cn(
-                      'h-8 w-8 rounded-lg bg-zinc-100 flex items-center justify-center flex-shrink-0',
-                      'group-hover:bg-zinc-200 transition-colors',
-                    )}
-                  >
+                  <div className="h-8 w-8 rounded-lg bg-zinc-100 flex items-center justify-center flex-shrink-0 group-hover:bg-zinc-50 transition-colors duration-150">
                     <cap.icon className={cn('h-4 w-4', cap.color)} />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-zinc-900 leading-tight">
-                      {cap.label}
-                    </p>
-                    <p className="text-xs text-zinc-400 mt-0.5 leading-tight">
-                      {cap.description}
-                    </p>
+                    <p className="text-sm font-medium text-zinc-900 leading-tight">{cap.label}</p>
+                    <p className="text-xs text-zinc-500 mt-0.5 leading-tight">{cap.description}</p>
                   </div>
                 </div>
               </button>
             ))}
           </div>
-        </div>
+        </section>
       </div>
     </div>
   );

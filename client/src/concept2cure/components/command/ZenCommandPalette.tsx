@@ -321,7 +321,7 @@ const createCommands = (onAction: (id: string) => void): CommandItem[] => [
     id: 'nav-route-planner',
     title: 'Route Planner',
     subtitle: 'Plan regulatory submission pathways & timelines',
-    icon: <Compass className="w-4 h-4 text-indigo-600" />,
+    icon: <Compass className="w-4 h-4 text-blue-600" />,
     category: 'tools',
     action: () => onAction('nav-route-planner'),
     keywords: ['route', 'plan', 'pathway', 'submission', 'timeline', 'destination'],

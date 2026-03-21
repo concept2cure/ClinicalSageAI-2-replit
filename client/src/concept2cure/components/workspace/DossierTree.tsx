@@ -164,7 +164,7 @@ function StatusIndicator({ status }: { status: DossierNodeStatus }) {
 // ── Node icon by type ────────────────────────────────────────────────────────
 
 function NodeIcon({ nodeType, isExpanded }: { nodeType: string; isExpanded: boolean }) {
-  if (nodeType === 'module') return <Package className="w-3.5 h-3.5 text-indigo-500 shrink-0" />;
+  if (nodeType === 'module') return <Package className="w-3.5 h-3.5 text-blue-500 shrink-0" />;
   if (nodeType === 'section') {
     return isExpanded ? (
       <FolderOpen className="w-3.5 h-3.5 text-zinc-400 shrink-0" />

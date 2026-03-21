@@ -281,7 +281,7 @@ const IndustryStep: React.FC<{
               key={option.value}
               onClick={() => onChange(option.value)}
               className={cn(
-                'p-6 rounded-xl border-2 text-left transition-all',
+                'p-5 rounded-xl border text-left transition-all',
                 isSelected
                   ? 'border-blue-500 bg-blue-50'
                   : 'border-zinc-200 hover:border-blue-300'
@@ -336,7 +336,7 @@ const SubmissionTypeStep: React.FC<{
               key={key}
               onClick={() => onChange(key as SubmissionType)}
               className={cn(
-                'p-4 rounded-lg border-2 text-left transition-all',
+                'p-4 rounded-lg border text-left transition-all',
                 isSelected
                   ? 'border-blue-500 bg-blue-50'
                   : 'border-zinc-200 hover:border-blue-300'

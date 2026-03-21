@@ -58,7 +58,7 @@ const ACTION_STYLES: Record<string, { bg: string; text: string; icon: typeof Clo
   approved:     { bg: 'bg-emerald-50',  text: 'text-emerald-700', icon: ThumbsUp },
   rejected:     { bg: 'bg-red-50',      text: 'text-red-700',     icon: AlertTriangle },
   deleted:      { bg: 'bg-red-50',      text: 'text-red-600',     icon: AlertTriangle },
-  signed:       { bg: 'bg-indigo-50',   text: 'text-indigo-700',  icon: Fingerprint },
+  signed:       { bg: 'bg-blue-50',   text: 'text-blue-700',  icon: Fingerprint },
   submitted:    { bg: 'bg-violet-50',   text: 'text-violet-700',  icon: FileText },
   branched:     { bg: 'bg-teal-50',     text: 'text-teal-700',    icon: GitBranch },
 };
@@ -319,7 +319,7 @@ export const ProvenanceViewer: React.FC<ProvenanceViewerProps> = ({ programId })
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search entries..."
-              className="w-full text-xs pl-8 pr-3 py-1.5 border border-zinc-200 rounded-lg bg-white text-zinc-700 focus:outline-none focus:ring-1 focus:ring-blue-400"
+              className="w-full text-xs pl-8 pr-3 py-1.5 border border-zinc-200 rounded-lg bg-white text-zinc-700 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
             />
           </div>
 

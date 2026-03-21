@@ -494,7 +494,7 @@ interface SmartToolbarProps {
 }
 
 const SmartToolbar: React.FC<SmartToolbarProps> = ({ onAIAction, disabled }) => (
-  <div className="flex items-center gap-1 px-2 py-1.5 border-b border-zinc-200 bg-gradient-to-r from-purple-50/50 to-blue-50/50">
+  <div className="flex items-center gap-1 px-2 py-1.5 border-b border-zinc-200 bg-zinc-50">
     <Sparkles className="w-3.5 h-3.5 text-purple-500 mr-1" />
     <span className="text-xs font-semibold text-purple-600 mr-2 uppercase tracking-wider">AI</span>
     {AI_TOOLBAR_ACTIONS.map(action => (
@@ -563,7 +563,7 @@ const FindReplaceBar: React.FC<FindReplaceBarProps> = ({ editor, onClose }) => {
         value={findText}
         onChange={e => handleFind(e.target.value)}
         placeholder="Find..."
-        className="w-40 px-2 py-1 text-xs bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+        className="w-40 px-2 py-1 text-xs bg-white border border-zinc-200 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
         onKeyDown={e => {
           if (e.key === 'Enter') (editor?.commands as Record<string, () => boolean>)?.nextMatch?.();
           if (e.key === 'Escape') onClose();
@@ -585,7 +585,7 @@ const FindReplaceBar: React.FC<FindReplaceBarProps> = ({ editor, onClose }) => {
         value={replaceText}
         onChange={e => setReplaceText(e.target.value)}
         placeholder="Replace..."
-        className="w-32 px-2 py-1 text-xs bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+        className="w-32 px-2 py-1 text-xs bg-white border border-zinc-200 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
       />
       <button onClick={handleReplace} className="px-2 py-1 text-xs bg-white border border-zinc-200 rounded hover:bg-zinc-100">
         Replace
@@ -1640,7 +1640,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
           <div className="p-8 max-w-4xl mx-auto">
             <EditorContent
               editor={editor}
-              className="prose prose-slate max-w-none min-h-[500px] focus:outline-none"
+              className="prose prose-slate max-w-none min-h-[500px] outline-none"
             />
           </div>
         </div>

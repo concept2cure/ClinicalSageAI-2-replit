@@ -218,7 +218,7 @@ const MemberAvatar: React.FC<{
         />
       ) : (
         <div className={cn(
-          'rounded-full flex items-center justify-center font-medium bg-gradient-to-br from-blue-500 to-violet-600 text-white ring-2 ring-white',
+          'rounded-full flex items-center justify-center font-medium bg-blue-600 text-white ring-2 ring-white',
           sizeClasses[size]
         )}>
           {member.initials}

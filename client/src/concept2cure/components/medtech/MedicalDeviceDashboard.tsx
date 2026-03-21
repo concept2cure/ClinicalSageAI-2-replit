@@ -272,7 +272,7 @@ const STATUS_CONFIG: Record<
     step: 5,
   },
   estar_prep: { label: 'eSTAR Prep', color: 'text-cyan-600', bgColor: 'bg-cyan-100', step: 6 },
-  submitted: { label: 'Submitted', color: 'text-indigo-600', bgColor: 'bg-indigo-100', step: 7 },
+  submitted: { label: 'Submitted', color: 'text-blue-600', bgColor: 'bg-blue-100', step: 7 },
   fda_review: { label: 'FDA Review', color: 'text-orange-600', bgColor: 'bg-orange-100', step: 8 },
   additional_info: {
     label: 'Additional Info Requested',
@@ -340,7 +340,7 @@ const PredicatePathfinder: React.FC<{
 
   return (
     <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
-      <div className="p-4 border-b border-zinc-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+      <div className="p-4 border-b border-zinc-200 bg-blue-50">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-100 rounded-lg">
@@ -488,7 +488,7 @@ const MAUDEHazardMonitor: React.FC<{
 
   return (
     <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
-      <div className="p-4 border-b border-zinc-200 bg-gradient-to-r from-red-50 to-orange-50">
+      <div className="p-4 border-b border-zinc-200 bg-red-50">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-red-100 rounded-lg">
             <AlertOctagon className="w-5 h-5 text-red-600" />
@@ -620,7 +620,7 @@ const ESTARProgressTracker: React.FC<{
         {/* Progress Bar */}
         <div className="h-3 bg-zinc-100 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all duration-150"
+            className="h-full bg-blue-500 rounded-full transition-all duration-150"
             style={{ width: `${submission.estarProgress}%` }}
           />
         </div>
@@ -695,7 +695,7 @@ const SubmissionCard: React.FC<{
   return (
     <button
       onClick={onClick}
-      className="w-full bg-white rounded-xl border border-zinc-200 p-4 text-left hover:shadow-lg hover:border-blue-300 transition-all duration-150"
+      className="w-full bg-white rounded-xl border border-zinc-200 p-4 text-left hover:shadow-md hover:border-blue-300 transition-all duration-150"
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
@@ -886,7 +886,7 @@ export const MedicalDeviceDashboard: React.FC<MedicalDeviceDashboardProps> = ({
   return (
     <div className={cn('flex flex-col h-full bg-zinc-50', className)}>
       {/* Header - THE SHERPA BANNER */}
-      <div className="flex-shrink-0 bg-gradient-to-r from-zinc-900 via-blue-900 to-indigo-900 text-white p-6">
+      <div className="flex-shrink-0 bg-zinc-900 text-white p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-white/10 rounded-xl backdrop-blur">

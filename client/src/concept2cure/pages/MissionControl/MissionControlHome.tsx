@@ -164,7 +164,7 @@ function CreateProgramPanel({ onCreated }: { onCreated: (id: number) => void }) 
           <input
             value={name}
             onChange={e => setName(e.target.value)}
-            className="w-full px-3 py-2 border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400"
+            className="w-full px-3 py-2 border border-zinc-200 rounded-lg text-sm focus-visible:ring-2 outline-none focus:ring-violet-500/20 focus:border-violet-400"
             placeholder="e.g., NeuroCure IND Program"
           />
         </div>
@@ -197,7 +197,7 @@ function CreateProgramPanel({ onCreated }: { onCreated: (id: number) => void }) 
           <select
             value={destType}
             onChange={e => setDestType(e.target.value)}
-            className="w-full px-3 py-2 border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+            className="w-full px-3 py-2 border border-zinc-200 rounded-lg text-sm focus-visible:ring-2 outline-none focus:ring-violet-500/20"
           >
             <option value="IND">IND (Investigational New Drug)</option>
             <option value="NDA">NDA (New Drug Application)</option>
@@ -215,7 +215,7 @@ function CreateProgramPanel({ onCreated }: { onCreated: (id: number) => void }) 
           <input
             value={indication}
             onChange={e => setIndication(e.target.value)}
-            className="w-full px-3 py-2 border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+            className="w-full px-3 py-2 border border-zinc-200 rounded-lg text-sm focus-visible:ring-2 outline-none focus:ring-violet-500/20"
             placeholder="e.g., Treatment of major depressive disorder"
           />
         </div>
@@ -308,7 +308,7 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
           <select
             value={activeProgramId || ''}
             onChange={e => setSelectedProgramId(parseInt(e.target.value))}
-            className="text-sm font-semibold text-zinc-900 bg-transparent border-none focus:outline-none cursor-pointer"
+            className="text-sm font-semibold text-zinc-900 bg-transparent border-none outline-none cursor-pointer"
           >
             {programs.map((p: any) => (
               <option key={p.id} value={p.id}>{p.name}</option>

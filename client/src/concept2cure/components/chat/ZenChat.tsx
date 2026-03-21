@@ -262,7 +262,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
 
         <button
           onClick={() => onOpenEditor(artifact)}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition-colors duration-150"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100 transition-colors duration-150"
         >
           <PenTool className="w-3.5 h-3.5" />
           Edit Inline
@@ -349,7 +349,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           <div
             className={cn(
               'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm mt-0.5',
-              isUser ? 'bg-zinc-800 text-white' : 'bg-gradient-to-br from-violet-500 to-violet-700'
+              isUser ? 'bg-zinc-800 text-white' : 'bg-violet-600'
             )}
           >
             {isUser ? (
@@ -775,7 +775,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
       <div className="max-w-3xl mx-auto">
         <div
           className={cn(
-            'flex items-end gap-2 px-4 py-3 bg-white border rounded-xl transition-all duration-200',
+            'flex items-end gap-2 px-4 py-3 bg-white border rounded-xl transition-all duration-150',
             isFocused
               ? 'border-blue-300 ring-4 ring-blue-50 shadow-sm'
               : 'border-zinc-200 hover:border-zinc-300'
@@ -809,7 +809,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
               onClick={onSend}
               disabled={!canSend}
               className={cn(
-                'flex-shrink-0 p-2 rounded-full transition-all duration-200',
+                'flex-shrink-0 p-2 rounded-full transition-all duration-150',
                 canSend
                   ? 'bg-zinc-900 text-white hover:bg-zinc-800 hover:scale-105'
                   : 'bg-zinc-100 text-zinc-400 cursor-not-allowed'
@@ -843,7 +843,7 @@ const ScrollToBottomButton: React.FC<ScrollButtonProps> = ({ visible, onClick })
   <button
     onClick={onClick}
     className={cn(
-      'fixed bottom-24 left-1/2 -translate-x-1/2 px-4 py-2 bg-white border border-zinc-200 rounded-full shadow-lg flex items-center gap-2 text-sm text-zinc-600 hover:bg-zinc-50 transition-all duration-200',
+      'fixed bottom-24 left-1/2 -translate-x-1/2 px-4 py-2 bg-white border border-zinc-200 rounded-full shadow-lg flex items-center gap-2 text-sm text-zinc-600 hover:bg-zinc-50 transition-all duration-150',
       visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
     )}
   >

@@ -171,7 +171,7 @@ function ReplyInput({
           onKeyDown={handleKeyDown}
           placeholder="Reply... Use @name to mention"
           rows={2}
-          className="w-full text-xs rounded-md border border-border bg-background px-3 py-2 pr-8 resize-none focus:outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground"
+          className="w-full text-xs rounded-md border border-border bg-background px-3 py-2 pr-8 resize-none focus-visible:ring-2 outline-none focus:ring-ring placeholder:text-muted-foreground"
         />
         <button
           onClick={handleSubmit}

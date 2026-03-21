@@ -221,7 +221,7 @@ const IndustryStep: React.FC<{
             key={industry.id}
             onClick={() => onSelect(industry.id)}
             className={cn(
-              'p-6 rounded-xl border-2 text-left transition-all',
+              'p-5 rounded-xl border text-left transition-all',
               selected === industry.id
                 ? `${industry.bgColor} border-current ${industry.color} ring-2 ring-offset-2`
                 : 'bg-white border-zinc-200 hover:border-zinc-300 hover:shadow-md'
@@ -280,7 +280,7 @@ const RoleStep: React.FC<{
               key={role.id}
               onClick={() => onSelect(role.id)}
               className={cn(
-                'p-4 rounded-lg border-2 text-left transition-all flex items-start gap-4',
+                'p-4 rounded-lg border text-left transition-all flex items-start gap-4',
                 selected === role.id
                   ? 'bg-blue-50 border-blue-500 ring-2 ring-blue-200'
                   : 'bg-white border-zinc-200 hover:border-zinc-300'
@@ -325,7 +325,7 @@ const ConfirmationStep: React.FC<{
   
   return (
     <div className="space-y-6 text-center">
-      <div className="w-20 h-20 mx-auto rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center">
+      <div className="w-14 h-14 mx-auto rounded-lg bg-blue-600 flex items-center justify-center">
         <Sparkles className="w-10 h-10 text-white" />
       </div>
       
@@ -396,7 +396,7 @@ export const IndustryModeSelector: React.FC<IndustryModeSelectorProps> = ({
   
   return (
     <div className={cn(
-      'min-h-screen bg-gradient-to-br from-zinc-50 to-zinc-100 flex items-center justify-center p-8',
+      'min-h-screen bg-zinc-50 flex items-center justify-center p-8',
       className
     )}>
       <div className="w-full max-w-4xl">

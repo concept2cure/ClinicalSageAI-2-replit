@@ -497,7 +497,7 @@ export function CitationSearchPanel({
             onClick={() => insertCitation(result)}
             className={cn(
               'w-full text-left px-4 py-3 border-b border-zinc-50 transition-colors',
-              'focus:outline-none',
+              'outline-none',
               index === selectedIndex
                 ? 'bg-blue-50/80 border-l-2 border-l-blue-500'
                 : 'hover:bg-zinc-50 border-l-2 border-l-transparent'

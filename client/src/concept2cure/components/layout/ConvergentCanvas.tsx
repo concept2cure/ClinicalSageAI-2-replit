@@ -296,7 +296,7 @@ const CortexSidecar: React.FC<{
       <div className="flex-1 overflow-y-auto">
         {messages.length === 0 ? (
           <div className="p-6 text-center">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-blue-600 flex items-center justify-center">
+            <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-blue-600 flex items-center justify-center">
               <Mountain className="w-8 h-8 text-white" />
             </div>
             <h3 className="text-lg font-semibold text-zinc-900 mb-2">Your Sherpa is Ready</h3>

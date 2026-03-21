@@ -180,7 +180,7 @@ const STATUS_CONFIG: Record<CAPAStatus, { label: string; color: string; icon: Re
   },
   action_planning: {
     label: 'Action Planning',
-    color: 'bg-indigo-100 text-indigo-800',
+    color: 'bg-blue-100 text-blue-800',
     icon: <ClipboardList className="w-4 h-4" />,
   },
   implementation: {
@@ -1230,7 +1230,7 @@ export function CAPAManagement() {
       </div>
 
       {/* RI Integration */}
-      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50">
+      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-zinc-50">
         <div className="px-3 py-2 p-4">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-purple-100 rounded-full">

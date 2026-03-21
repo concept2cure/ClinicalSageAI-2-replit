@@ -494,7 +494,7 @@ const TherapeuticAreaCard: React.FC<{
         className="w-full flex items-center justify-between p-4 hover:bg-zinc-50 transition-colors duration-150"
       >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center">
             <Pill className="w-5 h-5 text-white" />
           </div>
           <div className="text-left">

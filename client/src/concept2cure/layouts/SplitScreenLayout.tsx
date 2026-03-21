@@ -179,7 +179,7 @@ export const SplitScreenLayout: React.FC = () => {
     <div ref={containerRef} className="flex h-full w-full overflow-hidden bg-white">
       {/* Chat Panel (Left) */}
       <div
-        className="flex flex-col h-full overflow-hidden transition-all duration-200 flex-1"
+        className="flex flex-col h-full overflow-hidden transition-all duration-150 flex-1"
         style={artifactPanelVisible ? { width: `${chatWidth}%` } : undefined}
       >
         <ChatPanel />
@@ -211,7 +211,7 @@ export const SplitScreenLayout: React.FC = () => {
       {/* Artifact Panel (Right) */}
       {artifactPanelVisible && (
         <div
-          className="flex flex-col h-full overflow-hidden border-l border-zinc-200 bg-zinc-50 transition-all duration-200"
+          className="flex flex-col h-full overflow-hidden border-l border-zinc-200 bg-zinc-50 transition-all duration-150"
           style={{ width: `${artifactWidth}%` }}
         >
           <ArtifactPanel artifact={activeArtifact} />

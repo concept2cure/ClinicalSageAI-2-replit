@@ -95,9 +95,9 @@ export interface MorningBriefingProps {
 
 const getGreeting = (): { greeting: string; icon: React.ReactNode } => {
   const hour = new Date().getHours();
-  if (hour < 12) return { greeting: 'Good Morning', icon: <Sun className="text-yellow-400" size={40} /> };
-  if (hour < 18) return { greeting: 'Good Afternoon', icon: <Sun className="text-orange-400" size={40} /> };
-  return { greeting: 'Good Evening', icon: <Moon className="text-indigo-300" size={40} /> };
+  if (hour < 12) return { greeting: 'Good Morning', icon: <Sun className="text-amber-400" size={24} /> };
+  if (hour < 18) return { greeting: 'Good Afternoon', icon: <Sun className="text-orange-400" size={24} /> };
+  return { greeting: 'Good Evening', icon: <Moon className="text-blue-300" size={24} /> };
 };
 
 const SOURCE_CONFIG: Record<AlertSource, {
@@ -268,7 +268,7 @@ export const MorningBriefing: React.FC<MorningBriefingProps> = ({
           </button>
           
           {/* Greeting */}
-          <div className="drop-shadow-lg mb-3">{icon}</div>
+          <div className="mb-3">{icon}</div>
           <h2 className="text-2xl font-semibold text-white tracking-tight">
             {greeting}{userName ? `, ${userName}` : ''}.
           </h2>

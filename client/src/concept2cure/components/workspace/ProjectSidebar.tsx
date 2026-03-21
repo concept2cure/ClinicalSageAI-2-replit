@@ -79,7 +79,7 @@ const InstructionsModal: React.FC<{
           <textarea
             value={draft}
             onChange={e => setDraft(e.target.value)}
-            className="w-full h-64 p-4 border border-zinc-200 rounded-xl text-sm text-zinc-900 leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-zinc-200 focus:border-zinc-300 bg-zinc-50"
+            className="w-full h-64 p-4 border border-zinc-200 rounded-xl text-sm text-zinc-900 leading-relaxed resize-none focus-visible:ring-2 outline-none focus:ring-zinc-200 focus:border-zinc-300 bg-zinc-50"
             placeholder="e.g., This project is for a 510(k) submission for a Class II medical device. Focus on FDA guidance documents and use formal regulatory language..."
           />
         </div>
@@ -260,7 +260,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
         {docs.length === 0 && !isUploading ? (
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="w-full py-8 border-2 border-dashed border-zinc-200 rounded-xl text-center hover:border-zinc-300 hover:bg-zinc-50 transition-colors duration-150"
+            className="w-full py-8 border border-dashed border-zinc-200 rounded-xl text-center hover:border-zinc-300 hover:bg-zinc-50 transition-colors duration-150"
           >
             <Upload className="w-5 h-5 text-zinc-400 mx-auto mb-2" />
             <p className="text-xs text-zinc-400">Drop files here or click to upload</p>

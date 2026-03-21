@@ -138,7 +138,7 @@ interface ApprovalTrend {
 
 const AGENCY_CONFIG: Record<Agency, { label: string; color: string; flag: string }> = {
   FDA: { label: 'FDA (US)', color: 'bg-blue-100 text-blue-800', flag: '🇺🇸' },
-  EMA: { label: 'EMA (EU)', color: 'bg-indigo-100 text-indigo-800', flag: '🇪🇺' },
+  EMA: { label: 'EMA (EU)', color: 'bg-blue-100 text-blue-800', flag: '🇪🇺' },
   PMDA: { label: 'PMDA (Japan)', color: 'bg-red-100 text-red-800', flag: '🇯🇵' },
   'Health Canada': { label: 'Health Canada', color: 'bg-pink-100 text-pink-800', flag: '🇨🇦' },
   TGA: { label: 'TGA (Australia)', color: 'bg-green-100 text-green-800', flag: '🇦🇺' },
@@ -680,7 +680,7 @@ function CompetitiveIntelligence({ approvals }: { approvals: CompetitorApproval[
               <p className="text-2xl font-semibold">50</p>
               <p className="text-xs text-green-600">+12% vs 2023</p>
             </div>
-            <div className="border border-border/40 rounded-sm bg-background p-4 bg-indigo-50">
+            <div className="border border-border/40 rounded-sm bg-background p-4 bg-blue-50">
               <p className="text-sm text-muted-foreground">EMA 2024</p>
               <p className="text-2xl font-semibold">42</p>
               <p className="text-xs text-green-600">+8% vs 2023</p>
@@ -815,7 +815,7 @@ export function RegulatoryIntelligence() {
       </Tabs>
 
       {/* RI Assistance */}
-      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50">
+      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-zinc-50">
         <div className="px-3 py-2 p-4">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-purple-100 rounded-full">

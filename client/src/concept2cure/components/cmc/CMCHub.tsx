@@ -202,7 +202,7 @@ const DocumentUploadPanel: React.FC<{
         onDragLeave={() => setIsDragOver(false)}
         onDrop={handleDrop}
         className={cn(
-          'border-2 border-dashed rounded-xl p-8 text-center transition-colors',
+          'border border-dashed rounded-xl p-8 text-center transition-colors',
           isDragOver
             ? 'border-violet-400 bg-violet-50'
             : 'border-zinc-200 hover:border-zinc-300 bg-zinc-50/50'
@@ -487,7 +487,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
       <div className="flex-shrink-0 border-b border-zinc-200 bg-white/80 backdrop-blur-sm px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-sm">
+            <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center shadow-sm">
               <Beaker className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -610,7 +610,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <button
                     onClick={() => setActiveTab('drug-substance')}
-                    className="flex items-center gap-3 p-4 bg-white rounded-xl border hover:border-violet-200 hover:bg-violet-50/30 transition-colors text-left"
+                    className="flex items-center gap-3 p-4 bg-white rounded-xl border hover:border-blue-200 hover:bg-violet-50/30 transition-colors text-left"
                   >
                     <FlaskConical className="w-5 h-5 text-violet-500" />
                     <div>
@@ -985,7 +985,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                     const Icon = section.icon;
                     const isGenerating = generatingSection === section.code;
                     return (
-                      <div key={section.code} className="flex items-center gap-3 p-3 bg-white rounded-lg border hover:border-violet-200 transition-colors duration-150">
+                      <div key={section.code} className="flex items-center gap-3 p-3 bg-white rounded-lg border hover:border-blue-200 transition-colors duration-150">
                         <Icon className="w-4 h-4 text-violet-500 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-zinc-900">{section.code} — {section.title}</p>

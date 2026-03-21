@@ -155,9 +155,9 @@ const CHAMBER_CONFIG: Record<
   route_timing: {
     label: 'Route & Timing',
     icon: Clock,
-    accent: 'text-indigo-600',
-    bg: 'bg-indigo-50',
-    border: 'border-indigo-200',
+    accent: 'text-blue-600',
+    bg: 'bg-blue-50',
+    border: 'border-blue-200',
   },
   evidence_sufficiency: {
     label: 'Evidence Sufficiency',
@@ -583,7 +583,7 @@ function ProgramSelector({
 }) {
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6 px-4">
-      <div className="rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
+      <div className="rounded-xl bg-blue-50 p-6">
         <Sparkles className="h-12 w-12 text-blue-500" />
       </div>
       <div className="text-center">

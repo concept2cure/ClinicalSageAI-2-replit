@@ -316,7 +316,7 @@ const MorningBriefingGreeting: React.FC<MorningBriefingGreetingProps> = ({
     <div className="bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 rounded-xl p-8 text-white shadow-xl">
       <div className="flex items-start justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-amber-500 flex items-center justify-center">
             <Sun className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -424,7 +424,7 @@ const CouncilAdvisorCard: React.FC<CouncilAdvisorCardProps> = ({
     <button
       onClick={onClick}
       className={cn(
-        "flex items-center gap-3 p-3 rounded-xl transition-all duration-200",
+        "flex items-center gap-3 p-3 rounded-xl transition-all duration-150",
         isActive
           ? `bg-gradient-to-r ${persona.color} text-white shadow-lg`
           : "bg-zinc-50 hover:bg-zinc-100 text-zinc-700"
@@ -494,7 +494,7 @@ const ZeroState: React.FC<ZeroStateProps> = ({ userName, industry, onQuickAction
     <div className="flex-1 flex flex-col items-center justify-center p-8">
       <div className="max-w-xl text-center">
         {/* Sherpa Avatar */}
-        <div className="w-20 h-20 mx-auto mb-6 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg">
+        <div className="w-14 h-14 mx-auto mb-6 rounded-lg bg-amber-500 flex items-center justify-center shadow-sm">
           <span className="text-4xl">🏔️</span>
         </div>
 
@@ -651,7 +651,7 @@ function CouncilChat({ advisorId, projectId }: { advisorId: string; projectId: s
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
             placeholder={`Ask ${persona?.name || 'your advisor'}...`}
-            className="flex-1 px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-300"
+            className="flex-1 px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus-visible:ring-2 outline-none focus:ring-zinc-900/10 focus:border-zinc-300"
           />
           <button
             onClick={sendMessage}
@@ -855,7 +855,7 @@ export const ConvergentCanvas: React.FC<ConvergentCanvasProps> = ({
           {!sidebarOpen && (
             <button
               onClick={() => setSidebarOpen(true)}
-              className="absolute left-4 top-16 z-10 p-2 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
+              className="absolute left-4 top-16 z-10 p-2 bg-white rounded-lg shadow-md hover:shadow-md transition-shadow"
             >
               <Menu className="w-5 h-5 text-zinc-600" />
             </button>
@@ -895,7 +895,7 @@ export const ConvergentCanvas: React.FC<ConvergentCanvasProps> = ({
                   {/* Council Thread would render here */}
                   <div className="max-w-3xl mx-auto">
                     <div className="flex items-center gap-4 mb-6">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-2xl">
+                      <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center text-2xl">
                         {SHERPA_PERSONAS[
                           Object.keys(SHERPA_PERSONAS).find(
                             k => SHERPA_PERSONAS[k as keyof typeof SHERPA_PERSONAS].id === activeAdvisor

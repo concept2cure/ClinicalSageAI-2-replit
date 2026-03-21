@@ -407,7 +407,7 @@ function PMSMetrics({
               <p className="text-sm text-muted-foreground">Pending Reports</p>
               <p className="text-2xl font-semibold">{pendingReports}</p>
             </div>
-            <FileText className="w-8 h-8 text-indigo-500" />
+            <FileText className="w-8 h-8 text-blue-500" />
           </div>
         </div>
       </div>
@@ -661,7 +661,7 @@ function SignalManagement({ signals }: { signals: SafetySignal[] }) {
       </Table>
 
       {/* RI Signal Detection */}
-      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50">
+      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-zinc-50">
         <div className="px-3 py-2 p-4">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-purple-100 rounded-full">
@@ -717,7 +717,7 @@ function PeriodicReports({ reports }: { reports: PeriodicReport[] }) {
               <div className="px-3 py-2 p-4">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-indigo-100 rounded-lg">
+                    <div className="p-2 bg-blue-100 rounded-lg">
                       {REPORT_TYPE_LABELS[report.type].icon}
                     </div>
                     <div>
@@ -1056,7 +1056,7 @@ function RiskBenefitTab() {
       </div>
 
       {/* RI Assistance */}
-      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50">
+      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-zinc-50">
         <div className="px-3 py-2 p-4">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-purple-100 rounded-full">

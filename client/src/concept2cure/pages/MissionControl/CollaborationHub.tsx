@@ -325,7 +325,7 @@ const CollaborationHub: React.FC<CollaborationHubProps> = ({ programId }) => {
                 placeholder="Search threads..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="w-full text-xs pl-8 pr-3 py-1.5 border border-zinc-200 rounded-lg bg-zinc-50 focus:outline-none focus:ring-1 focus:ring-blue-400 focus:bg-white"
+                className="w-full text-xs pl-8 pr-3 py-1.5 border border-zinc-200 rounded-lg bg-zinc-50 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none focus:bg-white"
               />
             </div>
             <div className="flex items-center gap-1.5">
@@ -521,7 +521,7 @@ const CollaborationHub: React.FC<CollaborationHubProps> = ({ programId }) => {
                     }}
                     placeholder="Type your message... (Ctrl+Enter to send)"
                     rows={2}
-                    className="flex-1 text-sm px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 resize-none"
+                    className="flex-1 text-sm px-3 py-2 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none resize-none"
                   />
                 </div>
                 <div className="flex items-center gap-2 mt-2">

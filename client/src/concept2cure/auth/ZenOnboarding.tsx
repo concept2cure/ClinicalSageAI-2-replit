@@ -397,7 +397,7 @@ export const ZenOnboarding: React.FC = () => {
             value={preferences.projectName}
             onChange={e => setPreferences(p => ({ ...p, projectName: e.target.value }))}
             placeholder="e.g., CardioMonitor 510(k)"
-            className="w-full px-4 py-3 border-2 border-zinc-200 rounded-xl focus:border-blue-500 focus:outline-none transition-colors duration-150"
+            className="w-full px-4 py-3 border-2 border-zinc-200 rounded-xl focus:border-blue-500 outline-none transition-colors duration-150"
           />
         </div>
 
@@ -667,7 +667,7 @@ export const ZenOnboarding: React.FC = () => {
       <div className="w-full max-w-xl">
         {renderProgress()}
 
-        <div className="bg-white rounded-2xl shadow-sm border border-zinc-200 p-8">
+        <div className="bg-white rounded-xl shadow-sm border border-zinc-200 p-8">
           <AnimatePresence mode="wait">
             {step === 'welcome' && renderWelcomeStep()}
             {step === 'workspace' && renderWorkspaceStep()}

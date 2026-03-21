@@ -165,7 +165,7 @@ const STATUS_CONFIG: Record<
     label: 'Empty',
     color: 'text-zinc-400',
     bgColor: 'bg-zinc-50',
-    icon: <div className="w-3 h-3 rounded-full border-2 border-dashed border-zinc-300" />,
+    icon: <div className="w-3 h-3 rounded-full border border-dashed border-zinc-300" />,
   },
   ai_drafting: {
     label: 'RI Drafting...',
@@ -212,7 +212,7 @@ const STATUS_CONFIG: Record<
 const ZeroState: React.FC<{ onStartDrafting?: () => void }> = ({ onStartDrafting }) => (
   <div className="flex-1 flex items-center justify-center p-8">
     <div className="text-center max-w-md">
-      <div className="w-16 h-16 mx-auto mb-6 rounded-xl bg-zinc-900 flex items-center justify-center shadow-sm">
+      <div className="w-12 h-12 mx-auto mb-5 rounded-lg bg-zinc-900 flex items-center justify-center shadow-sm">
         <Mountain className="w-8 h-8 text-white" />
       </div>
       <h2 className="text-xl font-semibold text-zinc-900 mb-3">Your Sherpa is Ready</h2>
@@ -515,7 +515,7 @@ const SectionEditor: React.FC<{
       <div className="flex-1 overflow-auto p-6">
         {section.status === 'empty' ? (
           <div className="text-center py-12">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-zinc-100 flex items-center justify-center">
+            <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-zinc-100 flex items-center justify-center">
               <FileText className="w-8 h-8 text-zinc-400" />
             </div>
             <h3 className="text-lg font-medium text-zinc-600 mb-2">Section Not Yet Drafted</h3>
@@ -541,7 +541,7 @@ const SectionEditor: React.FC<{
           </div>
         ) : section.status === 'ai_drafting' ? (
           <div className="text-center py-12">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-100 flex items-center justify-center animate-pulse">
+            <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-blue-100 flex items-center justify-center animate-pulse">
               <Sparkles className="w-8 h-8 text-blue-600" />
             </div>
             <h3 className="text-lg font-medium text-blue-700 mb-2">RI is Drafting...</h3>

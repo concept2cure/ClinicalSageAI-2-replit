@@ -533,7 +533,7 @@ export const MissionControl: React.FC<MissionControlProps> = ({ projectId }) => 
         {/* ── Hero Welcome Section (Claude.AI-style) ──────────────────── */}
         <div className="mb-8">
           <div className="text-center max-w-2xl mx-auto mb-8">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-violet-200/50">
+            <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center mx-auto mb-4 /50">
               <Target className="w-6 h-6 text-white" />
             </div>
             <h1 className="text-2xl font-semibold text-zinc-900 mb-2">
@@ -824,7 +824,7 @@ export const MissionControl: React.FC<MissionControlProps> = ({ projectId }) => 
         {!hasData && (
           <div className="mt-8 bg-white rounded-xl border border-zinc-200 p-8 text-center">
             <div className="max-w-md mx-auto">
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-100 to-violet-100 flex items-center justify-center mx-auto mb-4">
+              <div className="w-14 h-14 rounded-xl bg-blue-100 flex items-center justify-center mx-auto mb-4">
                 <Target className="w-7 h-7 text-violet-600" />
               </div>
               <h3 className="text-lg font-semibold text-zinc-900 mb-2">

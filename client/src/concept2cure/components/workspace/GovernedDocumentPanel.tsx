@@ -860,7 +860,7 @@ function StatusTab({
         <div>
           <button
             onClick={onOpenDiff}
-            className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 ring-1 ring-indigo-200/60 transition-colors duration-150"
+            className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 ring-1 ring-blue-200/60 transition-colors duration-150"
           >
             <GitBranch className="w-3 h-3" />
             Compare Versions
@@ -972,7 +972,7 @@ function SnapshotsTab({ snapshots }: { snapshots: SnapshotEntry[] }) {
   }
 
   const actionIcons: Record<string, React.ReactNode> = {
-    publish: <Lock className="w-3 h-3 text-indigo-500" />,
+    publish: <Lock className="w-3 h-3 text-blue-500" />,
     'export-docx': <FileText className="w-3 h-3 text-blue-500" />,
     'export-pdf': <FileText className="w-3 h-3 text-red-500" />,
     'submission-snapshot': <Shield className="w-3 h-3 text-emerald-500" />,
@@ -1118,7 +1118,7 @@ function VersionsTab({
                   </span>
                 )}
                 {v.version === publishedVersionId && (
-                  <span className="text-xs px-1 py-px bg-indigo-600 text-white rounded">
+                  <span className="text-xs px-1 py-px bg-blue-600 text-white rounded">
                     published
                   </span>
                 )}
@@ -1164,7 +1164,7 @@ function VersionsTab({
         <div className="mt-2">
           <button
             onClick={onOpenDiff}
-            className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 ring-1 ring-indigo-200/60 transition-colors duration-150"
+            className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 ring-1 ring-blue-200/60 transition-colors duration-150"
           >
             <GitBranch className="w-3 h-3" />
             Compare Versions

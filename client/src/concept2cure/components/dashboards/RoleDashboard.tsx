@@ -248,17 +248,17 @@ interface MetricCardProps {
 
 // Static Tailwind color maps to prevent CSS purge issues
 const COLOR_BG_100: Record<string, string> = {
-  blue: 'bg-blue-100', indigo: 'bg-indigo-100', green: 'bg-green-100', purple: 'bg-purple-100',
+  blue: 'bg-blue-100', indigo: 'bg-blue-100', green: 'bg-green-100', purple: 'bg-purple-100',
   violet: 'bg-violet-100', amber: 'bg-amber-100', teal: 'bg-teal-100', cyan: 'bg-cyan-100',
   rose: 'bg-rose-100', slate: 'bg-zinc-100', sky: 'bg-sky-100', orange: 'bg-orange-100',
 };
 const COLOR_TEXT_600: Record<string, string> = {
-  blue: 'text-blue-600', indigo: 'text-indigo-600', green: 'text-green-600', purple: 'text-purple-600',
+  blue: 'text-blue-600', indigo: 'text-blue-600', green: 'text-green-600', purple: 'text-purple-600',
   violet: 'text-violet-600', amber: 'text-amber-600', teal: 'text-teal-600', cyan: 'text-cyan-600',
   rose: 'text-rose-600', slate: 'text-zinc-600', sky: 'text-sky-600', orange: 'text-orange-600',
 };
 const COLOR_TEXT_700: Record<string, string> = {
-  blue: 'text-blue-700', indigo: 'text-indigo-700', green: 'text-green-700', purple: 'text-purple-700',
+  blue: 'text-blue-700', indigo: 'text-blue-700', green: 'text-green-700', purple: 'text-purple-700',
   violet: 'text-violet-700', amber: 'text-amber-700', teal: 'text-teal-700', cyan: 'text-cyan-700',
   rose: 'text-rose-700', slate: 'text-zinc-700', sky: 'text-sky-700', orange: 'text-orange-700',
 };
@@ -473,7 +473,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ role, onAskAnA }) =
   };
 
   return (
-    <div className="border border-blue-200 rounded-md bg-gradient-to-br from-blue-50 to-white">
+    <div className="border border-blue-200 rounded-md bg-blue-50">
       <div className="px-4 py-3 pb-2">
         <h3 className="text-base font-semibold flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-blue-600" />

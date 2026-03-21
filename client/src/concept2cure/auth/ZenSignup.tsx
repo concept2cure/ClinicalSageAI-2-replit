@@ -378,8 +378,8 @@ export const ZenSignup: React.FC = () => {
         className={`
           w-full px-4 py-3 text-base
           border-2 rounded-xl
-          transition-all duration-200
-          focus:outline-none focus:ring-0
+          transition-all duration-150
+          outline-none focus:ring-0
           ${
             errors[field]
               ? 'border-red-300 bg-red-50 focus:border-red-500'
@@ -408,8 +408,8 @@ export const ZenSignup: React.FC = () => {
         className={`
           w-full px-4 py-3 text-base
           border-2 rounded-xl
-          transition-all duration-200
-          focus:outline-none focus:ring-0
+          transition-all duration-150
+          outline-none focus:ring-0
           appearance-none
           bg-white
           ${
@@ -476,7 +476,7 @@ export const ZenSignup: React.FC = () => {
           text-base font-medium text-white
           bg-blue-600 hover:bg-blue-700
           rounded-xl
-          transition-all duration-200
+          transition-all duration-150
           focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none
         `}
       >
@@ -526,7 +526,7 @@ export const ZenSignup: React.FC = () => {
           text-base font-medium text-white
           bg-blue-600 hover:bg-blue-700
           rounded-xl
-          transition-all duration-200
+          transition-all duration-150
           focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none
         `}
       >
@@ -569,7 +569,7 @@ export const ZenSignup: React.FC = () => {
             key={plan.id}
             onClick={() => updateField('selectedPlan', plan.id)}
             className={`
-              w-full p-4 rounded-xl border-2 text-left transition-all relative
+              w-full p-4 rounded-xl border text-left transition-all relative
               ${formData.selectedPlan === plan.id
                 ? 'border-blue-500 bg-blue-50/50 shadow-sm'
                 : 'border-zinc-200 hover:border-zinc-300'}
@@ -586,7 +586,7 @@ export const ZenSignup: React.FC = () => {
                 <div className="text-sm text-zinc-500 mt-0.5">{plan.desc}</div>
               </div>
               <div className="text-right">
-                <div className="font-bold text-zinc-900">{plan.price}</div>
+                <div className="font-semibold text-zinc-900">{plan.price}</div>
                 {plan.id !== 'free' && <div className="text-xs text-green-600">14-day free trial</div>}
               </div>
             </div>
@@ -606,7 +606,7 @@ export const ZenSignup: React.FC = () => {
           text-base font-medium text-white
           bg-blue-600 hover:bg-blue-700
           rounded-xl
-          transition-all duration-200
+          transition-all duration-150
           focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none
         `}
       >
@@ -710,7 +710,7 @@ export const ZenSignup: React.FC = () => {
           text-base font-medium text-white
           bg-blue-600 hover:bg-blue-700
           rounded-xl
-          transition-all duration-200
+          transition-all duration-150
           disabled:opacity-60 disabled:cursor-not-allowed
           focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none
         `}
@@ -765,7 +765,7 @@ export const ZenSignup: React.FC = () => {
           w-full py-3 px-4
           text-base font-medium text-white
           bg-blue-600 hover:bg-blue-700 rounded-xl
-          transition-all duration-200
+          transition-all duration-150
         `}
       >
         Open Concept2Cure
@@ -800,7 +800,7 @@ export const ZenSignup: React.FC = () => {
           {step !== 'submitted' && renderProgress()}
 
           {/* Form card */}
-          <div className="bg-white rounded-2xl shadow-sm border border-zinc-200 p-8">
+          <div className="bg-white rounded-xl shadow-sm border border-zinc-200 p-8">
             <AnimatePresence mode="wait">
               {step === 'info' && renderInfoStep()}
               {step === 'organization' && renderOrganizationStep()}

@@ -295,8 +295,8 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
         className={cn(
           'fixed bottom-6 right-6 z-50',
           'w-14 h-14 rounded-full',
-          'bg-gradient-to-br from-violet-500 to-violet-600',
-          'shadow-lg shadow-violet-500/30',
+          'bg-violet-600',
+          'shadow-sm',
           'flex items-center justify-center',
           'hover:scale-105 transition-transform',
           className
@@ -319,9 +319,9 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 bg-gradient-to-r from-violet-50 to-purple-50">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 bg-zinc-50">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center">
             <Sparkles className="w-4 h-4 text-white" />
           </div>
           <div>
@@ -366,7 +366,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
             >
               {/* Avatar */}
               {message.role === 'assistant' && (
-                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center flex-shrink-0">
+                <div className="w-7 h-7 rounded-lg bg-violet-600 flex items-center justify-center flex-shrink-0">
                   <Sparkles className="w-3.5 h-3.5 text-white" />
                 </div>
               )}
@@ -392,7 +392,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
                           className={cn(
                             'w-full flex items-center gap-2 px-3 py-2 rounded-lg',
                             'bg-white border border-zinc-200 text-sm text-zinc-700',
-                            'hover:border-violet-300 hover:bg-violet-50 transition-colors'
+                            'hover:border-blue-200 hover:bg-violet-50 transition-colors'
                           )}
                         >
                           <Icon className="w-4 h-4 text-violet-600" />
@@ -411,7 +411,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
         {/* Thinking indicator */}
         {isThinking && (
           <div className="flex gap-3">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center flex-shrink-0">
+            <div className="w-7 h-7 rounded-lg bg-violet-600 flex items-center justify-center flex-shrink-0">
               <Sparkles className="w-3.5 h-3.5 text-white" />
             </div>
             <div className="bg-zinc-100 rounded-xl px-4 py-2.5">
@@ -440,7 +440,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
                   className={cn(
                     'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl',
                     'bg-zinc-50 border border-zinc-200',
-                    'hover:bg-violet-50 hover:border-violet-200 transition-colors',
+                    'hover:bg-violet-50 hover:border-blue-200 transition-colors',
                     'text-left group'
                   )}
                 >
@@ -498,7 +498,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
             rows={1}
             className={cn(
               'flex-1 bg-transparent resize-none text-sm',
-              'placeholder:text-zinc-400 focus:outline-none',
+              'placeholder:text-zinc-400 outline-none',
               'min-h-[24px] max-h-[120px]'
             )}
           />

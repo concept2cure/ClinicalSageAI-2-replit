@@ -285,8 +285,8 @@ export function WatermarkSettings({
           aria-checked={enabled}
           onClick={handleToggle}
           className={[
-            'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2',
-            enabled ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-gray-600',
+            'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 outline-none focus:ring-offset-2',
+            enabled ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600',
           ].join(' ')}
         >
           <span
@@ -313,7 +313,7 @@ export function WatermarkSettings({
             onChange={handleTextChange}
             placeholder="e.g. INTERNAL USE ONLY"
             maxLength={60}
-            className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+            className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus-visible:ring-2 outline-none focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
           />
         </div>
       )}

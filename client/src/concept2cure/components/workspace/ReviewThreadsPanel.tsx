@@ -432,14 +432,14 @@ export function ReviewThreadsPanel({
                   value={newThreadTitle}
                   onChange={e => setNewThreadTitle(e.target.value)}
                   placeholder="Thread title..."
-                  className="w-full px-2 py-1 text-xs bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+                  className="w-full px-2 py-1 text-xs bg-white border border-zinc-200 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                   maxLength={500}
                 />
                 <div className="flex gap-1.5">
                   <select
                     value={newThreadPriority}
                     onChange={e => setNewThreadPriority(e.target.value)}
-                    className="flex-1 px-1.5 py-1 text-xs bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+                    className="flex-1 px-1.5 py-1 text-xs bg-white border border-zinc-200 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                   >
                     <option value="">Priority...</option>
                     {Object.entries(tailoring.priorityLabels).map(([val, label]) => (
@@ -451,7 +451,7 @@ export function ReviewThreadsPanel({
                   <select
                     value={newThreadAnchorType}
                     onChange={e => setNewThreadAnchorType(e.target.value)}
-                    className="flex-1 px-1.5 py-1 text-xs bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+                    className="flex-1 px-1.5 py-1 text-xs bg-white border border-zinc-200 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                   >
                     <option value="">Anchor...</option>
                     {tailoring.anchorTypes.map(a => (
@@ -467,7 +467,7 @@ export function ReviewThreadsPanel({
                     value={newThreadAnchorLabel}
                     onChange={e => setNewThreadAnchorLabel(e.target.value)}
                     placeholder="Anchor label (e.g. section name)..."
-                    className="w-full px-2 py-1 text-xs bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+                    className="w-full px-2 py-1 text-xs bg-white border border-zinc-200 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                   />
                 )}
                 <div className="flex items-center gap-1.5">
@@ -476,14 +476,14 @@ export function ReviewThreadsPanel({
                     type="date"
                     value={newThreadDueAt}
                     onChange={e => setNewThreadDueAt(e.target.value)}
-                    className="flex-1 px-2 py-1 text-xs bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+                    className="flex-1 px-2 py-1 text-xs bg-white border border-zinc-200 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                   />
                 </div>
                 <textarea
                   value={newThreadComment}
                   onChange={e => setNewThreadComment(e.target.value)}
                   placeholder={tailoring.threadPlaceholder}
-                  className="w-full px-2 py-1 text-xs bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400 resize-none"
+                  className="w-full px-2 py-1 text-xs bg-white border border-zinc-200 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none resize-none"
                   rows={2}
                   maxLength={10000}
                 />
@@ -818,7 +818,7 @@ function ThreadCard({
                         value={replyBody}
                         onChange={e => onSetReplyBody(e.target.value)}
                         placeholder="Reply..."
-                        className="flex-1 px-2 py-1 text-xs bg-white border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+                        className="flex-1 px-2 py-1 text-xs bg-white border border-zinc-200 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                         maxLength={10000}
                         onKeyDown={e => {
                           if (e.key === 'Enter' && !e.shiftKey) {
@@ -911,7 +911,7 @@ function ThreadCard({
                     value={newTaskTitle || ''}
                     onChange={e => onSetNewTaskTitle?.(e.target.value)}
                     placeholder="Task title..."
-                    className="w-full px-1.5 py-0.5 text-xs bg-white border border-blue-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-400"
+                    className="w-full px-1.5 py-0.5 text-xs bg-white border border-blue-200 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                     maxLength={500}
                   />
                   <div className="flex gap-1">
@@ -967,7 +967,7 @@ function ThreadCard({
                     value={requestChangesBody}
                     onChange={e => setRequestChangesBody(e.target.value)}
                     placeholder="Describe the required changes..."
-                    className="w-full px-1.5 py-0.5 text-xs bg-white border border-amber-200 rounded focus:outline-none focus:ring-1 focus:ring-amber-400 resize-none"
+                    className="w-full px-1.5 py-0.5 text-xs bg-white border border-amber-200 rounded focus-visible:ring-2 outline-none focus:ring-amber-400 resize-none"
                     rows={2}
                     maxLength={10000}
                   />

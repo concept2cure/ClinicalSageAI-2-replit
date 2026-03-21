@@ -455,9 +455,9 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
   return (
     <div className="h-full flex flex-col bg-white border-l border-zinc-200">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200 bg-gradient-to-r from-indigo-50/50 to-violet-50/50 shrink-0">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200 bg-zinc-50 shrink-0">
         <div className="flex items-center gap-2">
-          <Fingerprint className="w-4 h-4 text-indigo-500" />
+          <Fingerprint className="w-4 h-4 text-blue-500" />
           <span className="text-xs font-semibold text-zinc-900">Document Provenance</span>
         </div>
         <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600">
@@ -480,7 +480,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
             {editHistory.totalVersions !== 1 ? 's' : ''}
           </span>
           {compliance.signatures.length > 0 && (
-            <span className="text-xs text-indigo-600 flex items-center gap-0.5">
+            <span className="text-xs text-blue-600 flex items-center gap-0.5">
               <CheckCircle className="w-3 h-3" />
               {compliance.signatures.length} signature
               {compliance.signatures.length !== 1 ? 's' : ''}
@@ -550,7 +550,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
                   {si.description && <p className="text-xs text-zinc-500">{si.description}</p>}
                   {si.details && Object.keys(si.details).length > 0 && (
                     <details className="mt-1">
-                      <summary className="text-xs text-indigo-500 cursor-pointer">
+                      <summary className="text-xs text-blue-500 cursor-pointer">
                         View data fields
                       </summary>
                       <div className="mt-1 text-xs font-mono text-zinc-500 bg-white rounded p-1.5 max-h-24 overflow-y-auto">
@@ -784,9 +784,9 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
               </div>
               <div className="space-y-1.5">
                 {compliance.signatures.map(sig => (
-                  <div key={sig.signatureId} className="bg-indigo-50/50 rounded-md p-2">
+                  <div key={sig.signatureId} className="bg-blue-50/50 rounded-md p-2">
                     <div className="flex items-center gap-1.5">
-                      <CheckCircle className="w-3 h-3 text-indigo-500" />
+                      <CheckCircle className="w-3 h-3 text-blue-500" />
                       <span className="text-xs font-medium text-zinc-700">
                         {sig.signerName}
                       </span>
@@ -884,12 +884,12 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
               onChange={e => setNewComment(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleAddComment()}
               placeholder="Add a review comment..."
-              className="flex-1 px-2 py-1 text-xs border border-zinc-200 rounded focus:outline-none focus:ring-1 focus:ring-indigo-300"
+              className="flex-1 px-2 py-1 text-xs border border-zinc-200 rounded focus-visible:ring-2 outline-none focus:ring-blue-300"
             />
             <button
               onClick={handleAddComment}
               disabled={addingComment || !newComment.trim()}
-              className="px-2 py-1 text-xs rounded bg-indigo-50 text-indigo-700 hover:bg-indigo-100 disabled:opacity-60 flex items-center gap-0.5"
+              className="px-2 py-1 text-xs rounded bg-blue-50 text-blue-700 hover:bg-blue-100 disabled:opacity-60 flex items-center gap-0.5"
             >
               {addingComment ? (
                 <Loader2 className="w-3 h-3 animate-spin" />

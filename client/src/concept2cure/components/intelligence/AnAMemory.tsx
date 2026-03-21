@@ -73,7 +73,7 @@ const CATEGORY_CONFIG: Record<MemoryCategory, { label: string; icon: React.Eleme
   decision: { label: 'Decisions', icon: Target, color: 'text-violet-600 bg-violet-50' },
   preference: { label: 'Preferences', icon: Lightbulb, color: 'text-amber-600 bg-amber-50' },
   context: { label: 'Context', icon: Database, color: 'text-blue-600 bg-blue-50' },
-  strategy: { label: 'Strategy', icon: Target, color: 'text-indigo-600 bg-indigo-50' },
+  strategy: { label: 'Strategy', icon: Target, color: 'text-blue-600 bg-blue-50' },
   feedback: { label: 'Feedback', icon: FileText, color: 'text-emerald-600 bg-emerald-50' },
   regulatory: { label: 'Regulatory', icon: Shield, color: 'text-red-600 bg-red-50' },
   clinical: { label: 'Clinical', icon: Brain, color: 'text-cyan-600 bg-cyan-50' },
@@ -261,7 +261,7 @@ export function AnAMemory({
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-zinc-200 bg-gradient-to-r from-violet-50 to-purple-50">
+      <div className="px-4 py-3 border-b border-zinc-200 bg-zinc-50">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <Brain className="w-5 h-5 text-violet-600" />

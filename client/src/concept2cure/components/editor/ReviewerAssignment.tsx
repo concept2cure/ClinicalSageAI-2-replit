@@ -122,7 +122,7 @@ function getInitials(name: string): string {
 
 const AVATAR_COLORS = [
   'bg-blue-500', 'bg-emerald-500', 'bg-violet-500', 'bg-amber-500',
-  'bg-rose-500', 'bg-cyan-500', 'bg-indigo-500', 'bg-teal-500',
+  'bg-rose-500', 'bg-cyan-500', 'bg-blue-500', 'bg-teal-500',
 ];
 
 function avatarColor(name: string): string {
@@ -177,7 +177,7 @@ export function ReviewerAssignment({
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100">
         <div className="flex items-center gap-2">
-          <Users className="h-4 w-4 text-indigo-500" />
+          <Users className="h-4 w-4 text-blue-500" />
           <h3 className="text-sm font-semibold text-zinc-900">Review Team</h3>
           {reviewers.length > 0 && (
             <span className="text-[10px] font-medium text-zinc-500 bg-zinc-100 px-1.5 py-0.5 rounded">
@@ -208,7 +208,7 @@ export function ReviewerAssignment({
             <div
               className={cn(
                 'h-full rounded-full transition-all',
-                progress.allApproved ? 'bg-emerald-500' : 'bg-indigo-500',
+                progress.allApproved ? 'bg-emerald-500' : 'bg-blue-500',
               )}
               style={{ width: `${progress.total > 0 ? (progress.completed / progress.total) * 100 : 0}%` }}
             />
@@ -272,7 +272,7 @@ export function ReviewerAssignment({
                   {reviewer.status === 'pending' && onSendReminder && (
                     <button
                       onClick={() => onSendReminder(reviewer.id)}
-                      className="p-1 text-zinc-400 hover:text-indigo-600 rounded"
+                      className="p-1 text-zinc-400 hover:text-blue-600 rounded"
                       title="Send reminder"
                     >
                       <Send className="h-3 w-3" />
@@ -299,7 +299,7 @@ export function ReviewerAssignment({
         <div className="relative">
           <button
             onClick={() => setShowAddDropdown(!showAddDropdown)}
-            className="w-full flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-md hover:bg-indigo-100 transition-colors duration-150"
+            className="w-full flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors duration-150"
           >
             <Plus className="h-3 w-3" />
             Add Reviewer
@@ -314,7 +314,7 @@ export function ReviewerAssignment({
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                   placeholder="Search team members..."
-                  className="w-full px-2 py-1.5 text-xs rounded border border-zinc-200 focus:outline-none focus:ring-1 focus:ring-indigo-300"
+                  className="w-full px-2 py-1.5 text-xs rounded border border-zinc-200 focus-visible:ring-2 outline-none focus:ring-blue-300"
                   autoFocus
                 />
               </div>
@@ -362,7 +362,7 @@ export function ReviewerAssignment({
           <button
             onClick={onSubmitForReview}
             disabled={isSubmitting}
-            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
           >
             {isSubmitting ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />

@@ -298,7 +298,7 @@ function statusIcon(status: CheckStatus, size = 'h-4 w-4') {
     case 'manual':
       return <Circle className={cn(size, 'text-slate-300')} />;
     case 'running':
-      return <Loader2 className={cn(size, 'text-indigo-500 animate-spin')} />;
+      return <Loader2 className={cn(size, 'text-blue-500 animate-spin')} />;
     default:
       return <Clock className={cn(size, 'text-slate-300')} />;
   }
@@ -366,7 +366,7 @@ export function PreSubmissionChecklist({
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
         <div className="flex items-center gap-3">
-          <ClipboardCheck className="h-5 w-5 text-indigo-500" />
+          <ClipboardCheck className="h-5 w-5 text-blue-500" />
           <div>
             <h2 className="text-base font-semibold text-slate-800">Pre-Submission Checklist</h2>
             <p className="text-xs text-slate-500">{submissionType} · {region}</p>
@@ -376,7 +376,7 @@ export function PreSubmissionChecklist({
           <button
             onClick={onRunValidation}
             disabled={isRunning}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-md hover:bg-indigo-100 transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors disabled:opacity-50"
           >
             {isRunning ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
             {isRunning ? 'Running...' : 'Run Checks'}
@@ -466,7 +466,7 @@ export function PreSubmissionChecklist({
                               <Check className="h-2.5 w-2.5 text-white" />
                             </div>
                           ) : (
-                            <div className="h-4 w-4 rounded border-2 border-slate-300 hover:border-indigo-400 transition-colors duration-150" />
+                            <div className="h-4 w-4 rounded border-2 border-slate-300 hover:border-blue-400 transition-colors duration-150" />
                           )}
                         </button>
                       )}
@@ -482,7 +482,7 @@ export function PreSubmissionChecklist({
                       {item.status === 'fail' && item.fixAction && onFixIssue && (
                         <button
                           onClick={() => onFixIssue(item.id)}
-                          className="text-[10px] font-medium text-indigo-600 hover:text-indigo-800 whitespace-nowrap"
+                          className="text-[10px] font-medium text-blue-600 hover:text-blue-800 whitespace-nowrap"
                         >
                           Fix
                         </button>

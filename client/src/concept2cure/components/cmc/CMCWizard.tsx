@@ -518,7 +518,7 @@ export const CMCWizard: React.FC<CMCWizardProps> = ({
   return (
     <div className={cn('flex flex-col h-full bg-zinc-50', className)}>
       {/* Header */}
-      <div className="flex-shrink-0 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white p-6">
+      <div className="flex-shrink-0 bg-emerald-600 text-white p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-white/10 rounded-xl backdrop-blur">

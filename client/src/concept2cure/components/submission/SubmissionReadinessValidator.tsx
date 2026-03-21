@@ -376,10 +376,10 @@ export function SubmissionReadinessValidator({
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-zinc-200 bg-gradient-to-r from-indigo-50 to-violet-50">
+      <div className="px-4 py-3 border-b border-zinc-200 bg-zinc-50">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-indigo-600" />
+            <ShieldCheck className="w-5 h-5 text-blue-600" />
             <div>
               <h2 className="text-sm font-semibold text-zinc-900">Submission Readiness</h2>
               <p className="text-[10px] text-zinc-500">
@@ -390,7 +390,7 @@ export function SubmissionReadinessValidator({
           <button
             onClick={handleRevalidate}
             disabled={running}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-indigo-600 bg-white border border-indigo-200 rounded-lg hover:bg-indigo-50 transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-blue-600 bg-white border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors disabled:opacity-50"
           >
             <RefreshCw className={cn('w-3 h-3', running && 'animate-spin')} />
             {running ? 'Validating...' : 'Re-validate'}
@@ -533,7 +533,7 @@ export function SubmissionReadinessValidator({
             </button>
           )}
           <button
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
             disabled={stats.fail > 0}
             title={stats.fail > 0 ? 'Resolve all failures before exporting' : 'Generate submission package'}
           >

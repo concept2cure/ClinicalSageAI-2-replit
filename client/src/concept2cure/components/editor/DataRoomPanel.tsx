@@ -229,7 +229,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search sources..."
-            className="w-full pl-8 pr-8 py-1.5 text-xs bg-white border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            className="w-full pl-8 pr-8 py-1.5 text-xs bg-white border border-zinc-200 rounded-lg focus-visible:ring-2 outline-none focus:ring-emerald-500"
           />
           {search && (
             <button

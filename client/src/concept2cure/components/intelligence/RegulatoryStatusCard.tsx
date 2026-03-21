@@ -130,9 +130,9 @@ export function RegulatoryStatusCard({
   return (
     <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-zinc-200 bg-gradient-to-r from-indigo-50/60 to-violet-50/60">
+      <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-zinc-200 bg-zinc-50">
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-          <ShieldCheck className="w-4 h-4 text-indigo-600 shrink-0" />
+          <ShieldCheck className="w-4 h-4 text-blue-600 shrink-0" />
           <span className="text-xs sm:text-sm font-semibold text-zinc-900 truncate">
             Regulatory Status
           </span>
@@ -140,7 +140,7 @@ export function RegulatoryStatusCard({
         {onOpenIntelligence && (
           <button
             onClick={onOpenIntelligence}
-            className="flex items-center gap-0.5 text-xs text-indigo-600 hover:text-indigo-700 font-medium"
+            className="flex items-center gap-0.5 text-xs text-blue-600 hover:text-blue-700 font-medium"
           >
             Details
             <ChevronRight className="w-3 h-3" />
@@ -172,7 +172,7 @@ export function RegulatoryStatusCard({
           {/* Precedents Found */}
           <div className="p-3">
             <div className="flex items-center gap-1.5 mb-1.5">
-              <FileSearch className="w-3.5 h-3.5 text-indigo-500" />
+              <FileSearch className="w-3.5 h-3.5 text-blue-500" />
               <span className="text-xs text-zinc-500 font-medium">Precedents</span>
             </div>
             <div className="text-2xl font-semibold text-zinc-900">{data.precedentsFound}</div>

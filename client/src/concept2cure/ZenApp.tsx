@@ -584,7 +584,7 @@ const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
             ) : (
               <div className="flex items-center justify-center h-full text-center p-8">
                 <div>
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-zinc-100 flex items-center justify-center">
+                  <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-zinc-100 flex items-center justify-center">
                     <Icon className="w-8 h-8 text-zinc-500" />
                   </div>
                   <h3 className="text-lg font-semibold text-zinc-900 mb-2">{config.title}</h3>
@@ -2241,7 +2241,7 @@ export const ZenApp: React.FC = () => {
               {!activeProjectId ? (
                 <div className="flex-1 flex items-center justify-center bg-zinc-50/30 p-8">
                   <div className="max-w-md text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-violet-50 flex items-center justify-center">
+                    <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-violet-50 flex items-center justify-center">
                       <ShieldCheck className="w-8 h-8 text-violet-600" />
                     </div>
                     <h2 className="text-xl font-semibold text-zinc-900 mb-2">IND Workspace</h2>
@@ -2316,7 +2316,7 @@ export const ZenApp: React.FC = () => {
               {!activeProjectId ? (
                 <div className="flex-1 flex items-center justify-center bg-zinc-50/30 p-8">
                   <div className="max-w-md text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-blue-50 flex items-center justify-center">
+                    <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-blue-50 flex items-center justify-center">
                       <FolderOpen className="w-8 h-8 text-blue-600" />
                     </div>
                     <h2 className="text-xl font-semibold text-zinc-900 mb-2">eCTD Co-Author</h2>
@@ -2378,7 +2378,7 @@ export const ZenApp: React.FC = () => {
               {!activeProjectId ? (
                 <div className="flex-1 flex items-center justify-center bg-zinc-50/30 p-8">
                   <div className="max-w-md text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-teal-50 flex items-center justify-center">
+                    <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-teal-50 flex items-center justify-center">
                       <FolderOpen className="w-8 h-8 text-teal-600" />
                     </div>
                     <h2 className="text-xl font-semibold text-zinc-900 mb-2">CMC Platform</h2>

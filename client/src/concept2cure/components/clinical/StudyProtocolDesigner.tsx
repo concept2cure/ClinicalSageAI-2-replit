@@ -582,7 +582,7 @@ const SampleSizePanel: React.FC<SampleSizePanelProps> = ({
 
       {/* Results */}
       {result && (
-        <div className="border border-border/40 rounded-sm bg-background bg-gradient-to-br from-blue-50 to-white border-blue-200">
+        <div className="border border-border/40 rounded-sm bg-background bg-blue-50 border-blue-200">
           <div className="px-3 py-2 border-b border-border/30 pb-2">
             <h3 className="text-sm font-semibold text-base flex items-center gap-2">
               <Calculator className="h-4 w-4 text-blue-600" />

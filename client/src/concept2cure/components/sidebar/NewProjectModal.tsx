@@ -128,8 +128,8 @@ const submissionTypes: SubmissionTypeOption[] = [
     description:
       'EU IVDR 2017/746 — Classification, performance evaluation & technical documentation for IVDs',
     icon: Microscope,
-    color: 'text-indigo-600',
-    bgColor: 'bg-indigo-50 hover:bg-indigo-100 border-indigo-200',
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-50 hover:bg-blue-100 border-blue-200',
   },
 ];
 
@@ -228,7 +228,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onClose,
                   key={option.type}
                   onClick={() => handleTypeSelect(option.type)}
                   className={cn(
-                    'flex flex-col items-start p-4 rounded-lg border-2 transition-all text-left',
+                    'flex flex-col items-start p-4 rounded-lg border transition-all text-left',
                     option.bgColor,
                     selectedType === option.type && 'ring-2 ring-offset-2 ring-blue-500'
                   )}

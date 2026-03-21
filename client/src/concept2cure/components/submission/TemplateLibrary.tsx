@@ -387,7 +387,7 @@ export function TemplateLibrary({
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
         <div className="flex items-center gap-3">
-          <BookOpen className="h-5 w-5 text-indigo-500" />
+          <BookOpen className="h-5 w-5 text-blue-500" />
           <div>
             <h2 className="text-base font-semibold text-slate-800">Template Library</h2>
             <p className="text-xs text-slate-500">{TEMPLATES.length} regulatory document templates</p>
@@ -409,7 +409,7 @@ export function TemplateLibrary({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search templates..."
-            className="w-full pl-9 pr-3 py-2 text-sm rounded-md border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400"
+            className="w-full pl-9 pr-3 py-2 text-sm rounded-md border border-slate-200 focus-visible:ring-2 outline-none focus:ring-blue-200 focus:border-blue-400"
           />
         </div>
         <div className="flex gap-1.5 flex-wrap">
@@ -420,7 +420,7 @@ export function TemplateLibrary({
               className={cn(
                 'px-2.5 py-1 text-xs font-medium rounded-full transition-colors',
                 selectedCategory === cat
-                  ? 'bg-indigo-600 text-white'
+                  ? 'bg-blue-600 text-white'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
               )}
             >
@@ -448,7 +448,7 @@ export function TemplateLibrary({
                 className={cn(
                   'p-3 rounded-lg border cursor-pointer transition-all',
                   selectedTemplate?.id === t.id
-                    ? 'border-indigo-300 bg-indigo-50 shadow-sm'
+                    ? 'border-blue-300 bg-blue-50 shadow-sm'
                     : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50',
                 )}
               >
@@ -491,7 +491,7 @@ export function TemplateLibrary({
               <div className="flex gap-2 mb-4">
                 <button
                   onClick={() => onSelectTemplate?.(selectedTemplate)}
-                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-md hover:bg-indigo-100 transition-colors flex-1"
+                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors flex-1"
                 >
                   <Plus className="h-3 w-3" />
                   Use Template
@@ -500,7 +500,7 @@ export function TemplateLibrary({
                   <button
                     onClick={() => onGenerateFromTemplate?.(selectedTemplate)}
                     disabled={isGenerating}
-                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors flex-1 disabled:opacity-50"
+                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors flex-1 disabled:opacity-50"
                   >
                     {isGenerating ? (
                       <Loader2 className="h-3 w-3 animate-spin" />

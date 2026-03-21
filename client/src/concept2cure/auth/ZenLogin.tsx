@@ -217,8 +217,8 @@ const MfaCodeInput: React.FC<MfaInputProps> = ({ value, onChange, error }) => {
             className={`
               w-12 h-12 text-center text-xl font-medium
               border-2 rounded-xl
-              transition-all duration-200
-              focus:outline-none focus:ring-0
+              transition-all duration-150
+              outline-none focus:ring-0
               ${
                 error
                   ? 'border-red-300 bg-red-50 focus:border-red-500'
@@ -556,8 +556,8 @@ export const ZenLogin: React.FC = () => {
           className={`
             w-full px-4 py-3 text-base
             border-2 rounded-xl
-            transition-all duration-200
-            focus:outline-none focus:ring-0
+            transition-all duration-150
+            outline-none focus:ring-0
             ${
               error?.field === 'email'
                 ? 'border-red-300 bg-red-50 focus:border-red-500'
@@ -585,9 +585,9 @@ export const ZenLogin: React.FC = () => {
           text-base font-semibold text-white
           bg-zinc-900
           hover:bg-zinc-800
-          shadow-lg shadow-zinc-900/20 hover:shadow-zinc-900/30
+          shadow-sm hover:shadow-md
           rounded-xl
-          transition-all duration-200
+          transition-all duration-150
           disabled:opacity-60 disabled:cursor-not-allowed
           focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none
         `}
@@ -618,7 +618,7 @@ export const ZenLogin: React.FC = () => {
             text-sm font-semibold
             text-emerald-700 bg-emerald-50 border-2 border-emerald-200
             hover:bg-emerald-100 hover:border-emerald-300
-            rounded-xl transition-all duration-200
+            rounded-xl transition-all duration-150
             disabled:opacity-60 disabled:cursor-not-allowed
           `}
         >
@@ -693,7 +693,7 @@ export const ZenLogin: React.FC = () => {
             text-sm font-medium text-zinc-700
             bg-white border-2 border-zinc-200 rounded-xl
             hover:bg-zinc-50 hover:border-zinc-300
-            transition-all duration-200
+            transition-all duration-150
             disabled:opacity-60 disabled:cursor-not-allowed
           `}
         >
@@ -708,7 +708,7 @@ export const ZenLogin: React.FC = () => {
             text-sm font-medium text-zinc-700
             bg-white border-2 border-zinc-200 rounded-xl
             hover:bg-zinc-50 hover:border-zinc-300
-            transition-all duration-200
+            transition-all duration-150
             disabled:opacity-60 disabled:cursor-not-allowed
           `}
         >
@@ -757,8 +757,8 @@ export const ZenLogin: React.FC = () => {
             className={`
               w-full px-4 py-3 pr-12 text-base
               border-2 rounded-xl
-              transition-all duration-200
-              focus:outline-none focus:ring-0
+              transition-all duration-150
+              outline-none focus:ring-0
               ${
                 error?.field === 'password'
                   ? 'border-red-300 bg-red-50 focus:border-red-500'
@@ -839,9 +839,9 @@ export const ZenLogin: React.FC = () => {
           text-base font-semibold text-white
           bg-zinc-900
           hover:bg-zinc-800
-          shadow-lg shadow-zinc-900/20 hover:shadow-zinc-900/30
+          shadow-sm hover:shadow-md
           rounded-xl
-          transition-all duration-200
+          transition-all duration-150
           disabled:opacity-60 disabled:cursor-not-allowed
           focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none
         `}
@@ -888,7 +888,7 @@ export const ZenLogin: React.FC = () => {
                 onClick={() => setMfaMethod(method.type)}
                 className={`
                   px-3 py-1.5 text-sm rounded-full border
-                  transition-all duration-200
+                  transition-all duration-150
                   ${
                     mfaMethod === method.type
                       ? 'border-blue-500 bg-blue-50 text-blue-700'
@@ -918,7 +918,7 @@ export const ZenLogin: React.FC = () => {
           text-base font-medium text-white
           bg-blue-600 hover:bg-blue-700
           rounded-xl
-          transition-all duration-200
+          transition-all duration-150
           disabled:opacity-60 disabled:cursor-not-allowed
           focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none
         `}
@@ -969,7 +969,7 @@ export const ZenLogin: React.FC = () => {
           text-base font-medium text-white
           bg-blue-600 hover:bg-blue-700
           rounded-xl
-          transition-all duration-200
+          transition-all duration-150
           disabled:opacity-60 disabled:cursor-not-allowed
           focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none
         `}
@@ -1004,7 +1004,7 @@ export const ZenLogin: React.FC = () => {
           text-base font-medium text-zinc-700
           bg-white border-2 border-zinc-200 rounded-xl
           hover:bg-zinc-50 hover:border-zinc-300
-          transition-all duration-200
+          transition-all duration-150
         `}
       >
         Back to sign in
@@ -1055,7 +1055,7 @@ export const ZenLogin: React.FC = () => {
   return (
     <div className="min-h-screen flex">
       {/* Left panel — branding / hero */}
-      <div className="hidden lg:flex lg:w-[52%] relative overflow-hidden bg-gradient-to-br from-zinc-900 via-blue-950 to-indigo-950">
+      <div className="hidden lg:flex lg:w-[52%] relative overflow-hidden bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900">
         {/* Decorative grid */}
         <div
           className="absolute inset-0 opacity-[0.04]"
@@ -1066,7 +1066,7 @@ export const ZenLogin: React.FC = () => {
         />
         {/* Gradient orbs */}
         <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-blue-500/20 blur-[120px]" />
-        <div className="absolute bottom-0 right-0 w-80 h-80 rounded-full bg-indigo-500/20 blur-[100px]" />
+        <div className="absolute bottom-0 right-0 w-80 h-80 rounded-full bg-blue-500/20 blur-[100px]" />
 
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           {/* Top — logo */}
@@ -1083,7 +1083,7 @@ export const ZenLogin: React.FC = () => {
 
           {/* Center — tagline */}
           <div className="space-y-6">
-            <h2 className="text-4xl font-bold text-white leading-tight">
+            <h2 className="text-4xl font-semibold text-white leading-tight">
               Accelerate your path
               <br />
               from concept to cure.
@@ -1107,7 +1107,7 @@ export const ZenLogin: React.FC = () => {
           </div>
 
           {/* Bottom — testimonial / stat */}
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6">
             <p className="text-sm text-blue-100/90 italic leading-relaxed">
               "Concept2Cure reduced our IND preparation time from 18 months to under 6 — with full
               regulatory traceability at every step."
@@ -1136,7 +1136,7 @@ export const ZenLogin: React.FC = () => {
           >
             {/* Title */}
             <div className="mb-8">
-              <h1 className="text-2xl font-bold text-zinc-900">
+              <h1 className="text-2xl font-semibold text-zinc-900">
                 {step === 'success' ? '' : 'Welcome back'}
               </h1>
               {step === 'email' && (

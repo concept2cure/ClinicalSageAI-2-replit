@@ -118,7 +118,7 @@ const MODE_CONFIG: Record<IndustryMode, {
   cro: { label: 'CRO', icon: Briefcase, color: 'text-violet-600', bgColor: 'bg-violet-50' },
   medtech: { label: 'MedTech', icon: Microscope, color: 'text-sky-600', bgColor: 'bg-sky-50' },
   academic: { label: 'Academic', icon: GraduationCap, color: 'text-amber-600', bgColor: 'bg-amber-50' },
-  regulatory: { label: 'Regulatory', icon: FileCheck, color: 'text-indigo-600', bgColor: 'bg-indigo-50' },
+  regulatory: { label: 'Regulatory', icon: FileCheck, color: 'text-blue-600', bgColor: 'bg-blue-50' },
   medical_writing: { label: 'Medical Writing', icon: PenTool, color: 'text-rose-600', bgColor: 'bg-rose-50' },
 };
 
@@ -284,7 +284,7 @@ const Sidebar: React.FC<{
     )}>
       {/* Logo */}
       <div className="flex items-center gap-3 p-4 border-b border-zinc-800">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center">
+        <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
           <Sparkles className="w-5 h-5 text-white" />
         </div>
         {!collapsed && (
@@ -450,7 +450,7 @@ const Header: React.FC<{
         
         {/* User Menu */}
         <button className="flex items-center gap-2 px-2 py-1 hover:bg-zinc-100 rounded-lg transition-colors duration-150">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center text-white text-sm font-medium">
+          <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-medium">
             {currentUser.name.split(' ').map(n => n[0]).join('')}
           </div>
           <div className="text-left">

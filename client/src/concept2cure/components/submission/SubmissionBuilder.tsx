@@ -264,7 +264,7 @@ function TreeNodeRow({
       <div
         className={cn(
           'flex items-center gap-2 py-1.5 px-2 rounded-md cursor-pointer transition-colors group',
-          isSelected ? 'bg-indigo-50 border border-indigo-200' : 'hover:bg-slate-50',
+          isSelected ? 'bg-blue-50 border border-blue-200' : 'hover:bg-slate-50',
           !node.required && node.status === 'empty' && 'opacity-60',
         )}
         style={{ paddingLeft: `${depth * 20 + 8}px` }}
@@ -287,7 +287,7 @@ function TreeNodeRow({
         )}
 
         {hasChildren
-          ? (isExpanded ? <FolderOpen className="h-4 w-4 text-indigo-400 shrink-0" /> : <Folder className="h-4 w-4 text-slate-400 shrink-0" />)
+          ? (isExpanded ? <FolderOpen className="h-4 w-4 text-blue-400 shrink-0" /> : <Folder className="h-4 w-4 text-slate-400 shrink-0" />)
           : <FileText className="h-4 w-4 text-slate-400 shrink-0" />}
 
         <span className="text-sm font-medium text-slate-700 truncate flex-1">
@@ -302,7 +302,7 @@ function TreeNodeRow({
         )}
 
         {artifactCount > 0 && (
-          <span className="text-[10px] font-medium text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded shrink-0">
+          <span className="text-[10px] font-medium text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded shrink-0">
             {artifactCount} {artifactCount === 1 ? 'doc' : 'docs'}
           </span>
         )}
@@ -319,7 +319,7 @@ function TreeNodeRow({
               className="flex items-center gap-2 py-1 px-2 text-xs text-slate-600 hover:bg-slate-50 rounded cursor-pointer"
               onClick={() => onOpenArtifact?.(a.id)}
             >
-              <FileText className="h-3 w-3 text-indigo-400" />
+              <FileText className="h-3 w-3 text-blue-400" />
               <span className="truncate flex-1">{a.title}</span>
               <span className="text-slate-400">v{a.version}</span>
               <span className={cn(
@@ -438,7 +438,7 @@ export function SubmissionBuilder({
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
         <div className="flex items-center gap-3">
-          <Package className="h-5 w-5 text-indigo-500" />
+          <Package className="h-5 w-5 text-blue-500" />
           <div>
             <h2 className="text-base font-semibold text-slate-800">
               Submission Builder
@@ -465,7 +465,7 @@ export function SubmissionBuilder({
           </button>
           <button
             onClick={onGeneratePackage}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors duration-150"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors duration-150"
           >
             <Download className="h-3.5 w-3.5" />
             Generate Package
@@ -482,7 +482,7 @@ export function SubmissionBuilder({
       <div className="px-4 py-3 border-b border-slate-100 bg-slate-50">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-medium text-slate-600">Submission Readiness</span>
-          <span className="text-sm font-semibold text-indigo-600">{stats.readiness}%</span>
+          <span className="text-sm font-semibold text-blue-600">{stats.readiness}%</span>
         </div>
         <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
           <div
@@ -635,10 +635,10 @@ function SectionDetail({
                 key={a.id}
                 className="flex items-center gap-2 p-2 rounded-md border border-slate-200 bg-white group"
               >
-                <FileText className="h-3.5 w-3.5 text-indigo-400 shrink-0" />
+                <FileText className="h-3.5 w-3.5 text-blue-400 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p
-                    className="text-xs font-medium text-slate-700 truncate cursor-pointer hover:text-indigo-600"
+                    className="text-xs font-medium text-slate-700 truncate cursor-pointer hover:text-blue-600"
                     onClick={() => onOpenArtifact?.(a.id)}
                   >
                     {a.title}
@@ -667,7 +667,7 @@ function SectionDetail({
       <div className="flex items-center gap-2 mb-4">
         <button
           onClick={onTogglePicker}
-          className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-md hover:bg-indigo-100 transition-colors duration-150"
+          className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors duration-150"
         >
           <Link2 className="h-3 w-3" />
           Assign Existing
@@ -691,7 +691,7 @@ function SectionDetail({
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Search artifacts..."
-              className="w-full pl-7 pr-2 py-1.5 text-xs rounded border border-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-300"
+              className="w-full pl-7 pr-2 py-1.5 text-xs rounded border border-slate-200 focus-visible:ring-2 outline-none focus:ring-blue-300"
             />
           </div>
           <div className="max-h-40 overflow-y-auto space-y-1">

@@ -78,7 +78,7 @@ const LIFECYCLE_STATES = [
   { key: 'in-review', label: 'In Review', color: 'bg-amber-500' },
   { key: 'approved', label: 'Approved', color: 'bg-emerald-500' },
   { key: 'locked', label: 'Locked', color: 'bg-violet-500' },
-  { key: 'exported', label: 'Exported', color: 'bg-indigo-500' },
+  { key: 'exported', label: 'Exported', color: 'bg-blue-500' },
 ] as const;
 
 const DOSSIER_MODULES = [

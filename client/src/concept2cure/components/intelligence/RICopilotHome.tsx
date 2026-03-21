@@ -258,7 +258,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
     return (
       <div className="flex-1 flex items-center justify-center bg-zinc-50/30 p-8">
         <div className="max-w-md text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-blue-50 flex items-center justify-center">
+          <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-blue-50 flex items-center justify-center">
             <Brain className="w-8 h-8 text-blue-600" />
           </div>
           <h2 className="text-xl font-semibold text-zinc-900 mb-2">AnA Intelligence</h2>
@@ -271,7 +271,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
           </p>
           <button
             onClick={onSelectProject}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors duration-150 shadow-sm focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none"
           >
             <FolderOpen className="w-4 h-4" />
             Choose Project
@@ -285,7 +285,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
   // 3-PANE LAYOUT: LEFT (investigation) | CENTER (intelligence) | RIGHT (governance)
   // ═══════════════════════════════════════════════════════════════════════════
   return (
-    <div className="flex-1 flex min-h-0 border-t-2 border-blue-500/20">
+    <div className="flex-1 flex min-h-0 border-t border-zinc-200">
       {/* ═══════════════════════════════════════════════════════════════════════
           LEFT INVESTIGATION RAIL
           ═══════════════════════════════════════════════════════════════════════ */}
@@ -305,7 +305,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                 }
               }}
               placeholder="Investigate evidence..."
-              className="w-full pl-8 pr-3 py-2 text-xs rounded-lg border border-zinc-200 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400 focus:border-blue-400 placeholder:text-zinc-400"
+              className="w-full pl-8 pr-3 py-2 text-xs rounded-lg border border-zinc-200 bg-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 outline-none placeholder:text-zinc-400"
             />
           </div>
         </div>
@@ -321,7 +321,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
               <select
                 value={filterPhase}
                 onChange={e => setFilterPhase(e.target.value)}
-                className="w-full text-xs px-2 py-1.5 rounded-md border border-zinc-200 bg-white text-zinc-700 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                className="w-full text-xs px-2 py-1.5 rounded-md border border-zinc-200 bg-white text-zinc-700 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
               >
                 <option value="">All Phases</option>
                 {stats.phases.map(p => (
@@ -333,7 +333,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
               <select
                 value={filterOutcome}
                 onChange={e => setFilterOutcome(e.target.value)}
-                className="w-full text-xs px-2 py-1.5 rounded-md border border-zinc-200 bg-white text-zinc-700 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                className="w-full text-xs px-2 py-1.5 rounded-md border border-zinc-200 bg-white text-zinc-700 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
               >
                 <option value="">All Outcomes</option>
                 <option value="positive">Positive</option>

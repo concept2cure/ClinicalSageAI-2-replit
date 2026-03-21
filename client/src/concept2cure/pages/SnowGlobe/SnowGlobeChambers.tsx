@@ -123,9 +123,9 @@ const CHAMBERS: ChamberDef[] = [
     key: 'route_timing',
     label: 'Route & Timing',
     icon: Clock,
-    accent: 'text-indigo-600',
-    bg: 'bg-indigo-50',
-    border: 'border-indigo-200',
+    accent: 'text-blue-600',
+    bg: 'bg-blue-50',
+    border: 'border-blue-200',
     description:
       'Regulatory pathway viability analysis — models submission timing, pathway alternatives, and approval probability curves across agencies.',
     scoreKey: 'route_viability',
@@ -782,12 +782,12 @@ export default function SnowGlobeChambers({ programId, initialChamber }: SnowGlo
                 </div>
 
                 {/* Similar Program Outcomes */}
-                <div className="p-4 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-lg border border-indigo-100">
+                <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
                   <div className="flex items-center gap-2 mb-2">
-                    <Info className="h-4 w-4 text-indigo-600" />
-                    <span className="text-sm font-medium text-indigo-700">Similar Program Analysis</span>
+                    <Info className="h-4 w-4 text-blue-600" />
+                    <span className="text-sm font-medium text-blue-700">Similar Program Analysis</span>
                   </div>
-                  <p className="text-xs text-indigo-600 leading-relaxed">
+                  <p className="text-xs text-blue-600 leading-relaxed">
                     Based on analysis of 18 similar submissions in this therapeutic area, programs with
                     comparable {chamber.label.toLowerCase()} profiles achieved a 68% first-cycle approval
                     rate. Programs that addressed all critical findings before submission improved outcomes

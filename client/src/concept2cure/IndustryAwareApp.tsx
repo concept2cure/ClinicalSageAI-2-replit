@@ -202,10 +202,10 @@ const Sidebar: React.FC<{
       <div className="flex items-center justify-between p-4 border-b border-zinc-200">
         {!collapsed && (
           <div className="flex items-center gap-2">
-            <div className={cn('p-2 rounded-lg bg-gradient-to-br from-blue-500 to-violet-600')}>
+            <div className={cn('p-2 rounded-lg bg-blue-600')}>
               <Sparkles className="w-5 h-5 text-white" />
             </div>
-            <span className="font-bold text-zinc-900">Concept2Cure</span>
+            <span className="font-semibold text-zinc-900">Concept2Cure</span>
           </div>
         )}
         <button
@@ -329,7 +329,7 @@ const Header: React.FC<{
         <button className="relative p-2 text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors duration-150">
           <Bell className="w-5 h-5" />
           {notifications > 0 && (
-            <span className="absolute top-1 right-1 w-4 h-4 text-xs font-bold bg-red-500 text-white rounded-full flex items-center justify-center">
+            <span className="absolute top-1 right-1 w-4 h-4 text-xs font-semibold bg-red-500 text-white rounded-full flex items-center justify-center">
               {notifications > 9 ? '9+' : notifications}
             </span>
           )}

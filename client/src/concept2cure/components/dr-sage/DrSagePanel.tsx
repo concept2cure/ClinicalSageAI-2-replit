@@ -394,7 +394,7 @@ function AnaContent() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Ask AnA 1.0 anything..."
-          className="w-full rounded-lg border border-zinc-200 bg-white p-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-zinc-300 resize-none h-20"
+          className="w-full rounded-lg border border-zinc-200 bg-white p-3 text-sm text-zinc-900 placeholder:text-zinc-400 outline-none focus:border-zinc-300 resize-none h-20"
         />
         <div className="flex items-center justify-between">
           <button className="flex items-center gap-1.5 text-sm font-medium text-zinc-900 hover:text-zinc-600">
@@ -486,7 +486,7 @@ export function DrSageButton({
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
       transition={{ duration: 0.15 }}
-      className="fixed right-6 bottom-6 z-50 flex items-center justify-center h-12 w-12 rounded-full bg-zinc-900 text-white hover:bg-zinc-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2"
+      className="fixed right-6 bottom-6 z-50 flex items-center justify-center h-12 w-12 rounded-full bg-zinc-900 text-white hover:bg-zinc-800 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2"
     >
       <Sparkles className="h-5 w-5" />
     </motion.button>

@@ -261,7 +261,7 @@ export const RiskCockpit: React.FC<RiskCockpitProps> = ({ programId }) => {
                   type="text"
                   value={newRisk.title}
                   onChange={e => setNewRisk(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
+                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                   placeholder="Risk title..."
                 />
               </div>
@@ -300,7 +300,7 @@ export const RiskCockpit: React.FC<RiskCockpitProps> = ({ programId }) => {
                 <textarea
                   value={newRisk.description}
                   onChange={e => setNewRisk(prev => ({ ...prev, description: e.target.value }))}
-                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 h-20 resize-none"
+                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none h-20 resize-none"
                   placeholder="Describe the risk..."
                 />
               </div>

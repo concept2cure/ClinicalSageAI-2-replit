@@ -411,7 +411,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
               className={cn(
                 'w-full h-full p-6 resize-none',
                 'font-mono text-sm text-zinc-900',
-                'focus:outline-none'
+                'outline-none'
               )}
               spellCheck={artifact.type !== 'code'}
             />

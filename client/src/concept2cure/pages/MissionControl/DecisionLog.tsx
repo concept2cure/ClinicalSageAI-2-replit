@@ -192,7 +192,7 @@ export const DecisionLog: React.FC<DecisionLogProps> = ({ programId }) => {
             type="text"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 text-xs border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
+            className="w-full pl-8 pr-3 py-1.5 text-xs border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
             placeholder="Search decisions..."
           />
         </div>
@@ -437,7 +437,7 @@ export const DecisionLog: React.FC<DecisionLogProps> = ({ programId }) => {
                   type="text"
                   value={form.title}
                   onChange={e => setForm(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
+                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                   placeholder="Decision title..."
                 />
               </div>
@@ -484,7 +484,7 @@ export const DecisionLog: React.FC<DecisionLogProps> = ({ programId }) => {
                 <textarea
                   value={form.rationale}
                   onChange={e => setForm(prev => ({ ...prev, rationale: e.target.value }))}
-                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 h-20 resize-none"
+                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none h-20 resize-none"
                   placeholder="Why was this decision made?"
                 />
               </div>
@@ -497,7 +497,7 @@ export const DecisionLog: React.FC<DecisionLogProps> = ({ programId }) => {
                 <textarea
                   value={form.impact}
                   onChange={e => setForm(prev => ({ ...prev, impact: e.target.value }))}
-                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 h-16 resize-none"
+                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none h-16 resize-none"
                   placeholder="Expected impact on the program..."
                 />
               </div>
@@ -511,7 +511,7 @@ export const DecisionLog: React.FC<DecisionLogProps> = ({ programId }) => {
                   type="text"
                   value={form.decisionMaker}
                   onChange={e => setForm(prev => ({ ...prev, decisionMaker: e.target.value }))}
-                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
+                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                   placeholder="Name or role..."
                 />
               </div>

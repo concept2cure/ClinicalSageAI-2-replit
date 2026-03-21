@@ -80,7 +80,7 @@ const TableRow: React.FC<{ cells: string[]; highlight?: boolean }> = ({ cells, h
 
 const HeroPreview: React.FC = () => (
   <div className="flex flex-col items-center justify-center h-full text-center px-8">
-    <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center mb-6 shadow-lg shadow-violet-200">
+    <div className="w-14 h-14 rounded-lg bg-blue-600 flex items-center justify-center mb-6 shadow-sm">
       <Sparkles className="w-10 h-10 text-white" />
     </div>
     <h2 className="text-2xl font-semibold text-zinc-900 mb-2">ClinicalSageAI</h2>
@@ -1038,7 +1038,7 @@ const NanoBananaGeneratePreview: React.FC = () => (
         <div className="text-xs text-zinc-400 mb-1">Prompt</div>
         <div className="text-xs text-zinc-700 italic">"Infographic showing IND submission timeline with Phase 1-3 milestones, FDA review gates, and approval pathway"</div>
       </div>
-      <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg p-6 flex items-center justify-center border border-amber-200">
+      <div className="bg-amber-50 rounded-lg p-6 flex items-center justify-center border border-amber-200">
         <div className="text-center">
           <div className="text-3xl mb-1">🖼️</div>
           <div className="text-xs font-medium text-amber-700">4096 x 4096 Generated</div>
@@ -1147,7 +1147,7 @@ export const DemoPreview: React.FC<DemoPreviewProps> = ({ previewType }) => {
   const PreviewComponent = PREVIEW_MAP[previewType] || HeroPreview;
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-zinc-50 to-white overflow-y-auto">
+    <div className="flex flex-col h-full bg-zinc-50 overflow-y-auto">
       <AnimatePresence mode="wait">
         <motion.div
           key={previewType}

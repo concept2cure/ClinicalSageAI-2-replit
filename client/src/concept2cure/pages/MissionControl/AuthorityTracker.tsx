@@ -87,7 +87,7 @@ const STATUS_STYLE: Record<string, { bg: string; text: string }> = {
 
 const AUTHORITY_STYLE: Record<string, { bg: string; text: string }> = {
   FDA:  { bg: 'bg-blue-50',    text: 'text-blue-700' },
-  EMA:  { bg: 'bg-indigo-50',  text: 'text-indigo-700' },
+  EMA:  { bg: 'bg-blue-50',  text: 'text-blue-700' },
   PMDA: { bg: 'bg-rose-50',    text: 'text-rose-700' },
   HC:   { bg: 'bg-red-50',     text: 'text-red-700' },
   TGA:  { bg: 'bg-teal-50',    text: 'text-teal-700' },
@@ -761,7 +761,7 @@ export const AuthorityTracker: React.FC<AuthorityTrackerProps> = ({ programId })
                   type="text"
                   value={newInteraction.subject}
                   onChange={e => setNewInteraction(prev => ({ ...prev, subject: e.target.value }))}
-                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
+                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                   placeholder="Meeting or submission subject..."
                 />
               </div>
@@ -773,7 +773,7 @@ export const AuthorityTracker: React.FC<AuthorityTrackerProps> = ({ programId })
                   type="date"
                   value={newInteraction.date}
                   onChange={e => setNewInteraction(prev => ({ ...prev, date: e.target.value }))}
-                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
+                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                 />
               </div>
 
@@ -783,7 +783,7 @@ export const AuthorityTracker: React.FC<AuthorityTrackerProps> = ({ programId })
                 <textarea
                   value={newInteraction.description}
                   onChange={e => setNewInteraction(prev => ({ ...prev, description: e.target.value }))}
-                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 h-20 resize-none"
+                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none h-20 resize-none"
                   placeholder="Notes or context for this interaction..."
                 />
               </div>

@@ -446,7 +446,7 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
       <div className="mb-6">
         <div className="w-full h-2 bg-zinc-100 rounded-full overflow-hidden">
           <div 
-            className="h-full bg-gradient-to-r from-blue-500 via-blue-400 to-green-500 transition-all duration-700 ease-out"
+            className="h-full bg-blue-500 transition-all duration-700 ease-out"
             style={{ width: `${progressPercent}%` }}
           />
         </div>

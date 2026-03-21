@@ -243,7 +243,7 @@ export default function DocumentChangeImpact({ projectId, submissionType }: { pr
                 <select
                   value={selectedGuidance}
                   onChange={(e) => setSelectedGuidance(e.target.value)}
-                  className="w-full appearance-none rounded-lg border border-zinc-200 bg-white px-3 py-2.5 pr-10 text-sm text-zinc-900 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-colors duration-150"
+                  className="w-full appearance-none rounded-lg border border-zinc-200 bg-white px-3 py-2.5 pr-10 text-sm text-zinc-900 focus:border-blue-400 focus-visible:ring-2 outline-none focus:ring-blue-100 transition-colors duration-150"
                 >
                   <option value="">Select a guidance document...</option>
                   {GUIDANCE_DOCUMENTS.map((doc) => (
@@ -265,7 +265,7 @@ export default function DocumentChangeImpact({ projectId, submissionType }: { pr
                 <select
                   value={selectedSubmission}
                   onChange={(e) => setSelectedSubmission(e.target.value)}
-                  className="w-full appearance-none rounded-lg border border-zinc-200 bg-white px-3 py-2.5 pr-10 text-sm text-zinc-900 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-colors duration-150"
+                  className="w-full appearance-none rounded-lg border border-zinc-200 bg-white px-3 py-2.5 pr-10 text-sm text-zinc-900 focus:border-blue-400 focus-visible:ring-2 outline-none focus:ring-blue-100 transition-colors duration-150"
                 >
                   <option value="">Select submission type...</option>
                   {SUBMISSION_TYPES.map((type) => (

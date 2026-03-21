@@ -374,7 +374,7 @@ function EvidenceHub() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search evidence by keyword..."
-            className="w-full pl-10 pr-4 py-2 rounded-lg border border-zinc-200 bg-white text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-200"
+            className="w-full pl-10 pr-4 py-2 rounded-lg border border-zinc-200 bg-white text-sm text-zinc-900 placeholder:text-zinc-400 focus-visible:ring-2 outline-none focus:ring-zinc-200"
           />
         </div>
         <div className="flex items-center gap-1">
@@ -530,7 +530,7 @@ function PrecedentFinder() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search by product name, indication, or device type..."
-          className="w-full pl-10 pr-4 py-2 rounded-lg border border-zinc-200 bg-white text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-200"
+          className="w-full pl-10 pr-4 py-2 rounded-lg border border-zinc-200 bg-white text-sm text-zinc-900 placeholder:text-zinc-400 focus-visible:ring-2 outline-none focus:ring-zinc-200"
         />
       </div>
 

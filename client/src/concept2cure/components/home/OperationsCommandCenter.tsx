@@ -179,10 +179,11 @@ export function OperationsCommandCenter({
         <button
           onClick={onCreateProject}
           className={cn(
-            'inline-flex items-center gap-2 rounded-xl px-5 py-2.5',
+            'inline-flex items-center gap-2 rounded-lg px-5 py-2.5',
             'bg-zinc-900 text-white text-sm font-medium',
             'hover:bg-zinc-800 active:bg-zinc-950',
-            'transition-colors shadow-sm',
+            'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none',
+            'transition-colors duration-150 shadow-sm',
           )}
         >
           <Plus className="h-4 w-4" />
@@ -229,9 +230,10 @@ export function OperationsCommandCenter({
             <button
               onClick={onCreateProject}
               className={cn(
-                'mt-4 inline-flex items-center gap-2 rounded-xl px-4 py-2',
+                'mt-4 inline-flex items-center gap-2 rounded-lg px-4 py-2',
                 'bg-zinc-900 text-white text-sm font-medium',
-                'hover:bg-zinc-800 transition-colors',
+                'hover:bg-zinc-800 transition-colors duration-150',
+                'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none',
               )}
             >
               <Plus className="h-4 w-4" />
@@ -249,10 +251,10 @@ export function OperationsCommandCenter({
                   key={project.id}
                   onClick={() => onSelectProject(project.id)}
                   className={cn(
-                    'rounded-xl border border-zinc-200 bg-white p-5 text-left',
+                    'rounded-xl border border-zinc-200 bg-white p-5 text-left shadow-sm',
                     'hover:shadow-md hover:border-zinc-300',
-                    'transition-all duration-200 ease-out',
-                    'focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:ring-offset-2',
+                    'transition-all duration-150',
+                    'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none',
                     'group',
                   )}
                 >
@@ -321,19 +323,19 @@ export function OperationsCommandCenter({
             <div
               key={link.label}
               className={cn(
-                'rounded-xl border border-zinc-200 bg-white px-5 py-4',
+                'rounded-xl border border-zinc-200 bg-white px-5 py-4 shadow-sm',
                 'hover:shadow-md hover:border-zinc-300',
-                'transition-all duration-200 ease-out cursor-pointer',
+                'transition-all duration-150 cursor-pointer',
                 'group',
               )}
             >
               <div
                 className={cn(
-                  'h-9 w-9 rounded-xl bg-zinc-100 flex items-center justify-center mb-3',
+                  'h-9 w-9 rounded-lg bg-zinc-100 flex items-center justify-center mb-3',
                   'group-hover:bg-zinc-200 transition-colors',
                 )}
               >
-                <link.icon className="h-4.5 w-4.5 text-zinc-600" />
+                <link.icon className="h-4 w-4 text-zinc-600" />
               </div>
               <p className="text-sm font-semibold text-zinc-900">{link.label}</p>
               <p className="text-xs text-zinc-400 mt-0.5">{link.description}</p>

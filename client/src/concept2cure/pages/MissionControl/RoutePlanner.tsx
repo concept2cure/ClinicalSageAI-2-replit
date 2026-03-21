@@ -45,7 +45,7 @@ const DESTINATION_TYPES: Record<string, { label: string; color: string; authorit
   '510k': { label: '510(k) Clearance', color: 'text-amber-600', authority: 'FDA' },
   PMA: { label: 'Pre-Market Approval', color: 'text-red-600', authority: 'FDA' },
   'De-Novo': { label: 'De Novo Classification', color: 'text-teal-600', authority: 'FDA' },
-  MAA: { label: 'Marketing Auth Application', color: 'text-indigo-600', authority: 'EMA' },
+  MAA: { label: 'Marketing Auth Application', color: 'text-blue-600', authority: 'EMA' },
   CE: { label: 'CE Marking', color: 'text-orange-600', authority: 'Notified Body' },
   PMDA: { label: 'PMDA Submission', color: 'text-pink-600', authority: 'PMDA' },
   'Health-Canada': { label: 'Health Canada', color: 'text-red-500', authority: 'Health Canada' },
@@ -112,7 +112,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({ programId }) => {
       {/* Header */}
       <div className="border-b bg-white px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Compass className="w-5 h-5 text-indigo-500" />
+          <Compass className="w-5 h-5 text-blue-500" />
           <h1 className="text-base font-semibold text-zinc-900">Route Planner</h1>
           <span className="text-xs text-zinc-500">{destinations.length} destinations</span>
         </div>
@@ -149,7 +149,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({ programId }) => {
                     onClick={() => setSelectedDestId(dest.id)}
                     className={cn(
                       'w-full text-left p-4 transition-colors',
-                      isActive ? 'bg-indigo-50 border-l-2 border-indigo-500' : 'hover:bg-zinc-50'
+                      isActive ? 'bg-blue-50 border-l-2 border-blue-500' : 'hover:bg-zinc-50'
                     )}
                   >
                     <div className="flex items-start gap-3">
@@ -212,7 +212,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({ programId }) => {
                   </div>
                   <button
                     onClick={() => setShowAddRoute(true)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-lg hover:bg-indigo-100"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     Add Route
@@ -356,7 +356,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({ programId }) => {
                   type="text"
                   value={newRoute.strategyName}
                   onChange={e => setNewRoute(prev => ({ ...prev, strategyName: e.target.value }))}
-                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
+                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                   placeholder="e.g. Fast-track IND pathway"
                 />
               </div>
@@ -381,7 +381,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({ programId }) => {
                 <textarea
                   value={newRoute.notes}
                   onChange={e => setNewRoute(prev => ({ ...prev, notes: e.target.value }))}
-                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 h-20 resize-none"
+                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none h-20 resize-none"
                   placeholder="Strategy rationale..."
                 />
               </div>

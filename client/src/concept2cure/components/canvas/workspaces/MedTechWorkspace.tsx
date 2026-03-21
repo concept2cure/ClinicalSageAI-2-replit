@@ -321,7 +321,7 @@ const SubmissionTracker: React.FC = () => {
       case 'READY_FOR_SUBMISSION': return 'bg-emerald-100 text-emerald-600';
       case 'SUBMITTED': return 'bg-purple-100 text-purple-600';
       case 'RTA_HOLD': return 'bg-amber-100 text-amber-600';
-      case 'SUBSTANTIVE_REVIEW': return 'bg-indigo-100 text-indigo-600';
+      case 'SUBSTANTIVE_REVIEW': return 'bg-blue-100 text-blue-600';
       case 'AI_REQUEST': return 'bg-orange-100 text-orange-600';
       case 'SE_DETERMINATION': return 'bg-emerald-100 text-emerald-600';
       default: return 'bg-zinc-100 text-zinc-600';

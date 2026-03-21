@@ -67,7 +67,7 @@ export const DemoChat: React.FC<DemoChatProps> = ({
     <div className="flex flex-col h-full bg-white/80 backdrop-blur-sm border-r border-zinc-200/60">
       {/* Header */}
       <div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-200/60">
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full bg-violet-600 flex items-center justify-center">
           <Sparkles className="w-4 h-4 text-white" />
         </div>
         <div>
@@ -95,7 +95,7 @@ export const DemoChat: React.FC<DemoChatProps> = ({
                 )}
               >
                 {msg.role === 'ana' && (
-                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center flex-shrink-0 mt-1">
+                  <div className="w-6 h-6 rounded-full bg-violet-600 flex items-center justify-center flex-shrink-0 mt-1">
                     <Sparkles className="w-3 h-3 text-white" />
                   </div>
                 )}

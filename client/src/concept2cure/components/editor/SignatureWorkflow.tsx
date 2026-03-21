@@ -608,7 +608,7 @@ export function SignatureWorkflow({
                 const match = signatures.find((s) => s.id === signer.signatureId);
                 if (match) setShowCertificate(match);
               }}
-              className="text-[11px] text-indigo-600 hover:text-indigo-800 transition-colors underline underline-offset-2"
+              className="text-[11px] text-blue-600 hover:text-blue-800 transition-colors underline underline-offset-2"
             >
               Certificate
             </button>
@@ -628,10 +628,10 @@ export function SignatureWorkflow({
       <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm">
         <div className="w-full max-w-lg mx-4 bg-white rounded-xl shadow-2xl overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 bg-gradient-to-r from-indigo-50 to-violet-50">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 bg-zinc-50">
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-indigo-100 border border-indigo-200">
-                <Fingerprint className="w-5 h-5 text-indigo-600" />
+              <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-blue-100 border border-blue-200">
+                <Fingerprint className="w-5 h-5 text-blue-600" />
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-zinc-900">Electronic Signature</h3>
@@ -688,7 +688,7 @@ export function SignatureWorkflow({
                 <select
                   value={selectedMeaning}
                   onChange={(e) => setSelectedMeaning(e.target.value as SignatureMeaning)}
-                  className="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg bg-white appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 cursor-pointer"
+                  className="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg bg-white appearance-none focus-visible:ring-2 outline-none focus:ring-blue-200 focus:border-blue-400 cursor-pointer"
                 >
                   {MEANING_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>
@@ -711,7 +711,7 @@ export function SignatureWorkflow({
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Re-enter your password to authenticate"
-                className="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400"
+                className="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg bg-white focus-visible:ring-2 outline-none focus:ring-blue-200 focus:border-blue-400"
               />
               <p className="text-[10px] text-zinc-400 mt-1">
                 Identity verification required per 21 CFR Part 11 §11.100(a)
@@ -759,7 +759,7 @@ export function SignatureWorkflow({
                 'inline-flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all',
                 signing || !legalAck || !password
                   ? 'bg-zinc-200 text-zinc-400 cursor-not-allowed'
-                  : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm shadow-indigo-200'
+                  : 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm shadow-blue-200'
               )}
             >
               {signing ? (
@@ -794,7 +794,7 @@ export function SignatureWorkflow({
       <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm">
         <div className="w-full max-w-md mx-4 bg-white border-2 border-emerald-200 rounded-xl shadow-2xl overflow-hidden">
           {/* Certificate header */}
-          <div className="px-5 py-4 border-b border-emerald-100 bg-gradient-to-r from-emerald-50 to-teal-50 text-center">
+          <div className="px-5 py-4 border-b border-emerald-100 bg-emerald-50 text-center">
             <div className="flex items-center justify-center w-12 h-12 mx-auto rounded-full bg-emerald-100 border border-emerald-200 mb-2">
               <Award className="w-6 h-6 text-emerald-600" />
             </div>
@@ -855,10 +855,10 @@ export function SignatureWorkflow({
   return (
     <div className="flex flex-col h-full bg-white text-zinc-900">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 bg-gradient-to-r from-indigo-50/50 to-violet-50/50">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 bg-zinc-50">
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-indigo-100 border border-indigo-200">
-            <Shield className="w-5 h-5 text-indigo-600" />
+          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-blue-100 border border-blue-200">
+            <Shield className="w-5 h-5 text-blue-600" />
           </div>
           <div>
             <h2 className="text-sm font-semibold text-zinc-900">E-Signature Workflow</h2>
@@ -1031,7 +1031,7 @@ export function SignatureWorkflow({
 
         <button
           onClick={() => setShowSignModal(true)}
-          className="inline-flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm shadow-indigo-200 transition-all duration-150"
+          className="inline-flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 shadow-sm shadow-blue-200 transition-all duration-150"
         >
           <PenTool className="w-4 h-4" />
           Sign Document

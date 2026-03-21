@@ -122,8 +122,8 @@ const TYPE_CONFIG: Record<
   },
   authority_response: {
     icon: Shield,
-    color: 'text-indigo-600',
-    bgColor: 'bg-indigo-50',
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-50',
     label: 'Authority Response',
   },
 };

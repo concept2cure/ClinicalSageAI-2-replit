@@ -162,7 +162,7 @@ export const ZenAppWithSession: React.FC<ZenAppWithSessionProps> = ({
     return (
       <div className="flex items-center justify-center h-screen bg-stone-50">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center animate-pulse">
+          <div className="w-12 h-12 rounded-xl bg-violet-600 flex items-center justify-center animate-pulse">
             <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
             </svg>

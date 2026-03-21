@@ -79,7 +79,7 @@ const artifactTypeConfig: Record<
   traceability_matrix: { icon: Table2, label: 'Traceability Matrix', color: 'text-green-600' },
   protocol_designer: { icon: Workflow, label: 'Protocol Designer', color: 'text-orange-600' },
   ifu_checker: { icon: Workflow, label: 'IFU Checker', color: 'text-cyan-600' },
-  predicate_search: { icon: Workflow, label: 'Predicate Search', color: 'text-indigo-600' },
+  predicate_search: { icon: Workflow, label: 'Predicate Search', color: 'text-blue-600' },
   timeline_planner: { icon: Workflow, label: 'Timeline Planner', color: 'text-pink-600' },
   knowledge_graph: { icon: Network, label: 'Knowledge Graph', color: 'text-violet-600' },
   compliance_dashboard: {
@@ -114,7 +114,7 @@ const DocumentArtifact: React.FC<DocumentArtifactProps> = ({
       <textarea
         value={content}
         onChange={e => onContentChange(e.target.value)}
-        className="w-full h-full p-6 font-mono text-sm bg-white border-0 focus:outline-none resize-none"
+        className="w-full h-full p-6 font-mono text-sm bg-white border-0 outline-none resize-none"
       />
     );
   }

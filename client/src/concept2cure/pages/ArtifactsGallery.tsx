@@ -162,7 +162,7 @@ export const ArtifactsGallery: React.FC = () => {
         </div>
 
         {/* Export format capability bar */}
-        <div className="flex items-center gap-3 mb-6 py-3 px-4 bg-gradient-to-r from-zinc-50 to-violet-50/30 rounded-xl border border-zinc-200">
+        <div className="flex items-center gap-3 mb-6 py-3 px-4 bg-zinc-50 rounded-xl border border-zinc-200">
           <Sparkles className="w-4 h-4 text-violet-500 flex-shrink-0" />
           <span className="text-xs text-zinc-600">AnA can create &amp; export:</span>
           <div className="flex items-center gap-2">
@@ -274,7 +274,7 @@ export const ArtifactsGallery: React.FC = () => {
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search artifacts..."
-                className="w-full pl-9 pr-4 py-2 border border-zinc-200 rounded-lg text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-200 focus:border-zinc-300"
+                className="w-full pl-9 pr-4 py-2 border border-zinc-200 rounded-lg text-sm text-zinc-900 placeholder:text-zinc-400 focus-visible:ring-2 outline-none focus:ring-zinc-200 focus:border-zinc-300"
               />
             </div>
 

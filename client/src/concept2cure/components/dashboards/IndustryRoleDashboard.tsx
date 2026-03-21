@@ -462,7 +462,7 @@ const CROProjectManagerView: React.FC<{
               <button
                 key={d.id}
                 onClick={() => onDeliverableClick?.(d.id)}
-                className="w-full p-3 bg-white rounded-lg border border-violet-200 text-left hover:border-violet-300 transition-colors duration-150"
+                className="w-full p-3 bg-white rounded-lg border border-violet-200 text-left hover:border-blue-200 transition-colors duration-150"
               >
                 <p className="text-sm font-medium text-zinc-900 line-clamp-2">{d.name}</p>
                 <div className="mt-2 flex items-center justify-between text-xs text-zinc-500">

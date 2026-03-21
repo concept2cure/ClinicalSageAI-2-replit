@@ -283,7 +283,7 @@ export function ProjectDashboard({
             <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">{projectName}</h1>
             <div className="flex flex-wrap items-center gap-2">
               {projectType && (
-                <span className="inline-flex items-center rounded-md bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-200">
+                <span className="inline-flex items-center rounded-md bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-200">
                   {projectType}
                 </span>
               )}
@@ -439,7 +439,7 @@ export function ProjectDashboard({
 
           {/* CTD Coverage */}
           <div className="flex flex-col items-center justify-center rounded-xl border border-zinc-200 bg-white p-5 hover:shadow-sm transition-shadow">
-            <Layers size={18} className="text-indigo-500" />
+            <Layers size={18} className="text-blue-500" />
             <span className="text-2xl font-semibold tabular-nums text-zinc-900 mt-1">{stats.ctdCoverage}%</span>
             <span className="text-xs font-medium text-zinc-500 mt-0.5">CTD Coverage</span>
           </div>
@@ -592,7 +592,7 @@ export function ProjectDashboard({
 
       {/* ── 3B. Getting Started — type-specific workflow guidance ──────────── */}
       {stats.total < 5 && (
-        <section className="rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50/60 to-white p-6 shadow-sm">
+        <section className="rounded-xl border border-blue-100 bg-blue-50/60 p-6 shadow-sm">
           <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-blue-600">
             {(projectType || submissionType || 'IND').toUpperCase()} Submission Workflow
           </h2>

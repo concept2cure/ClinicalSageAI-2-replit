@@ -546,7 +546,7 @@ function AboutTab() {
     <div className="space-y-10">
       {/* Hero */}
       <div className="text-center max-w-3xl mx-auto">
-        <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center mx-auto mb-6 shadow-xl shadow-violet-200/50">
+        <div className="w-16 h-16 rounded-xl bg-blue-600 flex items-center justify-center mx-auto mb-6 shadow-xl shadow-violet-200/50">
           <Sparkles className="w-8 h-8 text-white" />
         </div>
         <h2 className="text-3xl font-semibold text-zinc-900 mb-3">
@@ -627,7 +627,7 @@ function AboutTab() {
       {/* Meet AnA */}
       <div className="bg-gradient-to-br from-violet-50 to-blue-50 rounded-xl border border-violet-100 p-8 max-w-3xl mx-auto">
         <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center flex-shrink-0">
+          <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0">
             <Brain className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -680,7 +680,7 @@ function AboutTab() {
                 <div className={cn(
                   'w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 z-10 border-2 border-white',
                   idx === COMPANY_TIMELINE.length - 1
-                    ? 'bg-gradient-to-br from-violet-500 to-blue-600'
+                    ? 'bg-blue-600'
                     : 'bg-white border border-zinc-200'
                 )}>
                   <span className={cn(
@@ -833,7 +833,7 @@ function IntelligenceTab() {
       {/* Continuous Learning */}
       <div className="bg-gradient-to-br from-violet-50 to-blue-50 rounded-xl border border-violet-100 p-8">
         <div className="flex items-center gap-3 mb-5">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center">
             <RefreshCw className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -1838,7 +1838,7 @@ function DrSageTab() {
           <div className="bg-white rounded-xl border border-zinc-200 p-4">
             <div className="flex items-center gap-2 mb-2">
               <div className="flex -space-x-2">
-                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center border-2 border-white z-10">
+                <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center border-2 border-white z-10">
                   <Sparkles className="w-3 h-3 text-white" />
                 </div>
                 <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-cyan-300 flex items-center justify-center border-2 border-white">
@@ -1887,7 +1887,7 @@ function WhatsNewTab() {
         return (
           <div className="bg-gradient-to-br from-violet-50 via-blue-50 to-cyan-50 rounded-xl border border-violet-100 p-8">
             <div className="flex items-start gap-4">
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-violet-200/50">
+              <div className="w-14 h-14 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0 /50">
                 <LatestIcon className="w-7 h-7 text-white" />
               </div>
               <div>

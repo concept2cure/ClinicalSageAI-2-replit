@@ -139,7 +139,7 @@ const DOCUMENT_TYPE_CONFIG: Record<DocumentType, {
   response: { label: 'Regulatory Response', shortLabel: 'Response', color: 'bg-orange-500', avgDays: 14 },
   briefing: { label: 'Briefing Document', shortLabel: 'Briefing', color: 'bg-cyan-500', avgDays: 21 },
   nonclinical_summary: { label: 'Nonclinical Summary', shortLabel: 'CTD 2.4', color: 'bg-lime-500', avgDays: 21 },
-  quality_summary: { label: 'Quality Summary', shortLabel: 'CTD 2.3', color: 'bg-indigo-500', avgDays: 14 },
+  quality_summary: { label: 'Quality Summary', shortLabel: 'CTD 2.3', color: 'bg-blue-500', avgDays: 14 },
 };
 
 const STAGE_CONFIG: Record<ReviewStage, {
@@ -155,7 +155,7 @@ const STAGE_CONFIG: Record<ReviewStage, {
   sponsor_review: { label: 'Sponsor Review', icon: Send, color: 'text-cyan-600', bgColor: 'bg-cyan-100' },
   final_qc: { label: 'Final QC', icon: CheckCircle, color: 'text-emerald-600', bgColor: 'bg-emerald-100' },
   approved: { label: 'Approved', icon: Star, color: 'text-green-600', bgColor: 'bg-green-100' },
-  published: { label: 'Published', icon: BookOpen, color: 'text-indigo-600', bgColor: 'bg-indigo-100' },
+  published: { label: 'Published', icon: BookOpen, color: 'text-blue-600', bgColor: 'bg-blue-100' },
 };
 
 const REVIEW_PIPELINE: ReviewStage[] = [

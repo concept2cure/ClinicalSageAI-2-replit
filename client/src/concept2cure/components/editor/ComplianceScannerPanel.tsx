@@ -171,7 +171,7 @@ export function ComplianceScannerPanel({
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-zinc-200 bg-gradient-to-r from-violet-50 to-indigo-50">
+      <div className="px-4 py-3 border-b border-zinc-200 bg-zinc-50">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-5 h-5 text-violet-600" />

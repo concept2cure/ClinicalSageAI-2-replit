@@ -228,9 +228,9 @@ export function RegulatoryIntelligencePanel({
   return (
     <div className="flex flex-col h-full bg-white border-l border-zinc-200">
       {/* Header */}
-      <div className="flex items-center justify-between px-2 sm:px-3 py-2 border-b border-zinc-200 bg-gradient-to-r from-indigo-50/80 to-violet-50/80 shrink-0">
+      <div className="flex items-center justify-between px-2 sm:px-3 py-2 border-b border-zinc-200 bg-zinc-50 shrink-0">
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-          <Brain className="w-4 h-4 text-indigo-600 shrink-0" />
+          <Brain className="w-4 h-4 text-blue-600 shrink-0" />
           <span className="text-xs sm:text-sm font-semibold text-zinc-900 truncate">
             Regulatory Intelligence
           </span>
@@ -252,7 +252,7 @@ export function RegulatoryIntelligencePanel({
               onClick={() => setActiveTab(tab.id)}
               className={`flex-1 flex items-center justify-center gap-1 px-1 sm:px-2 py-2 text-xs font-medium border-b-2 transition-colors ${
                 activeTab === tab.id
-                  ? 'border-indigo-500 text-indigo-700 bg-indigo-50/50'
+                  ? 'border-blue-500 text-blue-700 bg-blue-50/50'
                   : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50'
               }`}
             >
@@ -272,7 +272,7 @@ export function RegulatoryIntelligencePanel({
             <button
               onClick={handleRunAnalysis}
               disabled={regulatoryAnalysis.isPending}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-indigo-600 text-white text-xs font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-60"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 disabled:opacity-60"
             >
               {regulatoryAnalysis.isPending ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -285,17 +285,17 @@ export function RegulatoryIntelligencePanel({
             {/* RI Analysis Results */}
             {analysisResult && (
               <div className="space-y-2">
-                <div className="p-2.5 bg-indigo-50 border border-indigo-100 rounded-lg">
+                <div className="p-2.5 bg-blue-50 border border-blue-100 rounded-lg">
                   <div className="flex items-center gap-1.5 mb-1.5">
-                    <Brain className="w-3.5 h-3.5 text-indigo-600" />
-                    <span className="text-xs font-semibold text-indigo-800">
+                    <Brain className="w-3.5 h-3.5 text-blue-600" />
+                    <span className="text-xs font-semibold text-blue-800">
                       {analysisResult.regulatory_framework || 'Regulatory Analysis'}
                     </span>
                   </div>
                   <ScoreBar
                     value={analysisResult.overall_confidence_score || 0}
                     label="Confidence"
-                    color="bg-indigo-500"
+                    color="bg-blue-500"
                   />
                   {analysisResult.regulatory_impact_summary && (
                     <p className="text-xs text-zinc-700 leading-relaxed mt-2">
@@ -384,7 +384,7 @@ export function RegulatoryIntelligencePanel({
                     key={p.id || i}
                     className={`p-2.5 border rounded-lg cursor-pointer transition-colors ${
                       selectedPrecedent?.id === p.id
-                        ? 'border-indigo-300 bg-indigo-50/50'
+                        ? 'border-blue-300 bg-blue-50/50'
                         : 'border-zinc-200 hover:border-zinc-300 bg-white'
                     }`}
                     onClick={() => handleComparePrecedent(p)}
@@ -393,7 +393,7 @@ export function RegulatoryIntelligencePanel({
                       <span className="text-xs font-medium text-zinc-900">
                         {p.deviceName || p.applicantName || 'Unknown Device'}
                       </span>
-                      <span className="text-xs font-mono text-indigo-600">
+                      <span className="text-xs font-mono text-blue-600">
                         {p.clearanceNumber}
                       </span>
                     </div>
@@ -417,7 +417,7 @@ export function RegulatoryIntelligencePanel({
                     {p.indication && (
                       <p className="text-xs text-zinc-500 mt-1 truncate">{p.indication}</p>
                     )}
-                    <div className="flex items-center gap-1 mt-1.5 text-xs text-indigo-600">
+                    <div className="flex items-center gap-1 mt-1.5 text-xs text-blue-600">
                       <ArrowRight className="w-3 h-3" />
                       Compare to my submission
                     </div>
@@ -436,20 +436,20 @@ export function RegulatoryIntelligencePanel({
             {/* Compare result */}
             {precedentCompare.isPending && (
               <div className="flex items-center justify-center py-4">
-                <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />
+                <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
                 <span className="text-xs text-zinc-500 ml-2">Comparing...</span>
               </div>
             )}
             {compareResult && (
-              <div className="p-2.5 bg-indigo-50 border border-indigo-100 rounded-lg space-y-2">
-                <span className="text-xs font-semibold text-indigo-700 uppercase tracking-wider">
+              <div className="p-2.5 bg-blue-50 border border-blue-100 rounded-lg space-y-2">
+                <span className="text-xs font-semibold text-blue-700 uppercase tracking-wider">
                   Comparison Results
                 </span>
                 {compareResult.overallScore != null && (
                   <ScoreBar
                     value={compareResult.overallScore}
                     label="Overall Similarity"
-                    color="bg-indigo-500"
+                    color="bg-blue-500"
                   />
                 )}
                 {compareResult.riskLevel && (
@@ -879,7 +879,7 @@ export function RegulatoryIntelligencePanel({
               const coverageLabel =
                 coverageRatio >= 0.7 ? 'Good' : coverageRatio >= 0.4 ? 'Partial' : 'Gaps Found';
               return (
-                <div className="p-2.5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-lg">
+                <div className="p-2.5 bg-blue-50 border border-blue-100 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-semibold text-zinc-900 flex items-center gap-1">
                       <FileCheck className="w-3.5 h-3.5 text-blue-600" />

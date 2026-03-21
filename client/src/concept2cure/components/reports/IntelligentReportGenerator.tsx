@@ -515,7 +515,7 @@ export default function IntelligentReportGenerator() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
       </div>
     );
   }
@@ -530,12 +530,12 @@ export default function IntelligentReportGenerator() {
   ];
 
   return (
-    <div className="h-full flex flex-col bg-gradient-to-br from-slate-50 to-white overflow-hidden">
+    <div className="h-full flex flex-col bg-white overflow-hidden">
       {/* Header */}
       <div className="flex-shrink-0 border-b border-zinc-200 bg-white px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
               <FileText className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -551,7 +551,7 @@ export default function IntelligentReportGenerator() {
                 onClick={() => setActiveTab(tab.key)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
                   activeTab === tab.key
-                    ? 'bg-indigo-100 text-indigo-700'
+                    ? 'bg-blue-100 text-blue-700'
                     : 'text-zinc-500 hover:bg-zinc-100'
                 }`}
               >
@@ -576,7 +576,7 @@ export default function IntelligentReportGenerator() {
                 value={reportTitle}
                 onChange={e => setReportTitle(e.target.value)}
                 placeholder="e.g., IND Annual Report — Compound XYZ-201"
-                className="w-full px-4 py-2.5 border border-zinc-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-4 py-2.5 border border-zinc-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
@@ -604,12 +604,12 @@ export default function IntelligentReportGenerator() {
                     }}
                     className={`p-3 rounded-xl border text-left transition-all ${
                       selectedDomain?.domain === d.domain
-                        ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200'
+                        ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
                         : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
                     }`}
                   >
                     <div className="flex items-center gap-2 mb-1.5">
-                      <span className={selectedDomain?.domain === d.domain ? 'text-indigo-600' : 'text-zinc-400'}>
+                      <span className={selectedDomain?.domain === d.domain ? 'text-blue-600' : 'text-zinc-400'}>
                         {DOMAIN_ICONS[d.domain] || <FileText className="w-5 h-5" />}
                       </span>
                       <span className="text-sm font-medium text-zinc-900 truncate">{d.label}</span>
@@ -638,7 +638,7 @@ export default function IntelligentReportGenerator() {
                       onClick={() => setSelectedSubtype(sub)}
                       className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
                         selectedSubtype === sub
-                          ? 'border-indigo-500 bg-indigo-100 text-indigo-700'
+                          ? 'border-blue-500 bg-blue-100 text-blue-700'
                           : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'
                       }`}
                     >
@@ -662,7 +662,7 @@ export default function IntelligentReportGenerator() {
                     onClick={() => setSelectedBody(selectedBody === b.code ? '' : b.code)}
                     className={`p-2.5 rounded-lg border text-left transition-all ${
                       selectedBody === b.code
-                        ? 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-200'
+                        ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-200'
                         : 'border-zinc-200 hover:border-zinc-300'
                     }`}
                   >
@@ -743,7 +743,7 @@ export default function IntelligentReportGenerator() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h2 className="text-white font-semibold text-lg">{generatedReport.record.reportTitle}</h2>
-                    <p className="text-indigo-200 text-sm">{generatedReport.reportCode}</p>
+                    <p className="text-blue-200 text-sm">{generatedReport.reportCode}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     {generatedReport.record.version && (
@@ -769,7 +769,7 @@ export default function IntelligentReportGenerator() {
               <div className="p-6 grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
                   <div className="text-xs text-zinc-500 mb-0.5">Verification Code</div>
-                  <div className="text-sm font-mono font-semibold text-indigo-600">{generatedReport.verificationCode}</div>
+                  <div className="text-sm font-mono font-semibold text-blue-600">{generatedReport.verificationCode}</div>
                 </div>
                 <div>
                   <div className="text-xs text-zinc-500 mb-0.5">Compliance Score</div>
@@ -1074,7 +1074,7 @@ export default function IntelligentReportGenerator() {
                         className="w-full p-4 flex items-center justify-between hover:bg-zinc-50 transition-colors duration-150"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 font-semibold text-xs">
+                          <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 font-semibold text-xs">
                             {idx + 1}
                           </div>
                           <div className="text-left">
@@ -1176,7 +1176,7 @@ export default function IntelligentReportGenerator() {
               <button
                 onClick={loadProvenance}
                 disabled={provenanceLoading}
-                className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-700"
+                className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
               >
                 <RefreshCw className={`w-3 h-3 ${provenanceLoading ? 'animate-spin' : ''}`} />
                 Refresh
@@ -1267,7 +1267,7 @@ export default function IntelligentReportGenerator() {
                       <hr className="border-zinc-200" />
                       <div>
                         <div className="text-zinc-400 mb-0.5">Source Table</div>
-                        <div className="text-indigo-600 font-mono font-medium">{selectedProvenance.sourceTable}</div>
+                        <div className="text-blue-600 font-mono font-medium">{selectedProvenance.sourceTable}</div>
                       </div>
                       <div>
                         <div className="text-zinc-400 mb-0.5">Source Record ID</div>
@@ -1332,7 +1332,7 @@ export default function IntelligentReportGenerator() {
               <button
                 onClick={handleComplianceValidation}
                 disabled={validating}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-indigo-600 hover:text-indigo-700 border border-indigo-200 rounded-lg hover:bg-indigo-50"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-blue-600 hover:text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-50"
               >
                 <RefreshCw className={`w-3 h-3 ${validating ? 'animate-spin' : ''}`} />
                 Re-validate
@@ -1384,7 +1384,7 @@ export default function IntelligentReportGenerator() {
 
             {validating && complianceChecks.length === 0 && (
               <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-3" />
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3" />
                 <div className="text-sm text-zinc-500">Running compliance validation...</div>
               </div>
             )}
@@ -1572,7 +1572,7 @@ export default function IntelligentReportGenerator() {
             <p className="text-sm">No report generated yet</p>
             <button
               onClick={() => setActiveTab('generate')}
-              className="mt-3 text-sm text-indigo-600 hover:text-indigo-700"
+              className="mt-3 text-sm text-blue-600 hover:text-blue-700"
             >
               Go to Generate tab
             </button>

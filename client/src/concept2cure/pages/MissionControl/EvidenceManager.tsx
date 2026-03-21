@@ -218,7 +218,7 @@ export const EvidenceManager: React.FC<EvidenceManagerProps> = ({ programId }) =
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search evidence..."
-                className="w-full text-xs pl-8 pr-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 bg-zinc-50"
+                className="w-full text-xs pl-8 pr-3 py-2 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none bg-zinc-50"
               />
             </div>
             <div className="flex gap-2">
@@ -470,7 +470,7 @@ export const EvidenceManager: React.FC<EvidenceManagerProps> = ({ programId }) =
                   type="text"
                   value={form.title}
                   onChange={e => setForm(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
+                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                   placeholder="Evidence title..."
                 />
               </div>
@@ -507,7 +507,7 @@ export const EvidenceManager: React.FC<EvidenceManagerProps> = ({ programId }) =
                   type="text"
                   value={form.source}
                   onChange={e => setForm(prev => ({ ...prev, source: e.target.value }))}
-                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
+                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                   placeholder="Citation or source..."
                 />
               </div>
@@ -516,7 +516,7 @@ export const EvidenceManager: React.FC<EvidenceManagerProps> = ({ programId }) =
                 <textarea
                   value={form.description}
                   onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))}
-                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 h-24 resize-none"
+                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none h-24 resize-none"
                   placeholder="Summary of the evidence..."
                 />
               </div>

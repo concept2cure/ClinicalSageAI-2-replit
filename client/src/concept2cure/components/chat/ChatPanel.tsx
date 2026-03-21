@@ -383,7 +383,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             placeholder={placeholder}
             disabled={disabled}
             rows={1}
-            className="flex-1 bg-transparent text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none resize-none max-h-[200px]"
+            className="flex-1 bg-transparent text-sm text-zinc-900 placeholder:text-zinc-400 outline-none resize-none max-h-[200px]"
           />
 
           {/* Send button */}
@@ -413,7 +413,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
 const EmptyState: React.FC = () => {
   return (
     <div className="flex flex-col items-center justify-center h-full text-center px-4">
-      <div className="w-16 h-16 bg-purple-100 rounded-xl flex items-center justify-center mb-6">
+      <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-6">
         <Sparkles className="h-8 w-8 text-purple-600" />
       </div>
       <h2 className="text-xl font-semibold text-zinc-900 mb-2">
@@ -552,7 +552,7 @@ export const ChatPanel: React.FC = () => {
   if (!activeProject) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center px-4">
-        <div className="w-16 h-16 bg-zinc-100 rounded-xl flex items-center justify-center mb-6">
+        <div className="w-12 h-12 bg-zinc-100 rounded-lg flex items-center justify-center mb-6">
           <Sparkles className="h-8 w-8 text-zinc-400" />
         </div>
         <h2 className="text-xl font-semibold text-zinc-900 mb-2">Select a Project</h2>

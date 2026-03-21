@@ -861,7 +861,7 @@ export const LandingPage: React.FC = () => {
                   <div className={`relative z-10 w-14 h-14 rounded-xl flex items-center justify-center text-white font-semibold text-lg shadow-lg flex-shrink-0 ${
                     step.color === 'blue' ? 'bg-blue-600 shadow-blue-600/30' :
                     step.color === 'violet' ? 'bg-violet-600 shadow-violet-600/30' :
-                    step.color === 'indigo' ? 'bg-indigo-600 shadow-indigo-600/30' :
+                    step.color === 'indigo' ? 'bg-blue-600 shadow-blue-600/30' :
                     'bg-green-600 shadow-green-600/30'
                   }`}>
                     {step.step}
@@ -922,7 +922,7 @@ export const LandingPage: React.FC = () => {
                 {i < 4 && <div className="absolute -right-2 top-1/2 -translate-y-1/2 text-zinc-600 hidden md:block">&rarr;</div>}
                 <div className="text-sm font-semibold text-white mb-1">{s.stage}</div>
                 <div className="text-xs text-zinc-400">{s.desc}</div>
-                <div className="mt-2 w-full h-1 rounded-full bg-gradient-to-r from-blue-500 to-violet-500 opacity-60" />
+                <div className="mt-2 w-full h-1 rounded-full bg-blue-600 opacity-60" />
               </motion.div>
             ))}
           </motion.div>
@@ -1043,7 +1043,7 @@ export const LandingPage: React.FC = () => {
                     <motion.div
                       key={mod.name}
                       variants={fadeIn}
-                      className="p-5 rounded-xl bg-zinc-50 border border-zinc-200 hover:bg-white hover:border-blue-200 hover:shadow-md transition-all duration-200 group"
+                      className="p-5 rounded-xl bg-zinc-50 border border-zinc-200 hover:bg-white hover:border-blue-200 hover:shadow-md transition-all duration-150 group"
                     >
                       <h4 className="text-sm font-semibold text-zinc-900 mb-2 group-hover:text-blue-700 transition-colors duration-150">{mod.name}</h4>
                       <p className="text-xs text-zinc-500 leading-relaxed">{mod.desc}</p>
@@ -1125,7 +1125,7 @@ export const LandingPage: React.FC = () => {
                 </p>
               </div>
 
-              <div className="p-5 rounded-xl bg-gradient-to-br from-indigo-900 to-violet-900 text-white border border-indigo-700/50">
+              <div className="p-5 rounded-xl bg-gradient-to-br from-blue-900 to-violet-900 text-white border border-blue-700/50">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center">
                     <svg className="w-5 h-5 text-cyan-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -1134,10 +1134,10 @@ export const LandingPage: React.FC = () => {
                   </div>
                   <div>
                     <div className="font-semibold text-sm">AnA Predictions</div>
-                    <div className="text-xs text-indigo-300">Predictive Intelligence Engine</div>
+                    <div className="text-xs text-blue-300">Predictive Intelligence Engine</div>
                   </div>
                 </div>
-                <p className="text-xs text-indigo-200 leading-relaxed">
+                <p className="text-xs text-blue-200 leading-relaxed">
                   Submission success prediction, pathway simulations, what-if analysis, and regulatory
                   outcome modeling. See the future of your filing before you file.
                 </p>
@@ -1247,13 +1247,13 @@ export const LandingPage: React.FC = () => {
                 className={`group p-8 rounded-xl border-2 transition-all duration-300 hover:shadow-xl ${
                   s.color === 'blue' ? 'border-blue-100 hover:border-blue-300 bg-gradient-to-b from-blue-50/30 to-white hover:shadow-blue-600/10' :
                   s.color === 'violet' ? 'border-violet-100 hover:border-violet-300 bg-gradient-to-b from-violet-50/30 to-white hover:shadow-violet-600/10' :
-                  'border-indigo-100 hover:border-indigo-300 bg-gradient-to-b from-indigo-50/30 to-white hover:shadow-indigo-600/10'
+                  'border-blue-100 hover:border-blue-300 bg-gradient-to-b from-blue-50/30 to-white hover:shadow-blue-600/10'
                 }`}
               >
                 <div className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold mb-4 ${
                   s.color === 'blue' ? 'bg-blue-100 text-blue-700' :
                   s.color === 'violet' ? 'bg-violet-100 text-violet-700' :
-                  'bg-indigo-100 text-indigo-700'
+                  'bg-blue-100 text-blue-700'
                 }`}>
                   {s.persona}
                 </div>
@@ -1368,7 +1368,7 @@ export const LandingPage: React.FC = () => {
                   "{t.quote}"
                 </blockquote>
                 <div className="flex items-center gap-3 pt-4 border-t border-zinc-200">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-xs font-semibold">
+                  <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-semibold">
                     {t.author.split(' ').map(w => w[0]).join('')}
                   </div>
                   <div>

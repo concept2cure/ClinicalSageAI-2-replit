@@ -362,7 +362,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               return (
                 <div key={msg.id} className={cn('group px-4 py-3', isUser ? 'bg-zinc-50/60' : 'bg-white')}>
                   <div className="flex gap-2.5 max-w-3xl mx-auto">
-                    <div className={cn('w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5', isUser ? 'bg-zinc-800 text-white' : 'bg-gradient-to-br from-violet-500 to-violet-700')}>
+                    <div className={cn('w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5', isUser ? 'bg-zinc-800 text-white' : 'bg-violet-600')}>
                       {isUser ? <span className="text-xs font-semibold">{(contextProfile?.userRole?.[0] || 'Y').toUpperCase()}</span> : <Sparkles className="w-3.5 h-3.5 text-white" />}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -380,7 +380,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             {isThinking && (
               <div className="px-4 py-3 bg-white">
                 <div className="flex gap-2.5 max-w-3xl mx-auto">
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center flex-shrink-0 mt-0.5"><Sparkles className="w-3.5 h-3.5 text-white" /></div>
+                  <div className="w-7 h-7 rounded-full bg-violet-600 flex items-center justify-center flex-shrink-0 mt-0.5"><Sparkles className="w-3.5 h-3.5 text-white" /></div>
                   <div>
                     <span className="text-xs font-semibold text-zinc-900">AnA</span>
                     <div className="flex items-center gap-1.5 mt-1">
@@ -434,7 +434,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             <div className="max-w-2xl w-full text-center">
               {/* Greeting */}
               <div className="mb-10">
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center mx-auto mb-5 shadow-lg shadow-violet-500/20">
+                <div className="w-14 h-14 rounded-lg bg-blue-600 flex items-center justify-center mx-auto mb-5 shadow-sm">
                   <Sparkles className="w-7 h-7 text-white" />
                 </div>
                 <h2 className="text-2xl font-semibold text-zinc-900">{defaultGreeting}</h2>
@@ -482,7 +482,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   <div className="flex gap-2.5 max-w-3xl mx-auto">
                     <div className={cn(
                       'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm',
-                      isUser ? 'bg-zinc-800 text-white' : 'bg-gradient-to-br from-violet-500 to-violet-700'
+                      isUser ? 'bg-zinc-800 text-white' : 'bg-violet-600'
                     )}>
                       {isUser ? (
                         <span className="text-xs font-semibold">{(contextProfile?.userRole?.[0] || 'Y').toUpperCase()}</span>
@@ -566,7 +566,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             {isThinking && (
               <div className="px-4 py-4 bg-white">
                 <div className="flex gap-3 max-w-3xl mx-auto">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
+                  <div className="w-8 h-8 rounded-full bg-violet-600 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
                     <Sparkles className="w-4 h-4 text-white" />
                   </div>
                   <div>

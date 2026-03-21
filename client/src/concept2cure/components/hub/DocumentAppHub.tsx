@@ -84,7 +84,7 @@ const APPS: AppCard[] = [
       'Document authoring with live regulatory intelligence: precedents, risk, strategy.',
     icon: <Brain className="w-5 h-5" />,
     badge: 'NEW',
-    badgeColor: 'bg-indigo-50 text-indigo-700',
+    badgeColor: 'bg-blue-50 text-blue-700',
     navigateTo: 'regulatory-workspace',
     category: 'analyze',
   },
@@ -211,7 +211,7 @@ export const DocumentAppHub: React.FC<DocumentAppHubProps> = ({
         })}
 
         {/* Pipeline hint */}
-        <div className="mt-4 p-4 rounded-xl bg-gradient-to-r from-violet-50 to-blue-50 border border-violet-100">
+        <div className="mt-4 p-4 rounded-xl bg-zinc-50 border border-violet-100">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-white/80 flex items-center justify-center shadow-sm">
               <Sparkles className="w-5 h-5 text-violet-600" />

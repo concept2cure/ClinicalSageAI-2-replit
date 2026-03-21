@@ -165,7 +165,7 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
         onDragOver={handleDragOver}
         onDrop={handleDrop}
         className={cn(
-          'relative border-2 border-dashed rounded-lg p-6 transition-all cursor-pointer',
+          'relative border border-dashed rounded-lg p-6 transition-all cursor-pointer',
           'flex flex-col items-center justify-center gap-3',
           isDragging && 'border-blue-500 bg-blue-50',
           isUploading && 'border-blue-300 bg-blue-50 cursor-wait',

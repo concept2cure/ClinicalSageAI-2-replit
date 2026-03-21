@@ -78,8 +78,8 @@ const ACTIVITY_CONFIG: Record<ActivityType, {
   },
   status_change: {
     icon: ArrowRight,
-    color: 'text-indigo-500',
-    bgColor: 'bg-indigo-50',
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-50',
     verb: 'changed status of',
   },
   commented: {

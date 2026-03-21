@@ -206,7 +206,7 @@ const DOC_TYPE_CONFIG: Record<DocumentType, { label: string; shortLabel: string;
   informed_consent: { label: 'Informed Consent', shortLabel: 'ICF', color: 'bg-pink-100 text-pink-700' },
   regulatory_response: { label: 'Regulatory Response', shortLabel: 'Response', color: 'bg-red-100 text-red-700' },
   briefing_document: { label: 'Briefing Document', shortLabel: 'Briefing', color: 'bg-rose-100 text-rose-700' },
-  dsur: { label: 'DSUR', shortLabel: 'DSUR', color: 'bg-indigo-100 text-indigo-700' },
+  dsur: { label: 'DSUR', shortLabel: 'DSUR', color: 'bg-blue-100 text-blue-700' },
   psur: { label: 'PSUR', shortLabel: 'PSUR', color: 'bg-fuchsia-100 text-fuchsia-700' },
 };
 

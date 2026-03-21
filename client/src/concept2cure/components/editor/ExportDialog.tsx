@@ -167,7 +167,7 @@ export function ExportDialog({
                   onClick={() => setSelectedFormat(fmt.id)}
                   disabled={!fmt.available}
                   className={cn(
-                    'flex items-start gap-3 p-3 rounded-xl border-2 text-left transition-all',
+                    'flex items-start gap-3 p-3 rounded-xl border text-left transition-all',
                     isSelected
                       ? 'border-blue-500 bg-blue-50/50 shadow-sm'
                       : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50',

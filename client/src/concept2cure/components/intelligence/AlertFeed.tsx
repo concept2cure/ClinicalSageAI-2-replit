@@ -221,7 +221,7 @@ function PriorityBadge({ priority }: { priority: AlertPriority }) {
 function SourceBadge({ source }: { source: AlertSource }) {
   const colors: Record<AlertSource, string> = {
     FDA: 'bg-blue-50 text-blue-700 border-blue-200',
-    EMA: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+    EMA: 'bg-blue-50 text-blue-700 border-blue-200',
     'Health Canada': 'bg-red-50 text-red-700 border-red-200',
     ICH: 'bg-violet-50 text-violet-700 border-violet-200',
     WHO: 'bg-emerald-50 text-emerald-700 border-emerald-200',
@@ -307,7 +307,7 @@ export function AlertFeed({
   return (
     <div className={cn('flex flex-col h-full bg-white', compact && 'text-xs')}>
       {/* Header */}
-      <div className="px-4 py-3 border-b border-zinc-200 bg-gradient-to-r from-amber-50 to-orange-50">
+      <div className="px-4 py-3 border-b border-zinc-200 bg-amber-50">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <BellRing className="w-5 h-5 text-amber-600" />
@@ -462,7 +462,7 @@ export function AlertFeed({
                             {alert.affectedSections.map(section => (
                               <span
                                 key={section}
-                                className="px-1.5 py-0.5 bg-indigo-50 text-indigo-700 rounded text-[10px] font-mono"
+                                className="px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded text-[10px] font-mono"
                               >
                                 §{section}
                               </span>
@@ -510,7 +510,7 @@ export function AlertFeed({
                           <button
                             key={docId}
                             onClick={() => onNavigateToDocument?.(docId)}
-                            className="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-md hover:bg-indigo-100 transition-colors duration-150"
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors duration-150"
                           >
                             <FileText className="w-3 h-3" />
                             Open Document

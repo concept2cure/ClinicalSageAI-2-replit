@@ -123,7 +123,7 @@ const ZenHeader: React.FC<ZenHeaderProps> = ({
         <Settings className="w-4 h-4" />
       </button>
       <button onClick={onProfileClick} className={zenClasses.buttonIcon} aria-label="Profile">
-        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center">
+        <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center">
           <span className="text-xs font-medium text-white">U</span>
         </div>
       </button>
@@ -281,7 +281,7 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
             isCollapsed ? 'justify-center p-2' : 'px-3 py-2'
           )}
         >
-          <div className="w-8 h-8 rounded-lg border-2 border-dashed border-zinc-300 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg border border-dashed border-zinc-300 flex items-center justify-center">
             <Plus className="w-4 h-4" />
           </div>
           {!isCollapsed && <span className="text-sm font-medium">New project</span>}
@@ -318,7 +318,7 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
       {/* Sidebar */}
       <aside
         className={cn(
-          'bg-zinc-50 border-r border-zinc-200 h-full transition-all duration-200 ease-in-out',
+          'bg-zinc-50 border-r border-zinc-200 h-full transition-all duration-150 ease-in-out',
           // Desktop
           'hidden md:block',
           isCollapsed ? 'w-[60px]' : 'w-[260px]'
