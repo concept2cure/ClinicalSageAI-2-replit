@@ -56,6 +56,8 @@ import { BatchAIPanel } from './BatchAIPanel';
 import { DocumentDiff } from './DocumentDiff';
 import { CrossReferencePanel } from './CrossReferencePanel';
 import { KeyboardShortcutsOverlay } from './KeyboardShortcuts';
+import { ExportDialog } from './ExportDialog';
+import type { ExportOptions } from './ExportDialog';
 import { CommentThreadPanel } from './CommentThread';
 import { ReviewModePanel } from './ReviewMode';
 import { DocumentStatusTimeline } from './DocumentStatusTimeline';
@@ -102,6 +104,7 @@ interface SignatureInfo {
 
 interface EditorPanelProps {
   projectId?: string;
+  projectName?: string;
   submissionType?: string;
   /** When provided, auto-create an artifact with this content and open it */
   initialContent?: string;
@@ -117,6 +120,8 @@ interface EditorPanelProps {
   onContentChange?: (content: string, title: string) => void;
   /** When set, auto-open this inspector panel */
   initialInspector?: 'compare' | 'provenance' | 'audit' | null;
+  /** Called when user clicks project name in breadcrumb */
+  onNavigateToProject?: () => void;
 }
 
 type AIAction = 'rewrite' | 'expand' | 'summarize' | 'regulatory-tone' | 'add-references';
@@ -132,6 +137,7 @@ const AI_ACTIONS: { id: AIAction; label: string; description: string }[] = [
 // ── Component ────────────────────────────────────────────────────────────────
 const EditorPanel: React.FC<EditorPanelProps> = ({
   projectId,
+  projectName,
   submissionType,
   initialContent,
   initialTitle,
@@ -141,6 +147,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   onOpenArtifactConsumed,
   onContentChange,
   initialInspector,
+  onNavigateToProject,
 }) => {
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
   const [activeArtifact, setActiveArtifact] = useState<Artifact | null>(null);
@@ -254,6 +261,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   // ── New comment dialog state ───────────────────────────────────────
   const [pendingCommentText, setPendingCommentText] = useState('');
   const [showNewCommentDialog, setShowNewCommentDialog] = useState(false);
+  const [showExportDialog, setShowExportDialog] = useState(false);
   const [pendingCommentHighlight, setPendingCommentHighlight] = useState('');
   const pendingCommentClientIdRef = useRef<string>('');
   const [cancelCommentId, setCancelCommentId] = useState<string | null>(null);
@@ -1458,21 +1466,35 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     <div className="flex flex-col h-full bg-white">
       {/* ── Document toolbar ───────────────────────────────────────────── */}
       <div className="flex items-center h-12 px-4 border-b border-zinc-200 bg-white shrink-0 gap-2.5">
-        {/* Left: back + title + status */}
-        <button
-          onClick={() => {
-            setActiveArtifact(null);
-            setShowArtifactList(true);
-            setAiResult(null);
-          }}
-          className="text-xs text-zinc-500 hover:text-zinc-800 shrink-0 px-2 py-1 rounded-md hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
-        >
-          ← Docs
-        </button>
-        <span className="text-zinc-300">/</span>
-        <span className="text-sm font-semibold text-zinc-900 truncate max-w-[280px]">
-          {activeArtifact?.title}
-        </span>
+        {/* Left: breadcrumb navigation */}
+        <nav className="flex items-center gap-1 text-xs min-w-0" aria-label="Breadcrumb">
+          {projectName && onNavigateToProject && (
+            <>
+              <button
+                onClick={onNavigateToProject}
+                className="text-zinc-400 hover:text-zinc-700 shrink-0 px-1.5 py-0.5 rounded hover:bg-zinc-100 transition-colors truncate max-w-[120px]"
+                title={projectName}
+              >
+                {projectName}
+              </button>
+              <ChevronDown className="w-3 h-3 text-zinc-300 shrink-0 -rotate-90" />
+            </>
+          )}
+          <button
+            onClick={() => {
+              setActiveArtifact(null);
+              setShowArtifactList(true);
+              setAiResult(null);
+            }}
+            className="text-zinc-500 hover:text-zinc-800 shrink-0 px-1.5 py-0.5 rounded hover:bg-zinc-100 transition-colors"
+          >
+            Documents
+          </button>
+          <ChevronDown className="w-3 h-3 text-zinc-300 shrink-0 -rotate-90" />
+          <span className="text-sm font-semibold text-zinc-900 truncate max-w-[280px]">
+            {activeArtifact?.title}
+          </span>
+        </nav>
         {activeArtifact?.ctdSection && (
           <button
             onClick={() => setShowCtdInput(prev => !prev)}
@@ -1605,32 +1627,14 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   <Check className="w-3 h-3 text-zinc-400" />
                   Save
                 </button>
-                {/* Export submenu */}
-                <div className="px-3 py-1.5 text-xs font-semibold text-zinc-400 uppercase tracking-wider">Export</div>
+                {/* Export */}
                 <button
                   role="menuitem"
-                  onClick={() => { handleExportDocx(); setOverflowOpen(false); }}
-                  disabled={docxExporting}
-                  className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 disabled:opacity-60 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
-                >
-                  <Download className="w-3 h-3 text-zinc-400" />
-                  Word (.docx)
-                </button>
-                <button
-                  role="menuitem"
-                  onClick={() => { handleExportPdf(); setOverflowOpen(false); }}
+                  onClick={() => { setShowExportDialog(true); setOverflowOpen(false); }}
                   className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
                 >
                   <Download className="w-3 h-3 text-zinc-400" />
-                  PDF (.pdf)
-                </button>
-                <button
-                  role="menuitem"
-                  onClick={() => { handleExportPptx(); setOverflowOpen(false); }}
-                  className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
-                >
-                  <Download className="w-3 h-3 text-zinc-400" />
-                  PowerPoint (.pptx)
+                  Export…
                 </button>
                 <button
                   role="menuitem"
@@ -2436,6 +2440,33 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           </div>
         )}
       </div>
+
+      {/* ── Export Dialog ── */}
+      {activeArtifact && (
+        <ExportDialog
+          isOpen={showExportDialog}
+          onClose={() => setShowExportDialog(false)}
+          documentTitle={activeArtifact.title}
+          documentContent={activeArtifact.content || ''}
+          ctdSection={activeArtifact.ctdSection}
+          onExport={async (format) => {
+            switch (format) {
+              case 'docx':
+                await handleExportDocx();
+                break;
+              case 'pdf':
+                await handleExportPdf();
+                break;
+              case 'pptx':
+                await handleExportPptx();
+                break;
+              case 'markdown':
+                await handleExportMarkdown();
+                break;
+            }
+          }}
+        />
+      )}
 
       {/* ── Quality Gate Dialog ── */}
       {qualityGateDialog.show && (

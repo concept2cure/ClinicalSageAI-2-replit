@@ -1528,6 +1528,28 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
               >
                 <FileCheck className="w-3.5 h-3.5" />
               </button>
+              <button
+                onClick={() => {
+                  const { from, to } = editor.state.selection;
+                  const text = editor.state.doc.textBetween(from, to, ' ');
+                  onAIAction?.('expand', text);
+                }}
+                className="p-1.5 rounded hover:bg-purple-700 text-purple-300"
+                title="AI Expand — add detail and evidence"
+              >
+                <span className="text-[10px] font-bold">+</span>
+              </button>
+              <button
+                onClick={() => {
+                  const { from, to } = editor.state.selection;
+                  const text = editor.state.doc.textBetween(from, to, ' ');
+                  onAIAction?.('summarize', text);
+                }}
+                className="p-1.5 rounded hover:bg-purple-700 text-purple-300"
+                title="AI Summarize — create concise version"
+              >
+                <span className="text-[10px] font-bold">Σ</span>
+              </button>
               <div className="w-px h-4 bg-zinc-600 mx-0.5" />
               {/* Comment */}
               <button
