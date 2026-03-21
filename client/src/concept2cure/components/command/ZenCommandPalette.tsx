@@ -61,7 +61,9 @@ import {
   Users,
   BarChart3,
   Snowflake,
+  Clock,
 } from 'lucide-react';
+import { getRecentDocuments, type RecentDocument } from '../../hooks/useRecentDocuments';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -669,15 +671,29 @@ export const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  // Get commands
-  const commands = useMemo(
-    () =>
-      createCommands(id => {
-        onAction(id);
-        onClose();
-      }),
-    [onAction, onClose]
-  );
+  // Get commands (static + dynamic recent documents)
+  const commands = useMemo(() => {
+    const handler = (id: string) => {
+      onAction(id);
+      onClose();
+    };
+    const staticCmds = createCommands(handler);
+
+    // Inject recent documents at the top of the 'recent' category
+    const recentDocs = getRecentDocuments(5);
+    const recentDocCmds: CommandItem[] = recentDocs.map(doc => ({
+      id: `recent-doc-${doc.id}`,
+      title: doc.title,
+      subtitle: doc.ctdSection ? `CTD ${doc.ctdSection}` : doc.projectName || 'Recent document',
+      icon: <Clock className="w-4 h-4 text-zinc-500" />,
+      category: 'recent' as CommandCategory,
+      action: () => handler(`open-document:${doc.id}:${doc.projectId}`),
+      keywords: ['recent', 'document', doc.title.toLowerCase(), doc.ctdSection || ''].filter(Boolean),
+    }));
+
+    // Place recent doc commands before the static ones
+    return [...recentDocCmds, ...staticCmds];
+  }, [onAction, onClose]);
 
   // Filter commands based on query
   const filteredCommands = useMemo(() => {

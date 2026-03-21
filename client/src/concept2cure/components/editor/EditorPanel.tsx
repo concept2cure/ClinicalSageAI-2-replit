@@ -61,6 +61,8 @@ import { ReviewModePanel } from './ReviewMode';
 import { DocumentStatusTimeline } from './DocumentStatusTimeline';
 import type { CommentThread } from './extensions/CommentMark';
 import { useComments } from '../../hooks/useComments';
+import { recordDocumentAccess } from '../../hooks/useRecentDocuments';
+import { ReviewerAssignment } from './ReviewerAssignment';
 import { getCurrentUser } from '../../utils/getCurrentUser';
 
 // ── Auth helper (same pattern as useProjects) ────────────────────────────────
@@ -164,7 +166,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const claimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Single secondary inspector panel (only one open at a time) ────────
-  type InspectorPanel = 'intelligence' | 'provenance' | 'compare' | 'audit' | 'dataroom' | 'inconsistency' | 'health' | 'versions' | 'batch-ai' | 'crossref' | 'comments' | 'review';
+  type InspectorPanel = 'intelligence' | 'provenance' | 'compare' | 'audit' | 'dataroom' | 'inconsistency' | 'health' | 'versions' | 'batch-ai' | 'crossref' | 'comments' | 'review' | 'reviewers';
   const [activeInspector, setActiveInspector] = useState<InspectorPanel | null>(null);
   const toggleInspector = useCallback((panel: InspectorPanel) => {
     setActiveInspector(prev => (prev === panel ? null : panel));
@@ -1340,6 +1342,13 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   onClick={() => {
                     setActiveArtifact(a);
                     setShowArtifactList(false);
+                    recordDocumentAccess({
+                      id: String(a.id),
+                      title: a.title,
+                      projectId: String(projectId),
+                      ctdSection: a.ctdSection,
+                      status: a.status,
+                    });
                   }}
                   className="w-full text-left px-4 py-3 rounded-lg border border-transparent hover:border-zinc-200 hover:bg-zinc-50/80 hover:shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all group relative"
                 >
@@ -1673,6 +1682,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           <div className="flex items-center gap-0.5">
             <button data-testid="ribbon-comments" onClick={() => toggleInspector('comments')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap relative', activeInspector === 'comments' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><MessageSquare className="w-3.5 h-3.5" />Comments{comments.filter(c => !c.resolved).length > 0 && (<span className={cn('ml-1 inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full text-[10px] font-bold', activeInspector === 'comments' ? 'bg-white text-blue-600' : 'bg-amber-500 text-white')}>{comments.filter(c => !c.resolved).length}</span>)}</button>
             <button data-testid="ribbon-review" onClick={() => toggleInspector('review')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', isReviewMode ? 'bg-amber-500 text-white font-medium shadow-sm' : activeInspector === 'review' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Eye className="w-3.5 h-3.5" />Review{isReviewMode && <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}</button>
+            <button data-testid="ribbon-reviewers" onClick={() => toggleInspector('reviewers')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'reviewers' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Users className="w-3.5 h-3.5" />Reviewers</button>
             <button data-testid="ribbon-versions" onClick={() => toggleInspector('versions')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'versions' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><GitCompare className="w-3.5 h-3.5" />History</button>
             <button data-testid="ribbon-compare" onClick={() => toggleInspector('compare')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'compare' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><GitCompare className="w-3.5 h-3.5" />Compare</button>
           </div>
@@ -2254,6 +2264,23 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 } else {
                   pushToast('Comment location not found in document', 'info');
                 }
+              }}
+              onClose={() => setActiveInspector(null)}
+            />
+          </div>
+        )}
+        {/* Reviewer Assignment Panel */}
+        {activeInspector === 'reviewers' && activeArtifact && (
+          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-200 overflow-y-auto">
+            <ReviewerAssignment
+              documentId={activeArtifact.id}
+              documentTitle={activeArtifact.title}
+              currentStatus={activeArtifact.status}
+              reviewers={[]}
+              teamMembers={[]}
+              onSubmitForReview={async () => {
+                await handleStatusChange('review');
+                pushToast('Document submitted for review', 'success');
               }}
               onClose={() => setActiveInspector(null)}
             />

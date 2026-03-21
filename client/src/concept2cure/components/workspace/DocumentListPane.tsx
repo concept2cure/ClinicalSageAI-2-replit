@@ -163,11 +163,20 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
             <p className="text-sm font-medium text-zinc-500 mb-1">
               {documents.length === 0 ? 'No documents in this folder' : 'No matching documents'}
             </p>
-            <p className="text-xs text-zinc-400 max-w-[260px]">
+            <p className="text-xs text-zinc-400 max-w-[260px] mb-3">
               {documents.length === 0
-                ? 'Documents will appear here once created or moved into this category.'
-                : 'Try adjusting your search or filter criteria.'}
+                ? 'Create your first document to start regulatory authoring.'
+                : 'Try broadening your search or adjusting filters.'}
             </p>
+            {documents.length === 0 && onCreateNew && (
+              <button
+                onClick={onCreateNew}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
+              >
+                <Plus className="w-3 h-3" />
+                Create Document
+              </button>
+            )}
           </div>
         ) : (
           <table className="w-full text-left text-sm">
