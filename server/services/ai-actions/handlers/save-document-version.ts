@@ -1,16 +1,15 @@
 /**
  * Save Document Version Handler
  *
- * Creates a versioned snapshot of a unified document.
- * Wraps the existing atomVersionService for governed versioning.
- *
- * Phase 1: Single-document version save with audit trail.
- * Phase 2: Batch versioning, cross-document version sets.
+ * Creates a real versioned snapshot in workflowDocumentVersions table,
+ * increments the document counter, and optionally updates status.
+ * All operations run in a transaction for atomicity.
  */
 
 import { eq, and } from 'drizzle-orm';
-import { unifiedDocuments } from '../../../../shared/schema/unified_workflow';
+import { unifiedDocuments, workflowDocumentVersions } from '../../../../shared/schema/unified_workflow';
 import { registerActionHandler } from '../action-registry';
+import { fetchDocument, isValidDocumentStatus } from '../shared-utils';
 import type {
   AIActionHandler,
   AIActionRequest,
@@ -31,6 +30,14 @@ const handler: AIActionHandler = {
         message: 'targetId is required — must be the document ID',
       });
     }
+    // Validate status if provided
+    const status = request.payload?.status as string | undefined;
+    if (status && !isValidDocumentStatus(status)) {
+      errors.push({
+        code: 'INVALID_STATUS',
+        message: `Invalid document status '${status}'. Allowed: draft, in_review, approved, published, archived, rejected`,
+      });
+    }
     return errors;
   },
 
@@ -42,27 +49,10 @@ const handler: AIActionHandler = {
     const payload = request.payload || {};
     const documentId = Number(request.targetId);
 
-    // 1. Fetch document
-    const [doc] = await db
-      .select()
-      .from(unifiedDocuments)
-      .where(
-        and(
-          eq(unifiedDocuments.id, documentId),
-          eq(unifiedDocuments.organizationId, ctx.user.organizationId)
-        )
-      )
-      .limit(1);
+    // 1. Fetch document (org-scoped)
+    const doc = await fetchDocument(db, documentId, ctx.user.organizationId);
 
-    if (!doc) {
-      throw new AIActionHandlerError(
-        'DOCUMENT_NOT_FOUND',
-        `Document ${documentId} not found`,
-        404
-      );
-    }
-
-    // 2. Check document isn't in a terminal state
+    // 2. Check terminal state
     if (doc.status === 'archived') {
       throw new AIActionHandlerError(
         'DOCUMENT_ARCHIVED',
@@ -71,28 +61,51 @@ const handler: AIActionHandler = {
       );
     }
 
-    // 3. Increment version
+    // 3. Execute in transaction: create version record + bump counter
     const newVersion = (doc.latestVersion || 1) + 1;
     const newStatus = (payload.status as string) || doc.status;
     const changeReason = (payload.changeReason as string) || 'AI action: save version';
+    const content = (payload.content as string) || (doc.metadata as any)?.content || '';
 
-    const [updated] = await db
-      .update(unifiedDocuments)
-      .set({
-        latestVersion: newVersion,
-        updatedBy: ctx.user.userName,
-        updatedAt: new Date(),
-        status: newStatus,
-        metadata: {
-          ...(doc.metadata || {}),
-          lastVersionedBy: ctx.user.userId,
-          lastVersionedAt: new Date().toISOString(),
-          lastChangeReason: changeReason,
-          lastActionId: ctx.actionId,
-        },
-      })
-      .where(eq(unifiedDocuments.id, documentId))
-      .returning();
+    const { updated, versionRecord } = await db.transaction(async (tx: any) => {
+      // 3a. Create actual version snapshot
+      const [ver] = await tx
+        .insert(workflowDocumentVersions)
+        .values({
+          documentId,
+          version: newVersion,
+          content: {
+            body: content,
+            previousVersion: doc.latestVersion,
+            contentHash: require('crypto').createHash('sha256').update(content).digest('hex'),
+          },
+          createdBy: ctx.user.userName,
+          comments: changeReason,
+        })
+        .returning();
+
+      // 3b. Update document counter and metadata
+      const [upd] = await tx
+        .update(unifiedDocuments)
+        .set({
+          latestVersion: newVersion,
+          updatedBy: ctx.user.userName,
+          updatedAt: new Date(),
+          status: newStatus,
+          metadata: {
+            ...(doc.metadata || {}),
+            content, // Keep latest content in metadata for quick access
+            lastVersionedBy: ctx.user.userId,
+            lastVersionedAt: new Date().toISOString(),
+            lastChangeReason: changeReason,
+            lastActionId: ctx.actionId,
+          },
+        })
+        .where(eq(unifiedDocuments.id, documentId))
+        .returning();
+
+      return { updated: upd, versionRecord: ver };
+    });
 
     return {
       success: true,
@@ -102,10 +115,18 @@ const handler: AIActionHandler = {
         documentId: updated.id,
         previousVersion: doc.latestVersion,
         newVersion,
+        versionRecordId: versionRecord.id,
         status: updated.status,
         changeReason,
       },
-      createdObjects: [],
+      createdObjects: [
+        {
+          type: 'version',
+          id: versionRecord.id,
+          title: `v${newVersion} — ${updated.title}`,
+          status: 'created',
+        },
+      ],
       updatedObjects: [
         {
           type: 'document',
@@ -123,13 +144,14 @@ const handler: AIActionHandler = {
         organizationId: ctx.user.organizationId,
         projectId: request.projectId,
         sourceSurface: request.sourceSurface,
+        versionId: String(versionRecord.id),
       },
       nextSuggestedActions: [
         {
           actionType: 'run_validation',
           label: 'Validate new version',
           description: 'Run validation against the updated document version',
-          payload: { targetId: updated.id },
+          payload: { targetId: updated.id, targetType: 'document' },
         },
       ],
     };

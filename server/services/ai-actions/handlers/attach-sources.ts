@@ -8,10 +8,11 @@
  * Phase 2: Wire into sentenceTraceabilityService for sentence-level linking.
  */
 
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { unifiedDocuments } from '../../../../shared/schema/unified_workflow';
 import { concept2cureArtifacts } from '../../../../shared/schema';
 import { registerActionHandler } from '../action-registry';
+import { fetchDocument, fetchArtifact } from '../shared-utils';
 import type {
   AIActionHandler,
   AIActionRequest,
@@ -71,20 +72,7 @@ async function attachToDocument(
   request: AIActionRequest,
   ctx: AIActionExecutionContext
 ): Promise<AIActionResponse> {
-  const [doc] = await db
-    .select()
-    .from(unifiedDocuments)
-    .where(
-      and(
-        eq(unifiedDocuments.id, documentId),
-        eq(unifiedDocuments.organizationId, ctx.user.organizationId)
-      )
-    )
-    .limit(1);
-
-  if (!doc) {
-    throw new AIActionHandlerError('DOCUMENT_NOT_FOUND', `Document ${documentId} not found`, 404);
-  }
+  const doc = await fetchDocument(db, documentId, ctx.user.organizationId);
 
   const existingSources = ((doc.metadata as any)?.sources as SourceReference[]) || [];
   const mergedSources = deduplicateSources([...existingSources, ...sources]);
@@ -144,26 +132,7 @@ async function attachToArtifact(
   request: AIActionRequest,
   ctx: AIActionExecutionContext
 ): Promise<AIActionResponse> {
-  const whereClause =
-    typeof targetId === 'number' || /^\d+$/.test(String(targetId))
-      ? and(
-          eq(concept2cureArtifacts.id, Number(targetId)),
-          eq(concept2cureArtifacts.organizationId, ctx.user.organizationId)
-        )
-      : and(
-          eq(concept2cureArtifacts.artifactId, String(targetId)),
-          eq(concept2cureArtifacts.organizationId, ctx.user.organizationId)
-        );
-
-  const [artifact] = await db
-    .select()
-    .from(concept2cureArtifacts)
-    .where(whereClause)
-    .limit(1);
-
-  if (!artifact) {
-    throw new AIActionHandlerError('ARTIFACT_NOT_FOUND', `Artifact ${targetId} not found`, 404);
-  }
+  const artifact = await fetchArtifact(db, targetId, ctx.user.organizationId);
 
   const existingSources = ((artifact.metadata as any)?.sources as SourceReference[]) || [];
   const mergedSources = deduplicateSources([...existingSources, ...sources]);

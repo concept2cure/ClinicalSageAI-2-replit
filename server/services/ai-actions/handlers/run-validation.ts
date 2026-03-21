@@ -8,10 +8,8 @@
  * Phase 2: Multi-validator orchestration, cross-document validation, eCTD package validation.
  */
 
-import { eq, and } from 'drizzle-orm';
-import { concept2cureArtifacts } from '../../../../shared/schema';
-import { unifiedDocuments } from '../../../../shared/schema/unified_workflow';
 import { registerActionHandler } from '../action-registry';
+import { fetchContentForProcessing } from '../shared-utils';
 import type {
   AIActionHandler,
   AIActionRequest,
@@ -52,10 +50,10 @@ const handler: AIActionHandler = {
     const payload = request.payload || {};
 
     // 1. Fetch content to validate
-    const { content, title, documentType } = await fetchContent(
+    const { content, title, documentType } = await fetchContentForProcessing(
       db,
       request.targetType,
-      request.targetId!,
+      request.targetId,
       ctx.user.organizationId,
       payload
     );
@@ -156,75 +154,6 @@ const handler: AIActionHandler = {
     };
   },
 };
-
-// ---------------------------------------------------------------------------
-// Content Fetching
-// ---------------------------------------------------------------------------
-
-async function fetchContent(
-  db: any,
-  targetType: string,
-  targetId: string | number,
-  organizationId: number,
-  payload: Record<string, unknown>
-): Promise<{ content: string; title: string; documentType: string | undefined }> {
-  // Allow inline content override for ad-hoc validation
-  if (payload.content && typeof payload.content === 'string') {
-    return {
-      content: payload.content,
-      title: (payload.title as string) || 'Inline content',
-      documentType: payload.documentType as string | undefined,
-    };
-  }
-
-  if (targetType === 'artifact') {
-    const [artifact] = await db
-      .select()
-      .from(concept2cureArtifacts)
-      .where(
-        and(
-          typeof targetId === 'number' || /^\d+$/.test(String(targetId))
-            ? eq(concept2cureArtifacts.id, Number(targetId))
-            : eq(concept2cureArtifacts.artifactId, String(targetId)),
-          eq(concept2cureArtifacts.organizationId, organizationId)
-        )
-      )
-      .limit(1);
-
-    if (!artifact) {
-      throw new AIActionHandlerError('ARTIFACT_NOT_FOUND', `Artifact ${targetId} not found`, 404);
-    }
-    return {
-      content: artifact.content || '',
-      title: artifact.title,
-      documentType: (payload.documentType as string) || artifact.type,
-    };
-  }
-
-  if (targetType === 'document') {
-    const [doc] = await db
-      .select()
-      .from(unifiedDocuments)
-      .where(
-        and(
-          eq(unifiedDocuments.id, Number(targetId)),
-          eq(unifiedDocuments.organizationId, organizationId)
-        )
-      )
-      .limit(1);
-
-    if (!doc) {
-      throw new AIActionHandlerError('DOCUMENT_NOT_FOUND', `Document ${targetId} not found`, 404);
-    }
-    return {
-      content: (doc.metadata as any)?.content || '',
-      title: doc.title,
-      documentType: (payload.documentType as string) || doc.documentType,
-    };
-  }
-
-  throw new AIActionHandlerError('INVALID_TARGET_TYPE', `Unsupported target type: ${targetType}`, 400);
-}
 
 // ---------------------------------------------------------------------------
 // Validation Result Mapping

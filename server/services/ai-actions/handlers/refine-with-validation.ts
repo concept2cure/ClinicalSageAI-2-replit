@@ -12,8 +12,8 @@
 
 import { eq, and } from 'drizzle-orm';
 import { concept2cureArtifacts } from '../../../../shared/schema';
-import { unifiedDocuments } from '../../../../shared/schema/unified_workflow';
 import { registerActionHandler } from '../action-registry';
+import { fetchContentForProcessing, artifactWhereClause } from '../shared-utils';
 import type {
   AIActionHandler,
   AIActionRequest,
@@ -60,14 +60,11 @@ const handler: AIActionHandler = {
     let originalContent: string;
     let title: string;
 
-    if (payload.content && typeof payload.content === 'string') {
-      originalContent = payload.content;
-      title = (payload.title as string) || 'Inline content';
-    } else {
-      const fetched = await fetchContent(db, request.targetType, request.targetId!, ctx.user.organizationId);
-      originalContent = fetched.content;
-      title = fetched.title;
-    }
+    const fetched = await fetchContentForProcessing(
+      db, request.targetType, request.targetId, ctx.user.organizationId, payload
+    );
+    originalContent = fetched.content;
+    title = fetched.title;
 
     if (!originalContent || originalContent.trim().length === 0) {
       throw new AIActionHandlerError('EMPTY_CONTENT', 'Cannot refine empty content', 400);
@@ -121,7 +118,6 @@ const handler: AIActionHandler = {
     const updatedObjects = [];
     if (request.targetId && request.targetType === 'artifact') {
       try {
-        const isNumericId = typeof request.targetId === 'number' || /^\d+$/.test(String(request.targetId));
         await db
           .update(concept2cureArtifacts)
           .set({
@@ -135,14 +131,7 @@ const handler: AIActionHandler = {
             },
             updatedAt: new Date(),
           })
-          .where(
-            and(
-              isNumericId
-                ? eq(concept2cureArtifacts.id, Number(request.targetId))
-                : eq(concept2cureArtifacts.artifactId, String(request.targetId)),
-              eq(concept2cureArtifacts.organizationId, ctx.user.organizationId)
-            )
-          );
+          .where(artifactWhereClause(request.targetId, ctx.user.organizationId));
 
         updatedObjects.push({
           type: 'artifact',
@@ -266,71 +255,16 @@ Provide the complete revised content with all findings addressed.`;
 // Helpers
 // ---------------------------------------------------------------------------
 
-async function fetchContent(
-  db: any,
-  targetType: string,
-  targetId: string | number,
-  organizationId: number
-): Promise<{ content: string; title: string }> {
-  if (targetType === 'artifact') {
-    const [artifact] = await db
-      .select()
-      .from(concept2cureArtifacts)
-      .where(
-        and(
-          typeof targetId === 'number' || /^\d+$/.test(String(targetId))
-            ? eq(concept2cureArtifacts.id, Number(targetId))
-            : eq(concept2cureArtifacts.artifactId, String(targetId)),
-          eq(concept2cureArtifacts.organizationId, organizationId)
-        )
-      )
-      .limit(1);
-
-    if (!artifact) {
-      throw new AIActionHandlerError('ARTIFACT_NOT_FOUND', `Artifact ${targetId} not found`, 404);
-    }
-    return { content: artifact.content || '', title: artifact.title };
-  }
-
-  if (targetType === 'document') {
-    const [doc] = await db
-      .select()
-      .from(unifiedDocuments)
-      .where(
-        and(
-          eq(unifiedDocuments.id, Number(targetId)),
-          eq(unifiedDocuments.organizationId, organizationId)
-        )
-      )
-      .limit(1);
-
-    if (!doc) {
-      throw new AIActionHandlerError('DOCUMENT_NOT_FOUND', `Document ${targetId} not found`, 404);
-    }
-    return { content: (doc.metadata as any)?.content || '', title: doc.title };
-  }
-
-  throw new AIActionHandlerError('INVALID_TARGET_TYPE', `Unsupported: ${targetType}`, 400);
-}
-
 async function getArtifactVersion(
   db: any,
   targetId: string | number,
   organizationId: number
 ): Promise<number> {
   try {
-    const isNumericId = typeof targetId === 'number' || /^\d+$/.test(String(targetId));
     const [artifact] = await db
       .select({ version: concept2cureArtifacts.version })
       .from(concept2cureArtifacts)
-      .where(
-        and(
-          isNumericId
-            ? eq(concept2cureArtifacts.id, Number(targetId))
-            : eq(concept2cureArtifacts.artifactId, String(targetId)),
-          eq(concept2cureArtifacts.organizationId, organizationId)
-        )
-      )
+      .where(artifactWhereClause(targetId, organizationId))
       .limit(1);
     return artifact?.version || 1;
   } catch {

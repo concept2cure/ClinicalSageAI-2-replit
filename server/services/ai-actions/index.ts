@@ -10,8 +10,21 @@ export {
   registerActionHandler,
   dispatchAction,
   getRegisteredActions,
+  getActionMetrics,
 } from './action-registry';
 export type { DispatchOptions } from './action-registry';
+
+// Shared utilities
+export {
+  fetchArtifact,
+  fetchDocument,
+  fetchContentForProcessing,
+  isValidActionType,
+  isValidSourceSurface,
+  isValidDocumentStatus,
+  isValidModuleType,
+  checkActionPermission,
+} from './shared-utils';
 
 // Load all handlers (side-effect imports that call registerActionHandler)
 import './handlers/promote-artifact';

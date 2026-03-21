@@ -14,6 +14,7 @@ import {
   moduleDocuments,
 } from '../../../../shared/schema/unified_workflow';
 import { registerActionHandler } from '../action-registry';
+import { fetchDocument, isValidModuleType } from '../shared-utils';
 import type {
   AIActionHandler,
   AIActionRequest,
@@ -31,8 +32,11 @@ const handler: AIActionHandler = {
     if (!request.targetId) {
       errors.push({ code: 'MISSING_TARGET', message: 'targetId (document ID) is required' });
     }
-    if (!request.module && !request.payload?.module) {
+    const moduleType = (request.module || request.payload?.module) as string | undefined;
+    if (!moduleType) {
       errors.push({ code: 'MISSING_MODULE', message: 'module is required for routing' });
+    } else if (!isValidModuleType(moduleType)) {
+      errors.push({ code: 'INVALID_MODULE', message: `Invalid module type '${moduleType}'. Allowed: cmc, cer, study, ectd, 510k, vault` });
     }
     return errors;
   },
@@ -46,20 +50,7 @@ const handler: AIActionHandler = {
     const moduleType = (request.module || request.payload?.module) as string;
 
     // 1. Verify document exists and belongs to org
-    const [doc] = await db
-      .select()
-      .from(unifiedDocuments)
-      .where(
-        and(
-          eq(unifiedDocuments.id, documentId),
-          eq(unifiedDocuments.organizationId, ctx.user.organizationId)
-        )
-      )
-      .limit(1);
-
-    if (!doc) {
-      throw new AIActionHandlerError('DOCUMENT_NOT_FOUND', `Document ${documentId} not found`, 404);
-    }
+    const doc = await fetchDocument(db, documentId, ctx.user.organizationId);
 
     // 2. Check for existing module link (prevent duplicates)
     const existing = await db
@@ -108,7 +99,8 @@ const handler: AIActionHandler = {
       .values({
         unifiedDocumentId: documentId,
         moduleType,
-        moduleSpecificId: (request.payload?.moduleSpecificId as string) || null,
+        originalId: (request.payload?.moduleSpecificId as string) || `doc-${documentId}`,
+        organizationId: ctx.user.organizationId,
         metadata: {
           routedBy: ctx.user.userId,
           routedAt: new Date().toISOString(),

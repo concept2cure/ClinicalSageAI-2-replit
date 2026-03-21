@@ -17,7 +17,8 @@ import * as crypto from 'crypto';
 import {
   concept2cureArtifacts,
 } from '../../../../shared/schema';
-import { unifiedDocuments } from '../../../../shared/schema/unified_workflow';
+import { unifiedDocuments, workflowDocumentVersions } from '../../../../shared/schema/unified_workflow';
+import { fetchArtifact } from '../shared-utils';
 import { registerActionHandler } from '../action-registry';
 import type {
   AIActionHandler,
@@ -64,28 +65,11 @@ const promoteArtifactHandler: AIActionHandler = {
     const db = ctx.db as any; // Drizzle instance
     const payload = request.payload || {};
 
-    // 1. Fetch the artifact
-    const artifact = await findArtifact(db, request.targetId!, ctx.user.organizationId);
-    if (!artifact) {
-      throw new AIActionHandlerError(
-        'ARTIFACT_NOT_FOUND',
-        `Artifact ${request.targetId} not found or not accessible`,
-        404
-      );
-    }
+    // 1. Fetch the artifact (org-scoped via shared utility)
+    const artifact = await fetchArtifact(db, request.targetId!, ctx.user.organizationId);
 
-    // 2. Verify org ownership
-    if (artifact.organizationId !== ctx.user.organizationId) {
-      throw new AIActionHandlerError(
-        'FORBIDDEN',
-        'Artifact belongs to a different organization',
-        403
-      );
-    }
-
-    // 3. Check artifact isn't already promoted (idempotency guard)
-    const existingStatus = artifact.status;
-    if (existingStatus === 'locked') {
+    // 2. Check artifact isn't already promoted (idempotency guard)
+    if (artifact.status === 'locked') {
       throw new AIActionHandlerError(
         'ALREADY_LOCKED',
         'Artifact is locked and cannot be promoted again. Create a new version instead.',
@@ -93,54 +77,66 @@ const promoteArtifactHandler: AIActionHandler = {
       );
     }
 
-    // 4. Create unified document from artifact content
+    // 3. Prepare promotion data
     const documentType = (payload.documentType as string) || mapArtifactTypeToDocType(artifact.type);
     const title = (payload.title as string) || artifact.title;
     const moduleType = request.module || inferModuleFromContext(request);
+    const contentHash = crypto.createHash('sha256').update(artifact.content || '').digest('hex');
 
-    const [newDoc] = await db
-      .insert(unifiedDocuments)
-      .values({
-        title,
-        documentType,
-        status: 'draft',
+    // 4. Execute promotion in a transaction (atomic: create doc + version + update artifact)
+    const { newDoc } = await db.transaction(async (tx: any) => {
+      // 4a. Create unified document with content in metadata
+      const [doc] = await tx
+        .insert(unifiedDocuments)
+        .values({
+          title,
+          documentType,
+          status: 'draft',
+          createdBy: ctx.user.userName,
+          organizationId: ctx.user.organizationId,
+          latestVersion: 1,
+          metadata: {
+            content: artifact.content || '',
+            sourceArtifactId: artifact.id,
+            sourceArtifactExternalId: artifact.artifactId,
+            promotedBy: ctx.user.userId,
+            promotedAt: new Date().toISOString(),
+            projectId: request.projectId,
+            module: moduleType,
+            ctdSection: artifact.ctdSection || (payload.ctdSection as string) || null,
+            contentHash,
+            promotionActionId: ctx.actionId,
+          },
+        })
+        .returning();
+
+      // 4b. Create initial version record for audit trail
+      await tx.insert(workflowDocumentVersions).values({
+        documentId: doc.id,
+        version: 1,
+        content: { body: artifact.content || '', sourceArtifactId: artifact.artifactId },
         createdBy: ctx.user.userName,
-        organizationId: ctx.user.organizationId,
-        latestVersion: 1,
-        metadata: {
-          sourceArtifactId: artifact.id,
-          sourceArtifactExternalId: artifact.artifactId,
-          promotedBy: ctx.user.userId,
-          promotedAt: new Date().toISOString(),
-          projectId: request.projectId,
-          module: moduleType,
-          ctdSection: artifact.ctdSection || (payload.ctdSection as string) || null,
-          contentHash: crypto
-            .createHash('sha256')
-            .update(artifact.content || '')
-            .digest('hex'),
-          promotionActionId: ctx.actionId,
-        },
-      })
-      .returning();
+        comments: `Promoted from artifact ${artifact.artifactId}`,
+      });
 
-    // 5. Update artifact status to 'promoted' (custom status addition)
-    //    Since the enum only has draft/review/approved/locked, we use metadata
-    //    to track promotion while keeping status as 'approved'.
-    await db
-      .update(concept2cureArtifacts)
-      .set({
-        status: 'approved',
-        metadata: {
-          ...(artifact.metadata as Record<string, unknown> || {}),
-          promotedToDocumentId: newDoc.id,
-          promotedAt: new Date().toISOString(),
-          promotedBy: ctx.user.userId,
-          promotionActionId: ctx.actionId,
-        },
-        updatedAt: new Date(),
-      })
-      .where(eq(concept2cureArtifacts.id, artifact.id));
+      // 4c. Update artifact status
+      await tx
+        .update(concept2cureArtifacts)
+        .set({
+          status: 'approved',
+          metadata: {
+            ...(artifact.metadata as Record<string, unknown> || {}),
+            promotedToDocumentId: doc.id,
+            promotedAt: new Date().toISOString(),
+            promotedBy: ctx.user.userId,
+            promotionActionId: ctx.actionId,
+          },
+          updatedAt: new Date(),
+        })
+        .where(eq(concept2cureArtifacts.id, artifact.id));
+
+      return { newDoc: doc };
+    });
 
     // 6. Build response
     const createdObjects: AIActionObjectRef[] = [
@@ -229,43 +225,6 @@ const createDocumentFromArtifactHandler: AIActionHandler = {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-async function findArtifact(
-  db: any,
-  targetId: string | number,
-  organizationId: number
-): Promise<any | null> {
-  // Try by numeric ID first, then by external artifactId string
-  let results;
-
-  if (typeof targetId === 'number' || /^\d+$/.test(String(targetId))) {
-    results = await db
-      .select()
-      .from(concept2cureArtifacts)
-      .where(
-        and(
-          eq(concept2cureArtifacts.id, Number(targetId)),
-          eq(concept2cureArtifacts.organizationId, organizationId)
-        )
-      )
-      .limit(1);
-  }
-
-  if (!results || results.length === 0) {
-    results = await db
-      .select()
-      .from(concept2cureArtifacts)
-      .where(
-        and(
-          eq(concept2cureArtifacts.artifactId, String(targetId)),
-          eq(concept2cureArtifacts.organizationId, organizationId)
-        )
-      )
-      .limit(1);
-  }
-
-  return results?.[0] || null;
-}
 
 function mapArtifactTypeToDocType(artifactType: string): string {
   const mapping: Record<string, string> = {

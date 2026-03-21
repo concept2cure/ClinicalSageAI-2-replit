@@ -8,9 +8,10 @@
  * Phase 2: Inline export execution with streaming download.
  */
 
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { unifiedDocuments } from '../../../../shared/schema/unified_workflow';
 import { registerActionHandler } from '../action-registry';
+import { fetchDocument } from '../shared-utils';
 import type {
   AIActionHandler,
   AIActionRequest,
@@ -39,21 +40,8 @@ const handler: AIActionHandler = {
     const documentId = Number(request.targetId);
     const format = (request.payload?.format as string) || 'pdf';
 
-    // 1. Verify document exists
-    const [doc] = await db
-      .select()
-      .from(unifiedDocuments)
-      .where(
-        and(
-          eq(unifiedDocuments.id, documentId),
-          eq(unifiedDocuments.organizationId, ctx.user.organizationId)
-        )
-      )
-      .limit(1);
-
-    if (!doc) {
-      throw new AIActionHandlerError('DOCUMENT_NOT_FOUND', `Document ${documentId} not found`, 404);
-    }
+    // 1. Verify document exists (org-scoped)
+    const doc = await fetchDocument(db, documentId, ctx.user.organizationId);
 
     // Phase 1: Record the export intent and return the export URL for client-side download.
     // Actual export is handled by existing routes (cerv2-export-routes, export_routes).
