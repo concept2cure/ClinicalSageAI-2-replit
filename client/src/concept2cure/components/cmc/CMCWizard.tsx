@@ -238,10 +238,10 @@ const GuardrailCard: React.FC<{
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div>
-          <span className={cn('text-xs font-bold', guidelineConfig.color)}>
+          <span className={cn('text-xs font-semibold', guidelineConfig.color)}>
             ICH {guidelineConfig.name}
           </span>
-          <h4 className="font-medium text-zinc-800">{guardrail.parameter}</h4>
+          <h4 className="font-medium text-zinc-900">{guardrail.parameter}</h4>
         </div>
         <span
           className={cn(
@@ -259,7 +259,7 @@ const GuardrailCard: React.FC<{
       <div className="mb-3">
         <div className="flex justify-between text-xs mb-1">
           <span className="text-zinc-500">Current Value</span>
-          <span className={cn('font-mono font-bold', statusConfig.color)}>
+          <span className={cn('font-mono font-semibold', statusConfig.color)}>
             {guardrail.currentValue} {guardrail.unit}
           </span>
         </div>
@@ -326,7 +326,7 @@ const ImpurityTable: React.FC<{
 }> = ({ impurities, onReview }) => (
   <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden">
     <div className="p-3 bg-zinc-50 border-b border-zinc-200">
-      <h3 className="text-sm font-semibold text-zinc-800 flex items-center gap-2">
+      <h3 className="text-sm font-semibold text-zinc-900 flex items-center gap-2">
         <Beaker className="w-4 h-4 text-orange-600" />
         Impurity Profile (ICH Q3A/Q3B)
       </h3>
@@ -351,7 +351,7 @@ const ImpurityTable: React.FC<{
               <tr key={imp.id} className="border-b border-zinc-200 hover:bg-zinc-50">
                 <td className="px-3 py-2">
                   <div>
-                    <span className="font-medium text-zinc-800">{imp.name}</span>
+                    <span className="font-medium text-zinc-900">{imp.name}</span>
                     <span
                       className={cn(
                         'ml-2 px-1.5 py-0.5 text-xs rounded',
@@ -364,7 +364,7 @@ const ImpurityTable: React.FC<{
                     </span>
                   </div>
                 </td>
-                <td className="px-3 py-2 text-right font-mono font-medium text-zinc-800">
+                <td className="px-3 py-2 text-right font-mono font-medium text-zinc-900">
                   {imp.currentLevel}%
                 </td>
                 <td className="px-3 py-2 text-right font-mono text-zinc-500">
@@ -427,7 +427,7 @@ const StabilityChart: React.FC<{
 }> = ({ conditions }) => (
   <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden">
     <div className="p-3 bg-zinc-50 border-b border-zinc-200">
-      <h3 className="text-sm font-semibold text-zinc-800 flex items-center gap-2">
+      <h3 className="text-sm font-semibold text-zinc-900 flex items-center gap-2">
         <ThermometerSun className="w-4 h-4 text-blue-600" />
         Stability Summary (ICH Q1A)
       </h3>
@@ -525,7 +525,7 @@ export const CMCWizard: React.FC<CMCWizardProps> = ({
               <Settings className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold">CMC Wizard</h1>
+              <h1 className="text-xl font-semibold">CMC Wizard</h1>
               <p className="text-green-100 text-sm">ICH Quality Guardrails • The Gear Master</p>
             </div>
           </div>
@@ -544,7 +544,7 @@ export const CMCWizard: React.FC<CMCWizardProps> = ({
           <div className="flex items-center gap-6">
             <div>
               <span className="text-xs text-green-200">DRUG SUBSTANCE</span>
-              <h2 className="text-lg font-bold">{substance.name}</h2>
+              <h2 className="text-lg font-semibold">{substance.name}</h2>
               {substance.inn && <p className="text-sm text-green-100">INN: {substance.inn}</p>}
             </div>
             <div className="text-sm">
@@ -562,7 +562,7 @@ export const CMCWizard: React.FC<CMCWizardProps> = ({
         <div className="grid grid-cols-5 gap-3">
           <div className="p-3 bg-white/10 rounded-lg">
             <p className="text-xs text-green-200">Guardrails Pass</p>
-            <p className="text-2xl font-bold text-green-300">{metrics.passCount}</p>
+            <p className="text-2xl font-semibold text-green-300">{metrics.passCount}</p>
           </div>
           <div
             className={cn(
@@ -571,7 +571,7 @@ export const CMCWizard: React.FC<CMCWizardProps> = ({
             )}
           >
             <p className="text-xs text-amber-200">Warnings</p>
-            <p className="text-2xl font-bold text-amber-300">{metrics.warningCount}</p>
+            <p className="text-2xl font-semibold text-amber-300">{metrics.warningCount}</p>
           </div>
           <div
             className={cn(
@@ -580,7 +580,7 @@ export const CMCWizard: React.FC<CMCWizardProps> = ({
             )}
           >
             <p className="text-xs text-red-200">Failures</p>
-            <p className="text-2xl font-bold text-red-300">{metrics.failCount}</p>
+            <p className="text-2xl font-semibold text-red-300">{metrics.failCount}</p>
           </div>
           <div
             className={cn(
@@ -589,7 +589,7 @@ export const CMCWizard: React.FC<CMCWizardProps> = ({
             )}
           >
             <p className="text-xs text-purple-200">Need Justification</p>
-            <p className="text-2xl font-bold text-purple-300">{metrics.needsJustification}</p>
+            <p className="text-2xl font-semibold text-purple-300">{metrics.needsJustification}</p>
           </div>
           <div
             className={cn(
@@ -598,7 +598,7 @@ export const CMCWizard: React.FC<CMCWizardProps> = ({
             )}
           >
             <p className="text-xs text-orange-200">Impurity Issues</p>
-            <p className="text-2xl font-bold text-orange-300">{metrics.impurityIssues}</p>
+            <p className="text-2xl font-semibold text-orange-300">{metrics.impurityIssues}</p>
           </div>
         </div>
       </div>
@@ -619,7 +619,7 @@ export const CMCWizard: React.FC<CMCWizardProps> = ({
             >
               {tab.label}
               {tab.count > 0 && (
-                <span className="px-1.5 py-0.5 text-xs font-bold bg-amber-100 text-amber-700 rounded">
+                <span className="px-1.5 py-0.5 text-xs font-semibold bg-amber-100 text-amber-700 rounded">
                   {tab.count}
                 </span>
               )}
@@ -651,7 +651,7 @@ export const CMCWizard: React.FC<CMCWizardProps> = ({
         {activeTab === 'specs' && (
           <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden">
             <div className="p-3 bg-zinc-50 border-b border-zinc-200">
-              <h3 className="text-sm font-semibold text-zinc-800">Specifications (ICH Q6A/Q6B)</h3>
+              <h3 className="text-sm font-semibold text-zinc-900">Specifications (ICH Q6A/Q6B)</h3>
             </div>
             <table className="w-full text-xs">
               <thead>
@@ -668,10 +668,10 @@ export const CMCWizard: React.FC<CMCWizardProps> = ({
                   const statusConfig = STATUS_CONFIG[spec.status];
                   return (
                     <tr key={spec.id} className="border-b border-zinc-200">
-                      <td className="px-3 py-2 font-medium text-zinc-800">{spec.parameter}</td>
+                      <td className="px-3 py-2 font-medium text-zinc-900">{spec.parameter}</td>
                       <td className="px-3 py-2 text-zinc-600">{spec.method}</td>
                       <td className="px-3 py-2 font-mono text-zinc-600">{spec.acceptance}</td>
-                      <td className="px-3 py-2 font-mono font-medium text-zinc-800">
+                      <td className="px-3 py-2 font-mono font-medium text-zinc-900">
                         {spec.result}
                       </td>
                       <td className="px-3 py-2">

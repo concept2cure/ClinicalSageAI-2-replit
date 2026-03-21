@@ -266,7 +266,7 @@ export function AnAMemory({
           <div className="flex items-center gap-2">
             <Brain className="w-5 h-5 text-violet-600" />
             <div>
-              <h2 className="text-sm font-semibold text-zinc-800">AnA Memory</h2>
+              <h2 className="text-sm font-semibold text-zinc-900">AnA Memory</h2>
               <p className="text-[10px] text-zinc-500">
                 {entries.length} entries · {projectName || 'Project'}
               </p>
@@ -275,20 +275,20 @@ export function AnAMemory({
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => setShowAddForm(!showAddForm)}
-              className="p-1.5 rounded-md hover:bg-white/60 transition-colors"
+              className="p-1.5 rounded-md hover:bg-white/60 transition-colors duration-150"
               title="Add memory entry"
             >
               <Plus className="w-3.5 h-3.5 text-violet-600" />
             </button>
             <button
               onClick={handleExport}
-              className="p-1.5 rounded-md hover:bg-white/60 transition-colors"
+              className="p-1.5 rounded-md hover:bg-white/60 transition-colors duration-150"
               title="Export memory"
             >
               <Download className="w-3.5 h-3.5 text-zinc-500" />
             </button>
             {onClose && (
-              <button onClick={onClose} className="p-1.5 rounded-md hover:bg-white/60 transition-colors">
+              <button onClick={onClose} className="p-1.5 rounded-md hover:bg-white/60 transition-colors duration-150">
                 <X className="w-3.5 h-3.5 text-zinc-500" />
               </button>
             )}
@@ -412,7 +412,7 @@ export function AnAMemory({
               <div key={category} className="border-b border-zinc-100">
                 <button
                   onClick={() => toggleCategory(category)}
-                  className="w-full flex items-center gap-2 px-4 py-2.5 text-left hover:bg-zinc-50 transition-colors"
+                  className="w-full flex items-center gap-2 px-4 py-2.5 text-left hover:bg-zinc-50 transition-colors duration-150"
                 >
                   {isExpanded ? (
                     <ChevronDown className="w-3.5 h-3.5 text-zinc-400 shrink-0" />

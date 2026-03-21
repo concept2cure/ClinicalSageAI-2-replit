@@ -1,5 +1,5 @@
-/* Import Modern Theme Styles - Must come first */
-@import './styles/modern-theme.css';
+/* Zen Design System — enterprise UI foundation */
+@import './concept2cure/design/zen.css';
 
 @tailwind base;
 @tailwind components;

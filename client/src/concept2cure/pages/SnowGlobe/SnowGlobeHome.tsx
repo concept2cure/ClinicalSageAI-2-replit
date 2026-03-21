@@ -370,7 +370,7 @@ function ScoreCard({
 
       {/* Score value */}
       <div className="flex items-end gap-2">
-        <span className={cn('text-3xl font-bold tabular-nums', styles.text)}>
+        <span className={cn('text-3xl font-semibold tabular-nums', styles.text)}>
           {Math.round(entry.value)}
         </span>
         <span className={cn('mb-1 text-sm font-medium', styles.text)}>%</span>
@@ -427,7 +427,7 @@ function ChamberCard({
           <Icon className={cn('h-5 w-5', config.accent)} />
         </div>
         <div className="flex-1">
-          <h3 className="text-sm font-semibold text-zinc-800">{config.label}</h3>
+          <h3 className="text-sm font-semibold text-zinc-900">{config.label}</h3>
           {score !== undefined && (
             <span className={cn('text-xs font-medium', bandStyle.text)}>
               Score: {Math.round(score)}%
@@ -504,13 +504,13 @@ function RemediationRow({ action }: { action: RemediationAction }) {
   return (
     <div className="flex items-start gap-3 border-b border-zinc-200 px-4 py-3 last:border-b-0">
       {/* Priority number */}
-      <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
+      <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-semibold text-white">
         {action.priority}
       </span>
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-zinc-800">{action.title}</p>
+        <p className="text-sm font-medium text-zinc-900">{action.title}</p>
         <p className="mt-0.5 text-xs leading-relaxed text-zinc-500">{action.why}</p>
       </div>
 
@@ -559,9 +559,9 @@ function ScenarioPill({
     >
       <div className="min-w-0">
         <div className="flex items-center gap-1.5">
-          <span className="truncate text-sm font-medium text-zinc-800">{scenario.name}</span>
+          <span className="truncate text-sm font-medium text-zinc-900">{scenario.name}</span>
           {scenario.isBaseline && (
-            <span className="shrink-0 rounded bg-blue-100 px-1.5 py-0.5 text-xs font-bold uppercase tracking-wider text-blue-600">
+            <span className="shrink-0 rounded bg-blue-100 px-1.5 py-0.5 text-xs font-semibold uppercase tracking-wider text-blue-600">
               Baseline
             </span>
           )}
@@ -583,11 +583,11 @@ function ProgramSelector({
 }) {
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6 px-4">
-      <div className="rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
+      <div className="rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
         <Sparkles className="h-12 w-12 text-blue-500" />
       </div>
       <div className="text-center">
-        <h2 className="text-xl font-semibold text-zinc-800">
+        <h2 className="text-xl font-semibold text-zinc-900">
           Select a Program to Begin
         </h2>
         <p className="mt-2 max-w-md text-sm text-zinc-500">
@@ -828,7 +828,7 @@ export default function SnowGlobeHome({ programId }: SnowGlobeHomeProps) {
               <Sparkles className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold tracking-tight text-zinc-900">
+              <h1 className="text-xl font-semibold tracking-tight text-zinc-900">
                 AnA Predictions
               </h1>
               <p className="text-sm text-zinc-500">
@@ -952,7 +952,7 @@ export default function SnowGlobeHome({ programId }: SnowGlobeHomeProps) {
             <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 text-amber-500" />
-                <h3 className="text-sm font-semibold text-zinc-800">
+                <h3 className="text-sm font-semibold text-zinc-900">
                   Top Findings
                 </h3>
                 {topFindings && (
@@ -997,7 +997,7 @@ export default function SnowGlobeHome({ programId }: SnowGlobeHomeProps) {
             <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                <h3 className="text-sm font-semibold text-zinc-800">
+                <h3 className="text-sm font-semibold text-zinc-900">
                   Remediation Priorities
                 </h3>
               </div>
@@ -1093,7 +1093,7 @@ export default function SnowGlobeHome({ programId }: SnowGlobeHomeProps) {
       {/* Scenario Comparison Modal Overlay */}
       {showComparison && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="w-full max-w-5xl max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl border border-zinc-200">
+          <div className="w-full max-w-5xl max-h-[90vh] overflow-y-auto bg-white rounded-xl shadow-2xl border border-zinc-200">
             <Suspense fallback={<div className="flex items-center justify-center p-12"><Loader2 className="h-8 w-8 animate-spin text-zinc-400" /></div>}>
               <ScenarioComparison
                 programId={programId}

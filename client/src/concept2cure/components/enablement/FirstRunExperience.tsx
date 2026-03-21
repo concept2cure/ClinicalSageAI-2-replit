@@ -139,7 +139,7 @@ function WelcomeScreen({ userName, projectCount }: { userName?: string; projectC
 function DrSageScreen() {
   return (
     <div className="flex flex-col items-center justify-center h-full text-center px-8">
-      <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center mb-6">
+      <div className="w-14 h-14 rounded-xl bg-emerald-50 flex items-center justify-center mb-6">
         <span className="text-2xl">&#x1F9D1;&#x200D;&#x2695;&#xFE0F;</span>
       </div>
       <h2 className="text-3xl font-semibold text-zinc-900">Meet Dr. Sage</h2>
@@ -170,7 +170,7 @@ function DrSageScreen() {
 function AnAScreen() {
   return (
     <div className="flex flex-col items-center justify-center h-full text-center px-8">
-      <div className="w-14 h-14 rounded-2xl bg-violet-50 flex items-center justify-center mb-6">
+      <div className="w-14 h-14 rounded-xl bg-violet-50 flex items-center justify-center mb-6">
         <span className="text-2xl">&#x2728;</span>
       </div>
       <h2 className="text-3xl font-semibold text-zinc-900">Meet AnA</h2>
@@ -314,7 +314,7 @@ function AgentTeamScreen({
                 <button
                   key={agent.id}
                   onClick={() => onToggleAgent(agent.id)}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded hover:bg-zinc-50 transition-colors"
+                  className="w-full flex items-center justify-between px-3 py-2 rounded hover:bg-zinc-50 transition-colors duration-150"
                 >
                   <div className="text-left">
                     <span className="text-sm text-zinc-900">{agent.name}</span>
@@ -413,7 +413,7 @@ function ReadyScreen({
 
       <button
         onClick={onLaunch}
-        className="text-sm font-medium text-blue-600 hover:underline transition-colors"
+        className="text-sm font-medium text-blue-600 hover:underline transition-colors duration-150"
       >
         Launch Concept2Cure
       </button>
@@ -546,7 +546,7 @@ export default function FirstRunExperience({ onComplete, onSkip, existingProject
           {screen > 0 && (
             <button
               onClick={goPrev}
-              className="text-sm text-zinc-600 hover:text-zinc-900 transition-colors"
+              className="text-sm text-zinc-600 hover:text-zinc-900 transition-colors duration-150"
             >
               &larr; Back
             </button>
@@ -558,7 +558,7 @@ export default function FirstRunExperience({ onComplete, onSkip, existingProject
         <div className="flex items-center gap-6">
           <button
             onClick={handleSkip}
-            className="text-sm text-zinc-400 hover:text-zinc-600 transition-colors"
+            className="text-sm text-zinc-400 hover:text-zinc-600 transition-colors duration-150"
           >
             Skip
           </button>

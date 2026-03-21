@@ -451,21 +451,21 @@ export function SubmissionBuilder({
         <div className="flex items-center gap-2">
           <button
             onClick={onOpenChecklist}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors duration-150"
           >
             <ClipboardCheck className="h-3.5 w-3.5" />
             Checklist
           </button>
           <button
             onClick={onValidate}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 rounded-md hover:bg-amber-100 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 rounded-md hover:bg-amber-100 transition-colors duration-150"
           >
             <AlertTriangle className="h-3.5 w-3.5" />
             Validate
           </button>
           <button
             onClick={onGeneratePackage}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors duration-150"
           >
             <Download className="h-3.5 w-3.5" />
             Generate Package
@@ -482,7 +482,7 @@ export function SubmissionBuilder({
       <div className="px-4 py-3 border-b border-slate-100 bg-slate-50">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-medium text-slate-600">Submission Readiness</span>
-          <span className="text-sm font-bold text-indigo-600">{stats.readiness}%</span>
+          <span className="text-sm font-semibold text-indigo-600">{stats.readiness}%</span>
         </div>
         <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
           <div
@@ -667,14 +667,14 @@ function SectionDetail({
       <div className="flex items-center gap-2 mb-4">
         <button
           onClick={onTogglePicker}
-          className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-md hover:bg-indigo-100 transition-colors"
+          className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-md hover:bg-indigo-100 transition-colors duration-150"
         >
           <Link2 className="h-3 w-3" />
           Assign Existing
         </button>
         <button
           onClick={onCreateArtifact}
-          className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-emerald-600 bg-emerald-50 rounded-md hover:bg-emerald-100 transition-colors"
+          className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-emerald-600 bg-emerald-50 rounded-md hover:bg-emerald-100 transition-colors duration-150"
         >
           <Plus className="h-3 w-3" />
           Create New
@@ -702,7 +702,7 @@ function SectionDetail({
                 <button
                   key={a.id}
                   onClick={() => onAssign(a.id)}
-                  className="w-full flex items-center gap-2 p-1.5 text-left rounded hover:bg-white transition-colors"
+                  className="w-full flex items-center gap-2 p-1.5 text-left rounded hover:bg-white transition-colors duration-150"
                 >
                   <FileText className="h-3 w-3 text-slate-400 shrink-0" />
                   <span className="text-xs text-slate-700 truncate flex-1">{a.title}</span>

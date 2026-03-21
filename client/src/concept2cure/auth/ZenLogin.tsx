@@ -589,7 +589,7 @@ export const ZenLogin: React.FC = () => {
           rounded-xl
           transition-all duration-200
           disabled:opacity-60 disabled:cursor-not-allowed
-          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+          focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none
         `}
       >
         {isLoading ? <SpinnerIcon /> : 'Continue'}
@@ -732,7 +732,7 @@ export const ZenLogin: React.FC = () => {
       <div className="flex items-center gap-3">
         <button
           onClick={() => setStep('email')}
-          className="p-2 rounded-lg hover:bg-zinc-100 transition-colors"
+          className="p-2 rounded-lg hover:bg-zinc-100 transition-colors duration-150"
           aria-label="Go back"
         >
           <ArrowLeftIcon />
@@ -843,7 +843,7 @@ export const ZenLogin: React.FC = () => {
           rounded-xl
           transition-all duration-200
           disabled:opacity-60 disabled:cursor-not-allowed
-          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+          focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none
         `}
       >
         {isLoading ? <SpinnerIcon /> : 'Sign in'}
@@ -863,7 +863,7 @@ export const ZenLogin: React.FC = () => {
       {/* Back button */}
       <button
         onClick={() => setStep('password')}
-        className="flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-800"
+        className="flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-900"
       >
         <ArrowLeftIcon />
         Back
@@ -920,7 +920,7 @@ export const ZenLogin: React.FC = () => {
           rounded-xl
           transition-all duration-200
           disabled:opacity-60 disabled:cursor-not-allowed
-          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+          focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none
         `}
       >
         {isLoading ? <SpinnerIcon /> : 'Verify'}
@@ -947,7 +947,7 @@ export const ZenLogin: React.FC = () => {
       {/* Back button */}
       <button
         onClick={() => setStep('password')}
-        className="flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-800"
+        className="flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-900"
       >
         <ArrowLeftIcon />
         Back to sign in
@@ -971,7 +971,7 @@ export const ZenLogin: React.FC = () => {
           rounded-xl
           transition-all duration-200
           disabled:opacity-60 disabled:cursor-not-allowed
-          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+          focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none
         `}
       >
         {isLoading ? <SpinnerIcon /> : 'Send reset link'}

@@ -1194,7 +1194,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 setOpenArtifactNotFound(false);
                 loadArtifacts();
               }}
-              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-150"
             >
               Refresh documents
             </button>
@@ -1203,7 +1203,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 setOpenArtifactNotFound(false);
                 setShowArtifactList(true);
               }}
-              className="px-4 py-2 text-sm border border-zinc-300 text-zinc-600 rounded-lg hover:bg-zinc-50 transition-colors"
+              className="px-4 py-2 text-sm border border-zinc-300 text-zinc-600 rounded-lg hover:bg-zinc-50 transition-colors duration-150"
             >
               Open artifact list
             </button>
@@ -1236,7 +1236,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between h-14 px-5 border-b border-zinc-200/80 bg-gradient-to-r from-zinc-50 to-white">
           <div className="flex items-baseline gap-2">
-            <h3 className="text-base font-bold text-zinc-800 tracking-tight">Documents</h3>
+            <h3 className="text-base font-semibold text-zinc-900 tracking-tight">Documents</h3>
             {artifacts.length > 0 && (
               <span className="text-xs text-zinc-400 font-medium tabular-nums">
                 {artifacts.length}
@@ -1326,7 +1326,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               onChange={e => setNewDocTitle(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleCreateNew()}
               placeholder="New document title..."
-              className="flex-1 px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+              className="flex-1 px-3 py-2 text-sm border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/30"
             />
             <button
               onClick={handleCreateNew}
@@ -1353,7 +1353,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               <button
                 key={tpl.prefix}
                 onClick={() => setNewDocTitle(tpl.label)}
-                className="text-xs px-2.5 py-1 rounded-md border border-zinc-200 text-zinc-500 hover:border-blue-200 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                className="text-xs px-2.5 py-1 rounded-md border border-zinc-200 text-zinc-500 hover:border-blue-200 hover:text-blue-600 hover:bg-blue-50 transition-colors duration-150"
               >
                 {tpl.prefix}: {tpl.label}
               </button>
@@ -1427,7 +1427,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 >
                   {/* Title row */}
                   <div className="flex items-start justify-between gap-2">
-                    <span className="text-sm font-semibold text-zinc-800 leading-snug line-clamp-2">
+                    <span className="text-sm font-semibold text-zinc-900 leading-snug line-clamp-2">
                       {a.title}
                     </span>
                     <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
@@ -1498,7 +1498,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               setShowArtifactList(true);
               setAiResult(null);
             }}
-            className="text-zinc-500 hover:text-zinc-800 shrink-0 px-1.5 py-0.5 rounded hover:bg-zinc-100 transition-colors"
+            className="text-zinc-500 hover:text-zinc-900 shrink-0 px-1.5 py-0.5 rounded hover:bg-zinc-100 transition-colors duration-150"
           >
             Documents
           </button>
@@ -1608,7 +1608,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         {/* Keyboard shortcuts */}
         <button
           onClick={() => setShowShortcuts(true)}
-          className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors"
+          className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors duration-150"
           title="Keyboard shortcuts (Ctrl+Shift+/)"
         >
           <Keyboard className="w-4 h-4" />
@@ -1622,7 +1622,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               onClick={() => setOverflowOpen(!overflowOpen)}
               aria-label="More actions"
               aria-expanded={overflowOpen}
-              className="px-2 py-1.5 text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+              className="px-2 py-1.5 text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150"
             >
               <ChevronDown className="w-4 h-4" />
             </button>
@@ -1761,7 +1761,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         {/* Review & Collaboration */}
         <div className="flex flex-col items-center pr-3 mr-3 border-r border-zinc-200 py-1">
           <div className="flex items-center gap-0.5">
-            <button data-testid="ribbon-comments" onClick={() => toggleInspector('comments')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap relative', activeInspector === 'comments' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><MessageSquare className="w-3.5 h-3.5" />Comments{comments.filter(c => !c.resolved).length > 0 && (<span className={cn('ml-1 inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full text-[10px] font-bold', activeInspector === 'comments' ? 'bg-white text-blue-600' : 'bg-amber-500 text-white')}>{comments.filter(c => !c.resolved).length}</span>)}</button>
+            <button data-testid="ribbon-comments" onClick={() => toggleInspector('comments')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap relative', activeInspector === 'comments' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><MessageSquare className="w-3.5 h-3.5" />Comments{comments.filter(c => !c.resolved).length > 0 && (<span className={cn('ml-1 inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full text-[10px] font-semibold', activeInspector === 'comments' ? 'bg-white text-blue-600' : 'bg-amber-500 text-white')}>{comments.filter(c => !c.resolved).length}</span>)}</button>
             <button data-testid="ribbon-review" onClick={() => toggleInspector('review')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', isReviewMode ? 'bg-amber-500 text-white font-medium shadow-sm' : activeInspector === 'review' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Eye className="w-3.5 h-3.5" />Review{isReviewMode && <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}</button>
             <button data-testid="ribbon-reviewers" onClick={() => toggleInspector('reviewers')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'reviewers' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Users className="w-3.5 h-3.5" />Reviewers</button>
             <button data-testid="ribbon-versions" onClick={() => toggleInspector('versions')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'versions' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><GitCompare className="w-3.5 h-3.5" />History</button>
@@ -1806,7 +1806,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setAiResult(null)}
-                className="px-3 py-1.5 text-xs font-medium text-zinc-600 bg-white border border-zinc-200 rounded-lg hover:bg-zinc-50 transition-colors"
+                className="px-3 py-1.5 text-xs font-medium text-zinc-600 bg-white border border-zinc-200 rounded-lg hover:bg-zinc-50 transition-colors duration-150"
               >
                 Dismiss
               </button>
@@ -2103,7 +2103,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               <div className="pointer-events-auto bg-white/95 backdrop-blur-sm border border-zinc-200 rounded-xl shadow-lg p-5 max-w-md w-full mx-4">
                 <div className="text-center mb-4">
                   <PenTool className="w-6 h-6 text-violet-500 mx-auto mb-2" />
-                  <h3 className="text-sm font-semibold text-zinc-800">Get started with your document</h3>
+                  <h3 className="text-sm font-semibold text-zinc-900">Get started with your document</h3>
                   <p className="text-xs text-zinc-500 mt-1">Choose a quick action or just start typing below</p>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -2561,7 +2561,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-5">
             <div className="flex items-center gap-2 mb-3">
               <AlertTriangle className="w-5 h-5 text-amber-500" />
-              <h3 className="text-sm font-semibold text-zinc-800">Quality Check — Review Before Proceeding</h3>
+              <h3 className="text-sm font-semibold text-zinc-900">Quality Check — Review Before Proceeding</h3>
             </div>
             <p className="text-xs text-zinc-500 mb-3">
               The following issues were detected. You can proceed anyway or go back to fix them.
@@ -2577,7 +2577,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             <div className="flex items-center justify-end gap-2">
               <button
                 onClick={() => setQualityGateDialog({ show: false, targetStatus: '', warnings: [] })}
-                className="px-3 py-1.5 text-xs font-medium text-zinc-600 bg-zinc-100 rounded-lg hover:bg-zinc-200 transition-colors"
+                className="px-3 py-1.5 text-xs font-medium text-zinc-600 bg-zinc-100 rounded-lg hover:bg-zinc-200 transition-colors duration-150"
               >
                 Go Back & Fix
               </button>
@@ -2587,7 +2587,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   setQualityGateDialog({ show: false, targetStatus: '', warnings: [] });
                   executeStatusChange(target);
                 }}
-                className="px-3 py-1.5 text-xs font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 transition-colors"
+                className="px-3 py-1.5 text-xs font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 transition-colors duration-150"
               >
                 Proceed Anyway
               </button>
@@ -2602,7 +2602,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-4">
             <div className="flex items-center gap-2 mb-3">
               <MessageSquare className="w-4 h-4 text-blue-500" />
-              <h3 className="text-sm font-semibold text-zinc-800">Add Comment</h3>
+              <h3 className="text-sm font-semibold text-zinc-900">Add Comment</h3>
             </div>
             {pendingCommentHighlight && (
               <div className="border-l-2 border-blue-300 pl-2 py-1 bg-blue-50 rounded-r text-xs text-zinc-500 italic mb-3 truncate">
@@ -2624,7 +2624,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               }}
               placeholder="Type your comment…"
               rows={3}
-              className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none"
+              className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/30 resize-none"
             />
             <div className="flex items-center justify-between mt-3">
               <span className="text-[10px] text-zinc-400">Ctrl+Enter to submit</span>
@@ -2655,7 +2655,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           <span className="font-medium">Review Mode Active</span>
           <span className="text-amber-600">— All changes are being tracked as suggestions</span>
           {trackedChanges.filter(c => !c.accepted && !c.rejected).length > 0 && (
-            <span className="ml-auto bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full text-[10px] font-bold">
+            <span className="ml-auto bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full text-[10px] font-semibold">
               {trackedChanges.filter(c => !c.accepted && !c.rejected).length} pending
             </span>
           )}
@@ -2688,7 +2688,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                     t.onUndo?.();
                     setToasts(prev => prev.filter(x => x.id !== t.id));
                   }}
-                  className="ml-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide bg-white/20 rounded hover:bg-white/30 transition-colors"
+                  className="ml-1 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-white/20 rounded hover:bg-white/30 transition-colors duration-150"
                 >
                   Undo
                 </button>

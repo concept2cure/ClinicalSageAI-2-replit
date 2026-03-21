@@ -210,7 +210,7 @@ function CircularProgress({ value, size = 160 }: { value: number; size?: number 
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-4xl font-bold text-zinc-900">{value}%</span>
+        <span className="text-4xl font-semibold text-zinc-900">{value}%</span>
         <span className="text-xs text-zinc-500 mt-0.5">Readiness</span>
       </div>
     </div>
@@ -411,7 +411,7 @@ export default function SubmissionGapAnalysis({ projectId, submissionType: initi
               id="submission-type"
               value={submissionType}
               onChange={(e) => setSubmissionType(e.target.value as SubmissionType | '')}
-              className="w-full max-w-xs px-3 py-2 bg-white border border-zinc-200 rounded-lg text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
+              className="w-full max-w-xs px-3 py-2 bg-white border border-zinc-200 rounded-lg text-sm text-zinc-900 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/20 focus:border-blue-500 transition-colors duration-150"
             >
               <option value="">Select submission type...</option>
               <option value="510K">510(k)</option>
@@ -434,14 +434,14 @@ export default function SubmissionGapAnalysis({ projectId, submissionType: initi
                 <div className="flex gap-2">
                   <button
                     onClick={selectAllDocs}
-                    className="text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                    className="text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors duration-150"
                   >
                     Select all
                   </button>
                   <span className="text-zinc-400">|</span>
                   <button
                     onClick={clearAllDocs}
-                    className="text-xs text-zinc-400 hover:text-zinc-600 font-medium transition-colors"
+                    className="text-xs text-zinc-400 hover:text-zinc-600 font-medium transition-colors duration-150"
                   >
                     Clear
                   </button>
@@ -477,7 +477,7 @@ export default function SubmissionGapAnalysis({ projectId, submissionType: initi
           <button
             onClick={runAnalysis}
             disabled={!submissionType || loading}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/20 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150"
           >
             {loading ? (
               <>
@@ -586,7 +586,7 @@ export default function SubmissionGapAnalysis({ projectId, submissionType: initi
                     {result.gaps.map((gap, idx) => (
                       <tr
                         key={`${gap.ectdModule}-${idx}`}
-                        className="hover:bg-zinc-50/50 transition-colors"
+                        className="hover:bg-zinc-50/50 transition-colors duration-150"
                       >
                         <td className="px-6 py-3.5 font-mono text-xs text-zinc-600 whitespace-nowrap">
                           {gap.ectdModule}
@@ -677,7 +677,7 @@ function SummaryCard({
   return (
     <div className={`${s.bg} border border-zinc-200 rounded-xl shadow-sm p-5 flex flex-col`}>
       <div className={`${s.iconColor} mb-2`}>{icon}</div>
-      <span className={`text-3xl font-bold ${s.valueColor} tracking-tight`}>{value}</span>
+      <span className={`text-3xl font-semibold ${s.valueColor} tracking-tight`}>{value}</span>
       <span className="text-xs text-zinc-500 mt-1">{label}</span>
     </div>
   );

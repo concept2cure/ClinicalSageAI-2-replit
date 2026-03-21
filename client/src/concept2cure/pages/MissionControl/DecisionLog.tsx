@@ -524,7 +524,7 @@ export const DecisionLog: React.FC<DecisionLogProps> = ({ programId }) => {
                   setForm(EMPTY_FORM);
                   setShowModal(false);
                 }}
-                className="px-3 py-1.5 text-xs text-zinc-600 hover:text-zinc-800"
+                className="px-3 py-1.5 text-xs text-zinc-600 hover:text-zinc-900"
               >
                 Cancel
               </button>

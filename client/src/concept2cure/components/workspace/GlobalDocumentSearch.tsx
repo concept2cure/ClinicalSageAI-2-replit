@@ -168,7 +168,7 @@ export function GlobalDocumentSearch({ isOpen, onClose, onOpenDocument }: Global
       <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50" onClick={onClose} />
 
       {/* Dialog */}
-      <div className="fixed top-[10%] left-1/2 -translate-x-1/2 w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
+      <div className="fixed top-[10%] left-1/2 -translate-x-1/2 w-full max-w-2xl bg-white rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
         {/* Search input */}
         <div className="flex items-center gap-3 px-4 py-4 border-b border-zinc-200">
           <Search className="w-5 h-5 text-zinc-400 shrink-0" />
@@ -200,7 +200,7 @@ export function GlobalDocumentSearch({ isOpen, onClose, onOpenDocument }: Global
             <select
               value={statusFilter}
               onChange={e => setStatusFilter(e.target.value)}
-              className="px-2.5 py-1.5 text-xs border border-zinc-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+              className="px-2.5 py-1.5 text-xs border border-zinc-200 rounded-lg bg-white focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/30"
             >
               <option value="all">All Status</option>
               <option value="draft">Draft</option>
@@ -211,7 +211,7 @@ export function GlobalDocumentSearch({ isOpen, onClose, onOpenDocument }: Global
             <select
               value={projectFilter}
               onChange={e => setProjectFilter(e.target.value)}
-              className="px-2.5 py-1.5 text-xs border border-zinc-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 max-w-[200px]"
+              className="px-2.5 py-1.5 text-xs border border-zinc-200 rounded-lg bg-white focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/30 max-w-[200px]"
             >
               <option value="all">All Projects</option>
               {projects.map(([id, name]) => (

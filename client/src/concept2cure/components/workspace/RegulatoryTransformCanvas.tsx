@@ -158,7 +158,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
       {/* Header */}
       <div className="flex items-center gap-2 px-4 h-10 border-b border-zinc-200 shrink-0">
         <Sparkles className="w-4 h-4 text-violet-500" />
-        <h2 className="text-sm font-semibold text-zinc-800">Regulatory Transform Canvas</h2>
+        <h2 className="text-sm font-semibold text-zinc-900">Regulatory Transform Canvas</h2>
         {projectName && (
           <>
             <span className="text-zinc-400">·</span>
@@ -286,7 +286,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
                       <button
                         key={s}
                         onClick={() => setSelectedCtd(s)}
-                        className="w-full text-left text-xs px-2 py-1 rounded hover:bg-blue-50 text-blue-600 transition-colors"
+                        className="w-full text-left text-xs px-2 py-1 rounded hover:bg-blue-50 text-blue-600 transition-colors duration-150"
                       >
                         {s} — {getSectionLabel(s)}
                       </button>

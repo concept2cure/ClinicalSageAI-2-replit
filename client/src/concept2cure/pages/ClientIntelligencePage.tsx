@@ -87,7 +87,7 @@ const SectionCard: React.FC<{
         className={`w-full flex items-center gap-3 px-5 py-4 text-left ${collapsible ? 'cursor-pointer hover:bg-zinc-50' : 'cursor-default'} transition-colors`}
       >
         <span className="text-blue-600">{icon}</span>
-        <h3 className="text-sm font-semibold text-zinc-800 flex-1">{title}</h3>
+        <h3 className="text-sm font-semibold text-zinc-900 flex-1">{title}</h3>
         {collapsible && (
           open ? <ChevronDown className="w-4 h-4 text-zinc-400" /> : <ChevronRight className="w-4 h-4 text-zinc-400" />
         )}
@@ -148,7 +148,7 @@ const FieldInput: React.FC<{
       value={value}
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+      className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-150"
     />
   </div>
 );
@@ -324,7 +324,7 @@ export default function ClientIntelligencePage() {
             <Brain className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-lg font-bold text-zinc-900">Client Intelligence</h1>
+            <h1 className="text-lg font-semibold text-zinc-900">Client Intelligence</h1>
             <p className="text-xs text-zinc-500">
               Build deep organizational memory so AnA and all agents intimately understand your needs
             </p>
@@ -474,7 +474,7 @@ export default function ClientIntelligencePage() {
                 ))}
                 <button
                   onClick={addPipelineAsset}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-150"
                 >
                   <Plus className="w-3.5 h-3.5" /> Add pipeline asset
                 </button>
@@ -591,7 +591,7 @@ export default function ClientIntelligencePage() {
                       />
                       <label
                         htmlFor="file-upload"
-                        className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium cursor-pointer hover:bg-blue-700 transition-colors"
+                        className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium cursor-pointer hover:bg-blue-700 transition-colors duration-150"
                       >
                         <Upload className="w-4 h-4" /> Choose Files
                       </label>
@@ -613,7 +613,7 @@ export default function ClientIntelligencePage() {
                         >
                           <FileText className="w-5 h-5 text-zinc-400 flex-shrink-0" />
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-zinc-800 truncate">
+                            <p className="text-sm font-medium text-zinc-900 truncate">
                               {doc.fileName}
                             </p>
                             <div className="flex items-center gap-3 text-xs text-zinc-400">
@@ -650,19 +650,19 @@ export default function ClientIntelligencePage() {
                 {profile && (
                   <div className="grid grid-cols-3 gap-4">
                     <div className="bg-white border border-zinc-200 rounded-xl p-4 text-center">
-                      <p className="text-2xl font-bold text-blue-600">
+                      <p className="text-2xl font-semibold text-blue-600">
                         {profile.totalDocumentsIngested || 0}
                       </p>
                       <p className="text-xs text-zinc-500">Documents Ingested</p>
                     </div>
                     <div className="bg-white border border-zinc-200 rounded-xl p-4 text-center">
-                      <p className="text-2xl font-bold text-violet-600">
+                      <p className="text-2xl font-semibold text-violet-600">
                         {((profile.totalTokensProcessed || 0) / 1000).toFixed(0)}K
                       </p>
                       <p className="text-xs text-zinc-500">Tokens Processed</p>
                     </div>
                     <div className="bg-white border border-zinc-200 rounded-xl p-4 text-center">
-                      <p className="text-2xl font-bold text-emerald-600">
+                      <p className="text-2xl font-semibold text-emerald-600">
                         {memoryTotalCount}
                       </p>
                       <p className="text-xs text-zinc-500">Memory Entries</p>
@@ -718,7 +718,7 @@ export default function ClientIntelligencePage() {
                   {memoryEntries.map(entry => (
                     <div
                       key={entry.id}
-                      className="bg-white border border-zinc-200 rounded-xl p-4 hover:border-blue-200 transition-colors"
+                      className="bg-white border border-zinc-200 rounded-xl p-4 hover:border-blue-200 transition-colors duration-150"
                     >
                       <div className="flex items-start gap-3">
                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
@@ -734,7 +734,7 @@ export default function ClientIntelligencePage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <h4 className="text-sm font-medium text-zinc-800 truncate">
+                            <h4 className="text-sm font-medium text-zinc-900 truncate">
                               {entry.title}
                             </h4>
                             {entry.isVerifiedByUser && (
@@ -760,7 +760,7 @@ export default function ClientIntelligencePage() {
                           {!entry.isVerifiedByUser && (
                             <button
                               onClick={() => verifyEntry(entry.id)}
-                              className="p-1.5 rounded-lg text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                              className="p-1.5 rounded-lg text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors duration-150"
                               title="Verify this insight"
                             >
                               <CheckCircle2 className="w-4 h-4" />
@@ -768,7 +768,7 @@ export default function ClientIntelligencePage() {
                           )}
                           <button
                             onClick={() => archiveEntry(entry.id)}
-                            className="p-1.5 rounded-lg text-zinc-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                            className="p-1.5 rounded-lg text-zinc-400 hover:text-red-500 hover:bg-red-50 transition-colors duration-150"
                             title="Remove this insight"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -790,7 +790,7 @@ export default function ClientIntelligencePage() {
               <div className="flex items-center gap-3 mb-4">
                 <ClipboardList className="w-5 h-5 text-blue-600" />
                 <div>
-                  <h2 className="text-sm font-semibold text-zinc-800">
+                  <h2 className="text-sm font-semibold text-zinc-900">
                     What We Need From You
                   </h2>
                   <p className="text-xs text-zinc-500">

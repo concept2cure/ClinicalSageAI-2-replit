@@ -101,7 +101,7 @@ export const SubmissionAppsPanel: React.FC<SubmissionAppsPanelProps> = ({
       {/* Header */}
       <div className="flex items-center gap-2 px-4 h-10 border-b border-zinc-200 shrink-0">
         <Sparkles className="w-4 h-4 text-blue-500" />
-        <h2 className="text-sm font-semibold text-zinc-800">Submission Apps</h2>
+        <h2 className="text-sm font-semibold text-zinc-900">Submission Apps</h2>
         {projectName && (
           <>
             <span className="text-zinc-400">·</span>
@@ -129,8 +129,8 @@ export const SubmissionAppsPanel: React.FC<SubmissionAppsPanelProps> = ({
               >
                 <div className="flex items-center gap-2 w-full">
                   {APP_ICONS[app.appId] || <FileText className="w-5 h-5 text-zinc-400" />}
-                  <span className="text-xs font-semibold text-zinc-800 flex-1">{app.label}</span>
-                  <ChevronRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-blue-400 transition-colors" />
+                  <span className="text-xs font-semibold text-zinc-900 flex-1">{app.label}</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-blue-400 transition-colors duration-150" />
                 </div>
                 <p className="text-xs text-zinc-500 leading-snug">{app.description}</p>
                 <div className="flex items-center gap-2 mt-auto">
@@ -160,7 +160,7 @@ export const SubmissionAppsPanel: React.FC<SubmissionAppsPanelProps> = ({
             <div className="flex items-center gap-3">
               {APP_ICONS[selectedApp.appId] || <FileText className="w-6 h-6 text-zinc-400" />}
               <div>
-                <h3 className="text-sm font-semibold text-zinc-800">{selectedApp.label}</h3>
+                <h3 className="text-sm font-semibold text-zinc-900">{selectedApp.label}</h3>
                 <p className="text-xs text-zinc-500">{selectedApp.description}</p>
               </div>
             </div>

@@ -305,7 +305,7 @@ const FullTimeline: React.FC<{
       <div className="p-4 bg-zinc-50 rounded-xl">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-medium text-zinc-700">Overall Progress</span>
-          <span className="text-sm font-bold text-zinc-900">{overallProgress}%</span>
+          <span className="text-sm font-semibold text-zinc-900">{overallProgress}%</span>
         </div>
         <div className="h-3 bg-zinc-200 rounded-full overflow-hidden">
           <div
@@ -389,7 +389,7 @@ const FullTimeline: React.FC<{
                       </div>
                       <div className="h-1.5 bg-blue-100 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-blue-500 rounded-full transition-all"
+                          className="h-full bg-blue-500 rounded-full transition-all duration-150"
                           style={{ width: `${phase.progress}%` }}
                         />
                       </div>

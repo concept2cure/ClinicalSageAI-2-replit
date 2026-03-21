@@ -734,7 +734,7 @@ function SnowGlobeView() {
 
             <button
               onClick={() => handleRunSimulation(i)}
-              className="mt-4 flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
+              className="mt-4 flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors duration-150"
             >
               <Play className="w-3 h-3" />
               Run simulation

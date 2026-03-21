@@ -392,7 +392,7 @@ function TwinHeader({ onClose, projectName }: { onClose: () => void; projectName
   return (
     <div className="flex items-center gap-2 px-4 h-10 border-b border-zinc-200 shrink-0">
       <Brain className="w-4 h-4 text-violet-500" />
-      <h2 className="text-sm font-semibold text-zinc-800">Program Twin</h2>
+      <h2 className="text-sm font-semibold text-zinc-900">Program Twin</h2>
       {projectName && (
         <>
           <span className="text-zinc-400">·</span>
@@ -414,7 +414,7 @@ function StatCard({ label, value, icon }: { label: string; value: number; icon: 
   return (
     <div className="flex items-center gap-1.5 px-2 py-1 border border-zinc-200 rounded bg-zinc-50/50">
       {icon}
-      <span className="text-sm font-bold text-zinc-800 tabular-nums">{value}</span>
+      <span className="text-sm font-semibold text-zinc-900 tabular-nums">{value}</span>
       <span className="text-xs text-zinc-400">{label}</span>
     </div>
   );

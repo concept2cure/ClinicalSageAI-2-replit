@@ -183,7 +183,7 @@ const ProfileSection: React.FC = () => {
           <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-2xl font-semibold">
             JD
           </div>
-          <button className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-white border border-zinc-200 shadow-sm flex items-center justify-center hover:bg-zinc-50 transition-colors">
+          <button className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-white border border-zinc-200 shadow-sm flex items-center justify-center hover:bg-zinc-50 transition-colors duration-150">
             <Camera className="w-4 h-4 text-zinc-600" />
           </button>
         </div>
@@ -201,7 +201,7 @@ const ProfileSection: React.FC = () => {
             type="text"
             value={name}
             onChange={e => setName(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+            className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all duration-150"
           />
         </div>
         <div>
@@ -222,7 +222,7 @@ const ProfileSection: React.FC = () => {
             type="text"
             value={role}
             onChange={e => setRole(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+            className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all duration-150"
           />
         </div>
         <div>
@@ -231,7 +231,7 @@ const ProfileSection: React.FC = () => {
             value={objectives}
             onChange={e => setObjectives(e.target.value)}
             rows={3}
-            className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+            className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all duration-150"
             placeholder="Comma or new-line separated"
           />
         </div>
@@ -241,7 +241,7 @@ const ProfileSection: React.FC = () => {
             value={criteria}
             onChange={e => setCriteria(e.target.value)}
             rows={3}
-            className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+            className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all duration-150"
             placeholder="What must be true for success"
           />
         </div>
@@ -249,7 +249,7 @@ const ProfileSection: React.FC = () => {
 
       <button
         onClick={handleSave}
-        className="mt-6 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+        className="mt-6 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors duration-150"
       >
         Save Changes
       </button>
@@ -381,10 +381,10 @@ const SecuritySection: React.FC = () => {
           These actions are irreversible. Please proceed with caution.
         </p>
         <div className="flex gap-3">
-          <button className="px-3 py-1.5 text-xs font-medium text-red-700 border border-red-300 rounded-lg hover:bg-red-100 transition-colors">
+          <button className="px-3 py-1.5 text-xs font-medium text-red-700 border border-red-300 rounded-lg hover:bg-red-100 transition-colors duration-150">
             Export All Data
           </button>
-          <button className="px-3 py-1.5 text-xs font-medium text-red-700 border border-red-300 rounded-lg hover:bg-red-100 transition-colors">
+          <button className="px-3 py-1.5 text-xs font-medium text-red-700 border border-red-300 rounded-lg hover:bg-red-100 transition-colors duration-150">
             Delete Account
           </button>
         </div>
@@ -603,7 +603,7 @@ export const ZenSettings: React.FC<ZenSettingsProps> = ({ isOpen, onClose }) => 
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50" onClick={onClose} />
 
       {/* Modal */}
-      <div className="fixed inset-4 sm:inset-auto sm:top-[5%] sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-4xl sm:h-[90vh] bg-white rounded-2xl shadow-2xl overflow-hidden z-50 flex animate-in fade-in zoom-in-95 duration-150">
+      <div className="fixed inset-4 sm:inset-auto sm:top-[5%] sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-4xl sm:h-[90vh] bg-white rounded-xl shadow-2xl overflow-hidden z-50 flex animate-in fade-in zoom-in-95 duration-150">
         {/* Sidebar */}
         <div className="w-56 bg-zinc-50 border-r border-zinc-200 flex flex-col">
           {/* Header */}
@@ -632,7 +632,7 @@ export const ZenSettings: React.FC<ZenSettingsProps> = ({ isOpen, onClose }) => 
 
           {/* Sign out */}
           <div className="p-2 border-t border-zinc-200">
-            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors">
+            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors duration-150">
               <LogOut className="w-4 h-4" />
               Sign Out
             </button>
@@ -646,7 +646,7 @@ export const ZenSettings: React.FC<ZenSettingsProps> = ({ isOpen, onClose }) => 
             <div />
             <button
               onClick={onClose}
-              className="p-2 rounded-lg text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 transition-colors"
+              className="p-2 rounded-lg text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 transition-colors duration-150"
             >
               <X className="w-5 h-5" />
             </button>

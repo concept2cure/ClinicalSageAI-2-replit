@@ -60,7 +60,7 @@ export const ProjectFilesCompact: React.FC<ProjectFilesCompactProps> = ({
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={!projectId || isUploading}
-          className="flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium text-blue-600 hover:bg-blue-50 disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+          className="flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium text-blue-600 hover:bg-blue-50 disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150"
         >
           {isUploading ? (
             <Loader2 className="w-3 h-3 animate-spin" />
@@ -103,7 +103,7 @@ export const ProjectFilesCompact: React.FC<ProjectFilesCompactProps> = ({
             {docs.map(doc => (
               <li
                 key={doc.id}
-                className="group flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-zinc-50 transition-colors"
+                className="group flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-zinc-50 transition-colors duration-150"
               >
                 <FileText className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0" />
                 <span className="flex-1 text-xs text-zinc-700 truncate min-w-0" title={doc.name}>
@@ -134,7 +134,7 @@ export const ProjectFilesCompact: React.FC<ProjectFilesCompactProps> = ({
         <div className="flex-shrink-0 border-t border-zinc-200 px-3 py-1.5">
           <button
             onClick={onOpenFullManager}
-            className="text-xs text-zinc-500 hover:text-zinc-700 hover:underline transition-colors"
+            className="text-xs text-zinc-500 hover:text-zinc-700 hover:underline transition-colors duration-150"
           >
             Open full manager →
           </button>

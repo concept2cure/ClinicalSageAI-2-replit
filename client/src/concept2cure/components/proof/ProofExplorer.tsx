@@ -94,7 +94,7 @@ export const ProofExplorer: React.FC<ProofExplorerProps> = ({ workflowRunId, cla
   if (!proof) return null;
 
   return (
-    <div className={cn('rounded-2xl border bg-white p-6 shadow-sm', className)}>
+    <div className={cn('rounded-xl border bg-white p-6 shadow-sm', className)}>
       <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold text-zinc-900">Proof Certificate</h2>
@@ -129,15 +129,15 @@ export const ProofExplorer: React.FC<ProofExplorerProps> = ({ workflowRunId, cla
       <section className="mt-6 grid gap-4 md:grid-cols-3">
         <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
           <p className="text-xs uppercase tracking-wide text-zinc-400">Execution Proof</p>
-          <p className="mt-1 text-sm font-medium text-zinc-800">{proof.proof.pathProof?.proofId}</p>
+          <p className="mt-1 text-sm font-medium text-zinc-900">{proof.proof.pathProof?.proofId}</p>
         </div>
         <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
           <p className="text-xs uppercase tracking-wide text-zinc-400">Integrity Root</p>
-          <p className="mt-1 text-sm font-medium text-zinc-800">{proof.proof.documentIntegrityProof.merkleRoot}</p>
+          <p className="mt-1 text-sm font-medium text-zinc-900">{proof.proof.documentIntegrityProof.merkleRoot}</p>
         </div>
         <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
           <p className="text-xs uppercase tracking-wide text-zinc-400">Authorizations</p>
-          <p className="mt-1 text-sm font-medium text-zinc-800">
+          <p className="mt-1 text-sm font-medium text-zinc-900">
             {proof.proof.authorizationProofs.length} proofs
           </p>
         </div>
@@ -145,7 +145,7 @@ export const ProofExplorer: React.FC<ProofExplorerProps> = ({ workflowRunId, cla
 
       <section className="mt-6 flex flex-col gap-4 rounded-xl border border-zinc-200 bg-zinc-50 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm font-medium text-zinc-800">Verification</p>
+          <p className="text-sm font-medium text-zinc-900">Verification</p>
           <p className="text-xs text-zinc-500">
             {verification
               ? `Status: ${verification.valid ? 'Valid' : 'Invalid'} • ${verification.verificationTimeMs}ms`

@@ -230,7 +230,7 @@ const Section: React.FC<{
     <div className="border-b border-zinc-200 last:border-b-0">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-zinc-50/50 transition-colors"
+        className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-zinc-50/50 transition-colors duration-150"
       >
         <span className="text-zinc-500">{icon}</span>
         <span className="text-xs font-semibold text-zinc-700 flex-1">{title}</span>
@@ -458,7 +458,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
       <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200 bg-gradient-to-r from-indigo-50/50 to-violet-50/50 shrink-0">
         <div className="flex items-center gap-2">
           <Fingerprint className="w-4 h-4 text-indigo-500" />
-          <span className="text-xs font-bold text-zinc-800">Document Provenance</span>
+          <span className="text-xs font-semibold text-zinc-900">Document Provenance</span>
         </div>
         <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600">
           <X className="w-4 h-4" />
@@ -657,7 +657,7 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
               >
                 <div className="flex flex-col items-center">
                   <span
-                    className={`text-xs font-bold ${
+                    className={`text-xs font-semibold ${
                       v.version === editHistory.currentVersion ? 'text-blue-600' : 'text-zinc-400'
                     }`}
                   >

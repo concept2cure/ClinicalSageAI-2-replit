@@ -865,7 +865,7 @@ export default function IVDRAnnexVIIIClassifier() {
               {/* Classification Badge */}
               <div className="flex items-center gap-4">
                 <div
-                  className={`inline-flex items-center justify-center w-20 h-20 rounded-xl text-4xl font-bold border-2 ${
+                  className={`inline-flex items-center justify-center w-20 h-20 rounded-xl text-4xl font-semibold border-2 ${
                     CLASS_COLORS[result.classification]
                   }`}
                 >

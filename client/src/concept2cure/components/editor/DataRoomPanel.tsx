@@ -216,7 +216,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
       <div className="p-3 border-b border-zinc-200 bg-zinc-50">
         <div className="flex items-center gap-2 mb-2">
           <Database className="w-4 h-4 text-emerald-600" />
-          <span className="font-semibold text-sm text-zinc-800">Data Room</span>
+          <span className="font-semibold text-sm text-zinc-900">Data Room</span>
           <span className="ml-auto text-xs text-zinc-500">
             {sources.length} source{sources.length !== 1 ? 's' : ''}
           </span>
@@ -324,7 +324,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
               return (
                 <div
                   key={source.id}
-                  className="border border-zinc-200 rounded-lg bg-white hover:border-emerald-300 transition-colors"
+                  className="border border-zinc-200 rounded-lg bg-white hover:border-emerald-300 transition-colors duration-150"
                   draggable
                   onDragStart={() => onSourceDrag?.(source)}
                 >
@@ -339,7 +339,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
                     <GripVertical className="w-3 h-3 text-zinc-400 mt-0.5 flex-shrink-0 cursor-grab" />
                     {getFileIcon(source.type)}
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-zinc-800 truncate">
+                      <p className="text-xs font-medium text-zinc-900 truncate">
                         {source.title}
                       </p>
                       <div className="flex items-center gap-2 mt-0.5">

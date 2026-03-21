@@ -243,7 +243,7 @@ const DevelopmentPipeline: React.FC<{
           <React.Fragment key={stage}>
             <div className="flex flex-col items-center">
               <div className={cn(
-                'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all',
+                'w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-all',
                 isCompleted && 'bg-green-500 text-white',
                 isCurrent && cn(config.color, 'text-white ring-4 ring-offset-2'),
                 !isCompleted && !isCurrent && 'bg-zinc-200 text-zinc-400'
@@ -483,7 +483,7 @@ const FundingMilestoneCard: React.FC<{
           </span>
         </div>
         {milestone.linkedFunding && (
-          <span className="text-xs font-bold text-violet-600 bg-violet-100 px-2 py-0.5 rounded-full">
+          <span className="text-xs font-semibold text-violet-600 bg-violet-100 px-2 py-0.5 rounded-full">
             {milestone.linkedFunding}
           </span>
         )}
@@ -548,7 +548,7 @@ export const BiotechProgramDashboard: React.FC<BiotechProgramDashboardProps> = (
       <div className="flex-shrink-0 bg-white border-b border-zinc-200 p-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-zinc-900">Program Dashboard</h1>
+            <h1 className="text-xl font-semibold text-zinc-900">Program Dashboard</h1>
             <p className="text-sm text-zinc-500">Track your pipeline from discovery to approval</p>
           </div>
           
@@ -561,7 +561,7 @@ export const BiotechProgramDashboard: React.FC<BiotechProgramDashboardProps> = (
               )}>
                 <p className="text-xs text-zinc-600">Runway</p>
                 <p className={cn(
-                  'text-lg font-bold',
+                  'text-lg font-semibold',
                   companyRunway <= 12 ? 'text-red-700' : companyRunway <= 18 ? 'text-amber-700' : 'text-green-700'
                 )}>
                   {companyRunway} months
@@ -571,19 +571,19 @@ export const BiotechProgramDashboard: React.FC<BiotechProgramDashboardProps> = (
             
             <div className="px-4 py-2 bg-zinc-100 rounded-lg">
               <p className="text-xs text-zinc-600">Active Programs</p>
-              <p className="text-lg font-bold text-zinc-900">{metrics.activePrograms}</p>
+              <p className="text-lg font-semibold text-zinc-900">{metrics.activePrograms}</p>
             </div>
             
             {metrics.criticalAtRisk > 0 && (
               <div className="px-4 py-2 bg-red-100 rounded-lg">
                 <p className="text-xs text-red-600">Critical Path Risk</p>
-                <p className="text-lg font-bold text-red-700">{metrics.criticalAtRisk}</p>
+                <p className="text-lg font-semibold text-red-700">{metrics.criticalAtRisk}</p>
               </div>
             )}
             
             <div className="px-4 py-2 bg-blue-100 rounded-lg">
               <p className="text-xs text-blue-600">Upcoming FDA Meetings</p>
-              <p className="text-lg font-bold text-blue-700">{metrics.upcomingFDAMeetings}</p>
+              <p className="text-lg font-semibold text-blue-700">{metrics.upcomingFDAMeetings}</p>
             </div>
           </div>
         </div>
@@ -632,7 +632,7 @@ export const BiotechProgramDashboard: React.FC<BiotechProgramDashboardProps> = (
           <div className="bg-white rounded-xl border border-zinc-200 p-6 mb-6">
             <div className="flex items-start justify-between mb-6">
               <div>
-                <h2 className="text-2xl font-bold text-zinc-900 mb-1">{selectedProgram.programName}</h2>
+                <h2 className="text-2xl font-semibold text-zinc-900 mb-1">{selectedProgram.programName}</h2>
                 <p className="text-sm text-zinc-500">
                   {selectedProgram.therapeuticArea} • {selectedProgram.indication} • {selectedProgram.modality.replace('_', ' ')}
                 </p>
@@ -644,7 +644,7 @@ export const BiotechProgramDashboard: React.FC<BiotechProgramDashboardProps> = (
               <div className="text-right">
                 <p className="text-xs text-zinc-500">Current Stage</p>
                 <span className={cn(
-                  'inline-block px-3 py-1 text-sm font-bold text-white rounded-full',
+                  'inline-block px-3 py-1 text-sm font-semibold text-white rounded-full',
                   STAGE_CONFIG[selectedProgram.currentStage].color
                 )}>
                   {STAGE_CONFIG[selectedProgram.currentStage].label}

@@ -398,7 +398,7 @@ export const ProjectsSidebar: React.FC = () => {
               <TooltipTrigger asChild>
                 <button
                   onClick={() => setShowNewProjectModal(true)}
-                  className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-900 text-white hover:bg-zinc-800 transition-colors"
+                  className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-900 text-white hover:bg-zinc-800 transition-colors duration-150"
                 >
                   <Plus className="h-5 w-5" />
                 </button>
@@ -504,7 +504,7 @@ export const ProjectsSidebar: React.FC = () => {
               <button
                 key={item.id}
                 onClick={() => handleAccess(item.id)}
-                className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200/50 transition-colors"
+                className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200/50 transition-colors duration-150"
               >
                 <Icon className="h-4 w-4" />
                 {item.label}
@@ -523,7 +523,7 @@ export const ProjectsSidebar: React.FC = () => {
             placeholder="Search projects..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 text-sm bg-white border border-zinc-200 rounded-md placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+            className="w-full pl-8 pr-3 py-1.5 text-sm bg-white border border-zinc-200 rounded-md placeholder:text-zinc-400 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/30 focus:border-blue-500"
           />
         </div>
       </div>

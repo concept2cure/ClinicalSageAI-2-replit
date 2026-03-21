@@ -523,7 +523,7 @@ export function GovernedDocumentPanel({
           <div className="bg-white rounded-lg shadow-xl p-4 mx-3 w-full max-w-[280px]">
             <div className="flex items-center gap-2 mb-3">
               <AlertCircle className="w-4 h-4 text-amber-500" />
-              <span className="text-sm font-semibold text-zinc-800">Reason Required</span>
+              <span className="text-sm font-semibold text-zinc-900">Reason Required</span>
             </div>
             <p className="text-xs text-zinc-500 mb-2">
               Regressing{' '}
@@ -540,7 +540,7 @@ export function GovernedDocumentPanel({
               value={rationale}
               onChange={e => setRationale(e.target.value)}
               placeholder="Enter reason for status regression..."
-              className="w-full h-20 text-xs border border-zinc-200 rounded-md p-2 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full h-20 text-xs border border-zinc-200 rounded-md p-2 resize-none focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
               autoFocus
             />
             <div className="flex justify-end gap-2 mt-3">
@@ -573,7 +573,7 @@ export function GovernedDocumentPanel({
           <div className="bg-white rounded-lg shadow-xl p-4 mx-3 w-full max-w-[280px]">
             <div className="flex items-center gap-2 mb-3">
               <CheckCircle className="w-4 h-4 text-emerald-500" />
-              <span className="text-sm font-semibold text-zinc-800">
+              <span className="text-sm font-semibold text-zinc-900">
                 {attestationTarget === 'approved'
                   ? tailoring.statusLabels.approved
                   : tailoring.lockActionLabel}{' '}
@@ -593,7 +593,7 @@ export function GovernedDocumentPanel({
                 <select
                   value={attestationMeaning}
                   onChange={e => setAttestationMeaning(e.target.value)}
-                  className="w-full text-xs border border-zinc-200 rounded-md p-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full text-xs border border-zinc-200 rounded-md p-1.5 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                 >
                   {attestationTarget === 'approved'
                     ? tailoring.approvalMeanings.map(m => (
@@ -614,7 +614,7 @@ export function GovernedDocumentPanel({
                   value={attestationText}
                   onChange={e => setAttestationText(e.target.value)}
                   placeholder={tailoring.attestationPlaceholder}
-                  className="w-full h-16 text-xs border border-zinc-200 rounded-md p-2 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full h-16 text-xs border border-zinc-200 rounded-md p-2 resize-none focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                   autoFocus
                 />
               </div>
@@ -860,7 +860,7 @@ function StatusTab({
         <div>
           <button
             onClick={onOpenDiff}
-            className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 ring-1 ring-indigo-200/60 transition-colors"
+            className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 ring-1 ring-indigo-200/60 transition-colors duration-150"
           >
             <GitBranch className="w-3 h-3" />
             Compare Versions
@@ -998,7 +998,7 @@ function SnapshotsTab({ snapshots }: { snapshots: SnapshotEntry[] }) {
           >
             <div className="flex items-center gap-1.5 mb-0.5">
               {actionIcons[s.actionType] || <Clock className="w-3 h-3 text-zinc-400" />}
-              <span className="font-semibold text-zinc-800">
+              <span className="font-semibold text-zinc-900">
                 {actionLabels[s.actionType] || s.actionType}
               </span>
               {s.versionId && (
@@ -1106,7 +1106,7 @@ function VersionsTab({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
                 <GitBranch className="w-3 h-3 text-zinc-400" />
-                <span className="font-semibold text-zinc-800">v{v.version}</span>
+                <span className="font-semibold text-zinc-900">v{v.version}</span>
                 {v.version === currentVersion && (
                   <span className="text-xs px-1 py-px bg-blue-600 text-white rounded">
                     current
@@ -1164,7 +1164,7 @@ function VersionsTab({
         <div className="mt-2">
           <button
             onClick={onOpenDiff}
-            className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 ring-1 ring-indigo-200/60 transition-colors"
+            className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 ring-1 ring-indigo-200/60 transition-colors duration-150"
           >
             <GitBranch className="w-3 h-3" />
             Compare Versions

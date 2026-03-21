@@ -199,7 +199,7 @@ export const ContextRibbon: React.FC<ContextRibbonProps> = ({
       {/* ═══════ LEFT: ACTIVE CONTEXT ═══════ */}
       <div className="flex items-center gap-4">
         {/* Context Indicator */}
-        <div className="flex items-center gap-2 text-zinc-500 font-bold tracking-widest">
+        <div className="flex items-center gap-2 text-zinc-500 font-semibold tracking-widest">
           <Activity className="w-3.5 h-3.5 text-blue-600" />
           <span className="text-xs">ACTIVE CONTEXT</span>
         </div>
@@ -207,9 +207,9 @@ export const ContextRibbon: React.FC<ContextRibbonProps> = ({
         {/* Project / Status */}
         <button
           onClick={onProjectClick}
-          className="flex items-center gap-2 hover:bg-zinc-50 rounded-lg px-2 py-1 -ml-2 transition-colors"
+          className="flex items-center gap-2 hover:bg-zinc-50 rounded-lg px-2 py-1 -ml-2 transition-colors duration-150"
         >
-          <span className="font-bold text-zinc-800 bg-zinc-100 px-3 py-1 rounded border border-zinc-200 shadow-sm">
+          <span className="font-semibold text-zinc-900 bg-zinc-100 px-3 py-1 rounded border border-zinc-200 shadow-sm">
             {project}
           </span>
           <span className="text-zinc-400">/</span>
@@ -245,7 +245,7 @@ export const ContextRibbon: React.FC<ContextRibbonProps> = ({
             <span className="text-zinc-600">DUE:</span>
             <span
               className={cn(
-                'font-mono font-bold',
+                'font-mono font-semibold',
                 days <= 7 && 'text-red-600',
                 days > 7 && days <= 14 && 'text-amber-600',
                 days > 14 && days <= 30 && 'text-blue-600',
@@ -269,7 +269,7 @@ export const ContextRibbon: React.FC<ContextRibbonProps> = ({
             riskConfig.borderColor
           )}
         >
-          <span className="text-zinc-500 font-bold uppercase tracking-wider text-xs">
+          <span className="text-zinc-500 font-semibold uppercase tracking-wider text-xs">
             RISK:
           </span>
           <div className={cn(riskConfig.color, riskConfig.pulse && 'animate-pulse')}>
@@ -279,7 +279,7 @@ export const ContextRibbon: React.FC<ContextRibbonProps> = ({
           {riskItems !== undefined && riskItems > 0 && (
             <span
               className={cn(
-                'px-1.5 py-0.5 text-xs font-bold rounded-full',
+                'px-1.5 py-0.5 text-xs font-semibold rounded-full',
                 riskLevel === 'CRITICAL' || riskLevel === 'HIGH'
                   ? 'bg-red-600 text-white'
                   : 'bg-zinc-200 text-zinc-600'
@@ -308,11 +308,11 @@ export const ContextRibbon: React.FC<ContextRibbonProps> = ({
         {/* RI Connection */}
         <button
           onClick={onConnectionClick}
-          className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-zinc-50 transition-colors"
+          className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-zinc-50 transition-colors duration-150"
           title={`AnA Cortex: ${connConfig.label}${lastSyncTime ? ` • Last sync: ${lastSyncTime}` : ''}`}
         >
           <Zap className="w-3.5 h-3.5 text-blue-600" />
-          <span className="text-xs font-bold text-zinc-500 tracking-wider">CORTEX</span>
+          <span className="text-xs font-semibold text-zinc-500 tracking-wider">CORTEX</span>
           <div className={connConfig.color}>{connConfig.icon}</div>
           <span
             className={cn(

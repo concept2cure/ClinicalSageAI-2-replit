@@ -159,7 +159,7 @@ export const DocumentAppHub: React.FC<DocumentAppHubProps> = ({
           )}
           <button
             onClick={() => onNavigate('ind-workspace')}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-zinc-200 bg-white text-zinc-700 text-sm font-medium hover:bg-zinc-50 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-zinc-200 bg-white text-zinc-700 text-sm font-medium hover:bg-zinc-50 transition-colors duration-150"
           >
             <Upload className="w-4 h-4" />
             Upload Source Files
@@ -186,12 +186,12 @@ export const DocumentAppHub: React.FC<DocumentAppHubProps> = ({
                     className="group text-left rounded-xl border border-zinc-200 bg-white p-4 hover:border-blue-200 hover:shadow-md transition-all duration-150"
                   >
                     <div className="flex items-start justify-between mb-2">
-                      <div className="w-9 h-9 rounded-lg bg-zinc-100 group-hover:bg-blue-50 flex items-center justify-center text-zinc-500 group-hover:text-blue-600 transition-colors">
+                      <div className="w-9 h-9 rounded-lg bg-zinc-100 group-hover:bg-blue-50 flex items-center justify-center text-zinc-500 group-hover:text-blue-600 transition-colors duration-150">
                         {app.icon}
                       </div>
                       {app.badge && (
                         <span
-                          className={`text-xs font-bold px-1.5 py-0.5 rounded ${app.badgeColor || 'bg-zinc-100 text-zinc-500'}`}
+                          className={`text-xs font-semibold px-1.5 py-0.5 rounded ${app.badgeColor || 'bg-zinc-100 text-zinc-500'}`}
                         >
                           {app.badge}
                         </span>
@@ -217,7 +217,7 @@ export const DocumentAppHub: React.FC<DocumentAppHubProps> = ({
               <Sparkles className="w-5 h-5 text-violet-600" />
             </div>
             <div>
-              <p className="text-sm font-medium text-zinc-800">Everything flows to documents</p>
+              <p className="text-sm font-medium text-zinc-900">Everything flows to documents</p>
               <p className="text-xs text-zinc-500 mt-0.5">
                 Upload files → RI harvests data → draft sections → validate claims → export DOCX →
                 assemble submission

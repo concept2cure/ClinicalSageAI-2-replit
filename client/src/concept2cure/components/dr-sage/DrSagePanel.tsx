@@ -548,7 +548,7 @@ export function DrSagePanel({
               <h2 className="text-sm font-semibold text-zinc-900">Dr. Sage</h2>
               <button
                 onClick={onToggle}
-                className="h-6 w-6 flex items-center justify-center text-zinc-400 hover:text-zinc-600 transition-colors"
+                className="h-6 w-6 flex items-center justify-center text-zinc-400 hover:text-zinc-600 transition-colors duration-150"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -564,7 +564,7 @@ export function DrSagePanel({
                       key={tab.id}
                       onClick={() => onTabChange(tab.id)}
                       className={cn(
-                        "relative py-3 text-sm whitespace-nowrap transition-colors",
+                        "relative py-3 text-sm whitespace-nowrap transition-colors duration-150",
                         active
                           ? "text-zinc-900"
                           : "text-zinc-400 hover:text-zinc-600"

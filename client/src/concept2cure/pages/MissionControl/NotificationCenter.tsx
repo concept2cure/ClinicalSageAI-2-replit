@@ -447,7 +447,7 @@ export const NotificationCenter: React.FC = () => {
           <div className="relative">
             <Bell className="w-5 h-5 text-blue-600" />
             {unreadCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-blue-600 text-white text-xs font-bold px-1">
+              <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-blue-600 text-white text-xs font-semibold px-1">
                 {unreadCount}
               </span>
             )}
@@ -459,14 +459,14 @@ export const NotificationCenter: React.FC = () => {
           <button
             onClick={markAllRead}
             disabled={unreadCount === 0}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-600 border border-zinc-200 rounded-lg hover:bg-zinc-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors duration-150"
           >
             <CheckCheck className="w-3.5 h-3.5" />
             Mark All Read
           </button>
           <button
             onClick={() => setShowPreferences(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 transition-colors duration-150"
           >
             <Settings className="w-3.5 h-3.5" />
             Settings
@@ -480,15 +480,15 @@ export const NotificationCenter: React.FC = () => {
           <div className="grid grid-cols-4 gap-4">
             <div className="bg-white rounded-xl border border-zinc-200 p-4">
               <p className="text-xs text-zinc-500 mb-1">Unread</p>
-              <p className="text-2xl font-bold text-blue-600">{unreadCount}</p>
+              <p className="text-2xl font-semibold text-blue-600">{unreadCount}</p>
             </div>
             <div className="bg-white rounded-xl border border-zinc-200 p-4">
               <p className="text-xs text-zinc-500 mb-1">Today</p>
-              <p className="text-2xl font-bold text-zinc-800">{todayCount}</p>
+              <p className="text-2xl font-semibold text-zinc-900">{todayCount}</p>
             </div>
             <div className="bg-white rounded-xl border border-zinc-200 p-4">
               <p className="text-xs text-zinc-500 mb-1">Action Required</p>
-              <p className="text-2xl font-bold text-orange-600">{actionRequiredCount}</p>
+              <p className="text-2xl font-semibold text-orange-600">{actionRequiredCount}</p>
             </div>
             <div className="bg-white rounded-xl border border-zinc-200 p-4">
               <p className="text-xs text-zinc-500 mb-1">Categories</p>
@@ -532,7 +532,7 @@ export const NotificationCenter: React.FC = () => {
                   {badge !== null && badge > 0 && (
                     <span
                       className={cn(
-                        'min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-xs font-bold px-1',
+                        'min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-xs font-semibold px-1',
                         isActive ? 'bg-white/20 text-white' : 'bg-zinc-100 text-zinc-600',
                       )}
                     >
@@ -587,7 +587,7 @@ export const NotificationCenter: React.FC = () => {
                                   <div className="flex items-center gap-2 mb-0.5">
                                     <p
                                       className={cn(
-                                        'text-sm text-zinc-800 truncate',
+                                        'text-sm text-zinc-900 truncate',
                                         !notification.read && 'font-semibold',
                                       )}
                                     >
@@ -626,21 +626,21 @@ export const NotificationCenter: React.FC = () => {
                                     <button
                                       onClick={() => markRead(notification.id)}
                                       title="Mark as read"
-                                      className="p-1.5 rounded-lg text-zinc-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                                      className="p-1.5 rounded-lg text-zinc-400 hover:text-blue-600 hover:bg-blue-50 transition-colors duration-150"
                                     >
                                       <Check className="w-3.5 h-3.5" />
                                     </button>
                                   )}
                                   <button
                                     title="Go to source"
-                                    className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors"
+                                    className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors duration-150"
                                   >
                                     <ExternalLink className="w-3.5 h-3.5" />
                                   </button>
                                   <button
                                     onClick={() => dismiss(notification.id)}
                                     title="Dismiss"
-                                    className="p-1.5 rounded-lg text-zinc-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                    className="p-1.5 rounded-lg text-zinc-400 hover:text-red-600 hover:bg-red-50 transition-colors duration-150"
                                   >
                                     <X className="w-3.5 h-3.5" />
                                   </button>
@@ -676,7 +676,7 @@ export const NotificationCenter: React.FC = () => {
               </div>
               <button
                 onClick={() => setShowPreferences(false)}
-                className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors"
+                className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors duration-150"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -693,7 +693,7 @@ export const NotificationCenter: React.FC = () => {
                     <div className="flex items-center gap-3">
                       <BellOff className="w-4 h-4 text-zinc-500" />
                       <div>
-                        <p className="text-sm font-medium text-zinc-800">Pause notifications</p>
+                        <p className="text-sm font-medium text-zinc-900">Pause notifications</p>
                         <p className="text-xs text-zinc-500">Silence all in-app alerts</p>
                       </div>
                     </div>
@@ -723,7 +723,7 @@ export const NotificationCenter: React.FC = () => {
                     <div className="flex items-center gap-3">
                       <Inbox className="w-4 h-4 text-zinc-500" />
                       <div>
-                        <p className="text-sm font-medium text-zinc-800">In-App</p>
+                        <p className="text-sm font-medium text-zinc-900">In-App</p>
                         <p className="text-xs text-zinc-500">Show in notification center</p>
                       </div>
                     </div>
@@ -747,7 +747,7 @@ export const NotificationCenter: React.FC = () => {
                     <div className="flex items-center gap-3">
                       <Mail className="w-4 h-4 text-zinc-500" />
                       <div>
-                        <p className="text-sm font-medium text-zinc-800">Email</p>
+                        <p className="text-sm font-medium text-zinc-900">Email</p>
                         <p className="text-xs text-zinc-500">Send to your inbox</p>
                       </div>
                     </div>

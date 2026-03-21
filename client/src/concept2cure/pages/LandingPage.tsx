@@ -510,7 +510,7 @@ function PlatformMockup() {
                 { label: 'Days to PDUFA', value: '142', color: 'text-amber-600', bg: 'bg-amber-50' },
               ].map(m => (
                 <div key={m.label} className={`${m.bg} rounded-xl p-4`}>
-                  <div className={`text-2xl font-bold ${m.color}`}>{m.value}</div>
+                  <div className={`text-2xl font-semibold ${m.color}`}>{m.value}</div>
                   <div className="text-xs text-zinc-600 mt-1">{m.label}</div>
                 </div>
               ))}
@@ -594,16 +594,16 @@ export const LandingPage: React.FC = () => {
             <span className="text-xl font-semibold text-zinc-900">Concept2Cure</span>
           </div>
           <nav className="hidden md:flex items-center gap-8 text-sm text-zinc-600">
-            <a href="#platform" className="hover:text-zinc-900 transition-colors">Platform</a>
-            <a href="#features" className="hover:text-zinc-900 transition-colors">Solutions</a>
-            <a href="#nano-banana" className="hover:text-zinc-900 transition-colors">Visual AI</a>
-            <a href="#security" className="hover:text-zinc-900 transition-colors">Security</a>
-            <a href="#pricing" className="hover:text-zinc-900 transition-colors">Pricing</a>
+            <a href="#platform" className="hover:text-zinc-900 transition-colors duration-150">Platform</a>
+            <a href="#features" className="hover:text-zinc-900 transition-colors duration-150">Solutions</a>
+            <a href="#nano-banana" className="hover:text-zinc-900 transition-colors duration-150">Visual AI</a>
+            <a href="#security" className="hover:text-zinc-900 transition-colors duration-150">Security</a>
+            <a href="#pricing" className="hover:text-zinc-900 transition-colors duration-150">Pricing</a>
           </nav>
           <div className="flex items-center gap-3">
             <button
               onClick={() => setLocation('/concept2cure/demo')}
-              className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-violet-700 bg-violet-50 hover:bg-violet-100 border border-violet-200 rounded-lg transition-colors"
+              className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-violet-700 bg-violet-50 hover:bg-violet-100 border border-violet-200 rounded-lg transition-colors duration-150"
             >
               <span className="flex h-1.5 w-1.5 relative">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75" />
@@ -613,7 +613,7 @@ export const LandingPage: React.FC = () => {
             </button>
             <button
               onClick={() => setLocation('/concept2cure/login')}
-              className="px-4 py-2 text-sm font-medium text-zinc-700 hover:text-zinc-900 transition-colors"
+              className="px-4 py-2 text-sm font-medium text-zinc-700 hover:text-zinc-900 transition-colors duration-150"
             >
               Sign in
             </button>
@@ -653,7 +653,7 @@ export const LandingPage: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-5xl sm:text-6xl md:text-7xl font-bold text-zinc-900 leading-[1.08] tracking-tight mb-6"
+            className="text-5xl sm:text-6xl md:text-7xl font-semibold text-zinc-900 leading-[1.08] tracking-tight mb-6"
           >
             The AI platform that
             <br />
@@ -726,7 +726,7 @@ export const LandingPage: React.FC = () => {
           >
             {HERO_STATS.map(s => (
               <div key={s.label} className="p-4 rounded-xl bg-white/70 backdrop-blur border border-zinc-200">
-                <div className="text-2xl font-bold text-zinc-900"><AnimatedValue value={s.value} /></div>
+                <div className="text-2xl font-semibold text-zinc-900"><AnimatedValue value={s.value} /></div>
                 <div className="text-sm font-medium text-zinc-700">{s.label}</div>
                 <div className="text-xs text-zinc-500 mt-0.5">{s.sub}</div>
               </div>
@@ -753,7 +753,7 @@ export const LandingPage: React.FC = () => {
               <div key={m.agency} className="flex items-center gap-2">
                 <span className="text-xl">{m.flag}</span>
                 <div>
-                  <span className="text-sm font-semibold text-zinc-800">{m.agency}</span>
+                  <span className="text-sm font-semibold text-zinc-900">{m.agency}</span>
                   <span className="text-xs text-zinc-500 ml-1.5">{m.name}</span>
                 </div>
               </div>
@@ -766,7 +766,7 @@ export const LandingPage: React.FC = () => {
       <Section id="platform" className="py-20 px-6">
         <div className="max-w-6xl mx-auto">
           <motion.div variants={fadeUp} className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-zinc-900 mb-4">
+            <h2 className="text-3xl sm:text-4xl font-semibold text-zinc-900 mb-4">
               Your entire regulatory operation, unified
             </h2>
             <p className="text-lg text-zinc-600 max-w-2xl mx-auto">
@@ -787,7 +787,7 @@ export const LandingPage: React.FC = () => {
             <div className="inline-flex items-center gap-2 px-3 py-1.5 mb-4 rounded-full bg-green-50 border border-green-100">
               <span className="text-sm font-medium text-green-700">Measurable ROI from Day 1</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-bold text-zinc-900 mb-4">
+            <h2 className="text-3xl sm:text-4xl font-semibold text-zinc-900 mb-4">
               The numbers speak for themselves
             </h2>
             <p className="text-lg text-zinc-600 max-w-2xl mx-auto">
@@ -801,12 +801,12 @@ export const LandingPage: React.FC = () => {
               <motion.div
                 key={m.label}
                 variants={fadeUp}
-                className="relative p-6 rounded-2xl bg-white border border-zinc-200 hover:border-green-200 hover:shadow-lg hover:shadow-green-600/5 transition-all duration-300 group"
+                className="relative p-6 rounded-xl bg-white border border-zinc-200 hover:border-green-200 hover:shadow-lg hover:shadow-green-600/5 transition-all duration-300 group"
               >
-                <div className="text-3xl sm:text-4xl font-bold text-zinc-900 mb-2 group-hover:text-green-700 transition-colors">
+                <div className="text-3xl sm:text-4xl font-semibold text-zinc-900 mb-2 group-hover:text-green-700 transition-colors duration-150">
                   <AnimatedValue value={m.value} />
                 </div>
-                <div className="text-sm font-semibold text-zinc-800 mb-1">{m.label}</div>
+                <div className="text-sm font-semibold text-zinc-900 mb-1">{m.label}</div>
                 <div className="text-xs text-zinc-500 leading-relaxed">{m.detail}</div>
               </motion.div>
             ))}
@@ -815,10 +815,10 @@ export const LandingPage: React.FC = () => {
           {/* Value Calculator Banner */}
           <motion.div
             variants={fadeUp}
-            className="p-8 rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 text-white flex flex-col md:flex-row items-center justify-between gap-6"
+            className="p-8 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 text-white flex flex-col md:flex-row items-center justify-between gap-6"
           >
             <div>
-              <h3 className="text-xl font-bold mb-2">Calculate Your ROI</h3>
+              <h3 className="text-xl font-semibold mb-2">Calculate Your ROI</h3>
               <p className="text-green-100 text-sm max-w-lg">
                 The average 50-person regulatory team spends $3.8M/year on tools, CRO hours, and manual processes.
                 Concept2Cure typically delivers 3-5x ROI within the first year.
@@ -838,7 +838,7 @@ export const LandingPage: React.FC = () => {
       <Section className="py-24 px-6">
         <div className="max-w-5xl mx-auto">
           <motion.div variants={fadeUp} className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-zinc-900 mb-4">
+            <h2 className="text-3xl sm:text-4xl font-semibold text-zinc-900 mb-4">
               Four steps to faster submissions
             </h2>
             <p className="text-lg text-zinc-600 max-w-2xl mx-auto">
@@ -858,7 +858,7 @@ export const LandingPage: React.FC = () => {
                   variants={fadeUp}
                   className="flex items-start gap-6"
                 >
-                  <div className={`relative z-10 w-14 h-14 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-lg flex-shrink-0 ${
+                  <div className={`relative z-10 w-14 h-14 rounded-xl flex items-center justify-center text-white font-semibold text-lg shadow-lg flex-shrink-0 ${
                     step.color === 'blue' ? 'bg-blue-600 shadow-blue-600/30' :
                     step.color === 'violet' ? 'bg-violet-600 shadow-violet-600/30' :
                     step.color === 'indigo' ? 'bg-indigo-600 shadow-indigo-600/30' :
@@ -895,7 +895,7 @@ export const LandingPage: React.FC = () => {
             <div className="inline-flex items-center gap-2 px-3 py-1.5 mb-4 rounded-full bg-white/10 border border-white/10">
               <span className="text-sm font-medium text-blue-300">The only platform built for the full regulatory lifecycle</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+            <h2 className="text-3xl sm:text-4xl font-semibold mb-4">
               Don't just assemble data.<br />
               <span className="text-blue-400">Tell the story of your therapeutic.</span>
             </h2>
@@ -917,7 +917,7 @@ export const LandingPage: React.FC = () => {
               <motion.div
                 key={s.stage}
                 variants={fadeIn}
-                className="relative p-4 rounded-xl bg-white/5 border border-white/10 text-center group hover:bg-white/10 transition-all"
+                className="relative p-4 rounded-xl bg-white/5 border border-white/10 text-center group hover:bg-white/10 transition-all duration-150"
               >
                 {i < 4 && <div className="absolute -right-2 top-1/2 -translate-y-1/2 text-zinc-600 hidden md:block">&rarr;</div>}
                 <div className="text-sm font-semibold text-white mb-1">{s.stage}</div>
@@ -955,10 +955,10 @@ export const LandingPage: React.FC = () => {
               </svg>
               <div className="w-12 h-[1px] bg-zinc-600" />
             </div>
-            <div className="max-w-lg mx-auto p-8 rounded-2xl bg-gradient-to-br from-blue-600/20 to-violet-600/20 border border-blue-500/30 shadow-lg shadow-blue-500/10">
+            <div className="max-w-lg mx-auto p-8 rounded-xl bg-gradient-to-br from-blue-600/20 to-violet-600/20 border border-blue-500/30 shadow-lg shadow-blue-500/10">
               <div className="flex items-center justify-center gap-3 mb-4">
                 <Logo />
-                <span className="text-2xl font-bold text-white">Concept2Cure</span>
+                <span className="text-2xl font-semibold text-white">Concept2Cure</span>
               </div>
               <p className="text-blue-200 text-sm mb-3">
                 One AI-native platform. One source of truth. One connected workspace.
@@ -978,7 +978,7 @@ export const LandingPage: React.FC = () => {
             <div className="inline-flex items-center gap-2 px-3 py-1.5 mb-4 rounded-full bg-blue-50 border border-blue-100">
               <span className="text-sm font-medium text-blue-700">Core Capabilities</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-bold text-zinc-900 mb-4">
+            <h2 className="text-3xl sm:text-4xl font-semibold text-zinc-900 mb-4">
               Create submission-ready content with<br />
               speed, structure, and confidence
             </h2>
@@ -995,14 +995,14 @@ export const LandingPage: React.FC = () => {
                 <motion.div
                   key={f.title}
                   variants={fadeUp}
-                  className="group p-6 rounded-2xl bg-white border border-zinc-200 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-600/5 transition-all duration-300"
+                  className="group p-6 rounded-xl bg-white border border-zinc-200 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-600/5 transition-all duration-300"
                 >
                   <div className="flex items-start justify-between mb-4">
-                    <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                    <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors duration-150">
                       {Icon && <Icon className="w-5 h-5 text-blue-600" />}
                     </div>
                     <div className="text-right">
-                      <div className="text-lg font-bold text-blue-600">{f.stat}</div>
+                      <div className="text-lg font-semibold text-blue-600">{f.stat}</div>
                       <div className="text-xs text-zinc-500 uppercase tracking-wide">{f.statLabel}</div>
                     </div>
                   </div>
@@ -1022,7 +1022,7 @@ export const LandingPage: React.FC = () => {
             <div className="inline-flex items-center gap-2 px-3 py-1.5 mb-4 rounded-full bg-zinc-100 border border-zinc-200">
               <span className="text-sm font-medium text-zinc-700">86+ integrated modules across 6 strategic groups</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-bold text-zinc-900 mb-4">
+            <h2 className="text-3xl sm:text-4xl font-semibold text-zinc-900 mb-4">
               The complete regulatory platform
             </h2>
             <p className="text-lg text-zinc-600 max-w-2xl mx-auto">
@@ -1036,7 +1036,7 @@ export const LandingPage: React.FC = () => {
               <motion.div key={cat.category} variants={fadeUp}>
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-1.5 h-6 rounded-full bg-gradient-to-b from-blue-500 to-violet-500" />
-                  <h3 className="text-lg font-bold text-zinc-900">{cat.category}</h3>
+                  <h3 className="text-lg font-semibold text-zinc-900">{cat.category}</h3>
                 </div>
                 <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   {cat.modules.map(mod => (
@@ -1045,7 +1045,7 @@ export const LandingPage: React.FC = () => {
                       variants={fadeIn}
                       className="p-5 rounded-xl bg-zinc-50 border border-zinc-200 hover:bg-white hover:border-blue-200 hover:shadow-md transition-all duration-200 group"
                     >
-                      <h4 className="text-sm font-semibold text-zinc-900 mb-2 group-hover:text-blue-700 transition-colors">{mod.name}</h4>
+                      <h4 className="text-sm font-semibold text-zinc-900 mb-2 group-hover:text-blue-700 transition-colors duration-150">{mod.name}</h4>
                       <p className="text-xs text-zinc-500 leading-relaxed">{mod.desc}</p>
                     </motion.div>
                   ))}
@@ -1054,7 +1054,7 @@ export const LandingPage: React.FC = () => {
             ))}
           </div>
 
-          <motion.div variants={fadeUp} className="text-center mt-12 p-8 rounded-2xl bg-gradient-to-r from-zinc-50 to-blue-50/50 border border-zinc-200">
+          <motion.div variants={fadeUp} className="text-center mt-12 p-8 rounded-xl bg-gradient-to-r from-zinc-50 to-blue-50/50 border border-zinc-200">
             <p className="text-lg font-semibold text-zinc-900 mb-2">
               All modules included in every plan. No upsells. No add-ons.
             </p>
@@ -1079,7 +1079,7 @@ export const LandingPage: React.FC = () => {
               <SparklesIcon className="w-4 h-4 text-violet-600" />
               <span className="text-sm font-medium text-violet-700">Powered by AI</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-bold text-zinc-900 mb-4">
+            <h2 className="text-3xl sm:text-4xl font-semibold text-zinc-900 mb-4">
               An AI agent swarm that never sleeps
             </h2>
             <p className="text-lg text-zinc-600 max-w-2xl mx-auto">
@@ -1095,7 +1095,7 @@ export const LandingPage: React.FC = () => {
                 <motion.div
                   key={agent.name}
                   variants={fadeUp}
-                  className="p-3.5 rounded-xl bg-white border border-zinc-200 hover:border-violet-200 transition-all"
+                  className="p-3.5 rounded-xl bg-white border border-zinc-200 hover:border-violet-200 transition-all duration-150"
                 >
                   <div className="flex items-center gap-2 mb-1.5">
                     <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
@@ -1108,7 +1108,7 @@ export const LandingPage: React.FC = () => {
 
             {/* AnA + SnowGlobe + Dr. Sage */}
             <motion.div variants={fadeUp} className="space-y-4">
-              <div className="p-6 rounded-2xl bg-gradient-to-br from-violet-600 to-blue-600 text-white">
+              <div className="p-6 rounded-xl bg-gradient-to-br from-violet-600 to-blue-600 text-white">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
                     <SparklesIcon className="w-5 h-5 text-white" />
@@ -1125,7 +1125,7 @@ export const LandingPage: React.FC = () => {
                 </p>
               </div>
 
-              <div className="p-5 rounded-2xl bg-gradient-to-br from-indigo-900 to-violet-900 text-white border border-indigo-700/50">
+              <div className="p-5 rounded-xl bg-gradient-to-br from-indigo-900 to-violet-900 text-white border border-indigo-700/50">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center">
                     <svg className="w-5 h-5 text-cyan-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -1143,7 +1143,7 @@ export const LandingPage: React.FC = () => {
                 </p>
               </div>
 
-              <div className="p-5 rounded-2xl bg-white border border-zinc-200">
+              <div className="p-5 rounded-xl bg-white border border-zinc-200">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">
                     <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -1172,7 +1172,7 @@ export const LandingPage: React.FC = () => {
             <div className="inline-flex items-center gap-2 px-3 py-1.5 mb-4 rounded-full bg-amber-50 border border-amber-200">
               <span className="text-sm font-medium text-amber-700">Powered by Google Gemini</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-bold text-zinc-900 mb-4">
+            <h2 className="text-3xl sm:text-4xl font-semibold text-zinc-900 mb-4">
               AnA Visual
             </h2>
             <p className="text-lg text-zinc-600 max-w-2xl mx-auto">
@@ -1202,7 +1202,7 @@ export const LandingPage: React.FC = () => {
               <motion.div
                 key={card.title}
                 variants={fadeUp}
-                className="group p-8 rounded-2xl border-2 border-amber-100 hover:border-amber-300 bg-white hover:shadow-xl hover:shadow-amber-600/10 transition-all duration-300"
+                className="group p-8 rounded-xl border-2 border-amber-100 hover:border-amber-300 bg-white hover:shadow-xl hover:shadow-amber-600/10 transition-all duration-300"
               >
                 <div className="text-4xl mb-4">{card.icon}</div>
                 <h3 className="text-lg font-semibold text-zinc-900 mb-2">{card.title}</h3>
@@ -1230,7 +1230,7 @@ export const LandingPage: React.FC = () => {
             <div className="inline-flex items-center gap-2 px-3 py-1.5 mb-4 rounded-full bg-blue-50 border border-blue-100">
               <span className="text-sm font-medium text-blue-700">Built for your team</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-bold text-zinc-900 mb-4">
+            <h2 className="text-3xl sm:text-4xl font-semibold text-zinc-900 mb-4">
               Solutions that scale with you
             </h2>
             <p className="text-lg text-zinc-600 max-w-2xl mx-auto">
@@ -1244,7 +1244,7 @@ export const LandingPage: React.FC = () => {
               <motion.div
                 key={s.persona}
                 variants={fadeUp}
-                className={`group p-8 rounded-2xl border-2 transition-all duration-300 hover:shadow-xl ${
+                className={`group p-8 rounded-xl border-2 transition-all duration-300 hover:shadow-xl ${
                   s.color === 'blue' ? 'border-blue-100 hover:border-blue-300 bg-gradient-to-b from-blue-50/30 to-white hover:shadow-blue-600/10' :
                   s.color === 'violet' ? 'border-violet-100 hover:border-violet-300 bg-gradient-to-b from-violet-50/30 to-white hover:shadow-violet-600/10' :
                   'border-indigo-100 hover:border-indigo-300 bg-gradient-to-b from-indigo-50/30 to-white hover:shadow-indigo-600/10'
@@ -1257,7 +1257,7 @@ export const LandingPage: React.FC = () => {
                 }`}>
                   {s.persona}
                 </div>
-                <h3 className="text-xl font-bold text-zinc-900 mb-3">{s.tagline}</h3>
+                <h3 className="text-xl font-semibold text-zinc-900 mb-3">{s.tagline}</h3>
                 <p className="text-sm text-zinc-600 leading-relaxed mb-6">{s.description}</p>
                 <ul className="space-y-2">
                   {s.stats.map(stat => (
@@ -1298,12 +1298,12 @@ export const LandingPage: React.FC = () => {
               },
             ].map(pillar => (
               <motion.div key={pillar.title} variants={fadeUp} className="text-center">
-                <div className={`w-14 h-14 mx-auto mb-4 rounded-2xl bg-gradient-to-br ${pillar.gradient} flex items-center justify-center shadow-lg`}>
+                <div className={`w-14 h-14 mx-auto mb-4 rounded-xl bg-gradient-to-br ${pillar.gradient} flex items-center justify-center shadow-lg`}>
                   <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d={pillar.iconPath} />
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold text-zinc-900 mb-2">{pillar.title}</h3>
+                <h3 className="text-xl font-semibold text-zinc-900 mb-2">{pillar.title}</h3>
                 <p className="text-sm text-zinc-600 leading-relaxed">{pillar.description}</p>
               </motion.div>
             ))}
@@ -1315,7 +1315,7 @@ export const LandingPage: React.FC = () => {
       <Section id="security" className="py-24 px-6 bg-zinc-900 text-white">
         <div className="max-w-6xl mx-auto">
           <motion.div variants={fadeUp} className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+            <h2 className="text-3xl sm:text-4xl font-semibold mb-4">
               Enterprise security. Regulatory compliance. <span className="text-blue-400">Built in.</span>
             </h2>
             <p className="text-zinc-400 text-lg max-w-2xl mx-auto">
@@ -1329,7 +1329,7 @@ export const LandingPage: React.FC = () => {
               <motion.div
                 key={b.label}
                 variants={fadeUp}
-                className="p-5 rounded-xl bg-white/5 border border-white/10 hover:border-blue-500/30 transition-all"
+                className="p-5 rounded-xl bg-white/5 border border-white/10 hover:border-blue-500/30 transition-all duration-150"
               >
                 <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center mb-3">
                   <CheckIcon className="w-5 h-5 text-blue-400" />
@@ -1346,7 +1346,7 @@ export const LandingPage: React.FC = () => {
       <Section className="py-24 px-6">
         <div className="max-w-6xl mx-auto">
           <motion.div variants={fadeUp} className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-zinc-900 mb-4">
+            <h2 className="text-3xl sm:text-4xl font-semibold text-zinc-900 mb-4">
               Trusted by regulatory teams worldwide
             </h2>
             <p className="text-lg text-zinc-600">
@@ -1359,7 +1359,7 @@ export const LandingPage: React.FC = () => {
               <motion.div
                 key={i}
                 variants={fadeUp}
-                className="p-6 rounded-2xl bg-white border border-zinc-200 hover:shadow-lg transition-all duration-300"
+                className="p-6 rounded-xl bg-white border border-zinc-200 hover:shadow-lg transition-all duration-300"
               >
                 <div className="inline-flex items-center gap-1 px-2.5 py-1 mb-4 rounded-full bg-blue-50 border border-blue-100">
                   <span className="text-xs font-semibold text-blue-700">{t.metric}</span>
@@ -1368,7 +1368,7 @@ export const LandingPage: React.FC = () => {
                   "{t.quote}"
                 </blockquote>
                 <div className="flex items-center gap-3 pt-4 border-t border-zinc-200">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-xs font-bold">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-xs font-semibold">
                     {t.author.split(' ').map(w => w[0]).join('')}
                   </div>
                   <div>
@@ -1386,7 +1386,7 @@ export const LandingPage: React.FC = () => {
       <Section id="pricing" className="py-24 px-6 bg-white border-t border-zinc-200/60">
         <div className="max-w-6xl mx-auto">
           <motion.div variants={fadeUp} className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-zinc-900 mb-4">Simple, transparent pricing</h2>
+            <h2 className="text-3xl sm:text-4xl font-semibold text-zinc-900 mb-4">Simple, transparent pricing</h2>
             <p className="text-lg text-zinc-600 mb-8">
               No sales calls. No contracts. Start free and upgrade when you're ready.
             </p>
@@ -1415,7 +1415,7 @@ export const LandingPage: React.FC = () => {
               <motion.div
                 key={tier.name}
                 variants={fadeUp}
-                className={`relative p-6 rounded-2xl border-2 transition-all ${
+                className={`relative p-6 rounded-xl border-2 transition-all ${
                   tier.highlighted
                     ? 'border-blue-600 bg-blue-50/30 shadow-xl shadow-blue-600/10'
                     : 'border-zinc-200 bg-white hover:border-zinc-300 hover:shadow-md'
@@ -1429,7 +1429,7 @@ export const LandingPage: React.FC = () => {
                 <div className="mb-6">
                   <h3 className="text-lg font-semibold text-zinc-900">{tier.name}</h3>
                   <div className="mt-2 flex items-baseline gap-1">
-                    <span className="text-3xl font-bold text-zinc-900">
+                    <span className="text-3xl font-semibold text-zinc-900">
                       {tier.price === 'Custom' || tier.price === 'Free'
                         ? tier.price
                         : billingCycle === 'annual'
@@ -1461,7 +1461,7 @@ export const LandingPage: React.FC = () => {
                   className={`w-full py-2.5 px-4 text-sm font-medium rounded-xl transition-all ${
                     tier.highlighted
                       ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-600/20'
-                      : 'bg-zinc-100 text-zinc-800 hover:bg-zinc-200'
+                      : 'bg-zinc-100 text-zinc-900 hover:bg-zinc-200'
                   }`}
                 >
                   {tier.cta}
@@ -1481,7 +1481,7 @@ export const LandingPage: React.FC = () => {
         </div>
 
         <div className="relative max-w-3xl mx-auto text-center">
-          <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl font-bold mb-4">
+          <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl font-semibold mb-4">
             Stop paying for 12 tools that don't talk to each other
           </motion.h2>
           <motion.p variants={fadeUp} className="text-lg text-white/80 mb-4">
@@ -1503,7 +1503,7 @@ export const LandingPage: React.FC = () => {
             </button>
             <button
               onClick={() => setLocation('/concept2cure/signup')}
-              className="px-8 py-3.5 text-base font-medium text-white border-2 border-white/30 hover:border-white/60 rounded-xl transition-all"
+              className="px-8 py-3.5 text-base font-medium text-white border-2 border-white/30 hover:border-white/60 rounded-xl transition-all duration-150"
             >
               Start Free Trial
             </button>
@@ -1527,10 +1527,10 @@ export const LandingPage: React.FC = () => {
             <div>
               <h4 className="text-sm font-semibold text-zinc-400 mb-3">Platform</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#features" className="hover:text-white transition-colors">Solutions</a></li>
-                <li><a href="#pricing" className="hover:text-white transition-colors">Pricing</a></li>
-                <li><a href="#security" className="hover:text-white transition-colors">Security</a></li>
-                <li><button onClick={() => setLocation('/concept2cure/demo')} className="hover:text-white transition-colors">Interactive Demo</button></li>
+                <li><a href="#features" className="hover:text-white transition-colors duration-150">Solutions</a></li>
+                <li><a href="#pricing" className="hover:text-white transition-colors duration-150">Pricing</a></li>
+                <li><a href="#security" className="hover:text-white transition-colors duration-150">Security</a></li>
+                <li><button onClick={() => setLocation('/concept2cure/demo')} className="hover:text-white transition-colors duration-150">Interactive Demo</button></li>
               </ul>
             </div>
             <div>

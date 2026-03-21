@@ -181,7 +181,7 @@ export const ReviewCommandCenter: React.FC<ReviewCommandCenterProps> = ({
                   <div className="flex items-start gap-2">
                     <FileText className="w-4 h-4 mt-0.5 text-zinc-400 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-zinc-800 truncate">{artifact.title}</p>
+                      <p className="text-sm font-medium text-zinc-900 truncate">{artifact.title}</p>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-xs font-mono text-zinc-500">{artifact.code}</span>
                         <span className={cn(
@@ -290,7 +290,7 @@ export const ReviewCommandCenter: React.FC<ReviewCommandCenterProps> = ({
                             <User className="w-4 h-4 mt-0.5 text-zinc-400" />
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
-                                <span className="text-sm font-medium text-zinc-800">{review.reviewer}</span>
+                                <span className="text-sm font-medium text-zinc-900">{review.reviewer}</span>
                                 <span className={cn('text-xs px-1.5 py-0.5 rounded-full', verdictColors.bg, verdictColors.text)}>
                                   {review.verdict}
                                 </span>
@@ -321,7 +321,7 @@ export const ReviewCommandCenter: React.FC<ReviewCommandCenterProps> = ({
                           <MessageSquare className="w-4 h-4 mt-0.5 text-zinc-400 flex-shrink-0" />
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium text-zinc-800">{comment.author}</span>
+                              <span className="text-sm font-medium text-zinc-900">{comment.author}</span>
                               <span className="text-xs px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-600">
                                 {COLLAB_TYPE_LABELS[comment.type] || comment.type}
                               </span>

@@ -871,7 +871,7 @@ export function ECTDNavigator() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-3">
+          <h1 className="text-3xl font-semibold flex items-center gap-3">
             <Package className="w-8 h-8 text-indigo-600" />
             eCTD Navigator
           </h1>
@@ -907,7 +907,7 @@ export function ECTDNavigator() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Documents</p>
-                <p className="text-2xl font-bold">{overallStats.total}</p>
+                <p className="text-2xl font-semibold">{overallStats.total}</p>
               </div>
               <FileText className="w-8 h-8 text-blue-500" />
             </div>
@@ -918,7 +918,7 @@ export function ECTDNavigator() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Approved</p>
-                <p className="text-2xl font-bold text-green-600">{overallStats.approved}</p>
+                <p className="text-2xl font-semibold text-green-600">{overallStats.approved}</p>
               </div>
               <CheckCircle2 className="w-8 h-8 text-green-500" />
             </div>
@@ -929,7 +929,7 @@ export function ECTDNavigator() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">In Review</p>
-                <p className="text-2xl font-bold text-yellow-600">{overallStats.inReview}</p>
+                <p className="text-2xl font-semibold text-yellow-600">{overallStats.inReview}</p>
               </div>
               <Clock className="w-8 h-8 text-yellow-500" />
             </div>
@@ -940,7 +940,7 @@ export function ECTDNavigator() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Draft</p>
-                <p className="text-2xl font-bold text-zinc-600">{overallStats.draft}</p>
+                <p className="text-2xl font-semibold text-zinc-600">{overallStats.draft}</p>
               </div>
               <File className="w-8 h-8 text-zinc-500" />
             </div>

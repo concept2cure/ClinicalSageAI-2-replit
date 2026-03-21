@@ -304,7 +304,7 @@ const ScoreCard: React.FC<ScoreCardProps> = ({ result }) => {
       <div className="flex items-center justify-between mb-4">
         <div>
           <div className="text-sm text-zinc-500">Consistency Score</div>
-          <div className={cn('text-3xl font-bold', getScoreColor(result.overallScore))}>
+          <div className={cn('text-3xl font-semibold', getScoreColor(result.overallScore))}>
             {result.overallScore}%
           </div>
           <div className={cn('text-sm', getScoreColor(result.overallScore))}>

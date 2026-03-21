@@ -633,7 +633,7 @@ const SectionRow: React.FC<{
 
         {/* Title */}
         <span
-          className={cn('flex-1 truncate', isLeaf ? 'text-zinc-700' : 'font-medium text-zinc-800')}
+          className={cn('flex-1 truncate', isLeaf ? 'text-zinc-700' : 'font-medium text-zinc-900')}
         >
           {section.title}
         </span>
@@ -945,7 +945,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
               {onNavigateToCoAuthor && (
                 <button
                   onClick={onNavigateToCoAuthor}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-zinc-200 text-zinc-600 hover:bg-zinc-50 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-zinc-200 text-zinc-600 hover:bg-zinc-50 transition-colors duration-150"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
                   Open Co-Author
@@ -1041,7 +1041,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                 <div key={mod.code}>
                   {/* Module header */}
                   <div
-                    className="flex items-center gap-2 px-4 py-2 bg-zinc-50 border-b border-zinc-200 cursor-pointer hover:bg-zinc-100 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-zinc-50 border-b border-zinc-200 cursor-pointer hover:bg-zinc-100 transition-colors duration-150"
                     onClick={() => handleToggle(mod.code)}
                   >
                     {expandedSet.has(mod.code) ? (
@@ -1050,7 +1050,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                       <ChevronRight className="w-4 h-4 text-zinc-400" />
                     )}
                     <BarChart3 className="w-4 h-4 text-zinc-500" />
-                    <span className="font-medium text-sm text-zinc-800">{mod.title}</span>
+                    <span className="font-medium text-sm text-zinc-900">{mod.title}</span>
                     <span className="ml-auto text-xs text-zinc-400 tabular-nums">
                       {moduleProgress(mod)}%
                     </span>
@@ -1088,7 +1088,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <span className="font-mono text-xs text-zinc-500">{section.code}</span>
-                    <span className="font-medium text-sm text-zinc-800">{section.title}</span>
+                    <span className="font-medium text-sm text-zinc-900">{section.title}</span>
                     <span className={cn('text-xs px-2 py-0.5 rounded-full', cfg.bg, cfg.color)}>
                       {cfg.label}
                     </span>
@@ -1123,7 +1123,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                     {section.aiDraftable && (
                       <button
                         onClick={() => onDraftWithAI?.(section.code, section.title)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-violet-600 text-white hover:bg-violet-700 transition-colors"
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-violet-600 text-white hover:bg-violet-700 transition-colors duration-150"
                       >
                         <Sparkles className="w-3.5 h-3.5" />
                         Draft with RI
@@ -1131,7 +1131,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                     )}
                     <button
                       onClick={() => onOpenSection?.(section.code)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-zinc-200 text-zinc-600 hover:bg-white transition-colors"
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-zinc-200 text-zinc-600 hover:bg-white transition-colors duration-150"
                     >
                       <FileText className="w-3.5 h-3.5" />
                       Open in Editor
@@ -1283,7 +1283,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                   </button>
                   <button
                     onClick={() => setShowCompileDialog(false)}
-                    className="px-4 py-2.5 text-sm font-medium rounded-lg border border-zinc-200 text-zinc-600 hover:bg-zinc-50 transition-colors"
+                    className="px-4 py-2.5 text-sm font-medium rounded-lg border border-zinc-200 text-zinc-600 hover:bg-zinc-50 transition-colors duration-150"
                   >
                     Cancel
                   </button>
@@ -1385,7 +1385,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                         a.click();
                         URL.revokeObjectURL(url);
                       }}
-                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors duration-150"
                     >
                       <Download className="w-4 h-4" />
                       Download XML Backbone
@@ -1396,7 +1396,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                       setCompilationResult(null);
                       setShowCompileDialog(false);
                     }}
-                    className="px-4 py-2.5 text-sm font-medium rounded-lg border border-zinc-200 text-zinc-600 hover:bg-zinc-50 transition-colors"
+                    className="px-4 py-2.5 text-sm font-medium rounded-lg border border-zinc-200 text-zinc-600 hover:bg-zinc-50 transition-colors duration-150"
                   >
                     Close
                   </button>

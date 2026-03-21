@@ -227,7 +227,7 @@ const ContextRibbon: React.FC<ContextRibbonProps> = ({
       {context.nextDeadline && (
         <button 
           onClick={onDeadlineClick}
-          className="flex items-center gap-2 px-3 py-1 rounded-lg hover:bg-zinc-50 transition-colors"
+          className="flex items-center gap-2 px-3 py-1 rounded-lg hover:bg-zinc-50 transition-colors duration-150"
         >
           <Clock className="w-3.5 h-3.5 text-zinc-400" />
           <span className="text-zinc-600">{context.nextDeadline.label}</span>
@@ -248,7 +248,7 @@ const ContextRibbon: React.FC<ContextRibbonProps> = ({
         {context.criticalAlerts > 0 && (
           <button
             onClick={onAlertClick}
-            className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+            className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-red-50 text-red-600 hover:bg-red-100 transition-colors duration-150"
           >
             <Bell className="w-3.5 h-3.5" />
             <span className="font-medium">{context.criticalAlerts}</span>
@@ -313,7 +313,7 @@ const MorningBriefingGreeting: React.FC<MorningBriefingGreetingProps> = ({
   const firstName = userName.split(' ')[0];
 
   return (
-    <div className="bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 rounded-2xl p-8 text-white shadow-xl">
+    <div className="bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 rounded-xl p-8 text-white shadow-xl">
       <div className="flex items-start justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
@@ -334,7 +334,7 @@ const MorningBriefingGreeting: React.FC<MorningBriefingGreetingProps> = ({
         </div>
         <button
           onClick={onDismiss}
-          className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+          className="p-2 rounded-lg hover:bg-white/10 transition-colors duration-150"
         >
           <X className="w-5 h-5" />
         </button>
@@ -371,7 +371,7 @@ const MorningBriefingGreeting: React.FC<MorningBriefingGreetingProps> = ({
       {/* CTA */}
       <button
         onClick={onViewDetails}
-        className="w-full flex items-center justify-center gap-2 bg-white text-zinc-900 rounded-xl py-3 font-medium hover:bg-zinc-100 transition-colors"
+        className="w-full flex items-center justify-center gap-2 bg-white text-zinc-900 rounded-xl py-3 font-medium hover:bg-zinc-100 transition-colors duration-150"
       >
         <span>View Full Briefing</span>
         <ArrowRight className="w-4 h-4" />
@@ -399,7 +399,7 @@ const StatCard: React.FC<{
       <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center mb-2", colorClasses[color])}>
         <Icon className="w-4 h-4" />
       </div>
-      <div className="text-2xl font-bold">{value}</div>
+      <div className="text-2xl font-semibold">{value}</div>
       <div className="text-xs text-zinc-500">{label}</div>
     </div>
   );
@@ -494,7 +494,7 @@ const ZeroState: React.FC<ZeroStateProps> = ({ userName, industry, onQuickAction
     <div className="flex-1 flex flex-col items-center justify-center p-8">
       <div className="max-w-xl text-center">
         {/* Sherpa Avatar */}
-        <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg">
+        <div className="w-20 h-20 mx-auto mb-6 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg">
           <span className="text-4xl">🏔️</span>
         </div>
 
@@ -602,7 +602,7 @@ function CouncilChat({ advisorId, projectId }: { advisorId: string; projectId: s
   }, [input, isThinking, messages, persona, projectId]);
 
   return (
-    <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm flex flex-col" style={{ height: 'calc(100vh - 280px)', minHeight: 400 }}>
+    <div className="bg-white rounded-xl border border-zinc-200 shadow-sm flex flex-col" style={{ height: 'calc(100vh - 280px)', minHeight: 400 }}>
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 && (
@@ -613,7 +613,7 @@ function CouncilChat({ advisorId, projectId }: { advisorId: string; projectId: s
                 <button
                   key={q}
                   onClick={() => { setInput(q); }}
-                  className="px-3 py-1.5 text-xs bg-zinc-50 hover:bg-zinc-100 text-zinc-600 rounded-full border border-zinc-200 transition-colors"
+                  className="px-3 py-1.5 text-xs bg-zinc-50 hover:bg-zinc-100 text-zinc-600 rounded-full border border-zinc-200 transition-colors duration-150"
                 >
                   {q}
                 </button>
@@ -624,7 +624,7 @@ function CouncilChat({ advisorId, projectId }: { advisorId: string; projectId: s
         {messages.map((msg, i) => (
           <div key={i} className={cn('flex', msg.role === 'user' ? 'justify-end' : 'justify-start')}>
             <div className={cn(
-              'max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed',
+              'max-w-[80%] rounded-xl px-4 py-2.5 text-sm leading-relaxed',
               msg.role === 'user'
                 ? 'bg-zinc-900 text-white'
                 : 'bg-zinc-50 text-zinc-900 border border-zinc-200'
@@ -635,7 +635,7 @@ function CouncilChat({ advisorId, projectId }: { advisorId: string; projectId: s
         ))}
         {isThinking && (
           <div className="flex justify-start">
-            <div className="bg-zinc-50 rounded-2xl px-4 py-2.5 text-sm text-zinc-500 border border-zinc-200 flex items-center gap-2">
+            <div className="bg-zinc-50 rounded-xl px-4 py-2.5 text-sm text-zinc-500 border border-zinc-200 flex items-center gap-2">
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
               {persona?.name || 'Advisor'} is thinking...
             </div>
@@ -656,7 +656,7 @@ function CouncilChat({ advisorId, projectId }: { advisorId: string; projectId: s
           <button
             onClick={sendMessage}
             disabled={!input.trim() || isThinking}
-            className="px-4 py-2.5 bg-zinc-900 text-white text-sm font-medium rounded-xl hover:bg-zinc-800 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+            className="px-4 py-2.5 bg-zinc-900 text-white text-sm font-medium rounded-xl hover:bg-zinc-800 disabled:opacity-60 disabled:cursor-not-allowed transition-colors duration-150"
           >
             Send
           </button>
@@ -840,7 +840,7 @@ export const ConvergentCanvas: React.FC<ConvergentCanvasProps> = ({
             <div className="p-3 border-t border-zinc-200">
               <button
                 onClick={onSettingsOpen}
-                className="w-full flex items-center gap-2 p-2 rounded-lg text-sm text-zinc-600 hover:bg-zinc-50 transition-colors"
+                className="w-full flex items-center gap-2 p-2 rounded-lg text-sm text-zinc-600 hover:bg-zinc-50 transition-colors duration-150"
               >
                 <Settings className="w-4 h-4" />
                 <span>Settings</span>

@@ -157,7 +157,7 @@ const ScoreRing: React.FC<ScoreRingProps> = ({
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span
-          className="text-3xl font-bold"
+          className="text-3xl font-semibold"
           style={{ color: getScoreColor(score) }}
         >
           {score}
@@ -265,7 +265,7 @@ const ViolationCard: React.FC<ViolationCardProps> = ({
               {violation.category}
             </span>
           </div>
-          <p className="text-sm font-medium text-zinc-800">
+          <p className="text-sm font-medium text-zinc-900">
             {violation.ruleName}
           </p>
           <p className="text-sm text-zinc-600 mt-0.5">
@@ -419,7 +419,7 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
               <Shield className="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <h2 className="font-semibold text-zinc-800">Compliance Dashboard</h2>
+              <h2 className="font-semibold text-zinc-900">Compliance Dashboard</h2>
               {documentTitle && (
                 <p className="text-sm text-zinc-500">{documentTitle}</p>
               )}
@@ -439,7 +439,7 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
             {onExport && (
               <button
                 onClick={onExport}
-                className="p-2 hover:bg-zinc-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-zinc-100 rounded-lg transition-colors duration-150"
                 title="Export Report"
               >
                 <Download className="w-5 h-5 text-zinc-600" />

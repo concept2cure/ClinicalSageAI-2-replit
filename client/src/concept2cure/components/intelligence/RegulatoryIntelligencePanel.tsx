@@ -78,7 +78,7 @@ function ScoreBar({ value, label, color }: { value: number; label: string; color
     <div className="mb-2">
       <div className="flex justify-between text-xs mb-1">
         <span className="text-zinc-600">{label}</span>
-        <span className="font-semibold text-zinc-800">{pct}%</span>
+        <span className="font-semibold text-zinc-900">{pct}%</span>
       </div>
       <div className="h-2 bg-zinc-100 rounded-full overflow-hidden">
         <div
@@ -231,7 +231,7 @@ export function RegulatoryIntelligencePanel({
       <div className="flex items-center justify-between px-2 sm:px-3 py-2 border-b border-zinc-200 bg-gradient-to-r from-indigo-50/80 to-violet-50/80 shrink-0">
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
           <Brain className="w-4 h-4 text-indigo-600 shrink-0" />
-          <span className="text-xs sm:text-sm font-semibold text-zinc-800 truncate">
+          <span className="text-xs sm:text-sm font-semibold text-zinc-900 truncate">
             Regulatory Intelligence
           </span>
         </div>
@@ -338,7 +338,7 @@ export function RegulatoryIntelligencePanel({
                       className="p-2 bg-teal-50/60 border border-teal-100 rounded-lg"
                     >
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs font-medium text-zinc-800 truncate">
+                        <span className="text-xs font-medium text-zinc-900 truncate">
                           {csr.title}
                         </span>
                         <span className="text-xs px-1.5 py-0.5 bg-teal-100 text-teal-700 rounded-full">
@@ -390,7 +390,7 @@ export function RegulatoryIntelligencePanel({
                     onClick={() => handleComparePrecedent(p)}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-medium text-zinc-800">
+                      <span className="text-xs font-medium text-zinc-900">
                         {p.deviceName || p.applicantName || 'Unknown Device'}
                       </span>
                       <span className="text-xs font-mono text-indigo-600">
@@ -678,7 +678,7 @@ export function RegulatoryIntelligencePanel({
                   </div>
                   {precedentStrategy.data.recommendedStrategy && (
                     <div className="p-2 bg-white rounded border border-violet-200 mb-2">
-                      <span className="text-xs font-medium text-zinc-800">
+                      <span className="text-xs font-medium text-zinc-900">
                         {precedentStrategy.data.recommendedStrategy.pathway ||
                           precedentStrategy.data.recommendedStrategy.name ||
                           'Recommended Pathway'}
@@ -813,7 +813,7 @@ export function RegulatoryIntelligencePanel({
                     '2.5'
                   );
                 }}
-                className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors"
+                className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors duration-150"
               >
                 <ArrowRight className="w-3.5 h-3.5" />
                 Save as Strategy Memo
@@ -881,7 +881,7 @@ export function RegulatoryIntelligencePanel({
               return (
                 <div className="p-2.5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-semibold text-zinc-800 flex items-center gap-1">
+                    <span className="text-xs font-semibold text-zinc-900 flex items-center gap-1">
                       <FileCheck className="w-3.5 h-3.5 text-blue-600" />
                       Evidence Coverage ({submissionType || 'General'})
                     </span>
@@ -937,7 +937,7 @@ export function RegulatoryIntelligencePanel({
                 value={evidenceQuery}
                 onChange={e => setEvidenceQuery(e.target.value)}
                 placeholder="Search clinical evidence (CSRs, studies)..."
-                className="w-full pl-8 pr-3 py-1.5 text-xs border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/30 bg-white"
+                className="w-full pl-8 pr-3 py-1.5 text-xs border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/30 bg-white"
               />
             </div>
 
@@ -951,10 +951,10 @@ export function RegulatoryIntelligencePanel({
                   {csrSearch.data.map((csr, i) => (
                     <div
                       key={csr.id || i}
-                      className="p-2.5 border border-zinc-200 rounded-lg bg-zinc-50/50 hover:bg-zinc-50 transition-colors"
+                      className="p-2.5 border border-zinc-200 rounded-lg bg-zinc-50/50 hover:bg-zinc-50 transition-colors duration-150"
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <span className="text-xs font-semibold text-zinc-800 leading-tight">
+                        <span className="text-xs font-semibold text-zinc-900 leading-tight">
                           {csr.title}
                         </span>
                         {csr.relevance_score != null && (
@@ -1009,10 +1009,10 @@ export function RegulatoryIntelligencePanel({
                       {evidenceSearch.data.map((csr, i) => (
                         <div
                           key={csr.id || i}
-                          className="p-2.5 border border-zinc-200 rounded-lg bg-zinc-50/50 hover:bg-zinc-50 transition-colors"
+                          className="p-2.5 border border-zinc-200 rounded-lg bg-zinc-50/50 hover:bg-zinc-50 transition-colors duration-150"
                         >
                           <div className="flex items-start justify-between gap-2">
-                            <span className="text-xs font-semibold text-zinc-800 leading-tight">
+                            <span className="text-xs font-semibold text-zinc-900 leading-tight">
                               {csr.title}
                             </span>
                             {csr.relevance_score != null && (
@@ -1085,7 +1085,7 @@ export function RegulatoryIntelligencePanel({
                     '5.3'
                   );
                 }}
-                className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-150"
               >
                 <ArrowRight className="w-3.5 h-3.5" />
                 Save as Evidence Binder

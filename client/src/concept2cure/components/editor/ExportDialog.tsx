@@ -134,7 +134,7 @@ export function ExportDialog({
   return (
     <>
       <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50" onClick={onClose} />
-      <div className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
+      <div className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-lg bg-white rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200">
           <div>
@@ -178,7 +178,7 @@ export function ExportDialog({
                     <Icon className="w-4 h-4" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-medium text-zinc-800">{fmt.label}</p>
+                    <p className="text-xs font-medium text-zinc-900">{fmt.label}</p>
                     <p className="text-[10px] text-zinc-500 mt-0.5 leading-snug">{fmt.description}</p>
                   </div>
                 </button>
@@ -215,7 +215,7 @@ export function ExportDialog({
                 <select
                   value={options.pageSize}
                   onChange={e => setOptions(prev => ({ ...prev, pageSize: e.target.value as 'letter' | 'a4' }))}
-                  className="text-xs border border-zinc-200 rounded-md px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                  className="text-xs border border-zinc-200 rounded-md px-2 py-1 bg-white focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/30"
                 >
                   <option value="letter">US Letter</option>
                   <option value="a4">A4</option>
@@ -229,7 +229,7 @@ export function ExportDialog({
         <div className="flex items-center justify-between px-5 py-4 border-t border-zinc-200 bg-zinc-50">
           <button
             onClick={onClose}
-            className="px-3 py-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-800 transition-colors"
+            className="px-3 py-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-900 transition-colors duration-150"
           >
             Cancel
           </button>

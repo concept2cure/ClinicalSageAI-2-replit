@@ -66,7 +66,7 @@ const InstructionsModal: React.FC<{
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col">
+      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col">
         <div className="px-6 pt-6 pb-4">
           <h2 className="text-lg font-semibold text-zinc-900">Set project instructions</h2>
           <p className="text-sm text-zinc-500 mt-1">
@@ -79,14 +79,14 @@ const InstructionsModal: React.FC<{
           <textarea
             value={draft}
             onChange={e => setDraft(e.target.value)}
-            className="w-full h-64 p-4 border border-zinc-200 rounded-xl text-sm text-zinc-800 leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-zinc-200 focus:border-zinc-300 bg-zinc-50"
+            className="w-full h-64 p-4 border border-zinc-200 rounded-xl text-sm text-zinc-900 leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-zinc-200 focus:border-zinc-300 bg-zinc-50"
             placeholder="e.g., This project is for a 510(k) submission for a Class II medical device. Focus on FDA guidance documents and use formal regulatory language..."
           />
         </div>
         <div className="flex items-center justify-end gap-3 px-6 py-4">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors"
+            className="px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors duration-150"
           >
             Cancel
           </button>
@@ -167,7 +167,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
           <h3 className="text-sm font-semibold text-zinc-900">Instructions</h3>
           <button
             onClick={() => setInstructionsOpen(true)}
-            className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors"
+            className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors duration-150"
             title="Edit instructions"
           >
             <PenLine className="w-3.5 h-3.5" />
@@ -197,7 +197,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
           <div className="relative">
             <button
               onClick={() => setUploadMenuOpen(!uploadMenuOpen)}
-              className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors"
+              className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors duration-150"
               title="Add files"
             >
               <Plus className="w-4 h-4" />
@@ -210,14 +210,14 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
                 <div className="absolute right-0 top-8 z-20 bg-white rounded-xl shadow-lg border border-zinc-200 py-1 w-48">
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 transition-colors"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 transition-colors duration-150"
                   >
                     <Upload className="w-4 h-4 text-zinc-400" />
                     Upload from device
                   </button>
                   <button
                     onClick={() => { setUploadMenuOpen(false); setInstructionsOpen(true); }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 transition-colors"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 transition-colors duration-150"
                   >
                     <PenLine className="w-4 h-4 text-zinc-400" />
                     Add text content
@@ -240,7 +240,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
         <div className="mb-3">
           <div className="w-full h-1 bg-zinc-100 rounded-full overflow-hidden">
             <div
-              className="h-full bg-blue-500 rounded-full transition-all"
+              className="h-full bg-blue-500 rounded-full transition-all duration-150"
               style={{ width: `${Math.max(capacityPercent, 1)}%` }}
             />
           </div>
@@ -260,7 +260,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
         {docs.length === 0 && !isUploading ? (
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="w-full py-8 border-2 border-dashed border-zinc-200 rounded-xl text-center hover:border-zinc-300 hover:bg-zinc-50 transition-colors"
+            className="w-full py-8 border-2 border-dashed border-zinc-200 rounded-xl text-center hover:border-zinc-300 hover:bg-zinc-50 transition-colors duration-150"
           >
             <Upload className="w-5 h-5 text-zinc-400 mx-auto mb-2" />
             <p className="text-xs text-zinc-400">Drop files here or click to upload</p>
@@ -270,7 +270,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
             {docs.map((doc: any) => (
               <div
                 key={doc.id || doc.name}
-                className="group relative border border-zinc-200 rounded-lg overflow-hidden hover:border-zinc-300 transition-colors"
+                className="group relative border border-zinc-200 rounded-lg overflow-hidden hover:border-zinc-300 transition-colors duration-150"
               >
                 {/* Thumbnail placeholder */}
                 <div className="aspect-[4/5] bg-zinc-50 flex items-center justify-center">
@@ -278,7 +278,7 @@ export const ProjectSidebar: React.FC<ProjectSidebarProps> = ({
                 </div>
                 {/* File type badge */}
                 <div className="absolute bottom-1 left-1">
-                  <span className="text-xs font-bold text-white bg-red-500 px-1.5 py-0.5 rounded uppercase">
+                  <span className="text-xs font-semibold text-white bg-red-500 px-1.5 py-0.5 rounded uppercase">
                     {(doc.type || doc.name?.split('.').pop() || 'file').toUpperCase()}
                   </span>
                 </div>

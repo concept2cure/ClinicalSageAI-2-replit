@@ -543,7 +543,7 @@ const SectionHeader: React.FC<{
         {onAdd && (
           <button
             onClick={onAdd}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-800 transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-800 transition-colors duration-150"
           >
             <Plus className="h-3.5 w-3.5" />
             Add
@@ -552,7 +552,7 @@ const SectionHeader: React.FC<{
         {onExport && (
           <button
             onClick={onExport}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-colors duration-150"
           >
             <Download className="h-3.5 w-3.5" />
             Export
@@ -579,7 +579,7 @@ const SectionHeader: React.FC<{
         value={searchValue}
         onChange={(e) => onSearchChange(e.target.value)}
         placeholder={`Search ${title.toLowerCase()}...`}
-        className="w-full rounded-lg border border-zinc-200 bg-white py-2 pl-10 pr-4 text-sm text-zinc-900 placeholder-zinc-400 outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100 transition-all"
+        className="w-full rounded-lg border border-zinc-200 bg-white py-2 pl-10 pr-4 text-sm text-zinc-900 placeholder-zinc-400 outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100 transition-all duration-150"
       />
     </div>
   </div>
@@ -650,7 +650,7 @@ const IPPortfolioPanel: React.FC<{ search: string }> = ({ search }) => {
         {filtered.map((patent) => (
           <div
             key={patent.id}
-            className="rounded-xl border border-zinc-200 bg-white p-5 hover:border-zinc-200 transition-colors"
+            className="rounded-xl border border-zinc-200 bg-white p-5 hover:border-zinc-200 transition-colors duration-150"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
@@ -662,7 +662,7 @@ const IPPortfolioPanel: React.FC<{ search: string }> = ({ search }) => {
                 <h3 className="text-sm font-semibold text-zinc-900 mb-1">{patent.title}</h3>
                 <p className="text-xs text-zinc-500 font-mono">{patent.patentNumber}</p>
               </div>
-              <button className="rounded-lg border border-zinc-200 p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 transition-colors">
+              <button className="rounded-lg border border-zinc-200 p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 transition-colors duration-150">
                 <ArrowUpRight className="h-4 w-4" />
               </button>
             </div>
@@ -725,7 +725,7 @@ const ContractsPanel: React.FC<{ search: string }> = ({ search }) => {
       {filtered.map((contract) => (
         <div
           key={contract.id}
-          className="rounded-xl border border-zinc-200 bg-white p-5 hover:border-zinc-200 transition-colors"
+          className="rounded-xl border border-zinc-200 bg-white p-5 hover:border-zinc-200 transition-colors duration-150"
         >
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
@@ -799,7 +799,7 @@ const RegulatoryLawPanel: React.FC<{ search: string }> = ({ search }) => {
       {filtered.map((ref) => (
         <div
           key={ref.id}
-          className="rounded-xl border border-zinc-200 bg-white p-5 hover:border-zinc-200 transition-colors"
+          className="rounded-xl border border-zinc-200 bg-white p-5 hover:border-zinc-200 transition-colors duration-150"
         >
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
@@ -914,7 +914,7 @@ const CompliancePanel: React.FC<{ search: string }> = ({ search }) => {
         {filtered.map((item) => (
           <div
             key={item.id}
-            className="rounded-xl border border-zinc-200 bg-white p-5 hover:border-zinc-200 transition-colors"
+            className="rounded-xl border border-zinc-200 bg-white p-5 hover:border-zinc-200 transition-colors duration-150"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
@@ -1045,7 +1045,7 @@ const RiskRegisterPanel: React.FC<{ search: string }> = ({ search }) => {
         {filtered.map((risk) => (
           <div
             key={risk.id}
-            className="rounded-xl border border-zinc-200 bg-white p-5 hover:border-zinc-200 transition-colors"
+            className="rounded-xl border border-zinc-200 bg-white p-5 hover:border-zinc-200 transition-colors duration-150"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
@@ -1058,7 +1058,7 @@ const RiskRegisterPanel: React.FC<{ search: string }> = ({ search }) => {
                   />
                   <span
                     className={cn(
-                      'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold',
+                      'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold',
                       risk.riskScore >= 15
                         ? 'bg-red-100 text-red-700'
                         : risk.riskScore >= 10
@@ -1196,7 +1196,7 @@ export const LegalCenter: React.FC<{ onClose?: () => void }> = ({ onClose }) => 
           {onClose && (
             <button
               onClick={onClose}
-              className="rounded-lg border border-zinc-200 p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 transition-colors"
+              className="rounded-lg border border-zinc-200 p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 transition-colors duration-150"
             >
               <X className="h-4 w-4" />
             </button>

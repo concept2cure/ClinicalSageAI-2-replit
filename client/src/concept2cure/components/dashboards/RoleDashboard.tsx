@@ -270,7 +270,7 @@ const MetricCard: React.FC<MetricCardProps> = ({ metric, colorClass }) => {
         <div className="flex items-start justify-between">
           <div>
             <p className="text-xs text-zinc-500 font-medium tracking-wide">{metric.label}</p>
-            <p className={cn('text-3xl font-bold mt-1.5', COLOR_TEXT_700[colorClass] || 'text-zinc-800')}>
+            <p className={cn('text-3xl font-semibold mt-1.5', COLOR_TEXT_700[colorClass] || 'text-zinc-900')}>
               {typeof metric.value === 'number' && metric.value % 1 !== 0
                 ? metric.value.toFixed(1)
                 : metric.value}
@@ -489,7 +489,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ role, onAskAnA }) =
             <button
               key={idx}
               onClick={() => onAskAnA(suggestion)}
-              className="w-full text-left p-2 text-xs text-zinc-600 bg-white rounded-lg border border-zinc-200 hover:border-blue-300 hover:bg-blue-50 transition-colors"
+              className="w-full text-left p-2 text-xs text-zinc-600 bg-white rounded-lg border border-zinc-200 hover:border-blue-300 hover:bg-blue-50 transition-colors duration-150"
             >
               {suggestion}
             </button>
@@ -651,7 +651,7 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
         <div className="p-6 space-y-6">
           {/* Metrics Grid */}
           <div>
-            <h2 className="text-base font-semibold text-zinc-800 mb-4">Key Metrics</h2>
+            <h2 className="text-base font-semibold text-zinc-900 mb-4">Key Metrics</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {metrics.map(metric => (
                 <MetricCard key={metric.id} metric={metric} colorClass={roleConfig.color} />

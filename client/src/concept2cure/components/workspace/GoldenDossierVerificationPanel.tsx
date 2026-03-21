@@ -189,7 +189,7 @@ export const GoldenDossierVerificationPanel: React.FC<GoldenDossierVerificationP
             <p className="text-xs opacity-80">{result.title}</p>
           </div>
           <div className="text-right">
-            <p className="text-lg font-bold">{result.score}%</p>
+            <p className="text-lg font-semibold">{result.score}%</p>
             <p className="text-xs uppercase tracking-wider opacity-60">Score</p>
           </div>
         </div>
@@ -241,7 +241,7 @@ export const GoldenDossierVerificationPanel: React.FC<GoldenDossierVerificationP
             <ul className="space-y-1.5">
               {result.recommendedActions.map((action, i) => (
                 <li key={i} className="flex items-center gap-2 text-xs text-zinc-600">
-                  <span className="w-4 h-4 rounded-full bg-blue-100 text-blue-600 text-xs font-bold flex items-center justify-center shrink-0">
+                  <span className="w-4 h-4 rounded-full bg-blue-100 text-blue-600 text-xs font-semibold flex items-center justify-center shrink-0">
                     {i + 1}
                   </span>
                   {action}
@@ -310,7 +310,7 @@ function PanelHeader({ onClose, title }: { onClose: () => void; title: string })
   return (
     <div className="flex items-center gap-2 px-4 h-10 border-b border-zinc-200 shrink-0">
       <ShieldCheck className="w-4 h-4 text-emerald-500" />
-      <h2 className="text-sm font-semibold text-zinc-800">{title}</h2>
+      <h2 className="text-sm font-semibold text-zinc-900">{title}</h2>
       <button
         onClick={onClose}
         className="ml-auto p-1 rounded hover:bg-zinc-100 text-zinc-400 hover:text-zinc-600 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"

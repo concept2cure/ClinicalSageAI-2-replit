@@ -713,7 +713,7 @@ function ThreadCard({
           <p
             className={cn(
               'text-xs font-medium truncate',
-              isOpen ? 'text-zinc-800' : 'text-zinc-500 line-through'
+              isOpen ? 'text-zinc-900' : 'text-zinc-500 line-through'
             )}
           >
             {thread.title}
@@ -1043,7 +1043,7 @@ function TaskCard({ task, onResolve, onReopen, taskTypeOptions }: TaskCardProps)
           <p
             className={cn(
               'text-xs font-medium',
-              isActive ? 'text-zinc-800' : 'text-zinc-500 line-through'
+              isActive ? 'text-zinc-900' : 'text-zinc-500 line-through'
             )}
           >
             {task.title}

@@ -289,7 +289,7 @@ const PDUFACalendar: React.FC<{
                       </div>
                       <div className="text-right">
                         <p className={cn(
-                          'text-lg font-bold',
+                          'text-lg font-semibold',
                           isUrgent ? 'text-red-600' : 'text-zinc-900'
                         )}>
                           {daysUntil}d
@@ -336,7 +336,7 @@ const CommitmentTracker: React.FC<{
           Regulatory Commitments
         </h3>
         {overdue.length > 0 && (
-          <span className="px-2 py-1 text-xs font-bold text-red-700 bg-red-100 rounded-full">
+          <span className="px-2 py-1 text-xs font-semibold text-red-700 bg-red-100 rounded-full">
             {overdue.length} OVERDUE
           </span>
         )}
@@ -388,7 +388,7 @@ const CommitmentTracker: React.FC<{
                     isUrgent && !isOverdue && 'text-amber-600',
                     !isOverdue && !isUrgent && 'text-zinc-600'
                   )}>
-                    <p className="text-sm font-bold">
+                    <p className="text-sm font-semibold">
                       {isOverdue ? `${Math.abs(daysUntil)}d overdue` : `${daysUntil}d`}
                     </p>
                     <p className="text-xs">{formatDate(commitment.dueDate)}</p>
@@ -491,7 +491,7 @@ const TherapeuticAreaCard: React.FC<{
       {/* Header */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between p-4 hover:bg-zinc-50 transition-colors"
+        className="w-full flex items-center justify-between p-4 hover:bg-zinc-50 transition-colors duration-150"
       >
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center">
@@ -507,12 +507,12 @@ const TherapeuticAreaCard: React.FC<{
           {/* Revenue */}
           <div className="text-right">
             <p className="text-xs text-zinc-500">Revenue</p>
-            <p className="text-lg font-bold text-zinc-900">{formatCurrency(portfolio.totalRevenue)}</p>
+            <p className="text-lg font-semibold text-zinc-900">{formatCurrency(portfolio.totalRevenue)}</p>
           </div>
           
           {/* Health Score */}
           <div className={cn(
-            'w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold',
+            'w-12 h-12 rounded-full flex items-center justify-center text-sm font-semibold',
             portfolio.healthScore >= 80 && 'bg-green-100 text-green-700',
             portfolio.healthScore >= 60 && portfolio.healthScore < 80 && 'bg-amber-100 text-amber-700',
             portfolio.healthScore < 60 && 'bg-red-100 text-red-700'
@@ -564,7 +564,7 @@ const TherapeuticAreaCard: React.FC<{
                     <Target className="w-4 h-4 text-amber-500" title="Key Product" />
                   )}
                   <span className={cn(
-                    'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold',
+                    'w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold',
                     product.healthScore >= 80 && 'bg-green-100 text-green-700',
                     product.healthScore >= 60 && product.healthScore < 80 && 'bg-amber-100 text-amber-700',
                     product.healthScore < 60 && 'bg-red-100 text-red-700'
@@ -623,7 +623,7 @@ export const PharmaPortfolioDashboard: React.FC<PharmaPortfolioDashboardProps> =
       <div className="flex-shrink-0 bg-white border-b border-zinc-200 p-4">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-xl font-bold text-zinc-900">Global Regulatory Portfolio</h1>
+            <h1 className="text-xl font-semibold text-zinc-900">Global Regulatory Portfolio</h1>
             <p className="text-sm text-zinc-500">Enterprise-wide view across therapeutic areas</p>
           </div>
           
@@ -655,11 +655,11 @@ export const PharmaPortfolioDashboard: React.FC<PharmaPortfolioDashboardProps> =
         <div className="grid grid-cols-5 gap-4">
           <div className="p-3 bg-blue-50 rounded-lg">
             <p className="text-xs text-blue-600">Total Revenue</p>
-            <p className="text-xl font-bold text-blue-700">{formatCurrency(metrics.totalRevenue)}</p>
+            <p className="text-xl font-semibold text-blue-700">{formatCurrency(metrics.totalRevenue)}</p>
           </div>
           <div className="p-3 bg-zinc-100 rounded-lg">
             <p className="text-xs text-zinc-500">Products</p>
-            <p className="text-xl font-bold text-zinc-900">{metrics.totalProducts}</p>
+            <p className="text-xl font-semibold text-zinc-900">{metrics.totalProducts}</p>
           </div>
           <div className={cn(
             'p-3 rounded-lg',
@@ -668,7 +668,7 @@ export const PharmaPortfolioDashboard: React.FC<PharmaPortfolioDashboardProps> =
             <p className={cn('text-xs', metrics.upcomingPDUFAs > 0 ? 'text-amber-600' : 'text-zinc-500')}>
               PDUFA (90d)
             </p>
-            <p className={cn('text-xl font-bold', metrics.upcomingPDUFAs > 0 ? 'text-amber-700' : 'text-zinc-900')}>
+            <p className={cn('text-xl font-semibold', metrics.upcomingPDUFAs > 0 ? 'text-amber-700' : 'text-zinc-900')}>
               {metrics.upcomingPDUFAs}
             </p>
           </div>
@@ -679,13 +679,13 @@ export const PharmaPortfolioDashboard: React.FC<PharmaPortfolioDashboardProps> =
             <p className={cn('text-xs', metrics.overdueCommitments > 0 ? 'text-red-600' : 'text-zinc-500')}>
               Overdue Commitments
             </p>
-            <p className={cn('text-xl font-bold', metrics.overdueCommitments > 0 ? 'text-red-700' : 'text-zinc-900')}>
+            <p className={cn('text-xl font-semibold', metrics.overdueCommitments > 0 ? 'text-red-700' : 'text-zinc-900')}>
               {metrics.overdueCommitments}
             </p>
           </div>
           <div className="p-3 bg-violet-50 rounded-lg">
             <p className="text-xs text-violet-600">At Risk (30d)</p>
-            <p className="text-xl font-bold text-violet-700">{metrics.atRiskCommitments}</p>
+            <p className="text-xl font-semibold text-violet-700">{metrics.atRiskCommitments}</p>
           </div>
         </div>
       </div>

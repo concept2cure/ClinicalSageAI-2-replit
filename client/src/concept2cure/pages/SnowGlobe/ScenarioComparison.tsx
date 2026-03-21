@@ -236,7 +236,7 @@ function ScenarioSelector({
           className={cn(
             'w-full appearance-none rounded-lg border border-zinc-700 bg-zinc-800/80',
             'px-3 py-2.5 pr-8 text-sm text-zinc-100',
-            'focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/60',
+            'focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/40 focus:border-blue-500/60',
             'transition-colors cursor-pointer',
           )}
         >
@@ -265,7 +265,7 @@ function ScoreRow({
   const DeltaIcon = info.icon;
 
   return (
-    <div className="grid grid-cols-12 items-center gap-3 px-4 py-3 border-b border-zinc-800/60 last:border-b-0 hover:bg-zinc-800/30 transition-colors">
+    <div className="grid grid-cols-12 items-center gap-3 px-4 py-3 border-b border-zinc-800/60 last:border-b-0 hover:bg-zinc-800/30 transition-colors duration-150">
       {/* Score Name */}
       <div className="col-span-3 text-sm text-zinc-400 font-medium truncate" title={def.label}>
         {def.label}
@@ -744,14 +744,14 @@ export default function ScenarioComparison({
                   </p>
                   <div className="flex items-center gap-3">
                     <div className="text-center flex-1">
-                      <p className="text-2xl font-bold text-zinc-400 tabular-nums">
+                      <p className="text-2xl font-semibold text-zinc-400 tabular-nums">
                         {recommendation.baselineBetter}
                       </p>
                       <p className="text-xs text-zinc-500">Baseline wins</p>
                     </div>
                     <div className="h-8 w-px bg-zinc-700" />
                     <div className="text-center flex-1">
-                      <p className="text-2xl font-bold text-blue-400 tabular-nums">
+                      <p className="text-2xl font-semibold text-blue-400 tabular-nums">
                         {recommendation.alternateBetter}
                       </p>
                       <p className="text-xs text-zinc-500">Alternate wins</p>

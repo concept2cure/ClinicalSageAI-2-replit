@@ -74,7 +74,7 @@ const Section: React.FC<{
     <div className="border-b border-zinc-200 last:border-0">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center gap-2 px-4 py-2.5 text-left hover:bg-zinc-50 transition-colors"
+        className="w-full flex items-center gap-2 px-4 py-2.5 text-left hover:bg-zinc-50 transition-colors duration-150"
       >
         {open ? (
           <ChevronDown className="w-3 h-3 text-zinc-400" />
@@ -201,7 +201,7 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
         <div className="flex items-center gap-2">
           <Brain className="w-4 h-4 text-violet-500" />
           <div className="flex-1 min-w-0">
-            <div className="text-xs font-semibold text-zinc-800 truncate">
+            <div className="text-xs font-semibold text-zinc-900 truncate">
               {activeProject?.name || 'Project Knowledge'}
             </div>
             <div className="text-xs text-zinc-400">
@@ -274,7 +274,7 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
                   return (
                     <li
                       key={doc.id}
-                      className="group flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-zinc-50 transition-colors"
+                      className="group flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-zinc-50 transition-colors duration-150"
                     >
                       <Icon className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0" />
                       <span className="flex-1 text-xs text-zinc-700 truncate min-w-0" title={doc.name}>
@@ -290,7 +290,7 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
                       )}
                       <button
                         onClick={() => removeDocument(doc.id)}
-                        className="flex-shrink-0 opacity-0 group-hover:opacity-100 p-1 rounded text-zinc-400 hover:text-red-500 hover:bg-red-50 transition-all"
+                        className="flex-shrink-0 opacity-0 group-hover:opacity-100 p-1 rounded text-zinc-400 hover:text-red-500 hover:bg-red-50 transition-all duration-150"
                         title="Remove file"
                       >
                         <X className="w-3 h-3" />
@@ -341,7 +341,7 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
             ) : (
               <button
                 onClick={handleStartEditing}
-                className="w-full text-left p-3 rounded-md border border-zinc-200 hover:border-zinc-200 hover:bg-zinc-50 transition-colors"
+                className="w-full text-left p-3 rounded-md border border-zinc-200 hover:border-zinc-200 hover:bg-zinc-50 transition-colors duration-150"
               >
                 {knowledge?.customInstructions ? (
                   <p className="text-xs text-zinc-700 whitespace-pre-wrap line-clamp-4">
@@ -370,7 +370,7 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
                 {artifacts.slice(0, 20).map((artifact) => (
                   <li
                     key={artifact.id}
-                    className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-zinc-50 transition-colors"
+                    className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-zinc-50 transition-colors duration-150"
                   >
                     <FileText className="w-3.5 h-3.5 text-violet-400 flex-shrink-0" />
                     <span className="flex-1 text-xs text-zinc-700 truncate min-w-0" title={artifact.title}>

@@ -460,14 +460,14 @@ export function DualAITheater({
           {finished ? (
             <button
               onClick={replay}
-              className="text-zinc-900 font-medium hover:text-blue-600 transition-colors"
+              className="text-zinc-900 font-medium hover:text-blue-600 transition-colors duration-150"
             >
               Replay
             </button>
           ) : (
             <button
               onClick={togglePlay}
-              className="text-zinc-900 font-medium hover:text-blue-600 transition-colors"
+              className="text-zinc-900 font-medium hover:text-blue-600 transition-colors duration-150"
             >
               {playing ? 'Pause' : 'Play'}
             </button>

@@ -196,11 +196,11 @@ export default function SnowGlobeArtifactSummary({
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Shield className="h-4 w-4 text-zinc-400" />
-          <span className="text-sm font-semibold text-zinc-800">AnA Prediction Risk</span>
+          <span className="text-sm font-semibold text-zinc-900">AnA Prediction Risk</span>
         </div>
         <span
           className={cn(
-            'rounded-full border px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider',
+            'rounded-full border px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider',
             riskStyles.bg,
             riskStyles.text,
             riskStyles.border,

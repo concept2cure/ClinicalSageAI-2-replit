@@ -381,7 +381,7 @@ export function SubmissionReadinessValidator({
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-5 h-5 text-indigo-600" />
             <div>
-              <h2 className="text-sm font-semibold text-zinc-800">Submission Readiness</h2>
+              <h2 className="text-sm font-semibold text-zinc-900">Submission Readiness</h2>
               <p className="text-[10px] text-zinc-500">
                 eCTD Validation — {submissionType || 'NDA'}
               </p>
@@ -410,7 +410,7 @@ export function SubmissionReadinessValidator({
               style={{ width: `${readinessScore}%` }}
             />
           </div>
-          <span className={cn('text-lg font-bold tabular-nums', readinessColor)}>
+          <span className={cn('text-lg font-semibold tabular-nums', readinessColor)}>
             {readinessScore}%
           </span>
         </div>
@@ -418,19 +418,19 @@ export function SubmissionReadinessValidator({
         {/* Quick stats */}
         <div className="grid grid-cols-4 gap-2 mt-2">
           <div className="text-center">
-            <div className="text-lg font-bold text-emerald-600 tabular-nums">{stats.pass}</div>
+            <div className="text-lg font-semibold text-emerald-600 tabular-nums">{stats.pass}</div>
             <div className="text-[10px] text-zinc-400">Pass</div>
           </div>
           <div className="text-center">
-            <div className="text-lg font-bold text-red-600 tabular-nums">{stats.fail}</div>
+            <div className="text-lg font-semibold text-red-600 tabular-nums">{stats.fail}</div>
             <div className="text-[10px] text-zinc-400">Fail</div>
           </div>
           <div className="text-center">
-            <div className="text-lg font-bold text-amber-600 tabular-nums">{stats.warning}</div>
+            <div className="text-lg font-semibold text-amber-600 tabular-nums">{stats.warning}</div>
             <div className="text-[10px] text-zinc-400">Warn</div>
           </div>
           <div className="text-center">
-            <div className="text-lg font-bold text-zinc-400 tabular-nums">{stats.na}</div>
+            <div className="text-lg font-semibold text-zinc-400 tabular-nums">{stats.na}</div>
             <div className="text-[10px] text-zinc-400">N/A</div>
           </div>
         </div>
@@ -448,7 +448,7 @@ export function SubmissionReadinessValidator({
               {/* Module header */}
               <button
                 onClick={() => toggleModule(mod.module)}
-                className="w-full flex items-center gap-2 px-4 py-2.5 text-left hover:bg-zinc-50 transition-colors"
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-left hover:bg-zinc-50 transition-colors duration-150"
               >
                 {mod.expanded ? (
                   <ChevronDown className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
@@ -499,7 +499,7 @@ export function SubmissionReadinessValidator({
                       </div>
                       {check.autoFixable && (
                         <button
-                          className="shrink-0 px-2 py-1 text-[10px] font-medium text-violet-600 bg-violet-50 rounded hover:bg-violet-100 transition-colors"
+                          className="shrink-0 px-2 py-1 text-[10px] font-medium text-violet-600 bg-violet-50 rounded hover:bg-violet-100 transition-colors duration-150"
                           onClick={() => {
                             // Extract artifact ID from check.id
                             const artifactId = check.id.replace(/-(?:wordcount|placeholder|headings|status)$/, '');
@@ -527,7 +527,7 @@ export function SubmissionReadinessValidator({
           {onClose && (
             <button
               onClick={onClose}
-              className="px-3 py-1.5 text-xs text-zinc-500 hover:text-zinc-700 transition-colors"
+              className="px-3 py-1.5 text-xs text-zinc-500 hover:text-zinc-700 transition-colors duration-150"
             >
               Close
             </button>

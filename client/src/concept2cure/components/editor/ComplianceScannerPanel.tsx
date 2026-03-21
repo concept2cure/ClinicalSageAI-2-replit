@@ -176,7 +176,7 @@ export function ComplianceScannerPanel({
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-5 h-5 text-violet-600" />
             <div>
-              <h2 className="text-sm font-semibold text-zinc-800">Compliance Scanner</h2>
+              <h2 className="text-sm font-semibold text-zinc-900">Compliance Scanner</h2>
               <p className="text-[10px] text-zinc-500">
                 {isScanning ? 'Scanning...' : `Last scan: ${timeSince(lastScanTime)}`}
               </p>
@@ -192,7 +192,7 @@ export function ComplianceScannerPanel({
               <RefreshCw className={cn('w-3.5 h-3.5 text-zinc-500', isScanning && 'animate-spin')} />
             </button>
             {onClose && (
-              <button onClick={onClose} className="p-1.5 rounded-md hover:bg-white/60 transition-colors">
+              <button onClick={onClose} className="p-1.5 rounded-md hover:bg-white/60 transition-colors duration-150">
                 <X className="w-3.5 h-3.5 text-zinc-500" />
               </button>
             )}
@@ -208,7 +208,7 @@ export function ComplianceScannerPanel({
                 style={{ width: `${score}%` }}
               />
             </div>
-            <span className={cn('text-sm font-bold tabular-nums', scoreColor)}>{score}</span>
+            <span className={cn('text-sm font-semibold tabular-nums', scoreColor)}>{score}</span>
           </div>
           <div className="flex items-center gap-2 text-[10px] ml-auto">
             {stats.errors > 0 && (
@@ -290,7 +290,7 @@ export function ComplianceScannerPanel({
             <div key={severity} className="border-b border-zinc-100">
               <button
                 onClick={() => toggleSeverity(severity)}
-                className="w-full flex items-center gap-2 px-4 py-2.5 text-left hover:bg-zinc-50 transition-colors"
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-left hover:bg-zinc-50 transition-colors duration-150"
               >
                 {isExpanded ? (
                   <ChevronDown className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
@@ -337,7 +337,7 @@ export function ComplianceScannerPanel({
                                 e.stopPropagation();
                                 onFixIssue(issue);
                               }}
-                              className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-violet-700 bg-violet-100 rounded hover:bg-violet-200 transition-colors"
+                              className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-violet-700 bg-violet-100 rounded hover:bg-violet-200 transition-colors duration-150"
                               title={`Replace with "${issue.suggestion}"`}
                             >
                               <Zap className="w-3 h-3" />
@@ -349,7 +349,7 @@ export function ComplianceScannerPanel({
                               e.stopPropagation();
                               handleDismiss(issue.id);
                             }}
-                            className="p-1 text-zinc-400 hover:text-zinc-600 transition-colors"
+                            className="p-1 text-zinc-400 hover:text-zinc-600 transition-colors duration-150"
                             title="Dismiss"
                           >
                             <X className="w-3 h-3" />

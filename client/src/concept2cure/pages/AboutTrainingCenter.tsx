@@ -546,10 +546,10 @@ function AboutTab() {
     <div className="space-y-10">
       {/* Hero */}
       <div className="text-center max-w-3xl mx-auto">
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center mx-auto mb-6 shadow-xl shadow-violet-200/50">
+        <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center mx-auto mb-6 shadow-xl shadow-violet-200/50">
           <Sparkles className="w-8 h-8 text-white" />
         </div>
-        <h2 className="text-3xl font-bold text-zinc-900 mb-3">
+        <h2 className="text-3xl font-semibold text-zinc-900 mb-3">
           ClinicalSageAI
         </h2>
         <p className="text-lg text-zinc-500 leading-relaxed">
@@ -559,7 +559,7 @@ function AboutTab() {
       </div>
 
       {/* Mission */}
-      <div className="bg-white rounded-2xl border border-zinc-200 p-8 max-w-3xl mx-auto">
+      <div className="bg-white rounded-xl border border-zinc-200 p-8 max-w-3xl mx-auto">
         <h3 className="text-lg font-semibold text-zinc-900 mb-3 flex items-center gap-2">
           <Lightbulb className="w-5 h-5 text-amber-500" />
           Our Mission
@@ -589,7 +589,7 @@ function AboutTab() {
           return (
             <div key={stat.label} className="bg-white rounded-xl border border-zinc-200 p-5 text-center">
               <Icon className="w-5 h-5 text-violet-500 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-zinc-900">{stat.value}</p>
+              <p className="text-2xl font-semibold text-zinc-900">{stat.value}</p>
               <p className="text-xs text-zinc-500 mt-1">{stat.label}</p>
             </div>
           );
@@ -625,7 +625,7 @@ function AboutTab() {
       </div>
 
       {/* Meet AnA */}
-      <div className="bg-gradient-to-br from-violet-50 to-blue-50 rounded-2xl border border-violet-100 p-8 max-w-3xl mx-auto">
+      <div className="bg-gradient-to-br from-violet-50 to-blue-50 rounded-xl border border-violet-100 p-8 max-w-3xl mx-auto">
         <div className="flex items-start gap-4">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center flex-shrink-0">
             <Brain className="w-6 h-6 text-white" />
@@ -648,7 +648,7 @@ function AboutTab() {
       </div>
 
       {/* Meet Dr. Sage */}
-      <div className="bg-gradient-to-br from-slate-50 to-blue-50 rounded-2xl border border-blue-100 p-8 max-w-3xl mx-auto">
+      <div className="bg-gradient-to-br from-slate-50 to-blue-50 rounded-xl border border-blue-100 p-8 max-w-3xl mx-auto">
         <div className="flex items-start gap-4">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center flex-shrink-0">
             <Stethoscope className="w-6 h-6 text-white" />
@@ -684,7 +684,7 @@ function AboutTab() {
                     : 'bg-white border border-zinc-200'
                 )}>
                   <span className={cn(
-                    'text-xs font-bold',
+                    'text-xs font-semibold',
                     idx === COMPANY_TIMELINE.length - 1 ? 'text-white' : 'text-zinc-600'
                   )}>
                     {item.year.replace('20', "'").replace(' ', '')}
@@ -709,7 +709,7 @@ function PlatformTab() {
   return (
     <div className="space-y-10">
       <div className="text-center max-w-2xl mx-auto mb-2">
-        <h2 className="text-2xl font-bold text-zinc-900 mb-2">Platform Capabilities</h2>
+        <h2 className="text-2xl font-semibold text-zinc-900 mb-2">Platform Capabilities</h2>
         <p className="text-sm text-zinc-500">
           Every module is designed for regulatory professionals — deeply integrated, AI-augmented,
           and built for 21 CFR Part 11 compliance from day one.
@@ -752,7 +752,7 @@ function PlatformTab() {
       ))}
 
       {/* Compliance Foundation */}
-      <div className="bg-zinc-900 rounded-2xl p-8 text-white">
+      <div className="bg-zinc-900 rounded-xl p-8 text-white">
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
           <Lock className="w-5 h-5 text-emerald-400" />
           Enterprise Compliance Foundation
@@ -789,7 +789,7 @@ function IntelligenceTab() {
   return (
     <div className="space-y-10">
       <div className="text-center max-w-2xl mx-auto mb-2">
-        <h2 className="text-2xl font-bold text-zinc-900 mb-2">Proprietary Intelligence</h2>
+        <h2 className="text-2xl font-semibold text-zinc-900 mb-2">Proprietary Intelligence</h2>
         <p className="text-sm text-zinc-500">
           Our AI isn't a wrapper on a chatbot. It's a purpose-built cognitive engine
           trained on regulatory domain knowledge that no general-purpose AI possesses.
@@ -804,11 +804,11 @@ function IntelligenceTab() {
             <div key={pillar.title} className="bg-white rounded-xl border border-zinc-200 p-6">
               <div className="flex items-start gap-5">
                 <div className="flex-shrink-0">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-50 to-blue-50 flex items-center justify-center">
+                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-violet-50 to-blue-50 flex items-center justify-center">
                     <Icon className="w-7 h-7 text-violet-600" />
                   </div>
                   <div className="text-center mt-2">
-                    <p className="text-lg font-bold text-zinc-900">{pillar.stat}</p>
+                    <p className="text-lg font-semibold text-zinc-900">{pillar.stat}</p>
                     <p className="text-xs text-zinc-500 leading-tight">{pillar.statLabel}</p>
                   </div>
                 </div>
@@ -831,7 +831,7 @@ function IntelligenceTab() {
       </div>
 
       {/* Continuous Learning */}
-      <div className="bg-gradient-to-br from-violet-50 to-blue-50 rounded-2xl border border-violet-100 p-8">
+      <div className="bg-gradient-to-br from-violet-50 to-blue-50 rounded-xl border border-violet-100 p-8">
         <div className="flex items-center gap-3 mb-5">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center">
             <RefreshCw className="w-6 h-6 text-white" />
@@ -877,7 +877,7 @@ function IntelligenceTab() {
       </div>
 
       {/* Intelligence Differentiator */}
-      <div className="bg-white rounded-2xl border border-zinc-200 p-8 max-w-3xl mx-auto">
+      <div className="bg-white rounded-xl border border-zinc-200 p-8 max-w-3xl mx-auto">
         <h3 className="text-lg font-semibold text-zinc-900 mb-4 text-center">Why Our Intelligence Is Different</h3>
         <div className="space-y-3">
           {[
@@ -900,7 +900,7 @@ function IntelligenceTab() {
           ].map((item, i) => (
             <div key={i} className="flex items-start gap-3 p-4 rounded-lg bg-zinc-50">
               <div className="w-6 h-6 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <span className="text-xs font-bold text-violet-600">{i + 1}</span>
+                <span className="text-xs font-semibold text-violet-600">{i + 1}</span>
               </div>
               <div>
                 <p className="text-sm font-semibold text-zinc-900">{item.title}</p>
@@ -986,7 +986,7 @@ function TrainingTab() {
     <div className="space-y-8">
       {/* Hero */}
       <div className="text-center max-w-2xl mx-auto mb-2">
-        <h2 className="text-2xl font-bold text-zinc-900 mb-2">Training Center</h2>
+        <h2 className="text-2xl font-semibold text-zinc-900 mb-2">Training Center</h2>
         <p className="text-sm text-zinc-500">
           Master every tool on the platform to accelerate your regulatory submissions.
           Choose a learning path for your role, or explore individual modules at your own pace.
@@ -994,7 +994,7 @@ function TrainingTab() {
       </div>
 
       {/* Progress Overview */}
-      <div className="bg-white rounded-2xl border border-zinc-200 p-6">
+      <div className="bg-white rounded-xl border border-zinc-200 p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-sm font-semibold text-zinc-900">Your Progress</h3>
@@ -1007,7 +1007,7 @@ function TrainingTab() {
                 <span className="text-xs font-medium text-zinc-700">{earnedCerts.length} certification{earnedCerts.length !== 1 ? 's' : ''}</span>
               </div>
             )}
-            <span className="text-lg font-bold text-zinc-900">{totalProgress}%</span>
+            <span className="text-lg font-semibold text-zinc-900">{totalProgress}%</span>
           </div>
         </div>
         <div className="w-full h-2.5 bg-zinc-100 rounded-full overflow-hidden">
@@ -1075,7 +1075,7 @@ function TrainingTab() {
                       <h4 className="text-sm font-semibold text-zinc-900">{path.title}</h4>
                       <p className="text-xs text-zinc-500 mt-0.5">{path.modules.length} modules</p>
                     </div>
-                    <span className="text-xs font-bold text-zinc-700">{pathProgress}%</span>
+                    <span className="text-xs font-semibold text-zinc-700">{pathProgress}%</span>
                   </div>
                   <p className="text-xs text-zinc-500 leading-relaxed mb-3">{path.description}</p>
 
@@ -1106,7 +1106,7 @@ function TrainingTab() {
                               {done ? (
                                 <CheckCircle2 className="w-3 h-3 text-white" />
                               ) : (
-                                <span className="text-xs font-bold text-zinc-500">{idx + 1}</span>
+                                <span className="text-xs font-semibold text-zinc-500">{idx + 1}</span>
                               )}
                             </div>
                             <span className={cn('text-xs', done ? 'text-zinc-400 line-through' : 'text-zinc-700')}>{mod.title}</span>
@@ -1121,7 +1121,7 @@ function TrainingTab() {
                           if (nextIncomplete) setExpandedModule(nextIncomplete);
                           setView('modules');
                         }}
-                        className="w-full mt-2 flex items-center justify-center gap-1.5 px-3 py-2 bg-zinc-900 text-white rounded-lg text-xs font-medium hover:bg-zinc-800 transition-colors"
+                        className="w-full mt-2 flex items-center justify-center gap-1.5 px-3 py-2 bg-zinc-900 text-white rounded-lg text-xs font-medium hover:bg-zinc-800 transition-colors duration-150"
                       >
                         <Play className="w-3.5 h-3.5" />
                         {pathComplete === 0 ? 'Start Path' : pathComplete < path.modules.length ? 'Continue' : 'Review'}
@@ -1209,9 +1209,9 @@ function TrainingTab() {
                           <h5 className="text-xs font-semibold text-zinc-700 mb-3">What You'll Learn</h5>
                           <div className="space-y-2">
                             {mod.lessons.map((lesson, idx) => (
-                              <div key={idx} className="flex items-center gap-3 p-2.5 rounded-lg bg-zinc-50 hover:bg-zinc-100 transition-colors">
+                              <div key={idx} className="flex items-center gap-3 p-2.5 rounded-lg bg-zinc-50 hover:bg-zinc-100 transition-colors duration-150">
                                 <div className="w-6 h-6 rounded-full bg-white border border-zinc-200 flex items-center justify-center flex-shrink-0">
-                                  <span className="text-xs font-bold text-zinc-500">{idx + 1}</span>
+                                  <span className="text-xs font-semibold text-zinc-500">{idx + 1}</span>
                                 </div>
                                 <span className="text-xs text-zinc-700">{lesson}</span>
                               </div>
@@ -1233,12 +1233,12 @@ function TrainingTab() {
 
                           <div className="p-3 rounded-lg bg-zinc-50">
                             <p className="text-xs font-medium text-zinc-600 mb-1">Category</p>
-                            <p className="text-xs text-zinc-800">{mod.category}</p>
+                            <p className="text-xs text-zinc-900">{mod.category}</p>
                           </div>
 
                           <div className="p-3 rounded-lg bg-zinc-50">
                             <p className="text-xs font-medium text-zinc-600 mb-1">Lessons</p>
-                            <p className="text-xs text-zinc-800">{mod.lessons.length} lessons</p>
+                            <p className="text-xs text-zinc-900">{mod.lessons.length} lessons</p>
                           </div>
 
                           <button
@@ -1356,7 +1356,7 @@ function TrainingTab() {
       )}
 
       {/* Quick Answers — always visible */}
-      <div className="bg-white rounded-2xl border border-zinc-200 p-8">
+      <div className="bg-white rounded-xl border border-zinc-200 p-8">
         <h3 className="text-lg font-semibold text-zinc-900 mb-2 flex items-center gap-2">
           <MessageSquare className="w-5 h-5 text-blue-500" />
           Need Help? Ask AnA or Dr. Sage
@@ -1602,18 +1602,18 @@ function DrSageTab() {
   return (
     <div className="space-y-6">
       {/* Dr. Sage Hero */}
-      <div className="bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 rounded-2xl p-8 text-white relative overflow-hidden">
+      <div className="bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 rounded-xl p-8 text-white relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-blue-400 blur-[100px]" />
           <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full bg-violet-400 blur-[80px]" />
         </div>
         <div className="relative flex items-start gap-5">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-400 to-cyan-300 flex items-center justify-center flex-shrink-0 shadow-lg">
+          <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-400 to-cyan-300 flex items-center justify-center flex-shrink-0 shadow-lg">
             <Stethoscope className="w-8 h-8 text-white" />
           </div>
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <h2 className="text-xl font-bold">Dr. Sage</h2>
+              <h2 className="text-xl font-semibold">Dr. Sage</h2>
               <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-medium border border-emerald-500/30">
                 FDA Reviewer AI Agent
               </span>
@@ -1770,13 +1770,13 @@ function DrSageTab() {
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend(input)}
                 placeholder="Ask Dr. Sage about the platform, regulatory strategy, or training..."
-                className="flex-1 px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                className="flex-1 px-3 py-2 text-sm border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/20 focus:border-blue-400"
                 disabled={isThinking}
               />
               <button
                 onClick={() => handleSend(input)}
                 disabled={!input.trim() || isThinking}
-                className="px-3 py-2 bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-40 transition-colors"
+                className="px-3 py-2 bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-40 transition-colors duration-150"
               >
                 <Send className="w-4 h-4" />
               </button>
@@ -1872,7 +1872,7 @@ function WhatsNewTab() {
   return (
     <div className="space-y-8">
       <div className="text-center max-w-2xl mx-auto mb-2">
-        <h2 className="text-2xl font-bold text-zinc-900 mb-2">What's New</h2>
+        <h2 className="text-2xl font-semibold text-zinc-900 mb-2">What's New</h2>
         <p className="text-sm text-zinc-500">
           The latest features, intelligence updates, and improvements to help you
           get more from the platform.
@@ -1885,9 +1885,9 @@ function WhatsNewTab() {
         const LatestIcon = latest.icon;
         const typeCfg = TYPE_CONFIG[latest.type];
         return (
-          <div className="bg-gradient-to-br from-violet-50 via-blue-50 to-cyan-50 rounded-2xl border border-violet-100 p-8">
+          <div className="bg-gradient-to-br from-violet-50 via-blue-50 to-cyan-50 rounded-xl border border-violet-100 p-8">
             <div className="flex items-start gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-violet-200/50">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-violet-200/50">
                 <LatestIcon className="w-7 h-7 text-white" />
               </div>
               <div>
@@ -1937,7 +1937,7 @@ function WhatsNewTab() {
       </div>
 
       {/* Roadmap Teaser */}
-      <div className="bg-zinc-900 rounded-2xl p-8 text-white">
+      <div className="bg-zinc-900 rounded-xl p-8 text-white">
         <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
           <Rocket className="w-5 h-5 text-violet-400" />
           Coming Soon
@@ -1950,7 +1950,7 @@ function WhatsNewTab() {
           ].map(item => {
             const RoadmapIcon = item.icon;
             return (
-              <div key={item.title} className="p-4 rounded-xl bg-white/10 hover:bg-white/15 transition-colors">
+              <div key={item.title} className="p-4 rounded-xl bg-white/10 hover:bg-white/15 transition-colors duration-150">
                 <RoadmapIcon className="w-5 h-5 text-violet-300 mb-2" />
                 <h4 className="text-sm font-semibold text-white mb-1">{item.title}</h4>
                 <p className="text-xs text-zinc-400 leading-relaxed">{item.desc}</p>

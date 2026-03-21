@@ -214,7 +214,7 @@ export const ProjectFileTree: React.FC<ProjectFileTreeProps> = ({
         {onCreateNew && (
           <button
             onClick={onCreateNew}
-            className="p-1.5 rounded text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+            className="p-1.5 rounded text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150"
             title="New document"
             aria-label="New document"
           >

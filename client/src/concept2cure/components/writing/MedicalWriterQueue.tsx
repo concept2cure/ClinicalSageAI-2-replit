@@ -373,7 +373,7 @@ const TaskCard: React.FC<{
               e.stopPropagation();
               onStartWriting();
             }}
-            className="px-3 py-1 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors"
+            className="px-3 py-1 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors duration-150"
           >
             Start Writing
           </button>
@@ -550,14 +550,14 @@ export const MedicalWriterQueue: React.FC<MedicalWriterQueueProps> = ({
               placeholder="Search documents..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-9 pr-4 py-2 text-sm border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
             />
           </div>
           
           <select
             value={filterDocType}
             onChange={(e) => setFilterDocType(e.target.value as DocumentType | 'all')}
-            className="px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 text-sm border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
           >
             <option value="all">All Document Types</option>
             {Object.entries(DOCUMENT_TYPE_CONFIG).map(([type, config]) => (
@@ -568,7 +568,7 @@ export const MedicalWriterQueue: React.FC<MedicalWriterQueueProps> = ({
           <select
             value={filterStage}
             onChange={(e) => setFilterStage(e.target.value as ReviewStage | 'all')}
-            className="px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 text-sm border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
           >
             <option value="all">All Stages</option>
             {Object.entries(STAGE_CONFIG).map(([stage, config]) => (

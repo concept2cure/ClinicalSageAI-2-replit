@@ -261,7 +261,7 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
             ) : (
               <ShieldCheck className="w-4 h-4 text-blue-600" />
             )}
-            <h3 id="placement-dialog-title" className="text-[14px] font-semibold text-zinc-800">
+            <h3 id="placement-dialog-title" className="text-[14px] font-semibold text-zinc-900">
               {config.label}
             </h3>
           </div>
@@ -281,7 +281,7 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
           {/* Document info */}
           <div className="bg-zinc-50 rounded-lg px-3 py-2">
             <p className="text-xs text-zinc-400">Document</p>
-            <p className="text-sm font-medium text-zinc-800 truncate">{artifact.title}</p>
+            <p className="text-sm font-medium text-zinc-900 truncate">{artifact.title}</p>
             {currentSection && (
               <p className="text-xs text-zinc-400 mt-0.5">
                 Currently at: <span className="font-mono">{currentSection}</span> —{' '}
@@ -408,7 +408,7 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
               value={reason}
               onChange={e => setReason(e.target.value)}
               placeholder="Provide justification (min 5 characters)…"
-              className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg resize-none h-16 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-shadow duration-150"
+              className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg resize-none h-16 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/30 transition-shadow duration-150"
             />
             <div className="flex items-center justify-between mt-1">
               <span

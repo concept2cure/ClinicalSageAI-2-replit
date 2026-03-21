@@ -872,7 +872,7 @@ export function IntelligenceHub({ onClose }: { onClose: () => void }) {
         <div className="flex items-center gap-3 mb-1">
           <button
             onClick={onClose}
-            className="text-zinc-400 hover:text-zinc-600 transition-colors"
+            className="text-zinc-400 hover:text-zinc-600 transition-colors duration-150"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>

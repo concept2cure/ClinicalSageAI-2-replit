@@ -213,7 +213,7 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
 
           <button
             onClick={onDismiss}
-            className="text-sm text-zinc-500 hover:text-zinc-700 px-3 py-1.5 rounded-lg hover:bg-zinc-100 transition-colors"
+            className="text-sm text-zinc-500 hover:text-zinc-700 px-3 py-1.5 rounded-lg hover:bg-zinc-100 transition-colors duration-150"
           >
             Skip to Dashboard
           </button>
@@ -225,7 +225,7 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
         <div className="max-w-5xl mx-auto px-6 py-12">
           {/* Greeting */}
           <div className="mb-10">
-            <h2 className="text-3xl font-bold text-zinc-900 mb-2">
+            <h2 className="text-3xl font-semibold text-zinc-900 mb-2">
               {getGreeting()}, {firstName}!
             </h2>
             <p className="text-zinc-500 text-lg">
@@ -245,7 +245,7 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
               <button
                 onClick={() => onContinue(lastProject.id, lastConversation?.id)}
                 className={cn(
-                  'w-full text-left p-6 rounded-2xl border-2 border-zinc-200',
+                  'w-full text-left p-6 rounded-xl border-2 border-zinc-200',
                   'bg-gradient-to-br from-white to-zinc-50',
                   'hover:border-violet-300 hover:shadow-lg hover:shadow-violet-100/50',
                   'transition-all duration-200 group'
@@ -300,7 +300,7 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
                   </div>
 
                   {/* Action */}
-                  <div className="flex items-center gap-2 text-violet-600 group-hover:gap-3 transition-all">
+                  <div className="flex items-center gap-2 text-violet-600 group-hover:gap-3 transition-all duration-150">
                     <span className="text-sm font-medium">Continue</span>
                     <ArrowRight className="w-4 h-4" />
                   </div>
@@ -429,7 +429,7 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
 
           <button
             onClick={onViewDashboard}
-            className="text-sm text-zinc-600 hover:text-zinc-900 px-4 py-2 rounded-lg hover:bg-zinc-100 transition-colors"
+            className="text-sm text-zinc-600 hover:text-zinc-900 px-4 py-2 rounded-lg hover:bg-zinc-100 transition-colors duration-150"
           >
             View Full Dashboard
           </button>

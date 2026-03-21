@@ -1,17 +1,17 @@
 /**
  * NextActionsPanel Component
- * 
- * 🔴 P0 Priority UI Component
- * 
- * Dashboard panel showing the user's next available actions across
- * all active workflows. Prioritized by SLA urgency.
+ *
+ * P0 Priority UI Component — Dashboard panel showing user's next actions
+ * across all active workflows. Prioritized by SLA urgency.
+ *
+ * Uses enterprise UI primitives for design consistency.
  */
 
 import React, { useMemo } from 'react';
-import { 
-  Play, 
+import {
+  Play,
   CheckCircle2,
-  Clock, 
+  Clock,
   AlertTriangle,
   Send,
   PenTool,
@@ -22,6 +22,15 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  EnterpriseCard,
+  CardSection,
+  IconBox,
+  StatusPill,
+  EnterpriseButton,
+  SectionHeader,
+  EmptyState as EmptyStatePrimitive,
+} from '../ui/enterprise';
 
 // Types
 export interface ActionableStep {
@@ -52,46 +61,64 @@ export interface NextActionsPanelProps {
   showEmpty?: boolean;
 }
 
-// Priority badge colors
-const priorityConfig = {
-  CRITICAL: { bg: 'bg-red-100', text: 'text-red-700', border: 'border-red-300', label: '🔴 Critical' },
-  HIGH: { bg: 'bg-amber-100', text: 'text-amber-700', border: 'border-amber-300', label: '🟠 High' },
-  MEDIUM: { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-300', label: '🟡 Medium' },
-  LOW: { bg: 'bg-zinc-100', text: 'text-zinc-600', border: 'border-zinc-300', label: '⚪ Low' },
+// Priority → visual config
+const PRIORITY_CONFIG: Record<string, {
+  pillVariant: 'danger' | 'warning' | 'info' | 'default';
+  label: string;
+  timeColor: string;
+}> = {
+  CRITICAL: { pillVariant: 'danger', label: 'Critical', timeColor: 'text-red-600' },
+  HIGH: { pillVariant: 'warning', label: 'High', timeColor: 'text-amber-600' },
+  MEDIUM: { pillVariant: 'info', label: 'Medium', timeColor: 'text-blue-600' },
+  LOW: { pillVariant: 'default', label: 'Low', timeColor: 'text-zinc-500' },
+};
+
+// Status → IconBox color
+const STATUS_ICON_CLASS: Record<string, string> = {
+  READY: 'bg-blue-100 text-blue-600',
+  IN_PROGRESS: 'bg-emerald-100 text-emerald-600',
+  AWAITING_APPROVAL: 'bg-amber-100 text-amber-600',
+  AWAITING_SIGNATURE: 'bg-purple-100 text-purple-600',
+};
+
+// Step type → icon
+const STEP_TYPE_ICONS: Record<string, React.ElementType> = {
+  APPROVAL: CheckCircle2,
+  REVIEW: CheckCircle2,
+  SIGNATURE: PenTool,
+  EXPORT: Send,
+  TASK: Play,
 };
 
 // Calculate priority from SLA
-const calculatePriority = (action: ActionableStep): ActionableStep['priority'] => {
+function calculatePriority(action: ActionableStep): ActionableStep['priority'] {
   if (action.slaBreached) return 'CRITICAL';
-  
-  const hoursRemaining = action.hoursRemaining ?? 
+  const hoursRemaining = action.hoursRemaining ??
     (action.slaDueAt ? (new Date(action.slaDueAt).getTime() - Date.now()) / (1000 * 60 * 60) : 999);
-  
   if (hoursRemaining < 0) return 'CRITICAL';
   if (hoursRemaining < 8) return 'HIGH';
   if (hoursRemaining < 24) return 'MEDIUM';
   return 'LOW';
-};
+}
 
-// Action type icon
-const ActionTypeIcon: React.FC<{ type: ActionableStep['stepType']; size?: number }> = ({ 
-  type, 
-  size = 18 
-}) => {
-  switch (type) {
-    case 'APPROVAL':
-    case 'REVIEW':
-      return <CheckCircle2 size={size} />;
-    case 'SIGNATURE':
-      return <PenTool size={size} />;
-    case 'EXPORT':
-      return <Send size={size} />;
+// Primary action config per status
+function getPrimaryAction(action: ActionableStep) {
+  switch (action.status) {
+    case 'READY':
+      return { label: 'Start', icon: Play, variant: 'primary' as const };
+    case 'IN_PROGRESS':
+      return { label: action.stepType === 'APPROVAL' ? 'Review' : 'Complete', icon: CheckCircle2, variant: 'success' as const };
+    case 'AWAITING_APPROVAL':
+      return { label: 'Review', icon: CheckCircle2, variant: 'warning' as const };
+    case 'AWAITING_SIGNATURE':
+      return { label: 'Sign', icon: PenTool, variant: 'purple' as const };
     default:
-      return <Play size={size} />;
+      return null;
   }
-};
+}
 
-// Single action item component
+// ─── ActionItem ──────────────────────────────────────────────────────────────
+
 const ActionItem: React.FC<{
   action: ActionableStep;
   onClick?: () => void;
@@ -99,66 +126,27 @@ const ActionItem: React.FC<{
   onComplete?: () => void;
 }> = ({ action, onClick, onStart, onComplete }) => {
   const priority = action.priority || calculatePriority(action);
-  const config = priorityConfig[priority];
-  const ariaLabel = `${action.name} in ${action.workflowName}, priority ${priority.toLowerCase()}`;
-  
+  const config = PRIORITY_CONFIG[priority];
+  const StepIcon = STEP_TYPE_ICONS[action.stepType] || Play;
+  const primaryAction = getPrimaryAction(action);
+
   const timeDisplay = useMemo(() => {
     if (action.slaBreached) return 'Overdue';
     if (!action.slaDueAt) return null;
-    
-    const hours = action.hoursRemaining ?? 
+    const hours = action.hoursRemaining ??
       (new Date(action.slaDueAt).getTime() - Date.now()) / (1000 * 60 * 60);
-    
     if (hours < 0) return 'Overdue';
     if (hours < 1) return `${Math.round(hours * 60)}m`;
     if (hours < 24) return `${Math.round(hours)}h`;
     return `${Math.round(hours / 24)}d`;
   }, [action.slaDueAt, action.hoursRemaining, action.slaBreached]);
-  
-  // Determine primary action button
-  const getPrimaryAction = () => {
-    switch (action.status) {
-      case 'READY':
-        return {
-          label: 'Start',
-          icon: Play,
-          onClick: onStart,
-          className: 'bg-blue-500 hover:bg-blue-600 text-white',
-        };
-      case 'IN_PROGRESS':
-        return {
-          label: action.stepType === 'APPROVAL' ? 'Review' : 'Complete',
-          icon: CheckCircle2,
-          onClick: onComplete,
-          className: 'bg-green-500 hover:bg-green-600 text-white',
-        };
-      case 'AWAITING_APPROVAL':
-        return {
-          label: 'Review',
-          icon: CheckCircle2,
-          onClick: onClick,
-          className: 'bg-amber-500 hover:bg-amber-600 text-white',
-        };
-      case 'AWAITING_SIGNATURE':
-        return {
-          label: 'Sign',
-          icon: PenTool,
-          onClick: onClick,
-          className: 'bg-purple-500 hover:bg-purple-600 text-white',
-        };
-      default:
-        return null;
-    }
-  };
-  
-  const primaryAction = getPrimaryAction();
-  
+
   return (
     <div
       className={cn(
-        "group relative p-4 rounded-2xl border bg-white transition-all hover:shadow-md cursor-pointer",
-        config.border,
-        priority === 'CRITICAL' && "animate-pulse-subtle"
+        'group relative p-4 rounded-xl border bg-white transition-all duration-150 hover:shadow-md cursor-pointer',
+        'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none',
+        priority === 'CRITICAL' ? 'border-red-200' : 'border-zinc-200',
       )}
       onClick={onClick}
       role="button"
@@ -169,107 +157,62 @@ const ActionItem: React.FC<{
           onClick?.();
         }
       }}
-      aria-label={ariaLabel}
+      aria-label={`${action.name} in ${action.workflowName}, priority ${priority.toLowerCase()}`}
     >
       <div className="flex items-start gap-3">
-        {/* Action type icon */}
-        <div className={cn(
-          "w-10 h-10 rounded-lg flex items-center justify-center",
-          action.status === 'AWAITING_APPROVAL' && "bg-amber-100 text-amber-600",
-          action.status === 'AWAITING_SIGNATURE' && "bg-purple-100 text-purple-600",
-          action.status === 'READY' && "bg-blue-100 text-blue-600",
-          action.status === 'IN_PROGRESS' && "bg-green-100 text-green-600"
-        )}>
-          <ActionTypeIcon type={action.stepType} />
-        </div>
-        
+        <IconBox
+          icon={StepIcon}
+          size="sm"
+          className={STATUS_ICON_CLASS[action.status] || 'bg-zinc-100 text-zinc-500'}
+        />
+
         <div className="flex-1 min-w-0">
-          <h4 className="font-medium text-zinc-900 truncate">
-            {action.name}
-          </h4>
-          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
-            <span className="truncate">{action.workflowName}</span>
-            <span className={cn(
-              "px-2 py-0.5 rounded-full font-medium",
-              config.bg, config.text
-            )}>
-              {config.label}
-            </span>
+          <h4 className="text-sm font-medium text-zinc-900 truncate">{action.name}</h4>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <span className="text-xs text-zinc-500 truncate">{action.workflowName}</span>
+            <StatusPill label={config.label} variant={config.pillVariant} />
           </div>
-          
-          {/* Time remaining */}
           {timeDisplay && (
-            <div className={cn(
-              "flex items-center gap-1 mt-1 text-xs",
-              priority === 'CRITICAL' && "text-red-600",
-              priority === 'HIGH' && "text-amber-600",
-              priority === 'MEDIUM' && "text-blue-600",
-              priority === 'LOW' && "text-zinc-500"
-            )}>
-              {priority === 'CRITICAL' ? (
-                <AlertTriangle size={12} />
-              ) : (
-                <Clock size={12} />
-              )}
+            <div className={cn('flex items-center gap-1 mt-1.5 text-xs', config.timeColor)}>
+              {priority === 'CRITICAL' ? <AlertTriangle size={12} /> : <Clock size={12} />}
               <span>{timeDisplay} remaining</span>
             </div>
           )}
         </div>
-        
-        {/* Primary action button */}
-        {primaryAction && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              primaryAction.onClick?.();
-            }}
-            className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
-              primaryAction.className
-            )}
-          >
-            <primaryAction.icon size={14} />
-            {primaryAction.label}
-          </button>
-        )}
 
-        {action.workflowRunId && (
-          <a
-            href={`/concept2cure/proofs/${action.workflowRunId}`}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border border-blue-200 text-blue-700 hover:bg-blue-50"
-            onClick={(event) => event.stopPropagation()}
-            aria-label={`View proof for ${action.name}`}
-          >
-            <ShieldCheck size={14} />
-            Proof
-          </a>
-        )}
-        
-        <ChevronRight 
-          size={16} 
-          className="text-zinc-400 group-hover:text-zinc-500 transition-colors" 
-        />
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {primaryAction && (
+            <EnterpriseButton
+              variant={primaryAction.variant}
+              size="sm"
+              icon={primaryAction.icon}
+              onClick={(e) => { e.stopPropagation(); (action.status === 'READY' ? onStart : onComplete)?.(); }}
+            >
+              {primaryAction.label}
+            </EnterpriseButton>
+          )}
+
+          {action.workflowRunId && (
+            <a
+              href={`/concept2cure/proofs/${action.workflowRunId}`}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-blue-200 text-blue-700 hover:bg-blue-50 transition-colors duration-150"
+              onClick={(event) => event.stopPropagation()}
+              aria-label={`View proof for ${action.name}`}
+            >
+              <ShieldCheck size={14} />
+              Proof
+            </a>
+          )}
+
+          <ChevronRight size={16} className="text-zinc-400 group-hover:text-zinc-600 transition-colors duration-150" />
+        </div>
       </div>
     </div>
   );
 };
 
-// Empty state component
-const EmptyState: React.FC = () => (
-  <div className="text-center py-12 px-6">
-    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
-      <Sparkles size={32} className="text-green-500" />
-    </div>
-    <h3 className="text-lg font-medium text-zinc-900 mb-1">
-      All caught up!
-    </h3>
-    <p className="text-sm text-zinc-500">
-      No pending actions at the moment. Great job staying on top of your workflows.
-    </p>
-  </div>
-);
+// ─── Main Component ──────────────────────────────────────────────────────────
 
-// Main component
 export const NextActionsPanel: React.FC<NextActionsPanelProps> = ({
   actions,
   userId: _userId,
@@ -280,70 +223,53 @@ export const NextActionsPanel: React.FC<NextActionsPanelProps> = ({
   maxItems = 5,
   showEmpty = true,
 }) => {
-  // Sort actions by priority (SLA urgency)
   const sortedActions = useMemo(() => {
     return [...actions]
-      .map(action => ({
+      .map((action) => ({
         ...action,
         priority: action.priority || calculatePriority(action),
       }))
       .sort((a, b) => {
-        const priorityOrder = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
-        return priorityOrder[a.priority] - priorityOrder[b.priority];
+        const order = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
+        return order[a.priority] - order[b.priority];
       })
       .slice(0, maxItems);
   }, [actions, maxItems]);
-  
-  // Stats
-  const criticalCount = sortedActions.filter(a => a.priority === 'CRITICAL').length;
+
+  const criticalCount = sortedActions.filter((a) => a.priority === 'CRITICAL').length;
   const totalCount = actions.length;
-  
+
   if (sortedActions.length === 0 && showEmpty) {
     return (
-      <div className={cn(
-        "bg-white rounded-2xl border border-zinc-200",
-        className
-      )}>
-        <EmptyState />
-      </div>
+      <EnterpriseCard noPadding className={className}>
+        <EmptyStatePrimitive
+          icon={Sparkles}
+          title="All caught up!"
+          description="No pending actions at the moment. Great job staying on top of your workflows."
+        />
+      </EnterpriseCard>
     );
   }
-  
-  if (sortedActions.length === 0) {
-    return null;
-  }
-  
+
+  if (sortedActions.length === 0) return null;
+
   return (
-    <div className={cn(
-      "bg-white rounded-2xl border border-zinc-200 overflow-hidden",
-      className
-    )}>
+    <EnterpriseCard noPadding className={className}>
       {/* Header */}
-      <div className="px-6 py-4 border-b border-zinc-200">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
-              <Zap size={20} className="text-white" />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-zinc-900">
-                Your Next Actions
-              </h2>
-              <p className="text-sm text-zinc-500">
-                {totalCount} pending {totalCount === 1 ? 'action' : 'actions'}
-              </p>
-            </div>
-          </div>
-          
-          {criticalCount > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-red-100 text-red-700 rounded-full text-sm font-medium">
-              <AlertTriangle size={14} />
-              {criticalCount} critical
-            </div>
-          )}
-        </div>
+      <div className="px-5 py-4 border-b border-zinc-100">
+        <SectionHeader
+          icon={Zap}
+          iconClassName="bg-gradient-to-br from-blue-500 to-purple-500 text-white"
+          title="Your Next Actions"
+          subtitle={`${totalCount} pending ${totalCount === 1 ? 'action' : 'actions'}`}
+          actions={
+            criticalCount > 0 ? (
+              <StatusPill label={`${criticalCount} critical`} variant="danger" dot />
+            ) : undefined
+          }
+        />
       </div>
-      
+
       {/* Action List */}
       <div className="p-4 space-y-3">
         {sortedActions.map((action) => (
@@ -356,30 +282,29 @@ export const NextActionsPanel: React.FC<NextActionsPanelProps> = ({
           />
         ))}
       </div>
-      
-      {/* Footer - View All */}
+
+      {/* Footer */}
       {totalCount > maxItems && (
-        <div className="px-6 py-3 bg-zinc-50 border-t border-zinc-200">
-          <button className="w-full flex items-center justify-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700">
+        <div className="px-5 py-3 bg-zinc-50 border-t border-zinc-100">
+          <button className="w-full flex items-center justify-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors duration-150">
             <Target size={16} />
             View all {totalCount} actions
             <ChevronRight size={14} />
           </button>
         </div>
       )}
-    </div>
+    </EnterpriseCard>
   );
 };
 
-// Quick stats bar component for use in headers
+// Quick stats bar
 export const ActionStatsBar: React.FC<{
   actions: ActionableStep[];
   className?: string;
 }> = ({ actions, className }) => {
   const stats = useMemo(() => {
     let critical = 0, high = 0, medium = 0, low = 0;
-    
-    actions.forEach(action => {
+    actions.forEach((action) => {
       const priority = action.priority || calculatePriority(action);
       switch (priority) {
         case 'CRITICAL': critical++; break;
@@ -388,35 +313,18 @@ export const ActionStatsBar: React.FC<{
         case 'LOW': low++; break;
       }
     });
-    
     return { critical, high, medium, low, total: actions.length };
   }, [actions]);
-  
+
   if (stats.total === 0) return null;
-  
+
   return (
-    <div className={cn("flex items-center gap-3 text-sm", className)}>
+    <div className={cn('flex items-center gap-2 text-sm', className)}>
       <span className="text-zinc-500">Actions:</span>
-      {stats.critical > 0 && (
-        <span className="flex items-center gap-1 text-red-600 font-medium">
-          🔴 {stats.critical}
-        </span>
-      )}
-      {stats.high > 0 && (
-        <span className="flex items-center gap-1 text-amber-600">
-          🟠 {stats.high}
-        </span>
-      )}
-      {stats.medium > 0 && (
-        <span className="flex items-center gap-1 text-blue-600">
-          🟡 {stats.medium}
-        </span>
-      )}
-      {stats.low > 0 && (
-        <span className="flex items-center gap-1 text-zinc-500">
-          ⚪ {stats.low}
-        </span>
-      )}
+      {stats.critical > 0 && <StatusPill label={String(stats.critical)} variant="danger" dot />}
+      {stats.high > 0 && <StatusPill label={String(stats.high)} variant="warning" dot />}
+      {stats.medium > 0 && <StatusPill label={String(stats.medium)} variant="info" dot />}
+      {stats.low > 0 && <StatusPill label={String(stats.low)} variant="default" />}
     </div>
   );
 };

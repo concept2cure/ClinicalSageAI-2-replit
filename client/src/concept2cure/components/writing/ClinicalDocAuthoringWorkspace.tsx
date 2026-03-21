@@ -334,7 +334,7 @@ const DocumentOutlineTree: React.FC<{
             placeholder="Search sections..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-8 pr-3 py-1.5 text-sm border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
           />
         </div>
       </div>
@@ -463,7 +463,7 @@ const ReviewCommentsPanel: React.FC<{
                     {comment.status === 'open' && (
                       <button
                         onClick={() => onCommentResolve?.(comment)}
-                        className="p-1 text-zinc-400 hover:text-green-600 transition-colors"
+                        className="p-1 text-zinc-400 hover:text-green-600 transition-colors duration-150"
                         title="Resolve"
                       >
                         <CheckCircle className="w-4 h-4" />
@@ -668,7 +668,7 @@ const DocumentList: React.FC<{
                 </div>
                 <div className="h-1 bg-zinc-200 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-blue-500 rounded-full transition-all"
+                    className="h-full bg-blue-500 rounded-full transition-all duration-150"
                     style={{ width: `${progress}%` }}
                   />
                 </div>
@@ -722,7 +722,7 @@ const DocumentHeader: React.FC<{
               </span>
             )}
           </div>
-          <h2 className="text-xl font-bold text-zinc-900">{document.title}</h2>
+          <h2 className="text-xl font-semibold text-zinc-900">{document.title}</h2>
           <p className="text-sm text-zinc-500">{document.productName} • v{document.currentVersion}</p>
         </div>
         
@@ -816,7 +816,7 @@ export const ClinicalDocAuthoringWorkspace: React.FC<ClinicalDocAuthoringWorkspa
       <div className="flex-shrink-0 bg-white border-b border-zinc-200 p-4">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-xl font-bold text-zinc-900">Clinical Document Authoring</h1>
+            <h1 className="text-xl font-semibold text-zinc-900">Clinical Document Authoring</h1>
             <p className="text-sm text-zinc-500">Regulatory document workspace</p>
           </div>
           
@@ -830,25 +830,25 @@ export const ClinicalDocAuthoringWorkspace: React.FC<ClinicalDocAuthoringWorkspa
         <div className="grid grid-cols-5 gap-4">
           <div className="p-3 bg-zinc-100 rounded-lg">
             <p className="text-xs text-zinc-500">Documents</p>
-            <p className="text-xl font-bold text-zinc-900">{metrics.totalDocuments}</p>
+            <p className="text-xl font-semibold text-zinc-900">{metrics.totalDocuments}</p>
           </div>
           <div className="p-3 bg-blue-50 rounded-lg">
             <p className="text-xs text-blue-600">In Draft</p>
-            <p className="text-xl font-bold text-blue-700">{metrics.inDraft}</p>
+            <p className="text-xl font-semibold text-blue-700">{metrics.inDraft}</p>
           </div>
           <div className="p-3 bg-violet-50 rounded-lg">
             <p className="text-xs text-violet-600">In Review</p>
-            <p className="text-xl font-bold text-violet-700">{metrics.inReview}</p>
+            <p className="text-xl font-semibold text-violet-700">{metrics.inReview}</p>
           </div>
           <div className={cn('p-3 rounded-lg', metrics.openComments > 0 ? 'bg-amber-50' : 'bg-zinc-100')}>
             <p className={cn('text-xs', metrics.openComments > 0 ? 'text-amber-600' : 'text-zinc-500')}>Open Comments</p>
-            <p className={cn('text-xl font-bold', metrics.openComments > 0 ? 'text-amber-700' : 'text-zinc-900')}>
+            <p className={cn('text-xl font-semibold', metrics.openComments > 0 ? 'text-amber-700' : 'text-zinc-900')}>
               {metrics.openComments}
             </p>
           </div>
           <div className="p-3 bg-green-50 rounded-lg">
             <p className="text-xs text-green-600">Avg Progress</p>
-            <p className="text-xl font-bold text-green-700">{metrics.avgProgress}%</p>
+            <p className="text-xl font-semibold text-green-700">{metrics.avgProgress}%</p>
           </div>
         </div>
       </div>

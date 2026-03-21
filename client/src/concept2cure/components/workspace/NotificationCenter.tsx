@@ -210,7 +210,7 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
       >
         <Bell className="w-3 h-3" />
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[12px] h-3 px-0.5 bg-red-500 text-white text-[7px] font-bold rounded-full flex items-center justify-center">
+          <span className="absolute -top-0.5 -right-0.5 min-w-[12px] h-3 px-0.5 bg-red-500 text-white text-[7px] font-semibold rounded-full flex items-center justify-center">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
@@ -274,7 +274,7 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
                 >
                   <div className="mt-0.5 shrink-0">{getNotifIcon(n.notificationType)}</div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-zinc-800 truncate">{n.title}</p>
+                    <p className="text-xs font-medium text-zinc-900 truncate">{n.title}</p>
                     <p className="text-xs text-zinc-500 line-clamp-2">{n.body}</p>
                     <div className="flex items-center gap-1.5 mt-0.5">
                       <span className="text-xs text-zinc-400">{formatTimeAgo(n.createdAt)}</span>

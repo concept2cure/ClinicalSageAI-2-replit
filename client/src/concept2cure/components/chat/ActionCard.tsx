@@ -11,10 +11,13 @@
  *   project.new       → calls onNewProject callback
  *   validation.run    → prefill chat with "Run a regulatory validation on…"
  *   workflow.*        → prefill chat with workflow startup prompt
+ *
+ * Uses enterprise UI primitives for design consistency.
  */
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { ArrowRight, Upload, FolderPlus, ShieldCheck, MessageSquare, Zap } from 'lucide-react';
+import { IconBox, EnterpriseButton } from '../ui/enterprise';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -31,7 +34,6 @@ export interface ActionCardProps extends ActionCardDef {
   onSend?: (text: string) => void;
   onNavigate?: (path: string) => void;
   onNewProject?: () => void;
-  /** Called with the intent string after non-navigate/project actions fire — triggers server action + cache invalidation */
   onRunIntent?: (intent: string, label: string) => void;
   compact?: boolean;
   className?: string;
@@ -94,10 +96,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({
   const handlePrimary = () => {
     const action = primary?.action || intent || '';
 
-    if (
-      action &&
-      (action === 'vault.open_upload' || action === 'vault.upload' || action.startsWith('vault'))
-    ) {
+    if (action && (action === 'vault.open_upload' || action === 'vault.upload' || action.startsWith('vault'))) {
       onNavigate?.('/concept2cure?panel=vault');
       return;
     }
@@ -105,42 +104,37 @@ export const ActionCard: React.FC<ActionCardProps> = ({
       onNewProject?.();
       return;
     }
-    // Default: send a prompt to the chat, and fire the server action for state mutation
     onSend?.(intentToPrompt(action, primary?.label || label));
     onRunIntent?.(action, primary?.label || label);
   };
 
   if (compact) {
-    // Compact pill — used in the WelcomeScreen suggestion row
     return (
       <button
         onClick={handlePrimary}
         className={cn(
           'group inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium',
           'border border-zinc-200 bg-white text-zinc-700',
-          'hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 transition-all duration-150',
-          className
+          'hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700',
+          'transition-colors duration-150',
+          'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none',
+          className,
         )}
       >
-        <Icon className="w-4 h-4 text-zinc-400 group-hover:text-blue-500 transition-colors" />
+        <Icon className="w-4 h-4 text-zinc-400 group-hover:text-blue-500 transition-colors duration-150" />
         <span>{label}</span>
-        <ArrowRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all" />
+        <ArrowRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all duration-150" />
       </button>
     );
   }
 
-  // Full card
   return (
-    <div
-      className={cn(
-        'rounded-xl border border-zinc-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow',
-        className
-      )}
-    >
+    <div className={cn(
+      'rounded-xl border border-zinc-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow duration-150',
+      className,
+    )}>
       <div className="flex items-start gap-3">
-        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center mt-0.5">
-          <Icon className="w-4 h-4 text-blue-600" />
-        </div>
+        <IconBox icon={Icon} size="sm" className="bg-blue-50 text-blue-600" />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-zinc-900">{label}</p>
           {description && (
@@ -149,23 +143,24 @@ export const ActionCard: React.FC<ActionCardProps> = ({
         </div>
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-2">
-        <button
+      <div className="mt-4 flex flex-wrap gap-2">
+        <EnterpriseButton
+          variant="primary"
+          iconRight={ArrowRight}
           onClick={handlePrimary}
-          className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
+          className="flex-1 sm:flex-none"
         >
           {primary?.label || label}
-          <ArrowRight className="w-3.5 h-3.5" />
-        </button>
+        </EnterpriseButton>
 
-        {secondary?.map(s => (
-          <button
+        {secondary?.map((s) => (
+          <EnterpriseButton
             key={s.action}
+            variant="secondary"
             onClick={() => onSend?.(intentToPrompt(s.action, s.label))}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-zinc-200 bg-white text-zinc-700 text-sm font-medium hover:bg-zinc-50 transition-colors"
           >
             {s.label}
-          </button>
+          </EnterpriseButton>
         ))}
       </div>
     </div>

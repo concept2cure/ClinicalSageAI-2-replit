@@ -326,7 +326,7 @@ const ComplianceScoreRing: React.FC<{
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className={`text-3xl font-bold ${colors.text}`}>{score}</span>
+        <span className={`text-3xl font-semibold ${colors.text}`}>{score}</span>
         <span className="text-xs text-zinc-500">Compliance</span>
       </div>
     </div>
@@ -377,7 +377,7 @@ const IssueCard: React.FC<IssueCardProps> = ({ guard, onAction, onAutoFix }) => 
         <Icon className={`w-5 h-5 flex-shrink-0 mt-0.5 ${config.iconColor}`} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h4 className="font-medium text-zinc-800">
+            <h4 className="font-medium text-zinc-900">
               {guard.title}
             </h4>
             <span className={`px-2 py-0.5 rounded text-xs font-medium ${
@@ -576,14 +576,14 @@ export const ComplianceGuardian: React.FC<ComplianceGuardianProps> = ({
       <div className={`${className}`}>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full flex items-center justify-between p-3 bg-white rounded-lg border border-zinc-200 hover:border-blue-300 transition-colors"
+          className="w-full flex items-center justify-between p-3 bg-white rounded-lg border border-zinc-200 hover:border-blue-300 transition-colors duration-150"
           data-testid="button-compliance-compact-toggle"
           aria-expanded={isExpanded}
         >
           <div className="flex items-center gap-3">
             <StatusIcon className={`w-5 h-5 ${status.color}`} />
             <div className="text-left">
-              <p className="font-medium text-zinc-800">
+              <p className="font-medium text-zinc-900">
                 Compliance: {complianceScore}%
               </p>
               <p className="text-xs text-zinc-500">
@@ -619,13 +619,13 @@ export const ComplianceGuardian: React.FC<ComplianceGuardianProps> = ({
   return (
     <div className={`space-y-6 ${className}`}>
       {/* Header with Score */}
-      <div className="flex items-center gap-6 p-4 rounded-2xl border border-zinc-200/70 bg-white shadow-sm">
+      <div className="flex items-center gap-6 p-4 rounded-xl border border-zinc-200/70 bg-white shadow-sm">
         <ComplianceScoreRing score={complianceScore} />
         
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
             <StatusIcon className={`w-6 h-6 ${status.color}`} />
-            <h3 className="text-lg font-semibold text-zinc-800">
+            <h3 className="text-lg font-semibold text-zinc-900">
               {status.label}
             </h3>
           </div>
@@ -660,7 +660,7 @@ export const ComplianceGuardian: React.FC<ComplianceGuardianProps> = ({
           {complianceScore >= 90 && !hasSignatures && (
             <button
               onClick={onRequestReview}
-              className="mt-3 flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
+              className="mt-3 flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors duration-150"
               data-testid="button-request-review"
             >
               <Users className="w-4 h-4" />
@@ -684,8 +684,8 @@ export const ComplianceGuardian: React.FC<ComplianceGuardianProps> = ({
                 onClick={() => setSelectedCategory(tab.id)}
                 className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium transition-colors
                   ${selectedCategory === tab.id
-                    ? 'bg-white text-zinc-800 shadow-sm'
-                    : 'text-zinc-600 hover:text-zinc-800'
+                    ? 'bg-white text-zinc-900 shadow-sm'
+                    : 'text-zinc-600 hover:text-zinc-900'
                   }`}
                 data-testid={`button-category-tab-${tab.id}`}
                 aria-current={selectedCategory === tab.id ? 'page' : undefined}
@@ -712,7 +712,7 @@ export const ComplianceGuardian: React.FC<ComplianceGuardianProps> = ({
       {filteredIssues.length === 0 ? (
         <div className="text-center py-8">
           <ShieldCheck className="w-12 h-12 mx-auto mb-3 text-green-500" />
-          <h4 className="font-semibold text-zinc-800">All Clear!</h4>
+          <h4 className="font-semibold text-zinc-900">All Clear!</h4>
           <p className="text-sm text-zinc-600 mt-1">
             {selectedCategory === 'all' 
               ? 'No compliance issues found. Your document is ready.'

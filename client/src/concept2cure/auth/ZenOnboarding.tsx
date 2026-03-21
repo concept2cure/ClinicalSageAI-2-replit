@@ -357,7 +357,7 @@ export const ZenOnboarding: React.FC = () => {
       <div className="pt-4">
         <button
           onClick={handleNext}
-          className="inline-flex items-center gap-2 px-8 py-3 text-base font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors"
+          className="inline-flex items-center gap-2 px-8 py-3 text-base font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors duration-150"
         >
           Get Started
           <ArrowRightIcon />
@@ -397,7 +397,7 @@ export const ZenOnboarding: React.FC = () => {
             value={preferences.projectName}
             onChange={e => setPreferences(p => ({ ...p, projectName: e.target.value }))}
             placeholder="e.g., CardioMonitor 510(k)"
-            className="w-full px-4 py-3 border-2 border-zinc-200 rounded-xl focus:border-blue-500 focus:outline-none transition-colors"
+            className="w-full px-4 py-3 border-2 border-zinc-200 rounded-xl focus:border-blue-500 focus:outline-none transition-colors duration-150"
           />
         </div>
 
@@ -429,14 +429,14 @@ export const ZenOnboarding: React.FC = () => {
       <div className="flex gap-3 pt-4">
         <button
           onClick={handleBack}
-          className="flex-1 py-3 px-4 text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-xl transition-colors"
+          className="flex-1 py-3 px-4 text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-xl transition-colors duration-150"
         >
           Back
         </button>
         <button
           onClick={handleNext}
           disabled={!preferences.projectName || !preferences.submissionType}
-          className="flex-1 py-3 px-4 text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed rounded-xl transition-colors"
+          className="flex-1 py-3 px-4 text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed rounded-xl transition-colors duration-150"
         >
           Continue
         </button>
@@ -481,7 +481,7 @@ export const ZenOnboarding: React.FC = () => {
         ].map(pref => (
           <label
             key={pref.key}
-            className="flex items-center justify-between p-4 bg-zinc-50 rounded-xl cursor-pointer hover:bg-zinc-100 transition-colors"
+            className="flex items-center justify-between p-4 bg-zinc-50 rounded-xl cursor-pointer hover:bg-zinc-100 transition-colors duration-150"
           >
             <div>
               <div className="font-medium text-zinc-900">{pref.label}</div>
@@ -518,13 +518,13 @@ export const ZenOnboarding: React.FC = () => {
       <div className="flex gap-3 pt-4">
         <button
           onClick={handleBack}
-          className="flex-1 py-3 px-4 text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-xl transition-colors"
+          className="flex-1 py-3 px-4 text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-xl transition-colors duration-150"
         >
           Back
         </button>
         <button
           onClick={handleNext}
-          className="flex-1 py-3 px-4 text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors"
+          className="flex-1 py-3 px-4 text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors duration-150"
         >
           Continue
         </button>
@@ -570,13 +570,13 @@ export const ZenOnboarding: React.FC = () => {
       <div className="flex gap-3 pt-4">
         <button
           onClick={handleBack}
-          className="flex-1 py-3 px-4 text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-xl transition-colors"
+          className="flex-1 py-3 px-4 text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-xl transition-colors duration-150"
         >
           Back
         </button>
         <button
           onClick={handleNext}
-          className="flex-1 py-3 px-4 text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors"
+          className="flex-1 py-3 px-4 text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors duration-150"
         >
           Continue
         </button>

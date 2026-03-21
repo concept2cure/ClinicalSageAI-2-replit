@@ -419,7 +419,7 @@ const ModuleHeader: React.FC<{
       {/* Module number */}
       <div
         className={cn(
-          'w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold flex-shrink-0',
+          'w-10 h-10 rounded-lg flex items-center justify-center text-lg font-semibold flex-shrink-0',
           moduleId === '1' && 'bg-blue-100 text-blue-700',
           moduleId === '2' && 'bg-violet-100 text-violet-700',
           moduleId === '3' && 'bg-emerald-100 text-emerald-700',
@@ -579,7 +579,7 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
           </div>
           <div className="h-2 bg-zinc-100 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-blue-500 to-violet-500 rounded-full transition-all"
+              className="h-full bg-gradient-to-r from-blue-500 to-violet-500 rounded-full transition-all duration-150"
               style={{ width: `${overallProgress.percent}%` }}
             />
           </div>
@@ -598,7 +598,7 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
               placeholder="Search sections..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-9 pr-3 py-2 text-sm border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
             />
           </div>
           <button className="flex items-center gap-1.5 px-3 py-2 text-sm border border-zinc-200 rounded-lg hover:bg-zinc-50">

@@ -347,7 +347,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
         </div>
         <button
           onClick={onClose}
-          className="p-1 rounded hover:bg-zinc-700/60 transition-colors"
+          className="p-1 rounded hover:bg-zinc-700/60 transition-colors duration-150"
           aria-label="Close panel"
         >
           <X className="w-4 h-4 text-zinc-400" />
@@ -535,7 +535,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
                     >
                       <button
                         onClick={() => setExpandedSection(isExpanded ? null : section.id)}
-                        className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-zinc-700/30 transition-colors"
+                        className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-zinc-700/30 transition-colors duration-150"
                       >
                         <div className="flex items-center gap-2 min-w-0">
                           <StatusIcon status={result.status} />
@@ -579,7 +579,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
                             onClick={() =>
                               handleApplySelected(new Set([section.id]))
                             }
-                            className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors"
+                            className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors duration-150"
                           >
                             Apply this section only
                           </button>
@@ -621,14 +621,14 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
           <div className="flex gap-2">
             <button
               onClick={handlePauseResume}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium bg-amber-600/20 text-amber-300 hover:bg-amber-600/30 transition-colors"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium bg-amber-600/20 text-amber-300 hover:bg-amber-600/30 transition-colors duration-150"
             >
               {isPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
               {isPaused ? 'Resume' : 'Pause'}
             </button>
             <button
               onClick={handleCancel}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium bg-red-600/20 text-red-300 hover:bg-red-600/30 transition-colors"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium bg-red-600/20 text-red-300 hover:bg-red-600/30 transition-colors duration-150"
             >
               <X className="w-4 h-4" />
               Cancel
@@ -640,14 +640,14 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
           <div className="space-y-2">
             <button
               onClick={handleApplyAll}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium bg-emerald-600 hover:bg-emerald-500 text-white transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium bg-emerald-600 hover:bg-emerald-500 text-white transition-colors duration-150"
             >
               <Check className="w-4 h-4" />
               Apply All Changes
             </button>
             <button
               onClick={resetResults}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium bg-zinc-700 hover:bg-zinc-600 text-zinc-300 transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium bg-zinc-700 hover:bg-zinc-600 text-zinc-300 transition-colors duration-150"
             >
               <RotateCcw className="w-4 h-4" />
               Reset

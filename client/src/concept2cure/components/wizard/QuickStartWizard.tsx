@@ -401,7 +401,7 @@ const ProductStep: React.FC<{
           value={productName || ''}
           onChange={(e) => onProductChange(e.target.value)}
           placeholder="e.g., ABC-123, Investigational Drug X"
-          className="w-full px-4 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-4 py-2 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
         />
       </div>
       
@@ -415,7 +415,7 @@ const ProductStep: React.FC<{
           value={projectName || ''}
           onChange={(e) => onProjectChange(e.target.value)}
           placeholder="e.g., ABC-123 IND Filing, Phase 2 Study"
-          className="w-full px-4 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-4 py-2 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
         />
       </div>
       
@@ -528,7 +528,7 @@ const TimelineStep: React.FC<{
           type="date"
           value={targetDate || ''}
           onChange={(e) => onTargetDateChange(e.target.value)}
-          className="w-full px-4 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-4 py-2 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
         />
         {suggestedTimeline && (
           <p className="text-xs text-zinc-500 mt-2 flex items-center gap-1">
@@ -727,7 +727,7 @@ export const QuickStartWizard: React.FC<QuickStartWizardProps> = ({
       <div className="flex-shrink-0 px-8 py-6 border-t border-zinc-200 flex items-center justify-between">
         <button
           onClick={step === 1 ? onCancel : handleBack}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors duration-150"
         >
           <ChevronLeft className="w-4 h-4" />
           {step === 1 ? 'Cancel' : 'Back'}

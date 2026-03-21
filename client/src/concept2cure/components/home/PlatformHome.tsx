@@ -310,7 +310,7 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
           {metrics.map(m => (
             <div
               key={m.label}
-              className="rounded-2xl border border-zinc-200 bg-white px-5 py-4 flex flex-col gap-1"
+              className="rounded-xl border border-zinc-200 bg-white px-5 py-4 flex flex-col gap-1"
             >
               <div className="flex items-center gap-2">
                 <m.icon className={cn('h-4 w-4', m.color)} />
@@ -413,7 +413,7 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
         {/* ── Projects Grid ── */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-zinc-800">Projects</h2>
+            <h2 className="text-lg font-semibold text-zinc-900">Projects</h2>
             {sortedProjects.length > 0 && (
               <span className="text-xs text-zinc-400">
                 {sortedProjects.length} project{sortedProjects.length !== 1 ? 's' : ''}
@@ -424,7 +424,7 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
           {sortedProjects.length === 0 ? (
             <div
               className={cn(
-                'rounded-2xl border border-dashed border-zinc-300 bg-zinc-50',
+                'rounded-xl border border-dashed border-zinc-300 bg-zinc-50',
                 'flex flex-col items-center justify-center py-16 text-center',
               )}
             >
@@ -456,7 +456,7 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
                     key={project.id}
                     onClick={() => onProjectClick(project.id)}
                     className={cn(
-                      'rounded-2xl border border-zinc-200 bg-white p-5 text-left',
+                      'rounded-xl border border-zinc-200 bg-white p-5 text-left',
                       'hover:shadow-md hover:border-zinc-300',
                       'transition-all duration-200 ease-out',
                       'focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:ring-offset-2',
@@ -560,7 +560,7 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
                     <cap.icon className={cn('h-4 w-4', cap.color)} />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-zinc-800 leading-tight">
+                    <p className="text-sm font-semibold text-zinc-900 leading-tight">
                       {cap.label}
                     </p>
                     <p className="text-xs text-zinc-400 mt-0.5 leading-tight">

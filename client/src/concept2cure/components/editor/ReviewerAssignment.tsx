@@ -178,7 +178,7 @@ export function ReviewerAssignment({
       <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100">
         <div className="flex items-center gap-2">
           <Users className="h-4 w-4 text-indigo-500" />
-          <h3 className="text-sm font-semibold text-zinc-800">Review Team</h3>
+          <h3 className="text-sm font-semibold text-zinc-900">Review Team</h3>
           {reviewers.length > 0 && (
             <span className="text-[10px] font-medium text-zinc-500 bg-zinc-100 px-1.5 py-0.5 rounded">
               {progress.completed}/{progress.total}
@@ -236,7 +236,7 @@ export function ReviewerAssignment({
               >
                 {/* Avatar */}
                 <div className={cn(
-                  'h-7 w-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0',
+                  'h-7 w-7 rounded-full flex items-center justify-center text-white text-[10px] font-semibold shrink-0',
                   avatarColor(reviewer.name),
                 )}>
                   {getInitials(reviewer.name)}
@@ -245,7 +245,7 @@ export function ReviewerAssignment({
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <p className="text-xs font-medium text-zinc-800 truncate">{reviewer.name}</p>
+                    <p className="text-xs font-medium text-zinc-900 truncate">{reviewer.name}</p>
                     {reviewer.role && (
                       <span className="text-[9px] text-zinc-400">{reviewer.role}</span>
                     )}
@@ -299,7 +299,7 @@ export function ReviewerAssignment({
         <div className="relative">
           <button
             onClick={() => setShowAddDropdown(!showAddDropdown)}
-            className="w-full flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-md hover:bg-indigo-100 transition-colors"
+            className="w-full flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-md hover:bg-indigo-100 transition-colors duration-150"
           >
             <Plus className="h-3 w-3" />
             Add Reviewer
@@ -332,10 +332,10 @@ export function ReviewerAssignment({
                         setShowAddDropdown(false);
                         setSearchQuery('');
                       }}
-                      className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-zinc-50 transition-colors"
+                      className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-zinc-50 transition-colors duration-150"
                     >
                       <div className={cn(
-                        'h-6 w-6 rounded-full flex items-center justify-center text-white text-[9px] font-bold shrink-0',
+                        'h-6 w-6 rounded-full flex items-center justify-center text-white text-[9px] font-semibold shrink-0',
                         avatarColor(m.name),
                       )}>
                         {getInitials(m.name)}

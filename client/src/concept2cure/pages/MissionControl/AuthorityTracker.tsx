@@ -346,7 +346,7 @@ export const AuthorityTracker: React.FC<AuthorityTrackerProps> = ({ programId })
                               </span>
                             )}
                           </div>
-                          <p className="text-sm font-medium text-zinc-800 truncate">{ix.subject}</p>
+                          <p className="text-sm font-medium text-zinc-900 truncate">{ix.subject}</p>
                           <div className="flex items-center gap-3 mt-1.5">
                             <span className="text-xs text-zinc-500">{formatDate(ix.date)}</span>
                             {days !== null && !overdue && (
@@ -425,7 +425,7 @@ export const AuthorityTracker: React.FC<AuthorityTrackerProps> = ({ programId })
               /* ── List View ──────────────────────────────────────────────── */
               <div className="bg-white rounded-xl border">
                 <div className="p-4 border-b flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-zinc-800">All Interactions</h3>
+                  <h3 className="text-sm font-semibold text-zinc-900">All Interactions</h3>
                   <span className="text-xs text-zinc-500">{interactions.length} records</span>
                 </div>
 
@@ -472,7 +472,7 @@ export const AuthorityTracker: React.FC<AuthorityTrackerProps> = ({ programId })
                           <span className={cn('text-xs px-1.5 py-0.5 rounded-full text-center font-medium w-fit', authColors.bg, authColors.text)}>
                             {ix.authority || '--'}
                           </span>
-                          <span className="text-xs text-zinc-800 truncate">{ix.subject}</span>
+                          <span className="text-xs text-zinc-900 truncate">{ix.subject}</span>
                           <span className={cn('text-xs', overdue ? 'text-red-600 font-medium' : 'text-zinc-600')}>
                             {formatDate(ix.date)}
                           </span>
@@ -568,7 +568,7 @@ export const AuthorityTracker: React.FC<AuthorityTrackerProps> = ({ programId })
           <div className="w-96 bg-white overflow-y-auto flex flex-col">
             {/* Detail header */}
             <div className="p-4 border-b flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-zinc-800">Interaction Detail</h3>
+              <h3 className="text-sm font-semibold text-zinc-900">Interaction Detail</h3>
               <button
                 onClick={() => setSelectedId(null)}
                 className="p-1 rounded-md hover:bg-zinc-100 text-zinc-400 hover:text-zinc-600"
@@ -792,7 +792,7 @@ export const AuthorityTracker: React.FC<AuthorityTrackerProps> = ({ programId })
             <div className="flex items-center justify-end gap-2 mt-4">
               <button
                 onClick={() => setShowAddModal(false)}
-                className="px-3 py-1.5 text-xs text-zinc-600 hover:text-zinc-800"
+                className="px-3 py-1.5 text-xs text-zinc-600 hover:text-zinc-900"
               >
                 Cancel
               </button>

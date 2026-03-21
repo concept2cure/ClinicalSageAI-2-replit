@@ -112,7 +112,7 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
       <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200">
         <div className="flex items-center gap-1.5">
           <Inbox className="w-3.5 h-3.5 text-blue-600" />
-          <span className="text-xs font-semibold text-zinc-800">My Review Queue</span>
+          <span className="text-xs font-semibold text-zinc-900">My Review Queue</span>
           {totalItems > 0 && (
             <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-medium">
               {totalItems}
@@ -184,9 +184,9 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
                   <button
                     key={t.threadId}
                     onClick={() => onNavigateToArtifact?.(t.projectId, t.artifactId)}
-                    className="w-full mb-1.5 p-2 bg-white border border-zinc-200 rounded-lg text-left hover:border-blue-200 hover:bg-blue-50/30 transition-colors"
+                    className="w-full mb-1.5 p-2 bg-white border border-zinc-200 rounded-lg text-left hover:border-blue-200 hover:bg-blue-50/30 transition-colors duration-150"
                   >
-                    <p className="text-xs font-medium text-zinc-800 truncate">{t.title}</p>
+                    <p className="text-xs font-medium text-zinc-900 truncate">{t.title}</p>
                     <div className="flex items-center gap-1.5 mt-0.5">
                       <span className="text-xs text-zinc-400 truncate">{t.artifactTitle}</span>
                       {t.priority === 'high' && (
@@ -213,9 +213,9 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
                   <button
                     key={t.taskId}
                     onClick={() => onNavigateToArtifact?.(t.projectId, t.artifactId)}
-                    className="w-full mb-1.5 p-2 bg-white border border-zinc-200 rounded-lg text-left hover:border-blue-200 hover:bg-blue-50/30 transition-colors"
+                    className="w-full mb-1.5 p-2 bg-white border border-zinc-200 rounded-lg text-left hover:border-blue-200 hover:bg-blue-50/30 transition-colors duration-150"
                   >
-                    <p className="text-xs font-medium text-zinc-800 truncate">{t.title}</p>
+                    <p className="text-xs font-medium text-zinc-900 truncate">{t.title}</p>
                     <div className="flex items-center gap-1.5 mt-0.5">
                       <span className="text-xs text-zinc-400 truncate">{t.artifactTitle}</span>
                       {t.dueAt && (

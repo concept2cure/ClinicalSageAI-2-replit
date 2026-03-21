@@ -312,7 +312,7 @@ export function AlertFeed({
           <div className="flex items-center gap-2">
             <BellRing className="w-5 h-5 text-amber-600" />
             <div>
-              <h2 className="text-sm font-semibold text-zinc-800">Regulatory Alerts</h2>
+              <h2 className="text-sm font-semibold text-zinc-900">Regulatory Alerts</h2>
               <p className="text-[10px] text-zinc-500">
                 {stats.unacknowledged} unread{stats.critical > 0 && ` · ${stats.critical} critical`}
               </p>
@@ -321,13 +321,13 @@ export function AlertFeed({
           <div className="flex items-center gap-1.5">
             <button
               onClick={handleRefresh}
-              className="p-1.5 rounded-md hover:bg-white/60 transition-colors"
+              className="p-1.5 rounded-md hover:bg-white/60 transition-colors duration-150"
               title="Refresh alerts"
             >
               <RefreshCw className="w-3.5 h-3.5 text-zinc-500" />
             </button>
             {onClose && (
-              <button onClick={onClose} className="p-1.5 rounded-md hover:bg-white/60 transition-colors">
+              <button onClick={onClose} className="p-1.5 rounded-md hover:bg-white/60 transition-colors duration-150">
                 <X className="w-3.5 h-3.5 text-zinc-500" />
               </button>
             )}
@@ -426,7 +426,7 @@ export function AlertFeed({
                           <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
                         )}
                       </div>
-                      <h3 className="text-xs font-medium text-zinc-800 leading-snug">
+                      <h3 className="text-xs font-medium text-zinc-900 leading-snug">
                         {alert.title}
                       </h3>
                       <div className="flex items-center gap-2 mt-1 text-[10px] text-zinc-400">
@@ -489,7 +489,7 @@ export function AlertFeed({
                         {!alert.acknowledged && (
                           <button
                             onClick={() => handleAcknowledge(alert.id)}
-                            className="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md hover:bg-emerald-100 transition-colors"
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md hover:bg-emerald-100 transition-colors duration-150"
                           >
                             <CheckCircle className="w-3 h-3" />
                             Acknowledge
@@ -500,7 +500,7 @@ export function AlertFeed({
                             href={alert.sourceUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-medium text-zinc-600 bg-zinc-50 border border-zinc-200 rounded-md hover:bg-zinc-100 transition-colors"
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-medium text-zinc-600 bg-zinc-50 border border-zinc-200 rounded-md hover:bg-zinc-100 transition-colors duration-150"
                           >
                             <ExternalLink className="w-3 h-3" />
                             View Source
@@ -510,7 +510,7 @@ export function AlertFeed({
                           <button
                             key={docId}
                             onClick={() => onNavigateToDocument?.(docId)}
-                            className="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-md hover:bg-indigo-100 transition-colors"
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-md hover:bg-indigo-100 transition-colors duration-150"
                           >
                             <FileText className="w-3 h-3" />
                             Open Document

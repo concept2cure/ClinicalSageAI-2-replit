@@ -176,7 +176,7 @@ function ReplyInput({
         <button
           onClick={handleSubmit}
           disabled={!text.trim()}
-          className="absolute bottom-2 right-2 text-muted-foreground hover:text-primary disabled:opacity-30 transition-colors"
+          className="absolute bottom-2 right-2 text-muted-foreground hover:text-primary disabled:opacity-30 transition-colors duration-150"
         >
           <Send className="h-3.5 w-3.5" />
         </button>
@@ -191,7 +191,7 @@ function ReplyInput({
             setExpanded(false);
             setText("");
           }}
-          className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+          className="text-[10px] text-muted-foreground hover:text-foreground transition-colors duration-150"
         >
           Cancel
         </button>
@@ -257,7 +257,7 @@ function CommentCard({
                 onReopen(comment.id);
               }}
               title="Reopen"
-              className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+              className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors duration-150"
             >
               <MessageSquare className="h-3.5 w-3.5" />
             </button>
@@ -268,7 +268,7 @@ function CommentCard({
                 onResolve(comment.id);
               }}
               title="Resolve"
-              className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-emerald-500 transition-colors"
+              className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-emerald-500 transition-colors duration-150"
             >
               <CheckCircle className="h-3.5 w-3.5" />
             </button>
@@ -279,7 +279,7 @@ function CommentCard({
               onDelete(comment.id);
             }}
             title="Delete"
-            className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-destructive transition-colors"
+            className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-destructive transition-colors duration-150"
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -292,7 +292,7 @@ function CommentCard({
           onClick={() => onNavigateToComment(comment.id)}
           className="mt-2 ml-8 block text-left w-[calc(100%-2rem)]"
         >
-          <div className="border-l-2 border-primary/40 pl-2 py-0.5 bg-primary/5 rounded-r text-xs text-muted-foreground italic truncate hover:text-foreground transition-colors">
+          <div className="border-l-2 border-primary/40 pl-2 py-0.5 bg-primary/5 rounded-r text-xs text-muted-foreground italic truncate hover:text-foreground transition-colors duration-150">
             &ldquo;{comment.highlightedText}&rdquo;
           </div>
         </button>
@@ -394,7 +394,7 @@ export function CommentThreadPanel({
           <MessageSquare className="h-4 w-4 text-primary" />
           <h3 className="text-sm font-semibold">Comments</h3>
           {openCount > 0 && (
-            <span className="inline-flex items-center justify-center h-5 min-w-[20px] px-1.5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
+            <span className="inline-flex items-center justify-center h-5 min-w-[20px] px-1.5 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold">
               {openCount}
             </span>
           )}
@@ -405,7 +405,7 @@ export function CommentThreadPanel({
             <button
               onClick={() => setShowFilterMenu((prev) => !prev)}
               className={cn(
-                "flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors",
+                "flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors duration-150",
                 showFilterMenu
                   ? "bg-accent text-foreground"
                   : "text-muted-foreground hover:text-foreground hover:bg-accent"
@@ -429,7 +429,7 @@ export function CommentThreadPanel({
                         setShowFilterMenu(false);
                       }}
                       className={cn(
-                        "flex items-center justify-between w-full px-3 py-1.5 text-xs transition-colors",
+                        "flex items-center justify-between w-full px-3 py-1.5 text-xs transition-colors duration-150",
                         filter === mode
                           ? "bg-accent text-foreground font-medium"
                           : "text-muted-foreground hover:bg-accent hover:text-foreground"
@@ -446,7 +446,7 @@ export function CommentThreadPanel({
           {onClose && (
             <button
               onClick={onClose}
-              className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-accent transition-colors duration-150"
             >
               <X className="h-4 w-4" />
             </button>
@@ -461,7 +461,7 @@ export function CommentThreadPanel({
             key={mode}
             onClick={() => setFilter(mode)}
             className={cn(
-              "px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors",
+              "px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors duration-150",
               filter === mode
                 ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:bg-accent hover:text-foreground"

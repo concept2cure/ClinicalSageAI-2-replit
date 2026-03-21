@@ -197,7 +197,7 @@ export function ProjectDashboard({
         'flex flex-col items-center justify-center rounded-xl border px-4 py-5 transition-shadow hover:shadow-sm',
         cfg.bg, cfg.border,
       )}>
-        <span className={cn('text-2xl font-bold tabular-nums', cfg.color)}>{count}</span>
+        <span className={cn('text-2xl font-semibold tabular-nums', cfg.color)}>{count}</span>
         <span className={cn('mt-1 text-xs font-medium', cfg.color)}>{cfg.label}</span>
       </div>
     );
@@ -280,7 +280,7 @@ export function ProjectDashboard({
       <section className="space-y-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-2">
-            <h1 className="text-2xl font-bold tracking-tight text-zinc-900">{projectName}</h1>
+            <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">{projectName}</h1>
             <div className="flex flex-wrap items-center gap-2">
               {projectType && (
                 <span className="inline-flex items-center rounded-md bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-200">
@@ -371,28 +371,28 @@ export function ProjectDashboard({
           <div className="flex h-3 w-full overflow-hidden rounded-full bg-zinc-100">
             {stats.counts.locked > 0 && (
               <div
-                className="bg-emerald-600 transition-all"
+                className="bg-emerald-600 transition-all duration-150"
                 style={{ width: `${(stats.counts.locked / barTotal) * 100}%` }}
                 title={`${stats.counts.locked} Published`}
               />
             )}
             {stats.counts.approved > 0 && (
               <div
-                className="bg-green-500 transition-all"
+                className="bg-green-500 transition-all duration-150"
                 style={{ width: `${(stats.counts.approved / barTotal) * 100}%` }}
                 title={`${stats.counts.approved} Approved`}
               />
             )}
             {stats.counts.review > 0 && (
               <div
-                className="bg-blue-500 transition-all"
+                className="bg-blue-500 transition-all duration-150"
                 style={{ width: `${(stats.counts.review / barTotal) * 100}%` }}
                 title={`${stats.counts.review} In Review`}
               />
             )}
             {stats.counts.draft > 0 && (
               <div
-                className="bg-amber-400 transition-all"
+                className="bg-amber-400 transition-all duration-150"
                 style={{ width: `${(stats.counts.draft / barTotal) * 100}%` }}
                 title={`${stats.counts.draft} Draft`}
               />
@@ -420,7 +420,7 @@ export function ProjectDashboard({
               'text-emerald-500',
             )} />
             <span className={cn(
-              'text-2xl font-bold tabular-nums mt-1',
+              'text-2xl font-semibold tabular-nums mt-1',
               stats.riskLevel === 'high' ? 'text-red-700' :
               stats.riskLevel === 'medium' ? 'text-amber-700' :
               'text-emerald-700',
@@ -440,21 +440,21 @@ export function ProjectDashboard({
           {/* CTD Coverage */}
           <div className="flex flex-col items-center justify-center rounded-xl border border-zinc-200 bg-white p-5 hover:shadow-sm transition-shadow">
             <Layers size={18} className="text-indigo-500" />
-            <span className="text-2xl font-bold tabular-nums text-zinc-800 mt-1">{stats.ctdCoverage}%</span>
+            <span className="text-2xl font-semibold tabular-nums text-zinc-900 mt-1">{stats.ctdCoverage}%</span>
             <span className="text-xs font-medium text-zinc-500 mt-0.5">CTD Coverage</span>
           </div>
 
           {/* Approval Rate */}
           <div className="flex flex-col items-center justify-center rounded-xl border border-zinc-200 bg-white p-5 hover:shadow-sm transition-shadow">
             <TrendingUp size={18} className="text-green-500" />
-            <span className="text-2xl font-bold tabular-nums text-zinc-800 mt-1">{stats.approvalRate}%</span>
+            <span className="text-2xl font-semibold tabular-nums text-zinc-900 mt-1">{stats.approvalRate}%</span>
             <span className="text-xs font-medium text-zinc-500 mt-0.5">Approval Rate</span>
           </div>
 
           {/* In Review */}
           <div className="flex flex-col items-center justify-center rounded-xl border border-zinc-200 bg-white p-5 hover:shadow-sm transition-shadow">
             <AlertTriangle size={18} className={stats.reviewCycle > 30 ? 'text-amber-500' : 'text-blue-500'} />
-            <span className="text-2xl font-bold tabular-nums text-zinc-800 mt-1">{stats.counts.review}</span>
+            <span className="text-2xl font-semibold tabular-nums text-zinc-900 mt-1">{stats.counts.review}</span>
             <span className="text-xs font-medium text-zinc-500 mt-0.5">Awaiting Review</span>
           </div>
         </section>
@@ -521,7 +521,7 @@ export function ProjectDashboard({
                         {relativeTime(artifact.updatedAt)}
                       </span>
 
-                      <ChevronRight size={14} className="flex-shrink-0 text-zinc-300 group-hover:text-zinc-500 transition-colors" />
+                      <ChevronRight size={14} className="flex-shrink-0 text-zinc-300 group-hover:text-zinc-500 transition-colors duration-150" />
                     </button>
                   </li>
                 );
@@ -602,7 +602,7 @@ export function ProjectDashboard({
               return (
                 <li key={i} className="flex items-start gap-3">
                   <span className={cn(
-                    'flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold',
+                    'flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold',
                     isCompleted
                       ? 'bg-green-100 text-green-700'
                       : 'bg-blue-100 text-blue-600'
@@ -645,7 +645,7 @@ export function ProjectDashboard({
                       {mod.label}
                     </p>
                     {isFocusModule && (
-                      <span className="text-[9px] font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
+                      <span className="text-[9px] font-semibold uppercase tracking-wider text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
                         Key
                       </span>
                     )}

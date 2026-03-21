@@ -831,7 +831,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         data-testid="no-project-selected"
       >
         <div className="max-w-sm text-center">
-          <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-blue-50 flex items-center justify-center">
+          <div className="w-14 h-14 mx-auto mb-4 rounded-xl bg-blue-50 flex items-center justify-center">
             <FolderOpen className="w-7 h-7 text-blue-600" />
           </div>
           <h2 className="text-lg font-semibold text-zinc-900 mb-2">Select a Project</h2>
@@ -857,7 +857,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       <div className="flex items-center gap-3 px-4 h-11 border-b border-zinc-200 bg-white shrink-0">
         <button
           onClick={onBackToProjects}
-          className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-800 transition-colors"
+          className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-900 transition-colors duration-150"
         >
           <ChevronLeft className="w-4 h-4" />
           <span>Projects</span>
@@ -903,7 +903,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               <Brain className="w-3.5 h-3.5" />
               Intelligence
             </button>
-            <button className="px-3 py-1.5 text-xs font-medium bg-zinc-900 text-white transition-colors">
+            <button className="px-3 py-1.5 text-xs font-medium bg-zinc-900 text-white transition-colors duration-150">
               Documents
             </button>
           </div>
@@ -987,7 +987,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       {mode === 'edit' && activeArtifact && (
         <div className="flex items-center gap-2.5 px-4 h-10 border-b border-zinc-200 bg-zinc-50/60 shrink-0">
           <FileText className="w-4 h-4 text-zinc-500" />
-          <span className="text-xs font-semibold text-zinc-800 truncate">
+          <span className="text-xs font-semibold text-zinc-900 truncate">
             {activeArtifact.title}
           </span>
           {activeArtifact.ctdSection && (
@@ -1304,7 +1304,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                   }
                 }}
                 placeholder="New document title..."
-                className="flex-1 px-2 py-1 text-sm border border-zinc-200 rounded focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                className="flex-1 px-2 py-1 text-sm border border-zinc-200 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/30"
                 autoFocus
               />
               <button
@@ -1591,7 +1591,7 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
         {/* Section */}
         <div>
           <div className="text-xs text-zinc-400 uppercase tracking-wide mb-0.5">Section</div>
-          <div className="font-semibold text-zinc-800">{reqs.ctdSection}</div>
+          <div className="font-semibold text-zinc-900">{reqs.ctdSection}</div>
           <div className="text-zinc-600 mt-0.5">{reqs.label}</div>
         </div>
 

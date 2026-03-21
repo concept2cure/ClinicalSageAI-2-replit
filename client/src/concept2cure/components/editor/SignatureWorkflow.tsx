@@ -581,7 +581,7 @@ export function SignatureWorkflow({
             <RoleIcon className={cn('w-4 h-4', roleConf.color)} />
           </div>
           <div>
-            <div className="text-sm font-medium text-zinc-800">{signer.name}</div>
+            <div className="text-sm font-medium text-zinc-900">{signer.name}</div>
             <div className={cn('text-xs font-medium', roleConf.color)}>{signer.role}</div>
           </div>
         </div>
@@ -634,7 +634,7 @@ export function SignatureWorkflow({
                 <Fingerprint className="w-5 h-5 text-indigo-600" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-zinc-800">Electronic Signature</h3>
+                <h3 className="text-sm font-semibold text-zinc-900">Electronic Signature</h3>
                 <p className="text-[10px] text-zinc-500">21 CFR Part 11 Compliant</p>
               </div>
             </div>
@@ -643,7 +643,7 @@ export function SignatureWorkflow({
                 setShowSignModal(false);
                 resetSignForm();
               }}
-              className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 transition-colors"
+              className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 transition-colors duration-150"
             >
               <X className="w-4 h-4" />
             </button>
@@ -671,7 +671,7 @@ export function SignatureWorkflow({
                 Signer Identity
               </label>
               <div className="p-3 rounded-lg bg-zinc-50 border border-zinc-200">
-                <div className="text-sm font-medium text-zinc-800">{currentUser.name}</div>
+                <div className="text-sm font-medium text-zinc-900">{currentUser.name}</div>
                 <div className="flex items-center gap-1 text-xs text-zinc-400 mt-0.5">
                   <Mail className="w-3 h-3" />
                   {currentUser.email}
@@ -726,7 +726,7 @@ export function SignatureWorkflow({
                 onChange={(e) => setLegalAck(e.target.checked)}
                 className="mt-0.5 w-4 h-4 rounded border-amber-300 text-amber-600 focus:ring-amber-200 focus:ring-offset-0 cursor-pointer"
               />
-              <span className="text-xs text-amber-800 leading-relaxed group-hover:text-amber-900 transition-colors">
+              <span className="text-xs text-amber-800 leading-relaxed group-hover:text-amber-900 transition-colors duration-150">
                 I understand this constitutes a legally binding electronic signature equivalent to a
                 handwritten signature under 21 CFR Part 11 and applicable regulations.
               </span>
@@ -748,7 +748,7 @@ export function SignatureWorkflow({
                 setShowSignModal(false);
                 resetSignForm();
               }}
-              className="px-4 py-2 text-sm text-zinc-600 hover:text-zinc-800 transition-colors"
+              className="px-4 py-2 text-sm text-zinc-600 hover:text-zinc-900 transition-colors duration-150"
             >
               Cancel
             </button>
@@ -798,7 +798,7 @@ export function SignatureWorkflow({
             <div className="flex items-center justify-center w-12 h-12 mx-auto rounded-full bg-emerald-100 border border-emerald-200 mb-2">
               <Award className="w-6 h-6 text-emerald-600" />
             </div>
-            <h3 className="text-base font-semibold text-zinc-800">Signature Certificate</h3>
+            <h3 className="text-base font-semibold text-zinc-900">Signature Certificate</h3>
             <p className="text-[10px] text-emerald-600 mt-0.5">
               21 CFR Part 11 Electronic Signature Record
             </p>
@@ -853,7 +853,7 @@ export function SignatureWorkflow({
   // Main render
   // ---------------------------------------------------------------------------
   return (
-    <div className="flex flex-col h-full bg-white text-zinc-800">
+    <div className="flex flex-col h-full bg-white text-zinc-900">
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 bg-gradient-to-r from-indigo-50/50 to-violet-50/50">
         <div className="flex items-center gap-3">
@@ -861,7 +861,7 @@ export function SignatureWorkflow({
             <Shield className="w-5 h-5 text-indigo-600" />
           </div>
           <div>
-            <h2 className="text-sm font-semibold text-zinc-800">E-Signature Workflow</h2>
+            <h2 className="text-sm font-semibold text-zinc-900">E-Signature Workflow</h2>
             <p className="text-[10px] text-zinc-500">21 CFR Part 11 Compliance</p>
           </div>
         </div>
@@ -870,7 +870,7 @@ export function SignatureWorkflow({
           {onClose && (
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 transition-colors"
+              className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 transition-colors duration-150"
             >
               <X className="w-4 h-4" />
             </button>
@@ -947,7 +947,7 @@ export function SignatureWorkflow({
           <div>
             <button
               onClick={() => setTrailExpanded(!trailExpanded)}
-              className="flex items-center gap-2 text-xs font-semibold text-zinc-600 uppercase tracking-wider mb-2.5 hover:text-zinc-800 transition-colors"
+              className="flex items-center gap-2 text-xs font-semibold text-zinc-600 uppercase tracking-wider mb-2.5 hover:text-zinc-900 transition-colors duration-150"
             >
               <span>Signature Trail</span>
               <span className="text-zinc-400 normal-case font-normal">({signatures.length})</span>
@@ -1031,7 +1031,7 @@ export function SignatureWorkflow({
 
         <button
           onClick={() => setShowSignModal(true)}
-          className="inline-flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm shadow-indigo-200 transition-all"
+          className="inline-flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm shadow-indigo-200 transition-all duration-150"
         >
           <PenTool className="w-4 h-4" />
           Sign Document

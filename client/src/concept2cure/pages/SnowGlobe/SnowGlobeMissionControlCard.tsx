@@ -233,7 +233,7 @@ export default function SnowGlobeMissionControlCard({
           <div className="rounded-lg bg-blue-600 p-1.5">
             <Sparkles className="h-3.5 w-3.5 text-white" />
           </div>
-          <span className="text-sm font-semibold text-zinc-800">AnA Predictions</span>
+          <span className="text-sm font-semibold text-zinc-900">AnA Predictions</span>
         </div>
         {compositeScore !== null && (
           <span
@@ -254,7 +254,7 @@ export default function SnowGlobeMissionControlCard({
       {/* Composite health score */}
       {compositeScore !== null && (
         <div className="mb-4 flex items-end gap-2">
-          <span className={cn('text-4xl font-bold tabular-nums', getHealthColor(compositeScore))}>
+          <span className={cn('text-4xl font-semibold tabular-nums', getHealthColor(compositeScore))}>
             {compositeScore}
           </span>
           <span className={cn('mb-1 text-sm font-medium', getHealthColor(compositeScore))}>

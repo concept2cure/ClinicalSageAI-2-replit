@@ -539,7 +539,7 @@ const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
         <div className="flex items-center gap-3">
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200/50 transition-colors"
+            className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200/50 transition-colors duration-150"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -551,14 +551,14 @@ const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
         <div className="flex items-center gap-1">
           <button
             onClick={onToggleFullscreen}
-            className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200/50 transition-colors"
+            className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200/50 transition-colors duration-150"
             title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
           >
             {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           </button>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200/50 transition-colors"
+            className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200/50 transition-colors duration-150"
           >
             <X className="w-4 h-4" />
           </button>
@@ -655,7 +655,7 @@ function AnalyticsDashboardInline({ projects, onBack }: { projects: any[]; onBac
           </div>
           <button
             onClick={onBack}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-100 text-zinc-700 text-sm font-medium hover:bg-zinc-200 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-100 text-zinc-700 text-sm font-medium hover:bg-zinc-200 transition-colors duration-150"
           >
             <ChevronLeft className="w-4 h-4" />
             Back
@@ -1742,7 +1742,7 @@ export const ZenApp: React.FC = () => {
     <div className="flex items-center gap-3 px-4 h-12 border-b border-zinc-200 bg-white flex-shrink-0">
       <button
         onClick={onBack}
-        className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
+        className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition-colors duration-150"
       >
         <ChevronLeft className="w-4 h-4" />
         <span>{backLabel || 'Back'}</span>
@@ -2037,7 +2037,7 @@ export const ZenApp: React.FC = () => {
               {!moduleAssistantOpen && (
                 <button
                   onClick={() => setModuleAssistantOpen(true)}
-                  className="flex-shrink-0 w-10 flex flex-col items-center justify-center gap-1 bg-zinc-50 hover:bg-zinc-100 border-l border-zinc-200 transition-colors"
+                  className="flex-shrink-0 w-10 flex flex-col items-center justify-center gap-1 bg-zinc-50 hover:bg-zinc-100 border-l border-zinc-200 transition-colors duration-150"
                   title="Open AI Assistant"
                   data-testid="module-assistant-toggle"
                 >
@@ -2223,7 +2223,7 @@ export const ZenApp: React.FC = () => {
               <div className="flex items-center gap-3 px-4 h-12 border-b border-zinc-200 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('regulatory-workspace')}
-                  className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
+                  className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition-colors duration-150"
                 >
                   <ChevronLeft className="w-4 h-4" />
                   <span>Chat</span>
@@ -2417,7 +2417,7 @@ export const ZenApp: React.FC = () => {
                         setRiViewMode('editor');
                         setLayoutMode('regulatory-workspace');
                       }}
-                      className="text-xs px-2.5 py-1 rounded bg-white border border-zinc-200 text-zinc-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-colors"
+                      className="text-xs px-2.5 py-1 rounded bg-white border border-zinc-200 text-zinc-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-colors duration-150"
                     >
                       Draft 3.2.S (Drug Substance)
                     </button>
@@ -2440,7 +2440,7 @@ export const ZenApp: React.FC = () => {
                         setRiViewMode('editor');
                         setLayoutMode('regulatory-workspace');
                       }}
-                      className="text-xs px-2.5 py-1 rounded bg-white border border-zinc-200 text-zinc-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-colors"
+                      className="text-xs px-2.5 py-1 rounded bg-white border border-zinc-200 text-zinc-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-colors duration-150"
                     >
                       Draft 3.2.P (Drug Product)
                     </button>
@@ -2458,7 +2458,7 @@ export const ZenApp: React.FC = () => {
                         setRiViewMode('editor');
                         setLayoutMode('regulatory-workspace');
                       }}
-                      className="text-xs px-2.5 py-1 rounded bg-white border border-zinc-200 text-zinc-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-colors"
+                      className="text-xs px-2.5 py-1 rounded bg-white border border-zinc-200 text-zinc-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-colors duration-150"
                     >
                       Draft 3.2.A (Appendices)
                     </button>
@@ -2561,14 +2561,14 @@ export const ZenApp: React.FC = () => {
               <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('regulatory-workspace')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                   <span>Workspace</span>
                 </button>
                 <span className="text-zinc-200">·</span>
                 <ShieldCheck className="w-3.5 h-3.5 text-violet-500" />
-                <span className="text-xs font-medium text-zinc-800">
+                <span className="text-xs font-medium text-zinc-900">
                   {submissionWorkspaceLabel} — Submission Ops
                 </span>
               </div>
@@ -2584,7 +2584,7 @@ export const ZenApp: React.FC = () => {
                     </p>
                     <button
                       onClick={() => setProjectSwitcherOpen(true)}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-600 text-white text-sm font-medium hover:bg-violet-700 transition-colors"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-600 text-white text-sm font-medium hover:bg-violet-700 transition-colors duration-150"
                     >
                       Select Project
                     </button>
@@ -2618,14 +2618,14 @@ export const ZenApp: React.FC = () => {
               <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                   <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <GraduationCap className="w-3.5 h-3.5 text-blue-500" />
-                <span className="text-xs font-medium text-zinc-800">Academy</span>
+                <span className="text-xs font-medium text-zinc-900">Academy</span>
               </div>
               <ErrorBoundary>
                 <Suspense
@@ -2658,7 +2658,7 @@ export const ZenApp: React.FC = () => {
               <div className="flex items-center gap-3 px-4 h-12 border-b border-zinc-200 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
+                  className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition-colors duration-150"
                 >
                   <ChevronLeft className="w-4 h-4" />
                   <span>Home</span>
@@ -2735,14 +2735,14 @@ export const ZenApp: React.FC = () => {
               <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                   <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <Search className="w-3.5 h-3.5 text-violet-500" />
-                <span className="text-xs font-medium text-zinc-800">Regulatory Intelligence</span>
+                <span className="text-xs font-medium text-zinc-900">Regulatory Intelligence</span>
                 {activeProject && (
                   <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
                     {activeProject.name}
@@ -2769,14 +2769,14 @@ export const ZenApp: React.FC = () => {
               <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                   <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                <span className="text-xs font-medium text-zinc-800">Review & Compliance</span>
+                <span className="text-xs font-medium text-zinc-900">Review & Compliance</span>
                 {activeProject && (
                   <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
                     {activeProject.name}
@@ -2803,14 +2803,14 @@ export const ZenApp: React.FC = () => {
               <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                   <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <BarChart3 className="w-3.5 h-3.5 text-zinc-500" />
-                <span className="text-xs font-medium text-zinc-800">Operations Center</span>
+                <span className="text-xs font-medium text-zinc-900">Operations Center</span>
                 {activeProject && (
                   <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
                     {activeProject.name}
@@ -2840,14 +2840,14 @@ export const ZenApp: React.FC = () => {
               <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                   <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <Brain className="w-3.5 h-3.5 text-blue-500" />
-                <span className="text-xs font-medium text-zinc-800">Client Intelligence</span>
+                <span className="text-xs font-medium text-zinc-900">Client Intelligence</span>
               </div>
               <ErrorBoundary>
                 <Suspense
@@ -2870,14 +2870,14 @@ export const ZenApp: React.FC = () => {
               <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                   <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <MessageSquare className="w-3.5 h-3.5 text-blue-500" />
-                <span className="text-xs font-medium text-zinc-800">Collaboration</span>
+                <span className="text-xs font-medium text-zinc-900">Collaboration</span>
                 {activeProject && (
                   <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
                     {activeProject.name}
@@ -2906,14 +2906,14 @@ export const ZenApp: React.FC = () => {
               <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                   <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <FlaskConical className="w-3.5 h-3.5 text-emerald-500" />
-                <span className="text-xs font-medium text-zinc-800">Biostatistics</span>
+                <span className="text-xs font-medium text-zinc-900">Biostatistics</span>
                 {activeProject && (
                   <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
                     {activeProject.name}
@@ -2940,14 +2940,14 @@ export const ZenApp: React.FC = () => {
               <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                   <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <BookOpen className="w-3.5 h-3.5 text-violet-500" />
-                <span className="text-xs font-medium text-zinc-800">Training Center</span>
+                <span className="text-xs font-medium text-zinc-900">Training Center</span>
               </div>
               <ErrorBoundary>
                 <Suspense
@@ -2969,14 +2969,14 @@ export const ZenApp: React.FC = () => {
               <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                   <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <Bot className="w-3.5 h-3.5 text-violet-500" />
-                <span className="text-xs font-medium text-zinc-800">AI Agents</span>
+                <span className="text-xs font-medium text-zinc-900">AI Agents</span>
                 {activeProject && (
                   <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
                     {activeProject.name}
@@ -3003,14 +3003,14 @@ export const ZenApp: React.FC = () => {
               <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                   <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <Compass className="w-3.5 h-3.5 text-blue-500" />
-                <span className="text-xs font-medium text-zinc-800">AnA Guided Authoring</span>
+                <span className="text-xs font-medium text-zinc-900">AnA Guided Authoring</span>
                 {activeProject && (
                   <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
                     {activeProject.name}
@@ -3037,14 +3037,14 @@ export const ZenApp: React.FC = () => {
               <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                   <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <Activity className="w-3.5 h-3.5 text-blue-500" />
-                <span className="text-xs font-medium text-zinc-800">Review Pulse</span>
+                <span className="text-xs font-medium text-zinc-900">Review Pulse</span>
                 {activeProject && (
                   <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
                     {activeProject.name}
@@ -3071,14 +3071,14 @@ export const ZenApp: React.FC = () => {
               <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                   <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <Rocket className="w-3.5 h-3.5 text-blue-500" />
-                <span className="text-xs font-medium text-zinc-800">Client Onboarding</span>
+                <span className="text-xs font-medium text-zinc-900">Client Onboarding</span>
               </div>
               <ErrorBoundary>
                 <Suspense
@@ -3100,14 +3100,14 @@ export const ZenApp: React.FC = () => {
               <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                   <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <Upload className="w-3.5 h-3.5 text-emerald-500" />
-                <span className="text-xs font-medium text-zinc-800">Knowledge Base</span>
+                <span className="text-xs font-medium text-zinc-900">Knowledge Base</span>
               </div>
               <div className="flex-1 overflow-y-auto p-6">
                 <div className="max-w-3xl mx-auto">
@@ -3148,14 +3148,14 @@ export const ZenApp: React.FC = () => {
               <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                   <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <FileStack className="w-3.5 h-3.5 text-blue-500" />
-                <span className="text-xs font-medium text-zinc-800">Project Knowledge</span>
+                <span className="text-xs font-medium text-zinc-900">Project Knowledge</span>
                 {activeProject && (
                   <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
                     {activeProject.name}
@@ -3182,14 +3182,14 @@ export const ZenApp: React.FC = () => {
               <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                   <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <Layers className="w-3.5 h-3.5 text-violet-500" />
-                <span className="text-xs font-medium text-zinc-800">Documents & Artifacts</span>
+                <span className="text-xs font-medium text-zinc-900">Documents & Artifacts</span>
                 {activeProject && (
                   <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
                     {activeProject.name}
@@ -3209,14 +3209,14 @@ export const ZenApp: React.FC = () => {
               <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                   <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <Scale className="w-3.5 h-3.5 text-blue-500" />
-                <span className="text-xs font-medium text-zinc-800">Legal Center</span>
+                <span className="text-xs font-medium text-zinc-900">Legal Center</span>
               </div>
               <Suspense
                 fallback={
@@ -3236,14 +3236,14 @@ export const ZenApp: React.FC = () => {
               <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
                 <button
                   onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                   <span>Home</span>
                 </button>
                 <span className="text-zinc-200">&middot;</span>
                 <BookOpen className="w-3.5 h-3.5 text-violet-500" />
-                <span className="text-xs font-medium text-zinc-800">Document Builder</span>
+                <span className="text-xs font-medium text-zinc-900">Document Builder</span>
               </div>
               <Suspense
                 fallback={
@@ -3324,14 +3324,14 @@ export const ZenApp: React.FC = () => {
                 <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white flex-shrink-0">
                   <button
                     onClick={() => setLayoutMode('projects')}
-                    className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
+                    className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors duration-150"
                   >
                     <ChevronLeft className="w-3.5 h-3.5" />
                     <span>Home</span>
                   </button>
                   <span className="text-zinc-200">·</span>
                   <Brain className="w-3.5 h-3.5 text-blue-500" />
-                  <span className="text-xs font-medium text-zinc-800">RI Copilot</span>
+                  <span className="text-xs font-medium text-zinc-900">RI Copilot</span>
                   {activeProject && (
                     <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
                       {activeProject.name}
@@ -3352,7 +3352,7 @@ export const ZenApp: React.FC = () => {
                       <button
                         data-testid="view-toggle-editor"
                         onClick={() => setRiViewMode('editor')}
-                        className="px-2 py-0.5 text-xs font-medium text-zinc-500 hover:bg-zinc-50 transition-colors"
+                        className="px-2 py-0.5 text-xs font-medium text-zinc-500 hover:bg-zinc-50 transition-colors duration-150"
                       >
                         Documents
                       </button>
@@ -3472,12 +3472,12 @@ export const ZenApp: React.FC = () => {
                     <button
                       onClick={() => setEditProjectOpen(true)}
                       title="Project settings"
-                      className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors"
+                      className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors duration-150"
                     >
                       <PenLine className="w-4 h-4" />
                     </button>
                     <button
-                      className="p-1.5 text-zinc-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors"
+                      className="p-1.5 text-zinc-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors duration-150"
                       title="Star project"
                     >
                       <Star className="w-4 h-4" />
@@ -3550,7 +3550,7 @@ export const ZenApp: React.FC = () => {
                 {/* Mobile toggle button */}
                 <button
                   onClick={() => setWorkspacePanelOpen(true)}
-                  className="fixed right-4 bottom-4 z-30 lg:hidden w-10 h-10 bg-zinc-900 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-zinc-800 transition-colors"
+                  className="fixed right-4 bottom-4 z-30 lg:hidden w-10 h-10 bg-zinc-900 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-zinc-800 transition-colors duration-150"
                   title="Project context"
                 >
                   <FileText className="w-4 h-4" />

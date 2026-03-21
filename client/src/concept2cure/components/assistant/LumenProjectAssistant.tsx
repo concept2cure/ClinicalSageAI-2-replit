@@ -310,7 +310,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
   return (
     <div
       className={cn(
-        'flex flex-col bg-white rounded-2xl overflow-hidden',
+        'flex flex-col bg-white rounded-xl overflow-hidden',
         position === 'floating' &&
           'fixed bottom-6 right-6 z-50 w-96 max-h-[500px] shadow-2xl border border-zinc-200',
         position === 'sidebar' && 'h-full border-l border-zinc-200',
@@ -374,7 +374,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
               {/* Message Content */}
               <div
                 className={cn(
-                  'max-w-[80%] rounded-2xl px-4 py-2.5',
+                  'max-w-[80%] rounded-xl px-4 py-2.5',
                   message.role === 'user' ? 'bg-violet-600 text-white' : 'bg-zinc-100 text-zinc-900'
                 )}
               >
@@ -414,7 +414,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center flex-shrink-0">
               <Sparkles className="w-3.5 h-3.5 text-white" />
             </div>
-            <div className="bg-zinc-100 rounded-2xl px-4 py-2.5">
+            <div className="bg-zinc-100 rounded-xl px-4 py-2.5">
               <div className="flex items-center gap-2 text-sm text-zinc-500">
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 Thinking...
@@ -453,7 +453,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
                       <p className="text-xs text-zinc-500">{suggestion.description}</p>
                     )}
                   </div>
-                  <ArrowRight className="w-4 h-4 text-zinc-400 group-hover:text-violet-600 transition-colors" />
+                  <ArrowRight className="w-4 h-4 text-zinc-400 group-hover:text-violet-600 transition-colors duration-150" />
                 </button>
               );
             })}

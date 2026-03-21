@@ -317,7 +317,7 @@ function FindingRow({ finding, isExpanded, onToggle }: {
     <div className="border border-zinc-200 rounded-lg overflow-hidden">
       <button
         onClick={onToggle}
-        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-zinc-50 transition-colors"
+        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-zinc-50 transition-colors duration-150"
       >
         {isExpanded ? (
           <ChevronDown className="h-4 w-4 text-zinc-400 shrink-0" />
@@ -329,7 +329,7 @@ function FindingRow({ finding, isExpanded, onToggle }: {
           {sev.label}
         </span>
 
-        <span className="flex-1 text-sm font-medium text-zinc-800 truncate">
+        <span className="flex-1 text-sm font-medium text-zinc-900 truncate">
           {finding.title}
         </span>
 
@@ -522,7 +522,7 @@ export default function SnowGlobeChambers({ programId, initialChamber }: SnowGlo
                   {React.createElement(chamber.icon, { className: cn('h-8 w-8', chamber.accent) })}
                 </div>
                 <div>
-                  <h2 className={cn('text-xl font-bold', chamber.accent)}>{chamber.label}</h2>
+                  <h2 className={cn('text-xl font-semibold', chamber.accent)}>{chamber.label}</h2>
                   <p className="text-sm text-zinc-600 mt-1 max-w-2xl">{chamber.description}</p>
                 </div>
               </div>
@@ -548,7 +548,7 @@ export default function SnowGlobeChambers({ programId, initialChamber }: SnowGlo
                 <Loader2 className="h-8 w-8 animate-spin text-zinc-400 mx-auto" />
               ) : scoreValue !== null ? (
                 <>
-                  <div className={cn('text-5xl font-bold tabular-nums', bandColor.text)}>
+                  <div className={cn('text-5xl font-semibold tabular-nums', bandColor.text)}>
                     {scoreValue}
                   </div>
                   <div className="flex-1">
@@ -613,19 +613,19 @@ export default function SnowGlobeChambers({ programId, initialChamber }: SnowGlo
               <div className="text-sm font-medium text-zinc-700 mb-1">Chamber Stats</div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-2.5 bg-zinc-50 rounded-lg text-center">
-                  <div className="text-lg font-bold text-zinc-800">{chamberFindings.length}</div>
+                  <div className="text-lg font-semibold text-zinc-900">{chamberFindings.length}</div>
                   <div className="text-xs text-zinc-500">Findings</div>
                 </div>
                 <div className="p-2.5 bg-zinc-50 rounded-lg text-center">
-                  <div className="text-lg font-bold text-zinc-800">{chamberRemediation.length}</div>
+                  <div className="text-lg font-semibold text-zinc-900">{chamberRemediation.length}</div>
                   <div className="text-xs text-zinc-500">Actions</div>
                 </div>
                 <div className="p-2.5 bg-zinc-50 rounded-lg text-center">
-                  <div className="text-lg font-bold text-zinc-800">{severityCounts.critical + severityCounts.high}</div>
+                  <div className="text-lg font-semibold text-zinc-900">{severityCounts.critical + severityCounts.high}</div>
                   <div className="text-xs text-zinc-500">Critical/High</div>
                 </div>
                 <div className="p-2.5 bg-zinc-50 rounded-lg text-center">
-                  <div className="text-lg font-bold text-zinc-800">
+                  <div className="text-lg font-semibold text-zinc-900">
                     {chamberFindings.length > 0
                       ? Math.round(chamberFindings.reduce((s: number, f: any) => s + (f.confidence || 0), 0) / chamberFindings.length)
                       : '\u2014'}
@@ -641,7 +641,7 @@ export default function SnowGlobeChambers({ programId, initialChamber }: SnowGlo
             <div className="px-6 py-4 border-b border-zinc-200 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-zinc-600" />
-                <h3 className="font-semibold text-zinc-800">Findings</h3>
+                <h3 className="font-semibold text-zinc-900">Findings</h3>
                 <span className="text-xs bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-full">
                   {chamberFindings.length}
                 </span>
@@ -676,7 +676,7 @@ export default function SnowGlobeChambers({ programId, initialChamber }: SnowGlo
           <div className="rounded-xl border bg-white overflow-hidden">
             <div className="px-6 py-4 border-b border-zinc-200 flex items-center gap-2">
               <Target className="h-5 w-5 text-zinc-600" />
-              <h3 className="font-semibold text-zinc-800">Remediation Actions</h3>
+              <h3 className="font-semibold text-zinc-900">Remediation Actions</h3>
               <span className="text-xs bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded-full">
                 {chamberRemediation.length}
               </span>
@@ -698,12 +698,12 @@ export default function SnowGlobeChambers({ programId, initialChamber }: SnowGlo
                     const effort = EFFORT_STYLES[(r.effort as EffortLevel) || 'medium'];
                     const impactStyle = SEVERITY_STYLES[(r.impact as Severity) || 'medium'];
                     return (
-                      <div key={r.id || idx} className="flex items-start gap-4 p-4 border border-zinc-200 rounded-lg hover:border-zinc-300 transition-colors">
-                        <div className="flex items-center justify-center h-8 w-8 rounded-full bg-zinc-100 text-zinc-600 text-sm font-bold shrink-0">
+                      <div key={r.id || idx} className="flex items-start gap-4 p-4 border border-zinc-200 rounded-lg hover:border-zinc-300 transition-colors duration-150">
+                        <div className="flex items-center justify-center h-8 w-8 rounded-full bg-zinc-100 text-zinc-600 text-sm font-semibold shrink-0">
                           {r.priority || idx + 1}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium text-sm text-zinc-800">{r.title}</div>
+                          <div className="font-medium text-sm text-zinc-900">{r.title}</div>
                           <p className="text-xs text-zinc-500 mt-1 leading-relaxed">{r.why || r.description}</p>
                           <div className="flex items-center gap-2 mt-2">
                             <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', effort.badge)}>
@@ -726,11 +726,11 @@ export default function SnowGlobeChambers({ programId, initialChamber }: SnowGlo
           <div className="rounded-xl border bg-white overflow-hidden">
             <button
               onClick={() => setShowInsights(!showInsights)}
-              className="w-full px-6 py-4 border-b border-zinc-200 flex items-center justify-between hover:bg-zinc-50 transition-colors"
+              className="w-full px-6 py-4 border-b border-zinc-200 flex items-center justify-between hover:bg-zinc-50 transition-colors duration-150"
             >
               <div className="flex items-center gap-2">
                 <Lightbulb className="h-5 w-5 text-amber-500" />
-                <h3 className="font-semibold text-zinc-800">Regulatory Intelligence</h3>
+                <h3 className="font-semibold text-zinc-900">Regulatory Intelligence</h3>
               </div>
               {showInsights ? (
                 <ChevronDown className="h-4 w-4 text-zinc-400" />
@@ -771,8 +771,8 @@ export default function SnowGlobeChambers({ programId, initialChamber }: SnowGlo
                   </div>
                   <div className="space-y-1.5">
                     {RECOMMENDED_ACTIONS[activeChamber].map((action, i) => (
-                      <div key={i} className="flex items-start gap-2.5 p-2.5 hover:bg-zinc-50 rounded-lg transition-colors">
-                        <div className="flex items-center justify-center h-5 w-5 rounded-full bg-blue-100 text-blue-600 text-xs font-bold shrink-0 mt-0.5">
+                      <div key={i} className="flex items-start gap-2.5 p-2.5 hover:bg-zinc-50 rounded-lg transition-colors duration-150">
+                        <div className="flex items-center justify-center h-5 w-5 rounded-full bg-blue-100 text-blue-600 text-xs font-semibold shrink-0 mt-0.5">
                           {i + 1}
                         </div>
                         <span className="text-sm text-zinc-700">{action}</span>

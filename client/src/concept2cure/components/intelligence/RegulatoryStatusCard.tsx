@@ -133,7 +133,7 @@ export function RegulatoryStatusCard({
       <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-zinc-200 bg-gradient-to-r from-indigo-50/60 to-violet-50/60">
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
           <ShieldCheck className="w-4 h-4 text-indigo-600 shrink-0" />
-          <span className="text-xs sm:text-sm font-semibold text-zinc-800 truncate">
+          <span className="text-xs sm:text-sm font-semibold text-zinc-900 truncate">
             Regulatory Status
           </span>
         </div>
@@ -160,10 +160,10 @@ export function RegulatoryStatusCard({
               <Target className="w-3.5 h-3.5 text-violet-500" />
               <span className="text-xs text-zinc-500 font-medium">Readiness</span>
             </div>
-            <div className="text-2xl font-bold text-zinc-800">{data.submissionReadiness}%</div>
+            <div className="text-2xl font-semibold text-zinc-900">{data.submissionReadiness}%</div>
             <div className="h-1.5 bg-zinc-100 rounded-full mt-1.5 overflow-hidden">
               <div
-                className="h-full rounded-full bg-violet-500 transition-all"
+                className="h-full rounded-full bg-violet-500 transition-all duration-150"
                 style={{ width: `${data.submissionReadiness}%` }}
               />
             </div>
@@ -175,7 +175,7 @@ export function RegulatoryStatusCard({
               <FileSearch className="w-3.5 h-3.5 text-indigo-500" />
               <span className="text-xs text-zinc-500 font-medium">Precedents</span>
             </div>
-            <div className="text-2xl font-bold text-zinc-800">{data.precedentsFound}</div>
+            <div className="text-2xl font-semibold text-zinc-900">{data.precedentsFound}</div>
             <span className="text-xs text-zinc-400">matching records</span>
           </div>
 
@@ -185,7 +185,7 @@ export function RegulatoryStatusCard({
               <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
               <span className="text-xs text-zinc-500 font-medium">Risk Score</span>
             </div>
-            <div className="text-2xl font-bold text-zinc-800">{data.riskScore}</div>
+            <div className="text-2xl font-semibold text-zinc-900">{data.riskScore}</div>
             <span
               className={`text-xs font-medium ${
                 data.riskScore < 30
@@ -205,10 +205,10 @@ export function RegulatoryStatusCard({
               <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
               <span className="text-xs text-zinc-500 font-medium">Approval Prob.</span>
             </div>
-            <div className="text-2xl font-bold text-zinc-800">{data.approvalProbability}%</div>
+            <div className="text-2xl font-semibold text-zinc-900">{data.approvalProbability}%</div>
             <div className="h-1.5 bg-zinc-100 rounded-full mt-1.5 overflow-hidden">
               <div
-                className="h-full rounded-full bg-emerald-500 transition-all"
+                className="h-full rounded-full bg-emerald-500 transition-all duration-150"
                 style={{ width: `${data.approvalProbability}%` }}
               />
             </div>

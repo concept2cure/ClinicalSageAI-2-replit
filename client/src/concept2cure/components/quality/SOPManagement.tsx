@@ -494,25 +494,25 @@ const TrainingMatrix: React.FC<TrainingMatrixProps> = ({ records, onAcknowledge 
       <div className="grid grid-cols-4 gap-3">
         <div className="border border-border/40 rounded-sm bg-background cursor-pointer hover:border-zinc-300" onClick={() => setFilterStatus('all')}>
           <div className="px-3 py-2 p-3 text-center">
-            <p className="text-2xl font-bold text-zinc-900">{stats.total}</p>
+            <p className="text-2xl font-semibold text-zinc-900">{stats.total}</p>
             <p className="text-xs text-zinc-500">Total</p>
           </div>
         </div>
         <div className="border border-border/40 rounded-sm bg-background cursor-pointer hover:border-green-300" onClick={() => setFilterStatus('completed')}>
           <div className="px-3 py-2 p-3 text-center">
-            <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
+            <p className="text-2xl font-semibold text-green-600">{stats.completed}</p>
             <p className="text-xs text-zinc-500">Completed</p>
           </div>
         </div>
         <div className="border border-border/40 rounded-sm bg-background cursor-pointer hover:border-amber-300" onClick={() => setFilterStatus('pending')}>
           <div className="px-3 py-2 p-3 text-center">
-            <p className="text-2xl font-bold text-amber-600">{stats.pending}</p>
+            <p className="text-2xl font-semibold text-amber-600">{stats.pending}</p>
             <p className="text-xs text-zinc-500">Pending</p>
           </div>
         </div>
         <div className="border border-border/40 rounded-sm bg-background cursor-pointer hover:border-red-300" onClick={() => setFilterStatus('overdue')}>
           <div className="px-3 py-2 p-3 text-center">
-            <p className="text-2xl font-bold text-red-600">{stats.overdue}</p>
+            <p className="text-2xl font-semibold text-red-600">{stats.overdue}</p>
             <p className="text-xs text-zinc-500">Overdue</p>
           </div>
         </div>
@@ -645,7 +645,7 @@ export const SOPManagement: React.FC<SOPManagementProps> = ({ className }) => {
               <FileText className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-zinc-900">{stats.total}</p>
+              <p className="text-2xl font-semibold text-zinc-900">{stats.total}</p>
               <p className="text-xs text-zinc-500">Total SOPs</p>
             </div>
           </div>
@@ -656,7 +656,7 @@ export const SOPManagement: React.FC<SOPManagementProps> = ({ className }) => {
               <CheckCircle2 className="h-5 w-5 text-green-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-green-600">{stats.effective}</p>
+              <p className="text-2xl font-semibold text-green-600">{stats.effective}</p>
               <p className="text-xs text-zinc-500">Effective</p>
             </div>
           </div>
@@ -667,7 +667,7 @@ export const SOPManagement: React.FC<SOPManagementProps> = ({ className }) => {
               <Clock className="h-5 w-5 text-amber-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-amber-600">{stats.underReview}</p>
+              <p className="text-2xl font-semibold text-amber-600">{stats.underReview}</p>
               <p className="text-xs text-zinc-500">Under Review</p>
             </div>
           </div>
@@ -678,7 +678,7 @@ export const SOPManagement: React.FC<SOPManagementProps> = ({ className }) => {
               <RefreshCw className="h-5 w-5 text-red-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-red-600">{stats.reviewDue}</p>
+              <p className="text-2xl font-semibold text-red-600">{stats.reviewDue}</p>
               <p className="text-xs text-zinc-500">Review Due</p>
             </div>
           </div>

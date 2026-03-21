@@ -732,7 +732,7 @@ export function PrecedentIntelligenceDashboard({
                         >
                           <AlertTriangle className="w-3.5 h-3.5 text-red-500 flex-shrink-0 mt-0.5" />
                           <div>
-                            <span className="font-medium text-zinc-800">{f.factor}</span>
+                            <span className="font-medium text-zinc-900">{f.factor}</span>
                             <p className="text-zinc-500 mt-0.5">{f.detail}</p>
                           </div>
                           <Badge variant="outline" className="ml-auto flex-shrink-0 text-xs">
@@ -919,7 +919,7 @@ export function PrecedentIntelligenceDashboard({
                           className="p-3 rounded-lg border border-zinc-200 bg-zinc-50/50"
                         >
                           <div className="flex items-center justify-between mb-1">
-                            <span className="text-sm font-medium text-zinc-800">
+                            <span className="text-sm font-medium text-zinc-900">
                               {alt.strategy}
                             </span>
                             <ScoreBar value={alt.confidence} label="" />

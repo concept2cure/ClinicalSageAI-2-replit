@@ -51,7 +51,7 @@ const StatPill: React.FC<StatPillProps> = ({ icon: Icon, label, value, color = '
     title={label}
   >
     <Icon className={cn('w-3.5 h-3.5', ICON_COLOR_MAP[color] || 'text-zinc-500')} />
-    <span className="text-zinc-800 font-semibold tabular-nums">{value}</span>
+    <span className="text-zinc-900 font-semibold tabular-nums">{value}</span>
     <span className="text-zinc-400 hidden sm:inline">{label}</span>
   </div>
 );

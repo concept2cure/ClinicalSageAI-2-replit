@@ -211,7 +211,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
   return (
     <div
       className={cn(
-        'flex flex-col bg-white rounded-2xl shadow-2xl overflow-hidden',
+        'flex flex-col bg-white rounded-xl shadow-2xl overflow-hidden',
         isFullscreen
           ? 'fixed inset-4 z-50'
           : 'relative max-h-[80vh]',
@@ -311,7 +311,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
           {/* Copy */}
           <button
             onClick={handleCopy}
-            className="p-2 rounded-lg hover:bg-zinc-100 text-zinc-500 transition-colors"
+            className="p-2 rounded-lg hover:bg-zinc-100 text-zinc-500 transition-colors duration-150"
             title="Copy to clipboard"
           >
             {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
@@ -321,7 +321,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
           <div className="relative">
             <button
               onClick={() => setShowExportMenu(!showExportMenu)}
-              className="p-2 rounded-lg hover:bg-zinc-100 text-zinc-500 transition-colors"
+              className="p-2 rounded-lg hover:bg-zinc-100 text-zinc-500 transition-colors duration-150"
               title="Export"
             >
               <Download className="w-4 h-4" />
@@ -358,7 +358,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
           {onShare && (
             <button
               onClick={() => onShare(artifact)}
-              className="p-2 rounded-lg hover:bg-zinc-100 text-zinc-500 transition-colors"
+              className="p-2 rounded-lg hover:bg-zinc-100 text-zinc-500 transition-colors duration-150"
               title="Share"
             >
               <Share2 className="w-4 h-4" />
@@ -382,7 +382,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
           {/* Fullscreen */}
           <button
             onClick={() => setIsFullscreen(!isFullscreen)}
-            className="p-2 rounded-lg hover:bg-zinc-100 text-zinc-500 transition-colors"
+            className="p-2 rounded-lg hover:bg-zinc-100 text-zinc-500 transition-colors duration-150"
             title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
           >
             {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
@@ -391,7 +391,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
           {/* Close */}
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-zinc-100 text-zinc-500 transition-colors"
+            className="p-2 rounded-lg hover:bg-zinc-100 text-zinc-500 transition-colors duration-150"
             title="Close"
           >
             <X className="w-4 h-4" />
@@ -450,7 +450,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
                 <button
                   key={version.id}
                   onClick={() => onVersionSelect?.(version)}
-                  className="w-full p-3 rounded-lg hover:bg-white text-left transition-colors"
+                  className="w-full p-3 rounded-lg hover:bg-white text-left transition-colors duration-150"
                 >
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm font-medium text-zinc-900">
@@ -486,7 +486,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={handleCancel}
-              className="px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors"
+              className="px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors duration-150"
             >
               Cancel
             </button>

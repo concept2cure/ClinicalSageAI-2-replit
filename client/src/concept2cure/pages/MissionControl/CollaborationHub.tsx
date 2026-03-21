@@ -386,7 +386,7 @@ const CollaborationHub: React.FC<CollaborationHubProps> = ({ programId }) => {
                           <TypeIcon className={cn('w-3.5 h-3.5 mt-0.5 flex-shrink-0', typeConf.color)} />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5">
-                              <span className="text-xs font-medium text-zinc-800 truncate">
+                              <span className="text-xs font-medium text-zinc-900 truncate">
                                 {thread.author || 'Unknown'}
                               </span>
                               {thread.priority === 'high' && (
@@ -571,7 +571,7 @@ const CollaborationHub: React.FC<CollaborationHubProps> = ({ programId }) => {
                   <button
                     onClick={handleSend}
                     disabled={!composeBody.trim() || createCollaboration.isPending}
-                    className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-60 transition-colors"
+                    className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-60 transition-colors duration-150"
                   >
                     <Send className="w-3.5 h-3.5" />
                     Send
@@ -601,7 +601,7 @@ const CollaborationHub: React.FC<CollaborationHubProps> = ({ programId }) => {
                     <div className="flex items-start gap-2">
                       <FileText className="w-4 h-4 mt-0.5 text-zinc-400 flex-shrink-0" />
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-zinc-800 truncate">{linkedArtifact.title}</p>
+                        <p className="text-sm font-medium text-zinc-900 truncate">{linkedArtifact.title}</p>
                         <p className="text-xs font-mono text-zinc-500">{linkedArtifact.code}</p>
                       </div>
                     </div>
@@ -667,21 +667,21 @@ const CollaborationHub: React.FC<CollaborationHubProps> = ({ programId }) => {
                       <MessageSquare className="w-3.5 h-3.5 text-blue-500" />
                       <span className="text-xs text-zinc-600">Messages today</span>
                     </div>
-                    <span className="text-xs font-semibold text-zinc-800">{activitySummary.todayMessages}</span>
+                    <span className="text-xs font-semibold text-zinc-900">{activitySummary.todayMessages}</span>
                   </div>
                   <div className="flex items-center justify-between bg-zinc-50 rounded-lg px-3 py-2">
                     <div className="flex items-center gap-2">
                       <HelpCircle className="w-3.5 h-3.5 text-orange-500" />
                       <span className="text-xs text-zinc-600">Open questions</span>
                     </div>
-                    <span className="text-xs font-semibold text-zinc-800">{activitySummary.openQuestions}</span>
+                    <span className="text-xs font-semibold text-zinc-900">{activitySummary.openQuestions}</span>
                   </div>
                   <div className="flex items-center justify-between bg-zinc-50 rounded-lg px-3 py-2">
                     <div className="flex items-center gap-2">
                       <RotateCcw className="w-3.5 h-3.5 text-purple-500" />
                       <span className="text-xs text-zinc-600">Pending changes</span>
                     </div>
-                    <span className="text-xs font-semibold text-zinc-800">{activitySummary.pendingChanges}</span>
+                    <span className="text-xs font-semibold text-zinc-900">{activitySummary.pendingChanges}</span>
                   </div>
                 </div>
               </div>
@@ -702,7 +702,7 @@ const CollaborationHub: React.FC<CollaborationHubProps> = ({ programId }) => {
                         <button
                           key={t.id}
                           onClick={() => setSelectedThreadId(t.id)}
-                          className="w-full text-left flex items-start gap-2 p-2 rounded-lg hover:bg-zinc-50 transition-colors"
+                          className="w-full text-left flex items-start gap-2 p-2 rounded-lg hover:bg-zinc-50 transition-colors duration-150"
                         >
                           <TIcon className={cn('w-3.5 h-3.5 mt-0.5 flex-shrink-0', tc.color)} />
                           <div className="min-w-0">
@@ -749,7 +749,7 @@ const ThreadMessage: React.FC<ThreadMessageProps> = ({ message, onReply }) => {
         <div className="flex-1 min-w-0">
           {/* Header line */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-medium text-zinc-800">{message.author || 'Unknown'}</span>
+            <span className="text-sm font-medium text-zinc-900">{message.author || 'Unknown'}</span>
             {message.role && (
               <span className="text-xs px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-500">
                 {message.role}
@@ -782,7 +782,7 @@ const ThreadMessage: React.FC<ThreadMessageProps> = ({ message, onReply }) => {
           <div className="flex items-center gap-3 mt-3">
             <button
               onClick={onReply}
-              className="flex items-center gap-1 text-xs text-zinc-500 hover:text-blue-600 transition-colors"
+              className="flex items-center gap-1 text-xs text-zinc-500 hover:text-blue-600 transition-colors duration-150"
             >
               <Reply className="w-3 h-3" />
               Reply

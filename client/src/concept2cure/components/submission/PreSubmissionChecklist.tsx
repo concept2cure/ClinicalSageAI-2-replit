@@ -383,7 +383,7 @@ export function PreSubmissionChecklist({
           </button>
           <button
             onClick={onGenerateReport}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors duration-150"
           >
             <Download className="h-3.5 w-3.5" />
             Report
@@ -401,7 +401,7 @@ export function PreSubmissionChecklist({
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-medium text-slate-600">Overall Readiness</span>
           <span className={cn(
-            'text-sm font-bold',
+            'text-sm font-semibold',
             overallScore.pct >= 80 ? 'text-emerald-600' : overallScore.pct >= 50 ? 'text-amber-600' : 'text-red-600',
           )}>
             {overallScore.passed}/{overallScore.total} checks passed ({overallScore.pct}%)
@@ -428,7 +428,7 @@ export function PreSubmissionChecklist({
             <div key={cat.id} className="border border-slate-200 rounded-lg overflow-hidden">
               <button
                 onClick={() => toggleCategory(cat.id)}
-                className="w-full flex items-center gap-3 px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors"
+                className="w-full flex items-center gap-3 px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors duration-150"
               >
                 {isExpanded
                   ? <ChevronDown className="h-4 w-4 text-slate-400" />
@@ -452,7 +452,7 @@ export function PreSubmissionChecklist({
                   {cat.items.map(item => (
                     <div
                       key={item.id}
-                      className="flex items-start gap-3 px-4 py-2.5 hover:bg-slate-50 transition-colors"
+                      className="flex items-start gap-3 px-4 py-2.5 hover:bg-slate-50 transition-colors duration-150"
                     >
                       {item.autoCheck ? (
                         statusIcon(item.status)
@@ -466,7 +466,7 @@ export function PreSubmissionChecklist({
                               <Check className="h-2.5 w-2.5 text-white" />
                             </div>
                           ) : (
-                            <div className="h-4 w-4 rounded border-2 border-slate-300 hover:border-indigo-400 transition-colors" />
+                            <div className="h-4 w-4 rounded border-2 border-slate-300 hover:border-indigo-400 transition-colors duration-150" />
                           )}
                         </button>
                       )}

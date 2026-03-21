@@ -213,7 +213,7 @@ function FeedCard({
     <button
       type="button"
       onClick={() => onClick(item)}
-      className="w-full text-left bg-white rounded-xl border border-zinc-200 hover:border-zinc-200 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+      className="w-full text-left bg-white rounded-xl border border-zinc-200 hover:border-zinc-200 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/20"
     >
       <div className="flex">
         {/* Impact color stripe */}
@@ -276,7 +276,7 @@ function FeedCard({
                 // Navigate to change impact analysis (stub)
                 console.log('[RegulatoryIntelligenceFeed] Analyze impact:', item.id);
               }}
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors duration-150"
             >
               <TrendingUp size={13} />
               Analyze Impact
@@ -322,7 +322,7 @@ function WatchlistItem({ item }: { item: IntelligenceItem }) {
       <div className="flex items-start gap-2">
         <Bookmark size={13} className="text-violet-500 mt-0.5 shrink-0" fill="currentColor" />
         <div className="min-w-0">
-          <p className="text-xs font-medium text-zinc-800 line-clamp-2 leading-snug">
+          <p className="text-xs font-medium text-zinc-900 line-clamp-2 leading-snug">
             {item.title}
           </p>
           <p className="text-xs text-zinc-400 mt-1">
@@ -343,12 +343,12 @@ function PDUFAItem({ pdufa }: { pdufa: PDUFADate }) {
           <p className="text-xs font-semibold text-blue-600 uppercase">
             {new Date(pdufa.date).toLocaleDateString('en-US', { month: 'short' })}
           </p>
-          <p className="text-lg font-bold text-zinc-800 leading-tight">
+          <p className="text-lg font-semibold text-zinc-900 leading-tight">
             {new Date(pdufa.date).getDate()}
           </p>
         </div>
         <div className="min-w-0">
-          <p className="text-xs font-semibold text-zinc-800">{pdufa.drug}</p>
+          <p className="text-xs font-semibold text-zinc-900">{pdufa.drug}</p>
           <p className="text-xs text-zinc-500">{pdufa.sponsor}</p>
           <p className="text-xs text-zinc-400 mt-0.5 line-clamp-1">{pdufa.indication}</p>
         </div>
@@ -374,7 +374,7 @@ function SelectDropdown({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="appearance-none text-sm bg-white border border-zinc-200 rounded-lg px-3 py-2 pr-8 text-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-colors cursor-pointer"
+        className="appearance-none text-sm bg-white border border-zinc-200 rounded-lg px-3 py-2 pr-8 text-zinc-700 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/20 focus:border-blue-400 transition-colors cursor-pointer"
       >
         <option value="">{label}</option>
         {options.map((opt) => (
@@ -692,7 +692,7 @@ const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({
 
             <button
               type="button"
-              className="relative p-2 rounded-lg text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 transition-colors"
+              className="relative p-2 rounded-lg text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 transition-colors duration-150"
               aria-label="Notifications"
             >
               <Bell size={18} />
@@ -713,7 +713,7 @@ const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search guidance, alerts, approvals..."
-                className="w-full text-sm bg-white border border-zinc-200 rounded-lg pl-9 pr-3 py-2 text-zinc-800 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-colors"
+                className="w-full text-sm bg-white border border-zinc-200 rounded-lg pl-9 pr-3 py-2 text-zinc-900 placeholder:text-zinc-400 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/20 focus:border-blue-400 transition-colors duration-150"
               />
             </div>
 
@@ -831,7 +831,7 @@ const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({
             <div className="bg-white rounded-xl border border-zinc-200 p-4">
               <div className="flex items-center gap-2 mb-3">
                 <Bookmark size={14} className="text-violet-500" />
-                <h2 className="text-sm font-semibold text-zinc-800">Your Watchlist</h2>
+                <h2 className="text-sm font-semibold text-zinc-900">Your Watchlist</h2>
               </div>
 
               {loading ? (
@@ -861,7 +861,7 @@ const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({
             <div className="bg-white rounded-xl border border-zinc-200 p-4">
               <div className="flex items-center gap-2 mb-3">
                 <Clock size={14} className="text-blue-600" />
-                <h2 className="text-sm font-semibold text-zinc-800">
+                <h2 className="text-sm font-semibold text-zinc-900">
                   Upcoming PDUFA Dates
                 </h2>
               </div>
@@ -911,7 +911,7 @@ const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({
                 onClick={() =>
                   console.log('[RegulatoryIntelligenceFeed] AI Insights CTA clicked')
                 }
-                className="w-full text-xs font-semibold text-white bg-violet-600 hover:bg-violet-700 rounded-lg px-3 py-2 transition-colors"
+                className="w-full text-xs font-semibold text-white bg-violet-600 hover:bg-violet-700 rounded-lg px-3 py-2 transition-colors duration-150"
               >
                 Generate Insights Report
               </button>

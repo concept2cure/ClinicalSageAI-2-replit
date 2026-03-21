@@ -209,7 +209,7 @@ const IndustryStep: React.FC<{
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-zinc-900">Welcome to Concept2Cure</h2>
+        <h2 className="text-2xl font-semibold text-zinc-900">Welcome to Concept2Cure</h2>
         <p className="mt-2 text-zinc-600">
           Let's personalize your workspace. What type of organization are you?
         </p>
@@ -265,7 +265,7 @@ const RoleStep: React.FC<{
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-zinc-900">What's your primary role?</h2>
+        <h2 className="text-2xl font-semibold text-zinc-900">What's your primary role?</h2>
         <p className="mt-2 text-zinc-600">
           This helps us show you the most relevant tools and views.
         </p>
@@ -325,12 +325,12 @@ const ConfirmationStep: React.FC<{
   
   return (
     <div className="space-y-6 text-center">
-      <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center">
+      <div className="w-20 h-20 mx-auto rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center">
         <Sparkles className="w-10 h-10 text-white" />
       </div>
       
       <div>
-        <h2 className="text-2xl font-bold text-zinc-900">You're all set!</h2>
+        <h2 className="text-2xl font-semibold text-zinc-900">You're all set!</h2>
         <p className="mt-2 text-zinc-600">
           Your workspace is configured for optimal productivity.
         </p>
@@ -423,7 +423,7 @@ export const IndustryModeSelector: React.FC<IndustryModeSelectorProps> = ({
         </div>
         
         {/* Content */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="bg-white rounded-xl shadow-xl p-8">
           {step === 1 && (
             <IndustryStep
               selected={industry}

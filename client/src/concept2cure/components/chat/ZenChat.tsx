@@ -195,7 +195,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
     <div className="mt-2 p-3 bg-zinc-50 border border-zinc-200 rounded-xl">
       <div className="flex items-center gap-2 mb-2">
         <FileText className="w-4 h-4 text-violet-500" />
-        <span className="text-sm font-medium text-zinc-800 truncate flex-1">
+        <span className="text-sm font-medium text-zinc-900 truncate flex-1">
           {artifact.title}
         </span>
         <span className="text-xs text-zinc-400">{wordCount.toLocaleString()} words</span>
@@ -225,7 +225,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
         <div className="relative">
           <button
             onClick={() => setShowExportMenu(!showExportMenu)}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 transition-colors duration-150"
           >
             <Download className="w-3.5 h-3.5" />
             Export
@@ -262,7 +262,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
 
         <button
           onClick={() => onOpenEditor(artifact)}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition-colors"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition-colors duration-150"
         >
           <PenTool className="w-3.5 h-3.5" />
           Edit Inline
@@ -353,7 +353,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             )}
           >
             {isUser ? (
-              <span className="text-xs font-bold text-white">{userInitials}</span>
+              <span className="text-xs font-semibold text-white">{userInitials}</span>
             ) : (
               <Sparkles className="w-4 h-4 text-white" />
             )}
@@ -387,7 +387,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
               <TypingIndicator />
             ) : isUser ? (
               // User messages: plain text (preserving whitespace)
-              <p className="text-zinc-800 leading-relaxed whitespace-pre-wrap text-sm">
+              <p className="text-zinc-900 leading-relaxed whitespace-pre-wrap text-sm">
                 {message.content}
               </p>
             ) : (
@@ -454,7 +454,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                   <button
                     key={link.href}
                     onClick={() => onNavigate?.(link.href)}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium text-zinc-600 hover:border-zinc-300 hover:bg-zinc-50 transition-colors"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium text-zinc-600 hover:border-zinc-300 hover:bg-zinc-50 transition-colors duration-150"
                   >
                     <ExternalLink className="h-3 w-3" />
                     {link.label}
@@ -473,7 +473,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
               >
                 <button
                   onClick={handleCopy}
-                  className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors"
+                  className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors duration-150"
                   title="Copy"
                 >
                   {copied ? (
@@ -486,21 +486,21 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                   <>
                     <button
                       onClick={() => onFeedback?.(true)}
-                      className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors"
+                      className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors duration-150"
                       title="Good response"
                     >
                       <ThumbsUp className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => onFeedback?.(false)}
-                      className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors"
+                      className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors duration-150"
                       title="Bad response"
                     >
                       <ThumbsDown className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={onRegenerate}
-                      className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors"
+                      className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors duration-150"
                       title="Regenerate"
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
@@ -702,7 +702,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               <button
                 key={i}
                 onClick={() => onSuggestionClick('prompt' in item ? (item as { prompt: string }).prompt : item.title)}
-                className="w-full group flex items-center gap-4 p-4 rounded-xl border border-zinc-200 bg-white hover:border-blue-200 hover:shadow-sm text-left transition-all"
+                className="w-full group flex items-center gap-4 p-4 rounded-xl border border-zinc-200 bg-white hover:border-blue-200 hover:shadow-sm text-left transition-all duration-150"
               >
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium text-zinc-900 group-hover:text-blue-900">
@@ -775,7 +775,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
       <div className="max-w-3xl mx-auto">
         <div
           className={cn(
-            'flex items-end gap-2 px-4 py-3 bg-white border rounded-2xl transition-all duration-200',
+            'flex items-end gap-2 px-4 py-3 bg-white border rounded-xl transition-all duration-200',
             isFocused
               ? 'border-blue-300 ring-4 ring-blue-50 shadow-sm'
               : 'border-zinc-200 hover:border-zinc-300'
@@ -799,7 +799,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
           {isGenerating ? (
             <button
               onClick={onStop}
-              className="flex-shrink-0 p-2 bg-zinc-900 text-white rounded-full hover:bg-zinc-800 transition-colors"
+              className="flex-shrink-0 p-2 bg-zinc-900 text-white rounded-full hover:bg-zinc-800 transition-colors duration-150"
               title="Stop generating"
             >
               <StopCircle className="w-5 h-5" />

@@ -167,7 +167,7 @@ export const ZenChatSkeleton: React.FC = () => (
     {/* User message skeleton */}
     <div className="flex justify-end">
       <div className="max-w-[70%] space-y-2">
-        <ZenSkeleton variant="rectangular" height={40} className="rounded-2xl" />
+        <ZenSkeleton variant="rectangular" height={40} className="rounded-xl" />
       </div>
     </div>
     
@@ -182,7 +182,7 @@ export const ZenChatSkeleton: React.FC = () => (
     {/* User message skeleton */}
     <div className="flex justify-end">
       <div className="max-w-[60%]">
-        <ZenSkeleton variant="rectangular" height={32} className="rounded-2xl" />
+        <ZenSkeleton variant="rectangular" height={32} className="rounded-xl" />
       </div>
     </div>
     
@@ -201,7 +201,7 @@ export const ZenChatSkeleton: React.FC = () => (
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export const ZenTypingIndicator: React.FC = () => (
-  <div className="flex items-center gap-1 p-3 bg-zinc-100 rounded-2xl rounded-tl-none w-fit">
+  <div className="flex items-center gap-1 p-3 bg-zinc-100 rounded-xl rounded-tl-none w-fit">
     {[0, 1, 2].map((i) => (
       <motion.div
         key={i}

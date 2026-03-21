@@ -592,15 +592,15 @@ const SampleSizePanel: React.FC<SampleSizePanelProps> = ({
           <div className="px-3 py-2">
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
-                <p className="text-2xl font-bold text-blue-700">{result.perArm}</p>
+                <p className="text-2xl font-semibold text-blue-700">{result.perArm}</p>
                 <p className="text-xs text-zinc-500">Per Arm</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-blue-700">{result.total}</p>
+                <p className="text-2xl font-semibold text-blue-700">{result.total}</p>
                 <p className="text-xs text-zinc-500">Total</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-green-700">{result.adjustedForDropout}</p>
+                <p className="text-2xl font-semibold text-green-700">{result.adjustedForDropout}</p>
                 <p className="text-xs text-zinc-500">With Dropout</p>
               </div>
             </div>

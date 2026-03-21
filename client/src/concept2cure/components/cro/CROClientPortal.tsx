@@ -302,7 +302,7 @@ const DeliverablesDuePanel: React.FC<{
             </span>
           </div>
           <div className={cn(
-            'text-sm font-bold',
+            'text-sm font-semibold',
             isOverdue && 'text-red-600',
             isUrgent && !isOverdue && 'text-amber-600',
             !isOverdue && !isUrgent && 'text-zinc-600'
@@ -346,7 +346,7 @@ const DeliverablesDuePanel: React.FC<{
       <div className="space-y-4 max-h-[500px] overflow-y-auto">
         {overdue.length > 0 && (
           <div>
-            <p className="text-xs font-bold text-red-600 mb-2 flex items-center gap-1">
+            <p className="text-xs font-semibold text-red-600 mb-2 flex items-center gap-1">
               <AlertTriangle className="w-3 h-3" />
               OVERDUE ({overdue.length})
             </p>
@@ -416,7 +416,7 @@ const ResourceUtilizationPanel: React.FC<{
           Resource Utilization
         </h3>
         <span className={cn(
-          'px-3 py-1 text-sm font-bold rounded-full',
+          'px-3 py-1 text-sm font-semibold rounded-full',
           avgUtilization >= 80 && 'bg-green-100 text-green-700',
           avgUtilization >= 60 && avgUtilization < 80 && 'bg-amber-100 text-amber-700',
           avgUtilization < 60 && 'bg-red-100 text-red-700'
@@ -615,7 +615,7 @@ const ClientCard: React.FC<{
       {/* Header */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between p-4 hover:bg-zinc-50 transition-colors"
+        className="w-full flex items-center justify-between p-4 hover:bg-zinc-50 transition-colors duration-150"
       >
         <div className="flex items-center gap-3">
           <div className={cn(
@@ -651,18 +651,18 @@ const ClientCard: React.FC<{
           {/* Active SOWs */}
           <div className="text-right">
             <p className="text-xs text-zinc-500">Active SOWs</p>
-            <p className="text-lg font-bold text-zinc-900">{metrics.activeSOWs}</p>
+            <p className="text-lg font-semibold text-zinc-900">{metrics.activeSOWs}</p>
           </div>
           
           {/* Contract Value */}
           <div className="text-right">
             <p className="text-xs text-zinc-500">Contract Value</p>
-            <p className="text-lg font-bold text-blue-600">{formatCurrency(metrics.totalContractValue)}</p>
+            <p className="text-lg font-semibold text-blue-600">{formatCurrency(metrics.totalContractValue)}</p>
           </div>
           
           {/* Alerts */}
           {metrics.overdueDeliverables > 0 && (
-            <span className="px-2 py-1 text-xs font-bold text-red-700 bg-red-100 rounded-full">
+            <span className="px-2 py-1 text-xs font-semibold text-red-700 bg-red-100 rounded-full">
               {metrics.overdueDeliverables} overdue
             </span>
           )}
@@ -786,7 +786,7 @@ export const CROClientPortal: React.FC<CROClientPortalProps> = ({
       <div className="flex-shrink-0 bg-white border-b border-zinc-200 p-4">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-xl font-bold text-zinc-900">Client Engagement Portal</h1>
+            <h1 className="text-xl font-semibold text-zinc-900">Client Engagement Portal</h1>
             <p className="text-sm text-zinc-500">CRO operations dashboard</p>
           </div>
           
@@ -806,31 +806,31 @@ export const CROClientPortal: React.FC<CROClientPortalProps> = ({
         <div className="grid grid-cols-6 gap-4">
           <div className="p-3 bg-zinc-100 rounded-lg">
             <p className="text-xs text-zinc-500">Clients</p>
-            <p className="text-xl font-bold text-zinc-900">{metrics.totalClients}</p>
+            <p className="text-xl font-semibold text-zinc-900">{metrics.totalClients}</p>
           </div>
           <div className="p-3 bg-blue-50 rounded-lg">
             <p className="text-xs text-blue-600">Active SOWs</p>
-            <p className="text-xl font-bold text-blue-700">{metrics.activeSOWs}</p>
+            <p className="text-xl font-semibold text-blue-700">{metrics.activeSOWs}</p>
           </div>
           <div className="p-3 bg-green-50 rounded-lg">
             <p className="text-xs text-green-600">Contract Value</p>
-            <p className="text-xl font-bold text-green-700">{formatCurrency(metrics.totalContractValue)}</p>
+            <p className="text-xl font-semibold text-green-700">{formatCurrency(metrics.totalContractValue)}</p>
           </div>
           <div className={cn('p-3 rounded-lg', metrics.overdueDeliverables > 0 ? 'bg-red-50' : 'bg-zinc-100')}>
             <p className={cn('text-xs', metrics.overdueDeliverables > 0 ? 'text-red-600' : 'text-zinc-500')}>Overdue</p>
-            <p className={cn('text-xl font-bold', metrics.overdueDeliverables > 0 ? 'text-red-700' : 'text-zinc-900')}>
+            <p className={cn('text-xl font-semibold', metrics.overdueDeliverables > 0 ? 'text-red-700' : 'text-zinc-900')}>
               {metrics.overdueDeliverables}
             </p>
           </div>
           <div className={cn('p-3 rounded-lg', metrics.pendingCOs > 0 ? 'bg-amber-50' : 'bg-zinc-100')}>
             <p className={cn('text-xs', metrics.pendingCOs > 0 ? 'text-amber-600' : 'text-zinc-500')}>Pending COs</p>
-            <p className={cn('text-xl font-bold', metrics.pendingCOs > 0 ? 'text-amber-700' : 'text-zinc-900')}>
+            <p className={cn('text-xl font-semibold', metrics.pendingCOs > 0 ? 'text-amber-700' : 'text-zinc-900')}>
               {metrics.pendingCOs}
             </p>
           </div>
           <div className="p-3 bg-violet-50 rounded-lg">
             <p className="text-xs text-violet-600">Utilization</p>
-            <p className="text-xl font-bold text-violet-700">{metrics.avgUtilization}%</p>
+            <p className="text-xl font-semibold text-violet-700">{metrics.avgUtilization}%</p>
           </div>
         </div>
       </div>

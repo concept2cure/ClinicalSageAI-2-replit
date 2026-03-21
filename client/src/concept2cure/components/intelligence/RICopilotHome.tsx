@@ -258,7 +258,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
     return (
       <div className="flex-1 flex items-center justify-center bg-zinc-50/30 p-8">
         <div className="max-w-md text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-blue-50 flex items-center justify-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-blue-50 flex items-center justify-center">
             <Brain className="w-8 h-8 text-blue-600" />
           </div>
           <h2 className="text-xl font-semibold text-zinc-900 mb-2">AnA Intelligence</h2>
@@ -567,7 +567,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
           {/* ── 3. Evidence Clusters — Real CSR Study Cards ─────────── */}
           <div className="mb-5">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-zinc-800 flex items-center gap-1.5">
+              <h2 className="text-sm font-semibold text-zinc-900 flex items-center gap-1.5">
                 <Database className="w-4 h-4 text-violet-500" />
                 Matched Clinical Study Reports
                 {csrLoading && <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-400 ml-1" />}
@@ -626,7 +626,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                 {filteredCSR.length > 10 && (
                   <button
                     onClick={onAnalyzeEvidence}
-                    className="w-full text-center py-2.5 text-xs text-blue-600 hover:text-blue-800 font-medium rounded-lg border border-zinc-200 bg-white hover:bg-blue-50 transition-colors"
+                    className="w-full text-center py-2.5 text-xs text-blue-600 hover:text-blue-800 font-medium rounded-lg border border-zinc-200 bg-white hover:bg-blue-50 transition-colors duration-150"
                   >
                     View all {filteredCSR.length} studies →
                   </button>
@@ -641,7 +641,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
               {/* Risk Assessment */}
               {riskData && (
                 <div className="rounded-xl border border-zinc-200 bg-white p-4">
-                  <h3 className="text-sm font-semibold text-zinc-800 flex items-center gap-1.5 mb-3">
+                  <h3 className="text-sm font-semibold text-zinc-900 flex items-center gap-1.5 mb-3">
                     <AlertTriangle className="w-4 h-4 text-amber-500" />
                     Risk Assessment
                     <span
@@ -719,7 +719,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                 strategyData.alternativeStrategies &&
                 strategyData.alternativeStrategies.length > 0 && (
                   <div className="rounded-xl border border-zinc-200 bg-white p-4">
-                    <h3 className="text-sm font-semibold text-zinc-800 flex items-center gap-1.5 mb-3">
+                    <h3 className="text-sm font-semibold text-zinc-900 flex items-center gap-1.5 mb-3">
                       <Target className="w-4 h-4 text-violet-500" />
                       Alternative Pathways
                     </h3>
@@ -747,7 +747,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
           {/* ── 5. Precedent Match Cards ───────────────────────────── */}
           {precedents.length > 0 && (
             <div className="mb-5">
-              <h2 className="text-sm font-semibold text-zinc-800 flex items-center gap-1.5 mb-3">
+              <h2 className="text-sm font-semibold text-zinc-900 flex items-center gap-1.5 mb-3">
                 <Microscope className="w-4 h-4 text-blue-500" />
                 Matched Regulatory Precedents
                 <span className="text-xs text-zinc-400 ml-1 font-normal">
@@ -789,7 +789,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
 
           {/* ── 6. Document Outcome Block ──────────────────────────── */}
           <div className="rounded-xl border border-zinc-200 bg-white p-4 mb-5">
-            <h3 className="text-sm font-semibold text-zinc-800 flex items-center gap-1.5 mb-3">
+            <h3 className="text-sm font-semibold text-zinc-900 flex items-center gap-1.5 mb-3">
               <FileCheck className="w-4 h-4 text-emerald-500" />
               Document Actions
             </h3>
@@ -820,7 +820,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                       </span>
                       <span className="text-xs text-zinc-400">CTD {doc.ctdSection}</span>
                     </div>
-                    <ArrowRight className="w-3 h-3 text-zinc-400 group-hover:text-blue-500 transition-colors" />
+                    <ArrowRight className="w-3 h-3 text-zinc-400 group-hover:text-blue-500 transition-colors duration-150" />
                   </button>
                 );
               })}
@@ -915,7 +915,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
                   <FileText className="w-3 h-3 text-blue-500" />
                   <span>Governed Artifacts</span>
                 </div>
-                <span className="font-mono font-semibold text-zinc-800">{artifactCount}</span>
+                <span className="font-mono font-semibold text-zinc-900">{artifactCount}</span>
               </div>
               <div className="flex items-center justify-between text-zinc-600">
                 <div className="flex items-center gap-1.5">
@@ -992,13 +992,13 @@ const CSRStudyCard: React.FC<{
   <div className="rounded-lg border border-zinc-200 bg-white overflow-hidden">
     <button
       onClick={onToggle}
-      className="w-full text-left px-3 py-2.5 flex items-start gap-2.5 hover:bg-zinc-50 transition-colors"
+      className="w-full text-left px-3 py-2.5 flex items-start gap-2.5 hover:bg-zinc-50 transition-colors duration-150"
     >
       <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-mono font-medium shrink-0 mt-0.5">
         {index + 1}
       </span>
       <div className="flex-1 min-w-0">
-        <span className="text-xs font-medium text-zinc-800 block truncate">
+        <span className="text-xs font-medium text-zinc-900 block truncate">
           {csr.title || `Study ${index + 1}`}
         </span>
         <div className="flex items-center gap-2 mt-1 flex-wrap">
@@ -1085,7 +1085,7 @@ const PrecedentCard: React.FC<{
   <div className="rounded-lg border border-zinc-200 bg-white p-3">
     <div className="flex items-start justify-between gap-2">
       <div className="flex-1 min-w-0">
-        <span className="text-xs font-medium text-zinc-800 block truncate">
+        <span className="text-xs font-medium text-zinc-900 block truncate">
           {precedent.deviceName || precedent.indication || 'Precedent'}
         </span>
         <div className="flex items-center gap-2 mt-1 flex-wrap">
@@ -1157,7 +1157,7 @@ const MetricPill: React.FC<{
       {loading ? (
         <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-400 mx-auto mt-0.5" />
       ) : (
-        <span className={cn('text-lg font-bold block', colorMap[color] || 'text-zinc-700')}>
+        <span className={cn('text-lg font-semibold block', colorMap[color] || 'text-zinc-700')}>
           {value}
         </span>
       )}
@@ -1216,7 +1216,7 @@ const ActionButton: React.FC<{
 }> = ({ icon, label, onClick }) => (
   <button
     onClick={onClick}
-    className="w-full flex items-center gap-2 px-2.5 py-2 text-xs text-zinc-600 hover:bg-white hover:text-blue-700 rounded-md border border-transparent hover:border-zinc-200 transition-all"
+    className="w-full flex items-center gap-2 px-2.5 py-2 text-xs text-zinc-600 hover:bg-white hover:text-blue-700 rounded-md border border-transparent hover:border-zinc-200 transition-all duration-150"
   >
     {icon}
     <span className="flex-1 text-left">{label}</span>

@@ -363,12 +363,12 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 <div key={msg.id} className={cn('group px-4 py-3', isUser ? 'bg-zinc-50/60' : 'bg-white')}>
                   <div className="flex gap-2.5 max-w-3xl mx-auto">
                     <div className={cn('w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5', isUser ? 'bg-zinc-800 text-white' : 'bg-gradient-to-br from-violet-500 to-violet-700')}>
-                      {isUser ? <span className="text-xs font-bold">{(contextProfile?.userRole?.[0] || 'Y').toUpperCase()}</span> : <Sparkles className="w-3.5 h-3.5 text-white" />}
+                      {isUser ? <span className="text-xs font-semibold">{(contextProfile?.userRole?.[0] || 'Y').toUpperCase()}</span> : <Sparkles className="w-3.5 h-3.5 text-white" />}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <span className="text-xs font-semibold text-zinc-800">{isUser ? 'You' : 'AnA'}</span>
+                      <span className="text-xs font-semibold text-zinc-900">{isUser ? 'You' : 'AnA'}</span>
                       {isUser ? (
-                        <p className="text-sm text-zinc-800 leading-relaxed whitespace-pre-wrap mt-0.5">{msg.content}</p>
+                        <p className="text-sm text-zinc-900 leading-relaxed whitespace-pre-wrap mt-0.5">{msg.content}</p>
                       ) : (
                         <div className="prose prose-sm prose-zinc max-w-none mt-0.5 prose-p:text-zinc-700 prose-p:leading-relaxed prose-p:my-1.5 prose-strong:text-zinc-900 [&>*:first-child]:mt-0 [&>*:last-child]:mb-0" dangerouslySetInnerHTML={{ __html: htmlContent }} />
                       )}
@@ -382,7 +382,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 <div className="flex gap-2.5 max-w-3xl mx-auto">
                   <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center flex-shrink-0 mt-0.5"><Sparkles className="w-3.5 h-3.5 text-white" /></div>
                   <div>
-                    <span className="text-xs font-semibold text-zinc-800">AnA</span>
+                    <span className="text-xs font-semibold text-zinc-900">AnA</span>
                     <div className="flex items-center gap-1.5 mt-1">
                       <div className="w-2 h-2 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_infinite]" />
                       <div className="w-2 h-2 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
@@ -400,7 +400,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         <div className="px-4 py-2.5 bg-white">
           <div className="max-w-3xl mx-auto">
             <div className={cn(
-              'flex items-end gap-2 px-3.5 py-2.5 bg-zinc-50 border rounded-2xl transition-colors duration-150',
+              'flex items-end gap-2 px-3.5 py-2.5 bg-zinc-50 border rounded-xl transition-colors duration-150',
               isFocused ? 'border-zinc-300 ring-2 ring-zinc-100 bg-white shadow-sm' : 'border-zinc-200 hover:border-zinc-300'
             )}>
               <div className="flex items-center gap-1.5 flex-shrink-0 self-center">
@@ -409,7 +409,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               </div>
               <textarea ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)} placeholder="Message AnA..." rows={1} className="flex-1 resize-none bg-transparent border-none outline-none text-zinc-900 placeholder:text-zinc-400 text-sm leading-6 min-h-[24px] max-h-[120px]" />
               {hasMessages && (
-                <button onClick={() => setMessages([])} className="flex-shrink-0 p-1.5 text-zinc-400 hover:text-zinc-600 rounded-lg transition-colors" title="New thread">
+                <button onClick={() => setMessages([])} className="flex-shrink-0 p-1.5 text-zinc-400 hover:text-zinc-600 rounded-lg transition-colors duration-150" title="New thread">
                   <RotateCcw className="w-3.5 h-3.5" />
                 </button>
               )}
@@ -434,7 +434,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             <div className="max-w-2xl w-full text-center">
               {/* Greeting */}
               <div className="mb-10">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center mx-auto mb-5 shadow-lg shadow-violet-500/20">
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center mx-auto mb-5 shadow-lg shadow-violet-500/20">
                   <Sparkles className="w-7 h-7 text-white" />
                 </div>
                 <h2 className="text-2xl font-semibold text-zinc-900">{defaultGreeting}</h2>
@@ -452,7 +452,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       onClick={() => handleSuggestedAction(action)}
                       className="text-left px-5 py-4 rounded-xl border border-zinc-200 hover:border-blue-200 hover:shadow-md transition-all group"
                     >
-                      <p className="text-sm font-medium text-zinc-800 group-hover:text-blue-900">{action.label}</p>
+                      <p className="text-sm font-medium text-zinc-900 group-hover:text-blue-900">{action.label}</p>
                       {action.description && (
                         <p className="text-xs text-zinc-500 mt-1 line-clamp-2">{action.description}</p>
                       )}
@@ -485,15 +485,15 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       isUser ? 'bg-zinc-800 text-white' : 'bg-gradient-to-br from-violet-500 to-violet-700'
                     )}>
                       {isUser ? (
-                        <span className="text-xs font-bold">{(contextProfile?.userRole?.[0] || 'Y').toUpperCase()}</span>
+                        <span className="text-xs font-semibold">{(contextProfile?.userRole?.[0] || 'Y').toUpperCase()}</span>
                       ) : (
                         <Sparkles className="w-4 h-4 text-white" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <span className="text-xs font-semibold text-zinc-800">{isUser ? 'You' : 'AnA'}</span>
+                      <span className="text-xs font-semibold text-zinc-900">{isUser ? 'You' : 'AnA'}</span>
                       {isUser ? (
-                        <p className="text-sm text-zinc-800 leading-relaxed whitespace-pre-wrap mt-0.5">{msg.content}</p>
+                        <p className="text-sm text-zinc-900 leading-relaxed whitespace-pre-wrap mt-0.5">{msg.content}</p>
                       ) : (
                         <>
                           <div
@@ -536,7 +536,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                 a.click();
                                 URL.revokeObjectURL(url);
                               }}
-                              className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition-colors"
+                              className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition-colors duration-150"
                             >
                               <Download className="w-3.5 h-3.5" />
                               {msg.pptx.filename}
@@ -549,11 +549,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           'flex items-center gap-0.5 mt-1 transition-opacity duration-150',
                           showActions === msg.id ? 'opacity-100' : 'opacity-0'
                         )}>
-                          <button onClick={() => handleCopy(msg.id, msg.content)} className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors" title="Copy">
+                          <button onClick={() => handleCopy(msg.id, msg.content)} className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors duration-150" title="Copy">
                             {copiedId === msg.id ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
                           </button>
-                          <button className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors" title="Good"><ThumbsUp className="w-3.5 h-3.5" /></button>
-                          <button className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors" title="Bad"><ThumbsDown className="w-3.5 h-3.5" /></button>
+                          <button className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors duration-150" title="Good"><ThumbsUp className="w-3.5 h-3.5" /></button>
+                          <button className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors duration-150" title="Bad"><ThumbsDown className="w-3.5 h-3.5" /></button>
                         </div>
                       )}
                     </div>
@@ -570,7 +570,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     <Sparkles className="w-4 h-4 text-white" />
                   </div>
                   <div>
-                    <span className="text-xs font-semibold text-zinc-800">AnA</span>
+                    <span className="text-xs font-semibold text-zinc-900">AnA</span>
                     <div className="flex items-center gap-2.5 mt-1.5">
                       <div className="flex items-center gap-1">
                         <div className="w-2 h-2 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_infinite]" />
@@ -596,7 +596,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             <div className="flex justify-center mb-2">
               <button
                 onClick={() => setMessages([])}
-                className="flex items-center gap-1.5 px-3 py-1 text-xs text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-full transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1 text-xs text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-full transition-colors duration-150"
               >
                 <RotateCcw className="w-3 h-3" />
                 New thread
@@ -605,7 +605,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           )}
 
           <div className={cn(
-            'flex items-end gap-2 px-3.5 py-2.5 bg-zinc-50 border rounded-2xl transition-colors duration-150',
+            'flex items-end gap-2 px-3.5 py-2.5 bg-zinc-50 border rounded-xl transition-colors duration-150',
             isFocused
               ? 'border-zinc-300 ring-2 ring-zinc-100 bg-white shadow-sm'
               : 'border-zinc-200 hover:border-zinc-300'

@@ -181,7 +181,7 @@ export const EvidenceManager: React.FC<EvidenceManagerProps> = ({ programId }) =
       {/* ── Stats Strip ── */}
       <div className="border-b bg-white px-6 py-2 flex items-center gap-4 overflow-x-auto">
         <div className="flex items-center gap-1.5 text-xs text-zinc-500">
-          <span className="font-medium text-zinc-800">{stats.total}</span> total
+          <span className="font-medium text-zinc-900">{stats.total}</span> total
         </div>
         <span className="text-zinc-200">|</span>
         {(['strong', 'moderate', 'weak', 'insufficient'] as Strength[]).map(s => {
@@ -190,18 +190,18 @@ export const EvidenceManager: React.FC<EvidenceManagerProps> = ({ programId }) =
             <div key={s} className="flex items-center gap-1.5 text-xs text-zinc-500">
               <span className={cn('w-2 h-2 rounded-full', c.dot)} />
               <span className="capitalize">{s}</span>
-              <span className="font-medium text-zinc-800">{stats.byStrength[s]}</span>
+              <span className="font-medium text-zinc-900">{stats.byStrength[s]}</span>
             </div>
           );
         })}
         <span className="text-zinc-200">|</span>
         <div className="flex items-center gap-1.5 text-xs text-zinc-500">
           <Link2 className="w-3 h-3" />
-          <span className="font-medium text-zinc-800">{stats.linked}</span> linked
+          <span className="font-medium text-zinc-900">{stats.linked}</span> linked
         </div>
         <div className="flex items-center gap-1.5 text-xs text-zinc-500">
           <Unlink className="w-3 h-3" />
-          <span className="font-medium text-zinc-800">{stats.unlinked}</span> unlinked
+          <span className="font-medium text-zinc-900">{stats.unlinked}</span> unlinked
         </div>
       </div>
 
@@ -280,7 +280,7 @@ export const EvidenceManager: React.FC<EvidenceManagerProps> = ({ programId }) =
                         <TypeIcon className="w-4 h-4 mt-0.5 text-zinc-400 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-0.5">
-                            <p className="text-sm font-medium text-zinc-800 truncate">{ev.title}</p>
+                            <p className="text-sm font-medium text-zinc-900 truncate">{ev.title}</p>
                           </div>
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-xs px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-600">
@@ -524,7 +524,7 @@ export const EvidenceManager: React.FC<EvidenceManagerProps> = ({ programId }) =
             <div className="flex items-center justify-end gap-2 mt-4">
               <button
                 onClick={() => setShowAddModal(false)}
-                className="px-3 py-1.5 text-xs text-zinc-600 hover:text-zinc-800"
+                className="px-3 py-1.5 text-xs text-zinc-600 hover:text-zinc-900"
               >
                 Cancel
               </button>

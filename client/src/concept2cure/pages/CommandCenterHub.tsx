@@ -816,12 +816,12 @@ export function CommandCenterHub({ onClose }: { onClose: () => void }) {
           <span className="text-xs text-zinc-400">Regulatory Operations Hub</span>
         </div>
         <div className="flex items-center gap-2">
-          <button className="p-1.5 rounded hover:bg-zinc-50 text-zinc-400 hover:text-zinc-600 transition-colors">
+          <button className="p-1.5 rounded hover:bg-zinc-50 text-zinc-400 hover:text-zinc-600 transition-colors duration-150">
             <Settings className="w-4 h-4" />
           </button>
           <button
             onClick={onClose}
-            className="p-1.5 rounded hover:bg-zinc-50 text-zinc-400 hover:text-zinc-600 transition-colors"
+            className="p-1.5 rounded hover:bg-zinc-50 text-zinc-400 hover:text-zinc-600 transition-colors duration-150"
           >
             <X className="w-4 h-4" />
           </button>

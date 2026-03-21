@@ -105,7 +105,7 @@ const TimelineStep: React.FC<{
       className={cn(
         "flex items-start gap-4 group text-left w-full",
         isClickable
-          ? "cursor-pointer hover:bg-zinc-50 rounded-lg -mx-2 px-2 py-2 transition-colors"
+          ? "cursor-pointer hover:bg-zinc-50 rounded-lg -mx-2 px-2 py-2 transition-colors duration-150"
           : "cursor-not-allowed opacity-80"
       )}
       onClick={isClickable ? onClick : undefined}
@@ -117,7 +117,7 @@ const TimelineStep: React.FC<{
       {/* Icon and connector line */}
       <div className="flex flex-col items-center">
         <div className={cn(
-          "flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all",
+          "flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all duration-150",
           isActive && "ring-2 ring-blue-200 ring-offset-2",
           step.status === 'COMPLETED' && "border-green-500 bg-green-50",
           step.status === 'IN_PROGRESS' && "border-blue-500 bg-blue-50",
@@ -222,7 +222,7 @@ const PhaseGroup: React.FC<{
       {/* Phase Header */}
       <button
         onClick={onToggle}
-        className="flex items-center gap-3 w-full p-3 rounded-lg bg-zinc-50 hover:bg-zinc-100 transition-colors"
+        className="flex items-center gap-3 w-full p-3 rounded-lg bg-zinc-50 hover:bg-zinc-100 transition-colors duration-150"
         aria-expanded={phase.isExpanded}
         aria-controls={`phase-${phase.id}`}
         data-testid={`button-phase-toggle-${phase.id}`}
@@ -376,7 +376,7 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
                 onClick={() => step.status !== 'PENDING' && onStepClick?.(step)}
               >
                 <div className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all",
+                  "w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-150",
                   step.id === currentStepId && "ring-2 ring-blue-200",
                   step.status === 'COMPLETED' && "border-green-500 bg-green-50",
                   step.status === 'IN_PROGRESS' && "border-blue-500 bg-blue-50",
@@ -434,7 +434,7 @@ export const WorkflowTimeline: React.FC<WorkflowTimelineProps> = ({
             {assetState}
           </span>
           <div
-            className="text-2xl font-bold text-zinc-900"
+            className="text-2xl font-semibold text-zinc-900"
             aria-label={`Workflow progress ${progressPercent}%`}
           >
             {progressPercent}%

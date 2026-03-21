@@ -210,7 +210,7 @@ const Sidebar: React.FC<{
         )}
         <button
           onClick={onToggleCollapse}
-          className="p-2 rounded-lg hover:bg-zinc-100 transition-colors"
+          className="p-2 rounded-lg hover:bg-zinc-100 transition-colors duration-150"
         >
           {collapsed ? <Menu className="w-5 h-5" /> : <X className="w-5 h-5" />}
         </button>
@@ -288,7 +288,7 @@ const Sidebar: React.FC<{
                 </p>
               </div>
             </div>
-            <button className="p-2 text-zinc-400 hover:text-zinc-600 transition-colors">
+            <button className="p-2 text-zinc-400 hover:text-zinc-600 transition-colors duration-150">
               <LogOut className="w-4 h-4" />
             </button>
           </div>
@@ -321,12 +321,12 @@ const Header: React.FC<{
           <input
             type="text"
             placeholder="Search..."
-            className="pl-9 pr-4 py-2 w-64 text-sm bg-zinc-100 border-none rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="pl-9 pr-4 py-2 w-64 text-sm bg-zinc-100 border-none rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
           />
         </div>
 
         {/* Notifications */}
-        <button className="relative p-2 text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors">
+        <button className="relative p-2 text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors duration-150">
           <Bell className="w-5 h-5" />
           {notifications > 0 && (
             <span className="absolute top-1 right-1 w-4 h-4 text-xs font-bold bg-red-500 text-white rounded-full flex items-center justify-center">
@@ -336,7 +336,7 @@ const Header: React.FC<{
         </button>
 
         {/* Help */}
-        <button className="p-2 text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors">
+        <button className="p-2 text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors duration-150">
           <MessageSquare className="w-5 h-5" />
         </button>
       </div>

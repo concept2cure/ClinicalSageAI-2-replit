@@ -251,7 +251,7 @@ export function NewDocumentDialog({
                 <div className="h-10 w-10 rounded-lg bg-zinc-100 flex items-center justify-center">
                   <FileText className="h-5 w-5 text-zinc-500" />
                 </div>
-                <span className="text-sm font-semibold text-zinc-800">Blank Document</span>
+                <span className="text-sm font-semibold text-zinc-900">Blank Document</span>
                 <span className="text-[11px] text-zinc-500">Start from scratch</span>
               </button>
 
@@ -267,7 +267,7 @@ export function NewDocumentDialog({
                 <div className="h-10 w-10 rounded-lg bg-indigo-100 flex items-center justify-center">
                   <BookOpen className="h-5 w-5 text-indigo-500" />
                 </div>
-                <span className="text-sm font-semibold text-zinc-800">From Template</span>
+                <span className="text-sm font-semibold text-zinc-900">From Template</span>
                 <span className="text-[11px] text-zinc-500">Pre-structured sections</span>
               </button>
 
@@ -283,7 +283,7 @@ export function NewDocumentDialog({
                 <div className="h-10 w-10 rounded-lg bg-violet-100 flex items-center justify-center">
                   <Sparkles className="h-5 w-5 text-violet-500" />
                 </div>
-                <span className="text-sm font-semibold text-zinc-800">AI Generate</span>
+                <span className="text-sm font-semibold text-zinc-900">AI Generate</span>
                 <span className="text-[11px] text-zinc-500">AI-drafted content</span>
               </button>
             </div>
@@ -308,7 +308,7 @@ export function NewDocumentDialog({
                     >
                       <FileCheck className="h-4 w-4 text-indigo-400 mt-0.5 shrink-0" />
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-zinc-800 leading-tight">{t.name}</p>
+                        <p className="text-sm font-medium text-zinc-900 leading-tight">{t.name}</p>
                         <p className="text-[11px] text-zinc-500 mt-0.5 line-clamp-2">{t.description}</p>
                         <div className="flex items-center gap-2 mt-1.5">
                           {t.ctdSection && (
@@ -419,7 +419,7 @@ export function NewDocumentDialog({
           <div className="flex items-center justify-between px-6 py-4 border-t border-zinc-100 bg-zinc-50/50">
             <button
               onClick={handleClose}
-              className="px-4 py-2 text-sm text-zinc-500 hover:text-zinc-700 rounded-lg hover:bg-zinc-100 transition-colors"
+              className="px-4 py-2 text-sm text-zinc-500 hover:text-zinc-700 rounded-lg hover:bg-zinc-100 transition-colors duration-150"
             >
               Cancel
             </button>

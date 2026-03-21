@@ -170,7 +170,7 @@ const ReportSection: React.FC<{
   <div className="mb-4 print:mb-3">
     <div className="flex items-center gap-2 mb-2 pb-1 border-b border-zinc-200">
       <span className="text-zinc-500 print:text-zinc-700">{icon}</span>
-      <h3 className="text-sm font-semibold text-zinc-800">{title}</h3>
+      <h3 className="text-sm font-semibold text-zinc-900">{title}</h3>
     </div>
     <div className="pl-1">{children}</div>
   </div>
@@ -343,7 +343,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
       <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200 bg-gradient-to-r from-emerald-50/50 to-blue-50/50 shrink-0 print:hidden">
         <div className="flex items-center gap-2">
           <Shield className="w-4 h-4 text-emerald-600" />
-          <span className="text-xs font-bold text-zinc-800">
+          <span className="text-xs font-semibold text-zinc-900">
             {reportPurpose === 'inspection' ? 'Inspection Report' : 'QA Report'}
           </span>
         </div>
@@ -404,7 +404,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
       <div className="flex-1 overflow-y-auto p-4 print:p-0">
         {/* Print header */}
         <div className="hidden print:block mb-4 pb-3 border-b-2 border-zinc-800">
-          <h1 className="text-lg font-bold">{report.reportType}</h1>
+          <h1 className="text-lg font-semibold">{report.reportType}</h1>
           <p className="text-xs text-zinc-500">
             Generated: {formatDate(report.generatedAt)} · Standard: {report.standard}
           </p>

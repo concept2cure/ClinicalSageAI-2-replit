@@ -196,7 +196,7 @@ export function OperationsCommandCenter({
           <div
             key={m.label}
             className={cn(
-              'rounded-2xl border border-zinc-200 bg-white px-5 py-4',
+              'rounded-xl border border-zinc-200 bg-white px-5 py-4',
               'flex flex-col gap-1',
             )}
           >
@@ -213,11 +213,11 @@ export function OperationsCommandCenter({
 
       {/* ── Projects Grid ── */}
       <div>
-        <h2 className="text-lg font-semibold text-zinc-800 mb-4">Projects</h2>
+        <h2 className="text-lg font-semibold text-zinc-900 mb-4">Projects</h2>
         {sortedProjects.length === 0 ? (
           <div
             className={cn(
-              'rounded-2xl border border-dashed border-zinc-300 bg-zinc-50',
+              'rounded-xl border border-dashed border-zinc-300 bg-zinc-50',
               'flex flex-col items-center justify-center py-16 text-center',
             )}
           >
@@ -249,7 +249,7 @@ export function OperationsCommandCenter({
                   key={project.id}
                   onClick={() => onSelectProject(project.id)}
                   className={cn(
-                    'rounded-2xl border border-zinc-200 bg-white p-5 text-left',
+                    'rounded-xl border border-zinc-200 bg-white p-5 text-left',
                     'hover:shadow-md hover:border-zinc-300',
                     'transition-all duration-200 ease-out',
                     'focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:ring-offset-2',
@@ -315,13 +315,13 @@ export function OperationsCommandCenter({
 
       {/* ── Quick Access Bar ── */}
       <div>
-        <h2 className="text-lg font-semibold text-zinc-800 mb-4">Quick Access</h2>
+        <h2 className="text-lg font-semibold text-zinc-900 mb-4">Quick Access</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {quickLinks.map((link) => (
             <div
               key={link.label}
               className={cn(
-                'rounded-2xl border border-zinc-200 bg-white px-5 py-4',
+                'rounded-xl border border-zinc-200 bg-white px-5 py-4',
                 'hover:shadow-md hover:border-zinc-300',
                 'transition-all duration-200 ease-out cursor-pointer',
                 'group',
@@ -335,7 +335,7 @@ export function OperationsCommandCenter({
               >
                 <link.icon className="h-4.5 w-4.5 text-zinc-600" />
               </div>
-              <p className="text-sm font-semibold text-zinc-800">{link.label}</p>
+              <p className="text-sm font-semibold text-zinc-900">{link.label}</p>
               <p className="text-xs text-zinc-400 mt-0.5">{link.description}</p>
             </div>
           ))}

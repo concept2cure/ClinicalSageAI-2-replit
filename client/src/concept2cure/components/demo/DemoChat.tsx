@@ -102,9 +102,9 @@ export const DemoChat: React.FC<DemoChatProps> = ({
 
                 <div
                   className={cn(
-                    'max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed',
+                    'max-w-[85%] rounded-xl px-4 py-3 text-sm leading-relaxed',
                     msg.role === 'ana'
-                      ? 'bg-zinc-100 text-zinc-800'
+                      ? 'bg-zinc-100 text-zinc-900'
                       : 'bg-violet-600 text-white',
                   )}
                 >

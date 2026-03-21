@@ -62,7 +62,7 @@ const SourceCard: React.FC<SourceCardProps> = ({ suggestion, onLink, isLinking }
   const [isExpanded, setIsExpanded] = useState(false);
   
   return (
-    <div className="border border-zinc-200 rounded-lg overflow-hidden hover:border-blue-400 transition-colors">
+    <div className="border border-zinc-200 rounded-lg overflow-hidden hover:border-blue-400 transition-colors duration-150">
       <div className="p-3">
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="flex items-center gap-2">
@@ -92,7 +92,7 @@ const SourceCard: React.FC<SourceCardProps> = ({ suggestion, onLink, isLinking }
           <button
             onClick={onLink}
             disabled={isLinking}
-            className="px-3 py-1 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+            className="px-3 py-1 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors duration-150"
             data-testid={`button-link-source-${suggestion.sourceId}`}
           >
             {isLinking ? 'Linking...' : 'Link Source'}
@@ -148,7 +148,7 @@ const EmptyState: React.FC<{
     {onAction && actionLabel && (
       <button
         onClick={onAction}
-        className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-150"
         data-testid="button-empty-state-action"
       >
         {actionLabel}
@@ -384,7 +384,7 @@ export const InlineSuggestionTooltip: React.FC<{
     
     <button
       onClick={onLink}
-      className="w-full px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
+      className="w-full px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors duration-150"
       data-testid={`button-link-inline-source-${suggestion.sourceId}`}
     >
       Link This Source

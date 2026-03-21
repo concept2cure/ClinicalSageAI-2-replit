@@ -477,7 +477,7 @@ export const ZenSignup: React.FC = () => {
           bg-blue-600 hover:bg-blue-700
           rounded-xl
           transition-all duration-200
-          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+          focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none
         `}
       >
         Continue
@@ -497,7 +497,7 @@ export const ZenSignup: React.FC = () => {
     >
       <button
         onClick={handleBack}
-        className="flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-800 mb-2"
+        className="flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-900 mb-2"
       >
         <ArrowLeftIcon />
         Back
@@ -527,7 +527,7 @@ export const ZenSignup: React.FC = () => {
           bg-blue-600 hover:bg-blue-700
           rounded-xl
           transition-all duration-200
-          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+          focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none
         `}
       >
         Continue
@@ -557,7 +557,7 @@ export const ZenSignup: React.FC = () => {
     >
       <button
         onClick={handleBack}
-        className="flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-800 mb-2"
+        className="flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-900 mb-2"
       >
         <ArrowLeftIcon />
         Back
@@ -607,7 +607,7 @@ export const ZenSignup: React.FC = () => {
           bg-blue-600 hover:bg-blue-700
           rounded-xl
           transition-all duration-200
-          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+          focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none
         `}
       >
         Continue
@@ -627,7 +627,7 @@ export const ZenSignup: React.FC = () => {
     >
       <button
         onClick={handleBack}
-        className="flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-800 mb-2"
+        className="flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-900 mb-2"
       >
         <ArrowLeftIcon />
         Back
@@ -712,7 +712,7 @@ export const ZenSignup: React.FC = () => {
           rounded-xl
           transition-all duration-200
           disabled:opacity-60 disabled:cursor-not-allowed
-          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+          focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none
         `}
       >
         {isLoading ? <SpinnerIcon /> : formData.selectedPlan === 'free' ? 'Create Account' : 'Create Account & Start Trial'}

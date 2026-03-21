@@ -405,14 +405,14 @@ function MemberCard({
       <div className="flex items-center gap-2 mt-3">
         <button
           onClick={() => onMessage(member)}
-          className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-zinc-600 bg-zinc-50 hover:bg-zinc-100 rounded-lg transition-colors"
+          className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-zinc-600 bg-zinc-50 hover:bg-zinc-100 rounded-lg transition-colors duration-150"
         >
           <MessageSquare className="w-3.5 h-3.5" />
           Message
         </button>
         <button
           onClick={() => onReassign(member)}
-          className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+          className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors duration-150"
         >
           <ArrowRightLeft className="w-3.5 h-3.5" />
           Reassign
@@ -453,7 +453,7 @@ function InviteModal({ open, onClose }: { open: boolean; onClose: () => void }) 
             </div>
             <h3 className="text-lg font-semibold text-zinc-900">Invite Team Member</h3>
           </div>
-          <button onClick={onClose} className="p-1.5 hover:bg-zinc-100 rounded-lg transition-colors">
+          <button onClick={onClose} className="p-1.5 hover:bg-zinc-100 rounded-lg transition-colors duration-150">
             <X className="w-5 h-5 text-zinc-400" />
           </button>
         </div>
@@ -469,7 +469,7 @@ function InviteModal({ open, onClose }: { open: boolean; onClose: () => void }) 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="colleague@pharmadev.com"
-                className="w-full pl-10 pr-4 py-2.5 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-colors"
+                className="w-full pl-10 pr-4 py-2.5 border border-zinc-200 rounded-xl text-sm focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/20 focus:border-blue-400 transition-colors duration-150"
               />
             </div>
           </div>
@@ -480,7 +480,7 @@ function InviteModal({ open, onClose }: { open: boolean; onClose: () => void }) 
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as MemberRole)}
-              className="w-full px-4 py-2.5 border border-zinc-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-colors"
+              className="w-full px-4 py-2.5 border border-zinc-200 rounded-xl text-sm bg-white focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/20 focus:border-blue-400 transition-colors duration-150"
             >
               {ALL_ROLES.map((r) => (
                 <option key={r} value={r}>
@@ -498,7 +498,7 @@ function InviteModal({ open, onClose }: { open: boolean; onClose: () => void }) 
               value={department}
               onChange={(e) => setDepartment(e.target.value)}
               placeholder="e.g. Regulatory Affairs"
-              className="w-full px-4 py-2.5 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-colors"
+              className="w-full px-4 py-2.5 border border-zinc-200 rounded-xl text-sm focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/20 focus:border-blue-400 transition-colors duration-150"
             />
           </div>
 
@@ -512,7 +512,7 @@ function InviteModal({ open, onClose }: { open: boolean; onClose: () => void }) 
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Add a personal note to the invitation..."
               rows={3}
-              className="w-full px-4 py-2.5 border border-zinc-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-colors"
+              className="w-full px-4 py-2.5 border border-zinc-200 rounded-xl text-sm resize-none focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/20 focus:border-blue-400 transition-colors duration-150"
             />
           </div>
         </div>
@@ -520,7 +520,7 @@ function InviteModal({ open, onClose }: { open: boolean; onClose: () => void }) 
         <div className="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-zinc-200">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-50 rounded-xl transition-colors"
+            className="px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-50 rounded-xl transition-colors duration-150"
           >
             Cancel
           </button>
@@ -583,7 +583,7 @@ export default function TeamWorkspace({ programId }: TeamWorkspaceProps) {
   if (!programId) {
     return (
       <div className="flex flex-col items-center justify-center py-32 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-zinc-100 flex items-center justify-center mb-4">
+        <div className="w-16 h-16 rounded-xl bg-zinc-100 flex items-center justify-center mb-4">
           <Users className="w-8 h-8 text-zinc-400" />
         </div>
         <h3 className="text-lg font-semibold text-zinc-900 mb-1">No Program Selected</h3>
@@ -620,7 +620,7 @@ export default function TeamWorkspace({ programId }: TeamWorkspaceProps) {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-xl font-bold text-zinc-900">Team Workspace</h2>
+              <h2 className="text-xl font-semibold text-zinc-900">Team Workspace</h2>
               <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold">
                 {members.length} members
               </span>
@@ -671,7 +671,7 @@ export default function TeamWorkspace({ programId }: TeamWorkspaceProps) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search members by name, email, role, or department..."
-              className="w-full pl-10 pr-4 py-2.5 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-colors"
+              className="w-full pl-10 pr-4 py-2.5 border border-zinc-200 rounded-xl text-sm focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/20 focus:border-blue-400 transition-colors duration-150"
             />
           </div>
 
@@ -699,7 +699,7 @@ export default function TeamWorkspace({ programId }: TeamWorkspaceProps) {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <p className="text-sm text-zinc-500">Permission matrix for each role in the workspace.</p>
-            <button className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors">
+            <button className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors duration-150">
               <Plus className="w-4 h-4" />
               Add Role
             </button>
@@ -774,7 +774,7 @@ export default function TeamWorkspace({ programId }: TeamWorkspaceProps) {
               const roleStyle = member ? ROLE_COLORS[member.role] : ROLE_COLORS['Contributor'];
 
               return (
-                <div key={entry.id} className="flex items-start gap-3 px-5 py-4 hover:bg-zinc-50/50 transition-colors">
+                <div key={entry.id} className="flex items-start gap-3 px-5 py-4 hover:bg-zinc-50/50 transition-colors duration-150">
                   {/* Timeline icon */}
                   <div className={cn('flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center mt-0.5', colorClasses)}>
                     <Icon className="w-4 h-4" />
@@ -861,7 +861,7 @@ export default function TeamWorkspace({ programId }: TeamWorkspaceProps) {
                       >
                         {getInitials(entry.memberName)}
                       </div>
-                      <span className="text-sm font-medium text-zinc-800">{entry.memberName}</span>
+                      <span className="text-sm font-medium text-zinc-900">{entry.memberName}</span>
                     </div>
                     <div className="flex items-center gap-3 text-xs">
                       <span className="text-zinc-400">{total} total</span>
@@ -924,7 +924,7 @@ export default function TeamWorkspace({ programId }: TeamWorkspaceProps) {
                 >
                   <ArrowRightLeft className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
-                    <p className="text-sm text-zinc-800">
+                    <p className="text-sm text-zinc-900">
                       Consider reassigning{' '}
                       <span className="font-semibold text-amber-700">{rec.count} tasks</span> from{' '}
                       <span className="font-semibold">{rec.from}</span> to{' '}
@@ -932,7 +932,7 @@ export default function TeamWorkspace({ programId }: TeamWorkspaceProps) {
                     </p>
                     <p className="text-xs text-zinc-500 mt-1">{rec.reason}</p>
                   </div>
-                  <button className="flex-shrink-0 px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors">
+                  <button className="flex-shrink-0 px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors duration-150">
                     Apply
                   </button>
                 </div>

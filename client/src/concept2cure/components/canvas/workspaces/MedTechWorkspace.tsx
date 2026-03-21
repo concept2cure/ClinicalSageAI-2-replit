@@ -106,7 +106,7 @@ const PredicatePathfinder: React.FC<PredicatePathfinderProps> = ({ onSelectPredi
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by device name, product code, or K number..."
-            className="w-full pl-10 pr-4 py-2.5 border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2.5 border border-zinc-200 rounded-lg text-sm focus-visible:ring-2 focus-visible:ring-blue-500 outline-none focus:border-transparent"
           />
         </div>
       </div>
@@ -151,7 +151,7 @@ const PredicatePathfinder: React.FC<PredicatePathfinderProps> = ({ onSelectPredi
                       {predicate.applicant} • {predicate.productCode} • Class {predicate.deviceClass}
                     </p>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-zinc-400 group-hover:text-zinc-500 transition-colors" />
+                  <ChevronRight className="w-5 h-5 text-zinc-400 group-hover:text-zinc-500 transition-colors duration-150" />
                 </div>
               </button>
             ))}
@@ -239,25 +239,25 @@ const MAUDEHazardMonitor: React.FC<MAUDEHazardMonitorProps> = ({ productCode }) 
       {/* Summary Stats */}
       <div className="grid grid-cols-4 gap-4 p-4 border-b border-zinc-200">
         <div className="text-center">
-          <div className="text-2xl font-bold text-zinc-900">
+          <div className="text-2xl font-semibold text-zinc-900">
             {hazardAnalysis.summary.totalReports}
           </div>
           <div className="text-xs text-zinc-500">Total Reports</div>
         </div>
         <div className="text-center">
-          <div className="text-2xl font-bold text-amber-600">
+          <div className="text-2xl font-semibold text-amber-600">
             {hazardAnalysis.summary.malfunctions}
           </div>
           <div className="text-xs text-zinc-500">Malfunctions</div>
         </div>
         <div className="text-center">
-          <div className="text-2xl font-bold text-orange-600">
+          <div className="text-2xl font-semibold text-orange-600">
             {hazardAnalysis.summary.injuries}
           </div>
           <div className="text-xs text-zinc-500">Injuries</div>
         </div>
         <div className="text-center">
-          <div className="text-2xl font-bold text-red-600">
+          <div className="text-2xl font-semibold text-red-600">
             {hazardAnalysis.summary.deaths}
           </div>
           <div className="text-xs text-zinc-500">Deaths</div>
@@ -274,7 +274,7 @@ const MAUDEHazardMonitor: React.FC<MAUDEHazardMonitorProps> = ({ productCode }) 
               className="flex items-center justify-between p-3 bg-zinc-50 rounded-lg"
             >
               <div className="flex items-center gap-3">
-                <div className="w-6 h-6 rounded bg-zinc-200 flex items-center justify-center text-xs font-bold text-zinc-600">
+                <div className="w-6 h-6 rounded bg-zinc-200 flex items-center justify-center text-xs font-semibold text-zinc-600">
                   {index + 1}
                 </div>
                 <span className="text-sm text-zinc-700">{issue.issue}</span>
@@ -335,7 +335,7 @@ const SubmissionTracker: React.FC = () => {
           <h3 className="font-semibold text-zinc-900">Active Submissions</h3>
           <p className="text-sm text-zinc-500">{submissions.length} total</p>
         </div>
-        <button className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900 text-white rounded-lg text-sm font-medium hover:bg-zinc-800 transition-colors">
+        <button className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900 text-white rounded-lg text-sm font-medium hover:bg-zinc-800 transition-colors duration-150">
           <Plus className="w-4 h-4" />
           New 510(k)
         </button>
@@ -429,7 +429,7 @@ export const MedTechWorkspace: React.FC<MedTechWorkspaceProps> = ({
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-150",
                 activeTab === tab.id
                   ? "bg-zinc-900 text-white"
                   : "text-zinc-600 hover:bg-zinc-100"
@@ -467,7 +467,7 @@ export const MedTechWorkspace: React.FC<MedTechWorkspaceProps> = ({
             <ClipboardList className="w-16 h-16 mx-auto mb-4 text-zinc-400" />
             <h3 className="text-lg font-semibold text-zinc-900 mb-2">eSTAR Package Manager</h3>
             <p className="text-zinc-500 mb-4">FDA eSTAR template management and validation</p>
-            <button className="px-4 py-2 bg-zinc-900 text-white rounded-lg text-sm font-medium hover:bg-zinc-800 transition-colors">
+            <button className="px-4 py-2 bg-zinc-900 text-white rounded-lg text-sm font-medium hover:bg-zinc-800 transition-colors duration-150">
               Create eSTAR Package
             </button>
           </div>
@@ -478,7 +478,7 @@ export const MedTechWorkspace: React.FC<MedTechWorkspaceProps> = ({
             <Globe className="w-16 h-16 mx-auto mb-4 text-zinc-400" />
             <h3 className="text-lg font-semibold text-zinc-900 mb-2">Clinical Evaluation Report</h3>
             <p className="text-zinc-500 mb-4">EU MDR CER and PMCF planning</p>
-            <button className="px-4 py-2 bg-zinc-900 text-white rounded-lg text-sm font-medium hover:bg-zinc-800 transition-colors">
+            <button className="px-4 py-2 bg-zinc-900 text-white rounded-lg text-sm font-medium hover:bg-zinc-800 transition-colors duration-150">
               Start New CER
             </button>
           </div>

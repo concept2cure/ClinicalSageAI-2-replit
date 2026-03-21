@@ -83,7 +83,7 @@ export function CollaborationPresence({
               {/* Avatar circle */}
               <div
                 className={cn(
-                  'w-6 h-6 rounded-full flex items-center justify-center text-white text-[9px] font-bold ring-2 ring-white transition-all',
+                  'w-6 h-6 rounded-full flex items-center justify-center text-white text-[9px] font-semibold ring-2 ring-white transition-all',
                   isTyping && 'ring-amber-400 animate-pulse',
                 )}
                 style={{ backgroundColor: collab.color }}
@@ -121,7 +121,7 @@ export function CollaborationPresence({
 
         {/* Overflow count */}
         {overflow > 0 && (
-          <div className="w-6 h-6 rounded-full bg-zinc-200 flex items-center justify-center text-[9px] font-bold text-zinc-600 ring-2 ring-white">
+          <div className="w-6 h-6 rounded-full bg-zinc-200 flex items-center justify-center text-[9px] font-semibold text-zinc-600 ring-2 ring-white">
             +{overflow}
           </div>
         )}

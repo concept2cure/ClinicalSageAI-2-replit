@@ -166,11 +166,11 @@ export const ArtifactsGallery: React.FC = () => {
           <Sparkles className="w-4 h-4 text-violet-500 flex-shrink-0" />
           <span className="text-xs text-zinc-600">AnA can create &amp; export:</span>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-700">DOCX</span>
-            <span className="text-xs font-bold px-2 py-0.5 rounded bg-red-100 text-red-700">PDF</span>
-            <span className="text-xs font-bold px-2 py-0.5 rounded bg-orange-100 text-orange-700">PPTX</span>
-            <span className="text-xs font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">Markdown</span>
-            <span className="text-xs font-bold px-2 py-0.5 rounded bg-zinc-200 text-zinc-700">HTML</span>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-blue-100 text-blue-700">DOCX</span>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-red-100 text-red-700">PDF</span>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-orange-100 text-orange-700">PPTX</span>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">Markdown</span>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-zinc-200 text-zinc-700">HTML</span>
           </div>
           <span className="text-xs text-zinc-400 ml-auto hidden sm:block">Ask AnA to draft any document type</span>
         </div>
@@ -242,7 +242,7 @@ export const ArtifactsGallery: React.FC = () => {
                         <div className="flex items-center gap-1">
                           {template.formats?.map(fmt => (
                             <span key={fmt} className={cn(
-                              'text-xs font-bold px-1.5 py-0.5 rounded uppercase',
+                              'text-xs font-semibold px-1.5 py-0.5 rounded uppercase',
                               fmt === 'DOCX' ? 'bg-blue-50 text-blue-600' :
                               fmt === 'PDF' ? 'bg-red-50 text-red-600' :
                               fmt === 'PPTX' ? 'bg-orange-50 text-orange-600' :
@@ -373,7 +373,7 @@ export const ArtifactsGallery: React.FC = () => {
                             a.click(); URL.revokeObjectURL(url);
                           });
                         }}
-                        className="px-1.5 py-0.5 text-xs font-medium text-zinc-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                        className="px-1.5 py-0.5 text-xs font-medium text-zinc-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors duration-150"
                         title="Export as Word"
                       >
                         DOCX
@@ -393,7 +393,7 @@ export const ArtifactsGallery: React.FC = () => {
                             a.click(); URL.revokeObjectURL(url);
                           });
                         }}
-                        className="px-1.5 py-0.5 text-xs font-medium text-zinc-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                        className="px-1.5 py-0.5 text-xs font-medium text-zinc-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors duration-150"
                         title="Export as PDF"
                       >
                         PDF
@@ -413,13 +413,13 @@ export const ArtifactsGallery: React.FC = () => {
                             a.click(); URL.revokeObjectURL(url);
                           });
                         }}
-                        className="px-1.5 py-0.5 text-xs font-medium text-zinc-500 hover:text-orange-600 hover:bg-orange-50 rounded transition-colors"
+                        className="px-1.5 py-0.5 text-xs font-medium text-zinc-500 hover:text-orange-600 hover:bg-orange-50 rounded transition-colors duration-150"
                         title="Export as PowerPoint"
                       >
                         PPTX
                       </button>
                       <div className="flex-1" />
-                      <button className="p-1 text-zinc-400 hover:text-amber-500 hover:bg-amber-50 rounded transition-colors" title="Star">
+                      <button className="p-1 text-zinc-400 hover:text-amber-500 hover:bg-amber-50 rounded transition-colors duration-150" title="Star">
                         <Star className="w-3.5 h-3.5" />
                       </button>
                     </div>

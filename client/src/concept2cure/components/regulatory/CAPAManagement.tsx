@@ -385,7 +385,7 @@ function CAPAMetrics({ capas }: { capas: CAPA[] }) {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Open CAPAs</p>
-              <p className="text-2xl font-bold">{metrics.open}</p>
+              <p className="text-2xl font-semibold">{metrics.open}</p>
             </div>
             <FileWarning className="w-8 h-8 text-blue-500" />
           </div>
@@ -397,7 +397,7 @@ function CAPAMetrics({ capas }: { capas: CAPA[] }) {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Overdue</p>
-              <p className="text-2xl font-bold text-red-600">{metrics.overdue}</p>
+              <p className="text-2xl font-semibold text-red-600">{metrics.overdue}</p>
             </div>
             <Clock className="w-8 h-8 text-red-500" />
           </div>
@@ -409,7 +409,7 @@ function CAPAMetrics({ capas }: { capas: CAPA[] }) {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Critical</p>
-              <p className="text-2xl font-bold text-orange-600">{metrics.critical}</p>
+              <p className="text-2xl font-semibold text-orange-600">{metrics.critical}</p>
             </div>
             <AlertTriangle className="w-8 h-8 text-orange-500" />
           </div>
@@ -421,7 +421,7 @@ function CAPAMetrics({ capas }: { capas: CAPA[] }) {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Regulatory</p>
-              <p className="text-2xl font-bold text-purple-600">{metrics.regulatory}</p>
+              <p className="text-2xl font-semibold text-purple-600">{metrics.regulatory}</p>
             </div>
             <FileWarning className="w-8 h-8 text-purple-500" />
           </div>
@@ -433,7 +433,7 @@ function CAPAMetrics({ capas }: { capas: CAPA[] }) {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Avg Days Open</p>
-              <p className="text-2xl font-bold">{metrics.avgDaysOpen}</p>
+              <p className="text-2xl font-semibold">{metrics.avgDaysOpen}</p>
             </div>
             <Calendar className="w-8 h-8 text-zinc-500" />
           </div>
@@ -748,7 +748,7 @@ function CAPADetail({ capa, onClose }: { capa: CAPA; onClose: () => void }) {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h2 className="text-2xl font-bold">{capa.id}</h2>
+          <h2 className="text-2xl font-semibold">{capa.id}</h2>
           <p className="text-lg text-muted-foreground">{capa.title}</p>
         </div>
         <div className="flex items-center gap-2">
@@ -762,7 +762,7 @@ function CAPADetail({ capa, onClose }: { capa: CAPA; onClose: () => void }) {
         <div className="border border-border/40 rounded-sm bg-background">
           <div className="px-3 py-2 p-4">
             <p className="text-sm text-muted-foreground">Days Open</p>
-            <p className="text-2xl font-bold">{daysOpen}</p>
+            <p className="text-2xl font-semibold">{daysOpen}</p>
           </div>
         </div>
         <div className="border border-border/40 rounded-sm bg-background">
@@ -770,7 +770,7 @@ function CAPADetail({ capa, onClose }: { capa: CAPA; onClose: () => void }) {
             <p className="text-sm text-muted-foreground">
               {isOverdue ? 'Days Overdue' : 'Days Remaining'}
             </p>
-            <p className={`text-2xl font-bold ${isOverdue ? 'text-red-600' : ''}`}>
+            <p className={`text-2xl font-semibold ${isOverdue ? 'text-red-600' : ''}`}>
               {Math.abs(daysRemaining)}
             </p>
           </div>
@@ -790,7 +790,7 @@ function CAPADetail({ capa, onClose }: { capa: CAPA; onClose: () => void }) {
           <div className="px-3 py-2 p-4">
             <p className="text-sm text-muted-foreground">Risk Score</p>
             <p
-              className={`text-2xl font-bold ${
+              className={`text-2xl font-semibold ${
                 (capa.riskScore || 0) >= 80
                   ? 'text-red-600'
                   : (capa.riskScore || 0) >= 50
@@ -1113,7 +1113,7 @@ export function CAPAManagement() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">CAPA Management</h1>
+          <h1 className="text-3xl font-semibold">CAPA Management</h1>
           <p className="text-muted-foreground">
             Corrective and Preventive Action tracking for quality management
           </p>

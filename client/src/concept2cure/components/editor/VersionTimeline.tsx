@@ -106,7 +106,7 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
         <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200">
           <div className="flex items-center gap-2">
             <History className="w-4 h-4 text-blue-500" />
-            <span className="text-sm font-semibold text-zinc-800">Version History</span>
+            <span className="text-sm font-semibold text-zinc-900">Version History</span>
           </div>
           <button onClick={onClose} className="p-1 hover:bg-zinc-100 rounded">
             <X className="w-4 h-4 text-zinc-400" />
@@ -129,7 +129,7 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
       <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 shrink-0">
         <div className="flex items-center gap-2">
           <History className="w-4 h-4 text-blue-500" />
-          <span className="text-sm font-semibold text-zinc-800">Version History</span>
+          <span className="text-sm font-semibold text-zinc-900">Version History</span>
           <span className="text-xs text-zinc-400">{sortedVersions.length} versions</span>
         </div>
         <button onClick={onClose} className="p-1 hover:bg-zinc-100 rounded">
@@ -213,7 +213,7 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
                   {/* Top row: version + time */}
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-zinc-800">
+                      <span className="text-xs font-semibold text-zinc-900">
                         v{version.version}
                       </span>
                       {isLatest && (
@@ -261,7 +261,7 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
                           e.stopPropagation();
                           handleRestore(version);
                         }}
-                        className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-amber-700 bg-amber-100 rounded hover:bg-amber-200 transition-colors"
+                        className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-amber-700 bg-amber-100 rounded hover:bg-amber-200 transition-colors duration-150"
                       >
                         <RotateCcw className="w-3 h-3" />
                         Restore
@@ -271,7 +271,7 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
                           e.stopPropagation();
                           setShowDiff(!showDiff);
                         }}
-                        className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded hover:bg-blue-200 transition-colors"
+                        className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded hover:bg-blue-200 transition-colors duration-150"
                       >
                         <GitCompare className="w-3 h-3" />
                         {showDiff ? 'Hide Diff' : 'Compare'}

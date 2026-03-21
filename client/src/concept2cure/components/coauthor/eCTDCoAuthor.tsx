@@ -304,7 +304,7 @@ const OutlineTree: React.FC<{
 
               {/* Alerts Badge */}
               {section.redlineAlerts && section.redlineAlerts.length > 0 && (
-                <span className="px-1.5 py-0.5 text-xs font-bold bg-red-100 text-red-700 rounded">
+                <span className="px-1.5 py-0.5 text-xs font-semibold bg-red-100 text-red-700 rounded">
                   {section.redlineAlerts.length}
                 </span>
               )}
@@ -392,8 +392,8 @@ const RedlineAlertPanel: React.FC<{
     <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg">
       <div className="flex items-center gap-2 mb-3">
         <AlertTriangle className="w-4 h-4 text-red-600" />
-        <h4 className="text-sm font-bold text-red-800">Safety Line Alerts</h4>
-        <span className="px-2 py-0.5 text-xs font-bold bg-red-200 text-red-800 rounded-full">
+        <h4 className="text-sm font-semibold text-red-800">Safety Line Alerts</h4>
+        <span className="px-2 py-0.5 text-xs font-semibold bg-red-200 text-red-800 rounded-full">
           {alerts.length}
         </span>
       </div>
@@ -403,7 +403,7 @@ const RedlineAlertPanel: React.FC<{
             <div className="flex items-start justify-between mb-2">
               <span
                 className={cn(
-                  'px-2 py-0.5 text-xs font-bold rounded uppercase',
+                  'px-2 py-0.5 text-xs font-semibold rounded uppercase',
                   alert.severity === 'critical' && 'bg-red-600 text-white',
                   alert.severity === 'warning' && 'bg-amber-500 text-white',
                   alert.severity === 'info' && 'bg-blue-500 text-white'
@@ -455,7 +455,7 @@ const SectionEditor: React.FC<{
           <div className="flex items-center gap-2 mb-1">
             <span
               className={cn(
-                'px-2 py-0.5 text-xs font-bold rounded',
+                'px-2 py-0.5 text-xs font-semibold rounded',
                 moduleConfig.bgColor,
                 moduleConfig.color
               )}
@@ -464,7 +464,7 @@ const SectionEditor: React.FC<{
             </span>
             <span className="text-sm font-mono text-zinc-500">{section.number}</span>
           </div>
-          <h2 className="text-lg font-semibold text-zinc-800">{section.title}</h2>
+          <h2 className="text-lg font-semibold text-zinc-900">{section.title}</h2>
         </div>
         <div className="flex items-center gap-2">
           <span
@@ -563,7 +563,7 @@ const SectionEditor: React.FC<{
             {/* Smart Tags Display */}
             {section.smartTags.length > 0 && (
               <div className="mt-6 pt-4 border-t border-zinc-200">
-                <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-3">
+                <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">
                   Smart Tags ({section.smartTags.length})
                 </h4>
                 <div className="flex flex-wrap gap-2">
@@ -775,7 +775,7 @@ export const eCTDCoAuthor: React.FC<eCTDCoAuthorProps> = ({
               <Layers className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="font-semibold text-zinc-800">{document.name}</h2>
+              <h2 className="font-semibold text-zinc-900">{document.name}</h2>
               <p className="text-xs text-zinc-500">
                 {document.submissionType} • v{document.version}
               </p>
@@ -826,7 +826,7 @@ export const eCTDCoAuthor: React.FC<eCTDCoAuthorProps> = ({
 
         {/* Add Section */}
         <div className="p-3 border-t border-zinc-200">
-          <button className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+          <button className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-150">
             <Plus className="w-4 h-4" />
             Add Section
           </button>

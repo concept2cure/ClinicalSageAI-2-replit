@@ -63,7 +63,7 @@ function buildCategories(): ShortcutCategory[] {
     },
     {
       label: 'Formatting',
-      icon: <span className="font-bold text-sm">B</span>,
+      icon: <span className="font-semibold text-sm">B</span>,
       shortcuts: [
         { keys: [MOD, 'B'], description: 'Bold' },
         { keys: [MOD, 'I'], description: 'Italic' },
@@ -203,7 +203,7 @@ export function KeyboardShortcutsOverlay({ isOpen, onClose }: KeyboardShortcutsO
     >
       <div
         className={cn(
-          'relative w-full max-w-2xl max-h-[80vh] overflow-hidden rounded-2xl',
+          'relative w-full max-w-2xl max-h-[80vh] overflow-hidden rounded-xl',
           'bg-gradient-to-br from-slate-900/95 to-slate-800/95',
           'border border-white/10',
           'shadow-2xl shadow-black/40',

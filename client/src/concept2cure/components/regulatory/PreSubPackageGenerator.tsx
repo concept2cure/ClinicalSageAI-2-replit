@@ -300,7 +300,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
                 </div>
                 <button
                   onClick={() => onRemove(q.id)}
-                  className="opacity-0 group-hover:opacity-100 p-1 rounded text-zinc-400 hover:text-red-600 transition-all"
+                  className="opacity-0 group-hover:opacity-100 p-1 rounded text-zinc-400 hover:text-red-600 transition-all duration-150"
                 >
                   <X className="h-4 w-4" />
                 </button>

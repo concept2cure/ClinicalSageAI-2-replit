@@ -247,19 +247,19 @@ export const ProvenanceViewer: React.FC<ProvenanceViewerProps> = ({ programId })
           <div className="flex items-center gap-2">
             <FileText className="w-3.5 h-3.5 text-zinc-400" />
             <span className="text-xs text-zinc-500">Total Entries</span>
-            <span className="text-xs font-semibold text-zinc-800">{stats.total}</span>
+            <span className="text-xs font-semibold text-zinc-900">{stats.total}</span>
           </div>
           <div className="w-px h-4 bg-zinc-200" />
           <div className="flex items-center gap-2">
             <Clock className="w-3.5 h-3.5 text-zinc-400" />
             <span className="text-xs text-zinc-500">Today</span>
-            <span className="text-xs font-semibold text-zinc-800">{stats.today}</span>
+            <span className="text-xs font-semibold text-zinc-900">{stats.today}</span>
           </div>
           <div className="w-px h-4 bg-zinc-200" />
           <div className="flex items-center gap-2">
             <User className="w-3.5 h-3.5 text-zinc-400" />
             <span className="text-xs text-zinc-500">Unique Actors</span>
-            <span className="text-xs font-semibold text-zinc-800">{stats.uniqueActors}</span>
+            <span className="text-xs font-semibold text-zinc-900">{stats.uniqueActors}</span>
           </div>
           <div className="w-px h-4 bg-zinc-200" />
           <div className="flex items-center gap-2">
@@ -461,7 +461,7 @@ export const ProvenanceViewer: React.FC<ProvenanceViewerProps> = ({ programId })
             <div className="flex items-center justify-center mt-8">
               <button
                 onClick={() => setLimit(prev => Math.min(prev + 50, 500))}
-                className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-zinc-600 bg-white border border-zinc-200 rounded-lg hover:bg-zinc-50 hover:border-zinc-300 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-zinc-600 bg-white border border-zinc-200 rounded-lg hover:bg-zinc-50 hover:border-zinc-300 transition-colors duration-150"
               >
                 <ChevronDown className="w-3.5 h-3.5" />
                 Load more entries

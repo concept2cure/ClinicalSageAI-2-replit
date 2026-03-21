@@ -203,7 +203,7 @@ export function ActivityFeed({
               return (
                 <div
                   key={item.id}
-                  className="group flex items-start gap-3 rounded-lg px-2 py-2 hover:bg-zinc-50 transition-colors"
+                  className="group flex items-start gap-3 rounded-lg px-2 py-2 hover:bg-zinc-50 transition-colors duration-150"
                 >
                   {/* Icon */}
                   <div className={cn('mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full', config.bgColor)}>
@@ -214,7 +214,7 @@ export function ActivityFeed({
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-zinc-600 leading-relaxed">
                       {item.author && (
-                        <span className="font-semibold text-zinc-800">{item.author}</span>
+                        <span className="font-semibold text-zinc-900">{item.author}</span>
                       )}{' '}
                       {config.verb}{' '}
                       <button

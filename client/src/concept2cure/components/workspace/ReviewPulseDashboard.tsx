@@ -113,7 +113,7 @@ const StatCard: React.FC<{
 }> = ({ icon: Icon, label, value, color, subtext }) => (
   <div className="flex items-center gap-2 px-3 py-1.5 border border-zinc-200 rounded bg-zinc-50/50 min-w-0">
     <Icon className={cn('w-3.5 h-3.5 shrink-0', color)} />
-    <span className="text-sm font-bold tabular-nums text-zinc-900">{value}</span>
+    <span className="text-sm font-semibold tabular-nums text-zinc-900">{value}</span>
     <span className="text-xs text-zinc-500 truncate">{label}</span>
     {subtext && <span className="text-xs text-zinc-400 ml-auto">{subtext}</span>}
   </div>
@@ -337,7 +337,7 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
                     )}
                     onClick={() => onNavigateToArtifact?.(a.artifactId)}
                   >
-                    <td className="px-3 py-2 text-zinc-800 font-medium truncate max-w-[200px]">
+                    <td className="px-3 py-2 text-zinc-900 font-medium truncate max-w-[200px]">
                       {a.title}
                     </td>
                     <td className="px-3 py-2 text-zinc-500 text-xs font-mono">
@@ -359,7 +359,7 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
                     </td>
                     <td className="px-3 py-2 text-center tabular-nums">
                       {a.overdueTasks > 0 ? (
-                        <span className="text-red-600 font-bold">{a.overdueTasks}</span>
+                        <span className="text-red-600 font-semibold">{a.overdueTasks}</span>
                       ) : (
                         <span className="text-zinc-400">0</span>
                       )}
@@ -391,7 +391,7 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
                   aw.overdue > 0 && 'border-red-200'
                 )}
               >
-                <p className="text-sm font-medium text-zinc-800 truncate">{aw.name}</p>
+                <p className="text-sm font-medium text-zinc-900 truncate">{aw.name}</p>
                 <div className="flex items-center gap-3 text-xs text-zinc-500">
                   <span>{aw.threads} threads</span>
                   <span>{aw.tasks} tasks</span>

@@ -115,7 +115,7 @@ const DocumentItem: React.FC<DocumentItemProps> = ({ document, onRemove }) => {
 
   return (
     <>
-      <div className="group flex items-center gap-3 p-2 rounded-lg hover:bg-zinc-50 transition-colors">
+      <div className="group flex items-center gap-3 p-2 rounded-lg hover:bg-zinc-50 transition-colors duration-150">
         {/* Icon */}
         <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
           <FileIcon className="h-4 w-4 text-blue-600" />

@@ -322,7 +322,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onClose,
             </div>
 
             <div className="bg-zinc-50 rounded-xl p-4 space-y-3">
-              <h4 className="text-sm font-semibold text-zinc-800">What to do first</h4>
+              <h4 className="text-sm font-semibold text-zinc-900">What to do first</h4>
               <div className="space-y-2">
                 {[
                   { step: '1', label: 'Open your project workspace', desc: 'Click below to start working' },
@@ -330,11 +330,11 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onClose,
                   { step: '3', label: 'Upload reference documents', desc: 'Give AnA context about your product' },
                 ].map(item => (
                   <div key={item.step} className="flex gap-3 items-start">
-                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-zinc-200 text-zinc-700 text-xs font-bold flex items-center justify-center">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-zinc-200 text-zinc-700 text-xs font-semibold flex items-center justify-center">
                       {item.step}
                     </span>
                     <div>
-                      <div className="text-sm font-medium text-zinc-800">{item.label}</div>
+                      <div className="text-sm font-medium text-zinc-900">{item.label}</div>
                       <div className="text-xs text-zinc-500">{item.desc}</div>
                     </div>
                   </div>

@@ -372,13 +372,13 @@ const PredicatePathfinder: React.FC<{
           </p>
           <div className="flex items-start justify-between">
             <div>
-              <p className="font-bold text-zinc-900">{selected.kNumber}</p>
+              <p className="font-semibold text-zinc-900">{selected.kNumber}</p>
               <p className="text-sm text-zinc-700">{selected.deviceName}</p>
               <p className="text-xs text-zinc-500">{selected.manufacturer}</p>
             </div>
             <div className="text-right">
               <div className="flex items-center gap-1">
-                <span className="text-2xl font-bold text-green-600">
+                <span className="text-2xl font-semibold text-green-600">
                   {selected.similarityScore}
                 </span>
                 <span className="text-xs text-green-600">% Match</span>
@@ -415,11 +415,11 @@ const PredicatePathfinder: React.FC<{
                 <div className="flex items-start justify-between mb-2">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-sm font-bold text-blue-600">
+                      <span className="font-mono text-sm font-semibold text-blue-600">
                         {candidate.kNumber}
                       </span>
                       {candidate.hasRecalls && (
-                        <span className="px-1.5 py-0.5 text-xs font-bold bg-red-100 text-red-700 rounded flex items-center gap-0.5">
+                        <span className="px-1.5 py-0.5 text-xs font-semibold bg-red-100 text-red-700 rounded flex items-center gap-0.5">
                           <AlertTriangle className="w-3 h-3" />
                           {candidate.recallCount} RECALL{candidate.recallCount > 1 ? 'S' : ''}
                         </span>
@@ -431,7 +431,7 @@ const PredicatePathfinder: React.FC<{
                     </p>
                   </div>
                   <div className="text-right">
-                    <div className="text-lg font-bold text-zinc-900">
+                    <div className="text-lg font-semibold text-zinc-900">
                       {candidate.similarityScore}%
                     </div>
                     <span
@@ -510,7 +510,7 @@ const MAUDEHazardMonitor: React.FC<{
         >
           <p
             className={cn(
-              'text-lg font-bold',
+              'text-lg font-semibold',
               deaths.length > 0 ? 'text-red-700' : 'text-zinc-400'
             )}
           >
@@ -526,7 +526,7 @@ const MAUDEHazardMonitor: React.FC<{
         >
           <p
             className={cn(
-              'text-lg font-bold',
+              'text-lg font-semibold',
               injuries.length > 0 ? 'text-amber-700' : 'text-zinc-400'
             )}
           >
@@ -535,7 +535,7 @@ const MAUDEHazardMonitor: React.FC<{
           <p className="text-xs text-zinc-500">Injuries</p>
         </div>
         <div className="p-2 rounded-lg text-center bg-zinc-100">
-          <p className="text-lg font-bold text-zinc-600">{malfunctions.length}</p>
+          <p className="text-lg font-semibold text-zinc-600">{malfunctions.length}</p>
           <p className="text-xs text-zinc-500">Malfunctions</p>
         </div>
       </div>
@@ -557,7 +557,7 @@ const MAUDEHazardMonitor: React.FC<{
               <div className="flex items-center gap-2">
                 <span
                   className={cn(
-                    'px-2 py-0.5 text-xs font-bold rounded uppercase',
+                    'px-2 py-0.5 text-xs font-semibold rounded uppercase',
                     alert.eventType === 'death' && 'bg-red-100 text-red-700',
                     alert.eventType === 'injury' && 'bg-amber-100 text-amber-700',
                     alert.eventType === 'malfunction' && 'bg-blue-100 text-blue-700'
@@ -614,13 +614,13 @@ const ESTARProgressTracker: React.FC<{
             <FileCheck className="w-5 h-5 text-cyan-600" />
             <h3 className="text-sm font-semibold text-zinc-900">eSTAR Submission</h3>
           </div>
-          <span className="text-sm font-bold text-cyan-600">{submission.estarProgress}%</span>
+          <span className="text-sm font-semibold text-cyan-600">{submission.estarProgress}%</span>
         </div>
 
         {/* Progress Bar */}
         <div className="h-3 bg-zinc-100 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all"
+            className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all duration-150"
             style={{ width: `${submission.estarProgress}%` }}
           />
         </div>
@@ -695,14 +695,14 @@ const SubmissionCard: React.FC<{
   return (
     <button
       onClick={onClick}
-      className="w-full bg-white rounded-xl border border-zinc-200 p-4 text-left hover:shadow-lg hover:border-blue-300 transition-all"
+      className="w-full bg-white rounded-xl border border-zinc-200 p-4 text-left hover:shadow-lg hover:border-blue-300 transition-all duration-150"
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
           <span
             className={cn(
-              'px-2 py-1 text-xs font-bold rounded',
+              'px-2 py-1 text-xs font-semibold rounded',
               pathwayConfig.bgColor,
               pathwayConfig.color
             )}
@@ -742,11 +742,11 @@ const SubmissionCard: React.FC<{
         <div className="flex items-center gap-4">
           <div>
             <p className="text-zinc-400">eSTAR</p>
-            <p className="font-bold text-zinc-900">{submission.estarProgress}%</p>
+            <p className="font-semibold text-zinc-900">{submission.estarProgress}%</p>
           </div>
           <div>
             <p className="text-zinc-400">Tests</p>
-            <p className="font-bold text-zinc-900">
+            <p className="font-semibold text-zinc-900">
               {submission.completedTests.length}/{submission.requiredTests.length}
             </p>
           </div>
@@ -763,7 +763,7 @@ const SubmissionCard: React.FC<{
           >
             <p
               className={cn(
-                'text-lg font-bold',
+                'text-lg font-semibold',
                 daysToTarget <= 14 && 'text-red-600',
                 daysToTarget > 14 && daysToTarget <= 30 && 'text-amber-600',
                 daysToTarget > 30 && 'text-zinc-600'
@@ -893,7 +893,7 @@ export const MedicalDeviceDashboard: React.FC<MedicalDeviceDashboardProps> = ({
               <Mountain className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold">Medical Device Regulatory Pathfinder</h1>
+              <h1 className="text-xl font-semibold">Medical Device Regulatory Pathfinder</h1>
               <p className="text-blue-200 text-sm">Your Sherpa to FDA Clearance</p>
             </div>
           </div>
@@ -914,15 +914,15 @@ export const MedicalDeviceDashboard: React.FC<MedicalDeviceDashboardProps> = ({
         <div className="grid grid-cols-5 gap-4">
           <div className="p-3 bg-white/10 rounded-lg backdrop-blur">
             <p className="text-xs text-blue-200">510(k) Active</p>
-            <p className="text-2xl font-bold">{metrics.total510k}</p>
+            <p className="text-2xl font-semibold">{metrics.total510k}</p>
           </div>
           <div className="p-3 bg-white/10 rounded-lg backdrop-blur">
             <p className="text-xs text-blue-200">PMA Active</p>
-            <p className="text-2xl font-bold">{metrics.totalPMA}</p>
+            <p className="text-2xl font-semibold">{metrics.totalPMA}</p>
           </div>
           <div className="p-3 bg-white/10 rounded-lg backdrop-blur">
             <p className="text-xs text-blue-200">Submitted</p>
-            <p className="text-2xl font-bold">{metrics.submitted}</p>
+            <p className="text-2xl font-semibold">{metrics.submitted}</p>
           </div>
           <div
             className={cn(
@@ -931,7 +931,7 @@ export const MedicalDeviceDashboard: React.FC<MedicalDeviceDashboardProps> = ({
             )}
           >
             <p className="text-xs text-amber-200">Needs Action</p>
-            <p className="text-2xl font-bold">{metrics.needsAction}</p>
+            <p className="text-2xl font-semibold">{metrics.needsAction}</p>
           </div>
           <div
             className={cn(
@@ -940,7 +940,7 @@ export const MedicalDeviceDashboard: React.FC<MedicalDeviceDashboardProps> = ({
             )}
           >
             <p className="text-xs text-red-200">MAUDE Alerts</p>
-            <p className="text-2xl font-bold">{metrics.criticalAlerts}</p>
+            <p className="text-2xl font-semibold">{metrics.criticalAlerts}</p>
           </div>
         </div>
       </div>

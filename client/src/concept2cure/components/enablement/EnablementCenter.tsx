@@ -212,7 +212,7 @@ function AllModulesView() {
           placeholder="Search modules..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full max-w-md rounded-md border border-zinc-200 bg-white py-2 px-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-300 focus:outline-none transition-colors"
+          className="w-full max-w-md rounded-md border border-zinc-200 bg-white py-2 px-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-300 focus:outline-none transition-colors duration-150"
         />
       </div>
 

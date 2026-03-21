@@ -289,7 +289,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
             <BarChart3 className="w-6 h-6 text-blue-600" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-zinc-900">Program Analytics</h2>
+            <h2 className="text-xl font-semibold text-zinc-900">Program Analytics</h2>
             <p className="text-sm text-zinc-500">Submission readiness, artifacts, risks & activity</p>
           </div>
         </div>
@@ -324,7 +324,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
             <Target className="w-4 h-4 text-blue-500" />
           </div>
           <div className="flex items-end gap-2">
-            <span className="text-3xl font-bold text-zinc-900">
+            <span className="text-3xl font-semibold text-zinc-900">
               {isLoading ? '—' : `${overallReadiness ?? 0}%`}
             </span>
             {readinessTrend !== 0 && (
@@ -373,14 +373,14 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
             <FileText className="w-4 h-4 text-emerald-500" />
           </div>
           <div className="flex items-end gap-2">
-            <span className="text-3xl font-bold text-zinc-900">
+            <span className="text-3xl font-semibold text-zinc-900">
               {isLoading ? '—' : artifactStats.approved}
             </span>
             <span className="text-sm text-zinc-400 pb-1">/ {artifactStats.total}</span>
           </div>
           <div className="w-full bg-zinc-100 rounded-full h-1.5">
             <div
-              className="h-1.5 rounded-full bg-emerald-500 transition-all"
+              className="h-1.5 rounded-full bg-emerald-500 transition-all duration-150"
               style={{
                 width: `${artifactStats.total ? (artifactStats.approved / artifactStats.total) * 100 : 0}%`,
               }}
@@ -397,7 +397,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
             <AlertTriangle className="w-4 h-4 text-amber-500" />
           </div>
           <div className="flex items-end gap-2">
-            <span className="text-3xl font-bold text-zinc-900">
+            <span className="text-3xl font-semibold text-zinc-900">
               {isLoading ? '—' : riskStats.openCount}
             </span>
           </div>
@@ -422,7 +422,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
             <Activity className="w-4 h-4 text-blue-500" />
           </div>
           <div className="flex items-end gap-2">
-            <span className="text-3xl font-bold text-zinc-900">
+            <span className="text-3xl font-semibold text-zinc-900">
               {isLoading ? '—' : activityCount}
             </span>
             <span className="text-sm text-zinc-400 pb-1">events ({DATE_RANGE_LABELS[dateRange]})</span>
@@ -565,15 +565,15 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-zinc-50 rounded-lg p-3 space-y-1">
               <span className="text-xs text-zinc-500">Total Open</span>
-              <p className="text-xl font-bold text-zinc-900">{riskStats.openCount}</p>
+              <p className="text-xl font-semibold text-zinc-900">{riskStats.openCount}</p>
             </div>
             <div className="bg-emerald-50 rounded-lg p-3 space-y-1">
               <span className="text-xs text-emerald-600">Recently Mitigated</span>
-              <p className="text-xl font-bold text-emerald-700">{riskStats.mitigatedCount}</p>
+              <p className="text-xl font-semibold text-emerald-700">{riskStats.mitigatedCount}</p>
             </div>
             <div className="bg-zinc-50 rounded-lg p-3 space-y-1">
               <span className="text-xs text-zinc-500">Avg Time to Resolve</span>
-              <p className="text-xl font-bold text-zinc-900">14d</p>
+              <p className="text-xl font-semibold text-zinc-900">14d</p>
             </div>
             <div className="bg-zinc-50 rounded-lg p-3 space-y-1">
               <span className="text-xs text-zinc-500">By Severity</span>
@@ -582,7 +582,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
                   <div key={sev} className="text-center">
                     <span
                       className={cn(
-                        'inline-block w-5 h-5 rounded text-xs font-bold leading-5 text-center',
+                        'inline-block w-5 h-5 rounded text-xs font-semibold leading-5 text-center',
                         SEVERITY_CONFIG[sev]?.bg,
                         SEVERITY_CONFIG[sev]?.text,
                       )}
@@ -612,7 +612,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
                   </div>
                   <div className="flex-1 h-3 bg-zinc-100 rounded overflow-hidden">
                     <div
-                      className="h-full bg-amber-400 rounded transition-all"
+                      className="h-full bg-amber-400 rounded transition-all duration-150"
                       style={{ width: `${(count / maxCount) * 100}%` }}
                     />
                   </div>
@@ -664,7 +664,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
                   <div className="flex-1 pb-4 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="text-xs text-zinc-800 font-medium truncate">
+                        <p className="text-xs text-zinc-900 font-medium truncate">
                           <span className="capitalize">{entry.action || 'update'}</span>
                           {entry.entityType && (
                             <span className="text-zinc-400"> on </span>
@@ -732,7 +732,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
 
                   <div className="flex-1 min-w-0 space-y-1">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-zinc-800">
+                      <p className="text-sm font-medium text-zinc-900">
                         {blocker.description || blocker.title || 'Unnamed blocker'}
                       </p>
                       <span
@@ -773,7 +773,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
       {/* ── Nano Banana: Export Dashboard as Visual ── */}
       <div className="rounded-xl border border-zinc-200 bg-white">
         <div className="px-4 py-3 border-b border-zinc-200">
-          <h3 className="text-sm font-semibold text-zinc-800">Export as Visual or Deck</h3>
+          <h3 className="text-sm font-semibold text-zinc-900">Export as Visual or Deck</h3>
           <p className="text-xs text-zinc-500 mt-0.5">Use AnA Visual to generate infographics or a slide deck from your program analytics.</p>
         </div>
         <div className="p-4">

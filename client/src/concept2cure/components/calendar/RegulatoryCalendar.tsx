@@ -422,20 +422,20 @@ export const RegulatoryCalendar: React.FC<RegulatoryCalendarProps> = ({
               <div className="flex items-center gap-1">
                 <button
                   onClick={prevMonth}
-                  className="p-1.5 rounded-lg hover:bg-zinc-100 transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-zinc-100 transition-colors duration-150"
                 >
                   <ChevronLeft className="w-5 h-5 text-zinc-600" />
                 </button>
                 <button
                   onClick={nextMonth}
-                  className="p-1.5 rounded-lg hover:bg-zinc-100 transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-zinc-100 transition-colors duration-150"
                 >
                   <ChevronRight className="w-5 h-5 text-zinc-600" />
                 </button>
               </div>
               <button
                 onClick={goToToday}
-                className="px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                className="px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-150"
               >
                 Today
               </button>
@@ -467,7 +467,7 @@ export const RegulatoryCalendar: React.FC<RegulatoryCalendarProps> = ({
               {onAddEvent && (
                 <button
                   onClick={() => onAddEvent(selectedDate)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors duration-150"
                 >
                   <Plus className="w-4 h-4" />
                   Add Event
@@ -521,7 +521,7 @@ export const RegulatoryCalendar: React.FC<RegulatoryCalendarProps> = ({
                   <div className="flex items-center justify-between mb-1">
                     <span className={cn(
                       'w-6 h-6 flex items-center justify-center text-sm rounded-full',
-                      isTodayDate && 'bg-blue-600 text-white font-bold',
+                      isTodayDate && 'bg-blue-600 text-white font-semibold',
                       !isTodayDate && isSelected && 'text-blue-700 font-medium',
                       !isTodayDate && !isSelected && 'text-zinc-700'
                     )}>

@@ -413,7 +413,7 @@ export function CitationSearchPanel({
       {/* Header */}
       <div className="flex items-center gap-2 px-4 py-3 border-b border-zinc-100 bg-zinc-50/50">
         <BookOpen className="w-4 h-4 text-violet-600" />
-        <span className="text-sm font-semibold text-zinc-800">Insert Citation</span>
+        <span className="text-sm font-semibold text-zinc-900">Insert Citation</span>
         <div className="flex-1" />
         <button
           onClick={() => {
@@ -442,8 +442,8 @@ export function CitationSearchPanel({
           className={cn(
             'w-full pl-8 pr-4 py-2 text-sm rounded-lg',
             'bg-zinc-50 border border-zinc-200',
-            'focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400',
-            'placeholder:text-zinc-400 text-zinc-800',
+            'focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/30 focus:border-blue-400',
+            'placeholder:text-zinc-400 text-zinc-900',
             'transition-all'
           )}
           autoComplete="off"
@@ -506,7 +506,7 @@ export function CitationSearchPanel({
             <div className="flex items-start gap-3">
               <div className="flex-1 min-w-0">
                 {/* Title */}
-                <p className="text-sm font-medium text-zinc-800 truncate">
+                <p className="text-sm font-medium text-zinc-900 truncate">
                   {result.title}
                 </p>
 

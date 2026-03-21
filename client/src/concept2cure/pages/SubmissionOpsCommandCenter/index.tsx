@@ -684,7 +684,7 @@ export function SubmissionOpsCommandCenter({
                 className="flex items-center gap-2 px-4 h-10 border-b border-zinc-200 shrink-0"
               >
                 {DRAWER_LABELS[activeDrawer]?.icon}
-                <span data-testid="drawer-title" className="text-sm font-semibold text-zinc-800">
+                <span data-testid="drawer-title" className="text-sm font-semibold text-zinc-900">
                   {DRAWER_LABELS[activeDrawer]?.label}
                 </span>
               </div>
@@ -753,7 +753,7 @@ function BlockerRow({
       <div className="flex-1 min-w-0">
         {/* Title + severity */}
         <div className="flex items-center gap-1.5">
-          <span className="text-xs font-medium text-zinc-800 truncate">
+          <span className="text-xs font-medium text-zinc-900 truncate">
             {item.artifactTitle || item.title || 'Untitled'}
           </span>
           <span
@@ -834,7 +834,7 @@ function BlockerInspector({
     <div className="p-3 space-y-3">
       {/* Title */}
       <div>
-        <h3 className="text-xs font-semibold text-zinc-800">{item.artifactTitle || item.title}</h3>
+        <h3 className="text-xs font-semibold text-zinc-900">{item.artifactTitle || item.title}</h3>
         {item.documentFamily && (
           <p className="text-xs text-zinc-400 mt-0.5">{item.documentFamily}</p>
         )}
@@ -964,7 +964,7 @@ function BlockerInspector({
 function BottleneckInspector({ item }: { item: any }) {
   return (
     <div className="p-3 space-y-3">
-      <h3 className="text-xs font-semibold text-zinc-800">Approval Bottleneck</h3>
+      <h3 className="text-xs font-semibold text-zinc-900">Approval Bottleneck</h3>
       <InspectorField label="Approval Class">
         <span className="text-xs text-zinc-700">{item.approvalClass?.replace(/_/g, ' ')}</span>
       </InspectorField>
@@ -1001,7 +1001,7 @@ function BottleneckInspector({ item }: { item: any }) {
 function AreaInspector({ item }: { item: any }) {
   return (
     <div className="p-3 space-y-3">
-      <h3 className="text-xs font-semibold text-zinc-800">{item.sectionLabel || 'Package Area'}</h3>
+      <h3 className="text-xs font-semibold text-zinc-900">{item.sectionLabel || 'Package Area'}</h3>
       {item.readinessPercent != null && (
         <InspectorField label="Readiness">
           <div className="flex items-center gap-2">
@@ -1218,7 +1218,7 @@ function ReadinessDrawer({
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2 mb-3">
-        <span className="text-sm font-semibold text-zinc-800">
+        <span className="text-sm font-semibold text-zinc-900">
           Overall: {readiness.overallReadiness ?? 0}%
         </span>
         <span

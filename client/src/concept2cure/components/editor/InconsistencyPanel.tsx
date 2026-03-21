@@ -179,7 +179,7 @@ const InconsistencyPanel: React.FC<InconsistencyPanelProps> = ({
       <div className="p-3 border-b border-zinc-200 bg-zinc-50">
         <div className="flex items-center gap-2 mb-1">
           <Sparkles className="w-4 h-4 text-amber-500" />
-          <span className="font-semibold text-sm text-zinc-800">
+          <span className="font-semibold text-sm text-zinc-900">
             Inconsistency Intelligence
           </span>
         </div>
@@ -210,7 +210,7 @@ const InconsistencyPanel: React.FC<InconsistencyPanelProps> = ({
         <button
           onClick={checkInconsistencies}
           disabled={loading}
-          className="mt-2 flex items-center gap-1 text-xs text-zinc-600 hover:text-zinc-800"
+          className="mt-2 flex items-center gap-1 text-xs text-zinc-600 hover:text-zinc-900"
         >
           {loading ? (
             <Loader2 className="w-3 h-3 animate-spin" />
@@ -297,7 +297,7 @@ const InconsistencyPanel: React.FC<InconsistencyPanelProps> = ({
                       <div className="flex items-center gap-2 mt-2">
                         <button
                           onClick={() => onNavigateToArtifact?.(section.artifactId)}
-                          className="flex items-center gap-1 px-2 py-1 text-xs rounded bg-white/60 hover:bg-white transition-colors"
+                          className="flex items-center gap-1 px-2 py-1 text-xs rounded bg-white/60 hover:bg-white transition-colors duration-150"
                         >
                           <Eye className="w-3 h-3" />
                           View
@@ -306,7 +306,7 @@ const InconsistencyPanel: React.FC<InconsistencyPanelProps> = ({
                           onClick={() =>
                             onUpdateArtifact?.(section.artifactId, section.affectedText)
                           }
-                          className="flex items-center gap-1 px-2 py-1 text-xs rounded bg-white/60 hover:bg-white transition-colors"
+                          className="flex items-center gap-1 px-2 py-1 text-xs rounded bg-white/60 hover:bg-white transition-colors duration-150"
                         >
                           <Pencil className="w-3 h-3" />
                           Update

@@ -243,7 +243,7 @@ export default function DocumentChangeImpact({ projectId, submissionType }: { pr
                 <select
                   value={selectedGuidance}
                   onChange={(e) => setSelectedGuidance(e.target.value)}
-                  className="w-full appearance-none rounded-lg border border-zinc-200 bg-white px-3 py-2.5 pr-10 text-sm text-zinc-800 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-colors"
+                  className="w-full appearance-none rounded-lg border border-zinc-200 bg-white px-3 py-2.5 pr-10 text-sm text-zinc-900 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-colors duration-150"
                 >
                   <option value="">Select a guidance document...</option>
                   {GUIDANCE_DOCUMENTS.map((doc) => (
@@ -265,7 +265,7 @@ export default function DocumentChangeImpact({ projectId, submissionType }: { pr
                 <select
                   value={selectedSubmission}
                   onChange={(e) => setSelectedSubmission(e.target.value)}
-                  className="w-full appearance-none rounded-lg border border-zinc-200 bg-white px-3 py-2.5 pr-10 text-sm text-zinc-800 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-colors"
+                  className="w-full appearance-none rounded-lg border border-zinc-200 bg-white px-3 py-2.5 pr-10 text-sm text-zinc-900 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-colors duration-150"
                 >
                   <option value="">Select submission type...</option>
                   {SUBMISSION_TYPES.map((type) => (
@@ -386,7 +386,7 @@ export default function DocumentChangeImpact({ projectId, submissionType }: { pr
             {/* Affected Sections Table */}
             <div className="rounded-xl border border-zinc-200 bg-white overflow-hidden">
               <div className="px-5 py-4 border-b border-zinc-200">
-                <h2 className="text-sm font-semibold text-zinc-800">
+                <h2 className="text-sm font-semibold text-zinc-900">
                   Affected Sections
                 </h2>
               </div>
@@ -420,9 +420,9 @@ export default function DocumentChangeImpact({ projectId, submissionType }: { pr
                       return (
                         <tr
                           key={idx}
-                          className="hover:bg-zinc-50/50 transition-colors"
+                          className="hover:bg-zinc-50/50 transition-colors duration-150"
                         >
-                          <td className="px-5 py-3 font-medium text-zinc-800">
+                          <td className="px-5 py-3 font-medium text-zinc-900">
                             {section.ectdSection}
                           </td>
                           <td className="px-5 py-3 text-zinc-600">
@@ -480,7 +480,7 @@ export default function DocumentChangeImpact({ projectId, submissionType }: { pr
             <div className="rounded-xl border border-zinc-200 bg-white p-6">
               <div className="flex items-center gap-2 mb-5">
                 <CalendarDays className="h-4 w-4 text-zinc-500" />
-                <h2 className="text-sm font-semibold text-zinc-800">
+                <h2 className="text-sm font-semibold text-zinc-900">
                   Timeline Impact
                 </h2>
               </div>

@@ -159,7 +159,7 @@ export const DossierView: React.FC<DossierViewProps> = ({
                   ) : (
                     <Folder className="w-4 h-4 text-zinc-400" />
                   )}
-                  <span className="text-sm font-medium text-zinc-800 flex-1">{module.label}</span>
+                  <span className="text-sm font-medium text-zinc-900 flex-1">{module.label}</span>
                   {modArts.length > 0 && (
                     <span className="text-xs text-zinc-500">
                       {completeness?.approved || 0}/{modArts.length}
@@ -284,19 +284,19 @@ export const DossierView: React.FC<DossierViewProps> = ({
                 <div className="grid grid-cols-4 gap-4 text-xs">
                   <div>
                     <p className="text-zinc-500 mb-0.5">Module</p>
-                    <p className="text-zinc-800 font-medium">{selectedArtifact.dossierModule || '—'}</p>
+                    <p className="text-zinc-900 font-medium">{selectedArtifact.dossierModule || '—'}</p>
                   </div>
                   <div>
                     <p className="text-zinc-500 mb-0.5">Requirement</p>
-                    <p className="text-zinc-800 font-medium capitalize">{selectedArtifact.requirementLevel || 'required'}</p>
+                    <p className="text-zinc-900 font-medium capitalize">{selectedArtifact.requirementLevel || 'required'}</p>
                   </div>
                   <div>
                     <p className="text-zinc-500 mb-0.5">Version</p>
-                    <p className="text-zinc-800 font-medium">{selectedArtifact.version || '0.0'}</p>
+                    <p className="text-zinc-900 font-medium">{selectedArtifact.version || '0.0'}</p>
                   </div>
                   <div>
                     <p className="text-zinc-500 mb-0.5">Owner</p>
-                    <p className="text-zinc-800 font-medium">{selectedArtifact.ownerId || 'Unassigned'}</p>
+                    <p className="text-zinc-900 font-medium">{selectedArtifact.ownerId || 'Unassigned'}</p>
                   </div>
                 </div>
               </div>
@@ -308,7 +308,7 @@ export const DossierView: React.FC<DossierViewProps> = ({
                   <div className="flex items-center gap-3">
                     <div className="flex-1 h-2 bg-zinc-100 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-emerald-500 rounded-full transition-all"
+                        className="h-full bg-emerald-500 rounded-full transition-all duration-150"
                         style={{ width: `${moduleCompleteness[selectedArtifact.dossierModule].pct}%` }}
                       />
                     </div>

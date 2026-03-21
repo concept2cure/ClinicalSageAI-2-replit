@@ -156,7 +156,7 @@ function ComplianceGauge({ score }: { score: number }) {
         />
       </svg>
       <div className="absolute flex flex-col items-center">
-        <span className={cn('text-lg font-bold tabular-nums', getGaugeColor(score))}>
+        <span className={cn('text-lg font-semibold tabular-nums', getGaugeColor(score))}>
           {Math.round(score)}
         </span>
         <span className="text-xs font-medium text-zinc-400">/ 100</span>
@@ -270,7 +270,7 @@ export default function SnowGlobeDossierNodeSummary({
       {/* Header */}
       <div className="mb-3 flex items-center gap-2">
         <FileCheck className="h-4 w-4 text-blue-500" />
-        <span className="text-sm font-semibold text-zinc-800">Node Compliance</span>
+        <span className="text-sm font-semibold text-zinc-900">Node Compliance</span>
       </div>
 
       {/* Compliance gauge */}
@@ -355,7 +355,7 @@ export default function SnowGlobeDossierNodeSummary({
           <div className="space-y-1">
             {remediationItems.map((item) => (
               <div key={item.id} className="flex items-start gap-2">
-                <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
+                <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-semibold text-white">
                   {item.priority}
                 </span>
                 <p className="line-clamp-1 text-xs leading-snug text-zinc-600">

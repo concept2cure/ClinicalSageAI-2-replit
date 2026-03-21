@@ -31,7 +31,7 @@ const MockCard: React.FC<{
   )}>
     <div className="flex items-center gap-2 mb-3">
       {icon}
-      <h4 className="text-sm font-semibold text-zinc-800">{title}</h4>
+      <h4 className="text-sm font-semibold text-zinc-900">{title}</h4>
     </div>
     {children}
   </div>
@@ -52,7 +52,7 @@ const ProgressBar: React.FC<{ label: string; value: number; color?: string }> = 
   <div className="space-y-1">
     <div className="flex justify-between text-xs">
       <span className="text-zinc-600">{label}</span>
-      <span className="font-medium text-zinc-800">{value}%</span>
+      <span className="font-medium text-zinc-900">{value}%</span>
     </div>
     <div className="h-1.5 bg-zinc-100 rounded-full overflow-hidden">
       <div className={cn('h-full rounded-full transition-all', color)} style={{ width: `${value}%` }} />
@@ -62,7 +62,7 @@ const ProgressBar: React.FC<{ label: string; value: number; color?: string }> = 
 
 const MetricBox: React.FC<{ label: string; value: string; trend?: string }> = ({ label, value, trend }) => (
   <div className="bg-zinc-50 rounded-lg p-3 text-center">
-    <p className="text-lg font-bold text-zinc-900">{value}</p>
+    <p className="text-lg font-semibold text-zinc-900">{value}</p>
     <p className="text-xs text-zinc-500 mt-0.5">{label}</p>
     {trend && <p className="text-xs text-emerald-600 mt-0.5">{trend}</p>}
   </div>
@@ -80,10 +80,10 @@ const TableRow: React.FC<{ cells: string[]; highlight?: boolean }> = ({ cells, h
 
 const HeroPreview: React.FC = () => (
   <div className="flex flex-col items-center justify-center h-full text-center px-8">
-    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center mb-6 shadow-lg shadow-violet-200">
+    <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center mb-6 shadow-lg shadow-violet-200">
       <Sparkles className="w-10 h-10 text-white" />
     </div>
-    <h2 className="text-2xl font-bold text-zinc-900 mb-2">ClinicalSageAI</h2>
+    <h2 className="text-2xl font-semibold text-zinc-900 mb-2">ClinicalSageAI</h2>
     <p className="text-sm text-zinc-500 max-w-md">
       The unified regulatory intelligence platform. One AI co-pilot replacing 10-15 disconnected tools.
     </p>
@@ -107,7 +107,7 @@ const HeroPreview: React.FC = () => (
 const CTAPreview: React.FC = () => (
   <div className="flex flex-col items-center justify-center h-full text-center px-8">
     <Award className="w-16 h-16 text-violet-500 mb-6" />
-    <h2 className="text-2xl font-bold text-zinc-900 mb-2">Ready to Transform Your Workflow?</h2>
+    <h2 className="text-2xl font-semibold text-zinc-900 mb-2">Ready to Transform Your Workflow?</h2>
     <p className="text-sm text-zinc-500 max-w-md mb-6">
       Join teams at leading biotech, pharma, and CRO organizations who have consolidated their regulatory workflows into one platform.
     </p>
@@ -171,7 +171,7 @@ const Sub510kPreview: React.FC = () => (
         ].map((p) => (
           <div key={p.name} className="flex items-center justify-between p-3 bg-white border border-zinc-200 rounded-lg">
             <div>
-              <p className="text-xs font-medium text-zinc-800">{p.name}</p>
+              <p className="text-xs font-medium text-zinc-900">{p.name}</p>
               <p className="text-xs text-zinc-500">{p.manufacturer} — Product Code: {p.code}</p>
             </div>
             <StatusBadge status={`${p.match} match`} color="bg-emerald-50 text-emerald-700" />
@@ -222,7 +222,7 @@ const SubGlobalPreview: React.FC = () => (
         ].map((a) => (
           <div key={a.agency} className="p-3 bg-zinc-50 rounded-lg">
             <div className="flex justify-between items-start mb-2">
-              <p className="text-xs font-medium text-zinc-800">{a.agency}</p>
+              <p className="text-xs font-medium text-zinc-900">{a.agency}</p>
               <StatusBadge status={a.status} color={a.color} />
             </div>
             <p className="text-xs text-zinc-500">{a.type} — Region-specific Module 1</p>
@@ -245,7 +245,7 @@ const SubMeetingsPreview: React.FC = () => (
           <div className="flex items-center gap-2">
             {m.icon}
             <div>
-              <p className="text-xs font-medium text-zinc-800">{m.type} Meeting</p>
+              <p className="text-xs font-medium text-zinc-900">{m.type} Meeting</p>
               <p className="text-xs text-zinc-500">{m.date}</p>
             </div>
           </div>
@@ -310,7 +310,7 @@ const ResIntelligencePreview: React.FC = () => (
       ].map((a) => (
         <div key={a.title} className="flex items-start gap-2 p-2 border-b border-zinc-50 last:border-0">
           <div className="flex-1">
-            <p className="text-xs font-medium text-zinc-800">{a.title}</p>
+            <p className="text-xs font-medium text-zinc-900">{a.title}</p>
             <div className="flex gap-2 mt-1">
               <StatusBadge status={a.type} color={a.severity} />
               <span className="text-xs text-zinc-400">{a.date}</span>
@@ -332,7 +332,7 @@ const ResPrecedentPreview: React.FC = () => (
       ].map((p) => (
         <div key={p.name} className="flex items-center justify-between p-3 border border-zinc-200 rounded-lg mb-2">
           <div>
-            <p className="text-xs font-medium text-zinc-800">{p.name}</p>
+            <p className="text-xs font-medium text-zinc-900">{p.name}</p>
             <p className="text-xs text-zinc-500">{p.pathway} — {p.timeline} review</p>
           </div>
           <StatusBadge status={p.outcome} color="bg-emerald-50 text-emerald-700" />
@@ -368,7 +368,7 @@ const DocEditorPreview: React.FC = () => (
   <div className="space-y-4">
     <MockCard title="eCTD Co-Author" icon={<FileText className="w-4 h-4 text-blue-500" />}>
       <div className="bg-zinc-50 rounded-lg p-4 font-mono text-xs text-zinc-700 space-y-2 mb-3">
-        <p className="font-bold text-zinc-900">2.7.4 Summary of Clinical Safety</p>
+        <p className="font-semibold text-zinc-900">2.7.4 Summary of Clinical Safety</p>
         <p>The safety profile of [compound] was evaluated across <span className="bg-violet-100 text-violet-700 px-1 rounded">3 pivotal trials</span> enrolling a total of <span className="bg-violet-100 text-violet-700 px-1 rounded">4,200 subjects</span>.</p>
         <p className="text-zinc-400 italic">AI suggestion: "Consider adding the treatment-emergent adverse events table reference (Table 14.3.1.1)..."</p>
       </div>
@@ -410,7 +410,7 @@ const DocTemplatesPreview: React.FC = () => (
           { agency: 'NMPA', types: 'IND, NDA (China)' },
         ].map((t) => (
           <div key={t.agency} className="p-3 bg-zinc-50 rounded-lg">
-            <p className="text-xs font-semibold text-zinc-800 mb-1">{t.agency}</p>
+            <p className="text-xs font-semibold text-zinc-900 mb-1">{t.agency}</p>
             <p className="text-xs text-zinc-500">{t.types}</p>
           </div>
         ))}
@@ -527,7 +527,7 @@ const CMCManufacturingPreview: React.FC = () => (
       ].map((s) => (
         <div key={s.step} className="flex items-center justify-between p-2 border-b border-zinc-50 last:border-0">
           <div>
-            <p className="text-xs text-zinc-800">{s.step}</p>
+            <p className="text-xs text-zinc-900">{s.step}</p>
             <p className="text-xs text-zinc-500">Scale: {s.scale}</p>
           </div>
           <StatusBadge status={s.status} color={s.status === 'Production' ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700'} />
@@ -598,9 +598,9 @@ const AISnowglobePreview: React.FC = () => (
           { scenario: 'With Additional Data', probability: '89%', timeline: '14 months', risk: 'Low' },
         ].map((s) => (
           <div key={s.scenario} className="p-3 border border-zinc-200 rounded-lg">
-            <p className="text-xs font-medium text-zinc-800 mb-2">{s.scenario}</p>
+            <p className="text-xs font-medium text-zinc-900 mb-2">{s.scenario}</p>
             <div className="space-y-1">
-              <p className="text-xs text-zinc-600">Approval probability: <span className="font-bold text-violet-700">{s.probability}</span></p>
+              <p className="text-xs text-zinc-600">Approval probability: <span className="font-semibold text-violet-700">{s.probability}</span></p>
               <p className="text-xs text-zinc-600">Est. timeline: {s.timeline}</p>
               <p className="text-xs text-zinc-600">Risk: {s.risk}</p>
             </div>
@@ -742,7 +742,7 @@ const PMDecisionsPreview: React.FC = () => (
         { decision: 'Approved CMO selection — BioContract Inc', date: 'Mar 1', signers: 4 },
       ].map((d) => (
         <div key={d.decision} className="p-2 border-b border-zinc-50 last:border-0">
-          <p className="text-xs text-zinc-800">{d.decision}</p>
+          <p className="text-xs text-zinc-900">{d.decision}</p>
           <div className="flex gap-2 mt-1">
             <span className="text-xs text-zinc-400">{d.date}</span>
             <span className="text-xs text-emerald-600">{d.signers} sign-offs</span>
@@ -815,7 +815,7 @@ const SecRBACPreview: React.FC = () => (
         ].map((r) => (
           <div key={r.role} className="flex items-center justify-between p-2 bg-zinc-50 rounded-lg">
             <div>
-              <p className="text-xs font-medium text-zinc-800">{r.role}</p>
+              <p className="text-xs font-medium text-zinc-900">{r.role}</p>
               <p className="text-xs text-zinc-500">{r.access}</p>
             </div>
             <span className="text-xs text-zinc-400">{r.count} users</span>
@@ -862,7 +862,7 @@ const SecGovernancePreview: React.FC = () => (
           <div key={s.standard} className="flex items-center gap-2 p-2 bg-zinc-50 rounded-lg">
             <CheckCircle className="w-3 h-3 text-emerald-500" />
             <div>
-              <p className="text-xs font-medium text-zinc-800">{s.standard}</p>
+              <p className="text-xs font-medium text-zinc-900">{s.standard}</p>
               <p className="text-xs text-emerald-600">{s.status}</p>
             </div>
           </div>
@@ -886,7 +886,7 @@ const CollabHubPreview: React.FC = () => (
           <div className="flex items-center gap-2">
             {t.unread && <div className="w-2 h-2 rounded-full bg-violet-500" />}
             <div>
-              <p className="text-xs text-zinc-800">{t.thread}</p>
+              <p className="text-xs text-zinc-900">{t.thread}</p>
               <p className="text-xs text-zinc-400">{t.replies} replies — {t.last}</p>
             </div>
           </div>
@@ -907,7 +907,7 @@ const CollabReviewPreview: React.FC = () => (
       ].map((r) => (
         <div key={r.doc} className="flex items-center justify-between p-2 border-b border-zinc-50 last:border-0">
           <div>
-            <p className="text-xs text-zinc-800">{r.doc}</p>
+            <p className="text-xs text-zinc-900">{r.doc}</p>
             <p className="text-xs text-zinc-500">{r.reviewer} — Due: {r.due}</p>
           </div>
           <StatusBadge status={r.sla} color={r.sla === 'Escalated' ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700'} />
@@ -997,7 +997,7 @@ const NanoBananaOverviewPreview: React.FC = () => (
   <div className="space-y-4">
     <div className="text-center mb-6">
       <div className="text-5xl mb-2">🍌</div>
-      <h3 className="text-lg font-bold text-zinc-900">AnA Visual</h3>
+      <h3 className="text-lg font-semibold text-zinc-900">AnA Visual</h3>
       <p className="text-xs text-zinc-500">Powered by Google Gemini</p>
     </div>
     <div className="grid grid-cols-3 gap-3">
@@ -1007,7 +1007,7 @@ const NanoBananaOverviewPreview: React.FC = () => (
         { title: 'Diagrams', metric: '<12s', desc: 'Per image', color: 'bg-yellow-50 border-yellow-200' },
       ].map(c => (
         <div key={c.title} className={cn('rounded-xl border p-3 text-center', c.color)}>
-          <div className="text-lg font-bold text-zinc-900">{c.metric}</div>
+          <div className="text-lg font-semibold text-zinc-900">{c.metric}</div>
           <div className="text-xs font-medium text-zinc-700">{c.title}</div>
           <div className="text-xs text-zinc-500">{c.desc}</div>
         </div>
@@ -1055,7 +1055,7 @@ const NanoBananaGeneratePreview: React.FC = () => (
         <div key={c.label} className="flex items-start gap-2 py-1.5">
           <Lock className="w-3 h-3 text-blue-500 mt-0.5 shrink-0" />
           <div>
-            <div className="text-xs font-medium text-zinc-800">{c.label}</div>
+            <div className="text-xs font-medium text-zinc-900">{c.label}</div>
             <div className="text-xs text-zinc-500">{c.desc}</div>
           </div>
         </div>

@@ -340,7 +340,7 @@ const ClaimCard: React.FC<ClaimCardProps> = ({
                   </span>
                 )}
               </div>
-              <p className="text-sm font-medium text-zinc-800">
+              <p className="text-sm font-medium text-zinc-900">
                 "{claim.text}"
               </p>
             </div>
@@ -378,7 +378,7 @@ const ClaimCard: React.FC<ClaimCardProps> = ({
             <div className="flex items-center gap-2 mt-3">
               <button
                 onClick={() => onLink(topSuggestion)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors duration-150"
                 data-testid={`button-link-claim-${claim.id}`}
               >
                 <Link2 className="w-3.5 h-3.5" />
@@ -386,7 +386,7 @@ const ClaimCard: React.FC<ClaimCardProps> = ({
               </button>
               <button
                 onClick={() => onPreview(topSuggestion)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-zinc-600 text-sm hover:bg-zinc-100 rounded-lg transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-zinc-600 text-sm hover:bg-zinc-100 rounded-lg transition-colors duration-150"
                 data-testid={`button-preview-claim-source-${claim.id}`}
               >
                 <Eye className="w-3.5 h-3.5" />
@@ -503,7 +503,7 @@ const BulkLinkPanel: React.FC<BulkLinkPanelProps> = ({ pendingLinks, onConfirmAl
       <div className="flex items-center gap-2">
         <button
           onClick={onConfirmAll}
-          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors duration-150"
           data-testid="button-bulk-link-confirm"
         >
           <Link2 className="w-4 h-4" />
@@ -511,7 +511,7 @@ const BulkLinkPanel: React.FC<BulkLinkPanelProps> = ({ pendingLinks, onConfirmAl
         </button>
         <button
           onClick={onClear}
-          className="px-4 py-2 text-green-700 hover:bg-green-100 rounded-lg transition-colors"
+          className="px-4 py-2 text-green-700 hover:bg-green-100 rounded-lg transition-colors duration-150"
           data-testid="button-bulk-link-clear"
         >
           Review Individually
@@ -666,11 +666,11 @@ export const AutoTraceabilityEngine: React.FC<AutoTraceabilityEngineProps> = ({
   return (
     <div className={`space-y-4 ${className}`}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 rounded-2xl border border-zinc-200/70 bg-white shadow-sm">
+      <div className="flex items-center justify-between p-4 rounded-xl border border-zinc-200/70 bg-white shadow-sm">
         <div>
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-blue-500" />
-            <h3 className="font-semibold text-zinc-800">Auto-Traceability</h3>
+            <h3 className="font-semibold text-zinc-900">Auto-Traceability</h3>
           </div>
           <p className="text-xs text-zinc-500 mt-1">
             {totalClaims} claims detected
@@ -703,7 +703,7 @@ export const AutoTraceabilityEngine: React.FC<AutoTraceabilityEngineProps> = ({
 
       {/* Claims List */}
       {visibleClaims.length === 0 ? (
-        <div className="text-center py-10 text-zinc-500 bg-white rounded-2xl border border-zinc-200/70 shadow-sm">
+        <div className="text-center py-10 text-zinc-500 bg-white rounded-xl border border-zinc-200/70 shadow-sm">
           <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-500" />
           <p className="font-medium text-zinc-700">All claims sourced!</p>
           <p className="text-sm mt-1">Your document is fully traceable.</p>

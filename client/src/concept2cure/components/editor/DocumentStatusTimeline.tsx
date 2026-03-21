@@ -181,7 +181,7 @@ export function DocumentStatusTimeline({
       {/* Inline bar */}
       <button
         onClick={() => setShowDetails(!showDetails)}
-        className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-zinc-50 transition-colors"
+        className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-zinc-50 transition-colors duration-150"
       >
         {STAGES.map((stage, idx) => {
           const isActive = idx === currentIdx;
@@ -222,7 +222,7 @@ export function DocumentStatusTimeline({
         <div className="absolute top-full left-0 mt-1 w-80 bg-white rounded-lg border border-zinc-200 shadow-lg z-50 py-3">
           {/* Header */}
           <div className="px-4 pb-3 border-b border-zinc-100">
-            <p className="text-sm font-semibold text-zinc-800">
+            <p className="text-sm font-semibold text-zinc-900">
               {documentTitle || 'Document'} — Status
             </p>
             <div className="flex items-center gap-3 mt-1 text-[11px] text-zinc-400">
@@ -288,7 +288,7 @@ export function DocumentStatusTimeline({
                       </p>
                       {isActive && (
                         <span className={cn(
-                          'text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded',
+                          'text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded',
                           stage.activeBg, stage.activeColor,
                         )}>
                           Current
@@ -318,7 +318,7 @@ export function DocumentStatusTimeline({
                   onChangeStatus(STAGES[currentIdx + 1].stage);
                   setShowDetails(false);
                 }}
-                className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
+                className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors duration-150"
               >
                 <ArrowRight className="h-3 w-3" />
                 Advance to {STAGES[currentIdx + 1].label}

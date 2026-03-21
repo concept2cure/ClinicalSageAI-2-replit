@@ -333,11 +333,11 @@ const Sidebar: React.FC<{
       
       {/* Footer */}
       <div className="p-4 border-t border-zinc-800 space-y-1">
-        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors">
+        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors duration-150">
           <Settings className="w-5 h-5 flex-shrink-0" />
           {!collapsed && <span className="text-sm">Settings</span>}
         </button>
-        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors">
+        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors duration-150">
           <HelpCircle className="w-5 h-5 flex-shrink-0" />
           {!collapsed && <span className="text-sm">Help</span>}
         </button>
@@ -381,7 +381,7 @@ const Header: React.FC<{
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && onSearch?.(searchQuery)}
-          className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
         />
       </div>
       
@@ -393,7 +393,7 @@ const Header: React.FC<{
           return (
             <button
               key={i}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-colors duration-150"
             >
               <Icon className="w-4 h-4" />
               {action.label}
@@ -404,7 +404,7 @@ const Header: React.FC<{
         {/* New Project */}
         <button
           onClick={onNewProject}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors duration-150"
         >
           <Plus className="w-4 h-4" />
           New
@@ -414,11 +414,11 @@ const Header: React.FC<{
         <div className="relative">
           <button
             onClick={() => setShowNotifications(!showNotifications)}
-            className="relative p-2 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-colors"
+            className="relative p-2 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-colors duration-150"
           >
             <Bell className="w-5 h-5" />
             {unreadCount > 0 && (
-              <span className="absolute top-0 right-0 w-4 h-4 text-xs font-bold text-white bg-red-500 rounded-full flex items-center justify-center">
+              <span className="absolute top-0 right-0 w-4 h-4 text-xs font-semibold text-white bg-red-500 rounded-full flex items-center justify-center">
                 {unreadCount}
               </span>
             )}
@@ -449,7 +449,7 @@ const Header: React.FC<{
         </div>
         
         {/* User Menu */}
-        <button className="flex items-center gap-2 px-2 py-1 hover:bg-zinc-100 rounded-lg transition-colors">
+        <button className="flex items-center gap-2 px-2 py-1 hover:bg-zinc-100 rounded-lg transition-colors duration-150">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center text-white text-sm font-medium">
             {currentUser.name.split(' ').map(n => n[0]).join('')}
           </div>

@@ -102,7 +102,7 @@ function CapabilityItem({
     <div>
       <button
         onClick={onToggle}
-        className="w-full text-left py-1.5 px-2 rounded hover:bg-zinc-50 transition-colors"
+        className="w-full text-left py-1.5 px-2 rounded hover:bg-zinc-50 transition-colors duration-150"
       >
         <span className="text-sm text-zinc-700">{node.label}</span>
       </button>

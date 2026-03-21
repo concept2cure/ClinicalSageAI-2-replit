@@ -257,9 +257,9 @@ export const DocumentHealth: React.FC<DocumentHealthProps> = ({
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <TrendingUp className={cn('w-5 h-5', getScoreColor(overallScore))} />
-            <span className="text-sm font-semibold text-zinc-800">Document Health</span>
+            <span className="text-sm font-semibold text-zinc-900">Document Health</span>
           </div>
-          <span className={cn('text-3xl font-bold', getScoreColor(overallScore))}>
+          <span className={cn('text-3xl font-semibold', getScoreColor(overallScore))}>
             {overallScore}
           </span>
         </div>
@@ -290,7 +290,7 @@ export const DocumentHealth: React.FC<DocumentHealthProps> = ({
               <div className="flex items-center gap-2 px-4 py-3">
                 <Icon className={cn('w-4 h-4 shrink-0', getScoreColor(dim.score))} />
                 <span className="text-xs font-semibold text-zinc-700 flex-1">{dim.label}</span>
-                <span className={cn('text-sm font-bold', getScoreColor(dim.score))}>
+                <span className={cn('text-sm font-semibold', getScoreColor(dim.score))}>
                   {dim.score}
                 </span>
                 <div className="w-16 bg-zinc-200 rounded-full h-1.5 ml-1">

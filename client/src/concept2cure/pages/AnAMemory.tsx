@@ -295,7 +295,7 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
             <div className="rounded-xl border border-zinc-200 bg-white p-6">
               <div className="flex items-center gap-2 mb-5">
                 <Tag className="h-4 w-4 text-zinc-500" />
-                <h2 className="text-sm font-semibold text-zinc-800">
+                <h2 className="text-sm font-semibold text-zinc-900">
                   Project Context
                 </h2>
               </div>
@@ -323,20 +323,20 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
                         />
                         <button
                           onClick={saveEdit}
-                          className="rounded p-1 text-emerald-600 hover:bg-emerald-50 transition-colors"
+                          className="rounded p-1 text-emerald-600 hover:bg-emerald-50 transition-colors duration-150"
                         >
                           <Check className="h-3.5 w-3.5" />
                         </button>
                         <button
                           onClick={cancelEdit}
-                          className="rounded p-1 text-zinc-400 hover:bg-zinc-100 transition-colors"
+                          className="rounded p-1 text-zinc-400 hover:bg-zinc-100 transition-colors duration-150"
                         >
                           <X className="h-3.5 w-3.5" />
                         </button>
                       </div>
                     ) : (
                       <div className="flex items-center justify-between">
-                        <p className="text-sm text-zinc-800">
+                        <p className="text-sm text-zinc-900">
                           {projectContext[key] || (
                             <span className="italic text-zinc-400">
                               Not set
@@ -345,7 +345,7 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
                         </p>
                         <button
                           onClick={() => startEditing(key)}
-                          className="opacity-0 group-hover:opacity-100 rounded p-1 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 transition-all"
+                          className="opacity-0 group-hover:opacity-100 rounded p-1 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 transition-all duration-150"
                           title={`Edit ${label}`}
                         >
                           <Pencil className="h-3.5 w-3.5" />
@@ -439,7 +439,7 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
 
                         {/* Content */}
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm text-zinc-800 leading-relaxed">
+                          <p className="text-sm text-zinc-900 leading-relaxed">
                             {memory.content}
                           </p>
                           <div className="mt-2 flex items-center gap-3">
@@ -515,7 +515,7 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
                     }
                   }}
                   placeholder="e.g., Prefers Module 2.5 summaries under 15 pages..."
-                  className="flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-800 placeholder:text-zinc-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                  className="flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
                 />
 
                 {/* Add button */}

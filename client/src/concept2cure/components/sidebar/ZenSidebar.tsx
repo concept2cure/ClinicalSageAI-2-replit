@@ -91,7 +91,7 @@ const WorkspaceGroup: React.FC<{
       <button
         onClick={() => setOpen(o => !o)}
         aria-expanded={open}
-        className="w-full flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-zinc-500 uppercase tracking-wider hover:text-zinc-400 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded transition-colors"
+        className="w-full flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-zinc-500 uppercase tracking-wider hover:text-zinc-400 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded transition-colors duration-150"
       >
         <ChevronDown
           className={cn(
@@ -278,14 +278,14 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <button
           onClick={onNewChat}
           aria-label="New chat"
-          className="w-9 h-9 rounded-xl bg-white/10 text-white flex items-center justify-center hover:bg-white/20 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+          className="w-9 h-9 rounded-xl bg-white/10 text-white flex items-center justify-center hover:bg-white/20 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150"
         >
           <Plus className="w-4 h-4" />
         </button>
         <button
           onClick={onOpenProjects}
           aria-label="Projects"
-          className="w-9 h-9 rounded-xl text-zinc-400 flex items-center justify-center hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+          className="w-9 h-9 rounded-xl text-zinc-400 flex items-center justify-center hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150"
         >
           <FolderOpen className="w-4 h-4" />
         </button>
@@ -346,14 +346,14 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <button
           onClick={onToggleCollapse}
           aria-label="Expand sidebar"
-          className="mt-auto w-9 h-9 rounded-xl text-zinc-500 flex items-center justify-center hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+          className="mt-auto w-9 h-9 rounded-xl text-zinc-500 flex items-center justify-center hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150"
         >
           <ChevronRight className="w-4 h-4" />
         </button>
         <button
           onClick={onOpenSettings}
           aria-label="Settings"
-          className="w-9 h-9 rounded-xl text-zinc-500 flex items-center justify-center hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+          className="w-9 h-9 rounded-xl text-zinc-500 flex items-center justify-center hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150"
         >
           <Settings className="w-4 h-4" />
         </button>
@@ -382,7 +382,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           <button
             onClick={onToggleCollapse}
             aria-label="Collapse sidebar"
-            className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-400 hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+            className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-400 hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -392,7 +392,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <div className="px-2 pb-1.5 flex-shrink-0">
           <button
             onClick={onNewChat}
-            className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg bg-white/10 text-white text-sm font-medium hover:bg-white/15 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+            className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg bg-white/10 text-white text-sm font-medium hover:bg-white/15 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150"
           >
             <Plus className="w-3.5 h-3.5 flex-shrink-0" />
             New workspace thread
@@ -403,7 +403,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <div className="px-2 pb-1.5 flex-shrink-0">
           <button
             onClick={onOpenProjects}
-            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-zinc-400 hover:bg-white/8 hover:text-zinc-200 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-zinc-400 hover:bg-white/8 hover:text-zinc-200 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150"
           >
             <FolderOpen className="w-3.5 h-3.5 flex-shrink-0 text-zinc-500" />
             My projects
@@ -618,10 +618,10 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <div className="flex-shrink-0 border-t border-zinc-800 p-2">
           <button
             onClick={onOpenSettings}
-            className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-zinc-400 hover:bg-white/10 hover:text-zinc-200 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+            className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-zinc-400 hover:bg-white/10 hover:text-zinc-200 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150"
           >
             <div className="w-7 h-7 rounded-full bg-violet-500/20 flex items-center justify-center flex-shrink-0">
-              <span className="text-xs font-bold text-violet-400 leading-none">
+              <span className="text-xs font-semibold text-violet-400 leading-none">
                 {avatarInitial}
               </span>
             </div>

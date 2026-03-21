@@ -717,7 +717,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onUse, onPreview 
   const Icon = categoryIcons[template.category];
 
   return (
-    <div className="group p-4 bg-white rounded-lg border border-zinc-200 hover:border-zinc-300 transition-all">
+    <div className="group p-4 bg-white rounded-lg border border-zinc-200 hover:border-zinc-300 transition-all duration-150">
       {/* Header */}
       <div className="flex items-start gap-3 mb-3">
         <div className={cn('p-2 rounded-lg', typeColors[template.category])}>
