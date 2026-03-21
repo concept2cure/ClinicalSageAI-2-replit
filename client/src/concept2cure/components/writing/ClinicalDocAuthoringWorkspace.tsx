@@ -32,6 +32,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { LIFECYCLE, toLifecycleStage } from '../ui/enterprise';
 import {
   FileText,
   BookOpen,
@@ -254,10 +255,10 @@ const SectionTreeItem: React.FC<{
   const hasChildren = section.children && section.children.length > 0;
   
   const statusColors = {
-    not_started: 'bg-zinc-200',
-    draft: 'bg-blue-400',
-    review: 'bg-amber-400',
-    complete: 'bg-green-400',
+    not_started: LIFECYCLE.not_started.dot,
+    draft: LIFECYCLE.draft.dot,
+    review: LIFECYCLE.in_review.dot,
+    complete: LIFECYCLE.approved.dot,
   };
   
   return (

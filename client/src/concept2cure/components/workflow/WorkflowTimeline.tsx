@@ -8,10 +8,11 @@
  */
 
 import React, { useMemo } from 'react';
-import { 
-  CheckCircle2, 
-  Circle, 
-  Clock, 
+import { LIFECYCLE } from '../ui/enterprise';
+import {
+  CheckCircle2,
+  Circle,
+  Clock,
   AlertTriangle,
   Lock,
   ChevronDown,
@@ -133,7 +134,7 @@ const TimelineStep: React.FC<{
         {!isLast && (
           <div className={cn(
             "w-0.5 h-12 mt-2",
-            step.status === 'COMPLETED' ? 'bg-green-300' : 'bg-zinc-200'
+            step.status === 'COMPLETED' ? 'bg-emerald-300' : 'bg-zinc-200'
           )} />
         )}
       </div>
@@ -143,10 +144,10 @@ const TimelineStep: React.FC<{
         <div className="flex items-center gap-2">
           <h4 className={cn(
             "font-medium",
-            step.status === 'COMPLETED' && "text-green-700",
-            step.status === 'IN_PROGRESS' && "text-blue-700",
+            step.status === 'COMPLETED' && LIFECYCLE.approved.text,
+            step.status === 'IN_PROGRESS' && LIFECYCLE.in_review.text,
             step.status === 'BLOCKED' && "text-red-700",
-            step.status === 'PENDING' && "text-zinc-500"
+            step.status === 'PENDING' && LIFECYCLE.not_started.text
           )}>
             {step.name}
           </h4>

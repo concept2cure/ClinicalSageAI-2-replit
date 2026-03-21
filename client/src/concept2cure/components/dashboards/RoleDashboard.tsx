@@ -13,6 +13,7 @@
 
 import React, { useState, useMemo } from 'react';
 import type { SubmissionType } from '../../types';
+import { LIFECYCLE, toLifecycleStage } from '../ui/enterprise';
 import { cn } from '@/lib/utils';
 import { NextActionsPanel, StepCard } from '@/concept2cure/components/workflow';
 import { Badge } from '@/components/ui/badge';
@@ -334,9 +335,9 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskClick }) => {
   };
 
   const statusColors = {
-    pending: 'bg-zinc-50 border-zinc-200',
-    in_progress: 'bg-blue-50 border-blue-200',
-    review: 'bg-purple-50 border-purple-200',
+    pending: `${LIFECYCLE.not_started.bg} ${LIFECYCLE.not_started.border}`,
+    in_progress: `${LIFECYCLE.draft.bg} ${LIFECYCLE.draft.border}`,
+    review: `${LIFECYCLE.in_review.bg} ${LIFECYCLE.in_review.border}`,
     blocked: 'bg-red-50 border-red-200',
   };
 

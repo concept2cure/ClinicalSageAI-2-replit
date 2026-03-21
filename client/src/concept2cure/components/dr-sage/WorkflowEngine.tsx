@@ -10,6 +10,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { LIFECYCLE } from '../ui/enterprise';
 import {
   Brain,
   Bot,
@@ -76,24 +77,24 @@ export interface WorkflowDemoProps {
 
 const STATUS_CONFIG = {
   pending: {
-    bg: 'bg-muted/50',
-    border: 'border-muted',
+    bg: LIFECYCLE.not_started.bg,
+    border: LIFECYCLE.not_started.border,
     icon: Clock,
-    iconColor: 'text-muted-foreground',
+    iconColor: LIFECYCLE.not_started.text,
     label: 'Pending',
   },
   running: {
-    bg: 'bg-blue-50',
-    border: 'border-blue-400',
+    bg: LIFECYCLE.in_review.bg,
+    border: LIFECYCLE.in_review.border,
     icon: Loader2,
-    iconColor: 'text-blue-500',
+    iconColor: LIFECYCLE.in_review.text,
     label: 'Running',
   },
   complete: {
-    bg: 'bg-emerald-50',
-    border: 'border-emerald-400',
+    bg: LIFECYCLE.approved.bg,
+    border: LIFECYCLE.approved.border,
     icon: CheckCircle2,
-    iconColor: 'text-emerald-500',
+    iconColor: LIFECYCLE.approved.text,
     label: 'Complete',
   },
   blocked: {
@@ -104,13 +105,13 @@ const STATUS_CONFIG = {
     label: 'Blocked',
   },
   'action-needed': {
-    bg: 'bg-amber-50',
-    border: 'border-amber-400',
+    bg: LIFECYCLE.draft.bg,
+    border: LIFECYCLE.draft.border,
     icon: AlertTriangle,
-    iconColor: 'text-amber-500',
+    iconColor: LIFECYCLE.draft.text,
     label: 'Action Needed',
   },
-} as const;
+};
 
 const ACTOR_CONFIG = {
   'dr-sage': {

@@ -14,6 +14,7 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { LIFECYCLE } from '../ui/enterprise';
 import {
   Check,
   Circle,
@@ -328,7 +329,7 @@ const FullTimeline: React.FC<{
                 <div
                   className={cn(
                     'absolute left-4 top-8 w-0.5 h-full -ml-px',
-                    phase.status === 'completed' ? 'bg-emerald-500' : 'bg-zinc-200'
+                    phase.status === 'completed' ? LIFECYCLE.approved.dot : 'bg-zinc-200'
                   )}
                 />
               )}

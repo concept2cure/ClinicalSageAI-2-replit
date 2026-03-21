@@ -14,6 +14,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { LIFECYCLE } from '../../components/ui/enterprise';
 import {
   Scale,
   Search,
@@ -40,12 +41,13 @@ interface DecisionLogProps {
 type DecisionStatus = 'proposed' | 'accepted' | 'rejected' | 'deferred' | 'superseded';
 type DecisionCategory = 'regulatory' | 'clinical' | 'manufacturing' | 'commercial' | 'technical';
 
+// Decision statuses use canonical lifecycle semantic colors
 const STATUS_COLORS: Record<DecisionStatus, { bg: string; text: string; dot: string }> = {
-  proposed:   { bg: 'bg-blue-50',   text: 'text-blue-700',   dot: 'bg-blue-500' },
-  accepted:   { bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-500' },
-  rejected:   { bg: 'bg-red-50',    text: 'text-red-700',    dot: 'bg-red-500' },
-  deferred:   { bg: 'bg-amber-50',  text: 'text-amber-700',  dot: 'bg-amber-500' },
-  superseded: { bg: 'bg-zinc-100',  text: 'text-zinc-600',   dot: 'bg-zinc-400' },
+  proposed:   { bg: LIFECYCLE.in_review.bg,   text: LIFECYCLE.in_review.text,   dot: LIFECYCLE.in_review.dot },
+  accepted:   { bg: LIFECYCLE.approved.bg,     text: LIFECYCLE.approved.text,    dot: LIFECYCLE.approved.dot },
+  rejected:   { bg: 'bg-red-50',              text: 'text-red-700',            dot: 'bg-red-500' },  // danger — no lifecycle equivalent
+  deferred:   { bg: LIFECYCLE.draft.bg,        text: LIFECYCLE.draft.text,       dot: LIFECYCLE.draft.dot },
+  superseded: { bg: LIFECYCLE.superseded.bg,   text: LIFECYCLE.superseded.text,  dot: LIFECYCLE.superseded.dot },
 };
 
 const CATEGORY_COLORS: Record<DecisionCategory, string> = {

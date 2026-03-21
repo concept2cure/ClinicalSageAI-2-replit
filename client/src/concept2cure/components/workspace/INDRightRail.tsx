@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { BookOpen, History, ListChecks, UserCheck, MapPin, Loader2 } from 'lucide-react';
 import { useCSRSearch } from '../../hooks/useWorkspaceIntelligence';
 import { usePrecedentSearch } from '../../hooks/usePrecedentEngine';
+import { LIFECYCLE, toLifecycleStage } from '../ui/enterprise';
 
 interface INDRightRailProps {
   projectName?: string;
@@ -286,11 +287,11 @@ const ReviewItem: React.FC<{
   status: 'not_started' | 'drafting' | 'review' | 'approved' | 'locked';
 }> = ({ label, status }) => {
   const statusConfig = {
-    not_started: { bg: 'bg-zinc-100', text: 'text-zinc-500', label: 'Not Started' },
-    drafting: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Drafting' },
-    review: { bg: 'bg-amber-100', text: 'text-amber-700', label: 'In Review' },
-    approved: { bg: 'bg-emerald-100', text: 'text-emerald-700', label: 'Approved' },
-    locked: { bg: 'bg-violet-100', text: 'text-violet-700', label: 'Locked' },
+    not_started: { bg: LIFECYCLE.not_started.bg, text: LIFECYCLE.not_started.text, label: 'Not Started' },
+    drafting: { bg: LIFECYCLE.draft.bg, text: LIFECYCLE.draft.text, label: 'Drafting' },
+    review: { bg: LIFECYCLE.in_review.bg, text: LIFECYCLE.in_review.text, label: 'In Review' },
+    approved: { bg: LIFECYCLE.approved.bg, text: LIFECYCLE.approved.text, label: 'Approved' },
+    locked: { bg: LIFECYCLE.published.bg, text: LIFECYCLE.published.text, label: 'Locked' },
   };
   const cfg = statusConfig[status];
   return (

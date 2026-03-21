@@ -11,6 +11,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
+import { LIFECYCLE, toLifecycleStage } from '@/concept2cure/components/ui/enterprise';
 import {
   FileText,
   Plus,
@@ -333,19 +334,18 @@ export const ArtifactsGallery: React.FC = () => {
                       {artifact.projectName && (
                         <span className="text-xs text-zinc-400 truncate">{artifact.projectName}</span>
                       )}
-                      {artifact.status && (
-                        <span className={cn(
-                          'text-xs px-1.5 py-0.5 rounded-full font-medium capitalize',
-                          artifact.status === 'approved' ? 'bg-emerald-50 text-emerald-600' :
-                          artifact.status === 'locked' ? 'bg-blue-50 text-blue-600' :
-                          artifact.status === 'review' ? 'bg-violet-50 text-violet-600' :
-                          artifact.status === 'draft' ? 'bg-amber-50 text-amber-600' :
-                          artifact.status === 'complete' ? 'bg-emerald-50 text-emerald-600' :
-                          'bg-zinc-100 text-zinc-500'
-                        )}>
-                          {artifact.status === 'locked' ? 'Locked' : artifact.status}
-                        </span>
-                      )}
+                      {artifact.status && (() => {
+                        const stage = toLifecycleStage(artifact.status);
+                        const lc = LIFECYCLE[stage];
+                        return (
+                          <span className={cn(
+                            'text-xs px-1.5 py-0.5 rounded-full font-medium capitalize',
+                            lc.bg, lc.text
+                          )}>
+                            {lc.label}
+                          </span>
+                        );
+                      })()}
                     </div>
                     {artifact.createdAt && (
                       <div className="flex items-center gap-1 mt-1.5">

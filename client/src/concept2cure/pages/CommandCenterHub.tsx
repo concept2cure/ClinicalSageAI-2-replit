@@ -8,6 +8,7 @@
  */
 import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { LIFECYCLE, toLifecycleStage } from '@/concept2cure/components/ui/enterprise';
 import { useDeliverable } from '@/concept2cure/hooks/useDeliverable';
 import { useProjects } from '@/concept2cure/hooks/useProjects';
 import { useProjectTasks } from '@/concept2cure/hooks/useProjectTasks';
@@ -75,21 +76,22 @@ const SEVERITY_STYLES = {
   low: 'text-zinc-500 bg-zinc-50',
 };
 
+// Status dots derived from canonical lifecycle where possible
 const STATUS_DOT: Record<string, string> = {
-  'Active': 'bg-emerald-500',
-  'Under Review': 'bg-blue-500',
-  'Drafting': 'bg-amber-500',
-  'Pre-Submission': 'bg-zinc-400',
-  'In Progress': 'bg-blue-500',
-  'Review': 'bg-amber-500',
-  'Approved': 'bg-emerald-500',
-  'Draft': 'bg-zinc-400',
-  'Pending Data': 'bg-orange-500',
-  'Completed': 'bg-emerald-500',
-  'Scheduled': 'bg-blue-500',
-  'Available': 'bg-emerald-500',
-  'Busy': 'bg-amber-500',
-  'In Meeting': 'bg-orange-500',
+  'Active':         LIFECYCLE.approved.dot,
+  'Under Review':   LIFECYCLE.in_review.dot,
+  'Drafting':       LIFECYCLE.draft.dot,
+  'Pre-Submission': LIFECYCLE.not_started.dot,
+  'In Progress':    LIFECYCLE.in_review.dot,
+  'Review':         LIFECYCLE.in_review.dot,
+  'Approved':       LIFECYCLE.approved.dot,
+  'Draft':          LIFECYCLE.draft.dot,
+  'Pending Data':   LIFECYCLE.draft.dot,
+  'Completed':      LIFECYCLE.approved.dot,
+  'Scheduled':      LIFECYCLE.in_review.dot,
+  'Available':      LIFECYCLE.approved.dot,
+  'Busy':           LIFECYCLE.draft.dot,
+  'In Meeting':     LIFECYCLE.draft.dot,
 };
 
 const COLUMNS = [

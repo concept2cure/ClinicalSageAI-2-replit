@@ -22,6 +22,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { LIFECYCLE } from '../ui/enterprise';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -62,42 +63,18 @@ interface ReviewerAssignmentProps {
 
 // ── Status config ───────────────────────────────────────────────────────────
 
+// Review statuses use canonical lifecycle semantic colors
 const STATUS_CONFIG: Record<ReviewStatus, {
   label: string;
   icon: React.ElementType;
   color: string;
   bg: string;
 }> = {
-  pending: {
-    label: 'Pending',
-    icon: Clock,
-    color: 'text-zinc-500',
-    bg: 'bg-zinc-100',
-  },
-  in_progress: {
-    label: 'Reviewing',
-    icon: MessageSquare,
-    color: 'text-blue-600',
-    bg: 'bg-blue-50',
-  },
-  approved: {
-    label: 'Approved',
-    icon: CheckCircle,
-    color: 'text-emerald-600',
-    bg: 'bg-emerald-50',
-  },
-  changes_requested: {
-    label: 'Changes Requested',
-    icon: AlertCircle,
-    color: 'text-amber-600',
-    bg: 'bg-amber-50',
-  },
-  rejected: {
-    label: 'Rejected',
-    icon: XCircle,
-    color: 'text-red-600',
-    bg: 'bg-red-50',
-  },
+  pending:           { label: 'Pending',            icon: Clock,          color: LIFECYCLE.not_started.text,  bg: LIFECYCLE.not_started.bg },
+  in_progress:       { label: 'Reviewing',          icon: MessageSquare,  color: LIFECYCLE.in_review.text,    bg: LIFECYCLE.in_review.bg },
+  approved:          { label: 'Approved',           icon: CheckCircle,    color: LIFECYCLE.approved.text,     bg: LIFECYCLE.approved.bg },
+  changes_requested: { label: 'Changes Requested',  icon: AlertCircle,    color: LIFECYCLE.draft.text,        bg: LIFECYCLE.draft.bg },
+  rejected:          { label: 'Rejected',           icon: XCircle,        color: 'text-red-600',              bg: 'bg-red-50' },
 };
 
 // ── Helpers ─────────────────────────────────────────────────────────────────

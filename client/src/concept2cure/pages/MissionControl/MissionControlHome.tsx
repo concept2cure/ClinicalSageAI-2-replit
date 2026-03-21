@@ -12,6 +12,7 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
+import { LIFECYCLE, toLifecycleStage } from '../../components/ui/enterprise';
 import {
   Target,
   Compass,
@@ -458,27 +459,27 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
                 <span className="text-xs text-zinc-500">{inMotion.length} active</span>
               </div>
 
-              {/* Lifecycle bar */}
+              {/* Lifecycle bar — canonical colors */}
               <div className="flex items-center gap-1 h-2 mb-4 rounded-full overflow-hidden bg-zinc-100">
                 {lifecycleCounts['approved'] && (
-                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${(lifecycleCounts['approved'] / (artifacts.length || 1)) * 100}%` }} />
+                  <div className={cn('h-full rounded-full', LIFECYCLE.approved.dot)} style={{ width: `${(lifecycleCounts['approved'] / (artifacts.length || 1)) * 100}%` }} />
                 )}
                 {lifecycleCounts['in-review'] && (
-                  <div className="h-full bg-blue-500 rounded-full" style={{ width: `${(lifecycleCounts['in-review'] / (artifacts.length || 1)) * 100}%` }} />
+                  <div className={cn('h-full rounded-full', LIFECYCLE.in_review.dot)} style={{ width: `${(lifecycleCounts['in-review'] / (artifacts.length || 1)) * 100}%` }} />
                 )}
                 {lifecycleCounts['drafting'] && (
-                  <div className="h-full bg-amber-400 rounded-full" style={{ width: `${(lifecycleCounts['drafting'] / (artifacts.length || 1)) * 100}%` }} />
+                  <div className={cn('h-full rounded-full', LIFECYCLE.draft.dot)} style={{ width: `${(lifecycleCounts['drafting'] / (artifacts.length || 1)) * 100}%` }} />
                 )}
                 {lifecycleCounts['planned'] && (
-                  <div className="h-full bg-zinc-300 rounded-full" style={{ width: `${(lifecycleCounts['planned'] / (artifacts.length || 1)) * 100}%` }} />
+                  <div className={cn('h-full rounded-full', LIFECYCLE.not_started.dot)} style={{ width: `${(lifecycleCounts['planned'] / (artifacts.length || 1)) * 100}%` }} />
                 )}
               </div>
 
               <div className="flex items-center gap-4 text-xs text-zinc-500 mb-4">
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" /> Approved ({lifecycleCounts['approved'] || 0})</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500" /> In Review ({lifecycleCounts['in-review'] || 0})</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400" /> Drafting ({lifecycleCounts['drafting'] || 0})</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-zinc-300" /> Planned ({lifecycleCounts['planned'] || 0})</span>
+                <span className="flex items-center gap-1"><span className={cn('w-2 h-2 rounded-full', LIFECYCLE.approved.dot)} /> Approved ({lifecycleCounts['approved'] || 0})</span>
+                <span className="flex items-center gap-1"><span className={cn('w-2 h-2 rounded-full', LIFECYCLE.in_review.dot)} /> In Review ({lifecycleCounts['in-review'] || 0})</span>
+                <span className="flex items-center gap-1"><span className={cn('w-2 h-2 rounded-full', LIFECYCLE.draft.dot)} /> Drafting ({lifecycleCounts['drafting'] || 0})</span>
+                <span className="flex items-center gap-1"><span className={cn('w-2 h-2 rounded-full', LIFECYCLE.not_started.dot)} /> Planned ({lifecycleCounts['planned'] || 0})</span>
               </div>
 
               {inMotion.length > 0 ? (
@@ -487,8 +488,7 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
                     <div key={a.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-zinc-50">
                       <div className={cn(
                         'w-2 h-2 rounded-full flex-shrink-0',
-                        a.lifecycleState === 'in-review' ? 'bg-blue-500' :
-                        a.lifecycleState === 'drafting' ? 'bg-amber-400' : 'bg-zinc-400'
+                        LIFECYCLE[toLifecycleStage(a.lifecycleState || 'not_started')].dot
                       )} />
                       <span className="text-xs font-mono text-zinc-500 w-12">{a.code}</span>
                       <span className="text-sm text-zinc-900 flex-1 truncate">{a.title}</span>

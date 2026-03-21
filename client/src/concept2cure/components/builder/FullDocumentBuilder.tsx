@@ -8,6 +8,7 @@
 
 import React, { useState, useCallback } from 'react';
 import NanoBananaImageGenerator from '@/components/NanoBananaImageGenerator';
+import { LIFECYCLE } from '@/concept2cure/components/ui/enterprise';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -360,8 +361,8 @@ export const FullDocumentBuilder: React.FC = () => {
             {buildResult.sections.map(section => (
               <div key={`${section.number}-${section.agency || ''}`} className="px-4 py-3 flex items-center gap-3 hover:bg-zinc-50">
                 <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                  section.status === 'drafted' ? 'bg-green-500' :
-                  section.status === 'template_only' ? 'bg-yellow-500' : 'bg-zinc-300'
+                  section.status === 'drafted' ? LIFECYCLE.approved.dot :
+                  section.status === 'template_only' ? LIFECYCLE.draft.dot : LIFECYCLE.not_started.dot
                 }`} />
                 <span className="text-xs font-mono text-zinc-400 w-10">{section.number}</span>
                 <span className="text-sm text-zinc-900 flex-1">{section.title}</span>

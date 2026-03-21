@@ -49,6 +49,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { LIFECYCLE } from '../ui/enterprise';
 import { getCurrentUser } from '../../utils/getCurrentUser';
 
 // =============================================================================
@@ -152,15 +153,15 @@ const ROLE_CONFIG: Record<
     icon: PenTool,
   },
   Reviewer: {
-    color: 'text-amber-600',
-    bg: 'bg-amber-50',
-    border: 'border-amber-200',
+    color: LIFECYCLE.in_review.text,
+    bg: LIFECYCLE.in_review.bg,
+    border: LIFECYCLE.in_review.border,
     icon: Eye,
   },
   Approver: {
-    color: 'text-emerald-600',
-    bg: 'bg-emerald-50',
-    border: 'border-emerald-200',
+    color: LIFECYCLE.approved.text,
+    bg: LIFECYCLE.approved.bg,
+    border: LIFECYCLE.approved.border,
     icon: BadgeCheck,
   },
   QA: {
@@ -171,28 +172,14 @@ const ROLE_CONFIG: Record<
   },
 };
 
+// Signer statuses use canonical lifecycle semantic colors
 const STATUS_CONFIG: Record<
   SignerStatus,
   { label: string; color: string; bg: string; icon: React.ElementType }
 > = {
-  pending: {
-    label: 'Pending',
-    color: 'text-zinc-500',
-    bg: 'bg-zinc-100',
-    icon: Clock,
-  },
-  signed: {
-    label: 'Signed',
-    color: 'text-emerald-700',
-    bg: 'bg-emerald-50',
-    icon: CheckCircle2,
-  },
-  rejected: {
-    label: 'Rejected',
-    color: 'text-red-700',
-    bg: 'bg-red-50',
-    icon: XCircle,
-  },
+  pending:  { label: 'Pending',   color: LIFECYCLE.not_started.text,  bg: LIFECYCLE.not_started.bg,  icon: Clock },
+  signed:   { label: 'Signed',    color: LIFECYCLE.approved.text,     bg: LIFECYCLE.approved.bg,     icon: CheckCircle2 },
+  rejected: { label: 'Rejected',  color: 'text-red-700',             bg: 'bg-red-50',               icon: XCircle },
 };
 
 const ROLE_MEANING_MAP: Record<SignerRole, string> = {

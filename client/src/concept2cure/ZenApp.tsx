@@ -29,6 +29,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspens
 import { useQuery } from '@tanstack/react-query';
 import { useLocation, useRoute } from 'wouter';
 import { cn } from '@/lib/utils';
+import { LoadingState } from './components/ui/enterprise';
 import { ZenSidebar } from './components/sidebar/ZenSidebar';
 import { ZenChat } from './components/chat/ZenChat';
 import { ZenCommandPalette } from './components/command/ZenCommandPalette';
@@ -77,7 +78,6 @@ import {
   Folder,
   ShieldCheck,
   WifiOff,
-  Loader2,
   FileText,
   Plus,
   ArrowLeft,
@@ -120,12 +120,9 @@ import {
   GraduationCap,
 } from 'lucide-react';
 
-// Loading fallback — subtle spinner with text
+// Loading fallback — canonical accessible loading state
 const ModuleLoadingFallback = () => (
-  <div className="flex-1 flex flex-col items-center justify-center bg-white gap-3">
-    <div className="w-5 h-5 rounded-full border-2 border-zinc-200 border-t-zinc-500 animate-spin" />
-    <span className="text-sm text-zinc-400">Loading module...</span>
-  </div>
+  <LoadingState size="page" label="Loading module…" />
 );
 
 // Utility: instantly redirect dead layout modes to regulatory-workspace
@@ -571,10 +568,7 @@ const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
         <ErrorBoundary>
           <Suspense
             fallback={
-              <div className="flex flex-col items-center justify-center h-full gap-3">
-                <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
-                <span className="text-sm text-zinc-400">Loading...</span>
-              </div>
+              <LoadingState size="page" />
             }
           >
             {PANEL_COMPONENTS[panel] ? (
@@ -2207,10 +2201,7 @@ export const ZenApp: React.FC = () => {
             >
               <Suspense
                 fallback={
-                  <div className="flex-1 flex flex-col items-center justify-center bg-white gap-3">
-                    <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
-                    <span className="text-sm text-zinc-400">Loading...</span>
-                  </div>
+                  <LoadingState size="page" />
                 }
               >
                 <AboutTrainingCenter />
@@ -2530,9 +2521,7 @@ export const ZenApp: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense
                     fallback={
-                      <div className="flex-1 flex items-center justify-center bg-white h-full">
-                        <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
-                      </div>
+                      <LoadingState size="page" />
                     }
                   >
                     <TemplateLibraryInline
@@ -2595,9 +2584,7 @@ export const ZenApp: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense
                     fallback={
-                      <div className="flex-1 flex items-center justify-center">
-                        <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
-                      </div>
+                      <LoadingState size="page" />
                     }
                   >
                     <SubmissionOpsCommandCenter
@@ -2631,12 +2618,7 @@ export const ZenApp: React.FC = () => {
               <ErrorBoundary>
                 <Suspense
                   fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <div className="text-center">
-                        <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-3" />
-                        <p className="text-sm text-zinc-500">Loading Enablement Center...</p>
-                      </div>
-                    </div>
+                    <LoadingState size="page" label="Loading Enablement Center…" />
                   }
                 >
                   <EnablementCenter
@@ -2702,9 +2684,7 @@ export const ZenApp: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense
                     fallback={
-                      <div className="flex-1 flex items-center justify-center bg-white">
-                        <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
-                      </div>
+                      <LoadingState size="page" />
                     }
                   >
                     <INDWorkspace
@@ -2753,9 +2733,7 @@ export const ZenApp: React.FC = () => {
               <ErrorBoundary>
                 <Suspense
                   fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
-                    </div>
+                    <LoadingState size="page" />
                   }
                 >
                   <IntelligenceHub onClose={() => setLayoutMode('projects')} />
@@ -2787,9 +2765,7 @@ export const ZenApp: React.FC = () => {
               <ErrorBoundary>
                 <Suspense
                   fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
-                    </div>
+                    <LoadingState size="page" />
                   }
                 >
                   <ReviewReadiness onClose={() => setLayoutMode('projects')} />
@@ -2821,9 +2797,7 @@ export const ZenApp: React.FC = () => {
               <ErrorBoundary>
                 <Suspense
                   fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
-                    </div>
+                    <LoadingState size="page" />
                   }
                 >
                   <CommandCenterHub onClose={() => setLayoutMode('projects')} />
@@ -2853,9 +2827,7 @@ export const ZenApp: React.FC = () => {
               <ErrorBoundary>
                 <Suspense
                   fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
-                    </div>
+                    <LoadingState size="page" />
                   }
                 >
                   <ClientIntelligencePage />
@@ -2888,9 +2860,7 @@ export const ZenApp: React.FC = () => {
               <ErrorBoundary>
                 <Suspense
                   fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
-                    </div>
+                    <LoadingState size="page" />
                   }
                 >
                   <CollaborationHubPage
@@ -2924,9 +2894,7 @@ export const ZenApp: React.FC = () => {
               <ErrorBoundary>
                 <Suspense
                   fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
-                    </div>
+                    <LoadingState size="page" />
                   }
                 >
                   <BiostatPlatformDashboard />
@@ -2953,9 +2921,7 @@ export const ZenApp: React.FC = () => {
               <ErrorBoundary>
                 <Suspense
                   fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
-                    </div>
+                    <LoadingState size="page" />
                   }
                 >
                   <TrainingManagementPage />
@@ -2987,9 +2953,7 @@ export const ZenApp: React.FC = () => {
               <ErrorBoundary>
                 <Suspense
                   fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
-                    </div>
+                    <LoadingState size="page" />
                   }
                 >
                   <AgentShowcasePage />
@@ -3021,9 +2985,7 @@ export const ZenApp: React.FC = () => {
               <ErrorBoundary>
                 <Suspense
                   fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
-                    </div>
+                    <LoadingState size="page" />
                   }
                 >
                   <DocumentSherpaPage />
@@ -3055,9 +3017,7 @@ export const ZenApp: React.FC = () => {
               <ErrorBoundary>
                 <Suspense
                   fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
-                    </div>
+                    <LoadingState size="page" />
                   }
                 >
                   <ReviewPulseDashboardPage />
@@ -3084,9 +3044,7 @@ export const ZenApp: React.FC = () => {
               <ErrorBoundary>
                 <Suspense
                   fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
-                    </div>
+                    <LoadingState size="page" />
                   }
                 >
                   <OnboardingWizardPage />
@@ -3166,9 +3124,7 @@ export const ZenApp: React.FC = () => {
               <ErrorBoundary>
                 <Suspense
                   fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
-                    </div>
+                    <LoadingState size="page" />
                   }
                 >
                   <ProjectKnowledgePanel projectId={activeProjectId || null} />
@@ -3221,9 +3177,7 @@ export const ZenApp: React.FC = () => {
               </div>
               <Suspense
                 fallback={
-                  <div className="flex-1 flex items-center justify-center">
-                    <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
-                  </div>
+                  <LoadingState size="page" />
                 }
               >
                 <LegalCenterPage onClose={() => setLayoutMode('projects')} />
@@ -3248,9 +3202,7 @@ export const ZenApp: React.FC = () => {
               </div>
               <Suspense
                 fallback={
-                  <div className="flex-1 flex items-center justify-center">
-                    <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
-                  </div>
+                  <LoadingState size="page" />
                 }
               >
                 <FullDocumentBuilder />
@@ -3263,9 +3215,7 @@ export const ZenApp: React.FC = () => {
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-report-engine">
               <Suspense
                 fallback={
-                  <div className="flex-1 flex items-center justify-center">
-                    <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
-                  </div>
+                  <LoadingState size="page" />
                 }
               >
                 <IntelligentReportGenerator />
@@ -3278,9 +3228,7 @@ export const ZenApp: React.FC = () => {
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-submission-builder">
               <Suspense
                 fallback={
-                  <div className="flex-1 flex items-center justify-center">
-                    <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
-                  </div>
+                  <LoadingState size="page" />
                 }
               >
                 <SubmissionBuilderPage
@@ -3297,9 +3245,7 @@ export const ZenApp: React.FC = () => {
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-template-library">
               <Suspense
                 fallback={
-                  <div className="flex-1 flex items-center justify-center">
-                    <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
-                  </div>
+                  <LoadingState size="page" />
                 }
               >
                 <TemplateLibraryPage
@@ -3363,9 +3309,7 @@ export const ZenApp: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense
                     fallback={
-                      <div className="flex-1 flex items-center justify-center">
-                        <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
-                      </div>
+                      <LoadingState size="page" />
                     }
                   >
                     <RICopilotHome
@@ -3421,9 +3365,7 @@ export const ZenApp: React.FC = () => {
           {!embeddedModule && layoutMode === 'projects' && (
             <Suspense
               fallback={
-                <div className="flex-1 flex items-center justify-center">
-                  <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
-                </div>
+                <LoadingState size="page" />
               }
             >
               <PlatformHome
@@ -3564,9 +3506,7 @@ export const ZenApp: React.FC = () => {
               <ErrorBoundary>
                 <Suspense
                   fallback={
-                    <div className="flex-1 flex items-center justify-center">
-                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
-                    </div>
+                    <LoadingState size="page" />
                   }
                 >
                   <EditorPanel
