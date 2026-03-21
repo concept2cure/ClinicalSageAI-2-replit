@@ -210,7 +210,7 @@ router.get('/session', async (req: Request, res: Response) => {
         displayName: sessionDisplayName,
         roles: sessionRoles,
         permissions: [],
-        organizationId: decoded.organizationId || '1',
+        organizationId: decoded.organizationId,
         organizationName: orgName,
         mfaEnabled: false,
         mfaMethods: [],
@@ -765,7 +765,7 @@ router.get('/me', async (req: Request, res: Response) => {
     const meRole = meMembership?.role || 'user';
     const meRoles =
       meRole === 'admin' ? ['admin', 'user'] : [meRole === 'editor' ? 'editor' : 'user'];
-    const meOrgId = decoded.organizationId || meMembership?.organizationId?.toString() || '1';
+    const meOrgId = decoded.organizationId || meMembership?.organizationId?.toString();
 
     // Look up the actual organization name
     let meOrgName = 'Organization';

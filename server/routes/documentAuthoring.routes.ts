@@ -258,9 +258,9 @@ const checkDocumentPermission = (requiredPermission: string) => {
 router.post('/session/init', authenticateJWT, async (req: Request, res: Response) => {
   try {
     const { documentId, sessionType = 'read' } = req.body;
-    const userId = Number(req.user?.id || req.userId || 1);
+    const userId = Number(req.user?.id || req.userId);
     const organizationId = Number(
-      req.user?.organizationId || req.tenantContext?.organizationId || 1
+      req.user?.organizationId || req.tenantContext?.organizationId
     );
 
     // Generate secure session token
@@ -423,7 +423,7 @@ router.get('/documents', authenticateJWT, async (req: Request, res: Response) =>
     const { status, documentType, category, search, page = 1, limit = 20 } = req.query;
 
     const organizationId = Number(
-      req.user?.organizationId || req.tenantContext?.organizationId || 1
+      req.user?.organizationId || req.tenantContext?.organizationId
     );
     const offset = (parseInt(page as string) - 1) * parseInt(limit as string);
 
@@ -490,7 +490,7 @@ router.get(
   async (req: Request, res: Response) => {
     try {
       const documentId = parseInt(req.params.id);
-      const userId = Number(req.user?.id || req.userId || 1);
+      const userId = Number(req.user?.id || req.userId);
 
       // Get document with current version
       const document = await db!
@@ -560,11 +560,11 @@ router.post(
   documentRateLimiter,
   async (req: Request, res: Response) => {
     try {
-      const userId = Number(req.user?.id || req.userId || 1);
+      const userId = Number(req.user?.id || req.userId);
       const organizationId = Number(
-        req.user?.organizationId || req.tenantContext?.organizationId || 1
+        req.user?.organizationId || req.tenantContext?.organizationId
       );
-      const clientWorkspaceId = Number((req as any).tenantContext?.clientWorkspaceId || 1);
+      const clientWorkspaceId = Number((req as any).tenantContext?.clientWorkspaceId);
 
       // Validate input
       const documentData = insertDocumentSchema.parse({
@@ -642,7 +642,7 @@ router.put(
   async (req: Request, res: Response) => {
     try {
       const documentId = parseInt(req.params.id);
-      const userId = Number(req.user?.id || req.userId || 1);
+      const userId = Number(req.user?.id || req.userId);
 
       // Get current document state
       const currentDoc = await db!
@@ -710,7 +710,7 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       const documentId = parseInt(req.params.id);
-      const userId = Number(req.user?.id || req.userId || 1);
+      const userId = Number(req.user?.id || req.userId);
 
       // Get document
       const document = await db!
@@ -849,7 +849,7 @@ router.post('/signatures', authenticateJWT, async (req: Request, res: Response) 
       meaningStatement,
     } = req.body;
 
-    const userId = Number(req.user?.id || req.userId || 1);
+    const userId = Number(req.user?.id || req.userId);
 
     // Verify user password (dual authentication)
     const user = await db!.select().from(users).where(eq(users.id, userId)).limit(1);
@@ -1066,7 +1066,7 @@ router.get(
       } = req.query;
 
       const organizationId = Number(
-        req.user?.organizationId || req.tenantContext?.organizationId || 1
+        req.user?.organizationId || req.tenantContext?.organizationId
       );
       const offset = (parseInt(page as string) - 1) * parseInt(limit as string);
 
@@ -1165,7 +1165,7 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       const documentId = parseInt(req.params.id);
-      const userId = Number(req.user?.id || req.userId || 1);
+      const userId = Number(req.user?.id || req.userId);
       const { sectionId, lockType = 'exclusive', lockReason } = req.body;
 
       // Check if section is already locked
@@ -1251,7 +1251,7 @@ router.delete(
     try {
       const documentId = parseInt(req.params.id);
       const lockToken = req.params.lockToken;
-      const userId = Number(req.user?.id || req.userId || 1);
+      const userId = Number(req.user?.id || req.userId);
 
       // Find lock
       const lock = await db!
@@ -1356,7 +1356,7 @@ router.post(
     try {
       const documentId = parseInt(req.params.id);
       const { format = 'pdf', versionId, includeMetadata = true } = req.body;
-      const userId = Number(req.user?.id || req.userId || 1);
+      const userId = Number(req.user?.id || req.userId);
 
       // Get document and version
       const document = await db!
@@ -1490,9 +1490,9 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       const { documentIds, limsEndpoint, apiKey } = req.body;
-      const userId = Number(req.user?.id || req.userId || 1);
+      const userId = Number(req.user?.id || req.userId);
       const organizationId = Number(
-        req.user?.organizationId || req.tenantContext?.organizationId || 1
+        req.user?.organizationId || req.tenantContext?.organizationId
       );
 
       // Validate LIMS configuration
@@ -1566,7 +1566,7 @@ router.post(
 router.get('/integrations/dms/status', authenticateJWT, async (req: Request, res: Response) => {
   try {
     const organizationId = Number(
-      req.user?.organizationId || req.tenantContext?.organizationId || 1
+      req.user?.organizationId || req.tenantContext?.organizationId
     );
 
     // Get DMS configuration from organization settings
@@ -1612,7 +1612,7 @@ router.get('/integrations/dms/status', authenticateJWT, async (req: Request, res
 router.post('/mfa/verify', authenticateJWT, async (req: Request, res: Response) => {
   try {
     const { token, action } = req.body;
-    const userId = Number(req.user?.id || req.userId || 1);
+    const userId = Number(req.user?.id || req.userId);
 
     // Get user MFA settings
     const user = await db!.select().from(users).where(eq(users.id, userId)).limit(1);
@@ -1673,7 +1673,7 @@ router.post('/mfa/verify', authenticateJWT, async (req: Request, res: Response) 
 // POST /api/document-authoring/mfa/setup
 router.post('/mfa/setup', authenticateJWT, async (req: Request, res: Response) => {
   try {
-    const userId = Number(req.user?.id || req.userId || 1);
+    const userId = Number(req.user?.id || req.userId);
 
     // Generate MFA secret (would use actual MFA library)
     // const secret = speakeasy.generateSecret({ name: 'Document Authoring System' });
@@ -1901,7 +1901,7 @@ router.put(
     try {
       const documentId = parseInt(req.params.id);
       const { userId: targetUserId, permissions } = req.body;
-      const userId = Number(req.user?.id || req.userId || 1);
+      const userId = Number(req.user?.id || req.userId);
 
       // Get current document
       const document = await db!
@@ -1978,7 +1978,7 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       const documentId = parseInt(req.params.id);
-      const userId = Number(req.user?.id || req.userId || 1);
+      const userId = Number(req.user?.id || req.userId);
 
       const commentData = insertDocumentCommentSchema.parse({
         ...req.body,

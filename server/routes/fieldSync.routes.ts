@@ -41,7 +41,7 @@ router.post('/update-field', async (req, res) => {
       source: source as 'workflow' | 'document',
       field,
       value,
-      userId: userId || 1,
+      userId: userId,
       timestamp: new Date(),
       metadata: {
         projectId,

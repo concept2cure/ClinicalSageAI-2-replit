@@ -66,7 +66,7 @@ router.get('/project', async (req, res) => {
 router.post('/project', async (req, res) => {
   try {
     const organizationId = req.user?.organizationId || DEFAULT_ORG_ID;
-    const userId = req.user?.id || 1;
+    const userId = req.user?.id;
     const { projectData, stepData, currentStep, sections, cmcData, csrData } = req.body;
     
     // Calculate progress based on sections
@@ -322,7 +322,7 @@ router.post('/templates/:templateId/use', async (req, res) => {
   try {
     const { templateId } = req.params;
     const { projectId } = req.body;
-    const userId = req.user?.id || 1;
+    const userId = req.user?.id;
     const organizationId = req.user?.organizationId || DEFAULT_ORG_ID;
     
     // Get template
@@ -383,7 +383,7 @@ router.post('/templates/:templateId/use', async (req, res) => {
 router.post('/workflow/save', async (req, res) => {
   try {
     const { module, entityType, entityId, currentState, completedSteps, pendingSteps, progressPercentage } = req.body;
-    const userId = req.user?.id || 1;
+    const userId = req.user?.id;
     const organizationId = req.user?.organizationId || DEFAULT_ORG_ID;
     const sessionId = req.sessionID || generateUUID();
     
@@ -455,7 +455,7 @@ router.post('/workflow/save', async (req, res) => {
 router.get('/workflow/:entityId', async (req, res) => {
   try {
     const { entityId } = req.params;
-    const userId = req.user?.id || 1;
+    const userId = req.user?.id;
     
     const workflows = await db
       .select()

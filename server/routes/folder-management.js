@@ -52,7 +52,10 @@ router.get('/folders', asyncHandler(async (req, res) => {
 // POST /api/folders - Create new folder
 router.post('/folders', asyncHandler(async (req, res) => {
     const validated = createFolderBody.parse(req.body);
-    const organizationId = req.body.organizationId || 1;
+    const organizationId = req.body.organizationId;
+    if (!organizationId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
 
     const result = await pool.query(
       `INSERT INTO document_folders (name, parent_id, organization_id, created_by_id)

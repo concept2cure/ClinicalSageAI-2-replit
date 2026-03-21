@@ -14,6 +14,8 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { cn } from '@/lib/utils';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
+import { useAIAction } from '../../hooks/useAIAction';
+import type { AIActionType, AIActionSourceSurface } from '../../hooks/useAIAction';
 import {
   Sparkles,
   ArrowUp,
@@ -133,6 +135,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   mode = 'full',
   defaultChatMode = 'standard',
 }) => {
+  // AI Action system — unified execution spine (Phase 1)
+  const aiAction = useAIAction();
+
   const [messages, setMessages] = useState<AnaMessage[]>([]);
   const [input, setInput] = useState('');
   const [isThinking, setIsThinking] = useState(false);
@@ -492,6 +497,51 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         ts: Date.now(),
       });
     }
+
+    // Route AI-actionable intents through the unified action system
+    // Phase 1: Map known intents to AI actions; fall through to chat for unknown
+    const aiActionMap: Record<string, { actionType: AIActionType; targetType: 'artifact' | 'document' }> = {
+      'validation.run': { actionType: 'run_validation', targetType: 'artifact' },
+      'artifact.promote': { actionType: 'promote_artifact', targetType: 'artifact' },
+      'document.export': { actionType: 'export_document', targetType: 'document' },
+      'document.version': { actionType: 'save_document_version', targetType: 'document' },
+      'document.route': { actionType: 'route_document_to_module', targetType: 'document' },
+    };
+    const mappedEntry = action.intent ? aiActionMap[action.intent] : undefined;
+    const projectId = contextProfile?.projectId ? Number(contextProfile.projectId) : NaN;
+    if (mappedEntry && !isNaN(projectId)) {
+      aiAction.execute({
+        actionType: mappedEntry.actionType,
+        targetType: mappedEntry.targetType,
+        targetId: (action as any).targetId || null,
+        projectId,
+        sourceSurface: 'global_panel' as AIActionSourceSurface,
+        payload: (action as any).payload || {},
+      }).then(result => {
+        if (onActionRun) {
+          onActionRun({
+            id: action.id,
+            intent: action.intent!,
+            label: action.label,
+            status: result.success ? 'done' : 'failed',
+            ts: Date.now(),
+          });
+        }
+      }).catch((err) => {
+        // Notify caller of failure so UI can reflect the error
+        if (onActionRun) {
+          onActionRun({
+            id: action.id,
+            intent: action.intent!,
+            label: action.label,
+            status: 'failed',
+            ts: Date.now(),
+            error: err instanceof Error ? err.message : 'Action execution failed',
+          });
+        }
+      });
+    }
+
     handleSend(action.label);
   };
 

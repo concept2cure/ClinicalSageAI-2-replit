@@ -26,7 +26,10 @@ async function sq(sql: string, params: any[] = []) {
 // ─── POST /api/workspace/projects ──────────────────────────────────────────
 
 router.post('/workspace/projects', async (req: Request, res: Response) => {
-  const orgId: number = parseInt((req as any).organizationId || '1', 10);
+  const orgId: number = parseInt((req as any).organizationId || '', 10);
+  if (!orgId) {
+    return res.status(401).json({ ok: false, error: 'Organization context required' });
+  }
   const userId: string | null = (req as any).userId || null;
 
   const {
@@ -143,7 +146,10 @@ router.post('/workspace/projects', async (req: Request, res: Response) => {
 // ─── GET /api/workspace/projects ────────────────────────────────────────────
 
 router.get('/workspace/projects', async (req: Request, res: Response) => {
-  const orgId: number = parseInt((req as any).organizationId || '1', 10);
+  const orgId: number = parseInt((req as any).organizationId || '', 10);
+  if (!orgId) {
+    return res.status(401).json({ ok: false, error: 'Organization context required' });
+  }
 
   try {
     const r = await sq(

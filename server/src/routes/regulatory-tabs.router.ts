@@ -14,7 +14,11 @@ const q = async <T = any>(query: string, params: any[] = []): Promise<{ rows: T[
 
 // Helper to get tenant_id from request headers/context
 const getTenantId = (req: any): string => {
-  return req.headers['x-tenant-id'] || req.query.tenant_id || '7'; // Default to org 7 for testing
+  const tenantId = req.headers['x-tenant-id'] || req.query.tenant_id;
+  if (!tenantId) {
+    throw new Error('Tenant context required');
+  }
+  return tenantId;
 };
 
 const router = Router();

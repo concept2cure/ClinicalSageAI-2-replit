@@ -24,6 +24,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { InlineAIButton } from '../ui/InlineAIButton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -705,6 +706,13 @@ export default function AnalyticalValidationTracker() {
                                 </p>
                               </div>
                               <div className="flex items-center gap-2">
+                                <InlineAIButton
+                                  actionType="explain_selection"
+                                  content={`${meta.label} (${meta.standard}): Value=${val || 'not set'}, Status=${status}, Threshold=${JSON.stringify(meta.threshold)}, Unit=${meta.unit}`}
+                                  projectId={1}
+                                  label="Explain"
+                                  size="sm"
+                                />
                                 {status === 'pass' && (
                                   <Badge className="bg-green-100 text-green-800">
                                     <CheckCircle2 className="h-3 w-3 mr-1" />

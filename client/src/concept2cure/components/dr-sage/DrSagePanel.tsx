@@ -6,8 +6,11 @@ import {
   ArrowRight,
   Send,
   Check,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAIAction } from "../../hooks/useAIAction";
+import type { AIActionResponse } from "../../hooks/useAIAction";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -411,6 +414,36 @@ function AnaContent() {
 }
 
 function FixContent() {
+  const { execute, isLoading } = useAIAction();
+  const [fixingIndex, setFixingIndex] = useState<number | null>(null);
+  const [fixResults, setFixResults] = useState<Record<number, AIActionResponse | null>>({});
+
+  const handleFix = async (issue: typeof MOCK_ISSUES[0], idx: number) => {
+    setFixingIndex(idx);
+    try {
+      // Route through unified AI action system — run validation + refinement
+      // Use inline content validation (no targetId needed when payload.content is provided)
+      const result = await execute({
+        actionType: 'run_validation',
+        targetType: 'document',
+        projectId: 1, // Phase 2: derive from workspace context
+        sourceSurface: 'contextual_rail',
+        payload: {
+          content: issue.description,
+          documentType: 'regulatory_submission',
+          issueTitle: issue.title,
+          severity: issue.severity,
+        },
+      });
+      setFixResults(prev => ({ ...prev, [idx]: result }));
+    } catch {
+      // Non-fatal — show error state
+      setFixResults(prev => ({ ...prev, [idx]: null }));
+    } finally {
+      setFixingIndex(null);
+    }
+  };
+
   return (
     <div className="py-6 px-5 space-y-4">
       <p className="text-sm text-zinc-600 leading-relaxed">
@@ -433,7 +466,7 @@ function FixContent() {
                   <p
                     className={cn(
                       "text-sm",
-                      issue.resolved
+                      issue.resolved || fixResults[idx]?.success
                         ? "text-zinc-400"
                         : issue.severity === "critical"
                           ? "font-semibold text-zinc-900"
@@ -442,7 +475,7 @@ function FixContent() {
                   >
                     {issue.title}
                   </p>
-                  {issue.resolved && (
+                  {(issue.resolved || fixResults[idx]?.success) && (
                     <Check className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
                   )}
                 </div>
@@ -452,10 +485,26 @@ function FixContent() {
                 <p className="text-sm text-zinc-500 leading-relaxed">
                   {issue.description}
                 </p>
-                {!issue.resolved && (
-                  <button className="text-sm text-blue-600 hover:underline mt-2">
-                    Fix this
+                {!issue.resolved && !fixResults[idx]?.success && (
+                  <button
+                    onClick={() => handleFix(issue, idx)}
+                    disabled={isLoading}
+                    className="text-sm text-blue-600 hover:underline mt-2 disabled:opacity-50 flex items-center gap-1.5"
+                  >
+                    {fixingIndex === idx ? (
+                      <>
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        Analyzing...
+                      </>
+                    ) : (
+                      'Fix this'
+                    )}
                   </button>
+                )}
+                {fixResults[idx] && !fixResults[idx]?.success && (
+                  <p className="text-xs text-amber-600 mt-1">
+                    Could not auto-fix — {fixResults[idx]?.errors?.[0]?.message || 'review manually'}
+                  </p>
                 )}
               </div>
             </div>

@@ -15,8 +15,11 @@ const orchestrationService = new DocumentOrchestrationService();
 router.post('/api/510k/:projectId/generate-documents', async (req, res) => {
   try {
     const { projectId } = req.params;
-    const userId = req.headers['x-user-id'] as string || '1';
-    const organizationId = req.headers['x-organization-id'] as string || '1';
+    const userId = req.headers['x-user-id'] as string;
+    const organizationId = req.headers['x-organization-id'] as string;
+    if (!organizationId) {
+      return res.status(401).json({ success: false, error: 'Organization context required' });
+    }
 
     const result = await orchestrationService.orchestrateDocumentGeneration(
       projectId,
@@ -40,8 +43,8 @@ router.post('/api/510k/:projectId/generate-documents', async (req, res) => {
 router.post('/api/510k/documents/:documentId/lock', async (req, res) => {
   try {
     const { documentId } = req.params;
-    const userId = req.headers['x-user-id'] as string || '1';
-    const organizationId = req.headers['x-organization-id'] as string || '1';
+    const userId = req.headers['x-user-id'] as string;
+    const organizationId = req.headers['x-organization-id'] as string;
 
     const lockedDocument = await orchestrationService.lockDocument(
       documentId,
@@ -68,8 +71,8 @@ router.post('/api/510k/documents/:documentId/lock', async (req, res) => {
 router.post('/api/510k/documents/:documentId/version', async (req, res) => {
   try {
     const { documentId } = req.params;
-    const userId = req.headers['x-user-id'] as string || '1';
-    const organizationId = req.headers['x-organization-id'] as string || '1';
+    const userId = req.headers['x-user-id'] as string;
+    const organizationId = req.headers['x-organization-id'] as string;
 
     const newVersion = await orchestrationService.createDocumentVersion(
       documentId,

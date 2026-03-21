@@ -438,7 +438,17 @@ export class AIGateway {
       }
     }
 
-    const completion = await this.openaiClient.chat.completions.create(params);
+    const completion = await Promise.race([
+      this.openaiClient.chat.completions.create(params),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('OpenAI API call timed out after 120s')), 120_000)
+      ),
+    ]).catch((error: Error) => {
+      if (error.message.includes('timed out')) {
+        this.recordFailure('openai', error);
+      }
+      throw error;
+    });
     const choice = completion.choices?.[0];
 
     return {
@@ -555,7 +565,17 @@ export class AIGateway {
       }
     }
 
-    const response = await this.anthropicClient.messages.create(params);
+    const response = await Promise.race([
+      this.anthropicClient.messages.create(params),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Anthropic API call timed out after 120s')), 120_000)
+      ),
+    ]).catch((error: Error) => {
+      if (error.message.includes('timed out')) {
+        this.recordFailure('anthropic', error);
+      }
+      throw error;
+    });
 
     // Extract text, thinking, and tool use blocks
     let content = '';
@@ -758,7 +778,17 @@ export class AIGateway {
       params.response_format = { type: 'json_object' };
     }
 
-    const completion = await this.moonshotClient.chat.completions.create(params);
+    const completion = await Promise.race([
+      this.moonshotClient.chat.completions.create(params),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Moonshot API call timed out after 120s')), 120_000)
+      ),
+    ]).catch((error: Error) => {
+      if (error.message.includes('timed out')) {
+        this.recordFailure('moonshot', error);
+      }
+      throw error;
+    });
     const choice = completion.choices?.[0];
 
     return {
@@ -941,18 +971,21 @@ export class AIGateway {
     // Mark unhealthy after 3 consecutive failures
     if (health.consecutiveFailures >= 3) {
       health.healthy = false;
+      // Exponential backoff: 60s, 120s, 240s, max 5min
+      const backoffRound = Math.floor(health.consecutiveFailures / 3) - 1;
+      const backoffMs = Math.min(300_000, 60_000 * Math.pow(2, backoffRound));
       console.warn(
-        `[AI Gateway] Provider ${provider} marked unhealthy after ${health.consecutiveFailures} failures`
+        `[AI Gateway] Provider ${provider} marked unhealthy after ${health.consecutiveFailures} failures — recovery in ${backoffMs / 1000}s`
       );
 
-      // Auto-recover after 60 seconds
       setTimeout(() => {
-        if (health.consecutiveFailures >= 3) {
+        // Only recover if no new successes have already reset it
+        if (!health.healthy) {
           health.healthy = true;
           health.consecutiveFailures = 0;
-          console.log(`[AI Gateway] Provider ${provider} auto-recovered`);
+          console.log(`[AI Gateway] Provider ${provider} auto-recovered after ${backoffMs / 1000}s backoff`);
         }
-      }, 60000);
+      }, backoffMs);
     }
   }
 
@@ -1052,7 +1085,7 @@ export class AIGateway {
         maxRequestsPerMinutePerUser: 30,
         blockedPatterns: [],
         contentFilters: true,
-        piiDetection: false,
+        piiDetection: true,
       },
       auditEnabled: true,
       ...overrides,

@@ -112,7 +112,7 @@ import predictiveSectionsRoutes from './routes/predictive-sections';
 // Import enterprise routes
 import enterpriseRoutes from './api/enterprise/routes.js';
 
-// Import AnA Predictions routes
+// Import ForesightAI routes
 import foresightApiRoutes from './routes/foresight-api';
 import foresightAIAdvancedRoutes from './routes/foresight-ai-advanced';
 import foresightFeedbackRoutes from './routes/foresight-feedback';
@@ -177,10 +177,21 @@ async function gracefulShutdown(signal: string) {
     console.error('❌ Error closing Redis rate limiter:', error.message);
   }
 
-  // 4. Cleanup performance resources
+  // 4. Drain AI action queue and close Redis
+  try {
+    const { drainActionQueue, closeAllSSEConnections, closeRedis } = await import('./services/ai-actions/index');
+    closeAllSSEConnections();
+    await drainActionQueue(10_000);
+    await closeRedis();
+    console.log('AI Actions infrastructure shut down');
+  } catch (error: any) {
+    console.error('Error shutting down AI Actions:', error.message);
+  }
+
+  // 5. Cleanup performance resources
   cleanupPerformance();
 
-  // 5. Close database pool
+  // 6. Close database pool
   try {
     if (pool) await pool.end();
     console.log('✅ Database connections closed');
@@ -195,9 +206,15 @@ process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 // Add process-level error handlers to prevent crashes on recoverable errors
+let unhandledRejectionCount = 0;
 process.on('unhandledRejection', (reason, promise) => {
   console.error('🚨 Unhandled Rejection at:', promise, 'reason:', reason);
-  // Don't exit - log and continue for client stability
+  unhandledRejectionCount++;
+  // If repeated rejections occur (likely systemic issue), exit gracefully
+  if (unhandledRejectionCount >= 10) {
+    console.error('🚨 Too many unhandled rejections — shutting down');
+    process.exit(1);
+  }
 });
 
 process.on('uncaughtException', (error) => {
@@ -240,16 +257,13 @@ console.log('✅ Enterprise security and performance middleware enabled');
 app.use(httpLogger); // Add structured logging
 // Audit logging now handled by enterprise-security middleware
 
-// Body parsing with size limits (5MB covers AI chat payloads; file uploads use multer separately)
-app.use(express.json({ limit: '5mb' }));
-app.use(express.urlencoded({ extended: true, limit: '5mb' }));
+// Body parsing with size limits
+// 50MB needed for large document uploads via JSON (base64-encoded); file uploads use multer separately
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // Cookie parsing (required for CSRF double-submit pattern)
 import cookieParser from 'cookie-parser';
 app.use(cookieParser());
-
-// Body parsing with size limits
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // CSRF protection (double-submit cookie pattern)
 import { csrfProtection } from './middleware/csrf.js';
@@ -310,32 +324,36 @@ import { ensureCoreTables } from './db/ensureCoreTables';
 // Create Drizzle ORM instance for database queries
 const db = drizzle(pool);
 
-// Test database connection and ensure core tables exist
-pool
-  .connect()
-  .then(async client => {
+// Test database connection and ensure core tables exist (awaited at startup)
+async function verifyDatabaseConnection() {
+  try {
+    const client = await pool.connect();
     console.log('✅ Database connection successful');
     client.release();
-
-    // Enterprise: Verify all core tables exist on startup
-    try {
-      const result = await ensureCoreTables(process.env.DATABASE_URL);
-      if (result.success) {
-        console.log(`✅ All ${result.existingTables.length} core database tables verified`);
-      } else if (result.missingCritical.length > 0) {
-        console.error('❌ CRITICAL: Missing tables:', result.missingCritical.join(', '));
-        console.error('   Run: npm run db:push to sync schema');
-      } else if (result.errors.length > 0) {
-        console.error('⚠️ Table verification errors:', result.errors);
-      }
-    } catch (err: any) {
-      console.error('⚠️ Core table verification failed:', err.message);
-      // Non-fatal: app continues but may have issues with missing tables
-    }
-  })
-  .catch(err => {
+  } catch (err: any) {
     console.error('❌ Database connection failed:', err.message);
-  });
+    if (process.env.NODE_ENV === 'production') {
+      console.error('   Fatal in production — exiting');
+      process.exit(1);
+    }
+    return; // Non-fatal in dev
+  }
+
+  // Enterprise: Verify all core tables exist on startup
+  try {
+    const result = await ensureCoreTables(process.env.DATABASE_URL);
+    if (result.success) {
+      console.log(`✅ All ${result.existingTables.length} core database tables verified`);
+    } else if (result.missingCritical.length > 0) {
+      console.error('❌ CRITICAL: Missing tables:', result.missingCritical.join(', '));
+      console.error('   Run: npm run db:push to sync schema');
+    } else if (result.errors.length > 0) {
+      console.error('⚠️ Table verification errors:', result.errors);
+    }
+  } catch (err: any) {
+    console.error('⚠️ Core table verification failed:', err.message);
+  }
+}
 
 // Simple storage client for now - in production this would be cloud storage
 const storageClient = {
@@ -643,7 +661,10 @@ app.post('/api/device-projects', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'state must be a JSON object' });
     }
 
-    const client_workspace_id = Number(bodyWsId || 1);
+    const client_workspace_id = Number(bodyWsId);
+    if (!client_workspace_id) {
+      return res.status(400).json({ error: 'clientWorkspaceId is required' });
+    }
 
     const [row] = await db
       .insert(projects)
@@ -878,13 +899,13 @@ try {
   console.error('❌ Failed to mount AI Assistance routes:', error);
 }
 
-// Mount AnA RI dedicated routes (10-K harvesting, observation terms)
+// Mount Lumen Cortex dedicated routes (10-K harvesting, observation terms)
 try {
   const lumenCortexRoutes = await import('./routes/lumen-cortex');
   app.use('/api/lumen-cortex', lumenCortexRoutes.default);
-  console.log('✅ AnA RI dedicated routes mounted (health, 10K harvest, observation terms)');
+  console.log('✅ Lumen Cortex dedicated routes mounted (health, 10K harvest, observation terms)');
 } catch (error) {
-  console.error('❌ Failed to mount AnA RI routes:', error);
+  console.error('❌ Failed to mount Lumen Cortex routes:', error);
 }
 
 // Mount Nano Banana (Gemini image generation) routes
@@ -912,7 +933,7 @@ try {
   console.error('❌ Failed to mount PM Settings routes:', error);
 }
 
-// Mount AnA RI (formerly ForesightAI) routes
+// Mount Lumen Cortex (formerly ForesightAI) routes
 // Legacy routes maintained for backward compatibility
 try {
   // Shared deprecation middleware for all Foresight/Lumen legacy routes
@@ -935,15 +956,15 @@ try {
     },
     foresightFeedbackRoutes
   );
-  // New AnA RI aliases
+  // New Lumen Cortex aliases
   app.use('/api/lumen', foresightDeprecation, foresightApiRoutes);
   app.use('/api/lumen-ai', foresightDeprecation, foresightAIAdvancedRoutes);
-  console.log('✅ AnA RI Intelligence API routes mounted (+ legacy /foresight aliases)');
+  console.log('✅ Lumen Cortex™ Intelligence API routes mounted (+ legacy /foresight aliases)');
 } catch (error) {
-  console.error('Failed to mount AnA RI routes:', error);
+  console.error('Failed to mount Lumen Cortex routes:', error);
 }
 
-// Mount AnA RI RAG routes (formerly ForesightAI RAG)
+// Mount Lumen Cortex RAG routes (formerly ForesightAI RAG)
 try {
   const foresightRagRoutes = await import('./routes/foresight-rag-api.js');
   const foresightRagDeprecation = (req: Request, res: Response, next: () => void) => {
@@ -954,9 +975,9 @@ try {
   };
   app.use('/api/foresight/rag', foresightRagDeprecation, foresightRagRoutes.default);
   app.use('/api/lumen/rag', foresightRagDeprecation, foresightRagRoutes.default); // New alias
-  console.log('✅ AnA RI RAG API routes mounted successfully');
+  console.log('✅ Lumen Cortex RAG API routes mounted successfully');
 } catch (error) {
-  console.error('Failed to mount AnA RI RAG routes:', error);
+  console.error('Failed to mount Lumen Cortex RAG routes:', error);
 }
 
 // Mount Biotech AI Intelligence RAG routes
@@ -1295,16 +1316,6 @@ try {
   console.error('❌ Failed to mount CERV2 document routes:', error);
 }
 
-// Mount Document Comment CRUD routes
-try {
-  const commentModule = await import('./routes/comment-routes');
-  const commentRoutes = commentModule.default;
-  app.use('/api/comments', commentRoutes);
-  console.log('✅ Document comment CRUD routes mounted successfully');
-} catch (error) {
-  console.error('❌ Failed to mount comment routes:', error);
-}
-
 // Mount PubMed Literature Search routes (PRODUCTION with real NCBI API)
 try {
   const pubmedModule = await import('./routes/pubmed');
@@ -1358,14 +1369,14 @@ try {
   console.error('❌ Failed to mount Billing routes:', error);
 }
 
-// Mount AnA Research routes (connectors, orchestrator, usage metering)
+// Mount Deep Research routes (connectors, orchestrator, usage metering)
 try {
   const deepResearchModule = await import('./routes/deep-research.js');
   const deepResearchRouter = deepResearchModule.default;
   app.use('/api/deep-research', deepResearchRouter);
-  console.log('✅ AnA Research API routes mounted (connectors, jobs, usage)');
+  console.log('✅ Deep Research API routes mounted (connectors, jobs, usage)');
 } catch (error) {
-  console.error('❌ Failed to mount AnA Research routes:', error);
+  console.error('❌ Failed to mount Deep Research routes:', error);
 }
 
 // Mount Intelligent Report Engine routes (immutable reports, provenance, sealing)
@@ -2694,11 +2705,14 @@ app.get('/api/audit/events', async (req: Request, res: Response) => {
 app.post('/api/audit/events', async (req: Request, res: Response) => {
   try {
     const body = req.body || {};
+    if (!body.organizationId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
     const result = await pool.query(
       `INSERT INTO audit_events (organization_id, event_type, entity_type, entity_id, user_id, user_name, user_role, ip_address, timestamp, reason, metadata, regulatory_significant, gxp_relevant, created_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), $9, $10, $11, $12, NOW()) RETURNING id`,
       [
-        body.organizationId || 1,
+        body.organizationId,
         body.eventType || body.event_type || 'general',
         body.entityType || body.entity_type || 'system',
         body.entityId || body.entity_id || 0,
@@ -2741,7 +2755,7 @@ app.post('/api/audit/events/batch', async (req: Request, res: Response) => {
           `INSERT INTO audit_events (organization_id, event_type, entity_type, entity_id, user_id, user_name, user_role, ip_address, timestamp, reason, metadata, regulatory_significant, gxp_relevant, created_at)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), $9, $10, $11, $12, NOW()) RETURNING id`,
           [
-            evt.organizationId || 1,
+            evt.organizationId,
             evt.eventType || evt.action || 'general',
             evt.entityType || 'document',
             evt.entityId || 0,
@@ -2783,7 +2797,7 @@ app.post('/api/audit/signatures', async (req: Request, res: Response) => {
        signature_status, signed_by, signed_date, signature_meaning, reason, metadata, regulatory_significant, gxp_relevant, created_at)
        VALUES ($1, 'signature.create', $2, $3, $4, $5, $6, NOW(), 'signed', $5, NOW(), $7, $8, $9, true, true, NOW()) RETURNING id`,
       [
-        body.organizationId || 1,
+        body.organizationId,
         body.entityType || 'document',
         body.entityId || 0,
         body.userId || 0,
@@ -3336,10 +3350,10 @@ try {
   console.error('❌ Failed to mount Ana Platform Control routes:', error);
 }
 
-// Mount AnA RI Chat routes
+// Mount Lumen Cortex Chat routes
 import chatRoutes from './routes/chat';
 app.use('/api/chat', chatRoutes);
-console.log('✅ AnA RI Chat API routes mounted successfully');
+console.log('✅ Lumen Cortex Chat API routes mounted successfully');
 
 // Mount AI Claims → Binder provenance route
 try {
@@ -3365,10 +3379,37 @@ import concept2cureRoutes from './routes/concept2cure';
 app.use('/api/concept2cure', concept2cureRoutes);
 console.log('✅ Concept2Cure API routes mounted successfully');
 
-// Mount Phase 3 Orchestration Engine routes
-import orchestrationRoutes from './routes/orchestration';
-app.use('/api/orchestration', orchestrationRoutes);
-console.log('✅ Orchestration Engine API routes mounted successfully');
+// Mount AI Actions unified execution API (Phase 1 — conversational OS spine)
+try {
+  // Initialize action registry and handlers BEFORE mounting routes
+  const aiActions = await import('./services/ai-actions/index');
+  console.log('✅ AI Action handlers registered');
+
+  // Initialize HA infrastructure (Redis, queue, SSE broadcaster)
+  const redisOk = await aiActions.initializeRedis();
+  console.log(redisOk ? '✅ AI Actions Redis connected' : '⚠️  AI Actions Redis unavailable (in-memory fallback)');
+
+  const queueOk = await aiActions.initializeActionQueue();
+  console.log(queueOk ? '✅ AI Actions async queue initialized' : '⚠️  AI Actions queue unavailable (sync fallback)');
+
+  aiActions.initializeSSEBroadcaster();
+
+  const aiActionsRoutes = (await import('./routes/ai-actions')).default;
+  app.use('/api/ai-actions', aiActionsRoutes);
+  console.log('✅ AI Actions API routes mounted at /api/ai-actions');
+} catch (error: any) {
+  console.error('❌ Failed to mount AI Actions routes:', error.message);
+}
+
+// Mount Phase 3 Orchestration routes (workflow orchestration, readiness, recommendations, continuity)
+try {
+  await import('./services/orchestration'); // Load orchestration engine + workflow templates
+  const orchestrationRoutes = (await import('./routes/orchestration')).default;
+  app.use('/api/orchestration', orchestrationRoutes);
+  console.log('✅ Phase 3 Orchestration API routes mounted at /api/orchestration');
+} catch (error: any) {
+  console.error('❌ Failed to mount Orchestration routes:', error.message);
+}
 
 // Mount Client Intelligence Memory routes
 import clientIntelligenceRoutes from './routes/client-intelligence';
@@ -3379,11 +3420,6 @@ console.log('✅ Client Intelligence Memory API routes mounted successfully');
 import accountIntelligenceRoutes from './routes/account-intelligence';
 app.use('/api/account-intelligence', accountIntelligenceRoutes);
 console.log('✅ Account Intelligence API routes mounted successfully');
-
-// Mount Intelligence Layer routes (recommendations, readiness, next actions, feedback, cross-module)
-import intelligenceLayerRoutes from './routes/intelligence';
-app.use('/api/intelligence', intelligenceLayerRoutes);
-console.log('✅ Intelligence Layer API routes mounted successfully');
 
 // Mount Universal Packager routes
 import universalPackagerRoutes from './routes/universal-packager';
@@ -3440,7 +3476,7 @@ app.post('/api/510k-workflow/:projectId', async (req, res) => {
         stage,
         section,
         action: 'SAVE',
-        userId: parseInt(req.headers['x-user-id'] as string || '1'),
+        userId: parseInt(req.headers['x-user-id'] as string || ''),
         organizationId: parseInt(organizationId),
         data,
         metadata: {
@@ -3582,7 +3618,7 @@ app.post('/api/510k-workflow/:projectId', async (req, res) => {
       await FDA510kComplianceTracker.createDocumentVersion({
         documentId: `510K_${projectId}`,
         projectId,
-        userId: parseInt(req.headers['x-user-id'] as string || '1'),
+        userId: parseInt(req.headers['x-user-id'] as string || ''),
         organizationId: parseInt(organizationId),
         content: data,
         changeDescription: `Updated ${stage} - ${section || 'default'}`,
@@ -3602,7 +3638,7 @@ app.post('/api/510k-workflow/:projectId', async (req, res) => {
       const orchestrationService = new DocumentOrchestrationService();
       const orchestrationResult = await orchestrationService.orchestrateDocumentGeneration(
         projectId,
-        (req.headers['x-user-id'] as string) || '1',
+        (req.headers['x-user-id'] as string),
         organizationId
       );
       autoPopulated = true;
@@ -3678,7 +3714,10 @@ app.get('/api/510k-workflow/:projectId/stage-data', async (req, res) => {
 
 // GET all 510k workflows
 app.get('/api/510k-workflow', async (req, res) => {
-  const organizationId = req.query.organizationId || req.headers['x-organization-id'] || '1';
+  const organizationId = req.query.organizationId || req.headers['x-organization-id'];
+  if (!organizationId) {
+    return res.status(401).json({ error: 'Organization context required' });
+  }
 
   try {
     // For now, return empty workflows array to avoid database errors
@@ -6142,6 +6181,9 @@ app.post('/api/workflow/progression/create', async (req: Request, res: Response)
 async function startServer() {
   debugLog('Starting server initialization...');
 
+  // Verify database connection before mounting routes
+  await verifyDatabaseConnection();
+
   try {
     const redisReady = await initializeRedisRateLimiter();
     if (redisReady) {
@@ -6171,21 +6213,6 @@ async function startServer() {
     console.log('✅ Auth schema bootstrap complete');
   } catch (error: any) {
     console.error('⚠️ Auth schema bootstrap warning:', error.message);
-  }
-
-  // Initialize Firebase Projection Publisher (Phase 3 real-time events)
-  try {
-    const { getFirestoreAdmin } = await import('./services/firebase-admin.js');
-    const { initFirebasePublisher } = await import('./services/firebase-projection.js');
-    const firestoreDb = await getFirestoreAdmin();
-    const publisher = initFirebasePublisher(firestoreDb);
-    if (firestoreDb) {
-      console.log('✅ Firebase projection publisher initialized');
-    } else {
-      console.log('⚠️ Firebase projection publisher disabled (no credentials configured)');
-    }
-  } catch (error: any) {
-    console.error('⚠️ Firebase projection publisher initialization warning:', error.message);
   }
 
   // Start Python backend first
@@ -6634,9 +6661,9 @@ async function startServer() {
   try {
     const lumenCortexFtRoutes = await import('./routes/lumen-cortex-ft');
     app.use('/api/lumen-cortex-ft', lumenCortexFtRoutes.default);
-    console.log('✅ AnA RI Fine-Tuning routes mounted at /api/lumen-cortex-ft');
+    console.log('✅ Lumen Cortex Fine-Tuning routes mounted at /api/lumen-cortex-ft');
   } catch (error) {
-    console.error('❌ Failed to mount AnA RI FT routes:', error);
+    console.error('❌ Failed to mount Lumen Cortex FT routes:', error);
   }
 
   try {
@@ -6668,7 +6695,7 @@ async function startServer() {
   try {
     const agentSwarmRoutes = await import('./routes/agent-swarm');
     app.use('/api/agent-swarm', agentSwarmRoutes.default);
-    console.log('✅ AnA Agents routes mounted at /api/agent-swarm');
+    console.log('✅ Agent Swarm routes mounted at /api/agent-swarm');
   } catch (error) {
     console.error('❌ Failed to mount agent swarm routes:', error);
   }
@@ -6710,7 +6737,7 @@ async function startServer() {
 
     const snowglobeRoutes = await import('./routes/snowglobe');
     app.use('/api/snowglobe', snowglobeRoutes.default);
-    console.log('✅ AnA Predictions routes mounted at /api/snowglobe');
+    console.log('✅ Snow Globe routes mounted at /api/snowglobe');
   } catch (error) {
     console.error('❌ Failed to mount Mission Control routes:', error);
   }
@@ -6813,9 +6840,14 @@ async function startServer() {
       req.tenantContext?.organizationId ||
       req.organizationId ||
       req.user?.organizationId ||
-      req.user?.tenantId ||
-      '1';
-    const orgId: number = parseInt(String(rawOrgId), 10) || 1;
+      req.user?.tenantId;
+    if (!rawOrgId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
+    const orgId: number = parseInt(String(rawOrgId), 10);
+    if (!orgId) {
+      return res.status(401).json({ error: 'Invalid organization ID' });
+    }
     const {
       name,
       type = 'ind',
@@ -6887,9 +6919,14 @@ async function startServer() {
       req.tenantContext?.organizationId ||
       req.organizationId ||
       req.user?.organizationId ||
-      req.user?.tenantId ||
-      '1';
-    const orgId: number = parseInt(String(rawOrgId), 10) || 1;
+      req.user?.tenantId;
+    if (!rawOrgId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
+    const orgId: number = parseInt(String(rawOrgId), 10);
+    if (!orgId) {
+      return res.status(401).json({ error: 'Invalid organization ID' });
+    }
     try {
       const r = await pool.query(
         `SELECT * FROM (SELECT id::text, name, 'ind' AS type, status, updated_at FROM ind_projects WHERE organization_id = $1 UNION ALL SELECT id::text, COALESCE(device_name,'Unnamed') AS name, '510k' AS type, NULL AS status, updated_at FROM fda_510k_projects WHERE organization_id = $1 UNION ALL SELECT id::text, name, 'cer' AS type, status, updated_at FROM cer_projects WHERE organization_id = $1) p ORDER BY updated_at DESC NULLS LAST`,

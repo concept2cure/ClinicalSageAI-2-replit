@@ -28,15 +28,27 @@ const resolveClientWorkspaceId = (req: any) => {
     req.header('x-client-workspace-id') ||
     req.header('x-client-workspace');
   const queryClient = req.query?.client_workspace_id || req.query?.clientWorkspaceId;
-  const raw = headerClient || queryClient || 1;
+  const raw = headerClient || queryClient;
+  if (!raw) {
+    throw new Error('Client workspace context required');
+  }
   const parsed = Number(raw);
-  return Number.isFinite(parsed) ? parsed : 1;
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    throw new Error('Invalid client workspace ID');
+  }
+  return parsed;
 };
 
 const resolveUserId = (req: any) => {
   const raw = req.userId || req.user?.id || req.user?.userId;
+  if (!raw) {
+    throw new Error('User context required');
+  }
   const parsed = Number(raw);
-  return Number.isFinite(parsed) ? parsed : 1;
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    throw new Error('Invalid user ID');
+  }
+  return parsed;
 };
 
 const tableExists = async (_req: any, tableName: string) => {

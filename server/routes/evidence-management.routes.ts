@@ -23,7 +23,11 @@ const upload = multer({
 
 // Middleware to get organization ID
 router.use((req: Request, res: Response, next) => {
-  req.organizationId = parseInt(req.headers['x-organization-id'] as string) || 7;
+  const parsedOrgId = parseInt(req.headers['x-organization-id'] as string);
+  if (!parsedOrgId) {
+    return res.status(401).json({ error: 'Organization context required' });
+  }
+  req.organizationId = parsedOrgId;
   next();
 });
 

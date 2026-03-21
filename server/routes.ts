@@ -513,6 +513,10 @@ router.post('/cer/generate-full', async (req, res) => {
       user_id,
     } = req.body;
 
+    if (!organization_id) {
+      return res.status(401).json({ error: 'Organization context required (organization_id)' });
+    }
+
     const reportId = `CER-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
 
     const result = await pool.query(
@@ -523,7 +527,7 @@ router.post('/cer/generate-full', async (req, res) => {
        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', 'pending', $9, NOW(), NOW())
        RETURNING id, report_id, status, created_at`,
       [
-        organization_id || 1,
+        organization_id,
         cer_project_id || null,
         reportId,
         device_name || 'Unnamed Device',
@@ -703,7 +707,10 @@ export default function registerRoutes(app: Express): void {
     try {
       // Check multiple sources for organization/workspace context
       const client_workspace_id = req.query.client_workspace_id || req.headers['x-client-workspace-id'];
-      const organization_id = req.query.organization_id || req.headers['x-organization-id'] || '6'; // Default to org 6
+      const organization_id = req.query.organization_id || req.headers['x-organization-id'];
+      if (!organization_id) {
+        return res.status(401).json({ error: 'Organization context required' });
+      }
       
       // Import database connection
       const { pool } = require('./db');

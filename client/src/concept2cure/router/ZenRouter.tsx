@@ -34,13 +34,9 @@ const CERV2Page = lazy(() => import('@/pages/csr/CERV2Page'));
 // Lazy-load PMA Workspace for standalone mode
 const PMAWorkspacePage = lazy(() => import('../components/pma/PMAWorkspace'));
 
-// Claude-aligned biotech dashboards
-const ECTDSubmissionDashboard = lazy(() => import('../pages/ECTDSubmissionDashboard'));
-const PharmacovigilanceDashboard = lazy(() => import('../pages/PharmacovigilanceDashboard'));
-const ClinicalOperationsDashboard = lazy(() => import('../pages/ClinicalOperationsDashboard'));
-const DocumentArtifactsHub = lazy(() => import('../pages/DocumentArtifactsHub'));
-const HAQManagerDashboard = lazy(() => import('../pages/HAQManagerDashboard'));
-const INDAutoDraftDashboard = lazy(() => import('../pages/INDAutoDraftDashboard'));
+// NOTE: ECTDSubmissionDashboard, PharmacovigilanceDashboard, ClinicalOperationsDashboard,
+// DocumentArtifactsHub, HAQManagerDashboard, INDAutoDraftDashboard are now rendered inside
+// ZenApp shell (lazy-loaded there) so they get persistent AI access.
 
 // DTC Landing Page — public, renders at / for unauthenticated users
 const LandingPage = lazy(() => import('../pages/LandingPage'));
@@ -495,79 +491,57 @@ export const ZenRouter: React.FC = () => {
             )}
           </Route>
 
-          {/* eCTD Submission Agent Dashboard */}
+          {/* Shell-embedded dashboard routes — rendered inside ZenApp for persistent AI access */}
           <Route path="/concept2cure/ectd-agent">
             {() => (
               <PageTransition>
                 <ProtectedRoute>
-                  <Suspense fallback={<ZenLoadingScreen message="Loading eCTD Agent..." />}>
-                    <ECTDSubmissionDashboard />
-                  </Suspense>
+                  <ZenApp />
                 </ProtectedRoute>
               </PageTransition>
             )}
           </Route>
-
-          {/* Pharmacovigilance Dashboard */}
           <Route path="/concept2cure/pharmacovigilance">
             {() => (
               <PageTransition>
                 <ProtectedRoute>
-                  <Suspense fallback={<ZenLoadingScreen message="Loading Pharmacovigilance..." />}>
-                    <PharmacovigilanceDashboard />
-                  </Suspense>
+                  <ZenApp />
                 </ProtectedRoute>
               </PageTransition>
             )}
           </Route>
-
-          {/* Document Artifacts Hub */}
           <Route path="/concept2cure/documents">
             {() => (
               <PageTransition>
                 <ProtectedRoute>
-                  <Suspense fallback={<ZenLoadingScreen message="Loading Document Artifacts..." />}>
-                    <DocumentArtifactsHub />
-                  </Suspense>
+                  <ZenApp />
                 </ProtectedRoute>
               </PageTransition>
             )}
           </Route>
-
-          {/* HAQ Response Manager */}
           <Route path="/concept2cure/haq-manager">
             {() => (
               <PageTransition>
                 <ProtectedRoute>
-                  <Suspense fallback={<ZenLoadingScreen message="Loading HAQ Manager..." />}>
-                    <HAQManagerDashboard />
-                  </Suspense>
+                  <ZenApp />
                 </ProtectedRoute>
               </PageTransition>
             )}
           </Route>
-
-          {/* IND AutoDraft Engine */}
           <Route path="/concept2cure/ind-autodraft">
             {() => (
               <PageTransition>
                 <ProtectedRoute>
-                  <Suspense fallback={<ZenLoadingScreen message="Loading IND AutoDraft..." />}>
-                    <INDAutoDraftDashboard />
-                  </Suspense>
+                  <ZenApp />
                 </ProtectedRoute>
               </PageTransition>
             )}
           </Route>
-
-          {/* Clinical Operations Dashboard */}
           <Route path="/concept2cure/clinical-operations">
             {() => (
               <PageTransition>
                 <ProtectedRoute>
-                  <Suspense fallback={<ZenLoadingScreen message="Loading Clinical Operations..." />}>
-                    <ClinicalOperationsDashboard />
-                  </Suspense>
+                  <ZenApp />
                 </ProtectedRoute>
               </PageTransition>
             )}
@@ -575,6 +549,16 @@ export const ZenRouter: React.FC = () => {
 
           {/* Catch-all for /concept2cure/* routes */}
           <Route path="/concept2cure/*">
+            {() => (
+              <PageTransition>
+                <ProtectedRoute>
+                  <ZenApp />
+                </ProtectedRoute>
+              </PageTransition>
+            )}
+          </Route>
+          {/* Phase 3: Readiness Intelligence Dashboard */}
+          <Route path="/concept2cure/readiness">
             {() => (
               <PageTransition>
                 <ProtectedRoute>

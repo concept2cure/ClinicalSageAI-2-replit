@@ -9,6 +9,7 @@ import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
 import html2pdf from 'html2pdf.js';
 import { useLocation } from 'wouter';
+import { InlineAIMenu } from '../../concept2cure/components/ui/InlineAIMenu';
 
 interface CSRCompareViewerProps {
   selectedIds: string[];
@@ -163,6 +164,22 @@ export default function CSRCompareViewer({ selectedIds = [], onClose }: CSRCompa
         </div>
       </div>
       
+      {data.length > 0 && (
+        <div className="mb-4">
+          <InlineAIMenu
+            content={JSON.stringify(data.map(d => ({ id: d.id, title: d.title, indication: d.indication, phase: d.phase })))}
+            items={data.map(d => JSON.stringify(d))}
+            projectId={1}
+            module="csr"
+            actions={[
+              { id: 'compare_selection', label: 'Compare CSRs', icon: '⚖️', description: 'AI-powered comparison of selected CSRs' },
+              { id: 'summarize_selection', label: 'Summarize CSRs', icon: '📋', description: 'Generate a summary of these CSRs' },
+              { id: 'explain_selection', label: 'Explain CSRs', icon: '💡', description: 'Explain key aspects of these CSRs' },
+            ]}
+          />
+        </div>
+      )}
+
       <div id="csr-comparison-content">
         <Card>
           <CardContent className="space-y-2 pt-6">

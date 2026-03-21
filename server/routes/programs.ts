@@ -149,7 +149,10 @@ router.get('/', validateQuery(queryParamsSchema), async (req: Request, res: Resp
   try {
     const { page, limit, status, programType, productType, agency, search, sortBy, sortOrder } =
       req.query as z.infer<typeof queryParamsSchema>;
-    const tenantId = (req as any).tenantContext?.tenantId || 1;
+    const tenantId = (req as any).tenantContext?.tenantId;
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Tenant context required' });
+    }
 
     // Mock response - replace with actual DB query
     const programs = [
@@ -214,7 +217,10 @@ router.get('/', validateQuery(queryParamsSchema), async (req: Request, res: Resp
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const tenantId = (req as any).tenantContext?.tenantId || 1;
+    const tenantId = (req as any).tenantContext?.tenantId;
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Tenant context required' });
+    }
 
     // Mock response - replace with actual DB query
     const program = {
@@ -290,7 +296,10 @@ router.get('/:id', async (req: Request, res: Response) => {
 router.post('/', validateBody(createProgramSchema), async (req: Request, res: Response) => {
   try {
     const data = req.body;
-    const tenantId = (req as any).tenantContext?.tenantId || 1;
+    const tenantId = (req as any).tenantContext?.tenantId;
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Tenant context required' });
+    }
     const userId = (req as any).user?.id || 'system';
 
     // Generate program code if not provided
@@ -526,7 +535,10 @@ router.get('/:id/activity', async (req: Request, res: Response) => {
  */
 router.get('/stats/overview', async (req: Request, res: Response) => {
   try {
-    const tenantId = (req as any).tenantContext?.tenantId || 1;
+    const tenantId = (req as any).tenantContext?.tenantId;
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Tenant context required' });
+    }
 
     // Mock response
     const stats = {

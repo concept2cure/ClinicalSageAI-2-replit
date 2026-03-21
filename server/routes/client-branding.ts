@@ -185,7 +185,10 @@ templateStore.set(1, [
 // ── GET /api/client-branding/settings ────────────────────────────────────────
 // Returns the branding settings for the current organization.
 router.get('/settings', (req: Request, res: Response) => {
-  const orgId = Number(req.query.organizationId) || 1;
+  const orgId = Number(req.query.organizationId);
+  if (!orgId) {
+    return res.status(401).json({ error: 'Organization context required' });
+  }
   const settings = brandingStore.get(orgId) || brandingStore.get(1);
   res.json(settings);
 });
@@ -193,7 +196,10 @@ router.get('/settings', (req: Request, res: Response) => {
 // ── PATCH /api/client-branding/settings ──────────────────────────────────────
 // Update branding settings (colors, fonts, header/footer HTML, watermark).
 router.patch('/settings', async (req: Request, res: Response) => {
-  const orgId = Number(req.body.organizationId) || 1;
+  const orgId = Number(req.body.organizationId);
+  if (!orgId) {
+    return res.status(401).json({ error: 'Organization context required' });
+  }
   const existing = brandingStore.get(orgId) || brandingStore.get(1)!;
 
   const updated: BrandingSettings = {
@@ -220,7 +226,10 @@ router.patch('/settings', async (req: Request, res: Response) => {
 // Upload a company logo. Accepts base64-encoded image data.
 router.post('/upload-logo', async (req: Request, res: Response) => {
   const { organizationId, logoBase64, fileName } = req.body;
-  const orgId = Number(organizationId) || 1;
+  const orgId = Number(organizationId);
+  if (!orgId) {
+    return res.status(401).json({ error: 'Organization context required' });
+  }
 
   if (!logoBase64) {
     return res.status(400).json({ error: 'logoBase64 is required' });
@@ -270,7 +279,10 @@ router.get('/logo/:orgId', (req: Request, res: Response) => {
 // Upload a company letterhead template.
 router.post('/upload-letterhead', async (req: Request, res: Response) => {
   const { organizationId, letterheadBase64, fileName } = req.body;
-  const orgId = Number(organizationId) || 1;
+  const orgId = Number(organizationId);
+  if (!orgId) {
+    return res.status(401).json({ error: 'Organization context required' });
+  }
 
   if (!letterheadBase64) {
     return res.status(400).json({ error: 'letterheadBase64 is required' });
@@ -296,7 +308,10 @@ router.post('/upload-letterhead', async (req: Request, res: Response) => {
 // ── GET /api/client-branding/templates ───────────────────────────────────────
 // List all custom templates for the organization.
 router.get('/templates', (req: Request, res: Response) => {
-  const orgId = Number(req.query.organizationId) || 1;
+  const orgId = Number(req.query.organizationId);
+  if (!orgId) {
+    return res.status(401).json({ error: 'Organization context required' });
+  }
   const category = req.query.category as string | undefined;
   let templates = templateStore.get(orgId) || [];
 
@@ -311,7 +326,10 @@ router.get('/templates', (req: Request, res: Response) => {
 // Get a single template with its content and placeholders.
 router.get('/templates/:id', (req: Request, res: Response) => {
   const templateId = parseInt(req.params.id, 10);
-  const orgId = Number(req.query.organizationId) || 1;
+  const orgId = Number(req.query.organizationId);
+  if (!orgId) {
+    return res.status(401).json({ error: 'Organization context required' });
+  }
   const templates = templateStore.get(orgId) || [];
   const template = templates.find(t => t.id === templateId);
 
@@ -339,7 +357,10 @@ router.post('/templates', async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'name and category are required' });
   }
 
-  const orgId = Number(organizationId) || 1;
+  const orgId = Number(organizationId);
+  if (!orgId) {
+    return res.status(401).json({ error: 'Organization context required' });
+  }
   const template: ClientTemplate = {
     id: nextTemplateId++,
     organizationId: orgId,
@@ -378,7 +399,10 @@ router.post('/templates', async (req: Request, res: Response) => {
 // Update an existing template.
 router.patch('/templates/:id', async (req: Request, res: Response) => {
   const templateId = parseInt(req.params.id, 10);
-  const orgId = Number(req.body.organizationId) || 1;
+  const orgId = Number(req.body.organizationId);
+  if (!orgId) {
+    return res.status(401).json({ error: 'Organization context required' });
+  }
   const templates = templateStore.get(orgId) || [];
   const template = templates.find(t => t.id === templateId);
 
@@ -408,7 +432,10 @@ router.patch('/templates/:id', async (req: Request, res: Response) => {
 // Soft-delete a template (mark inactive).
 router.delete('/templates/:id', async (req: Request, res: Response) => {
   const templateId = parseInt(req.params.id, 10);
-  const orgId = Number(req.query.organizationId) || 1;
+  const orgId = Number(req.query.organizationId);
+  if (!orgId) {
+    return res.status(401).json({ error: 'Organization context required' });
+  }
   const templates = templateStore.get(orgId) || [];
   const template = templates.find(t => t.id === templateId);
 
@@ -432,7 +459,10 @@ router.delete('/templates/:id', async (req: Request, res: Response) => {
 // Render a template with provided placeholder values and org branding.
 router.post('/render-template/:id', (req: Request, res: Response) => {
   const templateId = parseInt(req.params.id, 10);
-  const orgId = Number(req.body.organizationId) || 1;
+  const orgId = Number(req.body.organizationId);
+  if (!orgId) {
+    return res.status(401).json({ error: 'Organization context required' });
+  }
   const values = req.body.values || {};
 
   const templates = templateStore.get(orgId) || [];

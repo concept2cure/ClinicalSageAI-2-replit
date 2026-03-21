@@ -102,6 +102,22 @@ export class GatewayPolicyEngine {
   }
 
   private checkBlockedPatterns(request: GatewayRequest): PolicyResult {
+    // Prompt injection detection (before blocked patterns)
+    if (this.config.contentFilters) {
+      const injectionPatterns = [
+        /ignore\s+(all\s+)?(previous|prior|above)\s+(instructions|prompts|rules)/i,
+        /system\s*:\s*(override|bypass|ignore)/i,
+      ];
+      for (const pattern of injectionPatterns) {
+        for (const msg of request.messages) {
+          const content = typeof msg.content === 'string' ? msg.content : '';
+          if (pattern.test(content)) {
+            return { allowed: false, reason: 'Content filter: potential prompt injection detected' };
+          }
+        }
+      }
+    }
+
     if (!this.config.blockedPatterns || this.config.blockedPatterns.length === 0) {
       return { allowed: true };
     }
@@ -133,25 +149,43 @@ export class GatewayPolicyEngine {
   }
 
   private checkRateLimit(request: GatewayRequest): PolicyResult {
-    const key = request.organizationId?.toString() || '__global__';
     const now = Date.now();
     const windowMs = 60_000; // 1 minute
 
-    let bucket = this.rateBuckets.get(key);
-
-    // Reset bucket if window expired
-    if (!bucket || now - bucket.windowStart > windowMs) {
-      bucket = { count: 0, windowStart: now };
-      this.rateBuckets.set(key, bucket);
+    // --- Organization-level rate limit ---
+    const orgKey = request.organizationId?.toString() || '__global__';
+    let orgBucket = this.rateBuckets.get(orgKey);
+    if (!orgBucket || now - orgBucket.windowStart > windowMs) {
+      orgBucket = { count: 0, windowStart: now };
+      this.rateBuckets.set(orgKey, orgBucket);
     }
+    orgBucket.count++;
 
-    bucket.count++;
-
-    if (bucket.count > this.config.maxRequestsPerMinutePerOrg) {
+    if (orgBucket.count > this.config.maxRequestsPerMinutePerOrg) {
       return {
         allowed: false,
-        reason: `Rate limit exceeded: ${bucket.count}/${this.config.maxRequestsPerMinutePerOrg} requests per minute`,
+        reason: `Organization rate limit exceeded: ${orgBucket.count}/${this.config.maxRequestsPerMinutePerOrg} requests per minute`,
       };
+    }
+
+    // --- Per-user rate limit ---
+    const userId = (request as any).userId;
+    if (userId) {
+      const userKey = `${orgKey}:user:${userId}`;
+      let userBucket = this.rateBuckets.get(userKey);
+      if (!userBucket || now - userBucket.windowStart > windowMs) {
+        userBucket = { count: 0, windowStart: now };
+        this.rateBuckets.set(userKey, userBucket);
+      }
+      userBucket.count++;
+
+      const perUserLimit = this.config.maxRequestsPerMinutePerUser || 30;
+      if (userBucket.count > perUserLimit) {
+        return {
+          allowed: false,
+          reason: `User rate limit exceeded: ${userBucket.count}/${perUserLimit} requests per minute`,
+        };
+      }
     }
 
     return { allowed: true };

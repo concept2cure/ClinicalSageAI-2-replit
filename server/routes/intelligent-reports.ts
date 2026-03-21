@@ -90,7 +90,7 @@ router.post('/generate', async (req: Request, res: Response) => {
       });
     }
 
-    const userId = (req as any).user?.id || req.body.userId || 1;
+    const userId = (req as any).user?.id || req.body.userId;
     const userName = (req as any).user?.name || req.body.userName || 'System';
 
     const result = await intelligentReportEngine.generateReport({
@@ -240,7 +240,7 @@ router.post('/:reportId/seal', async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: 'Justification required for sealing' });
     }
 
-    const userId = (req as any).user?.id || req.body.userId || 1;
+    const userId = (req as any).user?.id || req.body.userId;
     const userName = (req as any).user?.name || req.body.userName || 'System';
 
     const result = await intelligentReportEngine.sealReport(
@@ -293,7 +293,7 @@ router.post('/:reportId/supersede', async (req: Request, res: Response) => {
       });
     }
 
-    const userId = (req as any).user?.id || req.body.userId || 1;
+    const userId = (req as any).user?.id || req.body.userId;
     const userName = (req as any).user?.name || req.body.userName || 'System';
 
     const result = await intelligentReportEngine.supersedeReport(originalReportId, {
@@ -343,7 +343,7 @@ router.post('/:reportId/revoke', async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: 'Justification required for revocation' });
     }
 
-    const userId = (req as any).user?.id || req.body.userId || 1;
+    const userId = (req as any).user?.id || req.body.userId;
     const userName = (req as any).user?.name || req.body.userName || 'System';
 
     await intelligentReportEngine.revokeReport(

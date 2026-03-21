@@ -724,6 +724,39 @@ ${moduleIntel.workflowStages.map((s, i) => `${i + 1}. **${s.name}** (${s.estimat
     }
   }
 
+  // ── Phase 3: Readiness Intelligence ──────────────────────────────────────
+  // Inject readiness and recommendation context when project is active
+  if (context.project?.id && organizationId) {
+    try {
+      const { assembleCrossObjectPayload } = await import('./orchestration/cross-object-resolver');
+      const { computeReadinessAssessment } = await import('./orchestration/readiness-engine');
+      const { generateRecommendations } = await import('./orchestration/recommendation-engine');
+
+      const payload = await assembleCrossObjectPayload({
+        organizationId,
+        projectId: context.project.id,
+      });
+      const readiness = computeReadinessAssessment(payload);
+      const recSet = generateRecommendations(payload, { projectId: context.project.id, limit: 5 });
+
+      parts.push(`
+## Submission Readiness Intelligence
+- **Overall Readiness**: ${readiness.overallScore}% (${readiness.status.replace(/_/g, ' ')})
+- **Completeness**: ${readiness.scores.completeness}% | **Quality**: ${readiness.scores.quality}% | **Compliance**: ${readiness.scores.compliance}%
+- **Routing**: ${readiness.scores.routing}% | **Consistency**: ${readiness.scores.consistency}%
+- **Blockers**: ${readiness.blockers.length}${readiness.blockers.length > 0 ? ` — ${readiness.blockers.slice(0, 3).map(b => b.message).join('; ')}` : ''}
+
+### Top Recommendations
+${recSet.recommendations.slice(0, 5).map((r, i) => `${i + 1}. [${r.severity.toUpperCase()}] ${r.reason} → ${r.suggestedAction}`).join('\n')}
+
+When the user asks about readiness, blockers, gaps, or what to do next, reference this data.
+You can suggest running orchestration workflows: submission_readiness_review, draft_validate_route, project_blocker_scan.`);
+    } catch (err) {
+      // Non-blocking — readiness intelligence is best-effort
+      console.warn('[Lumen] Phase 3 readiness intelligence unavailable:', err instanceof Error ? err.message : err);
+    }
+  }
+
   // ── Submission-specific guidance ─────────────────────────────────────────
   const subType = context.project?.submissionType?.toUpperCase();
   if (subType === 'IND') {

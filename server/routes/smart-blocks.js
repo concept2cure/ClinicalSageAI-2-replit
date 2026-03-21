@@ -10,7 +10,10 @@ const router = express.Router();
 // Get available smart blocks
 router.get('/', async (req, res) => {
   try {
-    const organizationId = req.headers['x-organization-id'] || '7';
+    const organizationId = req.headers['x-organization-id'];
+    if (!organizationId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
 
     // Define available smart blocks
     const smartBlocks = [
@@ -115,7 +118,10 @@ router.post('/:blockId/render', async (req, res) => {
   try {
     const { blockId } = req.params;
     const { context } = req.body;
-    const organizationId = req.headers['x-organization-id'] || '7';
+    const organizationId = req.headers['x-organization-id'];
+    if (!organizationId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
 
     let content = '';
     let metadata = {};
@@ -345,7 +351,10 @@ The overall residual risk is acceptable when weighed against the clinical benefi
 router.post('/', async (req, res) => {
   try {
     const { name, description, category, template, dataSource } = req.body;
-    const organizationId = req.headers['x-organization-id'] || '7';
+    const organizationId = req.headers['x-organization-id'];
+    if (!organizationId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
 
     const result = await db.query(
       `
@@ -470,7 +479,7 @@ router.post('/generate', async (req, res) => {
             templateId,
             documentId || null,
             projectId || null,
-            organizationId || '7',
+            organizationId,
             new Date(),
             dataSource,
             generatedContent.version,

@@ -60,8 +60,14 @@ router.use(authMiddleware);
 
 router.post('/projects', async (req: Request, res: Response) => {
   try {
-    const organizationId = Number(req.tenantId) || 1;
-    const userId = Number(req.userId) || 1;
+    const organizationId = Number(req.tenantId);
+    if (!organizationId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
+    const userId = Number(req.userId);
+    if (!userId) {
+      return res.status(401).json({ error: 'User context required' });
+    }
     const { name, regulatoryRegion, submissionType, productName, productType, therapeuticArea, indication } = req.body;
 
     if (!name || !regulatoryRegion || !submissionType || !productName || !productType) {
@@ -99,7 +105,10 @@ router.post('/projects', async (req: Request, res: Response) => {
 
 router.get('/projects', async (req: Request, res: Response) => {
   try {
-    const organizationId = Number(req.tenantId) || 1;
+    const organizationId = Number(req.tenantId);
+    if (!organizationId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
     const projects = await listCTDProjects(organizationId);
     return res.json({ projects, total: projects.length });
   } catch (error: unknown) {
@@ -115,7 +124,10 @@ router.get('/projects', async (req: Request, res: Response) => {
 
 router.get('/projects/:id', async (req: Request, res: Response) => {
   try {
-    const organizationId = Number(req.tenantId) || 1;
+    const organizationId = Number(req.tenantId);
+    if (!organizationId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
     const projectId = parseInt(req.params.id, 10);
 
     if (isNaN(projectId)) {
@@ -142,7 +154,10 @@ router.get('/projects/:id', async (req: Request, res: Response) => {
 
 router.post('/projects/:id/upload', upload.single('file'), async (req: Request, res: Response) => {
   try {
-    const organizationId = Number(req.tenantId) || 1;
+    const organizationId = Number(req.tenantId);
+    if (!organizationId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
     const projectId = parseInt(req.params.id, 10);
 
     if (isNaN(projectId)) {
@@ -190,7 +205,10 @@ router.post('/projects/:id/upload', upload.single('file'), async (req: Request, 
 
 router.post('/projects/:id/validate', async (req: Request, res: Response) => {
   try {
-    const organizationId = Number(req.tenantId) || 1;
+    const organizationId = Number(req.tenantId);
+    if (!organizationId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
     const projectId = parseInt(req.params.id, 10);
 
     if (isNaN(projectId)) {

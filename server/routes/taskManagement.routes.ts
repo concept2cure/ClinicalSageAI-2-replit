@@ -214,7 +214,10 @@ async function getOptimalAssignee(organizationId: number, taskData: any) {
 router.post('/tasks', async (req: Request, res: Response) => {
   try {
     const validatedData = createTaskSchema.parse(req.body);
-    const organizationId = req.body.organizationId || 1;
+    const organizationId = req.body.organizationId;
+    if (!organizationId) {
+      return res.status(401).json({ success: false, error: 'Organization context required' });
+    }
     const taskId = `TASK-${Date.now()}-${uuidv4().substr(0, 8)}`;
     
     // Auto-assign if not specified
@@ -242,7 +245,7 @@ router.post('/tasks', async (req: Request, res: Response) => {
         completionPercentage: 0,
         createdAt: new Date(),
         updatedAt: new Date(),
-        createdById: req.body.userId || 1,
+        createdById: req.body.userId,
       })
       .returningAll()
       .executeTakeFirst();
@@ -264,7 +267,10 @@ router.post('/tasks', async (req: Request, res: Response) => {
 router.post('/tasks/bulk-create', async (req: Request, res: Response) => {
   try {
     const validatedData = bulkCreateTasksSchema.parse(req.body);
-    const organizationId = req.body.organizationId || 1;
+    const organizationId = req.body.organizationId;
+    if (!organizationId) {
+      return res.status(401).json({ success: false, error: 'Organization context required' });
+    }
     const createdTasks = [];
     const taskIdMapping: Record<string, string> = {};
     
@@ -302,7 +308,7 @@ router.post('/tasks/bulk-create', async (req: Request, res: Response) => {
           completionPercentage: 0,
           createdAt: new Date(),
           updatedAt: new Date(),
-          createdById: req.body.userId || 1,
+          createdById: req.body.userId,
         })
         .returningAll()
         .executeTakeFirst();
@@ -356,7 +362,10 @@ router.post('/tasks/from-template/:templateId', async (req: Request, res: Respon
   try {
     const templateId = req.params.templateId;
     const { projectId, startDate, adjustDates } = req.body;
-    const organizationId = req.body.organizationId || 1;
+    const organizationId = req.body.organizationId;
+    if (!organizationId) {
+      return res.status(401).json({ success: false, error: 'Organization context required' });
+    }
     
     // Get template
     const template = await storage.db
@@ -420,7 +429,7 @@ router.post('/tasks/from-template/:templateId', async (req: Request, res: Respon
           templateId: template.id,
           createdAt: new Date(),
           updatedAt: new Date(),
-          createdById: req.body.userId || 1,
+          createdById: req.body.userId,
         })
         .returningAll()
         .executeTakeFirst();
@@ -595,7 +604,7 @@ router.post('/tasks/auto-assign', async (req: Request, res: Response) => {
           .set({
             assigneeId: optimalAssignee.id,
             assigneeName: optimalAssignee.name,
-            assignedBy: req.body.userId || 1,
+            assignedBy: req.body.userId,
             assignedAt: new Date(),
             updatedAt: new Date(),
           })
@@ -725,7 +734,10 @@ router.get('/tasks/analytics', async (req: Request, res: Response) => {
 router.post('/templates', async (req: Request, res: Response) => {
   try {
     const validatedData = createTemplateSchema.parse(req.body);
-    const organizationId = req.body.organizationId || 1;
+    const organizationId = req.body.organizationId;
+    if (!organizationId) {
+      return res.status(401).json({ success: false, error: 'Organization context required' });
+    }
     const templateId = `TMPL-${Date.now()}-${uuidv4().substr(0, 8)}`;
     
     const newTemplate = await storage.db
@@ -737,7 +749,7 @@ router.post('/templates', async (req: Request, res: Response) => {
         isActive: true,
         version: 1,
         usageCount: 0,
-        createdById: req.body.userId || 1,
+        createdById: req.body.userId,
         createdAt: new Date(),
         updatedAt: new Date(),
       })
@@ -761,7 +773,10 @@ router.post('/templates', async (req: Request, res: Response) => {
 router.post('/automation', async (req: Request, res: Response) => {
   try {
     const validatedData = createAutomationSchema.parse(req.body);
-    const organizationId = req.body.organizationId || 1;
+    const organizationId = req.body.organizationId;
+    if (!organizationId) {
+      return res.status(401).json({ success: false, error: 'Organization context required' });
+    }
     const automationId = `AUTO-${Date.now()}-${uuidv4().substr(0, 8)}`;
     
     const newAutomation = await storage.db
@@ -775,7 +790,7 @@ router.post('/automation', async (req: Request, res: Response) => {
         executionCount: 0,
         successCount: 0,
         failureCount: 0,
-        createdById: req.body.userId || 1,
+        createdById: req.body.userId,
         createdAt: new Date(),
         updatedAt: new Date(),
       })

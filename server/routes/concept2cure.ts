@@ -208,7 +208,7 @@ async function logAuditEntry(
       actionCategory: getActionCategory(action),
       previousValue: previousValue ?? null,
       newValue: newValue ?? null,
-      userId: req.userId || 1,
+      userId: req.userId,
       userName: req.userEmail || 'unknown',
       userRole: req.userRole || 'user',
       ipAddress: getClientIp(req),
@@ -738,7 +738,7 @@ function getClientWorkspaceId(req: Request): number {
         : parseInt(String(ctx.clientWorkspaceId), 10);
     if (!isNaN(id)) return id;
   }
-  return 1; // Default workspace for development
+  throw new Error('Client workspace context required');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -11170,7 +11170,7 @@ router.get('/precedents', async (req: Request, res: Response) => {
          WHERE organization_id = $1
          ORDER BY decision_date DESC
          LIMIT 50`,
-        [orgId || 1]
+        [orgId]
       );
       precedents = result.rows;
     } catch {
@@ -11202,7 +11202,7 @@ router.get('/patents', async (req: Request, res: Response) => {
          FROM patent_portfolio
          WHERE organization_id = $1
          ORDER BY filing_date DESC`,
-        [orgId || 1]
+        [orgId]
       );
       patents = result.rows;
     } catch {
@@ -11233,7 +11233,7 @@ router.get('/compliance', async (req: Request, res: Response) => {
          FROM compliance_tracking
          WHERE organization_id = $1
          ORDER BY next_audit_date ASC`,
-        [orgId || 1]
+        [orgId]
       );
       complianceItems = result.rows;
     } catch {
@@ -11254,6 +11254,9 @@ router.get('/compliance', async (req: Request, res: Response) => {
 router.get('/team/workload', async (req: Request, res: Response) => {
   try {
     const orgId = (req as any).user?.organizationId || (req as any).tenantContext?.organizationId;
+    if (!orgId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
 
     let workload: any[] = [];
     try {
@@ -11270,7 +11273,7 @@ router.get('/team/workload', async (req: Request, res: Response) => {
          WHERE u.organization_id = $1
          GROUP BY u.id, u.name
          ORDER BY u.name`,
-        [orgId || 1]
+        [orgId]
       );
       workload = result.rows;
     } catch {

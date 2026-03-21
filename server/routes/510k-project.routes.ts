@@ -33,7 +33,10 @@ router.get('/templates', asyncHandler(async (req: Request, res: Response) => {
 
 // Create a new project with wizard data
 router.post('/create', asyncHandler(async (req: Request, res: Response) => {
-  const organizationId = parseInt((req.headers['x-organization-id'] as string) || '1');
+  const organizationId = parseInt((req.headers['x-organization-id'] as string) || '');
+  if (!organizationId) {
+    return res.status(401).json({ error: 'Organization context required' });
+  }
   const {
     projectName,
     deviceName,
@@ -273,7 +276,10 @@ router.post('/create', asyncHandler(async (req: Request, res: Response) => {
 // Get project stage data
 router.get('/:projectId/stage', asyncHandler(async (req: Request, res: Response) => {
   const { projectId } = req.params;
-  const organizationId = parseInt((req.headers['x-organization-id'] as string) || '1');
+  const organizationId = parseInt((req.headers['x-organization-id'] as string) || '');
+  if (!organizationId) {
+    return res.status(401).json({ error: 'Organization context required' });
+  }
 
   // Get FDA 510k project stage information
   const projectResult = await db.execute(sql`
@@ -345,7 +351,10 @@ router.get('/:projectId/stage', asyncHandler(async (req: Request, res: Response)
 // Get project details
 router.get('/:projectId', asyncHandler(async (req: Request, res: Response) => {
   const { projectId } = req.params;
-  const organizationId = parseInt((req.headers['x-organization-id'] as string) || '1');
+  const organizationId = parseInt((req.headers['x-organization-id'] as string) || '');
+  if (!organizationId) {
+    return res.status(401).json({ error: 'Organization context required' });
+  }
 
   const [project] = await db
     .select()

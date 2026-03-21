@@ -113,10 +113,16 @@ const pool = getPool();
 async function executeQuery(req: any, queryText: string, params?: any[]) {
   const client = await pool.connect();
   try {
-    // Set tenant context for RLS policies - use tenant from header or default to 1
-    const tenantId = req.headers?.['x-tenant-id'] || req.headers?.['x-organization-id'] || '1';
+    // Set tenant context for RLS policies
+    const tenantId = req.headers?.['x-tenant-id'] || req.headers?.['x-organization-id'];
+    if (!tenantId) {
+      throw new Error('Tenant context required');
+    }
     // Use parameterized set_config() to prevent SQL injection
-    const safeTenantId = parseInt(tenantId.toString()) || 1;
+    const safeTenantId = parseInt(tenantId.toString());
+    if (!safeTenantId) {
+      throw new Error('Invalid tenant ID');
+    }
     await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [String(safeTenantId)]);
 
     // Execute the actual query
@@ -127,11 +133,17 @@ async function executeQuery(req: any, queryText: string, params?: any[]) {
 }
 
 // Helper function for queries that don't need request context (internal use)
-async function executeInternalQuery(tenantId: string = '1', queryText: string, params?: any[]) {
+async function executeInternalQuery(tenantId: string, queryText: string, params?: any[]) {
+  if (!tenantId) {
+    throw new Error('Tenant context required');
+  }
   const client = await pool.connect();
   try {
     // Use parameterized set_config() to prevent SQL injection
-    const safeTenantId = parseInt(tenantId.toString()) || 1;
+    const safeTenantId = parseInt(tenantId.toString());
+    if (!safeTenantId) {
+      throw new Error('Invalid tenant ID');
+    }
     await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [String(safeTenantId)]);
     return await client.query(queryText, params);
   } finally {
@@ -145,8 +157,14 @@ async function audit(studyId: string, action: string, payload: any, req: any) {
   const client = await pool.connect();
   try {
     // Set tenant context for audit - use parameterized set_config() to prevent SQL injection
-    const tenantId = req.headers?.['x-tenant-id'] || req.headers?.['x-organization-id'] || '1';
-    const safeTenantId = parseInt(tenantId.toString()) || 1;
+    const tenantId = req.headers?.['x-tenant-id'] || req.headers?.['x-organization-id'];
+    if (!tenantId) {
+      throw new Error('Tenant context required');
+    }
+    const safeTenantId = parseInt(tenantId.toString());
+    if (!safeTenantId) {
+      throw new Error('Invalid tenant ID');
+    }
     await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [String(safeTenantId)]);
 
     await client.query(
@@ -162,10 +180,16 @@ async function audit(studyId: string, action: string, payload: any, req: any) {
 router.get('/studies', async (req, res) => {
   const client = await pool.connect();
   try {
-    // Set tenant context for RLS policies - use tenant from header or default to 1
-    const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '1';
+    // Set tenant context for RLS policies
+    const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'];
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Tenant context required' });
+    }
     // SET commands don't support parameterized queries, but set_config() does
-    const safetenantId = parseInt(tenantId.toString()) || 1;
+    const safetenantId = parseInt(tenantId.toString());
+    if (!safetenantId) {
+      return res.status(401).json({ error: 'Invalid tenant ID' });
+    }
     await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [String(safetenantId)]);
 
     const result = await client.query(`
@@ -247,13 +271,19 @@ router.post('/studies', async (req, res) => {
     } = req.body;
 
     // Get tenant ID from request headers
-    const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '1';
+    const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'];
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Tenant context required' });
+    }
 
     // Start transaction
     await client.query('BEGIN');
 
     // Set tenant context for RLS policies - use parameterized set_config()
-    const safeTenantId = parseInt(tenantId.toString()) || 1;
+    const safeTenantId = parseInt(tenantId.toString());
+    if (!safeTenantId) {
+      return res.status(401).json({ error: 'Invalid tenant ID' });
+    }
     await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [String(safeTenantId)]);
 
     // Generate dates
@@ -492,8 +522,14 @@ router.get('/studies/:id', async (req, res) => {
     const { id } = req.params;
 
     // Set tenant context for RLS policies - use parameterized set_config()
-    const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '1';
-    const safeTenantId = parseInt(tenantId.toString()) || 1;
+    const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'];
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Tenant context required' });
+    }
+    const safeTenantId = parseInt(tenantId.toString());
+    if (!safeTenantId) {
+      return res.status(401).json({ error: 'Invalid tenant ID' });
+    }
     await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [String(safeTenantId)]);
 
     // Get study
@@ -571,8 +607,14 @@ router.post('/studies/:id/conditions', async (req, res) => {
     const { kind, temp, rh, description } = req.body;
 
     // Set tenant context for RLS policies - use parameterized set_config()
-    const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '1';
-    const safeTenantId = parseInt(tenantId.toString()) || 1;
+    const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'];
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Tenant context required' });
+    }
+    const safeTenantId = parseInt(tenantId.toString());
+    if (!safeTenantId) {
+      return res.status(401).json({ error: 'Invalid tenant ID' });
+    }
     await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [String(safeTenantId)]);
 
     const result = await client.query(
@@ -600,8 +642,14 @@ router.delete('/conditions/:condId', async (req, res) => {
     const { condId } = req.params;
 
     // Set tenant context for RLS policies - use parameterized set_config()
-    const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '1';
-    const safeTenantId = parseInt(tenantId.toString()) || 1;
+    const tenantId = req.headers['x-tenant-id'] || req.headers['x-organization-id'];
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Tenant context required' });
+    }
+    const safeTenantId = parseInt(tenantId.toString());
+    if (!safeTenantId) {
+      return res.status(401).json({ error: 'Invalid tenant ID' });
+    }
     await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [String(safeTenantId)]);
 
     await client.query('DELETE FROM stab_conditions WHERE cond_id = $1', [condId]);

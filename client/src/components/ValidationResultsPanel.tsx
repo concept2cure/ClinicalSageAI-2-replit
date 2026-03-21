@@ -4,6 +4,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { CheckCircle, XCircle, AlertTriangle, AlertCircle, Info } from 'lucide-react';
+import { InlineAIButton } from '../concept2cure/components/ui/InlineAIButton';
 
 // Define types for validation results
 export interface ValidationIssue {
@@ -137,6 +138,26 @@ const ValidationResultsPanel: React.FC<ValidationResultsPanelProps> = ({
           <AlertDescription>{status.description}</AlertDescription>
         </Alert>
 
+        {/* AI: Refine All findings button */}
+        {totalIssues > 0 && (
+          <div className="flex justify-end">
+            <InlineAIButton
+              actionType="refine_with_validation_findings"
+              content={`Validation results for ${results.region} (${results.profile}): ${results.issues?.length || 0} errors, ${results.warnings?.length || 0} warnings`}
+              findings={(results.issues || []).concat(results.warnings || []).map(f => ({
+                id: f.id,
+                code: f.code,
+                message: f.message,
+                severity: f.severity,
+                location: f.location,
+              }))}
+              projectId={1}
+              label="Refine All Findings"
+              size="md"
+            />
+          </div>
+        )}
+
         <Tabs defaultValue="errors" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="errors">
@@ -161,7 +182,7 @@ const ValidationResultsPanel: React.FC<ValidationResultsPanelProps> = ({
                   <Alert key={index} variant="destructive">
                     <div className="flex items-start">
                       <XCircle className="h-4 w-4 mt-0.5 mr-2" />
-                      <div>
+                      <div className="flex-1">
                         <AlertTitle>
                           {issue.code} - {issue.message}
                         </AlertTitle>
@@ -178,6 +199,15 @@ const ValidationResultsPanel: React.FC<ValidationResultsPanelProps> = ({
                             </div>
                           )}
                         </AlertDescription>
+                      </div>
+                      <div className="ml-2 shrink-0">
+                        <InlineAIButton
+                          actionType="explain_selection"
+                          content={`${issue.code}: ${issue.message}. ${issue.description}${issue.location ? ` Location: ${issue.location}` : ''}${issue.guideline ? ` Guideline: ${issue.guideline}` : ''}`}
+                          projectId={1}
+                          label="Explain"
+                          size="sm"
+                        />
                       </div>
                     </div>
                   </Alert>
@@ -199,7 +229,7 @@ const ValidationResultsPanel: React.FC<ValidationResultsPanelProps> = ({
                   <Alert key={index}>
                     <div className="flex items-start">
                       <AlertTriangle className="h-4 w-4 mt-0.5 mr-2 text-warning" />
-                      <div>
+                      <div className="flex-1">
                         <AlertTitle>
                           {warning.code} - {warning.message}
                         </AlertTitle>
@@ -216,6 +246,15 @@ const ValidationResultsPanel: React.FC<ValidationResultsPanelProps> = ({
                             </div>
                           )}
                         </AlertDescription>
+                      </div>
+                      <div className="ml-2 shrink-0">
+                        <InlineAIButton
+                          actionType="explain_selection"
+                          content={`${warning.code}: ${warning.message}. ${warning.description}${warning.location ? ` Location: ${warning.location}` : ''}${warning.guideline ? ` Guideline: ${warning.guideline}` : ''}`}
+                          projectId={1}
+                          label="Explain"
+                          size="sm"
+                        />
                       </div>
                     </div>
                   </Alert>

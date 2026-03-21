@@ -288,7 +288,7 @@ router.post('/', async (req, res) => {
     }
 
     const organizationId = req.user?.organizationId || DEFAULT_ORG_ID;
-    const userId = req.user?.id || 1;
+    const userId = req.user?.id;
     const { name, description, category, type, content, sections, metadata } = req.body;
     
     const templateId = generateTemplateId(category);
@@ -472,7 +472,7 @@ router.post('/:templateId/use', async (req, res) => {
     }
 
     const { templateId } = req.params;
-    const userId = req.user?.id || 1;
+    const userId = req.user?.id;
     const organizationId = req.user?.organizationId || DEFAULT_ORG_ID;
     
     // Update usage count for IND templates

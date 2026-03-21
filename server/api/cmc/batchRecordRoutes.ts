@@ -78,7 +78,10 @@ const releaseSchema = z.object({
 router.get('/:projectId', async (req, res) => {
   try {
     const { projectId } = req.params;
-    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '1';
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || req.headers['x-tenant-id'] || req.headers['x-organization-id'];
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Tenant context required' });
+    }
     const pool = getPool();
 
     await ensureBatchTables();
@@ -121,7 +124,10 @@ router.post('/', async (req, res) => {
 
     const data = validationResult.data;
     const pool = getPool();
-    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || req.headers['x-tenant-id'] || req.headers['x-organization-id'] || '1';
+    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId || req.headers['x-tenant-id'] || req.headers['x-organization-id'];
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Tenant context required' });
+    }
 
     await ensureBatchTables();
 

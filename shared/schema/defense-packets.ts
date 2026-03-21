@@ -25,6 +25,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod';
+import { organizations } from '../schema';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // DEFENSE PACKETS
@@ -42,6 +43,7 @@ export const defensePackets = pgTable(
   'defense_packets',
   {
     id: uuid('id').primaryKey().defaultRandom(),
+    organizationId: integer('organization_id').notNull().references(() => organizations.id),
     programId: uuid('program_id').notNull(),
     subjectHash: text('subject_hash').notNull(),
     predicateKNumber: text('predicate_k_number').notNull(),
@@ -85,6 +87,7 @@ export const defensePackets = pgTable(
     previousPacketId: uuid('previous_packet_id'),
   },
   table => ({
+    orgIdx: index('idx_dp_org').on(table.organizationId),
     programIdx: index('idx_dp_program').on(table.programId),
     subjectIdx: index('idx_dp_subject').on(table.subjectHash),
     manifestIdx: uniqueIndex('idx_dp_manifest').on(table.manifestHash),

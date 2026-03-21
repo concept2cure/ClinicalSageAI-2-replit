@@ -14,6 +14,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
+import { InlineAIMenu } from '../ui/InlineAIMenu';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -1220,6 +1221,14 @@ export function CAPAManagement() {
                         {capa.actions.filter(a => a.status === 'completed').length}/
                         {capa.actions.length}
                       </span>
+                    </TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <InlineAIMenu
+                        content={`CAPA ${capa.id}: ${capa.title}\nDescription: ${capa.description}\nSource: ${capa.source}\nPriority: ${capa.priority}\nStatus: ${capa.status}\nOwner: ${capa.owner}\nRoot Cause: ${capa.rootCause || 'Not yet determined'}`}
+                        projectId={1}
+                        variant="icon"
+                        actions={['summarize_selection', 'explain_selection', 'create_followup_task']}
+                      />
                     </TableCell>
                   </TableRow>
                 );

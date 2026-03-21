@@ -44,7 +44,7 @@ function getUser(req: Request): { userId: string; organizationId: string } | nul
     };
     return {
       userId: decoded.userId,
-      organizationId: decoded.organizationId || '2',
+      organizationId: decoded.organizationId,
     };
   } catch {
     return null;
