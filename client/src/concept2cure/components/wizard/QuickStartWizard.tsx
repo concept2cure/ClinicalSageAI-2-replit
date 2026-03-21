@@ -281,7 +281,7 @@ const IndustryStep: React.FC<{
               key={option.value}
               onClick={() => onChange(option.value)}
               className={cn(
-                'p-5 rounded-xl border text-left transition-all',
+                'p-5 rounded-xl border text-left transition-all duration-150',
                 isSelected
                   ? 'border-blue-500 bg-blue-50'
                   : 'border-zinc-200 hover:border-blue-300'
@@ -336,7 +336,7 @@ const SubmissionTypeStep: React.FC<{
               key={key}
               onClick={() => onChange(key as SubmissionType)}
               className={cn(
-                'p-4 rounded-lg border text-left transition-all',
+                'p-4 rounded-lg border text-left transition-all duration-150',
                 isSelected
                   ? 'border-blue-500 bg-blue-50'
                   : 'border-zinc-200 hover:border-blue-300'
@@ -434,7 +434,7 @@ const ProductStep: React.FC<{
                 key={ta.value}
                 onClick={() => onTherapeuticChange(ta.value)}
                 className={cn(
-                  'p-3 rounded-lg border text-center transition-all',
+                  'p-3 rounded-lg border text-center transition-all duration-150',
                   isSelected
                     ? 'border-blue-500 bg-blue-50 text-blue-700'
                     : 'border-zinc-200 hover:border-blue-300 text-zinc-600'
@@ -498,7 +498,7 @@ const TimelineStep: React.FC<{
                 key={key}
                 onClick={() => toggleRegion(key as RegulatoryRegion)}
                 className={cn(
-                  'p-3 rounded-lg border text-left transition-all',
+                  'p-3 rounded-lg border text-left transition-all duration-150',
                   isSelected
                     ? 'border-blue-500 bg-blue-50'
                     : 'border-zinc-200 hover:border-blue-300'
@@ -666,7 +666,7 @@ export const QuickStartWizard: React.FC<QuickStartWizardProps> = ({
           {Array.from({ length: totalSteps }).map((_, i) => (
             <React.Fragment key={i}>
               <div className={cn(
-                'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors',
+                'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors duration-150',
                 i + 1 < step && 'bg-blue-600 text-white',
                 i + 1 === step && 'bg-blue-600 text-white ring-4 ring-blue-200',
                 i + 1 > step && 'bg-zinc-200 text-zinc-500'
@@ -675,7 +675,7 @@ export const QuickStartWizard: React.FC<QuickStartWizardProps> = ({
               </div>
               {i < totalSteps - 1 && (
                 <div className={cn(
-                  'flex-1 h-0.5 transition-colors',
+                  'flex-1 h-0.5 transition-colors duration-150',
                   i + 1 < step ? 'bg-blue-600' : 'bg-zinc-200'
                 )} />
               )}
@@ -737,7 +737,7 @@ export const QuickStartWizard: React.FC<QuickStartWizardProps> = ({
           onClick={handleNext}
           disabled={!canProceed()}
           className={cn(
-            'flex items-center gap-2 px-6 py-2 text-sm font-medium rounded-lg transition-colors',
+            'flex items-center gap-2 px-6 py-2 text-sm font-medium rounded-lg transition-colors duration-150',
             canProceed()
               ? 'bg-blue-600 text-white hover:bg-blue-700'
               : 'bg-zinc-200 text-zinc-400 cursor-not-allowed'

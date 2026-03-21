@@ -225,7 +225,7 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
         <div className="max-w-5xl mx-auto px-6 py-12">
           {/* Greeting */}
           <div className="mb-10">
-            <h2 className="text-3xl font-semibold text-zinc-900 mb-2">
+            <h2 className="text-2xl font-semibold text-zinc-900 mb-2">
               {getGreeting()}, {firstName}!
             </h2>
             <p className="text-zinc-500 text-lg">

@@ -272,7 +272,7 @@ export const EvidenceManager: React.FC<EvidenceManagerProps> = ({ programId }) =
                       key={ev.id}
                       onClick={() => setSelectedId(ev.id)}
                       className={cn(
-                        'w-full text-left p-3 hover:bg-zinc-50 transition-colors',
+                        'w-full text-left p-3 hover:bg-zinc-50 transition-colors duration-150',
                         isSelected && 'bg-blue-50/60 border-l-2 border-l-blue-500',
                       )}
                     >

@@ -562,7 +562,7 @@ export function SignatureWorkflow({
       <div
         key={signer.id}
         className={cn(
-          'flex items-center justify-between p-3 rounded-lg border transition-colors',
+          'flex items-center justify-between p-3 rounded-lg border transition-colors duration-150',
           signer.status === 'signed'
             ? 'bg-emerald-50/60 border-emerald-200'
             : signer.status === 'rejected'
@@ -630,7 +630,7 @@ export function SignatureWorkflow({
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 bg-zinc-50">
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-blue-100 border border-blue-200">
+              <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-blue-100 border border-blue-200">
                 <Fingerprint className="w-5 h-5 text-blue-600" />
               </div>
               <div>
@@ -756,7 +756,7 @@ export function SignatureWorkflow({
               onClick={handleSign}
               disabled={signing || !legalAck || !password}
               className={cn(
-                'inline-flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all',
+                'inline-flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all duration-150',
                 signing || !legalAck || !password
                   ? 'bg-zinc-200 text-zinc-400 cursor-not-allowed'
                   : 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm shadow-blue-200'
@@ -857,7 +857,7 @@ export function SignatureWorkflow({
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 bg-zinc-50">
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-blue-100 border border-blue-200">
+          <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-blue-100 border border-blue-200">
             <Shield className="w-5 h-5 text-blue-600" />
           </div>
           <div>

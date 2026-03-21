@@ -301,7 +301,7 @@ const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
   return (
     <div
       className={cn(
-        'group flex items-center gap-2 py-1.5 px-2 rounded-lg cursor-pointer transition-colors',
+        'group flex items-center gap-2 py-1.5 px-2 rounded-lg cursor-pointer transition-colors duration-150',
         isSelected ? 'bg-blue-50' : 'hover:bg-zinc-50',
         level > 0 && 'ml-4'
       )}
@@ -411,7 +411,7 @@ const ModuleHeader: React.FC<{
     <button
       onClick={onToggle}
       className={cn(
-        'w-full flex items-center gap-3 p-3 rounded-xl transition-colors',
+        'w-full flex items-center gap-3 p-3 rounded-xl transition-colors duration-150',
         'border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50',
         isExpanded && 'bg-zinc-50 border-zinc-300'
       )}
@@ -421,7 +421,7 @@ const ModuleHeader: React.FC<{
         className={cn(
           'w-10 h-10 rounded-lg flex items-center justify-center text-lg font-semibold flex-shrink-0',
           moduleId === '1' && 'bg-blue-100 text-blue-700',
-          moduleId === '2' && 'bg-violet-100 text-violet-700',
+          moduleId === '2' && 'bg-blue-100 text-blue-700',
           moduleId === '3' && 'bg-emerald-100 text-emerald-700',
           moduleId === '4' && 'bg-amber-100 text-amber-700',
           moduleId === '5' && 'bg-pink-100 text-pink-700'
@@ -448,7 +448,7 @@ const ModuleHeader: React.FC<{
           <div className="h-1.5 bg-zinc-200 rounded-full overflow-hidden">
             <div
               className={cn(
-                'h-full rounded-full transition-all',
+                'h-full rounded-full transition-all duration-150',
                 progressPercent === 100 && 'bg-emerald-500',
                 progressPercent >= 50 && progressPercent < 100 && 'bg-blue-500',
                 progressPercent < 50 && 'bg-amber-500'
@@ -558,7 +558,7 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
                 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-medium',
                 dossier.status.overall === 'drafting' && 'bg-blue-100 text-blue-700',
                 dossier.status.overall === 'internal_review' && 'bg-amber-100 text-amber-700',
-                dossier.status.overall === 'qc' && 'bg-violet-100 text-violet-700',
+                dossier.status.overall === 'qc' && 'bg-blue-100 text-blue-700',
                 dossier.status.overall === 'ready' && 'bg-emerald-100 text-emerald-700',
                 dossier.status.overall === 'submitted' && 'bg-zinc-100 text-zinc-700'
               )}

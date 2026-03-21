@@ -386,7 +386,7 @@ const DesignSelector: React.FC<DesignSelectorProps> = ({ selectedDesign, onSelec
           <div
             key={design.id}
             className={cn(
-              'border border-border/40 rounded-sm bg-background cursor-pointer transition-all',
+              'border border-border/40 rounded-sm bg-background cursor-pointer transition-all duration-150',
               isSelected && 'ring-2 ring-blue-500 bg-blue-50'
             )}
             onClick={() => onSelect(design.type)}
@@ -448,7 +448,7 @@ const EndpointSelector: React.FC<EndpointSelectorProps> = ({
           <div
             key={endpoint.id}
             className={cn(
-              'flex items-center gap-3 p-3 rounded-lg border transition-colors',
+              'flex items-center gap-3 p-3 rounded-lg border transition-colors duration-150',
               isSelected
                 ? 'bg-blue-50 border-blue-200'
                 : 'bg-white border-zinc-200 hover:border-zinc-300'

@@ -55,7 +55,7 @@ const ProgressBar: React.FC<{ label: string; value: number; color?: string }> = 
       <span className="font-medium text-zinc-900">{value}%</span>
     </div>
     <div className="h-1.5 bg-zinc-100 rounded-full overflow-hidden">
-      <div className={cn('h-full rounded-full transition-all', color)} style={{ width: `${value}%` }} />
+      <div className={cn('h-full rounded-full transition-all duration-150', color)} style={{ width: `${value}%` }} />
     </div>
   </div>
 );
@@ -369,7 +369,7 @@ const DocEditorPreview: React.FC = () => (
     <MockCard title="eCTD Co-Author" icon={<FileText className="w-4 h-4 text-blue-500" />}>
       <div className="bg-zinc-50 rounded-lg p-4 font-mono text-xs text-zinc-700 space-y-2 mb-3">
         <p className="font-semibold text-zinc-900">2.7.4 Summary of Clinical Safety</p>
-        <p>The safety profile of [compound] was evaluated across <span className="bg-violet-100 text-violet-700 px-1 rounded">3 pivotal trials</span> enrolling a total of <span className="bg-violet-100 text-violet-700 px-1 rounded">4,200 subjects</span>.</p>
+        <p>The safety profile of [compound] was evaluated across <span className="bg-blue-100 text-blue-700 px-1 rounded">3 pivotal trials</span> enrolling a total of <span className="bg-blue-100 text-blue-700 px-1 rounded">4,200 subjects</span>.</p>
         <p className="text-zinc-400 italic">AI suggestion: "Consider adding the treatment-emergent adverse events table reference (Table 14.3.1.1)..."</p>
       </div>
       <div className="flex gap-2">
@@ -1067,7 +1067,7 @@ const NanoBananaGeneratePreview: React.FC = () => (
 const NanoBananaIntegrationsPreview: React.FC = () => (
   <div className="space-y-4">
     {[
-      { name: 'AnA Chat', desc: 'Switch to AnA Visual mode, describe what you need', icon: <Bot className="w-4 h-4 text-violet-500" />, color: 'border-violet-200' },
+      { name: 'AnA Chat', desc: 'Switch to AnA Visual mode, describe what you need', icon: <Bot className="w-4 h-4 text-violet-500" />, color: 'border-blue-200' },
       { name: 'Report Center', desc: 'Generate visuals alongside readiness briefs & transmittals', icon: <BarChart3 className="w-4 h-4 text-blue-500" />, color: 'border-blue-200' },
       { name: 'Document Builder', desc: 'Insert AI figures into CSR/CTD sections during review', icon: <FileText className="w-4 h-4 text-emerald-500" />, color: 'border-emerald-200' },
       { name: 'Program Analytics', desc: 'Export dashboards as infographics or slide decks', icon: <Activity className="w-4 h-4 text-orange-500" />, color: 'border-orange-200' },

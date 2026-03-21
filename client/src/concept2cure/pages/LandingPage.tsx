@@ -460,7 +460,7 @@ function PlatformMockup() {
   return (
     <div className="relative mx-auto max-w-5xl">
       {/* Browser chrome */}
-      <div className="rounded-xl border border-zinc-200 bg-white shadow-2xl shadow-blue-900/10 overflow-hidden">
+      <div className="rounded-xl border border-zinc-200 bg-white shadow-lg overflow-hidden">
         {/* Title bar */}
         <div className="flex items-center gap-2 px-4 py-3 bg-zinc-50 border-b border-zinc-200">
           <div className="flex gap-1.5">
@@ -603,7 +603,7 @@ export const LandingPage: React.FC = () => {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setLocation('/concept2cure/demo')}
-              className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-violet-700 bg-violet-50 hover:bg-violet-100 border border-violet-200 rounded-lg transition-colors duration-150"
+              className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 hover:bg-violet-100 border border-blue-200 rounded-lg transition-colors duration-150"
             >
               <span className="flex h-1.5 w-1.5 relative">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75" />
@@ -640,7 +640,7 @@ export const LandingPage: React.FC = () => {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 px-4 py-2 mb-8 rounded-full bg-gradient-to-r from-blue-50 to-violet-50 border border-blue-100/60"
+            className="inline-flex items-center gap-2 px-4 py-2 mb-8 rounded-full bg-blue-50 border border-blue-100/60"
           >
             <span className="flex h-2 w-2 relative">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
@@ -692,7 +692,7 @@ export const LandingPage: React.FC = () => {
           >
             <button
               onClick={() => setLocation('/concept2cure/demo')}
-              className="group px-8 py-3.5 text-base font-medium text-white bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-700 hover:to-blue-700 rounded-xl transition-all shadow-lg shadow-violet-600/25 hover:shadow-violet-600/40 flex items-center gap-2"
+              className="group px-8 py-3.5 text-base font-medium text-white bg-blue-600 hover:from-violet-700 hover:to-blue-700 rounded-xl transition-all shadow-lg shadow-violet-600/25 hover:shadow-violet-600/40 flex items-center gap-2"
             >
               <span className="flex h-2 w-2 relative mr-1">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
@@ -858,7 +858,7 @@ export const LandingPage: React.FC = () => {
                   variants={fadeUp}
                   className="flex items-start gap-6"
                 >
-                  <div className={`relative z-10 w-14 h-14 rounded-xl flex items-center justify-center text-white font-semibold text-lg shadow-lg flex-shrink-0 ${
+                  <div className={`relative z-10 w-14 h-14 rounded-lg flex items-center justify-center text-white font-semibold text-lg shadow-lg flex-shrink-0 ${
                     step.color === 'blue' ? 'bg-blue-600 shadow-blue-600/30' :
                     step.color === 'violet' ? 'bg-violet-600 shadow-violet-600/30' :
                     step.color === 'indigo' ? 'bg-blue-600 shadow-blue-600/30' :
@@ -878,7 +878,7 @@ export const LandingPage: React.FC = () => {
           <motion.div variants={fadeUp} className="text-center mt-12">
             <button
               onClick={() => setLocation('/concept2cure/demo')}
-              className="group px-8 py-3.5 text-base font-medium text-white bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 rounded-xl transition-all shadow-lg shadow-blue-600/20 flex items-center gap-2 mx-auto"
+              className="group px-8 py-3.5 text-base font-medium text-white bg-blue-600 hover:from-blue-700 hover:to-violet-700 rounded-xl transition-all shadow-lg shadow-blue-600/20 flex items-center gap-2 mx-auto"
             >
               <SparklesIcon className="w-4 h-4" />
               Try the Interactive Demo
@@ -1088,14 +1088,14 @@ export const LandingPage: React.FC = () => {
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 gap-8 items-start">
+          <div className="grid md:grid-cols-2 gap-4 items-start">
             {/* Agent Grid */}
             <motion.div variants={fadeUp} className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {AI_CAPABILITIES.map((agent) => (
                 <motion.div
                   key={agent.name}
                   variants={fadeUp}
-                  className="p-3.5 rounded-xl bg-white border border-zinc-200 hover:border-violet-200 transition-all duration-150"
+                  className="p-3.5 rounded-xl bg-white border border-zinc-200 hover:border-blue-200 transition-all duration-150"
                 >
                   <div className="flex items-center gap-2 mb-1.5">
                     <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
@@ -1108,9 +1108,9 @@ export const LandingPage: React.FC = () => {
 
             {/* AnA + SnowGlobe + Dr. Sage */}
             <motion.div variants={fadeUp} className="space-y-4">
-              <div className="p-6 rounded-xl bg-gradient-to-br from-violet-600 to-blue-600 text-white">
+              <div className="p-6 rounded-xl bg-blue-600 text-white">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
                     <SparklesIcon className="w-5 h-5 text-white" />
                   </div>
                   <div>
@@ -1127,7 +1127,7 @@ export const LandingPage: React.FC = () => {
 
               <div className="p-5 rounded-xl bg-gradient-to-br from-blue-900 to-violet-900 text-white border border-blue-700/50">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center">
                     <svg className="w-5 h-5 text-cyan-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
                     </svg>
@@ -1145,7 +1145,7 @@ export const LandingPage: React.FC = () => {
 
               <div className="p-5 rounded-xl bg-white border border-zinc-200">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
                     <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342" />
                     </svg>
@@ -1202,7 +1202,7 @@ export const LandingPage: React.FC = () => {
               <motion.div
                 key={card.title}
                 variants={fadeUp}
-                className="group p-8 rounded-xl border-2 border-amber-100 hover:border-amber-300 bg-white hover:shadow-xl hover:shadow-amber-600/10 transition-all duration-300"
+                className="group p-8 rounded-xl border-2 border-amber-100 hover:border-amber-300 bg-white hover:shadow-md hover:shadow-amber-600/10 transition-all duration-300"
               >
                 <div className="text-4xl mb-4">{card.icon}</div>
                 <h3 className="text-lg font-semibold text-zinc-900 mb-2">{card.title}</h3>
@@ -1244,15 +1244,15 @@ export const LandingPage: React.FC = () => {
               <motion.div
                 key={s.persona}
                 variants={fadeUp}
-                className={`group p-8 rounded-xl border-2 transition-all duration-300 hover:shadow-xl ${
+                className={`group p-8 rounded-xl border-2 transition-all duration-300 hover:shadow-md ${
                   s.color === 'blue' ? 'border-blue-100 hover:border-blue-300 bg-gradient-to-b from-blue-50/30 to-white hover:shadow-blue-600/10' :
-                  s.color === 'violet' ? 'border-violet-100 hover:border-violet-300 bg-gradient-to-b from-violet-50/30 to-white hover:shadow-violet-600/10' :
+                  s.color === 'violet' ? 'border-violet-100 hover:border-blue-300 bg-gradient-to-b from-violet-50/30 to-white hover:shadow-violet-600/10' :
                   'border-blue-100 hover:border-blue-300 bg-gradient-to-b from-blue-50/30 to-white hover:shadow-blue-600/10'
                 }`}
               >
                 <div className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold mb-4 ${
                   s.color === 'blue' ? 'bg-blue-100 text-blue-700' :
-                  s.color === 'violet' ? 'bg-violet-100 text-violet-700' :
+                  s.color === 'violet' ? 'bg-blue-100 text-blue-700' :
                   'bg-blue-100 text-blue-700'
                 }`}>
                   {s.persona}
@@ -1514,7 +1514,7 @@ export const LandingPage: React.FC = () => {
       {/* ─── FOOTER ─── */}
       <footer className="py-12 px-6 bg-zinc-900 text-zinc-400">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <Logo />

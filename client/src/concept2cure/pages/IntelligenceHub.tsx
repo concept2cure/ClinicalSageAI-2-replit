@@ -383,7 +383,7 @@ function EvidenceHub() {
               key={s}
               onClick={() => setSourceFilter(s)}
               className={cn(
-                'px-3 py-1.5 rounded text-xs transition-colors',
+                'px-3 py-1.5 rounded text-xs transition-colors duration-150',
                 sourceFilter === s
                   ? 'bg-zinc-900 text-white'
                   : 'text-zinc-400 hover:text-zinc-600'
@@ -890,7 +890,7 @@ export function IntelligenceHub({ onClose }: { onClose: () => void }) {
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={cn(
-              'relative py-3 text-sm transition-colors',
+              'relative py-3 text-sm transition-colors duration-150',
               activeTab === tab.key
                 ? 'text-zinc-900 font-medium'
                 : 'text-zinc-400 hover:text-zinc-600'

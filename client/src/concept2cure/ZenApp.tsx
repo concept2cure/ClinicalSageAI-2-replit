@@ -715,7 +715,7 @@ function AnalyticsDashboardInline({ projects, onBack }: { projects: any[]; onBac
                     </div>
                     <div className="h-2 bg-zinc-200 rounded-full">
                       <div
-                        className={cn('h-2 rounded-full transition-all', item.color)}
+                        className={cn('h-2 rounded-full transition-all duration-150', item.color)}
                         style={{ width: `${item.pct}%` }}
                       />
                     </div>
@@ -2684,7 +2684,7 @@ export const ZenApp: React.FC = () => {
                         key={tab.key}
                         onClick={() => setLayoutMode(tab.key as LayoutMode)}
                         className={cn(
-                          'px-2.5 py-1 text-xs font-medium transition-colors',
+                          'px-2.5 py-1 text-xs font-medium transition-colors duration-150',
                           layoutMode === tab.key
                             ? 'bg-zinc-100 text-zinc-900'
                             : 'text-zinc-500 hover:bg-zinc-50'
@@ -3343,7 +3343,7 @@ export const ZenApp: React.FC = () => {
                         data-testid="view-toggle-intelligence"
                         onClick={() => setRiViewMode('intelligence')}
                         className={cn(
-                          'px-2 py-0.5 text-xs font-medium transition-colors',
+                          'px-2 py-0.5 text-xs font-medium transition-colors duration-150',
                           'bg-blue-100 text-blue-700'
                         )}
                       >

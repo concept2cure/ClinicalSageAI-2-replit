@@ -299,8 +299,8 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
             <button
               onClick={() => setShowVersions(!showVersions)}
               className={cn(
-                'p-2 rounded-lg transition-colors',
-                showVersions ? 'bg-violet-100 text-violet-700' : 'hover:bg-zinc-100 text-zinc-500'
+                'p-2 rounded-lg transition-colors duration-150',
+                showVersions ? 'bg-blue-100 text-blue-700' : 'hover:bg-zinc-100 text-zinc-500'
               )}
               title="Version history"
             >
@@ -370,8 +370,8 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
             <button
               onClick={() => setIsEditing(!isEditing)}
               className={cn(
-                'p-2 rounded-lg transition-colors',
-                isEditing ? 'bg-violet-100 text-violet-700' : 'hover:bg-zinc-100 text-zinc-500'
+                'p-2 rounded-lg transition-colors duration-150',
+                isEditing ? 'bg-blue-100 text-blue-700' : 'hover:bg-zinc-100 text-zinc-500'
               )}
               title={isEditing ? 'View mode' : 'Edit'}
             >
@@ -494,8 +494,8 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
               onClick={handleSave}
               disabled={isSaving}
               className={cn(
-                'px-4 py-1.5 text-sm font-medium rounded-lg transition-colors',
-                'bg-violet-600 text-white hover:bg-violet-700',
+                'px-4 py-1.5 text-sm font-medium rounded-lg transition-colors duration-150',
+                'bg-blue-600 text-white hover:bg-blue-700',
                 'disabled:opacity-60 disabled:cursor-not-allowed',
                 'flex items-center gap-2'
               )}
@@ -527,7 +527,7 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
           <button
             onClick={() => onSign(artifact)}
             className={cn(
-              'px-4 py-1.5 text-sm font-medium rounded-lg transition-colors',
+              'px-4 py-1.5 text-sm font-medium rounded-lg transition-colors duration-150',
               'bg-emerald-600 text-white hover:bg-emerald-700',
               'flex items-center gap-2'
             )}

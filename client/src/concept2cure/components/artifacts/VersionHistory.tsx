@@ -351,7 +351,7 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
         <DialogTrigger asChild>
           <button
             className={cn(
-              'flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors',
+              'flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors duration-150',
               'text-sm text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900',
               className
             )}

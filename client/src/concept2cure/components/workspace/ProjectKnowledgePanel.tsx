@@ -114,7 +114,7 @@ const ContextUsageBar: React.FC<{
       </div>
       <div className="h-1 rounded-full bg-zinc-100 overflow-hidden">
         <div
-          className={cn('h-full rounded-full transition-all', color)}
+          className={cn('h-full rounded-full transition-all duration-150', color)}
           style={{ width: `${Math.min(percent, 100)}%` }}
         />
       </div>

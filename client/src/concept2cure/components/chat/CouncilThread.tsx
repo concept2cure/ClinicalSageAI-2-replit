@@ -283,7 +283,7 @@ const MessageBubble: React.FC<{
                     <div className="flex-1 h-1.5 bg-zinc-200 rounded-full overflow-hidden">
                       <div
                         className={cn(
-                          'h-full rounded-full transition-all',
+                          'h-full rounded-full transition-all duration-150',
                           message.confidence >= 90 && 'bg-green-500',
                           message.confidence >= 70 && message.confidence < 90 && 'bg-blue-500',
                           message.confidence >= 50 && message.confidence < 70 && 'bg-amber-500',

@@ -319,7 +319,7 @@ function FindingCard({
   return (
     <div
       className={cn(
-        'flex items-start gap-3 rounded-lg border p-3 transition-colors',
+        'flex items-start gap-3 rounded-lg border p-3 transition-colors duration-150',
         side === 'baseline'
           ? 'border-zinc-700/60 bg-zinc-800/40'
           : 'border-blue-500/20 bg-blue-500/5',
@@ -531,7 +531,7 @@ export default function ScenarioComparison({
             className={cn(
               'flex items-center justify-center h-8 w-8 rounded-lg',
               'border border-zinc-700 bg-zinc-800/60 text-zinc-400',
-              'hover:bg-zinc-700 hover:text-zinc-200 transition-colors',
+              'hover:bg-zinc-700 hover:text-zinc-200 transition-colors duration-150',
             )}
           >
             <X className="h-4 w-4" />

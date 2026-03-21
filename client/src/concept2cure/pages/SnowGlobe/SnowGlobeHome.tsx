@@ -150,7 +150,7 @@ const CHAMBER_CONFIG: Record<
     icon: Shield,
     accent: 'text-violet-600',
     bg: 'bg-violet-50',
-    border: 'border-violet-200',
+    border: 'border-blue-200',
   },
   route_timing: {
     label: 'Route & Timing',
@@ -383,7 +383,7 @@ function ScoreCard({
       <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-zinc-100">
         <div
           className={cn(
-            'h-full rounded-full transition-all',
+            'h-full rounded-full transition-all duration-150',
             band === 'green' && 'bg-emerald-400',
             band === 'amber' && 'bg-amber-400',
             band === 'red' && 'bg-red-400',
@@ -446,7 +446,7 @@ function ChamberCard({
         onClick={onDeepDive}
         className={cn(
           'inline-flex items-center gap-1.5 self-start rounded-lg px-3 py-1.5 text-xs font-medium',
-          'border transition-colors',
+          'border transition-colors duration-150',
           config.border,
           config.accent,
           'hover:bg-zinc-50',
@@ -551,7 +551,7 @@ function ScenarioPill({
     <button
       onClick={onSelect}
       className={cn(
-        'flex shrink-0 items-center gap-2 rounded-xl border px-4 py-2.5 text-left transition-all',
+        'flex shrink-0 items-center gap-2 rounded-xl border px-4 py-2.5 text-left transition-all duration-150',
         isSelected
           ? 'border-blue-300 bg-blue-50 ring-1 ring-blue-200'
           : 'border-zinc-200 bg-white hover:border-zinc-300 hover:shadow-sm',

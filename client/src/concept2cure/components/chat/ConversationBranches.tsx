@@ -128,7 +128,7 @@ export const ForkIndicator: React.FC<ForkIndicatorProps> = ({
               'absolute -right-3 top-1/2 -translate-y-1/2',
               'flex items-center gap-1 px-1.5 py-0.5 rounded-full',
               'bg-amber-50 border border-amber-200 text-amber-700',
-              'text-xs font-medium hover:bg-amber-100 transition-colors'
+              'text-xs font-medium hover:bg-amber-100 transition-colors duration-150'
             )}
           >
             <GitBranch className="h-3 w-3" />
@@ -237,7 +237,7 @@ const BranchNode: React.FC<BranchNodeProps> = ({
             <DropdownMenuTrigger asChild>
               <button
                 className={cn(
-                  'opacity-0 group-hover:opacity-100 p-1 rounded transition-all',
+                  'opacity-0 group-hover:opacity-100 p-1 rounded transition-all duration-150',
                   'hover:bg-zinc-200 text-zinc-400 hover:text-zinc-600'
                 )}
                 onClick={(e) => e.stopPropagation()}
@@ -346,7 +346,7 @@ export const ConversationBranches: React.FC<ConversationBranchesProps> = ({
       <DialogTrigger asChild>
         <button
           className={cn(
-            'flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors',
+            'flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors duration-150',
             'text-sm text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900',
             totalBranches > 1 && 'text-amber-700 bg-amber-50 hover:bg-amber-100',
             className
@@ -442,7 +442,7 @@ export const ForkActionButton: React.FC<ForkActionButtonProps> = ({
           <button
             onClick={() => onFork(messageId)}
             className={cn(
-              'p-1.5 rounded-md transition-colors',
+              'p-1.5 rounded-md transition-colors duration-150',
               'text-zinc-400 hover:text-amber-600 hover:bg-amber-50'
             )}
           >

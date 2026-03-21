@@ -275,7 +275,7 @@ export function OperationsCommandCenter({
                     <ArrowRight
                       className={cn(
                         'h-4 w-4 text-zinc-300 group-hover:text-zinc-500',
-                        'transition-colors',
+                        'transition-colors duration-150',
                       )}
                     />
                   </div>
@@ -332,7 +332,7 @@ export function OperationsCommandCenter({
               <div
                 className={cn(
                   'h-9 w-9 rounded-lg bg-zinc-100 flex items-center justify-center mb-3',
-                  'group-hover:bg-zinc-200 transition-colors',
+                  'group-hover:bg-zinc-200 transition-colors duration-150',
                 )}
               >
                 <link.icon className="h-4 w-4 text-zinc-600" />

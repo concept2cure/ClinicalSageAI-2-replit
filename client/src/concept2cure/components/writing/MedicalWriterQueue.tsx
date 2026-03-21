@@ -237,7 +237,7 @@ const TaskCard: React.FC<{
           <div className="h-1.5 bg-zinc-200 rounded-full overflow-hidden">
             <div
               className={cn(
-                'h-full rounded-full transition-all',
+                'h-full rounded-full transition-all duration-150',
                 task.progress >= 100 ? 'bg-green-500' : 'bg-blue-500'
               )}
               style={{ width: `${task.progress}%` }}
@@ -324,7 +324,7 @@ const TaskCard: React.FC<{
         <div className="h-2 bg-zinc-200 rounded-full overflow-hidden">
           <div
             className={cn(
-              'h-full rounded-full transition-all',
+              'h-full rounded-full transition-all duration-150',
               task.progress >= 100 ? 'bg-green-500' : 'bg-blue-500'
             )}
             style={{ width: `${task.progress}%` }}
@@ -501,7 +501,7 @@ export const MedicalWriterQueue: React.FC<MedicalWriterQueueProps> = ({
             <button
               onClick={() => setView('list')}
               className={cn(
-                'p-2 rounded transition-colors',
+                'p-2 rounded transition-colors duration-150',
                 view === 'list' ? 'bg-blue-100 text-blue-600' : 'text-zinc-400 hover:bg-zinc-100'
               )}
             >
@@ -510,7 +510,7 @@ export const MedicalWriterQueue: React.FC<MedicalWriterQueueProps> = ({
             <button
               onClick={() => setView('pipeline')}
               className={cn(
-                'p-2 rounded transition-colors',
+                'p-2 rounded transition-colors duration-150',
                 view === 'pipeline' ? 'bg-blue-100 text-blue-600' : 'text-zinc-400 hover:bg-zinc-100'
               )}
             >

@@ -598,7 +598,7 @@ const SectionRow: React.FC<{
     <>
       <div
         className={cn(
-          'group flex items-center gap-2 px-3 py-1.5 text-sm cursor-pointer transition-colors',
+          'group flex items-center gap-2 px-3 py-1.5 text-sm cursor-pointer transition-colors duration-150',
           'hover:bg-zinc-50',
           isSelected && 'bg-violet-50 border-l-2 border-violet-500',
           !isSelected && 'border-l-2 border-transparent'
@@ -920,7 +920,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                 onClick={() => canCompileEctd && setShowCompileDialog(true)}
                 disabled={compileMutation.isPending || !canCompileEctd}
                 className={cn(
-                  'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors',
+                  'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors duration-150',
                   ectdStatus?.submissionReady
                     ? 'bg-emerald-600 text-white hover:bg-emerald-700'
                     : 'bg-blue-600 text-white hover:bg-blue-700',
@@ -1003,7 +1003,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                 key={f.id}
                 onClick={() => setFilter(f.id)}
                 className={cn(
-                  'px-2 py-1 text-xs rounded-md transition-colors',
+                  'px-2 py-1 text-xs rounded-md transition-colors duration-150',
                   filter === f.id ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:bg-zinc-100'
                 )}
               >
@@ -1123,7 +1123,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                     {section.aiDraftable && (
                       <button
                         onClick={() => onDraftWithAI?.(section.code, section.title)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-violet-600 text-white hover:bg-violet-700 transition-colors duration-150"
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors duration-150"
                       >
                         <Sparkles className="w-3.5 h-3.5" />
                         Draft with RI

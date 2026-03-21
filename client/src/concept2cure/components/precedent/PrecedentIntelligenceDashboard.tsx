@@ -109,7 +109,7 @@ function ScoreBar({ value, max = 1, label }: { value: number; max?: number; labe
       {label && <span className="text-xs text-zinc-500 w-28 flex-shrink-0">{label}</span>}
       <div className="flex-1 h-2 bg-zinc-100 rounded-full overflow-hidden">
         <div
-          className={cn('h-full rounded-full transition-all', color)}
+          className={cn('h-full rounded-full transition-all duration-150', color)}
           style={{ width: `${pct}%` }}
         />
       </div>

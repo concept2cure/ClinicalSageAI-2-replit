@@ -286,7 +286,7 @@ const DeliverablesDuePanel: React.FC<{
         key={item.deliverable.id}
         onClick={() => onDeliverableClick?.(item.deliverable, item.sow)}
         className={cn(
-          'w-full p-3 rounded-lg border text-left transition-colors',
+          'w-full p-3 rounded-lg border text-left transition-colors duration-150',
           isOverdue && 'border-red-300 bg-red-50',
           isUrgent && !isOverdue && 'border-amber-300 bg-amber-50',
           !isOverdue && !isUrgent && 'border-zinc-200 bg-white hover:bg-zinc-50'
@@ -323,7 +323,7 @@ const DeliverablesDuePanel: React.FC<{
           <div className="h-1.5 bg-zinc-200 rounded-full overflow-hidden">
             <div
               className={cn(
-                'h-full rounded-full transition-all',
+                'h-full rounded-full transition-all duration-150',
                 item.deliverable.completionPct >= 80 && 'bg-green-500',
                 item.deliverable.completionPct >= 50 && item.deliverable.completionPct < 80 && 'bg-amber-500',
                 item.deliverable.completionPct < 50 && 'bg-blue-500'
@@ -461,7 +461,7 @@ const ResourceUtilizationPanel: React.FC<{
                     <div className="flex-1 h-3 bg-zinc-100 rounded-full overflow-hidden">
                       <div
                         className={cn(
-                          'h-full rounded-full transition-all',
+                          'h-full rounded-full transition-all duration-150',
                           resource.currentUtilization > 90 && 'bg-red-500',
                           resource.currentUtilization > 75 && resource.currentUtilization <= 90 && 'bg-green-500',
                           resource.currentUtilization >= 60 && resource.currentUtilization <= 75 && 'bg-amber-500',
@@ -693,7 +693,7 @@ const ClientCard: React.FC<{
                         key={sow.id}
                         onClick={() => onSOWClick?.(sow, client)}
                         className={cn(
-                          'p-3 rounded-lg border text-left transition-colors',
+                          'p-3 rounded-lg border text-left transition-colors duration-150',
                           sow.status === 'active' && 'bg-white border-zinc-200 hover:border-blue-300',
                           sow.status === 'complete' && 'bg-green-50 border-green-200',
                           sow.status === 'on_hold' && 'bg-amber-50 border-amber-200'

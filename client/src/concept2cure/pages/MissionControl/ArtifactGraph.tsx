@@ -169,7 +169,7 @@ export const ArtifactGraph: React.FC<ArtifactGraphProps> = ({
               key={state}
               onClick={() => setFilterState(filterState === state ? null : state)}
               className={cn(
-                'flex items-center gap-1.5 px-2 py-1 rounded-md text-xs transition-colors',
+                'flex items-center gap-1.5 px-2 py-1 rounded-md text-xs transition-colors duration-150',
                 filterState === state ? `${colors.bg} ${colors.text} font-semibold` : 'text-zinc-500 hover:bg-zinc-50'
               )}
             >
@@ -203,7 +203,7 @@ export const ArtifactGraph: React.FC<ArtifactGraphProps> = ({
                       key={artifact.id}
                       onClick={() => setSelectedArtifact(isSelected ? null : artifact)}
                       className={cn(
-                        'relative p-3 rounded-lg border cursor-pointer transition-all',
+                        'relative p-3 rounded-lg border cursor-pointer transition-all duration-150',
                         isSelected ? 'ring-2 ring-violet-400 border-violet-300' : 'hover:border-zinc-300',
                         isStale ? 'border-amber-300 bg-amber-50/50' : 'border-zinc-200',
                       )}
@@ -281,7 +281,7 @@ export const ArtifactGraph: React.FC<ArtifactGraphProps> = ({
               {selectedArtifact.lifecycleState === 'planned' && onDraftWithAI && (
                 <button
                   onClick={() => onDraftWithAI(selectedArtifact.id, selectedArtifact.title)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-violet-50 text-violet-700 border border-violet-200 rounded-lg hover:bg-violet-100"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-violet-50 text-violet-700 border border-blue-200 rounded-lg hover:bg-violet-100"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   Draft with AnA

@@ -221,7 +221,7 @@ const CompactTimeline: React.FC<{
             >
               <div
                 className={cn(
-                  'w-6 h-6 rounded-full flex items-center justify-center transition-all',
+                  'w-6 h-6 rounded-full flex items-center justify-center transition-all duration-150',
                   colors.bg,
                   colors.border,
                   'border-2',
@@ -336,7 +336,7 @@ const FullTimeline: React.FC<{
               <button
                 onClick={() => onPhaseClick?.(phase.id)}
                 className={cn(
-                  'w-full flex items-start gap-4 p-4 rounded-xl transition-all',
+                  'w-full flex items-start gap-4 p-4 rounded-xl transition-all duration-150',
                   'text-left',
                   isCurrent && 'bg-blue-50 border border-blue-200',
                   !isCurrent && 'hover:bg-zinc-50',
@@ -416,7 +416,7 @@ const FullTimeline: React.FC<{
                           }}
                           className={cn(
                             'flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs',
-                            'border transition-colors',
+                            'border transition-colors duration-150',
                             doc.status === 'approved' && 'bg-emerald-50 border-emerald-200 text-emerald-700',
                             doc.status === 'review' && 'bg-amber-50 border-amber-200 text-amber-700',
                             doc.status === 'draft' && 'bg-zinc-50 border-zinc-200 text-zinc-700',

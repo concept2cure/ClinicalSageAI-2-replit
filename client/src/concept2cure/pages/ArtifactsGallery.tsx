@@ -206,7 +206,7 @@ export const ArtifactsGallery: React.FC = () => {
                   key={cat.id}
                   onClick={() => setActiveCategory(activeCategory === cat.id ? 'all' : cat.id)}
                   className={cn(
-                    'px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
+                    'px-3 py-1.5 rounded-full text-sm font-medium transition-colors duration-150',
                     activeCategory === cat.id
                       ? 'bg-zinc-900 text-white'
                       : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
@@ -285,7 +285,7 @@ export const ArtifactsGallery: React.FC = () => {
                   key={cat.id}
                   onClick={() => setActiveCategory(cat.id)}
                   className={cn(
-                    'px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
+                    'px-3 py-1.5 rounded-full text-sm font-medium transition-colors duration-150',
                     activeCategory === cat.id
                       ? 'bg-zinc-900 text-white'
                       : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'

@@ -266,7 +266,7 @@ const GuardrailCard: React.FC<{
         <div className="relative h-3 bg-zinc-100 rounded-full overflow-hidden">
           <div
             className={cn(
-              'absolute h-full rounded-full transition-all',
+              'absolute h-full rounded-full transition-all duration-150',
               guardrail.status === 'pass' && 'bg-green-500',
               guardrail.status === 'warning' && 'bg-amber-500',
               guardrail.status === 'fail' && 'bg-red-500'

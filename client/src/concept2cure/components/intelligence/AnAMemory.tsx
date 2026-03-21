@@ -312,7 +312,7 @@ export function AnAMemory({
           <button
             onClick={() => setFilterCategory('all')}
             className={cn(
-              'px-2 py-0.5 text-[10px] font-medium rounded-full whitespace-nowrap transition-colors',
+              'px-2 py-0.5 text-[10px] font-medium rounded-full whitespace-nowrap transition-colors duration-150',
               filterCategory === 'all'
                 ? 'bg-violet-600 text-white'
                 : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200',
@@ -329,7 +329,7 @@ export function AnAMemory({
                 key={cat}
                 onClick={() => setFilterCategory(filterCategory === cat ? 'all' : cat)}
                 className={cn(
-                  'px-2 py-0.5 text-[10px] font-medium rounded-full whitespace-nowrap transition-colors',
+                  'px-2 py-0.5 text-[10px] font-medium rounded-full whitespace-nowrap transition-colors duration-150',
                   filterCategory === cat
                     ? 'bg-violet-600 text-white'
                     : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200',
@@ -344,7 +344,7 @@ export function AnAMemory({
 
       {/* Add form */}
       {showAddForm && (
-        <div className="px-4 py-3 border-b border-violet-200 bg-violet-50/50">
+        <div className="px-4 py-3 border-b border-blue-200 bg-violet-50/50">
           <div className="space-y-2">
             <select
               value={newCategory}
@@ -432,7 +432,7 @@ export function AnAMemory({
                       <div
                         key={entry.id}
                         className={cn(
-                          'p-2.5 rounded-lg border border-zinc-100 text-xs group hover:border-zinc-200 transition-colors',
+                          'p-2.5 rounded-lg border border-zinc-100 text-xs group hover:border-zinc-200 transition-colors duration-150',
                           entry.source === 'auto' ? 'bg-zinc-50/50' : 'bg-white',
                         )}
                       >

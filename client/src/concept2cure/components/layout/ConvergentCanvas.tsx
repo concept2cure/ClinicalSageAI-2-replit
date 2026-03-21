@@ -244,7 +244,7 @@ const Sidebar: React.FC<{
       {/* User */}
       <div className="p-2 border-t border-zinc-800">
         <button className={cn(
-          'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors',
+          'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors duration-150',
           collapsed && 'justify-center'
         )}>
           <Settings className="w-5 h-5" />
@@ -342,7 +342,7 @@ const CortexSidecar: React.FC<{
             onClick={handleSend}
             disabled={!input.trim()}
             className={cn(
-              'p-2 rounded-lg transition-colors',
+              'p-2 rounded-lg transition-colors duration-150',
               input.trim()
                 ? 'bg-blue-600 text-white hover:bg-blue-700'
                 : 'bg-zinc-200 text-zinc-400'
@@ -398,7 +398,7 @@ const Header: React.FC<{
       <button
         onClick={onCortexToggle}
         className={cn(
-          'flex items-center gap-2 px-3 py-2 rounded-lg transition-colors',
+          'flex items-center gap-2 px-3 py-2 rounded-lg transition-colors duration-150',
           cortexOpen
             ? 'bg-blue-100 text-blue-700'
             : 'hover:bg-zinc-100 text-zinc-600'

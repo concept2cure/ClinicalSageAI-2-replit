@@ -148,7 +148,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({ programId }) => {
                     key={dest.id}
                     onClick={() => setSelectedDestId(dest.id)}
                     className={cn(
-                      'w-full text-left p-4 transition-colors',
+                      'w-full text-left p-4 transition-colors duration-150',
                       isActive ? 'bg-blue-50 border-l-2 border-blue-500' : 'hover:bg-zinc-50'
                     )}
                   >

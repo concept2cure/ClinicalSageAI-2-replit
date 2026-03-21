@@ -616,7 +616,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 type="button"
                 onClick={() => setShowModeDropdown(prev => !prev)}
                 className={cn(
-                  'flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors',
+                  'flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors duration-150',
                   chatMode === 'deep-research'
                     ? 'bg-violet-50 text-violet-700 hover:bg-violet-100'
                     : chatMode === 'nano-banana'
@@ -643,7 +643,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     type="button"
                     onClick={() => { setChatMode('standard'); setShowModeDropdown(false); }}
                     className={cn(
-                      'w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-zinc-50 transition-colors',
+                      'w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-zinc-50 transition-colors duration-150',
                       chatMode === 'standard' && 'bg-zinc-50'
                     )}
                   >
@@ -658,7 +658,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     type="button"
                     onClick={() => { setChatMode('deep-research'); setShowModeDropdown(false); }}
                     className={cn(
-                      'w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-zinc-50 transition-colors',
+                      'w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-zinc-50 transition-colors duration-150',
                       chatMode === 'deep-research' && 'bg-violet-50'
                     )}
                   >
@@ -674,7 +674,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     type="button"
                     onClick={() => { setChatMode('nano-banana'); setShowModeDropdown(false); }}
                     className={cn(
-                      'w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-zinc-50 transition-colors',
+                      'w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-zinc-50 transition-colors duration-150',
                       chatMode === 'nano-banana' && 'bg-amber-50'
                     )}
                   >

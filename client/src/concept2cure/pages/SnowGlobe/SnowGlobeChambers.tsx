@@ -113,7 +113,7 @@ const CHAMBERS: ChamberDef[] = [
     icon: Shield,
     accent: 'text-violet-600',
     bg: 'bg-violet-50',
-    border: 'border-violet-200',
+    border: 'border-blue-200',
     description:
       'GCP/GMP audit readiness assessment — evaluates traceability, document integrity, and inspection trail completeness for regulatory audits.',
     scoreKey: 'audit_exposure',
@@ -531,7 +531,7 @@ export default function SnowGlobeChambers({ programId, initialChamber }: SnowGlo
                 onClick={handleRunScan}
                 disabled={isRunning}
                 className={cn(
-                  'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white transition-all',
+                  'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white transition-all duration-150',
                   isRunning ? 'bg-zinc-400 cursor-not-allowed' : 'bg-zinc-800 hover:bg-zinc-700 shadow-sm'
                 )}
               >
@@ -594,7 +594,7 @@ export default function SnowGlobeChambers({ programId, initialChamber }: SnowGlo
                       </span>
                       <div className="flex-1 h-2 bg-zinc-100 rounded-full overflow-hidden">
                         <div
-                          className={cn('h-full rounded-full transition-all', style.dot)}
+                          className={cn('h-full rounded-full transition-all duration-150', style.dot)}
                           style={{ width: `${(count / maxCount) * 100}%` }}
                         />
                       </div>

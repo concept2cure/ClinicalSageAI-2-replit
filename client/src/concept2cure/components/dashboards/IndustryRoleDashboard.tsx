@@ -224,7 +224,7 @@ const ActionItemCard: React.FC<{
     <button
       onClick={onClick}
       className={cn(
-        'w-full p-4 rounded-xl border text-left transition-all',
+        'w-full p-4 rounded-xl border text-left transition-all duration-150',
         'hover:shadow-md hover:border-blue-200',
         item.priority === 'critical' && 'border-red-200 bg-red-50',
         item.priority === 'high' && !isOverdue && 'border-amber-200 bg-amber-50',
@@ -291,7 +291,7 @@ const PDUFACard: React.FC<{
     <button
       onClick={onClick}
       className={cn(
-        'w-full p-4 rounded-xl border text-left transition-all',
+        'w-full p-4 rounded-xl border text-left transition-all duration-150',
         'hover:shadow-md',
         isCritical && 'border-red-200 bg-red-50',
         isUrgent && !isCritical && 'border-amber-200 bg-amber-50',
@@ -338,7 +338,7 @@ const CommitmentCard: React.FC<{
     <button
       onClick={onClick}
       className={cn(
-        'w-full p-3 rounded-lg border text-left transition-all',
+        'w-full p-3 rounded-lg border text-left transition-all duration-150',
         'hover:shadow-sm',
         commitment.status === 'overdue' && 'border-red-200 bg-red-50',
         commitment.status === 'at_risk' && 'border-amber-200 bg-amber-50'
@@ -462,7 +462,7 @@ const CROProjectManagerView: React.FC<{
               <button
                 key={d.id}
                 onClick={() => onDeliverableClick?.(d.id)}
-                className="w-full p-3 bg-white rounded-lg border border-violet-200 text-left hover:border-blue-200 transition-colors duration-150"
+                className="w-full p-3 bg-white rounded-lg border border-blue-200 text-left hover:border-blue-200 transition-colors duration-150"
               >
                 <p className="text-sm font-medium text-zinc-900 line-clamp-2">{d.name}</p>
                 <div className="mt-2 flex items-center justify-between text-xs text-zinc-500">

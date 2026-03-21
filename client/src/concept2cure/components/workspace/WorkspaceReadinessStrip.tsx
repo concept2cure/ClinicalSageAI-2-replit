@@ -45,7 +45,7 @@ const StatPill: React.FC<StatPillProps> = ({ icon: Icon, label, value, color = '
   <div
     className={cn(
       'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border',
-      'bg-white border-zinc-200 text-zinc-600 hover:border-zinc-300 transition-colors',
+      'bg-white border-zinc-200 text-zinc-600 hover:border-zinc-300 transition-colors duration-150',
       pulse && 'animate-pulse'
     )}
     title={label}

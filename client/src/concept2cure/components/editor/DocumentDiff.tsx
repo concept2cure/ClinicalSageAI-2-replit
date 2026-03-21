@@ -369,7 +369,7 @@ export function DocumentDiff({
   // Render helpers -------------------------------------------------------
   const bgForType = (type: DiffBlock['type'], isActive: boolean) =>
     cn(
-      'relative group rounded px-2 py-1 my-0.5 transition-colors',
+      'relative group rounded px-2 py-1 my-0.5 transition-colors duration-150',
       type === 'addition' && 'bg-green-50 dark:bg-green-900/20',
       type === 'deletion' && 'bg-red-50 dark:bg-red-900/20',
       type === 'modification' && 'bg-amber-50 dark:bg-amber-900/20',

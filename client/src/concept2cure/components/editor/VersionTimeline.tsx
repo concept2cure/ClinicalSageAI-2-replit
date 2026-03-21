@@ -201,7 +201,7 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
                 {/* Version card */}
                 <div
                   className={cn(
-                    'flex-1 min-w-0 mb-3 rounded-lg border p-3 cursor-pointer transition-all',
+                    'flex-1 min-w-0 mb-3 rounded-lg border p-3 cursor-pointer transition-all duration-150',
                     iSelected
                       ? 'border-violet-300 bg-violet-50 shadow-sm'
                       : isLatest

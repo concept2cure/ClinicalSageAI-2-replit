@@ -193,7 +193,7 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
               key={project.id}
               onClick={() => onSelectProject(project.id)}
               className={cn(
-                'w-full flex items-center gap-3 rounded-lg transition-colors',
+                'w-full flex items-center gap-3 rounded-lg transition-colors duration-150',
                 isCollapsed ? 'justify-center p-2' : 'px-3 py-2',
                 activeProjectId === project.id
                   ? 'bg-blue-50 text-blue-700'
@@ -256,7 +256,7 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <button
           onClick={onNewChat}
           className={cn(
-            'flex items-center justify-center gap-2 rounded-lg font-medium transition-all',
+            'flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-150',
             isCollapsed
               ? 'w-10 h-10 bg-blue-600 text-white hover:bg-blue-700'
               : 'w-full px-4 py-2.5 bg-blue-600 text-white hover:bg-blue-700'
@@ -277,7 +277,7 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <button
           onClick={onNewProject}
           className={cn(
-            'w-full flex items-center gap-3 rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 transition-colors',
+            'w-full flex items-center gap-3 rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 transition-colors duration-150',
             isCollapsed ? 'justify-center p-2' : 'px-3 py-2'
           )}
         >
@@ -294,7 +294,7 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
       >
         <button
           className={cn(
-            'w-full flex items-center gap-3 rounded-lg text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-colors',
+            'w-full flex items-center gap-3 rounded-lg text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-colors duration-150',
             isCollapsed ? 'justify-center p-2' : 'px-3 py-2'
           )}
         >

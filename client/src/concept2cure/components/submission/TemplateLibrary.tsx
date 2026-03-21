@@ -418,7 +418,7 @@ export function TemplateLibrary({
               key={cat}
               onClick={() => setSelectedCategory(cat)}
               className={cn(
-                'px-2.5 py-1 text-xs font-medium rounded-full transition-colors',
+                'px-2.5 py-1 text-xs font-medium rounded-full transition-colors duration-150',
                 selectedCategory === cat
                   ? 'bg-blue-600 text-white'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
@@ -446,7 +446,7 @@ export function TemplateLibrary({
                 key={t.id}
                 onClick={() => setSelectedTemplate(t)}
                 className={cn(
-                  'p-3 rounded-lg border cursor-pointer transition-all',
+                  'p-3 rounded-lg border cursor-pointer transition-all duration-150',
                   selectedTemplate?.id === t.id
                     ? 'border-blue-300 bg-blue-50 shadow-sm'
                     : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50',

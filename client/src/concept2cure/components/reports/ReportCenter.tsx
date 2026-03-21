@@ -43,7 +43,7 @@ const REPORT_TYPES = [
     title: 'Sponsor Handoff Brief',
     description: 'Summary for sponsor/CRO handoff communication',
     icon: Users,
-    color: 'bg-violet-50 text-violet-600 border-violet-200',
+    color: 'bg-violet-50 text-violet-600 border-blue-200',
   },
   {
     type: 'transmittal' as const,

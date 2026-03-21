@@ -221,7 +221,7 @@ const IndustryStep: React.FC<{
             key={industry.id}
             onClick={() => onSelect(industry.id)}
             className={cn(
-              'p-5 rounded-xl border text-left transition-all',
+              'p-5 rounded-xl border text-left transition-all duration-150',
               selected === industry.id
                 ? `${industry.bgColor} border-current ${industry.color} ring-2 ring-offset-2`
                 : 'bg-white border-zinc-200 hover:border-zinc-300 hover:shadow-md'
@@ -406,14 +406,14 @@ export const IndustryModeSelector: React.FC<IndustryModeSelectorProps> = ({
             {[1, 2, 3].map(s => (
               <React.Fragment key={s}>
                 <div className={cn(
-                  'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors',
+                  'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors duration-150',
                   step >= s ? 'bg-blue-600 text-white' : 'bg-zinc-200 text-zinc-500'
                 )}>
                   {step > s ? <CheckCircle className="w-4 h-4" /> : s}
                 </div>
                 {s < 3 && (
                   <div className={cn(
-                    'w-12 h-1 rounded-full transition-colors',
+                    'w-12 h-1 rounded-full transition-colors duration-150',
                     step > s ? 'bg-blue-600' : 'bg-zinc-200'
                   )} />
                 )}
@@ -451,7 +451,7 @@ export const IndustryModeSelector: React.FC<IndustryModeSelectorProps> = ({
             <button
               onClick={() => setStep(Math.max(1, step - 1) as 1 | 2 | 3)}
               className={cn(
-                'px-4 py-2 text-sm font-medium rounded-lg transition-colors',
+                'px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-150',
                 step === 1 ? 'invisible' : 'text-zinc-600 hover:bg-zinc-100'
               )}
             >

@@ -331,7 +331,7 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
                   <tr
                     key={a.artifactId}
                     className={cn(
-                      'border-b last:border-0 hover:bg-zinc-50/50 transition-colors',
+                      'border-b last:border-0 hover:bg-zinc-50/50 transition-colors duration-150',
                       a.reviewStatus === 'blocked' && 'bg-red-50/30',
                       onNavigateToArtifact && 'cursor-pointer'
                     )}

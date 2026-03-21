@@ -366,7 +366,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
               onClick={() => setActionMenuOpen((v) => !v)}
               disabled={isRunning}
               className={cn(
-                'w-full flex items-center justify-between px-3 py-2 rounded-md border text-sm transition-colors',
+                'w-full flex items-center justify-between px-3 py-2 rounded-md border text-sm transition-colors duration-150',
                 selectedAction
                   ? 'border-violet-500/50 bg-violet-500/10 text-violet-200'
                   : 'border-zinc-600 bg-zinc-800 text-zinc-300 hover:border-zinc-500',
@@ -391,7 +391,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
                       resetResults();
                     }}
                     className={cn(
-                      'w-full flex items-start gap-2.5 px-3 py-2 text-left hover:bg-zinc-700/60 transition-colors',
+                      'w-full flex items-start gap-2.5 px-3 py-2 text-left hover:bg-zinc-700/60 transition-colors duration-150',
                       selectedAction === action.value && 'bg-violet-500/10',
                     )}
                   >
@@ -445,7 +445,7 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
                   onClick={() => !isRunning && toggleSection(section.id)}
                   disabled={isRunning}
                   className={cn(
-                    'w-full flex items-start gap-2 px-2.5 py-2 rounded-md text-left transition-colors',
+                    'w-full flex items-start gap-2 px-2.5 py-2 rounded-md text-left transition-colors duration-150',
                     selectedSections.has(section.id)
                       ? 'bg-blue-500/10 border border-blue-500/30'
                       : 'bg-zinc-800/50 border border-transparent hover:border-zinc-600',
@@ -606,9 +606,9 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
             onClick={processSections}
             disabled={!selectedAction || selectedSections.size === 0}
             className={cn(
-              'w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors',
+              'w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors duration-150',
               selectedAction && selectedSections.size > 0
-                ? 'bg-violet-600 hover:bg-violet-500 text-white'
+                ? 'bg-violet-600 hover:bg-blue-500 text-white'
                 : 'bg-zinc-700 text-zinc-500 cursor-not-allowed',
             )}
           >

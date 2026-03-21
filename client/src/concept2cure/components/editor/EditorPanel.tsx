@@ -1247,7 +1247,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={cn(
-                'flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-colors',
+                'flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-colors duration-150',
                 showFilters ? 'bg-blue-100 text-blue-700' : 'text-zinc-500 hover:bg-zinc-100'
               )}
             >
@@ -1586,7 +1586,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               <button
                 onClick={() => toggleInspector('audit')}
                 className={cn(
-                  'inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg font-semibold ring-1 cursor-pointer transition-colors',
+                  'inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg font-semibold ring-1 cursor-pointer transition-colors duration-150',
                   integrityVerified
                     ? 'bg-emerald-50 text-emerald-600 ring-emerald-200/60 hover:bg-emerald-100'
                     : 'bg-red-50 text-red-600 ring-red-200/60 hover:bg-red-100'
@@ -1793,7 +1793,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
       {/* ── AI Suggestion Diff Panel ──────────────────────────────────────── */}
       {aiResult && (
-        <div className="border-b border-violet-200 bg-zinc-50">
+        <div className="border-b border-blue-200 bg-zinc-50">
           {/* Header bar */}
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-violet-100">
             <div className="flex items-center gap-2">
@@ -1859,7 +1859,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
       {/* ── AI Loading Indicator ──────────────────────────────────────────── */}
       {aiLoading && (
-        <div className="border-b border-violet-200 bg-violet-50/60 px-4 py-3 flex items-center gap-3">
+        <div className="border-b border-blue-200 bg-violet-50/60 px-4 py-3 flex items-center gap-3">
           <div className="flex items-center gap-1.5">
             <div className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
             <div className="w-2 h-2 rounded-full bg-violet-400 animate-pulse [animation-delay:150ms]" />
@@ -2109,7 +2109,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => handleAIEdit('expand')}
-                    className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-violet-700 bg-violet-50 rounded-lg hover:bg-violet-100 transition-colors text-left"
+                    className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-violet-100 transition-colors text-left"
                   >
                     <Sparkles className="w-3.5 h-3.5 shrink-0" />
                     AI Generate Draft

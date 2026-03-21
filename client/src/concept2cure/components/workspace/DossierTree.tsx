@@ -595,7 +595,7 @@ export const DossierTree: React.FC<DossierTreeProps> = ({
                 onOpenTransformCanvas(contextMenu.ctdSection);
                 closeContextMenu();
               }}
-              className="w-full text-left px-3 py-1.5 text-sm text-violet-700 hover:bg-violet-50 transition-colors flex items-center gap-2 focus-visible:bg-violet-50 focus-visible:outline-none"
+              className="w-full text-left px-3 py-1.5 text-sm text-violet-700 hover:bg-blue-50 transition-colors flex items-center gap-2 focus-visible:bg-violet-50 focus-visible:outline-none"
               role="menuitem"
             >
               <Sparkles className="w-3 h-3" />

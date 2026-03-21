@@ -367,7 +367,7 @@ const SectionChecklist: React.FC<SectionChecklistProps> = ({
           <div
             key={section.id}
             className={cn(
-              'p-3 rounded-lg border transition-colors',
+              'p-3 rounded-lg border transition-colors duration-150',
               section.status === 'complete' && 'bg-green-50 border-green-200',
               section.status === 'in-progress' && 'bg-blue-50 border-blue-200',
               section.status === 'not-started' && 'bg-white border-zinc-200',

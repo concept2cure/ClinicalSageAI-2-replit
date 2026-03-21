@@ -207,7 +207,7 @@ export const DocumentListPane: React.FC<DocumentListPaneProps> = ({
                     <tr
                       onClick={() => onSelect(doc)}
                       className={cn(
-                        'cursor-pointer transition-colors',
+                        'cursor-pointer transition-colors duration-150',
                         doc.id === selectedId ? 'bg-blue-50/60' : 'hover:bg-zinc-50'
                       )}
                       data-testid="document-list-row"

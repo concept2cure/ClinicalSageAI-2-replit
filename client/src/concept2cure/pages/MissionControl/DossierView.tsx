@@ -181,7 +181,7 @@ export const DossierView: React.FC<DossierViewProps> = ({
                             key={art.id}
                             onClick={() => setSelectedArtifactId(art.id)}
                             className={cn(
-                              'w-full flex items-center gap-2 px-6 py-2 text-left transition-colors',
+                              'w-full flex items-center gap-2 px-6 py-2 text-left transition-colors duration-150',
                               isActive ? 'bg-blue-50 border-l-2 border-blue-500' : 'hover:bg-zinc-100'
                             )}
                           >
@@ -262,7 +262,7 @@ export const DossierView: React.FC<DossierViewProps> = ({
                     {selectedArtifact.lifecycleState === 'planned' && onDraftWithAI && (
                       <button
                         onClick={() => onDraftWithAI(selectedArtifact.id, selectedArtifact.title)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-violet-50 text-violet-700 border border-violet-200 rounded-lg hover:bg-violet-100"
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-violet-50 text-violet-700 border border-blue-200 rounded-lg hover:bg-violet-100"
                       >
                         <Sparkles className="w-3.5 h-3.5" />
                         Draft with AnA

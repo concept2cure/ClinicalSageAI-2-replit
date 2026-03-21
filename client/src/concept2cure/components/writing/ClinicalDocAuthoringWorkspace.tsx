@@ -199,7 +199,7 @@ const DOC_TYPE_CONFIG: Record<DocumentType, { label: string; shortLabel: string;
   ctd_2_5: { label: 'Clinical Overview', shortLabel: 'CTD 2.5', color: 'bg-blue-100 text-blue-700' },
   ctd_2_6: { label: 'Nonclinical Summaries', shortLabel: 'CTD 2.6', color: 'bg-teal-100 text-teal-700' },
   ctd_2_7: { label: 'Clinical Summary', shortLabel: 'CTD 2.7', color: 'bg-cyan-100 text-cyan-700' },
-  csr: { label: 'Clinical Study Report', shortLabel: 'CSR', color: 'bg-violet-100 text-violet-700' },
+  csr: { label: 'Clinical Study Report', shortLabel: 'CSR', color: 'bg-blue-100 text-blue-700' },
   ib: { label: "Investigator's Brochure", shortLabel: 'IB', color: 'bg-purple-100 text-purple-700' },
   protocol: { label: 'Protocol', shortLabel: 'Protocol', color: 'bg-amber-100 text-amber-700' },
   protocol_amendment: { label: 'Protocol Amendment', shortLabel: 'Amendment', color: 'bg-orange-100 text-orange-700' },
@@ -265,7 +265,7 @@ const SectionTreeItem: React.FC<{
       <button
         onClick={() => hasChildren ? setExpanded(!expanded) : onSelect?.(section)}
         className={cn(
-          'w-full flex items-center gap-2 px-2 py-1.5 text-left hover:bg-zinc-100 rounded transition-colors',
+          'w-full flex items-center gap-2 px-2 py-1.5 text-left hover:bg-zinc-100 rounded transition-colors duration-150',
           level === 0 && 'font-medium'
         )}
         style={{ paddingLeft: `${level * 16 + 8}px` }}
@@ -641,7 +641,7 @@ const DocumentList: React.FC<{
               key={doc.id}
               onClick={() => onDocumentSelect?.(doc)}
               className={cn(
-                'w-full p-3 text-left border-b border-zinc-200 transition-colors',
+                'w-full p-3 text-left border-b border-zinc-200 transition-colors duration-150',
                 isActive ? 'bg-blue-50' : 'hover:bg-zinc-50'
               )}
             >

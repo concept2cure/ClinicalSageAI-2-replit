@@ -677,7 +677,7 @@ export function RegulatoryIntelligencePanel({
                     </span>
                   </div>
                   {precedentStrategy.data.recommendedStrategy && (
-                    <div className="p-2 bg-white rounded border border-violet-200 mb-2">
+                    <div className="p-2 bg-white rounded border border-blue-200 mb-2">
                       <span className="text-xs font-medium text-zinc-900">
                         {precedentStrategy.data.recommendedStrategy.pathway ||
                           precedentStrategy.data.recommendedStrategy.name ||

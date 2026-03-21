@@ -301,7 +301,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
               key={range}
               onClick={() => setDateRange(range)}
               className={cn(
-                'px-3 py-1.5 text-xs font-medium rounded-lg transition-colors',
+                'px-3 py-1.5 text-xs font-medium rounded-lg transition-colors duration-150',
                 dateRange === range
                   ? 'bg-white text-zinc-900 shadow-sm'
                   : 'text-zinc-500 hover:text-zinc-700',
@@ -352,7 +352,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
           <div className="w-full bg-zinc-100 rounded-full h-1.5">
             <div
               className={cn(
-                'h-1.5 rounded-full transition-all',
+                'h-1.5 rounded-full transition-all duration-150',
                 (overallReadiness ?? 0) >= 80
                   ? 'bg-emerald-500'
                   : (overallReadiness ?? 0) >= 50
@@ -526,7 +526,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
                         return (
                           <div
                             key={state.key}
-                            className={cn('h-full transition-all', state.color)}
+                            className={cn('h-full transition-all duration-150', state.color)}
                             style={{ width: `${pct}%` }}
                             title={`${state.label}: ${count}`}
                           />

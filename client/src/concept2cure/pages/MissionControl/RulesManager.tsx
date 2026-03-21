@@ -110,7 +110,7 @@ const RuleListItem: React.FC<RuleListItemProps> = ({ rule, isSelected, onSelect 
   <button
     onClick={onSelect}
     className={cn(
-      'w-full text-left px-3 py-2.5 rounded-lg border transition-colors',
+      'w-full text-left px-3 py-2.5 rounded-lg border transition-colors duration-150',
       isSelected
         ? 'bg-blue-50 border-blue-200 text-blue-900'
         : 'bg-white border-zinc-200 hover:border-zinc-200 hover:bg-zinc-50'
@@ -349,7 +349,7 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
           type="button"
           onClick={() => setForm(prev => ({ ...prev, isActive: !prev.isActive }))}
           className={cn(
-            'relative w-10 h-5 rounded-full transition-colors',
+            'relative w-10 h-5 rounded-full transition-colors duration-150',
             form.isActive ? 'bg-blue-500' : 'bg-zinc-300'
           )}
         >
@@ -725,7 +725,7 @@ export const RulesManager: React.FC<RulesManagerProps> = ({ onBack }) => {
                   <button
                     onClick={() => handleToggleActive(selectedRule)}
                     className={cn(
-                      'flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-xs transition-colors',
+                      'flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-xs transition-colors duration-150',
                       selectedRule.isActive
                         ? 'border-amber-200 text-amber-700 hover:bg-amber-50'
                         : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'

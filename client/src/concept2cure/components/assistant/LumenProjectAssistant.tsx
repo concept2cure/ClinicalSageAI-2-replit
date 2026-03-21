@@ -392,7 +392,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
                           className={cn(
                             'w-full flex items-center gap-2 px-3 py-2 rounded-lg',
                             'bg-white border border-zinc-200 text-sm text-zinc-700',
-                            'hover:border-blue-200 hover:bg-violet-50 transition-colors'
+                            'hover:border-blue-200 hover:bg-blue-50 transition-colors duration-150'
                           )}
                         >
                           <Icon className="w-4 h-4 text-violet-600" />
@@ -440,7 +440,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
                   className={cn(
                     'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl',
                     'bg-zinc-50 border border-zinc-200',
-                    'hover:bg-violet-50 hover:border-blue-200 transition-colors',
+                    'hover:bg-blue-50 hover:border-blue-200 transition-colors duration-150',
                     'text-left group'
                   )}
                 >
@@ -474,7 +474,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
                   className={cn(
                     'flex items-center gap-1.5 px-3 py-1.5 rounded-full',
                     'bg-zinc-100 text-zinc-700 text-xs',
-                    'hover:bg-violet-100 hover:text-violet-700 transition-colors'
+                    'hover:bg-violet-100 hover:text-violet-700 transition-colors duration-150'
                   )}
                 >
                   <Icon className="w-3 h-3" />
@@ -515,9 +515,9 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
               onClick={() => sendMessage(input)}
               disabled={!input.trim() || isThinking}
               className={cn(
-                'p-1.5 rounded-lg transition-colors',
+                'p-1.5 rounded-lg transition-colors duration-150',
                 input.trim() && !isThinking
-                  ? 'bg-violet-600 text-white hover:bg-violet-700'
+                  ? 'bg-blue-600 text-white hover:bg-blue-700'
                   : 'bg-zinc-200 text-zinc-400'
               )}
             >

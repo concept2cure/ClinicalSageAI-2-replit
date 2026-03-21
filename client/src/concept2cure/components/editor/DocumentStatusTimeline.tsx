@@ -158,7 +158,7 @@ export function DocumentStatusTimeline({
               )}
               <div
                 className={cn(
-                  'flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors',
+                  'flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors duration-150',
                   isActive && stage.activeBg + ' border',
                   isActive && stage.activeColor,
                   isCompleted && stage.completedColor,
@@ -198,7 +198,7 @@ export function DocumentStatusTimeline({
               )}
               <div
                 className={cn(
-                  'flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-colors',
+                  'flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-colors duration-150',
                   isActive && stage.activeBg + ' border',
                   isActive && stage.activeColor,
                   isCompleted && stage.completedColor,

@@ -92,7 +92,7 @@ function sourceTypeLabel(type: CitationResult['sourceType']): string {
 
 function sourceTypeBadgeClass(type: CitationResult['sourceType']): string {
   const classes: Record<CitationResult['sourceType'], string> = {
-    csr: 'bg-violet-100 text-violet-700',
+    csr: 'bg-blue-100 text-blue-700',
     artifact: 'bg-blue-100 text-blue-700',
     literature: 'bg-zinc-100 text-zinc-700',
     regulatory: 'bg-amber-100 text-amber-700',
@@ -136,7 +136,7 @@ export const CitationMark = Mark.create({
           'citation-mark inline-flex items-center px-1 py-0.5 rounded ' +
           'bg-blue-50 text-blue-700 border border-blue-200 ' +
           'hover:bg-blue-100 cursor-pointer text-sm font-medium ' +
-          'transition-colors',
+          'transition-colors duration-150',
       }),
       0,
     ];
@@ -444,7 +444,7 @@ export function CitationSearchPanel({
             'bg-zinc-50 border border-zinc-200',
             'focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/30 focus:border-blue-400',
             'placeholder:text-zinc-400 text-zinc-900',
-            'transition-all'
+            'transition-all duration-150'
           )}
           autoComplete="off"
         />
@@ -496,7 +496,7 @@ export function CitationSearchPanel({
             data-selected={index === selectedIndex}
             onClick={() => insertCitation(result)}
             className={cn(
-              'w-full text-left px-4 py-3 border-b border-zinc-50 transition-colors',
+              'w-full text-left px-4 py-3 border-b border-zinc-50 transition-colors duration-150',
               'outline-none',
               index === selectedIndex
                 ? 'bg-blue-50/80 border-l-2 border-l-blue-500'

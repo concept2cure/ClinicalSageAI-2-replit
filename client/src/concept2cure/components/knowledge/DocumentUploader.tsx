@@ -189,7 +189,7 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
         {/* Icon */}
         <div
           className={cn(
-            'w-12 h-12 rounded-full flex items-center justify-center transition-colors',
+            'w-12 h-12 rounded-full flex items-center justify-center transition-colors duration-150',
             isDragging && 'bg-blue-100 text-blue-600',
             isUploading && 'bg-blue-100 text-blue-600',
             uploadSuccess && 'bg-green-100 text-green-600',

@@ -365,7 +365,7 @@ function SubmissionsView({ programs }: { programs: any[] }) {
               <button
                 key={s.id}
                 onClick={() => setSelected(i)}
-                className={cn('w-full flex items-center justify-between px-4 py-3 text-left transition-colors', selected === i ? 'bg-zinc-50' : 'hover:bg-zinc-50/50')}
+                className={cn('w-full flex items-center justify-between px-4 py-3 text-left transition-colors duration-150', selected === i ? 'bg-zinc-50' : 'hover:bg-zinc-50/50')}
               >
                 <div className="flex items-center gap-3">
                   <div className={cn('w-2 h-2 rounded-full', STATUS_DOT[s.status] || 'bg-zinc-400')} />
@@ -556,7 +556,7 @@ function VaultView({ documents }: { documents: any[] }) {
             <button
               key={d.id}
               onClick={() => setSelected(selected === d.id ? null : d.id)}
-              className={cn('w-full grid grid-cols-[1fr_100px_60px_100px_100px_100px] gap-2 px-4 py-2.5 text-left border-b border-zinc-50 last:border-0 transition-colors', selected === d.id ? 'bg-zinc-50' : 'hover:bg-zinc-50/50')}
+              className={cn('w-full grid grid-cols-[1fr_100px_60px_100px_100px_100px] gap-2 px-4 py-2.5 text-left border-b border-zinc-50 last:border-0 transition-colors duration-150', selected === d.id ? 'bg-zinc-50' : 'hover:bg-zinc-50/50')}
             >
               <span className="text-xs font-medium text-zinc-900 flex items-center gap-2">
                 <FileText className="w-3 h-3 text-zinc-400" />
@@ -838,7 +838,7 @@ export function CommandCenterHub({ onClose }: { onClose: () => void }) {
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
               className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors',
+                'flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors duration-150',
                 isActive
                   ? 'bg-zinc-900 text-white'
                   : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50',

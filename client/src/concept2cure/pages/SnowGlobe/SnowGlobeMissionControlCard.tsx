@@ -271,7 +271,7 @@ export default function SnowGlobeMissionControlCard({
             <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-100">
               {value !== null && (
                 <div
-                  className={cn('h-full rounded-full transition-all', getBarColor(value))}
+                  className={cn('h-full rounded-full transition-all duration-150', getBarColor(value))}
                   style={{ width: `${Math.min(value, 100)}%` }}
                 />
               )}

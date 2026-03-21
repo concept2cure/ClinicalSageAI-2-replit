@@ -296,7 +296,7 @@ export default function DocumentChangeImpact({ projectId, submissionType }: { pr
               onClick={analyzeImpact}
               disabled={!selectedGuidance || !selectedSubmission || loading}
               className={cn(
-                'inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium transition-all',
+                'inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium transition-all duration-150',
                 !selectedGuidance || !selectedSubmission || loading
                   ? 'bg-zinc-100 text-zinc-400 cursor-not-allowed'
                   : 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 shadow-sm'
@@ -457,7 +457,7 @@ export default function DocumentChangeImpact({ projectId, submissionType }: { pr
             </div>
 
             {/* AnA Recommendations */}
-            <div className="rounded-xl border border-violet-200 bg-violet-50/40 p-6">
+            <div className="rounded-xl border border-blue-200 bg-violet-50/40 p-6">
               <div className="flex items-center gap-2 mb-4">
                 <Sparkles className="h-4 w-4 text-violet-600" />
                 <h2 className="text-sm font-semibold text-violet-900">

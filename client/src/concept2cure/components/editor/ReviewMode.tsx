@@ -158,7 +158,7 @@ export function ReviewModePanel({
         <button
           onClick={onToggleReviewMode}
           className={cn(
-            'flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors',
+            'flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors duration-150',
             isReviewMode
               ? 'bg-blue-600 text-white hover:bg-blue-700'
               : 'bg-slate-100 text-slate-600 hover:bg-slate-200',

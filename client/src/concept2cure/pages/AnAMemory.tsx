@@ -261,7 +261,7 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
                 <h1 className="text-2xl font-semibold text-zinc-900 tracking-tight">
                   AnA Memory
                 </h1>
-                <span className="inline-flex items-center rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-medium text-violet-700 border border-violet-200">
+                <span className="inline-flex items-center rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-medium text-violet-700 border border-blue-200">
                   AnA v1.0
                 </span>
               </div>
@@ -403,7 +403,7 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
                 </p>
               </div>
             ) : filteredMemories.length === 0 ? (
-              <div className="rounded-xl border border-zinc-200 bg-white p-8 text-center">
+              <div className="rounded-xl border border-zinc-200 bg-white p-5 text-center">
                 <p className="text-sm text-zinc-500">
                   No memories in the "{activeCategory}" category.
                 </p>
@@ -419,7 +419,7 @@ export default function AnAMemory({ projectId }: { projectId?: string } = {}) {
                     <div
                       key={memory.id}
                       className={cn(
-                        'group rounded-xl border bg-white p-4 transition-all',
+                        'group rounded-xl border bg-white p-4 transition-all duration-150',
                         isDeleting
                           ? 'border-red-200 bg-red-50/30 opacity-60'
                           : 'border-zinc-200 hover:border-zinc-300'

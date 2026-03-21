@@ -223,7 +223,7 @@ function SourceBadge({ source }: { source: AlertSource }) {
     FDA: 'bg-blue-50 text-blue-700 border-blue-200',
     EMA: 'bg-blue-50 text-blue-700 border-blue-200',
     'Health Canada': 'bg-red-50 text-red-700 border-red-200',
-    ICH: 'bg-violet-50 text-violet-700 border-violet-200',
+    ICH: 'bg-violet-50 text-violet-700 border-blue-200',
     WHO: 'bg-emerald-50 text-emerald-700 border-emerald-200',
     Internal: 'bg-zinc-50 text-zinc-600 border-zinc-200',
   };
@@ -403,7 +403,7 @@ export function AlertFeed({
                 <div
                   key={alert.id}
                   className={cn(
-                    'px-4 py-3 transition-colors',
+                    'px-4 py-3 transition-colors duration-150',
                     !alert.acknowledged && 'bg-amber-50/30',
                     isExpanded && 'bg-zinc-50',
                   )}

@@ -466,7 +466,7 @@ function ReadinessBar({ label, value }: { label: string; value: number }) {
       </div>
       <div className="h-1.5 bg-zinc-100 rounded-full overflow-hidden">
         <div
-          className={cn('h-full rounded-full transition-all', color)}
+          className={cn('h-full rounded-full transition-all duration-150', color)}
           style={{ width: `${value}%` }}
         />
       </div>

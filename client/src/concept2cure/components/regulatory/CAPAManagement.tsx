@@ -1113,7 +1113,7 @@ export function CAPAManagement() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-semibold">CAPA Management</h1>
+          <h1 className="text-2xl font-semibold">CAPA Management</h1>
           <p className="text-muted-foreground">
             Corrective and Preventive Action tracking for quality management
           </p>

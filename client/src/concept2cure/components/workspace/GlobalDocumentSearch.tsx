@@ -183,7 +183,7 @@ export function GlobalDocumentSearch({ isOpen, onClose, onOpenDocument }: Global
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={cn(
-              'p-1.5 rounded-md transition-colors',
+              'p-1.5 rounded-md transition-colors duration-150',
               showFilters ? 'bg-blue-100 text-blue-600' : 'text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100'
             )}
           >

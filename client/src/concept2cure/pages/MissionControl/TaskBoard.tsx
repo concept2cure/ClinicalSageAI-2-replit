@@ -381,7 +381,7 @@ function TaskCard({
                 onClick={() => onMoveToColumn(task.id, s)}
                 className={cn(
                   'flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium',
-                  'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 transition-colors',
+                  'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 transition-colors duration-150',
                 )}
               >
                 <ArrowRight className="w-3 h-3" />
@@ -741,7 +741,7 @@ export default function TaskBoard({ programId }: TaskBoardProps) {
             <button
               onClick={() => setViewMode('board')}
               className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-150',
                 viewMode === 'board' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700',
               )}
             >
@@ -751,7 +751,7 @@ export default function TaskBoard({ programId }: TaskBoardProps) {
             <button
               onClick={() => setViewMode('list')}
               className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-150',
                 viewMode === 'list' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700',
               )}
             >
@@ -914,7 +914,7 @@ export default function TaskBoard({ programId }: TaskBoardProps) {
                     <tr
                       onClick={() => setExpandedTaskId(isExpanded ? null : task.id)}
                       className={cn(
-                        'border-b border-zinc-200 cursor-pointer hover:bg-zinc-50 transition-colors',
+                        'border-b border-zinc-200 cursor-pointer hover:bg-zinc-50 transition-colors duration-150',
                         isExpanded && 'bg-zinc-50',
                       )}
                     >

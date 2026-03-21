@@ -391,7 +391,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             onClick={handleSend}
             disabled={disabled || (!input.trim() && attachments.length === 0)}
             size="icon"
-            className="h-9 w-9 rounded-xl"
+            className="h-9 w-9 rounded-lg"
           >
             <Send className="h-4 w-4" />
           </Button>

@@ -120,7 +120,7 @@ const ProjectItem: React.FC<ProjectItemProps> = ({
             <button
               onClick={onClick}
               className={cn(
-                'flex h-10 w-10 items-center justify-center rounded-lg transition-all',
+                'flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-150',
                 isActive
                   ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-200'
                   : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none'

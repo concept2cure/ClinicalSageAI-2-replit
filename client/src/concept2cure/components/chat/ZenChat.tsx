@@ -205,10 +205,10 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
           onClick={() => onSave(artifact)}
           disabled={isSaving || isSaved}
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
+            'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors duration-150',
             isSaved
               ? 'bg-green-50 text-green-700 border border-green-200'
-              : 'bg-violet-50 text-violet-700 border border-violet-200 hover:bg-violet-100'
+              : 'bg-violet-50 text-violet-700 border border-blue-200 hover:bg-violet-100'
           )}
         >
           {isSaving ? (

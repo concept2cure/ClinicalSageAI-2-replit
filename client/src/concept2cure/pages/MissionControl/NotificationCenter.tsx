@@ -781,7 +781,7 @@ export const NotificationCenter: React.FC = () => {
                       key={freq}
                       onClick={() => setPreferences((p) => ({ ...p, emailDigest: freq }))}
                       className={cn(
-                        'flex-1 px-3 py-2 text-xs font-medium rounded-lg capitalize transition-colors',
+                        'flex-1 px-3 py-2 text-xs font-medium rounded-lg capitalize transition-colors duration-150',
                         preferences.emailDigest === freq
                           ? 'bg-zinc-900 text-white'
                           : 'text-zinc-600 hover:bg-zinc-50',

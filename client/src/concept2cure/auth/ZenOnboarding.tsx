@@ -328,7 +328,7 @@ export const ZenOnboarding: React.FC = () => {
       </motion.div>
 
       <div className="space-y-4">
-        <h1 className="text-3xl font-semibold text-zinc-900">Welcome to Concept2Cure</h1>
+        <h1 className="text-2xl font-semibold text-zinc-900">Welcome to Concept2Cure</h1>
         <p className="text-lg text-zinc-600 max-w-md mx-auto">
           The RI-powered regulatory intelligence platform that transforms how you create and manage
           submissions.
@@ -612,7 +612,7 @@ export const ZenOnboarding: React.FC = () => {
       </motion.div>
 
       <div className="space-y-4">
-        <h2 className="text-3xl font-semibold text-zinc-900">You're All Set!</h2>
+        <h2 className="text-2xl font-semibold text-zinc-900">You're All Set!</h2>
         <p className="text-lg text-zinc-600 max-w-md mx-auto">
           Your workspace "{preferences.projectName}" is ready. Let's start building your{' '}
           {SUBMISSION_TYPES.find(t => t.value === preferences.submissionType)?.label ||

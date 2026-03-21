@@ -228,7 +228,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
           onToggleStar();
         }}
         className={cn(
-          'absolute top-3 left-3 p-1 rounded-md transition-all',
+          'absolute top-3 left-3 p-1 rounded-md transition-all duration-150',
           project.starred
             ? 'text-amber-500'
             : 'text-zinc-400 opacity-0 group-hover:opacity-100 hover:text-amber-500'
@@ -701,7 +701,7 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
                           onClose();
                         }}
                         className={cn(
-                          'w-full flex items-center gap-3 px-4 py-2 text-left transition-colors',
+                          'w-full flex items-center gap-3 px-4 py-2 text-left transition-colors duration-150',
                           project.id === activeProjectId ? 'bg-blue-50' : 'hover:bg-zinc-50'
                         )}
                       >
@@ -761,7 +761,7 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
                           onClose();
                         }}
                         className={cn(
-                          'w-full flex items-center gap-3 px-4 py-2 text-left transition-colors',
+                          'w-full flex items-center gap-3 px-4 py-2 text-left transition-colors duration-150',
                           project.id === activeProjectId ? 'bg-blue-50' : 'hover:bg-zinc-50'
                         )}
                       >

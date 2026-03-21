@@ -207,7 +207,7 @@ export function ReviewerAssignment({
           <div className="h-1.5 bg-zinc-200 rounded-full overflow-hidden">
             <div
               className={cn(
-                'h-full rounded-full transition-all',
+                'h-full rounded-full transition-all duration-150',
                 progress.allApproved ? 'bg-emerald-500' : 'bg-blue-500',
               )}
               style={{ width: `${progress.total > 0 ? (progress.completed / progress.total) * 100 : 0}%` }}

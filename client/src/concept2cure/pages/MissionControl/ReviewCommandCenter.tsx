@@ -174,7 +174,7 @@ export const ReviewCommandCenter: React.FC<ReviewCommandCenterProps> = ({
                   key={artifact.id}
                   onClick={() => setSelectedArtifactId(artifact.id)}
                   className={cn(
-                    'w-full text-left p-3 transition-colors',
+                    'w-full text-left p-3 transition-colors duration-150',
                     isActive ? 'bg-blue-50 border-l-2 border-blue-500' : 'hover:bg-zinc-50'
                   )}
                 >

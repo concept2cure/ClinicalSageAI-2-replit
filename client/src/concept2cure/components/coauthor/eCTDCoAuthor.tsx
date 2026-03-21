@@ -261,7 +261,7 @@ const OutlineTree: React.FC<{
             <button
               onClick={() => onSelect(section)}
               className={cn(
-                'w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-colors',
+                'w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-colors duration-150',
                 'hover:bg-zinc-100',
                 isSelected && 'bg-blue-50 ring-1 ring-blue-200'
               )}
@@ -362,7 +362,7 @@ const SmartTagBadge: React.FC<{
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded border cursor-pointer transition-colors',
+        'inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded border cursor-pointer transition-colors duration-150',
         'hover:shadow-sm',
         c.color,
         !tag.isVerified && 'border-dashed opacity-75'

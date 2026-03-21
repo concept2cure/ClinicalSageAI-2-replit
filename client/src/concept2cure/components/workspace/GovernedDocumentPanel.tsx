@@ -460,7 +460,7 @@ export function GovernedDocumentPanel({
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={cn(
-              'flex-1 py-1.5 text-xs font-medium capitalize transition-colors',
+              'flex-1 py-1.5 text-xs font-medium capitalize transition-colors duration-150',
               activeTab === tab
                 ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/30'
                 : 'text-zinc-400 hover:text-zinc-600'

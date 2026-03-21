@@ -243,7 +243,7 @@ const DevelopmentPipeline: React.FC<{
           <React.Fragment key={stage}>
             <div className="flex flex-col items-center">
               <div className={cn(
-                'w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-all',
+                'w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-150',
                 isCompleted && 'bg-green-500 text-white',
                 isCurrent && cn(config.color, 'text-white ring-4 ring-offset-2'),
                 !isCompleted && !isCurrent && 'bg-zinc-200 text-zinc-400'
@@ -456,7 +456,7 @@ const FundingMilestoneCard: React.FC<{
     <button
       onClick={onClick}
       className={cn(
-        'w-full p-4 rounded-xl border text-left transition-all',
+        'w-full p-4 rounded-xl border text-left transition-all duration-150',
         milestone.status === 'achieved' && 'border-green-300 bg-green-50',
         milestone.status === 'on_track' && 'border-blue-300 bg-blue-50',
         milestone.status === 'at_risk' && 'border-red-300 bg-red-50',
@@ -602,7 +602,7 @@ export const BiotechProgramDashboard: React.FC<BiotechProgramDashboardProps> = (
                   key={program.id}
                   onClick={() => setSelectedProgram(program)}
                   className={cn(
-                    'px-4 py-2 rounded-lg transition-colors',
+                    'px-4 py-2 rounded-lg transition-colors duration-150',
                     isSelected
                       ? 'bg-blue-600 text-white'
                       : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'

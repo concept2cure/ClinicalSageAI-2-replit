@@ -105,7 +105,7 @@ function HeroSection() {
 
   return (
     <motion.section className="py-12 px-8" {...fade}>
-      <h1 className="text-3xl font-semibold text-zinc-900 tracking-tight mb-3">
+      <h1 className="text-2xl font-semibold text-zinc-900 tracking-tight mb-3">
         Your intelligent guide to regulatory excellence
       </h1>
       <p className="text-base text-zinc-500 max-w-2xl leading-relaxed mb-6">
@@ -223,7 +223,7 @@ function AllModulesView() {
             key={cat}
             onClick={() => setActiveCategory(cat)}
             className={cn(
-              'text-sm transition-colors',
+              'text-sm transition-colors duration-150',
               activeCategory === cat
                 ? 'font-medium text-zinc-900'
                 : 'text-zinc-400 hover:text-zinc-600'
@@ -460,7 +460,7 @@ function AboutView() {
         <h3 className="text-lg font-semibold text-zinc-900 mb-6">
           The dual-AI system
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Dr. Sage */}
           <div>
             <h4 className="text-base font-semibold text-zinc-900 mb-1">
@@ -530,7 +530,7 @@ function AiAgentsView() {
     <div className="py-12 px-6">
       {/* Header */}
       <div className="mb-8">
-        <h2 className="text-3xl font-semibold text-zinc-900 tracking-tight">
+        <h2 className="text-2xl font-semibold text-zinc-900 tracking-tight">
           AI Agents
         </h2>
         <p className="text-base text-zinc-500 mt-2 max-w-2xl leading-relaxed">
@@ -550,7 +550,7 @@ function AiAgentsView() {
             key={item.key}
             onClick={() => setSubView(item.key)}
             className={cn(
-              'text-sm transition-colors',
+              'text-sm transition-colors duration-150',
               subView === item.key
                 ? 'text-zinc-900 font-medium'
                 : 'text-zinc-400 hover:text-zinc-600'

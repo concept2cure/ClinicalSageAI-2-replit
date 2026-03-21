@@ -245,7 +245,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={cn(
-              'flex items-center gap-1 px-2 py-1 text-xs rounded border transition-colors',
+              'flex items-center gap-1 px-2 py-1 text-xs rounded border transition-colors duration-150',
               showFilters
                 ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
                 : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'

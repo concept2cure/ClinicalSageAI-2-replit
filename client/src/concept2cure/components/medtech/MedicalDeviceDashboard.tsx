@@ -547,7 +547,7 @@ const MAUDEHazardMonitor: React.FC<{
             key={alert.id}
             onClick={() => onAlertClick?.(alert)}
             className={cn(
-              'w-full p-3 text-left border-b border-zinc-200 hover:bg-zinc-50 transition-colors',
+              'w-full p-3 text-left border-b border-zinc-200 hover:bg-zinc-50 transition-colors duration-150',
               alert.eventType === 'death' && 'border-l-4 border-l-red-500',
               alert.eventType === 'injury' && 'border-l-4 border-l-amber-500',
               alert.eventType === 'malfunction' && 'border-l-4 border-l-blue-500'
@@ -566,7 +566,7 @@ const MAUDEHazardMonitor: React.FC<{
                   {alert.eventType}
                 </span>
                 {alert.isCompetitor && (
-                  <span className="px-1.5 py-0.5 text-xs font-medium bg-violet-100 text-violet-700 rounded">
+                  <span className="px-1.5 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded">
                     COMPETITOR
                   </span>
                 )}

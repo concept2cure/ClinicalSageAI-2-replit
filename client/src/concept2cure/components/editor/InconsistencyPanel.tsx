@@ -261,7 +261,7 @@ const InconsistencyPanel: React.FC<InconsistencyPanelProps> = ({
                 <div
                   key={section.artifactId}
                   className={cn(
-                    'rounded-lg border transition-colors',
+                    'rounded-lg border transition-colors duration-150',
                     getSeverityColor(section.severity)
                   )}
                 >

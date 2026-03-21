@@ -313,7 +313,7 @@ function TemplateStructureView({
           <div
             key={item.key}
             className={cn(
-              'flex items-center gap-1.5 py-[4px] px-3 text-left transition-colors',
+              'flex items-center gap-1.5 py-[4px] px-3 text-left transition-colors duration-150',
               present ? 'text-zinc-700' : 'text-zinc-400'
             )}
           >
@@ -338,7 +338,7 @@ function TemplateStructureView({
             {!present && onCreateSubsection && (
               <button
                 onClick={() => onCreateSubsection(item.key, item.label)}
-                className="p-0.5 text-zinc-400 hover:text-violet-600 rounded hover:bg-violet-50 shrink-0"
+                className="p-0.5 text-zinc-400 hover:text-violet-600 rounded hover:bg-blue-50 shrink-0"
                 title={`Create "${item.label}" section`}
               >
                 <Plus className="w-3 h-3" />

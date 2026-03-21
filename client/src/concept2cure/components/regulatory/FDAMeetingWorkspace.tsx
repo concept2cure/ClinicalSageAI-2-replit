@@ -216,7 +216,7 @@ const STATUS_CONFIG: Record<MeetingStatus, {
 const TOPIC_CONFIG: Record<QuestionTopic, { label: string; color: string }> = {
   clinical: { label: 'Clinical', color: 'bg-blue-100 text-blue-700' },
   nonclinical: { label: 'Nonclinical', color: 'bg-green-100 text-green-700' },
-  cmc: { label: 'CMC', color: 'bg-violet-100 text-violet-700' },
+  cmc: { label: 'CMC', color: 'bg-blue-100 text-blue-700' },
   regulatory_strategy: { label: 'Reg Strategy', color: 'bg-amber-100 text-amber-700' },
   safety: { label: 'Safety', color: 'bg-red-100 text-red-700' },
   efficacy: { label: 'Efficacy', color: 'bg-cyan-100 text-cyan-700' },
@@ -369,7 +369,7 @@ const QuestionsPanel: React.FC<{
                             <span className={cn(
                               'px-2 py-0.5 text-xs font-medium rounded',
                               question.status === 'answered' && 'bg-green-100 text-green-700',
-                              question.status === 'submitted' && 'bg-violet-100 text-violet-700',
+                              question.status === 'submitted' && 'bg-blue-100 text-blue-700',
                               question.status === 'finalized' && 'bg-blue-100 text-blue-700',
                               question.status === 'draft' && 'bg-zinc-100 text-zinc-600'
                             )}>
@@ -465,7 +465,7 @@ const ActionItemsPanel: React.FC<{
           <button
             onClick={() => onActionItemUpdate?.({ ...item, status: item.status === 'completed' ? 'open' : 'completed' })}
             className={cn(
-              'flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors',
+              'flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors duration-150',
               item.status === 'completed'
                 ? 'bg-green-600 border-green-600 text-white'
                 : 'border-zinc-300 hover:border-blue-500'
@@ -484,7 +484,7 @@ const ActionItemsPanel: React.FC<{
             
             <div className="mt-1 flex items-center gap-2 flex-wrap">
               {item.fdaCommitment && (
-                <span className="px-2 py-0.5 text-xs font-medium bg-violet-100 text-violet-700 rounded">
+                <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded">
                   FDA Commitment
                 </span>
               )}
@@ -603,7 +603,7 @@ const MeetingList: React.FC<{
               key={meeting.id}
               onClick={() => onMeetingSelect?.(meeting)}
               className={cn(
-                'w-full p-4 text-left border-b border-zinc-200 transition-colors',
+                'w-full p-4 text-left border-b border-zinc-200 transition-colors duration-150',
                 isActive ? 'bg-blue-50' : 'hover:bg-zinc-50'
               )}
             >

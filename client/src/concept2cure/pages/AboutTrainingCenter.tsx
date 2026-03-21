@@ -527,7 +527,7 @@ function TabButton({ active, label, icon: Icon, onClick }: { active: boolean; la
     <button
       onClick={onClick}
       className={cn(
-        'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+        'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-150',
         active
           ? 'bg-zinc-900 text-white shadow-sm'
           : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
@@ -546,10 +546,10 @@ function AboutTab() {
     <div className="space-y-10">
       {/* Hero */}
       <div className="text-center max-w-3xl mx-auto">
-        <div className="w-16 h-16 rounded-xl bg-blue-600 flex items-center justify-center mx-auto mb-6 shadow-xl shadow-violet-200/50">
+        <div className="w-16 h-16 rounded-lg bg-blue-600 flex items-center justify-center mx-auto mb-6 shadow-sm">
           <Sparkles className="w-8 h-8 text-white" />
         </div>
-        <h2 className="text-3xl font-semibold text-zinc-900 mb-3">
+        <h2 className="text-2xl font-semibold text-zinc-900 mb-3">
           ClinicalSageAI
         </h2>
         <p className="text-lg text-zinc-500 leading-relaxed">
@@ -625,9 +625,9 @@ function AboutTab() {
       </div>
 
       {/* Meet AnA */}
-      <div className="bg-gradient-to-br from-violet-50 to-blue-50 rounded-xl border border-violet-100 p-8 max-w-3xl mx-auto">
+      <div className="bg-zinc-50 rounded-xl border border-violet-100 p-8 max-w-3xl mx-auto">
         <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0">
+          <div className="w-12 h-12 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
             <Brain className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -648,9 +648,9 @@ function AboutTab() {
       </div>
 
       {/* Meet Dr. Sage */}
-      <div className="bg-gradient-to-br from-slate-50 to-blue-50 rounded-xl border border-blue-100 p-8 max-w-3xl mx-auto">
+      <div className="bg-zinc-50 rounded-xl border border-blue-100 p-8 max-w-3xl mx-auto">
         <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center flex-shrink-0">
+          <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center flex-shrink-0">
             <Stethoscope className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -804,7 +804,7 @@ function IntelligenceTab() {
             <div key={pillar.title} className="bg-white rounded-xl border border-zinc-200 p-6">
               <div className="flex items-start gap-5">
                 <div className="flex-shrink-0">
-                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-violet-50 to-blue-50 flex items-center justify-center">
+                  <div className="w-14 h-14 rounded-lg bg-zinc-50 flex items-center justify-center">
                     <Icon className="w-7 h-7 text-violet-600" />
                   </div>
                   <div className="text-center mt-2">
@@ -831,9 +831,9 @@ function IntelligenceTab() {
       </div>
 
       {/* Continuous Learning */}
-      <div className="bg-gradient-to-br from-violet-50 to-blue-50 rounded-xl border border-violet-100 p-8">
+      <div className="bg-zinc-50 rounded-xl border border-violet-100 p-8">
         <div className="flex items-center gap-3 mb-5">
-          <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-lg bg-blue-600 flex items-center justify-center">
             <RefreshCw className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -1022,7 +1022,7 @@ function TrainingTab() {
             <div
               key={m.id}
               className={cn(
-                'flex-1 h-1 rounded-full transition-colors',
+                'flex-1 h-1 rounded-full transition-colors duration-150',
                 completedModules.has(m.id) ? 'bg-emerald-500' : 'bg-zinc-200'
               )}
               title={m.title}
@@ -1033,13 +1033,13 @@ function TrainingTab() {
 
       {/* View Switcher */}
       <div className="flex items-center gap-1 bg-zinc-100 rounded-lg p-1 w-fit mx-auto">
-        <button onClick={() => setView('paths')} className={cn('px-3 py-1.5 rounded-md text-xs font-medium transition-colors', view === 'paths' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700')}>
+        <button onClick={() => setView('paths')} className={cn('px-3 py-1.5 rounded-md text-xs font-medium transition-colors duration-150', view === 'paths' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700')}>
           Learning Paths
         </button>
-        <button onClick={() => setView('modules')} className={cn('px-3 py-1.5 rounded-md text-xs font-medium transition-colors', view === 'modules' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700')}>
+        <button onClick={() => setView('modules')} className={cn('px-3 py-1.5 rounded-md text-xs font-medium transition-colors duration-150', view === 'modules' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700')}>
           All Modules
         </button>
-        <button onClick={() => setView('certifications')} className={cn('px-3 py-1.5 rounded-md text-xs font-medium transition-colors', view === 'certifications' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700')}>
+        <button onClick={() => setView('certifications')} className={cn('px-3 py-1.5 rounded-md text-xs font-medium transition-colors duration-150', view === 'certifications' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700')}>
           Certifications
         </button>
       </div>
@@ -1063,7 +1063,7 @@ function TrainingTab() {
                   key={path.id}
                   onClick={() => setActivePath(isActive ? null : path.id)}
                   className={cn(
-                    'bg-white rounded-xl border p-5 cursor-pointer transition-all',
+                    'bg-white rounded-xl border p-5 cursor-pointer transition-all duration-150',
                     isActive ? 'border-violet-300 shadow-md ring-1 ring-violet-100' : 'border-zinc-200 hover:shadow-sm hover:border-zinc-300'
                   )}
                 >
@@ -1081,7 +1081,7 @@ function TrainingTab() {
 
                   {/* Mini progress */}
                   <div className="w-full h-1.5 bg-zinc-100 rounded-full overflow-hidden mb-3">
-                    <div className={cn('h-full rounded-full transition-all', `bg-${path.color}-500`)} style={{ width: `${pathProgress}%` }} />
+                    <div className={cn('h-full rounded-full transition-all duration-150', `bg-${path.color}-500`)} style={{ width: `${pathProgress}%` }} />
                   </div>
 
                   {/* Outcome */}
@@ -1145,7 +1145,7 @@ function TrainingTab() {
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
                 className={cn(
-                  'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
+                  'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors duration-150',
                   selectedCategory === cat ? 'bg-zinc-900 text-white' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
                 )}
               >
@@ -1164,7 +1164,7 @@ function TrainingTab() {
 
               return (
                 <div key={mod.id} className={cn(
-                  'bg-white rounded-xl border transition-all',
+                  'bg-white rounded-xl border transition-all duration-150',
                   isComplete ? 'border-emerald-200 bg-emerald-50/30' : 'border-zinc-200',
                   isExpanded && 'shadow-md'
                 )}>
@@ -1255,7 +1255,7 @@ function TrainingTab() {
                               }
                             }}
                             className={cn(
-                              'w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors',
+                              'w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors duration-150',
                               isComplete
                                 ? 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
                                 : 'bg-zinc-900 text-white hover:bg-zinc-800'
@@ -1297,14 +1297,14 @@ function TrainingTab() {
               const progress = cert.requiredModules.filter(m => completedModules.has(m)).length;
               return (
                 <div key={cert.id} className={cn(
-                  'rounded-xl border p-5 transition-all',
+                  'rounded-xl border p-5 transition-all duration-150',
                   earned
                     ? 'bg-gradient-to-br from-amber-50 to-yellow-50 border-amber-200 shadow-sm'
                     : 'bg-white border-zinc-200'
                 )}>
                   <div className="flex items-center gap-3 mb-3">
                     <div className={cn(
-                      'w-12 h-12 rounded-xl flex items-center justify-center',
+                      'w-12 h-12 rounded-lg flex items-center justify-center',
                       earned ? 'bg-gradient-to-br from-amber-400 to-yellow-500' : `bg-${cert.color}-50`
                     )}>
                       <Icon className={cn('w-6 h-6', earned ? 'text-white' : `text-${cert.color}-500`)} />
@@ -1327,7 +1327,7 @@ function TrainingTab() {
                       <span className="text-xs font-medium text-zinc-700">{progress}/{cert.requiredModules.length}</span>
                     </div>
                     <div className="w-full h-1.5 bg-zinc-100 rounded-full overflow-hidden">
-                      <div className={cn('h-full rounded-full transition-all', earned ? 'bg-amber-500' : `bg-${cert.color}-500`)} style={{ width: `${(progress / cert.requiredModules.length) * 100}%` }} />
+                      <div className={cn('h-full rounded-full transition-all duration-150', earned ? 'bg-amber-500' : `bg-${cert.color}-500`)} style={{ width: `${(progress / cert.requiredModules.length) * 100}%` }} />
                     </div>
                   </div>
 
@@ -1608,7 +1608,7 @@ function DrSageTab() {
           <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full bg-violet-400 blur-[80px]" />
         </div>
         <div className="relative flex items-start gap-5">
-          <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-400 to-cyan-300 flex items-center justify-center flex-shrink-0 shadow-lg">
+          <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-blue-400 to-cyan-300 flex items-center justify-center flex-shrink-0 shadow-lg">
             <Stethoscope className="w-8 h-8 text-white" />
           </div>
           <div>
@@ -1711,7 +1711,7 @@ function DrSageTab() {
                   <div className="space-y-2">
                     {activeWorkflow.map((step, idx) => (
                       <div key={step.id} className={cn(
-                        'flex items-start gap-2.5 p-2 rounded-lg transition-colors',
+                        'flex items-start gap-2.5 p-2 rounded-lg transition-colors duration-150',
                         step.status === 'running' ? 'bg-blue-50' :
                         step.status === 'complete' ? 'bg-emerald-50/50' : 'bg-transparent'
                       )}>
@@ -1887,7 +1887,7 @@ function WhatsNewTab() {
         return (
           <div className="bg-gradient-to-br from-violet-50 via-blue-50 to-cyan-50 rounded-xl border border-violet-100 p-8">
             <div className="flex items-start gap-4">
-              <div className="w-14 h-14 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0 /50">
+              <div className="w-14 h-14 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0 /50">
                 <LatestIcon className="w-7 h-7 text-white" />
               </div>
               <div>
@@ -1914,7 +1914,7 @@ function WhatsNewTab() {
             const typeCfg = TYPE_CONFIG[item.type];
             return (
               <div key={idx} className="flex items-start gap-4 relative">
-                <div className="w-12 h-12 rounded-xl bg-white border border-zinc-200 flex items-center justify-center flex-shrink-0 z-10">
+                <div className="w-12 h-12 rounded-lg bg-white border border-zinc-200 flex items-center justify-center flex-shrink-0 z-10">
                   <Icon className={cn('w-5 h-5', `text-${typeCfg.color}-500`)} />
                 </div>
                 <div className="bg-white rounded-xl border border-zinc-200 p-4 flex-1 hover:shadow-sm transition-shadow">

@@ -528,7 +528,7 @@ function InviteModal({ open, onClose }: { open: boolean; onClose: () => void }) 
             onClick={onClose}
             disabled={!email.trim()}
             className={cn(
-              'flex items-center gap-2 px-5 py-2 text-sm font-medium rounded-xl transition-colors',
+              'flex items-center gap-2 px-5 py-2 text-sm font-medium rounded-xl transition-colors duration-150',
               email.trim()
                 ? 'bg-blue-600 text-white hover:bg-blue-700'
                 : 'bg-zinc-100 text-zinc-400 cursor-not-allowed',
@@ -583,7 +583,7 @@ export default function TeamWorkspace({ programId }: TeamWorkspaceProps) {
   if (!programId) {
     return (
       <div className="flex flex-col items-center justify-center py-32 text-center">
-        <div className="w-16 h-16 rounded-xl bg-zinc-100 flex items-center justify-center mb-4">
+        <div className="w-16 h-16 rounded-lg bg-zinc-100 flex items-center justify-center mb-4">
           <Users className="w-8 h-8 text-zinc-400" />
         </div>
         <h3 className="text-lg font-semibold text-zinc-900 mb-1">No Program Selected</h3>
@@ -615,7 +615,7 @@ export default function TeamWorkspace({ programId }: TeamWorkspaceProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
             <Users className="w-5 h-5 text-blue-600" />
           </div>
           <div>
@@ -647,7 +647,7 @@ export default function TeamWorkspace({ programId }: TeamWorkspaceProps) {
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
               className={cn(
-                'flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all',
+                'flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-150',
                 isActive
                   ? 'bg-white text-zinc-900 shadow-sm'
                   : 'text-zinc-500 hover:text-zinc-700',
@@ -727,7 +727,7 @@ export default function TeamWorkspace({ programId }: TeamWorkspaceProps) {
                       <tr
                         key={role}
                         className={cn(
-                          'border-b border-zinc-200 hover:bg-zinc-50/50 transition-colors',
+                          'border-b border-zinc-200 hover:bg-zinc-50/50 transition-colors duration-150',
                           idx === ALL_ROLES.length - 1 && 'border-b-0',
                         )}
                       >

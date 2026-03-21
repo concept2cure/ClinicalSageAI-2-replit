@@ -698,7 +698,7 @@ function ThreadCard({
   return (
     <div
       className={cn(
-        'mb-2 rounded-lg border transition-colors',
+        'mb-2 rounded-lg border transition-colors duration-150',
         isOpen ? 'border-zinc-200 bg-white' : 'border-zinc-200 bg-zinc-50/50'
       )}
     >

@@ -1071,7 +1071,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                   activeArtifact.title
                 )
               }
-              className="p-1.5 text-zinc-400 hover:text-violet-600 rounded-md hover:bg-violet-50"
+              className="p-1.5 text-zinc-400 hover:text-violet-600 rounded-md hover:bg-blue-50"
               title="Transform Canvas"
             >
               <Sparkles className="w-3.5 h-3.5" />
@@ -1137,7 +1137,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 onClick={() => !tab.disabled && setLeftRailMode(tab.key)}
                 disabled={tab.disabled}
                 className={cn(
-                  'flex-1 flex items-center justify-center gap-1 py-2.5 text-xs font-medium transition-colors',
+                  'flex-1 flex items-center justify-center gap-1 py-2.5 text-xs font-medium transition-colors duration-150',
                   leftRailMode === tab.key
                     ? 'text-zinc-900 bg-white border-b-2 border-zinc-900'
                     : tab.disabled
@@ -1272,7 +1272,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             <button
               onClick={openReviewPulse}
               className={cn(
-                'w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-xs font-medium transition-colors',
+                'w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-xs font-medium transition-colors duration-150',
                 phase4Panel === 'pulse'
                   ? 'text-rose-700 bg-rose-50'
                   : 'text-zinc-500 hover:text-rose-600 hover:bg-rose-50'
@@ -1709,7 +1709,7 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
               <div className="w-full bg-zinc-100 rounded-full h-1.5">
                 <div
                   className={cn(
-                    'h-1.5 rounded-full transition-all',
+                    'h-1.5 rounded-full transition-all duration-150',
                     metrics.completionPercent >= 75
                       ? 'bg-emerald-500'
                       : metrics.completionPercent >= 25

@@ -155,8 +155,8 @@ export const DemoChat: React.FC<DemoChatProps> = ({
                   transition={{ delay: i * 0.08, duration: 0.2 }}
                   onClick={() => onChoiceSelect(choice)}
                   className={cn(
-                    'text-left px-4 py-2.5 rounded-xl border text-sm transition-all',
-                    'border-violet-200 bg-white hover:bg-violet-50 hover:border-violet-400',
+                    'text-left px-4 py-2.5 rounded-xl border text-sm transition-all duration-150',
+                    'border-blue-200 bg-white hover:bg-blue-50 hover:border-violet-400',
                     'text-zinc-700 hover:text-violet-700',
                     'shadow-sm hover:shadow-md',
                   )}

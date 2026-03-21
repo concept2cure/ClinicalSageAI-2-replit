@@ -410,7 +410,7 @@ export function PreSubmissionChecklist({
         <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
           <div
             className={cn(
-              'h-full rounded-full transition-all',
+              'h-full rounded-full transition-all duration-150',
               overallScore.pct >= 80 ? 'bg-emerald-500' : overallScore.pct >= 50 ? 'bg-amber-500' : 'bg-red-500',
             )}
             style={{ width: `${overallScore.pct}%` }}

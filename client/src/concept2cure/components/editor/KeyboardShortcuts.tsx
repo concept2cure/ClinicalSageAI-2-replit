@@ -222,7 +222,7 @@ export function KeyboardShortcutsOverlay({ isOpen, onClose }: KeyboardShortcutsO
             className={cn(
               'p-1.5 rounded-lg',
               'text-white/50 hover:text-white hover:bg-white/10',
-              'transition-colors',
+              'transition-colors duration-150',
             )}
             aria-label="Close shortcuts overlay"
           >
@@ -245,7 +245,7 @@ export function KeyboardShortcutsOverlay({ isOpen, onClose }: KeyboardShortcutsO
                 'bg-white/5 border border-white/10',
                 'text-sm text-white placeholder:text-white/30',
                 'focus-visible:ring-2 outline-none focus:ring-blue-500/50 focus:border-blue-500/50',
-                'transition-colors',
+                'transition-colors duration-150',
               )}
             />
           </div>
@@ -275,7 +275,7 @@ export function KeyboardShortcutsOverlay({ isOpen, onClose }: KeyboardShortcutsO
                       className={cn(
                         'flex items-center justify-between',
                         'px-3 py-1.5 rounded-lg',
-                        'hover:bg-white/5 transition-colors',
+                        'hover:bg-white/5 transition-colors duration-150',
                       )}
                     >
                       <span className="text-sm text-white/80">{shortcut.description}</span>

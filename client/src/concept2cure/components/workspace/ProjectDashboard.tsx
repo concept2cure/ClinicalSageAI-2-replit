@@ -675,7 +675,7 @@ export function ProjectDashboard({
                   <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-100">
                     <div
                       className={cn(
-                        'h-full rounded-full transition-all',
+                        'h-full rounded-full transition-all duration-150',
                         hasContent ? 'bg-blue-500' : 'bg-zinc-100',
                       )}
                       style={{ width: `${pct}%` }}

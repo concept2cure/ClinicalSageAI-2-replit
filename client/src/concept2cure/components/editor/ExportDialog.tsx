@@ -167,7 +167,7 @@ export function ExportDialog({
                   onClick={() => setSelectedFormat(fmt.id)}
                   disabled={!fmt.available}
                   className={cn(
-                    'flex items-start gap-3 p-3 rounded-xl border text-left transition-all',
+                    'flex items-start gap-3 p-3 rounded-xl border text-left transition-all duration-150',
                     isSelected
                       ? 'border-blue-500 bg-blue-50/50 shadow-sm'
                       : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50',
@@ -237,7 +237,7 @@ export function ExportDialog({
             onClick={handleExport}
             disabled={exporting}
             className={cn(
-              'flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-lg transition-all',
+              'flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-lg transition-all duration-150',
               exportResult === 'success'
                 ? 'bg-emerald-600 text-white'
                 : exportResult === 'error'

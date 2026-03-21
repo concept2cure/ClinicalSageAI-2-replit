@@ -191,7 +191,7 @@ export const SplitScreenLayout: React.FC = () => {
           onMouseDown={handleMouseDown}
           className={cn(
             'relative flex w-1 cursor-col-resize items-center justify-center',
-            'bg-zinc-200 hover:bg-blue-400 transition-colors',
+            'bg-zinc-200 hover:bg-blue-400 transition-colors duration-150',
             isDragging && 'bg-blue-500'
           )}
         >
@@ -199,7 +199,7 @@ export const SplitScreenLayout: React.FC = () => {
             className={cn(
               'absolute z-10 flex h-12 w-5 items-center justify-center rounded',
               'bg-zinc-100 border border-zinc-300 shadow-sm',
-              'hover:bg-zinc-200 transition-colors',
+              'hover:bg-zinc-200 transition-colors duration-150',
               isDragging && 'bg-blue-100 border-blue-400'
             )}
           >

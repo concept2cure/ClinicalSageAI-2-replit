@@ -303,7 +303,7 @@ const CollaborationHub: React.FC<CollaborationHubProps> = ({ programId }) => {
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
                   className={cn(
-                    'flex-1 flex items-center justify-center gap-1 py-2.5 text-xs font-medium border-b-2 transition-colors',
+                    'flex-1 flex items-center justify-center gap-1 py-2.5 text-xs font-medium border-b-2 transition-colors duration-150',
                     activeTab === tab.key
                       ? 'border-blue-500 text-blue-700'
                       : 'border-transparent text-zinc-500 hover:text-zinc-700',
@@ -378,7 +378,7 @@ const CollaborationHub: React.FC<CollaborationHubProps> = ({ programId }) => {
                         key={thread.id}
                         onClick={() => setSelectedThreadId(thread.id)}
                         className={cn(
-                          'w-full text-left px-3 py-2.5 transition-colors',
+                          'w-full text-left px-3 py-2.5 transition-colors duration-150',
                           isActive ? 'bg-blue-50 border-l-2 border-blue-500' : 'hover:bg-zinc-50',
                         )}
                       >
@@ -555,7 +555,7 @@ const CollaborationHub: React.FC<CollaborationHubProps> = ({ programId }) => {
                   <button
                     onClick={() => setComposePriority(!composePriority)}
                     className={cn(
-                      'flex items-center gap-1 px-2 py-1.5 text-xs rounded-lg border transition-colors',
+                      'flex items-center gap-1 px-2 py-1.5 text-xs rounded-lg border transition-colors duration-150',
                       composePriority
                         ? 'bg-red-50 text-red-700 border-red-200'
                         : 'bg-white text-zinc-500 border-zinc-200 hover:bg-zinc-50',

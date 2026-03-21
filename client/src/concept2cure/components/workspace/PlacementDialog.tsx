@@ -86,7 +86,7 @@ function SectionPicker({ selected, onSelect }: SectionPickerProps) {
             if (hasChildren) toggleExpand(node.nodeId);
           }}
           className={cn(
-            'w-full flex items-center gap-1 py-[3px] pr-2 text-left transition-colors',
+            'w-full flex items-center gap-1 py-[3px] pr-2 text-left transition-colors duration-150',
             isSelected ? 'bg-blue-100 text-blue-700 font-medium' : 'text-zinc-600 hover:bg-zinc-50'
           )}
           style={{ paddingLeft: `${4 + depth * 12}px` }}
@@ -136,7 +136,7 @@ function SectionPicker({ selected, onSelect }: SectionPickerProps) {
                 key={n.nodeId}
                 onClick={() => onSelect(n.ctdSection)}
                 className={cn(
-                  'w-full flex items-center gap-1.5 px-3 py-1.5 text-left transition-colors',
+                  'w-full flex items-center gap-1.5 px-3 py-1.5 text-left transition-colors duration-150',
                   selected === n.ctdSection
                     ? 'bg-blue-100 text-blue-700'
                     : 'text-zinc-600 hover:bg-zinc-50'
@@ -445,7 +445,7 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
             onClick={handleConfirm}
             disabled={!canConfirm || loading}
             className={cn(
-              'px-4 py-1.5 text-sm font-medium rounded-lg transition-colors',
+              'px-4 py-1.5 text-sm font-medium rounded-lg transition-colors duration-150',
               canConfirm && !loading
                 ? 'bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:outline-none'
                 : 'bg-zinc-200 text-zinc-400 cursor-not-allowed'

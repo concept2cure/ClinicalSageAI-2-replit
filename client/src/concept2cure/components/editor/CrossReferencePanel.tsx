@@ -361,7 +361,7 @@ export function CrossReferencePanel({
           <button
             onClick={() => setShowInsertForm((v) => !v)}
             className={cn(
-              'p-1.5 rounded-md text-zinc-500 hover:text-blue-600 hover:bg-blue-50 transition-colors',
+              'p-1.5 rounded-md text-zinc-500 hover:text-blue-600 hover:bg-blue-50 transition-colors duration-150',
               showInsertForm && 'text-blue-600 bg-blue-50'
             )}
             title="Insert Reference"
@@ -466,7 +466,7 @@ export function CrossReferencePanel({
             <button
               onClick={() => setFilterStatus('all')}
               className={cn(
-                'flex items-center gap-1 px-2 py-0.5 rounded-full transition-colors',
+                'flex items-center gap-1 px-2 py-0.5 rounded-full transition-colors duration-150',
                 filterStatus === 'all'
                   ? 'bg-zinc-200 text-zinc-900 font-medium'
                   : 'text-zinc-500 hover:text-zinc-700'
@@ -478,7 +478,7 @@ export function CrossReferencePanel({
             <button
               onClick={() => setFilterStatus('valid')}
               className={cn(
-                'flex items-center gap-1 px-2 py-0.5 rounded-full transition-colors',
+                'flex items-center gap-1 px-2 py-0.5 rounded-full transition-colors duration-150',
                 filterStatus === 'valid'
                   ? 'bg-emerald-100 text-emerald-800 font-medium'
                   : 'text-emerald-600 hover:text-emerald-800'
@@ -490,7 +490,7 @@ export function CrossReferencePanel({
             <button
               onClick={() => setFilterStatus('broken')}
               className={cn(
-                'flex items-center gap-1 px-2 py-0.5 rounded-full transition-colors',
+                'flex items-center gap-1 px-2 py-0.5 rounded-full transition-colors duration-150',
                 filterStatus === 'broken'
                   ? 'bg-red-100 text-red-800 font-medium'
                   : 'text-red-600 hover:text-red-800'
@@ -502,7 +502,7 @@ export function CrossReferencePanel({
             <button
               onClick={() => setFilterStatus('unlinked')}
               className={cn(
-                'flex items-center gap-1 px-2 py-0.5 rounded-full transition-colors',
+                'flex items-center gap-1 px-2 py-0.5 rounded-full transition-colors duration-150',
                 filterStatus === 'unlinked'
                   ? 'bg-amber-100 text-amber-800 font-medium'
                   : 'text-amber-600 hover:text-amber-800'

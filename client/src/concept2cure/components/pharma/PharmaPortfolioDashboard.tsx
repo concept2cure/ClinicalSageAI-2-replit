@@ -274,7 +274,7 @@ const PDUFACalendar: React.FC<{
                     key={pdufa.id}
                     onClick={() => onPDUFAClick?.(pdufa)}
                     className={cn(
-                      'w-full p-3 rounded-lg border-l-4 text-left transition-colors',
+                      'w-full p-3 rounded-lg border-l-4 text-left transition-colors duration-150',
                       pdufa.status === 'at_risk'
                         ? 'border-l-red-500 bg-red-50 hover:bg-red-100'
                         : isUrgent
@@ -358,7 +358,7 @@ const CommitmentTracker: React.FC<{
                 key={commitment.id}
                 onClick={() => onCommitmentClick?.(commitment)}
                 className={cn(
-                  'w-full p-3 rounded-lg border text-left transition-colors',
+                  'w-full p-3 rounded-lg border text-left transition-colors duration-150',
                   isOverdue && 'border-red-300 bg-red-50',
                   isUrgent && !isOverdue && 'border-amber-300 bg-amber-50',
                   !isOverdue && !isUrgent && 'border-zinc-200 hover:bg-zinc-50'
@@ -631,7 +631,7 @@ export const PharmaPortfolioDashboard: React.FC<PharmaPortfolioDashboardProps> =
             <button
               onClick={() => setView('portfolio')}
               className={cn(
-                'px-3 py-1.5 text-sm font-medium rounded-lg transition-colors',
+                'px-3 py-1.5 text-sm font-medium rounded-lg transition-colors duration-150',
                 view === 'portfolio' ? 'bg-blue-600 text-white' : 'text-zinc-600 hover:bg-zinc-100'
               )}
             >
@@ -641,7 +641,7 @@ export const PharmaPortfolioDashboard: React.FC<PharmaPortfolioDashboardProps> =
             <button
               onClick={() => setView('matrix')}
               className={cn(
-                'px-3 py-1.5 text-sm font-medium rounded-lg transition-colors',
+                'px-3 py-1.5 text-sm font-medium rounded-lg transition-colors duration-150',
                 view === 'matrix' ? 'bg-blue-600 text-white' : 'text-zinc-600 hover:bg-zinc-100'
               )}
             >

@@ -220,7 +220,7 @@ export default function SnowGlobeArtifactSummary({
               </span>
               <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-100">
                 <div
-                  className={cn('h-full rounded-full transition-all', getBarColor(score))}
+                  className={cn('h-full rounded-full transition-all duration-150', getBarColor(score))}
                   style={{ width: `${Math.min(score, 100)}%` }}
                 />
               </div>

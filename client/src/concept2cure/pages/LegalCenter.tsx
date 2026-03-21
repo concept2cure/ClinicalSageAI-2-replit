@@ -436,7 +436,7 @@ function statusColor(status: StatusType): string {
     case 'Draft':
       return 'bg-blue-50 text-blue-700 border-blue-200';
     case 'Open':
-      return 'bg-violet-50 text-violet-700 border-violet-200';
+      return 'bg-violet-50 text-violet-700 border-blue-200';
     default:
       return 'bg-zinc-100 text-zinc-600 border-zinc-200';
   }
@@ -561,7 +561,7 @@ const SectionHeader: React.FC<{
         <button
           onClick={onToggleFilter}
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors',
+            'inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors duration-150',
             filterOpen
               ? 'border-blue-200 bg-blue-50 text-blue-700'
               : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50',
@@ -686,7 +686,7 @@ const IPPortfolioPanel: React.FC<{ search: string }> = ({ search }) => {
             </div>
             <div className="mt-3 flex flex-wrap gap-1.5">
               {patent.relatedCompounds.map((c) => (
-                <span key={c} className="rounded-md bg-violet-50 border border-violet-200 px-2 py-0.5 text-xs font-medium text-violet-700">
+                <span key={c} className="rounded-md bg-violet-50 border border-blue-200 px-2 py-0.5 text-xs font-medium text-violet-700">
                   {c}
                 </span>
               ))}
@@ -1020,7 +1020,7 @@ const RiskRegisterPanel: React.FC<{ search: string }> = ({ search }) => {
                       <div
                         key={key}
                         className={cn(
-                          'rounded-lg h-12 flex items-center justify-center text-xs font-semibold transition-all',
+                          'rounded-lg h-12 flex items-center justify-center text-xs font-semibold transition-all duration-150',
                           risks.length > 0 ? heatmapCell(likelihood, impact) : 'bg-zinc-50',
                         )}
                         title={risks.map((r) => r.title).join('\n')}

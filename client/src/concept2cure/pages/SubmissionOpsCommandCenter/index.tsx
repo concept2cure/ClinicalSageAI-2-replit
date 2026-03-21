@@ -736,7 +736,7 @@ function BlockerRow({
       data-testid="blocker-row"
       onClick={onClick}
       className={cn(
-        'w-full flex items-start gap-2 px-3 py-2 border-b border-zinc-50 text-left transition-colors',
+        'w-full flex items-start gap-2 px-3 py-2 border-b border-zinc-50 text-left transition-colors duration-150',
         isSelected
           ? 'bg-blue-50/60 border-l-2 border-l-blue-500'
           : 'hover:bg-zinc-50/60 border-l-2 border-l-transparent'

@@ -317,7 +317,7 @@ export const AuthorityTracker: React.FC<AuthorityTrackerProps> = ({ programId })
                       key={ix.id}
                       onClick={() => setSelectedId(ix.id)}
                       className={cn(
-                        'w-full text-left p-4 rounded-xl border transition-all',
+                        'w-full text-left p-4 rounded-xl border transition-all duration-150',
                         overdue
                           ? 'bg-red-50 border-red-200 hover:border-red-300'
                           : 'bg-white border-zinc-200 hover:border-zinc-300',

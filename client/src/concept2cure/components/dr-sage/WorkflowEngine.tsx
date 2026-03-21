@@ -120,7 +120,7 @@ const ACTOR_CONFIG = {
   },
   ana: {
     label: 'AnA 1.0',
-    bg: 'bg-violet-100 text-violet-700',
+    bg: 'bg-blue-100 text-blue-700',
     icons: [Brain],
   },
   both: {
@@ -214,7 +214,7 @@ function StepCard({
       {/* Card */}
       <motion.div
         className={cn(
-          'mb-4 flex-1 rounded-lg border p-4 transition-colors',
+          'mb-4 flex-1 rounded-lg border p-4 transition-colors duration-150',
           cfg.border,
           cfg.bg,
           step.status === 'running' && 'ring-2 ring-blue-400/30',

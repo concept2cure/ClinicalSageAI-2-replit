@@ -218,7 +218,7 @@ export const SubmissionAppsPanel: React.FC<SubmissionAppsPanelProps> = ({
                 onClick={handleRunApp}
                 disabled={!projectId || running}
                 className={cn(
-                  'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                  'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-150',
                   'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
                   projectId && !running
                     ? 'bg-blue-600 text-white hover:bg-blue-700'

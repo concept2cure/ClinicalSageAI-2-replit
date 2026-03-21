@@ -199,7 +199,7 @@ const VersionHistory: React.FC<VersionHistoryProps> = ({ artifact, onSelectVersi
             key={version.version}
             onClick={() => onSelectVersion(version.version)}
             className={cn(
-              'w-full p-3 text-left rounded-lg border transition-colors',
+              'w-full p-3 text-left rounded-lg border transition-colors duration-150',
               version.version === artifact.version
                 ? 'border-blue-300 bg-blue-50'
                 : 'border-zinc-200 hover:bg-zinc-50'

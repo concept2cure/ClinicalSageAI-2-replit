@@ -277,7 +277,7 @@ export function NewDocumentDialog({
                   'flex flex-col items-center gap-2 p-4 rounded-lg border transition-all text-center',
                   mode === 'ai-generate'
                     ? 'border-violet-400 bg-violet-50'
-                    : 'border-zinc-200 hover:border-blue-200 hover:bg-violet-50/50',
+                    : 'border-zinc-200 hover:border-blue-200 hover:bg-blue-50/50',
                 )}
               >
                 <div className="h-10 w-10 rounded-lg bg-violet-100 flex items-center justify-center">
@@ -300,7 +300,7 @@ export function NewDocumentDialog({
                       key={t.id}
                       onClick={() => { setSelectedTemplate(t); setCtdSection(t.ctdSection || ''); setStep(2); }}
                       className={cn(
-                        'flex items-start gap-3 p-3 rounded-lg border text-left transition-all',
+                        'flex items-start gap-3 p-3 rounded-lg border text-left transition-all duration-150',
                         selectedTemplate?.id === t.id
                           ? 'border-blue-300 bg-blue-50'
                           : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50',
@@ -427,9 +427,9 @@ export function NewDocumentDialog({
               onClick={handleCreate}
               disabled={isCreating}
               className={cn(
-                'flex items-center gap-2 px-5 py-2 text-sm font-medium rounded-lg transition-colors',
+                'flex items-center gap-2 px-5 py-2 text-sm font-medium rounded-lg transition-colors duration-150',
                 mode === 'ai-generate'
-                  ? 'bg-violet-600 text-white hover:bg-violet-700'
+                  ? 'bg-blue-600 text-white hover:bg-blue-700'
                   : 'bg-blue-600 text-white hover:bg-blue-700',
                 'disabled:opacity-50',
               )}

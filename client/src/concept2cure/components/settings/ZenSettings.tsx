@@ -421,7 +421,7 @@ const AppearanceSection: React.FC = () => {
               key={id}
               onClick={() => setTheme(id)}
               className={cn(
-                'flex-1 flex flex-col items-center gap-2 p-4 rounded-xl border transition-all',
+                'flex-1 flex flex-col items-center gap-2 p-4 rounded-xl border transition-all duration-150',
                 theme === id
                   ? 'border-blue-500 bg-blue-50'
                   : 'border-zinc-200 hover:border-zinc-300'
@@ -511,7 +511,7 @@ const IntegrationsSection: React.FC = () => {
             </div>
             <button
               className={cn(
-                'px-3 py-1.5 text-xs font-medium rounded-lg transition-colors',
+                'px-3 py-1.5 text-xs font-medium rounded-lg transition-colors duration-150',
                 integration.connected
                   ? 'text-zinc-600 bg-zinc-100 hover:bg-zinc-200'
                   : 'text-white bg-blue-600 hover:bg-blue-700'
@@ -618,7 +618,7 @@ export const ZenSettings: React.FC<ZenSettingsProps> = ({ isOpen, onClose }) => 
                 key={id}
                 onClick={() => setActiveSection(id)}
                 className={cn(
-                  'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                  'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150',
                   activeSection === id
                     ? 'bg-white text-zinc-900 shadow-sm'
                     : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'

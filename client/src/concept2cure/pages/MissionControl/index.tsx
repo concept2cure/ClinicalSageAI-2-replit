@@ -223,7 +223,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({ node, depth = 0, selectedId, onSele
           if (hasChildren) setExpanded(prev => !prev);
         }}
         className={cn(
-          'w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left text-sm transition-colors',
+          'w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left text-sm transition-colors duration-150',
           selectedId === node.id
             ? 'bg-blue-50 text-blue-900 border border-blue-200'
             : 'hover:bg-zinc-50 text-zinc-900'
@@ -533,7 +533,7 @@ export const MissionControl: React.FC<MissionControlProps> = ({ projectId }) => 
         {/* ── Hero Welcome Section (Claude.AI-style) ──────────────────── */}
         <div className="mb-8">
           <div className="text-center max-w-2xl mx-auto mb-8">
-            <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center mx-auto mb-4 /50">
+            <div className="w-12 h-12 rounded-lg bg-blue-600 flex items-center justify-center mx-auto mb-4 /50">
               <Target className="w-6 h-6 text-white" />
             </div>
             <h1 className="text-2xl font-semibold text-zinc-900 mb-2">
@@ -549,7 +549,7 @@ export const MissionControl: React.FC<MissionControlProps> = ({ projectId }) => 
           {/* How It Works — 3-column explainer */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <div className="bg-white rounded-xl border border-zinc-200 p-5 text-center hover:shadow-sm transition-shadow">
-              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center mx-auto mb-3">
+              <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center mx-auto mb-3">
                 <Eye className="w-5 h-5 text-blue-600" />
               </div>
               <h3 className="text-sm font-semibold text-zinc-900 mb-1">AI Sentinel Monitoring</h3>
@@ -559,7 +559,7 @@ export const MissionControl: React.FC<MissionControlProps> = ({ projectId }) => 
               </p>
             </div>
             <div className="bg-white rounded-xl border border-zinc-200 p-5 text-center hover:shadow-sm transition-shadow">
-              <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center mx-auto mb-3">
+              <div className="w-10 h-10 rounded-lg bg-violet-50 flex items-center justify-center mx-auto mb-3">
                 <Zap className="w-5 h-5 text-violet-600" />
               </div>
               <h3 className="text-sm font-semibold text-zinc-900 mb-1">Automation Rules Engine</h3>
@@ -569,7 +569,7 @@ export const MissionControl: React.FC<MissionControlProps> = ({ projectId }) => 
               </p>
             </div>
             <div className="bg-white rounded-xl border border-zinc-200 p-5 text-center hover:shadow-sm transition-shadow">
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center mx-auto mb-3">
+              <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center mx-auto mb-3">
                 <Layers className="w-5 h-5 text-emerald-600" />
               </div>
               <h3 className="text-sm font-semibold text-zinc-900 mb-1">Portfolio Oversight</h3>
@@ -590,7 +590,7 @@ export const MissionControl: React.FC<MissionControlProps> = ({ projectId }) => 
             onClick={handleScan}
             disabled={triggerScan.isPending}
             className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors',
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors duration-150',
               triggerScan.isPending
                 ? 'border-zinc-200 text-zinc-400 cursor-wait'
                 : 'border-zinc-300 text-zinc-700 hover:bg-zinc-50 hover:border-zinc-400'
@@ -674,7 +674,7 @@ export const MissionControl: React.FC<MissionControlProps> = ({ projectId }) => 
                       key={prog.id}
                       onClick={() => setSelectedProjectId(prog.id)}
                       className={cn(
-                        'w-full flex items-center gap-2 px-3 py-2 rounded-md text-left text-sm transition-colors',
+                        'w-full flex items-center gap-2 px-3 py-2 rounded-md text-left text-sm transition-colors duration-150',
                         selectedProjectId === prog.id
                           ? 'bg-blue-50 text-blue-900 border border-blue-200'
                           : 'hover:bg-zinc-50 text-zinc-900'
@@ -824,7 +824,7 @@ export const MissionControl: React.FC<MissionControlProps> = ({ projectId }) => 
         {!hasData && (
           <div className="mt-8 bg-white rounded-xl border border-zinc-200 p-8 text-center">
             <div className="max-w-md mx-auto">
-              <div className="w-14 h-14 rounded-xl bg-blue-100 flex items-center justify-center mx-auto mb-4">
+              <div className="w-14 h-14 rounded-lg bg-blue-100 flex items-center justify-center mx-auto mb-4">
                 <Target className="w-7 h-7 text-violet-600" />
               </div>
               <h3 className="text-lg font-semibold text-zinc-900 mb-2">

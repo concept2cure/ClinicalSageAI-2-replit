@@ -83,7 +83,7 @@ export function CollaborationPresence({
               {/* Avatar circle */}
               <div
                 className={cn(
-                  'w-6 h-6 rounded-full flex items-center justify-center text-white text-[9px] font-semibold ring-2 ring-white transition-all',
+                  'w-6 h-6 rounded-full flex items-center justify-center text-white text-[9px] font-semibold ring-2 ring-white transition-all duration-150',
                   isTyping && 'ring-amber-400 animate-pulse',
                 )}
                 style={{ backgroundColor: collab.color }}

@@ -498,7 +498,7 @@ export const TeamCollaborationPanel: React.FC<TeamCollaborationPanelProps> = ({
           <button
             onClick={() => setActiveTab('activity')}
             className={cn(
-              'flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-colors',
+              'flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-colors duration-150',
               activeTab === 'activity'
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-zinc-500 hover:text-zinc-700'
@@ -514,7 +514,7 @@ export const TeamCollaborationPanel: React.FC<TeamCollaborationPanelProps> = ({
           <button
             onClick={() => setActiveTab('team')}
             className={cn(
-              'flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-colors',
+              'flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-colors duration-150',
               activeTab === 'team'
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-zinc-500 hover:text-zinc-700'
