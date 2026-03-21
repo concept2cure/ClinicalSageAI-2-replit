@@ -185,14 +185,14 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const [changingStatus, setChangingStatus] = useState(false);
 
   // ── Toast notification queue ──────────────────────────────────────────
-  type ToastItem = { id: number; message: string; type: 'success' | 'error' | 'info' };
+  type ToastItem = { id: number; message: string; type: 'success' | 'error' | 'info'; onUndo?: () => void };
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const toastIdRef = useRef(0);
   const pushToast = useCallback(
-    (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+    (message: string, type: 'success' | 'error' | 'info' = 'success', onUndo?: () => void) => {
       const id = ++toastIdRef.current;
-      setToasts(prev => [...prev.slice(-2), { id, message, type }]);
-      setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 5000);
+      setToasts(prev => [...prev.slice(-2), { id, message, type, onUndo }]);
+      setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), onUndo ? 8000 : 5000);
     },
     []
   );
@@ -1016,9 +1016,13 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         if (res.ok) {
           const payload = await res.json();
           const updated = payload.data;
+          const previousStatus = activeArtifact.status || 'draft';
           setActiveArtifact(prev => (prev ? { ...prev, ...updated } : prev));
           loadArtifacts();
-          pushToast(`Status → ${newStatus}`, 'success');
+          pushToast(`Status → ${newStatus}`, 'success', () => {
+            // Undo: revert to previous status
+            handleStatusChange(previousStatus);
+          });
         } else {
           const err = await res.json().catch(() => ({ message: 'Status change failed' }));
           pushToast(err.message || 'Status change failed', 'error');
@@ -2005,6 +2009,55 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               </div>
             </div>
           )}
+          {/* Guided empty state for new/blank documents */}
+          {activeArtifact && (!activeArtifact.content || activeArtifact.content.replace(/<[^>]*>/g, '').trim().length < 10) && activeArtifact.status !== 'locked' && (
+            <div className="absolute inset-x-0 top-0 z-10 flex items-start justify-center pt-20 pointer-events-none">
+              <div className="pointer-events-auto bg-white/95 backdrop-blur-sm border border-zinc-200 rounded-xl shadow-lg p-5 max-w-md w-full mx-4">
+                <div className="text-center mb-4">
+                  <PenTool className="w-6 h-6 text-violet-500 mx-auto mb-2" />
+                  <h3 className="text-sm font-semibold text-zinc-800">Get started with your document</h3>
+                  <p className="text-xs text-zinc-500 mt-1">Choose a quick action or just start typing below</p>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => handleAIEdit('expand')}
+                    className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-violet-700 bg-violet-50 rounded-lg hover:bg-violet-100 transition-colors text-left"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                    AI Generate Draft
+                  </button>
+                  <button
+                    onClick={() => {
+                      const template = `<h1>${activeArtifact.title || 'Document Title'}</h1><h2>1. Introduction</h2><p></p><h2>2. Background</h2><p></p><h2>3. Methods</h2><p></p><h2>4. Results</h2><p></p><h2>5. Discussion</h2><p></p><h2>6. Conclusions</h2><p></p>`;
+                      setActiveArtifact({ ...activeArtifact, content: template });
+                      setIsDirty(true);
+                    }}
+                    className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors text-left"
+                  >
+                    <FileText className="w-3.5 h-3.5 shrink-0" />
+                    Standard Outline
+                  </button>
+                  <button
+                    onClick={() => toggleInspector('intelligence')}
+                    className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors text-left"
+                  >
+                    <Brain className="w-3.5 h-3.5 shrink-0" />
+                    Ask AnA RI
+                  </button>
+                  <button
+                    onClick={() => toggleInspector('health')}
+                    className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-amber-700 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors text-left"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+                    Check Health
+                  </button>
+                </div>
+                <p className="text-[10px] text-zinc-400 text-center mt-3">
+                  Tip: Type <kbd className="px-1 py-0.5 bg-zinc-100 rounded text-zinc-500">/</kbd> for slash commands
+                </p>
+              </div>
+            </div>
+          )}
           <UnifiedDocumentEditor
             key={activeArtifact?.id}
             documentId={activeArtifact?.id}
@@ -2151,8 +2204,18 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               documentType={activeArtifact.type}
               submissionType={submissionType}
               ctdSection={activeArtifact.ctdSection}
-              onFixIssue={(dimId, idx) => {
-                pushToast(`Fixing ${dimId} issue #${idx + 1}...`, 'info');
+              onFixIssue={async (dimId, idx) => {
+                if (!activeArtifact) return;
+                const fixActions: Record<string, string> = {
+                  language: 'regulatory-tone',
+                  readability: 'rewrite',
+                  completeness: 'expand',
+                  citations: 'add-references',
+                  formatting: 'rewrite',
+                };
+                const action = fixActions[dimId] || 'rewrite';
+                pushToast(`Applying AI fix for ${dimId} issue #${idx + 1}…`, 'info');
+                handleAIEdit(action as 'rewrite' | 'expand' | 'summarize' | 'regulatory-tone' | 'add-references');
               }}
             />
           </div>
@@ -2411,6 +2474,17 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               {t.type === 'error' && <AlertCircle className="w-3.5 h-3.5 shrink-0" />}
               {t.type === 'info' && <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin" />}
               {t.message}
+              {t.onUndo && (
+                <button
+                  onClick={() => {
+                    t.onUndo?.();
+                    setToasts(prev => prev.filter(x => x.id !== t.id));
+                  }}
+                  className="ml-1 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide bg-white/20 rounded hover:bg-white/30 transition-colors"
+                >
+                  Undo
+                </button>
+              )}
               <button
                 onClick={() => setToasts(prev => prev.filter(x => x.id !== t.id))}
                 className="ml-1 opacity-60 hover:opacity-100"
