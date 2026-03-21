@@ -150,6 +150,7 @@ export class GatewayAuditLogger {
     } catch (error: any) {
       // Non-blocking — don't let audit failures break the gateway
       console.error(`[AI Gateway Audit] DB persist failed: ${error.message}`);
+      process.emitWarning(`Audit log persistence failed: ${error.message}`, 'AuditWarning');
     }
   }
 

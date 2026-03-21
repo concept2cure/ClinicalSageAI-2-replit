@@ -137,12 +137,15 @@ router.use("/sections/:sectionId", async (req: Request, res: Response, next: any
 // Helper function to get tenant_id from request
 const getTenantId = (req: Request): number => {
   // Try different headers/query params for tenant_id
-  return (
+  const tenantId =
     parseInt(req.headers['x-tenant-id'] as string) ||
     parseInt(req.query.tenant_id as string) ||
     parseInt(req.body?.tenant_id) ||
-    1
-  ); // Default tenant
+    0;
+  if (!tenantId) {
+    throw new Error('Tenant context required');
+  }
+  return tenantId;
 };
 
 // Helper function to compute document hash for signatures
@@ -2631,7 +2634,7 @@ async function buildDocx(
         },
         {
           name: 'TenantId',
-          value: String(tenantId || 1),
+          value: String(tenantId),
         },
       ],
     });

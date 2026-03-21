@@ -102,6 +102,22 @@ export class GatewayPolicyEngine {
   }
 
   private checkBlockedPatterns(request: GatewayRequest): PolicyResult {
+    // Prompt injection detection (before blocked patterns)
+    if (this.config.contentFilters) {
+      const injectionPatterns = [
+        /ignore\s+(all\s+)?(previous|prior|above)\s+(instructions|prompts|rules)/i,
+        /system\s*:\s*(override|bypass|ignore)/i,
+      ];
+      for (const pattern of injectionPatterns) {
+        for (const msg of request.messages) {
+          const content = typeof msg.content === 'string' ? msg.content : '';
+          if (pattern.test(content)) {
+            return { allowed: false, reason: 'Content filter: potential prompt injection detected' };
+          }
+        }
+      }
+    }
+
     if (!this.config.blockedPatterns || this.config.blockedPatterns.length === 0) {
       return { allowed: true };
     }

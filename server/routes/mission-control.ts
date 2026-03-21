@@ -23,11 +23,15 @@ const router = Router();
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function getOrgId(req: Request): number {
-  return (req as any).tenantContext?.organizationId || (req as any).tenantId || (req as any).organizationId || (req as any).user?.organizationId || 1;
+  const orgId = (req as any).tenantContext?.organizationId || (req as any).tenantId || (req as any).organizationId || (req as any).user?.organizationId;
+  if (!orgId) throw new Error('Organization context required');
+  return orgId;
 }
 
 function getUserId(req: Request): number {
-  return (req as any).userId || (req as any).tenantContext?.userId || (req as any).user?.id || 1;
+  const userId = (req as any).userId || (req as any).tenantContext?.userId || (req as any).user?.id;
+  if (!userId) throw new Error('User context required');
+  return userId;
 }
 
 // In-memory store for Phase 1 (will migrate to DB with Drizzle push)

@@ -76,7 +76,7 @@ export default function createINDKpiRoutes(pool: Pool): Router {
       const parsed = parseInt(header as string, 10);
       if (Number.isFinite(parsed) && parsed > 0) return parsed;
     }
-    return 1; // default org
+    throw new Error('Organization context required');
   }
 
   function getUserId(req: Request): string | null {

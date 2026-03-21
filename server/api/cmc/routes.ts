@@ -32,12 +32,11 @@ function getOrgId(req: express.Request): number {
     (req as any).tenantId ||
     (req as any).tenantContext?.organizationId ||
     (req.headers['x-organization-id'] as string) ||
+    (req.query.organizationId as string) ||
     ''
   );
   if (isNaN(orgId) || orgId <= 0) {
-    console.warn('[CMC] No valid organization context — falling back to header-based orgId');
-    // Fallback for development; production should enforce auth
-    return parseInt((req.query.organizationId as string) || '1');
+    throw new Error('Organization context required');
   }
   return orgId;
 }

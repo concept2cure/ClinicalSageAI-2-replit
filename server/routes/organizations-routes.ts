@@ -7,6 +7,29 @@ import { eq } from 'drizzle-orm';
 const router = Router();
 
 /**
+ * Validate that the requesting user belongs to the organization in :id param.
+ * Returns 403 if the user's org doesn't match.
+ */
+function validateOrgOwnership(req: any, res: any, next: any) {
+  const paramId = parseInt(req.params.id, 10);
+  const userOrgId = req.user?.organizationId;
+  const userRole = req.user?.role || req.userRole;
+
+  // Platform admins can access any org
+  if (userRole === 'platform_admin' || userRole === 'superadmin') {
+    return next();
+  }
+
+  if (!userOrgId || userOrgId !== paramId) {
+    return res.status(403).json({
+      success: false,
+      error: 'Not authorized to access this organization',
+    });
+  }
+  next();
+}
+
+/**
  * Get all organizations
  * API: GET /api/organizations
  */
@@ -60,7 +83,7 @@ router.get('/', (req, res) => {
  * Get organization details
  * API: GET /api/organizations/:id
  */
-router.get('/:id', (req, res) => {
+router.get('/:id', validateOrgOwnership, (req, res) => {
   try {
     const { id } = req.params;
 
@@ -115,7 +138,7 @@ router.get('/:id', (req, res) => {
  * Get clients for an organization
  * API: GET /api/organizations/:id/clients
  */
-router.get('/:id/clients', (req, res) => {
+router.get('/:id/clients', validateOrgOwnership, (req, res) => {
   try {
     const { id } = req.params;
 
@@ -203,7 +226,7 @@ router.get('/:id/clients', (req, res) => {
  * Get organization settings
  * API: GET /api/organizations/:id/settings
  */
-router.get('/:id/settings', async (req, res) => {
+router.get('/:id/settings', validateOrgOwnership, async (req, res) => {
   try {
     const { id } = req.params;
     console.log(`Fetching settings for organization ${id}`);
@@ -301,7 +324,7 @@ router.get('/:id/settings', async (req, res) => {
  * Update organization settings
  * API: PATCH /api/organizations/:id/settings
  */
-router.patch('/:id/settings', async (req, res) => {
+router.patch('/:id/settings', validateOrgOwnership, async (req, res) => {
   try {
     const { id } = req.params;
     const settingsUpdate = req.body;

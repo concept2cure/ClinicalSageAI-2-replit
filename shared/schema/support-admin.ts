@@ -17,6 +17,7 @@ import {
   varchar,
   index,
 } from 'drizzle-orm/pg-core';
+import { organizations, users } from '../schema';
 
 // ============================================================
 // ENUMS
@@ -64,11 +65,11 @@ export const supportTickets = pgTable(
   'support_tickets',
   {
     id: serial('id').primaryKey(),
-    organizationId: integer('organization_id').notNull(),
+    organizationId: integer('organization_id').notNull().references(() => organizations.id),
     /** User who created the ticket */
-    createdById: integer('created_by_id').notNull(),
+    createdById: integer('created_by_id').notNull().references(() => users.id),
     /** Agent/admin assigned to handle the ticket */
-    assignedToId: integer('assigned_to_id'),
+    assignedToId: integer('assigned_to_id').references(() => users.id),
     ticketNumber: varchar('ticket_number', { length: 20 }).notNull().unique(),
     subject: varchar('subject', { length: 500 }).notNull(),
     description: text('description').notNull(),
@@ -115,9 +116,9 @@ export const supportTicketMessages = pgTable(
   'support_ticket_messages',
   {
     id: serial('id').primaryKey(),
-    ticketId: integer('ticket_id').notNull(),
+    ticketId: integer('ticket_id').notNull().references(() => supportTickets.id, { onDelete: 'cascade' }),
     /** User who wrote this message */
-    userId: integer('user_id').notNull(),
+    userId: integer('user_id').notNull().references(() => users.id),
     /** Whether this is an internal note (not visible to customer) */
     isInternal: boolean('is_internal').notNull().default(false),
     content: text('content').notNull(),
