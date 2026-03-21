@@ -21,58 +21,104 @@ import {
   onSnapshot,
   query,
   orderBy,
-  serverTimestamp,
   type Unsubscribe,
-  type DocumentData,
 } from 'firebase/firestore';
 
-// ── Types ────────────────────────────────────────────────────────────────────
+// ── Constants ─────────────────────────────────────────────────────────────────
 
-export interface CursorPresence {
-  userId: string;
-  userName: string;
-  color: string;
-  /** JSON cursor position from TipTap */
-  cursorPos: number | null;
-  /** Selection anchor/head */
-  selectionFrom?: number;
-  selectionTo?: number;
-  /** Timestamp of last activity */
-  lastActive: number;
-  /** Currently editing section */
-  activeSection?: string;
-}
+/** Presence entries older than this are treated as stale and filtered out */
+const PRESENCE_STALE_MS = 30_000;
 
-export interface LiveComment {
-  id: string;
-  userId: string;
-  userName: string;
-  content: string;
-  /** Position in document (character offset) */
-  anchorPos: number;
-  /** Thread parent ID (null for top-level) */
-  parentId: string | null;
-  resolved: boolean;
-  createdAt: number;
-  updatedAt: number;
-}
+/** How often to refresh own heartbeat timestamp */
+const HEARTBEAT_INTERVAL_MS = 10_000;
 
-export interface SectionLock {
-  sectionId: string;
-  lockedBy: string;
-  lockedByName: string;
-  lockedAt: number;
-  /** Auto-expires after this timestamp */
-  expiresAt: number;
-}
+/** Section locks auto-expire after this duration */
+const LOCK_DURATION_MS = 5 * 60 * 1_000; // 5 minutes
 
-// ── Cursor colors for collaborators ──────────────────────────────────────────
-
+/** Deterministic palette for collaborator cursors */
 const CURSOR_COLORS = [
   '#3B82F6', '#10B981', '#8B5CF6', '#F59E0B',
   '#EF4444', '#06B6D4', '#EC4899', '#14B8A6',
-];
+] as const satisfies readonly string[];
 
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+/** Ephemeral cursor/selection data broadcast to other collaborators */
+export interface CursorPresence {
+  readonly userId: string;
+  readonly userName: string;
+  readonly color: string;
+  /** TipTap cursor position (character offset), null when blurred */
+  readonly cursorPos: number | null;
+  /** Selection anchor (start) — present only when text is selected */
+  readonly selectionFrom?: number;
+  /** Selection head (end) — present only when text is selected */
+  readonly selectionTo?: number;
+  /** Unix-ms timestamp of last activity */
+  readonly lastActive: number;
+  /** CTD/document section the user is currently working in */
+  readonly activeSection?: string;
+}
+
+/** A comment anchored to a document position, optionally threaded */
+export interface LiveComment {
+  readonly id: string;
+  readonly userId: string;
+  readonly userName: string;
+  readonly content: string;
+  /** Character offset in the document where this comment is anchored */
+  readonly anchorPos: number;
+  /** ID of the parent comment (null for top-level/root comments) */
+  readonly parentId: string | null;
+  readonly resolved: boolean;
+  /** Unix-ms creation timestamp */
+  readonly createdAt: number;
+  /** Unix-ms last update timestamp */
+  readonly updatedAt: number;
+}
+
+/** A section-level edit lock with auto-expiration */
+export interface SectionLock {
+  readonly sectionId: string;
+  readonly lockedBy: string;
+  readonly lockedByName: string;
+  /** Unix-ms when the lock was acquired */
+  readonly lockedAt: number;
+  /** Unix-ms after which the lock is considered expired */
+  readonly expiresAt: number;
+}
+
+/** Configuration for the collaboration hook */
+interface UseRealtimeCollaborationOptions {
+  readonly documentId: string;
+  readonly userId: string;
+  readonly userName: string;
+  /** Enable cursor presence tracking (default: true) */
+  readonly presence?: boolean;
+  /** Enable live comments (default: true) */
+  readonly comments?: boolean;
+  /** Enable section locking (default: true) */
+  readonly locking?: boolean;
+}
+
+/** Full return type of the hook — explicitly typed for consumer reference */
+export interface UseRealtimeCollaborationReturn {
+  readonly collaborators: readonly CursorPresence[];
+  readonly liveComments: readonly LiveComment[];
+  readonly sectionLocks: readonly SectionLock[];
+  readonly isConnected: boolean;
+  readonly isAvailable: boolean;
+  readonly updateCursor: (cursorPos: number | null, selectionFrom?: number, selectionTo?: number) => void;
+  readonly addComment: (content: string, anchorPos: number, parentId?: string) => Promise<void>;
+  readonly resolveComment: (commentId: string) => Promise<void>;
+  readonly lockSection: (sectionId: string) => Promise<void>;
+  readonly unlockSection: (sectionId: string) => Promise<void>;
+  readonly isSectionLocked: (sectionId: string) => SectionLock | null;
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+/** Deterministic hash-based color assignment for a user ID */
 function getCursorColor(userId: string): string {
   let hash = 0;
   for (let i = 0; i < userId.length; i++) {
@@ -81,19 +127,7 @@ function getCursorColor(userId: string): string {
   return CURSOR_COLORS[Math.abs(hash) % CURSOR_COLORS.length];
 }
 
-// ── Hook ─────────────────────────────────────────────────────────────────────
-
-interface UseRealtimeCollaborationOptions {
-  documentId: string;
-  userId: string;
-  userName: string;
-  /** Enable cursor presence tracking */
-  presence?: boolean;
-  /** Enable live comments */
-  comments?: boolean;
-  /** Enable section locking */
-  locking?: boolean;
-}
+// ── Hook ──────────────────────────────────────────────────────────────────────
 
 export function useRealtimeCollaboration({
   documentId,
@@ -102,15 +136,15 @@ export function useRealtimeCollaboration({
   presence: enablePresence = true,
   comments: enableComments = true,
   locking: enableLocking = true,
-}: UseRealtimeCollaborationOptions) {
+}: UseRealtimeCollaborationOptions): UseRealtimeCollaborationReturn {
   const [collaborators, setCollaborators] = useState<CursorPresence[]>([]);
   const [liveComments, setLiveComments] = useState<LiveComment[]>([]);
   const [sectionLocks, setSectionLocks] = useState<SectionLock[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const unsubscribesRef = useRef<Unsubscribe[]>([]);
-  const heartbeatRef = useRef<ReturnType<typeof setInterval>>();
+  const heartbeatRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
 
-  // ── Connect to Firestore listeners ────────────────────────────────────────
+  // ── Connect to Firestore listeners ──────────────────────────────────────
 
   useEffect(() => {
     if (!isFirebaseConfigured() || !documentId) {
@@ -129,10 +163,10 @@ export function useRealtimeCollaboration({
       const unsub = onSnapshot(presenceRef, (snapshot) => {
         const now = Date.now();
         const presences: CursorPresence[] = [];
-        snapshot.forEach((doc) => {
-          const data = doc.data() as CursorPresence;
-          // Filter out stale presences (>30s old) and self
-          if (data.userId !== userId && now - data.lastActive < 30000) {
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data() as CursorPresence;
+          // Filter out stale presences and self
+          if (data.userId !== userId && now - data.lastActive < PRESENCE_STALE_MS) {
             presences.push(data);
           }
         });
@@ -142,7 +176,7 @@ export function useRealtimeCollaboration({
 
       // Register own presence
       const myPresenceRef = doc(db, 'documents', documentId, 'presence', userId);
-      setDoc(myPresenceRef, {
+      void setDoc(myPresenceRef, {
         userId,
         userName,
         color: getCursorColor(userId),
@@ -150,10 +184,10 @@ export function useRealtimeCollaboration({
         lastActive: Date.now(),
       });
 
-      // Heartbeat every 10s
+      // Heartbeat
       heartbeatRef.current = setInterval(() => {
-        setDoc(myPresenceRef, { lastActive: Date.now() }, { merge: true });
-      }, 10000);
+        void setDoc(myPresenceRef, { lastActive: Date.now() }, { merge: true });
+      }, HEARTBEAT_INTERVAL_MS);
     }
 
     // Comments listener
@@ -161,11 +195,11 @@ export function useRealtimeCollaboration({
       const commentsRef = collection(db, 'documents', documentId, 'comments');
       const q = query(commentsRef, orderBy('createdAt', 'asc'));
       const unsub = onSnapshot(q, (snapshot) => {
-        const comments: LiveComment[] = [];
-        snapshot.forEach((doc) => {
-          comments.push({ id: doc.id, ...doc.data() } as LiveComment);
+        const result: LiveComment[] = [];
+        snapshot.forEach((docSnap) => {
+          result.push({ id: docSnap.id, ...docSnap.data() } as LiveComment);
         });
-        setLiveComments(comments);
+        setLiveComments(result);
       });
       unsubs.push(unsub);
     }
@@ -176,9 +210,8 @@ export function useRealtimeCollaboration({
       const unsub = onSnapshot(locksRef, (snapshot) => {
         const now = Date.now();
         const locks: SectionLock[] = [];
-        snapshot.forEach((doc) => {
-          const data = doc.data() as SectionLock;
-          // Only show non-expired locks
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data() as SectionLock;
           if (data.expiresAt > now) {
             locks.push(data);
           }
@@ -199,24 +232,23 @@ export function useRealtimeCollaboration({
       // Remove own presence on disconnect
       if (enablePresence && db) {
         const myPresenceRef = doc(db, 'documents', documentId, 'presence', userId);
-        deleteDoc(myPresenceRef).catch(() => {});
+        void deleteDoc(myPresenceRef).catch(() => {});
       }
 
       setIsConnected(false);
     };
   }, [documentId, userId, userName, enablePresence, enableComments, enableLocking]);
 
-  // ── Actions ───────────────────────────────────────────────────────────────
+  // ── Actions ─────────────────────────────────────────────────────────────
 
-  /** Update own cursor position */
   const updateCursor = useCallback(
-    (cursorPos: number | null, selectionFrom?: number, selectionTo?: number) => {
+    (cursorPos: number | null, selectionFrom?: number, selectionTo?: number): void => {
       if (!isFirebaseConfigured() || !documentId) return;
       const db = getFirestoreDb();
       if (!db) return;
 
       const myPresenceRef = doc(db, 'documents', documentId, 'presence', userId);
-      setDoc(
+      void setDoc(
         myPresenceRef,
         { cursorPos, selectionFrom, selectionTo, lastActive: Date.now() },
         { merge: true },
@@ -225,32 +257,31 @@ export function useRealtimeCollaboration({
     [documentId, userId],
   );
 
-  /** Add a comment at a document position */
   const addComment = useCallback(
-    async (content: string, anchorPos: number, parentId?: string) => {
+    async (content: string, anchorPos: number, parentId?: string): Promise<void> => {
       if (!isFirebaseConfigured() || !documentId) return;
       const db = getFirestoreDb();
       if (!db) return;
 
       const commentsRef = collection(db, 'documents', documentId, 'comments');
       const commentDoc = doc(commentsRef);
+      const now = Date.now();
       await setDoc(commentDoc, {
         userId,
         userName,
         content,
         anchorPos,
-        parentId: parentId || null,
+        parentId: parentId ?? null,
         resolved: false,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
+        createdAt: now,
+        updatedAt: now,
       });
     },
     [documentId, userId, userName],
   );
 
-  /** Resolve a comment thread */
   const resolveComment = useCallback(
-    async (commentId: string) => {
+    async (commentId: string): Promise<void> => {
       if (!isFirebaseConfigured() || !documentId) return;
       const db = getFirestoreDb();
       if (!db) return;
@@ -261,28 +292,27 @@ export function useRealtimeCollaboration({
     [documentId],
   );
 
-  /** Lock a section for editing (5-minute auto-expire) */
   const lockSection = useCallback(
-    async (sectionId: string) => {
+    async (sectionId: string): Promise<void> => {
       if (!isFirebaseConfigured() || !documentId) return;
       const db = getFirestoreDb();
       if (!db) return;
 
+      const now = Date.now();
       const lockRef = doc(db, 'documents', documentId, 'locks', sectionId);
       await setDoc(lockRef, {
         sectionId,
         lockedBy: userId,
         lockedByName: userName,
-        lockedAt: Date.now(),
-        expiresAt: Date.now() + 5 * 60 * 1000, // 5 minutes
+        lockedAt: now,
+        expiresAt: now + LOCK_DURATION_MS,
       });
     },
     [documentId, userId, userName],
   );
 
-  /** Release a section lock */
   const unlockSection = useCallback(
-    async (sectionId: string) => {
+    async (sectionId: string): Promise<void> => {
       if (!isFirebaseConfigured() || !documentId) return;
       const db = getFirestoreDb();
       if (!db) return;
@@ -293,29 +323,21 @@ export function useRealtimeCollaboration({
     [documentId],
   );
 
-  /** Check if a section is locked by someone else */
   const isSectionLocked = useCallback(
     (sectionId: string): SectionLock | null => {
-      const lock = sectionLocks.find(
+      return sectionLocks.find(
         (l) => l.sectionId === sectionId && l.lockedBy !== userId,
-      );
-      return lock || null;
+      ) ?? null;
     },
     [sectionLocks, userId],
   );
 
   return {
-    /** Other users' cursors and presence */
     collaborators,
-    /** Live comment threads */
     liveComments,
-    /** Active section locks */
     sectionLocks,
-    /** Whether Firestore connection is active */
     isConnected,
-    /** Whether Firebase is configured at all */
     isAvailable: isFirebaseConfigured(),
-    // Actions
     updateCursor,
     addComment,
     resolveComment,

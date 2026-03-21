@@ -16,16 +16,17 @@
  */
 
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, type Variants, type Transition } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ZEN LOADER
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface ZenLoaderProps {
-  size?: 'sm' | 'md' | 'lg';
-  message?: string;
-  fullScreen?: boolean;
+  readonly size?: 'sm' | 'md' | 'lg';
+  readonly message?: string;
+  readonly fullScreen?: boolean;
 }
 
 export const ZenLoader: React.FC<ZenLoaderProps> = ({
@@ -96,11 +97,11 @@ export const ZenLoader: React.FC<ZenLoaderProps> = ({
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface ZenSkeletonProps {
-  variant?: 'text' | 'circular' | 'rectangular' | 'card';
-  width?: string | number;
-  height?: string | number;
-  lines?: number;
-  className?: string;
+  readonly variant?: 'text' | 'circular' | 'rectangular' | 'card';
+  readonly width?: string | number;
+  readonly height?: string | number;
+  readonly lines?: number;
+  readonly className?: string;
 }
 
 export const ZenSkeleton: React.FC<ZenSkeletonProps> = ({
@@ -250,10 +251,10 @@ export const ZenSidebarSkeleton: React.FC = () => (
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface ZenFadeInProps {
-  children: React.ReactNode;
-  delay?: number;
-  duration?: number;
-  className?: string;
+  readonly children: React.ReactNode;
+  readonly delay?: number;
+  readonly duration?: number;
+  readonly className?: string;
 }
 
 export const ZenFadeIn: React.FC<ZenFadeInProps> = ({
@@ -277,12 +278,14 @@ export const ZenFadeIn: React.FC<ZenFadeInProps> = ({
 // SLIDE IN ANIMATION
 // ═══════════════════════════════════════════════════════════════════════════════
 
+type SlideDirection = 'up' | 'down' | 'left' | 'right';
+
 interface ZenSlideInProps {
-  children: React.ReactNode;
-  direction?: 'up' | 'down' | 'left' | 'right';
-  delay?: number;
-  distance?: number;
-  className?: string;
+  readonly children: React.ReactNode;
+  readonly direction?: SlideDirection;
+  readonly delay?: number;
+  readonly distance?: number;
+  readonly className?: string;
 }
 
 export const ZenSlideIn: React.FC<ZenSlideInProps> = ({
@@ -317,9 +320,9 @@ export const ZenSlideIn: React.FC<ZenSlideInProps> = ({
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface ZenStaggerProps {
-  children: React.ReactNode;
-  staggerDelay?: number;
-  className?: string;
+  readonly children: React.ReactNode;
+  readonly staggerDelay?: number;
+  readonly className?: string;
 }
 
 export const ZenStagger: React.FC<ZenStaggerProps> = ({
@@ -361,19 +364,19 @@ export const ZenStagger: React.FC<ZenStaggerProps> = ({
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface ZenPulseProps {
-  children: React.ReactNode;
-  active?: boolean;
-  color?: string;
-  className?: string;
+  readonly children: React.ReactNode;
+  readonly active?: boolean;
+  readonly color?: string;
+  readonly className?: string;
 }
 
 export const ZenPulse: React.FC<ZenPulseProps> = ({
   children,
   active = true,
   color = 'rgba(37, 99, 235, 0.4)',
-  className = '',
+  className,
 }) => (
-  <div className={`relative ${className}`}>
+  <div className={cn('relative', className)}>
     {children}
     {active && (
       <motion.div
@@ -398,13 +401,16 @@ export const ZenPulse: React.FC<ZenPulseProps> = ({
 // PROGRESS BAR
 // ═══════════════════════════════════════════════════════════════════════════════
 
+type ProgressSize = 'sm' | 'md' | 'lg';
+type ProgressColor = 'blue' | 'green' | 'amber' | 'red';
+
 interface ZenProgressProps {
-  value: number;
-  max?: number;
-  showLabel?: boolean;
-  size?: 'sm' | 'md' | 'lg';
-  color?: 'blue' | 'green' | 'amber' | 'red';
-  className?: string;
+  readonly value: number;
+  readonly max?: number;
+  readonly showLabel?: boolean;
+  readonly size?: ProgressSize;
+  readonly color?: ProgressColor;
+  readonly className?: string;
 }
 
 export const ZenProgress: React.FC<ZenProgressProps> = ({
@@ -452,8 +458,8 @@ export const ZenProgress: React.FC<ZenProgressProps> = ({
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface ZenPageTransitionProps {
-  children: React.ReactNode;
-  className?: string;
+  readonly children: React.ReactNode;
+  readonly className?: string;
 }
 
 export const ZenPageTransition: React.FC<ZenPageTransitionProps> = ({
@@ -475,17 +481,19 @@ export const ZenPageTransition: React.FC<ZenPageTransitionProps> = ({
 // MOTION PANEL — animated slide-in drawer for tool panels and side sheets
 // ═══════════════════════════════════════════════════════════════════════════════
 
+type PanelSide = 'left' | 'right';
+
 interface MotionPanelProps {
-  children: React.ReactNode;
-  isOpen: boolean;
-  onClose?: () => void;
+  readonly children: React.ReactNode;
+  readonly isOpen: boolean;
+  readonly onClose?: () => void;
   /** Which edge the panel slides from */
-  side?: 'left' | 'right';
-  /** Panel width (Tailwind class or inline style) */
-  width?: string;
+  readonly side?: PanelSide;
+  /** Panel width (Tailwind class) */
+  readonly width?: string;
   /** Show backdrop overlay */
-  backdrop?: boolean;
-  className?: string;
+  readonly backdrop?: boolean;
+  readonly className?: string;
 }
 
 export const MotionPanel: React.FC<MotionPanelProps> = ({
@@ -495,7 +503,7 @@ export const MotionPanel: React.FC<MotionPanelProps> = ({
   side = 'right',
   width = 'w-80',
   backdrop = true,
-  className = '',
+  className,
 }) => {
   const slideFrom = side === 'right' ? '100%' : '-100%';
 
@@ -511,6 +519,7 @@ export const MotionPanel: React.FC<MotionPanelProps> = ({
               transition={{ duration: 0.15 }}
               className="fixed inset-0 bg-black/20 z-40"
               onClick={onClose}
+              aria-hidden="true"
             />
           )}
           <motion.div
@@ -518,7 +527,12 @@ export const MotionPanel: React.FC<MotionPanelProps> = ({
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: slideFrom, opacity: 0.8 }}
             transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-            className={`fixed top-0 ${side}-0 h-full ${width} bg-white border-${side === 'right' ? 'l' : 'r'} border-zinc-200 shadow-xl z-50 overflow-y-auto ${className}`}
+            className={cn(
+              'fixed top-0 h-full bg-white shadow-xl z-50 overflow-y-auto border-zinc-200',
+              side === 'right' ? 'right-0 border-l' : 'left-0 border-r',
+              width,
+              className,
+            )}
           >
             {children}
           </motion.div>
@@ -533,17 +547,20 @@ export const MotionPanel: React.FC<MotionPanelProps> = ({
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface MotionModalProps {
-  children: React.ReactNode;
-  isOpen: boolean;
-  onClose?: () => void;
-  className?: string;
+  readonly children: React.ReactNode;
+  readonly isOpen: boolean;
+  readonly onClose?: () => void;
+  readonly className?: string;
+  /** Accessible label for the dialog */
+  readonly ariaLabel?: string;
 }
 
 export const MotionModal: React.FC<MotionModalProps> = ({
   children,
   isOpen,
   onClose,
-  className = '',
+  className,
+  ariaLabel,
 }) => (
   <AnimatePresence>
     {isOpen && (
@@ -555,15 +572,20 @@ export const MotionModal: React.FC<MotionModalProps> = ({
           transition={{ duration: 0.15 }}
           className="absolute inset-0 bg-black/40"
           onClick={onClose}
+          aria-hidden="true"
         />
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 8 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 8 }}
           transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-          className={`relative z-10 bg-white rounded-xl shadow-2xl border border-zinc-200 ${className}`}
+          className={cn(
+            'relative z-10 bg-white rounded-xl shadow-2xl border border-zinc-200',
+            className,
+          )}
           role="dialog"
           aria-modal="true"
+          aria-label={ariaLabel}
         >
           {children}
         </motion.div>
@@ -577,22 +599,22 @@ export const MotionModal: React.FC<MotionModalProps> = ({
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface MotionListProps {
-  children: React.ReactNode;
+  readonly children: React.ReactNode;
   /** Unique key to trigger re-animation (e.g., filter state) */
-  stateKey?: string;
-  /** Delay between each child */
-  staggerMs?: number;
-  className?: string;
+  readonly stateKey?: string;
+  /** Delay in ms between each child item reveal (default: 30) */
+  readonly staggerMs?: number;
+  readonly className?: string;
 }
 
-const listContainerVariants = {
+const listContainerVariants: Variants = {
   hidden: {},
   visible: (staggerMs: number) => ({
     transition: { staggerChildren: staggerMs / 1000 },
   }),
 };
 
-const listItemVariants = {
+const listItemVariants: Variants = {
   hidden: { opacity: 0, y: 6 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.15 } },
 };
@@ -601,7 +623,7 @@ export const MotionList: React.FC<MotionListProps> = ({
   children,
   stateKey,
   staggerMs = 30,
-  className = '',
+  className,
 }) => (
   <motion.div
     key={stateKey}
@@ -617,10 +639,15 @@ export const MotionList: React.FC<MotionListProps> = ({
   </motion.div>
 );
 
-/** Wrap individual items when you need more control */
-export const MotionListItem: React.FC<{ children: React.ReactNode; className?: string }> = ({
+interface MotionListItemProps {
+  readonly children: React.ReactNode;
+  readonly className?: string;
+}
+
+/** Wrap individual items when you need more control over staggered reveals */
+export const MotionListItem: React.FC<MotionListItemProps> = ({
   children,
-  className = '',
+  className,
 }) => (
   <motion.div variants={listItemVariants} className={className}>
     {children}
@@ -632,16 +659,19 @@ export const MotionListItem: React.FC<{ children: React.ReactNode; className?: s
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface MotionLayoutProps {
-  /** Must be a unique key representing the current view (e.g., layoutMode) */
-  layoutKey: string;
-  children: React.ReactNode;
-  className?: string;
+  /** Unique key representing the current view (e.g., layoutMode) — changes trigger transition */
+  readonly layoutKey: string;
+  readonly children: React.ReactNode;
+  readonly className?: string;
 }
+
+/** Apple-quality ease curve for layout transitions */
+const layoutTransition: Transition = { duration: 0.15, ease: [0.2, 0, 0, 1] };
 
 export const MotionLayout: React.FC<MotionLayoutProps> = ({
   layoutKey,
   children,
-  className = '',
+  className,
 }) => (
   <AnimatePresence mode="wait">
     <motion.div
@@ -649,7 +679,7 @@ export const MotionLayout: React.FC<MotionLayoutProps> = ({
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -6 }}
-      transition={{ duration: 0.15, ease: [0.2, 0, 0, 1] }}
+      transition={layoutTransition}
       className={className}
     >
       {children}
@@ -662,19 +692,19 @@ export const MotionLayout: React.FC<MotionLayoutProps> = ({
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface MotionShimmerProps {
-  /** Number of skeleton lines */
-  lines?: number;
+  /** Number of skeleton lines (default: 3) */
+  readonly lines?: number;
   /** Show a circular avatar placeholder */
-  avatar?: boolean;
-  className?: string;
+  readonly avatar?: boolean;
+  readonly className?: string;
 }
 
 export const MotionShimmer: React.FC<MotionShimmerProps> = ({
   lines = 3,
   avatar = false,
-  className = '',
+  className,
 }) => (
-  <div className={`space-y-3 ${className}`} role="status" aria-label="Loading content">
+  <div className={cn('space-y-3', className)} role="status" aria-label="Loading content">
     {avatar && (
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-full bg-zinc-200 animate-pulse" />
@@ -701,15 +731,15 @@ export const MotionShimmer: React.FC<MotionShimmerProps> = ({
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface MotionCollapseProps {
-  children: React.ReactNode;
-  isOpen: boolean;
-  className?: string;
+  readonly children: React.ReactNode;
+  readonly isOpen: boolean;
+  readonly className?: string;
 }
 
 export const MotionCollapse: React.FC<MotionCollapseProps> = ({
   children,
   isOpen,
-  className = '',
+  className,
 }) => (
   <AnimatePresence initial={false}>
     {isOpen && (
@@ -718,7 +748,7 @@ export const MotionCollapse: React.FC<MotionCollapseProps> = ({
         animate={{ height: 'auto', opacity: 1 }}
         exit={{ height: 0, opacity: 0 }}
         transition={{ duration: 0.2, ease: [0.2, 0, 0, 1] }}
-        className={`overflow-hidden ${className}`}
+        className={cn('overflow-hidden', className)}
       >
         {children}
       </motion.div>
@@ -731,10 +761,10 @@ export const MotionCollapse: React.FC<MotionCollapseProps> = ({
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface MotionNumberProps {
-  value: number;
-  /** Number of decimal places */
-  decimals?: number;
-  className?: string;
+  readonly value: number;
+  /** Number of decimal places (default: 0) */
+  readonly decimals?: number;
+  readonly className?: string;
 }
 
 export const MotionNumber: React.FC<MotionNumberProps> = ({

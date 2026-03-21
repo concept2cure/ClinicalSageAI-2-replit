@@ -16,29 +16,44 @@ import { initializeApp, type FirebaseApp } from 'firebase/app';
 import { getFirestore, type Firestore } from 'firebase/firestore';
 import { getAuth, type Auth } from 'firebase/auth';
 
-// ── Firebase config from environment ────────────────────────────────────────
+// ── Config shape ──────────────────────────────────────────────────────────────
 
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
+interface FirebaseConfig {
+  readonly apiKey: string;
+  readonly authDomain: string;
+  readonly projectId: string;
+  readonly storageBucket: string;
+  readonly messagingSenderId: string;
+  readonly appId: string;
+}
+
+const env = (import.meta as unknown as { env: Record<string, string | undefined> }).env;
+
+const firebaseConfig: FirebaseConfig = {
+  apiKey: env.VITE_FIREBASE_API_KEY ?? '',
+  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN ?? '',
+  projectId: env.VITE_FIREBASE_PROJECT_ID ?? '',
+  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET ?? '',
+  messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID ?? '',
+  appId: env.VITE_FIREBASE_APP_ID ?? '',
 };
 
-// ── Lazy initialization ─────────────────────────────────────────────────────
+// ── Singleton instances ───────────────────────────────────────────────────────
 
 let app: FirebaseApp | null = null;
 let db: Firestore | null = null;
 let auth: Auth | null = null;
 
+// ── Type guard for configured state ───────────────────────────────────────────
+
 /** Whether Firebase is configured and available */
 export function isFirebaseConfigured(): boolean {
-  return !!(firebaseConfig.apiKey && firebaseConfig.projectId);
+  return firebaseConfig.apiKey !== '' && firebaseConfig.projectId !== '';
 }
 
-/** Get Firebase app instance (lazily initialized) */
+// ── Lazy-initialized getters ──────────────────────────────────────────────────
+
+/** Get Firebase app instance (lazily initialized). Returns `null` when unconfigured. */
 export function getFirebaseApp(): FirebaseApp | null {
   if (!isFirebaseConfigured()) return null;
   if (!app) {
@@ -47,7 +62,7 @@ export function getFirebaseApp(): FirebaseApp | null {
   return app;
 }
 
-/** Get Firestore instance */
+/** Get Firestore instance. Returns `null` when unconfigured. */
 export function getFirestoreDb(): Firestore | null {
   const firebaseApp = getFirebaseApp();
   if (!firebaseApp) return null;
@@ -57,7 +72,7 @@ export function getFirestoreDb(): Firestore | null {
   return db;
 }
 
-/** Get Firebase Auth instance */
+/** Get Firebase Auth instance. Returns `null` when unconfigured. */
 export function getFirebaseAuth(): Auth | null {
   const firebaseApp = getFirebaseApp();
   if (!firebaseApp) return null;
