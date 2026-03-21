@@ -10,7 +10,7 @@ const Layout = ({ children, hideNavigation = false }) => {
   return (
     <div className="min-h-screen bg-zinc-50">
       {!hideNavigation && (
-        <nav className="bg-white/80 backdrop-blur border-b border-zinc-100">
+        <nav className="bg-white/80 backdrop-blur border-b border-zinc-200">
           {/* Navigation would go here if not hidden */}
         </nav>
       )}

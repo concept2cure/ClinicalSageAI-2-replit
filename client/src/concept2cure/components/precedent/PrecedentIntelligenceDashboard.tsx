@@ -109,7 +109,7 @@ function ScoreBar({ value, max = 1, label }: { value: number; max?: number; labe
       {label && <span className="text-xs text-zinc-500 w-28 flex-shrink-0">{label}</span>}
       <div className="flex-1 h-2 bg-zinc-100 rounded-full overflow-hidden">
         <div
-          className={cn('h-full rounded-full transition-all', color)}
+          className={cn('h-full rounded-full transition-all duration-150', color)}
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -349,7 +349,7 @@ export function PrecedentIntelligenceDashboard({
                   </div>
                 ) : !searchResults?.length ? (
                   <div className="text-center py-8">
-                    <Search className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+                    <Search className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
                     <p className="text-sm text-zinc-500">
                       No precedents found. Try broadening your search criteria.
                     </p>
@@ -377,7 +377,7 @@ export function PrecedentIntelligenceDashboard({
                                 {p.deviceName || p.clearanceNumber || 'Unnamed'}
                               </span>
                               {p.clearanceNumber && (
-                                <Badge variant="outline" className="text-[10px] flex-shrink-0">
+                                <Badge variant="outline" className="text-xs flex-shrink-0">
                                   {p.clearanceNumber}
                                 </Badge>
                               )}
@@ -397,7 +397,7 @@ export function PrecedentIntelligenceDashboard({
                               <Badge
                                 variant="secondary"
                                 className={cn(
-                                  'text-[10px]',
+                                  'text-xs',
                                   p.decisionOutcome === 'cleared' &&
                                     'bg-emerald-50 text-emerald-700',
                                   p.decisionOutcome === 'approved' &&
@@ -409,11 +409,11 @@ export function PrecedentIntelligenceDashboard({
                               </Badge>
                             )}
                             {p.confidenceScore != null && (
-                              <span className="text-[10px] text-zinc-400">
+                              <span className="text-xs text-zinc-400">
                                 {Math.round(p.confidenceScore * 100)}% conf
                               </span>
                             )}
-                            <ChevronRight className="w-3 h-3 text-zinc-300 mt-1" />
+                            <ChevronRight className="w-3 h-3 text-zinc-400 mt-1" />
                           </div>
                         </div>
                       </button>
@@ -430,7 +430,7 @@ export function PrecedentIntelligenceDashboard({
           {!selectedPrecedent ? (
             <div className="border border-border/40 rounded-sm bg-background">
               <div className="px-3 py-2 py-12 text-center">
-                <GitCompare className="w-10 h-10 text-zinc-300 mx-auto mb-3" />
+                <GitCompare className="w-10 h-10 text-zinc-400 mx-auto mb-3" />
                 <h3 className="text-sm font-medium text-zinc-700 mb-1">
                   Select a Precedent to Compare
                 </h3>
@@ -582,7 +582,7 @@ export function PrecedentIntelligenceDashboard({
                                 {d.dimension}
                               </span>
                               <span className="text-zinc-500 truncate flex-1">{d.userValue}</span>
-                              <Badge variant="outline" className="text-[9px]">
+                              <Badge variant="outline" className="text-xs">
                                 {d.impact}
                               </Badge>
                             </div>
@@ -610,7 +610,7 @@ export function PrecedentIntelligenceDashboard({
                                 <Badge
                                   variant="outline"
                                   className={cn(
-                                    'text-[9px] ml-auto',
+                                    'text-xs ml-auto',
                                     d.impact === 'high' && 'border-red-200 text-red-600'
                                   )}
                                 >
@@ -732,10 +732,10 @@ export function PrecedentIntelligenceDashboard({
                         >
                           <AlertTriangle className="w-3.5 h-3.5 text-red-500 flex-shrink-0 mt-0.5" />
                           <div>
-                            <span className="font-medium text-zinc-800">{f.factor}</span>
+                            <span className="font-medium text-zinc-900">{f.factor}</span>
                             <p className="text-zinc-500 mt-0.5">{f.detail}</p>
                           </div>
-                          <Badge variant="outline" className="ml-auto flex-shrink-0 text-[9px]">
+                          <Badge variant="outline" className="ml-auto flex-shrink-0 text-xs">
                             {f.severity}
                           </Badge>
                         </div>
@@ -879,21 +879,21 @@ export function PrecedentIntelligenceDashboard({
                       {strategyResult.supportingPrecedents.map((p, i) => (
                         <div
                           key={i}
-                          className="flex items-center gap-2 p-2 rounded text-xs border border-zinc-100 hover:bg-zinc-50"
+                          className="flex items-center gap-2 p-2 rounded text-xs border border-zinc-200 hover:bg-zinc-50"
                         >
                           <FileText className="w-3 h-3 text-zinc-400 flex-shrink-0" />
                           <span className="font-medium text-zinc-700">
                             {p.deviceName || p.clearanceNumber}
                           </span>
                           {p.clearanceNumber && (
-                            <Badge variant="outline" className="text-[9px]">
+                            <Badge variant="outline" className="text-xs">
                               {p.clearanceNumber}
                             </Badge>
                           )}
                           {p.decisionOutcome && (
                             <Badge
                               variant="secondary"
-                              className="text-[9px] ml-auto bg-emerald-50 text-emerald-700"
+                              className="text-xs ml-auto bg-emerald-50 text-emerald-700"
                             >
                               {p.decisionOutcome}
                             </Badge>
@@ -916,10 +916,10 @@ export function PrecedentIntelligenceDashboard({
                       {strategyResult.alternativeStrategies.map((alt, i) => (
                         <div
                           key={i}
-                          className="p-3 rounded-lg border border-zinc-100 bg-zinc-50/50"
+                          className="p-3 rounded-lg border border-zinc-200 bg-zinc-50/50"
                         >
                           <div className="flex items-center justify-between mb-1">
-                            <span className="text-sm font-medium text-zinc-800">
+                            <span className="text-sm font-medium text-zinc-900">
                               {alt.strategy}
                             </span>
                             <ScoreBar value={alt.confidence} label="" />

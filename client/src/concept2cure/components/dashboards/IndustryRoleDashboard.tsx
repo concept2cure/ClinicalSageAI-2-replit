@@ -189,7 +189,7 @@ const MetricCard: React.FC<{
       </div>
       <div className="flex items-baseline gap-2">
         <span className={cn(
-          'text-2xl font-bold',
+          'text-2xl font-semibold',
           metric.status === 'good' && 'text-emerald-600',
           metric.status === 'warning' && 'text-amber-600',
           metric.status === 'critical' && 'text-red-600',
@@ -224,7 +224,7 @@ const ActionItemCard: React.FC<{
     <button
       onClick={onClick}
       className={cn(
-        'w-full p-4 rounded-xl border text-left transition-all',
+        'w-full p-4 rounded-xl border text-left transition-all duration-150',
         'hover:shadow-md hover:border-blue-200',
         item.priority === 'critical' && 'border-red-200 bg-red-50',
         item.priority === 'high' && !isOverdue && 'border-amber-200 bg-amber-50',
@@ -291,7 +291,7 @@ const PDUFACard: React.FC<{
     <button
       onClick={onClick}
       className={cn(
-        'w-full p-4 rounded-xl border text-left transition-all',
+        'w-full p-4 rounded-xl border text-left transition-all duration-150',
         'hover:shadow-md',
         isCritical && 'border-red-200 bg-red-50',
         isUrgent && !isCritical && 'border-amber-200 bg-amber-50',
@@ -304,7 +304,7 @@ const PDUFACard: React.FC<{
           <p className="text-sm text-zinc-500">{pdufa.submissionType}</p>
         </div>
         <span className={cn(
-          'text-lg font-bold',
+          'text-lg font-semibold',
           isCritical && 'text-red-600',
           isUrgent && !isCritical && 'text-amber-600',
           !isUrgent && 'text-blue-600'
@@ -338,7 +338,7 @@ const CommitmentCard: React.FC<{
     <button
       onClick={onClick}
       className={cn(
-        'w-full p-3 rounded-lg border text-left transition-all',
+        'w-full p-3 rounded-lg border text-left transition-all duration-150',
         'hover:shadow-sm',
         commitment.status === 'overdue' && 'border-red-200 bg-red-50',
         commitment.status === 'at_risk' && 'border-amber-200 bg-amber-50'
@@ -416,7 +416,7 @@ const CROProjectManagerView: React.FC<{
               <button
                 key={d.id}
                 onClick={() => onDeliverableClick?.(d.id)}
-                className="w-full p-3 bg-white rounded-lg border border-zinc-200 text-left hover:border-blue-300 transition-colors"
+                className="w-full p-3 bg-white rounded-lg border border-zinc-200 text-left hover:border-blue-300 transition-colors duration-150"
               >
                 <p className="text-sm font-medium text-zinc-900 line-clamp-2">{d.name}</p>
                 <div className="mt-2 flex items-center justify-between text-xs text-zinc-500">
@@ -439,7 +439,7 @@ const CROProjectManagerView: React.FC<{
               <button
                 key={d.id}
                 onClick={() => onDeliverableClick?.(d.id)}
-                className="w-full p-3 bg-white rounded-lg border border-amber-200 text-left hover:border-amber-300 transition-colors"
+                className="w-full p-3 bg-white rounded-lg border border-amber-200 text-left hover:border-amber-300 transition-colors duration-150"
               >
                 <p className="text-sm font-medium text-zinc-900 line-clamp-2">{d.name}</p>
                 <div className="mt-2 flex items-center justify-between text-xs text-zinc-500">
@@ -462,7 +462,7 @@ const CROProjectManagerView: React.FC<{
               <button
                 key={d.id}
                 onClick={() => onDeliverableClick?.(d.id)}
-                className="w-full p-3 bg-white rounded-lg border border-violet-200 text-left hover:border-violet-300 transition-colors"
+                className="w-full p-3 bg-white rounded-lg border border-blue-200 text-left hover:border-blue-200 transition-colors duration-150"
               >
                 <p className="text-sm font-medium text-zinc-900 line-clamp-2">{d.name}</p>
                 <div className="mt-2 flex items-center justify-between text-xs text-zinc-500">
@@ -485,7 +485,7 @@ const CROProjectManagerView: React.FC<{
               <button
                 key={d.id}
                 onClick={() => onDeliverableClick?.(d.id)}
-                className="w-full p-3 bg-white rounded-lg border border-zinc-200 text-left hover:border-zinc-300 transition-colors"
+                className="w-full p-3 bg-white rounded-lg border border-zinc-200 text-left hover:border-zinc-300 transition-colors duration-150"
               >
                 <p className="text-sm font-medium text-zinc-900 line-clamp-2">{d.name}</p>
                 <div className="mt-2 text-xs text-zinc-500">
@@ -528,7 +528,7 @@ export const IndustryRoleDashboard: React.FC<RoleBasedDashboardProps> = ({
     return (
       <div className={cn('p-6', className)}>
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-zinc-900">
+          <h1 className="text-2xl font-semibold text-zinc-900">
             {config.greeting}
           </h1>
           <p className="text-zinc-500">
@@ -549,7 +549,7 @@ export const IndustryRoleDashboard: React.FC<RoleBasedDashboardProps> = ({
       <div className={cn('p-6 space-y-6', className)}>
         {/* Header */}
         <div className="mb-2">
-          <h1 className="text-2xl font-bold text-zinc-900">{config.greeting}</h1>
+          <h1 className="text-2xl font-semibold text-zinc-900">{config.greeting}</h1>
           <p className="text-zinc-500">Welcome back, {firstName}</p>
         </div>
         
@@ -622,7 +622,7 @@ export const IndustryRoleDashboard: React.FC<RoleBasedDashboardProps> = ({
     <div className={cn('p-6 space-y-6', className)}>
       {/* Header */}
       <div className="mb-2">
-        <h1 className="text-2xl font-bold text-zinc-900">{config.greeting}</h1>
+        <h1 className="text-2xl font-semibold text-zinc-900">{config.greeting}</h1>
         <p className="text-zinc-500">Welcome back, {firstName}</p>
       </div>
       

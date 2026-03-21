@@ -1030,7 +1030,7 @@ export const MfaSetupWizard: React.FC<{
                     key={method}
                     onClick={() => handleSelectMethod(method)}
                     disabled={state.isLoading}
-                    className="w-full flex items-start gap-4 p-4 rounded-lg border hover:border-primary hover:bg-muted/50 text-left transition-colors disabled:opacity-50"
+                    className="w-full flex items-start gap-4 p-4 rounded-lg border hover:border-primary hover:bg-muted/50 text-left transition-colors disabled:opacity-60"
                   >
                     <div
                       className={`p-3 rounded-lg ${SECURITY_LEVEL_COLORS[details.securityLevel]}`}

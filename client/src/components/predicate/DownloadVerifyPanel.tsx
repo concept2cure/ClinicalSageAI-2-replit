@@ -196,11 +196,11 @@ function LockVersionBadge({ lockHash }: { lockHash?: string }) {
           <div className="text-xs space-y-1">
             <p className="font-semibold">Risk Code Lock Version</p>
             <p>
-              Expected: <code className="text-[10px]">{expected.slice(0, 12)}…</code>
+              Expected: <code className="text-[11px]">{expected.slice(0, 12)}…</code>
             </p>
             {lockHash && (
               <p>
-                Packet: <code className="text-[10px]">{lockHash.slice(0, 12)}…</code>
+                Packet: <code className="text-[11px]">{lockHash.slice(0, 12)}…</code>
               </p>
             )}
             {matches && <p className="text-green-600">Risk codes are in sync.</p>}
@@ -371,7 +371,7 @@ export function DownloadVerifyPanel({
                 <FileText className="h-6 w-6 text-red-600" />
               )}
               <span className="text-sm font-medium">Generate PDF</span>
-              <span className="text-[10px] text-muted-foreground">Branded defense report</span>
+              <span className="text-[11px] text-muted-foreground">Branded defense report</span>
             </Button>
 
             <Button
@@ -382,7 +382,7 @@ export function DownloadVerifyPanel({
             >
               <FileJson className="h-6 w-6 text-blue-600" />
               <span className="text-sm font-medium">Export JSON</span>
-              <span className="text-[10px] text-muted-foreground">Full packet + metadata</span>
+              <span className="text-[11px] text-muted-foreground">Full packet + metadata</span>
             </Button>
 
             <Button
@@ -397,7 +397,7 @@ export function DownloadVerifyPanel({
                 <FileSpreadsheet className="h-6 w-6 text-green-600" />
               )}
               <span className="text-sm font-medium">Export CSV</span>
-              <span className="text-[10px] text-muted-foreground">Evidence tasks spreadsheet</span>
+              <span className="text-[11px] text-muted-foreground">Evidence tasks spreadsheet</span>
             </Button>
 
             <Button
@@ -412,7 +412,7 @@ export function DownloadVerifyPanel({
                 <FolderArchive className="h-6 w-6 text-purple-600" />
               )}
               <span className="text-sm font-medium">Download ZIP</span>
-              <span className="text-[10px] text-muted-foreground">Complete submission bundle</span>
+              <span className="text-[11px] text-muted-foreground">Complete submission bundle</span>
             </Button>
           </div>
         </CardContent>

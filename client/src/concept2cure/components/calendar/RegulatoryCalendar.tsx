@@ -218,7 +218,7 @@ const EventBadge: React.FC<{
     <button
       onClick={onClick}
       className={cn(
-        'w-full text-left p-2 rounded-lg border transition-all',
+        'w-full text-left p-2 rounded-lg border transition-all duration-150',
         config.bgColor,
         config.borderColor,
         'hover:shadow-md'
@@ -301,7 +301,7 @@ const UpcomingEventsSidebar: React.FC<{
                 <div className={cn(
                   'text-xs font-medium mb-2 px-2 py-1 rounded',
                   isToday(date) && 'bg-blue-100 text-blue-700',
-                  isSelectedDay && !isToday(date) && 'bg-violet-100 text-violet-700',
+                  isSelectedDay && !isToday(date) && 'bg-blue-100 text-blue-700',
                   !isToday(date) && !isSelectedDay && 'text-zinc-500'
                 )}>
                   {isToday(date) ? 'Today' : date.toLocaleDateString(undefined, {
@@ -422,20 +422,20 @@ export const RegulatoryCalendar: React.FC<RegulatoryCalendarProps> = ({
               <div className="flex items-center gap-1">
                 <button
                   onClick={prevMonth}
-                  className="p-1.5 rounded-lg hover:bg-zinc-100 transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-zinc-100 transition-colors duration-150"
                 >
                   <ChevronLeft className="w-5 h-5 text-zinc-600" />
                 </button>
                 <button
                   onClick={nextMonth}
-                  className="p-1.5 rounded-lg hover:bg-zinc-100 transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-zinc-100 transition-colors duration-150"
                 >
                   <ChevronRight className="w-5 h-5 text-zinc-600" />
                 </button>
               </div>
               <button
                 onClick={goToToday}
-                className="px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                className="px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-150"
               >
                 Today
               </button>
@@ -451,7 +451,7 @@ export const RegulatoryCalendar: React.FC<RegulatoryCalendarProps> = ({
                       key={type}
                       onClick={() => toggleFilter(type as EventType)}
                       className={cn(
-                        'px-2 py-1 text-xs rounded-full border transition-colors',
+                        'px-2 py-1 text-xs rounded-full border transition-colors duration-150',
                         isActive ? cn(config.bgColor, config.borderColor, config.color) : 'bg-zinc-100 border-zinc-200 text-zinc-400'
                       )}
                     >
@@ -467,7 +467,7 @@ export const RegulatoryCalendar: React.FC<RegulatoryCalendarProps> = ({
               {onAddEvent && (
                 <button
                   onClick={() => onAddEvent(selectedDate)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors duration-150"
                 >
                   <Plus className="w-4 h-4" />
                   Add Event
@@ -512,16 +512,16 @@ export const RegulatoryCalendar: React.FC<RegulatoryCalendarProps> = ({
                     onDateClick?.(date);
                   }}
                   className={cn(
-                    'min-h-[100px] p-1 text-left rounded-lg border transition-colors',
+                    'min-h-[100px] p-1 text-left rounded-lg border transition-colors duration-150',
                     isSelected && 'border-blue-500 bg-blue-50',
-                    !isSelected && 'border-zinc-100 hover:border-zinc-200 hover:bg-zinc-50',
+                    !isSelected && 'border-zinc-200 hover:border-zinc-200 hover:bg-zinc-50',
                     hasPdufa && !isSelected && 'border-red-200 bg-red-50/50'
                   )}
                 >
                   <div className="flex items-center justify-between mb-1">
                     <span className={cn(
                       'w-6 h-6 flex items-center justify-center text-sm rounded-full',
-                      isTodayDate && 'bg-blue-600 text-white font-bold',
+                      isTodayDate && 'bg-blue-600 text-white font-semibold',
                       !isTodayDate && isSelected && 'text-blue-700 font-medium',
                       !isTodayDate && !isSelected && 'text-zinc-700'
                     )}>

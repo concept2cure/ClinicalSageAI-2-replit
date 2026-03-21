@@ -723,10 +723,10 @@ export function SEMatrixV2Panel({
                                 {entry.severity}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-[10px] font-mono text-muted-foreground">
+                            <TableCell className="text-[11px] font-mono text-muted-foreground">
                               {entry.before_hash}…
                             </TableCell>
-                            <TableCell className="text-[10px] font-mono text-muted-foreground">
+                            <TableCell className="text-[11px] font-mono text-muted-foreground">
                               {entry.after_hash}…
                             </TableCell>
                           </TableRow>

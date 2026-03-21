@@ -130,17 +130,17 @@ export function RegulatoryStatusCard({
   return (
     <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-zinc-100 bg-gradient-to-r from-indigo-50/60 to-violet-50/60">
+      <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-zinc-200 bg-zinc-50">
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-          <ShieldCheck className="w-4 h-4 text-indigo-600 shrink-0" />
-          <span className="text-xs sm:text-sm font-semibold text-zinc-800 truncate">
+          <ShieldCheck className="w-4 h-4 text-blue-600 shrink-0" />
+          <span className="text-xs sm:text-sm font-semibold text-zinc-900 truncate">
             Regulatory Status
           </span>
         </div>
         {onOpenIntelligence && (
           <button
             onClick={onOpenIntelligence}
-            className="flex items-center gap-0.5 text-[11px] text-indigo-600 hover:text-indigo-700 font-medium"
+            className="flex items-center gap-0.5 text-xs text-blue-600 hover:text-blue-700 font-medium"
           >
             Details
             <ChevronRight className="w-3 h-3" />
@@ -158,12 +158,12 @@ export function RegulatoryStatusCard({
           <div className="p-3">
             <div className="flex items-center gap-1.5 mb-1.5">
               <Target className="w-3.5 h-3.5 text-violet-500" />
-              <span className="text-[10px] text-zinc-500 font-medium">Readiness</span>
+              <span className="text-xs text-zinc-500 font-medium">Readiness</span>
             </div>
-            <div className="text-2xl font-bold text-zinc-800">{data.submissionReadiness}%</div>
+            <div className="text-2xl font-semibold text-zinc-900">{data.submissionReadiness}%</div>
             <div className="h-1.5 bg-zinc-100 rounded-full mt-1.5 overflow-hidden">
               <div
-                className="h-full rounded-full bg-violet-500 transition-all"
+                className="h-full rounded-full bg-violet-500 transition-all duration-150"
                 style={{ width: `${data.submissionReadiness}%` }}
               />
             </div>
@@ -172,22 +172,22 @@ export function RegulatoryStatusCard({
           {/* Precedents Found */}
           <div className="p-3">
             <div className="flex items-center gap-1.5 mb-1.5">
-              <FileSearch className="w-3.5 h-3.5 text-indigo-500" />
-              <span className="text-[10px] text-zinc-500 font-medium">Precedents</span>
+              <FileSearch className="w-3.5 h-3.5 text-blue-500" />
+              <span className="text-xs text-zinc-500 font-medium">Precedents</span>
             </div>
-            <div className="text-2xl font-bold text-zinc-800">{data.precedentsFound}</div>
-            <span className="text-[10px] text-zinc-400">matching records</span>
+            <div className="text-2xl font-semibold text-zinc-900">{data.precedentsFound}</div>
+            <span className="text-xs text-zinc-400">matching records</span>
           </div>
 
           {/* Risk Score */}
           <div className="p-3">
             <div className="flex items-center gap-1.5 mb-1.5">
               <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
-              <span className="text-[10px] text-zinc-500 font-medium">Risk Score</span>
+              <span className="text-xs text-zinc-500 font-medium">Risk Score</span>
             </div>
-            <div className="text-2xl font-bold text-zinc-800">{data.riskScore}</div>
+            <div className="text-2xl font-semibold text-zinc-900">{data.riskScore}</div>
             <span
-              className={`text-[10px] font-medium ${
+              className={`text-xs font-medium ${
                 data.riskScore < 30
                   ? 'text-emerald-600'
                   : data.riskScore < 60
@@ -203,19 +203,19 @@ export function RegulatoryStatusCard({
           <div className="p-3">
             <div className="flex items-center gap-1.5 mb-1.5">
               <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
-              <span className="text-[10px] text-zinc-500 font-medium">Approval Prob.</span>
+              <span className="text-xs text-zinc-500 font-medium">Approval Prob.</span>
             </div>
-            <div className="text-2xl font-bold text-zinc-800">{data.approvalProbability}%</div>
+            <div className="text-2xl font-semibold text-zinc-900">{data.approvalProbability}%</div>
             <div className="h-1.5 bg-zinc-100 rounded-full mt-1.5 overflow-hidden">
               <div
-                className="h-full rounded-full bg-emerald-500 transition-all"
+                className="h-full rounded-full bg-emerald-500 transition-all duration-150"
                 style={{ width: `${data.approvalProbability}%` }}
               />
             </div>
           </div>
         </div>
       ) : (
-        <div className="p-4 text-center text-[11px] text-zinc-400">
+        <div className="p-4 text-center text-xs text-zinc-400">
           No data available. Configure submission type to see status.
         </div>
       )}

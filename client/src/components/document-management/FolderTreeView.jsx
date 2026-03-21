@@ -295,7 +295,7 @@ function FolderNode({
           {name}
         </span>
         {showFileCounts && (
-          <span className={`ml-2 ${compactMode ? 'text-[10px]' : 'text-xs'} text-gray-500`}>
+          <span className={`ml-2 ${compactMode ? 'text-[11px]' : 'text-xs'} text-gray-500`}>
             ({folderCount > 0 ? `${folderCount} folder${folderCount !== 1 ? 's' : ''}, ` : ''}
             {fileCount} file{fileCount !== 1 ? 's' : ''})
           </span>
@@ -329,7 +329,7 @@ function FolderNode({
 
                     {showStatusBadges && file.status && (
                       <span
-                        className={`ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium ${
+                        className={`ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-[11px] font-medium ${
                           file.status === 'Final'
                             ? 'bg-green-100 text-green-800'
                             : file.status === 'Draft'

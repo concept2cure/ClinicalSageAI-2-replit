@@ -6,7 +6,7 @@ export default function Navigation() {
   const [location] = useLocation();
 
   return (
-    <nav className="bg-white/80 backdrop-blur border-b border-zinc-100">
+    <nav className="bg-white/80 backdrop-blur border-b border-zinc-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-14">
           <div className="flex items-center gap-6">

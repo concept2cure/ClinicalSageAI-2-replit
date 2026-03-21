@@ -327,7 +327,7 @@ export const TemplateLibraryInline: React.FC<TemplateLibraryInlineProps> = ({
               <button
                 key={t.id}
                 onClick={() => handleUse(t)}
-                className="group text-left p-4 rounded-lg border border-zinc-100 hover:border-zinc-300 bg-white transition-all"
+                className="group text-left p-4 rounded-lg border border-zinc-200 hover:border-zinc-300 bg-white transition-all duration-150"
               >
                 <div className="flex items-start gap-3">
                   <div className={cn('p-1.5 rounded-md flex-shrink-0', categoryColors[t.category])}>
@@ -342,22 +342,22 @@ export const TemplateLibraryInline: React.FC<TemplateLibraryInlineProps> = ({
                     </div>
                     <div className="flex items-center gap-2 mt-2">
                       {t.ctdSection && (
-                        <Badge variant="outline" className="text-[10px] px-1 py-0 border-blue-200 text-blue-500">
+                        <Badge variant="outline" className="text-xs px-1 py-0 border-blue-200 text-blue-500">
                           {t.ctdSection}
                         </Badge>
                       )}
                       {t.submissionTypes.slice(0, 3).map((st) => (
-                        <Badge key={st} variant="outline" className="text-[10px] px-1 py-0 border-zinc-200 text-zinc-400">
+                        <Badge key={st} variant="outline" className="text-xs px-1 py-0 border-zinc-200 text-zinc-400">
                           {st}
                         </Badge>
                       ))}
-                      <span className="text-[10px] text-zinc-300 ml-auto flex items-center gap-0.5">
+                      <span className="text-xs text-zinc-400 ml-auto flex items-center gap-0.5">
                         <Download className="h-2.5 w-2.5" />
                         {t.usageCount.toLocaleString()}
                       </span>
                     </div>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-zinc-300 group-hover:text-zinc-500 flex-shrink-0 mt-1 transition-colors" />
+                  <ArrowRight className="h-4 w-4 text-zinc-400 group-hover:text-zinc-500 flex-shrink-0 mt-1 transition-colors duration-150" />
                 </div>
               </button>
             ))}
@@ -376,7 +376,7 @@ export const TemplateLibraryInline: React.FC<TemplateLibraryInlineProps> = ({
               <button
                 key={t.id}
                 onClick={() => handleUse(t)}
-                className="group text-left p-4 rounded-lg border border-zinc-100 hover:border-blue-200 bg-white transition-all"
+                className="group text-left p-4 rounded-lg border border-zinc-200 hover:border-blue-200 bg-white transition-all duration-150"
               >
                 <div className="flex items-start gap-3">
                   <div className={cn('p-1.5 rounded-md flex-shrink-0', categoryColors[t.category])}>
@@ -390,7 +390,7 @@ export const TemplateLibraryInline: React.FC<TemplateLibraryInlineProps> = ({
                       {t.description}
                     </div>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-zinc-300 group-hover:text-blue-500 flex-shrink-0 mt-1 transition-colors" />
+                  <ArrowRight className="h-4 w-4 text-zinc-400 group-hover:text-blue-500 flex-shrink-0 mt-1 transition-colors duration-150" />
                 </div>
               </button>
             ))}

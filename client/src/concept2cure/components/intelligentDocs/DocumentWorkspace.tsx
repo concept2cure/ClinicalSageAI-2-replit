@@ -135,7 +135,7 @@ const SourceSuggestionCard: React.FC<{
       case 'predicate_device': return <Target className="w-4 h-4 text-blue-500" />;
       case 'literature': return <BookOpen className="w-4 h-4 text-green-500" />;
       case 'test_report': return <FileText className="w-4 h-4 text-orange-500" />;
-      case 'regulatory_document': return <Shield className="w-4 h-4 text-indigo-500" />;
+      case 'regulatory_document': return <Shield className="w-4 h-4 text-blue-500" />;
       default: return <Database className="w-4 h-4 text-zinc-500" />;
     }
   };
@@ -155,14 +155,14 @@ const SourceSuggestionCard: React.FC<{
   };
   
   return (
-    <div className="p-3 bg-white rounded-lg border border-zinc-200 hover:border-blue-300 transition-colors">
+    <div className="p-3 bg-white rounded-lg border border-zinc-200 hover:border-blue-300 transition-colors duration-150">
       <div className="flex items-start gap-3">
         <div className="p-2 bg-zinc-100 rounded-lg">
           {getSourceIcon(source.sourceType)}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h4 className="font-medium text-zinc-800 truncate">
+            <h4 className="font-medium text-zinc-900 truncate">
               {source.title}
             </h4>
             <span className="flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs">
@@ -178,10 +178,10 @@ const SourceSuggestionCard: React.FC<{
         </div>
       </div>
       
-      <div className="flex items-center gap-2 mt-3 pt-3 border-t border-zinc-100">
+      <div className="flex items-center gap-2 mt-3 pt-3 border-t border-zinc-200">
         <button
           onClick={onLink}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors duration-150"
           data-testid={`button-link-source-${source.id}`}
         >
           <Link2 className="w-3.5 h-3.5" />
@@ -189,7 +189,7 @@ const SourceSuggestionCard: React.FC<{
         </button>
         <button
           onClick={onPreview}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-zinc-600 hover:bg-zinc-100 rounded-md text-sm transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-zinc-600 hover:bg-zinc-100 rounded-md text-sm transition-colors duration-150"
           data-testid={`button-preview-source-${source.id}`}
         >
           <ExternalLink className="w-3.5 h-3.5" />
@@ -283,7 +283,7 @@ const CommandCenterPanel: React.FC<{
 
   return (
     <div className="space-y-4">
-      <div className={`rounded-2xl border border-zinc-200/70 p-4 shadow-sm ${statusMap[complianceStatus].bg}`}>
+      <div className={`rounded-xl border border-zinc-200/70 p-4 shadow-sm ${statusMap[complianceStatus].bg}`}>
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs uppercase tracking-wide text-zinc-500">Command Center</p>
@@ -302,7 +302,7 @@ const CommandCenterPanel: React.FC<{
             <span>{complianceScore}%</span>
           </div>
           <div className="mt-1 h-2 rounded-full bg-white/70">
-            <div className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500" style={{ width: `${complianceScore}%` }} />
+            <div className="h-2 rounded-full bg-blue-500" style={{ width: `${complianceScore}%` }} />
           </div>
         </div>
       </div>
@@ -315,7 +315,7 @@ const CommandCenterPanel: React.FC<{
         >
           <div className="flex items-center gap-2">
             <Link2 className="w-4 h-4 text-blue-500" />
-            <span className="text-sm font-medium text-zinc-800">Link Sources</span>
+            <span className="text-sm font-medium text-zinc-900">Link Sources</span>
           </div>
           <p className="text-xs text-zinc-500 mt-1">
             {unsupportedClaims} claims need evidence
@@ -328,7 +328,7 @@ const CommandCenterPanel: React.FC<{
         >
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-amber-500" />
-            <span className="text-sm font-medium text-zinc-800">Resolve Issues</span>
+            <span className="text-sm font-medium text-zinc-900">Resolve Issues</span>
           </div>
           <p className="text-xs text-zinc-500 mt-1">
             {availableSources > 0 ? 'Auto-fix ready' : 'Manual review'}
@@ -336,12 +336,12 @@ const CommandCenterPanel: React.FC<{
         </button>
         <button
           onClick={onOpenBridges}
-          className="p-3 rounded-xl border border-zinc-200 bg-white hover:border-indigo-300 transition-colors text-left shadow-sm hover:shadow"
+          className="p-3 rounded-xl border border-zinc-200 bg-white hover:border-blue-300 transition-colors text-left shadow-sm hover:shadow"
           data-testid="button-command-sync-data"
         >
           <div className="flex items-center gap-2">
-            <Database className="w-4 h-4 text-indigo-500" />
-            <span className="text-sm font-medium text-zinc-800">Sync Data</span>
+            <Database className="w-4 h-4 text-blue-500" />
+            <span className="text-sm font-medium text-zinc-900">Sync Data</span>
           </div>
           <p className="text-xs text-zinc-500 mt-1">
             {connectedModules} modules connected
@@ -350,7 +350,7 @@ const CommandCenterPanel: React.FC<{
         <div className="p-3 rounded-xl border border-zinc-200 bg-white shadow-sm">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-purple-500" />
-            <span className="text-sm font-medium text-zinc-800">Claims</span>
+            <span className="text-sm font-medium text-zinc-900">Claims</span>
           </div>
           <p className="text-xs text-zinc-500 mt-1">
             {totalClaims} detected in document
@@ -359,7 +359,7 @@ const CommandCenterPanel: React.FC<{
       </div>
 
       {(blockers.length > 0 || guidance.length > 0) && (
-        <div className="rounded-2xl border border-zinc-200/70 bg-white p-4 space-y-3 shadow-sm">
+        <div className="rounded-xl border border-zinc-200/70 bg-white p-4 space-y-3 shadow-sm">
           {blockers.length > 0 && (
             <div>
               <p className="text-xs uppercase tracking-wide text-zinc-500">Blockers</p>
@@ -367,7 +367,7 @@ const CommandCenterPanel: React.FC<{
                 {blockers.slice(0, 2).map(blocker => (
                   <div key={blocker.id} className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="text-sm font-medium text-zinc-800">{blocker.title}</p>
+                      <p className="text-sm font-medium text-zinc-900">{blocker.title}</p>
                       <p className="text-xs text-zinc-500">{blocker.resolution}</p>
                     </div>
                     <button
@@ -390,7 +390,7 @@ const CommandCenterPanel: React.FC<{
                 {guidance.slice(0, 3).map(item => (
                   <div key={item.id} className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="text-sm font-medium text-zinc-800">{item.title}</p>
+                      <p className="text-sm font-medium text-zinc-900">{item.title}</p>
                       <p className="text-xs text-zinc-500">{item.estimatedTime}</p>
                     </div>
                     <button
@@ -476,7 +476,7 @@ const ComplianceGuardCard: React.FC<{
       <div className="flex items-start gap-3">
         <Icon className={`w-5 h-5 ${iconColor} flex-shrink-0 mt-0.5`} />
         <div className="flex-1 min-w-0">
-          <h4 className="font-medium text-zinc-800">
+          <h4 className="font-medium text-zinc-900">
             {guard.title}
           </h4>
           <p className="text-sm text-zinc-600 mt-1">
@@ -552,7 +552,7 @@ const SherpaGuidanceCard: React.FC<{
   const { color, badge } = priorityConfig[guidance.priority];
   
   return (
-    <div className={`p-4 rounded-lg border-2 ${color} ${isNextBest ? 'bg-blue-50' : 'bg-white'}`}>
+    <div className={`p-4 rounded-lg border ${color} ${isNextBest ? 'bg-blue-50' : 'bg-white'}`}>
       {isNextBest && (
         <div className="flex items-center gap-2 mb-3">
           <Sparkles className="w-4 h-4 text-blue-500" />
@@ -567,7 +567,7 @@ const SherpaGuidanceCard: React.FC<{
           <Target className="w-4 h-4" />
         </div>
         <div className="flex-1">
-          <h4 className="font-semibold text-zinc-800">
+          <h4 className="font-semibold text-zinc-900">
             {guidance.title}
           </h4>
           <p className="text-sm text-zinc-600 mt-1">
@@ -588,7 +588,7 @@ const SherpaGuidanceCard: React.FC<{
       
       <button
         onClick={onAction}
-        className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+        className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors duration-150"
         data-testid={`button-sherpa-action-${guidance.id}`}
       >
         <ArrowRight className="w-4 h-4" />
@@ -1142,7 +1142,7 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
   const complianceStatus = state.document?.complianceStatus || 'needs-attention';
 
   return (
-    <div className={`flex h-full bg-gradient-to-b from-zinc-50 to-zinc-100 ${className}`}>
+    <div className={`flex h-full bg-zinc-50 ${className}`}>
       {/* ─────────────────────────────────────────────────────────────────── */}
       {/* Main Editor Area */}
       {/* ─────────────────────────────────────────────────────────────────── */}
@@ -1152,7 +1152,7 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <FileText className="w-5 h-5 text-blue-500" />
-              <h1 className="text-lg font-semibold text-zinc-800">
+              <h1 className="text-lg font-semibold text-zinc-900">
                 {state.document?.title || 'New Document'}
               </h1>
             </div>
@@ -1182,7 +1182,7 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
               <button
                 onClick={handleSave}
                 disabled={state.isSaving || !state.hasUnsavedChanges}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors duration-150"
                 data-testid="button-save-document"
               >
                 {state.isSaving ? (
@@ -1198,10 +1198,10 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
         
         {/* Editor */}
         <div className="flex-1 overflow-auto p-6">
-          <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-sm border border-zinc-200/80 min-h-[640px]">
+          <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-sm border border-zinc-200/80 min-h-[640px]">
             <EditorContent 
               editor={editor} 
-              className="prose prose-slate max-w-none p-8 focus:outline-none"
+              className="prose prose-slate max-w-none p-8 outline-none"
             />
           </div>
         </div>
@@ -1244,7 +1244,7 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-wide text-zinc-500">Intelligence Panel</p>
-                <h2 className="text-sm font-semibold text-zinc-800">Step 5 Command + Evidence</h2>
+                <h2 className="text-sm font-semibold text-zinc-900">Step 5 Command + Evidence</h2>
               </div>
               <button
                 onClick={() => setState(prev => ({ ...prev, isPanelOpen: false }))}

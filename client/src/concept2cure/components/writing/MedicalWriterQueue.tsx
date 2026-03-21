@@ -139,7 +139,7 @@ const DOCUMENT_TYPE_CONFIG: Record<DocumentType, {
   response: { label: 'Regulatory Response', shortLabel: 'Response', color: 'bg-orange-500', avgDays: 14 },
   briefing: { label: 'Briefing Document', shortLabel: 'Briefing', color: 'bg-cyan-500', avgDays: 21 },
   nonclinical_summary: { label: 'Nonclinical Summary', shortLabel: 'CTD 2.4', color: 'bg-lime-500', avgDays: 21 },
-  quality_summary: { label: 'Quality Summary', shortLabel: 'CTD 2.3', color: 'bg-indigo-500', avgDays: 14 },
+  quality_summary: { label: 'Quality Summary', shortLabel: 'CTD 2.3', color: 'bg-blue-500', avgDays: 14 },
 };
 
 const STAGE_CONFIG: Record<ReviewStage, {
@@ -155,7 +155,7 @@ const STAGE_CONFIG: Record<ReviewStage, {
   sponsor_review: { label: 'Sponsor Review', icon: Send, color: 'text-cyan-600', bgColor: 'bg-cyan-100' },
   final_qc: { label: 'Final QC', icon: CheckCircle, color: 'text-emerald-600', bgColor: 'bg-emerald-100' },
   approved: { label: 'Approved', icon: Star, color: 'text-green-600', bgColor: 'bg-green-100' },
-  published: { label: 'Published', icon: BookOpen, color: 'text-indigo-600', bgColor: 'bg-indigo-100' },
+  published: { label: 'Published', icon: BookOpen, color: 'text-blue-600', bgColor: 'bg-blue-100' },
 };
 
 const REVIEW_PIPELINE: ReviewStage[] = [
@@ -237,7 +237,7 @@ const TaskCard: React.FC<{
           <div className="h-1.5 bg-zinc-200 rounded-full overflow-hidden">
             <div
               className={cn(
-                'h-full rounded-full transition-all',
+                'h-full rounded-full transition-all duration-150',
                 task.progress >= 100 ? 'bg-green-500' : 'bg-blue-500'
               )}
               style={{ width: `${task.progress}%` }}
@@ -324,7 +324,7 @@ const TaskCard: React.FC<{
         <div className="h-2 bg-zinc-200 rounded-full overflow-hidden">
           <div
             className={cn(
-              'h-full rounded-full transition-all',
+              'h-full rounded-full transition-all duration-150',
               task.progress >= 100 ? 'bg-green-500' : 'bg-blue-500'
             )}
             style={{ width: `${task.progress}%` }}
@@ -349,7 +349,7 @@ const TaskCard: React.FC<{
       </div>
       
       {/* Footer */}
-      <div className="flex items-center justify-between pt-3 border-t border-zinc-100">
+      <div className="flex items-center justify-between pt-3 border-t border-zinc-200">
         <div className="flex items-center gap-1.5">
           <Calendar className={cn(
             'w-3.5 h-3.5',
@@ -373,7 +373,7 @@ const TaskCard: React.FC<{
               e.stopPropagation();
               onStartWriting();
             }}
-            className="px-3 py-1 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors"
+            className="px-3 py-1 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors duration-150"
           >
             Start Writing
           </button>
@@ -501,7 +501,7 @@ export const MedicalWriterQueue: React.FC<MedicalWriterQueueProps> = ({
             <button
               onClick={() => setView('list')}
               className={cn(
-                'p-2 rounded transition-colors',
+                'p-2 rounded transition-colors duration-150',
                 view === 'list' ? 'bg-blue-100 text-blue-600' : 'text-zinc-400 hover:bg-zinc-100'
               )}
             >
@@ -510,7 +510,7 @@ export const MedicalWriterQueue: React.FC<MedicalWriterQueueProps> = ({
             <button
               onClick={() => setView('pipeline')}
               className={cn(
-                'p-2 rounded transition-colors',
+                'p-2 rounded transition-colors duration-150',
                 view === 'pipeline' ? 'bg-blue-100 text-blue-600' : 'text-zinc-400 hover:bg-zinc-100'
               )}
             >
@@ -550,14 +550,14 @@ export const MedicalWriterQueue: React.FC<MedicalWriterQueueProps> = ({
               placeholder="Search documents..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-9 pr-4 py-2 text-sm border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
             />
           </div>
           
           <select
             value={filterDocType}
             onChange={(e) => setFilterDocType(e.target.value as DocumentType | 'all')}
-            className="px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 text-sm border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
           >
             <option value="all">All Document Types</option>
             {Object.entries(DOCUMENT_TYPE_CONFIG).map(([type, config]) => (
@@ -568,7 +568,7 @@ export const MedicalWriterQueue: React.FC<MedicalWriterQueueProps> = ({
           <select
             value={filterStage}
             onChange={(e) => setFilterStage(e.target.value as ReviewStage | 'all')}
-            className="px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 text-sm border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
           >
             <option value="all">All Stages</option>
             {Object.entries(STAGE_CONFIG).map(([stage, config]) => (
@@ -595,7 +595,7 @@ export const MedicalWriterQueue: React.FC<MedicalWriterQueueProps> = ({
             ))}
             {filteredTasks.length === 0 && (
               <div className="text-center py-12">
-                <FileText className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
+                <FileText className="w-12 h-12 text-zinc-400 mx-auto mb-3" />
                 <p className="text-zinc-500">No documents match your filters</p>
               </div>
             )}

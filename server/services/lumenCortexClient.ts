@@ -1,9 +1,9 @@
 /**
  * ═══════════════════════════════════════════════════════════════════════════════
- *                    LUMEN CORTEX API CLIENT - ENTERPRISE EDITION
+ *                    AnA RI API CLIENT - ENTERPRISE EDITION
  * ═══════════════════════════════════════════════════════════════════════════════
  *
- * TypeScript client for the Lumen Cortex Python backend.
+ * TypeScript client for the AnA RI Python backend.
  * Provides type-safe access to all enterprise features.
  *
  * FEATURES:
@@ -1039,7 +1039,7 @@ export class LumenCortexClient extends EventEmitter {
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
- * Create a new Lumen Cortex client instance
+ * Create a new AnA RI client instance
  */
 export function createLumenCortexClient(config: LumenCortexConfig): LumenCortexClient {
   return new LumenCortexClient(config);

@@ -477,7 +477,7 @@ function InspectionMetrics({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Upcoming</p>
-              <p className="text-2xl font-bold">{upcoming}</p>
+              <p className="text-2xl font-semibold">{upcoming}</p>
             </div>
             <Calendar className="w-8 h-8 text-blue-500" />
           </div>
@@ -489,7 +489,7 @@ function InspectionMetrics({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Open Findings</p>
-              <p className="text-2xl font-bold text-orange-600">{openFindings}</p>
+              <p className="text-2xl font-semibold text-orange-600">{openFindings}</p>
             </div>
             <AlertTriangle className="w-8 h-8 text-orange-500" />
           </div>
@@ -502,7 +502,7 @@ function InspectionMetrics({
             <div>
               <p className="text-sm text-muted-foreground">Avg Readiness</p>
               <p
-                className={`text-2xl font-bold ${
+                className={`text-2xl font-semibold ${
                   avgReadiness >= 80
                     ? 'text-green-600'
                     : avgReadiness >= 60
@@ -523,7 +523,7 @@ function InspectionMetrics({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Ready Items</p>
-              <p className="text-2xl font-bold">
+              <p className="text-2xl font-semibold">
                 {readyItems}/{totalItems}
               </p>
             </div>
@@ -943,13 +943,13 @@ export function InspectionReadiness() {
     <div className="p-6 space-y-6">
       {/* Early Access Banner */}
       <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-50 border border-amber-200 text-amber-700 text-xs">
-        <span className="font-semibold px-1.5 py-0.5 bg-amber-200 text-amber-800 rounded text-[10px] uppercase tracking-wider">Early Access</span>
+        <span className="font-semibold px-1.5 py-0.5 bg-amber-200 text-amber-800 rounded text-xs uppercase tracking-wider">Early Access</span>
         <span>This module displays sample data for demonstration. Live data integration coming soon.</span>
       </div>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-3">
+          <h1 className="text-2xl font-semibold flex items-center gap-3">
             <ClipboardCheck className="w-8 h-8 text-blue-600" />
             Inspection Readiness
           </h1>
@@ -1054,7 +1054,7 @@ export function InspectionReadiness() {
       </Tabs>
 
       {/* RI Assistance */}
-      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50">
+      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-zinc-50">
         <div className="px-3 py-2 p-4">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-purple-100 rounded-full">

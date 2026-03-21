@@ -193,7 +193,7 @@ const TOUR_FEATURES = [
     icon: '👥',
   },
   {
-    title: 'Nano Banana Visual AI',
+    title: 'AnA Visual',
     description:
       'Generate infographics, regulatory diagrams, and slide decks on demand — powered by Google Gemini.',
     icon: '🍌',
@@ -311,7 +311,7 @@ export const ZenOnboarding: React.FC = () => {
       </motion.div>
 
       <div className="space-y-4">
-        <h1 className="text-3xl font-semibold text-zinc-900">Welcome to Concept2Cure</h1>
+        <h1 className="text-2xl font-semibold text-zinc-900">Welcome to Concept2Cure</h1>
         <p className="text-lg text-zinc-600 max-w-md mx-auto">
           The RI-powered regulatory intelligence platform that transforms how you create and manage
           submissions.
@@ -340,7 +340,7 @@ export const ZenOnboarding: React.FC = () => {
       <div className="pt-4">
         <button
           onClick={handleNext}
-          className="inline-flex items-center gap-2 px-8 py-3 text-base font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors"
+          className="inline-flex items-center gap-2 px-8 py-3 text-base font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors duration-150"
         >
           Get Started
           <ArrowRightIcon />
@@ -380,7 +380,7 @@ export const ZenOnboarding: React.FC = () => {
             value={preferences.projectName}
             onChange={e => setPreferences(p => ({ ...p, projectName: e.target.value }))}
             placeholder="e.g., CardioMonitor 510(k)"
-            className="w-full px-4 py-3 border-2 border-zinc-200 rounded-xl focus:border-blue-500 focus:outline-none transition-colors"
+            className="w-full px-4 py-3 border-2 border-zinc-200 rounded-xl focus:border-blue-500 outline-none transition-colors duration-150"
           />
         </div>
 
@@ -412,14 +412,14 @@ export const ZenOnboarding: React.FC = () => {
       <div className="flex gap-3 pt-4">
         <button
           onClick={handleBack}
-          className="flex-1 py-3 px-4 text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-xl transition-colors"
+          className="flex-1 py-3 px-4 text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-xl transition-colors duration-150"
         >
           Back
         </button>
         <button
           onClick={handleNext}
           disabled={!preferences.projectName || !preferences.submissionType}
-          className="flex-1 py-3 px-4 text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-colors"
+          className="flex-1 py-3 px-4 text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed rounded-xl transition-colors duration-150"
         >
           Continue
         </button>
@@ -464,7 +464,7 @@ export const ZenOnboarding: React.FC = () => {
         ].map(pref => (
           <label
             key={pref.key}
-            className="flex items-center justify-between p-4 bg-zinc-50 rounded-xl cursor-pointer hover:bg-zinc-100 transition-colors"
+            className="flex items-center justify-between p-4 bg-zinc-50 rounded-xl cursor-pointer hover:bg-zinc-100 transition-colors duration-150"
           >
             <div>
               <div className="font-medium text-zinc-900">{pref.label}</div>
@@ -501,13 +501,13 @@ export const ZenOnboarding: React.FC = () => {
       <div className="flex gap-3 pt-4">
         <button
           onClick={handleBack}
-          className="flex-1 py-3 px-4 text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-xl transition-colors"
+          className="flex-1 py-3 px-4 text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-xl transition-colors duration-150"
         >
           Back
         </button>
         <button
           onClick={handleNext}
-          className="flex-1 py-3 px-4 text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors"
+          className="flex-1 py-3 px-4 text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors duration-150"
         >
           Continue
         </button>
@@ -553,13 +553,13 @@ export const ZenOnboarding: React.FC = () => {
       <div className="flex gap-3 pt-4">
         <button
           onClick={handleBack}
-          className="flex-1 py-3 px-4 text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-xl transition-colors"
+          className="flex-1 py-3 px-4 text-zinc-700 bg-zinc-100 hover:bg-zinc-200 rounded-xl transition-colors duration-150"
         >
           Back
         </button>
         <button
           onClick={handleNext}
-          className="flex-1 py-3 px-4 text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors"
+          className="flex-1 py-3 px-4 text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors duration-150"
         >
           Continue
         </button>
@@ -595,7 +595,7 @@ export const ZenOnboarding: React.FC = () => {
       </motion.div>
 
       <div className="space-y-4">
-        <h2 className="text-3xl font-semibold text-zinc-900">You're All Set!</h2>
+        <h2 className="text-2xl font-semibold text-zinc-900">You're All Set!</h2>
         <p className="text-lg text-zinc-600 max-w-md mx-auto">
           Your workspace "{preferences.projectName}" is ready. Let's start building your{' '}
           {SUBMISSION_TYPES.find(t => t.value === preferences.submissionType)?.label ||
@@ -608,7 +608,7 @@ export const ZenOnboarding: React.FC = () => {
         <button
           onClick={handleComplete}
           disabled={isLoading}
-          className="inline-flex items-center gap-2 px-8 py-3 text-base font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors disabled:opacity-50"
+          className="inline-flex items-center gap-2 px-8 py-3 text-base font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors disabled:opacity-60"
         >
           {isLoading ? (
             <>
@@ -650,7 +650,7 @@ export const ZenOnboarding: React.FC = () => {
       <div className="w-full max-w-xl">
         {renderProgress()}
 
-        <div className="bg-white rounded-2xl shadow-sm border border-zinc-200 p-8">
+        <div className="bg-white rounded-xl shadow-sm border border-zinc-200 p-8">
           <AnimatePresence mode="wait">
             {step === 'welcome' && renderWelcomeStep()}
             {step === 'workspace' && renderWorkspaceStep()}

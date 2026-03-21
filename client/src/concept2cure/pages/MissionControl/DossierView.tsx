@@ -8,6 +8,7 @@
 
 import React, { useState, useMemo, lazy, Suspense } from 'react';
 import { cn } from '@/lib/utils';
+import { LIFECYCLE, toLifecycleStage } from '../../components/ui/enterprise';
 
 const SnowGlobeDossierNodeSummary = lazy(() => import('../SnowGlobe/SnowGlobeDossierNodeSummary'));
 import {
@@ -35,14 +36,15 @@ interface DossierViewProps {
   onDraftWithAI?: (artifactId: number, title: string) => void;
 }
 
+// Colors from canonical lifecycle — domain icons preserved
 const LIFECYCLE_COLORS: Record<string, { bg: string; text: string; icon: typeof Clock }> = {
-  planned: { bg: 'bg-zinc-100', text: 'text-zinc-600', icon: Clock },
-  drafting: { bg: 'bg-amber-100', text: 'text-amber-700', icon: Pencil },
-  'in-review': { bg: 'bg-blue-100', text: 'text-blue-700', icon: Eye },
-  'revision-needed': { bg: 'bg-orange-100', text: 'text-orange-700', icon: AlertTriangle },
-  approved: { bg: 'bg-emerald-100', text: 'text-emerald-700', icon: CheckCircle2 },
-  locked: { bg: 'bg-violet-100', text: 'text-violet-700', icon: Lock },
-  exported: { bg: 'bg-teal-100', text: 'text-teal-700', icon: ExternalLink },
+  planned:           { bg: LIFECYCLE.not_started.bg, text: LIFECYCLE.not_started.text, icon: Clock },
+  drafting:          { bg: LIFECYCLE.draft.bg,       text: LIFECYCLE.draft.text,       icon: Pencil },
+  'in-review':       { bg: LIFECYCLE.in_review.bg,   text: LIFECYCLE.in_review.text,   icon: Eye },
+  'revision-needed': { bg: LIFECYCLE.in_review.bg,   text: LIFECYCLE.in_review.text,   icon: AlertTriangle },
+  approved:          { bg: LIFECYCLE.approved.bg,     text: LIFECYCLE.approved.text,    icon: CheckCircle2 },
+  locked:            { bg: LIFECYCLE.published.bg,    text: LIFECYCLE.published.text,   icon: Lock },
+  exported:          { bg: LIFECYCLE.published.bg,    text: LIFECYCLE.published.text,   icon: ExternalLink },
 };
 
 // Standard eCTD/CTD module structure
@@ -147,7 +149,7 @@ export const DossierView: React.FC<DossierViewProps> = ({
               <div key={module.id}>
                 <button
                   onClick={() => toggleModule(module.id)}
-                  className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-zinc-50 border-b border-zinc-100"
+                  className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-zinc-50 border-b border-zinc-200"
                 >
                   {isExpanded ? (
                     <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
@@ -159,9 +161,9 @@ export const DossierView: React.FC<DossierViewProps> = ({
                   ) : (
                     <Folder className="w-4 h-4 text-zinc-400" />
                   )}
-                  <span className="text-sm font-medium text-zinc-800 flex-1">{module.label}</span>
+                  <span className="text-sm font-medium text-zinc-900 flex-1">{module.label}</span>
                   {modArts.length > 0 && (
-                    <span className="text-[10px] text-zinc-500">
+                    <span className="text-xs text-zinc-500">
                       {completeness?.approved || 0}/{modArts.length}
                     </span>
                   )}
@@ -169,7 +171,7 @@ export const DossierView: React.FC<DossierViewProps> = ({
                 {isExpanded && (
                   <div className="bg-zinc-50/50">
                     {modArts.length === 0 ? (
-                      <p className="px-9 py-2 text-[10px] text-zinc-400 italic">No artifacts</p>
+                      <p className="px-9 py-2 text-xs text-zinc-400 italic">No artifacts</p>
                     ) : (
                       modArts.map((art: any) => {
                         const lc = LIFECYCLE_COLORS[art.lifecycleState] || LIFECYCLE_COLORS.planned;
@@ -181,13 +183,13 @@ export const DossierView: React.FC<DossierViewProps> = ({
                             key={art.id}
                             onClick={() => setSelectedArtifactId(art.id)}
                             className={cn(
-                              'w-full flex items-center gap-2 px-6 py-2 text-left transition-colors',
+                              'w-full flex items-center gap-2 px-6 py-2 text-left transition-colors duration-150',
                               isActive ? 'bg-blue-50 border-l-2 border-blue-500' : 'hover:bg-zinc-100'
                             )}
                           >
                             <Icon className={cn('w-3.5 h-3.5 flex-shrink-0', lc.text)} />
                             <span className="text-xs text-zinc-700 truncate flex-1">{art.title}</span>
-                            <span className={cn('text-[9px] px-1 py-0.5 rounded', lc.bg, lc.text)}>
+                            <span className={cn('text-xs px-1 py-0.5 rounded', lc.bg, lc.text)}>
                               {art.lifecycleState}
                             </span>
                           </button>
@@ -203,7 +205,7 @@ export const DossierView: React.FC<DossierViewProps> = ({
           {/* Unassigned artifacts */}
           {(artifactsByModule['unassigned'] || []).length > 0 && (
             <div>
-              <div className="px-3 py-2.5 border-b border-zinc-100">
+              <div className="px-3 py-2.5 border-b border-zinc-200">
                 <span className="text-sm font-medium text-zinc-500">Unassigned</span>
               </div>
               {artifactsByModule['unassigned'].map((art: any) => {
@@ -262,7 +264,7 @@ export const DossierView: React.FC<DossierViewProps> = ({
                     {selectedArtifact.lifecycleState === 'planned' && onDraftWithAI && (
                       <button
                         onClick={() => onDraftWithAI(selectedArtifact.id, selectedArtifact.title)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-violet-50 text-violet-700 border border-violet-200 rounded-lg hover:bg-violet-100"
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-violet-50 text-violet-700 border border-blue-200 rounded-lg hover:bg-violet-100"
                       >
                         <Sparkles className="w-3.5 h-3.5" />
                         Draft with AnA
@@ -284,19 +286,19 @@ export const DossierView: React.FC<DossierViewProps> = ({
                 <div className="grid grid-cols-4 gap-4 text-xs">
                   <div>
                     <p className="text-zinc-500 mb-0.5">Module</p>
-                    <p className="text-zinc-800 font-medium">{selectedArtifact.dossierModule || '—'}</p>
+                    <p className="text-zinc-900 font-medium">{selectedArtifact.dossierModule || '—'}</p>
                   </div>
                   <div>
                     <p className="text-zinc-500 mb-0.5">Requirement</p>
-                    <p className="text-zinc-800 font-medium capitalize">{selectedArtifact.requirementLevel || 'required'}</p>
+                    <p className="text-zinc-900 font-medium capitalize">{selectedArtifact.requirementLevel || 'required'}</p>
                   </div>
                   <div>
                     <p className="text-zinc-500 mb-0.5">Version</p>
-                    <p className="text-zinc-800 font-medium">{selectedArtifact.version || '0.0'}</p>
+                    <p className="text-zinc-900 font-medium">{selectedArtifact.version || '0.0'}</p>
                   </div>
                   <div>
                     <p className="text-zinc-500 mb-0.5">Owner</p>
-                    <p className="text-zinc-800 font-medium">{selectedArtifact.ownerId || 'Unassigned'}</p>
+                    <p className="text-zinc-900 font-medium">{selectedArtifact.ownerId || 'Unassigned'}</p>
                   </div>
                 </div>
               </div>
@@ -308,7 +310,7 @@ export const DossierView: React.FC<DossierViewProps> = ({
                   <div className="flex items-center gap-3">
                     <div className="flex-1 h-2 bg-zinc-100 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-emerald-500 rounded-full transition-all"
+                        className="h-full bg-emerald-500 rounded-full transition-all duration-150"
                         style={{ width: `${moduleCompleteness[selectedArtifact.dossierModule].pct}%` }}
                       />
                     </div>
@@ -324,7 +326,7 @@ export const DossierView: React.FC<DossierViewProps> = ({
               <div className="bg-white rounded-xl border p-6">
                 <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">Content Preview</h3>
                 <div className="bg-zinc-50 rounded-lg p-8 text-center">
-                  <FileText className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+                  <FileText className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
                   <p className="text-xs text-zinc-500">
                     {selectedArtifact.lifecycleState === 'planned'
                       ? 'This artifact has not been drafted yet. Use "Draft with AnA" to begin.'

@@ -10,6 +10,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { SEVERITY } from '../../components/ui/enterprise';
 import {
   AlertTriangle,
   ChevronDown,
@@ -71,17 +72,17 @@ const CHAMBER_LABELS: Record<ChamberKey, string> = {
 };
 
 const SEVERITY_STYLES: Record<Severity, { badge: string; label: string; order: number }> = {
-  critical: { badge: 'bg-red-100 text-red-700', label: 'Critical', order: 0 },
-  high: { badge: 'bg-orange-100 text-orange-700', label: 'High', order: 1 },
-  medium: { badge: 'bg-yellow-100 text-yellow-700', label: 'Medium', order: 2 },
-  low: { badge: 'bg-emerald-100 text-emerald-700', label: 'Low', order: 3 },
+  critical: { badge: `${SEVERITY.critical.bg} ${SEVERITY.critical.text}`, label: SEVERITY.critical.label, order: SEVERITY.critical.order },
+  high:     { badge: `${SEVERITY.high.bg} ${SEVERITY.high.text}`,         label: SEVERITY.high.label,     order: SEVERITY.high.order },
+  medium:   { badge: `${SEVERITY.medium.bg} ${SEVERITY.medium.text}`,     label: SEVERITY.medium.label,   order: SEVERITY.medium.order },
+  low:      { badge: `${SEVERITY.low.bg} ${SEVERITY.low.text}`,           label: SEVERITY.low.label,      order: SEVERITY.low.order },
 };
 
 const RISK_LEVEL_STYLES: Record<Severity, { bg: string; text: string; border: string }> = {
-  critical: { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200' },
-  high: { bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200' },
-  medium: { bg: 'bg-yellow-50', text: 'text-yellow-700', border: 'border-yellow-200' },
-  low: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
+  critical: { bg: SEVERITY.critical.bg, text: SEVERITY.critical.text, border: SEVERITY.critical.border },
+  high:     { bg: SEVERITY.high.bg,     text: SEVERITY.high.text,     border: SEVERITY.high.border },
+  medium:   { bg: SEVERITY.medium.bg,   text: SEVERITY.medium.text,   border: SEVERITY.medium.border },
+  low:      { bg: SEVERITY.low.bg,      text: SEVERITY.low.text,      border: SEVERITY.low.border },
 };
 
 // =============================================================================
@@ -154,7 +155,7 @@ export default function SnowGlobeArtifactSummary({
       >
         <div className="flex items-center gap-2 text-zinc-400">
           <Shield className="h-4 w-4" />
-          <span className="text-sm">Snow Globe Scores</span>
+          <span className="text-sm">AnA Prediction Scores</span>
         </div>
         <p className="mt-2 text-xs text-zinc-400">
           Select an artifact to view risk assessment.
@@ -173,7 +174,7 @@ export default function SnowGlobeArtifactSummary({
         )}
       >
         <div className="flex items-center gap-2">
-          <Loader2 className="h-4 w-4 animate-spin text-zinc-300" />
+          <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
           <span className="text-sm text-zinc-400">Analyzing artifact...</span>
         </div>
         <div className="mt-3 space-y-2">
@@ -196,11 +197,11 @@ export default function SnowGlobeArtifactSummary({
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Shield className="h-4 w-4 text-zinc-400" />
-          <span className="text-sm font-semibold text-zinc-800">Snow Globe Risk</span>
+          <span className="text-sm font-semibold text-zinc-900">AnA Prediction Risk</span>
         </div>
         <span
           className={cn(
-            'rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider',
+            'rounded-full border px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider',
             riskStyles.bg,
             riskStyles.text,
             riskStyles.border,
@@ -215,16 +216,16 @@ export default function SnowGlobeArtifactSummary({
         <div className="mb-3 space-y-1.5">
           {engineScores.map(({ engine, score }) => (
             <div key={engine} className="flex items-center gap-2">
-              <span className="w-28 truncate text-[11px] text-zinc-500">
+              <span className="w-28 truncate text-xs text-zinc-500">
                 {CHAMBER_LABELS[engine] ?? engine}
               </span>
               <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-100">
                 <div
-                  className={cn('h-full rounded-full transition-all', getBarColor(score))}
+                  className={cn('h-full rounded-full transition-all duration-150', getBarColor(score))}
                   style={{ width: `${Math.min(score, 100)}%` }}
                 />
               </div>
-              <span className="w-7 text-right text-[10px] font-medium tabular-nums text-zinc-500">
+              <span className="w-7 text-right text-xs font-medium tabular-nums text-zinc-500">
                 {Math.round(score)}
               </span>
             </div>
@@ -246,7 +247,7 @@ export default function SnowGlobeArtifactSummary({
             <span
               key={sev}
               className={cn(
-                'rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase',
+                'rounded px-1.5 py-0.5 text-xs font-semibold uppercase',
                 style.badge,
               )}
             >
@@ -272,20 +273,20 @@ export default function SnowGlobeArtifactSummary({
           </button>
 
           {findingsExpanded && (
-            <div className="mt-1 max-h-48 space-y-1 overflow-y-auto rounded-lg border border-zinc-100 bg-zinc-50/50 p-2">
+            <div className="mt-1 max-h-48 space-y-1 overflow-y-auto rounded-lg border border-zinc-200 bg-zinc-50/50 p-2">
               {findings.map((f) => {
                 const style = SEVERITY_STYLES[f.severity];
                 return (
                   <div key={f.id} className="flex items-start gap-2 py-1">
                     <span
                       className={cn(
-                        'mt-0.5 shrink-0 rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase',
+                        'mt-0.5 shrink-0 rounded px-1.5 py-0.5 text-xs font-semibold uppercase',
                         style.badge,
                       )}
                     >
                       {style.label}
                     </span>
-                    <p className="line-clamp-2 text-[11px] leading-snug text-zinc-600">
+                    <p className="line-clamp-2 text-xs leading-snug text-zinc-600">
                       {f.title}
                     </p>
                   </div>
@@ -304,7 +305,7 @@ export default function SnowGlobeArtifactSummary({
           'transition-colors hover:bg-zinc-100 active:bg-zinc-200',
         )}
       >
-        View in Snow Globe
+        View in AnA Predictions
         <ExternalLink className="h-3 w-3" />
       </button>
     </div>

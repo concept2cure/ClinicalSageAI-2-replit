@@ -8,10 +8,12 @@
  */
 import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { LIFECYCLE, toLifecycleStage, SEVERITY } from '@/concept2cure/components/ui/enterprise';
 import { useDeliverable } from '@/concept2cure/hooks/useDeliverable';
 import { useProjects } from '@/concept2cure/hooks/useProjects';
 import { useProjectTasks } from '@/concept2cure/hooks/useProjectTasks';
 import { useQuery } from '@tanstack/react-query';
+import { queryKeys } from '@/concept2cure/hooks/queryKeys';
 import { GenerateButton, ExportButton, RunButton } from '@/concept2cure/components/ui/ActionButton';
 import {
   Activity,
@@ -68,27 +70,28 @@ const TABS: Tab[] = [
 // ═══════════════════════════════════════════════════════════════════
 
 const SEVERITY_STYLES = {
-  critical: 'text-red-600 bg-red-50',
-  high: 'text-orange-600 bg-orange-50',
-  medium: 'text-amber-600 bg-amber-50',
-  low: 'text-zinc-500 bg-zinc-50',
+  critical: `${SEVERITY.critical.text} ${SEVERITY.critical.bg}`,
+  high: `${SEVERITY.high.text} ${SEVERITY.high.bg}`,
+  medium: `${SEVERITY.medium.text} ${SEVERITY.medium.bg}`,
+  low: `${SEVERITY.low.text} ${SEVERITY.low.bg}`,
 };
 
+// Status dots derived from canonical lifecycle where possible
 const STATUS_DOT: Record<string, string> = {
-  'Active': 'bg-emerald-500',
-  'Under Review': 'bg-blue-500',
-  'Drafting': 'bg-amber-500',
-  'Pre-Submission': 'bg-zinc-400',
-  'In Progress': 'bg-blue-500',
-  'Review': 'bg-amber-500',
-  'Approved': 'bg-emerald-500',
-  'Draft': 'bg-zinc-400',
-  'Pending Data': 'bg-orange-500',
-  'Completed': 'bg-emerald-500',
-  'Scheduled': 'bg-blue-500',
-  'Available': 'bg-emerald-500',
-  'Busy': 'bg-amber-500',
-  'In Meeting': 'bg-orange-500',
+  'Active':         LIFECYCLE.approved.dot,
+  'Under Review':   LIFECYCLE.in_review.dot,
+  'Drafting':       LIFECYCLE.draft.dot,
+  'Pre-Submission': LIFECYCLE.not_started.dot,
+  'In Progress':    LIFECYCLE.in_review.dot,
+  'Review':         LIFECYCLE.in_review.dot,
+  'Approved':       LIFECYCLE.approved.dot,
+  'Draft':          LIFECYCLE.draft.dot,
+  'Pending Data':   LIFECYCLE.draft.dot,
+  'Completed':      LIFECYCLE.approved.dot,
+  'Scheduled':      LIFECYCLE.in_review.dot,
+  'Available':      LIFECYCLE.approved.dot,
+  'Busy':           LIFECYCLE.draft.dot,
+  'In Meeting':     LIFECYCLE.draft.dot,
 };
 
 const COLUMNS = [
@@ -121,14 +124,14 @@ function Pill({ text, className }: { text: string; className?: string }) {
 
 function Card({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn('bg-white border border-zinc-100 rounded-lg p-4', className)}>
+    <div className={cn('bg-white border border-zinc-200 rounded-lg p-4', className)}>
       {children}
     </div>
   );
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <p className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider mb-3">{children}</p>;
+  return <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-3">{children}</p>;
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -140,23 +143,23 @@ function useCommandCenterData() {
 
   // Fetch artifact summary
   const { data: artifactSummary } = useQuery({
-    queryKey: ['/api/concept2cure/projects/all/artifacts-summary'],
+    queryKey: [...queryKeys.projects.artifactsSummary()],
   });
 
   // Fetch all artifacts across projects
   const { data: artifactsData } = useQuery({
-    queryKey: ['/api/concept2cure/artifacts'],
+    queryKey: [...queryKeys.artifacts.all],
   });
 
   // Fetch audit logs for activity feed
   const { data: auditData } = useQuery({
-    queryKey: ['/api/concept2cure/audit-logs', { limit: 20 }],
+    queryKey: [...queryKeys.auditLogs.list({ limit: 20 })],
     queryFn: () => fetch('/api/concept2cure/audit-logs?limit=20').then(r => r.json()),
   });
 
   // Fetch pending reviews
   const { data: reviewsData } = useQuery({
-    queryKey: ['/api/concept2cure/reviews/pending'],
+    queryKey: [...queryKeys.reviews.pending()],
   });
 
   // Transform projects into programs format
@@ -256,8 +259,8 @@ function DashboardView({ programs, riskSignals, summary, isLoading }: {
           {programs.length === 0 ? (
             <Card className="py-12 text-center">
               <Package className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
-              <p className="text-sm text-zinc-500">No programs yet</p>
-              <p className="text-xs text-zinc-400 mt-1">Create projects to see your active regulatory programs here.</p>
+              <p className="text-sm font-medium text-zinc-700">No programs yet</p>
+              <p className="text-xs text-zinc-500 mt-1">Create a project from the sidebar to see active regulatory programs here.</p>
             </Card>
           ) : (
             <Card className="p-0 divide-y divide-zinc-50">
@@ -281,7 +284,7 @@ function DashboardView({ programs, riskSignals, summary, isLoading }: {
                         <div className="h-1 bg-zinc-900 rounded-full" style={{ width: `${p.readiness}%` }} />
                       </div>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-zinc-300" />
+                    <ChevronRight className="w-4 h-4 text-zinc-400" />
                   </div>
                 </div>
               ))}
@@ -293,9 +296,9 @@ function DashboardView({ programs, riskSignals, summary, isLoading }: {
           <SectionLabel>Risk Signals</SectionLabel>
           {riskSignals.length === 0 ? (
             <Card className="py-12 text-center">
-              <CheckCircle2 className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
-              <p className="text-sm text-zinc-500">No risk signals</p>
-              <p className="text-xs text-zinc-400 mt-1">Pending reviews and risks will appear here.</p>
+              <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
+              <p className="text-sm font-medium text-zinc-700">No active risk signals</p>
+              <p className="text-xs text-zinc-500 mt-1">When reviews are pending or risks are flagged, they'll appear here.</p>
             </Card>
           ) : (
             <div className="space-y-2">
@@ -312,7 +315,7 @@ function DashboardView({ programs, riskSignals, summary, isLoading }: {
               ))}
             </div>
           )}
-          <p className="text-[10px] text-zinc-300 mt-3">Powered by Mission Control + Submission Readiness Twin</p>
+          <p className="text-xs text-zinc-400 mt-3">Powered by Mission Control + Submission Readiness Twin</p>
         </div>
       </div>
     </div>
@@ -354,7 +357,7 @@ function SubmissionsView({ programs }: { programs: any[] }) {
 
       {submissions.length === 0 ? (
         <Card className="py-12 text-center">
-          <Package className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+          <Package className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
           <p className="text-sm text-zinc-500">No submissions yet</p>
           <p className="text-xs text-zinc-400 mt-1">Create projects to track your regulatory submissions here.</p>
         </Card>
@@ -365,7 +368,7 @@ function SubmissionsView({ programs }: { programs: any[] }) {
               <button
                 key={s.id}
                 onClick={() => setSelected(i)}
-                className={cn('w-full flex items-center justify-between px-4 py-3 text-left transition-colors', selected === i ? 'bg-zinc-50' : 'hover:bg-zinc-50/50')}
+                className={cn('w-full flex items-center justify-between px-4 py-3 text-left transition-colors duration-150', selected === i ? 'bg-zinc-50' : 'hover:bg-zinc-50/50')}
               >
                 <div className="flex items-center gap-3">
                   <div className={cn('w-2 h-2 rounded-full', STATUS_DOT[s.status] || 'bg-zinc-400')} />
@@ -435,7 +438,7 @@ function SubmissionsView({ programs }: { programs: any[] }) {
           )}
         </>
       )}
-      <p className="text-[10px] text-zinc-300">Powered by Submission Ops Command Center</p>
+      <p className="text-xs text-zinc-400">Powered by Submission Ops Command Center</p>
     </div>
   );
 }
@@ -472,7 +475,7 @@ function WorkflowsView({ firstProjectId }: { firstProjectId: string | null }) {
 
       {tasks.length === 0 && !isLoadingTasks ? (
         <Card className="py-12 text-center">
-          <ListChecks className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+          <ListChecks className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
           <p className="text-sm text-zinc-500">No tasks yet</p>
           <p className="text-xs text-zinc-400 mt-1">Create projects and add tasks to see your workflow board here.</p>
         </Card>
@@ -484,14 +487,14 @@ function WorkflowsView({ firstProjectId }: { firstProjectId: string | null }) {
               <div key={col.key}>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-medium text-zinc-600">{col.label}</span>
-                  <span className="text-[10px] text-zinc-400 bg-zinc-50 px-1.5 py-0.5 rounded">{colTasks.length}</span>
+                  <span className="text-xs text-zinc-400 bg-zinc-50 px-1.5 py-0.5 rounded">{colTasks.length}</span>
                 </div>
                 <div className="space-y-2">
                   {colTasks.map((t) => (
                     <Card key={t.id} className="p-3">
                       <p className="text-xs font-medium text-zinc-900 mb-2 leading-snug">{t.title}</p>
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] text-zinc-400">{t.assignee}</span>
+                        <span className="text-xs text-zinc-400">{t.assignee}</span>
                         <Pill text={t.priority} className={SEVERITY_STYLES[t.priority]} />
                       </div>
                     </Card>
@@ -503,7 +506,7 @@ function WorkflowsView({ firstProjectId }: { firstProjectId: string | null }) {
         </div>
       )}
 
-      <p className="text-[10px] text-zinc-300">Powered by Workflow Engine + Task Management + Automation</p>
+      <p className="text-xs text-zinc-400">Powered by Workflow Engine + Task Management + Automation</p>
     </div>
   );
 }
@@ -536,27 +539,27 @@ function VaultView({ documents }: { documents: any[] }) {
         ].map(s => (
           <Card key={s.label} className="p-3 text-center">
             <div className={cn('text-lg font-semibold', s.color)}>{s.value}</div>
-            <div className="text-[10px] text-zinc-400 uppercase tracking-wider">{s.label}</div>
+            <div className="text-xs text-zinc-400 uppercase tracking-wider">{s.label}</div>
           </Card>
         ))}
       </div>
 
       {documents.length === 0 ? (
         <Card className="py-12 text-center">
-          <FolderOpen className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+          <FolderOpen className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
           <p className="text-sm text-zinc-500">No documents yet</p>
           <p className="text-xs text-zinc-400 mt-1">Create projects and generate artifacts to populate the document vault.</p>
         </Card>
       ) : (
         <Card className="p-0">
-          <div className="grid grid-cols-[1fr_100px_60px_100px_100px_100px] gap-2 px-4 py-2 border-b border-zinc-50 text-[10px] text-zinc-400 uppercase tracking-wider font-medium">
+          <div className="grid grid-cols-[1fr_100px_60px_100px_100px_100px] gap-2 px-4 py-2 border-b border-zinc-50 text-xs text-zinc-400 uppercase tracking-wider font-medium">
             <span>Name</span><span>Type</span><span>Ver</span><span>Status</span><span>Modified</span><span>Owner</span>
           </div>
           {documents.map((d) => (
             <button
               key={d.id}
               onClick={() => setSelected(selected === d.id ? null : d.id)}
-              className={cn('w-full grid grid-cols-[1fr_100px_60px_100px_100px_100px] gap-2 px-4 py-2.5 text-left border-b border-zinc-50 last:border-0 transition-colors', selected === d.id ? 'bg-zinc-50' : 'hover:bg-zinc-50/50')}
+              className={cn('w-full grid grid-cols-[1fr_100px_60px_100px_100px_100px] gap-2 px-4 py-2.5 text-left border-b border-zinc-50 last:border-0 transition-colors duration-150', selected === d.id ? 'bg-zinc-50' : 'hover:bg-zinc-50/50')}
             >
               <span className="text-xs font-medium text-zinc-900 flex items-center gap-2">
                 <FileText className="w-3 h-3 text-zinc-400" />
@@ -604,7 +607,7 @@ function VaultView({ documents }: { documents: any[] }) {
           </div>
         </Card>
       )}
-      <p className="text-[10px] text-zinc-300">21 CFR Part 11 Compliant · SHA-256 Content Hashing · Full Audit Trail</p>
+      <p className="text-xs text-zinc-400">21 CFR Part 11 Compliant · SHA-256 Content Hashing · Full Audit Trail</p>
     </div>
   );
 }
@@ -623,12 +626,12 @@ function NegotiationsView() {
       </div>
 
       <Card className="py-12 text-center">
-        <Handshake className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+        <Handshake className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
         <p className="text-sm text-zinc-500">No FDA meetings recorded yet</p>
         <p className="text-xs text-zinc-400 mt-1">Use AnA to schedule and track agency interactions.</p>
       </Card>
 
-      <p className="text-[10px] text-zinc-300">Powered by Regulatory Negotiation Logbook</p>
+      <p className="text-xs text-zinc-400">Powered by Regulatory Negotiation Logbook</p>
     </div>
   );
 }
@@ -647,7 +650,7 @@ function TeamView({ activities }: { activities: { time: string; user: string; ac
       </div>
 
       <Card className="py-12 text-center">
-        <Users className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+        <Users className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
         <p className="text-sm text-zinc-500">Team members will appear here when collaboration features are configured</p>
         <p className="text-xs text-zinc-400 mt-1">Invite team members and assign roles to see capacity and availability.</p>
       </Card>
@@ -658,19 +661,19 @@ function TeamView({ activities }: { activities: { time: string; user: string; ac
           <SectionLabel>Activity Feed</SectionLabel>
           {activities.length === 0 ? (
             <div className="text-center py-4">
-              <Activity className="w-6 h-6 text-zinc-300 mx-auto mb-1" />
+              <Activity className="w-6 h-6 text-zinc-400 mx-auto mb-1" />
               <p className="text-xs text-zinc-400">No recent activity</p>
             </div>
           ) : (
             <div className="space-y-3">
               {activities.map((a, i) => (
                 <div key={i} className="flex items-start gap-2">
-                  <Activity className="w-3 h-3 text-zinc-300 mt-0.5 shrink-0" />
+                  <Activity className="w-3 h-3 text-zinc-400 mt-0.5 shrink-0" />
                   <div>
                     <p className="text-xs text-zinc-600">
                       <span className="font-medium text-zinc-900">{a.user}</span> {a.action}
                     </p>
-                    <p className="text-[10px] text-zinc-400">{a.time}</p>
+                    <p className="text-xs text-zinc-400">{a.time}</p>
                   </div>
                 </div>
               ))}
@@ -678,7 +681,7 @@ function TeamView({ activities }: { activities: { time: string; user: string; ac
           )}
         </Card>
       </div>
-      <p className="text-[10px] text-zinc-300">Powered by Collaboration Hub + Team Workspace</p>
+      <p className="text-xs text-zinc-400">Powered by Collaboration Hub + Team Workspace</p>
     </div>
   );
 }
@@ -726,7 +729,7 @@ function AnalyticsView({ programs, summary }: {
       <div className="grid grid-cols-5 gap-4">
         {portfolio.map((m) => (
           <Card key={m.label}>
-            <p className="text-[10px] text-zinc-400 uppercase tracking-wider mb-1">{m.label}</p>
+            <p className="text-xs text-zinc-400 uppercase tracking-wider mb-1">{m.label}</p>
             <p className="text-xl font-semibold text-zinc-900">{m.value}</p>
           </Card>
         ))}
@@ -737,7 +740,7 @@ function AnalyticsView({ programs, summary }: {
           <SectionLabel>Artifact Breakdown</SectionLabel>
           {summary.total === 0 ? (
             <div className="text-center py-6">
-              <BarChart3 className="w-6 h-6 text-zinc-300 mx-auto mb-1" />
+              <BarChart3 className="w-6 h-6 text-zinc-400 mx-auto mb-1" />
               <p className="text-xs text-zinc-400">No artifacts yet. Create projects and artifacts to see analytics.</p>
             </div>
           ) : (
@@ -759,7 +762,7 @@ function AnalyticsView({ programs, summary }: {
           <SectionLabel>Program Readiness Distribution</SectionLabel>
           {programs.length === 0 ? (
             <div className="text-center py-6">
-              <Target className="w-6 h-6 text-zinc-300 mx-auto mb-1" />
+              <Target className="w-6 h-6 text-zinc-400 mx-auto mb-1" />
               <p className="text-xs text-zinc-400">Create projects to see readiness metrics here.</p>
             </div>
           ) : (
@@ -778,7 +781,7 @@ function AnalyticsView({ programs, summary }: {
         </Card>
       </div>
 
-      <p className="text-[10px] text-zinc-300">Powered by Program Analytics + Portfolio Analytics + Reports</p>
+      <p className="text-xs text-zinc-400">Powered by Program Analytics + Portfolio Analytics + Reports</p>
     </div>
   );
 }
@@ -809,19 +812,19 @@ export function CommandCenterHub({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 bg-[#faf9f5] flex flex-col">
       {/* ── Header ── */}
-      <div className="flex items-center justify-between px-6 py-3 border-b border-zinc-100 bg-white">
+      <div className="flex items-center justify-between px-6 py-3 border-b border-zinc-200 bg-white">
         <div className="flex items-center gap-3">
           <Target className="w-4 h-4 text-zinc-900" />
           <h1 className="text-sm font-semibold text-zinc-900">Command Center</h1>
           <span className="text-xs text-zinc-400">Regulatory Operations Hub</span>
         </div>
         <div className="flex items-center gap-2">
-          <button className="p-1.5 rounded hover:bg-zinc-50 text-zinc-400 hover:text-zinc-600 transition-colors">
+          <button className="p-1.5 rounded hover:bg-zinc-50 text-zinc-400 hover:text-zinc-600 transition-colors duration-150">
             <Settings className="w-4 h-4" />
           </button>
           <button
             onClick={onClose}
-            className="p-1.5 rounded hover:bg-zinc-50 text-zinc-400 hover:text-zinc-600 transition-colors"
+            className="p-1.5 rounded hover:bg-zinc-50 text-zinc-400 hover:text-zinc-600 transition-colors duration-150"
           >
             <X className="w-4 h-4" />
           </button>
@@ -829,7 +832,7 @@ export function CommandCenterHub({ onClose }: { onClose: () => void }) {
       </div>
 
       {/* ── Tab Navigation ── */}
-      <div className="flex items-center gap-1 px-6 py-2 border-b border-zinc-100 bg-white">
+      <div className="flex items-center gap-1 px-6 py-2 border-b border-zinc-200 bg-white">
         {TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.key;
@@ -838,7 +841,7 @@ export function CommandCenterHub({ onClose }: { onClose: () => void }) {
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
               className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors',
+                'flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors duration-150',
                 isActive
                   ? 'bg-zinc-900 text-white'
                   : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50',

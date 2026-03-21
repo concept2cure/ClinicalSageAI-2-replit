@@ -164,7 +164,7 @@ const SourceDocumentCard: React.FC<SourceDocumentCardProps> = ({
           <FileText className={`w-5 h-5 flex-shrink-0 mt-0.5 ${isSelected ? 'text-blue-500' : 'text-zinc-400'}`} />
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
-              <h4 className="font-medium text-zinc-800 line-clamp-1">
+              <h4 className="font-medium text-zinc-900 line-clamp-1">
                 {source.title}
               </h4>
               {isSelected && <CheckCircle className="w-4 h-4 text-blue-500 flex-shrink-0" />}
@@ -199,8 +199,9 @@ const SourceDocumentCard: React.FC<SourceDocumentCardProps> = ({
               </code>
               <button
                 onClick={() => navigator.clipboard.writeText(source.hash)}
-                className="p-0.5 hover:bg-zinc-200 rounded"
+                className="p-1.5 hover:bg-zinc-200 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                 title="Copy hash"
+                aria-label="Copy hash"
               >
                 <Copy className="w-3 h-3" />
               </button>
@@ -261,7 +262,7 @@ const LinkCard: React.FC<LinkCardProps> = ({ link, source, onVerify, onRemove, o
       <div className="flex items-start justify-between gap-2">
         <button
           onClick={onClick}
-          className="flex-1 text-left hover:text-blue-600 transition-colors"
+          className="flex-1 text-left hover:text-blue-600 transition-colors duration-150"
         >
           <p className="text-sm text-zinc-700 line-clamp-2">
             "{link.linkedText}"
@@ -336,7 +337,7 @@ const CitationTypeSelector: React.FC<CitationTypeSelectorProps> = ({ value, onCh
               : 'border-zinc-200 hover:border-zinc-300'
           }`}
         >
-          <p className="text-sm font-medium text-zinc-800">{option.label}</p>
+          <p className="text-sm font-medium text-zinc-900">{option.label}</p>
           <p className="text-xs text-zinc-500">{option.description}</p>
         </button>
       ))}
@@ -427,7 +428,7 @@ export const TraceabilityLinking: React.FC<TraceabilityLinkingProps> = ({
       <div className="p-4 border-b border-zinc-200 bg-white">
         <div className="flex items-center gap-2 mb-3">
           <Link className="w-5 h-5 text-blue-500" />
-          <h2 className="font-semibold text-zinc-800">Traceability Linking</h2>
+          <h2 className="font-semibold text-zinc-900">Traceability Linking</h2>
         </div>
 
         {/* Selected Text Preview */}
@@ -444,8 +445,8 @@ export const TraceabilityLinking: React.FC<TraceabilityLinkingProps> = ({
             onClick={() => setActiveTab('sources')}
             className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-colors ${
               activeTab === 'sources'
-                ? 'bg-white text-zinc-800 shadow'
-                : 'text-zinc-600 hover:text-zinc-800'
+                ? 'bg-white text-zinc-900 shadow'
+                : 'text-zinc-600 hover:text-zinc-900'
             }`}
           >
             Sources ({availableSources.length})
@@ -454,8 +455,8 @@ export const TraceabilityLinking: React.FC<TraceabilityLinkingProps> = ({
             onClick={() => setActiveTab('links')}
             className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-colors ${
               activeTab === 'links'
-                ? 'bg-white text-zinc-800 shadow'
-                : 'text-zinc-600 hover:text-zinc-800'
+                ? 'bg-white text-zinc-900 shadow'
+                : 'text-zinc-600 hover:text-zinc-900'
             }`}
           >
             Links ({existingLinks.length})
@@ -522,7 +523,7 @@ export const TraceabilityLinking: React.FC<TraceabilityLinkingProps> = ({
               <button
                 onClick={handleCreateLink}
                 disabled={isCreating || !selectedRange}
-                className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 <Link className="w-4 h-4" />
                 {isCreating ? 'Creating Link...' : 'Create Traceability Link'}

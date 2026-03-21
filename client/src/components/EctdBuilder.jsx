@@ -164,7 +164,7 @@ export default function EctdBuilder({ project }) {
 
         <div className="mt-4 md:mt-0">
           <button
-            className="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded shadow-sm disabled:opacity-50 font-medium"
+            className="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded shadow-sm disabled:opacity-60 font-medium"
             onClick={build}
             disabled={busy || !project}
           >

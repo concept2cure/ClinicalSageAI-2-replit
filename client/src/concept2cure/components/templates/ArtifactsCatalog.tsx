@@ -717,7 +717,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onUse, onPreview 
   const Icon = categoryIcons[template.category];
 
   return (
-    <div className="group p-4 bg-white rounded-lg border border-zinc-100 hover:border-zinc-300 transition-all">
+    <div className="group p-4 bg-white rounded-lg border border-zinc-200 hover:border-zinc-300 transition-all duration-150">
       {/* Header */}
       <div className="flex items-start gap-3 mb-3">
         <div className={cn('p-2 rounded-lg', typeColors[template.category])}>
@@ -730,7 +730,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onUse, onPreview 
           </p>
         </div>
         {template.isOfficial && (
-          <Badge variant="secondary" className="text-[10px] flex-shrink-0 bg-zinc-100 text-zinc-600 border-0">
+          <Badge variant="secondary" className="text-xs flex-shrink-0 bg-zinc-100 text-zinc-600 border-0">
             Official
           </Badge>
         )}
@@ -742,13 +742,13 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onUse, onPreview 
           <Badge
             key={type}
             variant="outline"
-            className="text-[10px] px-1.5 py-0 border-zinc-200 text-zinc-500"
+            className="text-xs px-1.5 py-0 border-zinc-200 text-zinc-500"
           >
             {type}
           </Badge>
         ))}
         {template.ctdSection && (
-          <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-blue-200 text-blue-600">
+          <Badge variant="outline" className="text-xs px-1.5 py-0 border-blue-200 text-blue-600">
             {template.ctdSection}
           </Badge>
         )}
@@ -837,7 +837,7 @@ const TemplatePreview: React.FC<TemplatePreviewProps> = ({
           </div>
         </ScrollArea>
 
-        <div className="flex items-center justify-between mt-4 pt-4 border-t border-zinc-100">
+        <div className="flex items-center justify-between mt-4 pt-4 border-t border-zinc-200">
           <div className="flex items-center gap-4 text-sm text-zinc-400">
             <span className="flex items-center gap-1">
               <Download className="h-4 w-4" />
@@ -983,7 +983,7 @@ export const ArtifactsCatalog: React.FC<ArtifactsCatalogProps> = ({ open, onClos
           </DialogHeader>
 
           {/* Filters */}
-          <div className="flex items-center gap-3 py-4 border-b border-zinc-100">
+          <div className="flex items-center gap-3 py-4 border-b border-zinc-200">
             {/* Search */}
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />

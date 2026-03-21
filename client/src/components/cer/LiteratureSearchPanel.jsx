@@ -451,7 +451,7 @@ ${citations}
             <button
               type="submit"
               disabled={isLoading}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-60 flex items-center gap-2"
             >
               {isLoading ? (
                 <>
@@ -988,7 +988,7 @@ ${citations}
                 <Button
                   onClick={handleGenerateMeddevReview}
                   disabled={selectedPapers.length === 0 || generatingReview}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-60"
                 >
                   {generatingReview ? (
                     <>
@@ -1028,7 +1028,7 @@ ${citations}
                         {paper.authors.join(', ')}
                       </p>
                       <p className="text-xs mt-1 flex items-center">
-                        <Badge variant="outline" className="mr-1 text-[10px] px-1 py-0">
+                        <Badge variant="outline" className="mr-1 text-[11px] px-1 py-0">
                           {paper.source}
                         </Badge>
                         {paper.journal}, {paper.publicationDate}
@@ -1089,7 +1089,7 @@ ${citations}
               <button
                 onClick={handleGenerateCitations}
                 disabled={isLoading}
-                className="px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"
+                className="px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 disabled:opacity-60 flex items-center gap-2"
               >
                 {isLoading ? (
                   <>

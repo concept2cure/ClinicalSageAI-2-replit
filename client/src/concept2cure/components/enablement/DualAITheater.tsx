@@ -172,7 +172,7 @@ function TranscriptMessage({
         <p className="text-xs text-zinc-400 italic">{text}</p>
         {isActive && !done && (
           <motion.span
-            className="inline-block text-zinc-300"
+            className="inline-block text-zinc-400"
             animate={{ opacity: [1, 0, 1] }}
             transition={{ duration: 0.8, repeat: Infinity }}
           >
@@ -214,7 +214,7 @@ function TranscriptMessage({
         {text}
         {isActive && !done && (
           <motion.span
-            className="inline-block text-zinc-300 ml-px"
+            className="inline-block text-zinc-400 ml-px"
             animate={{ opacity: [1, 0, 1] }}
             transition={{ duration: 0.8, repeat: Infinity }}
           >
@@ -365,7 +365,7 @@ export function DualAITheater({
       )}
     >
       {/* Header */}
-      <div className="px-6 py-4 border-b border-zinc-100">
+      <div className="px-6 py-4 border-b border-zinc-200">
         <h3 className="text-sm font-medium text-zinc-900">{scenario.title}</h3>
         <p className="text-xs text-zinc-400 mt-0.5">{scenario.description}</p>
       </div>
@@ -460,14 +460,14 @@ export function DualAITheater({
           {finished ? (
             <button
               onClick={replay}
-              className="text-zinc-900 font-medium hover:text-blue-600 transition-colors"
+              className="text-zinc-900 font-medium hover:text-blue-600 transition-colors duration-150"
             >
               Replay
             </button>
           ) : (
             <button
               onClick={togglePlay}
-              className="text-zinc-900 font-medium hover:text-blue-600 transition-colors"
+              className="text-zinc-900 font-medium hover:text-blue-600 transition-colors duration-150"
             >
               {playing ? 'Pause' : 'Play'}
             </button>

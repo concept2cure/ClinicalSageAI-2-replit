@@ -31,6 +31,7 @@
 import React, { useState, useCallback } from 'react';
 import DOMPurify from 'dompurify';
 import { cn } from '@/lib/utils';
+import { LIFECYCLE } from '../ui/enterprise';
 import {
   FileText,
   Sparkles,
@@ -179,44 +180,44 @@ const STATUS_CONFIG: Record<
 > = {
   empty: {
     label: 'Empty',
-    color: 'text-zinc-400',
-    bgColor: 'bg-zinc-50',
-    icon: <div className="w-3 h-3 rounded-full border-2 border-dashed border-zinc-300" />,
+    color: LIFECYCLE.not_started.text,
+    bgColor: LIFECYCLE.not_started.bg,
+    icon: <div className="w-3 h-3 rounded-full border border-dashed border-zinc-300" />,
   },
   ai_drafting: {
     label: 'RI Drafting...',
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50',
+    color: LIFECYCLE.in_review.text,
+    bgColor: LIFECYCLE.in_review.bg,
     icon: <Sparkles className="w-3 h-3 animate-pulse" />,
   },
   ai_draft: {
     label: 'RI Draft',
-    color: 'text-violet-600',
-    bgColor: 'bg-violet-50',
+    color: LIFECYCLE.superseded.text,
+    bgColor: LIFECYCLE.superseded.bg,
     icon: <Sparkles className="w-3 h-3" />,
   },
   editing: {
     label: 'Editing',
-    color: 'text-amber-600',
-    bgColor: 'bg-amber-50',
+    color: LIFECYCLE.draft.text,
+    bgColor: LIFECYCLE.draft.bg,
     icon: <Edit3 className="w-3 h-3" />,
   },
   in_review: {
     label: 'In Review',
-    color: 'text-orange-600',
-    bgColor: 'bg-orange-50',
+    color: LIFECYCLE.in_review.text,
+    bgColor: LIFECYCLE.in_review.bg,
     icon: <Eye className="w-3 h-3" />,
   },
   approved: {
     label: 'Approved',
-    color: 'text-green-600',
-    bgColor: 'bg-green-50',
+    color: LIFECYCLE.approved.text,
+    bgColor: LIFECYCLE.approved.bg,
     icon: <CheckCircle className="w-3 h-3" />,
   },
   locked: {
     label: 'Locked',
-    color: 'text-zinc-600',
-    bgColor: 'bg-zinc-100',
+    color: LIFECYCLE.published.text,
+    bgColor: LIFECYCLE.published.bg,
     icon: <Shield className="w-3 h-3" />,
   },
 };
@@ -228,7 +229,7 @@ const STATUS_CONFIG: Record<
 const ZeroState: React.FC<{ onStartDrafting?: () => void }> = ({ onStartDrafting }) => (
   <div className="flex-1 flex items-center justify-center p-8">
     <div className="text-center max-w-md">
-      <div className="w-16 h-16 mx-auto mb-6 rounded-xl bg-zinc-900 flex items-center justify-center shadow-sm">
+      <div className="w-12 h-12 mx-auto mb-5 rounded-lg bg-zinc-900 flex items-center justify-center shadow-sm">
         <Mountain className="w-8 h-8 text-white" />
       </div>
       <h2 className="text-xl font-semibold text-zinc-900 mb-3">Your Sherpa is Ready</h2>
@@ -277,7 +278,7 @@ const OutlineTree: React.FC<{
             <button
               onClick={() => onSelect(section)}
               className={cn(
-                'w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-colors',
+                'w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-colors duration-150',
                 'hover:bg-zinc-100',
                 isSelected && 'bg-blue-50 ring-1 ring-blue-200'
               )}
@@ -290,7 +291,7 @@ const OutlineTree: React.FC<{
                     e.stopPropagation();
                     setExpanded(prev => ({ ...prev, [section.id]: !isExpanded }));
                   }}
-                  className="p-0.5 hover:bg-zinc-200 rounded"
+                  className="p-1 hover:bg-zinc-200 rounded"
                 >
                   {isExpanded ? (
                     <ChevronDown className="w-3 h-3 text-zinc-400" />
@@ -320,7 +321,7 @@ const OutlineTree: React.FC<{
 
               {/* Alerts Badge */}
               {section.redlineAlerts && section.redlineAlerts.length > 0 && (
-                <span className="px-1.5 py-0.5 text-[10px] font-bold bg-red-100 text-red-700 rounded">
+                <span className="px-1.5 py-0.5 text-xs font-semibold bg-red-100 text-red-700 rounded">
                   {section.redlineAlerts.length}
                 </span>
               )}
@@ -378,7 +379,7 @@ const SmartTagBadge: React.FC<{
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded border cursor-pointer transition-colors',
+        'inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded border cursor-pointer transition-colors duration-150',
         'hover:shadow-sm',
         c.color,
         !tag.isVerified && 'border-dashed opacity-75'
@@ -388,7 +389,7 @@ const SmartTagBadge: React.FC<{
     >
       {c.icon}
       {tag.text}
-      {tag.pageRef && <span className="text-[10px] opacity-75">p.{tag.pageRef}</span>}
+      {tag.pageRef && <span className="text-xs opacity-75">p.{tag.pageRef}</span>}
       {!tag.isVerified && <AlertTriangle className="w-3 h-3 text-amber-500 ml-1" />}
     </span>
   );
@@ -408,8 +409,8 @@ const RedlineAlertPanel: React.FC<{
     <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg">
       <div className="flex items-center gap-2 mb-3">
         <AlertTriangle className="w-4 h-4 text-red-600" />
-        <h4 className="text-sm font-bold text-red-800">Safety Line Alerts</h4>
-        <span className="px-2 py-0.5 text-xs font-bold bg-red-200 text-red-800 rounded-full">
+        <h4 className="text-sm font-semibold text-red-800">Safety Line Alerts</h4>
+        <span className="px-2 py-0.5 text-xs font-semibold bg-red-200 text-red-800 rounded-full">
           {alerts.length}
         </span>
       </div>
@@ -419,7 +420,7 @@ const RedlineAlertPanel: React.FC<{
             <div className="flex items-start justify-between mb-2">
               <span
                 className={cn(
-                  'px-2 py-0.5 text-[10px] font-bold rounded uppercase',
+                  'px-2 py-0.5 text-xs font-semibold rounded uppercase',
                   alert.severity === 'critical' && 'bg-red-600 text-white',
                   alert.severity === 'warning' && 'bg-amber-500 text-white',
                   alert.severity === 'info' && 'bg-blue-500 text-white'
@@ -473,7 +474,7 @@ const SectionEditor: React.FC<{
           <div className="flex items-center gap-2 mb-1">
             <span
               className={cn(
-                'px-2 py-0.5 text-xs font-bold rounded',
+                'px-2 py-0.5 text-xs font-semibold rounded',
                 moduleConfig.bgColor,
                 moduleConfig.color
               )}
@@ -482,7 +483,7 @@ const SectionEditor: React.FC<{
             </span>
             <span className="text-sm font-mono text-zinc-500">{section.number}</span>
           </div>
-          <h2 className="text-lg font-semibold text-zinc-800">{section.title}</h2>
+          <h2 className="text-lg font-semibold text-zinc-900">{section.title}</h2>
         </div>
         <div className="flex items-center gap-2">
           <span
@@ -565,7 +566,7 @@ const SectionEditor: React.FC<{
       <div className="flex-1 overflow-auto p-6">
         {section.status === 'empty' ? (
           <div className="text-center py-12">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-zinc-100 flex items-center justify-center">
+            <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-zinc-100 flex items-center justify-center">
               <FileText className="w-8 h-8 text-zinc-400" />
             </div>
             <h3 className="text-lg font-medium text-zinc-600 mb-2">Section Not Yet Drafted</h3>
@@ -591,7 +592,7 @@ const SectionEditor: React.FC<{
           </div>
         ) : section.status === 'ai_drafting' ? (
           <div className="text-center py-12">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-100 flex items-center justify-center animate-pulse">
+            <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-blue-100 flex items-center justify-center animate-pulse">
               <Sparkles className="w-8 h-8 text-blue-600" />
             </div>
             <h3 className="text-lg font-medium text-blue-700 mb-2">RI is Drafting...</h3>
@@ -613,7 +614,7 @@ const SectionEditor: React.FC<{
             {/* Smart Tags Display */}
             {section.smartTags.length > 0 && (
               <div className="mt-6 pt-4 border-t border-zinc-200">
-                <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-3">
+                <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">
                   Smart Tags ({section.smartTags.length})
                 </h4>
                 <div className="flex flex-wrap gap-2">
@@ -860,7 +861,7 @@ export const eCTDCoAuthor: React.FC<eCTDCoAuthorProps> = ({
               <Layers className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="font-semibold text-zinc-800">{document.name}</h2>
+              <h2 className="font-semibold text-zinc-900">{document.name}</h2>
               <p className="text-xs text-zinc-500">
                 {document.submissionType} • v{document.version}
               </p>
@@ -911,7 +912,7 @@ export const eCTDCoAuthor: React.FC<eCTDCoAuthorProps> = ({
 
         {/* Add Section */}
         <div className="p-3 border-t border-zinc-200">
-          <button className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+          <button className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-150">
             <Plus className="w-4 h-4" />
             Add Section
           </button>

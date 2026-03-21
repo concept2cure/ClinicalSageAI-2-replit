@@ -210,7 +210,7 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
       >
         <Bell className="w-3 h-3" />
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[12px] h-3 px-0.5 bg-red-500 text-white text-[7px] font-bold rounded-full flex items-center justify-center">
+          <span className="absolute -top-0.5 -right-0.5 min-w-[12px] h-3 px-0.5 bg-red-500 text-white text-[7px] font-semibold rounded-full flex items-center justify-center">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
@@ -220,13 +220,13 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
       {open && (
         <div className="absolute right-0 top-full mt-1 w-72 bg-white border border-zinc-200 rounded-lg shadow-xl z-50 overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100 bg-zinc-50/50">
-            <span className="text-[11px] font-semibold text-zinc-700">Notifications</span>
+          <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200 bg-zinc-50/50">
+            <span className="text-xs font-semibold text-zinc-700">Notifications</span>
             <div className="flex items-center gap-1">
               {unreadCount > 0 && (
                 <button
                   onClick={markAllRead}
-                  className="text-[8px] text-blue-600 hover:text-blue-700 flex items-center gap-0.5"
+                  className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-0.5"
                   title="Mark all read"
                 >
                   <CheckCheck className="w-3 h-3" />
@@ -236,13 +236,13 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
           </div>
 
           {/* Tabs */}
-          <div className="flex border-b border-zinc-100">
+          <div className="flex border-b border-zinc-200">
             {(['unread', 'all'] as const).map(t => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
                 className={cn(
-                  'flex-1 py-1 text-[9px] font-medium capitalize',
+                  'flex-1 py-1 text-xs font-medium capitalize',
                   tab === t
                     ? 'text-blue-600 border-b-2 border-blue-600'
                     : 'text-zinc-400 hover:text-zinc-600'
@@ -257,10 +257,10 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
           <div className="max-h-64 overflow-y-auto">
             {loading ? (
               <div className="flex justify-center py-6">
-                <Loader2 className="w-4 h-4 animate-spin text-zinc-300" />
+                <Loader2 className="w-4 h-4 animate-spin text-zinc-400" />
               </div>
             ) : notifications.length === 0 ? (
-              <p className="text-[10px] text-zinc-400 text-center py-6">
+              <p className="text-xs text-zinc-400 text-center py-6">
                 {tab === 'unread' ? 'No unread notifications' : 'No notifications'}
               </p>
             ) : (
@@ -274,10 +274,10 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
                 >
                   <div className="mt-0.5 shrink-0">{getNotifIcon(n.notificationType)}</div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] font-medium text-zinc-800 truncate">{n.title}</p>
-                    <p className="text-[9px] text-zinc-500 line-clamp-2">{n.body}</p>
+                    <p className="text-xs font-medium text-zinc-900 truncate">{n.title}</p>
+                    <p className="text-xs text-zinc-500 line-clamp-2">{n.body}</p>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className="text-[8px] text-zinc-400">{formatTimeAgo(n.createdAt)}</span>
+                      <span className="text-xs text-zinc-400">{formatTimeAgo(n.createdAt)}</span>
                       {n.severity === 'critical' && (
                         <span className="text-[7px] bg-red-100 text-red-700 px-1 rounded font-medium">
                           {tailoring.severityLabels.critical?.toUpperCase() || 'CRITICAL'}
@@ -302,10 +302,11 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
                           e.stopPropagation();
                           markRead(n.notificationId);
                         }}
-                        className="p-0.5 text-zinc-400 hover:text-blue-600 rounded"
+                        className="p-1.5 text-zinc-400 hover:text-blue-600 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                         title="Mark read"
+                        aria-label="Mark as read"
                       >
-                        <Check className="w-3 h-3" />
+                        <Check className="w-3.5 h-3.5" />
                       </button>
                     )}
                     <button
@@ -313,10 +314,11 @@ export function NotificationCenter({ projectId, industryMode }: NotificationCent
                         e.stopPropagation();
                         dismiss(n.notificationId);
                       }}
-                      className="p-0.5 text-zinc-400 hover:text-red-500 rounded"
+                      className="p-1.5 text-zinc-400 hover:text-red-500 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                       title="Dismiss"
+                      aria-label="Dismiss notification"
                     >
-                      <X className="w-3 h-3" />
+                      <X className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>

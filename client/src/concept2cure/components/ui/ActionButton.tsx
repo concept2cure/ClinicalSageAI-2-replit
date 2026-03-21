@@ -117,7 +117,7 @@ export function ActionButton({
       disabled={disabled || isLoading}
       title={`Produces: ${produces}`}
       className={cn(
-        'inline-flex items-center justify-center gap-1.5 rounded-md font-medium transition-colors',
+        'inline-flex items-center justify-center gap-1.5 rounded-md font-medium transition-colors duration-150',
         config.bgClass,
         config.textClass,
         config.hoverClass,

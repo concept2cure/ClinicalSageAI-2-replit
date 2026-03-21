@@ -102,7 +102,7 @@ function CapabilityItem({
     <div>
       <button
         onClick={onToggle}
-        className="w-full text-left py-1.5 px-2 rounded hover:bg-zinc-50 transition-colors"
+        className="w-full text-left py-1.5 px-2 rounded hover:bg-zinc-50 transition-colors duration-150"
       >
         <span className="text-sm text-zinc-700">{node.label}</span>
       </button>
@@ -189,8 +189,8 @@ export function CapabilityConstellation({
   );
 
   return (
-    <div className={cn('w-full bg-white border border-zinc-100 rounded-lg p-6', className)}>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+    <div className={cn('w-full bg-white border border-zinc-200 rounded-lg p-6', className)}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {clusterOrder.map((cluster) => {
           const nodes = clusters[cluster];
           if (nodes.length === 0) return null;

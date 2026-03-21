@@ -115,7 +115,7 @@ const DocumentItem: React.FC<DocumentItemProps> = ({ document, onRemove }) => {
 
   return (
     <>
-      <div className="group flex items-center gap-3 p-2 rounded-lg hover:bg-zinc-50 transition-colors">
+      <div className="group flex items-center gap-3 p-2 rounded-lg hover:bg-zinc-50 transition-colors duration-150">
         {/* Icon */}
         <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
           <FileIcon className="h-4 w-4 text-blue-600" />
@@ -283,7 +283,7 @@ export const ProjectKnowledge: React.FC<ProjectKnowledgeProps> = ({ project, cla
         <SheetTrigger asChild>
           <button
             className={cn(
-              'w-full flex items-center justify-between p-3 rounded-lg transition-colors',
+              'w-full flex items-center justify-between p-3 rounded-lg transition-colors duration-150',
               'hover:bg-zinc-50 text-left border border-zinc-200'
             )}
           >
@@ -359,7 +359,7 @@ export const ProjectKnowledge: React.FC<ProjectKnowledgeProps> = ({ project, cla
             {/* Empty State */}
             {knowledge && knowledge.documents.length === 0 && !isUploading && (
               <div className="text-center py-6 text-sm text-zinc-500">
-                <FileText className="h-8 w-8 mx-auto mb-2 text-zinc-300" />
+                <FileText className="h-8 w-8 mx-auto mb-2 text-zinc-400" />
                 <p>No documents uploaded yet.</p>
                 <p className="text-xs mt-1">
                   Upload device specs, predicate summaries, test data, etc.

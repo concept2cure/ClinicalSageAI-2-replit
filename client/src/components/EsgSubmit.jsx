@@ -168,7 +168,7 @@ const EsgSubmit = ({ project, onComplete }) => {
 
         <div className="flex justify-between items-center">
           <motion.button
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded disabled:opacity-50"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded disabled:opacity-60"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleSubmit}

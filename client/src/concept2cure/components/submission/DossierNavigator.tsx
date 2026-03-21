@@ -22,6 +22,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { LIFECYCLE } from '../ui/enterprise';
 import {
   ChevronRight,
   ChevronDown,
@@ -210,24 +211,24 @@ const getStatusConfig = (status?: DocumentStatus['status']) => {
     case 'published':
       return {
         icon: CheckCircle,
-        color: 'text-emerald-600',
-        bg: 'bg-emerald-100',
+        color: LIFECYCLE.published.text,
+        bg: LIFECYCLE.published.bg,
         label: 'Published',
       };
     case 'final':
-      return { icon: Check, color: 'text-emerald-600', bg: 'bg-emerald-50', label: 'Final' };
+      return { icon: Check, color: LIFECYCLE.approved.text, bg: LIFECYCLE.approved.bg, label: 'Final' };
     case 'qc':
-      return { icon: Eye, color: 'text-violet-600', bg: 'bg-violet-50', label: 'QC Review' };
+      return { icon: Eye, color: LIFECYCLE.in_review.text, bg: LIFECYCLE.in_review.bg, label: 'QC Review' };
     case 'review':
-      return { icon: Eye, color: 'text-amber-600', bg: 'bg-amber-50', label: 'Under Review' };
+      return { icon: Eye, color: LIFECYCLE.in_review.text, bg: LIFECYCLE.in_review.bg, label: 'Under Review' };
     case 'drafting':
-      return { icon: Edit3, color: 'text-blue-600', bg: 'bg-blue-50', label: 'Drafting' };
+      return { icon: Edit3, color: LIFECYCLE.draft.text, bg: LIFECYCLE.draft.bg, label: 'Drafting' };
     case 'not_started':
-      return { icon: Circle, color: 'text-zinc-400', bg: 'bg-zinc-50', label: 'Not Started' };
+      return { icon: Circle, color: LIFECYCLE.not_started.text, bg: LIFECYCLE.not_started.bg, label: 'Not Started' };
     case 'not_required':
-      return { icon: Lock, color: 'text-zinc-300', bg: 'bg-zinc-50', label: 'Not Required' };
+      return { icon: Lock, color: LIFECYCLE.archived.text, bg: LIFECYCLE.archived.bg, label: 'Not Required' };
     default:
-      return { icon: Circle, color: 'text-zinc-400', bg: 'bg-zinc-50', label: 'Pending' };
+      return { icon: Circle, color: LIFECYCLE.not_started.text, bg: LIFECYCLE.not_started.bg, label: 'Pending' };
   }
 };
 
@@ -301,7 +302,7 @@ const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
   return (
     <div
       className={cn(
-        'group flex items-center gap-2 py-1.5 px-2 rounded-lg cursor-pointer transition-colors',
+        'group flex items-center gap-2 py-1.5 px-2 rounded-lg cursor-pointer transition-colors duration-150',
         isSelected ? 'bg-blue-50' : 'hover:bg-zinc-50',
         level > 0 && 'ml-4'
       )}
@@ -313,7 +314,7 @@ const TreeNodeItem: React.FC<TreeNodeItemProps> = ({
             e.stopPropagation();
             onToggle();
           }}
-          className="p-0.5 hover:bg-zinc-200 rounded"
+          className="p-1 hover:bg-zinc-200 rounded"
         >
           {isExpanded ? (
             <ChevronDown className="w-4 h-4 text-zinc-500" />
@@ -411,7 +412,7 @@ const ModuleHeader: React.FC<{
     <button
       onClick={onToggle}
       className={cn(
-        'w-full flex items-center gap-3 p-3 rounded-xl transition-colors',
+        'w-full flex items-center gap-3 p-3 rounded-xl transition-colors duration-150',
         'border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50',
         isExpanded && 'bg-zinc-50 border-zinc-300'
       )}
@@ -419,9 +420,9 @@ const ModuleHeader: React.FC<{
       {/* Module number */}
       <div
         className={cn(
-          'w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold flex-shrink-0',
+          'w-10 h-10 rounded-lg flex items-center justify-center text-lg font-semibold flex-shrink-0',
           moduleId === '1' && 'bg-blue-100 text-blue-700',
-          moduleId === '2' && 'bg-violet-100 text-violet-700',
+          moduleId === '2' && 'bg-blue-100 text-blue-700',
           moduleId === '3' && 'bg-emerald-100 text-emerald-700',
           moduleId === '4' && 'bg-amber-100 text-amber-700',
           moduleId === '5' && 'bg-pink-100 text-pink-700'
@@ -448,7 +449,7 @@ const ModuleHeader: React.FC<{
           <div className="h-1.5 bg-zinc-200 rounded-full overflow-hidden">
             <div
               className={cn(
-                'h-full rounded-full transition-all',
+                'h-full rounded-full transition-all duration-150',
                 progressPercent === 100 && 'bg-emerald-500',
                 progressPercent >= 50 && progressPercent < 100 && 'bg-blue-500',
                 progressPercent < 50 && 'bg-amber-500'
@@ -558,7 +559,7 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
                 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-medium',
                 dossier.status.overall === 'drafting' && 'bg-blue-100 text-blue-700',
                 dossier.status.overall === 'internal_review' && 'bg-amber-100 text-amber-700',
-                dossier.status.overall === 'qc' && 'bg-violet-100 text-violet-700',
+                dossier.status.overall === 'qc' && 'bg-blue-100 text-blue-700',
                 dossier.status.overall === 'ready' && 'bg-emerald-100 text-emerald-700',
                 dossier.status.overall === 'submitted' && 'bg-zinc-100 text-zinc-700'
               )}
@@ -579,7 +580,7 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
           </div>
           <div className="h-2 bg-zinc-100 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-blue-500 to-violet-500 rounded-full transition-all"
+              className="h-full bg-blue-600 rounded-full transition-all duration-150"
               style={{ width: `${overallProgress.percent}%` }}
             />
           </div>
@@ -598,7 +599,7 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
               placeholder="Search sections..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-9 pr-3 py-2 text-sm border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
             />
           </div>
           <button className="flex items-center gap-1.5 px-3 py-2 text-sm border border-zinc-200 rounded-lg hover:bg-zinc-50">
@@ -709,14 +710,14 @@ export const DossierNavigator: React.FC<DossierNavigatorProps> = ({
                                     <FileText className="w-3 h-3 text-blue-400" />
                                     <span className="truncate flex-1">{art.title}</span>
                                     <span className={cn(
-                                      'px-1.5 py-0.5 rounded text-[10px] font-medium',
+                                      'px-1.5 py-0.5 rounded text-xs font-medium',
                                       art.status === 'draft' && 'bg-blue-50 text-blue-600',
                                       art.status === 'review' && 'bg-amber-50 text-amber-600',
                                       (art.status === 'approved' || art.status === 'locked') && 'bg-emerald-50 text-emerald-600',
                                     )}>
                                       {art.status}
                                     </span>
-                                    <span className="text-[10px] text-zinc-400">v{art.version}</span>
+                                    <span className="text-xs text-zinc-400">v{art.version}</span>
                                   </div>
                                 ))}
                               </React.Fragment>

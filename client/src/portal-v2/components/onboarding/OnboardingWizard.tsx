@@ -399,7 +399,7 @@ export function OnboardingWizard({ onComplete, onCancel }: OnboardingWizardProps
               <button
                 onClick={handleComplete}
                 disabled={!canProceed || checkoutLoading}
-                className="flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {checkoutLoading ? (
                   <>
@@ -422,7 +422,7 @@ export function OnboardingWizard({ onComplete, onCancel }: OnboardingWizardProps
               <button
                 onClick={goNext}
                 disabled={!canProceed}
-                className="flex items-center gap-2 px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 Continue
                 <ChevronRight className="h-5 w-5" />
@@ -941,7 +941,7 @@ function UsersStep({ data, updateData }: StepProps) {
           <button
             onClick={addUser}
             disabled={!newUserEmail}
-            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             Add
           </button>

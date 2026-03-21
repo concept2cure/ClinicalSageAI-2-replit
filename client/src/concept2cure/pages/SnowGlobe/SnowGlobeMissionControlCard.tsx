@@ -9,6 +9,7 @@
 
 import React, { useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { SEVERITY } from '../../components/ui/enterprise';
 import {
   AlertTriangle,
   ArrowRight,
@@ -67,17 +68,17 @@ const CHAMBER_LABELS: Record<ChamberKey, string> = {
 };
 
 const SEVERITY_STYLES: Record<Severity, { badge: string; label: string }> = {
-  critical: { badge: 'bg-red-100 text-red-700', label: 'Critical' },
-  high: { badge: 'bg-orange-100 text-orange-700', label: 'High' },
-  medium: { badge: 'bg-yellow-100 text-yellow-700', label: 'Medium' },
-  low: { badge: 'bg-emerald-100 text-emerald-700', label: 'Low' },
+  critical: { badge: `${SEVERITY.critical.bg} ${SEVERITY.critical.text}`, label: SEVERITY.critical.label },
+  high:     { badge: `${SEVERITY.high.bg} ${SEVERITY.high.text}`,         label: SEVERITY.high.label },
+  medium:   { badge: `${SEVERITY.medium.bg} ${SEVERITY.medium.text}`,     label: SEVERITY.medium.label },
+  low:      { badge: `${SEVERITY.low.bg} ${SEVERITY.low.text}`,           label: SEVERITY.low.label },
 };
 
 const SEVERITY_ORDER: Record<string, number> = {
-  critical: 0,
-  high: 1,
-  medium: 2,
-  low: 3,
+  critical: SEVERITY.critical.order,
+  high: SEVERITY.high.order,
+  medium: SEVERITY.medium.order,
+  low: SEVERITY.low.order,
 };
 
 /** Maps chamber keys to score keys used by the API. */
@@ -188,7 +189,7 @@ export default function SnowGlobeMissionControlCard({
       >
         <div className="flex items-center gap-2 text-zinc-400">
           <Sparkles className="h-4 w-4" />
-          <span className="text-sm">Snow Globe</span>
+          <span className="text-sm">AnA Predictions</span>
         </div>
         <p className="mt-3 text-xs text-zinc-400">
           Select a program to view prediction scores.
@@ -207,8 +208,8 @@ export default function SnowGlobeMissionControlCard({
         )}
       >
         <div className="mb-4 flex items-center gap-2">
-          <Loader2 className="h-4 w-4 animate-spin text-zinc-300" />
-          <span className="text-sm text-zinc-400">Loading Snow Globe...</span>
+          <Loader2 className="h-4 w-4 animate-spin text-zinc-400" />
+          <span className="text-sm text-zinc-400">Loading AnA Predictions...</span>
         </div>
         <div className="space-y-2">
           <div className="h-8 w-20 rounded bg-zinc-100" />
@@ -233,7 +234,7 @@ export default function SnowGlobeMissionControlCard({
           <div className="rounded-lg bg-blue-600 p-1.5">
             <Sparkles className="h-3.5 w-3.5 text-white" />
           </div>
-          <span className="text-sm font-semibold text-zinc-800">Snow Globe</span>
+          <span className="text-sm font-semibold text-zinc-900">AnA Predictions</span>
         </div>
         {compositeScore !== null && (
           <span
@@ -254,7 +255,7 @@ export default function SnowGlobeMissionControlCard({
       {/* Composite health score */}
       {compositeScore !== null && (
         <div className="mb-4 flex items-end gap-2">
-          <span className={cn('text-4xl font-bold tabular-nums', getHealthColor(compositeScore))}>
+          <span className={cn('text-4xl font-semibold tabular-nums', getHealthColor(compositeScore))}>
             {compositeScore}
           </span>
           <span className={cn('mb-1 text-sm font-medium', getHealthColor(compositeScore))}>
@@ -267,16 +268,16 @@ export default function SnowGlobeMissionControlCard({
       <div className="mb-4 space-y-1.5">
         {engineScores.map(({ chamber, label, value }) => (
           <div key={chamber} className="flex items-center gap-2">
-            <span className="w-28 truncate text-[11px] text-zinc-500">{label}</span>
+            <span className="w-28 truncate text-xs text-zinc-500">{label}</span>
             <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-100">
               {value !== null && (
                 <div
-                  className={cn('h-full rounded-full transition-all', getBarColor(value))}
+                  className={cn('h-full rounded-full transition-all duration-150', getBarColor(value))}
                   style={{ width: `${Math.min(value, 100)}%` }}
                 />
               )}
             </div>
-            <span className="w-7 text-right text-[10px] font-medium tabular-nums text-zinc-500">
+            <span className="w-7 text-right text-xs font-medium tabular-nums text-zinc-500">
               {value !== null ? value : '--'}
             </span>
           </div>
@@ -288,7 +289,7 @@ export default function SnowGlobeMissionControlCard({
         <div className="mb-4">
           <div className="mb-2 flex items-center gap-1.5">
             <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+            <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
               Top Findings
             </span>
           </div>
@@ -299,7 +300,7 @@ export default function SnowGlobeMissionControlCard({
                 <div key={f.id} className="flex items-start gap-2">
                   <span
                     className={cn(
-                      'mt-0.5 shrink-0 rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase',
+                      'mt-0.5 shrink-0 rounded px-1.5 py-0.5 text-xs font-semibold uppercase',
                       sev.badge,
                     )}
                   >
@@ -328,7 +329,7 @@ export default function SnowGlobeMissionControlCard({
           'transition-colors hover:bg-blue-100 active:bg-blue-200',
         )}
       >
-        Open Snow Globe
+        Open AnA Predictions
         <ArrowRight className="h-4 w-4" />
       </button>
     </div>

@@ -277,7 +277,7 @@ export default function PhaseJourneyNavigator({ studyId = "STUDY001" }) {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Brain className="w-8 h-8 text-purple-500" />
-            ForesightAI™ Journey Navigator
+            AnA Predictions™ Journey Navigator
           </h1>
           <p className="text-gray-500 mt-1">
             Intelligent guidance through your drug development journey
@@ -325,7 +325,7 @@ export default function PhaseJourneyNavigator({ studyId = "STUDY001" }) {
             <TabsContent value="recommendations" className="mt-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>ForesightAI™ Recommendations</CardTitle>
+                  <CardTitle>AnA Predictions™ Recommendations</CardTitle>
                   <CardDescription>
                     Based on your Phase {currentPhase} progress
                   </CardDescription>

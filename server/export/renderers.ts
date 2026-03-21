@@ -1,7 +1,21 @@
 import fs from 'fs/promises';
 import PDFDocument from 'pdfkit';
 import { Cluster } from 'puppeteer-cluster';
-import { Document, Packer, Paragraph, HeadingLevel } from 'docx';
+import {
+  Document,
+  Packer,
+  Paragraph,
+  HeadingLevel,
+  TextRun,
+  AlignmentType,
+  Table,
+  TableRow,
+  TableCell,
+  WidthType,
+  BorderStyle,
+  UnderlineType,
+  convertInchesToTwip,
+} from 'docx';
 import { stylePacks, StylePack } from './stylePacks/config';
 
 const MAX_CONTENT_CHARS = 500000;
@@ -443,27 +457,264 @@ export async function renderPdfForDocType(docType: string, content: any, packKey
   return renderHtmlToPdf(await renderHtmlWithStylePack(html, pack));
 }
 
-export async function renderDocxForDocType(docType: string, content: any) {
-  const sections = extractSectionsFromEditor(content);
-  const paragraphs: Paragraph[] = [];
+/** Build a TextRun from a TipTap text node, respecting its marks (bold, italic, etc.) */
+function textNodeToRun(child: any, fontSize: number = 22): TextRun {
+  if (child.type !== 'text') {
+    return new TextRun({ text: nodeToText(child), size: fontSize });
+  }
+  const marks: any[] = child.marks || [];
+  const bold = marks.some((m: any) => m.type === 'bold');
+  const italic = marks.some((m: any) => m.type === 'italic');
+  const hasUnderline = marks.some((m: any) => m.type === 'underline');
+  const strikethrough = marks.some((m: any) => m.type === 'strike');
+  const superscript = marks.some((m: any) => m.type === 'superscript');
+  const subscript = marks.some((m: any) => m.type === 'subscript');
 
-  for (const section of sections) {
-    paragraphs.push(new Paragraph({ text: section.title, heading: HeadingLevel.HEADING_1 }));
-    const lines = (section.text || '')
-      .split('\n')
-      .map(line => line.trim())
-      .filter(Boolean);
-    if (lines.length === 0) {
-      paragraphs.push(
-        new Paragraph({ text: 'Section content not found in the current document.' })
-      );
-    } else {
-      lines.forEach(line => paragraphs.push(new Paragraph(line)));
+  return new TextRun({
+    text: child.text || '',
+    bold,
+    italics: italic,
+    underline: hasUnderline ? { type: UnderlineType.SINGLE } : undefined,
+    strike: strikethrough,
+    superScript: superscript,
+    subScript: subscript,
+    size: fontSize,
+  });
+}
+
+/**
+ * Convert TipTap editor nodes into rich DOCX elements with proper formatting.
+ * Supports: headings, paragraphs with marks, bullet/ordered lists, tables,
+ * blockquotes, and horizontal rules.
+ */
+function editorNodeToDocxElements(node: any): (Paragraph | Table)[] {
+  if (!node) return [];
+
+  // ── Headings ──
+  if (node.type === 'heading') {
+    const text = nodeToText(node).trim();
+    const level = node.attrs?.level || 2;
+    const headingMap: Record<number, typeof HeadingLevel[keyof typeof HeadingLevel]> = {
+      1: HeadingLevel.HEADING_1,
+      2: HeadingLevel.HEADING_2,
+      3: HeadingLevel.HEADING_3,
+      4: HeadingLevel.HEADING_4,
+    };
+    return [
+      new Paragraph({
+        text,
+        heading: headingMap[level] || HeadingLevel.HEADING_2,
+        spacing: { before: 240, after: 120 },
+      }),
+    ];
+  }
+
+  // ── Paragraphs with rich text marks ──
+  if (node.type === 'paragraph') {
+    const runs = (node.content || []).map((child: any) => textNodeToRun(child));
+
+    if (runs.length === 0) {
+      return [new Paragraph({ spacing: { after: 100 } })];
+    }
+
+    return [
+      new Paragraph({
+        children: runs,
+        spacing: { after: 120 },
+      }),
+    ];
+  }
+
+  // ── Bullet lists ──
+  if (node.type === 'bulletList') {
+    return (node.content || []).flatMap((item: any) => {
+      const text = nodeToText(item).trim();
+      if (!text) return [];
+      return [
+        new Paragraph({
+          children: [new TextRun({ text: `\u2022  ${text}`, size: 22 })],
+          indent: { left: convertInchesToTwip(0.5) },
+          spacing: { after: 60 },
+        }),
+      ];
+    });
+  }
+
+  // ── Ordered lists ──
+  if (node.type === 'orderedList') {
+    let idx = 1;
+    return (node.content || []).flatMap((item: any) => {
+      const text = nodeToText(item).trim();
+      if (!text) return [];
+      return [
+        new Paragraph({
+          children: [new TextRun({ text: `${idx++}.  ${text}`, size: 22 })],
+          indent: { left: convertInchesToTwip(0.5) },
+          spacing: { after: 60 },
+        }),
+      ];
+    });
+  }
+
+  // ── Tables ──
+  if (node.type === 'table') {
+    const rows: TableRow[] = (node.content || [])
+      .filter((row: any) => row.type === 'tableRow')
+      .map((row: any, rowIdx: number) => {
+        const cells: TableCell[] = (row.content || [])
+          .filter((cell: any) => cell.type === 'tableCell' || cell.type === 'tableHeader')
+          .map((cell: any) => {
+            const isHeader = cell.type === 'tableHeader' || rowIdx === 0;
+            const cellText = nodeToText(cell).trim() || '';
+            return new TableCell({
+              children: [
+                new Paragraph({
+                  children: [
+                    new TextRun({
+                      text: cellText,
+                      bold: isHeader,
+                      size: isHeader ? 22 : 20,
+                    }),
+                  ],
+                }),
+              ],
+              width: { size: 100, type: WidthType.AUTO },
+            });
+          });
+
+        return new TableRow({ children: cells });
+      });
+
+    if (rows.length > 0) {
+      return [
+        new Table({
+          rows,
+          width: { size: 100, type: WidthType.PERCENTAGE },
+        }),
+        new Paragraph({ spacing: { after: 120 } }), // spacing after table
+      ];
+    }
+    return [];
+  }
+
+  // ── Blockquotes ──
+  if (node.type === 'blockquote') {
+    const text = nodeToText(node).trim();
+    if (!text) return [];
+    return [
+      new Paragraph({
+        children: [
+          new TextRun({ text, italics: true, size: 22, color: '555555' }),
+        ],
+        indent: { left: convertInchesToTwip(0.5) },
+        spacing: { before: 120, after: 120 },
+        border: {
+          left: { style: BorderStyle.SINGLE, size: 6, color: 'CCCCCC', space: 10 },
+        },
+      }),
+    ];
+  }
+
+  // ── Horizontal rule ──
+  if (node.type === 'horizontalRule') {
+    return [
+      new Paragraph({
+        children: [new TextRun({ text: '─'.repeat(60), size: 16, color: 'CCCCCC' })],
+        spacing: { before: 200, after: 200 },
+        alignment: AlignmentType.CENTER,
+      }),
+    ];
+  }
+
+  // ── Fallback: recurse into child content ──
+  if (Array.isArray(node.content)) {
+    return node.content.flatMap(editorNodeToDocxElements);
+  }
+
+  const text = nodeToText(node).trim();
+  if (text) {
+    return [new Paragraph({ children: [new TextRun({ text, size: 22 })], spacing: { after: 120 } })];
+  }
+  return [];
+}
+
+export async function renderDocxForDocType(docType: string, content: any) {
+  const editorContent = Array.isArray(content?.content) ? content.content : [];
+  const children: (Paragraph | Table)[] = [];
+
+  // Title page
+  const docTypeLabel =
+    docType === 'cerv2_510k' ? '510(k) Premarket Notification'
+    : docType === 'cerv2_pma' ? 'Premarket Approval Application'
+    : docType === 'cerv2_cer' ? 'Clinical Evaluation Report'
+    : 'Regulatory Submission Document';
+
+  children.push(
+    new Paragraph({
+      children: [new TextRun({ text: docTypeLabel, bold: true, size: 48 })],
+      alignment: AlignmentType.CENTER,
+      spacing: { before: 2400, after: 480 },
+    }),
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: `Generated: ${new Date().toISOString().split('T')[0]}`,
+          size: 22,
+          color: '666666',
+        }),
+      ],
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 120 },
+    }),
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: 'Generated by Concept2Cure Platform',
+          size: 20,
+          color: '999999',
+          italics: true,
+        }),
+      ],
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 600 },
+    })
+  );
+
+  // Convert each editor node into DOCX elements (Paragraphs + Tables)
+  for (const node of editorContent) {
+    children.push(...editorNodeToDocxElements(node));
+  }
+
+  // Fallback: if editor JSON had no content nodes, try text extraction
+  if (editorContent.length === 0) {
+    const sections = extractSectionsFromEditor(content);
+    for (const section of sections) {
+      children.push(new Paragraph({ text: section.title, heading: HeadingLevel.HEADING_1 }));
+      const lines = (section.text || '').split('\n').map(l => l.trim()).filter(Boolean);
+      if (lines.length === 0) {
+        children.push(new Paragraph({ text: 'Section content not found in the current document.' }));
+      } else {
+        lines.forEach(line =>
+          children.push(new Paragraph({ children: [new TextRun({ text: line, size: 22 })] }))
+        );
+      }
     }
   }
 
   const doc = new Document({
-    sections: [{ children: paragraphs }],
+    sections: [{
+      properties: {
+        page: {
+          margin: {
+            top: convertInchesToTwip(1),
+            right: convertInchesToTwip(1),
+            bottom: convertInchesToTwip(1),
+            left: convertInchesToTwip(1),
+          },
+        },
+      },
+      children,
+    }],
   });
 
   return Packer.toBuffer(doc);

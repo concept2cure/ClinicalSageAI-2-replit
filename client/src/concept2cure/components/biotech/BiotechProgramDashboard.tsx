@@ -243,7 +243,7 @@ const DevelopmentPipeline: React.FC<{
           <React.Fragment key={stage}>
             <div className="flex flex-col items-center">
               <div className={cn(
-                'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all',
+                'w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-150',
                 isCompleted && 'bg-green-500 text-white',
                 isCurrent && cn(config.color, 'text-white ring-4 ring-offset-2'),
                 !isCompleted && !isCurrent && 'bg-zinc-200 text-zinc-400'
@@ -251,7 +251,7 @@ const DevelopmentPipeline: React.FC<{
                 {isCompleted ? <CheckCircle className="w-4 h-4" /> : i + 1}
               </div>
               <span className={cn(
-                'text-[10px] mt-1 font-medium',
+                'text-xs mt-1 font-medium',
                 isCurrent ? 'text-zinc-900' : 'text-zinc-500'
               )}>
                 {config.shortLabel}
@@ -334,7 +334,7 @@ const CriticalPathTracker: React.FC<{
                       style={{ width: `${d.percentComplete}%` }}
                     />
                   </div>
-                  <p className="text-[10px] text-zinc-500 text-center mt-0.5">{d.percentComplete}%</p>
+                  <p className="text-xs text-zinc-500 text-center mt-0.5">{d.percentComplete}%</p>
                 </div>
               )}
               
@@ -417,7 +417,7 @@ const FDAInteractionTimeline: React.FC<{
         ))}
         
         {completed.length > 0 && (
-          <div className="pt-2 border-t border-zinc-100">
+          <div className="pt-2 border-t border-zinc-200">
             <p className="text-xs text-zinc-500 mb-2">Completed ({completed.length})</p>
             {completed.slice(0, 2).map(interaction => (
               <div key={interaction.id} className="flex items-center gap-2 text-xs text-zinc-500 py-1">
@@ -425,7 +425,7 @@ const FDAInteractionTimeline: React.FC<{
                 <span>{typeLabels[interaction.type]}</span>
                 {interaction.outcome && (
                   <span className={cn(
-                    'px-1.5 py-0.5 rounded text-[10px]',
+                    'px-1.5 py-0.5 rounded text-xs',
                     interaction.outcome === 'favorable' && 'bg-green-100 text-green-700',
                     interaction.outcome === 'neutral' && 'bg-zinc-100 text-zinc-600',
                     interaction.outcome === 'unfavorable' && 'bg-red-100 text-red-700'
@@ -456,7 +456,7 @@ const FundingMilestoneCard: React.FC<{
     <button
       onClick={onClick}
       className={cn(
-        'w-full p-4 rounded-xl border-2 text-left transition-all',
+        'w-full p-4 rounded-xl border text-left transition-all duration-150',
         milestone.status === 'achieved' && 'border-green-300 bg-green-50',
         milestone.status === 'on_track' && 'border-blue-300 bg-blue-50',
         milestone.status === 'at_risk' && 'border-red-300 bg-red-50',
@@ -483,7 +483,7 @@ const FundingMilestoneCard: React.FC<{
           </span>
         </div>
         {milestone.linkedFunding && (
-          <span className="text-xs font-bold text-violet-600 bg-violet-100 px-2 py-0.5 rounded-full">
+          <span className="text-xs font-semibold text-violet-600 bg-violet-100 px-2 py-0.5 rounded-full">
             {milestone.linkedFunding}
           </span>
         )}
@@ -548,7 +548,7 @@ export const BiotechProgramDashboard: React.FC<BiotechProgramDashboardProps> = (
       <div className="flex-shrink-0 bg-white border-b border-zinc-200 p-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-zinc-900">Program Dashboard</h1>
+            <h1 className="text-xl font-semibold text-zinc-900">Program Dashboard</h1>
             <p className="text-sm text-zinc-500">Track your pipeline from discovery to approval</p>
           </div>
           
@@ -561,7 +561,7 @@ export const BiotechProgramDashboard: React.FC<BiotechProgramDashboardProps> = (
               )}>
                 <p className="text-xs text-zinc-600">Runway</p>
                 <p className={cn(
-                  'text-lg font-bold',
+                  'text-lg font-semibold',
                   companyRunway <= 12 ? 'text-red-700' : companyRunway <= 18 ? 'text-amber-700' : 'text-green-700'
                 )}>
                   {companyRunway} months
@@ -571,19 +571,19 @@ export const BiotechProgramDashboard: React.FC<BiotechProgramDashboardProps> = (
             
             <div className="px-4 py-2 bg-zinc-100 rounded-lg">
               <p className="text-xs text-zinc-600">Active Programs</p>
-              <p className="text-lg font-bold text-zinc-900">{metrics.activePrograms}</p>
+              <p className="text-lg font-semibold text-zinc-900">{metrics.activePrograms}</p>
             </div>
             
             {metrics.criticalAtRisk > 0 && (
               <div className="px-4 py-2 bg-red-100 rounded-lg">
                 <p className="text-xs text-red-600">Critical Path Risk</p>
-                <p className="text-lg font-bold text-red-700">{metrics.criticalAtRisk}</p>
+                <p className="text-lg font-semibold text-red-700">{metrics.criticalAtRisk}</p>
               </div>
             )}
             
             <div className="px-4 py-2 bg-blue-100 rounded-lg">
               <p className="text-xs text-blue-600">Upcoming FDA Meetings</p>
-              <p className="text-lg font-bold text-blue-700">{metrics.upcomingFDAMeetings}</p>
+              <p className="text-lg font-semibold text-blue-700">{metrics.upcomingFDAMeetings}</p>
             </div>
           </div>
         </div>
@@ -602,7 +602,7 @@ export const BiotechProgramDashboard: React.FC<BiotechProgramDashboardProps> = (
                   key={program.id}
                   onClick={() => setSelectedProgram(program)}
                   className={cn(
-                    'px-4 py-2 rounded-lg transition-colors',
+                    'px-4 py-2 rounded-lg transition-colors duration-150',
                     isSelected
                       ? 'bg-blue-600 text-white'
                       : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
@@ -632,7 +632,7 @@ export const BiotechProgramDashboard: React.FC<BiotechProgramDashboardProps> = (
           <div className="bg-white rounded-xl border border-zinc-200 p-6 mb-6">
             <div className="flex items-start justify-between mb-6">
               <div>
-                <h2 className="text-2xl font-bold text-zinc-900 mb-1">{selectedProgram.programName}</h2>
+                <h2 className="text-2xl font-semibold text-zinc-900 mb-1">{selectedProgram.programName}</h2>
                 <p className="text-sm text-zinc-500">
                   {selectedProgram.therapeuticArea} • {selectedProgram.indication} • {selectedProgram.modality.replace('_', ' ')}
                 </p>
@@ -644,7 +644,7 @@ export const BiotechProgramDashboard: React.FC<BiotechProgramDashboardProps> = (
               <div className="text-right">
                 <p className="text-xs text-zinc-500">Current Stage</p>
                 <span className={cn(
-                  'inline-block px-3 py-1 text-sm font-bold text-white rounded-full',
+                  'inline-block px-3 py-1 text-sm font-semibold text-white rounded-full',
                   STAGE_CONFIG[selectedProgram.currentStage].color
                 )}>
                   {STAGE_CONFIG[selectedProgram.currentStage].label}
@@ -657,7 +657,7 @@ export const BiotechProgramDashboard: React.FC<BiotechProgramDashboardProps> = (
             
             {/* Projected Timeline */}
             {(selectedProgram.projectedNDAFiling || selectedProgram.projectedApproval) && (
-              <div className="mt-6 pt-6 border-t border-zinc-100 flex items-center gap-8">
+              <div className="mt-6 pt-6 border-t border-zinc-200 flex items-center gap-8">
                 {selectedProgram.projectedNDAFiling && (
                   <div>
                     <p className="text-xs text-zinc-500">Projected NDA Filing</p>

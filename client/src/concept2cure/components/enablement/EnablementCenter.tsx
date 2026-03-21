@@ -105,7 +105,7 @@ function HeroSection() {
 
   return (
     <motion.section className="py-12 px-8" {...fade}>
-      <h1 className="text-3xl font-semibold text-zinc-900 tracking-tight mb-3">
+      <h1 className="text-2xl font-semibold text-zinc-900 tracking-tight mb-3">
         Your intelligent guide to regulatory excellence
       </h1>
       <p className="text-base text-zinc-500 max-w-2xl leading-relaxed mb-6">
@@ -139,7 +139,7 @@ function LearningPathsView() {
           return (
             <motion.div
               key={path.id || idx}
-              className="py-6 border-b border-zinc-100"
+              className="py-6 border-b border-zinc-200"
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.15, delay: idx * 0.04 }}
@@ -212,7 +212,7 @@ function AllModulesView() {
           placeholder="Search modules..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full max-w-md rounded-md border border-zinc-200 bg-white py-2 px-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-300 focus:outline-none transition-colors"
+          className="w-full max-w-md rounded-md border border-zinc-200 bg-white py-2 px-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-300 outline-none transition-colors duration-150"
         />
       </div>
 
@@ -223,7 +223,7 @@ function AllModulesView() {
             key={cat}
             onClick={() => setActiveCategory(cat)}
             className={cn(
-              'text-sm transition-colors',
+              'text-sm transition-colors duration-150',
               activeCategory === cat
                 ? 'font-medium text-zinc-900'
                 : 'text-zinc-400 hover:text-zinc-600'
@@ -250,7 +250,7 @@ function AllModulesView() {
               transition={{ duration: 0.15, delay: idx * 0.03 }}
             >
               <div
-                className="bg-white rounded-lg border border-zinc-100 p-5 cursor-pointer shadow-sm"
+                className="bg-white rounded-lg border border-zinc-200 p-5 cursor-pointer shadow-sm"
                 onClick={() =>
                   setExpandedModule(isExpanded ? null : mod.id || String(idx))
                 }
@@ -283,7 +283,7 @@ function AllModulesView() {
                       transition={{ duration: 0.15 }}
                       className="overflow-hidden"
                     >
-                      <div className="mt-4 pt-4 border-t border-zinc-100 space-y-2">
+                      <div className="mt-4 pt-4 border-t border-zinc-200 space-y-2">
                         {(mod.lessons || []).map(
                           (
                             lesson: { title: string; description: string } | string,
@@ -362,7 +362,7 @@ function CertificationsView() {
         return (
           <motion.div
             key={cert.id || idx}
-            className="py-6 border-b border-zinc-100"
+            className="py-6 border-b border-zinc-200"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.15, delay: idx * 0.04 }}
@@ -460,7 +460,7 @@ function AboutView() {
         <h3 className="text-lg font-semibold text-zinc-900 mb-6">
           The dual-AI system
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Dr. Sage */}
           <div>
             <h4 className="text-base font-semibold text-zinc-900 mb-1">
@@ -530,7 +530,7 @@ function AiAgentsView() {
     <div className="py-12 px-6">
       {/* Header */}
       <div className="mb-8">
-        <h2 className="text-3xl font-semibold text-zinc-900 tracking-tight">
+        <h2 className="text-2xl font-semibold text-zinc-900 tracking-tight">
           AI Agents
         </h2>
         <p className="text-base text-zinc-500 mt-2 max-w-2xl leading-relaxed">
@@ -540,7 +540,7 @@ function AiAgentsView() {
       </div>
 
       {/* Sub-navigation */}
-      <div className="flex items-center gap-6 mb-8 border-b border-zinc-100 pb-3">
+      <div className="flex items-center gap-6 mb-8 border-b border-zinc-200 pb-3">
         {([
           { key: 'showcase' as const, label: 'All Capabilities' },
           { key: 'setup' as const, label: 'Setup Wizard' },
@@ -550,7 +550,7 @@ function AiAgentsView() {
             key={item.key}
             onClick={() => setSubView(item.key)}
             className={cn(
-              'text-sm transition-colors',
+              'text-sm transition-colors duration-150',
               subView === item.key
                 ? 'text-zinc-900 font-medium'
                 : 'text-zinc-400 hover:text-zinc-600'
@@ -621,7 +621,7 @@ export function EnablementCenter({
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-[#faf9f5]">
       {/* Top bar */}
-      <header className="flex-shrink-0 h-12 border-b border-zinc-100 bg-white">
+      <header className="flex-shrink-0 h-12 border-b border-zinc-200 bg-white">
         <div className="flex items-center h-full px-6">
           {/* Back */}
           <button

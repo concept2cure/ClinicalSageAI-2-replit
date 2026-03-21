@@ -43,7 +43,7 @@ const REPORT_TYPES = [
     title: 'Sponsor Handoff Brief',
     description: 'Summary for sponsor/CRO handoff communication',
     icon: Users,
-    color: 'bg-violet-50 text-violet-600 border-violet-200',
+    color: 'bg-violet-50 text-violet-600 border-blue-200',
   },
   {
     type: 'transmittal' as const,
@@ -140,7 +140,7 @@ export const ReportCenter: React.FC<{ projectId?: string }> = ({ projectId }) =>
           AI Visuals & Presentations
         </h2>
         <p className="text-xs text-zinc-500 mb-3">
-          Generate infographics, regulatory diagrams, or full slide decks from any report context using Nano Banana (Gemini).
+          Generate infographics, regulatory diagrams, or full slide decks from any report context using AnA Visual (Gemini).
         </p>
         <NanoBananaImageGenerator
           context={projectId ? `Regulatory submission status for project ${projectId}` : 'Regulatory readiness overview'}
@@ -158,7 +158,7 @@ export const ReportCenter: React.FC<{ projectId?: string }> = ({ projectId }) =>
           </div>
         ) : reports.length === 0 ? (
           <div className="text-center py-12 text-zinc-400">
-            <FileOutput className="w-10 h-10 mx-auto mb-3 text-zinc-300" />
+            <FileOutput className="w-10 h-10 mx-auto mb-3 text-zinc-400" />
             <p className="text-sm font-medium">No reports generated yet</p>
             <p className="text-xs mt-1">Generate your first report using the templates above</p>
           </div>

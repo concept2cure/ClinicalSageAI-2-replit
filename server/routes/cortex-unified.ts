@@ -164,7 +164,7 @@ router.get('/docs', (_req: Request, res: Response) => {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONTEXT-AWARE CHAT ENDPOINT
-// POST /api/cortex/chat — Primary endpoint for ZenChat / Lumen Cortex
+// POST /api/cortex/chat — Primary endpoint for ZenChat / AnA RI
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // AI Gateway instance (lazy-initialized)
@@ -182,7 +182,7 @@ function ensureChatGateway() {
 
 /**
  * POST /api/cortex/chat
- * Context-aware chat endpoint for Lumen Cortex.
+ * Context-aware chat endpoint for AnA RI.
  * Accepts project_id and automatically injects project context into the system prompt.
  */
 router.post('/chat', requireAuth, async (req: Request, res: Response) => {

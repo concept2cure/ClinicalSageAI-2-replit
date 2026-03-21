@@ -438,29 +438,31 @@ export function GovernedDocumentPanel({
 
   // ── Render ───────────────────────────────────────────────────────────
   return (
-    <div className="w-[200px] 2xl:w-[240px] border-l border-zinc-100 shrink-0 flex flex-col bg-white overflow-hidden">
+    <div className="w-[200px] 2xl:w-[240px] border-l border-zinc-200 shrink-0 flex flex-col bg-white overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-1.5 border-b border-zinc-100 bg-zinc-50/40">
+      <div className="flex items-center justify-between px-3 py-1.5 border-b border-zinc-200 bg-zinc-50/60">
         <div className="flex items-center gap-1.5">
           <Shield className="w-3 h-3 text-blue-600" />
-          <span className="text-[10px] font-semibold text-zinc-700">{tailoring.panelTitle}</span>
+          <span className="text-xs font-semibold text-zinc-700">{tailoring.panelTitle}</span>
         </div>
         <button
           onClick={onClose}
-          className="p-0.5 text-zinc-400 hover:text-zinc-600 rounded hover:bg-zinc-100"
+          className="p-1.5 text-zinc-400 hover:text-zinc-600 rounded hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
+          aria-label="Close panel"
+          title="Close"
         >
-          <X className="w-3 h-3" />
+          <X className="w-3.5 h-3.5" />
         </button>
       </div>
 
       {/* Tab bar */}
-      <div className="flex border-b border-zinc-100">
+      <div className="flex border-b border-zinc-200">
         {(['status', 'audit', 'versions', 'snapshots', 'threads'] as const).map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={cn(
-              'flex-1 py-1.5 text-[9px] font-medium capitalize transition-colors',
+              'flex-1 py-1.5 text-xs font-medium capitalize transition-colors duration-150',
               activeTab === tab
                 ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/30'
                 : 'text-zinc-400 hover:text-zinc-600'
@@ -478,7 +480,7 @@ export function GovernedDocumentPanel({
       <div className="flex-1 overflow-y-auto">
         {loading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-4 h-4 animate-spin text-zinc-300" />
+            <Loader2 className="w-4 h-4 animate-spin text-zinc-400" />
           </div>
         ) : activeTab === 'status' ? (
           <StatusTab
@@ -523,7 +525,7 @@ export function GovernedDocumentPanel({
           <div className="bg-white rounded-lg shadow-xl p-4 mx-3 w-full max-w-[280px]">
             <div className="flex items-center gap-2 mb-3">
               <AlertCircle className="w-4 h-4 text-amber-500" />
-              <span className="text-sm font-semibold text-zinc-800">Reason Required</span>
+              <span className="text-sm font-semibold text-zinc-900">Reason Required</span>
             </div>
             <p className="text-xs text-zinc-500 mb-2">
               Regressing{' '}
@@ -540,7 +542,7 @@ export function GovernedDocumentPanel({
               value={rationale}
               onChange={e => setRationale(e.target.value)}
               placeholder="Enter reason for status regression..."
-              className="w-full h-20 text-xs border border-zinc-200 rounded-md p-2 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full h-20 text-xs border border-zinc-200 rounded-md p-2 resize-none focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
               autoFocus
             />
             <div className="flex justify-end gap-2 mt-3">
@@ -556,13 +558,13 @@ export function GovernedDocumentPanel({
               <button
                 onClick={() => handleTransition(rationaleTarget, rationale.trim())}
                 disabled={rationale.trim().length < 5 || changingStatus}
-                className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-1"
               >
                 {changingStatus && <Loader2 className="w-3 h-3 animate-spin" />}
                 Confirm
               </button>
             </div>
-            <p className="text-[9px] text-zinc-400 mt-1">Minimum 5 characters</p>
+            <p className="text-xs text-zinc-400 mt-1">Minimum 5 characters</p>
           </div>
         </div>
       )}
@@ -573,7 +575,7 @@ export function GovernedDocumentPanel({
           <div className="bg-white rounded-lg shadow-xl p-4 mx-3 w-full max-w-[280px]">
             <div className="flex items-center gap-2 mb-3">
               <CheckCircle className="w-4 h-4 text-emerald-500" />
-              <span className="text-sm font-semibold text-zinc-800">
+              <span className="text-sm font-semibold text-zinc-900">
                 {attestationTarget === 'approved'
                   ? tailoring.statusLabels.approved
                   : tailoring.lockActionLabel}{' '}
@@ -589,11 +591,11 @@ export function GovernedDocumentPanel({
             </p>
             <div className="space-y-2">
               <div>
-                <label className="text-[9px] text-zinc-400 uppercase">Meaning of Signature</label>
+                <label className="text-xs text-zinc-400 uppercase">Meaning of Signature</label>
                 <select
                   value={attestationMeaning}
                   onChange={e => setAttestationMeaning(e.target.value)}
-                  className="w-full text-xs border border-zinc-200 rounded-md p-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full text-xs border border-zinc-200 rounded-md p-1.5 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                 >
                   {attestationTarget === 'approved'
                     ? tailoring.approvalMeanings.map(m => (
@@ -609,17 +611,17 @@ export function GovernedDocumentPanel({
                 </select>
               </div>
               <div>
-                <label className="text-[9px] text-zinc-400 uppercase">Attestation Statement</label>
+                <label className="text-xs text-zinc-400 uppercase">Attestation Statement</label>
                 <textarea
                   value={attestationText}
                   onChange={e => setAttestationText(e.target.value)}
                   placeholder={tailoring.attestationPlaceholder}
-                  className="w-full h-16 text-xs border border-zinc-200 rounded-md p-2 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full h-16 text-xs border border-zinc-200 rounded-md p-2 resize-none focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                   autoFocus
                 />
               </div>
             </div>
-            <div className="flex items-center gap-1.5 mt-2 text-[9px] text-zinc-400">
+            <div className="flex items-center gap-1.5 mt-2 text-xs text-zinc-400">
               <Shield className="w-3 h-3" />
               <span>
                 Signed as {permissions?.role || 'user'} · {tailoring.regulatoryRef}
@@ -644,7 +646,7 @@ export function GovernedDocumentPanel({
                   })
                 }
                 disabled={attestationText.trim().length < 10 || changingStatus}
-                className="px-3 py-1 text-xs bg-emerald-600 text-white rounded hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                className="px-3 py-1 text-xs bg-emerald-600 text-white rounded hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-1"
               >
                 {changingStatus && <Loader2 className="w-3 h-3 animate-spin" />}
                 {attestationTarget === 'approved'
@@ -652,7 +654,7 @@ export function GovernedDocumentPanel({
                   : tailoring.lockActionLabel}
               </button>
             </div>
-            <p className="text-[9px] text-zinc-400 mt-1">Minimum 10 characters</p>
+            <p className="text-xs text-zinc-400 mt-1">Minimum 10 characters</p>
           </div>
         </div>
       )}
@@ -698,9 +700,9 @@ function StatusTab({
       {/* Current status + role badge */}
       <div>
         <div className="flex items-center justify-between mb-1">
-          <div className="text-[9px] text-zinc-400 uppercase tracking-wide">Current Status</div>
+          <div className="text-xs text-zinc-400 uppercase tracking-wide">Current Status</div>
           {permissions && (
-            <span className="text-[8px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium uppercase">
+            <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium uppercase">
               {permissions.role}
             </span>
           )}
@@ -725,22 +727,22 @@ function StatusTab({
       {/* Published / Approved version indicators */}
       {(artifact.publishedVersionId || artifact.approvedVersionId) && (
         <div>
-          <div className="text-[9px] text-zinc-400 uppercase tracking-wide mb-1">
+          <div className="text-xs text-zinc-400 uppercase tracking-wide mb-1">
             Version Milestones
           </div>
           <div className="space-y-1">
             {artifact.approvedVersionId && (
-              <div className="flex items-center gap-1.5 text-[10px] text-emerald-700 bg-emerald-50 px-2 py-1 rounded ring-1 ring-emerald-200/60">
+              <div className="flex items-center gap-1.5 text-xs text-emerald-700 bg-emerald-50 px-2 py-1 rounded ring-1 ring-emerald-200/60">
                 <CheckCircle className="w-3 h-3" />
                 <span>Approved at v{artifact.approvedVersionId}</span>
               </div>
             )}
             {artifact.publishedVersionId && (
-              <div className="flex items-center gap-1.5 text-[10px] text-blue-700 bg-blue-50 px-2 py-1 rounded ring-1 ring-blue-200/60">
+              <div className="flex items-center gap-1.5 text-xs text-blue-700 bg-blue-50 px-2 py-1 rounded ring-1 ring-blue-200/60">
                 <Lock className="w-3 h-3" />
                 <span>Published at v{artifact.publishedVersionId}</span>
                 {artifact.publishedAt && (
-                  <span className="text-[9px] text-blue-500 ml-auto">
+                  <span className="text-xs text-blue-500 ml-auto">
                     {formatTime(artifact.publishedAt)}
                   </span>
                 )}
@@ -752,10 +754,10 @@ function StatusTab({
 
       {/* Workflow transitions — permission filtered */}
       <div>
-        <div className="text-[9px] text-zinc-400 uppercase tracking-wide mb-1">Actions</div>
+        <div className="text-xs text-zinc-400 uppercase tracking-wide mb-1">Actions</div>
         <div className="space-y-1">
           {permittedTransitions.length === 0 && (
-            <div className="text-[10px] text-zinc-400 italic px-2 py-1">
+            <div className="text-xs text-zinc-400 italic px-2 py-1">
               No transitions available for your role
             </div>
           )}
@@ -772,7 +774,7 @@ function StatusTab({
                 onClick={() => onTransition(target)}
                 disabled={changingStatus}
                 className={cn(
-                  'w-full text-left px-2 py-1.5 rounded text-[11px] font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50',
+                  'w-full text-left px-2 py-1.5 rounded text-xs font-medium flex items-center gap-1.5 transition-colors disabled:opacity-60',
                   regression
                     ? 'text-amber-700 bg-amber-50 hover:bg-amber-100 ring-1 ring-amber-200/60'
                     : 'text-blue-700 bg-blue-50 hover:bg-blue-100 ring-1 ring-blue-200/60'
@@ -787,7 +789,7 @@ function StatusTab({
                 )}
                 {label}
                 {regression && (
-                  <span className="text-[9px] text-amber-500 ml-auto">requires reason</span>
+                  <span className="text-xs text-amber-500 ml-auto">requires reason</span>
                 )}
               </button>
             );
@@ -797,8 +799,8 @@ function StatusTab({
 
       {/* Identity */}
       <div>
-        <div className="text-[9px] text-zinc-400 uppercase tracking-wide mb-1">Identity</div>
-        <div className="space-y-1 text-[10px] text-zinc-600">
+        <div className="text-xs text-zinc-400 uppercase tracking-wide mb-1">Identity</div>
+        <div className="space-y-1 text-xs text-zinc-600">
           <div className="flex items-center gap-1.5">
             <FileText className="w-3 h-3 text-zinc-400" />
             <span className="truncate">{artifact.title}</span>
@@ -818,7 +820,7 @@ function StatusTab({
           {artifact.contentHash && (
             <div className="flex items-center gap-1.5">
               <Hash className="w-3 h-3 text-zinc-400" />
-              <span className="font-mono text-[9px]">{artifact.contentHash.slice(0, 16)}…</span>
+              <span className="font-mono text-xs">{artifact.contentHash.slice(0, 16)}…</span>
             </div>
           )}
           <div className="flex items-center gap-1.5">
@@ -831,12 +833,12 @@ function StatusTab({
       {/* Recent status history */}
       {statusEvents.length > 0 && (
         <div>
-          <div className="text-[9px] text-zinc-400 uppercase tracking-wide mb-1">
+          <div className="text-xs text-zinc-400 uppercase tracking-wide mb-1">
             Status History
           </div>
           <div className="space-y-1">
             {statusEvents.map(e => (
-              <div key={e.eventId} className="flex items-start gap-1.5 text-[10px]">
+              <div key={e.eventId} className="flex items-start gap-1.5 text-xs">
                 <Shield className="w-3 h-3 text-blue-400 mt-0.5 shrink-0" />
                 <div>
                   <div className="text-zinc-700">{e.sourceDescription}</div>
@@ -844,7 +846,7 @@ function StatusTab({
                     {e.actorName} · {formatTime(e.createdAt)}
                   </div>
                   {e.details?.reason && (
-                    <div className="text-amber-600 text-[9px] mt-0.5 italic">
+                    <div className="text-amber-600 text-xs mt-0.5 italic">
                       Reason: {e.details.reason}
                     </div>
                   )}
@@ -860,7 +862,7 @@ function StatusTab({
         <div>
           <button
             onClick={onOpenDiff}
-            className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-[10px] font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 ring-1 ring-indigo-200/60 transition-colors"
+            className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 ring-1 ring-blue-200/60 transition-colors duration-150"
           >
             <GitBranch className="w-3 h-3" />
             Compare Versions
@@ -876,13 +878,13 @@ function StatusTab({
 function AuditTab({ events }: { events: ProvenanceEvent[] }) {
   if (events.length === 0) {
     return (
-      <div className="p-4 text-center text-[11px] text-zinc-400">No audit events recorded yet.</div>
+      <div className="p-4 text-center text-xs text-zinc-400">No audit events recorded yet.</div>
     );
   }
 
   return (
     <div className="p-2.5">
-      <div className="text-[9px] text-zinc-400 uppercase tracking-wide mb-2">
+      <div className="text-xs text-zinc-400 uppercase tracking-wide mb-2">
         Document Timeline ({events.length} events)
       </div>
       <div className="relative">
@@ -896,10 +898,10 @@ function AuditTab({ events }: { events: ProvenanceEvent[] }) {
                 <EventIcon type={e.eventType} />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-[10px] text-zinc-700 leading-snug">
+                <div className="text-xs text-zinc-700 leading-snug">
                   {e.sourceDescription || e.eventAction}
                 </div>
-                <div className="text-[9px] text-zinc-400 flex items-center gap-1 mt-0.5">
+                <div className="text-xs text-zinc-400 flex items-center gap-1 mt-0.5">
                   {e.actorName && (
                     <>
                       <User className="w-2.5 h-2.5" />
@@ -910,7 +912,7 @@ function AuditTab({ events }: { events: ProvenanceEvent[] }) {
                   <span>{formatTime(e.createdAt)}</span>
                 </div>
                 {e.details?.reason && (
-                  <div className="text-[9px] text-amber-600 mt-0.5 italic">
+                  <div className="text-xs text-amber-600 mt-0.5 italic">
                     Reason: {e.details.reason}
                   </div>
                 )}
@@ -918,16 +920,16 @@ function AuditTab({ events }: { events: ProvenanceEvent[] }) {
                   <div className="flex items-center gap-1 mt-0.5">
                     <span
                       className={cn(
-                        'text-[8px] px-1 py-px rounded ring-1',
+                        'text-xs px-1 py-px rounded ring-1',
                         STATUS_COLORS[e.details.previousStatus]
                       )}
                     >
                       {e.details.previousStatus}
                     </span>
-                    <ArrowRight className="w-2.5 h-2.5 text-zinc-300" />
+                    <ArrowRight className="w-2.5 h-2.5 text-zinc-400" />
                     <span
                       className={cn(
-                        'text-[8px] px-1 py-px rounded ring-1',
+                        'text-xs px-1 py-px rounded ring-1',
                         STATUS_COLORS[e.details.newStatus]
                       )}
                     >
@@ -936,14 +938,14 @@ function AuditTab({ events }: { events: ProvenanceEvent[] }) {
                   </div>
                 )}
                 {e.details?.attestation && (
-                  <div className="mt-1 px-1.5 py-1 bg-emerald-50 rounded text-[9px] text-emerald-800 border-l-2 border-emerald-400">
+                  <div className="mt-1 px-1.5 py-1 bg-emerald-50 rounded text-xs text-emerald-800 border-l-2 border-emerald-400">
                     <div className="flex items-center gap-1">
                       <PenTool className="w-2.5 h-2.5" />
                       <span className="font-medium">
                         {e.details.attestation.meaning || 'Attested'}
                       </span>
                       {e.details.signatureId && (
-                        <span className="text-[8px] text-emerald-500 font-mono">
+                        <span className="text-xs text-emerald-500 font-mono">
                           sig:{e.details.signatureId}
                         </span>
                       )}
@@ -967,12 +969,12 @@ function AuditTab({ events }: { events: ProvenanceEvent[] }) {
 function SnapshotsTab({ snapshots }: { snapshots: SnapshotEntry[] }) {
   if (snapshots.length === 0) {
     return (
-      <div className="p-4 text-center text-[11px] text-zinc-400">No snapshot history yet.</div>
+      <div className="p-4 text-center text-xs text-zinc-400">No snapshot history yet.</div>
     );
   }
 
   const actionIcons: Record<string, React.ReactNode> = {
-    publish: <Lock className="w-3 h-3 text-indigo-500" />,
+    publish: <Lock className="w-3 h-3 text-blue-500" />,
     'export-docx': <FileText className="w-3 h-3 text-blue-500" />,
     'export-pdf': <FileText className="w-3 h-3 text-red-500" />,
     'submission-snapshot': <Shield className="w-3 h-3 text-emerald-500" />,
@@ -987,29 +989,29 @@ function SnapshotsTab({ snapshots }: { snapshots: SnapshotEntry[] }) {
 
   return (
     <div className="p-2.5">
-      <div className="text-[9px] text-zinc-400 uppercase tracking-wide mb-2">
+      <div className="text-xs text-zinc-400 uppercase tracking-wide mb-2">
         Submission Snapshots ({snapshots.length})
       </div>
       <div className="space-y-1.5">
         {snapshots.map(s => (
           <div
             key={s.snapshotId}
-            className="px-2 py-1.5 rounded text-[10px] ring-1 bg-zinc-50 ring-zinc-200/60"
+            className="px-2 py-1.5 rounded text-xs ring-1 bg-zinc-50 ring-zinc-200/60"
           >
             <div className="flex items-center gap-1.5 mb-0.5">
               {actionIcons[s.actionType] || <Clock className="w-3 h-3 text-zinc-400" />}
-              <span className="font-semibold text-zinc-800">
+              <span className="font-semibold text-zinc-900">
                 {actionLabels[s.actionType] || s.actionType}
               </span>
               {s.versionId && (
-                <span className="text-[8px] px-1 py-px bg-zinc-200 text-zinc-600 rounded">
+                <span className="text-xs px-1 py-px bg-zinc-200 text-zinc-600 rounded">
                   v{s.versionId}
                 </span>
               )}
             </div>
 
             {s.attestationText && (
-              <div className="mt-1 px-1.5 py-1 bg-emerald-50 rounded text-[9px] text-emerald-800 border-l-2 border-emerald-400">
+              <div className="mt-1 px-1.5 py-1 bg-emerald-50 rounded text-xs text-emerald-800 border-l-2 border-emerald-400">
                 <div className="flex items-center gap-1 mb-0.5">
                   <PenTool className="w-2.5 h-2.5" />
                   <span className="font-medium">{s.signatureMeaning || 'Attested'}</span>
@@ -1019,7 +1021,7 @@ function SnapshotsTab({ snapshots }: { snapshots: SnapshotEntry[] }) {
             )}
 
             {s.filename && (
-              <div className="text-[9px] text-zinc-500 mt-0.5 flex items-center gap-1">
+              <div className="text-xs text-zinc-500 mt-0.5 flex items-center gap-1">
                 <FileText className="w-2.5 h-2.5" />
                 {s.filename}
                 {s.fileSize && (
@@ -1028,7 +1030,7 @@ function SnapshotsTab({ snapshots }: { snapshots: SnapshotEntry[] }) {
               </div>
             )}
 
-            <div className="flex items-center gap-2 mt-0.5 text-[9px] text-zinc-400">
+            <div className="flex items-center gap-2 mt-0.5 text-xs text-zinc-400">
               {s.contentHash && (
                 <span className="font-mono flex items-center gap-0.5">
                   <Hash className="w-2.5 h-2.5" />
@@ -1043,12 +1045,12 @@ function SnapshotsTab({ snapshots }: { snapshots: SnapshotEntry[] }) {
               )}
             </div>
 
-            <div className="flex items-center justify-between mt-0.5 text-[9px] text-zinc-400">
+            <div className="flex items-center justify-between mt-0.5 text-xs text-zinc-400">
               <span className="flex items-center gap-1">
                 <User className="w-2.5 h-2.5" />
                 {s.actorName || 'System'}
                 {s.actorRole && (
-                  <span className="text-[8px] px-1 py-px bg-zinc-200 text-zinc-500 rounded">
+                  <span className="text-xs px-1 py-px bg-zinc-200 text-zinc-500 rounded">
                     {s.actorRole}
                   </span>
                 )}
@@ -1084,12 +1086,12 @@ function VersionsTab({
   publishedVersionId?: number;
 }) {
   if (versions.length === 0) {
-    return <div className="p-4 text-center text-[11px] text-zinc-400">No version history yet.</div>;
+    return <div className="p-4 text-center text-xs text-zinc-400">No version history yet.</div>;
   }
 
   return (
     <div className="p-2.5">
-      <div className="text-[9px] text-zinc-400 uppercase tracking-wide mb-2">
+      <div className="text-xs text-zinc-400 uppercase tracking-wide mb-2">
         Version History ({versions.length})
       </div>
       <div className="space-y-1.5">
@@ -1097,7 +1099,7 @@ function VersionsTab({
           <div
             key={v.version}
             className={cn(
-              'px-2 py-1.5 rounded text-[10px] ring-1',
+              'px-2 py-1.5 rounded text-xs ring-1',
               v.version === currentVersion
                 ? 'bg-blue-50 ring-blue-200'
                 : 'bg-zinc-50 ring-zinc-200/60'
@@ -1106,19 +1108,19 @@ function VersionsTab({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
                 <GitBranch className="w-3 h-3 text-zinc-400" />
-                <span className="font-semibold text-zinc-800">v{v.version}</span>
+                <span className="font-semibold text-zinc-900">v{v.version}</span>
                 {v.version === currentVersion && (
-                  <span className="text-[8px] px-1 py-px bg-blue-600 text-white rounded">
+                  <span className="text-xs px-1 py-px bg-blue-600 text-white rounded">
                     current
                   </span>
                 )}
                 {v.version === approvedVersionId && (
-                  <span className="text-[8px] px-1 py-px bg-emerald-600 text-white rounded">
+                  <span className="text-xs px-1 py-px bg-emerald-600 text-white rounded">
                     approved
                   </span>
                 )}
                 {v.version === publishedVersionId && (
-                  <span className="text-[8px] px-1 py-px bg-indigo-600 text-white rounded">
+                  <span className="text-xs px-1 py-px bg-blue-600 text-white rounded">
                     published
                   </span>
                 )}
@@ -1127,7 +1129,7 @@ function VersionsTab({
                 <button
                   onClick={() => onRollback(v.version)}
                   disabled={rollingBack}
-                  className="text-[9px] text-blue-600 hover:text-blue-800 flex items-center gap-0.5 disabled:opacity-50"
+                  className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-0.5 disabled:opacity-60"
                   title={`Restore version ${v.version}`}
                 >
                   <RotateCcw className="w-2.5 h-2.5" />
@@ -1138,7 +1140,7 @@ function VersionsTab({
             {v.changeDescription && (
               <div className="text-zinc-600 mt-0.5 leading-snug">{v.changeDescription}</div>
             )}
-            <div className="flex items-center gap-2 mt-0.5 text-[9px] text-zinc-400">
+            <div className="flex items-center gap-2 mt-0.5 text-xs text-zinc-400">
               <span className="font-mono">{v.contentHash?.slice(0, 12)}…</span>
               <span>{formatTime(v.createdAt)}</span>
             </div>
@@ -1147,14 +1149,14 @@ function VersionsTab({
       </div>
 
       {isLocked && (
-        <div className="mt-2 px-2 py-1 bg-amber-50 rounded text-[9px] text-amber-700 flex items-center gap-1">
+        <div className="mt-2 px-2 py-1 bg-amber-50 rounded text-xs text-amber-700 flex items-center gap-1">
           <Lock className="w-3 h-3" />
           Rollback disabled while locked
         </div>
       )}
 
       {!isLocked && canRollback === false && (
-        <div className="mt-2 px-2 py-1 bg-amber-50 rounded text-[9px] text-amber-700 flex items-center gap-1">
+        <div className="mt-2 px-2 py-1 bg-amber-50 rounded text-xs text-amber-700 flex items-center gap-1">
           <Shield className="w-3 h-3" />
           Rollback not permitted for your role
         </div>
@@ -1164,7 +1166,7 @@ function VersionsTab({
         <div className="mt-2">
           <button
             onClick={onOpenDiff}
-            className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-[10px] font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 ring-1 ring-indigo-200/60 transition-colors"
+            className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 ring-1 ring-blue-200/60 transition-colors duration-150"
           >
             <GitBranch className="w-3 h-3" />
             Compare Versions

@@ -295,10 +295,10 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
         className={cn(
           'fixed bottom-6 right-6 z-50',
           'w-14 h-14 rounded-full',
-          'bg-gradient-to-br from-violet-500 to-violet-600',
-          'shadow-lg shadow-violet-500/30',
+          'bg-violet-600',
+          'shadow-sm',
           'flex items-center justify-center',
-          'hover:scale-105 transition-transform',
+          'hover:scale-105 transition-transform duration-150',
           className
         )}
       >
@@ -310,18 +310,18 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
   return (
     <div
       className={cn(
-        'flex flex-col bg-white rounded-2xl overflow-hidden',
+        'flex flex-col bg-white rounded-xl overflow-hidden',
         position === 'floating' &&
-          'fixed bottom-6 right-6 z-50 w-96 max-h-[500px] shadow-2xl border border-zinc-200',
+          'fixed bottom-6 right-6 z-50 w-96 max-h-[500px] shadow-lg border border-zinc-200',
         position === 'sidebar' && 'h-full border-l border-zinc-200',
         position === 'inline' && 'border border-zinc-200',
         className
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100 bg-gradient-to-r from-violet-50 to-purple-50">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 bg-zinc-50">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center">
             <Sparkles className="w-4 h-4 text-white" />
           </div>
           <div>
@@ -366,7 +366,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
             >
               {/* Avatar */}
               {message.role === 'assistant' && (
-                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center flex-shrink-0">
+                <div className="w-7 h-7 rounded-lg bg-violet-600 flex items-center justify-center flex-shrink-0">
                   <Sparkles className="w-3.5 h-3.5 text-white" />
                 </div>
               )}
@@ -374,7 +374,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
               {/* Message Content */}
               <div
                 className={cn(
-                  'max-w-[80%] rounded-2xl px-4 py-2.5',
+                  'max-w-[80%] rounded-xl px-4 py-2.5',
                   message.role === 'user' ? 'bg-violet-600 text-white' : 'bg-zinc-100 text-zinc-900'
                 )}
               >
@@ -392,7 +392,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
                           className={cn(
                             'w-full flex items-center gap-2 px-3 py-2 rounded-lg',
                             'bg-white border border-zinc-200 text-sm text-zinc-700',
-                            'hover:border-violet-300 hover:bg-violet-50 transition-colors'
+                            'hover:border-blue-200 hover:bg-blue-50 transition-colors duration-150'
                           )}
                         >
                           <Icon className="w-4 h-4 text-violet-600" />
@@ -411,10 +411,10 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
         {/* Thinking indicator */}
         {isThinking && (
           <div className="flex gap-3">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center flex-shrink-0">
+            <div className="w-7 h-7 rounded-lg bg-violet-600 flex items-center justify-center flex-shrink-0">
               <Sparkles className="w-3.5 h-3.5 text-white" />
             </div>
-            <div className="bg-zinc-100 rounded-2xl px-4 py-2.5">
+            <div className="bg-zinc-100 rounded-xl px-4 py-2.5">
               <div className="flex items-center gap-2 text-sm text-zinc-500">
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 Thinking...
@@ -428,7 +428,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
 
       {/* Suggestions */}
       {suggestions.length > 0 && showQuickPrompts && messages.length === 0 && (
-        <div className="px-4 pb-2 border-t border-zinc-100">
+        <div className="px-4 pb-2 border-t border-zinc-200">
           <p className="text-xs text-zinc-500 mb-2 mt-3">Suggested actions</p>
           <div className="space-y-2">
             {suggestions.map(suggestion => {
@@ -439,8 +439,8 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
                   onClick={suggestion.action}
                   className={cn(
                     'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl',
-                    'bg-zinc-50 border border-zinc-100',
-                    'hover:bg-violet-50 hover:border-violet-200 transition-colors',
+                    'bg-zinc-50 border border-zinc-200',
+                    'hover:bg-blue-50 hover:border-blue-200 transition-colors duration-150',
                     'text-left group'
                   )}
                 >
@@ -453,7 +453,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
                       <p className="text-xs text-zinc-500">{suggestion.description}</p>
                     )}
                   </div>
-                  <ArrowRight className="w-4 h-4 text-zinc-400 group-hover:text-violet-600 transition-colors" />
+                  <ArrowRight className="w-4 h-4 text-zinc-400 group-hover:text-violet-600 transition-colors duration-150" />
                 </button>
               );
             })}
@@ -474,7 +474,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
                   className={cn(
                     'flex items-center gap-1.5 px-3 py-1.5 rounded-full',
                     'bg-zinc-100 text-zinc-700 text-xs',
-                    'hover:bg-violet-100 hover:text-violet-700 transition-colors'
+                    'hover:bg-violet-100 hover:text-violet-700 transition-colors duration-150'
                   )}
                 >
                   <Icon className="w-3 h-3" />
@@ -487,7 +487,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
       )}
 
       {/* Input */}
-      <div className="p-4 border-t border-zinc-100">
+      <div className="p-4 border-t border-zinc-200">
         <div className="relative flex items-end gap-2 bg-zinc-50 rounded-xl px-3 py-2">
           <textarea
             ref={inputRef}
@@ -498,7 +498,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
             rows={1}
             className={cn(
               'flex-1 bg-transparent resize-none text-sm',
-              'placeholder:text-zinc-400 focus:outline-none',
+              'placeholder:text-zinc-400 outline-none',
               'min-h-[24px] max-h-[120px]'
             )}
           />
@@ -515,9 +515,9 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
               onClick={() => sendMessage(input)}
               disabled={!input.trim() || isThinking}
               className={cn(
-                'p-1.5 rounded-lg transition-colors',
+                'p-1.5 rounded-lg transition-colors duration-150',
                 input.trim() && !isThinking
-                  ? 'bg-violet-600 text-white hover:bg-violet-700'
+                  ? 'bg-blue-600 text-white hover:bg-blue-700'
                   : 'bg-zinc-200 text-zinc-400'
               )}
             >

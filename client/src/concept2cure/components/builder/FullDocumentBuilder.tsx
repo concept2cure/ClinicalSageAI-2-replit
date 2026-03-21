@@ -8,6 +8,7 @@
 
 import React, { useState, useCallback } from 'react';
 import NanoBananaImageGenerator from '@/components/NanoBananaImageGenerator';
+import { LIFECYCLE } from '@/concept2cure/components/ui/enterprise';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -170,7 +171,7 @@ export const FullDocumentBuilder: React.FC = () => {
         <select
           value={studyInfo[field]}
           onChange={e => updateStudyInfo(field, e.target.value)}
-          className="w-full px-3 py-2.5 border border-zinc-200 rounded-lg text-sm bg-white focus:outline-none focus:border-blue-500"
+          className="w-full px-3 py-2.5 border border-zinc-200 rounded-lg text-sm bg-white outline-none focus:border-blue-500"
         >
           <option value="">Select...</option>
           {options?.map(o => <option key={o} value={o}>{o}</option>)}
@@ -181,14 +182,14 @@ export const FullDocumentBuilder: React.FC = () => {
           onChange={e => updateStudyInfo(field, e.target.value)}
           placeholder={placeholder}
           rows={3}
-          className="w-full px-3 py-2.5 border border-zinc-200 rounded-lg text-sm focus:outline-none focus:border-blue-500 resize-none"
+          className="w-full px-3 py-2.5 border border-zinc-200 rounded-lg text-sm outline-none focus:border-blue-500 resize-none"
         />
       ) : (
         <input
           value={studyInfo[field]}
           onChange={e => updateStudyInfo(field, e.target.value)}
           placeholder={placeholder}
-          className="w-full px-3 py-2.5 border border-zinc-200 rounded-lg text-sm focus:outline-none focus:border-blue-500"
+          className="w-full px-3 py-2.5 border border-zinc-200 rounded-lg text-sm outline-none focus:border-blue-500"
         />
       )}
     </div>
@@ -209,7 +210,7 @@ export const FullDocumentBuilder: React.FC = () => {
           <button
             key={dt.type}
             onClick={() => { setSelectedType(dt.type); setStep('agencies'); }}
-            className={`p-5 rounded-xl border-2 text-left transition-all hover:shadow-md ${
+            className={`p-5 rounded-xl border text-left transition-all hover:shadow-md ${
               selectedType === dt.type ? 'border-blue-500 bg-blue-50/50' : 'border-zinc-200 hover:border-zinc-300'
             }`}
           >
@@ -235,7 +236,7 @@ export const FullDocumentBuilder: React.FC = () => {
           <button
             key={a.id}
             onClick={() => toggleAgency(a.id)}
-            className={`p-4 rounded-xl border-2 flex items-center gap-3 transition-all ${
+            className={`p-4 rounded-xl border flex items-center gap-3 transition-all ${
               selectedAgencies.includes(a.id)
                 ? 'border-blue-500 bg-blue-50/50'
                 : 'border-zinc-200 hover:border-zinc-300'
@@ -261,7 +262,7 @@ export const FullDocumentBuilder: React.FC = () => {
         <button
           onClick={() => setStep('study_info')}
           disabled={selectedAgencies.length === 0}
-          className="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          className="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-60"
         >
           Continue
         </button>
@@ -297,7 +298,7 @@ export const FullDocumentBuilder: React.FC = () => {
         <button
           onClick={handleGenerate}
           disabled={!studyInfo.title || !studyInfo.indication || !studyInfo.primaryEndpoint}
-          className="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          className="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-60"
         >
           Generate Document
         </button>
@@ -307,7 +308,7 @@ export const FullDocumentBuilder: React.FC = () => {
 
   const renderGeneratingStep = () => (
     <div className="flex flex-col items-center justify-center py-20 space-y-6">
-      <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center">
+      <div className="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center">
         <svg className="w-8 h-8 text-blue-600 animate-spin" fill="none" viewBox="0 0 24 24">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -360,8 +361,8 @@ export const FullDocumentBuilder: React.FC = () => {
             {buildResult.sections.map(section => (
               <div key={`${section.number}-${section.agency || ''}`} className="px-4 py-3 flex items-center gap-3 hover:bg-zinc-50">
                 <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                  section.status === 'drafted' ? 'bg-green-500' :
-                  section.status === 'template_only' ? 'bg-yellow-500' : 'bg-zinc-300'
+                  section.status === 'drafted' ? LIFECYCLE.approved.dot :
+                  section.status === 'template_only' ? LIFECYCLE.draft.dot : LIFECYCLE.not_started.dot
                 }`} />
                 <span className="text-xs font-mono text-zinc-400 w-10">{section.number}</span>
                 <span className="text-sm text-zinc-900 flex-1">{section.title}</span>

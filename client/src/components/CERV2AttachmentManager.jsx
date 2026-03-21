@@ -160,7 +160,7 @@ export default function CERV2AttachmentManager({
         <Paperclip className="w-3.5 h-3.5 text-slate-500" />
         <span className="text-slate-700">Attachments</span>
         {totalFiles > 0 && (
-          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+          <Badge variant="secondary" className="text-[11px] px-1.5 py-0">
             {totalFiles}
           </Badge>
         )}
@@ -177,7 +177,7 @@ export default function CERV2AttachmentManager({
         <div className="flex items-center gap-2">
           <Paperclip className="w-4 h-4 text-slate-600" />
           <span className="font-semibold text-sm text-slate-800">Attachments</span>
-          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+          <Badge variant="outline" className="text-[11px] px-1.5 py-0">
             {totalFiles} total
           </Badge>
         </div>
@@ -222,7 +222,7 @@ export default function CERV2AttachmentManager({
               e.target.value = '';
             }}
           />
-          <p className="text-[10px] text-slate-400 mt-1">
+          <p className="text-[11px] text-slate-400 mt-1">
             Max 10 MB per file · {MAX_FILES_PER_SECTION} files per section
           </p>
         </div>
@@ -254,7 +254,7 @@ export default function CERV2AttachmentManager({
                     <ChevronRight className="w-3 h-3" />
                   )}
                   {section.label}
-                  <Badge variant="secondary" className="text-[9px] px-1 py-0 ml-auto">
+                  <Badge variant="secondary" className="text-[11px] px-1 py-0 ml-auto">
                     {files.length}
                   </Badge>
                 </button>
@@ -269,7 +269,7 @@ export default function CERV2AttachmentManager({
                         >
                           <Icon className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
                           <span className="truncate flex-1">{f.name}</span>
-                          <span className="text-[10px] text-slate-400">{formatSize(f.size)}</span>
+                          <span className="text-[11px] text-slate-400">{formatSize(f.size)}</span>
                           <button
                             onClick={() => removeFile(section.id, i)}
                             className="opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-600"

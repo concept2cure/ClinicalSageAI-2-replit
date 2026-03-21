@@ -29,7 +29,7 @@
 
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
-import { eq, desc, and, isNull, inArray, or, sql } from 'drizzle-orm';
+import { eq, ne, desc, and, isNull, inArray, or, sql } from 'drizzle-orm';
 import { db, pool } from '../db';
 import { createScopedLogger } from '../utils/logger';
 import * as metricsModule from '../metrics.js';
@@ -1619,6 +1619,517 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
     }
     logger.error('AI edit failed', { error: error.message });
     return sendError(res, 500, 'AI editing failed');
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AI AUTOCOMPLETE (Sprint 1A — Copilot-style inline completions)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/concept2cure/ai/autocomplete
+ * Returns a short inline completion for the editor ghost text.
+ * Low latency, low temperature, max ~80 tokens.
+ */
+router.post('/ai/autocomplete', async (req: Request, res: Response) => {
+  try {
+    const { textBefore, context, maxTokens = 80 } = req.body;
+    if (!textBefore || typeof textBefore !== 'string' || textBefore.length < 10) {
+      return sendError(res, 400, 'textBefore is required (min 10 chars)');
+    }
+
+    const { getGateway } = await import('../services/ai-gateway/gateway.js');
+    const gw = getGateway();
+    if (gw.getEnabledProviders().length === 0) {
+      return sendError(res, 503, 'AI service not configured');
+    }
+
+    const systemPrompt = [
+      'You are an inline autocomplete engine for regulatory document authoring.',
+      'Given the text so far, predict the NEXT 1-2 sentences the author is likely to write.',
+      'Match the tone, style, and formality of the existing text.',
+      'Use precise regulatory language appropriate for FDA/EMA submissions.',
+      context?.submissionType ? `Submission type: ${context.submissionType}.` : '',
+      context?.ctdSection ? `CTD Section: ${context.ctdSection}.` : '',
+      context?.documentType ? `Document type: ${context.documentType}.` : '',
+      'Return ONLY the completion text — no explanation, no quotes, no preamble.',
+      'If you cannot predict a useful continuation, return an empty string.',
+    ].filter(Boolean).join(' ');
+
+    const gwResponse = await gw.route({
+      taskType: 'document_drafting',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: textBefore },
+      ],
+      temperature: 0.3,
+      maxTokens: Math.min(maxTokens, 150),
+      callerModule: 'concept2cure/ai-autocomplete',
+    });
+
+    const completion = (gwResponse.content || '').trim();
+    return sendSuccess(res, { completion });
+  } catch (error: any) {
+    logger.error('AI autocomplete failed', { error: error.message });
+    return sendError(res, 500, 'Autocomplete failed');
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AI COMPLIANCE SCAN (Sprint 1C — real-time regulatory scanning)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/concept2cure/ai/compliance-scan
+ * Deep AI-powered compliance scan of document content.
+ * Returns structured issues with severity, rule, and suggested fix.
+ */
+router.post('/ai/compliance-scan', async (req: Request, res: Response) => {
+  try {
+    const { content, documentType, submissionType, ctdSection } = req.body;
+    if (!content || typeof content !== 'string') {
+      return sendError(res, 400, 'content is required');
+    }
+
+    const { getGateway } = await import('../services/ai-gateway/gateway.js');
+    const gw = getGateway();
+    if (gw.getEnabledProviders().length === 0) {
+      return sendError(res, 503, 'AI service not configured');
+    }
+
+    const systemPrompt = [
+      'You are an FDA/EMA regulatory compliance reviewer. Analyze the document content and identify compliance issues.',
+      'For each issue, provide: type (error/warning/info), rule (regulation reference), message (what is wrong), and suggestion (how to fix).',
+      submissionType ? `Submission type: ${submissionType}.` : '',
+      ctdSection ? `CTD Section: ${ctdSection}.` : '',
+      documentType ? `Document type: ${documentType}.` : '',
+      'Return a JSON array of issues: [{"type": "error|warning|info", "rule": "21 CFR 314.50(d)", "message": "...", "suggestion": "..."}]',
+      'Focus on: missing required content, regulatory language violations, formatting issues, and cross-reference gaps.',
+      'Return ONLY valid JSON array, no other text.',
+    ].filter(Boolean).join(' ');
+
+    // Use only first 3000 chars to keep latency low
+    const truncated = content.replace(/<[^>]+>/g, ' ').slice(0, 3000);
+
+    const gwResponse = await gw.route({
+      taskType: 'document_analysis',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: truncated },
+      ],
+      temperature: 0.2,
+      maxTokens: 2000,
+      callerModule: 'concept2cure/ai-compliance-scan',
+    });
+
+    let issues = [];
+    try {
+      const raw = (gwResponse.content || '').trim();
+      // Extract JSON array from response
+      const match = raw.match(/\[[\s\S]*\]/);
+      if (match) {
+        issues = JSON.parse(match[0]);
+      }
+    } catch {
+      issues = [];
+    }
+
+    return sendSuccess(res, { issues, scannedLength: truncated.length });
+  } catch (error: any) {
+    logger.error('Compliance scan failed', { error: error.message });
+    return sendError(res, 500, 'Compliance scan failed');
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AI CITATION SEARCH (Sprint 1B — Smart Citation Insertion)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/concept2cure/ai/citation-search
+ * Search for citable references across project artifacts and CSR database.
+ * Returns formatted citations with metadata for insertion.
+ */
+router.post('/ai/citation-search', async (req: Request, res: Response) => {
+  try {
+    const { query, projectId, limit = 10 } = req.body;
+    if (!query || typeof query !== 'string' || query.length < 2) {
+      return sendError(res, 400, 'query is required (min 2 chars)');
+    }
+
+    const results: Array<{
+      id: string;
+      title: string;
+      authors: string;
+      year: string;
+      sourceType: string;
+      excerpt: string;
+      citationText: string;
+    }> = [];
+
+    // Search project artifacts if projectId provided
+    if (projectId) {
+      try {
+        const artifactResult = await pool.query(
+          `SELECT id, title, content, type, created_at
+           FROM concept2cure_artifacts
+           WHERE project_id = $1
+             AND (title ILIKE $2 OR content ILIKE $2)
+           ORDER BY updated_at DESC
+           LIMIT $3`,
+          [projectId, `%${query}%`, Math.min(limit, 20)]
+        );
+        for (const row of artifactResult.rows) {
+          const year = new Date(row.created_at).getFullYear().toString();
+          const plainText = (row.content || '').replace(/<[^>]+>/g, ' ').trim();
+          results.push({
+            id: `artifact-${row.id}`,
+            title: row.title,
+            authors: 'Project Team',
+            year,
+            sourceType: row.type || 'document',
+            excerpt: plainText.slice(0, 200),
+            citationText: `[Project Team, ${year}]`,
+          });
+        }
+      } catch {
+        // Non-fatal — continue with other sources
+      }
+    }
+
+    // Search CSR knowledge base
+    try {
+      const csrResult = await pool.query(
+        `SELECT id, title, sponsor, indication, phase, approval_date
+         FROM csr_reports
+         WHERE title ILIKE $1 OR sponsor ILIKE $1 OR indication ILIKE $1
+         ORDER BY approval_date DESC NULLS LAST
+         LIMIT $2`,
+        [`%${query}%`, Math.min(limit, 20)]
+      );
+      for (const row of csrResult.rows) {
+        const year = row.approval_date
+          ? new Date(row.approval_date).getFullYear().toString()
+          : 'N/A';
+        results.push({
+          id: `csr-${row.id}`,
+          title: row.title,
+          authors: row.sponsor || 'Unknown',
+          year,
+          sourceType: `CSR Phase ${row.phase || '?'}`,
+          excerpt: `${row.indication || ''} — ${row.sponsor || ''}`.trim(),
+          citationText: `[${row.sponsor || 'Unknown'}, ${year}]`,
+        });
+      }
+    } catch {
+      // CSR table may not exist — non-fatal
+    }
+
+    return sendSuccess(res, { results: results.slice(0, limit), total: results.length });
+  } catch (error: any) {
+    logger.error('Citation search failed', { error: error.message });
+    return sendError(res, 500, 'Citation search failed');
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AI BATCH SECTION EDIT (Sprint 1D — Batch AI Operations)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/concept2cure/ai/batch-edit
+ * Process multiple document sections with an AI action in sequence.
+ * Accepts array of sections, returns array of results.
+ */
+router.post('/ai/batch-edit', async (req: Request, res: Response) => {
+  try {
+    const { sections, action, submissionType } = req.body;
+    if (!sections || !Array.isArray(sections) || sections.length === 0) {
+      return sendError(res, 400, 'sections array is required');
+    }
+    if (!action || typeof action !== 'string') {
+      return sendError(res, 400, 'action is required');
+    }
+
+    const { getGateway } = await import('../services/ai-gateway/gateway.js');
+    const gw = getGateway();
+    if (gw.getEnabledProviders().length === 0) {
+      return sendError(res, 503, 'AI service not configured');
+    }
+
+    const actionPrompts: Record<string, string> = {
+      'rewrite': 'Rewrite this section for clarity, precision, and professional regulatory language. Maintain all factual content.',
+      'expand': 'Expand this section with more detail, evidence references, and supporting data. Keep regulatory tone.',
+      'summarize': 'Create a concise executive summary of this section. Keep key data points and conclusions.',
+      'regulatory-tone': 'Rewrite in formal FDA/EMA regulatory submission language. Use "shall" for requirements, "should" for recommendations.',
+      'add-references': 'Add reference placeholders [Ref X] where claims need supporting evidence. Note what type of reference is needed.',
+    };
+
+    const systemPrompt = [
+      actionPrompts[action] || `Apply the "${action}" transformation to this text.`,
+      submissionType ? `Submission type: ${submissionType}.` : '',
+      'Return ONLY the transformed text — no preamble, no explanation.',
+    ].filter(Boolean).join(' ');
+
+    const results = [];
+    for (const section of sections.slice(0, 20)) {
+      try {
+        const text = (section.content || '').replace(/<[^>]+>/g, ' ').trim().slice(0, 3000);
+        if (text.length < 10) {
+          results.push({ sectionTitle: section.title, result: section.content, error: null });
+          continue;
+        }
+
+        const gwResponse = await gw.route({
+          taskType: 'document_drafting',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: `Section: ${section.title || 'Untitled'}\n\n${text}` },
+          ],
+          temperature: 0.4,
+          maxTokens: 2000,
+          callerModule: 'concept2cure/ai-batch-edit',
+        });
+
+        results.push({
+          sectionTitle: section.title,
+          result: (gwResponse.content || '').trim(),
+          error: null,
+        });
+      } catch (err: any) {
+        results.push({
+          sectionTitle: section.title,
+          result: section.content,
+          error: err.message,
+        });
+      }
+    }
+
+    return sendSuccess(res, { results, processedCount: results.length });
+  } catch (error: any) {
+    logger.error('Batch edit failed', { error: error.message });
+    return sendError(res, 500, 'Batch edit failed');
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CROSS-REFERENCE VALIDATION (Sprint 2C)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/concept2cure/ai/validate-references
+ * Validate cross-references found in document content against project artifacts.
+ */
+router.post('/ai/validate-references', async (req: Request, res: Response) => {
+  try {
+    const { references, projectId } = req.body;
+    if (!references || !Array.isArray(references)) {
+      return sendError(res, 400, 'references array is required');
+    }
+
+    const validatedRefs = [];
+
+    for (const ref of references.slice(0, 50)) {
+      let status: 'valid' | 'broken' | 'unlinked' = 'unlinked';
+      let targetTitle = '';
+
+      if (projectId && ref.targetSection) {
+        try {
+          const result = await pool.query(
+            `SELECT id, title FROM concept2cure_artifacts
+             WHERE project_id = $1
+               AND (ctd_section ILIKE $2 OR title ILIKE $3)
+             LIMIT 1`,
+            [projectId, `%${ref.targetSection}%`, `%${ref.targetSection}%`]
+          );
+          if (result.rows.length > 0) {
+            status = 'valid';
+            targetTitle = result.rows[0].title;
+          } else {
+            status = 'broken';
+          }
+        } catch {
+          status = 'unlinked';
+        }
+      }
+
+      validatedRefs.push({
+        ...ref,
+        status,
+        targetTitle,
+      });
+    }
+
+    return sendSuccess(res, { references: validatedRefs });
+  } catch (error: any) {
+    logger.error('Reference validation failed', { error: error.message });
+    return sendError(res, 500, 'Reference validation failed');
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INCONSISTENCY INTELLIGENCE (Sprint 2C — ARTOS-inspired)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/concept2cure/ai/check-inconsistency
+ * Cross-section change impact detection. When content changes in one section,
+ * identifies other sections in the same project that may need updating.
+ */
+router.post('/ai/check-inconsistency', async (req: Request, res: Response) => {
+  try {
+    const userId = getUserId(req);
+    const { changedText, changedSectionTitle, projectId, artifactId } = req.body;
+
+    if (!changedText || !projectId) {
+      return sendError(res, 400, 'changedText and projectId are required');
+    }
+
+    // Fetch all other artifacts in the project
+    const allArtifacts = await db
+      .select()
+      .from(concept2cureArtifacts)
+      .where(
+        and(
+          eq(concept2cureArtifacts.projectId, projectId),
+          ne(concept2cureArtifacts.id, artifactId || '')
+        )
+      );
+
+    if (allArtifacts.length === 0) {
+      return sendSuccess(res, { sections: [] });
+    }
+
+    // Build context of other sections (limit to first 500 chars each)
+    const otherSections = allArtifacts.slice(0, 10).map((a: any) => ({
+      id: a.id,
+      title: a.title,
+      excerpt: (a.content || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 500),
+    }));
+
+    const prompt = `You are a regulatory document consistency checker. A user changed content in the section "${changedSectionTitle || 'Unknown'}".
+
+Changed content:
+"${changedText.slice(0, 1500)}"
+
+Other sections in the same project:
+${otherSections.map((s: any) => `- [${s.id}] "${s.title}": ${s.excerpt}`).join('\n')}
+
+Identify which other sections (if any) reference similar data points, claims, or statistics as the changed content and may need updating for consistency. Return a JSON array of affected sections:
+[{ "artifactId": "...", "artifactTitle": "...", "affectedText": "relevant excerpt", "reason": "why it may be inconsistent", "severity": "high|medium|low" }]
+
+If no sections are affected, return an empty array []. Only return the JSON array, nothing else.`;
+
+    const { getGateway } = await import('../services/ai-gateway/gateway.js');
+    const gw = getGateway();
+    if (gw.getEnabledProviders().length === 0) {
+      return sendError(res, 503, 'AI service not configured — set ANTHROPIC_API_KEY');
+    }
+
+    const gwResponse = await gw.route({
+      taskType: 'document_analysis',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.2,
+      maxTokens: 2000,
+      callerModule: 'concept2cure/inconsistency-check',
+    });
+
+    let sections = [];
+    try {
+      const content = gwResponse.content || '[]';
+      const jsonMatch = content.match(/\[[\s\S]*\]/);
+      sections = jsonMatch ? JSON.parse(jsonMatch[0]) : [];
+    } catch {
+      sections = [];
+    }
+
+    logger.info('Inconsistency check completed', { userId, projectId, affectedCount: sections.length });
+    return sendSuccess(res, { sections });
+  } catch (error: any) {
+    logger.error('Inconsistency check failed', { error: error.message });
+    return sendError(res, 500, 'Inconsistency analysis failed');
+  }
+});
+
+/**
+ * POST /api/concept2cure/ai/extract-metadata
+ * AI-powered metadata extraction from source documents.
+ * Extracts study endpoints, sample sizes, key findings, p-values.
+ */
+router.post('/ai/extract-metadata', async (req: Request, res: Response) => {
+  try {
+    const userId = getUserId(req);
+    const { projectId, artifactId } = req.body;
+
+    if (!projectId || !artifactId) {
+      return sendError(res, 400, 'projectId and artifactId are required');
+    }
+
+    // Fetch the artifact content
+    const [artifact] = await db
+      .select()
+      .from(concept2cureArtifacts)
+      .where(
+        and(
+          eq(concept2cureArtifacts.id, artifactId),
+          eq(concept2cureArtifacts.projectId, projectId)
+        )
+      );
+
+    if (!artifact) {
+      return sendError(res, 404, 'Artifact not found');
+    }
+
+    const plainContent = ((artifact as any).content || '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 3000);
+
+    const prompt = `Extract key metadata from this regulatory/clinical document. Return a JSON object with these fields (use null for missing):
+{
+  "studyType": "e.g. Phase III RCT, observational, meta-analysis",
+  "endpoints": ["primary endpoint", "secondary endpoints..."],
+  "sampleSize": "N=...",
+  "keyFindings": ["finding 1", "finding 2"],
+  "pValues": ["p<0.001 for primary endpoint", ...],
+  "therapeuticArea": "e.g. oncology, cardiology",
+  "phase": "e.g. Phase I, Phase II, Phase III"
+}
+
+Document content:
+"${plainContent}"
+
+Return only the JSON object, nothing else.`;
+
+    const { getGateway } = await import('../services/ai-gateway/gateway.js');
+    const gw2 = getGateway();
+    if (gw2.getEnabledProviders().length === 0) {
+      return sendError(res, 503, 'AI service not configured — set ANTHROPIC_API_KEY');
+    }
+
+    const gwResponse = await gw2.route({
+      taskType: 'document_analysis',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.1,
+      maxTokens: 1000,
+      callerModule: 'concept2cure/extract-metadata',
+    });
+
+    let metadata = {};
+    try {
+      const content = gwResponse.content || '{}';
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      metadata = jsonMatch ? JSON.parse(jsonMatch[0]) : {};
+    } catch {
+      metadata = {};
+    }
+
+    logger.info('Metadata extraction completed', { userId, projectId, artifactId });
+    return sendSuccess(res, metadata);
+  } catch (error: any) {
+    logger.error('Metadata extraction failed', { error: error.message });
+    return sendError(res, 500, 'Metadata extraction failed');
   }
 });
 

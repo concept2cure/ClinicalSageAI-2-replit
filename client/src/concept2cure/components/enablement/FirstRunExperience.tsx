@@ -122,7 +122,7 @@ function WelcomeScreen({ userName, projectCount }: { userName?: string; projectC
   const hasProjects = (projectCount ?? 0) > 0;
   return (
     <div className="flex flex-col items-center justify-center h-full text-center px-8">
-      <h1 className="text-3xl font-semibold text-zinc-900">
+      <h1 className="text-2xl font-semibold text-zinc-900">
         {userName ? `Welcome back, ${userName}` : 'Welcome to Concept2Cure'}
       </h1>
       <p className="text-base text-zinc-500 mt-3">
@@ -139,10 +139,10 @@ function WelcomeScreen({ userName, projectCount }: { userName?: string; projectC
 function DrSageScreen() {
   return (
     <div className="flex flex-col items-center justify-center h-full text-center px-8">
-      <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center mb-6">
+      <div className="w-14 h-14 rounded-lg bg-emerald-50 flex items-center justify-center mb-6">
         <span className="text-2xl">&#x1F9D1;&#x200D;&#x2695;&#xFE0F;</span>
       </div>
-      <h2 className="text-3xl font-semibold text-zinc-900">Meet Dr. Sage</h2>
+      <h2 className="text-2xl font-semibold text-zinc-900">Meet Dr. Sage</h2>
       <p className="text-base text-zinc-500 max-w-md leading-relaxed mt-4">
         Your guide, trainer, and workflow operator. Dr. Sage helps you navigate the
         platform, learn best practices, and execute tasks with confidence.
@@ -170,10 +170,10 @@ function DrSageScreen() {
 function AnAScreen() {
   return (
     <div className="flex flex-col items-center justify-center h-full text-center px-8">
-      <div className="w-14 h-14 rounded-2xl bg-violet-50 flex items-center justify-center mb-6">
+      <div className="w-14 h-14 rounded-lg bg-violet-50 flex items-center justify-center mb-6">
         <span className="text-2xl">&#x2728;</span>
       </div>
-      <h2 className="text-3xl font-semibold text-zinc-900">Meet AnA</h2>
+      <h2 className="text-2xl font-semibold text-zinc-900">Meet AnA</h2>
       <p className="text-base text-zinc-500 max-w-md leading-relaxed mt-4">
         Your Regulatory Intelligence Copilot — always available at the bottom of every page.
         AnA is context-aware: it knows which workspace you're in and adapts its guidance.
@@ -207,7 +207,7 @@ function ChooseRoleScreen({
 }) {
   return (
     <div className="flex flex-col items-center justify-center h-full px-8">
-      <h2 className="text-3xl font-semibold text-zinc-900 mb-2">Choose your role</h2>
+      <h2 className="text-2xl font-semibold text-zinc-900 mb-2">Choose your role</h2>
       <p className="text-base text-zinc-500 mb-8">
         Select your primary role to personalize your experience
       </p>
@@ -247,7 +247,7 @@ function SubmissionTypeScreen({
 
   return (
     <div className="flex flex-col items-center justify-center h-full px-8">
-      <h2 className="text-3xl font-semibold text-zinc-900 mb-2">What are you working on?</h2>
+      <h2 className="text-2xl font-semibold text-zinc-900 mb-2">What are you working on?</h2>
       <p className="text-base text-zinc-500 mb-8">Select your submission type</p>
       <div className="max-w-md w-full space-y-1">
         {SUBMISSION_OPTIONS.map((opt) => (
@@ -298,7 +298,7 @@ function AgentTeamScreen({
 
   return (
     <div className="flex flex-col items-center h-full px-8 pt-12 overflow-y-auto">
-      <h2 className="text-3xl font-semibold text-zinc-900 mb-2">Your AI team</h2>
+      <h2 className="text-2xl font-semibold text-zinc-900 mb-2">Your AI team</h2>
       <p className="text-base text-zinc-500 mb-6">
         {enabledAgents.size} agents configured by phase
       </p>
@@ -314,7 +314,7 @@ function AgentTeamScreen({
                 <button
                   key={agent.id}
                   onClick={() => onToggleAgent(agent.id)}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded hover:bg-zinc-50 transition-colors"
+                  className="w-full flex items-center justify-between px-3 py-2 rounded hover:bg-zinc-50 transition-colors duration-150"
                 >
                   <div className="text-left">
                     <span className="text-sm text-zinc-900">{agent.name}</span>
@@ -337,7 +337,7 @@ function AgentTeamScreen({
           </div>
         ))}
 
-        <div className="border-t border-zinc-100 pt-5">
+        <div className="border-t border-zinc-200 pt-5">
           <p className="text-xs font-medium text-zinc-400 uppercase tracking-wide mb-2">
             Automation level
           </p>
@@ -387,7 +387,7 @@ function ReadyScreen({
 
   return (
     <div className="flex flex-col items-center justify-center h-full px-8">
-      <h2 className="text-3xl font-semibold text-zinc-900 mb-2">Ready to go</h2>
+      <h2 className="text-2xl font-semibold text-zinc-900 mb-2">Ready to go</h2>
       <p className="text-base text-zinc-500 mb-8">
         35 AI agents configured for your {subLabel} workflow.
       </p>
@@ -413,7 +413,7 @@ function ReadyScreen({
 
       <button
         onClick={onLaunch}
-        className="text-sm font-medium text-blue-600 hover:underline transition-colors"
+        className="text-sm font-medium text-blue-600 hover:underline transition-colors duration-150"
       >
         Launch Concept2Cure
       </button>
@@ -546,7 +546,7 @@ export default function FirstRunExperience({ onComplete, onSkip, existingProject
           {screen > 0 && (
             <button
               onClick={goPrev}
-              className="text-sm text-zinc-600 hover:text-zinc-900 transition-colors"
+              className="text-sm text-zinc-600 hover:text-zinc-900 transition-colors duration-150"
             >
               &larr; Back
             </button>
@@ -558,7 +558,7 @@ export default function FirstRunExperience({ onComplete, onSkip, existingProject
         <div className="flex items-center gap-6">
           <button
             onClick={handleSkip}
-            className="text-sm text-zinc-400 hover:text-zinc-600 transition-colors"
+            className="text-sm text-zinc-400 hover:text-zinc-600 transition-colors duration-150"
           >
             Skip
           </button>
@@ -569,7 +569,7 @@ export default function FirstRunExperience({ onComplete, onSkip, existingProject
               className={`text-sm font-medium transition-colors ${
                 canContinue()
                   ? 'text-zinc-900 hover:underline'
-                  : 'text-zinc-300 cursor-not-allowed'
+                  : 'text-zinc-400 cursor-not-allowed'
               }`}
             >
               Continue &rarr;

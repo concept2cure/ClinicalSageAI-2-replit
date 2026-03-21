@@ -181,7 +181,7 @@ export const EvidenceManager: React.FC<EvidenceManagerProps> = ({ programId }) =
       {/* ── Stats Strip ── */}
       <div className="border-b bg-white px-6 py-2 flex items-center gap-4 overflow-x-auto">
         <div className="flex items-center gap-1.5 text-xs text-zinc-500">
-          <span className="font-medium text-zinc-800">{stats.total}</span> total
+          <span className="font-medium text-zinc-900">{stats.total}</span> total
         </div>
         <span className="text-zinc-200">|</span>
         {(['strong', 'moderate', 'weak', 'insufficient'] as Strength[]).map(s => {
@@ -190,18 +190,18 @@ export const EvidenceManager: React.FC<EvidenceManagerProps> = ({ programId }) =
             <div key={s} className="flex items-center gap-1.5 text-xs text-zinc-500">
               <span className={cn('w-2 h-2 rounded-full', c.dot)} />
               <span className="capitalize">{s}</span>
-              <span className="font-medium text-zinc-800">{stats.byStrength[s]}</span>
+              <span className="font-medium text-zinc-900">{stats.byStrength[s]}</span>
             </div>
           );
         })}
         <span className="text-zinc-200">|</span>
         <div className="flex items-center gap-1.5 text-xs text-zinc-500">
           <Link2 className="w-3 h-3" />
-          <span className="font-medium text-zinc-800">{stats.linked}</span> linked
+          <span className="font-medium text-zinc-900">{stats.linked}</span> linked
         </div>
         <div className="flex items-center gap-1.5 text-xs text-zinc-500">
           <Unlink className="w-3 h-3" />
-          <span className="font-medium text-zinc-800">{stats.unlinked}</span> unlinked
+          <span className="font-medium text-zinc-900">{stats.unlinked}</span> unlinked
         </div>
       </div>
 
@@ -218,7 +218,7 @@ export const EvidenceManager: React.FC<EvidenceManagerProps> = ({ programId }) =
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search evidence..."
-                className="w-full text-xs pl-8 pr-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 bg-zinc-50"
+                className="w-full text-xs pl-8 pr-3 py-2 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none bg-zinc-50"
               />
             </div>
             <div className="flex gap-2">
@@ -272,7 +272,7 @@ export const EvidenceManager: React.FC<EvidenceManagerProps> = ({ programId }) =
                       key={ev.id}
                       onClick={() => setSelectedId(ev.id)}
                       className={cn(
-                        'w-full text-left p-3 hover:bg-zinc-50 transition-colors',
+                        'w-full text-left p-3 hover:bg-zinc-50 transition-colors duration-150',
                         isSelected && 'bg-blue-50/60 border-l-2 border-l-blue-500',
                       )}
                     >
@@ -280,27 +280,27 @@ export const EvidenceManager: React.FC<EvidenceManagerProps> = ({ programId }) =
                         <TypeIcon className="w-4 h-4 mt-0.5 text-zinc-400 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-0.5">
-                            <p className="text-sm font-medium text-zinc-800 truncate">{ev.title}</p>
+                            <p className="text-sm font-medium text-zinc-900 truncate">{ev.title}</p>
                           </div>
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-600">
+                            <span className="text-xs px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-600">
                               {TYPE_LABELS[ev.type] || ev.type}
                             </span>
-                            <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full', sColors.bg, sColors.text)}>
+                            <span className={cn('text-xs px-1.5 py-0.5 rounded-full', sColors.bg, sColors.text)}>
                               {ev.strength}
                             </span>
                             {artCount > 0 && (
-                              <span className="text-[10px] text-zinc-500 flex items-center gap-0.5">
+                              <span className="text-xs text-zinc-500 flex items-center gap-0.5">
                                 <Link2 className="w-2.5 h-2.5" />
                                 {artCount}
                               </span>
                             )}
                           </div>
                           {ev.source && (
-                            <p className="text-[11px] text-zinc-400 mt-1 truncate">{ev.source}</p>
+                            <p className="text-xs text-zinc-400 mt-1 truncate">{ev.source}</p>
                           )}
                         </div>
-                        <ChevronRight className="w-3.5 h-3.5 text-zinc-300 flex-shrink-0 mt-1" />
+                        <ChevronRight className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0 mt-1" />
                       </div>
                     </button>
                   );
@@ -363,7 +363,7 @@ export const EvidenceManager: React.FC<EvidenceManagerProps> = ({ programId }) =
                     {selected.linkedArtifacts.map((art: any) => (
                       <div
                         key={art.id}
-                        className="flex items-center gap-2 p-2 rounded-lg bg-zinc-50 border border-zinc-100"
+                        className="flex items-center gap-2 p-2 rounded-lg bg-zinc-50 border border-zinc-200"
                       >
                         <FileText className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0" />
                         <span className="text-xs text-zinc-700 flex-1 truncate">
@@ -399,7 +399,7 @@ export const EvidenceManager: React.FC<EvidenceManagerProps> = ({ programId }) =
                   <button
                     onClick={handleLink}
                     disabled={!linkArtifactId}
-                    className="px-3 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                    className="px-3 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60"
                   >
                     <Link2 className="w-3.5 h-3.5" />
                   </button>
@@ -470,7 +470,7 @@ export const EvidenceManager: React.FC<EvidenceManagerProps> = ({ programId }) =
                   type="text"
                   value={form.title}
                   onChange={e => setForm(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
+                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                   placeholder="Evidence title..."
                 />
               </div>
@@ -507,7 +507,7 @@ export const EvidenceManager: React.FC<EvidenceManagerProps> = ({ programId }) =
                   type="text"
                   value={form.source}
                   onChange={e => setForm(prev => ({ ...prev, source: e.target.value }))}
-                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
+                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                   placeholder="Citation or source..."
                 />
               </div>
@@ -516,7 +516,7 @@ export const EvidenceManager: React.FC<EvidenceManagerProps> = ({ programId }) =
                 <textarea
                   value={form.description}
                   onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))}
-                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 h-24 resize-none"
+                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none h-24 resize-none"
                   placeholder="Summary of the evidence..."
                 />
               </div>
@@ -524,14 +524,14 @@ export const EvidenceManager: React.FC<EvidenceManagerProps> = ({ programId }) =
             <div className="flex items-center justify-end gap-2 mt-4">
               <button
                 onClick={() => setShowAddModal(false)}
-                className="px-3 py-1.5 text-xs text-zinc-600 hover:text-zinc-800"
+                className="px-3 py-1.5 text-xs text-zinc-600 hover:text-zinc-900"
               >
                 Cancel
               </button>
               <button
                 onClick={handleCreate}
                 disabled={!form.title.trim() || createEvidence.isPending}
-                className="px-4 py-1.5 text-xs font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-50"
+                className="px-4 py-1.5 text-xs font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-60"
               >
                 {createEvidence.isPending ? 'Adding...' : 'Add Evidence'}
               </button>

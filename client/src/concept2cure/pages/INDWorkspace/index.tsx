@@ -44,6 +44,7 @@ import {
 } from 'lucide-react';
 import { useModules, useEctdCompile, useEctdStatus } from '../../hooks/useModules';
 import type { CompilationResult } from '../../hooks/useModules';
+import { LIFECYCLE } from '../../components/ui/enterprise';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -534,20 +535,16 @@ function moduleProgress(mod: CTDSection): number {
   return Math.round((done / leaves.length) * 100);
 }
 
+// Colors from canonical lifecycle — icons are domain-specific
 const STATUS_CONFIG: Record<
   SectionStatus,
   { icon: typeof CheckCircle2; color: string; bg: string; label: string }
 > = {
-  not_started: { icon: Circle, color: 'text-zinc-400', bg: 'bg-zinc-100', label: 'Not Started' },
-  drafting: { icon: Clock, color: 'text-violet-500', bg: 'bg-violet-50', label: 'Drafting' },
-  review: { icon: AlertTriangle, color: 'text-amber-500', bg: 'bg-amber-50', label: 'In Review' },
-  approved: {
-    icon: CheckCircle2,
-    color: 'text-emerald-500',
-    bg: 'bg-emerald-50',
-    label: 'Approved',
-  },
-  locked: { icon: CheckCircle2, color: 'text-emerald-700', bg: 'bg-emerald-100', label: 'Locked' },
+  not_started: { icon: Circle, color: LIFECYCLE.not_started.text, bg: LIFECYCLE.not_started.bg, label: LIFECYCLE.not_started.label },
+  drafting: { icon: Clock, color: LIFECYCLE.draft.text, bg: LIFECYCLE.draft.bg, label: 'Drafting' },
+  review: { icon: AlertTriangle, color: LIFECYCLE.in_review.text, bg: LIFECYCLE.in_review.bg, label: LIFECYCLE.in_review.label },
+  approved: { icon: CheckCircle2, color: LIFECYCLE.approved.text, bg: LIFECYCLE.approved.bg, label: LIFECYCLE.approved.label },
+  locked: { icon: CheckCircle2, color: LIFECYCLE.published.text, bg: LIFECYCLE.published.bg, label: 'Locked' },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -598,7 +595,7 @@ const SectionRow: React.FC<{
     <>
       <div
         className={cn(
-          'group flex items-center gap-2 px-3 py-1.5 text-sm cursor-pointer transition-colors',
+          'group flex items-center gap-2 px-3 py-1.5 text-sm cursor-pointer transition-colors duration-150',
           'hover:bg-zinc-50',
           isSelected && 'bg-violet-50 border-l-2 border-violet-500',
           !isSelected && 'border-l-2 border-transparent'
@@ -633,14 +630,14 @@ const SectionRow: React.FC<{
 
         {/* Title */}
         <span
-          className={cn('flex-1 truncate', isLeaf ? 'text-zinc-700' : 'font-medium text-zinc-800')}
+          className={cn('flex-1 truncate', isLeaf ? 'text-zinc-700' : 'font-medium text-zinc-900')}
         >
           {section.title}
         </span>
 
         {/* Required badge */}
         {section.required && isLeaf && (
-          <span className="text-[10px] px-1.5 py-0.5 bg-red-50 text-red-600 rounded font-medium flex-shrink-0">
+          <span className="text-xs px-1.5 py-0.5 bg-red-50 text-red-600 rounded font-medium flex-shrink-0">
             REQ
           </span>
         )}
@@ -652,7 +649,7 @@ const SectionRow: React.FC<{
               e.stopPropagation();
               onDraftAI(section.code, section.title);
             }}
-            className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-[10px] px-1.5 py-0.5 bg-violet-50 text-violet-600 rounded hover:bg-violet-100 flex-shrink-0"
+            className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-xs px-1.5 py-0.5 bg-violet-50 text-violet-600 rounded hover:bg-violet-100 flex-shrink-0"
           >
             <Sparkles className="w-3 h-3" />
             Draft
@@ -661,7 +658,7 @@ const SectionRow: React.FC<{
 
         {/* Hours estimate */}
         {isLeaf && section.estimatedHours > 0 && (
-          <span className="text-[10px] text-zinc-400 tabular-nums flex-shrink-0">
+          <span className="text-xs text-zinc-400 tabular-nums flex-shrink-0">
             {section.estimatedHours}h
           </span>
         )}
@@ -893,11 +890,11 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
     <>
       <div className="flex-1 flex flex-col bg-white min-h-0 border-t-2 border-violet-500/20">
         {/* Header — ultra minimal */}
-        <div className="border-b border-zinc-100 px-5 py-2.5">
+        <div className="border-b border-zinc-200 px-5 py-2.5">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-sm font-semibold text-zinc-900">{projectName}</h1>
-              <p className="text-[11px] text-zinc-400 mt-0.5">
+              <p className="text-xs text-zinc-400 mt-0.5">
                 IND Application • eCTD 4.0 • {requiredLeaves} required sections • ~{totalHours}h
                 estimated
               </p>
@@ -920,10 +917,10 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                 onClick={() => canCompileEctd && setShowCompileDialog(true)}
                 disabled={compileMutation.isPending || !canCompileEctd}
                 className={cn(
-                  'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors',
+                  'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors duration-150',
                   ectdStatus?.submissionReady
                     ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-                    : 'bg-indigo-600 text-white hover:bg-indigo-700',
+                    : 'bg-blue-600 text-white hover:bg-blue-700',
                   (compileMutation.isPending || !canCompileEctd) && 'opacity-60 cursor-not-allowed'
                 )}
               >
@@ -934,18 +931,18 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                 )}
                 {compileMutation.isPending ? 'Compiling…' : 'Compile eCTD'}
                 {ectdStatus && (
-                  <span className="ml-1 px-1.5 py-0.5 text-[10px] bg-white/20 rounded">
+                  <span className="ml-1 px-1.5 py-0.5 text-xs bg-white/20 rounded">
                     {ectdStatus.overallReadiness}%
                   </span>
                 )}
               </button>
               {!canCompileEctd && (
-                <span className="text-[10px] text-zinc-500">IND + eCTD module access required</span>
+                <span className="text-xs text-zinc-500">IND + eCTD module access required</span>
               )}
               {onNavigateToCoAuthor && (
                 <button
                   onClick={onNavigateToCoAuthor}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-zinc-200 text-zinc-600 hover:bg-zinc-50 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-zinc-200 text-zinc-600 hover:bg-zinc-50 transition-colors duration-150"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
                   Open Co-Author
@@ -959,10 +956,10 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
             {modules.map(mod => (
               <div key={mod.code}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[11px] font-medium text-zinc-600 truncate">
+                  <span className="text-xs font-medium text-zinc-600 truncate">
                     {mod.code.toUpperCase()}
                   </span>
-                  <span className="text-[10px] text-zinc-400 tabular-nums">
+                  <span className="text-xs text-zinc-400 tabular-nums">
                     {moduleProgress(mod)}%
                   </span>
                 </div>
@@ -973,7 +970,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
         </div>
 
         {/* Toolbar */}
-        <div className="border-b border-zinc-100 px-5 py-1.5 flex items-center gap-2">
+        <div className="border-b border-zinc-200 px-5 py-1.5 flex items-center gap-2">
           {/* Search */}
           <div className="relative flex-1 max-w-xs">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
@@ -982,7 +979,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search sections..."
-              className="w-full pl-8 pr-3 py-1.5 text-xs border border-zinc-200 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full pl-8 pr-3 py-1.5 text-xs border border-zinc-200 rounded-md focus-visible:ring-2 outline-none focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
 
@@ -1003,7 +1000,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                 key={f.id}
                 onClick={() => setFilter(f.id)}
                 className={cn(
-                  'px-2 py-1 text-[11px] rounded-md transition-colors',
+                  'px-2 py-1 text-xs rounded-md transition-colors duration-150',
                   filter === f.id ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:bg-zinc-100'
                 )}
               >
@@ -1013,7 +1010,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
           </div>
 
           {/* Summary chips */}
-          <div className="ml-auto flex items-center gap-2 text-[11px]">
+          <div className="ml-auto flex items-center gap-2 text-xs">
             <span className="flex items-center gap-1 text-emerald-600">
               <CheckCircle2 className="w-3 h-3" /> {counts.approved + counts.locked}
             </span>
@@ -1041,7 +1038,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                 <div key={mod.code}>
                   {/* Module header */}
                   <div
-                    className="flex items-center gap-2 px-4 py-2 bg-zinc-50 border-b border-zinc-100 cursor-pointer hover:bg-zinc-100 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-zinc-50 border-b border-zinc-200 cursor-pointer hover:bg-zinc-100 transition-colors duration-150"
                     onClick={() => handleToggle(mod.code)}
                   >
                     {expandedSet.has(mod.code) ? (
@@ -1050,7 +1047,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                       <ChevronRight className="w-4 h-4 text-zinc-400" />
                     )}
                     <BarChart3 className="w-4 h-4 text-zinc-500" />
-                    <span className="font-medium text-sm text-zinc-800">{mod.title}</span>
+                    <span className="font-medium text-sm text-zinc-900">{mod.title}</span>
                     <span className="ml-auto text-xs text-zinc-400 tabular-nums">
                       {moduleProgress(mod)}%
                     </span>
@@ -1088,12 +1085,12 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <span className="font-mono text-xs text-zinc-500">{section.code}</span>
-                    <span className="font-medium text-sm text-zinc-800">{section.title}</span>
-                    <span className={cn('text-[10px] px-2 py-0.5 rounded-full', cfg.bg, cfg.color)}>
+                    <span className="font-medium text-sm text-zinc-900">{section.title}</span>
+                    <span className={cn('text-xs px-2 py-0.5 rounded-full', cfg.bg, cfg.color)}>
                       {cfg.label}
                     </span>
                     {section.required && (
-                      <span className="text-[10px] px-1.5 py-0.5 bg-red-50 text-red-600 rounded">
+                      <span className="text-xs px-1.5 py-0.5 bg-red-50 text-red-600 rounded">
                         Required
                       </span>
                     )}
@@ -1112,7 +1109,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                             })
                           }
                           disabled={statusMutation.isPending}
-                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors disabled:opacity-50"
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors disabled:opacity-60"
                         >
                           <ActionIcon className="w-3.5 h-3.5" />
                           {action.label}
@@ -1123,7 +1120,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                     {section.aiDraftable && (
                       <button
                         onClick={() => onDraftWithAI?.(section.code, section.title)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-violet-600 text-white hover:bg-violet-700 transition-colors"
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors duration-150"
                       >
                         <Sparkles className="w-3.5 h-3.5" />
                         Draft with RI
@@ -1131,7 +1128,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                     )}
                     <button
                       onClick={() => onOpenSection?.(section.code)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-zinc-200 text-zinc-600 hover:bg-white transition-colors"
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-zinc-200 text-zinc-600 hover:bg-white transition-colors duration-150"
                     >
                       <FileText className="w-3.5 h-3.5" />
                       Open in Editor
@@ -1162,11 +1159,11 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
       {/* eCTD Compile Dialog */}
       {showCompileDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[85vh] overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-lg mx-4 max-h-[85vh] overflow-y-auto">
             {/* Dialog Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200">
               <div className="flex items-center gap-2">
-                <Package className="w-5 h-5 text-indigo-600" />
+                <Package className="w-5 h-5 text-blue-600" />
                 <h2 className="text-base font-semibold text-zinc-900">Compile eCTD Package</h2>
               </div>
               <button
@@ -1239,13 +1236,13 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                             style={{ width: `${m.completionPct}%` }}
                           />
                         </div>
-                        <span className="text-[11px] tabular-nums text-zinc-500 w-16 text-right">
+                        <span className="text-xs tabular-nums text-zinc-500 w-16 text-right">
                           {m.completedRequired}/{m.requiredSections}
                         </span>
                         {m.ready ? (
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
                         ) : (
-                          <Circle className="w-3.5 h-3.5 text-zinc-300" />
+                          <Circle className="w-3.5 h-3.5 text-zinc-400" />
                         )}
                       </div>
                     ))}
@@ -1267,7 +1264,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                       }
                     }}
                     disabled={compileMutation.isPending || !canCompileEctd}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors disabled:opacity-60"
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-60"
                   >
                     {compileMutation.isPending ? (
                       <>
@@ -1283,7 +1280,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                   </button>
                   <button
                     onClick={() => setShowCompileDialog(false)}
-                    className="px-4 py-2.5 text-sm font-medium rounded-lg border border-zinc-200 text-zinc-600 hover:bg-zinc-50 transition-colors"
+                    className="px-4 py-2.5 text-sm font-medium rounded-lg border border-zinc-200 text-zinc-600 hover:bg-zinc-50 transition-colors duration-150"
                   >
                     Cancel
                   </button>
@@ -1360,7 +1357,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                             </span>
                             {v.message}
                             {v.fix && (
-                              <span className="block text-[10px] mt-0.5 opacity-75">
+                              <span className="block text-xs mt-0.5 opacity-75">
                                 Fix: {v.fix}
                               </span>
                             )}
@@ -1385,7 +1382,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                         a.click();
                         URL.revokeObjectURL(url);
                       }}
-                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors duration-150"
                     >
                       <Download className="w-4 h-4" />
                       Download XML Backbone
@@ -1396,7 +1393,7 @@ export const INDWorkspace: React.FC<INDWorkspaceProps> = ({
                       setCompilationResult(null);
                       setShowCompileDialog(false);
                     }}
-                    className="px-4 py-2.5 text-sm font-medium rounded-lg border border-zinc-200 text-zinc-600 hover:bg-zinc-50 transition-colors"
+                    className="px-4 py-2.5 text-sm font-medium rounded-lg border border-zinc-200 text-zinc-600 hover:bg-zinc-50 transition-colors duration-150"
                   >
                     Close
                   </button>

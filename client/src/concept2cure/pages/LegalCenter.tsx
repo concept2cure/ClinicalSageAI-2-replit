@@ -436,7 +436,7 @@ function statusColor(status: StatusType): string {
     case 'Draft':
       return 'bg-blue-50 text-blue-700 border-blue-200';
     case 'Open':
-      return 'bg-violet-50 text-violet-700 border-violet-200';
+      return 'bg-violet-50 text-violet-700 border-blue-200';
     default:
       return 'bg-zinc-100 text-zinc-600 border-zinc-200';
   }
@@ -543,7 +543,7 @@ const SectionHeader: React.FC<{
         {onAdd && (
           <button
             onClick={onAdd}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-800 transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-800 transition-colors duration-150"
           >
             <Plus className="h-3.5 w-3.5" />
             Add
@@ -552,7 +552,7 @@ const SectionHeader: React.FC<{
         {onExport && (
           <button
             onClick={onExport}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-colors duration-150"
           >
             <Download className="h-3.5 w-3.5" />
             Export
@@ -561,7 +561,7 @@ const SectionHeader: React.FC<{
         <button
           onClick={onToggleFilter}
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors',
+            'inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors duration-150',
             filterOpen
               ? 'border-blue-200 bg-blue-50 text-blue-700'
               : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50',
@@ -579,7 +579,7 @@ const SectionHeader: React.FC<{
         value={searchValue}
         onChange={(e) => onSearchChange(e.target.value)}
         placeholder={`Search ${title.toLowerCase()}...`}
-        className="w-full rounded-lg border border-zinc-200 bg-white py-2 pl-10 pr-4 text-sm text-zinc-900 placeholder-zinc-400 outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100 transition-all"
+        className="w-full rounded-lg border border-zinc-200 bg-white py-2 pl-10 pr-4 text-sm text-zinc-900 placeholder-zinc-400 outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100 transition-all duration-150"
       />
     </div>
   </div>
@@ -635,7 +635,7 @@ const IPPortfolioPanel: React.FC<{ search: string }> = ({ search }) => {
           { label: 'Pending / Filed', value: stats.pending, icon: <Clock className="h-4 w-4 text-amber-500" /> },
           { label: 'FTO Blocked', value: stats.blocked, icon: <XCircle className="h-4 w-4 text-red-500" /> },
         ].map((s) => (
-          <div key={s.label} className="rounded-xl border border-zinc-100 bg-white p-4 flex items-center gap-3">
+          <div key={s.label} className="rounded-xl border border-zinc-200 bg-white p-4 flex items-center gap-3">
             <div className="rounded-lg bg-zinc-50 p-2">{s.icon}</div>
             <div>
               <p className="text-2xl font-semibold text-zinc-900">{s.value}</p>
@@ -650,7 +650,7 @@ const IPPortfolioPanel: React.FC<{ search: string }> = ({ search }) => {
         {filtered.map((patent) => (
           <div
             key={patent.id}
-            className="rounded-xl border border-zinc-100 bg-white p-5 hover:border-zinc-200 transition-colors"
+            className="rounded-xl border border-zinc-200 bg-white p-5 hover:border-zinc-200 transition-colors duration-150"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
@@ -662,7 +662,7 @@ const IPPortfolioPanel: React.FC<{ search: string }> = ({ search }) => {
                 <h3 className="text-sm font-semibold text-zinc-900 mb-1">{patent.title}</h3>
                 <p className="text-xs text-zinc-500 font-mono">{patent.patentNumber}</p>
               </div>
-              <button className="rounded-lg border border-zinc-200 p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 transition-colors">
+              <button className="rounded-lg border border-zinc-200 p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 transition-colors duration-150">
                 <ArrowUpRight className="h-4 w-4" />
               </button>
             </div>
@@ -686,7 +686,7 @@ const IPPortfolioPanel: React.FC<{ search: string }> = ({ search }) => {
             </div>
             <div className="mt-3 flex flex-wrap gap-1.5">
               {patent.relatedCompounds.map((c) => (
-                <span key={c} className="rounded-md bg-violet-50 border border-violet-200 px-2 py-0.5 text-xs font-medium text-violet-700">
+                <span key={c} className="rounded-md bg-violet-50 border border-blue-200 px-2 py-0.5 text-xs font-medium text-violet-700">
                   {c}
                 </span>
               ))}
@@ -699,7 +699,7 @@ const IPPortfolioPanel: React.FC<{ search: string }> = ({ search }) => {
           </div>
         ))}
         {filtered.length === 0 && (
-          <div className="rounded-xl border border-zinc-100 bg-white p-12 text-center">
+          <div className="rounded-xl border border-zinc-200 bg-white p-12 text-center">
             <p className="text-sm text-zinc-400">No patents match your search.</p>
           </div>
         )}
@@ -725,7 +725,7 @@ const ContractsPanel: React.FC<{ search: string }> = ({ search }) => {
       {filtered.map((contract) => (
         <div
           key={contract.id}
-          className="rounded-xl border border-zinc-100 bg-white p-5 hover:border-zinc-200 transition-colors"
+          className="rounded-xl border border-zinc-200 bg-white p-5 hover:border-zinc-200 transition-colors duration-150"
         >
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
@@ -774,7 +774,7 @@ const ContractsPanel: React.FC<{ search: string }> = ({ search }) => {
         </div>
       ))}
       {filtered.length === 0 && (
-        <div className="rounded-xl border border-zinc-100 bg-white p-12 text-center">
+        <div className="rounded-xl border border-zinc-200 bg-white p-12 text-center">
           <p className="text-sm text-zinc-400">No contracts match your search.</p>
         </div>
       )}
@@ -799,7 +799,7 @@ const RegulatoryLawPanel: React.FC<{ search: string }> = ({ search }) => {
       {filtered.map((ref) => (
         <div
           key={ref.id}
-          className="rounded-xl border border-zinc-100 bg-white p-5 hover:border-zinc-200 transition-colors"
+          className="rounded-xl border border-zinc-200 bg-white p-5 hover:border-zinc-200 transition-colors duration-150"
         >
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
@@ -845,7 +845,7 @@ const RegulatoryLawPanel: React.FC<{ search: string }> = ({ search }) => {
         </div>
       ))}
       {filtered.length === 0 && (
-        <div className="rounded-xl border border-zinc-100 bg-white p-12 text-center">
+        <div className="rounded-xl border border-zinc-200 bg-white p-12 text-center">
           <p className="text-sm text-zinc-400">No regulatory references match your search.</p>
         </div>
       )}
@@ -899,7 +899,7 @@ const CompliancePanel: React.FC<{ search: string }> = ({ search }) => {
           { label: 'Active CAPAs', value: stats.totalCapa, icon: <Target className="h-4 w-4 text-violet-500" /> },
           { label: 'High Risk Items', value: stats.atRisk, icon: <AlertTriangle className="h-4 w-4 text-red-500" /> },
         ].map((s) => (
-          <div key={s.label} className="rounded-xl border border-zinc-100 bg-white p-4 flex items-center gap-3">
+          <div key={s.label} className="rounded-xl border border-zinc-200 bg-white p-4 flex items-center gap-3">
             <div className="rounded-lg bg-zinc-50 p-2">{s.icon}</div>
             <div>
               <p className="text-2xl font-semibold text-zinc-900">{s.value}</p>
@@ -914,7 +914,7 @@ const CompliancePanel: React.FC<{ search: string }> = ({ search }) => {
         {filtered.map((item) => (
           <div
             key={item.id}
-            className="rounded-xl border border-zinc-100 bg-white p-5 hover:border-zinc-200 transition-colors"
+            className="rounded-xl border border-zinc-200 bg-white p-5 hover:border-zinc-200 transition-colors duration-150"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
@@ -951,7 +951,7 @@ const CompliancePanel: React.FC<{ search: string }> = ({ search }) => {
           </div>
         ))}
         {filtered.length === 0 && (
-          <div className="rounded-xl border border-zinc-100 bg-white p-12 text-center">
+          <div className="rounded-xl border border-zinc-200 bg-white p-12 text-center">
             <p className="text-sm text-zinc-400">No compliance items match your search.</p>
           </div>
         )}
@@ -986,7 +986,7 @@ const RiskRegisterPanel: React.FC<{ search: string }> = ({ search }) => {
   return (
     <div className="space-y-4">
       {/* Risk Heat Map */}
-      <div className="rounded-xl border border-zinc-100 bg-white p-5">
+      <div className="rounded-xl border border-zinc-200 bg-white p-5">
         <h3 className="text-sm font-semibold text-zinc-900 mb-4 flex items-center gap-2">
           <BarChart3 className="h-4 w-4 text-zinc-400" />
           Risk Heat Map
@@ -1020,7 +1020,7 @@ const RiskRegisterPanel: React.FC<{ search: string }> = ({ search }) => {
                       <div
                         key={key}
                         className={cn(
-                          'rounded-lg h-12 flex items-center justify-center text-xs font-semibold transition-all',
+                          'rounded-lg h-12 flex items-center justify-center text-xs font-semibold transition-all duration-150',
                           risks.length > 0 ? heatmapCell(likelihood, impact) : 'bg-zinc-50',
                         )}
                         title={risks.map((r) => r.title).join('\n')}
@@ -1045,7 +1045,7 @@ const RiskRegisterPanel: React.FC<{ search: string }> = ({ search }) => {
         {filtered.map((risk) => (
           <div
             key={risk.id}
-            className="rounded-xl border border-zinc-100 bg-white p-5 hover:border-zinc-200 transition-colors"
+            className="rounded-xl border border-zinc-200 bg-white p-5 hover:border-zinc-200 transition-colors duration-150"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
@@ -1058,7 +1058,7 @@ const RiskRegisterPanel: React.FC<{ search: string }> = ({ search }) => {
                   />
                   <span
                     className={cn(
-                      'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold',
+                      'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold',
                       risk.riskScore >= 15
                         ? 'bg-red-100 text-red-700'
                         : risk.riskScore >= 10
@@ -1099,7 +1099,7 @@ const RiskRegisterPanel: React.FC<{ search: string }> = ({ search }) => {
           </div>
         ))}
         {filtered.length === 0 && (
-          <div className="rounded-xl border border-zinc-100 bg-white p-12 text-center">
+          <div className="rounded-xl border border-zinc-200 bg-white p-12 text-center">
             <p className="text-sm text-zinc-400">No risks match your search.</p>
           </div>
         )}
@@ -1180,7 +1180,7 @@ export const LegalCenter: React.FC<{ onClose?: () => void }> = ({ onClose }) => 
   return (
     <div className="flex flex-col h-full bg-zinc-50">
       {/* Top bar */}
-      <div className="shrink-0 border-b border-zinc-100 bg-white px-6 py-4">
+      <div className="shrink-0 border-b border-zinc-200 bg-white px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-zinc-900 p-2">
@@ -1196,7 +1196,7 @@ export const LegalCenter: React.FC<{ onClose?: () => void }> = ({ onClose }) => 
           {onClose && (
             <button
               onClick={onClose}
-              className="rounded-lg border border-zinc-200 p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 transition-colors"
+              className="rounded-lg border border-zinc-200 p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 transition-colors duration-150"
             >
               <X className="h-4 w-4" />
             </button>
@@ -1232,7 +1232,7 @@ export const LegalCenter: React.FC<{ onClose?: () => void }> = ({ onClose }) => 
 
           {/* Filter bar (conditional) */}
           {filterOpen && (
-            <div className="rounded-xl border border-zinc-100 bg-white p-4 flex flex-wrap gap-3">
+            <div className="rounded-xl border border-zinc-200 bg-white p-4 flex flex-wrap gap-3">
               <div>
                 <label className="block text-xs font-medium text-zinc-500 mb-1">Status</label>
                 <select className="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm text-zinc-700 outline-none focus:border-blue-300">

@@ -381,7 +381,7 @@ function PMSMetrics({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Active Signals</p>
-              <p className="text-2xl font-bold">{activeSignals}</p>
+              <p className="text-2xl font-semibold">{activeSignals}</p>
             </div>
             <Activity className="w-8 h-8 text-blue-500" />
           </div>
@@ -393,7 +393,7 @@ function PMSMetrics({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">High Priority</p>
-              <p className="text-2xl font-bold text-red-600">{highPrioritySignals}</p>
+              <p className="text-2xl font-semibold text-red-600">{highPrioritySignals}</p>
             </div>
             <AlertTriangle className="w-8 h-8 text-red-500" />
           </div>
@@ -405,9 +405,9 @@ function PMSMetrics({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Pending Reports</p>
-              <p className="text-2xl font-bold">{pendingReports}</p>
+              <p className="text-2xl font-semibold">{pendingReports}</p>
             </div>
-            <FileText className="w-8 h-8 text-indigo-500" />
+            <FileText className="w-8 h-8 text-blue-500" />
           </div>
         </div>
       </div>
@@ -417,7 +417,7 @@ function PMSMetrics({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Overdue</p>
-              <p className="text-2xl font-bold text-orange-600">{overdueReports}</p>
+              <p className="text-2xl font-semibold text-orange-600">{overdueReports}</p>
             </div>
             <Clock className="w-8 h-8 text-orange-500" />
           </div>
@@ -429,7 +429,7 @@ function PMSMetrics({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Open Vigilance</p>
-              <p className="text-2xl font-bold">{openVigilance}</p>
+              <p className="text-2xl font-semibold">{openVigilance}</p>
             </div>
             <Shield className="w-8 h-8 text-purple-500" />
           </div>
@@ -441,7 +441,7 @@ function PMSMetrics({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Urgent Cases</p>
-              <p className="text-2xl font-bold text-red-600">{urgentVigilance}</p>
+              <p className="text-2xl font-semibold text-red-600">{urgentVigilance}</p>
             </div>
             <AlertCircle className="w-8 h-8 text-red-500" />
           </div>
@@ -494,20 +494,20 @@ function SignalManagement({ signals }: { signals: SafetySignal[] }) {
               <div className="border border-border/40 rounded-sm bg-background">
                 <div className="px-3 py-2 p-4">
                   <p className="text-sm text-muted-foreground">Observed Cases</p>
-                  <p className="text-2xl font-bold">{selectedSignal.caseCount}</p>
+                  <p className="text-2xl font-semibold">{selectedSignal.caseCount}</p>
                 </div>
               </div>
               <div className="border border-border/40 rounded-sm bg-background">
                 <div className="px-3 py-2 p-4">
                   <p className="text-sm text-muted-foreground">Expected Cases</p>
-                  <p className="text-2xl font-bold">{selectedSignal.expectedCount}</p>
+                  <p className="text-2xl font-semibold">{selectedSignal.expectedCount}</p>
                 </div>
               </div>
               <div className="border border-border/40 rounded-sm bg-background">
                 <div className="px-3 py-2 p-4">
                   <p className="text-sm text-muted-foreground">Risk Score</p>
                   <p
-                    className={`text-2xl font-bold ${
+                    className={`text-2xl font-semibold ${
                       selectedSignal.riskScore >= 70
                         ? 'text-red-600'
                         : selectedSignal.riskScore >= 50
@@ -661,7 +661,7 @@ function SignalManagement({ signals }: { signals: SafetySignal[] }) {
       </Table>
 
       {/* RI Signal Detection */}
-      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50">
+      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-zinc-50">
         <div className="px-3 py-2 p-4">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-purple-100 rounded-full">
@@ -717,7 +717,7 @@ function PeriodicReports({ reports }: { reports: PeriodicReport[] }) {
               <div className="px-3 py-2 p-4">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-indigo-100 rounded-lg">
+                    <div className="p-2 bg-blue-100 rounded-lg">
                       {REPORT_TYPE_LABELS[report.type].icon}
                     </div>
                     <div>
@@ -1056,7 +1056,7 @@ function RiskBenefitTab() {
       </div>
 
       {/* RI Assistance */}
-      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50">
+      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-zinc-50">
         <div className="px-3 py-2 p-4">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-purple-100 rounded-full">
@@ -1089,13 +1089,13 @@ export function PostMarketSurveillance() {
     <div className="p-6 space-y-6">
       {/* Early Access Banner */}
       <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-50 border border-amber-200 text-amber-700 text-xs">
-        <span className="font-semibold px-1.5 py-0.5 bg-amber-200 text-amber-800 rounded text-[10px] uppercase tracking-wider">Early Access</span>
+        <span className="font-semibold px-1.5 py-0.5 bg-amber-200 text-amber-800 rounded text-xs uppercase tracking-wider">Early Access</span>
         <span>This module displays sample data for demonstration. Live data integration coming soon.</span>
       </div>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-3">
+          <h1 className="text-2xl font-semibold flex items-center gap-3">
             <Shield className="w-8 h-8 text-purple-600" />
             Post-Market Surveillance
           </h1>

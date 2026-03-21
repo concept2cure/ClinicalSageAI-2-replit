@@ -1,6 +1,6 @@
--- Deep Research Intelligence Layer - Database Optimization
+-- AnA Research Intelligence Layer - Database Optimization
 -- Created: 2025-07-09
--- Purpose: Optimize CSR database queries for Deep Research performance
+-- Purpose: Optimize CSR database queries for AnA Research performance
 
 -- Index for unified_documents CSR module queries
 CREATE INDEX IF NOT EXISTS idx_unified_documents_csr_module 
@@ -35,6 +35,6 @@ GROUP BY tenant_id;
 
 -- Query performance statistics
 COMMENT ON INDEX idx_unified_documents_csr_module IS 'Optimizes CSR module queries with tenant isolation';
-COMMENT ON INDEX idx_unified_documents_processed_text_gin IS 'Full-text search optimization for Deep Research';
+COMMENT ON INDEX idx_unified_documents_processed_text_gin IS 'Full-text search optimization for AnA Research';
 COMMENT ON INDEX idx_unified_documents_title_search IS 'Title-based search optimization';
-COMMENT ON VIEW deep_research_performance IS 'Performance monitoring for Deep Research Intelligence Layer';
+COMMENT ON VIEW deep_research_performance IS 'Performance monitoring for AnA Research Intelligence Layer';

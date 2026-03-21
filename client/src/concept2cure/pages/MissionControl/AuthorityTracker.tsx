@@ -9,6 +9,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { LIFECYCLE } from '../../components/ui/enterprise';
 import {
   Building2,
   Calendar,
@@ -79,15 +80,15 @@ const TYPE_COLORS: Record<string, { bg: string; text: string; border: string; do
 };
 
 const STATUS_STYLE: Record<string, { bg: string; text: string }> = {
-  planned:   { bg: 'bg-blue-50',    text: 'text-blue-700' },
-  submitted: { bg: 'bg-amber-50',   text: 'text-amber-700' },
-  completed: { bg: 'bg-emerald-50', text: 'text-emerald-700' },
-  cancelled: { bg: 'bg-zinc-100',   text: 'text-zinc-500' },
+  planned:   { bg: LIFECYCLE.draft.bg,        text: LIFECYCLE.draft.text },
+  submitted: { bg: LIFECYCLE.in_review.bg,    text: LIFECYCLE.in_review.text },
+  completed: { bg: LIFECYCLE.approved.bg,     text: LIFECYCLE.approved.text },
+  cancelled: { bg: LIFECYCLE.archived.bg,     text: LIFECYCLE.archived.text },
 };
 
 const AUTHORITY_STYLE: Record<string, { bg: string; text: string }> = {
   FDA:  { bg: 'bg-blue-50',    text: 'text-blue-700' },
-  EMA:  { bg: 'bg-indigo-50',  text: 'text-indigo-700' },
+  EMA:  { bg: 'bg-blue-50',  text: 'text-blue-700' },
   PMDA: { bg: 'bg-rose-50',    text: 'text-rose-700' },
   HC:   { bg: 'bg-red-50',     text: 'text-red-700' },
   TGA:  { bg: 'bg-teal-50',    text: 'text-teal-700' },
@@ -317,7 +318,7 @@ export const AuthorityTracker: React.FC<AuthorityTrackerProps> = ({ programId })
                       key={ix.id}
                       onClick={() => setSelectedId(ix.id)}
                       className={cn(
-                        'w-full text-left p-4 rounded-xl border transition-all',
+                        'w-full text-left p-4 rounded-xl border transition-all duration-150',
                         overdue
                           ? 'bg-red-50 border-red-200 hover:border-red-300'
                           : 'bg-white border-zinc-200 hover:border-zinc-300',
@@ -328,12 +329,12 @@ export const AuthorityTracker: React.FC<AuthorityTrackerProps> = ({ programId })
                         <span className={cn('w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0', colors.dot)} />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full', colors.bg, colors.text)}>
+                            <span className={cn('text-xs px-1.5 py-0.5 rounded-full', colors.bg, colors.text)}>
                               {typeLabel(ix.type)}
                             </span>
                             {ix.authority && (
                               <span className={cn(
-                                'text-[10px] px-1.5 py-0.5 rounded-full font-medium',
+                                'text-xs px-1.5 py-0.5 rounded-full font-medium',
                                 AUTHORITY_STYLE[ix.authority]?.bg || 'bg-zinc-100',
                                 AUTHORITY_STYLE[ix.authority]?.text || 'text-zinc-600',
                               )}>
@@ -341,12 +342,12 @@ export const AuthorityTracker: React.FC<AuthorityTrackerProps> = ({ programId })
                               </span>
                             )}
                             {overdue && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-100 text-red-700 font-medium">
+                              <span className="text-xs px-1.5 py-0.5 rounded-full bg-red-100 text-red-700 font-medium">
                                 Overdue
                               </span>
                             )}
                           </div>
-                          <p className="text-sm font-medium text-zinc-800 truncate">{ix.subject}</p>
+                          <p className="text-sm font-medium text-zinc-900 truncate">{ix.subject}</p>
                           <div className="flex items-center gap-3 mt-1.5">
                             <span className="text-xs text-zinc-500">{formatDate(ix.date)}</span>
                             {days !== null && !overdue && (
@@ -395,16 +396,16 @@ export const AuthorityTracker: React.FC<AuthorityTrackerProps> = ({ programId })
                               <span className={cn('w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0', colors.dot, 'opacity-50')} />
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1">
-                                  <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full', colors.bg, colors.text)}>
+                                  <span className={cn('text-xs px-1.5 py-0.5 rounded-full', colors.bg, colors.text)}>
                                     {typeLabel(ix.type)}
                                   </span>
                                   {ix.authority && (
-                                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-500">
+                                    <span className="text-xs px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-500">
                                       {ix.authority}
                                     </span>
                                   )}
                                   <span className={cn(
-                                    'text-[10px] px-1.5 py-0.5 rounded-full',
+                                    'text-xs px-1.5 py-0.5 rounded-full',
                                     STATUS_STYLE[ix.status]?.bg,
                                     STATUS_STYLE[ix.status]?.text,
                                   )}>
@@ -425,12 +426,12 @@ export const AuthorityTracker: React.FC<AuthorityTrackerProps> = ({ programId })
               /* ── List View ──────────────────────────────────────────────── */
               <div className="bg-white rounded-xl border">
                 <div className="p-4 border-b flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-zinc-800">All Interactions</h3>
+                  <h3 className="text-sm font-semibold text-zinc-900">All Interactions</h3>
                   <span className="text-xs text-zinc-500">{interactions.length} records</span>
                 </div>
 
                 {/* Table header */}
-                <div className="grid grid-cols-[1fr_80px_1.5fr_100px_90px_80px] gap-2 px-4 py-2 text-[10px] font-semibold text-zinc-500 uppercase tracking-wider border-b bg-zinc-50">
+                <div className="grid grid-cols-[1fr_80px_1.5fr_100px_90px_80px] gap-2 px-4 py-2 text-xs font-semibold text-zinc-500 uppercase tracking-wider border-b bg-zinc-50">
                   <span>Type</span>
                   <span>Authority</span>
                   <span>Subject</span>
@@ -465,18 +466,18 @@ export const AuthorityTracker: React.FC<AuthorityTrackerProps> = ({ programId })
                             ) : (
                               <ChevronRight className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0" />
                             )}
-                            <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full whitespace-nowrap', colors.bg, colors.text)}>
+                            <span className={cn('text-xs px-1.5 py-0.5 rounded-full whitespace-nowrap', colors.bg, colors.text)}>
                               {typeLabel(ix.type)}
                             </span>
                           </span>
-                          <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full text-center font-medium w-fit', authColors.bg, authColors.text)}>
+                          <span className={cn('text-xs px-1.5 py-0.5 rounded-full text-center font-medium w-fit', authColors.bg, authColors.text)}>
                             {ix.authority || '--'}
                           </span>
-                          <span className="text-xs text-zinc-800 truncate">{ix.subject}</span>
+                          <span className="text-xs text-zinc-900 truncate">{ix.subject}</span>
                           <span className={cn('text-xs', overdue ? 'text-red-600 font-medium' : 'text-zinc-600')}>
                             {formatDate(ix.date)}
                           </span>
-                          <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full text-center w-fit', statusColors.bg, statusColors.text)}>
+                          <span className={cn('text-xs px-1.5 py-0.5 rounded-full text-center w-fit', statusColors.bg, statusColors.text)}>
                             {ix.status}
                           </span>
                           <span className="text-xs text-zinc-500 text-right">
@@ -494,12 +495,12 @@ export const AuthorityTracker: React.FC<AuthorityTrackerProps> = ({ programId })
                             {/* Commitments */}
                             {commitments.length > 0 && (
                               <div className="mb-3">
-                                <h4 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">
+                                <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">
                                   Commitments
                                 </h4>
                                 <div className="space-y-1">
                                   {commitments.map((c: any, idx: number) => (
-                                    <div key={idx} className="flex items-center gap-2 p-1.5 rounded-md bg-white border border-zinc-100">
+                                    <div key={idx} className="flex items-center gap-2 p-1.5 rounded-md bg-white border border-zinc-200">
                                       {c.completed ? (
                                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
                                       ) : (
@@ -510,7 +511,7 @@ export const AuthorityTracker: React.FC<AuthorityTrackerProps> = ({ programId })
                                       </span>
                                       {c.dueDate && (
                                         <span className={cn(
-                                          'text-[10px]',
+                                          'text-xs',
                                           !c.completed && isOverdue(c.dueDate, 'planned')
                                             ? 'text-red-600 font-medium'
                                             : 'text-zinc-400',
@@ -527,12 +528,12 @@ export const AuthorityTracker: React.FC<AuthorityTrackerProps> = ({ programId })
                             {/* Linked artifacts */}
                             {ix.linkedArtifacts?.length > 0 && (
                               <div className="mb-3">
-                                <h4 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">
+                                <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">
                                   Linked Artifacts
                                 </h4>
                                 <div className="flex flex-wrap gap-1.5">
                                   {ix.linkedArtifacts.map((a: any, idx: number) => (
-                                    <span key={idx} className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md bg-white border border-zinc-100 text-zinc-700">
+                                    <span key={idx} className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md bg-white border border-zinc-200 text-zinc-700">
                                       <Link2 className="w-3 h-3 text-zinc-400" />
                                       {a.title || a.code || a}
                                     </span>
@@ -544,10 +545,10 @@ export const AuthorityTracker: React.FC<AuthorityTrackerProps> = ({ programId })
                             {/* Outcomes / minutes */}
                             {ix.outcomes && (
                               <div>
-                                <h4 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">
+                                <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">
                                   Outcomes / Minutes
                                 </h4>
-                                <p className="text-xs text-zinc-600 p-2 rounded-md bg-white border border-zinc-100">
+                                <p className="text-xs text-zinc-600 p-2 rounded-md bg-white border border-zinc-200">
                                   {ix.outcomes}
                                 </p>
                               </div>
@@ -568,7 +569,7 @@ export const AuthorityTracker: React.FC<AuthorityTrackerProps> = ({ programId })
           <div className="w-96 bg-white overflow-y-auto flex flex-col">
             {/* Detail header */}
             <div className="p-4 border-b flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-zinc-800">Interaction Detail</h3>
+              <h3 className="text-sm font-semibold text-zinc-900">Interaction Detail</h3>
               <button
                 onClick={() => setSelectedId(null)}
                 className="p-1 rounded-md hover:bg-zinc-100 text-zinc-400 hover:text-zinc-600"
@@ -619,7 +620,7 @@ export const AuthorityTracker: React.FC<AuthorityTrackerProps> = ({ programId })
               {/* Description */}
               {selectedInteraction.description && (
                 <div>
-                  <h5 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-1">
+                  <h5 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1">
                     Description
                   </h5>
                   <p className="text-xs text-zinc-700 leading-relaxed">
@@ -630,7 +631,7 @@ export const AuthorityTracker: React.FC<AuthorityTrackerProps> = ({ programId })
 
               {/* Commitments */}
               <div>
-                <h5 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-2">
+                <h5 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">
                   Commitments
                 </h5>
                 {(!selectedInteraction.commitments || selectedInteraction.commitments.length === 0) ? (
@@ -638,7 +639,7 @@ export const AuthorityTracker: React.FC<AuthorityTrackerProps> = ({ programId })
                 ) : (
                   <div className="space-y-1.5">
                     {selectedInteraction.commitments.map((c: any, idx: number) => (
-                      <div key={idx} className="flex items-start gap-2 p-2 rounded-lg bg-zinc-50 border border-zinc-100">
+                      <div key={idx} className="flex items-start gap-2 p-2 rounded-lg bg-zinc-50 border border-zinc-200">
                         {c.completed ? (
                           <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
                         ) : (
@@ -650,7 +651,7 @@ export const AuthorityTracker: React.FC<AuthorityTrackerProps> = ({ programId })
                           </p>
                           {c.dueDate && (
                             <p className={cn(
-                              'text-[10px] mt-0.5',
+                              'text-xs mt-0.5',
                               !c.completed && isOverdue(c.dueDate, 'planned')
                                 ? 'text-red-600 font-medium'
                                 : 'text-zinc-400',
@@ -668,12 +669,12 @@ export const AuthorityTracker: React.FC<AuthorityTrackerProps> = ({ programId })
               {/* Linked Artifacts */}
               {selectedInteraction.linkedArtifacts?.length > 0 && (
                 <div>
-                  <h5 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-2">
+                  <h5 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">
                     Linked Artifacts
                   </h5>
                   <div className="space-y-1">
                     {selectedInteraction.linkedArtifacts.map((a: any, idx: number) => (
-                      <div key={idx} className="flex items-center gap-2 p-2 rounded-lg bg-zinc-50 border border-zinc-100">
+                      <div key={idx} className="flex items-center gap-2 p-2 rounded-lg bg-zinc-50 border border-zinc-200">
                         <Link2 className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0" />
                         <span className="text-xs text-zinc-700">{a.title || a.code || a}</span>
                       </div>
@@ -685,10 +686,10 @@ export const AuthorityTracker: React.FC<AuthorityTrackerProps> = ({ programId })
               {/* Outcomes / Minutes */}
               {selectedInteraction.outcomes && (
                 <div>
-                  <h5 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-2">
+                  <h5 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">
                     Outcomes / Minutes
                   </h5>
-                  <div className="p-3 rounded-lg bg-zinc-50 border border-zinc-100">
+                  <div className="p-3 rounded-lg bg-zinc-50 border border-zinc-200">
                     <p className="text-xs text-zinc-700 leading-relaxed whitespace-pre-wrap">
                       {selectedInteraction.outcomes}
                     </p>
@@ -761,7 +762,7 @@ export const AuthorityTracker: React.FC<AuthorityTrackerProps> = ({ programId })
                   type="text"
                   value={newInteraction.subject}
                   onChange={e => setNewInteraction(prev => ({ ...prev, subject: e.target.value }))}
-                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
+                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                   placeholder="Meeting or submission subject..."
                 />
               </div>
@@ -773,7 +774,7 @@ export const AuthorityTracker: React.FC<AuthorityTrackerProps> = ({ programId })
                   type="date"
                   value={newInteraction.date}
                   onChange={e => setNewInteraction(prev => ({ ...prev, date: e.target.value }))}
-                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
+                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                 />
               </div>
 
@@ -783,7 +784,7 @@ export const AuthorityTracker: React.FC<AuthorityTrackerProps> = ({ programId })
                 <textarea
                   value={newInteraction.description}
                   onChange={e => setNewInteraction(prev => ({ ...prev, description: e.target.value }))}
-                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 h-20 resize-none"
+                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none h-20 resize-none"
                   placeholder="Notes or context for this interaction..."
                 />
               </div>
@@ -792,14 +793,14 @@ export const AuthorityTracker: React.FC<AuthorityTrackerProps> = ({ programId })
             <div className="flex items-center justify-end gap-2 mt-4">
               <button
                 onClick={() => setShowAddModal(false)}
-                className="px-3 py-1.5 text-xs text-zinc-600 hover:text-zinc-800"
+                className="px-3 py-1.5 text-xs text-zinc-600 hover:text-zinc-900"
               >
                 Cancel
               </button>
               <button
                 onClick={handleCreate}
                 disabled={!newInteraction.subject.trim() || createInteraction.isPending}
-                className="px-4 py-1.5 text-xs font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-50"
+                className="px-4 py-1.5 text-xs font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-60"
               >
                 {createInteraction.isPending ? 'Adding...' : 'Add Interaction'}
               </button>

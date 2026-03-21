@@ -99,7 +99,7 @@ const CompetitorComparison = ({ t }) => {
                   >
                     {header.isHighlighted && (
                       <div className="absolute top-0 right-0 left-0 -translate-y-1/2 flex justify-center">
-                        <span className="bg-amber-400 text-amber-800 text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-0.5">
+                        <span className="bg-amber-400 text-amber-800 text-[11px] px-2 py-0.5 rounded-full font-bold flex items-center gap-0.5">
                           <Zap size={10} strokeWidth={3} /> {t('RECOMMENDED')}
                         </span>
                       </div>

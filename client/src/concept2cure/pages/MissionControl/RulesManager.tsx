@@ -110,10 +110,10 @@ const RuleListItem: React.FC<RuleListItemProps> = ({ rule, isSelected, onSelect 
   <button
     onClick={onSelect}
     className={cn(
-      'w-full text-left px-3 py-2.5 rounded-lg border transition-colors',
+      'w-full text-left px-3 py-2.5 rounded-lg border transition-colors duration-150',
       isSelected
         ? 'bg-blue-50 border-blue-200 text-blue-900'
-        : 'bg-white border-zinc-100 hover:border-zinc-200 hover:bg-zinc-50'
+        : 'bg-white border-zinc-200 hover:border-zinc-200 hover:bg-zinc-50'
     )}
   >
     <div className="flex items-center gap-2 mb-1">
@@ -144,7 +144,7 @@ interface TemplateCardProps {
 }
 
 const TemplateCard: React.FC<TemplateCardProps> = ({ template, onUse }) => (
-  <div className="bg-white border border-zinc-200 rounded-lg p-3 hover:border-blue-300 transition-colors">
+  <div className="bg-white border border-zinc-200 rounded-lg p-3 hover:border-blue-300 transition-colors duration-150">
     <div className="flex items-start justify-between gap-2 mb-2">
       <h4 className="text-sm font-medium text-zinc-900">{template.name}</h4>
       <button
@@ -160,7 +160,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, onUse }) => (
       {template.tags.slice(0, 3).map(tag => (
         <span
           key={tag}
-          className="text-[10px] px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-500"
+          className="text-xs px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-500"
         >
           {tag}
         </span>
@@ -244,7 +244,7 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
           type="text"
           value={form.name}
           onChange={e => setForm(prev => ({ ...prev, name: e.target.value }))}
-          className="w-full px-3 py-2 rounded-lg border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full px-3 py-2 rounded-lg border border-zinc-200 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 outline-none focus:border-transparent"
           placeholder="e.g., Auto-assign reviewer on draft complete"
           required
         />
@@ -256,7 +256,7 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
         <textarea
           value={form.description}
           onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))}
-          className="w-full px-3 py-2 rounded-lg border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+          className="w-full px-3 py-2 rounded-lg border border-zinc-200 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 outline-none focus:border-transparent resize-none"
           placeholder="Describe what this rule does..."
           rows={2}
         />
@@ -269,7 +269,7 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
           <select
             value={form.triggerEvent}
             onChange={e => setForm(prev => ({ ...prev, triggerEvent: e.target.value }))}
-            className="w-full px-3 py-2 rounded-lg border border-zinc-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 rounded-lg border border-zinc-200 text-sm bg-white focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
           >
             {TRIGGER_EVENTS.map(ev => (
               <option key={ev} value={ev}>
@@ -283,7 +283,7 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
           <select
             value={form.scope}
             onChange={e => setForm(prev => ({ ...prev, scope: e.target.value }))}
-            className="w-full px-3 py-2 rounded-lg border border-zinc-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 rounded-lg border border-zinc-200 text-sm bg-white focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
           >
             {SCOPE_OPTIONS.map(s => (
               <option key={s} value={s}>
@@ -304,7 +304,7 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
             onChange={e =>
               setForm(prev => ({ ...prev, priority: parseInt(e.target.value, 10) || 50 }))
             }
-            className="w-full px-3 py-2 rounded-lg border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 rounded-lg border border-zinc-200 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
             min={0}
             max={100}
           />
@@ -320,7 +320,7 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
                 cooldownMinutes: parseInt(e.target.value, 10) || 0,
               }))
             }
-            className="w-full px-3 py-2 rounded-lg border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 rounded-lg border border-zinc-200 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
             min={0}
           />
         </div>
@@ -336,7 +336,7 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
                 maxExecutions: val ? parseInt(val, 10) : null,
               }));
             }}
-            className="w-full px-3 py-2 rounded-lg border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 rounded-lg border border-zinc-200 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
             placeholder="∞"
             min={1}
           />
@@ -349,13 +349,13 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
           type="button"
           onClick={() => setForm(prev => ({ ...prev, isActive: !prev.isActive }))}
           className={cn(
-            'relative w-10 h-5 rounded-full transition-colors',
+            'relative w-10 h-5 rounded-full transition-colors duration-150',
             form.isActive ? 'bg-blue-500' : 'bg-zinc-300'
           )}
         >
           <div
             className={cn(
-              'absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform',
+              'absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-150',
               form.isActive ? 'translate-x-5' : 'translate-x-0.5'
             )}
           />
@@ -390,7 +390,7 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
                 addTag();
               }
             }}
-            className="flex-1 px-3 py-1.5 rounded-lg border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 px-3 py-1.5 rounded-lg border border-zinc-200 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
             placeholder="Add tag..."
           />
           <button
@@ -404,11 +404,11 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-2 pt-2 border-t border-zinc-100">
+      <div className="flex items-center gap-2 pt-2 border-t border-zinc-200">
         <button
           type="submit"
           disabled={isSaving || !form.name}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors duration-150"
         >
           {isSaving ? (
             <RefreshCw className="w-4 h-4 animate-spin" />
@@ -420,7 +420,7 @@ const RuleEditor: React.FC<RuleEditorProps> = ({
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 rounded-lg text-sm text-zinc-600 hover:bg-zinc-100 transition-colors"
+          className="px-4 py-2 rounded-lg text-sm text-zinc-600 hover:bg-zinc-100 transition-colors duration-150"
         >
           Cancel
         </button>
@@ -546,12 +546,12 @@ export const RulesManager: React.FC<RulesManagerProps> = ({ onBack }) => {
       {/* Header */}
       <div className="px-6 py-4 border-b border-zinc-200 bg-white flex items-center gap-3">
         {onBack && (
-          <button onClick={onBack} className="p-1.5 rounded-md hover:bg-zinc-100 transition-colors">
+          <button onClick={onBack} className="p-1.5 rounded-md hover:bg-zinc-100 transition-colors duration-150">
             <ArrowLeft className="w-4 h-4 text-zinc-600" />
           </button>
         )}
         <div className="flex-1">
-          <h1 className="text-lg font-bold text-zinc-900 flex items-center gap-2">
+          <h1 className="text-lg font-semibold text-zinc-900 flex items-center gap-2">
             <Zap className="w-5 h-5 text-violet-600" />
             Rules Engine
           </h1>
@@ -562,14 +562,14 @@ export const RulesManager: React.FC<RulesManagerProps> = ({ onBack }) => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setViewMode('templates')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-300 text-sm text-zinc-700 hover:bg-zinc-50 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-300 text-sm text-zinc-700 hover:bg-zinc-50 transition-colors duration-150"
           >
             <ListChecks className="w-4 h-4" />
             Templates
           </button>
           <button
             onClick={() => setViewMode('create')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-sm text-white font-medium hover:bg-blue-700 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-sm text-white font-medium hover:bg-blue-700 transition-colors duration-150"
           >
             <Plus className="w-4 h-4" />
             New Rule
@@ -581,14 +581,14 @@ export const RulesManager: React.FC<RulesManagerProps> = ({ onBack }) => {
         {/* ── Left: Rules List ────────────────────────────────────────── */}
         <div className="w-72 border-r border-zinc-200 bg-white flex flex-col">
           {/* Search */}
-          <div className="p-3 border-b border-zinc-100">
+          <div className="p-3 border-b border-zinc-200">
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-zinc-200 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 outline-none focus:border-transparent"
                 placeholder="Search rules..."
               />
             </div>
@@ -603,7 +603,7 @@ export const RulesManager: React.FC<RulesManagerProps> = ({ onBack }) => {
               </div>
             ) : filteredRules.length === 0 ? (
               <div className="text-center py-8">
-                <ListChecks className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+                <ListChecks className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
                 <p className="text-sm text-zinc-500">No rules found</p>
               </div>
             ) : (
@@ -696,7 +696,7 @@ export const RulesManager: React.FC<RulesManagerProps> = ({ onBack }) => {
                         selectedRule.isActive ? 'bg-emerald-500' : 'bg-zinc-300'
                       )}
                     />
-                    <h2 className="text-lg font-bold text-zinc-900">{selectedRule.name}</h2>
+                    <h2 className="text-lg font-semibold text-zinc-900">{selectedRule.name}</h2>
                   </div>
                   {selectedRule.description && (
                     <p className="text-sm text-zinc-500">{selectedRule.description}</p>
@@ -706,7 +706,7 @@ export const RulesManager: React.FC<RulesManagerProps> = ({ onBack }) => {
                   <button
                     onClick={handleTestRule}
                     disabled={testRule.isPending}
-                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-zinc-200 text-xs text-zinc-600 hover:bg-zinc-50 transition-colors"
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-zinc-200 text-xs text-zinc-600 hover:bg-zinc-50 transition-colors duration-150"
                   >
                     {testRule.isPending ? (
                       <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -717,7 +717,7 @@ export const RulesManager: React.FC<RulesManagerProps> = ({ onBack }) => {
                   </button>
                   <button
                     onClick={() => setViewMode('edit')}
-                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-zinc-200 text-xs text-zinc-600 hover:bg-zinc-50 transition-colors"
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-zinc-200 text-xs text-zinc-600 hover:bg-zinc-50 transition-colors duration-150"
                   >
                     <Edit3 className="w-3.5 h-3.5" />
                     Edit
@@ -725,7 +725,7 @@ export const RulesManager: React.FC<RulesManagerProps> = ({ onBack }) => {
                   <button
                     onClick={() => handleToggleActive(selectedRule)}
                     className={cn(
-                      'flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-xs transition-colors',
+                      'flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-xs transition-colors duration-150',
                       selectedRule.isActive
                         ? 'border-amber-200 text-amber-700 hover:bg-amber-50'
                         : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'
@@ -745,7 +745,7 @@ export const RulesManager: React.FC<RulesManagerProps> = ({ onBack }) => {
                   </button>
                   <button
                     onClick={handleDelete}
-                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-red-200 text-xs text-red-600 hover:bg-red-50 transition-colors"
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-red-200 text-xs text-red-600 hover:bg-red-50 transition-colors duration-150"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -787,23 +787,23 @@ export const RulesManager: React.FC<RulesManagerProps> = ({ onBack }) => {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
                 <div className="bg-zinc-50 rounded-lg p-3">
                   <div className="text-xs text-zinc-500">Trigger</div>
-                  <div className="text-sm font-medium text-zinc-800 capitalize">
+                  <div className="text-sm font-medium text-zinc-900 capitalize">
                     {selectedRule.triggerEvent.replace(/_/g, ' ')}
                   </div>
                 </div>
                 <div className="bg-zinc-50 rounded-lg p-3">
                   <div className="text-xs text-zinc-500">Scope</div>
-                  <div className="text-sm font-medium text-zinc-800 capitalize">
+                  <div className="text-sm font-medium text-zinc-900 capitalize">
                     {selectedRule.scope}
                   </div>
                 </div>
                 <div className="bg-zinc-50 rounded-lg p-3">
                   <div className="text-xs text-zinc-500">Priority</div>
-                  <div className="text-sm font-medium text-zinc-800">{selectedRule.priority}</div>
+                  <div className="text-sm font-medium text-zinc-900">{selectedRule.priority}</div>
                 </div>
                 <div className="bg-zinc-50 rounded-lg p-3">
                   <div className="text-xs text-zinc-500">Cooldown</div>
-                  <div className="text-sm font-medium text-zinc-800">
+                  <div className="text-sm font-medium text-zinc-900">
                     {selectedRule.cooldownMinutes > 0
                       ? `${selectedRule.cooldownMinutes} min`
                       : 'None'}
@@ -819,19 +819,19 @@ export const RulesManager: React.FC<RulesManagerProps> = ({ onBack }) => {
                 </h3>
                 <div className="grid grid-cols-3 gap-3">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-zinc-900 tabular-nums">
+                    <div className="text-2xl font-semibold text-zinc-900 tabular-nums">
                       {selectedRule.executionCount}
                     </div>
                     <div className="text-xs text-zinc-500">Total Runs</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-emerald-600 tabular-nums">
+                    <div className="text-2xl font-semibold text-emerald-600 tabular-nums">
                       {selectedRule.successCount}
                     </div>
                     <div className="text-xs text-zinc-500">Succeeded</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-red-600 tabular-nums">
+                    <div className="text-2xl font-semibold text-red-600 tabular-nums">
                       {selectedRule.failureCount}
                     </div>
                     <div className="text-xs text-zinc-500">Failed</div>
@@ -841,7 +841,7 @@ export const RulesManager: React.FC<RulesManagerProps> = ({ onBack }) => {
 
               {/* Execution Log */}
               <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden">
-                <div className="px-4 py-3 border-b border-zinc-100">
+                <div className="px-4 py-3 border-b border-zinc-200">
                   <h3 className="text-sm font-semibold text-zinc-900">Recent Executions</h3>
                 </div>
                 <div className="divide-y divide-zinc-50">
@@ -886,7 +886,7 @@ export const RulesManager: React.FC<RulesManagerProps> = ({ onBack }) => {
           {viewMode === 'list' && !selectedRuleId && (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
-                <Settings2 className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
+                <Settings2 className="w-12 h-12 text-zinc-400 mx-auto mb-3" />
                 <h3 className="text-base font-semibold text-zinc-700">
                   Select a rule to view details
                 </h3>

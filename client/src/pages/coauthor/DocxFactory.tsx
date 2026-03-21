@@ -248,14 +248,14 @@ function RenderEventTimeline({ programId, renderId }: { programId: string; rende
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-semibold">{evt.event_type}</span>
-                  <span className="text-[10px] text-muted-foreground">
+                  <span className="text-[11px] text-muted-foreground">
                     {formatTimestamp(evt.created_at)}
                   </span>
                 </div>
                 {hasPayload && (
                   <button
                     onClick={() => togglePayload(evt.id)}
-                    className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-0.5 mt-0.5"
+                    className="text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-0.5 mt-0.5"
                   >
                     {isExpanded ? (
                       <ChevronUp className="h-3 w-3" />
@@ -266,7 +266,7 @@ function RenderEventTimeline({ programId, renderId }: { programId: string; rende
                   </button>
                 )}
                 {isExpanded && hasPayload && (
-                  <pre className="mt-1 text-[10px] bg-muted rounded p-2 overflow-x-auto max-h-32 whitespace-pre-wrap break-all">
+                  <pre className="mt-1 text-[11px] bg-muted rounded p-2 overflow-x-auto max-h-32 whitespace-pre-wrap break-all">
                     {JSON.stringify(evt.payload_json, null, 2)}
                   </pre>
                 )}
@@ -337,11 +337,11 @@ function HashVerificationPanel({ state }: { state: HashVerifyState }) {
           </span>
         </div>
         <div className="space-y-1">
-          <div className="flex items-start gap-2 text-[10px]">
+          <div className="flex items-start gap-2 text-[11px]">
             <span className="text-muted-foreground w-14 shrink-0 font-medium">Server:</span>
             <code className="break-all font-mono">{state.serverSha}</code>
           </div>
-          <div className="flex items-start gap-2 text-[10px]">
+          <div className="flex items-start gap-2 text-[11px]">
             <span className="text-muted-foreground w-14 shrink-0 font-medium">Browser:</span>
             <code className="break-all font-mono">{state.clientSha}</code>
           </div>
@@ -688,7 +688,7 @@ function CreateRenderDialog({
                     <div>
                       <span className="text-xs font-medium">{pack.label}</span>
                       {pack.description && (
-                        <span className="text-[10px] text-muted-foreground ml-2">
+                        <span className="text-[11px] text-muted-foreground ml-2">
                           {pack.description}
                         </span>
                       )}
@@ -800,7 +800,7 @@ function TemplatesTab({ programId }: { programId: string }) {
                   payloads.
                 </p>
               </div>
-              <Badge variant="outline" className="text-[10px]">
+              <Badge variant="outline" className="text-[11px]">
                 <Sparkles className="h-3 w-3 mr-1" />
                 Catalog-driven
               </Badge>
@@ -954,7 +954,7 @@ function TemplatesTab({ programId }: { programId: string }) {
                       onClick={() => navigator.clipboard.writeText(t.id)}
                       title="Copy template ID"
                     >
-                      <code className="text-[10px] text-muted-foreground">{t.id.slice(0, 8)}…</code>
+                      <code className="text-[11px] text-muted-foreground">{t.id.slice(0, 8)}…</code>
                     </Button>
                   </div>
                 </TableCell>
@@ -1082,7 +1082,7 @@ function RendersTab({ programId }: { programId: string }) {
             {renders.length} render{renders.length !== 1 ? 's' : ''}
           </p>
           {hasPending && (
-            <Badge variant="outline" className="text-[10px] animate-pulse">
+            <Badge variant="outline" className="text-[11px] animate-pulse">
               <Loader2 className="h-2.5 w-2.5 mr-1 animate-spin" />
               polling
             </Badge>

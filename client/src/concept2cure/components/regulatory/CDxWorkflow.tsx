@@ -26,6 +26,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
+import { LIFECYCLE } from '../ui/enterprise';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -152,12 +153,12 @@ const CDX_STAGES: Array<{
 ];
 
 const STATUS_COLORS: Record<CDxStatus, string> = {
-  initiation: 'bg-zinc-100 text-zinc-700',
-  analytical_validation: 'bg-blue-100 text-blue-700',
-  clinical_validation: 'bg-purple-100 text-purple-700',
-  notified_body_review: 'bg-amber-100 text-amber-700',
-  eu_declaration: 'bg-green-100 text-green-700',
-  post_market: 'bg-teal-100 text-teal-700',
+  initiation: `${LIFECYCLE.not_started.bg} ${LIFECYCLE.not_started.text}`,
+  analytical_validation: `${LIFECYCLE.draft.bg} ${LIFECYCLE.draft.text}`,
+  clinical_validation: `${LIFECYCLE.in_review.bg} ${LIFECYCLE.in_review.text}`,
+  notified_body_review: `${LIFECYCLE.in_review.bg} ${LIFECYCLE.in_review.text}`,
+  eu_declaration: `${LIFECYCLE.approved.bg} ${LIFECYCLE.approved.text}`,
+  post_market: `${LIFECYCLE.published.bg} ${LIFECYCLE.published.text}`,
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -330,7 +331,7 @@ export default function CDxWorkflow() {
       {/* Create Form */}
       {showCreate && (
         <div className="border border-zinc-200 rounded-md">
-          <div className="px-4 py-3 border-b border-zinc-100">
+          <div className="px-4 py-3 border-b border-zinc-200">
             <h3 className="text-lg font-semibold">New CDx Pairing</h3>
             <p className="text-sm text-muted-foreground">
               Define the IVD — Medicinal Product pairing for companion diagnostic co-development
@@ -502,7 +503,7 @@ export default function CDxWorkflow() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Workflow List */}
         <div className="border border-zinc-200 rounded-md lg:col-span-1">
-          <div className="px-4 py-3 border-b border-zinc-100">
+          <div className="px-4 py-3 border-b border-zinc-200">
             <h3 className="text-lg font-semibold">CDx Pairings</h3>
           </div>
           <div className="px-4 py-3">
@@ -551,7 +552,7 @@ export default function CDxWorkflow() {
 
         {/* Workflow Detail */}
         <div className="border border-zinc-200 rounded-md lg:col-span-2">
-          <div className="px-4 py-3 border-b border-zinc-100">
+          <div className="px-4 py-3 border-b border-zinc-200">
             <h3 className="text-lg font-semibold">
               {selected ? selected.medicinal_product_name : 'Select a CDx Pairing'}
             </h3>

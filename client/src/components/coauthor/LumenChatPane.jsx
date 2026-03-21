@@ -40,7 +40,7 @@ const defaultMessages = [
     id: 1,
     role: 'assistant',
     content:
-      "Hello! I'm your Lumen AI Regulatory Assistant. I can help you with drafting, formatting, and ensuring compliance for this section. Feel free to ask me any questions about regulatory requirements, content suggestions, or best practices.",
+      "Hello! I'm your AnA RI Regulatory Assistant. I can help you with drafting, formatting, and ensuring compliance for this section. Feel free to ask me any questions about regulatory requirements, content suggestions, or best practices.",
     timestamp: new Date(),
     source: 'system',
   },
@@ -73,7 +73,7 @@ function ClaimStatusPill({ status }) {
   const config = CLAIM_STATUS_CONFIG[status] || CLAIM_STATUS_CONFIG.UNSUPPORTED;
   const Icon = config.icon;
   return (
-    <Badge variant="outline" className={`${config.color} text-[10px] font-medium gap-1`}>
+    <Badge variant="outline" className={`${config.color} text-[11px] font-medium gap-1`}>
       <Icon className="h-3 w-3" />
       {config.label}
     </Badge>
@@ -117,11 +117,11 @@ function ClaimCard({ claim, onAddToBinder, binderLoading }) {
               key={cit.chunkId || i}
               className="text-xs text-muted-foreground flex items-center gap-1.5"
             >
-              <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-0.5 text-[9px] font-bold bg-blue-100 text-blue-700 rounded-sm">
+              <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-0.5 text-[11px] font-bold bg-blue-100 text-blue-700 rounded-sm">
                 {i + 1}
               </span>
               <span className="truncate">{cit.title || 'Unknown source'}</span>
-              <span className="text-[10px] text-muted-foreground/60 shrink-0">
+              <span className="text-[11px] text-muted-foreground/60 shrink-0">
                 {Math.round((cit.score || 0) * 100)}%
               </span>
             </div>
@@ -150,7 +150,7 @@ function ClaimCard({ claim, onAddToBinder, binderLoading }) {
           <Button
             variant="outline"
             size="sm"
-            className="h-6 text-[10px] px-2"
+            className="h-6 text-[11px] px-2"
             disabled={binderLoading}
             onClick={() => onAddToBinder(claim.claimId)}
           >
@@ -180,7 +180,7 @@ function ChainDrawer({ chain, onClose }) {
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4 text-xs">
         {/* Retrieval */}
         <div className="space-y-1">
-          <div className="font-semibold text-muted-foreground uppercase tracking-wider text-[10px]">
+          <div className="font-semibold text-muted-foreground uppercase tracking-wider text-[11px]">
             Retrieval
           </div>
           <div className="bg-muted/50 rounded-md p-2 space-y-1 font-mono">
@@ -214,7 +214,7 @@ function ChainDrawer({ chain, onClose }) {
 
         {/* Generation */}
         <div className="space-y-1">
-          <div className="font-semibold text-muted-foreground uppercase tracking-wider text-[10px]">
+          <div className="font-semibold text-muted-foreground uppercase tracking-wider text-[11px]">
             Generation
           </div>
           <div className="bg-muted/50 rounded-md p-2 space-y-1 font-mono">
@@ -236,7 +236,7 @@ function ChainDrawer({ chain, onClose }) {
         {/* Claims summary */}
         {chain.claims && chain.claims.length > 0 && (
           <div className="space-y-1">
-            <div className="font-semibold text-muted-foreground uppercase tracking-wider text-[10px]">
+            <div className="font-semibold text-muted-foreground uppercase tracking-wider text-[11px]">
               Claims ({chain.claims.length})
             </div>
             <div className="space-y-1">
@@ -244,7 +244,7 @@ function ChainDrawer({ chain, onClose }) {
                 <div key={i} className="flex items-center gap-2 bg-muted/50 rounded-md px-2 py-1">
                   <span className="text-muted-foreground">#{i + 1}</span>
                   <ClaimStatusPill status={c.status} />
-                  <span className="text-[10px] text-muted-foreground">
+                  <span className="text-[11px] text-muted-foreground">
                     {c.citations?.length || 0} cit.
                   </span>
                 </div>
@@ -256,7 +256,7 @@ function ChainDrawer({ chain, onClose }) {
         {/* Sources */}
         {chain.sources && chain.sources.length > 0 && (
           <div className="space-y-1">
-            <div className="font-semibold text-muted-foreground uppercase tracking-wider text-[10px]">
+            <div className="font-semibold text-muted-foreground uppercase tracking-wider text-[11px]">
               Retrieved Sources
             </div>
             {chain.sources.map((s, i) => (
@@ -264,7 +264,7 @@ function ChainDrawer({ chain, onClose }) {
                 <div className="font-medium">
                   [SRC-{i + 1}] {s.title}
                 </div>
-                <div className="text-[10px] text-muted-foreground/70 mt-0.5">
+                <div className="text-[11px] text-muted-foreground/70 mt-0.5">
                   Source Type: {(s.sourceType || 'atom').toUpperCase()}
                 </div>
                 <div className="text-muted-foreground mt-0.5 line-clamp-2">
@@ -438,7 +438,7 @@ export default function LumenChatPane({ contextId, projectId }) {
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center">
           <Bot className="h-5 w-5 mr-2 text-primary" />
-          Lumen AI Assistant
+          AnA RI Assistant
           {contextId && (
             <span className="ml-2 text-xs text-muted-foreground font-normal">
               Section {contextId}
@@ -505,7 +505,7 @@ export default function LumenChatPane({ contextId, projectId }) {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-6 text-[10px] px-2 mt-1"
+                          className="h-6 text-[11px] px-2 mt-1"
                           onClick={() => setChainDrawerData(message)}
                         >
                           <Eye className="h-3 w-3 mr-1" />
@@ -598,7 +598,7 @@ export default function LumenChatPane({ contextId, projectId }) {
         </div>
       </CardContent>
       <CardFooter className="pt-0 px-4 pb-4 border-t flex justify-between items-center text-xs text-muted-foreground">
-        <span>{aiModel ? `Powered by ${aiModel}` : 'Powered by Lumen Cortex AI'}</span>
+        <span>{aiModel ? `Powered by ${aiModel}` : 'Powered by AnA RI'}</span>
         <div className="flex space-x-2">
           <Button variant="ghost" size="sm" className="h-7 px-2">
             <Image className="h-3 w-3 mr-1" />

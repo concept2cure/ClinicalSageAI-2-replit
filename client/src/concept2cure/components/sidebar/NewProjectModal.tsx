@@ -128,8 +128,8 @@ const submissionTypes: SubmissionTypeOption[] = [
     description:
       'EU IVDR 2017/746 — Classification, performance evaluation & technical documentation for IVDs',
     icon: Microscope,
-    color: 'text-indigo-600',
-    bgColor: 'bg-indigo-50 hover:bg-indigo-100 border-indigo-200',
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-50 hover:bg-blue-100 border-blue-200',
   },
 ];
 
@@ -140,16 +140,19 @@ const submissionTypes: SubmissionTypeOption[] = [
 interface NewProjectModalProps {
   open: boolean;
   onClose: () => void;
+  /** Called after successful creation with the new project ID and type */
+  onProjectCreated?: (projectId: string, submissionType: SubmissionType) => void;
 }
 
-export const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onClose }) => {
+export const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onClose, onProjectCreated }) => {
   const { createProject } = useProject();
 
-  const [step, setStep] = useState<'type' | 'details'>('type');
+  const [step, setStep] = useState<'type' | 'details' | 'success'>('type');
   const [selectedType, setSelectedType] = useState<SubmissionType | null>(null);
   const [projectName, setProjectName] = useState('');
   const [projectDescription, setProjectDescription] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   const selectedTypeOption = submissionTypes.find(t => t.type === selectedType);
 
@@ -158,18 +161,30 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onClose 
     setStep('details');
   };
 
+  const [createdProject, setCreatedProject] = useState<{ id: string; type: SubmissionType } | null>(null);
+
   const handleCreate = async () => {
     if (!selectedType || !projectName.trim()) return;
 
     setIsCreating(true);
+    setCreateError(null);
     try {
-      await createProject(projectName.trim(), selectedType, projectDescription.trim() || undefined);
-      handleClose();
+      const project = await createProject(projectName.trim(), selectedType, projectDescription.trim() || undefined);
+      setCreatedProject({ id: project.id, type: selectedType });
+      setStep('success' as any);
     } catch (error) {
-      console.error('Failed to create project:', error);
+      const message = error instanceof Error ? error.message : 'Failed to create project. Please try again.';
+      setCreateError(message);
     } finally {
       setIsCreating(false);
     }
+  };
+
+  const handleOpenProject = () => {
+    if (createdProject) {
+      onProjectCreated?.(createdProject.id, createdProject.type);
+    }
+    handleClose();
   };
 
   const handleClose = () => {
@@ -177,6 +192,8 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onClose 
     setSelectedType(null);
     setProjectName('');
     setProjectDescription('');
+    setCreatedProject(null);
+    setCreateError(null);
     onClose();
   };
 
@@ -189,13 +206,19 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onClose 
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-blue-600" />
-            {step === 'type' ? 'Create New Project' : 'Project Details'}
+            {step === 'success' ? (
+              <CheckCircle2 className="h-5 w-5 text-green-600" />
+            ) : (
+              <Sparkles className="h-5 w-5 text-blue-600" />
+            )}
+            {step === 'type' ? 'Create New Project' : step === 'success' ? 'Project Created' : 'Project Details'}
           </DialogTitle>
           <DialogDescription>
             {step === 'type'
               ? 'Select the type of regulatory submission for your project.'
-              : `Setting up a new ${selectedTypeOption?.fullName} project.`}
+              : step === 'success'
+                ? "Here's how to get started."
+                : `Setting up a new ${selectedTypeOption?.fullName} project.`}
           </DialogDescription>
         </DialogHeader>
 
@@ -209,7 +232,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onClose 
                   key={option.type}
                   onClick={() => handleTypeSelect(option.type)}
                   className={cn(
-                    'flex flex-col items-start p-4 rounded-lg border-2 transition-all text-left',
+                    'flex flex-col items-start p-4 rounded-lg border transition-all text-left',
                     option.bgColor,
                     selectedType === option.type && 'ring-2 ring-offset-2 ring-blue-500'
                   )}
@@ -255,6 +278,9 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onClose 
                 placeholder={`e.g., ${selectedTypeOption.type === '510K' ? 'Glucose Monitor XYZ' : 'Drug Candidate ABC'}`}
                 value={projectName}
                 onChange={e => setProjectName(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && projectName.trim() && !isCreating) handleCreate();
+                }}
                 autoFocus
               />
             </div>
@@ -287,16 +313,64 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onClose 
           </div>
         )}
 
+        {/* Step 3: Success — guide user to next action */}
+        {step === 'success' && selectedTypeOption && (
+          <div className="space-y-4 py-4">
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-50 mb-3">
+                <CheckCircle2 className="h-6 w-6 text-green-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-zinc-900">
+                {projectName} is ready
+              </h3>
+              <p className="text-sm text-zinc-500 mt-1">
+                Your {selectedTypeOption.fullName} project has been created.
+              </p>
+            </div>
+
+            <div className="bg-zinc-50 rounded-xl p-4 space-y-3">
+              <h4 className="text-sm font-semibold text-zinc-900">What to do first</h4>
+              <div className="space-y-2">
+                {[
+                  { step: '1', label: 'Open your project workspace', desc: 'Click below to start working' },
+                  { step: '2', label: 'Ask AnA to plan your submission', desc: 'Get a step-by-step roadmap' },
+                  { step: '3', label: 'Upload reference documents', desc: 'Give AnA context about your product' },
+                ].map(item => (
+                  <div key={item.step} className="flex gap-3 items-start">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-zinc-200 text-zinc-700 text-xs font-semibold flex items-center justify-center">
+                      {item.step}
+                    </span>
+                    <div>
+                      <div className="text-sm font-medium text-zinc-900">{item.label}</div>
+                      <div className="text-xs text-zinc-500">{item.desc}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         <DialogFooter>
           {step === 'type' ? (
             <Button variant="outline" onClick={handleClose}>
               Cancel
+            </Button>
+          ) : step === 'success' ? (
+            <Button onClick={handleOpenProject} className="w-full">
+              <Sparkles className="mr-2 h-4 w-4" />
+              Open Project Workspace
             </Button>
           ) : (
             <>
               <Button variant="outline" onClick={handleBack}>
                 Back
               </Button>
+              {createError && (
+                <div role="alert" className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                  {createError}
+                </div>
+              )}
               <Button onClick={handleCreate} disabled={!projectName.trim() || isCreating}>
                 {isCreating ? (
                   <>

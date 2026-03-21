@@ -278,7 +278,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
             <TooltipContent side="right" className="flex items-center gap-2">
               <span>{module.label}</span>
               {module.badge && (
-                <Badge variant="secondary" className="text-[10px]">
+                <Badge variant="secondary" className="text-[11px]">
                   {module.badge}
                 </Badge>
               )}
@@ -304,7 +304,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
         {module.badge && (
           <Badge
             variant={module.badge === 'New' ? 'default' : 'secondary'}
-            className="ml-auto text-[10px]"
+            className="ml-auto text-[11px]"
           >
             {module.badge}
           </Badge>
@@ -338,7 +338,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
           {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
           <CategoryIcon className="h-3.5 w-3.5" />
           <span>{categoryInfo.label}</span>
-          <Badge variant="outline" className="ml-auto text-[10px]">
+          <Badge variant="outline" className="ml-auto text-[11px]">
             {modules.length}
           </Badge>
         </button>
@@ -446,12 +446,12 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
               </button>
             </div>
             {commandFeedback && (
-              <div className="mt-1.5 text-[10px] text-blue-600 animate-pulse">
+              <div className="mt-1.5 text-[11px] text-blue-600 animate-pulse">
                 {commandFeedback}
               </div>
             )}
           </form>
-          <div className="mt-1 text-[10px] text-muted-foreground">
+          <div className="mt-1 text-[11px] text-muted-foreground">
             Try: "open vault", "510k", "analytics"
           </div>
         </div>

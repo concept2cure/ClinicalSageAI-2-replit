@@ -7,7 +7,7 @@
  * Claude.ai / ChatGPT style conversational interface.
  * Clean, focused, breathing room for thinking.
  *
- * Now connected to Lumen Cortex backend for real AI responses.
+ * Now connected to AnA RI backend for real AI responses.
  *
  * Design Philosophy:
  * - Content-first: Messages are the hero
@@ -128,18 +128,14 @@ interface ZenChatProps {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const ANA_THINKING_PHRASES = [
-  'Reviewing your regulatory landscape...',
-  'Cross-referencing guidance documents...',
-  'Checking the latest FDA updates...',
-  'Let me dig into the CTD modules...',
-  'Analyzing your submission strategy...',
-  'Running compliance checks...',
-  'Almost there — dotting the i\'s on Part 11...',
-  'Warming up the ELSA engines... no, not that one ❄️',
-  'Consulting my regulatory crystal ball...',
-  'Let it flow through the review process 🏔️',
-  'Building your regulatory snowglobe...',
-  'Searching through 65 ICH guidelines...',
+  'Analyzing your request...',
+  'Reviewing regulatory guidance...',
+  'Cross-referencing documents...',
+  'Checking FDA guidance...',
+  'Researching ICH guidelines...',
+  'Reviewing compliance requirements...',
+  'Preparing your response...',
+  'Searching regulatory databases...',
 ];
 
 const ThinkingIndicator: React.FC = () => {
@@ -207,6 +203,8 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
       <div className="flex items-center gap-2 mb-2">
         <FileText className="w-4 h-4 text-[#D97757]" />
         <span className="text-sm font-medium text-zinc-800 truncate flex-1">
+        <FileText className="w-4 h-4 text-violet-500" />
+        <span className="text-sm font-medium text-zinc-900 truncate flex-1">
           {artifact.title}
         </span>
         <span className="text-xs text-zinc-400">{wordCount.toLocaleString()} words</span>
@@ -216,10 +214,11 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
           onClick={() => onSave(artifact)}
           disabled={isSaving || isSaved}
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
+            'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors duration-150',
             isSaved
               ? 'bg-green-50 text-green-700 border border-green-200'
               : 'bg-[#FBF0EB] text-[#C4623F] border border-[#F5E0D6] hover:bg-[#F5E0D6]'
+              : 'bg-violet-50 text-violet-700 border border-blue-200 hover:bg-violet-100'
           )}
         >
           {isSaving ? (
@@ -236,7 +235,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
         <div className="relative">
           <button
             onClick={() => setShowExportMenu(!showExportMenu)}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 transition-colors duration-150"
           >
             <Download className="w-3.5 h-3.5" />
             Export
@@ -253,7 +252,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
                   <FileText className="w-4 h-4 text-[#D97757]" />
                   <div className="text-left">
                     <div className="font-medium text-xs">Word Document (.docx)</div>
-                    <div className="text-[10px] text-zinc-400">MS Word, Google Docs compatible</div>
+                    <div className="text-xs text-zinc-400">MS Word, Google Docs compatible</div>
                   </div>
                 </button>
                 <button
@@ -263,7 +262,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
                   <FileText className="w-4 h-4 text-red-500" />
                   <div className="text-left">
                     <div className="font-medium text-xs">PDF Document (.pdf)</div>
-                    <div className="text-[10px] text-zinc-400">Read-only, print-ready</div>
+                    <div className="text-xs text-zinc-400">Read-only, print-ready</div>
                   </div>
                 </button>
               </div>
@@ -273,7 +272,7 @@ const ArtifactActions: React.FC<ArtifactActionsProps> = ({
 
         <button
           onClick={() => onOpenEditor(artifact)}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition-colors"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100 transition-colors duration-150"
         >
           <PenTool className="w-3.5 h-3.5" />
           Edit Inline
@@ -348,7 +347,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     <div
       className={cn(
         'group py-6 px-4 sm:px-6',
-        !isUser && 'bg-white border-b border-zinc-100/80',
+        !isUser && 'bg-white border-b border-zinc-200/80',
         isUser && 'bg-zinc-50/60'
       )}
       onMouseEnter={() => setShowActions(true)}
@@ -360,11 +359,11 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           <div
             className={cn(
               'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm mt-0.5',
-              isUser ? 'bg-zinc-800 text-white' : 'bg-gradient-to-br from-violet-500 to-violet-700'
+              isUser ? 'bg-zinc-800 text-white' : 'bg-violet-600'
             )}
           >
             {isUser ? (
-              <span className="text-xs font-bold text-white">{userInitials}</span>
+              <span className="text-xs font-semibold text-white">{userInitials}</span>
             ) : (
               <Sparkles className="w-4 h-4 text-white" />
             )}
@@ -398,7 +397,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
               <TypingIndicator />
             ) : isUser ? (
               // User messages: plain text (preserving whitespace)
-              <p className="text-zinc-800 leading-relaxed whitespace-pre-wrap text-sm">
+              <p className="text-zinc-900 leading-relaxed whitespace-pre-wrap text-sm">
                 {message.content}
               </p>
             ) : (
@@ -465,7 +464,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                   <button
                     key={link.href}
                     onClick={() => onNavigate?.(link.href)}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium text-zinc-600 hover:border-zinc-300 hover:bg-zinc-50 transition-colors"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium text-zinc-600 hover:border-zinc-300 hover:bg-zinc-50 transition-colors duration-150"
                   >
                     <ExternalLink className="h-3 w-3" />
                     {link.label}
@@ -484,7 +483,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
               >
                 <button
                   onClick={handleCopy}
-                  className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors"
+                  className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors duration-150"
                   title="Copy"
                 >
                   {copied ? (
@@ -497,21 +496,21 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                   <>
                     <button
                       onClick={() => onFeedback?.(true)}
-                      className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors"
+                      className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors duration-150"
                       title="Good response"
                     >
                       <ThumbsUp className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => onFeedback?.(false)}
-                      className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors"
+                      className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors duration-150"
                       title="Bad response"
                     >
                       <ThumbsDown className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={onRegenerate}
-                      className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors"
+                      className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors duration-150"
                       title="Regenerate"
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
@@ -543,57 +542,27 @@ interface WelcomeScreenProps {
   submissionType?: string;
 }
 
-const DEVICE_PROMPTS = [
+/** Quick-start prompts when there's no project context */
+const QUICK_START_PROMPTS = [
   {
-    label: '510(k) Submission',
-    prompt:
-      'I need to prepare a 510(k) submission. Help me identify a predicate device, structure the substantial equivalence argument, and list the required sections.',
-    sub: 'Predicate selection · SE argument · document checklist',
+    label: 'Plan a new submission',
+    prompt: 'I need to plan a new regulatory submission. Help me choose the right pathway (510(k), IND, NDA, BLA, PMA, or De Novo) and create a step-by-step project plan.',
+    sub: 'Pathway selection · timeline · checklist',
   },
   {
-    label: 'PMA Strategy',
-    prompt:
-      'Walk me through the PMA pathway for a Class III device. What clinical evidence do I need, and what are the key milestones?',
-    sub: 'Clinical evidence · IDE requirements · panel review',
+    label: 'Draft a document section',
+    prompt: 'Help me draft a regulatory document section. I\'ll tell you which section and submission type, and you\'ll generate a first draft I can edit.',
+    sub: 'eCTD · CSR · protocol · CMC',
   },
   {
-    label: 'Design Controls (21 CFR 820)',
-    prompt:
-      'Help me set up a design controls framework for my medical device under 21 CFR 820.30. Generate the design history file outline.',
-    sub: 'DHF · design inputs/outputs · V&V plan',
+    label: 'Check my submission for gaps',
+    prompt: 'Review my submission package and identify any missing sections, compliance gaps, or areas that need strengthening before I submit to FDA.',
+    sub: 'Gap analysis · compliance · readiness',
   },
   {
-    label: 'De Novo Request',
-    prompt:
-      'My device has no predicate. Walk me through the De Novo classification request process and help me draft the request package.',
-    sub: 'Novel device pathway · classification criteria',
-  },
-];
-
-const BIOTECH_PROMPTS = [
-  {
-    label: 'IND Application',
-    prompt:
-      'Help me prepare an IND application for a Phase 1 oncology trial. Generate the CTD-formatted outline and identify the critical chemistry, manufacturing and controls sections.',
-    sub: 'CTD format · CMC · preclinical summary · protocol',
-  },
-  {
-    label: 'Clinical Trial Protocol',
-    prompt:
-      'Draft a Phase 1 dose-escalation protocol for a small molecule oncology drug. Include eligibility criteria, endpoints, and safety monitoring plan.',
-    sub: 'Dose escalation · endpoints · DSMB plan',
-  },
-  {
-    label: 'NDA / BLA Readiness',
-    prompt:
-      'We are approaching NDA submission. What are the FDA priority review criteria, and how do I structure the integrated summary of efficacy and safety?',
-    sub: 'Module 5 · ISE · ISS · labeling strategy',
-  },
-  {
-    label: 'FDA Meeting Request',
-    prompt:
-      'Help me draft a Type B pre-IND meeting request with FDA. What questions should I include and how should I structure the briefing document?',
-    sub: 'Pre-IND · Type B · briefing document format',
+    label: 'Research a regulatory question',
+    prompt: 'I have a regulatory question. Help me find the relevant FDA guidance, ICH guidelines, or precedent decisions to support my approach.',
+    sub: 'Guidance · precedents · requirements',
   },
 ];
 
@@ -664,108 +633,58 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   suggestedActions,
   submissionType,
 }) => {
-  const [activeTab, setActiveTab] = useState<'device' | 'biotech'>('device');
-
-  const prompts = activeTab === 'device' ? DEVICE_PROMPTS : BIOTECH_PROMPTS;
-
-  const suggestions = [
-    // If we have AI-recommended next task, show it first
-    ...(nextTask
-      ? [
-          {
-            title: nextTask.taskTitle,
-            description: nextTask.taskDescription || 'AI-recommended next step',
-            highlight: true,
-          },
-        ]
-      : []),
-    // If we have last work context, offer to continue
-    ...(lastWork
-      ? [
-          {
-            title: `Continue: ${lastWork.contextTitle}`,
-            description: `Pick up where you left off with ${lastWork.contextType.replace(/_/g, ' ')}`,
-            highlight: false,
-          },
-        ]
-      : []),
-    // Segment-aware suggestions based on submission type
-    ...getSmartSuggestions(submissionType),
-  ].slice(0, 6); // Show max 6 suggestions
+  // Choose prompts: if we have a submission type, show type-specific smart suggestions;
+  // otherwise show general quick-start prompts
+  const smartSuggestions = submissionType ? getSmartSuggestions(submissionType) : [];
+  const hasSmartSuggestions = smartSuggestions.length > 0;
 
   return (
-    <div className="flex flex-col items-center w-full px-4 py-10">
+    <div className="flex flex-col items-center w-full px-4 py-12">
       <div className="w-full max-w-2xl">
-        {/* Hero */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 mb-4 rounded-xl bg-gradient-to-br from-violet-500 to-blue-600 shadow-lg shadow-violet-500/20">
-            <Sparkles className="w-6 h-6 text-white" />
-          </div>
+        {/* Greeting — warm, concise */}
+        <div className="text-center mb-10">
           <h1 className="text-2xl font-semibold text-zinc-900 mb-2">
-            {greeting?.text || 'Good morning — ready to work?'}
+            {greeting?.text || 'Hi — what are you working on?'}
           </h1>
-          <p className="text-sm text-zinc-500 max-w-lg mx-auto leading-relaxed">
-            AnA is your AI-powered regulatory intelligence co-author for FDA submissions, clinical trial design,
-            and compliance strategy. Tell me what you're working on and I'll generate documents,
-            identify gaps, and guide every step.
+          <p className="text-sm text-zinc-500 max-w-md mx-auto">
+            {greeting?.subtitle || 'I can draft documents, find evidence, check compliance, or help plan your submission strategy.'}
           </p>
         </div>
 
-        {/* What it does — 3 power pillars */}
-        <div className="grid grid-cols-3 gap-3 mb-8">
-          {[
-            {
-              icon: '📄',
-              title: 'Draft Documents',
-              body: 'Generate submission-ready regulatory documents — INDs, 510(k)s, protocols, CMC sections, labeling.',
-            },
-            {
-              icon: '🔍',
-              title: 'Analyze & Advise',
-              body: 'Get instant answers on FDA regulations, pathway selection, predicate strategy, and clinical evidence gaps.',
-            },
-            {
-              icon: '✅',
-              title: 'Check Compliance',
-              body: 'Validate your submissions against 21 CFR, ICH guidelines, and current FDA guidance documents.',
-            },
-          ].map(p => (
-            <div key={p.title} className="rounded-xl border border-zinc-200 bg-white p-4">
-              <div className="text-xl mb-2">{p.icon}</div>
-              <div className="text-sm font-semibold text-zinc-800 mb-1">{p.title}</div>
-              <div className="text-xs text-zinc-500 leading-relaxed">{p.body}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Continuing work */}
+        {/* Continue previous work — only if there's context */}
         {(nextTask || lastWork) && (
           <div className="mb-6 rounded-xl border border-blue-200 bg-blue-50/50 p-4">
             <div className="text-xs font-semibold text-[#C4623F] uppercase tracking-wide mb-2">
+          <div className="mb-8 rounded-xl border border-blue-200 bg-blue-50/40 p-4">
+            <div className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-2">
               Pick up where you left off
             </div>
             {nextTask && (
               <button
                 onClick={() => onSuggestionClick(nextTask.taskTitle)}
                 className="block w-full text-left text-sm font-medium text-[#141413] hover:text-[#C4623F] transition-colors"
+                className="w-full flex items-center gap-3 text-left text-sm font-medium text-blue-900 hover:text-blue-700 transition-colors py-1"
               >
-                → {nextTask.taskTitle}
+                <ArrowUp className="w-3.5 h-3.5 rotate-45 flex-shrink-0" />
+                {nextTask.taskTitle}
               </button>
             )}
             {lastWork && (
               <button
                 onClick={() => onSuggestionClick(`Continue: ${lastWork.contextTitle}`)}
                 className="block w-full text-left text-xs text-[#D97757] mt-1 hover:text-[#A5512F] transition-colors"
+                className="w-full flex items-center gap-3 text-left text-sm text-blue-700 hover:text-blue-900 transition-colors py-1"
               >
+                <ArrowUp className="w-3.5 h-3.5 rotate-45 flex-shrink-0" />
                 Continue: {lastWork.contextTitle}
               </button>
             )}
           </div>
         )}
 
-        {/* Workspace-driven suggested actions (real data from /api/workspace/summary) */}
+        {/* Workspace-driven suggested actions */}
         {suggestedActions && suggestedActions.length > 0 && (
-          <div className="mb-6">
+          <div className="mb-8">
             <div className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">
               Suggested next steps
             </div>
@@ -785,50 +704,37 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
           </div>
         )}
 
-        {/* Role tabs */}
-        <div className="mb-4">
-          <div className="flex items-center gap-1 mb-4">
-            <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wide mr-2">
-              I work in:
-            </span>
-            {(['device', 'biotech'] as const).map(tab => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={cn(
-                  'px-4 py-1.5 rounded-full text-sm font-medium transition-all',
-                  activeTab === tab
-                    ? 'bg-zinc-900 text-white'
-                    : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
-                )}
-              >
-                {tab === 'device' ? '🩺 Medical Device & Diagnostics' : '🧬 Biotech & Clinical'}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex flex-col gap-2">
-            {prompts.map((p, i) => (
+        {/* Smart suggestions based on submission type, OR general quick-starts */}
+        <div className="mb-6">
+          {hasSmartSuggestions && (
+            <div className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">
+              For your {submissionType} submission
+            </div>
+          )}
+          <div className="space-y-2">
+            {(hasSmartSuggestions ? smartSuggestions : QUICK_START_PROMPTS.map(p => ({ title: p.label, description: p.sub, highlight: false, prompt: p.prompt }))).map((item, i) => (
               <button
                 key={i}
-                onClick={() => onSuggestionClick(p.prompt)}
-                className="group flex items-start gap-4 p-4 rounded-xl border border-zinc-200 bg-white hover:border-blue-300 hover:bg-blue-50/30 text-left transition-all duration-150"
+                onClick={() => onSuggestionClick('prompt' in item ? (item as { prompt: string }).prompt : item.title)}
+                className="w-full group flex items-center gap-4 p-4 rounded-xl border border-zinc-200 bg-white hover:border-blue-200 hover:shadow-sm text-left transition-all duration-150"
               >
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-semibold text-zinc-900 group-hover:text-[#A5512F] mb-0.5">
                     {p.label}
+                  <div className="text-sm font-medium text-zinc-900 group-hover:text-blue-900">
+                    {item.title}
                   </div>
-                  <div className="text-xs text-zinc-400">{p.sub}</div>
+                  <div className="text-xs text-zinc-500 mt-0.5">{item.description}</div>
                 </div>
                 <ArrowUp className="w-4 h-4 text-zinc-300 group-hover:text-[#E8967A] flex-shrink-0 mt-0.5 rotate-45" />
+                <ArrowUp className="w-4 h-4 text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 rotate-45" />
               </button>
             ))}
           </div>
         </div>
 
-        <p className="text-center text-xs text-zinc-400">
-          Or type any question about FDA regulations, your submission, or your clinical program
-          below ↓
+        <p className="text-center text-xs text-zinc-400 mt-4">
+          Or just type your question below
         </p>
       </div>
     </div>
@@ -882,11 +788,11 @@ const ChatInput: React.FC<ChatInputProps> = ({
   const canSend = value.trim().length > 0 && !isGenerating;
 
   return (
-    <div className="border-t border-zinc-100 bg-white px-4 py-4">
+    <div className="border-t border-zinc-200 bg-white px-4 py-4">
       <div className="max-w-3xl mx-auto">
         <div
           className={cn(
-            'flex items-end gap-2 px-4 py-3 bg-white border rounded-2xl transition-all duration-200',
+            'flex items-end gap-2 px-4 py-3 bg-white border rounded-xl transition-all duration-150',
             isFocused
               ? 'border-blue-300 ring-4 ring-blue-50 shadow-sm'
               : 'border-zinc-200 hover:border-zinc-300'
@@ -910,7 +816,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
           {isGenerating ? (
             <button
               onClick={onStop}
-              className="flex-shrink-0 p-2 bg-zinc-900 text-white rounded-full hover:bg-zinc-800 transition-colors"
+              className="flex-shrink-0 p-2 bg-zinc-900 text-white rounded-full hover:bg-zinc-800 transition-colors duration-150"
               title="Stop generating"
             >
               <StopCircle className="w-5 h-5" />
@@ -920,7 +826,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
               onClick={onSend}
               disabled={!canSend}
               className={cn(
-                'flex-shrink-0 p-2 rounded-full transition-all duration-200',
+                'flex-shrink-0 p-2 rounded-full transition-all duration-150',
                 canSend
                   ? 'bg-zinc-900 text-white hover:bg-zinc-800 hover:scale-105'
                   : 'bg-zinc-100 text-zinc-400 cursor-not-allowed'
@@ -954,7 +860,7 @@ const ScrollToBottomButton: React.FC<ScrollButtonProps> = ({ visible, onClick })
   <button
     onClick={onClick}
     className={cn(
-      'fixed bottom-24 left-1/2 -translate-x-1/2 px-4 py-2 bg-white border border-zinc-200 rounded-full shadow-lg flex items-center gap-2 text-sm text-zinc-600 hover:bg-zinc-50 transition-all duration-200',
+      'fixed bottom-24 left-1/2 -translate-x-1/2 px-4 py-2 bg-white border border-zinc-200 rounded-full shadow-lg flex items-center gap-2 text-sm text-zinc-600 hover:bg-zinc-50 transition-all duration-150',
       visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
     )}
   >

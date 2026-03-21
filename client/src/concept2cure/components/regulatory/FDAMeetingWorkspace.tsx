@@ -216,7 +216,7 @@ const STATUS_CONFIG: Record<MeetingStatus, {
 const TOPIC_CONFIG: Record<QuestionTopic, { label: string; color: string }> = {
   clinical: { label: 'Clinical', color: 'bg-blue-100 text-blue-700' },
   nonclinical: { label: 'Nonclinical', color: 'bg-green-100 text-green-700' },
-  cmc: { label: 'CMC', color: 'bg-violet-100 text-violet-700' },
+  cmc: { label: 'CMC', color: 'bg-blue-100 text-blue-700' },
   regulatory_strategy: { label: 'Reg Strategy', color: 'bg-amber-100 text-amber-700' },
   safety: { label: 'Safety', color: 'bg-red-100 text-red-700' },
   efficacy: { label: 'Efficacy', color: 'bg-cyan-100 text-cyan-700' },
@@ -261,7 +261,7 @@ const MeetingTimeline: React.FC<{
         {/* Progress Line */}
         <div className="absolute top-3 left-0 right-0 h-1 bg-zinc-200 rounded-full">
           <div
-            className="h-full bg-blue-600 rounded-full transition-all"
+            className="h-full bg-blue-600 rounded-full transition-all duration-150"
             style={{ width: `${(currentStep / 12) * 100}%` }}
           />
         </div>
@@ -275,7 +275,7 @@ const MeetingTimeline: React.FC<{
             return (
               <div key={milestone.step} className="flex flex-col items-center">
                 <div className={cn(
-                  'w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-bold z-10',
+                  'w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-semibold z-10',
                   isComplete && 'bg-blue-600 border-blue-600 text-white',
                   isCurrent && !isComplete && 'bg-white border-blue-600 text-blue-600',
                   !isComplete && !isCurrent && 'bg-white border-zinc-300 text-zinc-400'
@@ -283,13 +283,13 @@ const MeetingTimeline: React.FC<{
                   {isComplete ? '✓' : idx + 1}
                 </div>
                 <p className={cn(
-                  'text-[10px] mt-2 text-center max-w-[80px]',
+                  'text-xs mt-2 text-center max-w-[80px]',
                   isComplete ? 'text-zinc-700 font-medium' : 'text-zinc-400'
                 )}>
                   {milestone.label}
                 </p>
                 {milestone.date && (
-                  <p className="text-[9px] text-zinc-400">{formatDate(milestone.date)}</p>
+                  <p className="text-xs text-zinc-400">{formatDate(milestone.date)}</p>
                 )}
               </div>
             );
@@ -334,7 +334,7 @@ const QuestionsPanel: React.FC<{
       
       <div className="max-h-[500px] overflow-y-auto">
         {Object.entries(byTopic).map(([topic, questions]) => (
-          <div key={topic} className="border-b border-zinc-100 last:border-0">
+          <div key={topic} className="border-b border-zinc-200 last:border-0">
             <div className="px-4 py-2 bg-zinc-50">
               <span className={cn('px-2 py-0.5 text-xs font-medium rounded', TOPIC_CONFIG[topic as QuestionTopic].color)}>
                 {TOPIC_CONFIG[topic as QuestionTopic].label}
@@ -345,14 +345,14 @@ const QuestionsPanel: React.FC<{
               const isExpanded = expandedId === question.id;
               
               return (
-                <div key={question.id} className="border-t border-zinc-100">
+                <div key={question.id} className="border-t border-zinc-200">
                   <button
                     onClick={() => setExpandedId(isExpanded ? null : question.id)}
-                    className="w-full p-4 text-left hover:bg-zinc-50 transition-colors"
+                    className="w-full p-4 text-left hover:bg-zinc-50 transition-colors duration-150"
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex items-start gap-3">
-                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-zinc-200 flex items-center justify-center text-xs font-bold text-zinc-600">
+                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-zinc-200 flex items-center justify-center text-xs font-semibold text-zinc-600">
                           {question.number}
                         </span>
                         <div>
@@ -369,7 +369,7 @@ const QuestionsPanel: React.FC<{
                             <span className={cn(
                               'px-2 py-0.5 text-xs font-medium rounded',
                               question.status === 'answered' && 'bg-green-100 text-green-700',
-                              question.status === 'submitted' && 'bg-violet-100 text-violet-700',
+                              question.status === 'submitted' && 'bg-blue-100 text-blue-700',
                               question.status === 'finalized' && 'bg-blue-100 text-blue-700',
                               question.status === 'draft' && 'bg-zinc-100 text-zinc-600'
                             )}>
@@ -465,7 +465,7 @@ const ActionItemsPanel: React.FC<{
           <button
             onClick={() => onActionItemUpdate?.({ ...item, status: item.status === 'completed' ? 'open' : 'completed' })}
             className={cn(
-              'flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors',
+              'flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors duration-150',
               item.status === 'completed'
                 ? 'bg-green-600 border-green-600 text-white'
                 : 'border-zinc-300 hover:border-blue-500'
@@ -484,7 +484,7 @@ const ActionItemsPanel: React.FC<{
             
             <div className="mt-1 flex items-center gap-2 flex-wrap">
               {item.fdaCommitment && (
-                <span className="px-2 py-0.5 text-xs font-medium bg-violet-100 text-violet-700 rounded">
+                <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded">
                   FDA Commitment
                 </span>
               )}
@@ -603,14 +603,14 @@ const MeetingList: React.FC<{
               key={meeting.id}
               onClick={() => onMeetingSelect?.(meeting)}
               className={cn(
-                'w-full p-4 text-left border-b border-zinc-100 transition-colors',
+                'w-full p-4 text-left border-b border-zinc-200 transition-colors duration-150',
                 isActive ? 'bg-blue-50' : 'hover:bg-zinc-50'
               )}
             >
               <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <span className="text-lg">{purposeConfig.icon}</span>
-                  <span className={cn('text-xs font-bold', typeConfig.color)}>{typeConfig.label}</span>
+                  <span className={cn('text-xs font-semibold', typeConfig.color)}>{typeConfig.label}</span>
                 </div>
                 <span className={cn('px-2 py-0.5 text-xs font-medium rounded', statusConfig.bgColor, statusConfig.color)}>
                   {statusConfig.label}
@@ -666,14 +666,14 @@ const MeetingDetail: React.FC<{
           <div>
             <div className="flex items-center gap-2 mb-2">
               <span className="text-2xl">{purposeConfig.icon}</span>
-              <span className={cn('px-2 py-1 text-sm font-bold rounded', typeConfig.color === 'text-red-600' ? 'bg-red-100' : typeConfig.color === 'text-blue-600' ? 'bg-blue-100' : 'bg-zinc-100', typeConfig.color)}>
+              <span className={cn('px-2 py-1 text-sm font-semibold rounded', typeConfig.color === 'text-red-600' ? 'bg-red-100' : typeConfig.color === 'text-blue-600' ? 'bg-blue-100' : 'bg-zinc-100', typeConfig.color)}>
                 {typeConfig.label}
               </span>
               <span className={cn('px-2 py-1 text-sm font-medium rounded', statusConfig.bgColor, statusConfig.color)}>
                 {statusConfig.label}
               </span>
             </div>
-            <h2 className="text-xl font-bold text-zinc-900">{meeting.title}</h2>
+            <h2 className="text-xl font-semibold text-zinc-900">{meeting.title}</h2>
             <p className="text-sm text-zinc-500">{meeting.productName}</p>
           </div>
           
@@ -769,7 +769,7 @@ export const FDAMeetingWorkspace: React.FC<FDAMeetingWorkspaceProps> = ({
       <div className="flex-shrink-0 bg-white border-b border-zinc-200 p-4">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-xl font-bold text-zinc-900">FDA Meeting Workspace</h1>
+            <h1 className="text-xl font-semibold text-zinc-900">FDA Meeting Workspace</h1>
             <p className="text-sm text-zinc-500">Manage regulatory interactions</p>
           </div>
           
@@ -783,19 +783,19 @@ export const FDAMeetingWorkspace: React.FC<FDAMeetingWorkspaceProps> = ({
         <div className="grid grid-cols-4 gap-4">
           <div className="p-3 bg-blue-50 rounded-lg">
             <p className="text-xs text-blue-600">Scheduled</p>
-            <p className="text-xl font-bold text-blue-700">{metrics.scheduled}</p>
+            <p className="text-xl font-semibold text-blue-700">{metrics.scheduled}</p>
           </div>
           <div className="p-3 bg-amber-50 rounded-lg">
             <p className="text-xs text-amber-600">Awaiting FDA</p>
-            <p className="text-xl font-bold text-amber-700">{metrics.awaitingResponse}</p>
+            <p className="text-xl font-semibold text-amber-700">{metrics.awaitingResponse}</p>
           </div>
           <div className="p-3 bg-zinc-100 rounded-lg">
             <p className="text-xs text-zinc-500">Open Items</p>
-            <p className="text-xl font-bold text-zinc-900">{metrics.openActionItems}</p>
+            <p className="text-xl font-semibold text-zinc-900">{metrics.openActionItems}</p>
           </div>
           <div className="p-3 bg-violet-50 rounded-lg">
             <p className="text-xs text-violet-600">FDA Commitments</p>
-            <p className="text-xl font-bold text-violet-700">{metrics.fdaCommitments}</p>
+            <p className="text-xl font-semibold text-violet-700">{metrics.fdaCommitments}</p>
           </div>
         </div>
       </div>
@@ -823,7 +823,7 @@ export const FDAMeetingWorkspace: React.FC<FDAMeetingWorkspaceProps> = ({
             ) : (
               <div className="h-full flex items-center justify-center bg-white rounded-xl border border-zinc-200">
                 <div className="text-center">
-                  <Calendar className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
+                  <Calendar className="w-12 h-12 text-zinc-400 mx-auto mb-3" />
                   <p className="text-sm text-zinc-500">Select a meeting to view details</p>
                 </div>
               </div>

@@ -211,10 +211,10 @@ const MfaCodeInput: React.FC<MfaInputProps> = ({ value, onChange, error }) => {
             onKeyDown={e => handleKeyDown(index, e)}
             onPaste={handlePaste}
             className={`
-              w-12 h-14 text-center text-2xl font-medium
+              w-12 h-12 text-center text-xl font-medium
               border-2 rounded-xl
-              transition-all duration-200
-              focus:outline-none focus:ring-0
+              transition-all duration-150
+              outline-none focus:ring-0
               ${
                 error
                   ? 'border-red-300 bg-red-50 focus:border-red-500'
@@ -253,6 +253,8 @@ export const ZenLogin: React.FC = () => {
   const [mfaCode, setMfaCode] = useState('');
   const [recoveryCode, setRecoveryCode] = useState('');
   const [mfaMethod, setMfaMethod] = useState<MfaMethod['type']>('email');
+  const [mfaMethod, setMfaMethod] = useState<MfaMethod['type']>('totp');
+  const [useRecoveryCode, setUseRecoveryCode] = useState(false);
   const [availableMfaMethods, setAvailableMfaMethods] = useState<MfaMethod[]>([]);
   const [maskedEmail, setMaskedEmail] = useState<string>('');
   const [resendCountdown, setResendCountdown] = useState(0);
@@ -362,8 +364,12 @@ export const ZenLogin: React.FC = () => {
   }, [email, password, setLocation, login, rememberMe]);
 
   const handleMfaVerify = useCallback(async () => {
-    if (mfaCode.length !== 6) {
+    if (!useRecoveryCode && mfaCode.length !== 6) {
       setError({ field: 'mfa', message: 'Please enter the full 6-digit code' });
+      return;
+    }
+    if (useRecoveryCode && mfaCode.trim().length === 0) {
+      setError({ field: 'mfa', message: 'Please enter your recovery code' });
       return;
     }
 
@@ -371,8 +377,8 @@ export const ZenLogin: React.FC = () => {
 
     try {
       const result = await verifyMfa({
-        method: mfaMethod,
-        code: mfaCode,
+        method: useRecoveryCode ? 'recovery' as any : mfaMethod,
+        code: mfaCode.trim(),
       });
 
       if (!result.success) {
@@ -617,8 +623,8 @@ export const ZenLogin: React.FC = () => {
           className={`
             w-full px-4 py-3 text-base
             border-2 rounded-xl
-            transition-all duration-200
-            focus:outline-none focus:ring-0
+            transition-all duration-150
+            outline-none focus:ring-0
             ${
               error?.field === 'email'
                 ? 'border-red-300 bg-red-50 focus:border-red-500'
@@ -646,11 +652,11 @@ export const ZenLogin: React.FC = () => {
           text-base font-semibold text-white
           bg-zinc-900
           hover:bg-zinc-800
-          shadow-lg shadow-blue-600/25 hover:shadow-blue-700/30
+          shadow-sm hover:shadow-md
           rounded-xl
-          transition-all duration-200
-          disabled:opacity-50 disabled:cursor-not-allowed
-          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+          transition-all duration-150
+          disabled:opacity-60 disabled:cursor-not-allowed
+          focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none
         `}
       >
         {isLoading ? <SpinnerIcon /> : 'Continue'}
@@ -662,7 +668,7 @@ export const ZenLogin: React.FC = () => {
           <div className="w-full border-t border-zinc-200" />
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="px-4 bg-white text-zinc-400 text-xs uppercase tracking-wider">
+          <span className="px-4 bg-white text-zinc-400 text-sm">
             or continue with
           </span>
         </div>
@@ -683,8 +689,8 @@ export const ZenLogin: React.FC = () => {
             text-sm font-semibold
             text-emerald-700 bg-emerald-50 border-2 border-emerald-200
             hover:bg-emerald-100 hover:border-emerald-300
-            rounded-xl transition-all duration-200
-            disabled:opacity-50 disabled:cursor-not-allowed
+            rounded-xl transition-all duration-150
+            disabled:opacity-60 disabled:cursor-not-allowed
           `}
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -725,13 +731,13 @@ export const ZenLogin: React.FC = () => {
                   bg-white border border-zinc-200 rounded-lg
                   hover:bg-zinc-50 hover:border-zinc-300
                   transition-all duration-150
-                  disabled:opacity-50 disabled:cursor-not-allowed
+                  disabled:opacity-60 disabled:cursor-not-allowed
                 `}
               >
                 <span className="text-lg">{persona.icon}</span>
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-zinc-900 truncate">{persona.name}</div>
-                  <div className="text-xs text-zinc-500 truncate">{persona.title}</div>
+                  <div className="text-sm font-medium text-zinc-900 truncate">{persona.name}</div>
+                  <div className="text-sm text-zinc-500 truncate">{persona.title}</div>
                 </div>
                 <span className={`
                   text-xs font-medium px-2 py-0.5 rounded-full
@@ -775,8 +781,8 @@ export const ZenLogin: React.FC = () => {
             text-sm font-medium text-zinc-700
             bg-white border-2 border-zinc-200 rounded-xl
             hover:bg-zinc-50 hover:border-zinc-300
-            transition-all duration-200
-            disabled:opacity-50 disabled:cursor-not-allowed
+            transition-all duration-150
+            disabled:opacity-60 disabled:cursor-not-allowed
           `}
         >
           <MicrosoftIcon />
@@ -790,8 +796,8 @@ export const ZenLogin: React.FC = () => {
             text-sm font-medium text-zinc-700
             bg-white border-2 border-zinc-200 rounded-xl
             hover:bg-zinc-50 hover:border-zinc-300
-            transition-all duration-200
-            disabled:opacity-50 disabled:cursor-not-allowed
+            transition-all duration-150
+            disabled:opacity-60 disabled:cursor-not-allowed
           `}
         >
           <GoogleIcon />
@@ -814,7 +820,7 @@ export const ZenLogin: React.FC = () => {
       <div className="flex items-center gap-3">
         <button
           onClick={() => setStep('email')}
-          className="p-2 rounded-lg hover:bg-zinc-100 transition-colors"
+          className="p-2 rounded-lg hover:bg-zinc-100 transition-colors duration-150"
           aria-label="Go back"
         >
           <ArrowLeftIcon />
@@ -839,8 +845,8 @@ export const ZenLogin: React.FC = () => {
             className={`
               w-full px-4 py-3 pr-12 text-base
               border-2 rounded-xl
-              transition-all duration-200
-              focus:outline-none focus:ring-0
+              transition-all duration-150
+              outline-none focus:ring-0
               ${
                 error?.field === 'password'
                   ? 'border-red-300 bg-red-50 focus:border-red-500'
@@ -921,11 +927,11 @@ export const ZenLogin: React.FC = () => {
           text-base font-semibold text-white
           bg-zinc-900
           hover:bg-zinc-800
-          shadow-lg shadow-blue-600/25 hover:shadow-blue-700/30
+          shadow-sm hover:shadow-md
           rounded-xl
-          transition-all duration-200
-          disabled:opacity-50 disabled:cursor-not-allowed
-          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+          transition-all duration-150
+          disabled:opacity-60 disabled:cursor-not-allowed
+          focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none
         `}
       >
         {isLoading ? <SpinnerIcon /> : 'Sign in'}
@@ -945,7 +951,7 @@ export const ZenLogin: React.FC = () => {
       {/* Back button */}
       <button
         onClick={() => setStep('password')}
-        className="flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-800"
+        className="flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-900"
       >
         <ArrowLeftIcon />
         Back
@@ -971,19 +977,87 @@ export const ZenLogin: React.FC = () => {
         onChange={setMfaCode}
         error={error?.field === 'mfa' ? error.message : undefined}
       />
+        <h3 className="text-lg font-semibold text-zinc-900">
+          {useRecoveryCode ? 'Recovery code' : 'Two-factor authentication'}
+        </h3>
+        <p className="text-sm text-zinc-600">
+          {useRecoveryCode
+            ? 'Enter one of the recovery codes you saved when setting up MFA'
+            : 'Enter the 6-digit code from your authenticator app'}
+        </p>
+      </div>
+
+      {useRecoveryCode ? (
+        <div className="space-y-2">
+          <label htmlFor="recovery-code" className="block text-sm font-medium text-zinc-700">Recovery code</label>
+          <input
+            id="recovery-code"
+            type="text"
+            value={mfaCode}
+            onChange={(e) => setMfaCode(e.target.value)}
+            placeholder="xxxx-xxxx-xxxx"
+            autoComplete="off"
+            autoFocus
+            className={`
+              w-full px-4 py-3 text-center text-base font-mono tracking-wider
+              border rounded-xl bg-white
+              focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none
+              transition-colors duration-150
+              ${error?.field === 'mfa' ? 'border-red-300' : 'border-zinc-200'}
+            `}
+          />
+          {error?.field === 'mfa' && (
+            <p className="text-sm text-red-600">{error.message}</p>
+          )}
+        </div>
+      ) : (
+        <>
+          {availableMfaMethods.length > 0 && (
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-zinc-700">Verification method</label>
+              <div className="flex flex-wrap gap-2">
+                {availableMfaMethods.map(method => (
+                  <button
+                    key={method.type}
+                    type="button"
+                    onClick={() => setMfaMethod(method.type)}
+                    className={`
+                      px-3 py-1.5 text-sm rounded-full border
+                      transition-all duration-150
+                      ${
+                        mfaMethod === method.type
+                          ? 'border-blue-500 bg-blue-50 text-blue-700'
+                          : 'border-zinc-200 text-zinc-600 hover:border-zinc-300'
+                      }
+                    `}
+                  >
+                    {method.type.replace('_', ' ')}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <MfaCodeInput
+            value={mfaCode}
+            onChange={setMfaCode}
+            error={error?.field === 'mfa' ? error.message : undefined}
+          />
+        </>
+      )}
 
       <button
         onClick={handleMfaVerify}
-        disabled={isLoading || mfaCode.length !== 6}
+        disabled={isLoading || (!useRecoveryCode && mfaCode.length !== 6) || (useRecoveryCode && mfaCode.trim().length === 0)}
         className={`
           w-full py-3 px-4
           flex items-center justify-center gap-2
           text-base font-medium text-white
           bg-blue-600 hover:bg-blue-700
           rounded-xl
-          transition-all duration-200
-          disabled:opacity-50 disabled:cursor-not-allowed
-          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+          transition-all duration-150
+          disabled:opacity-60 disabled:cursor-not-allowed
+          focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none
         `}
       >
         {isLoading ? <SpinnerIcon /> : 'Verify'}
@@ -1091,6 +1165,27 @@ export const ZenLogin: React.FC = () => {
 
       <p className="text-center text-xs text-zinc-400">
         Each recovery code can only be used once. If you have used all your codes, contact your administrator.
+      <p className="text-center text-sm text-zinc-500">
+        {useRecoveryCode ? (
+          <button
+            type="button"
+            onClick={() => { setUseRecoveryCode(false); setMfaCode(''); setError(null); }}
+            className="text-blue-600 hover:text-blue-700 font-medium focus-visible:ring-2 focus-visible:ring-blue-500 rounded outline-none"
+          >
+            Use authenticator app instead
+          </button>
+        ) : (
+          <>
+            Having trouble?{' '}
+            <button
+              type="button"
+              onClick={() => { setUseRecoveryCode(true); setMfaCode(''); setError(null); }}
+              className="text-blue-600 hover:text-blue-700 font-medium focus-visible:ring-2 focus-visible:ring-blue-500 rounded outline-none"
+            >
+              Use a recovery code
+            </button>
+          </>
+        )}
       </p>
     </motion.div>
   );
@@ -1107,7 +1202,7 @@ export const ZenLogin: React.FC = () => {
       {/* Back button */}
       <button
         onClick={() => setStep('password')}
-        className="flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-800"
+        className="flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-900"
       >
         <ArrowLeftIcon />
         Back to sign in
@@ -1129,9 +1224,9 @@ export const ZenLogin: React.FC = () => {
           text-base font-medium text-white
           bg-blue-600 hover:bg-blue-700
           rounded-xl
-          transition-all duration-200
-          disabled:opacity-50 disabled:cursor-not-allowed
-          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+          transition-all duration-150
+          disabled:opacity-60 disabled:cursor-not-allowed
+          focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none
         `}
       >
         {isLoading ? <SpinnerIcon /> : 'Send reset link'}
@@ -1164,7 +1259,7 @@ export const ZenLogin: React.FC = () => {
           text-base font-medium text-zinc-700
           bg-white border-2 border-zinc-200 rounded-xl
           hover:bg-zinc-50 hover:border-zinc-300
-          transition-all duration-200
+          transition-all duration-150
         `}
       >
         Back to sign in
@@ -1215,7 +1310,7 @@ export const ZenLogin: React.FC = () => {
   return (
     <div className="min-h-screen flex">
       {/* Left panel — branding / hero */}
-      <div className="hidden lg:flex lg:w-[52%] relative overflow-hidden bg-gradient-to-br from-zinc-900 via-blue-950 to-indigo-950">
+      <div className="hidden lg:flex lg:w-[52%] relative overflow-hidden bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900">
         {/* Decorative grid */}
         <div
           className="absolute inset-0 opacity-[0.04]"
@@ -1226,7 +1321,7 @@ export const ZenLogin: React.FC = () => {
         />
         {/* Gradient orbs */}
         <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-blue-500/20 blur-[120px]" />
-        <div className="absolute bottom-0 right-0 w-80 h-80 rounded-full bg-indigo-500/20 blur-[100px]" />
+        <div className="absolute bottom-0 right-0 w-80 h-80 rounded-full bg-blue-500/20 blur-[100px]" />
 
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           {/* Top — logo */}
@@ -1238,7 +1333,7 @@ export const ZenLogin: React.FC = () => {
 
           {/* Center — tagline */}
           <div className="space-y-6">
-            <h2 className="text-4xl font-bold text-white leading-tight">
+            <h2 className="text-4xl font-semibold text-white leading-tight">
               Accelerate your path
               <br />
               from concept to cure.
@@ -1262,7 +1357,7 @@ export const ZenLogin: React.FC = () => {
           </div>
 
           {/* Bottom — testimonial / stat */}
-          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
+          <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6">
             <p className="text-sm text-blue-100/90 italic leading-relaxed">
               "Concept2Cure reduced our IND preparation time from 18 months to under 6 — with full
               regulatory traceability at every step."
@@ -1279,6 +1374,9 @@ export const ZenLogin: React.FC = () => {
         {/* Mobile logo (shown on small screens only) */}
         <div className="lg:hidden flex items-center gap-3 p-6 border-b border-zinc-100">
           <C2CLogo size="md" />
+        <div className="lg:hidden flex items-center gap-3 p-6 border-b border-zinc-200">
+          <img src={concept2cureLogo} alt="Concept2Cure" className="h-10 w-auto rounded-lg" />
+          <span className="text-lg font-semibold text-zinc-900">Concept2Cure</span>
         </div>
 
         <div className="flex-1 flex items-center justify-center px-6 py-12 sm:px-12">
@@ -1290,7 +1388,7 @@ export const ZenLogin: React.FC = () => {
           >
             {/* Title */}
             <div className="mb-8">
-              <h1 className="text-2xl font-bold text-zinc-900">
+              <h1 className="text-2xl font-semibold text-zinc-900">
                 {step === 'success' ? '' : 'Welcome back'}
               </h1>
               {step === 'email' && (
@@ -1325,7 +1423,7 @@ export const ZenLogin: React.FC = () => {
         </div>
 
         {/* Footer */}
-        <footer className="py-5 px-6 border-t border-zinc-100">
+        <footer className="py-5 px-6 border-t border-zinc-200">
           <div className="max-w-sm mx-auto flex items-center justify-between text-xs text-zinc-400">
             <span>© {new Date().getFullYear()} Concept2Cure Inc.</span>
             <div className="flex items-center gap-1">

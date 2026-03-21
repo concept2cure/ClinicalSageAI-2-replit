@@ -515,7 +515,7 @@ export default function IntelligentReportGenerator() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
       </div>
     );
   }
@@ -530,12 +530,12 @@ export default function IntelligentReportGenerator() {
   ];
 
   return (
-    <div className="h-full flex flex-col bg-gradient-to-br from-slate-50 to-white overflow-hidden">
+    <div className="h-full flex flex-col bg-white overflow-hidden">
       {/* Header */}
       <div className="flex-shrink-0 border-b border-zinc-200 bg-white px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center">
               <FileText className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -551,7 +551,7 @@ export default function IntelligentReportGenerator() {
                 onClick={() => setActiveTab(tab.key)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
                   activeTab === tab.key
-                    ? 'bg-indigo-100 text-indigo-700'
+                    ? 'bg-blue-100 text-blue-700'
                     : 'text-zinc-500 hover:bg-zinc-100'
                 }`}
               >
@@ -576,7 +576,7 @@ export default function IntelligentReportGenerator() {
                 value={reportTitle}
                 onChange={e => setReportTitle(e.target.value)}
                 placeholder="e.g., IND Annual Report — Compound XYZ-201"
-                className="w-full px-4 py-2.5 border border-zinc-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-4 py-2.5 border border-zinc-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
@@ -604,19 +604,19 @@ export default function IntelligentReportGenerator() {
                     }}
                     className={`p-3 rounded-xl border text-left transition-all ${
                       selectedDomain?.domain === d.domain
-                        ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200'
+                        ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
                         : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'
                     }`}
                   >
                     <div className="flex items-center gap-2 mb-1.5">
-                      <span className={selectedDomain?.domain === d.domain ? 'text-indigo-600' : 'text-zinc-400'}>
+                      <span className={selectedDomain?.domain === d.domain ? 'text-blue-600' : 'text-zinc-400'}>
                         {DOMAIN_ICONS[d.domain] || <FileText className="w-5 h-5" />}
                       </span>
                       <span className="text-sm font-medium text-zinc-900 truncate">{d.label}</span>
                     </div>
                     <div className="flex items-center gap-1.5 text-xs text-zinc-500">
                       <span>{d.subtypes.length} subtypes</span>
-                      <span className="text-zinc-300">|</span>
+                      <span className="text-zinc-400">|</span>
                       <span className={TIER_COLORS[d.indemnificationTier]?.split(' ')[0] || 'text-zinc-500'}>
                         {d.indemnificationTier === 'full_audit_trail' ? 'Full' :
                          d.indemnificationTier === 'partial' ? 'Partial' : 'Advisory'}
@@ -638,7 +638,7 @@ export default function IntelligentReportGenerator() {
                       onClick={() => setSelectedSubtype(sub)}
                       className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
                         selectedSubtype === sub
-                          ? 'border-indigo-500 bg-indigo-100 text-indigo-700'
+                          ? 'border-blue-500 bg-blue-100 text-blue-700'
                           : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'
                       }`}
                     >
@@ -662,13 +662,13 @@ export default function IntelligentReportGenerator() {
                     onClick={() => setSelectedBody(selectedBody === b.code ? '' : b.code)}
                     className={`p-2.5 rounded-lg border text-left transition-all ${
                       selectedBody === b.code
-                        ? 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-200'
+                        ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-200'
                         : 'border-zinc-200 hover:border-zinc-300'
                     }`}
                   >
-                    <div className="text-xs font-bold text-zinc-900">{b.code.replace('_', ' ')}</div>
-                    <div className="text-[10px] text-zinc-500 truncate">{b.country}</div>
-                    <div className="text-[10px] text-zinc-400">{b.regulationCount} regs</div>
+                    <div className="text-xs font-semibold text-zinc-900">{b.code.replace('_', ' ')}</div>
+                    <div className="text-xs text-zinc-500 truncate">{b.country}</div>
+                    <div className="text-xs text-zinc-400">{b.regulationCount} regs</div>
                   </button>
                 ))}
               </div>
@@ -715,7 +715,7 @@ export default function IntelligentReportGenerator() {
               <button
                 onClick={handleGenerate}
                 disabled={!selectedDomain || !reportTitle || generating}
-                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-medium text-sm hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-200"
+                className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium text-sm hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none transition-colors duration-150 shadow-sm focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none"
               >
                 {generating ? (
                   <>
@@ -738,12 +738,12 @@ export default function IntelligentReportGenerator() {
         {activeTab === 'result' && generatedReport && (
           <div className="max-w-5xl mx-auto p-6 space-y-6">
             {/* Report Header Card */}
-            <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden">
-              <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4">
+            <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
+              <div className="bg-blue-600 px-6 py-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <h2 className="text-white font-semibold text-lg">{generatedReport.record.reportTitle}</h2>
-                    <p className="text-indigo-200 text-sm">{generatedReport.reportCode}</p>
+                    <p className="text-blue-200 text-sm">{generatedReport.reportCode}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     {generatedReport.record.version && (
@@ -751,7 +751,7 @@ export default function IntelligentReportGenerator() {
                         v{generatedReport.record.version}
                       </span>
                     )}
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                       generatedReport.sealStatus === 'sealed'
                         ? 'bg-emerald-500 text-white'
                         : generatedReport.sealStatus === 'revoked'
@@ -769,24 +769,24 @@ export default function IntelligentReportGenerator() {
               <div className="p-6 grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
                   <div className="text-xs text-zinc-500 mb-0.5">Verification Code</div>
-                  <div className="text-sm font-mono font-bold text-indigo-600">{generatedReport.verificationCode}</div>
+                  <div className="text-sm font-mono font-semibold text-blue-600">{generatedReport.verificationCode}</div>
                 </div>
                 <div>
                   <div className="text-xs text-zinc-500 mb-0.5">Compliance Score</div>
-                  <div className="text-sm font-bold text-emerald-600">{generatedReport.complianceScore}/100</div>
+                  <div className="text-sm font-semibold text-emerald-600">{generatedReport.complianceScore}/100</div>
                 </div>
                 <div>
                   <div className="text-xs text-zinc-500 mb-0.5">Provenance Atoms</div>
-                  <div className="text-sm font-bold text-purple-600">{generatedReport.provenanceAtomCount}</div>
+                  <div className="text-sm font-semibold text-purple-600">{generatedReport.provenanceAtomCount}</div>
                 </div>
                 <div>
                   <div className="text-xs text-zinc-500 mb-0.5">Generation Time</div>
-                  <div className="text-sm font-bold text-zinc-600">{generatedReport.generationDurationMs}ms</div>
+                  <div className="text-sm font-semibold text-zinc-600">{generatedReport.generationDurationMs}ms</div>
                 </div>
               </div>
 
               {/* Cryptographic Details */}
-              <div className="border-t border-zinc-100 px-6 py-4 bg-zinc-50">
+              <div className="border-t border-zinc-200 px-6 py-4 bg-zinc-50">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
                     <div className="text-xs text-zinc-500 flex items-center gap-1 mb-0.5">
@@ -809,7 +809,7 @@ export default function IntelligentReportGenerator() {
               {/* Verify */}
               <button
                 onClick={handleVerify}
-                className="flex items-center gap-2 px-4 py-2.5 border border-zinc-300 rounded-xl text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-colors"
+                className="flex items-center gap-2 px-4 py-2.5 border border-zinc-300 rounded-xl text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-colors duration-150"
               >
                 <Fingerprint className="w-4 h-4" />
                 Verify Integrity
@@ -819,7 +819,7 @@ export default function IntelligentReportGenerator() {
               <button
                 onClick={handleDriftCheck}
                 disabled={checkingDrift}
-                className="flex items-center gap-2 px-4 py-2.5 border border-zinc-300 rounded-xl text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2.5 border border-zinc-300 rounded-xl text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-colors disabled:opacity-60"
               >
                 {checkingDrift ? (
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-zinc-600" />
@@ -833,7 +833,7 @@ export default function IntelligentReportGenerator() {
               <div className="relative group">
                 <button
                   disabled={exporting}
-                  className="flex items-center gap-2 px-4 py-2.5 border border-zinc-300 rounded-xl text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-colors disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2.5 border border-zinc-300 rounded-xl text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition-colors disabled:opacity-60"
                 >
                   <Download className="w-4 h-4" />
                   Export
@@ -861,7 +861,7 @@ export default function IntelligentReportGenerator() {
                     <FileSignature className="w-4 h-4 text-purple-500" />
                     Integrity Manifest
                   </button>
-                  <div className="mx-2 my-0.5 border-t border-zinc-100" />
+                  <div className="mx-2 my-0.5 border-t border-zinc-200" />
                   <button
                     onClick={() => setShowVisualGen(prev => !prev)}
                     className="flex items-center gap-2 w-full px-3 py-2 text-sm text-zinc-700 hover:bg-amber-50"
@@ -885,7 +885,7 @@ export default function IntelligentReportGenerator() {
                   <button
                     onClick={handleSeal}
                     disabled={!sealJustification || sealing}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 disabled:opacity-60 transition-colors duration-150"
                   >
                     <Lock className="w-4 h-4" />
                     {sealing ? 'Sealing...' : 'Seal'}
@@ -898,7 +898,7 @@ export default function IntelligentReportGenerator() {
                 <button
                   onClick={handleSupersede}
                   disabled={superseding}
-                  className="flex items-center gap-2 px-4 py-2.5 border border-amber-300 bg-amber-50 rounded-xl text-sm font-medium text-amber-700 hover:bg-amber-100 transition-colors disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2.5 border border-amber-300 bg-amber-50 rounded-xl text-sm font-medium text-amber-700 hover:bg-amber-100 transition-colors disabled:opacity-60"
                 >
                   <GitBranch className="w-4 h-4" />
                   {superseding ? 'Creating new version...' : 'Supersede'}
@@ -909,7 +909,7 @@ export default function IntelligentReportGenerator() {
               {generatedReport.sealStatus !== 'revoked' && generatedReport.sealStatus !== 'superseded' && (
                 <button
                   onClick={() => setShowRevokeModal(true)}
-                  className="flex items-center gap-2 px-4 py-2.5 border border-red-300 bg-red-50 rounded-xl text-sm font-medium text-red-700 hover:bg-red-100 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2.5 border border-red-300 bg-red-50 rounded-xl text-sm font-medium text-red-700 hover:bg-red-100 transition-colors duration-150"
                 >
                   <XCircle className="w-4 h-4" />
                   Revoke
@@ -936,7 +936,7 @@ export default function IntelligentReportGenerator() {
                   <button
                     onClick={handleRevoke}
                     disabled={!revokeJustification || revoking}
-                    className="px-4 py-2.5 bg-red-600 text-white rounded-xl text-sm font-medium hover:bg-red-700 disabled:opacity-50"
+                    className="px-4 py-2.5 bg-red-600 text-white rounded-xl text-sm font-medium hover:bg-red-700 disabled:opacity-60"
                   >
                     {revoking ? 'Revoking...' : 'Confirm Revoke'}
                   </button>
@@ -980,25 +980,25 @@ export default function IntelligentReportGenerator() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">
                   <div className="text-xs">
                     <span className="text-zinc-500">Content Hash:</span>{' '}
-                    <span className={verificationResult.contentHashValid ? 'text-emerald-600 font-medium' : 'text-red-600 font-bold'}>
+                    <span className={verificationResult.contentHashValid ? 'text-emerald-600 font-medium' : 'text-red-600 font-semibold'}>
                       {verificationResult.contentHashValid ? 'Valid' : 'MISMATCH'}
                     </span>
                   </div>
                   <div className="text-xs">
                     <span className="text-zinc-500">Merkle Root:</span>{' '}
-                    <span className={verificationResult.merkleRootValid ? 'text-emerald-600 font-medium' : 'text-red-600 font-bold'}>
+                    <span className={verificationResult.merkleRootValid ? 'text-emerald-600 font-medium' : 'text-red-600 font-semibold'}>
                       {verificationResult.merkleRootValid ? 'Valid' : 'MISMATCH'}
                     </span>
                   </div>
                   <div className="text-xs">
                     <span className="text-zinc-500">Seal Chain:</span>{' '}
-                    <span className={verificationResult.chainIntact ? 'text-emerald-600 font-medium' : 'text-red-600 font-bold'}>
+                    <span className={verificationResult.chainIntact ? 'text-emerald-600 font-medium' : 'text-red-600 font-semibold'}>
                       {verificationResult.chainIntact ? 'Intact' : 'BROKEN'}
                     </span>
                   </div>
                   <div className="text-xs">
                     <span className="text-zinc-500">Provenance Drift:</span>{' '}
-                    <span className={verificationResult.provenanceDrift.drifted === 0 ? 'text-emerald-600 font-medium' : 'text-amber-600 font-bold'}>
+                    <span className={verificationResult.provenanceDrift.drifted === 0 ? 'text-emerald-600 font-medium' : 'text-amber-600 font-semibold'}>
                       {verificationResult.provenanceDrift.drifted}/{verificationResult.provenanceDrift.total} drifted
                     </span>
                   </div>
@@ -1042,7 +1042,7 @@ export default function IntelligentReportGenerator() {
                           <span className="text-zinc-400 mx-1">in</span>
                           <span className="text-zinc-600">{d.sectionPath}</span>
                         </div>
-                        <div className="ml-auto text-zinc-400 font-mono text-[10px]">
+                        <div className="ml-auto text-zinc-400 font-mono text-xs">
                           {d.currentHash === 'DELETED' ? 'SOURCE DELETED' : 'HASH CHANGED'}
                         </div>
                       </div>
@@ -1071,10 +1071,10 @@ export default function IntelligentReportGenerator() {
                     <div key={idx} className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
                       <button
                         onClick={() => setExpandedSection(isExpanded ? null : section.sectionId)}
-                        className="w-full p-4 flex items-center justify-between hover:bg-zinc-50 transition-colors"
+                        className="w-full p-4 flex items-center justify-between hover:bg-zinc-50 transition-colors duration-150"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-xs">
+                          <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 font-semibold text-xs">
                             {idx + 1}
                           </div>
                           <div className="text-left">
@@ -1091,7 +1091,7 @@ export default function IntelligentReportGenerator() {
                       </button>
 
                       {isExpanded && (
-                        <div className="border-t border-zinc-100 p-4 space-y-3">
+                        <div className="border-t border-zinc-200 p-4 space-y-3">
                           {/* Section Content */}
                           <div className="bg-zinc-50 rounded-lg p-3">
                             <div className="text-xs font-medium text-zinc-500 mb-1">Section Data</div>
@@ -1151,10 +1151,10 @@ export default function IntelligentReportGenerator() {
 
             {/* Indemnification Statement */}
             {generatedReport.record.attestationStatement && (
-              <div className="p-4 bg-zinc-900 rounded-xl text-zinc-300 text-xs font-mono whitespace-pre-wrap leading-relaxed">
+              <div className="p-4 bg-zinc-900 rounded-xl text-zinc-400 text-xs font-mono whitespace-pre-wrap leading-relaxed">
                 <div className="flex items-center gap-2 mb-3 text-zinc-100">
                   <Scale className="w-4 h-4" />
-                  <span className="font-bold text-sm">Quasi-Indemnification Statement</span>
+                  <span className="font-semibold text-sm">Quasi-Indemnification Statement</span>
                 </div>
                 {generatedReport.record.attestationStatement}
               </div>
@@ -1176,7 +1176,7 @@ export default function IntelligentReportGenerator() {
               <button
                 onClick={loadProvenance}
                 disabled={provenanceLoading}
-                className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-700"
+                className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
               >
                 <RefreshCw className={`w-3 h-3 ${provenanceLoading ? 'animate-spin' : ''}`} />
                 Refresh
@@ -1212,13 +1212,13 @@ export default function IntelligentReportGenerator() {
                               p.driftDetected ? 'text-amber-500' : 'text-purple-400'
                             }`} />
                             <div className="flex-1 min-w-0">
-                              <div className="font-medium text-zinc-800 truncate">{p.fieldLabel || p.sectionPath}</div>
+                              <div className="font-medium text-zinc-900 truncate">{p.fieldLabel || p.sectionPath}</div>
                               <div className="text-zinc-400 truncate">
                                 {p.sourceTable}.{p.sourceField} #{p.sourceRecordId}
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                              <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
                                 p.transformationType === 'direct_copy' ? 'bg-emerald-50 text-emerald-600' :
                                 p.transformationType === 'aggregation' ? 'bg-blue-50 text-blue-600' :
                                 p.transformationType === 'ai_generated' ? 'bg-purple-50 text-purple-600' :
@@ -1244,7 +1244,7 @@ export default function IntelligentReportGenerator() {
                 {selectedProvenance && (
                   <div className="w-80 flex-shrink-0 bg-white border border-zinc-200 rounded-xl p-4 sticky top-6 self-start">
                     <div className="flex items-center justify-between mb-3">
-                      <h4 className="text-sm font-semibold text-zinc-800">Atom Detail</h4>
+                      <h4 className="text-sm font-semibold text-zinc-900">Atom Detail</h4>
                       <button onClick={() => setSelectedProvenance(null)} className="text-zinc-400 hover:text-zinc-600">
                         <X className="w-4 h-4" />
                       </button>
@@ -1252,7 +1252,7 @@ export default function IntelligentReportGenerator() {
                     <div className="space-y-3 text-xs">
                       <div>
                         <div className="text-zinc-400 mb-0.5">Field Label</div>
-                        <div className="text-zinc-800 font-medium">{selectedProvenance.fieldLabel}</div>
+                        <div className="text-zinc-900 font-medium">{selectedProvenance.fieldLabel}</div>
                       </div>
                       <div>
                         <div className="text-zinc-400 mb-0.5">Section Path</div>
@@ -1264,10 +1264,10 @@ export default function IntelligentReportGenerator() {
                           {selectedProvenance.reportedValue || '—'}
                         </div>
                       </div>
-                      <hr className="border-zinc-100" />
+                      <hr className="border-zinc-200" />
                       <div>
                         <div className="text-zinc-400 mb-0.5">Source Table</div>
-                        <div className="text-indigo-600 font-mono font-medium">{selectedProvenance.sourceTable}</div>
+                        <div className="text-blue-600 font-mono font-medium">{selectedProvenance.sourceTable}</div>
                       </div>
                       <div>
                         <div className="text-zinc-400 mb-0.5">Source Record ID</div>
@@ -1283,11 +1283,11 @@ export default function IntelligentReportGenerator() {
                           {selectedProvenance.sourceValue || '—'}
                         </div>
                       </div>
-                      <hr className="border-zinc-100" />
+                      <hr className="border-zinc-200" />
                       <div className="flex gap-3">
                         <div>
                           <div className="text-zinc-400 mb-0.5">Transformation</div>
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${
+                          <span className={`px-2 py-0.5 rounded text-xs font-medium ${
                             selectedProvenance.transformationType === 'direct_copy' ? 'bg-emerald-50 text-emerald-600' :
                             selectedProvenance.transformationType === 'aggregation' ? 'bg-blue-50 text-blue-600' :
                             'bg-zinc-100 text-zinc-500'
@@ -1297,12 +1297,12 @@ export default function IntelligentReportGenerator() {
                         </div>
                         <div>
                           <div className="text-zinc-400 mb-0.5">Confidence</div>
-                          <div className="font-bold text-zinc-800">{Math.round((selectedProvenance.confidence || 0) * 100)}%</div>
+                          <div className="font-semibold text-zinc-900">{Math.round((selectedProvenance.confidence || 0) * 100)}%</div>
                         </div>
                       </div>
                       <div>
                         <div className="text-zinc-400 mb-0.5">Value Hash (SHA-256)</div>
-                        <div className="text-zinc-500 font-mono text-[10px] break-all">{selectedProvenance.valueHash}</div>
+                        <div className="text-zinc-500 font-mono text-xs break-all">{selectedProvenance.valueHash}</div>
                       </div>
                       {selectedProvenance.driftDetected && (
                         <div className="p-2 bg-amber-50 border border-amber-200 rounded-lg">
@@ -1332,7 +1332,7 @@ export default function IntelligentReportGenerator() {
               <button
                 onClick={handleComplianceValidation}
                 disabled={validating}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-indigo-600 hover:text-indigo-700 border border-indigo-200 rounded-lg hover:bg-indigo-50"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-blue-600 hover:text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-50"
               >
                 <RefreshCw className={`w-3 h-3 ${validating ? 'animate-spin' : ''}`} />
                 Re-validate
@@ -1340,7 +1340,7 @@ export default function IntelligentReportGenerator() {
             </div>
 
             {complianceScore !== null && (
-              <div className="bg-white rounded-2xl border border-zinc-200 p-6">
+              <div className="bg-white rounded-xl border border-zinc-200 p-5">
                 <div className="flex items-center gap-6">
                   <div className="relative w-24 h-24">
                     <svg className="w-24 h-24 -rotate-90" viewBox="0 0 36 36">
@@ -1362,13 +1362,13 @@ export default function IntelligentReportGenerator() {
                       />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <span className={`text-xl font-bold ${complianceScore >= 80 ? 'text-emerald-600' : complianceScore >= 60 ? 'text-amber-600' : 'text-red-600'}`}>
+                      <span className={`text-xl font-semibold ${complianceScore >= 80 ? 'text-emerald-600' : complianceScore >= 60 ? 'text-amber-600' : 'text-red-600'}`}>
                         {complianceScore}
                       </span>
                     </div>
                   </div>
                   <div>
-                    <h4 className="text-lg font-semibold text-zinc-800">Overall Compliance Score</h4>
+                    <h4 className="text-lg font-semibold text-zinc-900">Overall Compliance Score</h4>
                     <p className="text-sm text-zinc-500 mt-1">
                       {complianceChecks.filter(c => c.passed).length}/{complianceChecks.length} checks passed
                     </p>
@@ -1384,7 +1384,7 @@ export default function IntelligentReportGenerator() {
 
             {validating && complianceChecks.length === 0 && (
               <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-3" />
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3" />
                 <div className="text-sm text-zinc-500">Running compliance validation...</div>
               </div>
             )}
@@ -1409,7 +1409,7 @@ export default function IntelligentReportGenerator() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-mono text-zinc-400">{check.checkId}</span>
-                        <span className="text-sm font-medium text-zinc-800">{check.description}</span>
+                        <span className="text-sm font-medium text-zinc-900">{check.description}</span>
                       </div>
                       <div className="flex items-center gap-3 mt-1">
                         <span className="text-xs text-zinc-500">{check.category.replace(/_/g, ' ')}</span>
@@ -1463,7 +1463,7 @@ export default function IntelligentReportGenerator() {
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-zinc-600">
+                      <span className="text-xs font-semibold text-zinc-600">
                         {att.complianceScore}/100
                       </span>
                       {att.sealed && (
@@ -1553,7 +1553,7 @@ export default function IntelligentReportGenerator() {
                           {report.sealStatus}
                         </span>
                         {report.complianceScore && (
-                          <span className="text-xs font-bold text-zinc-600">{report.complianceScore}/100</span>
+                          <span className="text-xs font-semibold text-zinc-600">{report.complianceScore}/100</span>
                         )}
                         <ChevronRight className="w-4 h-4 text-zinc-400" />
                       </div>
@@ -1568,11 +1568,11 @@ export default function IntelligentReportGenerator() {
         {/* ── No Report Placeholder ────────────────────── */}
         {['result', 'provenance', 'compliance'].includes(activeTab) && !generatedReport && (
           <div className="flex flex-col items-center justify-center py-20 text-zinc-400">
-            <FileText className="w-12 h-12 mb-3 text-zinc-300" />
+            <FileText className="w-12 h-12 mb-3 text-zinc-400" />
             <p className="text-sm">No report generated yet</p>
             <button
               onClick={() => setActiveTab('generate')}
-              className="mt-3 text-sm text-indigo-600 hover:text-indigo-700"
+              className="mt-3 text-sm text-blue-600 hover:text-blue-700"
             >
               Go to Generate tab
             </button>

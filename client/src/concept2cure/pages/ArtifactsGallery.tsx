@@ -11,6 +11,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
+import { LIFECYCLE, toLifecycleStage } from '@/concept2cure/components/ui/enterprise';
 import {
   FileText,
   Plus,
@@ -162,15 +163,15 @@ export const ArtifactsGallery: React.FC = () => {
         </div>
 
         {/* Export format capability bar */}
-        <div className="flex items-center gap-3 mb-6 py-3 px-4 bg-gradient-to-r from-zinc-50 to-violet-50/30 rounded-xl border border-zinc-100">
+        <div className="flex items-center gap-3 mb-6 py-3 px-4 bg-zinc-50 rounded-xl border border-zinc-200">
           <Sparkles className="w-4 h-4 text-violet-500 flex-shrink-0" />
           <span className="text-xs text-zinc-600">AnA can create &amp; export:</span>
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-700">DOCX</span>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-700">PDF</span>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-orange-100 text-orange-700">PPTX</span>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">Markdown</span>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-zinc-200 text-zinc-700">HTML</span>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-blue-100 text-blue-700">DOCX</span>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-red-100 text-red-700">PDF</span>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-orange-100 text-orange-700">PPTX</span>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-100 text-emerald-700">Markdown</span>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-zinc-200 text-zinc-700">HTML</span>
           </div>
           <span className="text-xs text-zinc-400 ml-auto hidden sm:block">Ask AnA to draft any document type</span>
         </div>
@@ -206,7 +207,7 @@ export const ArtifactsGallery: React.FC = () => {
                   key={cat.id}
                   onClick={() => setActiveCategory(activeCategory === cat.id ? 'all' : cat.id)}
                   className={cn(
-                    'px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
+                    'px-3 py-1.5 rounded-full text-sm font-medium transition-colors duration-150',
                     activeCategory === cat.id
                       ? 'bg-zinc-900 text-white'
                       : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
@@ -232,7 +233,7 @@ export const ArtifactsGallery: React.FC = () => {
                         <h3 className="text-sm font-semibold text-zinc-900 group-hover:text-zinc-700">
                           {template.title}
                         </h3>
-                        <Icon className="w-4 h-4 text-zinc-300 flex-shrink-0" />
+                        <Icon className="w-4 h-4 text-zinc-400 flex-shrink-0" />
                       </div>
                       <p className="text-xs text-zinc-500 leading-relaxed mb-3">
                         {template.description}
@@ -242,7 +243,7 @@ export const ArtifactsGallery: React.FC = () => {
                         <div className="flex items-center gap-1">
                           {template.formats?.map(fmt => (
                             <span key={fmt} className={cn(
-                              'text-[9px] font-bold px-1.5 py-0.5 rounded uppercase',
+                              'text-xs font-semibold px-1.5 py-0.5 rounded uppercase',
                               fmt === 'DOCX' ? 'bg-blue-50 text-blue-600' :
                               fmt === 'PDF' ? 'bg-red-50 text-red-600' :
                               fmt === 'PPTX' ? 'bg-orange-50 text-orange-600' :
@@ -252,7 +253,7 @@ export const ArtifactsGallery: React.FC = () => {
                             </span>
                           ))}
                         </div>
-                        <span className="flex items-center gap-1 text-[10px] font-medium text-violet-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="flex items-center gap-1 text-xs font-medium text-violet-600 opacity-0 group-hover:opacity-100 transition-opacity">
                           <Sparkles className="w-3 h-3" />
                           Create with AnA
                         </span>
@@ -274,7 +275,7 @@ export const ArtifactsGallery: React.FC = () => {
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search artifacts..."
-                className="w-full pl-9 pr-4 py-2 border border-zinc-200 rounded-lg text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-200 focus:border-zinc-300"
+                className="w-full pl-9 pr-4 py-2 border border-zinc-200 rounded-lg text-sm text-zinc-900 placeholder:text-zinc-400 focus-visible:ring-2 outline-none focus:ring-zinc-200 focus:border-zinc-300"
               />
             </div>
 
@@ -285,7 +286,7 @@ export const ArtifactsGallery: React.FC = () => {
                   key={cat.id}
                   onClick={() => setActiveCategory(cat.id)}
                   className={cn(
-                    'px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
+                    'px-3 py-1.5 rounded-full text-sm font-medium transition-colors duration-150',
                     activeCategory === cat.id
                       ? 'bg-zinc-900 text-white'
                       : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
@@ -303,7 +304,7 @@ export const ArtifactsGallery: React.FC = () => {
               </div>
             ) : filteredArtifacts.length === 0 ? (
               <div className="text-center py-16">
-                <Layers className="w-8 h-8 text-zinc-300 mx-auto mb-3" />
+                <Layers className="w-8 h-8 text-zinc-400 mx-auto mb-3" />
                 <h3 className="text-sm font-medium text-zinc-700 mb-1">
                   {search ? 'No artifacts match your search' : 'No artifacts yet'}
                 </h3>
@@ -321,7 +322,7 @@ export const ArtifactsGallery: React.FC = () => {
                     className="group p-4 rounded-xl border border-zinc-200 hover:border-zinc-300 hover:shadow-sm transition-all bg-white cursor-pointer"
                   >
                     {/* Preview area */}
-                    <div className="aspect-[4/3] rounded-lg bg-zinc-50 border border-zinc-100 flex items-center justify-center mb-3">
+                    <div className="aspect-[4/3] rounded-lg bg-zinc-50 border border-zinc-200 flex items-center justify-center mb-3">
                       <FileText className="w-8 h-8 text-zinc-200" />
                     </div>
 
@@ -331,26 +332,25 @@ export const ArtifactsGallery: React.FC = () => {
                     </h3>
                     <div className="flex items-center gap-2 mt-1">
                       {artifact.projectName && (
-                        <span className="text-[10px] text-zinc-400 truncate">{artifact.projectName}</span>
+                        <span className="text-xs text-zinc-400 truncate">{artifact.projectName}</span>
                       )}
-                      {artifact.status && (
-                        <span className={cn(
-                          'text-[10px] px-1.5 py-0.5 rounded-full font-medium capitalize',
-                          artifact.status === 'approved' ? 'bg-emerald-50 text-emerald-600' :
-                          artifact.status === 'locked' ? 'bg-blue-50 text-blue-600' :
-                          artifact.status === 'review' ? 'bg-violet-50 text-violet-600' :
-                          artifact.status === 'draft' ? 'bg-amber-50 text-amber-600' :
-                          artifact.status === 'complete' ? 'bg-emerald-50 text-emerald-600' :
-                          'bg-zinc-100 text-zinc-500'
-                        )}>
-                          {artifact.status === 'locked' ? 'Locked' : artifact.status}
-                        </span>
-                      )}
+                      {artifact.status && (() => {
+                        const stage = toLifecycleStage(artifact.status);
+                        const lc = LIFECYCLE[stage];
+                        return (
+                          <span className={cn(
+                            'text-xs px-1.5 py-0.5 rounded-full font-medium capitalize',
+                            lc.bg, lc.text
+                          )}>
+                            {lc.label}
+                          </span>
+                        );
+                      })()}
                     </div>
                     {artifact.createdAt && (
                       <div className="flex items-center gap-1 mt-1.5">
-                        <Clock className="w-3 h-3 text-zinc-300" />
-                        <span className="text-[10px] text-zinc-400">
+                        <Clock className="w-3 h-3 text-zinc-400" />
+                        <span className="text-xs text-zinc-400">
                           {new Date(artifact.createdAt).toLocaleDateString()}
                         </span>
                       </div>
@@ -373,7 +373,7 @@ export const ArtifactsGallery: React.FC = () => {
                             a.click(); URL.revokeObjectURL(url);
                           });
                         }}
-                        className="px-1.5 py-0.5 text-[10px] font-medium text-zinc-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                        className="px-1.5 py-0.5 text-xs font-medium text-zinc-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors duration-150"
                         title="Export as Word"
                       >
                         DOCX
@@ -393,7 +393,7 @@ export const ArtifactsGallery: React.FC = () => {
                             a.click(); URL.revokeObjectURL(url);
                           });
                         }}
-                        className="px-1.5 py-0.5 text-[10px] font-medium text-zinc-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                        className="px-1.5 py-0.5 text-xs font-medium text-zinc-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors duration-150"
                         title="Export as PDF"
                       >
                         PDF
@@ -413,13 +413,13 @@ export const ArtifactsGallery: React.FC = () => {
                             a.click(); URL.revokeObjectURL(url);
                           });
                         }}
-                        className="px-1.5 py-0.5 text-[10px] font-medium text-zinc-500 hover:text-orange-600 hover:bg-orange-50 rounded transition-colors"
+                        className="px-1.5 py-0.5 text-xs font-medium text-zinc-500 hover:text-orange-600 hover:bg-orange-50 rounded transition-colors duration-150"
                         title="Export as PowerPoint"
                       >
                         PPTX
                       </button>
                       <div className="flex-1" />
-                      <button className="p-1 text-zinc-400 hover:text-amber-500 hover:bg-amber-50 rounded transition-colors" title="Star">
+                      <button className="p-1 text-zinc-400 hover:text-amber-500 hover:bg-amber-50 rounded transition-colors duration-150" title="Star">
                         <Star className="w-3.5 h-3.5" />
                       </button>
                     </div>

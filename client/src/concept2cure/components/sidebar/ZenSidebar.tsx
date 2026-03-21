@@ -2,11 +2,11 @@
  * @fileoverview Zen Sidebar — Claude.ai-style, intent-organized navigation
  * @module concept2cure/components/sidebar/ZenSidebar
  *
- * Navigation restructured around user intent:
- *   WORK     → Copilot, Author
- *   RESEARCH → Intelligence (Alerts, Evidence, Precedents, Pathways)
- *   ASSURE   → Review & Readiness
- *   MANAGE   → Command Center, Academy
+ * Navigation restructured around user workflow:
+ *   CREATE  → Ask AnA, Draft Sections, Guided Authoring, Team Reviews
+ *   RESEARCH → Find Evidence, Biostatistics, Predictions
+ *   REVIEW  → Check Compliance, Submission Pulse, AI Agents
+ *   MANAGE  → Operations, Documents, Knowledge Base, Academy
  */
 
 import React, { useState } from 'react';
@@ -21,25 +21,18 @@ import {
   ChevronRight,
   ChevronDown,
   Sparkles,
-  Brain,
   PenLine,
   Search,
   ShieldCheck,
   BarChart3,
   GraduationCap,
-  Building2,
   Users,
   FlaskConical,
-  BookOpen,
   Snowflake,
   Bot,
   Compass,
   Activity,
   Upload,
-  FileStack,
-  Scale,
-  Rocket,
-  Beaker,
   Layers,
   FileText,
   ClipboardList,
@@ -49,6 +42,8 @@ import {
   Inbox,
   Palette,
   Link2,
+  Package,
+  BookOpen,
 } from 'lucide-react';
 import logoSrc from '@/assets/concept2cure-logo.jpg';
 
@@ -105,7 +100,7 @@ const WorkspaceGroup: React.FC<{
       <button
         onClick={() => setOpen(o => !o)}
         aria-expanded={open}
-        className="w-full flex items-center gap-1 px-3 py-1.5 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest hover:text-zinc-500 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded transition-colors"
+        className="w-full flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-zinc-500 uppercase tracking-wider hover:text-zinc-400 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded transition-colors duration-150"
       >
         <ChevronDown
           className={cn(
@@ -115,7 +110,7 @@ const WorkspaceGroup: React.FC<{
         />
         <span>{label}</span>
       </button>
-      {open && <div className="pb-2 space-y-0.5">{children}</div>}
+      {open && <div className="pb-2 space-y-px">{children}</div>}
     </div>
   );
 };
@@ -135,6 +130,9 @@ const NavItem: React.FC<{
     blue: { bg: 'bg-[#FBF0EB]', text: 'text-[#C4623F]', iconColor: 'text-[#D97757]' },
     violet: { bg: 'bg-[#FBF0EB]', text: 'text-[#C4623F]', iconColor: 'text-[#D97757]' },
     emerald: { bg: 'bg-emerald-50', text: 'text-emerald-700', iconColor: 'text-emerald-500' },
+    blue: { bg: 'bg-blue-500/15', text: 'text-blue-400', iconColor: 'text-blue-400' },
+    violet: { bg: 'bg-violet-500/15', text: 'text-violet-400', iconColor: 'text-violet-400' },
+    emerald: { bg: 'bg-emerald-500/15', text: 'text-emerald-400', iconColor: 'text-emerald-400' },
   };
   const accent = accentColor && accentMap[accentColor];
 
@@ -143,25 +141,29 @@ const NavItem: React.FC<{
       onClick={onClick}
       aria-current={active ? 'page' : undefined}
       className={cn(
-        'w-full flex items-center gap-2 mx-1 pl-5 pr-3 py-[5px] text-[12px] transition-all duration-150 rounded-md focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
+        'w-full flex items-center gap-2.5 mx-1 pl-5 pr-3 py-[6px] text-sm transition-all duration-150 rounded-md focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
         active
           ? accent
             ? `${accent.bg} ${accent.text} font-medium`
-            : 'bg-zinc-200/80 text-zinc-900 font-medium'
+            : 'bg-white/10 text-white font-medium'
           : accent
             ? cn(
                 'text-zinc-600',
                 accent.bg === 'bg-[#FBF0EB]' && 'hover:bg-[#FBF0EB] hover:text-[#C4623F]',
                 accent.bg === 'bg-[#FBF0EB]' && 'hover:bg-[#FBF0EB] hover:text-[#C4623F]',
                 accent.bg === 'bg-emerald-50' && 'hover:bg-emerald-50 hover:text-emerald-700'
+                'text-zinc-400',
+                accent.bg === 'bg-blue-500/15' && 'hover:bg-blue-500/10 hover:text-blue-400',
+                accent.bg === 'bg-violet-500/15' && 'hover:bg-blue-500/10 hover:text-violet-400',
+                accent.bg === 'bg-emerald-500/15' && 'hover:bg-emerald-500/10 hover:text-emerald-400'
               )
-            : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
+            : 'text-zinc-400 hover:bg-white/8 hover:text-zinc-200'
       )}
     >
       <span
         className={cn(
           'flex-shrink-0',
-          active ? (accent ? accent.iconColor : 'text-zinc-700') : 'text-zinc-400'
+          active ? (accent ? accent.iconColor : 'text-white') : 'text-zinc-500'
         )}
       >
         {icon}
@@ -169,11 +171,11 @@ const NavItem: React.FC<{
       <div className="flex-1 min-w-0 text-left">
         <span className="block truncate">{label}</span>
         {subtitle && (
-          <span className="block text-[10px] text-zinc-400 truncate leading-tight">{subtitle}</span>
+          <span className="block text-xs text-zinc-500 truncate leading-tight">{subtitle}</span>
         )}
       </div>
       {badge && (
-        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium leading-none flex-shrink-0">
+        <span className="text-xs px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-medium leading-none flex-shrink-0">
           {badge}
         </span>
       )}
@@ -207,8 +209,8 @@ const ConvoRow: React.FC<{
       className={cn(
         'group relative flex items-center gap-2 mx-2 px-3 py-2 rounded-lg cursor-pointer select-none transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
         isActive
-          ? 'bg-zinc-200/80 text-zinc-900'
-          : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
+          ? 'bg-white/10 text-white'
+          : 'text-zinc-400 hover:bg-white/8 hover:text-zinc-200'
       )}
     >
       <MessageSquare className="w-4 h-4 flex-shrink-0 opacity-50" />
@@ -221,7 +223,7 @@ const ConvoRow: React.FC<{
           }}
           aria-label={`Delete conversation: ${convo.title}`}
           className={cn(
-            'flex-shrink-0 p-1 rounded text-zinc-400 hover:bg-zinc-200 hover:text-red-500 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-all',
+            'flex-shrink-0 p-1 rounded text-zinc-500 hover:bg-white/10 hover:text-red-400 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-all duration-150',
             hovered ? 'opacity-100' : 'opacity-0 focus-visible:opacity-100'
           )}
         >
@@ -236,7 +238,7 @@ const ConvoRow: React.FC<{
 
 const SectionLabel: React.FC<{ label: string }> = ({ label }) => (
   <div className="px-5 pt-4 pb-1">
-    <span className="text-xs font-medium text-zinc-400">{label}</span>
+    <span className="text-xs font-medium text-zinc-500">{label}</span>
   </div>
 );
 
@@ -282,50 +284,60 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
   if (isCollapsed) {
     return (
       <aside
-        className="flex flex-col h-full w-14 bg-zinc-50 border-r border-zinc-200 items-center py-3 gap-2 flex-shrink-0"
+        className="flex flex-col h-full w-14 bg-zinc-900 border-r border-zinc-800 items-center py-3 gap-2 flex-shrink-0"
         role="navigation"
         aria-label="Main sidebar"
       >
         <div className="relative w-8 h-8 rounded-xl overflow-hidden shadow-sm flex-shrink-0">
           <img src={logoSrc} alt="C2C" className="w-full h-full object-cover object-center" />
           <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at center, transparent 40%, var(--color-bg, #faf9f5) 100%)' }} />
+        <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center shadow-sm flex-shrink-0">
+          <Sparkles className="w-4 h-4 text-white" />
         </div>
         <button
           onClick={onNewChat}
           aria-label="New chat"
-          className="w-9 h-9 rounded-xl bg-zinc-900 text-white flex items-center justify-center hover:bg-zinc-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+          title="New chat"
+          className="w-9 h-9 rounded-lg bg-white/10 text-white flex items-center justify-center hover:bg-white/20 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150"
         >
           <Plus className="w-4 h-4" />
         </button>
         <button
           onClick={onOpenProjects}
           aria-label="Projects"
-          className="w-9 h-9 rounded-xl text-zinc-500 flex items-center justify-center hover:bg-zinc-200 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+          title="Projects"
+          className="w-9 h-9 rounded-lg text-zinc-400 flex items-center justify-center hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150"
         >
           <FolderOpen className="w-4 h-4" />
         </button>
 
-        {/* Core module icons */}
-        <div className="w-8 border-t border-zinc-200 my-1" />
+        {/* Core workflow icons */}
+        <div className="w-8 border-t border-zinc-700 my-1" />
         <button
-          onClick={() => onNavigate?.('agent-hub')}
-          aria-label="AI Agents"
+          onClick={() => onNavigate?.('ai-copilot')}
+          aria-label="Ask AnA"
+          title="Ask AnA"
           className={cn(
             'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
             activeNavId === 'agent-hub' ? 'bg-[#FBF0EB] text-[#D97757]' : 'text-zinc-500 hover:bg-zinc-200'
+            'w-9 h-9 rounded-lg flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150',
+            activeNavId === 'ai-copilot' ? 'bg-violet-500/15 text-violet-400' : 'text-zinc-400 hover:bg-white/10'
           )}
         >
-          <Bot className="w-4 h-4" />
+          <Sparkles className="w-4 h-4" />
         </button>
         <button
-          onClick={() => onNavigate?.('snowglobe')}
-          aria-label="SnowGlobe"
+          onClick={() => onNavigate?.('author')}
+          aria-label="Draft Sections"
+          title="Draft Sections"
           className={cn(
             'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
             activeNavId === 'snowglobe' ? 'bg-[#FBF0EB] text-[#D97757]' : 'text-zinc-500 hover:bg-zinc-200'
+            'w-9 h-9 rounded-lg flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150',
+            activeNavId === 'author' ? 'bg-emerald-500/15 text-emerald-400' : 'text-zinc-400 hover:bg-white/10'
           )}
         >
-          <Snowflake className="w-4 h-4" />
+          <PenLine className="w-4 h-4" />
         </button>
         <button
           onClick={() => onNavigate?.('user-inbox')}
@@ -343,42 +355,54 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           className={cn(
             'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
             activeNavId === 'collaboration-hub' ? 'bg-[#FBF0EB] text-[#D97757]' : 'text-zinc-500 hover:bg-zinc-200'
+          onClick={() => onNavigate?.('intelligence-hub')}
+          aria-label="Find Evidence"
+          title="Find Evidence"
+          className={cn(
+            'w-9 h-9 rounded-lg flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150',
+            activeNavId === 'intelligence-hub' ? 'bg-blue-500/15 text-blue-400' : 'text-zinc-400 hover:bg-white/10'
           )}
         >
-          <Users className="w-4 h-4" />
+          <Search className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => onNavigate?.('review-readiness')}
+          aria-label="Check Compliance"
+          title="Check Compliance"
+          className={cn(
+            'w-9 h-9 rounded-lg flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150',
+            activeNavId === 'review-readiness' ? 'bg-blue-500/15 text-blue-400' : 'text-zinc-400 hover:bg-white/10'
+          )}
+        >
+          <ShieldCheck className="w-4 h-4" />
         </button>
         <button
           onClick={() => onNavigate?.('artifacts')}
-          aria-label="Artifacts"
+          aria-label="Documents"
+          title="Documents"
           className={cn(
             'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
             activeNavId === 'artifacts' ? 'bg-[#FBF0EB] text-[#D97757]' : 'text-zinc-500 hover:bg-zinc-200'
+            'w-9 h-9 rounded-lg flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150',
+            activeNavId === 'artifacts' ? 'bg-violet-500/15 text-violet-400' : 'text-zinc-400 hover:bg-white/10'
           )}
         >
           <Layers className="w-4 h-4" />
-        </button>
-        <button
-          onClick={() => onNavigate?.('knowledge-base')}
-          aria-label="Knowledge Base"
-          className={cn(
-            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
-            activeNavId === 'knowledge-base' ? 'bg-emerald-50 text-emerald-600' : 'text-zinc-500 hover:bg-zinc-200'
-          )}
-        >
-          <Upload className="w-4 h-4" />
         </button>
 
         <button
           onClick={onToggleCollapse}
           aria-label="Expand sidebar"
-          className="mt-auto w-9 h-9 rounded-xl text-zinc-400 flex items-center justify-center hover:bg-zinc-200 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+          title="Expand sidebar"
+          className="mt-auto w-9 h-9 rounded-lg text-zinc-500 flex items-center justify-center hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150"
         >
           <ChevronRight className="w-4 h-4" />
         </button>
         <button
           onClick={onOpenSettings}
           aria-label="Settings"
-          className="w-9 h-9 rounded-xl text-zinc-400 flex items-center justify-center hover:bg-zinc-200 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+          title="Settings"
+          className="w-9 h-9 rounded-lg text-zinc-500 flex items-center justify-center hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150"
         >
           <Settings className="w-4 h-4" />
         </button>
@@ -392,7 +416,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
       {/* Mobile backdrop */}
       <div className="fixed inset-0 z-40 bg-black/30 md:hidden" onClick={onToggleCollapse} />
       <aside
-        className="flex flex-col h-full w-56 bg-zinc-50/80 border-r border-zinc-100 flex-shrink-0 fixed z-50 md:static md:z-auto"
+        className="flex flex-col h-full w-56 bg-zinc-900 border-r border-zinc-800 flex-shrink-0 fixed z-50 md:static md:z-auto"
         role="navigation"
         aria-label="Main sidebar"
       >
@@ -402,13 +426,15 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             <div className="relative w-7 h-7 rounded-lg overflow-hidden flex-shrink-0 shadow-sm">
               <img src={logoSrc} alt="Concept2Cure" className="w-full h-full object-cover object-center" />
               <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at center, transparent 40%, var(--color-bg, #faf9f5) 100%)' }} />
+            <div className="w-6 h-6 rounded-md bg-blue-600 flex items-center justify-center">
+              <Sparkles className="w-3 h-3 text-white" />
             </div>
-            <span className="font-semibold text-zinc-800 text-[13px]">Concept2Cure</span>
+            <span className="font-semibold text-white text-sm">Concept2Cure</span>
           </div>
           <button
             onClick={onToggleCollapse}
             aria-label="Collapse sidebar"
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-200 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+            className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-400 hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -418,7 +444,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <div className="px-2 pb-1.5 flex-shrink-0">
           <button
             onClick={onNewChat}
-            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-zinc-800 text-white text-[12px] font-medium hover:bg-zinc-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+            className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg bg-white/10 text-white text-sm font-medium hover:bg-white/15 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150"
           >
             <Plus className="w-3.5 h-3.5 flex-shrink-0" />
             New workspace thread
@@ -429,103 +455,63 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <div className="px-2 pb-1.5 flex-shrink-0">
           <button
             onClick={onOpenProjects}
-            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 text-[12px] focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-zinc-400 hover:bg-white/8 hover:text-zinc-200 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150"
           >
-            <FolderOpen className="w-3.5 h-3.5 flex-shrink-0 text-zinc-400" />
+            <FolderOpen className="w-3.5 h-3.5 flex-shrink-0 text-zinc-500" />
             My projects
           </button>
         </div>
 
-        <div className="mx-2 border-t border-zinc-100 flex-shrink-0" />
+        <div className="mx-2 border-t border-zinc-800 flex-shrink-0" />
 
         {/* ── Intent-organized navigation ──────────────────────────────── */}
         <div
           className="flex-1 overflow-y-auto min-h-0 zen-scroll py-1"
           style={{ scrollbarWidth: 'thin' }}
         >
-          {/* ── WORK — what I'm building ─────────────────────────── */}
-          <WorkspaceGroup label="Work">
+          {/* ── CREATE — draft, write, build ────────────────────── */}
+          <WorkspaceGroup label="Create">
             <NavItem
-              icon={<Brain className="w-3.5 h-3.5" />}
-              label="AnA RI Copilot"
+              icon={<Sparkles className="w-3.5 h-3.5" />}
+              label="Ask AnA"
+              subtitle="Questions · Strategy · Guidance"
               active={activeNavId === 'ai-copilot'}
-              accentColor="blue"
+              accentColor="violet"
               onClick={() => onNavigate?.('ai-copilot')}
             />
             <NavItem
               icon={<PenLine className="w-3.5 h-3.5" />}
-              label="Author"
-              subtitle="Dossier · eCTD · CMC"
+              label="Draft Sections"
+              subtitle="eCTD · CSR · CTD modules"
               active={activeNavId === 'author'}
+              accentColor="emerald"
               onClick={() => onNavigate?.('author')}
             />
             <NavItem
               icon={<Compass className="w-3.5 h-3.5" />}
-              label="Document Sherpa"
-              subtitle="Guided authoring · AI assist"
+              label="Guided Authoring"
+              subtitle="Step-by-step with AI assist"
               active={activeNavId === 'document-sherpa'}
               onClick={() => onNavigate?.('document-sherpa')}
             />
             <NavItem
-              icon={<PenLine className="w-3.5 h-3.5" />}
-              label="Document Builder"
-              subtitle="CSR · CTD · Multi-agency"
-              active={activeNavId === 'document-builder'}
-              accentColor="emerald"
-              onClick={() => onNavigate?.('document-builder')}
-            />
-            <NavItem
               icon={<Users className="w-3.5 h-3.5" />}
-              label="Collaboration"
-              subtitle="Threads · Reviews · Decisions"
+              label="Team Reviews"
+              subtitle="Comments · Decisions"
               active={activeNavId === 'collaboration-hub'}
               accentColor="blue"
               onClick={() => onNavigate?.('collaboration-hub')}
             />
           </WorkspaceGroup>
 
-          {/* ── AI — agents & intelligence ──────────────────────── */}
-          <WorkspaceGroup label="AI Agents">
-            <NavItem
-              icon={<Bot className="w-3.5 h-3.5" />}
-              label="Agent Swarm"
-              subtitle="AI Agent Swarm"
-              active={activeNavId === 'agent-hub'}
-              accentColor="violet"
-              onClick={() => onNavigate?.('agent-hub')}
-            />
-            <NavItem
-              icon={<Snowflake className="w-3.5 h-3.5" />}
-              label="SnowGlobe"
-              subtitle="Predictions · Simulations"
-              active={activeNavId === 'snowglobe'}
-              accentColor="blue"
-              onClick={() => onNavigate?.('snowglobe')}
-            />
-            <NavItem
-              icon={<Activity className="w-3.5 h-3.5" />}
-              label="Review Pulse"
-              subtitle="Signals · Readiness · Risk"
-              active={activeNavId === 'review-pulse'}
-              onClick={() => onNavigate?.('review-pulse')}
-            />
-          </WorkspaceGroup>
-
-          {/* ── RESEARCH — what I need to know ───────────────────── */}
+          {/* ── RESEARCH — find evidence, analyze data ──────────── */}
           <WorkspaceGroup label="Research">
             <NavItem
               icon={<Search className="w-3.5 h-3.5" />}
-              label="Deep Research"
-              subtitle="Multi-source · Connectors · AI"
-              active={activeNavId === 'deep-research'}
-              accentColor="violet"
-              onClick={() => onNavigate?.('deep-research')}
-            />
-            <NavItem
-              icon={<Search className="w-3.5 h-3.5" />}
-              label="Intelligence"
-              subtitle="Evidence · Precedents · Alerts"
+              label="Find Evidence"
+              subtitle="Literature · Precedents · Alerts"
               active={activeNavId === 'intelligence-hub'}
+              accentColor="violet"
               onClick={() => onNavigate?.('intelligence-hub')}
             />
             <NavItem
@@ -537,12 +523,12 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               onClick={() => onNavigate?.('biostatistics')}
             />
             <NavItem
-              icon={<Beaker className="w-3.5 h-3.5" />}
-              label="CMC Platform"
-              subtitle="Chemistry · Manufacturing"
-              active={activeNavId === 'cmc'}
+              icon={<Snowflake className="w-3.5 h-3.5" />}
+              label="Predictions"
+              subtitle="Simulations · Forecasts"
+              active={activeNavId === 'snowglobe'}
               accentColor="blue"
-              onClick={() => onNavigate?.('cmc')}
+              onClick={() => onNavigate?.('snowglobe')}
             />
             <NavItem
               icon={<FlaskConical className="w-3.5 h-3.5" />}
@@ -554,29 +540,29 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             />
           </WorkspaceGroup>
 
-          {/* ── ASSURE — quality & compliance ─────────────────────── */}
-          <WorkspaceGroup label="Assure">
+          {/* ── REVIEW — quality, compliance, readiness ──────────── */}
+          <WorkspaceGroup label="Review">
             <NavItem
               icon={<ShieldCheck className="w-3.5 h-3.5" />}
-              label="Review & Readiness"
-              subtitle="Quality · Compliance · Audit"
+              label="Check Compliance"
+              subtitle="Quality · Audit · Readiness"
               active={activeNavId === 'review-readiness'}
               onClick={() => onNavigate?.('review-readiness')}
             />
             <NavItem
-              icon={<Scale className="w-3.5 h-3.5" />}
-              label="Legal Center"
-              subtitle="IP · Contracts · Regulatory law"
-              active={activeNavId === 'legal-center'}
-              onClick={() => onNavigate?.('legal-center')}
+              icon={<Activity className="w-3.5 h-3.5" />}
+              label="Submission Pulse"
+              subtitle="Signals · Risk · Status"
+              active={activeNavId === 'review-pulse'}
+              onClick={() => onNavigate?.('review-pulse')}
             />
             <NavItem
-              icon={<FileText className="w-3.5 h-3.5" />}
-              label="Report Engine"
-              subtitle="Immutable · Provenance · Indemnify"
-              active={activeNavId === 'report-engine'}
-              accentColor="indigo"
-              onClick={() => onNavigate?.('report-engine')}
+              icon={<Bot className="w-3.5 h-3.5" />}
+              label="AI Agents"
+              subtitle="Automated checks"
+              active={activeNavId === 'agent-hub'}
+              accentColor="violet"
+              onClick={() => onNavigate?.('agent-hub')}
             />
             <NavItem
               icon={<Shield className="w-3.5 h-3.5" />}
@@ -620,25 +606,43 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               accentColor="violet"
               onClick={() => onNavigate?.('client-intelligence')}
             />
+          {/* ── MANAGE — operations, files, settings ─────────────── */}
+          <WorkspaceGroup label="Manage" defaultOpen={false}>
             <NavItem
               icon={<BarChart3 className="w-3.5 h-3.5" />}
-              label="Command Center"
-              subtitle="Submissions · Workflows · Ops"
+              label="Operations"
+              subtitle="Submissions · Workflows"
               active={activeNavId === 'command-center'}
               onClick={() => onNavigate?.('command-center')}
             />
             <NavItem
               icon={<Layers className="w-3.5 h-3.5" />}
-              label="Artifacts"
-              subtitle="Outputs · Documents · Templates"
+              label="Documents"
+              subtitle="All outputs · Templates"
               active={activeNavId === 'artifacts'}
               accentColor="violet"
               onClick={() => onNavigate?.('artifacts')}
             />
             <NavItem
+              icon={<Package className="w-3.5 h-3.5" />}
+              label="Submissions"
+              subtitle="eCTD builder · Packaging"
+              active={activeNavId === 'submission-builder'}
+              accentColor="indigo"
+              onClick={() => onNavigate?.('submission-builder')}
+            />
+            <NavItem
+              icon={<BookOpen className="w-3.5 h-3.5" />}
+              label="Templates"
+              subtitle="Regulatory templates"
+              active={activeNavId === 'template-library'}
+              accentColor="violet"
+              onClick={() => onNavigate?.('template-library')}
+            />
+            <NavItem
               icon={<Upload className="w-3.5 h-3.5" />}
               label="Knowledge Base"
-              subtitle="Skills · .MD · Materials"
+              subtitle="Reference materials"
               active={activeNavId === 'knowledge-base'}
               accentColor="emerald"
               onClick={() => onNavigate?.('knowledge-base')}
@@ -681,24 +685,9 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             <NavItem
               icon={<GraduationCap className="w-3.5 h-3.5" />}
               label="Academy"
-              subtitle="Dr. Sage · AnA guides"
+              subtitle="Guides · Training"
               active={activeNavId === 'enablement-center'}
               onClick={() => onNavigate?.('enablement-center')}
-            />
-            <NavItem
-              icon={<BookOpen className="w-3.5 h-3.5" />}
-              label="Training Center"
-              subtitle="Courses · Certifications"
-              active={activeNavId === 'training-center'}
-              accentColor="violet"
-              onClick={() => onNavigate?.('training-center')}
-            />
-            <NavItem
-              icon={<Rocket className="w-3.5 h-3.5" />}
-              label="Client Onboarding"
-              subtitle="Setup · Configuration"
-              active={activeNavId === 'client-onboarding'}
-              onClick={() => onNavigate?.('client-onboarding')}
             />
           </WorkspaceGroup>
 
@@ -718,13 +707,14 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           </WorkspaceGroup>
 
           <div className="mx-2 my-1.5 border-t border-zinc-100" />
+          <div className="mx-2 my-1.5 border-t border-zinc-800" />
 
           {/* ── Conversations ──────────────────────────────────── */}
           <WorkspaceGroup label="Conversations" defaultOpen={conversations.length > 0}>
             {conversations.length === 0 && (
               <div className="px-4 py-4 text-center">
-                <MessageSquare className="w-6 h-6 text-zinc-300 mx-auto mb-1.5" />
-                <p className="text-xs text-zinc-400 leading-relaxed">No conversations yet.</p>
+                <MessageSquare className="w-6 h-6 text-zinc-600 mx-auto mb-1.5" />
+                <p className="text-xs text-zinc-500 leading-relaxed">No conversations yet.</p>
               </div>
             )}
 
@@ -776,23 +766,25 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         </div>
 
         {/* User / settings footer */}
-        <div className="flex-shrink-0 border-t border-zinc-100 p-2">
+        <div className="flex-shrink-0 border-t border-zinc-800 p-2">
           <button
             onClick={onOpenSettings}
-            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 text-[12px] focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+            className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-zinc-400 hover:bg-white/10 hover:text-zinc-200 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150"
           >
             <div className="w-6 h-6 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
               <span className="text-[10px] font-bold text-[#C4623F] leading-none">
+            <div className="w-7 h-7 rounded-full bg-violet-500/20 flex items-center justify-center flex-shrink-0">
+              <span className="text-xs font-semibold text-violet-400 leading-none">
                 {avatarInitial}
               </span>
             </div>
             {!isCollapsed && (
               <div className="flex-1 min-w-0 text-left">
-                <p className="text-[12px] font-medium text-zinc-700 truncate leading-tight">
+                <p className="text-sm font-medium text-zinc-200 truncate leading-tight">
                   {displayName}
                 </p>
                 {userEmail && (
-                  <p className="text-[10px] text-zinc-400 truncate leading-tight">{userEmail}</p>
+                  <p className="text-xs text-zinc-500 truncate leading-tight">{userEmail}</p>
                 )}
               </div>
             )}

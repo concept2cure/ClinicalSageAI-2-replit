@@ -727,8 +727,8 @@ function SubmissionSequences({ sequences }: { sequences: SubmissionSequence[] })
             <div className="px-3 py-2 p-4">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-indigo-100 rounded-lg">
-                    <Package className="w-5 h-5 text-indigo-600" />
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Package className="w-5 h-5 text-blue-600" />
                   </div>
                   <div>
                     <h4 className="font-semibold flex items-center gap-2">
@@ -871,8 +871,8 @@ export function ECTDNavigator() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-3">
-            <Package className="w-8 h-8 text-indigo-600" />
+          <h1 className="text-2xl font-semibold flex items-center gap-3">
+            <Package className="w-8 h-8 text-blue-600" />
             eCTD Navigator
           </h1>
           <p className="text-muted-foreground">
@@ -907,7 +907,7 @@ export function ECTDNavigator() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Documents</p>
-                <p className="text-2xl font-bold">{overallStats.total}</p>
+                <p className="text-2xl font-semibold">{overallStats.total}</p>
               </div>
               <FileText className="w-8 h-8 text-blue-500" />
             </div>
@@ -918,7 +918,7 @@ export function ECTDNavigator() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Approved</p>
-                <p className="text-2xl font-bold text-green-600">{overallStats.approved}</p>
+                <p className="text-2xl font-semibold text-green-600">{overallStats.approved}</p>
               </div>
               <CheckCircle2 className="w-8 h-8 text-green-500" />
             </div>
@@ -929,7 +929,7 @@ export function ECTDNavigator() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">In Review</p>
-                <p className="text-2xl font-bold text-yellow-600">{overallStats.inReview}</p>
+                <p className="text-2xl font-semibold text-yellow-600">{overallStats.inReview}</p>
               </div>
               <Clock className="w-8 h-8 text-yellow-500" />
             </div>
@@ -940,7 +940,7 @@ export function ECTDNavigator() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Draft</p>
-                <p className="text-2xl font-bold text-zinc-600">{overallStats.draft}</p>
+                <p className="text-2xl font-semibold text-zinc-600">{overallStats.draft}</p>
               </div>
               <File className="w-8 h-8 text-zinc-500" />
             </div>
@@ -1024,7 +1024,7 @@ export function ECTDNavigator() {
       </Tabs>
 
       {/* RI Assistance */}
-      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50">
+      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-zinc-50">
         <div className="px-3 py-2 p-4">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-purple-100 rounded-full">

@@ -86,7 +86,7 @@ function SectionPicker({ selected, onSelect }: SectionPickerProps) {
             if (hasChildren) toggleExpand(node.nodeId);
           }}
           className={cn(
-            'w-full flex items-center gap-1 py-[3px] pr-2 text-left transition-colors',
+            'w-full flex items-center gap-1 py-[3px] pr-2 text-left transition-colors duration-150',
             isSelected ? 'bg-blue-100 text-blue-700 font-medium' : 'text-zinc-600 hover:bg-zinc-50'
           )}
           style={{ paddingLeft: `${4 + depth * 12}px` }}
@@ -101,8 +101,8 @@ function SectionPicker({ selected, onSelect }: SectionPickerProps) {
           ) : (
             <span className="w-3 h-3 shrink-0" />
           )}
-          <span className="text-[10px] text-zinc-400 font-mono shrink-0">{node.ctdSection}</span>
-          <span className="text-[11px] truncate flex-1">
+          <span className="text-xs text-zinc-400 font-mono shrink-0">{node.ctdSection}</span>
+          <span className="text-xs truncate flex-1">
             {node.label.replace(/^Module \d+ — /, '')}
           </span>
         </button>
@@ -114,14 +114,14 @@ function SectionPicker({ selected, onSelect }: SectionPickerProps) {
   return (
     <div className="border border-zinc-200 rounded-lg overflow-hidden">
       {/* Search */}
-      <div className="flex items-center gap-2 px-2 py-1.5 border-b border-zinc-100 bg-zinc-50/60">
+      <div className="flex items-center gap-2 px-2 py-1.5 border-b border-zinc-200 bg-zinc-50/60">
         <Search className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
         <input
           type="text"
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Search sections…"
-          className="flex-1 text-[11px] bg-transparent outline-none placeholder:text-zinc-400"
+          className="flex-1 text-xs bg-transparent outline-none placeholder:text-zinc-400"
         />
       </div>
 
@@ -129,21 +129,21 @@ function SectionPicker({ selected, onSelect }: SectionPickerProps) {
       <div className="max-h-[240px] overflow-y-auto">
         {filteredNodes ? (
           filteredNodes.length === 0 ? (
-            <p className="px-3 py-4 text-[11px] text-zinc-400 text-center">No matching sections</p>
+            <p className="px-3 py-4 text-xs text-zinc-400 text-center">No matching sections</p>
           ) : (
             filteredNodes.map(n => (
               <button
                 key={n.nodeId}
                 onClick={() => onSelect(n.ctdSection)}
                 className={cn(
-                  'w-full flex items-center gap-1.5 px-3 py-1.5 text-left transition-colors',
+                  'w-full flex items-center gap-1.5 px-3 py-1.5 text-left transition-colors duration-150',
                   selected === n.ctdSection
                     ? 'bg-blue-100 text-blue-700'
                     : 'text-zinc-600 hover:bg-zinc-50'
                 )}
               >
-                <span className="text-[10px] text-zinc-400 font-mono shrink-0">{n.ctdSection}</span>
-                <span className="text-[11px] truncate flex-1">{n.label}</span>
+                <span className="text-xs text-zinc-400 font-mono shrink-0">{n.ctdSection}</span>
+                <span className="text-xs truncate flex-1">{n.label}</span>
               </button>
             ))
           )
@@ -240,7 +240,7 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
       role="presentation"
     >
       <div
-        className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        className="bg-white rounded-xl shadow-lg w-full max-w-lg mx-4 overflow-hidden animate-in fade-in zoom-in-95 duration-200"
         onClick={e => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -261,7 +261,7 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
             ) : (
               <ShieldCheck className="w-4 h-4 text-blue-600" />
             )}
-            <h3 id="placement-dialog-title" className="text-[14px] font-semibold text-zinc-800">
+            <h3 id="placement-dialog-title" className="text-[14px] font-semibold text-zinc-900">
               {config.label}
             </h3>
           </div>
@@ -276,20 +276,20 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
 
         {/* Body */}
         <div className="px-5 py-4 space-y-4">
-          <p className="text-[12px] text-zinc-500 leading-relaxed">{config.description}</p>
+          <p className="text-sm text-zinc-500 leading-relaxed">{config.description}</p>
 
           {/* Document info */}
           <div className="bg-zinc-50 rounded-lg px-3 py-2">
-            <p className="text-[11px] text-zinc-400">Document</p>
-            <p className="text-[13px] font-medium text-zinc-800 truncate">{artifact.title}</p>
+            <p className="text-xs text-zinc-400">Document</p>
+            <p className="text-sm font-medium text-zinc-900 truncate">{artifact.title}</p>
             {currentSection && (
-              <p className="text-[11px] text-zinc-400 mt-0.5">
+              <p className="text-xs text-zinc-400 mt-0.5">
                 Currently at: <span className="font-mono">{currentSection}</span> —{' '}
                 {getSectionLabel(currentSection)}
               </p>
             )}
             {artifact.status && (
-              <p className="text-[11px] text-zinc-400 mt-0.5">
+              <p className="text-xs text-zinc-400 mt-0.5">
                 Status: <span className="font-medium text-zinc-600">{artifact.status}</span>
                 {artifact.version ? ` · v${artifact.version}` : ''}
               </p>
@@ -300,7 +300,7 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
           {operation === 'relocate' && (
             <div
               className={cn(
-                'flex items-start gap-2 px-3 py-2 rounded-lg text-[11px]',
+                'flex items-start gap-2 px-3 py-2 rounded-lg text-xs',
                 isLocked
                   ? 'bg-red-50/60 border border-red-200 text-red-800'
                   : 'bg-amber-50/60 border border-amber-100 text-amber-800'
@@ -331,7 +331,7 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
 
           {/* Impact note — initial placement */}
           {operation === 'place' && (
-            <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-blue-50/60 border border-blue-100 text-[11px] text-blue-800">
+            <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-blue-50/60 border border-blue-100 text-xs text-blue-800">
               <ShieldCheck className="w-3.5 h-3.5 shrink-0 mt-0.5 text-blue-600" />
               <div>
                 <p className="font-medium">Placement creates a governed record</p>
@@ -359,19 +359,19 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
             >
               {currentSection && (
                 <div className="flex-1 text-center">
-                  <p className="text-[10px] text-zinc-400">From</p>
-                  <p className="text-[11px] font-mono font-medium text-zinc-700">
+                  <p className="text-xs text-zinc-400">From</p>
+                  <p className="text-xs font-mono font-medium text-zinc-700">
                     {currentSection}
                   </p>
-                  <p className="text-[9px] text-zinc-400 truncate">
+                  <p className="text-xs text-zinc-400 truncate">
                     {getSectionLabel(currentSection)}
                   </p>
                 </div>
               )}
               {!currentSection && (
                 <div className="flex-1 text-center">
-                  <p className="text-[10px] text-zinc-400">From</p>
-                  <p className="text-[11px] font-medium text-zinc-400 italic">Unplaced</p>
+                  <p className="text-xs text-zinc-400">From</p>
+                  <p className="text-xs font-medium text-zinc-400 italic">Unplaced</p>
                 </div>
               )}
               <ArrowRight
@@ -381,9 +381,9 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
                 )}
               />
               <div className="flex-1 text-center">
-                <p className="text-[10px] text-zinc-400">To</p>
-                <p className="text-[11px] font-mono font-medium text-blue-700">{selectedSection}</p>
-                <p className="text-[9px] text-zinc-400 truncate">
+                <p className="text-xs text-zinc-400">To</p>
+                <p className="text-xs font-mono font-medium text-blue-700">{selectedSection}</p>
+                <p className="text-xs text-zinc-400 truncate">
                   {getSectionLabel(selectedSection)}
                 </p>
               </div>
@@ -392,7 +392,7 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
 
           {/* Target section picker */}
           <div>
-            <label className="text-[11px] font-medium text-zinc-600 mb-1.5 block">
+            <label className="text-xs font-medium text-zinc-600 mb-1.5 block">
               Target CTD Section
             </label>
             <SectionPicker selected={selectedSection} onSelect={setSelectedSection} />
@@ -400,7 +400,7 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
 
           {/* Reason */}
           <div>
-            <label className="text-[11px] font-medium text-zinc-600 mb-1.5 block">
+            <label className="text-xs font-medium text-zinc-600 mb-1.5 block">
               Reason for {operation === 'relocate' ? 'relocation' : 'placement'}
               <span className="text-red-500"> *</span>
             </label>
@@ -408,23 +408,23 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
               value={reason}
               onChange={e => setReason(e.target.value)}
               placeholder="Provide justification (min 5 characters)…"
-              className="w-full px-3 py-2 text-[12px] border border-zinc-200 rounded-lg resize-none h-16 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-shadow duration-150"
+              className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg resize-none h-16 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/30 transition-shadow duration-150"
             />
             <div className="flex items-center justify-between mt-1">
               <span
                 className={cn(
-                  'text-[10px] tabular-nums',
+                  'text-xs tabular-nums',
                   reason.trim().length < 5 ? 'text-zinc-400' : 'text-emerald-500'
                 )}
               >
                 {reason.trim().length}/5 min
               </span>
-              <span className="text-[10px] text-zinc-300">⌘Enter to confirm</span>
+              <span className="text-xs text-zinc-400">⌘Enter to confirm</span>
             </div>
           </div>
 
           {/* Audit notice */}
-          <div className="flex items-start gap-2 text-[10px] text-zinc-400 leading-relaxed">
+          <div className="flex items-start gap-2 text-xs text-zinc-400 leading-relaxed">
             <ShieldCheck className="w-3.5 h-3.5 shrink-0 mt-0.5" />
             <span>
               This action will be recorded in the provenance audit trail with your identity,
@@ -434,10 +434,10 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-zinc-100 bg-zinc-50/40">
+        <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-zinc-200 bg-zinc-50/60">
           <button
             onClick={onClose}
-            className="px-3 py-1.5 text-[12px] text-zinc-600 rounded-lg hover:bg-zinc-100 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+            className="px-3 py-1.5 text-sm text-zinc-600 rounded-lg hover:bg-zinc-100 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
           >
             Cancel
           </button>
@@ -445,7 +445,7 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
             onClick={handleConfirm}
             disabled={!canConfirm || loading}
             className={cn(
-              'px-4 py-1.5 text-[12px] font-medium rounded-lg transition-colors',
+              'px-4 py-1.5 text-sm font-medium rounded-lg transition-colors duration-150',
               canConfirm && !loading
                 ? 'bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:outline-none'
                 : 'bg-zinc-200 text-zinc-400 cursor-not-allowed'

@@ -202,15 +202,15 @@ const Sidebar: React.FC<{
       <div className="flex items-center justify-between p-4 border-b border-zinc-200">
         {!collapsed && (
           <div className="flex items-center gap-2">
-            <div className={cn('p-2 rounded-lg bg-gradient-to-br from-blue-500 to-violet-600')}>
+            <div className={cn('p-2 rounded-lg bg-blue-600')}>
               <Sparkles className="w-5 h-5 text-white" />
             </div>
-            <span className="font-bold text-zinc-900">Concept2Cure</span>
+            <span className="font-semibold text-zinc-900">Concept2Cure</span>
           </div>
         )}
         <button
           onClick={onToggleCollapse}
-          className="p-2 rounded-lg hover:bg-zinc-100 transition-colors"
+          className="p-2 rounded-lg hover:bg-zinc-100 transition-colors duration-150"
         >
           {collapsed ? <Menu className="w-5 h-5" /> : <X className="w-5 h-5" />}
         </button>
@@ -247,7 +247,7 @@ const Sidebar: React.FC<{
               key={view.id}
               onClick={() => onViewChange(view.id)}
               className={cn(
-                'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors',
+                'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors duration-150',
                 isActive ? 'bg-blue-50 text-blue-600' : 'text-zinc-600 hover:bg-zinc-100'
               )}
               title={collapsed ? view.label : undefined}
@@ -288,7 +288,7 @@ const Sidebar: React.FC<{
                 </p>
               </div>
             </div>
-            <button className="p-2 text-zinc-400 hover:text-zinc-600 transition-colors">
+            <button className="p-2 text-zinc-400 hover:text-zinc-600 transition-colors duration-150">
               <LogOut className="w-4 h-4" />
             </button>
           </div>
@@ -321,22 +321,22 @@ const Header: React.FC<{
           <input
             type="text"
             placeholder="Search..."
-            className="pl-9 pr-4 py-2 w-64 text-sm bg-zinc-100 border-none rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="pl-9 pr-4 py-2 w-64 text-sm bg-zinc-100 border-none rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
           />
         </div>
 
         {/* Notifications */}
-        <button className="relative p-2 text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors">
+        <button className="relative p-2 text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors duration-150">
           <Bell className="w-5 h-5" />
           {notifications > 0 && (
-            <span className="absolute top-1 right-1 w-4 h-4 text-[10px] font-bold bg-red-500 text-white rounded-full flex items-center justify-center">
+            <span className="absolute top-1 right-1 w-4 h-4 text-xs font-semibold bg-red-500 text-white rounded-full flex items-center justify-center">
               {notifications > 9 ? '9+' : notifications}
             </span>
           )}
         </button>
 
         {/* Help */}
-        <button className="p-2 text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors">
+        <button className="p-2 text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors duration-150">
           <MessageSquare className="w-5 h-5" />
         </button>
       </div>
@@ -418,7 +418,7 @@ export const IndustryAwareApp: React.FC = () => {
         return (
           <div className="flex items-center justify-center h-full bg-zinc-50">
             <div className="text-center">
-              <Settings className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
+              <Settings className="w-12 h-12 text-zinc-400 mx-auto mb-3" />
               <p className="text-zinc-500">Settings workspace</p>
             </div>
           </div>

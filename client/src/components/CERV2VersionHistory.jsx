@@ -88,7 +88,7 @@ export default function CERV2VersionHistory({
         <History className="w-3.5 h-3.5 text-slate-500" />
         <span className="text-slate-700">History</span>
         {versions.length > 0 && (
-          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+          <Badge variant="secondary" className="text-[11px] px-1.5 py-0">
             {versions.length}
           </Badge>
         )}
@@ -103,7 +103,7 @@ export default function CERV2VersionHistory({
         <div className="flex items-center gap-2">
           <History className="w-4 h-4 text-slate-600" />
           <span className="font-semibold text-sm text-slate-800">Version History</span>
-          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+          <Badge variant="outline" className="text-[11px] px-1.5 py-0">
             {versions.length}
           </Badge>
         </div>
@@ -157,14 +157,14 @@ export default function CERV2VersionHistory({
                     <p className="text-xs font-medium text-slate-700 truncate">
                       {v.label || `Version ${versions.length - idx}`}
                     </p>
-                    <p className="text-[10px] text-slate-400">
+                    <p className="text-[11px] text-slate-400">
                       {formatDate(v.timestamp)} · {totalWords} words
                     </p>
                   </div>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 px-1.5 text-[10px] text-blue-600 hover:text-blue-800"
+                    className="h-6 px-1.5 text-[11px] text-blue-600 hover:text-blue-800"
                     onClick={e => {
                       e.stopPropagation();
                       handleRestore(v);
@@ -176,7 +176,7 @@ export default function CERV2VersionHistory({
 
                 {isExpanded && (
                   <div className="px-4 pb-2 border-t bg-slate-50/50">
-                    <table className="w-full text-[10px] mt-1">
+                    <table className="w-full text-[11px] mt-1">
                       <thead>
                         <tr className="text-slate-500">
                           <th className="text-left font-medium py-0.5">Section</th>

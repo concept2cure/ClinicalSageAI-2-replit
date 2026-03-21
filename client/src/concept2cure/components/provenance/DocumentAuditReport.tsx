@@ -170,7 +170,7 @@ const ReportSection: React.FC<{
   <div className="mb-4 print:mb-3">
     <div className="flex items-center gap-2 mb-2 pb-1 border-b border-zinc-200">
       <span className="text-zinc-500 print:text-zinc-700">{icon}</span>
-      <h3 className="text-sm font-semibold text-zinc-800">{title}</h3>
+      <h3 className="text-sm font-semibold text-zinc-900">{title}</h3>
     </div>
     <div className="pl-1">{children}</div>
   </div>
@@ -182,8 +182,8 @@ const Row: React.FC<{ label: string; value: React.ReactNode; mono?: boolean }> =
   mono,
 }) => (
   <div className="flex items-start gap-2 py-0.5">
-    <span className="text-[11px] text-zinc-400 w-28 shrink-0">{label}</span>
-    <span className={`text-[11px] text-zinc-700 break-all ${mono ? 'font-mono' : ''}`}>
+    <span className="text-xs text-zinc-400 w-28 shrink-0">{label}</span>
+    <span className={`text-xs text-zinc-700 break-all ${mono ? 'font-mono' : ''}`}>
       {value || '—'}
     </span>
   </div>
@@ -318,7 +318,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
   if (error || !report) {
     return (
       <div className="h-full flex flex-col bg-white border-l border-zinc-200">
-        <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200">
           <span className="text-xs font-semibold text-zinc-700">Audit Report</span>
           <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600">
             <X className="w-4 h-4" />
@@ -340,10 +340,10 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
   return (
     <div className="h-full flex flex-col bg-white border-l border-zinc-200 print:border-0">
       {/* Header — hidden on print */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100 bg-gradient-to-r from-emerald-50/50 to-blue-50/50 shrink-0 print:hidden">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200 bg-zinc-50 shrink-0 print:hidden">
         <div className="flex items-center gap-2">
           <Shield className="w-4 h-4 text-emerald-600" />
-          <span className="text-xs font-bold text-zinc-800">
+          <span className="text-xs font-semibold text-zinc-900">
             {reportPurpose === 'inspection' ? 'Inspection Report' : 'QA Report'}
           </span>
         </div>
@@ -351,7 +351,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
           {/* QA vs Inspection toggle */}
           <button
             onClick={() => setReportPurpose(reportPurpose === 'qa' ? 'inspection' : 'qa')}
-            className={`px-2 py-0.5 text-[10px] rounded ${
+            className={`px-2 py-0.5 text-xs rounded ${
               reportPurpose === 'inspection'
                 ? 'bg-red-100 text-red-700'
                 : 'bg-blue-100 text-blue-700'
@@ -361,7 +361,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
           </button>
           <button
             onClick={() => setMode(mode === 'summary' ? 'detailed' : 'summary')}
-            className="px-2 py-0.5 text-[10px] rounded bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+            className="px-2 py-0.5 text-xs rounded bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
           >
             {mode === 'summary' ? 'Show Detailed' : 'Show Summary'}
           </button>
@@ -369,7 +369,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
             <button
               onClick={onExportAsArtifact}
               disabled={exportingAudit}
-              className="px-2 py-0.5 text-[10px] rounded bg-indigo-100 text-indigo-700 hover:bg-indigo-200 disabled:opacity-50"
+              className="px-2 py-0.5 text-xs rounded bg-blue-100 text-blue-700 hover:bg-blue-200 disabled:opacity-60"
               title="Save as inspection-ready artifact"
             >
               {exportingAudit ? (
@@ -404,7 +404,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
       <div className="flex-1 overflow-y-auto p-4 print:p-0">
         {/* Print header */}
         <div className="hidden print:block mb-4 pb-3 border-b-2 border-zinc-800">
-          <h1 className="text-lg font-bold">{report.reportType}</h1>
+          <h1 className="text-lg font-semibold">{report.reportType}</h1>
           <p className="text-xs text-zinc-500">
             Generated: {formatDate(report.generatedAt)} · Standard: {report.standard}
           </p>
@@ -413,7 +413,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
         {/* Report type badge (screen only) */}
         <div className="mb-3 print:hidden">
           <span
-            className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+            className={`text-xs px-2 py-0.5 rounded-full font-medium ${
               reportPurpose === 'inspection'
                 ? 'bg-red-100 text-red-700'
                 : 'bg-emerald-100 text-emerald-700'
@@ -421,12 +421,12 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
           >
             {reportPurpose === 'inspection' ? 'Inspection-Ready Report' : report.reportType}
           </span>
-          <span className="text-[10px] text-zinc-400 ml-2">{report.standard}</span>
+          <span className="text-xs text-zinc-400 ml-2">{report.standard}</span>
         </div>
 
         {/* Inspection mode banner */}
         {reportPurpose === 'inspection' && (
-          <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded text-[10px] text-red-700 print:hidden">
+          <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700 print:hidden">
             <strong>Inspection Mode:</strong> This view shows all data an inspector would require.
             Hash chain integrity, full event timeline, and signature verification are prioritized.
           </div>
@@ -452,7 +452,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
           <Row
             label="Current Hash"
             value={
-              <span className="font-mono text-[10px]">
+              <span className="font-mono text-xs">
                 {report.integrityVerification.currentHash || '—'}
               </span>
             }
@@ -477,7 +477,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
             <button
               onClick={handleVerifyIntegrity}
               disabled={verifyingIntegrity}
-              className="flex items-center gap-1 px-2 py-1 text-[10px] rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 font-medium print:hidden"
+              className="flex items-center gap-1 px-2 py-1 text-xs rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-60 font-medium print:hidden"
             >
               {verifyingIntegrity ? (
                 <Loader2 className="w-3 h-3 animate-spin" />
@@ -488,7 +488,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
             </button>
             {liveIntegrity && (
               <div
-                className={`mt-1.5 p-2 rounded text-[10px] print:block ${liveIntegrity.verified ? 'bg-emerald-50 border border-emerald-200' : 'bg-red-50 border border-red-200'}`}
+                className={`mt-1.5 p-2 rounded text-xs print:block ${liveIntegrity.verified ? 'bg-emerald-50 border border-emerald-200' : 'bg-red-50 border border-red-200'}`}
               >
                 <div className="flex items-center gap-1.5 font-semibold">
                   {liveIntegrity.verified ? (
@@ -515,8 +515,8 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
             )}
           </div>
           <div className="mt-2">
-            <div className="text-[10px] font-semibold text-zinc-500 uppercase mb-1">Hash Chain</div>
-            <table className="w-full text-[10px]">
+            <div className="text-xs font-semibold text-zinc-500 uppercase mb-1">Hash Chain</div>
+            <table className="w-full text-xs">
               <thead>
                 <tr className="text-zinc-400">
                   <th className="text-left py-0.5">Ver</th>
@@ -540,12 +540,12 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
         {/* 3. Version Timeline */}
         <ReportSection icon={<GitBranch className="w-4 h-4" />} title="Version Timeline">
           {report.versionTimeline.length === 0 ? (
-            <p className="text-[11px] text-zinc-400">
+            <p className="text-xs text-zinc-400">
               No version history recorded. Each save creates an auditable version entry for
               regulatory traceability.
             </p>
           ) : (
-            <table className="w-full text-[10px]">
+            <table className="w-full text-xs">
               <thead>
                 <tr className="text-zinc-400">
                   <th className="text-left py-0.5">Ver</th>
@@ -571,7 +571,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
         {/* 4. Source Lineage */}
         <ReportSection icon={<FileInput className="w-4 h-4" />} title="Source Lineage">
           {report.sourceLineage.length === 0 ? (
-            <p className="text-[11px] text-zinc-400">
+            <p className="text-xs text-zinc-400">
               No source inputs tracked. Linked CSR data, prior submissions, and reference materials
               will appear here.
             </p>
@@ -579,13 +579,13 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
             report.sourceLineage.map((s, i) => (
               <div
                 key={i}
-                className="flex items-start gap-2 py-1 text-[11px] border-b border-zinc-50 last:border-0"
+                className="flex items-start gap-2 py-1 text-xs border-b border-zinc-50 last:border-0"
               >
                 <Activity className="w-3 h-3 text-blue-400 mt-0.5 shrink-0" />
                 <div>
                   <span className="font-medium text-zinc-700">{actionLabel(s.action)}</span>
                   {s.description && <span className="text-zinc-500"> — {s.description}</span>}
-                  <div className="text-zinc-400 text-[10px]">
+                  <div className="text-zinc-400 text-xs">
                     {s.actor && <>{s.actor} · </>}
                     {formatDate(s.timestamp)}
                   </div>
@@ -598,30 +598,30 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
         {/* 5. Generation Lineage */}
         <ReportSection icon={<Sparkles className="w-4 h-4" />} title="Generation Lineage">
           {report.generationLineage.length === 0 ? (
-            <p className="text-[11px] text-zinc-400">
+            <p className="text-xs text-zinc-400">
               No generation events logged. AI-assisted edits and content transforms are recorded
               here for compliance.
             </p>
           ) : (
             report.generationLineage.map((g, i) => (
               <div key={i} className="py-1.5 border-b border-zinc-50 last:border-0">
-                <div className="flex items-center gap-1.5 text-[11px]">
+                <div className="flex items-center gap-1.5 text-xs">
                   <Server className="w-3 h-3 text-violet-400" />
                   <span className="font-medium text-zinc-700">{actionLabel(g.action)}</span>
-                  <span className="text-[10px] text-zinc-400 ml-auto">
+                  <span className="text-xs text-zinc-400 ml-auto">
                     {formatDate(g.timestamp)}
                   </span>
                 </div>
                 {g.actor && (
-                  <div className="text-[10px] text-zinc-500 mt-0.5 flex items-center gap-1">
+                  <div className="text-xs text-zinc-500 mt-0.5 flex items-center gap-1">
                     <User className="w-3 h-3" /> {g.actor} ({g.actorType})
                   </div>
                 )}
                 {g.backendRoute && (
-                  <div className="text-[10px] font-mono text-zinc-400 mt-0.5">{g.backendRoute}</div>
+                  <div className="text-xs font-mono text-zinc-400 mt-0.5">{g.backendRoute}</div>
                 )}
                 {g.description && (
-                  <div className="text-[10px] text-zinc-500 mt-0.5">{g.description}</div>
+                  <div className="text-xs text-zinc-500 mt-0.5">{g.description}</div>
                 )}
               </div>
             ))
@@ -635,7 +635,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
             value={report.reviewSignatureSummary.totalSignatures.toString()}
           />
           {report.reviewSignatureSummary.signatures.length > 0 ? (
-            <table className="w-full text-[10px] mt-2">
+            <table className="w-full text-xs mt-2">
               <thead>
                 <tr className="text-zinc-400">
                   <th className="text-left py-0.5">Signer</th>
@@ -662,7 +662,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
               </tbody>
             </table>
           ) : (
-            <p className="text-[11px] text-zinc-400 mt-1">
+            <p className="text-xs text-zinc-400 mt-1">
               No signatures on record. Electronic signatures provide 21 CFR Part 11 compliance
               evidence.
             </p>
@@ -672,12 +672,12 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
         {/* 7. Export History */}
         <ReportSection icon={<Download className="w-4 h-4" />} title="Export History">
           {report.exportHistory.length === 0 ? (
-            <p className="text-[11px] text-zinc-400">
+            <p className="text-xs text-zinc-400">
               No exports recorded. DOCX and PDF exports are logged for submission traceability.
             </p>
           ) : (
             report.exportHistory.map((e, i) => (
-              <div key={i} className="flex items-center gap-2 py-0.5 text-[10px] text-zinc-500">
+              <div key={i} className="flex items-center gap-2 py-0.5 text-xs text-zinc-500">
                 <Download className="w-3 h-3 text-zinc-400" />
                 {actionLabel(e.action)}
                 {e.actor && ` by ${e.actor}`}
@@ -704,7 +704,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
           <Row label="Open" value={commentsOpen.toString()} />
           <Row label="Resolved" value={(commentsTotal - commentsOpen).toString()} />
           {reviewComments.length > 0 ? (
-            <table className="w-full text-[10px] mt-2">
+            <table className="w-full text-xs mt-2">
               <thead>
                 <tr className="text-zinc-400">
                   <th className="text-left py-0.5">Reviewer</th>
@@ -735,7 +735,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
               </tbody>
             </table>
           ) : (
-            <p className="text-[11px] text-zinc-400 mt-1">
+            <p className="text-xs text-zinc-400 mt-1">
               No review comments. Comments document the regulatory review process and resolution
               history.
             </p>
@@ -745,7 +745,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
         {/* 9. Full Event Timeline (detailed mode only) */}
         {report.fullEventTimeline && report.fullEventTimeline.length > 0 && (
           <ReportSection icon={<Activity className="w-4 h-4" />} title="Full Event Timeline">
-            <table className="w-full text-[9px]">
+            <table className="w-full text-xs">
               <thead>
                 <tr className="text-zinc-400">
                   <th className="text-left py-0.5">Event ID</th>
@@ -780,7 +780,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
             {onOpenProvenance && (
               <button
                 onClick={onOpenProvenance}
-                className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-[11px] rounded bg-violet-50 text-violet-700 hover:bg-violet-100 font-medium"
+                className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs rounded bg-violet-50 text-violet-700 hover:bg-violet-100 font-medium"
               >
                 Open Provenance
               </button>
@@ -788,7 +788,7 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
             {onOpenCompare && (
               <button
                 onClick={onOpenCompare}
-                className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-[11px] rounded bg-purple-50 text-purple-700 hover:bg-purple-100 font-medium"
+                className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs rounded bg-purple-50 text-purple-700 hover:bg-purple-100 font-medium"
               >
                 Compare Versions
               </button>
@@ -798,10 +798,10 @@ const DocumentAuditReport: React.FC<DocumentAuditReportProps> = ({
 
         {/* Report footer */}
         <div className="mt-4 pt-3 border-t border-zinc-200 text-center">
-          <p className="text-[9px] text-zinc-400">
+          <p className="text-xs text-zinc-400">
             {report.reportType} · Generated {formatDate(report.generatedAt)} · {report.standard}
           </p>
-          <p className="text-[9px] text-zinc-400 mt-0.5">
+          <p className="text-xs text-zinc-400 mt-0.5">
             Append-only audit trail · SHA-256 integrity verification · Inspection-ready
           </p>
         </div>

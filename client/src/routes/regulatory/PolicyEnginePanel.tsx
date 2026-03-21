@@ -401,7 +401,7 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
       const updatedHealth = mockSystemHealth.map(system => ({
         ...system,
         last_sync: 'Just now',
-        status: Math.random() > 0.8 ? 'warning' : ('healthy' as any),
+        status: Math.random() > 0.8 ? 'warning' as const : 'healthy' as const,
         ai_health_score: Math.random() * 20 + 80,
       }));
       setSystemHealth(updatedHealth);

@@ -20,7 +20,7 @@ export interface RAGResponse {
 }
 
 /**
- * RAG Service for ForesightAI
+ * RAG Service for AnA Predictions
  * Combines document retrieval with GPT-4 generation
  */
 export class ForesightRAGService {

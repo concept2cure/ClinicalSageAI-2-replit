@@ -90,7 +90,7 @@ const buildRegulatoryAnalysisResponse = (payload: any) => {
     lumen_intelligence_summary: {
       confidence_score: 92,
       generated_at: new Date().toISOString(),
-      source: 'lumen-cortex-compat',
+      source: 'ana-ri',
     },
   };
 };
@@ -169,10 +169,10 @@ router.get('/health', async (_req, res) => {
     const status = await lumenCortexService.verifyNeonConnection();
     res.json({ success: true, status });
   } catch (error) {
-    console.error('Lumen Cortex health check failed:', error);
+    console.error('AnA RI health check failed:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to verify Lumen Cortex connectivity',
+      error: 'Failed to verify AnA RI connectivity',
     });
   }
 });
@@ -182,7 +182,7 @@ router.post('/regulatory-analysis', requireAuth, async (req, res) => {
     const response = buildRegulatoryAnalysisResponse(req.body || {});
     res.json(response);
   } catch (error) {
-    console.error('Lumen Cortex regulatory analysis failed:', error);
+    console.error('AnA RI regulatory analysis failed:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to generate regulatory analysis',
@@ -195,7 +195,7 @@ router.post('/ich-e6r3-guidance', async (req, res) => {
     const response = buildIchGuidanceResponse(req.body || {});
     res.json(response);
   } catch (error) {
-    console.error('Lumen Cortex ICH guidance failed:', error);
+    console.error('AnA RI ICH guidance failed:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to generate ICH E6(R3) guidance',
@@ -217,7 +217,7 @@ router.get('/intelligence', async (_req, res) => {
       ],
     });
   } catch (error) {
-    console.error('Lumen Cortex intelligence feed failed:', error);
+    console.error('AnA RI intelligence feed failed:', error);
     res.status(500).json({ success: false, error: 'Failed to fetch intelligence feed' });
   }
 });
@@ -310,6 +310,98 @@ router.get('/observation-terms', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to fetch observation terms',
+    });
+  }
+});
+
+// ── Chat endpoint — connects AnaPersistentPanel to the AI gateway ───────────
+router.post('/chat', async (req, res) => {
+  try {
+    const { message, chatMode, context, conversationHistory } = req.body || {};
+    if (!message || typeof message !== 'string') {
+      return res.status(400).json({ error: 'Message is required' });
+    }
+
+    // Build document-aware system prompt
+    let systemPrompt = `You are AnA (Audit & Narrative Assistant), a regulatory intelligence co-pilot for life sciences professionals. You combine the knowledge of a senior FDA reviewer, ICH expert, and regulatory affairs VP.
+
+Help users move their regulatory submissions forward. Every response should leave the user knowing exactly what to do next.
+
+**Always be specific and actionable.** Don't just explain — generate the actual content, outline, or analysis the user needs.
+
+When a user asks about a document:
+→ Draft it. Don't describe what it should contain — write the first version.
+
+When a user asks about strategy:
+→ Give a concrete recommendation with reasoning.
+
+**After every substantive response, suggest the logical next action.**
+
+**Cite regulations.** Reference specific FDA guidance documents, 21 CFR sections, ICH guidelines, or ISO standards when relevant.
+
+**Structure your responses clearly** with headers, bullet points, and bold key terms.`;
+
+    // Add document context if user is working on a specific document
+    if (context?.activeDocument) {
+      systemPrompt += `\n\n## Current Document Context
+The user is currently editing a document titled "${context.activeDocument}"${context.activeDocumentCtdSection ? ` in CTD section ${context.activeDocumentCtdSection}` : ''}.
+${context.activeDocumentExcerpt ? `\nDocument excerpt:\n"${context.activeDocumentExcerpt}"` : ''}
+\nWhen responding, consider this document context. If they ask about "this document" or "this section", they mean the document above. Provide guidance specific to this document type and CTD section.`;
+    }
+
+    // Add project context
+    if (context?.project) {
+      systemPrompt += `\n\nThe user is working on project: "${context.project}"${context.productType ? ` (${context.productType} submission)` : ''}.`;
+    }
+
+    // Try to use the AI gateway
+    let aiResponse: string;
+    try {
+      const { getGateway } = await import('../services/ai-gateway/index.js');
+      const gateway = getGateway();
+
+      const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
+        { role: 'system', content: systemPrompt },
+      ];
+
+      // Add conversation history
+      if (Array.isArray(conversationHistory)) {
+        for (const m of conversationHistory.slice(-8)) {
+          if (m.role === 'user' || m.role === 'assistant') {
+            messages.push({ role: m.role, content: m.content });
+          }
+        }
+      }
+
+      messages.push({ role: 'user', content: message });
+
+      const result = await gateway.chat({
+        messages: messages as any,
+        maxTokens: 4096,
+        temperature: 0.7,
+      });
+
+      aiResponse = result.content || 'I can help with that. Could you share more details?';
+    } catch (gatewayError) {
+      console.error('[AnA Chat] AI Gateway error:', gatewayError);
+      aiResponse = `I understand you're asking about "${message.slice(0, 100)}". While I'm having trouble connecting to my AI engine right now, here's what I can tell you:\n\n- For regulatory guidance, consult the relevant FDA guidance documents\n- For document drafting, start with the CTD structure appropriate for your submission type\n- For compliance questions, reference 21 CFR Part 11 and ICH guidelines\n\nPlease try again in a moment, or use the AI actions in the editor toolbar for document-specific assistance.`;
+    }
+
+    res.json({
+      success: true,
+      response: aiResponse,
+      chatMode: chatMode || 'standard',
+      context: {
+        screen: context?.screen,
+        project: context?.project,
+        activeDocument: context?.activeDocument,
+      },
+    });
+  } catch (error) {
+    console.error('[AnA Chat] Error:', error);
+    res.status(500).json({
+      error: 'Chat service temporarily unavailable',
+      response: 'I\'m having trouble connecting right now. Please try again in a moment.',
     });
   }
 });

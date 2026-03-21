@@ -14,6 +14,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { LIFECYCLE } from '../../components/ui/enterprise';
 import {
   Scale,
   Search,
@@ -40,12 +41,13 @@ interface DecisionLogProps {
 type DecisionStatus = 'proposed' | 'accepted' | 'rejected' | 'deferred' | 'superseded';
 type DecisionCategory = 'regulatory' | 'clinical' | 'manufacturing' | 'commercial' | 'technical';
 
+// Decision statuses use canonical lifecycle semantic colors
 const STATUS_COLORS: Record<DecisionStatus, { bg: string; text: string; dot: string }> = {
-  proposed:   { bg: 'bg-blue-50',   text: 'text-blue-700',   dot: 'bg-blue-500' },
-  accepted:   { bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-500' },
-  rejected:   { bg: 'bg-red-50',    text: 'text-red-700',    dot: 'bg-red-500' },
-  deferred:   { bg: 'bg-amber-50',  text: 'text-amber-700',  dot: 'bg-amber-500' },
-  superseded: { bg: 'bg-zinc-100',  text: 'text-zinc-600',   dot: 'bg-zinc-400' },
+  proposed:   { bg: LIFECYCLE.in_review.bg,   text: LIFECYCLE.in_review.text,   dot: LIFECYCLE.in_review.dot },
+  accepted:   { bg: LIFECYCLE.approved.bg,     text: LIFECYCLE.approved.text,    dot: LIFECYCLE.approved.dot },
+  rejected:   { bg: 'bg-red-50',              text: 'text-red-700',            dot: 'bg-red-500' },  // danger — no lifecycle equivalent
+  deferred:   { bg: LIFECYCLE.draft.bg,        text: LIFECYCLE.draft.text,       dot: LIFECYCLE.draft.dot },
+  superseded: { bg: LIFECYCLE.superseded.bg,   text: LIFECYCLE.superseded.text,  dot: LIFECYCLE.superseded.dot },
 };
 
 const CATEGORY_COLORS: Record<DecisionCategory, string> = {
@@ -160,7 +162,7 @@ export const DecisionLog: React.FC<DecisionLogProps> = ({ programId }) => {
         <button
           onClick={() => setShowModal(true)}
           disabled={!programId}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-60 disabled:cursor-not-allowed"
         >
           <Plus className="w-3.5 h-3.5" />
           Record Decision
@@ -192,7 +194,7 @@ export const DecisionLog: React.FC<DecisionLogProps> = ({ programId }) => {
             type="text"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 text-xs border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
+            className="w-full pl-8 pr-3 py-1.5 text-xs border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
             placeholder="Search decisions..."
           />
         </div>
@@ -261,7 +263,7 @@ export const DecisionLog: React.FC<DecisionLogProps> = ({ programId }) => {
                               </h3>
                               <span
                                 className={cn(
-                                  'text-[10px] px-1.5 py-0.5 rounded-full font-medium capitalize',
+                                  'text-xs px-1.5 py-0.5 rounded-full font-medium capitalize',
                                   colors.bg,
                                   colors.text
                                 )}
@@ -270,7 +272,7 @@ export const DecisionLog: React.FC<DecisionLogProps> = ({ programId }) => {
                               </span>
                               <span
                                 className={cn(
-                                  'text-[10px] px-1.5 py-0.5 rounded-full capitalize',
+                                  'text-xs px-1.5 py-0.5 rounded-full capitalize',
                                   CATEGORY_COLORS[category]
                                 )}
                               >
@@ -292,7 +294,7 @@ export const DecisionLog: React.FC<DecisionLogProps> = ({ programId }) => {
                             )}
 
                             {/* Meta row */}
-                            <div className="flex items-center gap-3 text-[11px] text-zinc-400">
+                            <div className="flex items-center gap-3 text-xs text-zinc-400">
                               {decision.decisionMaker && (
                                 <span className="flex items-center gap-1">
                                   <Users className="w-3 h-3" />
@@ -330,7 +332,7 @@ export const DecisionLog: React.FC<DecisionLogProps> = ({ programId }) => {
 
                         {/* Expanded details */}
                         {isExpanded && (
-                          <div className="mt-4 pt-4 border-t border-zinc-100 space-y-3">
+                          <div className="mt-4 pt-4 border-t border-zinc-200 space-y-3">
                             {decision.rationale && (
                               <div>
                                 <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1">
@@ -394,7 +396,7 @@ export const DecisionLog: React.FC<DecisionLogProps> = ({ programId }) => {
                                   {decision.stakeholders.map((name: string, idx: number) => (
                                     <span
                                       key={idx}
-                                      className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600"
+                                      className="text-xs px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600"
                                     >
                                       {name}
                                     </span>
@@ -437,7 +439,7 @@ export const DecisionLog: React.FC<DecisionLogProps> = ({ programId }) => {
                   type="text"
                   value={form.title}
                   onChange={e => setForm(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
+                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                   placeholder="Decision title..."
                 />
               </div>
@@ -484,7 +486,7 @@ export const DecisionLog: React.FC<DecisionLogProps> = ({ programId }) => {
                 <textarea
                   value={form.rationale}
                   onChange={e => setForm(prev => ({ ...prev, rationale: e.target.value }))}
-                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 h-20 resize-none"
+                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none h-20 resize-none"
                   placeholder="Why was this decision made?"
                 />
               </div>
@@ -497,7 +499,7 @@ export const DecisionLog: React.FC<DecisionLogProps> = ({ programId }) => {
                 <textarea
                   value={form.impact}
                   onChange={e => setForm(prev => ({ ...prev, impact: e.target.value }))}
-                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 h-16 resize-none"
+                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none h-16 resize-none"
                   placeholder="Expected impact on the program..."
                 />
               </div>
@@ -511,7 +513,7 @@ export const DecisionLog: React.FC<DecisionLogProps> = ({ programId }) => {
                   type="text"
                   value={form.decisionMaker}
                   onChange={e => setForm(prev => ({ ...prev, decisionMaker: e.target.value }))}
-                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
+                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                   placeholder="Name or role..."
                 />
               </div>
@@ -524,14 +526,14 @@ export const DecisionLog: React.FC<DecisionLogProps> = ({ programId }) => {
                   setForm(EMPTY_FORM);
                   setShowModal(false);
                 }}
-                className="px-3 py-1.5 text-xs text-zinc-600 hover:text-zinc-800"
+                className="px-3 py-1.5 text-xs text-zinc-600 hover:text-zinc-900"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={!form.title.trim() || createDecision.isPending}
-                className="px-4 py-1.5 text-xs font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-1.5 text-xs font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {createDecision.isPending ? 'Saving...' : 'Save Decision'}
               </button>

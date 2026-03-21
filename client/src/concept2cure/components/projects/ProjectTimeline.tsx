@@ -14,6 +14,7 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { LIFECYCLE } from '../ui/enterprise';
 import {
   Check,
   Circle,
@@ -221,7 +222,7 @@ const CompactTimeline: React.FC<{
             >
               <div
                 className={cn(
-                  'w-6 h-6 rounded-full flex items-center justify-center transition-all',
+                  'w-6 h-6 rounded-full flex items-center justify-center transition-all duration-150',
                   colors.bg,
                   colors.border,
                   'border-2',
@@ -305,7 +306,7 @@ const FullTimeline: React.FC<{
       <div className="p-4 bg-zinc-50 rounded-xl">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-medium text-zinc-700">Overall Progress</span>
-          <span className="text-sm font-bold text-zinc-900">{overallProgress}%</span>
+          <span className="text-sm font-semibold text-zinc-900">{overallProgress}%</span>
         </div>
         <div className="h-3 bg-zinc-200 rounded-full overflow-hidden">
           <div
@@ -328,7 +329,7 @@ const FullTimeline: React.FC<{
                 <div
                   className={cn(
                     'absolute left-4 top-8 w-0.5 h-full -ml-px',
-                    phase.status === 'completed' ? 'bg-emerald-500' : 'bg-zinc-200'
+                    phase.status === 'completed' ? LIFECYCLE.approved.dot : 'bg-zinc-200'
                   )}
                 />
               )}
@@ -336,7 +337,7 @@ const FullTimeline: React.FC<{
               <button
                 onClick={() => onPhaseClick?.(phase.id)}
                 className={cn(
-                  'w-full flex items-start gap-4 p-4 rounded-xl transition-all',
+                  'w-full flex items-start gap-4 p-4 rounded-xl transition-all duration-150',
                   'text-left',
                   isCurrent && 'bg-blue-50 border border-blue-200',
                   !isCurrent && 'hover:bg-zinc-50',
@@ -389,7 +390,7 @@ const FullTimeline: React.FC<{
                       </div>
                       <div className="h-1.5 bg-blue-100 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-blue-500 rounded-full transition-all"
+                          className="h-full bg-blue-500 rounded-full transition-all duration-150"
                           style={{ width: `${phase.progress}%` }}
                         />
                       </div>
@@ -416,7 +417,7 @@ const FullTimeline: React.FC<{
                           }}
                           className={cn(
                             'flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs',
-                            'border transition-colors',
+                            'border transition-colors duration-150',
                             doc.status === 'approved' && 'bg-emerald-50 border-emerald-200 text-emerald-700',
                             doc.status === 'review' && 'bg-amber-50 border-amber-200 text-amber-700',
                             doc.status === 'draft' && 'bg-zinc-50 border-zinc-200 text-zinc-700',

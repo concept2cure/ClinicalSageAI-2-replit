@@ -8,6 +8,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { LIFECYCLE } from '../../components/ui/enterprise';
 import {
   Compass,
   Globe,
@@ -45,7 +46,7 @@ const DESTINATION_TYPES: Record<string, { label: string; color: string; authorit
   '510k': { label: '510(k) Clearance', color: 'text-amber-600', authority: 'FDA' },
   PMA: { label: 'Pre-Market Approval', color: 'text-red-600', authority: 'FDA' },
   'De-Novo': { label: 'De Novo Classification', color: 'text-teal-600', authority: 'FDA' },
-  MAA: { label: 'Marketing Auth Application', color: 'text-indigo-600', authority: 'EMA' },
+  MAA: { label: 'Marketing Auth Application', color: 'text-blue-600', authority: 'EMA' },
   CE: { label: 'CE Marking', color: 'text-orange-600', authority: 'Notified Body' },
   PMDA: { label: 'PMDA Submission', color: 'text-pink-600', authority: 'PMDA' },
   'Health-Canada': { label: 'Health Canada', color: 'text-red-500', authority: 'Health Canada' },
@@ -53,11 +54,11 @@ const DESTINATION_TYPES: Record<string, { label: string; color: string; authorit
 };
 
 const ROUTE_STATUS_COLORS: Record<string, string> = {
-  planned: 'bg-zinc-100 text-zinc-600',
-  active: 'bg-blue-100 text-blue-700',
-  submitted: 'bg-emerald-100 text-emerald-700',
-  'under-review': 'bg-amber-100 text-amber-700',
-  approved: 'bg-emerald-200 text-emerald-800',
+  planned: `${LIFECYCLE.not_started.bg} ${LIFECYCLE.not_started.text}`,
+  active: `${LIFECYCLE.draft.bg} ${LIFECYCLE.draft.text}`,
+  submitted: `${LIFECYCLE.in_review.bg} ${LIFECYCLE.in_review.text}`,
+  'under-review': `${LIFECYCLE.in_review.bg} ${LIFECYCLE.in_review.text}`,
+  approved: `${LIFECYCLE.approved.bg} ${LIFECYCLE.approved.text}`,
   rejected: 'bg-red-100 text-red-700',
 };
 
@@ -112,7 +113,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({ programId }) => {
       {/* Header */}
       <div className="border-b bg-white px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Compass className="w-5 h-5 text-indigo-500" />
+          <Compass className="w-5 h-5 text-blue-500" />
           <h1 className="text-base font-semibold text-zinc-900">Route Planner</h1>
           <span className="text-xs text-zinc-500">{destinations.length} destinations</span>
         </div>
@@ -135,7 +136,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({ programId }) => {
             <div className="p-6 text-center">
               <Globe className="w-8 h-8 text-zinc-200 mx-auto mb-2" />
               <p className="text-xs text-zinc-500">No destinations configured</p>
-              <p className="text-[10px] text-zinc-400 mt-1">Add a destination to define your regulatory strategy</p>
+              <p className="text-xs text-zinc-400 mt-1">Add a destination to define your regulatory strategy</p>
             </div>
           ) : (
             <div className="divide-y">
@@ -148,8 +149,8 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({ programId }) => {
                     key={dest.id}
                     onClick={() => setSelectedDestId(dest.id)}
                     className={cn(
-                      'w-full text-left p-4 transition-colors',
-                      isActive ? 'bg-indigo-50 border-l-2 border-indigo-500' : 'hover:bg-zinc-50'
+                      'w-full text-left p-4 transition-colors duration-150',
+                      isActive ? 'bg-blue-50 border-l-2 border-blue-500' : 'hover:bg-zinc-50'
                     )}
                   >
                     <div className="flex items-start gap-3">
@@ -158,14 +159,14 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({ programId }) => {
                         <p className={cn('text-sm font-semibold', destType.color)}>{dest.destinationType}</p>
                         <p className="text-xs text-zinc-600 mt-0.5">{destType.label}</p>
                         <div className="flex items-center gap-2 mt-1.5">
-                          <span className="text-[10px] text-zinc-500 flex items-center gap-1">
+                          <span className="text-xs text-zinc-500 flex items-center gap-1">
                             <Building2 className="w-3 h-3" /> {destType.authority}
                           </span>
-                          <span className="text-[10px] text-zinc-500 flex items-center gap-1">
+                          <span className="text-xs text-zinc-500 flex items-center gap-1">
                             <MapPin className="w-3 h-3" /> {dest.region || 'US'}
                           </span>
                           {dest.targetDate && (
-                            <span className="text-[10px] text-zinc-500 flex items-center gap-1">
+                            <span className="text-xs text-zinc-500 flex items-center gap-1">
                               <Calendar className="w-3 h-3" /> {new Date(dest.targetDate).toLocaleDateString()}
                             </span>
                           )}
@@ -212,7 +213,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({ programId }) => {
                   </div>
                   <button
                     onClick={() => setShowAddRoute(true)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-lg hover:bg-indigo-100"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     Add Route
@@ -233,10 +234,10 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({ programId }) => {
                     <div key={route.id} className="bg-white rounded-xl border p-5">
                       <div className="flex items-start justify-between mb-3">
                         <div>
-                          <h3 className="text-sm font-semibold text-zinc-800">{route.strategyName}</h3>
+                          <h3 className="text-sm font-semibold text-zinc-900">{route.strategyName}</h3>
                           <div className="flex items-center gap-2 mt-1">
                             <span className="text-xs text-zinc-500 capitalize">Pathway: {route.pathway}</span>
-                            <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full', ROUTE_STATUS_COLORS[route.status] || 'bg-zinc-100 text-zinc-600')}>
+                            <span className={cn('text-xs px-1.5 py-0.5 rounded-full', ROUTE_STATUS_COLORS[route.status] || 'bg-zinc-100 text-zinc-600')}>
                               {route.status}
                             </span>
                           </div>
@@ -270,11 +271,11 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({ programId }) => {
                               strokeLinecap="round"
                             />
                           </svg>
-                          <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-zinc-700">
+                          <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold text-zinc-700">
                             {Math.round((val as number) * 100)}
                           </span>
                         </div>
-                        <p className="text-[10px] text-zinc-600 capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</p>
+                        <p className="text-xs text-zinc-600 capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</p>
                       </div>
                     ))}
                   </div>
@@ -337,7 +338,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({ programId }) => {
               </div>
             </div>
             <div className="flex items-center justify-end gap-2 mt-4">
-              <button onClick={() => setShowAddDest(false)} className="px-3 py-1.5 text-xs text-zinc-600 hover:text-zinc-800">Cancel</button>
+              <button onClick={() => setShowAddDest(false)} className="px-3 py-1.5 text-xs text-zinc-600 hover:text-zinc-900">Cancel</button>
               <button onClick={handleAddDestination} className="px-4 py-1.5 text-xs font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-800">Add</button>
             </div>
           </div>
@@ -356,7 +357,7 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({ programId }) => {
                   type="text"
                   value={newRoute.strategyName}
                   onChange={e => setNewRoute(prev => ({ ...prev, strategyName: e.target.value }))}
-                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
+                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                   placeholder="e.g. Fast-track IND pathway"
                 />
               </div>
@@ -381,17 +382,17 @@ export const RoutePlanner: React.FC<RoutePlannerProps> = ({ programId }) => {
                 <textarea
                   value={newRoute.notes}
                   onChange={e => setNewRoute(prev => ({ ...prev, notes: e.target.value }))}
-                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 h-20 resize-none"
+                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none h-20 resize-none"
                   placeholder="Strategy rationale..."
                 />
               </div>
             </div>
             <div className="flex items-center justify-end gap-2 mt-4">
-              <button onClick={() => setShowAddRoute(false)} className="px-3 py-1.5 text-xs text-zinc-600 hover:text-zinc-800">Cancel</button>
+              <button onClick={() => setShowAddRoute(false)} className="px-3 py-1.5 text-xs text-zinc-600 hover:text-zinc-900">Cancel</button>
               <button
                 onClick={handleAddRoute}
                 disabled={!newRoute.strategyName.trim()}
-                className="px-4 py-1.5 text-xs font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-50"
+                className="px-4 py-1.5 text-xs font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-60"
               >
                 Add Route
               </button>

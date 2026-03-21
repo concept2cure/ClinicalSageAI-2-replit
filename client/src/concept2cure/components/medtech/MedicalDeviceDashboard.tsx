@@ -272,7 +272,7 @@ const STATUS_CONFIG: Record<
     step: 5,
   },
   estar_prep: { label: 'eSTAR Prep', color: 'text-cyan-600', bgColor: 'bg-cyan-100', step: 6 },
-  submitted: { label: 'Submitted', color: 'text-indigo-600', bgColor: 'bg-indigo-100', step: 7 },
+  submitted: { label: 'Submitted', color: 'text-blue-600', bgColor: 'bg-blue-100', step: 7 },
   fda_review: { label: 'FDA Review', color: 'text-orange-600', bgColor: 'bg-orange-100', step: 8 },
   additional_info: {
     label: 'Additional Info Requested',
@@ -340,7 +340,7 @@ const PredicatePathfinder: React.FC<{
 
   return (
     <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
-      <div className="p-4 border-b border-zinc-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+      <div className="p-4 border-b border-zinc-200 bg-blue-50">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-100 rounded-lg">
@@ -372,13 +372,13 @@ const PredicatePathfinder: React.FC<{
           </p>
           <div className="flex items-start justify-between">
             <div>
-              <p className="font-bold text-zinc-900">{selected.kNumber}</p>
+              <p className="font-semibold text-zinc-900">{selected.kNumber}</p>
               <p className="text-sm text-zinc-700">{selected.deviceName}</p>
               <p className="text-xs text-zinc-500">{selected.manufacturer}</p>
             </div>
             <div className="text-right">
               <div className="flex items-center gap-1">
-                <span className="text-2xl font-bold text-green-600">
+                <span className="text-2xl font-semibold text-green-600">
                   {selected.similarityScore}
                 </span>
                 <span className="text-xs text-green-600">% Match</span>
@@ -408,18 +408,18 @@ const PredicatePathfinder: React.FC<{
               <div
                 key={candidate.id}
                 className={cn(
-                  'p-3 border-b border-zinc-100 hover:bg-zinc-50 transition-colors cursor-pointer',
+                  'p-3 border-b border-zinc-200 hover:bg-zinc-50 transition-colors cursor-pointer',
                   isSelected && 'bg-blue-50'
                 )}
               >
                 <div className="flex items-start justify-between mb-2">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-sm font-bold text-blue-600">
+                      <span className="font-mono text-sm font-semibold text-blue-600">
                         {candidate.kNumber}
                       </span>
                       {candidate.hasRecalls && (
-                        <span className="px-1.5 py-0.5 text-[10px] font-bold bg-red-100 text-red-700 rounded flex items-center gap-0.5">
+                        <span className="px-1.5 py-0.5 text-xs font-semibold bg-red-100 text-red-700 rounded flex items-center gap-0.5">
                           <AlertTriangle className="w-3 h-3" />
                           {candidate.recallCount} RECALL{candidate.recallCount > 1 ? 'S' : ''}
                         </span>
@@ -431,12 +431,12 @@ const PredicatePathfinder: React.FC<{
                     </p>
                   </div>
                   <div className="text-right">
-                    <div className="text-lg font-bold text-zinc-900">
+                    <div className="text-lg font-semibold text-zinc-900">
                       {candidate.similarityScore}%
                     </div>
                     <span
                       className={cn(
-                        'inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded border',
+                        'inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded border',
                         recConfig.color
                       )}
                     >
@@ -452,7 +452,7 @@ const PredicatePathfinder: React.FC<{
                     {candidate.matchingIndications.slice(0, 3).map(ind => (
                       <span
                         key={ind}
-                        className="px-2 py-0.5 text-[10px] bg-zinc-100 text-zinc-600 rounded"
+                        className="px-2 py-0.5 text-xs bg-zinc-100 text-zinc-600 rounded"
                       >
                         {ind}
                       </span>
@@ -464,7 +464,7 @@ const PredicatePathfinder: React.FC<{
           })
         ) : (
           <div className="p-8 text-center">
-            <Compass className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
+            <Compass className="w-12 h-12 text-zinc-400 mx-auto mb-3" />
             <p className="text-sm text-zinc-500">No predicate candidates yet</p>
             <p className="text-xs text-zinc-400">Click "Search Predicates" to find your path</p>
           </div>
@@ -488,7 +488,7 @@ const MAUDEHazardMonitor: React.FC<{
 
   return (
     <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
-      <div className="p-4 border-b border-zinc-200 bg-gradient-to-r from-red-50 to-orange-50">
+      <div className="p-4 border-b border-zinc-200 bg-red-50">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-red-100 rounded-lg">
             <AlertOctagon className="w-5 h-5 text-red-600" />
@@ -510,13 +510,13 @@ const MAUDEHazardMonitor: React.FC<{
         >
           <p
             className={cn(
-              'text-lg font-bold',
+              'text-lg font-semibold',
               deaths.length > 0 ? 'text-red-700' : 'text-zinc-400'
             )}
           >
             {deaths.length}
           </p>
-          <p className="text-[10px] text-zinc-500">Deaths</p>
+          <p className="text-xs text-zinc-500">Deaths</p>
         </div>
         <div
           className={cn(
@@ -526,17 +526,17 @@ const MAUDEHazardMonitor: React.FC<{
         >
           <p
             className={cn(
-              'text-lg font-bold',
+              'text-lg font-semibold',
               injuries.length > 0 ? 'text-amber-700' : 'text-zinc-400'
             )}
           >
             {injuries.length}
           </p>
-          <p className="text-[10px] text-zinc-500">Injuries</p>
+          <p className="text-xs text-zinc-500">Injuries</p>
         </div>
         <div className="p-2 rounded-lg text-center bg-zinc-100">
-          <p className="text-lg font-bold text-zinc-600">{malfunctions.length}</p>
-          <p className="text-[10px] text-zinc-500">Malfunctions</p>
+          <p className="text-lg font-semibold text-zinc-600">{malfunctions.length}</p>
+          <p className="text-xs text-zinc-500">Malfunctions</p>
         </div>
       </div>
 
@@ -547,7 +547,7 @@ const MAUDEHazardMonitor: React.FC<{
             key={alert.id}
             onClick={() => onAlertClick?.(alert)}
             className={cn(
-              'w-full p-3 text-left border-b border-zinc-100 hover:bg-zinc-50 transition-colors',
+              'w-full p-3 text-left border-b border-zinc-200 hover:bg-zinc-50 transition-colors duration-150',
               alert.eventType === 'death' && 'border-l-4 border-l-red-500',
               alert.eventType === 'injury' && 'border-l-4 border-l-amber-500',
               alert.eventType === 'malfunction' && 'border-l-4 border-l-blue-500'
@@ -557,7 +557,7 @@ const MAUDEHazardMonitor: React.FC<{
               <div className="flex items-center gap-2">
                 <span
                   className={cn(
-                    'px-2 py-0.5 text-[10px] font-bold rounded uppercase',
+                    'px-2 py-0.5 text-xs font-semibold rounded uppercase',
                     alert.eventType === 'death' && 'bg-red-100 text-red-700',
                     alert.eventType === 'injury' && 'bg-amber-100 text-amber-700',
                     alert.eventType === 'malfunction' && 'bg-blue-100 text-blue-700'
@@ -566,12 +566,12 @@ const MAUDEHazardMonitor: React.FC<{
                   {alert.eventType}
                 </span>
                 {alert.isCompetitor && (
-                  <span className="px-1.5 py-0.5 text-[10px] font-medium bg-violet-100 text-violet-700 rounded">
+                  <span className="px-1.5 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded">
                     COMPETITOR
                   </span>
                 )}
               </div>
-              <span className="text-[10px] text-zinc-400 font-mono">
+              <span className="text-xs text-zinc-400 font-mono">
                 {formatDate(alert.eventDate)}
               </span>
             </div>
@@ -614,13 +614,13 @@ const ESTARProgressTracker: React.FC<{
             <FileCheck className="w-5 h-5 text-cyan-600" />
             <h3 className="text-sm font-semibold text-zinc-900">eSTAR Submission</h3>
           </div>
-          <span className="text-sm font-bold text-cyan-600">{submission.estarProgress}%</span>
+          <span className="text-sm font-semibold text-cyan-600">{submission.estarProgress}%</span>
         </div>
 
         {/* Progress Bar */}
         <div className="h-3 bg-zinc-100 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all"
+            className="h-full bg-blue-500 rounded-full transition-all duration-150"
             style={{ width: `${submission.estarProgress}%` }}
           />
         </div>
@@ -635,7 +635,7 @@ const ESTARProgressTracker: React.FC<{
           <div
             key={section.id}
             className={cn(
-              'px-4 py-2 border-b border-zinc-100 flex items-center justify-between',
+              'px-4 py-2 border-b border-zinc-200 flex items-center justify-between',
               section.status === 'complete' && 'bg-green-50',
               section.status === 'in_progress' && 'bg-blue-50'
             )}
@@ -665,7 +665,7 @@ const ESTARProgressTracker: React.FC<{
                   {section.completionPct}%
                 </span>
                 {section.requiredAttachments > 0 && (
-                  <p className="text-[10px] text-zinc-400">
+                  <p className="text-xs text-zinc-400">
                     {section.uploadedAttachments}/{section.requiredAttachments} files
                   </p>
                 )}
@@ -695,14 +695,14 @@ const SubmissionCard: React.FC<{
   return (
     <button
       onClick={onClick}
-      className="w-full bg-white rounded-xl border border-zinc-200 p-4 text-left hover:shadow-lg hover:border-blue-300 transition-all"
+      className="w-full bg-white rounded-xl border border-zinc-200 p-4 text-left hover:shadow-md hover:border-blue-300 transition-all duration-150"
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
           <span
             className={cn(
-              'px-2 py-1 text-xs font-bold rounded',
+              'px-2 py-1 text-xs font-semibold rounded',
               pathwayConfig.bgColor,
               pathwayConfig.color
             )}
@@ -731,7 +731,7 @@ const SubmissionCard: React.FC<{
       {/* Predicate (if 510k) */}
       {submission.pathway === '510k' && submission.predicateDevice && (
         <div className="p-2 bg-blue-50 rounded-lg mb-3">
-          <p className="text-[10px] font-medium text-blue-600 mb-1">PREDICATE</p>
+          <p className="text-xs font-medium text-blue-600 mb-1">PREDICATE</p>
           <p className="text-xs font-medium text-zinc-900">{submission.predicateDevice.kNumber}</p>
           <p className="text-xs text-zinc-500">{submission.predicateDevice.deviceName}</p>
         </div>
@@ -742,11 +742,11 @@ const SubmissionCard: React.FC<{
         <div className="flex items-center gap-4">
           <div>
             <p className="text-zinc-400">eSTAR</p>
-            <p className="font-bold text-zinc-900">{submission.estarProgress}%</p>
+            <p className="font-semibold text-zinc-900">{submission.estarProgress}%</p>
           </div>
           <div>
             <p className="text-zinc-400">Tests</p>
-            <p className="font-bold text-zinc-900">
+            <p className="font-semibold text-zinc-900">
               {submission.completedTests.length}/{submission.requiredTests.length}
             </p>
           </div>
@@ -763,7 +763,7 @@ const SubmissionCard: React.FC<{
           >
             <p
               className={cn(
-                'text-lg font-bold',
+                'text-lg font-semibold',
                 daysToTarget <= 14 && 'text-red-600',
                 daysToTarget > 14 && daysToTarget <= 30 && 'text-amber-600',
                 daysToTarget > 30 && 'text-zinc-600'
@@ -771,7 +771,7 @@ const SubmissionCard: React.FC<{
             >
               {daysToTarget}d
             </p>
-            <p className="text-[10px] text-zinc-500">to submit</p>
+            <p className="text-xs text-zinc-500">to submit</p>
           </div>
         )}
       </div>
@@ -802,7 +802,7 @@ const CERTracker: React.FC<{
 
       <div className="max-h-[250px] overflow-y-auto">
         {documents.map(doc => (
-          <div key={doc.id} className="p-3 border-b border-zinc-100 hover:bg-zinc-50">
+          <div key={doc.id} className="p-3 border-b border-zinc-200 hover:bg-zinc-50">
             <div className="flex items-start justify-between mb-2">
               <div>
                 <p className="text-sm font-medium text-zinc-900">{doc.deviceName}</p>
@@ -836,7 +836,7 @@ const CERTracker: React.FC<{
 
         {documents.length === 0 && (
           <div className="p-8 text-center">
-            <FileText className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
+            <FileText className="w-12 h-12 text-zinc-400 mx-auto mb-3" />
             <p className="text-sm text-zinc-500">No CER documents</p>
           </div>
         )}
@@ -886,14 +886,14 @@ export const MedicalDeviceDashboard: React.FC<MedicalDeviceDashboardProps> = ({
   return (
     <div className={cn('flex flex-col h-full bg-zinc-50', className)}>
       {/* Header - THE SHERPA BANNER */}
-      <div className="flex-shrink-0 bg-gradient-to-r from-zinc-900 via-blue-900 to-indigo-900 text-white p-6">
+      <div className="flex-shrink-0 bg-zinc-900 text-white p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-white/10 rounded-xl backdrop-blur">
               <Mountain className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold">Medical Device Regulatory Pathfinder</h1>
+              <h1 className="text-xl font-semibold">Medical Device Regulatory Pathfinder</h1>
               <p className="text-blue-200 text-sm">Your Sherpa to FDA Clearance</p>
             </div>
           </div>
@@ -914,15 +914,15 @@ export const MedicalDeviceDashboard: React.FC<MedicalDeviceDashboardProps> = ({
         <div className="grid grid-cols-5 gap-4">
           <div className="p-3 bg-white/10 rounded-lg backdrop-blur">
             <p className="text-xs text-blue-200">510(k) Active</p>
-            <p className="text-2xl font-bold">{metrics.total510k}</p>
+            <p className="text-2xl font-semibold">{metrics.total510k}</p>
           </div>
           <div className="p-3 bg-white/10 rounded-lg backdrop-blur">
             <p className="text-xs text-blue-200">PMA Active</p>
-            <p className="text-2xl font-bold">{metrics.totalPMA}</p>
+            <p className="text-2xl font-semibold">{metrics.totalPMA}</p>
           </div>
           <div className="p-3 bg-white/10 rounded-lg backdrop-blur">
             <p className="text-xs text-blue-200">Submitted</p>
-            <p className="text-2xl font-bold">{metrics.submitted}</p>
+            <p className="text-2xl font-semibold">{metrics.submitted}</p>
           </div>
           <div
             className={cn(
@@ -931,7 +931,7 @@ export const MedicalDeviceDashboard: React.FC<MedicalDeviceDashboardProps> = ({
             )}
           >
             <p className="text-xs text-amber-200">Needs Action</p>
-            <p className="text-2xl font-bold">{metrics.needsAction}</p>
+            <p className="text-2xl font-semibold">{metrics.needsAction}</p>
           </div>
           <div
             className={cn(
@@ -940,7 +940,7 @@ export const MedicalDeviceDashboard: React.FC<MedicalDeviceDashboardProps> = ({
             )}
           >
             <p className="text-xs text-red-200">MAUDE Alerts</p>
-            <p className="text-2xl font-bold">{metrics.criticalAlerts}</p>
+            <p className="text-2xl font-semibold">{metrics.criticalAlerts}</p>
           </div>
         </div>
       </div>
@@ -980,7 +980,7 @@ export const MedicalDeviceDashboard: React.FC<MedicalDeviceDashboardProps> = ({
               </>
             ) : (
               <div className="bg-white rounded-xl border border-zinc-200 p-8 text-center">
-                <Compass className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
+                <Compass className="w-12 h-12 text-zinc-400 mx-auto mb-3" />
                 <p className="text-zinc-500">Select a submission to view details</p>
               </div>
             )}

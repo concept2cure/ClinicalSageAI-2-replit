@@ -38,7 +38,7 @@ export const MedicalWritingWorkspace: React.FC<MedicalWritingWorkspaceProps> = (
               key={index}
               className="bg-white rounded-xl border border-zinc-200 p-6 hover:shadow-md transition-shadow cursor-pointer"
             >
-              <div className="w-12 h-12 rounded-xl bg-rose-100 flex items-center justify-center mb-4">
+              <div className="w-12 h-12 rounded-lg bg-rose-100 flex items-center justify-center mb-4">
                 <item.icon className="w-6 h-6 text-rose-600" />
               </div>
               <h3 className="font-semibold text-zinc-900 mb-1">{item.title}</h3>

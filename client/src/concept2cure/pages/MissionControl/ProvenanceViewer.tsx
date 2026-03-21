@@ -58,7 +58,7 @@ const ACTION_STYLES: Record<string, { bg: string; text: string; icon: typeof Clo
   approved:     { bg: 'bg-emerald-50',  text: 'text-emerald-700', icon: ThumbsUp },
   rejected:     { bg: 'bg-red-50',      text: 'text-red-700',     icon: AlertTriangle },
   deleted:      { bg: 'bg-red-50',      text: 'text-red-600',     icon: AlertTriangle },
-  signed:       { bg: 'bg-indigo-50',   text: 'text-indigo-700',  icon: Fingerprint },
+  signed:       { bg: 'bg-blue-50',   text: 'text-blue-700',  icon: Fingerprint },
   submitted:    { bg: 'bg-violet-50',   text: 'text-violet-700',  icon: FileText },
   branched:     { bg: 'bg-teal-50',     text: 'text-teal-700',    icon: GitBranch },
 };
@@ -231,7 +231,7 @@ export const ProvenanceViewer: React.FC<ProvenanceViewerProps> = ({ programId })
         <div className="flex items-center gap-3">
           <Fingerprint className="w-5 h-5 text-blue-600" />
           <h1 className="text-base font-semibold text-zinc-900">Provenance Trail</h1>
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-medium border border-emerald-200">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-medium border border-emerald-200">
             <Shield className="w-3 h-3" />
             21 CFR Part 11 Compliant
           </span>
@@ -247,19 +247,19 @@ export const ProvenanceViewer: React.FC<ProvenanceViewerProps> = ({ programId })
           <div className="flex items-center gap-2">
             <FileText className="w-3.5 h-3.5 text-zinc-400" />
             <span className="text-xs text-zinc-500">Total Entries</span>
-            <span className="text-xs font-semibold text-zinc-800">{stats.total}</span>
+            <span className="text-xs font-semibold text-zinc-900">{stats.total}</span>
           </div>
           <div className="w-px h-4 bg-zinc-200" />
           <div className="flex items-center gap-2">
             <Clock className="w-3.5 h-3.5 text-zinc-400" />
             <span className="text-xs text-zinc-500">Today</span>
-            <span className="text-xs font-semibold text-zinc-800">{stats.today}</span>
+            <span className="text-xs font-semibold text-zinc-900">{stats.today}</span>
           </div>
           <div className="w-px h-4 bg-zinc-200" />
           <div className="flex items-center gap-2">
             <User className="w-3.5 h-3.5 text-zinc-400" />
             <span className="text-xs text-zinc-500">Unique Actors</span>
-            <span className="text-xs font-semibold text-zinc-800">{stats.uniqueActors}</span>
+            <span className="text-xs font-semibold text-zinc-900">{stats.uniqueActors}</span>
           </div>
           <div className="w-px h-4 bg-zinc-200" />
           <div className="flex items-center gap-2">
@@ -294,7 +294,7 @@ export const ProvenanceViewer: React.FC<ProvenanceViewerProps> = ({ programId })
           </select>
 
           <div className="flex items-center gap-1.5">
-            <label className="text-[10px] text-zinc-500 uppercase tracking-wider">From</label>
+            <label className="text-xs text-zinc-500 uppercase tracking-wider">From</label>
             <input
               type="date"
               value={dateFrom}
@@ -303,7 +303,7 @@ export const ProvenanceViewer: React.FC<ProvenanceViewerProps> = ({ programId })
             />
           </div>
           <div className="flex items-center gap-1.5">
-            <label className="text-[10px] text-zinc-500 uppercase tracking-wider">To</label>
+            <label className="text-xs text-zinc-500 uppercase tracking-wider">To</label>
             <input
               type="date"
               value={dateTo}
@@ -319,12 +319,12 @@ export const ProvenanceViewer: React.FC<ProvenanceViewerProps> = ({ programId })
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search entries..."
-              className="w-full text-xs pl-8 pr-3 py-1.5 border border-zinc-200 rounded-lg bg-white text-zinc-700 focus:outline-none focus:ring-1 focus:ring-blue-400"
+              className="w-full text-xs pl-8 pr-3 py-1.5 border border-zinc-200 rounded-lg bg-white text-zinc-700 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
             />
           </div>
 
           <div className="ml-auto flex items-center gap-1.5">
-            <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Limit</span>
+            <span className="text-xs text-zinc-500 uppercase tracking-wider">Limit</span>
             <select
               value={limit}
               onChange={e => setLimit(Number(e.target.value))}
@@ -358,7 +358,7 @@ export const ProvenanceViewer: React.FC<ProvenanceViewerProps> = ({ programId })
                   {/* Date Separator */}
                   <div className="flex items-center gap-3 mb-4">
                     <div className="h-px flex-1 bg-zinc-200" />
-                    <span className="text-[11px] font-medium text-zinc-500 whitespace-nowrap">
+                    <span className="text-xs font-medium text-zinc-500 whitespace-nowrap">
                       {group.label}
                     </span>
                     <div className="h-px flex-1 bg-zinc-200" />
@@ -398,7 +398,7 @@ export const ProvenanceViewer: React.FC<ProvenanceViewerProps> = ({ programId })
                                   <div className="flex items-center gap-2 flex-wrap mb-1">
                                     <span
                                       className={cn(
-                                        'text-[10px] font-medium px-2 py-0.5 rounded-full capitalize',
+                                        'text-xs font-medium px-2 py-0.5 rounded-full capitalize',
                                         style.bg,
                                         style.text,
                                       )}
@@ -423,22 +423,22 @@ export const ProvenanceViewer: React.FC<ProvenanceViewerProps> = ({ programId })
 
                                 {/* Right side: timestamp, actor, hash */}
                                 <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                                  <span className="text-[10px] text-zinc-400 whitespace-nowrap">
+                                  <span className="text-xs text-zinc-400 whitespace-nowrap">
                                     {formatTimestamp(ts)}
                                   </span>
                                   <div className="flex items-center gap-1">
                                     <User className="w-3 h-3 text-zinc-400" />
-                                    <span className="text-[10px] text-zinc-500 max-w-[120px] truncate">
+                                    <span className="text-xs text-zinc-500 max-w-[120px] truncate">
                                       {actor}
                                     </span>
                                   </div>
                                   {hashOk ? (
-                                    <span className="inline-flex items-center gap-0.5 text-[10px] text-emerald-600">
+                                    <span className="inline-flex items-center gap-0.5 text-xs text-emerald-600">
                                       <CheckCircle2 className="w-3 h-3" />
                                       verified
                                     </span>
                                   ) : (
-                                    <span className="inline-flex items-center gap-0.5 text-[10px] text-red-500">
+                                    <span className="inline-flex items-center gap-0.5 text-xs text-red-500">
                                       <AlertTriangle className="w-3 h-3" />
                                       invalid
                                     </span>
@@ -461,7 +461,7 @@ export const ProvenanceViewer: React.FC<ProvenanceViewerProps> = ({ programId })
             <div className="flex items-center justify-center mt-8">
               <button
                 onClick={() => setLimit(prev => Math.min(prev + 50, 500))}
-                className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-zinc-600 bg-white border border-zinc-200 rounded-lg hover:bg-zinc-50 hover:border-zinc-300 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-zinc-600 bg-white border border-zinc-200 rounded-lg hover:bg-zinc-50 hover:border-zinc-300 transition-colors duration-150"
               >
                 <ChevronDown className="w-3.5 h-3.5" />
                 Load more entries

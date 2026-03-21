@@ -1,5 +1,5 @@
 /**
- * ForesightAI™ Feedback Orchestrator
+ * AnA Predictions™ Feedback Orchestrator
  * Implements bi-directional clinical feedback loop for continuous AI learning
  * Production-ready service for pharmaceutical companies
  */

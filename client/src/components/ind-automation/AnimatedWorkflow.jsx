@@ -349,7 +349,7 @@ const AnimatedWorkflow = ({ currentStage = 'forms', completedStages = [] }) => {
           transition={{ type: 'spring', stiffness: 100, damping: 15 }}
         >
           {documentIcons.form}
-          <div className="absolute top-[24px] left-0 w-full text-center text-[8px] text-blue-700">
+          <div className="absolute top-[24px] left-0 w-full text-center text-[11px] text-blue-700">
             Form 1571
           </div>
         </motion.div>
@@ -366,7 +366,7 @@ const AnimatedWorkflow = ({ currentStage = 'forms', completedStages = [] }) => {
           transition={{ type: 'spring', stiffness: 100, damping: 15, delay: 0.1 }}
         >
           {documentIcons.form}
-          <div className="absolute top-[24px] left-0 w-full text-center text-[8px] text-blue-700">
+          <div className="absolute top-[24px] left-0 w-full text-center text-[11px] text-blue-700">
             Form 1572
           </div>
         </motion.div>
@@ -383,7 +383,7 @@ const AnimatedWorkflow = ({ currentStage = 'forms', completedStages = [] }) => {
           transition={{ type: 'spring', stiffness: 100, damping: 15, delay: 0.2 }}
         >
           {documentIcons.form}
-          <div className="absolute top-[24px] left-0 w-full text-center text-[8px] text-blue-700">
+          <div className="absolute top-[24px] left-0 w-full text-center text-[11px] text-blue-700">
             Form 3674
           </div>
         </motion.div>
@@ -400,7 +400,7 @@ const AnimatedWorkflow = ({ currentStage = 'forms', completedStages = [] }) => {
           transition={{ type: 'spring', stiffness: 100, damping: 15, delay: 0.3 }}
         >
           {documentIcons.module}
-          <div className="absolute top-[24px] left-0 w-full text-center text-[8px] text-orange-700">
+          <div className="absolute top-[24px] left-0 w-full text-center text-[11px] text-orange-700">
             Module 2
           </div>
         </motion.div>
@@ -417,7 +417,7 @@ const AnimatedWorkflow = ({ currentStage = 'forms', completedStages = [] }) => {
           transition={{ type: 'spring', stiffness: 100, damping: 15, delay: 0.4 }}
         >
           {documentIcons.module}
-          <div className="absolute top-[24px] left-0 w-full text-center text-[8px] text-orange-700">
+          <div className="absolute top-[24px] left-0 w-full text-center text-[11px] text-orange-700">
             Module 3
           </div>
         </motion.div>
@@ -434,7 +434,7 @@ const AnimatedWorkflow = ({ currentStage = 'forms', completedStages = [] }) => {
           transition={{ type: 'spring', stiffness: 100, damping: 15, delay: 0.5 }}
         >
           {documentIcons.package}
-          <div className="absolute top-[24px] left-0 w-full text-center text-[8px] text-green-700">
+          <div className="absolute top-[24px] left-0 w-full text-center text-[11px] text-green-700">
             eCTD
           </div>
         </motion.div>
@@ -451,7 +451,7 @@ const AnimatedWorkflow = ({ currentStage = 'forms', completedStages = [] }) => {
           transition={{ type: 'spring', stiffness: 100, damping: 15, delay: 0.6 }}
         >
           {documentIcons.submission}
-          <div className="absolute top-[24px] left-0 w-full text-center text-[8px] text-blue-700">
+          <div className="absolute top-[24px] left-0 w-full text-center text-[11px] text-blue-700">
             Submission
           </div>
         </motion.div>

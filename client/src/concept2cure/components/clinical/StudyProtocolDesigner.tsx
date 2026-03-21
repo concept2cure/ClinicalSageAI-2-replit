@@ -386,7 +386,7 @@ const DesignSelector: React.FC<DesignSelectorProps> = ({ selectedDesign, onSelec
           <div
             key={design.id}
             className={cn(
-              'border border-border/40 rounded-sm bg-background cursor-pointer transition-all',
+              'border border-border/40 rounded-sm bg-background cursor-pointer transition-all duration-150',
               isSelected && 'ring-2 ring-blue-500 bg-blue-50'
             )}
             onClick={() => onSelect(design.type)}
@@ -448,7 +448,7 @@ const EndpointSelector: React.FC<EndpointSelectorProps> = ({
           <div
             key={endpoint.id}
             className={cn(
-              'flex items-center gap-3 p-3 rounded-lg border transition-colors',
+              'flex items-center gap-3 p-3 rounded-lg border transition-colors duration-150',
               isSelected
                 ? 'bg-blue-50 border-blue-200'
                 : 'bg-white border-zinc-200 hover:border-zinc-300'
@@ -463,8 +463,8 @@ const EndpointSelector: React.FC<EndpointSelectorProps> = ({
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-zinc-900">{endpoint.name}</span>
-                {isPrimary && <Badge className="bg-blue-600 text-white text-[10px]">Primary</Badge>}
-                <Badge variant="outline" className="text-[10px]">
+                {isPrimary && <Badge className="bg-blue-600 text-white text-xs">Primary</Badge>}
+                <Badge variant="outline" className="text-xs">
                   {endpoint.measureType.replace('_', ' ')}
                 </Badge>
               </div>
@@ -517,7 +517,7 @@ const SampleSizePanel: React.FC<SampleSizePanelProps> = ({
   if (!endpoint) {
     return (
       <div className="text-center py-8 text-zinc-500">
-        <Calculator className="h-12 w-12 mx-auto mb-3 text-zinc-300" />
+        <Calculator className="h-12 w-12 mx-auto mb-3 text-zinc-400" />
         <p className="text-sm">Select a primary endpoint to calculate sample size</p>
       </div>
     );
@@ -582,7 +582,7 @@ const SampleSizePanel: React.FC<SampleSizePanelProps> = ({
 
       {/* Results */}
       {result && (
-        <div className="border border-border/40 rounded-sm bg-background bg-gradient-to-br from-blue-50 to-white border-blue-200">
+        <div className="border border-border/40 rounded-sm bg-background bg-blue-50 border-blue-200">
           <div className="px-3 py-2 border-b border-border/30 pb-2">
             <h3 className="text-sm font-semibold text-base flex items-center gap-2">
               <Calculator className="h-4 w-4 text-blue-600" />
@@ -592,15 +592,15 @@ const SampleSizePanel: React.FC<SampleSizePanelProps> = ({
           <div className="px-3 py-2">
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
-                <p className="text-2xl font-bold text-blue-700">{result.perArm}</p>
+                <p className="text-2xl font-semibold text-blue-700">{result.perArm}</p>
                 <p className="text-xs text-zinc-500">Per Arm</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-blue-700">{result.total}</p>
+                <p className="text-2xl font-semibold text-blue-700">{result.total}</p>
                 <p className="text-xs text-zinc-500">Total</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-green-700">{result.adjustedForDropout}</p>
+                <p className="text-2xl font-semibold text-green-700">{result.adjustedForDropout}</p>
                 <p className="text-xs text-zinc-500">With Dropout</p>
               </div>
             </div>
@@ -946,7 +946,7 @@ export const StudyProtocolDesigner: React.FC<StudyProtocolDesignerProps> = ({
                       <Badge
                         variant="outline"
                         className={cn(
-                          'text-[10px] mt-1',
+                          'text-xs mt-1',
                           section.status === 'not_started' && 'bg-zinc-100 text-zinc-600',
                           section.status === 'ai_draft' && 'bg-blue-100 text-blue-700',
                           section.status === 'in_review' && 'bg-amber-100 text-amber-700',

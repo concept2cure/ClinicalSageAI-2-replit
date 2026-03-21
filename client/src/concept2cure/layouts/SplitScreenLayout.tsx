@@ -179,7 +179,7 @@ export const SplitScreenLayout: React.FC = () => {
     <div ref={containerRef} className="flex h-full w-full overflow-hidden bg-white">
       {/* Chat Panel (Left) */}
       <div
-        className="flex flex-col h-full overflow-hidden transition-all duration-200 flex-1"
+        className="flex flex-col h-full overflow-hidden transition-all duration-150 flex-1"
         style={artifactPanelVisible ? { width: `${chatWidth}%` } : undefined}
       >
         <ChatPanel />
@@ -191,7 +191,7 @@ export const SplitScreenLayout: React.FC = () => {
           onMouseDown={handleMouseDown}
           className={cn(
             'relative flex w-1 cursor-col-resize items-center justify-center',
-            'bg-zinc-200 hover:bg-blue-400 transition-colors',
+            'bg-zinc-200 hover:bg-blue-400 transition-colors duration-150',
             isDragging && 'bg-blue-500'
           )}
         >
@@ -199,7 +199,7 @@ export const SplitScreenLayout: React.FC = () => {
             className={cn(
               'absolute z-10 flex h-12 w-5 items-center justify-center rounded',
               'bg-zinc-100 border border-zinc-300 shadow-sm',
-              'hover:bg-zinc-200 transition-colors',
+              'hover:bg-zinc-200 transition-colors duration-150',
               isDragging && 'bg-blue-100 border-blue-400'
             )}
           >
@@ -211,7 +211,7 @@ export const SplitScreenLayout: React.FC = () => {
       {/* Artifact Panel (Right) */}
       {artifactPanelVisible && (
         <div
-          className="flex flex-col h-full overflow-hidden border-l border-zinc-200 bg-zinc-50 transition-all duration-200"
+          className="flex flex-col h-full overflow-hidden border-l border-zinc-200 bg-zinc-50 transition-all duration-150"
           style={{ width: `${artifactWidth}%` }}
         >
           <ArtifactPanel artifact={activeArtifact} />
@@ -220,8 +220,8 @@ export const SplitScreenLayout: React.FC = () => {
 
       {!artifactPanelVisible && (
         <div className="hidden lg:flex w-[360px] flex-col border-l border-zinc-200 bg-white animate-in fade-in slide-in-from-right-4">
-          <div className="border-b border-zinc-100 px-4 py-3">
-            <div className="flex items-center gap-2 text-sm font-medium text-zinc-800">
+          <div className="border-b border-zinc-200 px-4 py-3">
+            <div className="flex items-center gap-2 text-sm font-medium text-zinc-900">
               <Users className="h-4 w-4 text-zinc-500" />
               Agent Workspace
             </div>
@@ -231,7 +231,7 @@ export const SplitScreenLayout: React.FC = () => {
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            <section className="rounded-xl border border-zinc-100 bg-zinc-50 p-3">
+            <section className="rounded-xl border border-zinc-200 bg-zinc-50 p-3">
               <div className="flex items-center gap-2 text-xs font-semibold text-zinc-600">
                 <ClipboardCheck className="h-3.5 w-3.5" />
                 Active Agents
@@ -244,7 +244,7 @@ export const SplitScreenLayout: React.FC = () => {
                   >
                     <div className="mt-1 h-2 w-2 rounded-full bg-emerald-500" />
                     <div className="min-w-0">
-                      <p className="font-medium text-zinc-800 truncate">{agent.name}</p>
+                      <p className="font-medium text-zinc-900 truncate">{agent.name}</p>
                       <p className="text-xs text-zinc-500 truncate">
                         {agent.status} • {agent.focus}
                       </p>

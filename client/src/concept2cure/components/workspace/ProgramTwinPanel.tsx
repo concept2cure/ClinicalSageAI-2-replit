@@ -225,7 +225,7 @@ export const ProgramTwinPanel: React.FC<ProgramTwinPanelProps> = ({
                 ) : (
                   <Info className="w-3 h-3 text-blue-400 shrink-0 mt-0.5" />
                 )}
-                <span className="text-[11px] text-zinc-600">{p.message}</span>
+                <span className="text-xs text-zinc-600">{p.message}</span>
               </div>
             ))}
           </TwinSection>
@@ -239,7 +239,7 @@ export const ProgramTwinPanel: React.FC<ProgramTwinPanelProps> = ({
           expanded={expanded.has('dossier')}
           onToggle={() => toggle('dossier')}
         >
-          <div className="grid grid-cols-2 gap-2 text-[11px]">
+          <div className="grid grid-cols-2 gap-2 text-xs">
             <div className="text-zinc-500">Placed</div>
             <div className="text-zinc-700 font-medium">{data.dossier.placedCount}</div>
             <div className="text-zinc-500">Unplaced</div>
@@ -248,7 +248,7 @@ export const ProgramTwinPanel: React.FC<ProgramTwinPanelProps> = ({
           {Object.keys(data.dossier.moduleBreakdown).length > 0 && (
             <div className="mt-2 space-y-1">
               {Object.entries(data.dossier.moduleBreakdown).map(([mod, counts]) => (
-                <div key={mod} className="flex items-center gap-2 text-[11px]">
+                <div key={mod} className="flex items-center gap-2 text-xs">
                   <button
                     onClick={() => {
                       const section = mod.replace('Module ', '');
@@ -259,7 +259,7 @@ export const ProgramTwinPanel: React.FC<ProgramTwinPanelProps> = ({
                     {mod}
                   </button>
                   <span className="text-zinc-400 ml-auto">{counts.total}</span>
-                  <span className="text-zinc-300 text-[10px]">
+                  <span className="text-zinc-400 text-xs">
                     D{counts.draft} R{counts.review} A{counts.approved} L{counts.locked}
                   </span>
                 </div>
@@ -276,7 +276,7 @@ export const ProgramTwinPanel: React.FC<ProgramTwinPanelProps> = ({
           expanded={expanded.has('evidence')}
           onToggle={() => toggle('evidence')}
         >
-          <div className="grid grid-cols-2 gap-2 text-[11px]">
+          <div className="grid grid-cols-2 gap-2 text-xs">
             <div className="text-zinc-500">Evidence-backed</div>
             <div className="text-zinc-700 font-medium">{data.evidence.evidenceBackedCount}</div>
             <div className="text-zinc-500">Precedent-backed</div>
@@ -293,21 +293,21 @@ export const ProgramTwinPanel: React.FC<ProgramTwinPanelProps> = ({
           </div>
           {data.evidence.noEvidenceArtifacts.length > 0 && (
             <div className="mt-2">
-              <span className="text-[10px] text-zinc-400 uppercase tracking-wider">
+              <span className="text-xs text-zinc-400 uppercase tracking-wider">
                 Weak/no evidence
               </span>
               <ul className="mt-1 space-y-0.5">
                 {data.evidence.noEvidenceArtifacts.slice(0, 5).map(a => (
-                  <li key={a.id} className="flex items-center gap-1 text-[11px] text-zinc-600">
+                  <li key={a.id} className="flex items-center gap-1 text-xs text-zinc-600">
                     <AlertTriangle className="w-3 h-3 text-amber-400 shrink-0" />
                     <span className="truncate">{a.title}</span>
                     {a.ctdSection && (
-                      <span className="text-[10px] text-zinc-400 ml-auto">{a.ctdSection}</span>
+                      <span className="text-xs text-zinc-400 ml-auto">{a.ctdSection}</span>
                     )}
                     {onOpenVerification && (
                       <button
                         onClick={() => onOpenVerification(a.id)}
-                        className="text-[10px] text-blue-500 hover:underline ml-1 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded"
+                        className="text-xs text-blue-500 hover:underline ml-1 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded"
                       >
                         Verify
                       </button>
@@ -327,7 +327,7 @@ export const ProgramTwinPanel: React.FC<ProgramTwinPanelProps> = ({
           expanded={expanded.has('template')}
           onToggle={() => toggle('template')}
         >
-          <div className="grid grid-cols-2 gap-2 text-[11px]">
+          <div className="grid grid-cols-2 gap-2 text-xs">
             <div className="text-zinc-500">With template</div>
             <div className="text-zinc-700 font-medium">{data.template.withTemplateCount}</div>
             <div className="text-zinc-500">Without template</div>
@@ -350,7 +350,7 @@ export const ProgramTwinPanel: React.FC<ProgramTwinPanelProps> = ({
           expanded={expanded.has('governance')}
           onToggle={() => toggle('governance')}
         >
-          <div className="grid grid-cols-2 gap-2 text-[11px]">
+          <div className="grid grid-cols-2 gap-2 text-xs">
             <div className="text-zinc-500">Signatures</div>
             <div className="text-zinc-700 font-medium">{data.governance.signatureCount}</div>
             <div className="text-zinc-500">Signed artifacts</div>
@@ -370,11 +370,11 @@ export const ProgramTwinPanel: React.FC<ProgramTwinPanelProps> = ({
         </TwinSection>
 
         {/* ── Quick actions ── */}
-        <div className="flex flex-wrap gap-1.5 pt-2 border-t border-zinc-100">
+        <div className="flex flex-wrap gap-1.5 pt-2 border-t border-zinc-200">
           {onOpenTransformCanvas && (
             <button
               onClick={onOpenTransformCanvas}
-              className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium bg-violet-50 text-violet-600 hover:bg-violet-100 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+              className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-violet-50 text-violet-600 hover:bg-violet-100 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
             >
               <Sparkles className="w-3 h-3" />
               Transform Canvas
@@ -390,12 +390,12 @@ export const ProgramTwinPanel: React.FC<ProgramTwinPanelProps> = ({
 
 function TwinHeader({ onClose, projectName }: { onClose: () => void; projectName?: string }) {
   return (
-    <div className="flex items-center gap-2 px-4 h-10 border-b border-zinc-100 shrink-0">
+    <div className="flex items-center gap-2 px-4 h-10 border-b border-zinc-200 shrink-0">
       <Brain className="w-4 h-4 text-violet-500" />
-      <h2 className="text-sm font-semibold text-zinc-800">Program Twin</h2>
+      <h2 className="text-sm font-semibold text-zinc-900">Program Twin</h2>
       {projectName && (
         <>
-          <span className="text-zinc-300">·</span>
+          <span className="text-zinc-400">·</span>
           <span className="text-xs text-zinc-500 truncate">{projectName}</span>
         </>
       )}
@@ -412,10 +412,10 @@ function TwinHeader({ onClose, projectName }: { onClose: () => void; projectName
 
 function StatCard({ label, value, icon }: { label: string; value: number; icon: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-1.5 px-2 py-1 border border-zinc-100 rounded bg-zinc-50/50">
+    <div className="flex items-center gap-1.5 px-2 py-1 border border-zinc-200 rounded bg-zinc-50/50">
       {icon}
-      <span className="text-sm font-bold text-zinc-800 tabular-nums">{value}</span>
-      <span className="text-[10px] text-zinc-400">{label}</span>
+      <span className="text-sm font-semibold text-zinc-900 tabular-nums">{value}</span>
+      <span className="text-xs text-zinc-400">{label}</span>
     </div>
   );
 }
@@ -436,7 +436,7 @@ function TwinSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className="border border-zinc-100 rounded-lg">
+    <div className="border border-zinc-200 rounded-lg">
       <button
         onClick={onToggle}
         className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-zinc-50 transition-colors rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
@@ -449,7 +449,7 @@ function TwinSection({
         )}
         {icon}
         <span className="text-xs font-semibold text-zinc-700 flex-1">{title}</span>
-        {subtitle && <span className="text-[9px] text-zinc-400">{subtitle}</span>}
+        {subtitle && <span className="text-xs text-zinc-400">{subtitle}</span>}
       </button>
       {expanded && <div className="px-3 pb-3">{children}</div>}
     </div>
@@ -461,12 +461,12 @@ function ReadinessBar({ label, value }: { label: string; value: number }) {
   return (
     <div className="mb-1.5">
       <div className="flex items-center justify-between mb-0.5">
-        <span className="text-[11px] text-zinc-600">{label}</span>
-        <span className="text-[11px] font-medium text-zinc-700">{value}%</span>
+        <span className="text-xs text-zinc-600">{label}</span>
+        <span className="text-xs font-medium text-zinc-700">{value}%</span>
       </div>
       <div className="h-1.5 bg-zinc-100 rounded-full overflow-hidden">
         <div
-          className={cn('h-full rounded-full transition-all', color)}
+          className={cn('h-full rounded-full transition-all duration-150', color)}
           style={{ width: `${value}%` }}
         />
       </div>

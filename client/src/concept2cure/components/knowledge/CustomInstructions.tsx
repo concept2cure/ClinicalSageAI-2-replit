@@ -172,7 +172,7 @@ export const CustomInstructions: React.FC<CustomInstructionsProps> = ({
         <CollapsibleTrigger asChild>
           <button
             className={cn(
-              'w-full flex items-center justify-between p-3 rounded-lg transition-colors',
+              'w-full flex items-center justify-between p-3 rounded-lg transition-colors duration-150',
               'hover:bg-zinc-50 text-left',
               isOpen && 'bg-zinc-50'
             )}

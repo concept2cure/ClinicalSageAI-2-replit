@@ -109,17 +109,17 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200">
         <div className="flex items-center gap-1.5">
           <Inbox className="w-3.5 h-3.5 text-blue-600" />
-          <span className="text-[11px] font-semibold text-zinc-800">My Review Queue</span>
+          <span className="text-xs font-semibold text-zinc-900">My Review Queue</span>
           {totalItems > 0 && (
-            <span className="text-[9px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-medium">
+            <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-medium">
               {totalItems}
             </span>
           )}
           {unreadNotifications > 0 && (
-            <span className="text-[9px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full font-medium">
+            <span className="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full font-medium">
               {unreadNotifications} new
             </span>
           )}
@@ -136,12 +136,12 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
       <div className="flex-1 overflow-y-auto p-2">
         {loading ? (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-4 h-4 animate-spin text-zinc-300" />
+            <Loader2 className="w-4 h-4 animate-spin text-zinc-400" />
           </div>
         ) : totalItems === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-zinc-400">
             <Inbox className="w-6 h-6 mb-1" />
-            <p className="text-[10px]">Queue is empty</p>
+            <p className="text-xs">Queue is empty</p>
           </div>
         ) : (
           <>
@@ -152,22 +152,22 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
               approvalsNeeded > 0) && (
               <div className="flex flex-wrap gap-1 mb-2">
                 {overdueTasks > 0 && (
-                  <span className="text-[8px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full font-medium flex items-center gap-0.5">
+                  <span className="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full font-medium flex items-center gap-0.5">
                     <AlertTriangle className="w-2.5 h-2.5" /> {overdueTasks} overdue
                   </span>
                 )}
                 {dueSoonTasks > 0 && (
-                  <span className="text-[8px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-medium flex items-center gap-0.5">
+                  <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-medium flex items-center gap-0.5">
                     <Clock className="w-2.5 h-2.5" /> {dueSoonTasks} due soon
                   </span>
                 )}
                 {changeRequests > 0 && (
-                  <span className="text-[8px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-full font-medium">
+                  <span className="text-xs bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-full font-medium">
                     {changeRequests} changes requested
                   </span>
                 )}
                 {approvalsNeeded > 0 && (
-                  <span className="text-[8px] bg-violet-100 text-violet-700 px-1.5 py-0.5 rounded-full font-medium">
+                  <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-medium">
                     {approvalsNeeded} awaiting approval
                   </span>
                 )}
@@ -176,7 +176,7 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
             {/* Threads */}
             {threads.length > 0 && (
               <div className="mb-3">
-                <p className="text-[9px] text-zinc-400 font-medium mb-1 px-1 flex items-center gap-1">
+                <p className="text-xs text-zinc-400 font-medium mb-1 px-1 flex items-center gap-1">
                   <MessageSquare className="w-3 h-3" />
                   Threads ({threads.length})
                 </p>
@@ -184,18 +184,18 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
                   <button
                     key={t.threadId}
                     onClick={() => onNavigateToArtifact?.(t.projectId, t.artifactId)}
-                    className="w-full mb-1.5 p-2 bg-white border border-zinc-200 rounded-lg text-left hover:border-blue-200 hover:bg-blue-50/30 transition-colors"
+                    className="w-full mb-1.5 p-2 bg-white border border-zinc-200 rounded-lg text-left hover:border-blue-200 hover:bg-blue-50/30 transition-colors duration-150"
                   >
-                    <p className="text-[10px] font-medium text-zinc-800 truncate">{t.title}</p>
+                    <p className="text-xs font-medium text-zinc-900 truncate">{t.title}</p>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className="text-[8px] text-zinc-400 truncate">{t.artifactTitle}</span>
+                      <span className="text-xs text-zinc-400 truncate">{t.artifactTitle}</span>
                       {t.priority === 'high' && (
                         <AlertTriangle className="w-2.5 h-2.5 text-amber-500 shrink-0" />
                       )}
-                      <span className="text-[8px] text-zinc-400 ml-auto shrink-0">
+                      <span className="text-xs text-zinc-400 ml-auto shrink-0">
                         {formatTime(t.updatedAt)}
                       </span>
-                      <ChevronRight className="w-3 h-3 text-zinc-300 shrink-0" />
+                      <ChevronRight className="w-3 h-3 text-zinc-400 shrink-0" />
                     </div>
                   </button>
                 ))}
@@ -205,7 +205,7 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
             {/* Tasks */}
             {tasks.length > 0 && (
               <div>
-                <p className="text-[9px] text-zinc-400 font-medium mb-1 px-1 flex items-center gap-1">
+                <p className="text-xs text-zinc-400 font-medium mb-1 px-1 flex items-center gap-1">
                   <ListTodo className="w-3 h-3" />
                   Tasks ({tasks.length})
                 </p>
@@ -213,21 +213,21 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
                   <button
                     key={t.taskId}
                     onClick={() => onNavigateToArtifact?.(t.projectId, t.artifactId)}
-                    className="w-full mb-1.5 p-2 bg-white border border-zinc-200 rounded-lg text-left hover:border-blue-200 hover:bg-blue-50/30 transition-colors"
+                    className="w-full mb-1.5 p-2 bg-white border border-zinc-200 rounded-lg text-left hover:border-blue-200 hover:bg-blue-50/30 transition-colors duration-150"
                   >
-                    <p className="text-[10px] font-medium text-zinc-800 truncate">{t.title}</p>
+                    <p className="text-xs font-medium text-zinc-900 truncate">{t.title}</p>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className="text-[8px] text-zinc-400 truncate">{t.artifactTitle}</span>
+                      <span className="text-xs text-zinc-400 truncate">{t.artifactTitle}</span>
                       {t.dueAt && (
-                        <span className="text-[8px] text-zinc-400 flex items-center gap-0.5">
+                        <span className="text-xs text-zinc-400 flex items-center gap-0.5">
                           <Clock className="w-2.5 h-2.5" />
                           {formatTime(t.dueAt)}
                         </span>
                       )}
-                      <span className="text-[8px] text-zinc-400 ml-auto shrink-0">
+                      <span className="text-xs text-zinc-400 ml-auto shrink-0">
                         {formatTime(t.updatedAt)}
                       </span>
-                      <ChevronRight className="w-3 h-3 text-zinc-300 shrink-0" />
+                      <ChevronRight className="w-3 h-3 text-zinc-400 shrink-0" />
                     </div>
                   </button>
                 ))}

@@ -8,6 +8,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { SEVERITY } from '../../components/ui/enterprise';
 import {
   AlertTriangle,
   Shield,
@@ -30,10 +31,10 @@ interface RiskCockpitProps {
 }
 
 const SEVERITY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  critical: { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200' },
-  high: { bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200' },
-  medium: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
-  low: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' },
+  critical: { bg: SEVERITY.critical.bg, text: SEVERITY.critical.text, border: SEVERITY.critical.border },
+  high:     { bg: SEVERITY.high.bg,     text: SEVERITY.high.text,     border: SEVERITY.high.border },
+  medium:   { bg: SEVERITY.medium.bg,   text: SEVERITY.medium.text,   border: SEVERITY.medium.border },
+  low:      { bg: SEVERITY.low.bg,      text: SEVERITY.low.text,      border: SEVERITY.low.border },
 };
 
 const STATUS_ICONS: Record<string, typeof Clock> = {
@@ -158,7 +159,7 @@ export const RiskCockpit: React.FC<RiskCockpitProps> = ({ programId }) => {
                   )}
                 >
                   <p className="text-xs text-zinc-500 capitalize mb-1">{sev}</p>
-                  <p className={cn('text-2xl font-bold', colors.text)}>{count}</p>
+                  <p className={cn('text-2xl font-semibold', colors.text)}>{count}</p>
                 </button>
               );
             })}
@@ -173,7 +174,7 @@ export const RiskCockpit: React.FC<RiskCockpitProps> = ({ programId }) => {
                   <div key={cat} className="flex items-center gap-2 p-2 rounded-lg bg-zinc-50">
                     <Target className="w-3.5 h-3.5 text-zinc-400" />
                     <span className="text-xs text-zinc-700 capitalize flex-1">{cat}</span>
-                    <span className="text-xs font-semibold text-zinc-800">{count}</span>
+                    <span className="text-xs font-semibold text-zinc-900">{count}</span>
                   </div>
                 ))}
               </div>
@@ -198,14 +199,20 @@ export const RiskCockpit: React.FC<RiskCockpitProps> = ({ programId }) => {
           {/* Risk List */}
           <div className="bg-white rounded-xl border">
             <div className="p-4 border-b flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-zinc-800">Risk Register</h3>
+              <h3 className="text-sm font-semibold text-zinc-900">Risk Register</h3>
               <span className="text-xs text-zinc-500">{risks.length} risks</span>
             </div>
             {risks.length === 0 ? (
               <div className="p-12 text-center">
-                <Shield className="w-10 h-10 text-zinc-200 mx-auto mb-3" />
-                <p className="text-sm text-zinc-500">No risks registered</p>
-                <p className="text-xs text-zinc-400 mt-1">Add risks to track regulatory, clinical, and operational concerns.</p>
+                <Shield className="w-10 h-10 text-zinc-300 mx-auto mb-3" />
+                <p className="text-sm font-medium text-zinc-700">No risks registered</p>
+                <p className="text-xs text-zinc-500 mt-1">Track regulatory, clinical, and operational concerns.</p>
+                <button
+                  onClick={() => setShowAddRisk(true)}
+                  className="mt-4 px-4 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors duration-150"
+                >
+                  Add Your First Risk
+                </button>
               </div>
             ) : (
               <div className="divide-y">
@@ -213,19 +220,19 @@ export const RiskCockpit: React.FC<RiskCockpitProps> = ({ programId }) => {
                   const sevColors = SEVERITY_COLORS[risk.severity] || SEVERITY_COLORS.medium;
                   const StatusIcon = STATUS_ICONS[risk.status] || Clock;
                   return (
-                    <div key={risk.id} className="p-4 hover:bg-zinc-50 transition-colors">
+                    <div key={risk.id} className="p-4 hover:bg-zinc-50 transition-colors duration-150">
                       <div className="flex items-start gap-3">
                         <StatusIcon className={cn('w-4 h-4 mt-0.5 flex-shrink-0', sevColors.text)} />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <p className="text-sm font-medium text-zinc-800">{risk.title}</p>
-                            <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full', sevColors.bg, sevColors.text)}>
+                            <p className="text-sm font-medium text-zinc-900">{risk.title}</p>
+                            <span className={cn('text-xs px-1.5 py-0.5 rounded-full', sevColors.bg, sevColors.text)}>
                               {risk.severity}
                             </span>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-600">
+                            <span className="text-xs px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-600">
                               {risk.status}
                             </span>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-500 capitalize">
+                            <span className="text-xs px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-500 capitalize">
                               {risk.category}
                             </span>
                           </div>
@@ -261,7 +268,7 @@ export const RiskCockpit: React.FC<RiskCockpitProps> = ({ programId }) => {
                   type="text"
                   value={newRisk.title}
                   onChange={e => setNewRisk(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
+                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                   placeholder="Risk title..."
                 />
               </div>
@@ -300,7 +307,7 @@ export const RiskCockpit: React.FC<RiskCockpitProps> = ({ programId }) => {
                 <textarea
                   value={newRisk.description}
                   onChange={e => setNewRisk(prev => ({ ...prev, description: e.target.value }))}
-                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 h-20 resize-none"
+                  className="w-full text-sm px-3 py-2 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none h-20 resize-none"
                   placeholder="Describe the risk..."
                 />
               </div>
@@ -308,14 +315,14 @@ export const RiskCockpit: React.FC<RiskCockpitProps> = ({ programId }) => {
             <div className="flex items-center justify-end gap-2 mt-4">
               <button
                 onClick={() => setShowAddRisk(false)}
-                className="px-3 py-1.5 text-xs text-zinc-600 hover:text-zinc-800"
+                className="px-3 py-1.5 text-xs text-zinc-600 hover:text-zinc-900"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAddRisk}
                 disabled={!newRisk.title.trim()}
-                className="px-4 py-1.5 text-xs font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-50"
+                className="px-4 py-1.5 text-xs font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-60"
               >
                 Add Risk
               </button>

@@ -160,7 +160,7 @@ const PLATFORM_CAPABILITIES = [
     items: [
       {
         icon: Globe,
-        name: 'Snow Globe',
+        name: 'AnA Predictions',
         description: 'Cross-platform prediction and intelligence engine. Model regulatory scenarios, compare pathways, and forecast submission outcomes.',
         depth: 'Predictive models trained on 15 years of FDA review patterns, approval timelines, and Complete Response Letter triggers.',
         color: 'indigo',
@@ -299,7 +299,7 @@ const TRAINING_MODULES: TrainingModule[] = [
   },
   {
     id: 'snow-globe',
-    title: 'Snow Globe: Predictive Intelligence',
+    title: 'AnA Predictions: Predictive Intelligence',
     description: 'Use the prediction engine to model regulatory scenarios, compare pathways, and forecast submission timelines and outcomes.',
     duration: '20 min',
     level: 'advanced',
@@ -373,14 +373,14 @@ const TRAINING_MODULES: TrainingModule[] = [
   },
   {
     id: 'nano-banana-visual-ai',
-    title: 'Nano Banana Visual AI',
+    title: 'AnA Visual',
     description: 'Generate publication-ready infographics, regulatory diagrams, and slide decks using Google Gemini image generation — directly from any module.',
     duration: '15 min',
     level: 'beginner',
     category: 'AI & Intelligence',
     icon: Sparkles,
     lessons: [
-      'Switching to Nano Banana mode in AnA chat',
+      'Switching to AnA Visual mode in AnA chat',
       'Generating infographics with style presets',
       'Creating slide decks from a single prompt',
       'Editing images with natural language',
@@ -446,7 +446,7 @@ const WHATS_NEW: WhatsNewItem[] = [
   {
     date: '2026-03-12',
     version: '4.1.5',
-    title: 'Snow Globe Predictive Intelligence',
+    title: 'AnA Predictions',
     description: 'New cross-platform prediction engine that models regulatory scenarios, compares pathways, and forecasts submission outcomes based on 15 years of FDA review data.',
     type: 'feature',
     icon: Globe,
@@ -508,7 +508,7 @@ const COMPANY_TIMELINE = [
   { year: '2024 Q4', title: 'Mission Control', description: 'Portfolio governance with AI Sentinel monitoring and automation rules' },
   { year: '2025 Q1', title: 'CMC Platform', description: '102-endpoint CMC documentation engine covering the full product lifecycle' },
   { year: '2025 Q2', title: 'Claude Integration', description: 'Deep integration with Anthropic Claude for extended thinking and multi-agent orchestration' },
-  { year: '2025 Q4', title: 'Snow Globe', description: 'Predictive intelligence engine for regulatory scenario modeling and outcome forecasting' },
+  { year: '2025 Q4', title: 'AnA Predictions', description: 'Predictive intelligence engine for regulatory scenario modeling and outcome forecasting' },
   { year: '2026 Q1', title: 'Dr. Sage', description: 'FDA reviewer AI agent — the industry\'s first simulated reviewer for submission training and review' },
 ];
 
@@ -527,7 +527,7 @@ function TabButton({ active, label, icon: Icon, onClick }: { active: boolean; la
     <button
       onClick={onClick}
       className={cn(
-        'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+        'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-150',
         active
           ? 'bg-zinc-900 text-white shadow-sm'
           : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
@@ -546,11 +546,13 @@ function AboutTab() {
     <div className="space-y-10">
       {/* Hero */}
       <div className="text-center max-w-3xl mx-auto">
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center mx-auto mb-6 shadow-xl shadow-violet-200/50">
+        <div className="w-16 h-16 rounded-lg bg-blue-600 flex items-center justify-center mx-auto mb-6 shadow-sm">
           <Sparkles className="w-8 h-8 text-white" />
         </div>
         <h2 className="text-3xl font-bold text-zinc-900 mb-3">
           Concept2Cure.RI
+        <h2 className="text-2xl font-semibold text-zinc-900 mb-3">
+          ClinicalSageAI
         </h2>
         <p className="text-lg text-zinc-500 leading-relaxed">
           The cognitive regulatory ecosystem that transforms how life sciences companies
@@ -559,7 +561,7 @@ function AboutTab() {
       </div>
 
       {/* Mission */}
-      <div className="bg-white rounded-2xl border border-zinc-200 p-8 max-w-3xl mx-auto">
+      <div className="bg-white rounded-xl border border-zinc-200 p-8 max-w-3xl mx-auto">
         <h3 className="text-lg font-semibold text-zinc-900 mb-3 flex items-center gap-2">
           <Lightbulb className="w-5 h-5 text-amber-500" />
           Our Mission
@@ -589,7 +591,7 @@ function AboutTab() {
           return (
             <div key={stat.label} className="bg-white rounded-xl border border-zinc-200 p-5 text-center">
               <Icon className="w-5 h-5 text-violet-500 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-zinc-900">{stat.value}</p>
+              <p className="text-2xl font-semibold text-zinc-900">{stat.value}</p>
               <p className="text-xs text-zinc-500 mt-1">{stat.label}</p>
             </div>
           );
@@ -625,9 +627,9 @@ function AboutTab() {
       </div>
 
       {/* Meet AnA */}
-      <div className="bg-gradient-to-br from-violet-50 to-blue-50 rounded-2xl border border-violet-100 p-8 max-w-3xl mx-auto">
+      <div className="bg-zinc-50 rounded-xl border border-violet-100 p-8 max-w-3xl mx-auto">
         <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center flex-shrink-0">
+          <div className="w-12 h-12 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
             <Brain className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -648,9 +650,9 @@ function AboutTab() {
       </div>
 
       {/* Meet Dr. Sage */}
-      <div className="bg-gradient-to-br from-slate-50 to-blue-50 rounded-2xl border border-blue-100 p-8 max-w-3xl mx-auto">
+      <div className="bg-zinc-50 rounded-xl border border-blue-100 p-8 max-w-3xl mx-auto">
         <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center flex-shrink-0">
+          <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center flex-shrink-0">
             <Stethoscope className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -680,11 +682,11 @@ function AboutTab() {
                 <div className={cn(
                   'w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 z-10 border-2 border-white',
                   idx === COMPANY_TIMELINE.length - 1
-                    ? 'bg-gradient-to-br from-violet-500 to-blue-600'
+                    ? 'bg-blue-600'
                     : 'bg-white border border-zinc-200'
                 )}>
                   <span className={cn(
-                    'text-[10px] font-bold',
+                    'text-xs font-semibold',
                     idx === COMPANY_TIMELINE.length - 1 ? 'text-white' : 'text-zinc-600'
                   )}>
                     {item.year.replace('20', "'").replace(' ', '')}
@@ -709,7 +711,7 @@ function PlatformTab() {
   return (
     <div className="space-y-10">
       <div className="text-center max-w-2xl mx-auto mb-2">
-        <h2 className="text-2xl font-bold text-zinc-900 mb-2">Platform Capabilities</h2>
+        <h2 className="text-2xl font-semibold text-zinc-900 mb-2">Platform Capabilities</h2>
         <p className="text-sm text-zinc-500">
           Every module is designed for regulatory professionals — deeply integrated, AI-augmented,
           and built for 21 CFR Part 11 compliance from day one.
@@ -752,7 +754,7 @@ function PlatformTab() {
       ))}
 
       {/* Compliance Foundation */}
-      <div className="bg-zinc-900 rounded-2xl p-8 text-white">
+      <div className="bg-zinc-900 rounded-xl p-8 text-white">
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
           <Lock className="w-5 h-5 text-emerald-400" />
           Enterprise Compliance Foundation
@@ -772,7 +774,7 @@ function PlatformTab() {
         </div>
         <div className="mt-5 grid grid-cols-2 md:grid-cols-5 gap-3 text-center">
           {['Immutable Audit Trail', 'E-Signatures (SHA-256)', 'Role-Based Access', 'Row-Level Security', 'Hash Chain Integrity'].map(f => (
-            <div key={f} className="flex items-center gap-1.5 text-xs text-zinc-300">
+            <div key={f} className="flex items-center gap-1.5 text-xs text-zinc-400">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
               {f}
             </div>
@@ -789,7 +791,7 @@ function IntelligenceTab() {
   return (
     <div className="space-y-10">
       <div className="text-center max-w-2xl mx-auto mb-2">
-        <h2 className="text-2xl font-bold text-zinc-900 mb-2">Proprietary Intelligence</h2>
+        <h2 className="text-2xl font-semibold text-zinc-900 mb-2">Proprietary Intelligence</h2>
         <p className="text-sm text-zinc-500">
           Our AI isn't a wrapper on a chatbot. It's a purpose-built cognitive engine
           trained on regulatory domain knowledge that no general-purpose AI possesses.
@@ -804,12 +806,12 @@ function IntelligenceTab() {
             <div key={pillar.title} className="bg-white rounded-xl border border-zinc-200 p-6">
               <div className="flex items-start gap-5">
                 <div className="flex-shrink-0">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-50 to-blue-50 flex items-center justify-center">
+                  <div className="w-14 h-14 rounded-lg bg-zinc-50 flex items-center justify-center">
                     <Icon className="w-7 h-7 text-violet-600" />
                   </div>
                   <div className="text-center mt-2">
-                    <p className="text-lg font-bold text-zinc-900">{pillar.stat}</p>
-                    <p className="text-[10px] text-zinc-500 leading-tight">{pillar.statLabel}</p>
+                    <p className="text-lg font-semibold text-zinc-900">{pillar.stat}</p>
+                    <p className="text-xs text-zinc-500 leading-tight">{pillar.statLabel}</p>
                   </div>
                 </div>
                 <div className="flex-1">
@@ -831,9 +833,9 @@ function IntelligenceTab() {
       </div>
 
       {/* Continuous Learning */}
-      <div className="bg-gradient-to-br from-violet-50 to-blue-50 rounded-2xl border border-violet-100 p-8">
+      <div className="bg-zinc-50 rounded-xl border border-violet-100 p-8">
         <div className="flex items-center gap-3 mb-5">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-lg bg-blue-600 flex items-center justify-center">
             <RefreshCw className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -877,7 +879,7 @@ function IntelligenceTab() {
       </div>
 
       {/* Intelligence Differentiator */}
-      <div className="bg-white rounded-2xl border border-zinc-200 p-8 max-w-3xl mx-auto">
+      <div className="bg-white rounded-xl border border-zinc-200 p-8 max-w-3xl mx-auto">
         <h3 className="text-lg font-semibold text-zinc-900 mb-4 text-center">Why Our Intelligence Is Different</h3>
         <div className="space-y-3">
           {[
@@ -900,7 +902,7 @@ function IntelligenceTab() {
           ].map((item, i) => (
             <div key={i} className="flex items-start gap-3 p-4 rounded-lg bg-zinc-50">
               <div className="w-6 h-6 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <span className="text-xs font-bold text-violet-600">{i + 1}</span>
+                <span className="text-xs font-semibold text-violet-600">{i + 1}</span>
               </div>
               <div>
                 <p className="text-sm font-semibold text-zinc-900">{item.title}</p>
@@ -986,7 +988,7 @@ function TrainingTab() {
     <div className="space-y-8">
       {/* Hero */}
       <div className="text-center max-w-2xl mx-auto mb-2">
-        <h2 className="text-2xl font-bold text-zinc-900 mb-2">Training Center</h2>
+        <h2 className="text-2xl font-semibold text-zinc-900 mb-2">Training Center</h2>
         <p className="text-sm text-zinc-500">
           Master every tool on the platform to accelerate your regulatory submissions.
           Choose a learning path for your role, or explore individual modules at your own pace.
@@ -994,7 +996,7 @@ function TrainingTab() {
       </div>
 
       {/* Progress Overview */}
-      <div className="bg-white rounded-2xl border border-zinc-200 p-6">
+      <div className="bg-white rounded-xl border border-zinc-200 p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-sm font-semibold text-zinc-900">Your Progress</h3>
@@ -1007,7 +1009,7 @@ function TrainingTab() {
                 <span className="text-xs font-medium text-zinc-700">{earnedCerts.length} certification{earnedCerts.length !== 1 ? 's' : ''}</span>
               </div>
             )}
-            <span className="text-lg font-bold text-zinc-900">{totalProgress}%</span>
+            <span className="text-lg font-semibold text-zinc-900">{totalProgress}%</span>
           </div>
         </div>
         <div className="w-full h-2.5 bg-zinc-100 rounded-full overflow-hidden">
@@ -1022,7 +1024,7 @@ function TrainingTab() {
             <div
               key={m.id}
               className={cn(
-                'flex-1 h-1 rounded-full transition-colors',
+                'flex-1 h-1 rounded-full transition-colors duration-150',
                 completedModules.has(m.id) ? 'bg-emerald-500' : 'bg-zinc-200'
               )}
               title={m.title}
@@ -1033,13 +1035,13 @@ function TrainingTab() {
 
       {/* View Switcher */}
       <div className="flex items-center gap-1 bg-zinc-100 rounded-lg p-1 w-fit mx-auto">
-        <button onClick={() => setView('paths')} className={cn('px-3 py-1.5 rounded-md text-xs font-medium transition-colors', view === 'paths' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700')}>
+        <button onClick={() => setView('paths')} className={cn('px-3 py-1.5 rounded-md text-xs font-medium transition-colors duration-150', view === 'paths' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700')}>
           Learning Paths
         </button>
-        <button onClick={() => setView('modules')} className={cn('px-3 py-1.5 rounded-md text-xs font-medium transition-colors', view === 'modules' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700')}>
+        <button onClick={() => setView('modules')} className={cn('px-3 py-1.5 rounded-md text-xs font-medium transition-colors duration-150', view === 'modules' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700')}>
           All Modules
         </button>
-        <button onClick={() => setView('certifications')} className={cn('px-3 py-1.5 rounded-md text-xs font-medium transition-colors', view === 'certifications' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700')}>
+        <button onClick={() => setView('certifications')} className={cn('px-3 py-1.5 rounded-md text-xs font-medium transition-colors duration-150', view === 'certifications' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700')}>
           Certifications
         </button>
       </div>
@@ -1063,7 +1065,7 @@ function TrainingTab() {
                   key={path.id}
                   onClick={() => setActivePath(isActive ? null : path.id)}
                   className={cn(
-                    'bg-white rounded-xl border p-5 cursor-pointer transition-all',
+                    'bg-white rounded-xl border p-5 cursor-pointer transition-all duration-150',
                     isActive ? 'border-violet-300 shadow-md ring-1 ring-violet-100' : 'border-zinc-200 hover:shadow-sm hover:border-zinc-300'
                   )}
                 >
@@ -1075,24 +1077,24 @@ function TrainingTab() {
                       <h4 className="text-sm font-semibold text-zinc-900">{path.title}</h4>
                       <p className="text-xs text-zinc-500 mt-0.5">{path.modules.length} modules</p>
                     </div>
-                    <span className="text-xs font-bold text-zinc-700">{pathProgress}%</span>
+                    <span className="text-xs font-semibold text-zinc-700">{pathProgress}%</span>
                   </div>
                   <p className="text-xs text-zinc-500 leading-relaxed mb-3">{path.description}</p>
 
                   {/* Mini progress */}
                   <div className="w-full h-1.5 bg-zinc-100 rounded-full overflow-hidden mb-3">
-                    <div className={cn('h-full rounded-full transition-all', `bg-${path.color}-500`)} style={{ width: `${pathProgress}%` }} />
+                    <div className={cn('h-full rounded-full transition-all duration-150', `bg-${path.color}-500`)} style={{ width: `${pathProgress}%` }} />
                   </div>
 
                   {/* Outcome */}
                   <div className="flex items-start gap-2 p-2.5 rounded-lg bg-zinc-50">
                     <Target className="w-3.5 h-3.5 text-violet-500 mt-0.5 flex-shrink-0" />
-                    <span className="text-[11px] text-zinc-600 leading-relaxed">{path.outcome}</span>
+                    <span className="text-xs text-zinc-600 leading-relaxed">{path.outcome}</span>
                   </div>
 
                   {/* Expanded module list */}
                   {isActive && (
-                    <div className="mt-4 pt-3 border-t border-zinc-100 space-y-2">
+                    <div className="mt-4 pt-3 border-t border-zinc-200 space-y-2">
                       <p className="text-xs font-medium text-zinc-700 mb-2">Modules in this path:</p>
                       {pathModules.map((mod, idx) => {
                         const ModIcon = mod.icon;
@@ -1106,11 +1108,11 @@ function TrainingTab() {
                               {done ? (
                                 <CheckCircle2 className="w-3 h-3 text-white" />
                               ) : (
-                                <span className="text-[9px] font-bold text-zinc-500">{idx + 1}</span>
+                                <span className="text-xs font-semibold text-zinc-500">{idx + 1}</span>
                               )}
                             </div>
                             <span className={cn('text-xs', done ? 'text-zinc-400 line-through' : 'text-zinc-700')}>{mod.title}</span>
-                            <span className="text-[10px] text-zinc-400 ml-auto">{mod.duration}</span>
+                            <span className="text-xs text-zinc-400 ml-auto">{mod.duration}</span>
                           </div>
                         );
                       })}
@@ -1121,7 +1123,7 @@ function TrainingTab() {
                           if (nextIncomplete) setExpandedModule(nextIncomplete);
                           setView('modules');
                         }}
-                        className="w-full mt-2 flex items-center justify-center gap-1.5 px-3 py-2 bg-zinc-900 text-white rounded-lg text-xs font-medium hover:bg-zinc-800 transition-colors"
+                        className="w-full mt-2 flex items-center justify-center gap-1.5 px-3 py-2 bg-zinc-900 text-white rounded-lg text-xs font-medium hover:bg-zinc-800 transition-colors duration-150"
                       >
                         <Play className="w-3.5 h-3.5" />
                         {pathComplete === 0 ? 'Start Path' : pathComplete < path.modules.length ? 'Continue' : 'Review'}
@@ -1145,7 +1147,7 @@ function TrainingTab() {
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
                 className={cn(
-                  'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
+                  'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors duration-150',
                   selectedCategory === cat ? 'bg-zinc-900 text-white' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
                 )}
               >
@@ -1164,7 +1166,7 @@ function TrainingTab() {
 
               return (
                 <div key={mod.id} className={cn(
-                  'bg-white rounded-xl border transition-all',
+                  'bg-white rounded-xl border transition-all duration-150',
                   isComplete ? 'border-emerald-200 bg-emerald-50/30' : 'border-zinc-200',
                   isExpanded && 'shadow-md'
                 )}>
@@ -1189,29 +1191,29 @@ function TrainingTab() {
                     </div>
                     <div className="flex items-center gap-3 flex-shrink-0">
                       <div className="flex items-center gap-2">
-                        <span className={cn('px-2 py-0.5 rounded-full text-[10px] font-medium', `bg-${levelCfg.color}-50 text-${levelCfg.color}-700`)}>
+                        <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', `bg-${levelCfg.color}-50 text-${levelCfg.color}-700`)}>
                           {levelCfg.label}
                         </span>
-                        <span className="flex items-center gap-1 text-[10px] text-zinc-400">
+                        <span className="flex items-center gap-1 text-xs text-zinc-400">
                           <Clock className="w-3 h-3" />{mod.duration}
                         </span>
                       </div>
-                      <ChevronDown className={cn('w-4 h-4 text-zinc-400 transition-transform', isExpanded && 'rotate-180')} />
+                      <ChevronDown className={cn('w-4 h-4 text-zinc-400 transition-transform duration-150', isExpanded && 'rotate-180')} />
                     </div>
                   </div>
 
                   {/* Expanded Content */}
                   {isExpanded && (
-                    <div className="px-5 pb-5 border-t border-zinc-100 pt-4">
+                    <div className="px-5 pb-5 border-t border-zinc-200 pt-4">
                       <div className="grid grid-cols-12 gap-5">
                         {/* Lessons */}
                         <div className="col-span-8">
                           <h5 className="text-xs font-semibold text-zinc-700 mb-3">What You'll Learn</h5>
                           <div className="space-y-2">
                             {mod.lessons.map((lesson, idx) => (
-                              <div key={idx} className="flex items-center gap-3 p-2.5 rounded-lg bg-zinc-50 hover:bg-zinc-100 transition-colors">
+                              <div key={idx} className="flex items-center gap-3 p-2.5 rounded-lg bg-zinc-50 hover:bg-zinc-100 transition-colors duration-150">
                                 <div className="w-6 h-6 rounded-full bg-white border border-zinc-200 flex items-center justify-center flex-shrink-0">
-                                  <span className="text-[10px] font-bold text-zinc-500">{idx + 1}</span>
+                                  <span className="text-xs font-semibold text-zinc-500">{idx + 1}</span>
                                 </div>
                                 <span className="text-xs text-zinc-700">{lesson}</span>
                               </div>
@@ -1225,20 +1227,20 @@ function TrainingTab() {
                             <div className="p-3 rounded-lg bg-amber-50 border border-amber-100">
                               <div className="flex items-center gap-1.5 mb-1">
                                 <Award className="w-3.5 h-3.5 text-amber-600" />
-                                <span className="text-[10px] font-semibold text-amber-800">Earns Certification</span>
+                                <span className="text-xs font-semibold text-amber-800">Earns Certification</span>
                               </div>
-                              <p className="text-[10px] text-amber-700">{mod.certification}</p>
+                              <p className="text-xs text-amber-700">{mod.certification}</p>
                             </div>
                           )}
 
                           <div className="p-3 rounded-lg bg-zinc-50">
-                            <p className="text-[10px] font-medium text-zinc-600 mb-1">Category</p>
-                            <p className="text-xs text-zinc-800">{mod.category}</p>
+                            <p className="text-xs font-medium text-zinc-600 mb-1">Category</p>
+                            <p className="text-xs text-zinc-900">{mod.category}</p>
                           </div>
 
                           <div className="p-3 rounded-lg bg-zinc-50">
-                            <p className="text-[10px] font-medium text-zinc-600 mb-1">Lessons</p>
-                            <p className="text-xs text-zinc-800">{mod.lessons.length} lessons</p>
+                            <p className="text-xs font-medium text-zinc-600 mb-1">Lessons</p>
+                            <p className="text-xs text-zinc-900">{mod.lessons.length} lessons</p>
                           </div>
 
                           <button
@@ -1255,7 +1257,7 @@ function TrainingTab() {
                               }
                             }}
                             className={cn(
-                              'w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors',
+                              'w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors duration-150',
                               isComplete
                                 ? 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
                                 : 'bg-zinc-900 text-white hover:bg-zinc-800'
@@ -1297,14 +1299,14 @@ function TrainingTab() {
               const progress = cert.requiredModules.filter(m => completedModules.has(m)).length;
               return (
                 <div key={cert.id} className={cn(
-                  'rounded-xl border p-5 transition-all',
+                  'rounded-xl border p-5 transition-all duration-150',
                   earned
                     ? 'bg-gradient-to-br from-amber-50 to-yellow-50 border-amber-200 shadow-sm'
                     : 'bg-white border-zinc-200'
                 )}>
                   <div className="flex items-center gap-3 mb-3">
                     <div className={cn(
-                      'w-12 h-12 rounded-xl flex items-center justify-center',
+                      'w-12 h-12 rounded-lg flex items-center justify-center',
                       earned ? 'bg-gradient-to-br from-amber-400 to-yellow-500' : `bg-${cert.color}-50`
                     )}>
                       <Icon className={cn('w-6 h-6', earned ? 'text-white' : `text-${cert.color}-500`)} />
@@ -1312,7 +1314,7 @@ function TrainingTab() {
                     <div>
                       <h4 className="text-sm font-semibold text-zinc-900">{cert.name}</h4>
                       {earned && (
-                        <span className="flex items-center gap-1 text-[10px] font-medium text-amber-700">
+                        <span className="flex items-center gap-1 text-xs font-medium text-amber-700">
                           <BadgeCheck className="w-3 h-3" /> Earned
                         </span>
                       )}
@@ -1323,11 +1325,11 @@ function TrainingTab() {
                   {/* Progress */}
                   <div className="mb-3">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-[10px] text-zinc-500">Progress</span>
-                      <span className="text-[10px] font-medium text-zinc-700">{progress}/{cert.requiredModules.length}</span>
+                      <span className="text-xs text-zinc-500">Progress</span>
+                      <span className="text-xs font-medium text-zinc-700">{progress}/{cert.requiredModules.length}</span>
                     </div>
                     <div className="w-full h-1.5 bg-zinc-100 rounded-full overflow-hidden">
-                      <div className={cn('h-full rounded-full transition-all', earned ? 'bg-amber-500' : `bg-${cert.color}-500`)} style={{ width: `${(progress / cert.requiredModules.length) * 100}%` }} />
+                      <div className={cn('h-full rounded-full transition-all duration-150', earned ? 'bg-amber-500' : `bg-${cert.color}-500`)} style={{ width: `${(progress / cert.requiredModules.length) * 100}%` }} />
                     </div>
                   </div>
 
@@ -1341,7 +1343,7 @@ function TrainingTab() {
                           {done ? (
                             <CheckCircle2 className="w-3 h-3 text-emerald-500 flex-shrink-0" />
                           ) : (
-                            <CircleDot className="w-3 h-3 text-zinc-300 flex-shrink-0" />
+                            <CircleDot className="w-3 h-3 text-zinc-400 flex-shrink-0" />
                           )}
                           <span className={done ? 'text-zinc-400' : 'text-zinc-700'}>{mod.title}</span>
                         </div>
@@ -1356,7 +1358,7 @@ function TrainingTab() {
       )}
 
       {/* Quick Answers — always visible */}
-      <div className="bg-white rounded-2xl border border-zinc-200 p-8">
+      <div className="bg-white rounded-xl border border-zinc-200 p-8">
         <h3 className="text-lg font-semibold text-zinc-900 mb-2 flex items-center gap-2">
           <MessageSquare className="w-5 h-5 text-blue-500" />
           Need Help? Ask AnA or Dr. Sage
@@ -1372,7 +1374,7 @@ function TrainingTab() {
             'How do I configure Sentinel scanning for my program?',
             'What eCTD sections does Co-Author support?',
             'How do I link evidence to regulatory claims?',
-            'Show me how to run a Snow Globe prediction',
+            'Show me how to run an AnA Predictions analysis',
             'How do I set up automation rules in Mission Control?',
             'What does a reviewer look for in Module 2 summaries?',
           ].map(q => (
@@ -1428,13 +1430,13 @@ const SAGE_QUICK_ACTIONS = [
 ];
 
 const SAGE_RESPONSES: Record<string, string> = {
-  'platform-tour': `Great choice. Let me walk you through the platform from a regulatory reviewer's perspective — because I think about these tools differently than most.\n\n**1. AnA RI Copilot** — This is where most of your work happens. AnA drafts regulatory documents, but what makes her valuable is that she understands *what reviewers look for*. I've helped train her on review patterns.\n\n**2. eCTD Co-Author** — Your collaborative authoring environment. As a former reviewer, I can tell you: 80% of review delays come from poorly organized eCTD modules. This tool enforces the structure we expect.\n\n**3. Snow Globe** — Predictive intelligence. This models how likely your submission is to succeed based on historical review patterns. I wish I'd had this tool during my review days.\n\n**4. Mission Control** — Your portfolio oversight. Think of this as your internal regulatory program management office.\n\n**5. Document Vault** — Where everything lives with proper audit trails. 21 CFR Part 11 compliant — which is non-negotiable.\n\nWant me to deep-dive into any of these?`,
+  'platform-tour': `Great choice. Let me walk you through the platform from a regulatory reviewer's perspective — because I think about these tools differently than most.\n\n**1. AnA RI Copilot** — This is where most of your work happens. AnA drafts regulatory documents, but what makes her valuable is that she understands *what reviewers look for*. I've helped train her on review patterns.\n\n**2. eCTD Co-Author** — Your collaborative authoring environment. As a former reviewer, I can tell you: 80% of review delays come from poorly organized eCTD modules. This tool enforces the structure we expect.\n\n**3. AnA Predictions** — Predictive intelligence. This models how likely your submission is to succeed based on historical review patterns. I wish I'd had this tool during my review days.\n\n**4. Mission Control** — Your portfolio oversight. Think of this as your internal regulatory program management office.\n\n**5. Document Vault** — Where everything lives with proper audit trails. 21 CFR Part 11 compliant — which is non-negotiable.\n\nWant me to deep-dive into any of these?`,
 
   'review-submission': `I'll put on my reviewer hat. Here's how I'd approach your submission:\n\n🔍 **Step 1: Structure Check** — I'm looking at your eCTD module organization. Is Module 2 (summaries) complete and consistent with Module 3-5 data?\n\n🔍 **Step 2: Cross-Reference Integrity** — Do your clinical summaries accurately reflect the study reports? This is where I catch most issues.\n\n🔍 **Step 3: Safety Signal Review** — Are adverse events properly characterized? Is the risk-benefit narrative convincing?\n\n🔍 **Step 4: CMC Adequacy** — Is the manufacturing process validated? Are specifications justified?\n\nLet me work with AnA to run a Sentinel scan on your active program and give you a reviewer-perspective assessment. I'll flag everything I'd flag in a real review.\n\n*[Working with AnA to analyze your submission...]*`,
 
   'identify-risks': `From 20 years of reviewing submissions, here are the patterns that get applications sent back with a Complete Response Letter:\n\n⚠️ **#1 — Inconsistencies between Module 2 summaries and source data** (35% of CRL triggers)\nAnA can cross-check these automatically. Let me verify this is configured.\n\n⚠️ **#2 — Inadequate justification of specifications** (20% for CMC)\nReviewers want to see *why* you chose those limits, not just what they are.\n\n⚠️ **#3 — Missing or incomplete statistical analysis plans** (15% for clinical)\nPre-specified endpoints vs. post-hoc — we notice.\n\n⚠️ **#4 — Non-responsive to previous FDA feedback** (10%)\nIf you had a Pre-Sub meeting, every single piece of feedback needs a traceable response.\n\nWant me to scan your current program for these patterns?`,
 
-  'train-team': `I'll design a training curriculum based on your team's roles. Here's my recommended plan:\n\n**Week 1-2: Foundations**\n- Platform navigation and project setup (all roles)\n- AnA conversation basics — how to ask effective regulatory questions\n- Document Vault and version control\n\n**Week 3-4: Role-Specific Training**\n- *Regulatory Writers*: eCTD Co-Author, document drafting with AnA\n- *Regulatory Strategists*: Snow Globe predictions, Mission Control, pathway planning\n- *Quality/CMC*: CMC Platform, compliance validation, inspection readiness\n- *Clinical*: Clinical Trial Hub, evidence linking, protocol optimization\n\n**Week 5-6: Advanced Operations**\n- Sentinel configuration and automated scanning\n- Cross-program learning and portfolio management\n- FDA reviewer simulation exercises (I'll run these personally)\n\nShall I create detailed agendas for each session?`,
+  'train-team': `I'll design a training curriculum based on your team's roles. Here's my recommended plan:\n\n**Week 1-2: Foundations**\n- Platform navigation and project setup (all roles)\n- AnA conversation basics — how to ask effective regulatory questions\n- Document Vault and version control\n\n**Week 3-4: Role-Specific Training**\n- *Regulatory Writers*: eCTD Co-Author, document drafting with AnA\n- *Regulatory Strategists*: AnA Predictions, Mission Control, pathway planning\n- *Quality/CMC*: CMC Platform, compliance validation, inspection readiness\n- *Clinical*: Clinical Trial Hub, evidence linking, protocol optimization\n\n**Week 5-6: Advanced Operations**\n- Sentinel configuration and automated scanning\n- Cross-program learning and portfolio management\n- FDA reviewer simulation exercises (I'll run these personally)\n\nShall I create detailed agendas for each session?`,
 
   'fix-with-ana': `Let me coordinate with AnA to identify and resolve compliance gaps.\n\n**Phase 1: Discovery** — I'll ask AnA to run a comprehensive gap analysis across all active artifacts.\n\n**Phase 2: Triage** — I'll prioritize findings by reviewer impact. Not all gaps are equal — I know which ones actually trigger Complete Response Letters.\n\n**Phase 3: Remediation** — For each critical gap, AnA will draft corrective content while I review from the FDA perspective.\n\n**Phase 4: Verification** — I'll re-review the corrected sections to confirm they meet review expectations.\n\n*[Initiating collaborative session with AnA...]*\n\nThis is where the platform really shines — two AI perspectives working together: AnA as your author, me as your internal reviewer.`,
 
@@ -1442,7 +1444,7 @@ const SAGE_RESPONSES: Record<string, string> = {
 
   'audit-prep': `FDA inspection readiness is about demonstrating you have systems in place. Here's my inspector's checklist:\n\n**Document Systems** ✓\n- [ ] All records retrievable within 24 hours\n- [ ] Audit trails showing who changed what and when\n- [ ] Electronic signatures validated per 21 CFR Part 11\n- [ ] Version control with no orphaned documents\n\n**Data Integrity** ✓\n- [ ] ALCOA+ principles demonstrated (Attributable, Legible, Contemporaneous, Original, Accurate)\n- [ ] Backup and disaster recovery tested\n- [ ] Access controls appropriate to roles\n\n**Process Controls** ✓\n- [ ] SOPs current and accessible\n- [ ] Training records complete and current\n- [ ] CAPA system active with trend analysis\n\nThe Concept2Cure.RI platform handles most of this automatically. Let me verify your configuration covers all inspection requirements. Shall I run an audit readiness assessment?`,
 
-  'explain-module': `Which module would you like me to explain? I can cover:\n\n• **AnA RI Copilot** — The AI brain that powers everything\n• **eCTD Co-Author** — Collaborative regulatory document authoring\n• **CMC Platform** — Chemistry, Manufacturing & Controls\n• **Clinical Trial Hub** — Trial design and evidence management\n• **Snow Globe** — Predictive regulatory intelligence\n• **Mission Control** — Portfolio governance and automation\n• **Document Vault** — Regulatory-grade document management\n• **Evidence Search** — Literature and precedent discovery\n• **Submission Ops** — End-to-end submission management\n\nJust tell me which one, and I'll explain it from both a user perspective and a reviewer perspective — because understanding *why* the feature exists matters as much as *how* it works.`,
+  'explain-module': `Which module would you like me to explain? I can cover:\n\n• **AnA RI Copilot** — The AI brain that powers everything\n• **eCTD Co-Author** — Collaborative regulatory document authoring\n• **CMC Platform** — Chemistry, Manufacturing & Controls\n• **Clinical Trial Hub** — Trial design and evidence management\n• **AnA Predictions** — Predictive regulatory intelligence\n• **Mission Control** — Portfolio governance and automation\n• **Document Vault** — Regulatory-grade document management\n• **Evidence Search** — Literature and precedent discovery\n• **Submission Ops** — End-to-end submission management\n\nJust tell me which one, and I'll explain it from both a user perspective and a reviewer perspective — because understanding *why* the feature exists matters as much as *how* it works.`,
 };
 
 function DrSageTab() {
@@ -1602,18 +1604,18 @@ function DrSageTab() {
   return (
     <div className="space-y-6">
       {/* Dr. Sage Hero */}
-      <div className="bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 rounded-2xl p-8 text-white relative overflow-hidden">
+      <div className="bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 rounded-xl p-8 text-white relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-blue-400 blur-[100px]" />
           <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full bg-violet-400 blur-[80px]" />
         </div>
         <div className="relative flex items-start gap-5">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-400 to-cyan-300 flex items-center justify-center flex-shrink-0 shadow-lg">
+          <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-blue-400 to-cyan-300 flex items-center justify-center flex-shrink-0 shadow-lg">
             <Stethoscope className="w-8 h-8 text-white" />
           </div>
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <h2 className="text-xl font-bold">Dr. Sage</h2>
+              <h2 className="text-xl font-semibold">Dr. Sage</h2>
               <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-medium border border-emerald-500/30">
                 FDA Reviewer AI Agent
               </span>
@@ -1665,7 +1667,7 @@ function DrSageTab() {
                 )}
                 <div className={cn(
                   'max-w-[80%] rounded-xl px-4 py-3',
-                  msg.role === 'sage' && 'bg-zinc-50 border border-zinc-100',
+                  msg.role === 'sage' && 'bg-zinc-50 border border-zinc-200',
                   msg.role === 'user' && 'bg-zinc-900 text-white',
                   msg.role === 'system' && 'bg-blue-50 border border-blue-100 text-blue-800',
                 )}>
@@ -1703,7 +1705,7 @@ function DrSageTab() {
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center flex-shrink-0">
                   <Stethoscope className="w-4 h-4 text-white" />
                 </div>
-                <div className="bg-zinc-50 border border-zinc-100 rounded-xl px-4 py-4 max-w-[80%]">
+                <div className="bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-4 max-w-[80%]">
                   <div className="flex items-center gap-2 mb-3">
                     <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
                     <span className="text-xs font-semibold text-zinc-700">Agentic Workflow Running...</span>
@@ -1711,7 +1713,7 @@ function DrSageTab() {
                   <div className="space-y-2">
                     {activeWorkflow.map((step, idx) => (
                       <div key={step.id} className={cn(
-                        'flex items-start gap-2.5 p-2 rounded-lg transition-colors',
+                        'flex items-start gap-2.5 p-2 rounded-lg transition-colors duration-150',
                         step.status === 'running' ? 'bg-blue-50' :
                         step.status === 'complete' ? 'bg-emerald-50/50' : 'bg-transparent'
                       )}>
@@ -1721,7 +1723,7 @@ function DrSageTab() {
                           ) : step.status === 'running' ? (
                             <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
                           ) : (
-                            <CircleDot className="w-4 h-4 text-zinc-300" />
+                            <CircleDot className="w-4 h-4 text-zinc-400" />
                           )}
                         </div>
                         <div className="flex-1">
@@ -1730,7 +1732,7 @@ function DrSageTab() {
                               {step.label}
                             </span>
                             <span className={cn(
-                              'px-1.5 py-0.5 rounded text-[9px] font-medium',
+                              'px-1.5 py-0.5 rounded text-xs font-medium',
                               step.agent === 'sage' ? 'bg-blue-100 text-blue-600' :
                               step.agent === 'ana' ? 'bg-violet-100 text-violet-600' :
                               'bg-zinc-100 text-zinc-600'
@@ -1739,7 +1741,7 @@ function DrSageTab() {
                             </span>
                           </div>
                           {step.status === 'running' && (
-                            <p className="text-[10px] text-zinc-500 mt-0.5">{step.description}</p>
+                            <p className="text-xs text-zinc-500 mt-0.5">{step.description}</p>
                           )}
                         </div>
                       </div>
@@ -1753,7 +1755,7 @@ function DrSageTab() {
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center flex-shrink-0">
                   <Stethoscope className="w-4 h-4 text-white" />
                 </div>
-                <div className="bg-zinc-50 border border-zinc-100 rounded-xl px-4 py-3 flex items-center gap-2">
+                <div className="bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 flex items-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
                   <span className="text-sm text-zinc-500">Dr. Sage is thinking...</span>
                 </div>
@@ -1763,20 +1765,20 @@ function DrSageTab() {
           </div>
 
           {/* Input */}
-          <div className="border-t border-zinc-100 p-3">
+          <div className="border-t border-zinc-200 p-3">
             <div className="flex items-center gap-2">
               <input
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend(input)}
                 placeholder="Ask Dr. Sage about the platform, regulatory strategy, or training..."
-                className="flex-1 px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
+                className="flex-1 px-3 py-2 text-sm border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/20 focus:border-blue-400"
                 disabled={isThinking}
               />
               <button
                 onClick={() => handleSend(input)}
                 disabled={!input.trim() || isThinking}
-                className="px-3 py-2 bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-40 transition-colors"
+                className="px-3 py-2 bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-40 transition-colors duration-150"
               >
                 <Send className="w-4 h-4" />
               </button>
@@ -1799,7 +1801,7 @@ function DrSageTab() {
                     key={action.id}
                     onClick={() => handleQuickAction(action.id)}
                     disabled={isThinking}
-                    className="w-full flex items-center gap-2.5 p-2.5 rounded-lg text-left hover:bg-zinc-50 transition-colors disabled:opacity-50 group"
+                    className="w-full flex items-center gap-2.5 p-2.5 rounded-lg text-left hover:bg-zinc-50 transition-colors disabled:opacity-60 group"
                   >
                     <div className="w-7 h-7 rounded-md bg-zinc-100 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-50">
                       <Icon className="w-3.5 h-3.5 text-zinc-500 group-hover:text-blue-600" />
@@ -1838,7 +1840,7 @@ function DrSageTab() {
           <div className="bg-white rounded-xl border border-zinc-200 p-4">
             <div className="flex items-center gap-2 mb-2">
               <div className="flex -space-x-2">
-                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center border-2 border-white z-10">
+                <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center border-2 border-white z-10">
                   <Sparkles className="w-3 h-3 text-white" />
                 </div>
                 <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-cyan-300 flex items-center justify-center border-2 border-white">
@@ -1872,7 +1874,7 @@ function WhatsNewTab() {
   return (
     <div className="space-y-8">
       <div className="text-center max-w-2xl mx-auto mb-2">
-        <h2 className="text-2xl font-bold text-zinc-900 mb-2">What's New</h2>
+        <h2 className="text-2xl font-semibold text-zinc-900 mb-2">What's New</h2>
         <p className="text-sm text-zinc-500">
           The latest features, intelligence updates, and improvements to help you
           get more from the platform.
@@ -1885,14 +1887,14 @@ function WhatsNewTab() {
         const LatestIcon = latest.icon;
         const typeCfg = TYPE_CONFIG[latest.type];
         return (
-          <div className="bg-gradient-to-br from-violet-50 via-blue-50 to-cyan-50 rounded-2xl border border-violet-100 p-8">
+          <div className="bg-gradient-to-br from-violet-50 via-blue-50 to-cyan-50 rounded-xl border border-violet-100 p-8">
             <div className="flex items-start gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-violet-200/50">
+              <div className="w-14 h-14 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0 /50">
                 <LatestIcon className="w-7 h-7 text-white" />
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className={cn('px-2 py-0.5 rounded-full text-[10px] font-medium', `bg-${typeCfg.color}-100 text-${typeCfg.color}-700`)}>
+                  <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', `bg-${typeCfg.color}-100 text-${typeCfg.color}-700`)}>
                     {typeCfg.label}
                   </span>
                   <span className="text-xs text-zinc-400">v{latest.version} — {new Date(latest.date).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}</span>
@@ -1914,16 +1916,16 @@ function WhatsNewTab() {
             const typeCfg = TYPE_CONFIG[item.type];
             return (
               <div key={idx} className="flex items-start gap-4 relative">
-                <div className="w-12 h-12 rounded-xl bg-white border border-zinc-200 flex items-center justify-center flex-shrink-0 z-10">
+                <div className="w-12 h-12 rounded-lg bg-white border border-zinc-200 flex items-center justify-center flex-shrink-0 z-10">
                   <Icon className={cn('w-5 h-5', `text-${typeCfg.color}-500`)} />
                 </div>
                 <div className="bg-white rounded-xl border border-zinc-200 p-4 flex-1 hover:shadow-sm transition-shadow">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className={cn('px-2 py-0.5 rounded-full text-[10px] font-medium', `bg-${typeCfg.color}-50 text-${typeCfg.color}-700`)}>
+                    <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', `bg-${typeCfg.color}-50 text-${typeCfg.color}-700`)}>
                       {typeCfg.label}
                     </span>
-                    <span className="text-[10px] text-zinc-400">v{item.version}</span>
-                    <span className="text-[10px] text-zinc-400 ml-auto">
+                    <span className="text-xs text-zinc-400">v{item.version}</span>
+                    <span className="text-xs text-zinc-400 ml-auto">
                       {new Date(item.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                     </span>
                   </div>
@@ -1937,7 +1939,7 @@ function WhatsNewTab() {
       </div>
 
       {/* Roadmap Teaser */}
-      <div className="bg-zinc-900 rounded-2xl p-8 text-white">
+      <div className="bg-zinc-900 rounded-xl p-8 text-white">
         <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
           <Rocket className="w-5 h-5 text-violet-400" />
           Coming Soon
@@ -1950,7 +1952,7 @@ function WhatsNewTab() {
           ].map(item => {
             const RoadmapIcon = item.icon;
             return (
-              <div key={item.title} className="p-4 rounded-xl bg-white/10 hover:bg-white/15 transition-colors">
+              <div key={item.title} className="p-4 rounded-xl bg-white/10 hover:bg-white/15 transition-colors duration-150">
                 <RoadmapIcon className="w-5 h-5 text-violet-300 mb-2" />
                 <h4 className="text-sm font-semibold text-white mb-1">{item.title}</h4>
                 <p className="text-xs text-zinc-400 leading-relaxed">{item.desc}</p>

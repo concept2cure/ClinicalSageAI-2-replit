@@ -62,7 +62,7 @@ const submissionTypeColors: Record<SubmissionType, string> = {
 const SubmissionBadge: React.FC<{ type: SubmissionType }> = ({ type }) => (
   <Badge
     variant="outline"
-    className={cn('text-[10px] font-medium px-1.5 py-0', submissionTypeColors[type])}
+    className={cn('text-xs font-medium px-1.5 py-0', submissionTypeColors[type])}
   >
     {type.replace('_', ' ')}
   </Badge>
@@ -120,7 +120,7 @@ const ProjectItem: React.FC<ProjectItemProps> = ({
             <button
               onClick={onClick}
               className={cn(
-                'flex h-10 w-10 items-center justify-center rounded-lg transition-all',
+                'flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-150',
                 isActive
                   ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-200'
                   : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none'
@@ -274,9 +274,9 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
           )}
         </div>
         <div className="flex flex-col items-end gap-1">
-          <span className="text-[10px] text-zinc-400">{formatTime(updatedAt)}</span>
+          <span className="text-xs text-zinc-400">{formatTime(updatedAt)}</span>
           {artifactCount > 0 && (
-            <span className="flex items-center gap-0.5 text-[10px] text-zinc-400">
+            <span className="flex items-center gap-0.5 text-xs text-zinc-400">
               <FileText className="h-2.5 w-2.5" />
               {artifactCount}
             </span>
@@ -398,7 +398,7 @@ export const ProjectsSidebar: React.FC = () => {
               <TooltipTrigger asChild>
                 <button
                   onClick={() => setShowNewProjectModal(true)}
-                  className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-900 text-white hover:bg-zinc-800 transition-colors"
+                  className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-900 text-white hover:bg-zinc-800 transition-colors duration-150"
                 >
                   <Plus className="h-5 w-5" />
                 </button>
@@ -463,7 +463,14 @@ export const ProjectsSidebar: React.FC = () => {
           </TooltipProvider>
         </div>
 
-        <NewProjectModal open={showNewProjectModal} onClose={() => setShowNewProjectModal(false)} />
+        <NewProjectModal
+          open={showNewProjectModal}
+          onClose={() => setShowNewProjectModal(false)}
+          onProjectCreated={(projectId) => {
+            setActiveProject(projectId);
+            setShowNewProjectModal(false);
+          }}
+        />
       </div>
     );
   }
@@ -474,7 +481,7 @@ export const ProjectsSidebar: React.FC = () => {
       {/* Header */}
       <div className="flex h-14 items-center justify-between border-b border-zinc-200/50 px-4">
         <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center shadow-sm">
+          <div className="h-8 w-8 rounded-xl bg-violet-600 flex items-center justify-center shadow-sm">
             <Sparkles className="h-4 w-4 text-white" />
           </div>
           <span className="font-semibold text-zinc-900">Concept2Cure</span>
@@ -497,7 +504,7 @@ export const ProjectsSidebar: React.FC = () => {
               <button
                 key={item.id}
                 onClick={() => handleAccess(item.id)}
-                className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200/50 transition-colors"
+                className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200/50 transition-colors duration-150"
               >
                 <Icon className="h-4 w-4" />
                 {item.label}
@@ -508,7 +515,7 @@ export const ProjectsSidebar: React.FC = () => {
       </div>
 
       {/* Search */}
-      <div className="p-3 border-b border-zinc-100">
+      <div className="p-3 border-b border-zinc-200">
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
           <input
@@ -516,7 +523,7 @@ export const ProjectsSidebar: React.FC = () => {
             placeholder="Search projects..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 text-sm bg-white border border-zinc-200 rounded-md placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+            className="w-full pl-8 pr-3 py-1.5 text-sm bg-white border border-zinc-200 rounded-md placeholder:text-zinc-400 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/30 focus:border-blue-500"
           />
         </div>
       </div>
@@ -561,7 +568,7 @@ export const ProjectsSidebar: React.FC = () => {
 
                 {/* Expanded conversations list */}
                 {activeProject?.id === project.id && expandedProjectId === project.id && (
-                  <div className="mt-1 ml-2 pl-3 border-l-2 border-zinc-100 space-y-0.5">
+                  <div className="mt-1 ml-2 pl-3 border-l-2 border-zinc-200 space-y-0.5">
                     {/* Project Knowledge Panel - Claude.ai parity */}
                     <div className="py-2">
                       <ProjectKnowledge project={activeProject} />

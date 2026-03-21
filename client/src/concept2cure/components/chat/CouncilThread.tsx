@@ -151,9 +151,9 @@ const AGENTS: Record<
   PATHFINDER: {
     name: 'CERV2',
     title: 'Regulatory Pathfinder',
-    color: 'text-indigo-700',
-    bgColor: 'bg-indigo-100',
-    bubbleColor: 'bg-indigo-50 border border-indigo-200 text-indigo-900',
+    color: 'text-blue-700',
+    bgColor: 'bg-blue-100',
+    bubbleColor: 'bg-blue-50 border border-blue-200 text-blue-900',
     icon: <ShieldCheck className="w-4 h-4" />,
   },
   VAULT: {
@@ -161,7 +161,7 @@ const AGENTS: Record<
     title: 'Logistics Manager',
     color: 'text-zinc-700',
     bgColor: 'bg-zinc-100',
-    bubbleColor: 'bg-zinc-50 border border-zinc-200 text-zinc-800',
+    bubbleColor: 'bg-zinc-50 border border-zinc-200 text-zinc-900',
     icon: <Database className="w-4 h-4" />,
   },
 };
@@ -190,7 +190,7 @@ const ThinkingIndicator: React.FC = () => (
 const CitationBadge: React.FC<{ citation: Citation }> = ({ citation }) => (
   <button
     onClick={citation.onClick}
-    className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+    className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors duration-150"
   >
     <FileText className="w-3 h-3" />
     {citation.label}
@@ -252,19 +252,19 @@ const MessageBubble: React.FC<{
         <div
           className={cn('flex items-baseline gap-2 mb-1', isUser ? 'justify-end' : 'justify-start')}
         >
-          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+          <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
             {persona.name}
           </span>
-          {!isUser && <span className="text-[10px] text-zinc-300">{persona.title}</span>}
+          {!isUser && <span className="text-xs text-zinc-400">{persona.title}</span>}
           {message.timestamp && (
-            <span className="text-[10px] text-zinc-300">{message.timestamp}</span>
+            <span className="text-xs text-zinc-400">{message.timestamp}</span>
           )}
         </div>
 
         {/* Message Bubble */}
         <div
           className={cn(
-            'text-sm p-4 rounded-2xl shadow-sm leading-relaxed',
+            'text-sm p-4 rounded-xl shadow-sm leading-relaxed',
             isUser ? 'rounded-tr-none' : 'rounded-tl-none',
             persona.bubbleColor
           )}
@@ -279,11 +279,11 @@ const MessageBubble: React.FC<{
               {message.confidence !== undefined && (
                 <div className="mt-2 pt-2 border-t border-zinc-200/50">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-zinc-400">Confidence:</span>
+                    <span className="text-xs text-zinc-400">Confidence:</span>
                     <div className="flex-1 h-1.5 bg-zinc-200 rounded-full overflow-hidden">
                       <div
                         className={cn(
-                          'h-full rounded-full transition-all',
+                          'h-full rounded-full transition-all duration-150',
                           message.confidence >= 90 && 'bg-green-500',
                           message.confidence >= 70 && message.confidence < 90 && 'bg-blue-500',
                           message.confidence >= 50 && message.confidence < 70 && 'bg-amber-500',
@@ -292,7 +292,7 @@ const MessageBubble: React.FC<{
                         style={{ width: `${message.confidence}%` }}
                       />
                     </div>
-                    <span className="text-[10px] font-mono font-medium text-zinc-500">
+                    <span className="text-xs font-mono font-medium text-zinc-500">
                       {message.confidence}%
                     </span>
                   </div>
@@ -330,7 +330,7 @@ const MessageBubble: React.FC<{
                 key={i}
                 onClick={action.onClick}
                 className={cn(
-                  'text-[11px] font-bold px-3 py-1.5 rounded-full transition-all shadow-sm',
+                  'text-xs font-semibold px-3 py-1.5 rounded-full transition-all shadow-sm',
                   'flex items-center gap-1.5',
                   action.variant === 'primary' && 'bg-blue-600 text-white hover:bg-blue-700',
                   action.variant === 'danger' && 'bg-red-100 text-red-700 hover:bg-red-200',
@@ -350,28 +350,28 @@ const MessageBubble: React.FC<{
           <div className="flex items-center gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               onClick={() => onFeedback?.(true)}
-              className="p-1 text-zinc-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
+              className="p-1 text-zinc-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors duration-150"
               title="Good response"
             >
               <ThumbsUp className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => onFeedback?.(false)}
-              className="p-1 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+              className="p-1 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors duration-150"
               title="Poor response"
             >
               <ThumbsDown className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={onCopy}
-              className="p-1 text-zinc-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+              className="p-1 text-zinc-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors duration-150"
               title="Copy"
             >
               <Copy className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={onRetry}
-              className="p-1 text-zinc-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors"
+              className="p-1 text-zinc-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors duration-150"
               title="Regenerate"
             >
               <RefreshCw className="w-3.5 h-3.5" />
@@ -398,10 +398,10 @@ export const CouncilThread: React.FC<CouncilThreadProps> = ({
     <div className={cn('space-y-6 p-4', className)}>
       {messages.length === 0 ? (
         <div className="text-center py-12">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
+          <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-blue-100 flex items-center justify-center">
             <Sparkles className="w-8 h-8 text-blue-600" />
           </div>
-          <h3 className="text-lg font-semibold text-zinc-800 mb-1">Your Sherpa Team is Ready</h3>
+          <h3 className="text-lg font-semibold text-zinc-900 mb-1">Your Sherpa Team is Ready</h3>
           <p className="text-sm text-zinc-500 max-w-sm mx-auto">
             Start a conversation and your team of expert agents will guide you through the
             regulatory mountain.

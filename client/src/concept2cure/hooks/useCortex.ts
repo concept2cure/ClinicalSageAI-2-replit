@@ -10,6 +10,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { useVisibleInterval } from './useVisibleInterval';
 import {
   cortexService,
   cortexQueryKeys,
@@ -31,10 +32,11 @@ import {
  * Hook for Cortex health status
  */
 export function useCortexHealth(options?: { refetchInterval?: number }) {
+  const interval = useVisibleInterval(options?.refetchInterval ?? 30000);
   return useQuery({
     queryKey: cortexQueryKeys.health(),
     queryFn: () => cortexService.getHealth(),
-    refetchInterval: options?.refetchInterval ?? 30000,
+    refetchInterval: interval,
     staleTime: 10000,
   });
 }

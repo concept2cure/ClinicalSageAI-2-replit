@@ -195,15 +195,15 @@ const Sidebar: React.FC<{
           <div className="flex items-center gap-3">
             <Mountain className="w-8 h-8 text-blue-400" />
             <div>
-              <h1 className="font-bold text-sm tracking-tight">CONCEPT2CURE</h1>
-              <p className="text-[10px] text-zinc-400">Regulatory Sherpa</p>
+              <h1 className="font-semibold text-sm tracking-tight">CONCEPT2CURE</h1>
+              <p className="text-xs text-zinc-400">Regulatory Sherpa</p>
             </div>
           </div>
         )}
         {collapsed && <Mountain className="w-8 h-8 text-blue-400 mx-auto" />}
         <button
           onClick={() => onCollapsedChange(!collapsed)}
-          className="p-1.5 rounded-lg hover:bg-zinc-800 transition-colors"
+          className="p-1.5 rounded-lg hover:bg-zinc-800 transition-colors duration-150"
         >
           {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
         </button>
@@ -232,7 +232,7 @@ const Sidebar: React.FC<{
                 {!collapsed && (
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{item.label}</p>
-                    <p className="text-[10px] text-zinc-500 truncate">{item.description}</p>
+                    <p className="text-xs text-zinc-500 truncate">{item.description}</p>
                   </div>
                 )}
               </button>
@@ -244,7 +244,7 @@ const Sidebar: React.FC<{
       {/* User */}
       <div className="p-2 border-t border-zinc-800">
         <button className={cn(
-          'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors',
+          'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors duration-150',
           collapsed && 'justify-center'
         )}>
           <Settings className="w-5 h-5" />
@@ -286,7 +286,7 @@ const CortexSidecar: React.FC<{
         </div>
         <button
           onClick={() => onOpenChange(false)}
-          className="p-1.5 rounded-lg hover:bg-white/20 text-white transition-colors"
+          className="p-1.5 rounded-lg hover:bg-white/20 text-white transition-colors duration-150"
         >
           <PanelRightClose className="w-5 h-5" />
         </button>
@@ -296,10 +296,10 @@ const CortexSidecar: React.FC<{
       <div className="flex-1 overflow-y-auto">
         {messages.length === 0 ? (
           <div className="p-6 text-center">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-blue-600 flex items-center justify-center">
+            <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-blue-600 flex items-center justify-center">
               <Mountain className="w-8 h-8 text-white" />
             </div>
-            <h3 className="text-lg font-semibold text-zinc-800 mb-2">Your Sherpa is Ready</h3>
+            <h3 className="text-lg font-semibold text-zinc-900 mb-2">Your Sherpa is Ready</h3>
             <p className="text-sm text-zinc-500 mb-4">
               I'll help you draft documents, verify claims, navigate regulations, 
               and ensure you reach the summit safely.
@@ -311,13 +311,13 @@ const CortexSidecar: React.FC<{
             {/* Quick Actions */}
             <div className="mt-6 space-y-2">
               <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Quick Start</p>
-              <button className="w-full px-4 py-2 text-sm text-left bg-zinc-50 hover:bg-blue-50 rounded-lg border border-zinc-200 hover:border-blue-300 transition-colors">
+              <button className="w-full px-4 py-2 text-sm text-left bg-zinc-50 hover:bg-blue-50 rounded-lg border border-zinc-200 hover:border-blue-300 transition-colors duration-150">
                 📝 Draft a Clinical Overview
               </button>
-              <button className="w-full px-4 py-2 text-sm text-left bg-zinc-50 hover:bg-blue-50 rounded-lg border border-zinc-200 hover:border-blue-300 transition-colors">
+              <button className="w-full px-4 py-2 text-sm text-left bg-zinc-50 hover:bg-blue-50 rounded-lg border border-zinc-200 hover:border-blue-300 transition-colors duration-150">
                 🔍 Find a predicate device
               </button>
-              <button className="w-full px-4 py-2 text-sm text-left bg-zinc-50 hover:bg-blue-50 rounded-lg border border-zinc-200 hover:border-blue-300 transition-colors">
+              <button className="w-full px-4 py-2 text-sm text-left bg-zinc-50 hover:bg-blue-50 rounded-lg border border-zinc-200 hover:border-blue-300 transition-colors duration-150">
                 ⚗️ Check CMC guardrails
               </button>
             </div>
@@ -336,13 +336,13 @@ const CortexSidecar: React.FC<{
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             placeholder="Ask your Sherpa..."
-            className="flex-1 px-4 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="flex-1 px-4 py-2 text-sm border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none focus:border-transparent"
           />
           <button
             onClick={handleSend}
             disabled={!input.trim()}
             className={cn(
-              'p-2 rounded-lg transition-colors',
+              'p-2 rounded-lg transition-colors duration-150',
               input.trim()
                 ? 'bg-blue-600 text-white hover:bg-blue-700'
                 : 'bg-zinc-200 text-zinc-400'
@@ -374,9 +374,9 @@ const Header: React.FC<{
         <input
           type="text"
           placeholder="Search documents, projects, guidance..."
-          className="w-80 pl-10 pr-4 py-2 text-sm bg-zinc-50 border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-80 pl-10 pr-4 py-2 text-sm bg-zinc-50 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none focus:border-transparent"
         />
-        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-zinc-400 bg-zinc-200 px-1.5 py-0.5 rounded">
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-400 bg-zinc-200 px-1.5 py-0.5 rounded">
           ⌘K
         </span>
       </div>
@@ -385,10 +385,10 @@ const Header: React.FC<{
     {/* Actions */}
     <div className="flex items-center gap-2">
       {/* Notifications */}
-      <button className="relative p-2 rounded-lg hover:bg-zinc-100 text-zinc-600 transition-colors">
+      <button className="relative p-2 rounded-lg hover:bg-zinc-100 text-zinc-600 transition-colors duration-150">
         <Bell className="w-5 h-5" />
         {notificationCount > 0 && (
-          <span className="absolute top-1 right-1 w-4 h-4 text-[10px] font-bold bg-red-500 text-white rounded-full flex items-center justify-center">
+          <span className="absolute top-1 right-1 w-4 h-4 text-xs font-semibold bg-red-500 text-white rounded-full flex items-center justify-center">
             {notificationCount}
           </span>
         )}
@@ -398,7 +398,7 @@ const Header: React.FC<{
       <button
         onClick={onCortexToggle}
         className={cn(
-          'flex items-center gap-2 px-3 py-2 rounded-lg transition-colors',
+          'flex items-center gap-2 px-3 py-2 rounded-lg transition-colors duration-150',
           cortexOpen
             ? 'bg-blue-100 text-blue-700'
             : 'hover:bg-zinc-100 text-zinc-600'
@@ -411,10 +411,10 @@ const Header: React.FC<{
       {/* User */}
       <div className="ml-2 flex items-center gap-3 pl-4 border-l border-zinc-200">
         <div className="text-right">
-          <p className="text-sm font-medium text-zinc-800">{userName || 'User'}</p>
-          <p className="text-[10px] text-zinc-500">Regulatory Lead</p>
+          <p className="text-sm font-medium text-zinc-900">{userName || 'User'}</p>
+          <p className="text-xs text-zinc-500">Regulatory Lead</p>
         </div>
-        <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm">
+        <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm">
           {(userName || 'U')[0].toUpperCase()}
         </div>
       </div>

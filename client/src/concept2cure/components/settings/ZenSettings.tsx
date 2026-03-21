@@ -13,6 +13,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import {
   X,
@@ -81,7 +82,7 @@ interface SettingRowProps {
 }
 
 const SettingRow: React.FC<SettingRowProps> = ({ label, description, children }) => (
-  <div className="flex items-center justify-between py-4 border-b border-zinc-100 last:border-b-0">
+  <div className="flex items-center justify-between py-4 border-b border-zinc-200 last:border-b-0">
     <div className="flex-1 pr-4">
       <div className="text-sm font-medium text-zinc-900">{label}</div>
       {description && <div className="text-xs text-zinc-500 mt-0.5">{description}</div>}
@@ -104,6 +105,7 @@ const ToggleSwitch: React.FC<ToggleSwitchProps> = ({ enabled, onChange, label })
     onClick={() => onChange(!enabled)}
     className={cn(
       'relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:ring-offset-2',
+      'relative w-11 h-6 rounded-full transition-colors duration-150',
       enabled ? 'bg-blue-600' : 'bg-zinc-300'
     )}
   >
@@ -179,6 +181,25 @@ const ProfileSection: React.FC = () => {
       setSaveStatus('error');
     }
     setSaving(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle');
+
+  const handleSave = () => {
+    const normalizeList = (value: string) =>
+      value
+        .split(/\n|,/)
+        .map(item => item.trim())
+        .filter(Boolean);
+
+    const profile = {
+      role,
+      objectives: normalizeList(objectives),
+      criteria: normalizeList(criteria),
+      updatedAt: new Date().toISOString(),
+    };
+
+    localStorage.setItem('concept2cure_user_profile', JSON.stringify(profile));
+    setSaveStatus('saved');
+    setTimeout(() => setSaveStatus('idle'), 2000);
   };
 
   const initials = name.split(/\s+/).map(p => p[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || '??';
@@ -191,12 +212,14 @@ const ProfileSection: React.FC = () => {
       />
 
       {/* Avatar */}
-      <div className="flex items-center gap-4 mb-6 pb-6 border-b border-zinc-100">
+      <div className="flex items-center gap-4 mb-6 pb-6 border-b border-zinc-200">
         <div className="relative">
           <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-2xl font-semibold">
             {initials}
+          <div className="w-14 h-14 rounded-lg bg-blue-600 flex items-center justify-center text-white text-base font-semibold">
+            JD
           </div>
-          <button className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-white border border-zinc-200 shadow-sm flex items-center justify-center hover:bg-zinc-50 transition-colors">
+          <button aria-label="Change profile picture" title="Change profile picture" className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-white border border-zinc-200 shadow-sm flex items-center justify-center hover:bg-zinc-50 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none">
             <Camera className="w-4 h-4 text-zinc-600" />
           </button>
         </div>
@@ -214,7 +237,7 @@ const ProfileSection: React.FC = () => {
             type="text"
             value={name}
             onChange={e => setName(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+            className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all duration-150"
           />
         </div>
         <div>
@@ -247,6 +270,19 @@ const ProfileSection: React.FC = () => {
             onChange={e => setDepartment(e.target.value)}
             placeholder="e.g., Regulatory, Clinical, CMC"
             className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+            value={role}
+            onChange={e => setRole(e.target.value)}
+            className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all duration-150"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-zinc-700 mb-1.5">Objectives</label>
+          <textarea
+            value={objectives}
+            onChange={e => setObjectives(e.target.value)}
+            rows={3}
+            className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all duration-150"
+            placeholder="Comma or new-line separated"
           />
         </div>
         <div>
@@ -257,6 +293,8 @@ const ProfileSection: React.FC = () => {
             rows={3}
             className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
             placeholder="A short bio visible to your team"
+            className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all duration-150"
+            placeholder="What must be true for success"
           />
         </div>
       </div>
@@ -276,6 +314,16 @@ const ProfileSection: React.FC = () => {
           <span className="text-sm text-red-600 font-medium">Failed to save</span>
         )}
       </div>
+      <button
+        onClick={handleSave}
+        className={`mt-6 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-150 ${
+          saveStatus === 'saved'
+            ? 'bg-emerald-600 text-white'
+            : 'bg-blue-600 text-white hover:bg-blue-700'
+        }`}
+      >
+        {saveStatus === 'saved' ? 'Saved' : 'Save Changes'}
+      </button>
     </div>
   );
 };
@@ -470,10 +518,10 @@ const SecuritySection: React.FC = () => {
           These actions are irreversible. Please proceed with caution.
         </p>
         <div className="flex gap-3">
-          <button className="px-3 py-1.5 text-xs font-medium text-red-700 border border-red-300 rounded-lg hover:bg-red-100 transition-colors">
+          <button className="px-3 py-1.5 text-xs font-medium text-red-700 border border-red-300 rounded-lg hover:bg-red-100 transition-colors duration-150">
             Export All Data
           </button>
-          <button className="px-3 py-1.5 text-xs font-medium text-red-700 border border-red-300 rounded-lg hover:bg-red-100 transition-colors">
+          <button className="px-3 py-1.5 text-xs font-medium text-red-700 border border-red-300 rounded-lg hover:bg-red-100 transition-colors duration-150">
             Delete Account
           </button>
         </div>
@@ -510,7 +558,7 @@ const AppearanceSection: React.FC = () => {
               key={id}
               onClick={() => setTheme(id)}
               className={cn(
-                'flex-1 flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all',
+                'flex-1 flex flex-col items-center gap-2 p-4 rounded-xl border transition-all duration-150',
                 theme === id
                   ? 'border-blue-500 bg-blue-50'
                   : 'border-zinc-200 hover:border-zinc-300'
@@ -826,6 +874,10 @@ const IntegrationsSection: React.FC = () => {
                 filterCategory === cat
                   ? 'bg-blue-600 text-white'
                   : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                'px-3 py-1.5 text-xs font-medium rounded-lg transition-colors duration-150',
+                integration.connected
+                  ? 'text-zinc-600 bg-zinc-100 hover:bg-zinc-200'
+                  : 'text-white bg-blue-600 hover:bg-blue-700'
               )}
             >
               {CATEGORY_ICONS[cat]} {CATEGORY_LABELS[cat]} ({count})
@@ -1044,6 +1096,15 @@ const HelpSection: React.FC = () => {
 
       <div className="text-center py-6 border-t border-zinc-100">
         <p className="text-xs text-zinc-400 mb-2">Concept2Cure v3.0.0 • © 2026 Concept2Cure, Inc.</p>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-400 font-medium">
+              Coming soon
+            </span>
+          </div>
+        ))}
+      </div>
+
+      <div className="text-center py-6 border-t border-zinc-200">
+        <p className="text-xs text-zinc-400 mb-2">Concept2Cure v3.0.0 • © 2026 Concept2Cure</p>
         <div className="flex justify-center gap-4 text-xs">
           <a href="/concept2cure/legal/terms" className="text-zinc-400 hover:text-zinc-600 transition-colors" target="_blank">Terms</a>
           <a href="/concept2cure/legal/privacy" className="text-zinc-400 hover:text-zinc-600 transition-colors" target="_blank">Privacy</a>
@@ -1077,15 +1138,27 @@ export const ZenSettings: React.FC<ZenSettingsProps> = ({ isOpen, onClose }) => 
   const [activeSection, setActiveSection] = useState<SettingsSection>('profile');
   const ActiveComponent = SECTION_COMPONENTS[activeSection];
 
-  if (!isOpen) return null;
-
   return (
+    <AnimatePresence>
+    {isOpen && (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50" onClick={onClose} />
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.15 }}
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+        onClick={onClose}
+      />
 
       {/* Modal */}
-      <div className="fixed inset-4 sm:inset-auto sm:top-[5%] sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-4xl sm:h-[90vh] bg-white rounded-2xl shadow-2xl overflow-hidden z-50 flex animate-in fade-in zoom-in-95 duration-150">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
+        className="fixed inset-4 sm:inset-auto sm:top-[5%] sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-4xl sm:h-[90vh] bg-white rounded-xl shadow-lg overflow-hidden z-50 flex">
         {/* Sidebar */}
         <div className="w-56 bg-zinc-50 border-r border-zinc-200 flex flex-col">
           {/* Header */}
@@ -1100,7 +1173,7 @@ export const ZenSettings: React.FC<ZenSettingsProps> = ({ isOpen, onClose }) => 
                 key={id}
                 onClick={() => setActiveSection(id)}
                 className={cn(
-                  'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                  'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150',
                   activeSection === id
                     ? 'bg-white text-zinc-900 shadow-sm'
                     : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'
@@ -1114,7 +1187,7 @@ export const ZenSettings: React.FC<ZenSettingsProps> = ({ isOpen, onClose }) => 
 
           {/* Sign out */}
           <div className="p-2 border-t border-zinc-200">
-            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors">
+            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors duration-150">
               <LogOut className="w-4 h-4" />
               Sign Out
             </button>
@@ -1128,7 +1201,7 @@ export const ZenSettings: React.FC<ZenSettingsProps> = ({ isOpen, onClose }) => 
             <div />
             <button
               onClick={onClose}
-              className="p-2 rounded-lg text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 transition-colors"
+              className="p-2 rounded-lg text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 transition-colors duration-150"
             >
               <X className="w-5 h-5" />
             </button>
@@ -1139,8 +1212,10 @@ export const ZenSettings: React.FC<ZenSettingsProps> = ({ isOpen, onClose }) => 
             <ActiveComponent />
           </div>
         </div>
-      </div>
+      </motion.div>
     </>
+    )}
+    </AnimatePresence>
   );
 };
 

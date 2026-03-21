@@ -159,7 +159,7 @@ const MetricCard: React.FC<MetricCardProps> = ({
         </span>
       )}
     </div>
-    <div className="text-2xl font-bold text-zinc-900 tabular-nums">{value}</div>
+    <div className="text-2xl font-semibold text-zinc-900 tabular-nums">{value}</div>
     <div className="text-xs text-zinc-500 mt-0.5">{label}</div>
     {subtitle && <div className="text-xs text-zinc-400 mt-0.5">{subtitle}</div>}
   </div>
@@ -223,10 +223,10 @@ const TreeNode: React.FC<TreeNodeProps> = ({ node, depth = 0, selectedId, onSele
           if (hasChildren) setExpanded(prev => !prev);
         }}
         className={cn(
-          'w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left text-sm transition-colors',
+          'w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left text-sm transition-colors duration-150',
           selectedId === node.id
             ? 'bg-blue-50 text-blue-900 border border-blue-200'
-            : 'hover:bg-zinc-50 text-zinc-800'
+            : 'hover:bg-zinc-50 text-zinc-900'
         )}
         style={{ paddingLeft: `${depth * 16 + 8}px` }}
       >
@@ -326,7 +326,7 @@ const FindingsPanel: React.FC<FindingsPanelProps> = ({ findings, isLoading, onAc
             {finding.status === 'open' && (
               <button
                 onClick={() => onAcknowledge(finding.id)}
-                className="flex-shrink-0 p-1.5 rounded-md hover:bg-white/60 transition-colors"
+                className="flex-shrink-0 p-1.5 rounded-md hover:bg-white/60 transition-colors duration-150"
                 title="Acknowledge"
               >
                 <Eye className="w-4 h-4 text-zinc-500" />
@@ -392,7 +392,7 @@ const RulesActivityFeed: React.FC<RulesActivityFeedProps> = ({
 
       {logs.length === 0 ? (
         <div className="text-center py-6">
-          <ListChecks className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+          <ListChecks className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
           <p className="text-sm text-zinc-500">No recent rule executions</p>
         </div>
       ) : (
@@ -400,7 +400,7 @@ const RulesActivityFeed: React.FC<RulesActivityFeedProps> = ({
           {logs.slice(0, 8).map(log => (
             <div
               key={log.id}
-              className="flex items-center gap-2 rounded-md border border-zinc-100 bg-white px-3 py-2"
+              className="flex items-center gap-2 rounded-md border border-zinc-200 bg-white px-3 py-2"
             >
               {log.success ? (
                 <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
@@ -408,7 +408,7 @@ const RulesActivityFeed: React.FC<RulesActivityFeedProps> = ({
                 <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
               )}
               <div className="flex-1 min-w-0">
-                <span className="text-sm text-zinc-800 truncate block">
+                <span className="text-sm text-zinc-900 truncate block">
                   {log.triggerEvent.replace(/_/g, ' ')}
                 </span>
               </div>
@@ -533,10 +533,10 @@ export const MissionControl: React.FC<MissionControlProps> = ({ projectId }) => 
         {/* ── Hero Welcome Section (Claude.AI-style) ──────────────────── */}
         <div className="mb-8">
           <div className="text-center max-w-2xl mx-auto mb-8">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-violet-200/50">
+            <div className="w-12 h-12 rounded-lg bg-blue-600 flex items-center justify-center mx-auto mb-4 /50">
               <Target className="w-6 h-6 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-zinc-900 mb-2">
+            <h1 className="text-2xl font-semibold text-zinc-900 mb-2">
               Mission Control
             </h1>
             <p className="text-base text-zinc-500 leading-relaxed">
@@ -549,7 +549,7 @@ export const MissionControl: React.FC<MissionControlProps> = ({ projectId }) => 
           {/* How It Works — 3-column explainer */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <div className="bg-white rounded-xl border border-zinc-200 p-5 text-center hover:shadow-sm transition-shadow">
-              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center mx-auto mb-3">
+              <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center mx-auto mb-3">
                 <Eye className="w-5 h-5 text-blue-600" />
               </div>
               <h3 className="text-sm font-semibold text-zinc-900 mb-1">AI Sentinel Monitoring</h3>
@@ -559,7 +559,7 @@ export const MissionControl: React.FC<MissionControlProps> = ({ projectId }) => 
               </p>
             </div>
             <div className="bg-white rounded-xl border border-zinc-200 p-5 text-center hover:shadow-sm transition-shadow">
-              <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center mx-auto mb-3">
+              <div className="w-10 h-10 rounded-lg bg-violet-50 flex items-center justify-center mx-auto mb-3">
                 <Zap className="w-5 h-5 text-violet-600" />
               </div>
               <h3 className="text-sm font-semibold text-zinc-900 mb-1">Automation Rules Engine</h3>
@@ -569,7 +569,7 @@ export const MissionControl: React.FC<MissionControlProps> = ({ projectId }) => 
               </p>
             </div>
             <div className="bg-white rounded-xl border border-zinc-200 p-5 text-center hover:shadow-sm transition-shadow">
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center mx-auto mb-3">
+              <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center mx-auto mb-3">
                 <Layers className="w-5 h-5 text-emerald-600" />
               </div>
               <h3 className="text-sm font-semibold text-zinc-900 mb-1">Portfolio Oversight</h3>
@@ -590,7 +590,7 @@ export const MissionControl: React.FC<MissionControlProps> = ({ projectId }) => 
             onClick={handleScan}
             disabled={triggerScan.isPending}
             className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors',
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors duration-150',
               triggerScan.isPending
                 ? 'border-zinc-200 text-zinc-400 cursor-wait'
                 : 'border-zinc-300 text-zinc-700 hover:bg-zinc-50 hover:border-zinc-400'
@@ -649,7 +649,7 @@ export const MissionControl: React.FC<MissionControlProps> = ({ projectId }) => 
           <div className="lg:col-span-1 space-y-4">
             {/* Project Hierarchy */}
             <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
-              <div className="px-4 py-3 border-b border-zinc-100 flex items-center justify-between">
+              <div className="px-4 py-3 border-b border-zinc-200 flex items-center justify-between">
                 <h2 className="text-sm font-semibold text-zinc-900 flex items-center gap-1.5">
                   <GitBranch className="w-4 h-4 text-blue-600" />
                   Project Hierarchy
@@ -674,10 +674,10 @@ export const MissionControl: React.FC<MissionControlProps> = ({ projectId }) => 
                       key={prog.id}
                       onClick={() => setSelectedProjectId(prog.id)}
                       className={cn(
-                        'w-full flex items-center gap-2 px-3 py-2 rounded-md text-left text-sm transition-colors',
+                        'w-full flex items-center gap-2 px-3 py-2 rounded-md text-left text-sm transition-colors duration-150',
                         selectedProjectId === prog.id
                           ? 'bg-blue-50 text-blue-900 border border-blue-200'
-                          : 'hover:bg-zinc-50 text-zinc-800'
+                          : 'hover:bg-zinc-50 text-zinc-900'
                       )}
                     >
                       <Folder className="w-4 h-4 text-zinc-400" />
@@ -689,7 +689,7 @@ export const MissionControl: React.FC<MissionControlProps> = ({ projectId }) => 
                   ))
                 ) : (
                   <div className="text-center py-6">
-                    <Folder className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+                    <Folder className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
                     <p className="text-sm text-zinc-500">No programs yet</p>
                     <p className="text-xs text-zinc-400">Create a project to get started</p>
                   </div>
@@ -700,7 +700,7 @@ export const MissionControl: React.FC<MissionControlProps> = ({ projectId }) => 
             {/* Rollup Details (when a project is selected) */}
             {selectedProjectId && rollup && (
               <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
-                <div className="px-4 py-3 border-b border-zinc-100">
+                <div className="px-4 py-3 border-b border-zinc-200">
                   <h2 className="text-sm font-semibold text-zinc-900 flex items-center gap-1.5">
                     <BarChart3 className="w-4 h-4 text-violet-600" />
                     Rollup Summary
@@ -754,7 +754,7 @@ export const MissionControl: React.FC<MissionControlProps> = ({ projectId }) => 
           <div className="lg:col-span-2 space-y-4">
             {/* Sentinel Risk Panel */}
             <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
-              <div className="px-4 py-3 border-b border-zinc-100 flex items-center justify-between">
+              <div className="px-4 py-3 border-b border-zinc-200 flex items-center justify-between">
                 <h2 className="text-sm font-semibold text-zinc-900 flex items-center gap-1.5">
                   <Shield className="w-4 h-4 text-red-600" />
                   RI Sentinel — Active Findings
@@ -801,7 +801,7 @@ export const MissionControl: React.FC<MissionControlProps> = ({ projectId }) => 
 
             {/* Rules Engine Activity */}
             <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
-              <div className="px-4 py-3 border-b border-zinc-100 flex items-center justify-between">
+              <div className="px-4 py-3 border-b border-zinc-200 flex items-center justify-between">
                 <h2 className="text-sm font-semibold text-zinc-900 flex items-center gap-1.5">
                   <Zap className="w-4 h-4 text-violet-600" />
                   Rules Engine — Recent Activity
@@ -824,7 +824,7 @@ export const MissionControl: React.FC<MissionControlProps> = ({ projectId }) => 
         {!hasData && (
           <div className="mt-8 bg-white rounded-xl border border-zinc-200 p-8 text-center">
             <div className="max-w-md mx-auto">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-100 to-violet-100 flex items-center justify-center mx-auto mb-4">
+              <div className="w-14 h-14 rounded-lg bg-blue-100 flex items-center justify-center mx-auto mb-4">
                 <Target className="w-7 h-7 text-violet-600" />
               </div>
               <h3 className="text-lg font-semibold text-zinc-900 mb-2">
@@ -837,28 +837,28 @@ export const MissionControl: React.FC<MissionControlProps> = ({ projectId }) => 
               <div className="flex flex-col gap-3 text-left max-w-sm mx-auto">
                 <div className="flex items-start gap-3 p-3 rounded-lg bg-zinc-50">
                   <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-xs font-bold text-blue-600">1</span>
+                    <span className="text-xs font-semibold text-blue-600">1</span>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-zinc-800">Create a program</p>
+                    <p className="text-sm font-medium text-zinc-900">Create a program</p>
                     <p className="text-xs text-zinc-500">Define your submission type, indication, and regulatory pathway.</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3 p-3 rounded-lg bg-zinc-50">
                   <div className="w-6 h-6 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-xs font-bold text-violet-600">2</span>
+                    <span className="text-xs font-semibold text-violet-600">2</span>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-zinc-800">Run a Sentinel scan</p>
+                    <p className="text-sm font-medium text-zinc-900">Run a Sentinel scan</p>
                     <p className="text-xs text-zinc-500">AI analyzes your artifacts for compliance gaps and risks automatically.</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3 p-3 rounded-lg bg-zinc-50">
                   <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-xs font-bold text-emerald-600">3</span>
+                    <span className="text-xs font-semibold text-emerald-600">3</span>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-zinc-800">Configure automation rules</p>
+                    <p className="text-sm font-medium text-zinc-900">Configure automation rules</p>
                     <p className="text-xs text-zinc-500">Set up triggers for quality checks, reviews, and readiness assessments.</p>
                   </div>
                 </div>

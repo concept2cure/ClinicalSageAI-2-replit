@@ -230,7 +230,7 @@ function TagList({ tags, onRemove }: { tags: string[]; onRemove: (idx: number) =
           <button
             type="button"
             onClick={() => onRemove(idx)}
-            className="hover:bg-blue-200 rounded-full p-0.5 transition-colors"
+            className="hover:bg-blue-200 rounded-full p-0.5 transition-colors duration-150"
           >
             <X className="w-3 h-3" />
           </button>
@@ -251,7 +251,7 @@ function SummaryRow({ label, value, onClick }: { label: string; value: React.Rea
     >
       <span className="text-sm text-zinc-500 font-medium">{label}</span>
       <span className="text-sm text-zinc-900 font-medium text-right max-w-[60%]">
-        {value || <span className="text-zinc-300">—</span>}
+        {value || <span className="text-zinc-400">—</span>}
       </span>
     </div>
   );
@@ -418,7 +418,7 @@ export default function ProgramWizard({ onComplete, onCancel }: ProgramWizardPro
           value={state.name}
           onChange={(e) => update('name', e.target.value)}
           placeholder="e.g., ABC-101 IND Enabling Program"
-          className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-white text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition"
+          className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-white text-sm text-zinc-900 placeholder:text-zinc-400 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/30 focus:border-blue-500 transition"
         />
       </div>
 
@@ -430,7 +430,7 @@ export default function ProgramWizard({ onComplete, onCancel }: ProgramWizardPro
           onChange={(e) => update('description', e.target.value)}
           placeholder="Briefly describe the program objectives and scope..."
           rows={3}
-          className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-white text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition resize-none"
+          className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-white text-sm text-zinc-900 placeholder:text-zinc-400 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/30 focus:border-blue-500 transition resize-none"
         />
       </div>
 
@@ -447,7 +447,7 @@ export default function ProgramWizard({ onComplete, onCancel }: ProgramWizardPro
                 type="button"
                 onClick={() => update('customerTrack', track.value)}
                 className={cn(
-                  'flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all duration-200',
+                  'flex items-start gap-3 p-4 rounded-xl border text-left transition-all duration-150',
                   selected
                     ? 'border-blue-500 bg-blue-50/60 ring-2 ring-blue-500/20'
                     : 'border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50',
@@ -462,7 +462,7 @@ export default function ProgramWizard({ onComplete, onCancel }: ProgramWizardPro
                   <Icon className="w-4.5 h-4.5" />
                 </div>
                 <div>
-                  <div className={cn('text-sm font-semibold', selected ? 'text-blue-700' : 'text-zinc-800')}>
+                  <div className={cn('text-sm font-semibold', selected ? 'text-blue-700' : 'text-zinc-900')}>
                     {track.label}
                   </div>
                   <div className="text-xs text-zinc-500 mt-0.5">{track.desc}</div>
@@ -480,7 +480,7 @@ export default function ProgramWizard({ onComplete, onCancel }: ProgramWizardPro
           <select
             value={state.developmentStage ?? ''}
             onChange={(e) => update('developmentStage', (e.target.value || null) as DevelopmentStage | null)}
-            className="w-full appearance-none px-4 py-2.5 pr-10 rounded-xl border border-zinc-200 bg-white text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition"
+            className="w-full appearance-none px-4 py-2.5 pr-10 rounded-xl border border-zinc-200 bg-white text-sm text-zinc-900 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/30 focus:border-blue-500 transition"
           >
             <option value="">Select stage...</option>
             {DEV_STAGES.map((s) => (
@@ -511,7 +511,7 @@ export default function ProgramWizard({ onComplete, onCancel }: ProgramWizardPro
                 type="button"
                 onClick={() => update('destinationType', dt.value)}
                 className={cn(
-                  'flex flex-col items-center gap-1 p-3.5 rounded-xl border-2 transition-all duration-200',
+                  'flex flex-col items-center gap-1 p-3.5 rounded-xl border-2 transition-all duration-150',
                   selected
                     ? 'border-blue-500 bg-blue-50/60 ring-2 ring-blue-500/20'
                     : 'border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50',
@@ -520,10 +520,10 @@ export default function ProgramWizard({ onComplete, onCancel }: ProgramWizardPro
                 <Target
                   className={cn('w-5 h-5 mb-0.5', selected ? 'text-blue-600' : 'text-zinc-400')}
                 />
-                <span className={cn('text-sm font-bold', selected ? 'text-blue-700' : 'text-zinc-700')}>
+                <span className={cn('text-sm font-semibold', selected ? 'text-blue-700' : 'text-zinc-700')}>
                   {dt.label}
                 </span>
-                <span className="text-[10px] text-zinc-400 text-center leading-tight">{dt.desc}</span>
+                <span className="text-xs text-zinc-400 text-center leading-tight">{dt.desc}</span>
               </button>
             );
           })}
@@ -537,7 +537,7 @@ export default function ProgramWizard({ onComplete, onCancel }: ProgramWizardPro
           <select
             value={state.authority ?? ''}
             onChange={(e) => setAuthority(e.target.value as Authority)}
-            className="w-full appearance-none px-4 py-2.5 pr-10 rounded-xl border border-zinc-200 bg-white text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition"
+            className="w-full appearance-none px-4 py-2.5 pr-10 rounded-xl border border-zinc-200 bg-white text-sm text-zinc-900 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/30 focus:border-blue-500 transition"
           >
             <option value="">Select authority...</option>
             {AUTHORITIES.map((a) => (
@@ -574,7 +574,7 @@ export default function ProgramWizard({ onComplete, onCancel }: ProgramWizardPro
             type="date"
             value={state.targetDate}
             onChange={(e) => update('targetDate', e.target.value)}
-            className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-white text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition"
+            className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 bg-white text-sm text-zinc-900 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/30 focus:border-blue-500 transition"
           />
         </div>
       </div>
@@ -593,7 +593,7 @@ export default function ProgramWizard({ onComplete, onCancel }: ProgramWizardPro
             value={state.programLead}
             onChange={(e) => update('programLead', e.target.value)}
             placeholder="e.g., Dr. Jane Smith"
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-zinc-200 bg-white text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-zinc-200 bg-white text-sm text-zinc-900 placeholder:text-zinc-400 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/30 focus:border-blue-500 transition"
           />
         </div>
       </div>
@@ -613,7 +613,7 @@ export default function ProgramWizard({ onComplete, onCancel }: ProgramWizardPro
               }
             }}
             placeholder="Comma-separated names, press Enter to add"
-            className="flex-1 px-4 py-2.5 rounded-xl border border-zinc-200 bg-white text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition"
+            className="flex-1 px-4 py-2.5 rounded-xl border border-zinc-200 bg-white text-sm text-zinc-900 placeholder:text-zinc-400 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/30 focus:border-blue-500 transition"
           />
           <button
             type="button"
@@ -641,7 +641,7 @@ export default function ProgramWizard({ onComplete, onCancel }: ProgramWizardPro
               }
             }}
             placeholder="Comma-separated names, press Enter to add"
-            className="flex-1 px-4 py-2.5 rounded-xl border border-zinc-200 bg-white text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition"
+            className="flex-1 px-4 py-2.5 rounded-xl border border-zinc-200 bg-white text-sm text-zinc-900 placeholder:text-zinc-400 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/30 focus:border-blue-500 transition"
           />
           <button
             type="button"
@@ -666,7 +666,7 @@ export default function ProgramWizard({ onComplete, onCancel }: ProgramWizardPro
                 type="button"
                 onClick={() => update('complianceLevel', cl.value)}
                 className={cn(
-                  'flex items-center gap-3 w-full p-3.5 rounded-xl border-2 text-left transition-all duration-200',
+                  'flex items-center gap-3 w-full p-3.5 rounded-xl border-2 text-left transition-all duration-150',
                   selected
                     ? 'border-blue-500 bg-blue-50/60 ring-2 ring-blue-500/20'
                     : 'border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50',
@@ -687,7 +687,7 @@ export default function ProgramWizard({ onComplete, onCancel }: ProgramWizardPro
                   <div className="text-xs text-zinc-500">{cl.desc}</div>
                 </div>
                 {cl.value === 'cfr-part-11' && (
-                  <ShieldCheck className={cn('w-4 h-4 ml-auto', selected ? 'text-blue-500' : 'text-zinc-300')} />
+                  <ShieldCheck className={cn('w-4 h-4 ml-auto', selected ? 'text-blue-500' : 'text-zinc-400')} />
                 )}
               </button>
             );
@@ -701,7 +701,7 @@ export default function ProgramWizard({ onComplete, onCancel }: ProgramWizardPro
           type="button"
           onClick={() => update('autoScaffold', !state.autoScaffold)}
           className={cn(
-            'w-10 h-6 rounded-full relative transition-colors duration-200 shrink-0',
+            'w-10 h-6 rounded-full relative transition-colors duration-150 shrink-0',
             state.autoScaffold ? 'bg-blue-500' : 'bg-zinc-300',
           )}
         >
@@ -750,7 +750,7 @@ export default function ProgramWizard({ onComplete, onCancel }: ProgramWizardPro
               <CheckCircle2 className="w-10 h-10 text-emerald-500" />
             </div>
           </div>
-          <h3 className="text-xl font-bold text-zinc-900 mb-2">Program Launched!</h3>
+          <h3 className="text-xl font-semibold text-zinc-900 mb-2">Program Launched!</h3>
           <p className="text-sm text-zinc-500 max-w-xs">
             <span className="font-semibold text-zinc-700">{state.name}</span> has been created with a{' '}
             <span className="font-semibold text-zinc-700">{formatDestinationType(state.destinationType)}</span>{' '}
@@ -769,7 +769,7 @@ export default function ProgramWizard({ onComplete, onCancel }: ProgramWizardPro
     return (
       <div className="space-y-5">
         <div className="text-center mb-6">
-          <h3 className="text-base font-bold text-zinc-800">Review your program configuration</h3>
+          <h3 className="text-base font-semibold text-zinc-900">Review your program configuration</h3>
           <p className="text-xs text-zinc-500 mt-1">Click any section to go back and edit</p>
         </div>
 
@@ -778,13 +778,13 @@ export default function ProgramWizard({ onComplete, onCancel }: ProgramWizardPro
           className="rounded-xl border border-zinc-200 bg-white overflow-hidden cursor-pointer hover:border-zinc-300 transition"
           onClick={() => goToStep(1)}
         >
-          <div className="px-4 py-2.5 bg-zinc-50 border-b border-zinc-100 flex items-center gap-2">
+          <div className="px-4 py-2.5 bg-zinc-50 border-b border-zinc-200 flex items-center gap-2">
             <FileText className="w-4 h-4 text-blue-500" />
-            <span className="text-xs font-bold text-zinc-600 uppercase tracking-wider">Program Basics</span>
+            <span className="text-xs font-semibold text-zinc-600 uppercase tracking-wider">Program Basics</span>
           </div>
           <div className="px-1 py-1 divide-y divide-zinc-50">
             <SummaryRow label="Name" value={state.name} />
-            <SummaryRow label="Description" value={state.description || <span className="text-zinc-300 italic">None</span>} />
+            <SummaryRow label="Description" value={state.description || <span className="text-zinc-400 italic">None</span>} />
             <SummaryRow
               label="Customer Track"
               value={CUSTOMER_TRACKS.find((t) => t.value === state.customerTrack)?.label}
@@ -801,15 +801,15 @@ export default function ProgramWizard({ onComplete, onCancel }: ProgramWizardPro
           className="rounded-xl border border-zinc-200 bg-white overflow-hidden cursor-pointer hover:border-zinc-300 transition"
           onClick={() => goToStep(2)}
         >
-          <div className="px-4 py-2.5 bg-zinc-50 border-b border-zinc-100 flex items-center gap-2">
+          <div className="px-4 py-2.5 bg-zinc-50 border-b border-zinc-200 flex items-center gap-2">
             <Target className="w-4 h-4 text-emerald-500" />
-            <span className="text-xs font-bold text-zinc-600 uppercase tracking-wider">Regulatory Destination</span>
+            <span className="text-xs font-semibold text-zinc-600 uppercase tracking-wider">Regulatory Destination</span>
           </div>
           <div className="px-1 py-1 divide-y divide-zinc-50">
             <SummaryRow label="Destination" value={formatDestinationType(state.destinationType)} />
             <SummaryRow label="Authority" value={state.authority} />
             <SummaryRow label="Region" value={state.region} />
-            <SummaryRow label="Target Date" value={state.targetDate || <span className="text-zinc-300 italic">Not set</span>} />
+            <SummaryRow label="Target Date" value={state.targetDate || <span className="text-zinc-400 italic">Not set</span>} />
           </div>
         </div>
 
@@ -818,19 +818,19 @@ export default function ProgramWizard({ onComplete, onCancel }: ProgramWizardPro
           className="rounded-xl border border-zinc-200 bg-white overflow-hidden cursor-pointer hover:border-zinc-300 transition"
           onClick={() => goToStep(3)}
         >
-          <div className="px-4 py-2.5 bg-zinc-50 border-b border-zinc-100 flex items-center gap-2">
+          <div className="px-4 py-2.5 bg-zinc-50 border-b border-zinc-200 flex items-center gap-2">
             <Shield className="w-4 h-4 text-violet-500" />
-            <span className="text-xs font-bold text-zinc-600 uppercase tracking-wider">Team & Governance</span>
+            <span className="text-xs font-semibold text-zinc-600 uppercase tracking-wider">Team & Governance</span>
           </div>
           <div className="px-1 py-1 divide-y divide-zinc-50">
-            <SummaryRow label="Program Lead" value={state.programLead || <span className="text-zinc-300 italic">Not assigned</span>} />
+            <SummaryRow label="Program Lead" value={state.programLead || <span className="text-zinc-400 italic">Not assigned</span>} />
             <SummaryRow
               label="Reviewers"
-              value={state.reviewers.length > 0 ? state.reviewers.join(', ') : <span className="text-zinc-300 italic">None</span>}
+              value={state.reviewers.length > 0 ? state.reviewers.join(', ') : <span className="text-zinc-400 italic">None</span>}
             />
             <SummaryRow
               label="Approvers"
-              value={state.approvers.length > 0 ? state.approvers.join(', ') : <span className="text-zinc-300 italic">None</span>}
+              value={state.approvers.length > 0 ? state.approvers.join(', ') : <span className="text-zinc-400 italic">None</span>}
             />
             <SummaryRow
               label="Compliance"
@@ -872,7 +872,7 @@ export default function ProgramWizard({ onComplete, onCancel }: ProgramWizardPro
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-lg font-bold text-zinc-900">Create Program</h2>
+          <h2 className="text-lg font-semibold text-zinc-900">Create Program</h2>
           <p className="text-sm text-zinc-500 mt-0.5">Set up a new regulatory program with guided onboarding</p>
         </div>
         <button
@@ -897,12 +897,12 @@ export default function ProgramWizard({ onComplete, onCancel }: ProgramWizardPro
 
       {/* Footer Navigation */}
       {!launchSuccess && (
-        <div className="flex items-center justify-between mt-8 pt-5 border-t border-zinc-100">
+        <div className="flex items-center justify-between mt-8 pt-5 border-t border-zinc-200">
           <button
             type="button"
             onClick={step === 1 ? onCancel : goBack}
             disabled={isLaunching}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-zinc-600 hover:bg-zinc-100 transition disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-zinc-600 hover:bg-zinc-100 transition disabled:opacity-60"
           >
             <ArrowLeft className="w-4 h-4" />
             {step === 1 ? 'Cancel' : 'Back'}

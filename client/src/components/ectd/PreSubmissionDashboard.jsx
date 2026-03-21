@@ -582,17 +582,17 @@ export default function PreSubmissionDashboard({ submissionId, moduleType = 'ful
                             <p className="text-sm font-medium">{q.question || q.text}</p>
                             <div className="flex items-center gap-2 mt-1">
                               {q.likelihood && (
-                                <Badge variant="outline" className="text-[10px]">
+                                <Badge variant="outline" className="text-[11px]">
                                   {Math.round(q.likelihood * 100)}% likely
                                 </Badge>
                               )}
                               {q.reviewerType && (
-                                <span className="text-[10px] text-gray-500 flex items-center gap-0.5">
+                                <span className="text-[11px] text-gray-500 flex items-center gap-0.5">
                                   <Users className="h-2.5 w-2.5" /> {q.reviewerType}
                                 </span>
                               )}
                               {q.section && (
-                                <span className="text-[10px] text-gray-400">{q.section}</span>
+                                <span className="text-[11px] text-gray-400">{q.section}</span>
                               )}
                             </div>
                           </div>
@@ -641,7 +641,7 @@ export default function PreSubmissionDashboard({ submissionId, moduleType = 'ful
                       </div>
                     )}
                     {monteCarloTiming.simulationCount && (
-                      <p className="text-[10px] text-gray-400 text-right">
+                      <p className="text-[11px] text-gray-400 text-right">
                         Based on {monteCarloTiming.simulationCount.toLocaleString()} Monte Carlo
                         simulations
                       </p>

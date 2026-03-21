@@ -118,7 +118,7 @@ const MODE_CONFIG: Record<IndustryMode, {
   cro: { label: 'CRO', icon: Briefcase, color: 'text-violet-600', bgColor: 'bg-violet-50' },
   medtech: { label: 'MedTech', icon: Microscope, color: 'text-sky-600', bgColor: 'bg-sky-50' },
   academic: { label: 'Academic', icon: GraduationCap, color: 'text-amber-600', bgColor: 'bg-amber-50' },
-  regulatory: { label: 'Regulatory', icon: FileCheck, color: 'text-indigo-600', bgColor: 'bg-indigo-50' },
+  regulatory: { label: 'Regulatory', icon: FileCheck, color: 'text-blue-600', bgColor: 'bg-blue-50' },
   medical_writing: { label: 'Medical Writing', icon: PenTool, color: 'text-rose-600', bgColor: 'bg-rose-50' },
 };
 
@@ -284,7 +284,7 @@ const Sidebar: React.FC<{
     )}>
       {/* Logo */}
       <div className="flex items-center gap-3 p-4 border-b border-zinc-800">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center">
+        <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
           <Sparkles className="w-5 h-5 text-white" />
         </div>
         {!collapsed && (
@@ -315,7 +315,7 @@ const Sidebar: React.FC<{
               key={item.view}
               onClick={() => onViewChange(item.view)}
               className={cn(
-                'w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors',
+                'w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-150',
                 isActive
                   ? 'bg-blue-600 text-white'
                   : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
@@ -333,11 +333,11 @@ const Sidebar: React.FC<{
       
       {/* Footer */}
       <div className="p-4 border-t border-zinc-800 space-y-1">
-        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors">
+        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors duration-150">
           <Settings className="w-5 h-5 flex-shrink-0" />
           {!collapsed && <span className="text-sm">Settings</span>}
         </button>
-        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors">
+        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors duration-150">
           <HelpCircle className="w-5 h-5 flex-shrink-0" />
           {!collapsed && <span className="text-sm">Help</span>}
         </button>
@@ -346,7 +346,7 @@ const Sidebar: React.FC<{
       {/* Collapse Toggle */}
       <button
         onClick={() => onCollapse(!collapsed)}
-        className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-zinc-700 text-zinc-300 hover:bg-zinc-600 flex items-center justify-center shadow-lg"
+        className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-zinc-700 text-zinc-400 hover:bg-zinc-600 flex items-center justify-center shadow-lg"
       >
         {collapsed ? '→' : '←'}
       </button>
@@ -381,7 +381,7 @@ const Header: React.FC<{
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && onSearch?.(searchQuery)}
-          className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full pl-10 pr-4 py-2 text-sm border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
         />
       </div>
       
@@ -393,7 +393,7 @@ const Header: React.FC<{
           return (
             <button
               key={i}
-              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-colors duration-150"
             >
               <Icon className="w-4 h-4" />
               {action.label}
@@ -404,7 +404,7 @@ const Header: React.FC<{
         {/* New Project */}
         <button
           onClick={onNewProject}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors duration-150"
         >
           <Plus className="w-4 h-4" />
           New
@@ -414,11 +414,11 @@ const Header: React.FC<{
         <div className="relative">
           <button
             onClick={() => setShowNotifications(!showNotifications)}
-            className="relative p-2 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-colors"
+            className="relative p-2 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-colors duration-150"
           >
             <Bell className="w-5 h-5" />
             {unreadCount > 0 && (
-              <span className="absolute top-0 right-0 w-4 h-4 text-xs font-bold text-white bg-red-500 rounded-full flex items-center justify-center">
+              <span className="absolute top-0 right-0 w-4 h-4 text-xs font-semibold text-white bg-red-500 rounded-full flex items-center justify-center">
                 {unreadCount}
               </span>
             )}
@@ -435,7 +435,7 @@ const Header: React.FC<{
                     key={notification.id}
                     onClick={() => onNotificationClick?.(notification)}
                     className={cn(
-                      'w-full p-3 text-left hover:bg-zinc-50 border-b border-zinc-100 last:border-b-0',
+                      'w-full p-3 text-left hover:bg-zinc-50 border-b border-zinc-200 last:border-b-0',
                       !notification.read && 'bg-blue-50'
                     )}
                   >
@@ -449,8 +449,8 @@ const Header: React.FC<{
         </div>
         
         {/* User Menu */}
-        <button className="flex items-center gap-2 px-2 py-1 hover:bg-zinc-100 rounded-lg transition-colors">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center text-white text-sm font-medium">
+        <button className="flex items-center gap-2 px-2 py-1 hover:bg-zinc-100 rounded-lg transition-colors duration-150">
+          <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-medium">
             {currentUser.name.split(' ').map(n => n[0]).join('')}
           </div>
           <div className="text-left">

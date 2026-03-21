@@ -80,7 +80,7 @@ const JourneyProgress: React.FC<{
   completionPercent: number;
 }> = ({ currentStep, totalSteps, submissionType, completionPercent }) => {
   return (
-    <div className="relative p-4 bg-zinc-900 rounded-2xl text-white shadow-sm">
+    <div className="relative p-4 bg-zinc-900 rounded-xl text-white shadow-sm">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Mountain className="w-5 h-5" />
@@ -204,9 +204,9 @@ const NextBestActionCard: React.FC<{
         </div>
         <div>
           <span className="text-xs font-medium text-blue-600 uppercase tracking-wider">
-            Your Sherpa Recommends
+            AnA Guided Authoring Recommends
           </span>
-          <h3 className="font-semibold text-zinc-800">
+          <h3 className="font-semibold text-zinc-900">
             {guidance.title}
           </h3>
         </div>
@@ -229,7 +229,7 @@ const NextBestActionCard: React.FC<{
       
       <button
         onClick={onAction}
-        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors duration-150"
         data-testid={`button-next-best-action-${guidance.id}`}
       >
         <ArrowRight className="w-4 h-4" />
@@ -273,7 +273,7 @@ const StatusDashboard: React.FC<{
           }`} />
           <span className="text-xs font-medium text-zinc-600">Compliance</span>
         </div>
-        <p className={`text-2xl font-bold ${
+        <p className={`text-2xl font-semibold ${
           complianceScore >= 90 ? 'text-green-600' 
           : complianceScore >= 70 ? 'text-amber-600' 
           : 'text-red-600'
@@ -292,7 +292,7 @@ const StatusDashboard: React.FC<{
           <Link2 className={`w-4 h-4 ${claimPercent >= 90 ? 'text-green-500' : 'text-amber-500'}`} />
           <span className="text-xs font-medium text-zinc-600">Claims Sourced</span>
         </div>
-        <p className={`text-2xl font-bold ${
+        <p className={`text-2xl font-semibold ${
           claimPercent >= 90 ? 'text-green-600' : 'text-amber-600'
         }`}>
           {supportedClaims}/{totalClaims}
@@ -305,7 +305,7 @@ const StatusDashboard: React.FC<{
           <Compass className="w-4 h-4 text-blue-500" />
           <span className="text-xs font-medium text-zinc-600">Data Sources</span>
         </div>
-        <p className="text-2xl font-bold text-blue-600">
+        <p className="text-2xl font-semibold text-blue-600">
           {connectedModules}
         </p>
       </div>
@@ -321,7 +321,7 @@ const StatusDashboard: React.FC<{
             <Users className={`w-4 h-4 ${pendingReviews === 0 ? 'text-green-500' : 'text-amber-500'}`} />
             <span className="text-xs font-medium text-zinc-600">Reviews</span>
           </div>
-          <p className={`text-2xl font-bold ${
+          <p className={`text-2xl font-semibold ${
             pendingReviews === 0 ? 'text-green-600' : 'text-amber-600'
           }`}>
             {pendingReviews}
@@ -522,7 +522,7 @@ export const DocumentSherpa: React.FC<DocumentSherpaProps> = ({
       )}
       
       {/* Status Dashboard */}
-      <div className="rounded-2xl border border-zinc-200/70 bg-white shadow-sm p-4">
+      <div className="rounded-xl border border-zinc-200/70 bg-white shadow-sm p-4">
         <StatusDashboard
           complianceScore={complianceScore}
           totalClaims={totalClaims}
@@ -534,7 +534,7 @@ export const DocumentSherpa: React.FC<DocumentSherpaProps> = ({
       
       {/* Next Best Action */}
       {nextBestAction && (
-        <div className="rounded-2xl border border-zinc-200/70 bg-white shadow-sm p-4">
+        <div className="rounded-xl border border-zinc-200/70 bg-white shadow-sm p-4">
           <NextBestActionCard
             guidance={nextBestAction}
             onAction={() => onGuidanceAction(nextBestAction)}
@@ -543,7 +543,7 @@ export const DocumentSherpa: React.FC<DocumentSherpaProps> = ({
       )}
       
       {/* Upcoming Actions */}
-      <div className="rounded-2xl border border-zinc-200/70 bg-white shadow-sm p-4">
+      <div className="rounded-xl border border-zinc-200/70 bg-white shadow-sm p-4">
         <UpcomingActionsList
           guidance={guidance}
           onAction={onGuidanceAction}
@@ -554,7 +554,7 @@ export const DocumentSherpa: React.FC<DocumentSherpaProps> = ({
       {blockers.length === 0 && guidance.length === 0 && (
         <div className="text-center py-8">
           <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-500" />
-          <h3 className="font-semibold text-zinc-800">All Clear!</h3>
+          <h3 className="font-semibold text-zinc-900">All Clear!</h3>
           <p className="text-sm text-zinc-600 mt-1">
             Your document is on track. Keep up the great work!
           </p>

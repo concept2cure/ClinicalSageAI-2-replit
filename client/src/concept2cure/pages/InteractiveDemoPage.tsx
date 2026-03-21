@@ -144,7 +144,7 @@ const InteractiveDemoPage: React.FC = () => {
       >
         <button
           onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-900 transition-colors"
+          className="flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-900 transition-colors duration-150"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Home

@@ -1,6 +1,6 @@
 /**
- * Seed ForesightAI with real CSR extracted data
- * This script processes existing CSR reports and populates ForesightAI tables
+ * Seed AnA Predictions with real CSR extracted data
+ * This script processes existing CSR reports and populates AnA Predictions tables
  */
 
 import { db } from '../db';
@@ -163,7 +163,7 @@ const CSR_DATA = [
 ];
 
 async function seedForesightData() {
-  console.log('🚀 Starting ForesightAI CSR data seeding...');
+  console.log('🚀 Starting AnA Predictions CSR data seeding...');
   const organizationId = '7'; // Default organization
 
   try {
@@ -506,8 +506,8 @@ async function seedForesightData() {
       });
     }
 
-    // 6. Generate ForesightAI Predictions based on CSR data
-    console.log('🎯 Generating ForesightAI predictions based on CSR patterns...');
+    // 6. Generate AnA Predictions based on CSR data
+    console.log('🎯 Generating AnA Predictions based on CSR patterns...');
     const predictions = [
       {
         studyId: 'FUTURE-001',
@@ -531,7 +531,7 @@ async function seedForesightData() {
           { pattern: 'low_enrollment', probability: 0.12, mitigation: 'Multi-site recruitment' },
           { pattern: 'dose_toxicity', probability: 0.08, mitigation: 'Adaptive dose finding' }
         ],
-        modelVersion: 'ForesightAI-v2.3',
+        modelVersion: 'AnA-Predictions-v2.3',
       },
       {
         studyId: 'FUTURE-002',
@@ -550,7 +550,7 @@ async function seedForesightData() {
         failurePatterns: [
           { pattern: 'unexpected_toxicity', probability: 0.18, mitigation: 'Slower dose escalation' }
         ],
-        modelVersion: 'ForesightAI-v2.3',
+        modelVersion: 'AnA-Predictions-v2.3',
       },
       {
         studyId: 'FUTURE-003',
@@ -571,11 +571,11 @@ async function seedForesightData() {
         failurePatterns: [
           { pattern: 'screen_failure', probability: 0.28, mitigation: 'Pre-screening program' }
         ],
-        modelVersion: 'ForesightAI-v2.3',
+        modelVersion: 'AnA-Predictions-v2.3',
       }
     ];
 
-    console.log(`[Seeding] Generated ${predictions.length} ForesightAI predictions`);
+    console.log(`[Seeding] Generated ${predictions.length} AnA Predictions entries`);
 
     for (const prediction of predictions) {
       await db!.insert(foresightPredictions).values({
@@ -596,7 +596,7 @@ async function seedForesightData() {
       });
     }
 
-    console.log('✅ All ForesightAI data seeded successfully!');
+    console.log('✅ All AnA Predictions data seeded successfully!');
     console.log(`
 Summary:
 - Clinical Outcomes: ${CSR_DATA.length * 4} entries
@@ -604,11 +604,11 @@ Summary:
 - Translational Patterns: ${patterns.length} entries
 - Dose Escalation Studies: ${doseStudies.length} entries
 - Cross-Species PK/PD: ${pkpdData.length} entries
-- ForesightAI Predictions: ${predictions.length} entries
+- AnA Predictions: ${predictions.length} entries
     `);
 
   } catch (error) {
-    console.error('Error seeding ForesightAI data:', error);
+    console.error('Error seeding AnA Predictions data:', error);
     throw error;
   }
 }

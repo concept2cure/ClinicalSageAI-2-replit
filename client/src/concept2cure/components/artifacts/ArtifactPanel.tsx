@@ -79,7 +79,7 @@ const artifactTypeConfig: Record<
   traceability_matrix: { icon: Table2, label: 'Traceability Matrix', color: 'text-green-600' },
   protocol_designer: { icon: Workflow, label: 'Protocol Designer', color: 'text-orange-600' },
   ifu_checker: { icon: Workflow, label: 'IFU Checker', color: 'text-cyan-600' },
-  predicate_search: { icon: Workflow, label: 'Predicate Search', color: 'text-indigo-600' },
+  predicate_search: { icon: Workflow, label: 'Predicate Search', color: 'text-blue-600' },
   timeline_planner: { icon: Workflow, label: 'Timeline Planner', color: 'text-pink-600' },
   knowledge_graph: { icon: Network, label: 'Knowledge Graph', color: 'text-violet-600' },
   compliance_dashboard: {
@@ -114,7 +114,7 @@ const DocumentArtifact: React.FC<DocumentArtifactProps> = ({
       <textarea
         value={content}
         onChange={e => onContentChange(e.target.value)}
-        className="w-full h-full p-6 font-mono text-sm bg-white border-0 focus:outline-none resize-none"
+        className="w-full h-full p-6 font-mono text-sm bg-white border-0 outline-none resize-none"
       />
     );
   }
@@ -199,7 +199,7 @@ const VersionHistory: React.FC<VersionHistoryProps> = ({ artifact, onSelectVersi
             key={version.version}
             onClick={() => onSelectVersion(version.version)}
             className={cn(
-              'w-full p-3 text-left rounded-lg border transition-colors',
+              'w-full p-3 text-left rounded-lg border transition-colors duration-150',
               version.version === artifact.version
                 ? 'border-blue-300 bg-blue-50'
                 : 'border-zinc-200 hover:bg-zinc-50'
@@ -247,7 +247,7 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ artifact }) => {
     return (
       <div className="flex items-center justify-center h-full text-center p-8">
         <div className="text-zinc-500">
-          <FileText className="h-12 w-12 mx-auto mb-4 text-zinc-300" />
+          <FileText className="h-12 w-12 mx-auto mb-4 text-zinc-400" />
           <p className="text-sm">No artifact selected</p>
           <p className="text-xs mt-1">Artifacts will appear here when RI creates them</p>
         </div>
@@ -349,7 +349,7 @@ export const ArtifactPanel: React.FC<ArtifactPanelProps> = ({ artifact }) => {
                 {artifact.published && (
                   <>
                     <span>•</span>
-                    <Badge variant="secondary" className="text-[10px]">
+                    <Badge variant="secondary" className="text-xs">
                       Published
                     </Badge>
                   </>

@@ -1,4 +1,4 @@
-# Lumen Cortex Extractor — Deficiency / Rejection Letter Extraction Prompt
+# AnA RI Extractor — Deficiency / Rejection Letter Extraction Prompt
 
 You will be given:
 - doc_type = DEFICIENCY_LETTER

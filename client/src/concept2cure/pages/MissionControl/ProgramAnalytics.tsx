@@ -6,6 +6,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { SEVERITY } from '../../components/ui/enterprise';
 import NanoBananaImageGenerator from '@/components/NanoBananaImageGenerator';
 import {
   BarChart3,
@@ -78,7 +79,7 @@ const LIFECYCLE_STATES = [
   { key: 'in-review', label: 'In Review', color: 'bg-amber-500' },
   { key: 'approved', label: 'Approved', color: 'bg-emerald-500' },
   { key: 'locked', label: 'Locked', color: 'bg-violet-500' },
-  { key: 'exported', label: 'Exported', color: 'bg-indigo-500' },
+  { key: 'exported', label: 'Exported', color: 'bg-blue-500' },
 ] as const;
 
 const DOSSIER_MODULES = [
@@ -98,10 +99,10 @@ const RISK_CATEGORIES = [
 ] as const;
 
 const SEVERITY_CONFIG: Record<string, { bg: string; text: string; dot: string }> = {
-  critical: { bg: 'bg-red-50', text: 'text-red-700', dot: 'bg-red-500' },
-  high: { bg: 'bg-orange-50', text: 'text-orange-700', dot: 'bg-orange-500' },
-  medium: { bg: 'bg-amber-50', text: 'text-amber-700', dot: 'bg-amber-500' },
-  low: { bg: 'bg-blue-50', text: 'text-blue-700', dot: 'bg-blue-500' },
+  critical: { bg: SEVERITY.critical.bg, text: SEVERITY.critical.text, dot: SEVERITY.critical.dot },
+  high:     { bg: SEVERITY.high.bg,     text: SEVERITY.high.text,     dot: SEVERITY.high.dot },
+  medium:   { bg: SEVERITY.medium.bg,   text: SEVERITY.medium.text,   dot: SEVERITY.medium.dot },
+  low:      { bg: SEVERITY.low.bg,      text: SEVERITY.low.text,      dot: SEVERITY.low.dot },
 };
 
 const ACTION_ICONS: Record<string, typeof Activity> = {
@@ -268,7 +269,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
     return (
       <div className="flex items-center justify-center h-96 text-zinc-500">
         <div className="text-center space-y-2">
-          <BarChart3 className="w-12 h-12 mx-auto text-zinc-300" />
+          <BarChart3 className="w-12 h-12 mx-auto text-zinc-400" />
           <p className="text-lg font-medium">No Program Selected</p>
           <p className="text-sm">Select a program to view analytics.</p>
         </div>
@@ -289,7 +290,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
             <BarChart3 className="w-6 h-6 text-blue-600" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-zinc-900">Program Analytics</h2>
+            <h2 className="text-xl font-semibold text-zinc-900">Program Analytics</h2>
             <p className="text-sm text-zinc-500">Submission readiness, artifacts, risks & activity</p>
           </div>
         </div>
@@ -301,7 +302,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
               key={range}
               onClick={() => setDateRange(range)}
               className={cn(
-                'px-3 py-1.5 text-xs font-medium rounded-lg transition-colors',
+                'px-3 py-1.5 text-xs font-medium rounded-lg transition-colors duration-150',
                 dateRange === range
                   ? 'bg-white text-zinc-900 shadow-sm'
                   : 'text-zinc-500 hover:text-zinc-700',
@@ -324,7 +325,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
             <Target className="w-4 h-4 text-blue-500" />
           </div>
           <div className="flex items-end gap-2">
-            <span className="text-3xl font-bold text-zinc-900">
+            <span className="text-3xl font-semibold text-zinc-900">
               {isLoading ? '—' : `${overallReadiness ?? 0}%`}
             </span>
             {readinessTrend !== 0 && (
@@ -352,7 +353,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
           <div className="w-full bg-zinc-100 rounded-full h-1.5">
             <div
               className={cn(
-                'h-1.5 rounded-full transition-all',
+                'h-1.5 rounded-full transition-all duration-150',
                 (overallReadiness ?? 0) >= 80
                   ? 'bg-emerald-500'
                   : (overallReadiness ?? 0) >= 50
@@ -373,14 +374,14 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
             <FileText className="w-4 h-4 text-emerald-500" />
           </div>
           <div className="flex items-end gap-2">
-            <span className="text-3xl font-bold text-zinc-900">
+            <span className="text-3xl font-semibold text-zinc-900">
               {isLoading ? '—' : artifactStats.approved}
             </span>
             <span className="text-sm text-zinc-400 pb-1">/ {artifactStats.total}</span>
           </div>
           <div className="w-full bg-zinc-100 rounded-full h-1.5">
             <div
-              className="h-1.5 rounded-full bg-emerald-500 transition-all"
+              className="h-1.5 rounded-full bg-emerald-500 transition-all duration-150"
               style={{
                 width: `${artifactStats.total ? (artifactStats.approved / artifactStats.total) * 100 : 0}%`,
               }}
@@ -397,7 +398,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
             <AlertTriangle className="w-4 h-4 text-amber-500" />
           </div>
           <div className="flex items-end gap-2">
-            <span className="text-3xl font-bold text-zinc-900">
+            <span className="text-3xl font-semibold text-zinc-900">
               {isLoading ? '—' : riskStats.openCount}
             </span>
           </div>
@@ -422,7 +423,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
             <Activity className="w-4 h-4 text-blue-500" />
           </div>
           <div className="flex items-end gap-2">
-            <span className="text-3xl font-bold text-zinc-900">
+            <span className="text-3xl font-semibold text-zinc-900">
               {isLoading ? '—' : activityCount}
             </span>
             <span className="text-sm text-zinc-400 pb-1">events ({DATE_RANGE_LABELS[dateRange]})</span>
@@ -483,7 +484,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
           </div>
 
           {/* Legend */}
-          <div className="flex items-center gap-4 pt-2 border-t border-zinc-100 text-xs text-zinc-400">
+          <div className="flex items-center gap-4 pt-2 border-t border-zinc-200 text-xs text-zinc-400">
             <span className="flex items-center gap-1">
               <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500" /> &ge;80%
             </span>
@@ -526,7 +527,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
                         return (
                           <div
                             key={state.key}
-                            className={cn('h-full transition-all', state.color)}
+                            className={cn('h-full transition-all duration-150', state.color)}
                             style={{ width: `${pct}%` }}
                             title={`${state.label}: ${count}`}
                           />
@@ -535,7 +536,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
                     </div>
                   ) : (
                     <div className="h-5 rounded-md bg-zinc-50 flex items-center justify-center">
-                      <span className="text-[10px] text-zinc-300">No artifacts</span>
+                      <span className="text-xs text-zinc-400">No artifacts</span>
                     </div>
                   )}
                 </div>
@@ -544,7 +545,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
           </div>
 
           {/* Legend */}
-          <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-zinc-100 text-xs text-zinc-400">
+          <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-zinc-200 text-xs text-zinc-400">
             {LIFECYCLE_STATES.map((state) => (
               <span key={state.key} className="flex items-center gap-1">
                 <span className={cn('w-2.5 h-2.5 rounded-sm', state.color)} />
@@ -565,15 +566,15 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-zinc-50 rounded-lg p-3 space-y-1">
               <span className="text-xs text-zinc-500">Total Open</span>
-              <p className="text-xl font-bold text-zinc-900">{riskStats.openCount}</p>
+              <p className="text-xl font-semibold text-zinc-900">{riskStats.openCount}</p>
             </div>
             <div className="bg-emerald-50 rounded-lg p-3 space-y-1">
               <span className="text-xs text-emerald-600">Recently Mitigated</span>
-              <p className="text-xl font-bold text-emerald-700">{riskStats.mitigatedCount}</p>
+              <p className="text-xl font-semibold text-emerald-700">{riskStats.mitigatedCount}</p>
             </div>
             <div className="bg-zinc-50 rounded-lg p-3 space-y-1">
               <span className="text-xs text-zinc-500">Avg Time to Resolve</span>
-              <p className="text-xl font-bold text-zinc-900">14d</p>
+              <p className="text-xl font-semibold text-zinc-900">14d</p>
             </div>
             <div className="bg-zinc-50 rounded-lg p-3 space-y-1">
               <span className="text-xs text-zinc-500">By Severity</span>
@@ -582,7 +583,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
                   <div key={sev} className="text-center">
                     <span
                       className={cn(
-                        'inline-block w-5 h-5 rounded text-[10px] font-bold leading-5 text-center',
+                        'inline-block w-5 h-5 rounded text-xs font-semibold leading-5 text-center',
                         SEVERITY_CONFIG[sev]?.bg,
                         SEVERITY_CONFIG[sev]?.text,
                       )}
@@ -596,7 +597,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
           </div>
 
           {/* Category breakdown */}
-          <div className="space-y-2 pt-2 border-t border-zinc-100">
+          <div className="space-y-2 pt-2 border-t border-zinc-200">
             <span className="text-xs font-medium text-zinc-500 uppercase tracking-wide">
               By Category
             </span>
@@ -612,7 +613,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
                   </div>
                   <div className="flex-1 h-3 bg-zinc-100 rounded overflow-hidden">
                     <div
-                      className="h-full bg-amber-400 rounded transition-all"
+                      className="h-full bg-amber-400 rounded transition-all duration-150"
                       style={{ width: `${(count / maxCount) * 100}%` }}
                     />
                   </div>
@@ -664,7 +665,7 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
                   <div className="flex-1 pb-4 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="text-xs text-zinc-800 font-medium truncate">
+                        <p className="text-xs text-zinc-900 font-medium truncate">
                           <span className="capitalize">{entry.action || 'update'}</span>
                           {entry.entityType && (
                             <span className="text-zinc-400"> on </span>
@@ -674,12 +675,12 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
                             {entry.entityId ? ` #${entry.entityId}` : ''}
                           </span>
                         </p>
-                        <p className="text-[11px] text-zinc-400 mt-0.5 truncate">
+                        <p className="text-xs text-zinc-400 mt-0.5 truncate">
                           {entry.actor || entry.userId || 'System'}
                           {entry.note && ` — ${entry.note}`}
                         </p>
                       </div>
-                      <span className="text-[10px] text-zinc-400 whitespace-nowrap shrink-0">
+                      <span className="text-xs text-zinc-400 whitespace-nowrap shrink-0">
                         {entry.createdAt || entry.timestamp
                           ? relativeTime(entry.createdAt || entry.timestamp)
                           : ''}
@@ -732,12 +733,12 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
 
                   <div className="flex-1 min-w-0 space-y-1">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-zinc-800">
+                      <p className="text-sm font-medium text-zinc-900">
                         {blocker.description || blocker.title || 'Unnamed blocker'}
                       </p>
                       <span
                         className={cn(
-                          'px-1.5 py-0.5 text-[10px] font-semibold uppercase rounded',
+                          'px-1.5 py-0.5 text-xs font-semibold uppercase rounded',
                           sevConfig.bg,
                           sevConfig.text,
                         )}
@@ -772,9 +773,9 @@ const ProgramAnalytics: React.FC<ProgramAnalyticsProps> = ({ programId }) => {
 
       {/* ── Nano Banana: Export Dashboard as Visual ── */}
       <div className="rounded-xl border border-zinc-200 bg-white">
-        <div className="px-4 py-3 border-b border-zinc-100">
-          <h3 className="text-sm font-semibold text-zinc-800">Export as Visual or Deck</h3>
-          <p className="text-xs text-zinc-500 mt-0.5">Use Nano Banana AI to generate infographics or a slide deck from your program analytics.</p>
+        <div className="px-4 py-3 border-b border-zinc-200">
+          <h3 className="text-sm font-semibold text-zinc-900">Export as Visual or Deck</h3>
+          <p className="text-xs text-zinc-500 mt-0.5">Use AnA Visual to generate infographics or a slide deck from your program analytics.</p>
         </div>
         <div className="p-4">
           <NanoBananaImageGenerator

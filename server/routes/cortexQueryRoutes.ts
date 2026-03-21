@@ -3,7 +3,7 @@
  *                    UNIFIED CORTEX QUERY API
  * ═══════════════════════════════════════════════════════════════════════════
  *
- * Enterprise-grade unified API for querying the Lumen Cortex regulatory
+ * Enterprise-grade unified API for querying the AnA RI regulatory
  * intelligence system. Combines semantic search, knowledge graph traversal,
  * multi-provider AI generation, and cognitive advisory.
  *

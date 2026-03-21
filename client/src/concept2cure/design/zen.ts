@@ -373,44 +373,74 @@ export const zenComponents = {
  * Common class combinations for consistent styling
  */
 export const zenClasses = {
-  // Layout
+  // ─── Layout ──────────────────────────────────────────────────────────────────
   container: 'mx-auto max-w-3xl px-4 sm:px-6',
   containerWide: 'mx-auto max-w-5xl px-4 sm:px-6',
   centerContent: 'flex items-center justify-center',
 
-  // Text
-  heading1: 'text-2xl font-semibold tracking-tight text-zinc-900',
-  heading2: 'text-xl font-semibold tracking-tight text-zinc-900',
-  heading3: 'text-lg font-medium text-zinc-900',
-  body: 'text-base text-zinc-700 leading-relaxed',
-  caption: 'text-sm text-zinc-500',
+  // ─── Typography Hierarchy ────────────────────────────────────────────────────
+  // RULE: Always use these — never ad-hoc font-size + weight combos
+  heading1: 'text-xl font-semibold tracking-tight text-zinc-900',
+  heading2: 'text-lg font-semibold text-zinc-900',
+  heading3: 'text-base font-semibold text-zinc-900',
+  heading4: 'text-sm font-medium text-zinc-700',
+  body: 'text-sm text-zinc-600 leading-relaxed',
+  bodyLg: 'text-base text-zinc-600 leading-relaxed',
+  caption: 'text-xs text-zinc-500',
   label: 'text-sm font-medium text-zinc-700',
+  meta: 'text-xs text-zinc-500',
+  overline: 'text-xs font-medium text-zinc-400 uppercase tracking-wider',
 
-  // Interactive
-  buttonBase: 'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none',
-  buttonPrimary: 'bg-blue-600 text-white hover:bg-blue-700 px-4 py-2',
-  buttonSecondary: 'bg-white text-zinc-900 border border-zinc-200 hover:bg-zinc-50 px-4 py-2',
-  buttonGhost: 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 px-3 py-2',
+  // ─── Interactive ─────────────────────────────────────────────────────────────
+  // RULE: All buttons use buttonBase + a variant. Never build buttons from scratch.
+  buttonBase: 'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none disabled:opacity-50 disabled:pointer-events-none',
+  buttonPrimary: 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm px-4 py-2 text-sm',
+  buttonSecondary: 'bg-white text-zinc-700 border border-zinc-200 hover:bg-zinc-50 hover:border-zinc-300 px-4 py-2 text-sm',
+  buttonGhost: 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 px-3 py-2 text-sm',
+  buttonDanger: 'bg-red-600 text-white hover:bg-red-700 shadow-sm px-4 py-2 text-sm',
+  buttonSuccess: 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm px-4 py-2 text-sm',
+  buttonWarning: 'bg-amber-500 text-white hover:bg-amber-600 shadow-sm px-4 py-2 text-sm',
   buttonIcon: 'p-2 text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 rounded-lg',
+  // Size modifiers (combine with variant)
+  buttonSm: 'px-3 py-1.5 text-xs gap-1.5',
+  buttonLg: 'px-5 py-2.5 text-sm gap-2',
 
-  // Cards
-  card: 'bg-white rounded-xl border border-zinc-100 shadow-sm',
-  cardHover: 'bg-white rounded-xl border border-zinc-100 shadow-sm hover:shadow-md hover:border-zinc-200 transition-all cursor-pointer',
+  // ─── Cards ───────────────────────────────────────────────────────────────────
+  // RULE: rounded-xl, border-zinc-200, shadow-sm. Never rounded-2xl or border-2.
+  card: 'bg-white rounded-xl border border-zinc-200 shadow-sm',
+  cardHover: 'bg-white rounded-xl border border-zinc-200 shadow-sm hover:shadow-md hover:border-zinc-300 transition-all duration-150 cursor-pointer',
+  cardPadding: 'p-5',
+  cardSection: 'px-5 py-4 border-t border-zinc-100',
+  cardSectionMuted: 'px-5 py-4 border-t border-zinc-100 bg-zinc-50',
 
-  // Input
-  input: 'w-full rounded-lg border border-zinc-200 bg-white px-4 py-3 text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors',
-  textarea: 'w-full rounded-lg border border-zinc-200 bg-white px-4 py-3 text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors resize-none',
+  // ─── Icon Boxes ──────────────────────────────────────────────────────────────
+  // RULE: 3 sizes only. rounded-md (sm), rounded-lg (md, lg). Never rounded-xl.
+  iconBoxSm: 'w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0',
+  iconBoxMd: 'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0',
+  iconBoxLg: 'w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0',
 
-  // States
-  focusRing: 'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
-  hoverLight: 'hover:bg-zinc-50 transition-colors',
-  hoverDark: 'hover:bg-zinc-100 transition-colors',
+  // ─── Status Pills ───────────────────────────────────────────────────────────
+  // RULE: All badges use this base + a color combo
+  pillBase: 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium',
+
+  // ─── Input ───────────────────────────────────────────────────────────────────
+  input: 'w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors duration-150',
+  textarea: 'w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors duration-150 resize-none',
+
+  // ─── States ──────────────────────────────────────────────────────────────────
+  focusRing: 'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none',
+  hoverLight: 'hover:bg-zinc-50 transition-colors duration-150',
+  hoverDark: 'hover:bg-zinc-100 transition-colors duration-150',
   active: 'bg-blue-50 text-blue-700 border-blue-200',
 
-  // Animation
+  // ─── Animation ───────────────────────────────────────────────────────────────
   fadeIn: 'animate-in fade-in duration-200',
   slideUp: 'animate-in slide-in-from-bottom-4 duration-300',
   scaleIn: 'animate-in zoom-in-95 duration-200',
+
+  // ─── Dividers ────────────────────────────────────────────────────────────────
+  divider: 'h-px bg-zinc-100',
+  dividerStrong: 'h-px bg-zinc-200',
 } as const;
 
 // ═══════════════════════════════════════════════════════════════════════════════

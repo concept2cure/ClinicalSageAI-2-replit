@@ -252,7 +252,7 @@ interface AvatarProps {
 
 const Avatar: React.FC<AvatarProps> = memo(({ name, initials, status, size = 'md' }) => {
   const sizeClasses = {
-    sm: 'w-6 h-6 text-[10px]',
+    sm: 'w-6 h-6 text-[11px]',
     md: 'w-8 h-8 text-xs',
     lg: 'w-10 h-10 text-sm',
   };
@@ -586,7 +586,7 @@ const TimelineVisualization: React.FC<TimelineVisualizationProps> = memo(({ mile
           className="absolute top-0 bottom-0 w-0.5 bg-primary-500 z-10"
           style={{ left: `${Math.min(Math.max(todayPosition, 0), 100)}%` }}
         >
-          <div className="absolute -top-1 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded bg-primary-500 text-white text-[10px] font-medium whitespace-nowrap">
+          <div className="absolute -top-1 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded bg-primary-500 text-white text-[11px] font-medium whitespace-nowrap">
             Today
           </div>
         </div>

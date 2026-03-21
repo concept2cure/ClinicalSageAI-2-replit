@@ -84,16 +84,16 @@ const SectionCard: React.FC<{
     <div className="bg-white border border-zinc-200 rounded-xl overflow-hidden">
       <button
         onClick={collapsible ? () => setOpen(o => !o) : undefined}
-        className={`w-full flex items-center gap-3 px-5 py-4 text-left ${collapsible ? 'cursor-pointer hover:bg-zinc-50' : 'cursor-default'} transition-colors`}
+        className={`w-full flex items-center gap-3 px-5 py-4 text-left ${collapsible ? 'cursor-pointer hover:bg-zinc-50' : 'cursor-default'} transition-colors duration-150`}
       >
         <span className="text-blue-600">{icon}</span>
-        <h3 className="text-sm font-semibold text-zinc-800 flex-1">{title}</h3>
+        <h3 className="text-sm font-semibold text-zinc-900 flex-1">{title}</h3>
         {collapsible && (
           open ? <ChevronDown className="w-4 h-4 text-zinc-400" /> : <ChevronRight className="w-4 h-4 text-zinc-400" />
         )}
       </button>
       {(!collapsible || open) && (
-        <div className="px-5 pb-5 border-t border-zinc-100 pt-4">
+        <div className="px-5 pb-5 border-t border-zinc-200 pt-4">
           {children}
         </div>
       )}
@@ -148,7 +148,7 @@ const FieldInput: React.FC<{
       value={value}
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+      className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-150"
     />
   </div>
 );
@@ -163,7 +163,7 @@ const TextArea: React.FC<{
 }> = ({ label, value, onChange, placeholder, rows = 4, hint }) => (
   <div>
     <label className="block text-xs font-medium text-zinc-600 mb-1">{label}</label>
-    {hint && <p className="text-[11px] text-zinc-400 mb-1.5">{hint}</p>}
+    {hint && <p className="text-xs text-zinc-400 mb-1.5">{hint}</p>}
     <textarea
       value={value}
       onChange={e => onChange(e.target.value)}
@@ -320,11 +320,11 @@ export default function ClientIntelligencePage() {
       {/* ── Header ─────────────────────────────────────────────────── */}
       <div className="flex-shrink-0 bg-white border-b border-zinc-200 px-6 py-4">
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center shadow-sm">
+          <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center shadow-sm">
             <Brain className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-lg font-bold text-zinc-900">Client Intelligence</h1>
+            <h1 className="text-lg font-semibold text-zinc-900">Client Intelligence</h1>
             <p className="text-xs text-zinc-500">
               Build deep organizational memory so AnA and all agents intimately understand your needs
             </p>
@@ -353,7 +353,7 @@ export default function ClientIntelligencePage() {
               {tab.icon}
               {tab.label}
               {tab.badge && (
-                <span className="px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-600 text-[10px] font-semibold">
+                <span className="px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-600 text-xs font-semibold">
                   {tab.badge}
                 </span>
               )}
@@ -474,7 +474,7 @@ export default function ClientIntelligencePage() {
                 ))}
                 <button
                   onClick={addPipelineAsset}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-150"
                 >
                   <Plus className="w-3.5 h-3.5" /> Add pipeline asset
                 </button>
@@ -515,7 +515,7 @@ export default function ClientIntelligencePage() {
               <button
                 onClick={handleSave}
                 disabled={isSavingProfile}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-sm"
               >
                 {isSavingProfile ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -533,7 +533,7 @@ export default function ClientIntelligencePage() {
           <div className="max-w-3xl mx-auto space-y-5">
             {!profile?.id ? (
               <div className="text-center py-12">
-                <Building2 className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
+                <Building2 className="w-12 h-12 text-zinc-400 mx-auto mb-3" />
                 <p className="text-sm text-zinc-500 mb-2">Create a client profile first</p>
                 <button
                   onClick={() => setActiveTab('persona')}
@@ -549,7 +549,7 @@ export default function ClientIntelligencePage() {
                   onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
                   onDragLeave={() => setIsDragging(false)}
                   onDrop={handleDrop}
-                  className={`border-2 border-dashed rounded-xl p-8 text-center transition-all ${
+                  className={`border border-dashed rounded-xl p-8 text-center transition-all ${
                     isDragging
                       ? 'border-blue-400 bg-blue-50'
                       : 'border-zinc-300 bg-white hover:border-blue-300 hover:bg-blue-50/30'
@@ -591,7 +591,7 @@ export default function ClientIntelligencePage() {
                       />
                       <label
                         htmlFor="file-upload"
-                        className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium cursor-pointer hover:bg-blue-700 transition-colors"
+                        className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium cursor-pointer hover:bg-blue-700 transition-colors duration-150"
                       >
                         <Upload className="w-4 h-4" /> Choose Files
                       </label>
@@ -613,10 +613,10 @@ export default function ClientIntelligencePage() {
                         >
                           <FileText className="w-5 h-5 text-zinc-400 flex-shrink-0" />
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-zinc-800 truncate">
+                            <p className="text-sm font-medium text-zinc-900 truncate">
                               {doc.fileName}
                             </p>
-                            <div className="flex items-center gap-3 text-[11px] text-zinc-400">
+                            <div className="flex items-center gap-3 text-xs text-zinc-400">
                               <span>{doc.fileType?.toUpperCase()}</span>
                               {doc.fileSizeBytes && (
                                 <span>{(doc.fileSizeBytes / 1024).toFixed(0)} KB</span>
@@ -630,7 +630,7 @@ export default function ClientIntelligencePage() {
                             </div>
                           </div>
                           <span
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                            className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
                               doc.processingStatus === 'completed'
                                 ? 'bg-emerald-100 text-emerald-700'
                                 : doc.processingStatus === 'failed'
@@ -650,19 +650,19 @@ export default function ClientIntelligencePage() {
                 {profile && (
                   <div className="grid grid-cols-3 gap-4">
                     <div className="bg-white border border-zinc-200 rounded-xl p-4 text-center">
-                      <p className="text-2xl font-bold text-blue-600">
+                      <p className="text-2xl font-semibold text-blue-600">
                         {profile.totalDocumentsIngested || 0}
                       </p>
                       <p className="text-xs text-zinc-500">Documents Ingested</p>
                     </div>
                     <div className="bg-white border border-zinc-200 rounded-xl p-4 text-center">
-                      <p className="text-2xl font-bold text-violet-600">
+                      <p className="text-2xl font-semibold text-violet-600">
                         {((profile.totalTokensProcessed || 0) / 1000).toFixed(0)}K
                       </p>
                       <p className="text-xs text-zinc-500">Tokens Processed</p>
                     </div>
                     <div className="bg-white border border-zinc-200 rounded-xl p-4 text-center">
-                      <p className="text-2xl font-bold text-emerald-600">
+                      <p className="text-2xl font-semibold text-emerald-600">
                         {memoryTotalCount}
                       </p>
                       <p className="text-xs text-zinc-500">Memory Entries</p>
@@ -679,7 +679,7 @@ export default function ClientIntelligencePage() {
           <div className="max-w-3xl mx-auto space-y-5">
             {memoryEntries.length === 0 ? (
               <div className="text-center py-12">
-                <Brain className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
+                <Brain className="w-12 h-12 text-zinc-400 mx-auto mb-3" />
                 <p className="text-sm text-zinc-500 mb-1">No memory entries yet</p>
                 <p className="text-xs text-zinc-400">
                   Upload documents in the Document Vault tab to start building intelligence
@@ -705,7 +705,7 @@ export default function ClientIntelligencePage() {
                     return (
                       <span
                         key={cat}
-                        className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-zinc-100 text-zinc-600"
+                        className="px-2.5 py-1 rounded-full text-xs font-medium bg-zinc-100 text-zinc-600"
                       >
                         {cat === 'all' ? 'All' : cat.charAt(0).toUpperCase() + cat.slice(1)} ({count})
                       </span>
@@ -718,7 +718,7 @@ export default function ClientIntelligencePage() {
                   {memoryEntries.map(entry => (
                     <div
                       key={entry.id}
-                      className="bg-white border border-zinc-200 rounded-xl p-4 hover:border-blue-200 transition-colors"
+                      className="bg-white border border-zinc-200 rounded-xl p-4 hover:border-blue-200 transition-colors duration-150"
                     >
                       <div className="flex items-start gap-3">
                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
@@ -734,7 +734,7 @@ export default function ClientIntelligencePage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <h4 className="text-sm font-medium text-zinc-800 truncate">
+                            <h4 className="text-sm font-medium text-zinc-900 truncate">
                               {entry.title}
                             </h4>
                             {entry.isVerifiedByUser && (
@@ -744,7 +744,7 @@ export default function ClientIntelligencePage() {
                           <p className="text-xs text-zinc-600 leading-relaxed mb-2">
                             {entry.content}
                           </p>
-                          <div className="flex items-center gap-3 text-[11px] text-zinc-400">
+                          <div className="flex items-center gap-3 text-xs text-zinc-400">
                             <span className="px-1.5 py-0.5 rounded bg-zinc-100 font-medium">
                               {entry.category}
                             </span>
@@ -760,7 +760,7 @@ export default function ClientIntelligencePage() {
                           {!entry.isVerifiedByUser && (
                             <button
                               onClick={() => verifyEntry(entry.id)}
-                              className="p-1.5 rounded-lg text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                              className="p-1.5 rounded-lg text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors duration-150"
                               title="Verify this insight"
                             >
                               <CheckCircle2 className="w-4 h-4" />
@@ -768,7 +768,7 @@ export default function ClientIntelligencePage() {
                           )}
                           <button
                             onClick={() => archiveEntry(entry.id)}
-                            className="p-1.5 rounded-lg text-zinc-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                            className="p-1.5 rounded-lg text-zinc-400 hover:text-red-500 hover:bg-red-50 transition-colors duration-150"
                             title="Remove this insight"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -790,7 +790,7 @@ export default function ClientIntelligencePage() {
               <div className="flex items-center gap-3 mb-4">
                 <ClipboardList className="w-5 h-5 text-blue-600" />
                 <div>
-                  <h2 className="text-sm font-semibold text-zinc-800">
+                  <h2 className="text-sm font-semibold text-zinc-900">
                     What We Need From You
                   </h2>
                   <p className="text-xs text-zinc-500">
@@ -829,14 +829,14 @@ export default function ClientIntelligencePage() {
                             )}
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-zinc-700">{item.label}</p>
-                              <p className="text-[11px] text-zinc-400">{item.description}</p>
+                              <p className="text-xs text-zinc-400">{item.description}</p>
                             </div>
                             <div className="flex items-center gap-2 flex-shrink-0">
-                              <span className="text-[10px] text-zinc-400">
+                              <span className="text-xs text-zinc-400">
                                 {item.fileTypes.map(t => t.toUpperCase()).join(', ')}
                               </span>
                               <span
-                                className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${
+                                className={`px-1.5 py-0.5 rounded text-xs font-semibold ${
                                   item.priority === 'required'
                                     ? 'bg-amber-100 text-amber-700'
                                     : item.priority === 'recommended'

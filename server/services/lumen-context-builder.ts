@@ -1,10 +1,10 @@
 /**
- * @fileoverview Lumen Cortex Context Builder
+ * @fileoverview AnA RI Context Builder
  * @module server/services/lumen-context-builder
  * @version 1.0.0
  *
  * @description
- * Assembles rich, dynamic system prompts for Lumen Cortex by loading
+ * Assembles rich, dynamic system prompts for AnA RI by loading
  * project state, workflow position, document completion, IND pyramid
  * progress, and user role from the database.
  *

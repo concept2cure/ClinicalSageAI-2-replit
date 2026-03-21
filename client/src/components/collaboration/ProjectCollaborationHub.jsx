@@ -1254,7 +1254,7 @@ const ProjectCollaborationHub = ({
                     {approvalRequests.filter(req => req.status === 'pending').length > 0 && (
                       <Badge
                         variant="destructive"
-                        className="absolute -top-2 -right-2 h-4 w-4 p-0 flex items-center justify-center text-[10px]"
+                        className="absolute -top-2 -right-2 h-4 w-4 p-0 flex items-center justify-center text-[11px]"
                       >
                         {approvalRequests.filter(req => req.status === 'pending').length}
                       </Badge>

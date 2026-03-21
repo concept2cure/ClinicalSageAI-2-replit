@@ -169,7 +169,7 @@ export const ArtifactGraph: React.FC<ArtifactGraphProps> = ({
               key={state}
               onClick={() => setFilterState(filterState === state ? null : state)}
               className={cn(
-                'flex items-center gap-1.5 px-2 py-1 rounded-md text-xs transition-colors',
+                'flex items-center gap-1.5 px-2 py-1 rounded-md text-xs transition-colors duration-150',
                 filterState === state ? `${colors.bg} ${colors.text} font-semibold` : 'text-zinc-500 hover:bg-zinc-50'
               )}
             >
@@ -185,7 +185,7 @@ export const ArtifactGraph: React.FC<ArtifactGraphProps> = ({
         <div className="max-w-5xl mx-auto space-y-6">
           {Object.entries(moduleGroups).map(([module, arts]) => (
             <div key={module} className="bg-white rounded-xl border p-5">
-              <h3 className="text-sm font-semibold text-zinc-800 mb-3 flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-zinc-900 mb-3 flex items-center gap-2">
                 <FileText className="w-4 h-4 text-blue-500" />
                 {module.replace('-', ' ').replace(/\b\w/g, c => c.toUpperCase())}
                 <span className="text-xs text-zinc-500 font-normal">({arts.length} artifacts)</span>
@@ -203,7 +203,7 @@ export const ArtifactGraph: React.FC<ArtifactGraphProps> = ({
                       key={artifact.id}
                       onClick={() => setSelectedArtifact(isSelected ? null : artifact)}
                       className={cn(
-                        'relative p-3 rounded-lg border cursor-pointer transition-all',
+                        'relative p-3 rounded-lg border cursor-pointer transition-all duration-150',
                         isSelected ? 'ring-2 ring-violet-400 border-violet-300' : 'hover:border-zinc-300',
                         isStale ? 'border-amber-300 bg-amber-50/50' : 'border-zinc-200',
                       )}
@@ -216,14 +216,14 @@ export const ArtifactGraph: React.FC<ArtifactGraphProps> = ({
                       <div className="flex items-start gap-2">
                         <Icon className={cn('w-4 h-4 mt-0.5 flex-shrink-0', colors.text)} />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-zinc-800 truncate">{artifact.title}</p>
+                          <p className="text-sm font-medium text-zinc-900 truncate">{artifact.title}</p>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="text-[10px] font-mono text-zinc-500">{artifact.code}</span>
-                            <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full', colors.bg, colors.text)}>
+                            <span className="text-xs font-mono text-zinc-500">{artifact.code}</span>
+                            <span className={cn('text-xs px-1.5 py-0.5 rounded-full', colors.bg, colors.text)}>
                               {artifact.lifecycleState}
                             </span>
                             {artifact.requirementLevel === 'required' && (
-                              <span className="text-[10px] text-red-600 font-medium">required</span>
+                              <span className="text-xs text-red-600 font-medium">required</span>
                             )}
                           </div>
                         </div>
@@ -237,7 +237,7 @@ export const ArtifactGraph: React.FC<ArtifactGraphProps> = ({
 
           {Object.keys(moduleGroups).length === 0 && (
             <div className="bg-white rounded-xl border p-12 text-center">
-              <GitBranch className="w-10 h-10 text-zinc-300 mx-auto mb-3" />
+              <GitBranch className="w-10 h-10 text-zinc-400 mx-auto mb-3" />
               <h3 className="text-sm font-medium text-zinc-700">No artifacts yet</h3>
               <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">
                 Create a program and use auto-scaffold to generate the artifact tree for your destination type.
@@ -261,19 +261,19 @@ export const ArtifactGraph: React.FC<ArtifactGraphProps> = ({
               <div className="grid grid-cols-4 gap-4 text-xs">
                 <div>
                   <p className="text-zinc-500 mb-0.5">Code</p>
-                  <p className="font-mono text-zinc-800">{selectedArtifact.code}</p>
+                  <p className="font-mono text-zinc-900">{selectedArtifact.code}</p>
                 </div>
                 <div>
                   <p className="text-zinc-500 mb-0.5">Type</p>
-                  <p className="text-zinc-800 capitalize">{selectedArtifact.artifactType}</p>
+                  <p className="text-zinc-900 capitalize">{selectedArtifact.artifactType}</p>
                 </div>
                 <div>
                   <p className="text-zinc-500 mb-0.5">Module</p>
-                  <p className="text-zinc-800">{selectedArtifact.dossierModule || '—'}</p>
+                  <p className="text-zinc-900">{selectedArtifact.dossierModule || '—'}</p>
                 </div>
                 <div>
                   <p className="text-zinc-500 mb-0.5">Requirement</p>
-                  <p className="text-zinc-800 capitalize">{selectedArtifact.requirementLevel || 'required'}</p>
+                  <p className="text-zinc-900 capitalize">{selectedArtifact.requirementLevel || 'required'}</p>
                 </div>
               </div>
             </div>
@@ -281,7 +281,7 @@ export const ArtifactGraph: React.FC<ArtifactGraphProps> = ({
               {selectedArtifact.lifecycleState === 'planned' && onDraftWithAI && (
                 <button
                   onClick={() => onDraftWithAI(selectedArtifact.id, selectedArtifact.title)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-violet-50 text-violet-700 border border-violet-200 rounded-lg hover:bg-violet-100"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-violet-50 text-violet-700 border border-blue-200 rounded-lg hover:bg-violet-100"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   Draft with AnA

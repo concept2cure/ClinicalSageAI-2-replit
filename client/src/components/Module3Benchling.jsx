@@ -14,7 +14,7 @@ export default function Module3Benchling({ project }) {
 
   return (
     <button
-      className="bg-purple-600 text-white px-3 py-1 rounded disabled:opacity-50"
+      className="bg-purple-600 text-white px-3 py-1 rounded disabled:opacity-60"
       disabled={!project || busy}
       onClick={download}
     >

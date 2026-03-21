@@ -175,13 +175,13 @@ const VersionItem: React.FC<VersionItemProps> = ({
               {isCurrent && (
                 <Badge
                   variant="secondary"
-                  className="text-[10px] px-1.5 py-0 bg-blue-100 text-blue-700"
+                  className="text-xs px-1.5 py-0 bg-blue-100 text-blue-700"
                 >
                   Current
                 </Badge>
               )}
               {version.changeType === 'ai' && (
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                <Badge variant="outline" className="text-xs px-1.5 py-0">
                   <Sparkles className="h-2.5 w-2.5 mr-0.5" />
                   RI
                 </Badge>
@@ -351,7 +351,7 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
         <DialogTrigger asChild>
           <button
             className={cn(
-              'flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors',
+              'flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors duration-150',
               'text-sm text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900',
               className
             )}

@@ -10,6 +10,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { LIFECYCLE } from '../ui/enterprise';
 import {
   Brain,
   Bot,
@@ -76,24 +77,24 @@ export interface WorkflowDemoProps {
 
 const STATUS_CONFIG = {
   pending: {
-    bg: 'bg-muted/50',
-    border: 'border-muted',
+    bg: LIFECYCLE.not_started.bg,
+    border: LIFECYCLE.not_started.border,
     icon: Clock,
-    iconColor: 'text-muted-foreground',
+    iconColor: LIFECYCLE.not_started.text,
     label: 'Pending',
   },
   running: {
-    bg: 'bg-blue-50',
-    border: 'border-blue-400',
+    bg: LIFECYCLE.in_review.bg,
+    border: LIFECYCLE.in_review.border,
     icon: Loader2,
-    iconColor: 'text-blue-500',
+    iconColor: LIFECYCLE.in_review.text,
     label: 'Running',
   },
   complete: {
-    bg: 'bg-emerald-50',
-    border: 'border-emerald-400',
+    bg: LIFECYCLE.approved.bg,
+    border: LIFECYCLE.approved.border,
     icon: CheckCircle2,
-    iconColor: 'text-emerald-500',
+    iconColor: LIFECYCLE.approved.text,
     label: 'Complete',
   },
   blocked: {
@@ -104,13 +105,13 @@ const STATUS_CONFIG = {
     label: 'Blocked',
   },
   'action-needed': {
-    bg: 'bg-amber-50',
-    border: 'border-amber-400',
+    bg: LIFECYCLE.draft.bg,
+    border: LIFECYCLE.draft.border,
     icon: AlertTriangle,
-    iconColor: 'text-amber-500',
+    iconColor: LIFECYCLE.draft.text,
     label: 'Action Needed',
   },
-} as const;
+};
 
 const ACTOR_CONFIG = {
   'dr-sage': {
@@ -120,12 +121,12 @@ const ACTOR_CONFIG = {
   },
   ana: {
     label: 'AnA 1.0',
-    bg: 'bg-violet-100 text-violet-700',
+    bg: 'bg-blue-100 text-blue-700',
     icons: [Brain],
   },
   both: {
     label: 'Dr. Sage + AnA 1.0',
-    bg: 'bg-gradient-to-r from-blue-100 to-violet-100 text-indigo-700',
+    bg: 'bg-blue-50 text-blue-700',
     icons: [Bot, Brain],
   },
 } as const;
@@ -214,7 +215,7 @@ function StepCard({
       {/* Card */}
       <motion.div
         className={cn(
-          'mb-4 flex-1 rounded-lg border p-4 transition-colors',
+          'mb-4 flex-1 rounded-lg border p-4 transition-colors duration-150',
           cfg.border,
           cfg.bg,
           step.status === 'running' && 'ring-2 ring-blue-400/30',
@@ -237,7 +238,7 @@ function StepCard({
 
         {step.objectContext && (
           <div className="mt-2">
-            <Badge variant="outline" className="text-[10px] font-normal">
+            <Badge variant="outline" className="text-xs font-normal">
               {step.objectContext}
             </Badge>
           </div>
@@ -323,8 +324,8 @@ export function WorkflowEngine({
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-100">
-              <Zap className="h-4 w-4 text-indigo-600" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100">
+              <Zap className="h-4 w-4 text-blue-600" />
             </div>
             <div>
               <CardTitle className="text-base">{title}</CardTitle>
@@ -340,7 +341,7 @@ export function WorkflowEngine({
             <Badge
               variant={allComplete ? 'default' : 'secondary'}
               className={cn(
-                'text-[10px]',
+                'text-xs',
                 allComplete && 'bg-emerald-500 hover:bg-emerald-600',
                 isRunning && !allComplete && 'bg-blue-500 hover:bg-blue-600 text-white',
               )}

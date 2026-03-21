@@ -174,7 +174,7 @@ export default function CERV2PredicateSearch({ onSelectPredicate, visible, onTog
             Search
           </Button>
         </div>
-        <p className="text-[10px] text-slate-400 mt-1">
+        <p className="text-[11px] text-slate-400 mt-1">
           Searches the openFDA 510(k) clearance database
         </p>
       </div>
@@ -209,15 +209,15 @@ export default function CERV2PredicateSearch({ onSelectPredicate, visible, onTog
                     <p className="text-xs font-semibold text-slate-800 truncate">
                       {device.device_name}
                     </p>
-                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 flex-shrink-0">
+                    <Badge variant="outline" className="text-[11px] px-1.5 py-0 flex-shrink-0">
                       {device.k_number}
                     </Badge>
                   </div>
-                  <p className="text-[10px] text-slate-500 mt-0.5">{device.applicant}</p>
+                  <p className="text-[11px] text-slate-500 mt-0.5">{device.applicant}</p>
                   <div className="flex items-center gap-2 mt-1">
                     {device.decision_description && (
                       <Badge
-                        className={`text-[9px] px-1 py-0 ${
+                        className={`text-[11px] px-1 py-0 ${
                           device.decision_description === 'Substantially Equivalent'
                             ? 'bg-green-100 text-green-700 border-green-300'
                             : 'bg-slate-100 text-slate-600'
@@ -227,10 +227,10 @@ export default function CERV2PredicateSearch({ onSelectPredicate, visible, onTog
                       </Badge>
                     )}
                     {device.decision_date && (
-                      <span className="text-[10px] text-slate-400">{device.decision_date}</span>
+                      <span className="text-[11px] text-slate-400">{device.decision_date}</span>
                     )}
                     {device.product_code && (
-                      <span className="text-[10px] text-slate-400">
+                      <span className="text-[11px] text-slate-400">
                         Code: {device.product_code}
                       </span>
                     )}
@@ -239,7 +239,7 @@ export default function CERV2PredicateSearch({ onSelectPredicate, visible, onTog
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-7 text-[10px] gap-1 flex-shrink-0"
+                  className="h-7 text-[11px] gap-1 flex-shrink-0"
                   onClick={() => handleSelect(device)}
                 >
                   Use <ArrowRight className="w-3 h-3" />

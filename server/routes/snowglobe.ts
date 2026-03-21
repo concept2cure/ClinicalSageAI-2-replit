@@ -1317,7 +1317,7 @@ router.post('/runs/:runId/create-findings-memo', (req: Request, res: Response) =
     organizationId: orgId,
     createdById: userId,
     artifactType: 'findings-memo',
-    title: `Snow Globe Findings Memo — ${run.runType} — ${new Date().toISOString().split('T')[0]}`,
+    title: `AnA Predictions Findings Memo — ${run.runType} — ${new Date().toISOString().split('T')[0]}`,
     status: 'draft',
     content: {
       header: {

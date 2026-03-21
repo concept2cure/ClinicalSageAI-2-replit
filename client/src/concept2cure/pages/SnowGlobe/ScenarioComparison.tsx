@@ -10,6 +10,7 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
+import { SEVERITY } from '../../components/ui/enterprise';
 import {
   AlertTriangle,
   ArrowDownRight,
@@ -90,10 +91,10 @@ const SCORE_DEFS: ScoreDef[] = [
 ];
 
 const SEVERITY_CONFIG: Record<Severity, { bg: string; text: string; border: string; order: number }> = {
-  critical: { bg: 'bg-red-500/10', text: 'text-red-400', border: 'border-red-500/30', order: 0 },
-  high: { bg: 'bg-orange-500/10', text: 'text-orange-400', border: 'border-orange-500/30', order: 1 },
-  medium: { bg: 'bg-yellow-500/10', text: 'text-yellow-400', border: 'border-yellow-500/30', order: 2 },
-  low: { bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-500/30', order: 3 },
+  critical: { bg: SEVERITY.critical.bg, text: SEVERITY.critical.text, border: SEVERITY.critical.border, order: SEVERITY.critical.order },
+  high:     { bg: SEVERITY.high.bg,     text: SEVERITY.high.text,     border: SEVERITY.high.border,     order: SEVERITY.high.order },
+  medium:   { bg: SEVERITY.medium.bg,   text: SEVERITY.medium.text,   border: SEVERITY.medium.border,   order: SEVERITY.medium.order },
+  low:      { bg: SEVERITY.low.bg,      text: SEVERITY.low.text,      border: SEVERITY.low.border,      order: SEVERITY.low.order },
 };
 
 // =============================================================================
@@ -236,7 +237,7 @@ function ScenarioSelector({
           className={cn(
             'w-full appearance-none rounded-lg border border-zinc-700 bg-zinc-800/80',
             'px-3 py-2.5 pr-8 text-sm text-zinc-100',
-            'focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/60',
+            'focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/40 focus:border-blue-500/60',
             'transition-colors cursor-pointer',
           )}
         >
@@ -265,9 +266,9 @@ function ScoreRow({
   const DeltaIcon = info.icon;
 
   return (
-    <div className="grid grid-cols-12 items-center gap-3 px-4 py-3 border-b border-zinc-800/60 last:border-b-0 hover:bg-zinc-800/30 transition-colors">
+    <div className="grid grid-cols-12 items-center gap-3 px-4 py-3 border-b border-zinc-800/60 last:border-b-0 hover:bg-zinc-800/30 transition-colors duration-150">
       {/* Score Name */}
-      <div className="col-span-3 text-sm text-zinc-300 font-medium truncate" title={def.label}>
+      <div className="col-span-3 text-sm text-zinc-400 font-medium truncate" title={def.label}>
         {def.label}
       </div>
 
@@ -319,7 +320,7 @@ function FindingCard({
   return (
     <div
       className={cn(
-        'flex items-start gap-3 rounded-lg border p-3 transition-colors',
+        'flex items-start gap-3 rounded-lg border p-3 transition-colors duration-150',
         side === 'baseline'
           ? 'border-zinc-700/60 bg-zinc-800/40'
           : 'border-blue-500/20 bg-blue-500/5',
@@ -531,7 +532,7 @@ export default function ScenarioComparison({
             className={cn(
               'flex items-center justify-center h-8 w-8 rounded-lg',
               'border border-zinc-700 bg-zinc-800/60 text-zinc-400',
-              'hover:bg-zinc-700 hover:text-zinc-200 transition-colors',
+              'hover:bg-zinc-700 hover:text-zinc-200 transition-colors duration-150',
             )}
           >
             <X className="h-4 w-4" />
@@ -559,7 +560,7 @@ export default function ScenarioComparison({
             'border border-zinc-700 bg-zinc-800/80 text-zinc-400',
             'hover:bg-blue-500/10 hover:border-blue-500/30 hover:text-blue-400',
             'disabled:opacity-30 disabled:cursor-not-allowed',
-            'transition-all duration-200',
+            'transition-all duration-150',
           )}
           title="Swap scenarios"
         >
@@ -719,7 +720,7 @@ export default function ScenarioComparison({
                     recommendation.recommended === 'alternate'
                       ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
                       : recommendation.recommended === 'baseline'
-                        ? 'bg-zinc-700/50 text-zinc-300 border-zinc-600/50'
+                        ? 'bg-zinc-700/50 text-zinc-400 border-zinc-600/50'
                         : 'bg-blue-500/15 text-blue-400 border-blue-500/30',
                   )}
                 >
@@ -744,14 +745,14 @@ export default function ScenarioComparison({
                   </p>
                   <div className="flex items-center gap-3">
                     <div className="text-center flex-1">
-                      <p className="text-2xl font-bold text-zinc-300 tabular-nums">
+                      <p className="text-2xl font-semibold text-zinc-400 tabular-nums">
                         {recommendation.baselineBetter}
                       </p>
                       <p className="text-xs text-zinc-500">Baseline wins</p>
                     </div>
                     <div className="h-8 w-px bg-zinc-700" />
                     <div className="text-center flex-1">
-                      <p className="text-2xl font-bold text-blue-400 tabular-nums">
+                      <p className="text-2xl font-semibold text-blue-400 tabular-nums">
                         {recommendation.alternateBetter}
                       </p>
                       <p className="text-xs text-zinc-500">Alternate wins</p>

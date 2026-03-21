@@ -4,7 +4,7 @@
  *
  * Surfaces quality, compliance, stress-testing, and readiness capabilities
  * for the Concept2Cure regulatory platform. Seven sub-views accessible via
- * tab navigation: Quality Center, Compliance, SnowGlobe, Readiness Score,
+ * tab navigation: Quality Center, Compliance, AnA Predictions, Readiness Score,
  * Evidence Confidence, Audit Trail, and Traceability.
  *
  * Design: Claude-style — warm white bg, clean zinc typography, generous whitespace.
@@ -36,6 +36,7 @@ import { useDeliverable } from '@/concept2cure/hooks/useDeliverable';
 import { GenerateButton, ExportButton, RunButton } from '@/concept2cure/components/ui/ActionButton';
 import { useProjects } from '@/concept2cure/hooks/useProjects';
 import { useQuery } from '@tanstack/react-query';
+import { queryKeys } from '@/concept2cure/hooks/queryKeys';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -124,7 +125,7 @@ interface TraceabilityClaim {
 const TAB_LABELS: { key: TabKey; label: string }[] = [
   { key: 'quality', label: 'Quality Center' },
   { key: 'compliance', label: 'Compliance' },
-  { key: 'snowglobe', label: 'AnA SnowGlobe' },
+  { key: 'snowglobe', label: 'AnA Predictions' },
   { key: 'readiness', label: 'Readiness Score' },
   { key: 'evidence', label: 'Evidence Confidence' },
   { key: 'audit', label: 'Audit Trail' },
@@ -361,8 +362,8 @@ function riskColor(score: number): string {
 
 function EmptyState({ icon: Icon, message, detail }: { icon: React.ElementType; message: string; detail: string }) {
   return (
-    <div className="bg-white border border-zinc-100 rounded-lg py-12 text-center">
-      <Icon className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
+    <div className="bg-white border border-zinc-200 rounded-lg py-12 text-center">
+      <Icon className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
       <p className="text-sm text-zinc-500">{message}</p>
       <p className="text-xs text-zinc-400 mt-1">{detail}</p>
     </div>
@@ -427,7 +428,7 @@ function QualityCenterView({ qcSections }: { qcSections: QCSection[] }) {
       ) : (
         <>
           {/* Summary */}
-          <div className="bg-white border border-zinc-100 rounded-lg p-5">
+          <div className="bg-white border border-zinc-200 rounded-lg p-5">
             <div className="flex items-center gap-8">
               <div>
                 <p className="text-xs text-zinc-400 uppercase tracking-wide">Sections Checked</p>
@@ -448,10 +449,10 @@ function QualityCenterView({ qcSections }: { qcSections: QCSection[] }) {
           </div>
 
           {/* Table */}
-          <div className="bg-white border border-zinc-100 rounded-lg overflow-hidden">
+          <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-zinc-100">
+                <tr className="border-b border-zinc-200">
                   <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Section</th>
                   <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Status</th>
                   <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Issues</th>
@@ -527,7 +528,7 @@ function ComplianceView({ complianceRules }: { complianceRules: ComplianceRule[]
       </div>
 
       {/* Summary */}
-      <div className="bg-white border border-zinc-100 rounded-lg p-5">
+      <div className="bg-white border border-zinc-200 rounded-lg p-5">
         <div className="flex items-center gap-8">
           <div>
             <p className="text-xs text-zinc-400 uppercase tracking-wide">Rules Evaluated</p>
@@ -548,13 +549,13 @@ function ComplianceView({ complianceRules }: { complianceRules: ComplianceRule[]
       </div>
 
       {/* Compliance Rules */}
-      <div className="bg-white border border-zinc-100 rounded-lg overflow-hidden">
-        <div className="px-5 py-3 border-b border-zinc-100">
+      <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden">
+        <div className="px-5 py-3 border-b border-zinc-200">
           <h3 className="text-sm font-medium text-zinc-900">Compliance Rules</h3>
         </div>
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-zinc-100">
+            <tr className="border-b border-zinc-200">
               <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">ID</th>
               <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Category</th>
               <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Rule</th>
@@ -580,13 +581,13 @@ function ComplianceView({ complianceRules }: { complianceRules: ComplianceRule[]
       </div>
 
       {/* Multi-Agency Matrix */}
-      <div className="bg-white border border-zinc-100 rounded-lg overflow-hidden">
-        <div className="px-5 py-3 border-b border-zinc-100">
+      <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden">
+        <div className="px-5 py-3 border-b border-zinc-200">
           <h3 className="text-sm font-medium text-zinc-900">Multi-Agency Compliance Matrix</h3>
         </div>
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-zinc-100">
+            <tr className="border-b border-zinc-200">
               <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Requirement</th>
               <th className="text-center px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">FDA</th>
               <th className="text-center px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">EMA</th>
@@ -598,13 +599,13 @@ function ComplianceView({ complianceRules }: { complianceRules: ComplianceRule[]
               <tr key={i} className="border-b border-zinc-50 last:border-0">
                 <td className="px-5 py-3 text-zinc-900">{row.requirement}</td>
                 <td className="px-5 py-3 text-center">
-                  <span className={row.fda ? 'text-green-700' : 'text-zinc-300'}>{row.fda ? 'Met' : '\u2014'}</span>
+                  <span className={row.fda ? 'text-green-700' : 'text-zinc-400'}>{row.fda ? 'Met' : '\u2014'}</span>
                 </td>
                 <td className="px-5 py-3 text-center">
-                  <span className={row.ema ? 'text-green-700' : 'text-zinc-300'}>{row.ema ? 'Met' : '\u2014'}</span>
+                  <span className={row.ema ? 'text-green-700' : 'text-zinc-400'}>{row.ema ? 'Met' : '\u2014'}</span>
                 </td>
                 <td className="px-5 py-3 text-center">
-                  <span className={row.pmda ? 'text-green-700' : 'text-zinc-300'}>{row.pmda ? 'Met' : '\u2014'}</span>
+                  <span className={row.pmda ? 'text-green-700' : 'text-zinc-400'}>{row.pmda ? 'Met' : '\u2014'}</span>
                 </td>
               </tr>
             ))}
@@ -636,7 +637,7 @@ function SnowGlobeView() {
     <div className="px-8 py-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-medium text-zinc-900">AnA SnowGlobe</h2>
+          <h2 className="text-lg font-medium text-zinc-900">AnA Predictions</h2>
           <p className="text-sm text-zinc-600 mt-1">
             Unified prediction engine. Stress-test submissions, forecast trial outcomes, and model regulatory risk.
           </p>
@@ -644,15 +645,15 @@ function SnowGlobeView() {
         <div className="flex items-center gap-2">
           <GenerateButton
             label="Generate Full Report"
-            produces="AnA SnowGlobe Prediction Report (PDF)"
+            produces="AnA Predictions Report (PDF)"
             isLoading={isGenerating}
             onClick={() => generate({
               endpoint: '/api/snowglobe/report',
               method: 'POST',
               body: { engines: 'all', includePredictions: true },
-              filename: 'AnA_SnowGlobe_Report.pdf',
+              filename: 'AnA_Predictions_Report.pdf',
               format: 'pdf',
-              title: 'AnA SnowGlobe Prediction Report',
+              title: 'AnA Predictions Report',
             })}
           />
           <GenerateButton
@@ -685,7 +686,7 @@ function SnowGlobeView() {
       </div>
 
       {/* Aggregate Summary */}
-      <div className="bg-white border border-zinc-100 rounded-lg p-5">
+      <div className="bg-white border border-zinc-200 rounded-lg p-5">
         <div className="flex items-center gap-8">
           <div>
             <p className="text-xs text-zinc-400 uppercase tracking-wide">Aggregate Risk</p>
@@ -705,14 +706,14 @@ function SnowGlobeView() {
           </div>
         </div>
         <p className="text-xs text-zinc-400 mt-4">
-          Powered by AnA SnowGlobe — 6-engine simulation + Monte Carlo + ForesightAI + Endpoint Recommender
+          Powered by AnA Predictions — 6-engine simulation + Monte Carlo + AnA Predictions + Endpoint Recommender
         </p>
       </div>
 
       {/* Engine Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {simulations.map((engine, i) => (
-          <div key={i} className="bg-white border border-zinc-100 rounded-lg p-5">
+          <div key={i} className="bg-white border border-zinc-200 rounded-lg p-5">
             <div className="flex items-start justify-between">
               <div>
                 <h3 className="text-sm font-medium text-zinc-900">{engine.name}</h3>
@@ -726,7 +727,7 @@ function SnowGlobeView() {
             <ul className="mt-3 space-y-1">
               {engine.findings.map((f, j) => (
                 <li key={j} className="text-xs text-zinc-600 flex items-start gap-1.5">
-                  <span className="text-zinc-300 mt-0.5">-</span>
+                  <span className="text-zinc-400 mt-0.5">-</span>
                   {f}
                 </li>
               ))}
@@ -734,7 +735,7 @@ function SnowGlobeView() {
 
             <button
               onClick={() => handleRunSimulation(i)}
-              className="mt-4 flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
+              className="mt-4 flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors duration-150"
             >
               <Play className="w-3 h-3" />
               Run simulation
@@ -744,7 +745,7 @@ function SnowGlobeView() {
       </div>
 
       {/* Trial Prediction (merged from ForesightAI) */}
-      <div className="bg-white border border-zinc-100 rounded-lg p-5 space-y-4">
+      <div className="bg-white border border-zinc-200 rounded-lg p-5 space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-sm font-medium text-zinc-900">Trial Prediction</h3>
@@ -771,7 +772,7 @@ function SnowGlobeView() {
                 )} />
                 <span className="text-xs text-zinc-600">{rf.factor}</span>
                 <span className={cn(
-                  'text-[10px] font-medium uppercase ml-auto shrink-0',
+                  'text-xs font-medium uppercase ml-auto shrink-0',
                   rf.impact === 'high' ? 'text-red-500' : rf.impact === 'medium' ? 'text-amber-500' : 'text-zinc-400',
                 )}>{rf.impact}</span>
               </div>
@@ -781,7 +782,7 @@ function SnowGlobeView() {
       </div>
 
       {/* Monte Carlo Simulation */}
-      <div className="bg-white border border-zinc-100 rounded-lg p-5 space-y-4">
+      <div className="bg-white border border-zinc-200 rounded-lg p-5 space-y-4">
         <h3 className="text-sm font-medium text-zinc-900">Monte Carlo Simulation</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
@@ -813,19 +814,19 @@ function SnowGlobeView() {
       </div>
 
       {/* Recommended Endpoints */}
-      <div className="bg-white border border-zinc-100 rounded-lg p-5 space-y-3">
+      <div className="bg-white border border-zinc-200 rounded-lg p-5 space-y-3">
         <h3 className="text-sm font-medium text-zinc-900">Recommended Endpoints</h3>
         <div className="divide-y divide-zinc-50">
           {ANA_PREDICTION.endpoints.map((ep, i) => (
             <div key={i} className="flex items-center justify-between py-2 first:pt-0 last:pb-0">
               <div>
                 <p className="text-xs font-medium text-zinc-900">{ep.name}</p>
-                <p className="text-[10px] text-zinc-400">{ep.recommendation}</p>
+                <p className="text-xs text-zinc-400">{ep.recommendation}</p>
               </div>
               <span className={cn(
-                'text-[10px] font-medium px-2 py-0.5 rounded-full',
+                'text-xs font-medium px-2 py-0.5 rounded-full',
                 ep.type === 'Primary' ? 'bg-blue-50 text-blue-600' :
-                ep.type === 'Co-primary' ? 'bg-indigo-50 text-indigo-600' :
+                ep.type === 'Co-primary' ? 'bg-blue-50 text-blue-600' :
                 'bg-zinc-100 text-zinc-500',
               )}>{ep.type}</span>
             </div>
@@ -834,7 +835,7 @@ function SnowGlobeView() {
       </div>
 
       {/* Protocol Optimization */}
-      <div className="bg-white border border-zinc-100 rounded-lg p-5 space-y-3">
+      <div className="bg-white border border-zinc-200 rounded-lg p-5 space-y-3">
         <h3 className="text-sm font-medium text-zinc-900">Protocol Optimization</h3>
         <ul className="space-y-2">
           {ANA_PREDICTION.protocolFindings.map((finding, i) => (
@@ -911,7 +912,7 @@ function ReadinessScoreView({ readinessModules, summary }: { readinessModules: R
       ) : (
         <>
           {/* Main Score */}
-          <div className="bg-white border border-zinc-100 rounded-lg p-8 text-center">
+          <div className="bg-white border border-zinc-200 rounded-lg p-8 text-center">
             <p className="text-xs text-zinc-400 uppercase tracking-wide">Submission Readiness</p>
             <p className="text-6xl font-semibold text-zinc-900 mt-2">{overallReadiness}%</p>
             <p className="text-sm text-zinc-400 mt-2">
@@ -933,13 +934,13 @@ function ReadinessScoreView({ readinessModules, summary }: { readinessModules: R
           </div>
 
           {/* Module Breakdown */}
-          <div className="bg-white border border-zinc-100 rounded-lg overflow-hidden">
-            <div className="px-5 py-3 border-b border-zinc-100">
+          <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden">
+            <div className="px-5 py-3 border-b border-zinc-200">
               <h3 className="text-sm font-medium text-zinc-900">Module-by-Module Readiness</h3>
             </div>
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-zinc-100">
+                <tr className="border-b border-zinc-200">
                   <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Module</th>
                   <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Name</th>
                   <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Completeness</th>
@@ -978,7 +979,7 @@ function ReadinessScoreView({ readinessModules, summary }: { readinessModules: R
           </div>
 
           {/* Prediction Detail */}
-          <div className="bg-white border border-zinc-100 rounded-lg p-5">
+          <div className="bg-white border border-zinc-200 rounded-lg p-5">
             <h3 className="text-sm font-medium text-zinc-900">Filing Probability Model</h3>
             <p className="text-xs text-zinc-400 mt-1 mb-3">
               Predicted outcomes based on historical approval data for similar submissions.
@@ -1052,7 +1053,7 @@ function EvidenceConfidenceView({ evidenceSections }: { evidenceSections: Eviden
       </div>
 
       {/* Powered By */}
-      <div className="bg-white border border-zinc-100 rounded-lg p-5">
+      <div className="bg-white border border-zinc-200 rounded-lg p-5">
         <p className="text-xs text-zinc-400">
           Powered by Evidence Confidence Heatmap, Confidence Scoring Engine
         </p>
@@ -1066,10 +1067,10 @@ function EvidenceConfidenceView({ evidenceSections }: { evidenceSections: Eviden
         />
       ) : (
         /* Evidence Grid */
-        <div className="bg-white border border-zinc-100 rounded-lg overflow-hidden">
+        <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-zinc-100">
+              <tr className="border-b border-zinc-200">
                 <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Section</th>
                 <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Strength</th>
                 <th className="text-center px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Claims</th>
@@ -1163,7 +1164,7 @@ function AuditTrailView({ auditEntries }: { auditEntries: AuditEntry[] }) {
       </div>
 
       {/* Powered By */}
-      <div className="bg-white border border-zinc-100 rounded-lg p-5">
+      <div className="bg-white border border-zinc-200 rounded-lg p-5">
         <p className="text-xs text-zinc-400">
           Powered by Cognitive Audit Service, Provenance Trail
         </p>
@@ -1184,7 +1185,7 @@ function AuditTrailView({ auditEntries }: { auditEntries: AuditEntry[] }) {
               <select
                 value={filterUser}
                 onChange={(e) => setFilterUser(e.target.value)}
-                className="text-sm border border-zinc-200 rounded-md px-3 py-1.5 text-zinc-700 bg-white focus:outline-none focus:ring-1 focus:ring-zinc-300"
+                className="text-sm border border-zinc-200 rounded-md px-3 py-1.5 text-zinc-700 bg-white focus-visible:ring-2 outline-none focus:ring-zinc-300"
               >
                 <option value="">All users</option>
                 {users.map((u) => (
@@ -1195,7 +1196,7 @@ function AuditTrailView({ auditEntries }: { auditEntries: AuditEntry[] }) {
             <select
               value={filterAction}
               onChange={(e) => setFilterAction(e.target.value)}
-              className="text-sm border border-zinc-200 rounded-md px-3 py-1.5 text-zinc-700 bg-white focus:outline-none focus:ring-1 focus:ring-zinc-300"
+              className="text-sm border border-zinc-200 rounded-md px-3 py-1.5 text-zinc-700 bg-white focus-visible:ring-2 outline-none focus:ring-zinc-300"
             >
               <option value="">All actions</option>
               {actions.map((a) => (
@@ -1205,10 +1206,10 @@ function AuditTrailView({ auditEntries }: { auditEntries: AuditEntry[] }) {
           </div>
 
           {/* Audit Feed */}
-          <div className="bg-white border border-zinc-100 rounded-lg overflow-hidden">
+          <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-zinc-100">
+                <tr className="border-b border-zinc-200">
                   <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Timestamp</th>
                   <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">User</th>
                   <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Action</th>
@@ -1307,7 +1308,7 @@ function TraceabilityView({ traceability }: { traceability: TraceabilityClaim[] 
       ) : (
         <>
           {/* Summary */}
-          <div className="bg-white border border-zinc-100 rounded-lg p-5">
+          <div className="bg-white border border-zinc-200 rounded-lg p-5">
             <div className="flex items-center gap-8">
               <div>
                 <p className="text-xs text-zinc-400 uppercase tracking-wide">Coverage</p>
@@ -1326,7 +1327,7 @@ function TraceabilityView({ traceability }: { traceability: TraceabilityClaim[] 
 
           {/* Orphaned Claims */}
           {orphaned.length > 0 && (
-            <div className="bg-white border border-zinc-100 rounded-lg p-5">
+            <div className="bg-white border border-zinc-200 rounded-lg p-5">
               <h3 className="text-sm font-medium text-zinc-900">Orphaned Claims</h3>
               <p className="text-xs text-zinc-400 mt-1">Claims without supporting evidence links.</p>
               <ul className="mt-3 space-y-2">
@@ -1344,13 +1345,13 @@ function TraceabilityView({ traceability }: { traceability: TraceabilityClaim[] 
           )}
 
           {/* Full Matrix */}
-          <div className="bg-white border border-zinc-100 rounded-lg overflow-hidden">
-            <div className="px-5 py-3 border-b border-zinc-100">
+          <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden">
+            <div className="px-5 py-3 border-b border-zinc-200">
               <h3 className="text-sm font-medium text-zinc-900">Traceability Matrix</h3>
             </div>
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-zinc-100">
+                <tr className="border-b border-zinc-200">
                   <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Req ID</th>
                   <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Claim</th>
                   <th className="text-left px-5 py-3 text-xs font-medium text-zinc-400 uppercase tracking-wide">Evidence Links</th>
@@ -1367,7 +1368,7 @@ function TraceabilityView({ traceability }: { traceability: TraceabilityClaim[] 
                         <ul className="space-y-0.5">
                           {claim.evidenceLinks.map((link, j) => (
                             <li key={j} className="flex items-center gap-1">
-                              <Link2 className="w-3 h-3 text-zinc-300" />
+                              <Link2 className="w-3 h-3 text-zinc-400" />
                               {link}
                             </li>
                           ))}
@@ -1404,26 +1405,26 @@ export function ReviewReadiness({ onClose }: { onClose: () => void }) {
 
   // Fetch real artifact summary
   const { data: summaryRaw } = useQuery({
-    queryKey: ['/api/concept2cure/projects/all/artifacts-summary'],
+    queryKey: [...queryKeys.projects.artifactsSummary()],
   });
   const summary = (summaryRaw as any)?.data || { total: 0, draft: 0, review: 0, approved: 0 };
 
   // Fetch all artifacts for quality checks
   const { data: artifactsRaw } = useQuery({
-    queryKey: ['/api/concept2cure/artifacts'],
+    queryKey: [...queryKeys.artifacts.all],
   });
   const artifacts = (artifactsRaw as any)?.data || [];
 
   // Fetch real audit logs
   const { data: auditRaw } = useQuery({
-    queryKey: ['/api/concept2cure/audit-logs', { limit: 50 }],
+    queryKey: [...queryKeys.auditLogs.list({ limit: 50 })],
     queryFn: () => fetch('/api/concept2cure/audit-logs?limit=50').then(r => r.json()),
   });
   const auditLogs = (auditRaw as any)?.data?.logs || [];
 
   // Fetch pending reviews
   const { data: reviewsRaw } = useQuery({
-    queryKey: ['/api/concept2cure/reviews/pending'],
+    queryKey: [...queryKeys.reviews.pending()],
   });
   const pendingReviews = (reviewsRaw as any)?.data?.assignments || [];
 
@@ -1463,7 +1464,7 @@ export function ReviewReadiness({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-[#faf9f5]">
       {/* Top bar */}
-      <header className="flex-shrink-0 h-12 border-b border-zinc-100 bg-white">
+      <header className="flex-shrink-0 h-12 border-b border-zinc-200 bg-white">
         <div className="flex items-center h-full px-6">
           {/* Back */}
           <button

@@ -156,12 +156,12 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
   return (
     <div className="flex-1 flex flex-col bg-white min-h-0 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-2 px-4 h-10 border-b border-zinc-100 shrink-0">
+      <div className="flex items-center gap-2 px-4 h-10 border-b border-zinc-200 shrink-0">
         <Sparkles className="w-4 h-4 text-violet-500" />
-        <h2 className="text-sm font-semibold text-zinc-800">Regulatory Transform Canvas</h2>
+        <h2 className="text-sm font-semibold text-zinc-900">Regulatory Transform Canvas</h2>
         {projectName && (
           <>
-            <span className="text-zinc-300">·</span>
+            <span className="text-zinc-400">·</span>
             <span className="text-xs text-zinc-500 truncate">{projectName}</span>
           </>
         )}
@@ -179,7 +179,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
         <div className="grid grid-cols-5 gap-px bg-zinc-100 min-h-full">
           {/* ── Lane 1: Inputs ── */}
           <div className="bg-white p-3 flex flex-col gap-3">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-700 pb-1 border-b border-zinc-100">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-700 pb-1 border-b border-zinc-200">
               <Database className="w-3.5 h-3.5 text-blue-500" />
               Inputs
             </div>
@@ -219,7 +219,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
 
           {/* ── Lane 2: Structured Transform ── */}
           <div className="bg-white p-3 flex flex-col gap-3">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-700 pb-1 border-b border-zinc-100">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-700 pb-1 border-b border-zinc-200">
               <Layers className="w-3.5 h-3.5 text-violet-500" />
               Structured Transform
             </div>
@@ -235,14 +235,14 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
                 />
                 {templateStructure.length > 0 ? (
                   <div>
-                    <span className="text-[10px] text-zinc-400 uppercase tracking-wider">
+                    <span className="text-xs text-zinc-400 uppercase tracking-wider">
                       Required blocks
                     </span>
                     <ul className="mt-1 space-y-0.5">
                       {templateStructure.slice(0, 8).map(s => (
                         <li
                           key={s.key}
-                          className="flex items-center gap-1 text-[11px] text-zinc-600"
+                          className="flex items-center gap-1 text-xs text-zinc-600"
                         >
                           {s.required ? (
                             <CheckCircle className="w-3 h-3 text-emerald-500 shrink-0" />
@@ -253,23 +253,23 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
                         </li>
                       ))}
                       {templateStructure.length > 8 && (
-                        <li className="text-[10px] text-zinc-400">
+                        <li className="text-xs text-zinc-400">
                           +{templateStructure.length - 8} more
                         </li>
                       )}
                     </ul>
                   </div>
                 ) : (
-                  <span className="text-[11px] text-zinc-400">No template structure mapped</span>
+                  <span className="text-xs text-zinc-400">No template structure mapped</span>
                 )}
                 {matchingApps.length > 0 && (
                   <div>
-                    <span className="text-[10px] text-zinc-400 uppercase tracking-wider">
+                    <span className="text-xs text-zinc-400 uppercase tracking-wider">
                       Matching apps
                     </span>
                     <ul className="mt-1 space-y-0.5">
                       {matchingApps.map(app => (
-                        <li key={app.appId} className="text-[11px] text-violet-600">
+                        <li key={app.appId} className="text-xs text-violet-600">
                           {app.label}
                         </li>
                       ))}
@@ -279,14 +279,14 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
               </>
             ) : (
               <>
-                <span className="text-[11px] text-zinc-400">Select a CTD section</span>
+                <span className="text-xs text-zinc-400">Select a CTD section</span>
                 {context && context.ctdSections.length > 0 && (
                   <div className="space-y-1">
                     {context.ctdSections.slice(0, 6).map(s => (
                       <button
                         key={s}
                         onClick={() => setSelectedCtd(s)}
-                        className="w-full text-left text-[11px] px-2 py-1 rounded hover:bg-blue-50 text-blue-600 transition-colors"
+                        className="w-full text-left text-xs px-2 py-1 rounded hover:bg-blue-50 text-blue-600 transition-colors duration-150"
                       >
                         {s} — {getSectionLabel(s)}
                       </button>
@@ -299,12 +299,12 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
 
           {/* ── Lane 3: Draft Output ── */}
           <div className="bg-white p-3 flex flex-col gap-3">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-700 pb-1 border-b border-zinc-100">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-700 pb-1 border-b border-zinc-200">
               <FileText className="w-3.5 h-3.5 text-emerald-500" />
               Draft Output
             </div>
             <div>
-              <label className="text-[10px] text-zinc-400 uppercase tracking-wider block mb-1">
+              <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-1">
                 Artifact title
               </label>
               <input
@@ -312,7 +312,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
                 value={draftTitle}
                 onChange={e => setDraftTitle(e.target.value)}
                 placeholder="Document title..."
-                className="w-full text-[12px] px-2 py-1.5 rounded border border-zinc-200 focus:border-blue-400 focus:ring-1 focus:ring-blue-200 outline-none"
+                className="w-full text-sm px-2 py-1.5 rounded border border-zinc-200 focus:border-blue-400 focus:ring-1 focus:ring-blue-200 outline-none"
               />
             </div>
             {selectedCtd && (
@@ -323,13 +323,13 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
             )}
             {selectedTemplate && <LaneStat label="Template" value={selectedTemplate} />}
             <div>
-              <label className="text-[10px] text-zinc-400 uppercase tracking-wider block mb-1">
+              <label className="text-xs text-zinc-400 uppercase tracking-wider block mb-1">
                 Doc type
               </label>
               <select
                 value={docType}
                 onChange={e => setDocType(e.target.value)}
-                className="w-full text-[12px] px-2 py-1.5 rounded border border-zinc-200 outline-none focus:border-blue-400"
+                className="w-full text-sm px-2 py-1.5 rounded border border-zinc-200 outline-none focus:border-blue-400"
               >
                 <option value="regulatory_document">Regulatory Document</option>
                 <option value="evidence_memo">Evidence Memo</option>
@@ -344,7 +344,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
 
           {/* ── Lane 4: Governance ── */}
           <div className="bg-white p-3 flex flex-col gap-3">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-700 pb-1 border-b border-zinc-100">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-700 pb-1 border-b border-zinc-200">
               <ShieldCheck className="w-3.5 h-3.5 text-amber-500" />
               Governance
             </div>
@@ -359,7 +359,7 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
 
           {/* ── Lane 5: Downstream Actions ── */}
           <div className="bg-white p-3 flex flex-col gap-2">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-700 pb-1 border-b border-zinc-100">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-700 pb-1 border-b border-zinc-200">
               <ArrowRight className="w-3.5 h-3.5 text-blue-500" />
               Downstream Actions
             </div>
@@ -407,9 +407,9 @@ export const RegulatoryTransformCanvas: React.FC<RegulatoryTransformCanvasProps>
 function LaneStat({ label, value, sublabel }: { label: string; value: string; sublabel?: string }) {
   return (
     <div>
-      <span className="text-[10px] text-zinc-400 uppercase tracking-wider">{label}</span>
-      <p className="text-[12px] text-zinc-700 font-medium leading-tight">{value}</p>
-      {sublabel && <p className="text-[10px] text-zinc-400">{sublabel}</p>}
+      <span className="text-xs text-zinc-400 uppercase tracking-wider">{label}</span>
+      <p className="text-sm text-zinc-700 font-medium leading-tight">{value}</p>
+      {sublabel && <p className="text-xs text-zinc-400">{sublabel}</p>}
     </div>
   );
 }
@@ -417,7 +417,7 @@ function LaneStat({ label, value, sublabel }: { label: string; value: string; su
 function EmptyLane({ message }: { message: string }) {
   return (
     <div className="flex-1 flex items-center justify-center">
-      <span className="text-[11px] text-zinc-400">{message}</span>
+      <span className="text-xs text-zinc-400">{message}</span>
     </div>
   );
 }
@@ -440,13 +440,13 @@ function ActionButton({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        'flex items-center gap-2 px-2.5 py-1.5 rounded text-[11px] font-medium transition-colors text-left',
+        'flex items-center gap-2 px-2.5 py-1.5 rounded text-xs font-medium transition-colors text-left',
         'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
         primary && !disabled
           ? 'bg-blue-600 text-white hover:bg-blue-700'
           : !disabled
             ? 'bg-zinc-50 text-zinc-700 hover:bg-zinc-100 border border-zinc-200'
-            : 'bg-zinc-50 text-zinc-300 border border-zinc-100 cursor-not-allowed'
+            : 'bg-zinc-50 text-zinc-400 border border-zinc-200 cursor-not-allowed'
       )}
     >
       {icon}

@@ -5,6 +5,7 @@
  * Uses @tanstack/react-query for caching and refetching.
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useVisibleInterval } from './useVisibleInterval';
 
 const API = '/api/submission-ops';
 
@@ -56,11 +57,12 @@ export function useCreatePackage() {
 // ═══════════════════════════════════════════════════════════
 
 export function useReadiness(packageId?: string) {
+  const interval = useVisibleInterval(30_000);
   return useQuery({
     queryKey: ['submission-ops', 'readiness', packageId],
     queryFn: () => apiFetch<any>(`/packages/${packageId}/readiness`),
     enabled: !!packageId,
-    refetchInterval: 30_000,
+    refetchInterval: interval,
   });
 }
 
@@ -208,11 +210,12 @@ export function useMarkDigestRead() {
 // ═══════════════════════════════════════════════════════════
 
 export function useCommandCenter(projectId?: number) {
+  const interval = useVisibleInterval(30_000);
   return useQuery({
     queryKey: ['submission-ops', 'command-center', projectId],
     queryFn: () => apiFetch<any>(`/command-center?projectId=${projectId}`),
     enabled: !!projectId,
-    refetchInterval: 30_000,
+    refetchInterval: interval,
   });
 }
 

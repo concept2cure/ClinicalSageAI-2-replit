@@ -72,6 +72,12 @@ interface AnaPersistentPanelProps {
     screenName?: string;
     activeProject?: string;
     projectId?: string;
+    /** Currently active document title (from editor) */
+    activeDocumentTitle?: string;
+    /** Brief excerpt of active document content (first ~300 chars, HTML stripped) */
+    activeDocumentExcerpt?: string;
+    /** CTD section of active document */
+    activeDocumentCtdSection?: string;
   };
   /** Suggested actions shown as quick-start chips when conversation is empty */
   suggestedActions?: SuggestedAction[];
@@ -183,6 +189,15 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       'Checking predicate devices and precedents...',
       'Let it flow, let it flow... through the review process 🏔️',
       'Building your regulatory snowglobe of insights...',
+    const ANA_THINKING_MESSAGES = [
+      'Analyzing your request...',
+      'Reviewing regulatory guidance...',
+      'Cross-referencing documents...',
+      'Checking FDA requirements...',
+      'Researching ICH guidelines...',
+      'Reviewing compliance standards...',
+      'Preparing your response...',
+      'Searching regulatory databases...',
     ];
     const DEEP_RESEARCH_THINKING = [
       'Querying ClinicalTrials.gov for matching studies...',
@@ -208,6 +223,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     if (greeting) return greeting;
     const hour = new Date().getHours();
     const timeGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+    if (contextProfile?.activeDocumentTitle) {
+      return `${timeGreeting}. Working on "${contextProfile.activeDocumentTitle}"${contextProfile.activeDocumentCtdSection ? ` (CTD ${contextProfile.activeDocumentCtdSection})` : ''}. How can I help?`;
+    }
     if (contextProfile?.activeProject) {
       return `${timeGreeting}! Ready to make progress on ${contextProfile.activeProject}. What shall we tackle?`;
     }
@@ -452,6 +470,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               projectId: contextProfile?.projectId,
               productType: contextProfile?.productType,
               userRole: contextProfile?.userRole,
+              activeDocument: contextProfile?.activeDocumentTitle || undefined,
+              activeDocumentExcerpt: contextProfile?.activeDocumentExcerpt || undefined,
+              activeDocumentCtdSection: contextProfile?.activeDocumentCtdSection || undefined,
             },
             conversationHistory: messages.slice(-10).map(m => ({
               role: m.role,
@@ -521,6 +542,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         {/* Expanded conversation overlay (slides up from bottom) */}
         {hasMessages && (
           <div className="max-h-[50vh] overflow-y-auto zen-scroll border-t border-[#F5F4EF]" style={{ scrollbarWidth: 'thin' }}>
+          <div className="max-h-[50vh] overflow-y-auto zen-scroll border-t border-zinc-200" style={{ scrollbarWidth: 'thin' }}>
             {messages.map(msg => {
               const isUser = msg.role === 'user';
               const htmlContent = !isUser ? renderMarkdown(msg.content) : '';
@@ -534,6 +556,13 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       <span className="text-xs font-semibold text-[#2D2C28]">{isUser ? 'You' : 'AnA'}</span>
                       {isUser ? (
                         <p className="text-sm text-[#2D2C28] leading-relaxed whitespace-pre-wrap mt-0.5">{msg.content}</p>
+                    <div className={cn('w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5', isUser ? 'bg-zinc-800 text-white' : 'bg-violet-600')}>
+                      {isUser ? <span className="text-xs font-semibold">{(contextProfile?.userRole?.[0] || 'Y').toUpperCase()}</span> : <Sparkles className="w-3.5 h-3.5 text-white" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-xs font-semibold text-zinc-900">{isUser ? 'You' : 'AnA'}</span>
+                      {isUser ? (
+                        <p className="text-sm text-zinc-900 leading-relaxed whitespace-pre-wrap mt-0.5">{msg.content}</p>
                       ) : (
                         <div className="prose prose-sm prose-stone max-w-none mt-0.5 prose-p:text-[#4D4B45] prose-p:leading-relaxed prose-p:my-1.5 prose-strong:text-[#141413] [&>*:first-child]:mt-0 [&>*:last-child]:mb-0" dangerouslySetInnerHTML={{ __html: htmlContent }} />
                       )}
@@ -552,6 +581,13 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_infinite]" />
                       <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
                       <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
+                  <div className="w-7 h-7 rounded-full bg-violet-600 flex items-center justify-center flex-shrink-0 mt-0.5"><Sparkles className="w-3.5 h-3.5 text-white" /></div>
+                  <div>
+                    <span className="text-xs font-semibold text-zinc-900">AnA</span>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <div className="w-2 h-2 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_infinite]" />
+                      <div className="w-2 h-2 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
+                      <div className="w-2 h-2 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
                     </div>
                   </div>
                 </div>
@@ -571,10 +607,17 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               <div className="flex items-center gap-1.5 flex-shrink-0 self-center">
                 <Sparkles className="w-4 h-4 text-[#D97757]" />
                 {screenLabel && <span className="text-[10px] text-[#B0AEA5] font-medium hidden sm:inline">{screenLabel}</span>}
+              'flex items-end gap-2 px-3.5 py-2.5 bg-zinc-50 border rounded-xl transition-colors duration-150',
+              isFocused ? 'border-zinc-300 ring-2 ring-zinc-100 bg-white shadow-sm' : 'border-zinc-200 hover:border-zinc-300'
+            )}>
+              <div className="flex items-center gap-1.5 flex-shrink-0 self-center">
+                <Sparkles className="w-4 h-4 text-violet-500" />
+                {screenLabel && <span className="text-xs text-zinc-400 font-medium hidden sm:inline">{screenLabel}</span>}
               </div>
               <textarea ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)} placeholder="Message AnA..." rows={1} className="flex-1 resize-none bg-transparent border-none outline-none text-[#141413] placeholder:text-[#B0AEA5] text-sm leading-6 min-h-[24px] max-h-[120px]" />
               {hasMessages && (
                 <button onClick={() => setMessages([])} className="flex-shrink-0 p-1.5 text-[#B0AEA5] hover:text-[#6B6962] rounded-lg transition-colors" title="New thread">
+                <button onClick={() => setMessages([])} className="flex-shrink-0 p-1.5 text-zinc-400 hover:text-zinc-600 rounded-lg transition-colors duration-150" title="New thread">
                   <RotateCcw className="w-3.5 h-3.5" />
                 </button>
               )}
@@ -605,12 +648,19 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 <h2 className="text-xl font-semibold text-[#141413]">{defaultGreeting}</h2>
                 {screenLabel && (
                   <p className="text-sm text-[#B0AEA5] mt-1">{screenLabel}</p>
+              <div className="mb-10">
+                <div className="w-14 h-14 rounded-lg bg-blue-600 flex items-center justify-center mx-auto mb-5 shadow-sm">
+                  <Sparkles className="w-7 h-7 text-white" />
+                </div>
+                <h2 className="text-2xl font-semibold text-zinc-900">{defaultGreeting}</h2>
+                {screenLabel && (
+                  <p className="text-sm text-zinc-500 mt-2">{screenLabel}</p>
                 )}
               </div>
 
               {/* Suggested actions */}
               {suggestedActions && suggestedActions.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-lg mx-auto">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg mx-auto">
                   {suggestedActions.slice(0, 4).map(action => (
                     <button
                       key={action.id}
@@ -620,6 +670,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       <p className="text-sm font-medium text-[#4D4B45] group-hover:text-[#141413]">{action.label}</p>
                       {action.description && (
                         <p className="text-xs text-[#B0AEA5] mt-0.5 line-clamp-1">{action.description}</p>
+                      className="text-left px-5 py-4 rounded-xl border border-zinc-200 hover:border-blue-200 hover:shadow-md transition-all group"
+                    >
+                      <p className="text-sm font-medium text-zinc-900 group-hover:text-blue-900">{action.label}</p>
+                      {action.description && (
+                        <p className="text-xs text-zinc-500 mt-1 line-clamp-2">{action.description}</p>
                       )}
                     </button>
                   ))}
@@ -648,17 +703,22 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     <div className={cn(
                       'w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5',
                       isUser ? 'bg-[#4D4B45] text-white' : 'bg-[#D97757]'
+                      'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm',
+                      isUser ? 'bg-zinc-800 text-white' : 'bg-violet-600'
                     )}>
                       {isUser ? (
-                        <span className="text-[9px] font-bold">{(contextProfile?.userRole?.[0] || 'Y').toUpperCase()}</span>
+                        <span className="text-xs font-semibold">{(contextProfile?.userRole?.[0] || 'Y').toUpperCase()}</span>
                       ) : (
-                        <Sparkles className="w-3 h-3 text-white" />
+                        <Sparkles className="w-4 h-4 text-white" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <span className="text-xs font-semibold text-[#2D2C28]">{isUser ? 'You' : 'AnA'}</span>
                       {isUser ? (
                         <p className="text-sm text-[#2D2C28] leading-relaxed whitespace-pre-wrap mt-0.5">{msg.content}</p>
+                      <span className="text-xs font-semibold text-zinc-900">{isUser ? 'You' : 'AnA'}</span>
+                      {isUser ? (
+                        <p className="text-sm text-zinc-900 leading-relaxed whitespace-pre-wrap mt-0.5">{msg.content}</p>
                       ) : (
                         <>
                           <div
@@ -701,7 +761,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                 a.click();
                                 URL.revokeObjectURL(url);
                               }}
-                              className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 transition-colors"
+                              className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition-colors duration-150"
                             >
                               <Download className="w-3.5 h-3.5" />
                               {msg.pptx.filename}
@@ -719,6 +779,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           </button>
                           <button onClick={() => console.info(`[chat-feedback] messageId=${msg.id} positive=true`)} className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors" title="Good"><ThumbsUp className="w-3 h-3" /></button>
                           <button onClick={() => console.info(`[chat-feedback] messageId=${msg.id} positive=false`)} className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors" title="Bad"><ThumbsDown className="w-3 h-3" /></button>
+                          <button onClick={() => handleCopy(msg.id, msg.content)} className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors duration-150" title="Copy">
+                            {copiedId === msg.id ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
+                          </button>
+                          <button className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors duration-150" title="Good"><ThumbsUp className="w-3.5 h-3.5" /></button>
+                          <button className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors duration-150" title="Bad"><ThumbsDown className="w-3.5 h-3.5" /></button>
                         </div>
                       )}
                     </div>
@@ -743,6 +808,20 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                         <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
                       </div>
                       <span className="text-xs text-[#D97757] font-medium">{thinkingMsg || 'Thinking...'}</span>
+              <div className="px-4 py-4 bg-white">
+                <div className="flex gap-3 max-w-3xl mx-auto">
+                  <div className="w-8 h-8 rounded-full bg-violet-600 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
+                    <Sparkles className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-semibold text-zinc-900">AnA</span>
+                    <div className="flex items-center gap-2.5 mt-1.5">
+                      <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_infinite]" />
+                        <div className="w-2 h-2 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
+                        <div className="w-2 h-2 rounded-full bg-violet-400 animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
+                      </div>
+                      <span className="text-sm text-violet-600 font-medium">{thinkingMsg || 'Thinking...'}</span>
                     </div>
                   </div>
                 </div>
@@ -755,6 +834,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
       {/* ── Bottom input bar — always visible ── */}
       <div className="flex-shrink-0 px-4 py-3 border-t border-[#F5F4EF] bg-white">
+      <div className="flex-shrink-0 px-4 py-3 border-t border-zinc-200 bg-white">
         <div className="max-w-3xl mx-auto">
           {/* Clear conversation button */}
           {hasMessages && (
@@ -762,6 +842,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               <button
                 onClick={() => setMessages([])}
                 className="flex items-center gap-1.5 px-3 py-1 text-xs text-[#B0AEA5] hover:text-[#6B6962] hover:bg-[#F5F4EF] rounded-full transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1 text-xs text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-full transition-colors duration-150"
               >
                 <RotateCcw className="w-3 h-3" />
                 New thread
@@ -771,6 +852,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
           <div className={cn(
             'flex items-end gap-2 px-3.5 py-2.5 bg-[#FAF9F5] border rounded-2xl transition-colors duration-150',
+            'flex items-end gap-2 px-3.5 py-2.5 bg-zinc-50 border rounded-xl transition-colors duration-150',
             isFocused
               ? 'border-[#D8D5CA] ring-2 ring-[#F5F4EF] bg-white shadow-sm'
               : 'border-[#E8E6DC] hover:border-[#D8D5CA]'
@@ -781,7 +863,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 type="button"
                 onClick={() => setShowModeDropdown(prev => !prev)}
                 className={cn(
-                  'flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors',
+                  'flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors duration-150',
                   chatMode === 'deep-research'
                     ? 'bg-violet-50 text-violet-700 hover:bg-violet-100'
                     : chatMode === 'nano-banana'
@@ -797,7 +879,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   <Sparkles className="w-3.5 h-3.5" />
                 )}
                 <span className="hidden sm:inline">
-                  {chatMode === 'deep-research' ? 'Deep Research' : chatMode === 'nano-banana' ? 'Nano Banana' : 'AnA'}
+                  {chatMode === 'deep-research' ? 'AnA Research' : chatMode === 'nano-banana' ? 'AnA Visual' : 'AnA RI'}
                 </span>
                 <ChevronDown className="w-3 h-3 opacity-50" />
               </button>
@@ -816,6 +898,14 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     <div>
                       <div className="text-sm font-medium text-[#141413]">AnA</div>
                       <div className="text-[11px] text-[#B0AEA5] leading-tight">Fast regulatory co-pilot for everyday questions</div>
+                      'w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-zinc-50 transition-colors duration-150',
+                      chatMode === 'standard' && 'bg-zinc-50'
+                    )}
+                  >
+                    <MessageSquare className="w-4 h-4 mt-0.5 text-blue-600 flex-shrink-0" />
+                    <div>
+                      <div className="text-sm font-medium text-zinc-900">AnA RI</div>
+                      <div className="text-xs text-zinc-500 leading-tight">Regulatory intelligence co-pilot — drafting, analysis, guidance</div>
                     </div>
                     {chatMode === 'standard' && <Check className="w-4 h-4 text-[#D97757] ml-auto mt-0.5 flex-shrink-0" />}
                   </button>
@@ -825,28 +915,32 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     className={cn(
                       'w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-[#FAF9F5] transition-colors',
                       chatMode === 'deep-research' && 'bg-[#FBF0EB]'
+                      'w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-zinc-50 transition-colors duration-150',
+                      chatMode === 'deep-research' && 'bg-violet-50'
                     )}
                   >
                     <Zap className="w-4 h-4 mt-0.5 text-[#D97757] flex-shrink-0" />
                     <div>
                       <div className="text-sm font-medium text-[#141413]">Deep Research</div>
                       <div className="text-[11px] text-[#B0AEA5] leading-tight">Multi-source search across ClinicalTrials.gov, PubMed, FDA &amp; more</div>
+                      <div className="text-sm font-medium text-zinc-900">AnA Research</div>
+                      <div className="text-xs text-zinc-500 leading-tight">Deep multi-source search — ClinicalTrials.gov, PubMed, FDA, EMA</div>
                     </div>
                     {chatMode === 'deep-research' && <Check className="w-4 h-4 text-[#D97757] ml-auto mt-0.5 flex-shrink-0" />}
                   </button>
-                  <div className="mx-2 my-0.5 border-t border-zinc-100" />
+                  <div className="mx-2 my-0.5 border-t border-zinc-200" />
                   <button
                     type="button"
                     onClick={() => { setChatMode('nano-banana'); setShowModeDropdown(false); }}
                     className={cn(
-                      'w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-zinc-50 transition-colors',
+                      'w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-zinc-50 transition-colors duration-150',
                       chatMode === 'nano-banana' && 'bg-amber-50'
                     )}
                   >
                     <ImageIcon className="w-4 h-4 mt-0.5 text-amber-600 flex-shrink-0" />
                     <div>
-                      <div className="text-sm font-medium text-zinc-900">Nano Banana</div>
-                      <div className="text-[11px] text-zinc-400 leading-tight">AI image generation, presentations &amp; visual design via Gemini</div>
+                      <div className="text-sm font-medium text-zinc-900">AnA Visual</div>
+                      <div className="text-xs text-zinc-500 leading-tight">AI-generated images, infographics, and presentation slides</div>
                     </div>
                     {chatMode === 'nano-banana' && <Check className="w-4 h-4 text-amber-600 ml-auto mt-0.5 flex-shrink-0" />}
                   </button>
@@ -862,7 +956,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               onKeyDown={handleKeyDown}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
-              placeholder={chatMode === 'deep-research' ? 'Ask a deep research question...' : chatMode === 'nano-banana' ? 'Describe an image, infographic, or presentation...' : 'Message AnA...'}
+              placeholder={chatMode === 'deep-research' ? 'Ask AnA Research a question — searches regulatory databases and literature...' : chatMode === 'nano-banana' ? 'Describe what you need — diagrams, charts, infographics, presentations...' : 'Ask AnA RI anything about your regulatory work...'}
               rows={1}
               className="flex-1 resize-none bg-transparent border-none outline-none text-[#141413] placeholder:text-[#B0AEA5] text-sm leading-6 min-h-[24px] max-h-[120px]"
             />

@@ -138,7 +138,7 @@ interface ApprovalTrend {
 
 const AGENCY_CONFIG: Record<Agency, { label: string; color: string; flag: string }> = {
   FDA: { label: 'FDA (US)', color: 'bg-blue-100 text-blue-800', flag: '🇺🇸' },
-  EMA: { label: 'EMA (EU)', color: 'bg-indigo-100 text-indigo-800', flag: '🇪🇺' },
+  EMA: { label: 'EMA (EU)', color: 'bg-blue-100 text-blue-800', flag: '🇪🇺' },
   PMDA: { label: 'PMDA (Japan)', color: 'bg-red-100 text-red-800', flag: '🇯🇵' },
   'Health Canada': { label: 'Health Canada', color: 'bg-pink-100 text-pink-800', flag: '🇨🇦' },
   TGA: { label: 'TGA (Australia)', color: 'bg-green-100 text-green-800', flag: '🇦🇺' },
@@ -306,7 +306,7 @@ function IntelligenceMetrics() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">New Guidance</p>
-              <p className="text-2xl font-bold">12</p>
+              <p className="text-2xl font-semibold">12</p>
               <p className="text-xs text-green-600">+3 this week</p>
             </div>
             <FileText className="w-8 h-8 text-blue-500" />
@@ -319,7 +319,7 @@ function IntelligenceMetrics() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Active Alerts</p>
-              <p className="text-2xl font-bold text-orange-600">5</p>
+              <p className="text-2xl font-semibold text-orange-600">5</p>
               <p className="text-xs text-red-600">2 high priority</p>
             </div>
             <Bell className="w-8 h-8 text-orange-500" />
@@ -332,7 +332,7 @@ function IntelligenceMetrics() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Recent Approvals</p>
-              <p className="text-2xl font-bold">24</p>
+              <p className="text-2xl font-semibold">24</p>
               <p className="text-xs text-muted-foreground">Last 30 days</p>
             </div>
             <CheckCircle2 className="w-8 h-8 text-green-500" />
@@ -345,7 +345,7 @@ function IntelligenceMetrics() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Comment Deadlines</p>
-              <p className="text-2xl font-bold text-purple-600">3</p>
+              <p className="text-2xl font-semibold text-purple-600">3</p>
               <p className="text-xs text-muted-foreground">Open for comments</p>
             </div>
             <Calendar className="w-8 h-8 text-purple-500" />
@@ -358,7 +358,7 @@ function IntelligenceMetrics() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Bookmarked</p>
-              <p className="text-2xl font-bold">8</p>
+              <p className="text-2xl font-semibold">8</p>
               <p className="text-xs text-muted-foreground">Saved items</p>
             </div>
             <Bookmark className="w-8 h-8 text-yellow-500" />
@@ -584,7 +584,7 @@ function RegulatoryAlerts({ alerts }: { alerts: RegulatoryAlert[] }) {
  */
 function CompetitiveIntelligence({ approvals }: { approvals: CompetitorApproval[] }) {
   const approvalTypeConfig: Record<string, { label: string; color: string }> = {
-    standard: { label: 'Standard', color: 'bg-zinc-100 text-zinc-800' },
+    standard: { label: 'Standard', color: 'bg-zinc-100 text-zinc-900' },
     priority: { label: 'Priority Review', color: 'bg-blue-100 text-blue-800' },
     accelerated: { label: 'Accelerated', color: 'bg-green-100 text-green-800' },
     breakthrough: { label: 'Breakthrough', color: 'bg-purple-100 text-purple-800' },
@@ -677,22 +677,22 @@ function CompetitiveIntelligence({ approvals }: { approvals: CompetitorApproval[
           <div className="grid grid-cols-4 gap-4">
             <div className="border border-border/40 rounded-sm bg-background p-4 bg-blue-50">
               <p className="text-sm text-muted-foreground">FDA 2024</p>
-              <p className="text-2xl font-bold">50</p>
+              <p className="text-2xl font-semibold">50</p>
               <p className="text-xs text-green-600">+12% vs 2023</p>
             </div>
-            <div className="border border-border/40 rounded-sm bg-background p-4 bg-indigo-50">
+            <div className="border border-border/40 rounded-sm bg-background p-4 bg-blue-50">
               <p className="text-sm text-muted-foreground">EMA 2024</p>
-              <p className="text-2xl font-bold">42</p>
+              <p className="text-2xl font-semibold">42</p>
               <p className="text-xs text-green-600">+8% vs 2023</p>
             </div>
             <div className="border border-border/40 rounded-sm bg-background p-4 bg-purple-50">
               <p className="text-sm text-muted-foreground">Priority Reviews</p>
-              <p className="text-2xl font-bold">35%</p>
+              <p className="text-2xl font-semibold">35%</p>
               <p className="text-xs text-muted-foreground">of total</p>
             </div>
             <div className="border border-border/40 rounded-sm bg-background p-4 bg-green-50">
               <p className="text-sm text-muted-foreground">Avg Review Time</p>
-              <p className="text-2xl font-bold">10.2</p>
+              <p className="text-2xl font-semibold">10.2</p>
               <p className="text-xs text-muted-foreground">months</p>
             </div>
           </div>
@@ -765,7 +765,7 @@ export function RegulatoryIntelligence() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-3">
+          <h1 className="text-2xl font-semibold flex items-center gap-3">
             <Globe className="w-8 h-8 text-blue-600" />
             Regulatory Intelligence Hub
           </h1>
@@ -815,7 +815,7 @@ export function RegulatoryIntelligence() {
       </Tabs>
 
       {/* RI Assistance */}
-      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50">
+      <div className="border border-border/40 rounded-sm bg-background border-purple-200 bg-zinc-50">
         <div className="px-3 py-2 p-4">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-purple-100 rounded-full">

@@ -445,7 +445,7 @@ export default function CERV2FullExportSimulation({
           </div>
           {impactingSections.length > 0 && (
             <div className="ml-6 mb-2.5 space-y-1">
-              <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+              <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
                 Sections impacting readiness
               </span>
               {impactingSections.map(s => (
@@ -535,7 +535,7 @@ export default function CERV2FullExportSimulation({
       {exportHistory.length > 0 && (
         <ScrollArea className="max-h-40">
           <div className="px-4 py-2 space-y-1.5">
-            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
               Recent Exports
             </span>
             {exportHistory.map((entry, idx) => (

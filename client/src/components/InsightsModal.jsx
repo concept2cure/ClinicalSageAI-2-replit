@@ -103,7 +103,7 @@ export default function InsightsModal({ onClose }) {
                     <p className="text-xs opacity-80 mb-2" style={{ minHeight: '2.5em' }}>
                       {m.description}
                     </p>
-                    <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded dark:bg-emerald-900 dark:text-emerald-200">
+                    <span className="text-[11px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded dark:bg-emerald-900 dark:text-emerald-200">
                       v{m.version}
                     </span>
                   </a>

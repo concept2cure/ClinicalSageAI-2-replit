@@ -1,7 +1,7 @@
 /**
- * ForesightAI™ CSR Integration Service
- * 
- * Bridges existing CSR intelligence services with ForesightAI
+ * AnA Predictions™ CSR Integration Service
+ *
+ * Bridges existing CSR intelligence services with AnA Predictions
  * Integrates csr_api.py, csr_deep_learning.py, and csr_database.py
  */
 
@@ -73,7 +73,7 @@ export class ForesightCSRIntegration {
       // Extract patterns using deep learning
       const patterns = await this.extractPatternsFromCSR(analysisResult);
       
-      // Generate ForesightAI predictions
+      // Generate AnA Predictions predictions
       const predictions = await this.generatePredictionsFromCSR(
         csrId,
         biomarkers,
@@ -88,7 +88,7 @@ export class ForesightCSRIntegration {
         predictions,
       };
     } catch (error) {
-      console.error('Error processing CSR for ForesightAI:', error);
+      console.error('Error processing CSR for AnA Predictions:', error);
       
       // Fallback to basic extraction if Python service unavailable
       return await this.fallbackCSRProcessing(csrId);
@@ -96,7 +96,7 @@ export class ForesightCSRIntegration {
   }
   
   /**
-   * Import historical CSR data into ForesightAI knowledge graph
+   * Import historical CSR data into AnA Predictions knowledge graph
    */
   async importHistoricalCSRData(): Promise<{
     imported: number;
@@ -113,7 +113,7 @@ export class ForesightCSRIntegration {
       
       for (const csr of csrs) {
         try {
-          // Process each CSR through ForesightAI pipeline
+          // Process each CSR through AnA Predictions pipeline
           const result = await this.processCSRForForesight(csr.id);
           
           imported++;

@@ -163,8 +163,9 @@ export const ReviewCommandCenter: React.FC<ReviewCommandCenterProps> = ({
           <div className="divide-y">
             {reviewableArtifacts.length === 0 && (
               <div className="p-6 text-center">
-                <CheckCircle2 className="w-8 h-8 text-emerald-300 mx-auto mb-2" />
-                <p className="text-xs text-zinc-500">No artifacts pending review</p>
+                <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
+                <p className="text-sm font-medium text-zinc-700">All clear</p>
+                <p className="text-xs text-zinc-500 mt-1">No artifacts pending review. Check the Dossier View for submission readiness.</p>
               </div>
             )}
             {reviewableArtifacts.map((artifact: any) => {
@@ -174,18 +175,18 @@ export const ReviewCommandCenter: React.FC<ReviewCommandCenterProps> = ({
                   key={artifact.id}
                   onClick={() => setSelectedArtifactId(artifact.id)}
                   className={cn(
-                    'w-full text-left p-3 transition-colors',
+                    'w-full text-left p-3 transition-colors duration-150',
                     isActive ? 'bg-blue-50 border-l-2 border-blue-500' : 'hover:bg-zinc-50'
                   )}
                 >
                   <div className="flex items-start gap-2">
                     <FileText className="w-4 h-4 mt-0.5 text-zinc-400 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-zinc-800 truncate">{artifact.title}</p>
+                      <p className="text-sm font-medium text-zinc-900 truncate">{artifact.title}</p>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[10px] font-mono text-zinc-500">{artifact.code}</span>
+                        <span className="text-xs font-mono text-zinc-500">{artifact.code}</span>
                         <span className={cn(
-                          'text-[10px] px-1.5 py-0.5 rounded-full',
+                          'text-xs px-1.5 py-0.5 rounded-full',
                           artifact.lifecycleState === 'in-review' ? 'bg-blue-100 text-blue-700' :
                           artifact.lifecycleState === 'revision-needed' ? 'bg-orange-100 text-orange-700' :
                           'bg-amber-100 text-amber-700'
@@ -290,11 +291,11 @@ export const ReviewCommandCenter: React.FC<ReviewCommandCenterProps> = ({
                             <User className="w-4 h-4 mt-0.5 text-zinc-400" />
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
-                                <span className="text-sm font-medium text-zinc-800">{review.reviewer}</span>
-                                <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full', verdictColors.bg, verdictColors.text)}>
+                                <span className="text-sm font-medium text-zinc-900">{review.reviewer}</span>
+                                <span className={cn('text-xs px-1.5 py-0.5 rounded-full', verdictColors.bg, verdictColors.text)}>
                                   {review.verdict}
                                 </span>
-                                <span className="text-[10px] text-zinc-400 ml-auto">
+                                <span className="text-xs text-zinc-400 ml-auto">
                                   {review.reviewedAt ? new Date(review.reviewedAt).toLocaleDateString() : '—'}
                                 </span>
                               </div>
@@ -321,11 +322,11 @@ export const ReviewCommandCenter: React.FC<ReviewCommandCenterProps> = ({
                           <MessageSquare className="w-4 h-4 mt-0.5 text-zinc-400 flex-shrink-0" />
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium text-zinc-800">{comment.author}</span>
-                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-600">
+                              <span className="text-sm font-medium text-zinc-900">{comment.author}</span>
+                              <span className="text-xs px-1.5 py-0.5 rounded-full bg-zinc-100 text-zinc-600">
                                 {COLLAB_TYPE_LABELS[comment.type] || comment.type}
                               </span>
-                              <span className="text-[10px] text-zinc-400 ml-auto">
+                              <span className="text-xs text-zinc-400 ml-auto">
                                 {comment.createdAt ? new Date(comment.createdAt).toLocaleDateString() : '—'}
                               </span>
                             </div>
@@ -359,12 +360,12 @@ export const ReviewCommandCenter: React.FC<ReviewCommandCenterProps> = ({
                     onChange={e => setNewComment(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleAddComment()}
                     placeholder="Add a comment..."
-                    className="flex-1 text-sm px-3 py-1.5 border border-zinc-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400"
+                    className="flex-1 text-sm px-3 py-1.5 border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                   />
                   <button
                     onClick={handleAddComment}
                     disabled={!newComment.trim()}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-50"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-60"
                   >
                     <Send className="w-3.5 h-3.5" />
                     Send

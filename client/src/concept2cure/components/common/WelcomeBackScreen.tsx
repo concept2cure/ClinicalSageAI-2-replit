@@ -199,10 +199,10 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
   return (
     <div className="fixed inset-0 z-50 bg-white flex flex-col animate-in fade-in duration-300">
       {/* Header */}
-      <header className="flex-shrink-0 border-b border-zinc-100 bg-white/80 backdrop-blur">
+      <header className="flex-shrink-0 border-b border-zinc-200 bg-white/80 backdrop-blur">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-violet-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center">
               <Sparkles className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -213,7 +213,7 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
 
           <button
             onClick={onDismiss}
-            className="text-sm text-zinc-500 hover:text-zinc-700 px-3 py-1.5 rounded-lg hover:bg-zinc-100 transition-colors"
+            className="text-sm text-zinc-500 hover:text-zinc-700 px-3 py-1.5 rounded-lg hover:bg-zinc-100 transition-colors duration-150"
           >
             Skip to Dashboard
           </button>
@@ -225,7 +225,7 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
         <div className="max-w-5xl mx-auto px-6 py-12">
           {/* Greeting */}
           <div className="mb-10">
-            <h2 className="text-3xl font-bold text-zinc-900 mb-2">
+            <h2 className="text-2xl font-semibold text-zinc-900 mb-2">
               {getGreeting()}, {firstName}!
             </h2>
             <p className="text-zinc-500 text-lg">
@@ -245,17 +245,17 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
               <button
                 onClick={() => onContinue(lastProject.id, lastConversation?.id)}
                 className={cn(
-                  'w-full text-left p-6 rounded-2xl border-2 border-zinc-200',
-                  'bg-gradient-to-br from-white to-zinc-50',
-                  'hover:border-violet-300 hover:shadow-lg hover:shadow-violet-100/50',
-                  'transition-all duration-200 group'
+                  'w-full text-left p-5 rounded-xl border border-zinc-200 bg-white shadow-sm',
+                  'hover:border-blue-200 hover:shadow-md',
+                  'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none',
+                  'transition-all duration-150 group'
                 )}
               >
                 <div className="flex items-start gap-4">
                   {/* Project Icon */}
                   <div
                     className={cn(
-                      'w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0',
+                      'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0',
                       lastProject.type === '510K' && 'bg-blue-100',
                       lastProject.type === 'IND' && 'bg-purple-100',
                       lastProject.type === 'NDA' && 'bg-emerald-100'
@@ -263,7 +263,7 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
                   >
                     <Folder
                       className={cn(
-                        'w-7 h-7',
+                        'w-5 h-5',
                         lastProject.type === '510K' && 'text-blue-600',
                         lastProject.type === 'IND' && 'text-purple-600',
                         lastProject.type === 'NDA' && 'text-emerald-600'
@@ -300,7 +300,7 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
                   </div>
 
                   {/* Action */}
-                  <div className="flex items-center gap-2 text-violet-600 group-hover:gap-3 transition-all">
+                  <div className="flex items-center gap-2 text-blue-600 group-hover:gap-3 transition-all duration-150">
                     <span className="text-sm font-medium">Continue</span>
                     <ArrowRight className="w-4 h-4" />
                   </div>
@@ -323,21 +323,22 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
                     key={action.id}
                     onClick={() => onNewProject(action.submissionType)}
                     className={cn(
-                      'p-5 rounded-xl border-2 text-left transition-all duration-200',
-                      'hover:shadow-md',
+                      'p-5 rounded-xl border text-left transition-all duration-150',
+                      'hover:shadow-md shadow-sm',
+                      'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none',
                       action.color === 'blue' &&
-                        'border-blue-200 bg-blue-50/50 hover:border-blue-300 hover:bg-blue-100/50',
+                        'border-blue-200 bg-blue-50/50 hover:border-blue-300',
                       action.color === 'purple' &&
-                        'border-purple-200 bg-purple-50/50 hover:border-purple-300 hover:bg-purple-100/50',
+                        'border-purple-200 bg-purple-50/50 hover:border-purple-300',
                       action.color === 'emerald' &&
-                        'border-emerald-200 bg-emerald-50/50 hover:border-emerald-300 hover:bg-emerald-100/50',
+                        'border-emerald-200 bg-emerald-50/50 hover:border-emerald-300',
                       action.color === 'amber' &&
-                        'border-amber-200 bg-amber-50/50 hover:border-amber-300 hover:bg-amber-100/50'
+                        'border-amber-200 bg-amber-50/50 hover:border-amber-300'
                     )}
                   >
                     <Icon
                       className={cn(
-                        'w-8 h-8 mb-3',
+                        'w-5 h-5 mb-3',
                         action.color === 'blue' && 'text-blue-600',
                         action.color === 'purple' && 'text-purple-600',
                         action.color === 'emerald' && 'text-emerald-600',
@@ -421,7 +422,7 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
       </main>
 
       {/* Footer */}
-      <footer className="flex-shrink-0 border-t border-zinc-100 bg-zinc-50/50">
+      <footer className="flex-shrink-0 border-t border-zinc-200 bg-zinc-50/50">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <p className="text-xs text-zinc-500">
             {projects.length} projects • Last login: Today at 9:14 AM
@@ -429,7 +430,7 @@ export const WelcomeBackScreen: React.FC<WelcomeBackScreenProps> = ({
 
           <button
             onClick={onViewDashboard}
-            className="text-sm text-zinc-600 hover:text-zinc-900 px-4 py-2 rounded-lg hover:bg-zinc-100 transition-colors"
+            className="text-sm text-zinc-600 hover:text-zinc-900 px-4 py-2 rounded-lg hover:bg-zinc-100 transition-colors duration-150"
           >
             View Full Dashboard
           </button>

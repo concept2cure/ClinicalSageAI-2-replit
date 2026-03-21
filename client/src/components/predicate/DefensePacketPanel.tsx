@@ -191,7 +191,7 @@ function TopRiskCard({ code }: { code: string }) {
           variant={
             severity === 'HIGH' ? 'destructive' : severity === 'MEDIUM' ? 'default' : 'secondary'
           }
-          className="text-[10px]"
+          className="text-[11px]"
         >
           {severity}
         </Badge>
@@ -242,28 +242,28 @@ function EvidenceTaskRow({
         </div>
         <Badge
           variant={SEVERITY_BADGE[task.severity] || 'secondary'}
-          className="text-[10px] shrink-0 mt-0.5"
+          className="text-[11px] shrink-0 mt-0.5"
         >
           {task.severity}
         </Badge>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-medium text-sm">{task.title}</span>
-            <Badge variant="outline" className="text-[9px] font-mono">
+            <Badge variant="outline" className="text-[11px] font-mono">
               {task.category}
             </Badge>
             {task.completion?.state === 'DONE' && (
               <CheckCircle className="h-3.5 w-3.5 text-green-500" />
             )}
             {task.completion?.state === 'WAIVED' && (
-              <Badge variant="secondary" className="text-[9px]">
+              <Badge variant="secondary" className="text-[11px]">
                 WAIVED
               </Badge>
             )}
           </div>
           <div className="flex gap-1 mt-1 flex-wrap">
             {task.triggered_risk_codes.map(rc => (
-              <Badge key={rc} variant="secondary" className="text-[9px] font-mono">
+              <Badge key={rc} variant="secondary" className="text-[11px] font-mono">
                 {rc}
               </Badge>
             ))}
@@ -297,7 +297,7 @@ function EvidenceTaskRow({
               <p className="text-xs font-medium mb-1">Recommended Artifacts</p>
               <div className="flex flex-wrap gap-1">
                 {task.recommended_artifacts.map(a => (
-                  <Badge key={a} variant="outline" className="text-[9px]">
+                  <Badge key={a} variant="outline" className="text-[11px]">
                     {a}
                   </Badge>
                 ))}
@@ -316,10 +316,10 @@ function EvidenceTaskRow({
                   </p>
                   <p className="text-xs text-amber-700 italic">"{objection.question}"</p>
                   <div className="flex items-center gap-2 mt-1.5">
-                    <Badge variant="outline" className="text-[9px] border-amber-300 text-amber-700">
+                    <Badge variant="outline" className="text-[11px] border-amber-300 text-amber-700">
                       {objection.severity}
                     </Badge>
-                    <span className="text-[9px] text-amber-600">
+                    <span className="text-[11px] text-amber-600">
                       eCTD: {objection.ectd_location}
                     </span>
                   </div>
@@ -338,7 +338,7 @@ function EvidenceTaskRow({
                   {q.recommended_artifacts?.length > 0 && (
                     <div className="flex gap-1 mt-1">
                       {q.recommended_artifacts.map(a => (
-                        <Badge key={a} variant="outline" className="text-[8px]">
+                        <Badge key={a} variant="outline" className="text-[11px]">
                           {a}
                         </Badge>
                       ))}
@@ -434,7 +434,7 @@ function SubmissionGateCard({ gate }: { gate: SubmissionGateResult }) {
             <p className="text-xs font-medium mb-1">Blocking Tasks</p>
             <div className="flex flex-wrap gap-1">
               {gate.blocking_task_ids.map(id => (
-                <Badge key={id} variant="destructive" className="text-[9px] font-mono">
+                <Badge key={id} variant="destructive" className="text-[11px] font-mono">
                   {id.slice(0, 12)}
                 </Badge>
               ))}
@@ -447,7 +447,7 @@ function SubmissionGateCard({ gate }: { gate: SubmissionGateResult }) {
             <p className="text-xs font-medium mb-1">Blocking Risk Codes</p>
             <div className="flex flex-wrap gap-1">
               {gate.blocking_risk_codes.map(rc => (
-                <Badge key={rc} variant="destructive" className="text-[9px] font-mono">
+                <Badge key={rc} variant="destructive" className="text-[11px] font-mono">
                   {rc}
                 </Badge>
               ))}
@@ -575,7 +575,7 @@ export function DefensePacketPanel({
           <CardTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5" />
             Defense Packet Builder
-            <Badge variant="outline" className="text-[10px]">
+            <Badge variant="outline" className="text-[11px]">
               6.6.D1
             </Badge>
           </CardTitle>
@@ -709,10 +709,10 @@ export function DefensePacketPanel({
             <ManifestBadge hash={packet.manifest_hash} label="manifest" />
             <ManifestBadge hash={packet.risk_vocab_hash} label="risk_vocab" />
             <TamperSafeBadge verified={lockHashVerified} />
-            <Badge variant="outline" className="text-[10px] font-mono">
+            <Badge variant="outline" className="text-[11px] font-mono">
               v{packet.risk_code_map_version}
             </Badge>
-            <Badge variant="outline" className="text-[10px] font-mono">
+            <Badge variant="outline" className="text-[11px] font-mono">
               {packet.packet_version}
             </Badge>
           </div>
@@ -772,11 +772,11 @@ export function DefensePacketPanel({
                       <span className="text-sm font-semibold">
                         {CATEGORY_LABELS[category] || category}
                       </span>
-                      <Badge variant="outline" className="text-[9px]">
+                      <Badge variant="outline" className="text-[11px]">
                         {tasks.length} task{tasks.length !== 1 ? 's' : ''}
                       </Badge>
                       {tasks.some(t => t.severity === 'High') && (
-                        <Badge variant="destructive" className="text-[9px]">
+                        <Badge variant="destructive" className="text-[11px]">
                           HIGH
                         </Badge>
                       )}

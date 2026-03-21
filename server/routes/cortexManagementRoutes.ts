@@ -1,7 +1,7 @@
 /**
- * LUMEN CORTEX - Management API Routes
+ * AnA RI - Management API Routes
  *
- * Comprehensive API for managing the Lumen Cortex knowledge base.
+ * Comprehensive API for managing the AnA RI knowledge base.
  * Exposes knowledge graph, quality assessment, conflict detection,
  * version history, and administrative functions.
  *

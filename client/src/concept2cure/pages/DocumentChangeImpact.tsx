@@ -232,7 +232,7 @@ export default function DocumentChangeImpact({ projectId, submissionType }: { pr
         </div>
 
         {/* Guidance Selector */}
-        <div className="rounded-xl border border-zinc-200 bg-white p-6 mb-6">
+        <div className="rounded-xl border border-zinc-200 bg-white p-5 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Guidance Dropdown */}
             <div>
@@ -243,7 +243,7 @@ export default function DocumentChangeImpact({ projectId, submissionType }: { pr
                 <select
                   value={selectedGuidance}
                   onChange={(e) => setSelectedGuidance(e.target.value)}
-                  className="w-full appearance-none rounded-lg border border-zinc-200 bg-white px-3 py-2.5 pr-10 text-sm text-zinc-800 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-colors"
+                  className="w-full appearance-none rounded-lg border border-zinc-200 bg-white px-3 py-2.5 pr-10 text-sm text-zinc-900 focus:border-blue-400 focus-visible:ring-2 outline-none focus:ring-blue-100 transition-colors duration-150"
                 >
                   <option value="">Select a guidance document...</option>
                   {GUIDANCE_DOCUMENTS.map((doc) => (
@@ -265,7 +265,7 @@ export default function DocumentChangeImpact({ projectId, submissionType }: { pr
                 <select
                   value={selectedSubmission}
                   onChange={(e) => setSelectedSubmission(e.target.value)}
-                  className="w-full appearance-none rounded-lg border border-zinc-200 bg-white px-3 py-2.5 pr-10 text-sm text-zinc-800 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-colors"
+                  className="w-full appearance-none rounded-lg border border-zinc-200 bg-white px-3 py-2.5 pr-10 text-sm text-zinc-900 focus:border-blue-400 focus-visible:ring-2 outline-none focus:ring-blue-100 transition-colors duration-150"
                 >
                   <option value="">Select submission type...</option>
                   {SUBMISSION_TYPES.map((type) => (
@@ -296,7 +296,7 @@ export default function DocumentChangeImpact({ projectId, submissionType }: { pr
               onClick={analyzeImpact}
               disabled={!selectedGuidance || !selectedSubmission || loading}
               className={cn(
-                'inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium transition-all',
+                'inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-medium transition-all duration-150',
                 !selectedGuidance || !selectedSubmission || loading
                   ? 'bg-zinc-100 text-zinc-400 cursor-not-allowed'
                   : 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 shadow-sm'
@@ -385,15 +385,15 @@ export default function DocumentChangeImpact({ projectId, submissionType }: { pr
 
             {/* Affected Sections Table */}
             <div className="rounded-xl border border-zinc-200 bg-white overflow-hidden">
-              <div className="px-5 py-4 border-b border-zinc-100">
-                <h2 className="text-sm font-semibold text-zinc-800">
+              <div className="px-5 py-4 border-b border-zinc-200">
+                <h2 className="text-sm font-semibold text-zinc-900">
                   Affected Sections
                 </h2>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-zinc-100 bg-zinc-50/50">
+                    <tr className="border-b border-zinc-200 bg-zinc-50/50">
                       <th className="px-5 py-3 text-left font-medium text-zinc-500">
                         eCTD Section
                       </th>
@@ -420,9 +420,9 @@ export default function DocumentChangeImpact({ projectId, submissionType }: { pr
                       return (
                         <tr
                           key={idx}
-                          className="hover:bg-zinc-50/50 transition-colors"
+                          className="hover:bg-zinc-50/50 transition-colors duration-150"
                         >
-                          <td className="px-5 py-3 font-medium text-zinc-800">
+                          <td className="px-5 py-3 font-medium text-zinc-900">
                             {section.ectdSection}
                           </td>
                           <td className="px-5 py-3 text-zinc-600">
@@ -457,7 +457,7 @@ export default function DocumentChangeImpact({ projectId, submissionType }: { pr
             </div>
 
             {/* AnA Recommendations */}
-            <div className="rounded-xl border border-violet-200 bg-violet-50/40 p-6">
+            <div className="rounded-xl border border-blue-200 bg-blue-50/40 p-5">
               <div className="flex items-center gap-2 mb-4">
                 <Sparkles className="h-4 w-4 text-violet-600" />
                 <h2 className="text-sm font-semibold text-violet-900">
@@ -477,10 +477,10 @@ export default function DocumentChangeImpact({ projectId, submissionType }: { pr
             </div>
 
             {/* Timeline Comparison */}
-            <div className="rounded-xl border border-zinc-200 bg-white p-6">
+            <div className="rounded-xl border border-zinc-200 bg-white p-5">
               <div className="flex items-center gap-2 mb-5">
                 <CalendarDays className="h-4 w-4 text-zinc-500" />
-                <h2 className="text-sm font-semibold text-zinc-800">
+                <h2 className="text-sm font-semibold text-zinc-900">
                   Timeline Impact
                 </h2>
               </div>

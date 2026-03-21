@@ -13,6 +13,7 @@
 
 import React, { useState, useMemo } from 'react';
 import type { SubmissionType } from '../../types';
+import { LIFECYCLE, toLifecycleStage } from '../ui/enterprise';
 import { cn } from '@/lib/utils';
 import { NextActionsPanel, StepCard } from '@/concept2cure/components/workflow';
 import { Badge } from '@/components/ui/badge';
@@ -248,29 +249,29 @@ interface MetricCardProps {
 
 // Static Tailwind color maps to prevent CSS purge issues
 const COLOR_BG_100: Record<string, string> = {
-  blue: 'bg-blue-100', indigo: 'bg-indigo-100', green: 'bg-green-100', purple: 'bg-purple-100',
+  blue: 'bg-blue-100', indigo: 'bg-blue-100', green: 'bg-green-100', purple: 'bg-purple-100',
   violet: 'bg-violet-100', amber: 'bg-amber-100', teal: 'bg-teal-100', cyan: 'bg-cyan-100',
   rose: 'bg-rose-100', slate: 'bg-zinc-100', sky: 'bg-sky-100', orange: 'bg-orange-100',
 };
 const COLOR_TEXT_600: Record<string, string> = {
-  blue: 'text-blue-600', indigo: 'text-indigo-600', green: 'text-green-600', purple: 'text-purple-600',
+  blue: 'text-blue-600', indigo: 'text-blue-600', green: 'text-green-600', purple: 'text-purple-600',
   violet: 'text-violet-600', amber: 'text-amber-600', teal: 'text-teal-600', cyan: 'text-cyan-600',
   rose: 'text-rose-600', slate: 'text-zinc-600', sky: 'text-sky-600', orange: 'text-orange-600',
 };
 const COLOR_TEXT_700: Record<string, string> = {
-  blue: 'text-blue-700', indigo: 'text-indigo-700', green: 'text-green-700', purple: 'text-purple-700',
+  blue: 'text-blue-700', indigo: 'text-blue-700', green: 'text-green-700', purple: 'text-purple-700',
   violet: 'text-violet-700', amber: 'text-amber-700', teal: 'text-teal-700', cyan: 'text-cyan-700',
   rose: 'text-rose-700', slate: 'text-zinc-700', sky: 'text-sky-700', orange: 'text-orange-700',
 };
 
 const MetricCard: React.FC<MetricCardProps> = ({ metric, colorClass }) => {
   return (
-    <div className="border border-zinc-200 rounded-md">
-      <div className="p-3">
+    <div className="border border-zinc-200 rounded-xl shadow-sm bg-white hover:shadow-md transition-shadow">
+      <div className="p-5">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-xs text-zinc-500 font-medium">{metric.label}</p>
-            <p className={cn('text-2xl font-bold mt-1', COLOR_TEXT_700[colorClass] || 'text-zinc-700')}>
+            <p className="text-xs text-zinc-500 font-medium tracking-wide">{metric.label}</p>
+            <p className={cn('text-3xl font-semibold mt-1.5', COLOR_TEXT_700[colorClass] || 'text-zinc-900')}>
               {typeof metric.value === 'number' && metric.value % 1 !== 0
                 ? metric.value.toFixed(1)
                 : metric.value}
@@ -285,7 +286,7 @@ const MetricCard: React.FC<MetricCardProps> = ({ metric, colorClass }) => {
           {metric.trend && (
             <div
               className={cn(
-                'flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full',
+                'flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full',
                 metric.trend === 'up' && 'bg-green-100 text-green-700',
                 metric.trend === 'down' && 'bg-red-100 text-red-700',
                 metric.trend === 'stable' && 'bg-zinc-100 text-zinc-700'
@@ -293,7 +294,7 @@ const MetricCard: React.FC<MetricCardProps> = ({ metric, colorClass }) => {
             >
               <TrendingUp
                 className={cn(
-                  'h-3 w-3',
+                  'h-3.5 w-3.5',
                   metric.trend === 'down' && 'rotate-180',
                   metric.trend === 'stable' && 'rotate-90'
                 )}
@@ -303,12 +304,12 @@ const MetricCard: React.FC<MetricCardProps> = ({ metric, colorClass }) => {
           )}
         </div>
         {metric.target && (
-          <div className="mt-3">
-            <div className="flex items-center justify-between text-xs text-zinc-500 mb-1">
+          <div className="mt-4">
+            <div className="flex items-center justify-between text-xs text-zinc-500 mb-1.5">
               <span>Target: {metric.target}</span>
-              <span>{Math.round((metric.value / metric.target) * 100)}%</span>
+              <span className="font-medium">{Math.round((metric.value / metric.target) * 100)}%</span>
             </div>
-            <Progress value={(metric.value / metric.target) * 100} className="h-1.5" />
+            <Progress value={(metric.value / metric.target) * 100} className="h-2" />
           </div>
         )}
       </div>
@@ -334,9 +335,9 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskClick }) => {
   };
 
   const statusColors = {
-    pending: 'bg-zinc-50 border-zinc-200',
-    in_progress: 'bg-blue-50 border-blue-200',
-    review: 'bg-purple-50 border-purple-200',
+    pending: `${LIFECYCLE.not_started.bg} ${LIFECYCLE.not_started.border}`,
+    in_progress: `${LIFECYCLE.draft.bg} ${LIFECYCLE.draft.border}`,
+    review: `${LIFECYCLE.in_review.bg} ${LIFECYCLE.in_review.border}`,
     blocked: 'bg-red-50 border-red-200',
   };
 
@@ -368,7 +369,7 @@ const TaskList: React.FC<TaskListProps> = ({ tasks, onTaskClick }) => {
                 <span className="text-sm font-medium text-zinc-900 truncate">{task.title}</span>
                 <Badge
                   variant="outline"
-                  className={cn('text-[10px] shrink-0', priorityColors[task.priority])}
+                  className={cn('text-xs shrink-0', priorityColors[task.priority])}
                 >
                   {task.priority}
                 </Badge>
@@ -473,7 +474,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ role, onAskAnA }) =
   };
 
   return (
-    <div className="border border-blue-200 rounded-md bg-gradient-to-br from-blue-50 to-white">
+    <div className="border border-blue-200 rounded-md bg-blue-50">
       <div className="px-4 py-3 pb-2">
         <h3 className="text-base font-semibold flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-blue-600" />
@@ -489,7 +490,7 @@ const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ role, onAskAnA }) =
             <button
               key={idx}
               onClick={() => onAskAnA(suggestion)}
-              className="w-full text-left p-2 text-xs text-zinc-600 bg-white rounded-lg border border-zinc-200 hover:border-blue-300 hover:bg-blue-50 transition-colors"
+              className="w-full text-left p-2 text-xs text-zinc-600 bg-white rounded-lg border border-zinc-200 hover:border-blue-300 hover:bg-blue-50 transition-colors duration-150"
             >
               {suggestion}
             </button>
@@ -619,14 +620,14 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
   return (
     <div className={cn('h-full flex flex-col', className)}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b bg-white">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 bg-white">
+        <div className="flex items-center gap-4">
           <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center', COLOR_BG_100[roleConfig.color] || 'bg-zinc-100')}>
             <RoleIcon className={cn('h-5 w-5', COLOR_TEXT_600[roleConfig.color] || 'text-zinc-600')} />
           </div>
           <div>
             <h1 className="text-lg font-semibold text-zinc-900">{roleConfig.title}</h1>
-            <p className="text-xs text-zinc-500">{roleConfig.description}</p>
+            <p className="text-sm text-zinc-500">{roleConfig.description}</p>
           </div>
         </div>
         <Select value={currentRole} onValueChange={v => handleRoleChange(v as UserRole)}>
@@ -648,11 +649,11 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
 
       {/* Content */}
       <ScrollArea className="flex-1">
-        <div className="p-4 space-y-6">
+        <div className="p-6 space-y-6">
           {/* Metrics Grid */}
           <div>
-            <h2 className="text-sm font-semibold text-zinc-700 mb-3">Key Metrics</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <h2 className="text-base font-semibold text-zinc-900 mb-4">Key Metrics</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {metrics.map(metric => (
                 <MetricCard key={metric.id} metric={metric} colorClass={roleConfig.color} />
               ))}
@@ -662,14 +663,14 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Tasks */}
             <div className="lg:col-span-2">
-              <div className="border border-zinc-200 rounded-md">
-                <div className="px-4 py-3 pb-2 border-b border-zinc-100">
+              <div className="border border-zinc-200 rounded-xl shadow-sm bg-white">
+                <div className="px-5 py-3.5 border-b border-zinc-200">
                   <h3 className="text-base font-semibold flex items-center gap-2">
-                    <ClipboardList className="h-4 w-4" />
+                    <ClipboardList className="h-4 w-4 text-zinc-500" />
                     My Tasks
                   </h3>
                 </div>
-                <div className="px-4 py-3">
+                <div className="px-5 py-4">
                   {isLoadingOps && (
                     <div className="flex items-center gap-2 p-4 text-sm text-zinc-500">
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -681,7 +682,7 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
                   )}
                   {!isLoadingOps && tasks.length === 0 && (
                     <div className="text-center py-8 text-zinc-500">
-                      <ClipboardList className="w-8 h-8 mx-auto mb-2 text-zinc-300" />
+                      <ClipboardList className="w-8 h-8 mx-auto mb-2 text-zinc-400" />
                       <p className="text-sm font-medium">No active tasks</p>
                       <p className="text-xs mt-1">Tasks will appear here as they are created in the system</p>
                     </div>
@@ -700,8 +701,8 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
           </div>
 
           {/* Workflow Snapshot */}
-          <div className="border border-zinc-200 rounded-md">
-            <div className="px-4 py-3 pb-2 border-b border-zinc-100">
+          <div className="border border-zinc-200 rounded-xl shadow-sm bg-white">
+            <div className="px-5 py-4 border-b border-zinc-200">
               <h3 className="text-base font-semibold flex items-center gap-2">
                 <GitBranch className="h-4 w-4" />
                 Active Workflow Steps
@@ -710,7 +711,7 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
                 Proof-backed execution trail for the current workflow run
               </p>
             </div>
-            <div className="px-4 py-3 space-y-3">
+            <div className="px-5 py-4 space-y-3">
               {activeWorkflowSteps.map(step => (
                 <StepCard
                   key={step.id}
@@ -731,17 +732,17 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
           </div>
 
           {/* Relevant Submissions */}
-          <div className="border border-zinc-200 rounded-md">
-            <div className="px-4 py-3 pb-2 border-b border-zinc-100">
+          <div className="border border-zinc-200 rounded-xl shadow-sm bg-white">
+            <div className="px-5 py-4 border-b border-zinc-200">
               <h3 className="text-base font-semibold flex items-center gap-2">
-                <Globe2 className="h-4 w-4" />
+                <Globe2 className="h-4 w-4 text-zinc-500" />
                 Relevant Submission Types
               </h3>
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-zinc-500 mt-0.5">
                 Submission types most relevant to your role
               </p>
             </div>
-            <div className="px-4 py-3">
+            <div className="px-5 py-4">
               <div className="flex flex-wrap gap-2">
                 {roleConfig.relevantSubmissions.map(type => (
                   <Badge key={type} variant="outline" className="text-xs">

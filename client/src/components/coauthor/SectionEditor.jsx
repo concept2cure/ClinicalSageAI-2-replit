@@ -97,7 +97,7 @@ export default function SectionEditor() {
         <button
           onClick={generateDraft}
           disabled={isGenerating}
-          className="px-4 py-2 bg-indigo-600 text-white rounded-md flex items-center gap-2 hover:bg-indigo-700 transition-colors disabled:opacity-50"
+          className="px-4 py-2 bg-indigo-600 text-white rounded-md flex items-center gap-2 hover:bg-indigo-700 transition-colors disabled:opacity-60"
         >
           {isGenerating ? (
             <>

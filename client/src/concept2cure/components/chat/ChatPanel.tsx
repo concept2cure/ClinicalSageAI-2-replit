@@ -137,7 +137,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
                   ref={textareaRef}
                   value={editContent}
                   onChange={e => setEditContent(e.target.value)}
-                  className="w-full p-3 text-sm border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  className="w-full p-3 text-sm border border-blue-300 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none resize-none"
                   rows={4}
                 />
                 <div className="flex items-center gap-2">
@@ -338,9 +338,11 @@ const ChatInput: React.FC<ChatInputProps> = ({
                 <span className="truncate max-w-[150px]">{file.name}</span>
                 <button
                   onClick={() => removeAttachment(index)}
-                  className="p-0.5 hover:bg-zinc-200 rounded"
+                  className="p-1.5 hover:bg-zinc-200 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
+                  aria-label="Remove attachment"
+                  title="Remove"
                 >
-                  <X className="h-3 w-3 text-zinc-500" />
+                  <X className="h-3.5 w-3.5 text-zinc-500" />
                 </button>
               </div>
             ))}
@@ -348,14 +350,14 @@ const ChatInput: React.FC<ChatInputProps> = ({
         )}
 
         {/* Input area */}
-        <div className="flex items-end gap-3 bg-zinc-50 rounded-2xl border border-zinc-200 p-2 focus-within:border-blue-300 focus-within:ring-2 focus-within:ring-blue-100">
+        <div className="flex items-end gap-3 bg-zinc-50 rounded-xl border border-zinc-200 p-2 focus-within:border-blue-300 focus-within:ring-2 focus-within:ring-blue-100">
           {/* Attachment button */}
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="p-2 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-200 rounded-lg transition-colors"
+                  className="p-2 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-200 rounded-lg transition-colors duration-150"
                   disabled={disabled}
                 >
                   <Paperclip className="h-5 w-5" />
@@ -383,7 +385,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             placeholder={placeholder}
             disabled={disabled}
             rows={1}
-            className="flex-1 bg-transparent text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none resize-none max-h-[200px]"
+            className="flex-1 bg-transparent text-sm text-zinc-900 placeholder:text-zinc-400 outline-none resize-none max-h-[200px]"
           />
 
           {/* Send button */}
@@ -391,7 +393,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             onClick={handleSend}
             disabled={disabled || (!input.trim() && attachments.length === 0)}
             size="icon"
-            className="h-9 w-9 rounded-xl"
+            className="h-9 w-9 rounded-lg"
           >
             <Send className="h-4 w-4" />
           </Button>
@@ -413,7 +415,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
 const EmptyState: React.FC = () => {
   return (
     <div className="flex flex-col items-center justify-center h-full text-center px-4">
-      <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mb-6">
+      <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-6">
         <Sparkles className="h-8 w-8 text-purple-600" />
       </div>
       <h2 className="text-xl font-semibold text-zinc-900 mb-2">
@@ -432,7 +434,7 @@ const EmptyState: React.FC = () => {
         ].map(suggestion => (
           <button
             key={suggestion}
-            className="px-4 py-3 text-sm text-left bg-zinc-50 hover:bg-zinc-100 rounded-xl border border-zinc-200 text-zinc-700 transition-colors"
+            className="px-4 py-3 text-sm text-left bg-zinc-50 hover:bg-zinc-100 rounded-xl border border-zinc-200 text-zinc-700 transition-colors duration-150"
           >
             {suggestion}
           </button>
@@ -552,7 +554,7 @@ export const ChatPanel: React.FC = () => {
   if (!activeProject) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center px-4">
-        <div className="w-16 h-16 bg-zinc-100 rounded-2xl flex items-center justify-center mb-6">
+        <div className="w-12 h-12 bg-zinc-100 rounded-lg flex items-center justify-center mb-6">
           <Sparkles className="h-8 w-8 text-zinc-400" />
         </div>
         <h2 className="text-xl font-semibold text-zinc-900 mb-2">Select a Project</h2>

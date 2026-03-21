@@ -777,7 +777,7 @@ export default function UnifiedSubmissionCenter() {
                                   <p className="text-xs font-medium truncate">
                                     {task.description || task.type}
                                   </p>
-                                  <p className="text-[10px] text-gray-500">
+                                  <p className="text-[11px] text-gray-500">
                                     {task.agentId || 'Agent'}
                                   </p>
                                 </div>

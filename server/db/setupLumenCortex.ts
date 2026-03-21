@@ -1,7 +1,7 @@
 /**
- * Lumen Cortex Database Setup
+ * AnA RI Database Setup
  *
- * Initializes the tables required for Lumen Cortex intelligence harvesting.
+ * Initializes the tables required for AnA RI intelligence harvesting.
  */
 
 import { Pool } from 'pg';
@@ -12,7 +12,7 @@ import { getPool } from '../db';
 export const pool = getPool();
 
 export async function initializeLumenCortexDatabase() {
-  console.log('Initializing Lumen Cortex database tables...');
+  console.log('Initializing AnA RI database tables...');
 
   try {
     const client = await pool.connect();
@@ -23,13 +23,13 @@ export async function initializeLumenCortexDatabase() {
       const migrationSql = fs.readFileSync(migrationFilePath, 'utf8');
 
       await client.query(migrationSql);
-      console.log('Lumen Cortex tables created/verified successfully.');
+      console.log('AnA RI tables created/verified successfully.');
       return true;
     } finally {
       client.release();
     }
   } catch (error) {
-    console.error('Error initializing Lumen Cortex database:', error);
+    console.error('Error initializing AnA RI database:', error);
     return false;
   }
 }

@@ -13,6 +13,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
+import { useVisibleInterval } from './useVisibleInterval';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -111,11 +112,12 @@ async function fetchWorkspaceSummary(): Promise<WorkspaceSummary> {
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useWorkspaceSummary() {
+  const interval = useVisibleInterval(60_000);
   return useQuery<WorkspaceSummary, Error>({
     queryKey: ['workspace-summary', getOrgId()],
     queryFn: fetchWorkspaceSummary,
     staleTime: 30_000, // refetch after 30s
-    refetchInterval: 60_000, // background refresh every 60s
+    refetchInterval: interval, // pauses when tab is hidden
     retry: 2,
     refetchOnWindowFocus: false,
   });

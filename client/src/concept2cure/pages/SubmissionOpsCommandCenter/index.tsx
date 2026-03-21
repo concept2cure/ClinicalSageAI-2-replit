@@ -7,6 +7,7 @@
  */
 import React, { useState, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
+import { SEVERITY } from '../../components/ui/enterprise';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -65,10 +66,10 @@ const STATE_DOT: Record<string, string> = {
 };
 
 const SEVERITY_FG: Record<string, string> = {
-  critical: 'text-red-600',
-  high: 'text-orange-600',
-  medium: 'text-amber-600',
-  low: 'text-zinc-500',
+  critical: SEVERITY.critical.text,
+  high: SEVERITY.high.text,
+  medium: SEVERITY.medium.text,
+  low: SEVERITY.low.text,
 };
 
 type DrawerKind =
@@ -360,14 +361,14 @@ export function SubmissionOpsCommandCenter({
       {/* ── HEADER ── */}
       <div
         data-testid="submission-ops-header"
-        className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white shrink-0"
+        className="flex items-center gap-2 px-3 h-9 border-b border-zinc-200 bg-white shrink-0"
       >
         {/* Package selector */}
         <div className="relative">
           <button
             data-testid="package-selector"
             onClick={() => setPkgDropdownOpen(!pkgDropdownOpen)}
-            className="flex items-center gap-1.5 text-[11px] font-semibold text-zinc-700 hover:text-zinc-900"
+            className="flex items-center gap-1.5 text-xs font-semibold text-zinc-700 hover:text-zinc-900"
           >
             <Package className="w-3.5 h-3.5 text-blue-500" />
             <span className="truncate max-w-[180px]">
@@ -385,14 +386,14 @@ export function SubmissionOpsCommandCenter({
                     setPkgDropdownOpen(false);
                   }}
                   className={cn(
-                    'w-full text-left px-3 py-1.5 text-[11px] hover:bg-zinc-50',
+                    'w-full text-left px-3 py-1.5 text-xs hover:bg-zinc-50',
                     pkg.packageId === selectedPackageId
                       ? 'text-blue-700 bg-blue-50 font-medium'
                       : 'text-zinc-700'
                   )}
                 >
                   {pkg.label}
-                  <span className="ml-2 text-[10px] text-zinc-400">{pkg.packageFamily}</span>
+                  <span className="ml-2 text-xs text-zinc-400">{pkg.packageFamily}</span>
                 </button>
               ))}
             </div>
@@ -404,7 +405,7 @@ export function SubmissionOpsCommandCenter({
         {/* State pill */}
         <span
           className={cn(
-            'inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded',
+            'inline-flex items-center gap-1 text-xs font-medium px-1.5 py-0.5 rounded',
             overallState === 'on_track' && 'bg-emerald-50 text-emerald-700',
             overallState === 'at_risk' && 'bg-amber-50 text-amber-700',
             overallState === 'blocked' && 'bg-red-50 text-red-700'
@@ -419,7 +420,7 @@ export function SubmissionOpsCommandCenter({
         {/* Summary counters */}
         <div
           data-testid="summary-strip"
-          className="flex items-center gap-3 text-[10px] text-zinc-500 ml-1"
+          className="flex items-center gap-3 text-xs text-zinc-500 ml-1"
         >
           <span title="Readiness" data-testid="kpi-readiness">
             <Target className="w-3 h-3 inline -mt-px mr-0.5 text-zinc-400" />
@@ -447,7 +448,7 @@ export function SubmissionOpsCommandCenter({
           <button
             data-testid="quick-view-selector"
             onClick={() => setQuickViewOpen(!quickViewOpen)}
-            className="flex items-center gap-1 text-[10px] text-zinc-500 hover:text-zinc-700 border border-zinc-200 rounded px-2 py-0.5"
+            className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-700 border border-zinc-200 rounded px-2 py-0.5"
           >
             <Gauge className="w-3 h-3" />
             {quickView ? QUICK_VIEWS.find(q => q.key === quickView)?.label : 'All Items'}
@@ -461,7 +462,7 @@ export function SubmissionOpsCommandCenter({
                   setQuickViewOpen(false);
                 }}
                 className={cn(
-                  'w-full text-left px-3 py-1.5 text-[11px] hover:bg-zinc-50',
+                  'w-full text-left px-3 py-1.5 text-xs hover:bg-zinc-50',
                   !quickView && 'text-blue-700 bg-blue-50 font-medium'
                 )}
               >
@@ -475,7 +476,7 @@ export function SubmissionOpsCommandCenter({
                     setQuickViewOpen(false);
                   }}
                   className={cn(
-                    'w-full text-left px-3 py-1.5 text-[11px] hover:bg-zinc-50',
+                    'w-full text-left px-3 py-1.5 text-xs hover:bg-zinc-50',
                     quickView === qv.key ? 'text-blue-700 bg-blue-50 font-medium' : 'text-zinc-700'
                   )}
                 >
@@ -490,7 +491,7 @@ export function SubmissionOpsCommandCenter({
         <button
           onClick={() => setFilterOpen(!filterOpen)}
           className={cn(
-            'flex items-center gap-1 text-[10px] border rounded px-2 py-0.5',
+            'flex items-center gap-1 text-xs border rounded px-2 py-0.5',
             severityFilter.length > 0 || docFamilyFilter
               ? 'border-blue-300 text-blue-700 bg-blue-50'
               : 'border-zinc-200 text-zinc-500 hover:text-zinc-700'
@@ -499,7 +500,7 @@ export function SubmissionOpsCommandCenter({
           <Filter className="w-3 h-3" />
           Filter
           {(severityFilter.length > 0 || docFamilyFilter) && (
-            <span className="ml-0.5 bg-blue-600 text-white text-[9px] rounded-full w-3.5 h-3.5 flex items-center justify-center">
+            <span className="ml-0.5 bg-blue-600 text-white text-xs rounded-full w-3.5 h-3.5 flex items-center justify-center">
               {severityFilter.length + (docFamilyFilter ? 1 : 0)}
             </span>
           )}
@@ -508,7 +509,7 @@ export function SubmissionOpsCommandCenter({
         {/* Drawer toolbar buttons */}
         <div
           data-testid="drawer-toolbar"
-          className="flex items-center gap-0.5 ml-1 border-l border-zinc-100 pl-2"
+          className="flex items-center gap-0.5 ml-1 border-l border-zinc-200 pl-2"
         >
           {(
             [
@@ -541,8 +542,8 @@ export function SubmissionOpsCommandCenter({
 
       {/* ── FILTER BAR (conditional) ── */}
       {filterOpen && (
-        <div className="flex items-center gap-3 px-3 h-8 border-b border-zinc-100 bg-zinc-50/50 shrink-0">
-          <span className="text-[10px] font-medium text-zinc-500">Severity:</span>
+        <div className="flex items-center gap-3 px-3 h-8 border-b border-zinc-200 bg-zinc-50/50 shrink-0">
+          <span className="text-xs font-medium text-zinc-500">Severity:</span>
           {SEVERITY_LEVELS.map(s => (
             <button
               key={s.key}
@@ -552,7 +553,7 @@ export function SubmissionOpsCommandCenter({
                 )
               }
               className={cn(
-                'text-[10px] px-1.5 py-0.5 rounded border',
+                'text-xs px-1.5 py-0.5 rounded border',
                 severityFilter.includes(s.key)
                   ? 'border-blue-300 bg-blue-50 text-blue-700 font-medium'
                   : 'border-zinc-200 text-zinc-500 hover:border-zinc-300'
@@ -562,11 +563,11 @@ export function SubmissionOpsCommandCenter({
             </button>
           ))}
           <span className="text-zinc-200">|</span>
-          <span className="text-[10px] font-medium text-zinc-500">Doc Family:</span>
+          <span className="text-xs font-medium text-zinc-500">Doc Family:</span>
           <select
             value={docFamilyFilter ?? ''}
             onChange={e => setDocFamilyFilter(e.target.value || null)}
-            className="text-[10px] border border-zinc-200 rounded px-1.5 py-0.5 text-zinc-600 bg-white"
+            className="text-xs border border-zinc-200 rounded px-1.5 py-0.5 text-zinc-600 bg-white"
           >
             <option value="">All</option>
             {(BLOCKER_TYPES ?? []).slice(0, 15).map(bt => (
@@ -581,7 +582,7 @@ export function SubmissionOpsCommandCenter({
                 setSeverityFilter([]);
                 setDocFamilyFilter(null);
               }}
-              className="text-[10px] text-blue-600 hover:text-blue-800 ml-auto"
+              className="text-xs text-blue-600 hover:text-blue-800 ml-auto"
             >
               Clear filters
             </button>
@@ -602,17 +603,17 @@ export function SubmissionOpsCommandCenter({
                   {/* Group header */}
                   <button
                     onClick={() => toggleGroup(groupKey)}
-                    className="w-full flex items-center gap-1.5 px-3 py-1.5 bg-zinc-50/80 border-b border-zinc-100 hover:bg-zinc-100/60 sticky top-0 z-10"
+                    className="w-full flex items-center gap-1.5 px-3 py-1.5 bg-zinc-50/80 border-b border-zinc-200 hover:bg-zinc-100/60 sticky top-0 z-10"
                   >
                     {collapsedGroups.has(groupKey) ? (
                       <ChevronRight className="w-3 h-3 text-zinc-400" />
                     ) : (
                       <ChevronDown className="w-3 h-3 text-zinc-400" />
                     )}
-                    <span className="text-[10px] font-semibold text-zinc-600 uppercase tracking-wider">
+                    <span className="text-xs font-semibold text-zinc-600 uppercase tracking-wider">
                       {groupKey}
                     </span>
-                    <span className="text-[10px] text-zinc-400 ml-1">
+                    <span className="text-xs text-zinc-400 ml-1">
                       {(items as any[]).length}
                     </span>
                     {(items as any[]).some((i: any) => i.severity === 'critical') && (
@@ -641,7 +642,7 @@ export function SubmissionOpsCommandCenter({
         {/* RIGHT: Inspector */}
         <div
           data-testid="inspector-panel"
-          className="w-[280px] 2xl:w-[320px] border-l border-zinc-100 shrink-0 bg-white flex flex-col min-h-0"
+          className="w-[280px] 2xl:w-[320px] border-l border-zinc-200 shrink-0 bg-white flex flex-col min-h-0"
         >
           <ScrollArea className="flex-1">
             {selectedItem && selectedItemKind === 'blocker' ? (
@@ -681,10 +682,10 @@ export function SubmissionOpsCommandCenter({
             <>
               <div
                 data-testid="drawer-header"
-                className="flex items-center gap-2 px-4 h-10 border-b border-zinc-100 shrink-0"
+                className="flex items-center gap-2 px-4 h-10 border-b border-zinc-200 shrink-0"
               >
                 {DRAWER_LABELS[activeDrawer]?.icon}
-                <span data-testid="drawer-title" className="text-sm font-semibold text-zinc-800">
+                <span data-testid="drawer-title" className="text-sm font-semibold text-zinc-900">
                   {DRAWER_LABELS[activeDrawer]?.label}
                 </span>
               </div>
@@ -736,7 +737,7 @@ function BlockerRow({
       data-testid="blocker-row"
       onClick={onClick}
       className={cn(
-        'w-full flex items-start gap-2 px-3 py-2 border-b border-zinc-50 text-left transition-colors',
+        'w-full flex items-start gap-2 px-3 py-2 border-b border-zinc-50 text-left transition-colors duration-150',
         isSelected
           ? 'bg-blue-50/60 border-l-2 border-l-blue-500'
           : 'hover:bg-zinc-50/60 border-l-2 border-l-transparent'
@@ -753,12 +754,12 @@ function BlockerRow({
       <div className="flex-1 min-w-0">
         {/* Title + severity */}
         <div className="flex items-center gap-1.5">
-          <span className="text-[11px] font-medium text-zinc-800 truncate">
+          <span className="text-xs font-medium text-zinc-900 truncate">
             {item.artifactTitle || item.title || 'Untitled'}
           </span>
           <span
             className={cn(
-              'text-[9px] font-medium shrink-0',
+              'text-xs font-medium shrink-0',
               SEVERITY_FG[item.severity] || 'text-zinc-400'
             )}
           >
@@ -769,9 +770,9 @@ function BlockerRow({
         {/* Secondary: doc family + blocker type */}
         <div className="flex items-center gap-1.5 mt-0.5">
           {item.documentFamily && (
-            <span className="text-[9px] text-zinc-400">{item.documentFamily}</span>
+            <span className="text-xs text-zinc-400">{item.documentFamily}</span>
           )}
-          <span className={cn('text-[9px]', SEVERITY_FG[item.severity] || 'text-zinc-400')}>
+          <span className={cn('text-xs', SEVERITY_FG[item.severity] || 'text-zinc-400')}>
             {item.blockerType?.replace(/_/g, ' ')}
           </span>
         </div>
@@ -782,7 +783,7 @@ function BlockerRow({
           {item.approvalClass && (
             <span
               className={cn(
-                'text-[8px] px-1 py-px rounded border font-medium',
+                'text-xs px-1 py-px rounded border font-medium',
                 item.isOverdue
                   ? 'border-red-200 bg-red-50 text-red-600'
                   : 'border-zinc-200 bg-zinc-50 text-zinc-500'
@@ -793,19 +794,19 @@ function BlockerRow({
           )}
           {/* Handoff state */}
           {waitingLabel && (
-            <span className={cn('text-[8px] px-1 py-px rounded border font-medium', waitingColor)}>
+            <span className={cn('text-xs px-1 py-px rounded border font-medium', waitingColor)}>
               {waitingLabel}
             </span>
           )}
           {/* Overdue age */}
           {item.isOverdue && item.overdueHours && (
-            <span className="text-[8px] text-red-500 font-medium">
+            <span className="text-xs text-red-500 font-medium">
               {Math.round(item.overdueHours / 24)}d overdue
             </span>
           )}
           {/* Owner */}
           {item.ownerName && (
-            <span className="text-[8px] text-zinc-400 ml-auto truncate max-w-[80px]">
+            <span className="text-xs text-zinc-400 ml-auto truncate max-w-[80px]">
               {item.ownerName}
             </span>
           )}
@@ -834,27 +835,27 @@ function BlockerInspector({
     <div className="p-3 space-y-3">
       {/* Title */}
       <div>
-        <h3 className="text-xs font-semibold text-zinc-800">{item.artifactTitle || item.title}</h3>
+        <h3 className="text-xs font-semibold text-zinc-900">{item.artifactTitle || item.title}</h3>
         {item.documentFamily && (
-          <p className="text-[10px] text-zinc-400 mt-0.5">{item.documentFamily}</p>
+          <p className="text-xs text-zinc-400 mt-0.5">{item.documentFamily}</p>
         )}
       </div>
 
       {/* Stage */}
       {item.stage && (
         <InspectorField label="Stage">
-          <span className="text-[10px] text-zinc-700">{getStageLabel(item.stage, isDevice)}</span>
+          <span className="text-xs text-zinc-700">{getStageLabel(item.stage, isDevice)}</span>
         </InspectorField>
       )}
 
       {/* Blocker type + severity */}
       <InspectorField label="Blocker">
-        <span className={cn('text-[10px] font-medium', SEVERITY_FG[item.severity])}>
+        <span className={cn('text-xs font-medium', SEVERITY_FG[item.severity])}>
           {item.blockerType?.replace(/_/g, ' ')}
         </span>
         <span
           className={cn(
-            'text-[9px] ml-1.5 px-1 py-px rounded font-semibold',
+            'text-xs ml-1.5 px-1 py-px rounded font-semibold',
             item.severity === 'critical'
               ? 'bg-red-100 text-red-700'
               : item.severity === 'high'
@@ -871,21 +872,21 @@ function BlockerInspector({
       {/* Policy breach */}
       {item.policyBreachDescription && (
         <InspectorField label="Policy Breach">
-          <p className="text-[10px] text-zinc-600">{item.policyBreachDescription}</p>
+          <p className="text-xs text-zinc-600">{item.policyBreachDescription}</p>
         </InspectorField>
       )}
 
       {/* Owner + role */}
       {item.ownerName && (
         <InspectorField label="Owner">
-          <span className="text-[10px] text-zinc-700">{item.ownerName}</span>
+          <span className="text-xs text-zinc-700">{item.ownerName}</span>
           {item.ownerRole && (
-            <span className="text-[10px] text-zinc-400 ml-1">({item.ownerRole})</span>
+            <span className="text-xs text-zinc-400 ml-1">({item.ownerRole})</span>
           )}
           {item.ownershipType && (
             <span
               className={cn(
-                'text-[8px] ml-1.5 px-1 py-px rounded border font-medium',
+                'text-xs ml-1.5 px-1 py-px rounded border font-medium',
                 item.ownershipType === 'cro'
                   ? 'border-blue-200 bg-blue-50 text-blue-700'
                   : 'border-zinc-200 bg-zinc-50 text-zinc-500'
@@ -902,7 +903,7 @@ function BlockerInspector({
         <InspectorField label="Due">
           <span
             className={cn(
-              'text-[10px]',
+              'text-xs',
               item.isOverdue ? 'text-red-600 font-medium' : 'text-zinc-600'
             )}
           >
@@ -916,7 +917,7 @@ function BlockerInspector({
 
       {/* Linked counts */}
       <InspectorField label="Linked">
-        <div className="flex items-center gap-2 text-[10px] text-zinc-500">
+        <div className="flex items-center gap-2 text-xs text-zinc-500">
           {item.threadCount != null && <span>{item.threadCount} threads</span>}
           {item.taskCount != null && <span>{item.taskCount} tasks</span>}
           {item.approvalCount != null && <span>{item.approvalCount} approvals</span>}
@@ -926,29 +927,29 @@ function BlockerInspector({
       {/* Next action */}
       {item.nextAction && (
         <InspectorField label="Next Action">
-          <p className="text-[10px] text-zinc-700 font-medium">{item.nextAction}</p>
+          <p className="text-xs text-zinc-700 font-medium">{item.nextAction}</p>
         </InspectorField>
       )}
 
       {/* Jump links */}
-      <div className="flex flex-col gap-1 pt-2 border-t border-zinc-100">
+      <div className="flex flex-col gap-1 pt-2 border-t border-zinc-200">
         {item.artifactId && onNavigateToArtifact && (
           <button
             onClick={() => onNavigateToArtifact(item.artifactId)}
-            className="flex items-center gap-1 text-[10px] text-blue-600 hover:text-blue-800"
+            className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800"
           >
             <ExternalLink className="w-3 h-3" /> Open Artifact
           </button>
         )}
         <button
           onClick={() => onOpenDrawer('readiness')}
-          className="flex items-center gap-1 text-[10px] text-blue-600 hover:text-blue-800"
+          className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800"
         >
           <Target className="w-3 h-3" /> View Readiness
         </button>
         <button
           onClick={() => onOpenDrawer('bottlenecks')}
-          className="flex items-center gap-1 text-[10px] text-blue-600 hover:text-blue-800"
+          className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800"
         >
           <Lock className="w-3 h-3" /> View Bottlenecks
         </button>
@@ -964,28 +965,28 @@ function BlockerInspector({
 function BottleneckInspector({ item }: { item: any }) {
   return (
     <div className="p-3 space-y-3">
-      <h3 className="text-xs font-semibold text-zinc-800">Approval Bottleneck</h3>
+      <h3 className="text-xs font-semibold text-zinc-900">Approval Bottleneck</h3>
       <InspectorField label="Approval Class">
-        <span className="text-[10px] text-zinc-700">{item.approvalClass?.replace(/_/g, ' ')}</span>
+        <span className="text-xs text-zinc-700">{item.approvalClass?.replace(/_/g, ' ')}</span>
       </InspectorField>
       {item.approverRole && (
         <InspectorField label="Approver Role">
-          <span className="text-[10px] text-zinc-700">{item.approverRole}</span>
+          <span className="text-xs text-zinc-700">{item.approverRole}</span>
         </InspectorField>
       )}
       {item.waitingDuration && (
         <InspectorField label="Waiting">
-          <span className="text-[10px] text-amber-600">{item.waitingDuration}</span>
+          <span className="text-xs text-amber-600">{item.waitingDuration}</span>
         </InspectorField>
       )}
       {item.openFindings != null && (
         <InspectorField label="Open Findings">
-          <span className="text-[10px] text-zinc-700">{item.openFindings} preventing signoff</span>
+          <span className="text-xs text-zinc-700">{item.openFindings} preventing signoff</span>
         </InspectorField>
       )}
       <InspectorField label="Publish Ready">
         <span
-          className={cn('text-[10px]', item.publishBlocked ? 'text-red-600' : 'text-emerald-600')}
+          className={cn('text-xs', item.publishBlocked ? 'text-red-600' : 'text-emerald-600')}
         >
           {item.publishBlocked ? 'Blocked' : 'Ready'}
         </span>
@@ -1001,7 +1002,7 @@ function BottleneckInspector({ item }: { item: any }) {
 function AreaInspector({ item }: { item: any }) {
   return (
     <div className="p-3 space-y-3">
-      <h3 className="text-xs font-semibold text-zinc-800">{item.sectionLabel || 'Package Area'}</h3>
+      <h3 className="text-xs font-semibold text-zinc-900">{item.sectionLabel || 'Package Area'}</h3>
       {item.readinessPercent != null && (
         <InspectorField label="Readiness">
           <div className="flex items-center gap-2">
@@ -1018,25 +1019,25 @@ function AreaInspector({ item }: { item: any }) {
                 style={{ width: `${item.readinessPercent}%` }}
               />
             </div>
-            <span className="text-[10px] text-zinc-600 font-medium">{item.readinessPercent}%</span>
+            <span className="text-xs text-zinc-600 font-medium">{item.readinessPercent}%</span>
           </div>
         </InspectorField>
       )}
       {item.criticalItems != null && (
         <InspectorField label="Critical Items">
-          <span className="text-[10px] text-red-600">{item.criticalItems}</span>
+          <span className="text-xs text-red-600">{item.criticalItems}</span>
         </InspectorField>
       )}
       {item.overdueItems != null && (
         <InspectorField label="Overdue">
-          <span className="text-[10px] text-amber-600">{item.overdueItems}</span>
+          <span className="text-xs text-amber-600">{item.overdueItems}</span>
         </InspectorField>
       )}
       {item.trend && (
         <InspectorField label="Trend">
           <span
             className={cn(
-              'text-[10px] flex items-center gap-0.5',
+              'text-xs flex items-center gap-0.5',
               item.trend === 'improving'
                 ? 'text-emerald-600'
                 : item.trend === 'declining'
@@ -1078,11 +1079,11 @@ function DefaultInspector({
     <div className="p-3 space-y-4">
       {/* Approvals due soon */}
       <div>
-        <h4 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">
+        <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">
           Approvals Due Soon
         </h4>
         {upcomingApprovals.length === 0 ? (
-          <p className="text-[10px] text-zinc-400">No pending approvals</p>
+          <p className="text-xs text-zinc-400">No pending approvals</p>
         ) : (
           upcomingApprovals.map((a: any, i: number) => (
             <div
@@ -1090,10 +1091,10 @@ function DefaultInspector({
               className="flex items-center gap-1.5 py-1 border-b border-zinc-50 last:border-0"
             >
               <Lock className="w-3 h-3 text-amber-400 shrink-0" />
-              <span className="text-[10px] text-zinc-700 truncate flex-1">
+              <span className="text-xs text-zinc-700 truncate flex-1">
                 {a.artifactTitle || a.title || 'Approval'}
               </span>
-              <span className="text-[9px] text-zinc-400 shrink-0">
+              <span className="text-xs text-zinc-400 shrink-0">
                 {a.approvalClass?.replace(/_/g, ' ')}
               </span>
             </div>
@@ -1103,11 +1104,11 @@ function DefaultInspector({
 
       {/* Due soon timeline */}
       <div>
-        <h4 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">
+        <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">
           Due Soon
         </h4>
         {dueSoonItems.length === 0 ? (
-          <p className="text-[10px] text-zinc-400">Nothing due in next 48h</p>
+          <p className="text-xs text-zinc-400">Nothing due in next 48h</p>
         ) : (
           dueSoonItems.map((d: any, i: number) => (
             <div
@@ -1115,10 +1116,10 @@ function DefaultInspector({
               className="flex items-center gap-1.5 py-1 border-b border-zinc-50 last:border-0"
             >
               <Clock className="w-3 h-3 text-zinc-400 shrink-0" />
-              <span className="text-[10px] text-zinc-700 truncate flex-1">
+              <span className="text-xs text-zinc-700 truncate flex-1">
                 {d.title || d.artifactTitle || 'Item'}
               </span>
-              <span className="text-[9px] text-zinc-400 shrink-0">
+              <span className="text-xs text-zinc-400 shrink-0">
                 {d.dueDate ? new Date(d.dueDate).toLocaleDateString() : ''}
               </span>
             </div>
@@ -1128,11 +1129,11 @@ function DefaultInspector({
 
       {/* Recent automation */}
       <div>
-        <h4 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">
+        <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">
           Recent Automation
         </h4>
         {recentActions.length === 0 ? (
-          <p className="text-[10px] text-zinc-400">No recent automation</p>
+          <p className="text-xs text-zinc-400">No recent automation</p>
         ) : (
           recentActions.map((r: any, i: number) => (
             <div
@@ -1140,10 +1141,10 @@ function DefaultInspector({
               className="flex items-center gap-1.5 py-1 border-b border-zinc-50 last:border-0"
             >
               <Zap className="w-3 h-3 text-zinc-400 shrink-0" />
-              <span className="text-[10px] text-zinc-600 truncate flex-1">
+              <span className="text-xs text-zinc-600 truncate flex-1">
                 {r.status === 'completed' ? 'Sweep completed' : r.status}
               </span>
-              <span className="text-[9px] text-zinc-400 shrink-0">
+              <span className="text-xs text-zinc-400 shrink-0">
                 {r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ''}
               </span>
             </div>
@@ -1161,7 +1162,7 @@ function DefaultInspector({
 function InspectorField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <span className="text-[9px] font-semibold text-zinc-400 uppercase tracking-wider">
+      <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
         {label}
       </span>
       <div className="mt-0.5">{children}</div>
@@ -1218,12 +1219,12 @@ function ReadinessDrawer({
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2 mb-3">
-        <span className="text-sm font-semibold text-zinc-800">
+        <span className="text-sm font-semibold text-zinc-900">
           Overall: {readiness.overallReadiness ?? 0}%
         </span>
         <span
           className={cn(
-            'text-[10px] px-1.5 py-0.5 rounded font-medium',
+            'text-xs px-1.5 py-0.5 rounded font-medium',
             readiness.overallState === 'on_track' && 'bg-emerald-50 text-emerald-700',
             readiness.overallState === 'at_risk' && 'bg-amber-50 text-amber-700',
             readiness.overallState === 'blocked' && 'bg-red-50 text-red-700'
@@ -1232,7 +1233,7 @@ function ReadinessDrawer({
           {readiness.overallState}
         </span>
       </div>
-      <table className="w-full text-[11px]">
+      <table className="w-full text-xs">
         <thead>
           <tr className="border-b border-zinc-200">
             <th className="text-left py-1.5 font-semibold text-zinc-500">Section</th>
@@ -1281,7 +1282,7 @@ function BottlenecksDrawer({ projectId }: { projectId: number }) {
   if (isLoading) return <DrawerLoading />;
   if (!bottlenecks?.length) return <DrawerEmpty message="No approval bottlenecks" />;
   return (
-    <table className="w-full text-[11px]">
+    <table className="w-full text-xs">
       <thead>
         <tr className="border-b border-zinc-200">
           <th className="text-left py-1.5 font-semibold text-zinc-500">Artifact</th>
@@ -1323,13 +1324,13 @@ function HealthTrendsDrawer({ projectId, packageId }: { projectId: number; packa
     <div className="space-y-5">
       {/* Hotspots */}
       <div>
-        <h4 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-2">
+        <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">
           Change Hotspots
         </h4>
         {!hotspots?.length ? (
-          <p className="text-[10px] text-zinc-400">No hotspots detected</p>
+          <p className="text-xs text-zinc-400">No hotspots detected</p>
         ) : (
-          <table className="w-full text-[11px]">
+          <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-zinc-200">
                 <th className="text-left py-1.5 font-semibold text-zinc-500">Artifact</th>
@@ -1349,7 +1350,7 @@ function HealthTrendsDrawer({ projectId, packageId }: { projectId: number; packa
                   <td className="py-1.5 text-right">
                     <span
                       className={cn(
-                        'text-[10px] font-medium',
+                        'text-xs font-medium',
                         h.heat === 'critical'
                           ? 'text-red-600'
                           : h.heat === 'high'
@@ -1369,13 +1370,13 @@ function HealthTrendsDrawer({ projectId, packageId }: { projectId: number; packa
 
       {/* Workload */}
       <div>
-        <h4 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-2">
+        <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">
           Ownership & Workload
         </h4>
         {!workload?.length ? (
-          <p className="text-[10px] text-zinc-400">No workload data</p>
+          <p className="text-xs text-zinc-400">No workload data</p>
         ) : (
-          <table className="w-full text-[11px]">
+          <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-zinc-200">
                 <th className="text-left py-1.5 font-semibold text-zinc-500">Owner</th>
@@ -1408,23 +1409,23 @@ function HealthTrendsDrawer({ projectId, packageId }: { projectId: number; packa
 
       {/* Due Soon */}
       <div>
-        <h4 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-2">
+        <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">
           Due Soon
         </h4>
         {!dueSoonItems.length ? (
-          <p className="text-[10px] text-zinc-400">Nothing due in next 48h</p>
+          <p className="text-xs text-zinc-400">Nothing due in next 48h</p>
         ) : (
           <div className="space-y-1">
             {dueSoonItems.map((d: any, i: number) => (
               <div key={i} className="flex items-center gap-2 py-1.5 border-b border-zinc-50">
                 <Clock className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-[11px] text-zinc-700 truncate">{d.title || d.artifactTitle}</p>
-                  <p className="text-[9px] text-zinc-400">{d.type || d.itemType}</p>
+                  <p className="text-xs text-zinc-700 truncate">{d.title || d.artifactTitle}</p>
+                  <p className="text-xs text-zinc-400">{d.type || d.itemType}</p>
                 </div>
                 <span
                   className={cn(
-                    'text-[10px] shrink-0',
+                    'text-xs shrink-0',
                     d.isOverdue ? 'text-red-600 font-medium' : 'text-zinc-500'
                   )}
                 >
@@ -1451,13 +1452,13 @@ function PoliciesMilestonesDrawer({ packageId }: { packageId?: string }) {
     <div className="space-y-5">
       {/* Policies */}
       <div>
-        <h4 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-2">
+        <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">
           Policy Settings
         </h4>
         {!policies?.length ? (
-          <p className="text-[10px] text-zinc-400">No policies configured</p>
+          <p className="text-xs text-zinc-400">No policies configured</p>
         ) : (
-          <table className="w-full text-[11px]">
+          <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-zinc-200">
                 <th className="text-left py-1.5 font-semibold text-zinc-500">Policy</th>
@@ -1488,15 +1489,15 @@ function PoliciesMilestonesDrawer({ packageId }: { packageId?: string }) {
 
       {/* Milestones */}
       <div>
-        <h4 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-2">
+        <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">
           Milestone Gates
         </h4>
         {!milestones?.length ? (
-          <p className="text-[10px] text-zinc-400">No milestones</p>
+          <p className="text-xs text-zinc-400">No milestones</p>
         ) : (
           <div className="space-y-2">
             {milestones.map((m: any, i: number) => (
-              <div key={i} className="flex items-center gap-2 py-2 border-b border-zinc-100">
+              <div key={i} className="flex items-center gap-2 py-2 border-b border-zinc-200">
                 <span
                   className={cn(
                     'w-2 h-2 rounded-full shrink-0',
@@ -1508,15 +1509,15 @@ function PoliciesMilestonesDrawer({ packageId }: { packageId?: string }) {
                   )}
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-[11px] font-medium text-zinc-700">{m.label || m.name}</p>
-                  <p className="text-[9px] text-zinc-400">
+                  <p className="text-xs font-medium text-zinc-700">{m.label || m.name}</p>
+                  <p className="text-xs text-zinc-400">
                     {m.targetDate ? `Target: ${new Date(m.targetDate).toLocaleDateString()}` : ''}
                     {m.gateType && ` · ${m.gateType}`}
                   </p>
                 </div>
                 <span
                   className={cn(
-                    'text-[10px]',
+                    'text-xs',
                     m.status === 'completed'
                       ? 'text-emerald-600'
                       : m.status === 'blocked'
@@ -1548,11 +1549,11 @@ function ActivityDrawer({ projectId }: { projectId: number }) {
     <div className="space-y-5">
       {/* Digests */}
       <div>
-        <h4 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-2">
+        <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">
           Digest Center
         </h4>
         {!digests?.length ? (
-          <p className="text-[10px] text-zinc-400">No digests</p>
+          <p className="text-xs text-zinc-400">No digests</p>
         ) : (
           <div className="space-y-1">
             {digests.map((d: any, i: number) => (
@@ -1566,19 +1567,19 @@ function ActivityDrawer({ projectId }: { projectId: number }) {
                 <Mail
                   className={cn(
                     'w-3.5 h-3.5 mt-0.5 shrink-0',
-                    d.readAt ? 'text-zinc-300' : 'text-blue-500'
+                    d.readAt ? 'text-zinc-400' : 'text-blue-500'
                   )}
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-[11px] text-zinc-700">{d.subject || d.digestType}</p>
-                  <p className="text-[9px] text-zinc-400">
+                  <p className="text-xs text-zinc-700">{d.subject || d.digestType}</p>
+                  <p className="text-xs text-zinc-400">
                     {d.createdAt ? new Date(d.createdAt).toLocaleDateString() : ''}
                   </p>
                 </div>
                 {!d.readAt && (
                   <button
                     onClick={() => markRead.mutate(d.digestId)}
-                    className="text-[9px] text-blue-600 hover:text-blue-800 shrink-0"
+                    className="text-xs text-blue-600 hover:text-blue-800 shrink-0"
                   >
                     Mark read
                   </button>
@@ -1591,11 +1592,11 @@ function ActivityDrawer({ projectId }: { projectId: number }) {
 
       {/* Automation Runs */}
       <div>
-        <h4 className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-2">
+        <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">
           Automation Log
         </h4>
         {!runs?.length ? (
-          <p className="text-[10px] text-zinc-400">No automation runs</p>
+          <p className="text-xs text-zinc-400">No automation runs</p>
         ) : (
           <div className="space-y-1">
             {runs.map((r: any, i: number) => (
@@ -1611,17 +1612,17 @@ function ActivityDrawer({ projectId }: { projectId: number }) {
                   )}
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-[11px] text-zinc-700">
+                  <p className="text-xs text-zinc-700">
                     Sweep {r.status === 'completed' ? 'completed' : r.status}
                   </p>
-                  <p className="text-[9px] text-zinc-400">
+                  <p className="text-xs text-zinc-400">
                     {r.actionsCreated ?? 0} actions ·{' '}
                     {r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ''}
                   </p>
                 </div>
                 <span
                   className={cn(
-                    'text-[10px]',
+                    'text-xs',
                     r.status === 'completed'
                       ? 'text-emerald-600'
                       : r.status === 'failed'
@@ -1654,8 +1655,8 @@ function DrawerLoading() {
 
 function DrawerEmpty({ message }: { message: string }) {
   return (
-    <div className="flex flex-col items-center justify-center py-12 text-[11px] text-zinc-400">
-      <Layers className="w-5 h-5 mb-2 text-zinc-300" />
+    <div className="flex flex-col items-center justify-center py-12 text-xs text-zinc-400">
+      <Layers className="w-5 h-5 mb-2 text-zinc-400" />
       {message}
     </div>
   );
@@ -1664,7 +1665,7 @@ function DrawerEmpty({ message }: { message: string }) {
 function EmptyState({ message }: { message: string }) {
   return (
     <div className="flex flex-col items-center justify-center p-12 text-xs text-zinc-400">
-      <Layers className="w-6 h-6 mb-2 text-zinc-300" />
+      <Layers className="w-6 h-6 mb-2 text-zinc-400" />
       {message}
     </div>
   );

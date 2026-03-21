@@ -77,7 +77,7 @@ export function InlineCitation({ citation, index }) {
     <Popover>
       <PopoverTrigger asChild>
         <button
-          className="inline-flex items-center justify-center h-4 min-w-[18px] px-1 text-[10px] font-bold
+          className="inline-flex items-center justify-center h-4 min-w-[18px] px-1 text-[11px] font-bold
             bg-blue-100 text-blue-700 border border-blue-200 rounded-sm cursor-pointer
             hover:bg-blue-200 transition-colors align-super leading-none"
           aria-label={`Citation ${index + 1}: ${citation.title || 'Source'}`}
@@ -107,7 +107,7 @@ export function InlineCitation({ citation, index }) {
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>Relevance: {Math.round((citation.relevanceScore || 0) * 100)}%</span>
             {citation.snippetHash && (
-              <span className="font-mono text-[10px]">#{citation.snippetHash}</span>
+              <span className="font-mono text-[11px]">#{citation.snippetHash}</span>
             )}
           </div>
         </div>
@@ -139,7 +139,7 @@ export function CitationList({ citations = [], className = '' }) {
           key={citation.id || `citation-${i}`}
           className="flex items-start gap-2 text-xs rounded-md bg-muted/30 px-2.5 py-1.5 border border-border/50"
         >
-          <span className="inline-flex items-center justify-center h-4 min-w-[18px] px-1 text-[10px] font-bold bg-blue-100 text-blue-700 rounded-sm shrink-0 mt-0.5">
+          <span className="inline-flex items-center justify-center h-4 min-w-[18px] px-1 text-[11px] font-bold bg-blue-100 text-blue-700 rounded-sm shrink-0 mt-0.5">
             {i + 1}
           </span>
           <div className="min-w-0 flex-1">
@@ -148,7 +148,7 @@ export function CitationList({ citations = [], className = '' }) {
               <p className="text-muted-foreground">&sect;{citation.section}</p>
             )}
           </div>
-          <Badge variant="outline" className="text-[10px] shrink-0">
+          <Badge variant="outline" className="text-[11px] shrink-0">
             {Math.round((citation.relevanceScore || 0) * 100)}%
           </Badge>
         </div>
@@ -230,15 +230,15 @@ export function AIResponseBlock({
       <div className="flex items-center gap-2 flex-wrap">
         <ConfidenceBadge score={response.confidence} />
         {response.isRealAI ? (
-          <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200">
+          <Badge variant="outline" className="text-[11px] bg-emerald-50 text-emerald-700 border-emerald-200">
             AI Generated
           </Badge>
         ) : (
-          <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-700 border-amber-200">
+          <Badge variant="outline" className="text-[11px] bg-amber-50 text-amber-700 border-amber-200">
             Demo Mode
           </Badge>
         )}
-        <span className="text-[10px] text-muted-foreground ml-auto">
+        <span className="text-[11px] text-muted-foreground ml-auto">
           {response.model || 'unknown'}
         </span>
       </div>
@@ -256,7 +256,7 @@ export function AIResponseBlock({
       {/* Provenance & Actions */}
       {showProvenance && (
         <div className="flex items-center gap-2 pt-2 border-t border-border/50">
-          <p className="text-[10px] text-muted-foreground flex-1 italic">
+          <p className="text-[11px] text-muted-foreground flex-1 italic">
             {buildProvenanceLine(provenance)}
           </p>
           <div className="flex gap-1 shrink-0">

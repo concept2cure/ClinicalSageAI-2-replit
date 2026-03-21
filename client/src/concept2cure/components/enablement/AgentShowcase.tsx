@@ -46,7 +46,7 @@ const capabilities: AgentCapability[] = [
     id: "coordinator",
     name: "Coordinator Agent",
     system: "agent-swarm",
-    description: "Orchestrates tasks across the agent swarm, assigns work to specialists based on submission context.",
+    description: "Orchestrates tasks across AnA Agents, assigns work to specialists based on submission context.",
     whatItDoes: [
       "Decomposes complex submissions into discrete agent tasks",
       "Routes work to the best-fit specialist agent",
@@ -543,7 +543,7 @@ const capabilities: AgentCapability[] = [
   // AnA SnowGlobe (5)
   {
     id: "foresight-prediction",
-    name: "AnA SnowGlobe Prediction Engine",
+    name: "AnA Predictions Engine",
     system: "ana-snowglobe",
     description: "Multi-modal clinical outcome prediction using ensemble machine learning models.",
     whatItDoes: [
@@ -591,7 +591,7 @@ const capabilities: AgentCapability[] = [
   },
   {
     id: "foresight-kg",
-    name: "AnA SnowGlobe Knowledge Graph",
+    name: "AnA Predictions Knowledge Graph",
     system: "ana-snowglobe",
     description: "Predictive relationship mapping that identifies emerging trends and regulatory signals.",
     whatItDoes: [
@@ -629,11 +629,11 @@ const capabilities: AgentCapability[] = [
 
 const systemLabels: Record<string, string> = {
   all: "All",
-  "agent-swarm": "Agent Swarm",
+  "agent-swarm": "AnA Agents",
   "cognitive-ecosystem": "Cognitive",
   innovation: "Innovation",
   intelligence: "Intelligence",
-  "ana-snowglobe": "AnA SnowGlobe",
+  "ana-snowglobe": "AnA Predictions",
 };
 
 const categoryLabels: Record<string, string> = {
@@ -694,7 +694,7 @@ function CapabilityCard({ cap }: { cap: AgentCapability }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 4 }}
       transition={{ duration: 0.15 }}
-      className="bg-white border border-zinc-100 rounded-lg p-5"
+      className="bg-white border border-zinc-200 rounded-lg p-5"
     >
       {/* Header row */}
       <div className="flex items-start justify-between gap-3 mb-2">
@@ -756,7 +756,7 @@ function CapabilityCard({ cap }: { cap: AgentCapability }) {
               {cap.whatItDoes.map((item, i) => (
                 <li
                   key={i}
-                  className="text-sm text-zinc-600 leading-relaxed pl-3 relative before:content-['·'] before:absolute before:left-0 before:text-zinc-300"
+                  className="text-sm text-zinc-600 leading-relaxed pl-3 relative before:content-['·'] before:absolute before:left-0 before:text-zinc-400"
                 >
                   {item}
                 </li>
@@ -774,7 +774,7 @@ function CapabilityCard({ cap }: { cap: AgentCapability }) {
 
       {/* API endpoint */}
       {cap.apiEndpoint && (
-        <p className="text-xs text-zinc-300 font-mono mt-2">
+        <p className="text-xs text-zinc-400 font-mono mt-2">
           {cap.apiEndpoint}
         </p>
       )}

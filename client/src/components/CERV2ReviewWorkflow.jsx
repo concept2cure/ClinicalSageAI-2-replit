@@ -150,7 +150,7 @@ export default function CERV2ReviewWorkflow({
       >
         <ClipboardCheck className="w-3.5 h-3.5 text-slate-500" />
         <span className="text-slate-700">Review</span>
-        <Badge className={`text-[10px] px-1.5 py-0 ${stateCfg.color}`}>{stateCfg.label}</Badge>
+        <Badge className={`text-[11px] px-1.5 py-0 ${stateCfg.color}`}>{stateCfg.label}</Badge>
       </button>
     );
   }
@@ -183,7 +183,7 @@ export default function CERV2ReviewWorkflow({
                   <div className={`flex-1 h-0.5 ${isPast ? 'bg-green-400' : 'bg-slate-200'}`} />
                 )}
                 <div
-                  className={`flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium ${
+                  className={`flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-medium ${
                     isActive
                       ? cfg.color + ' ring-2 ring-offset-1 ring-blue-300'
                       : isPast
@@ -204,7 +204,7 @@ export default function CERV2ReviewWorkflow({
           <div className="space-y-2">
             {stateCfg.requiresSignature && (
               <div>
-                <Label className="text-[10px] text-slate-500">
+                <Label className="text-[11px] text-slate-500">
                   Electronic Signature (type your full name)
                 </Label>
                 <Input
@@ -217,7 +217,7 @@ export default function CERV2ReviewWorkflow({
             )}
 
             <div>
-              <Label className="text-[10px] text-slate-500">Comment (optional)</Label>
+              <Label className="text-[11px] text-slate-500">Comment (optional)</Label>
               <Input
                 value={comment}
                 onChange={e => setComment(e.target.value)}
@@ -252,7 +252,7 @@ export default function CERV2ReviewWorkflow({
             </div>
 
             {currentStatus === 'draft' && readinessScore < 30 && (
-              <p className="text-[10px] text-amber-600">
+              <p className="text-[11px] text-amber-600">
                 Readiness score must be at least 30% to submit for review (currently{' '}
                 {readinessScore}%).
               </p>
@@ -264,7 +264,7 @@ export default function CERV2ReviewWorkflow({
           <div className="text-center py-2">
             <Shield className="w-8 h-8 text-blue-500 mx-auto mb-1" />
             <p className="text-xs font-semibold text-blue-700">Document Released</p>
-            <p className="text-[10px] text-slate-500 mt-0.5">
+            <p className="text-[11px] text-slate-500 mt-0.5">
               This document has been released and is now read-only.
             </p>
             <Button
@@ -282,7 +282,7 @@ export default function CERV2ReviewWorkflow({
         {showRevert && (
           <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-md">
             <p className="text-xs text-red-700 font-medium">Revert to Draft?</p>
-            <p className="text-[10px] text-red-600 mb-2">
+            <p className="text-[11px] text-red-600 mb-2">
               This will reset the workflow state. An audit trail entry will be recorded.
             </p>
             <div className="flex gap-1.5">
@@ -309,7 +309,7 @@ export default function CERV2ReviewWorkflow({
 
       {/* Audit trail */}
       <div className="px-4 py-2 border-b bg-slate-50">
-        <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">
+        <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">
           Audit Trail
         </p>
       </div>
@@ -331,12 +331,12 @@ export default function CERV2ReviewWorkflow({
                   {' → '}
                   <span className="font-medium">{STATES[entry.to]?.label}</span>
                 </p>
-                <p className="text-[10px] text-slate-500">
+                <p className="text-[11px] text-slate-500">
                   {entry.signedBy && <span>by {entry.signedBy} · </span>}
                   {formatTimestamp(entry.date)}
                 </p>
                 {entry.comment && (
-                  <p className="text-[10px] text-slate-400 italic mt-0.5">{entry.comment}</p>
+                  <p className="text-[11px] text-slate-400 italic mt-0.5">{entry.comment}</p>
                 )}
               </div>
             </div>

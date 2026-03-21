@@ -204,7 +204,7 @@ export default function CERV2ExportPreviewPanel({
           </h3>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className={`text-[10px] tabular-nums font-bold ${readinessColor}`}>
+          <span className={`text-[11px] tabular-nums font-bold ${readinessColor}`}>
             {stats.readiness}%
           </span>
           <button
@@ -247,7 +247,7 @@ export default function CERV2ExportPreviewPanel({
           />
         </div>
         {/* Compact stats row */}
-        <div className="flex items-center gap-2 mt-1.5 text-[10px] text-muted-foreground">
+        <div className="flex items-center gap-2 mt-1.5 text-[11px] text-muted-foreground">
           {stats.readyCount > 0 && (
             <span className="flex items-center gap-0.5">
               <CheckCircle2 className="h-2.5 w-2.5 text-primary" />
@@ -330,21 +330,21 @@ export default function CERV2ExportPreviewPanel({
                   {/* Per-section readiness penalty badge (Phase 7.8) */}
                   {section.severity !== 'none' && READINESS_BADGES[section.severity] && (
                     <span
-                      className={`text-[9px] font-semibold tabular-nums px-1 py-0.5 rounded ${READINESS_BADGES[section.severity].bg} ${READINESS_BADGES[section.severity].text}`}
+                      className={`text-[11px] font-semibold tabular-nums px-1 py-0.5 rounded ${READINESS_BADGES[section.severity].bg} ${READINESS_BADGES[section.severity].text}`}
                     >
                       {READINESS_BADGES[section.severity].label}
                     </span>
                   )}
                   {section.status === 'ready' && (
-                    <span className="text-[10px] tabular-nums text-muted-foreground">
+                    <span className="text-[11px] tabular-nums text-muted-foreground">
                       {section.words}w
                     </span>
                   )}
                   {section.status === 'empty' && (
-                    <span className="text-[10px] text-muted-foreground/50 italic">empty</span>
+                    <span className="text-[11px] text-muted-foreground/50 italic">empty</span>
                   )}
                   {section.status === 'dismissed' && (
-                    <span className="text-[10px] text-muted-foreground/50 italic">dismissed</span>
+                    <span className="text-[11px] text-muted-foreground/50 italic">dismissed</span>
                   )}
                 </button>
 

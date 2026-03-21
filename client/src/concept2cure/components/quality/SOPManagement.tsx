@@ -14,6 +14,7 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
+import { LIFECYCLE, toLifecycleStage } from '../ui/enterprise';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -163,13 +164,14 @@ const CATEGORIES: { value: SOPCategory; label: string }[] = [
   { value: 'guideline', label: 'Guideline' },
 ];
 
+// Colors from canonical lifecycle — SOP-specific labels preserved
 const STATUS_CONFIG: Record<SOPStatus, { label: string; color: string; icon: React.ElementType }> = {
-  draft: { label: 'Draft', color: 'bg-zinc-100 text-zinc-700', icon: Edit },
-  review: { label: 'Under Review', color: 'bg-amber-100 text-amber-700', icon: Clock },
-  approved: { label: 'Approved', color: 'bg-blue-100 text-blue-700', icon: CheckCircle2 },
-  effective: { label: 'Effective', color: 'bg-green-100 text-green-700', icon: FileCheck },
-  superseded: { label: 'Superseded', color: 'bg-purple-100 text-purple-700', icon: History },
-  retired: { label: 'Retired', color: 'bg-red-100 text-red-700', icon: Archive },
+  draft:      { label: 'Draft',         color: `${LIFECYCLE.draft.bg} ${LIFECYCLE.draft.text}`,             icon: Edit },
+  review:     { label: 'Under Review',  color: `${LIFECYCLE.in_review.bg} ${LIFECYCLE.in_review.text}`,    icon: Clock },
+  approved:   { label: 'Approved',      color: `${LIFECYCLE.approved.bg} ${LIFECYCLE.approved.text}`,      icon: CheckCircle2 },
+  effective:  { label: 'Effective',     color: `${LIFECYCLE.published.bg} ${LIFECYCLE.published.text}`,    icon: FileCheck },
+  superseded: { label: 'Superseded',    color: `${LIFECYCLE.superseded.bg} ${LIFECYCLE.superseded.text}`,  icon: History },
+  retired:    { label: 'Retired',       color: `${LIFECYCLE.archived.bg} ${LIFECYCLE.archived.text}`,      icon: Archive },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -393,7 +395,7 @@ const SOPList: React.FC<SOPListProps> = ({ sops, onSelect, onEdit }) => {
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{sop.title}</span>
                       {isReviewDue(sop.reviewDate) && sop.status === 'effective' && (
-                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-[10px]">
+                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-xs">
                           Review Due
                         </Badge>
                       )}
@@ -401,7 +403,7 @@ const SOPList: React.FC<SOPListProps> = ({ sops, onSelect, onEdit }) => {
                   </TableCell>
                   <TableCell>v{sop.version}</TableCell>
                   <TableCell>
-                    <Badge variant="outline" className={cn('text-[10px]', STATUS_CONFIG[sop.status].color)}>
+                    <Badge variant="outline" className={cn('text-xs', STATUS_CONFIG[sop.status].color)}>
                       <StatusIcon className="h-3 w-3 mr-1" />
                       {STATUS_CONFIG[sop.status].label}
                     </Badge>
@@ -494,25 +496,25 @@ const TrainingMatrix: React.FC<TrainingMatrixProps> = ({ records, onAcknowledge 
       <div className="grid grid-cols-4 gap-3">
         <div className="border border-border/40 rounded-sm bg-background cursor-pointer hover:border-zinc-300" onClick={() => setFilterStatus('all')}>
           <div className="px-3 py-2 p-3 text-center">
-            <p className="text-2xl font-bold text-zinc-900">{stats.total}</p>
+            <p className="text-2xl font-semibold text-zinc-900">{stats.total}</p>
             <p className="text-xs text-zinc-500">Total</p>
           </div>
         </div>
         <div className="border border-border/40 rounded-sm bg-background cursor-pointer hover:border-green-300" onClick={() => setFilterStatus('completed')}>
           <div className="px-3 py-2 p-3 text-center">
-            <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
+            <p className="text-2xl font-semibold text-green-600">{stats.completed}</p>
             <p className="text-xs text-zinc-500">Completed</p>
           </div>
         </div>
         <div className="border border-border/40 rounded-sm bg-background cursor-pointer hover:border-amber-300" onClick={() => setFilterStatus('pending')}>
           <div className="px-3 py-2 p-3 text-center">
-            <p className="text-2xl font-bold text-amber-600">{stats.pending}</p>
+            <p className="text-2xl font-semibold text-amber-600">{stats.pending}</p>
             <p className="text-xs text-zinc-500">Pending</p>
           </div>
         </div>
         <div className="border border-border/40 rounded-sm bg-background cursor-pointer hover:border-red-300" onClick={() => setFilterStatus('overdue')}>
           <div className="px-3 py-2 p-3 text-center">
-            <p className="text-2xl font-bold text-red-600">{stats.overdue}</p>
+            <p className="text-2xl font-semibold text-red-600">{stats.overdue}</p>
             <p className="text-xs text-zinc-500">Overdue</p>
           </div>
         </div>
@@ -546,7 +548,7 @@ const TrainingMatrix: React.FC<TrainingMatrixProps> = ({ records, onAcknowledge 
                   <Badge
                     variant="outline"
                     className={cn(
-                      'text-[10px]',
+                      'text-xs',
                       record.status === 'completed' && 'bg-green-100 text-green-700',
                       record.status === 'pending' && 'bg-amber-100 text-amber-700',
                       record.status === 'overdue' && 'bg-red-100 text-red-700'
@@ -617,7 +619,7 @@ export const SOPManagement: React.FC<SOPManagementProps> = ({ className }) => {
     <div className={cn('h-full flex flex-col', className)}>
       {/* Early Access Banner */}
       <div className="mx-4 mt-3 flex items-center gap-2 px-3 py-2 rounded-md bg-amber-50 border border-amber-200 text-amber-700 text-xs">
-        <span className="font-semibold px-1.5 py-0.5 bg-amber-200 text-amber-800 rounded text-[10px] uppercase tracking-wider">Early Access</span>
+        <span className="font-semibold px-1.5 py-0.5 bg-amber-200 text-amber-800 rounded text-xs uppercase tracking-wider">Early Access</span>
         <span>This module displays sample data for demonstration. Live data integration coming soon.</span>
       </div>
       {/* Header */}
@@ -645,7 +647,7 @@ export const SOPManagement: React.FC<SOPManagementProps> = ({ className }) => {
               <FileText className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-zinc-900">{stats.total}</p>
+              <p className="text-2xl font-semibold text-zinc-900">{stats.total}</p>
               <p className="text-xs text-zinc-500">Total SOPs</p>
             </div>
           </div>
@@ -656,7 +658,7 @@ export const SOPManagement: React.FC<SOPManagementProps> = ({ className }) => {
               <CheckCircle2 className="h-5 w-5 text-green-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-green-600">{stats.effective}</p>
+              <p className="text-2xl font-semibold text-green-600">{stats.effective}</p>
               <p className="text-xs text-zinc-500">Effective</p>
             </div>
           </div>
@@ -667,7 +669,7 @@ export const SOPManagement: React.FC<SOPManagementProps> = ({ className }) => {
               <Clock className="h-5 w-5 text-amber-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-amber-600">{stats.underReview}</p>
+              <p className="text-2xl font-semibold text-amber-600">{stats.underReview}</p>
               <p className="text-xs text-zinc-500">Under Review</p>
             </div>
           </div>
@@ -678,7 +680,7 @@ export const SOPManagement: React.FC<SOPManagementProps> = ({ className }) => {
               <RefreshCw className="h-5 w-5 text-red-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-red-600">{stats.reviewDue}</p>
+              <p className="text-2xl font-semibold text-red-600">{stats.reviewDue}</p>
               <p className="text-xs text-zinc-500">Review Due</p>
             </div>
           </div>

@@ -236,7 +236,7 @@ const ModuleConnectionCard: React.FC<ModuleConnectionCardProps> = ({
     slate: 'bg-zinc-500',
     red: 'bg-red-500',
     amber: 'bg-amber-500',
-    indigo: 'bg-indigo-500',
+    indigo: 'bg-blue-500',
   };
 
   const Icon = config.icon;
@@ -266,7 +266,7 @@ const ModuleConnectionCard: React.FC<ModuleConnectionCardProps> = ({
   }
 
   return (
-    <div className="p-4 bg-white rounded-xl border border-zinc-200 hover:border-zinc-300 transition-colors">
+    <div className="p-4 bg-white rounded-xl border border-zinc-200 hover:border-zinc-300 transition-colors duration-150">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
           <div
@@ -275,7 +275,7 @@ const ModuleConnectionCard: React.FC<ModuleConnectionCardProps> = ({
             <Icon className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h4 className="font-medium text-zinc-800">{config.name}</h4>
+            <h4 className="font-medium text-zinc-900">{config.name}</h4>
             <p className="text-xs text-zinc-500">{config.description}</p>
           </div>
         </div>
@@ -306,7 +306,7 @@ const ModuleConnectionCard: React.FC<ModuleConnectionCardProps> = ({
             <button
               onClick={onSync}
               disabled={isLoading}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-150"
               data-testid={`button-bridge-sync-${config.id}`}
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
@@ -314,7 +314,7 @@ const ModuleConnectionCard: React.FC<ModuleConnectionCardProps> = ({
             </button>
             <button
               onClick={onNavigate}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors duration-150"
               data-testid={`button-bridge-view-${config.id}`}
             >
               <ExternalLink className="w-3.5 h-3.5" />
@@ -325,7 +325,7 @@ const ModuleConnectionCard: React.FC<ModuleConnectionCardProps> = ({
           <button
             onClick={onConnect}
             disabled={isLoading}
-            className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-60"
             data-testid={`button-bridge-connect-${config.id}`}
           >
             {isLoading ? (
@@ -339,7 +339,7 @@ const ModuleConnectionCard: React.FC<ModuleConnectionCardProps> = ({
           <button
             onClick={onSync}
             disabled={isLoading}
-            className="flex items-center gap-1.5 px-4 py-2 bg-amber-600 text-white text-sm font-medium rounded-lg hover:bg-amber-700 transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-4 py-2 bg-amber-600 text-white text-sm font-medium rounded-lg hover:bg-amber-700 transition-colors disabled:opacity-60"
             data-testid={`button-bridge-update-${config.id}`}
           >
             {isLoading ? (
@@ -352,7 +352,7 @@ const ModuleConnectionCard: React.FC<ModuleConnectionCardProps> = ({
         ) : (
           <button
             onClick={onNavigate}
-            className="flex items-center gap-1.5 px-4 py-2 bg-zinc-100 text-zinc-600 text-sm font-medium rounded-lg hover:bg-zinc-200 transition-colors"
+            className="flex items-center gap-1.5 px-4 py-2 bg-zinc-100 text-zinc-600 text-sm font-medium rounded-lg hover:bg-zinc-200 transition-colors duration-150"
             data-testid={`button-bridge-go-module-${config.id}`}
           >
             <ArrowRight className="w-4 h-4" />
@@ -376,16 +376,16 @@ const DataFlowDiagram: React.FC<{
   const totalSources = connections.reduce((sum, c) => sum + c.itemCount, 0);
 
   return (
-    <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+    <div className="p-6 bg-blue-50 rounded-xl border border-blue-200">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="font-semibold text-zinc-800">Data Flow Overview</h3>
+          <h3 className="font-semibold text-zinc-900">Data Flow Overview</h3>
           <p className="text-sm text-zinc-600">
             Sources flowing into your {submissionType} document
           </p>
         </div>
         <div className="text-right">
-          <p className="text-2xl font-bold text-blue-600">{totalSources}</p>
+          <p className="text-2xl font-semibold text-blue-600">{totalSources}</p>
           <p className="text-xs text-zinc-500">Total Sources</p>
         </div>
       </div>
@@ -725,9 +725,9 @@ export const CrossModuleDataBridge: React.FC<CrossModuleDataBridgeProps> = ({
 
   return (
     <div className={`space-y-6 ${className}`}>
-      <div className="p-4 rounded-2xl border border-zinc-200/70 bg-white shadow-sm flex items-center justify-between">
+      <div className="p-4 rounded-xl border border-zinc-200/70 bg-white shadow-sm flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-zinc-800">Data Bridges</h3>
+          <h3 className="text-lg font-semibold text-zinc-900">Data Bridges</h3>
           <p className="text-sm text-zinc-500">
             Keep sources in sync across modules.
           </p>
@@ -745,7 +745,7 @@ export const CrossModuleDataBridge: React.FC<CrossModuleDataBridgeProps> = ({
 
       {/* Module Connections */}
       <div>
-        <h3 className="text-lg font-semibold text-zinc-800 mb-4">
+        <h3 className="text-lg font-semibold text-zinc-900 mb-4">
           Module Connections
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

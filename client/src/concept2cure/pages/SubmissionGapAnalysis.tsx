@@ -12,6 +12,7 @@
  */
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { SEVERITY } from '@/concept2cure/components/ui/enterprise';
 import {
   CheckCircle2,
   AlertCircle,
@@ -210,7 +211,7 @@ function CircularProgress({ value, size = 160 }: { value: number; size?: number 
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-4xl font-bold text-zinc-900">{value}%</span>
+        <span className="text-4xl font-semibold text-zinc-900">{value}%</span>
         <span className="text-xs text-zinc-500 mt-0.5">Readiness</span>
       </div>
     </div>
@@ -242,10 +243,10 @@ function StatusPill({ status }: { status: GapStatus }) {
 
 function PriorityBadge({ priority }: { priority: Priority }) {
   const config: Record<Priority, { bg: string; text: string }> = {
-    critical: { bg: 'bg-red-100', text: 'text-red-800' },
-    high: { bg: 'bg-orange-100', text: 'text-orange-800' },
-    medium: { bg: 'bg-amber-100', text: 'text-amber-800' },
-    low: { bg: 'bg-zinc-100', text: 'text-zinc-600' },
+    critical: { bg: SEVERITY.critical.bg, text: SEVERITY.critical.text },
+    high:     { bg: SEVERITY.high.bg,     text: SEVERITY.high.text },
+    medium:   { bg: SEVERITY.medium.bg,   text: SEVERITY.medium.text },
+    low:      { bg: SEVERITY.low.bg,      text: SEVERITY.low.text },
   };
   const { bg, text } = config[priority];
   return (
@@ -410,7 +411,7 @@ export default function SubmissionGapAnalysis({ projectId, submissionType: initi
         </header>
 
         {/* ═══ Step 1: Configuration ═══ */}
-        <section className="bg-white border border-zinc-100 rounded-xl shadow-sm p-6 mb-8">
+        <section className="bg-white border border-zinc-200 rounded-xl shadow-sm p-6 mb-8">
           <h2 className="text-sm font-medium text-zinc-900 mb-5 flex items-center gap-2">
             <FileText className="w-4 h-4 text-zinc-400" />
             Configuration
@@ -425,7 +426,7 @@ export default function SubmissionGapAnalysis({ projectId, submissionType: initi
               id="submission-type"
               value={submissionType}
               onChange={(e) => setSubmissionType(e.target.value as SubmissionType | '')}
-              className="w-full max-w-xs px-3 py-2 bg-white border border-zinc-200 rounded-lg text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
+              className="w-full max-w-xs px-3 py-2 bg-white border border-zinc-200 rounded-lg text-sm text-zinc-900 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/20 focus:border-blue-500 transition-colors duration-150"
             >
               <option value="">Select submission type...</option>
               <option value="510K">510(k)</option>
@@ -448,14 +449,14 @@ export default function SubmissionGapAnalysis({ projectId, submissionType: initi
                 <div className="flex gap-2">
                   <button
                     onClick={selectAllDocs}
-                    className="text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                    className="text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors duration-150"
                   >
                     Select all
                   </button>
-                  <span className="text-zinc-300">|</span>
+                  <span className="text-zinc-400">|</span>
                   <button
                     onClick={clearAllDocs}
-                    className="text-xs text-zinc-400 hover:text-zinc-600 font-medium transition-colors"
+                    className="text-xs text-zinc-400 hover:text-zinc-600 font-medium transition-colors duration-150"
                   >
                     Clear
                   </button>
@@ -470,7 +471,7 @@ export default function SubmissionGapAnalysis({ projectId, submissionType: initi
                       className={`flex items-start gap-2.5 px-3 py-2.5 rounded-lg border cursor-pointer transition-all text-sm ${
                         isChecked
                           ? 'border-blue-200 bg-blue-50/50 text-zinc-900'
-                          : 'border-zinc-100 bg-white hover:border-zinc-200 text-zinc-600'
+                          : 'border-zinc-200 bg-white hover:border-zinc-200 text-zinc-600'
                       }`}
                     >
                       <input
@@ -491,7 +492,7 @@ export default function SubmissionGapAnalysis({ projectId, submissionType: initi
           <button
             onClick={runAnalysis}
             disabled={!submissionType || loading}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/20 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150"
           >
             {loading ? (
               <>
@@ -528,7 +529,7 @@ export default function SubmissionGapAnalysis({ projectId, submissionType: initi
             {/* Readiness Score + Summary Stats */}
             <section className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
               {/* Circular Score */}
-              <div className="lg:col-span-1 bg-white border border-zinc-100 rounded-xl shadow-sm p-6 flex flex-col items-center justify-center">
+              <div className="lg:col-span-1 bg-white border border-zinc-200 rounded-xl shadow-sm p-6 flex flex-col items-center justify-center">
                 <CircularProgress value={result.readinessScore} />
               </div>
 
@@ -562,8 +563,8 @@ export default function SubmissionGapAnalysis({ projectId, submissionType: initi
             </section>
 
             {/* Gap Table */}
-            <section className="bg-white border border-zinc-100 rounded-xl shadow-sm overflow-hidden mb-8">
-              <div className="px-6 py-4 border-b border-zinc-100">
+            <section className="bg-white border border-zinc-200 rounded-xl shadow-sm overflow-hidden mb-8">
+              <div className="px-6 py-4 border-b border-zinc-200">
                 <h3 className="text-sm font-medium text-zinc-900 flex items-center gap-2">
                   <Target className="w-4 h-4 text-zinc-400" />
                   Gap Analysis Details
@@ -600,7 +601,7 @@ export default function SubmissionGapAnalysis({ projectId, submissionType: initi
                     {result.gaps.map((gap, idx) => (
                       <tr
                         key={`${gap.ectdModule}-${idx}`}
-                        className="hover:bg-zinc-50/50 transition-colors"
+                        className="hover:bg-zinc-50/50 transition-colors duration-150"
                       >
                         <td className="px-6 py-3.5 font-mono text-xs text-zinc-600 whitespace-nowrap">
                           {gap.ectdModule}
@@ -651,7 +652,7 @@ export default function SubmissionGapAnalysis({ projectId, submissionType: initi
             )}
 
             {/* Timeline Projection */}
-            <section className="bg-white border border-zinc-100 rounded-xl shadow-sm p-6">
+            <section className="bg-white border border-zinc-200 rounded-xl shadow-sm p-6">
               <div className="flex items-center gap-2 mb-4">
                 <Clock className="w-4 h-4 text-zinc-400" />
                 <h3 className="text-sm font-medium text-zinc-900">Timeline Projection</h3>
@@ -689,9 +690,9 @@ function SummaryCard({
   const s = styles[color];
 
   return (
-    <div className={`${s.bg} border border-zinc-100 rounded-xl shadow-sm p-5 flex flex-col`}>
+    <div className={`${s.bg} border border-zinc-200 rounded-xl shadow-sm p-5 flex flex-col`}>
       <div className={`${s.iconColor} mb-2`}>{icon}</div>
-      <span className={`text-3xl font-bold ${s.valueColor} tracking-tight`}>{value}</span>
+      <span className={`text-3xl font-semibold ${s.valueColor} tracking-tight`}>{value}</span>
       <span className="text-xs text-zinc-500 mt-1">{label}</span>
     </div>
   );
@@ -742,7 +743,7 @@ function TimelineBar({ weeks, readiness }: { weeks: number; readiness: number })
         {markers.map((w) => (
           <span
             key={w}
-            className="absolute text-[10px] text-zinc-400 -translate-x-1/2"
+            className="absolute text-xs text-zinc-400 -translate-x-1/2"
             style={{ left: `${(w / maxWeeks) * 100}%` }}
           >
             {w === 0 ? 'Now' : `Wk ${w}`}

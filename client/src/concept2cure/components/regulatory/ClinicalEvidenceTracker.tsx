@@ -677,7 +677,7 @@ export default function ClinicalEvidenceTracker() {
                             </td>
                             <td className="border border-zinc-300 p-2 bg-green-50/50">
                               <div className="text-center">
-                                <Label className="text-xs text-green-700 font-bold">
+                                <Label className="text-xs text-green-700 font-semibold">
                                   True Positive (TP)
                                 </Label>
                                 <Input
@@ -696,7 +696,7 @@ export default function ClinicalEvidenceTracker() {
                             </td>
                             <td className="border border-zinc-300 p-2 bg-red-50/30">
                               <div className="text-center">
-                                <Label className="text-xs text-red-700 font-bold">
+                                <Label className="text-xs text-red-700 font-semibold">
                                   False Positive (FP)
                                 </Label>
                                 <Input
@@ -720,7 +720,7 @@ export default function ClinicalEvidenceTracker() {
                             </td>
                             <td className="border border-zinc-300 p-2 bg-red-50/30">
                               <div className="text-center">
-                                <Label className="text-xs text-red-700 font-bold">
+                                <Label className="text-xs text-red-700 font-semibold">
                                   False Negative (FN)
                                 </Label>
                                 <Input
@@ -739,7 +739,7 @@ export default function ClinicalEvidenceTracker() {
                             </td>
                             <td className="border border-zinc-300 p-2 bg-green-50/50">
                               <div className="text-center">
-                                <Label className="text-xs text-green-700 font-bold">
+                                <Label className="text-xs text-green-700 font-semibold">
                                   True Negative (TN)
                                 </Label>
                                 <Input
@@ -809,7 +809,7 @@ export default function ClinicalEvidenceTracker() {
                           className="p-3 rounded-lg border bg-muted/20 text-center"
                         >
                           <p className="text-xs text-muted-foreground">{m.label}</p>
-                          <p className="text-xl font-bold mt-1">{pct(m.value)}</p>
+                          <p className="text-xl font-semibold mt-1">{pct(m.value)}</p>
                           {m.ci && <p className="text-xs text-muted-foreground">{ciStr(m.ci)}</p>}
                         </div>
                       ))}

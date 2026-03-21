@@ -188,7 +188,7 @@ const SearchPage: React.FC = () => {
           <button
             onClick={handleSearch}
             disabled={loading}
-            className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
           >
             {loading ? 'Searching...' : 'Search'}
           </button>

@@ -286,13 +286,13 @@ const ClientUserTable = ({ organization }) => {
           </div>
           <div className="flex items-center space-x-2">
             <button
-              className="px-3 py-1 text-sm border rounded bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+              className="px-3 py-1 text-sm border rounded bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-60"
               disabled
             >
               Previous
             </button>
             <button
-              className="px-3 py-1 text-sm border rounded bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+              className="px-3 py-1 text-sm border rounded bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-60"
               disabled
             >
               Next

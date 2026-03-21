@@ -80,7 +80,7 @@ const ZenHeader: React.FC<ZenHeaderProps> = ({
   onProfileClick,
   isSidebarOpen,
 }) => (
-  <header className="h-12 flex items-center justify-between px-3 border-b border-zinc-100 bg-white/80 backdrop-blur-sm">
+  <header className="h-12 flex items-center justify-between px-3 border-b border-zinc-200 bg-white/80 backdrop-blur-sm">
     {/* Left section */}
     <div className="flex items-center gap-2">
       <button
@@ -123,8 +123,8 @@ const ZenHeader: React.FC<ZenHeaderProps> = ({
         <Settings className="w-4 h-4" />
       </button>
       <button onClick={onProfileClick} className={zenClasses.buttonIcon} aria-label="Profile">
-        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center">
-          <span className="text-[10px] font-medium text-white">U</span>
+        <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center">
+          <span className="text-xs font-medium text-white">U</span>
         </div>
       </button>
     </div>
@@ -193,7 +193,7 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
               key={project.id}
               onClick={() => onSelectProject(project.id)}
               className={cn(
-                'w-full flex items-center gap-3 rounded-lg transition-colors',
+                'w-full flex items-center gap-3 rounded-lg transition-colors duration-150',
                 isCollapsed ? 'justify-center p-2' : 'px-3 py-2',
                 activeProjectId === project.id
                   ? 'bg-blue-50 text-blue-700'
@@ -231,7 +231,7 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
       {/* Sidebar header */}
       <div
         className={cn(
-          'flex items-center h-12 border-b border-zinc-100',
+          'flex items-center h-12 border-b border-zinc-200',
           isCollapsed ? 'justify-center px-2' : 'justify-between px-3'
         )}
       >
@@ -256,7 +256,7 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <button
           onClick={onNewChat}
           className={cn(
-            'flex items-center justify-center gap-2 rounded-lg font-medium transition-all',
+            'flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-150',
             isCollapsed
               ? 'w-10 h-10 bg-blue-600 text-white hover:bg-blue-700'
               : 'w-full px-4 py-2.5 bg-blue-600 text-white hover:bg-blue-700'
@@ -277,11 +277,11 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <button
           onClick={onNewProject}
           className={cn(
-            'w-full flex items-center gap-3 rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 transition-colors',
+            'w-full flex items-center gap-3 rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 transition-colors duration-150',
             isCollapsed ? 'justify-center p-2' : 'px-3 py-2'
           )}
         >
-          <div className="w-8 h-8 rounded-lg border-2 border-dashed border-zinc-300 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg border border-dashed border-zinc-300 flex items-center justify-center">
             <Plus className="w-4 h-4" />
           </div>
           {!isCollapsed && <span className="text-sm font-medium">New project</span>}
@@ -290,11 +290,11 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
 
       {/* Sidebar footer */}
       <div
-        className={cn('border-t border-zinc-100 p-2', isCollapsed && 'flex flex-col items-center')}
+        className={cn('border-t border-zinc-200 p-2', isCollapsed && 'flex flex-col items-center')}
       >
         <button
           className={cn(
-            'w-full flex items-center gap-3 rounded-lg text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-colors',
+            'w-full flex items-center gap-3 rounded-lg text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-colors duration-150',
             isCollapsed ? 'justify-center p-2' : 'px-3 py-2'
           )}
         >
@@ -318,7 +318,7 @@ const ZenSidebar: React.FC<ZenSidebarProps> = ({
       {/* Sidebar */}
       <aside
         className={cn(
-          'bg-zinc-50 border-r border-zinc-100 h-full transition-all duration-200 ease-in-out',
+          'bg-zinc-50 border-r border-zinc-200 h-full transition-all duration-150 ease-in-out',
           // Desktop
           'hidden md:block',
           isCollapsed ? 'w-[60px]' : 'w-[260px]'
@@ -479,10 +479,10 @@ const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({ isOpen, onClose }
         role="dialog"
         aria-modal="true"
         aria-label="Command palette"
-        className="fixed top-[20%] left-1/2 -translate-x-1/2 w-full max-w-lg bg-white rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150"
+        className="fixed top-[20%] left-1/2 -translate-x-1/2 w-full max-w-lg bg-white rounded-xl shadow-lg overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150"
       >
         {/* Search input */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-zinc-100">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-zinc-200">
           <Search className="w-5 h-5 text-zinc-400" />
           <input
             type="text"

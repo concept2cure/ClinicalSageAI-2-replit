@@ -7,6 +7,7 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { SEVERITY } from '@/concept2cure/components/ui/enterprise';
 import {
   Search,
   Filter,
@@ -84,17 +85,17 @@ const THERAPEUTIC_AREAS = [
 ];
 
 const IMPACT_STRIPE_COLORS: Record<ImpactLevel, string> = {
-  critical: 'bg-red-500',
-  high: 'bg-amber-500',
-  medium: 'bg-blue-500',
-  low: 'bg-zinc-400',
+  critical: SEVERITY.critical.dot,
+  high: SEVERITY.high.dot,
+  medium: SEVERITY.medium.dot,
+  low: SEVERITY.low.dot,
 };
 
 const IMPACT_BADGE_STYLES: Record<ImpactLevel, string> = {
-  critical: 'bg-red-50 text-red-700 ring-red-200',
-  high: 'bg-amber-50 text-amber-700 ring-amber-200',
-  medium: 'bg-blue-50 text-blue-700 ring-blue-200',
-  low: 'bg-zinc-50 text-zinc-600 ring-zinc-200',
+  critical: `${SEVERITY.critical.bg} ${SEVERITY.critical.text} ring-red-200`,
+  high: `${SEVERITY.high.bg} ${SEVERITY.high.text} ring-amber-200`,
+  medium: `${SEVERITY.medium.bg} ${SEVERITY.medium.text} ring-blue-200`,
+  low: `${SEVERITY.low.bg} ${SEVERITY.low.text} ring-zinc-200`,
 };
 
 const AGENCY_BADGE_STYLES: Record<Agency, string> = {
@@ -142,7 +143,7 @@ function formatDate(isoDate: string): string {
 /** Skeleton placeholder for loading states */
 function SkeletonCard() {
   return (
-    <div className="bg-white rounded-xl border border-zinc-100 p-5 animate-pulse">
+    <div className="bg-white rounded-xl border border-zinc-200 p-5 animate-pulse">
       <div className="flex gap-4">
         <div className="w-1 rounded-full bg-zinc-200 shrink-0" />
         <div className="flex-1 space-y-3">
@@ -167,7 +168,7 @@ function SkeletonCard() {
 
 function SkeletonMetric() {
   return (
-    <div className="bg-white rounded-xl border border-zinc-100 p-4 animate-pulse">
+    <div className="bg-white rounded-xl border border-zinc-200 p-4 animate-pulse">
       <div className="h-4 w-20 rounded bg-zinc-200 mb-2" />
       <div className="h-7 w-12 rounded bg-zinc-200" />
     </div>
@@ -187,7 +188,7 @@ function MetricCard({
   accentColor: string;
 }) {
   return (
-    <div className="bg-white rounded-xl border border-zinc-100 p-4 flex items-center gap-3 min-w-0">
+    <div className="bg-white rounded-xl border border-zinc-200 p-4 flex items-center gap-3 min-w-0">
       <div className={`p-2 rounded-lg ${accentColor}`}>
         <Icon size={18} />
       </div>
@@ -213,7 +214,7 @@ function FeedCard({
     <button
       type="button"
       onClick={() => onClick(item)}
-      className="w-full text-left bg-white rounded-xl border border-zinc-100 hover:border-zinc-200 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+      className="w-full text-left bg-white rounded-xl border border-zinc-200 hover:border-zinc-200 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/20"
     >
       <div className="flex">
         {/* Impact color stripe */}
@@ -226,12 +227,12 @@ function FeedCard({
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <div className="flex items-center gap-2">
               <span
-                className={`inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded-full ${AGENCY_BADGE_STYLES[item.agency]}`}
+                className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full ${AGENCY_BADGE_STYLES[item.agency]}`}
               >
                 {item.agency}
               </span>
               <span
-                className={`inline-flex items-center text-[11px] font-medium px-2 py-0.5 rounded-full ring-1 ring-inset ${IMPACT_BADGE_STYLES[item.impactLevel]}`}
+                className={`inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-full ring-1 ring-inset ${IMPACT_BADGE_STYLES[item.impactLevel]}`}
               >
                 {item.impactLevel.charAt(0).toUpperCase() + item.impactLevel.slice(1)}
               </span>
@@ -259,7 +260,7 @@ function FeedCard({
               {item.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-zinc-50 text-zinc-500 border border-zinc-100"
+                  className="text-xs font-medium px-2 py-0.5 rounded-full bg-zinc-50 text-zinc-500 border border-zinc-200"
                 >
                   {tag}
                 </span>
@@ -276,7 +277,7 @@ function FeedCard({
                 // Navigate to change impact analysis (stub)
                 console.log('[RegulatoryIntelligenceFeed] Analyze impact:', item.id);
               }}
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors duration-150"
             >
               <TrendingUp size={13} />
               Analyze Impact
@@ -322,10 +323,10 @@ function WatchlistItem({ item }: { item: IntelligenceItem }) {
       <div className="flex items-start gap-2">
         <Bookmark size={13} className="text-violet-500 mt-0.5 shrink-0" fill="currentColor" />
         <div className="min-w-0">
-          <p className="text-xs font-medium text-zinc-800 line-clamp-2 leading-snug">
+          <p className="text-xs font-medium text-zinc-900 line-clamp-2 leading-snug">
             {item.title}
           </p>
-          <p className="text-[11px] text-zinc-400 mt-1">
+          <p className="text-xs text-zinc-400 mt-1">
             {item.agency} &middot; {relativeTime(item.date)}
           </p>
         </div>
@@ -340,17 +341,17 @@ function PDUFAItem({ pdufa }: { pdufa: PDUFADate }) {
     <div className="py-3 border-b border-zinc-50 last:border-0">
       <div className="flex items-start gap-3">
         <div className="w-10 text-center shrink-0">
-          <p className="text-[11px] font-semibold text-blue-600 uppercase">
+          <p className="text-xs font-semibold text-blue-600 uppercase">
             {new Date(pdufa.date).toLocaleDateString('en-US', { month: 'short' })}
           </p>
-          <p className="text-lg font-bold text-zinc-800 leading-tight">
+          <p className="text-lg font-semibold text-zinc-900 leading-tight">
             {new Date(pdufa.date).getDate()}
           </p>
         </div>
         <div className="min-w-0">
-          <p className="text-xs font-semibold text-zinc-800">{pdufa.drug}</p>
-          <p className="text-[11px] text-zinc-500">{pdufa.sponsor}</p>
-          <p className="text-[11px] text-zinc-400 mt-0.5 line-clamp-1">{pdufa.indication}</p>
+          <p className="text-xs font-semibold text-zinc-900">{pdufa.drug}</p>
+          <p className="text-xs text-zinc-500">{pdufa.sponsor}</p>
+          <p className="text-xs text-zinc-400 mt-0.5 line-clamp-1">{pdufa.indication}</p>
         </div>
       </div>
     </div>
@@ -374,7 +375,7 @@ function SelectDropdown({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="appearance-none text-sm bg-white border border-zinc-200 rounded-lg px-3 py-2 pr-8 text-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-colors cursor-pointer"
+        className="appearance-none text-sm bg-white border border-zinc-200 rounded-lg px-3 py-2 pr-8 text-zinc-700 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/20 focus:border-blue-400 transition-colors cursor-pointer"
       >
         <option value="">{label}</option>
         {options.map((opt) => (
@@ -677,6 +678,7 @@ const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({
     <div className="min-h-screen" style={{ backgroundColor: '#FAFAF9' }}>
       {/* ===================== HEADER ===================== */}
       <header className="sticky top-0 z-30 border-b border-zinc-100 bg-[#faf9f5]/80 backdrop-blur-md">
+      <header className="sticky top-0 z-30 border-b border-zinc-200 bg-[#FAFAF9]/80 backdrop-blur-md">
         <div className="max-w-[1440px] mx-auto px-6 py-4">
           {/* Title row */}
           <div className="flex items-center justify-between mb-4">
@@ -684,7 +686,7 @@ const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({
               <h1 className="text-xl font-semibold text-zinc-900 tracking-tight">
                 Regulatory Intelligence
               </h1>
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700">
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700">
                 <Radio size={11} className="animate-pulse" />
                 Live
               </span>
@@ -692,7 +694,7 @@ const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({
 
             <button
               type="button"
-              className="relative p-2 rounded-lg text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 transition-colors"
+              className="relative p-2 rounded-lg text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 transition-colors duration-150"
               aria-label="Notifications"
             >
               <Bell size={18} />
@@ -713,7 +715,7 @@ const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search guidance, alerts, approvals..."
-                className="w-full text-sm bg-white border border-zinc-200 rounded-lg pl-9 pr-3 py-2 text-zinc-800 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-colors"
+                className="w-full text-sm bg-white border border-zinc-200 rounded-lg pl-9 pr-3 py-2 text-zinc-900 placeholder:text-zinc-400 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/20 focus:border-blue-400 transition-colors duration-150"
               />
             </div>
 
@@ -789,7 +791,7 @@ const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({
             {loading ? (
               Array.from({ length: 5 }).map((_, i) => <SkeletonCard key={i} />)
             ) : error ? (
-              <div className="bg-white rounded-xl border border-zinc-100 p-10 text-center">
+              <div className="bg-white rounded-xl border border-zinc-200 p-10 text-center">
                 <AlertTriangle size={28} className="mx-auto text-amber-400 mb-3" />
                 <p className="text-sm text-zinc-600 mb-1 font-medium">
                   Unable to load intelligence feed
@@ -804,8 +806,8 @@ const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({
                 </button>
               </div>
             ) : filteredItems.length === 0 ? (
-              <div className="bg-white rounded-xl border border-zinc-100 p-10 text-center">
-                <Search size={28} className="mx-auto text-zinc-300 mb-3" />
+              <div className="bg-white rounded-xl border border-zinc-200 p-10 text-center">
+                <Search size={28} className="mx-auto text-zinc-400 mb-3" />
                 <p className="text-sm text-zinc-600 font-medium mb-1">
                   No items match your filters
                 </p>
@@ -828,10 +830,10 @@ const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({
           {/* Right sidebar (desktop only) */}
           <aside className="hidden lg:block w-72 xl:w-80 shrink-0 space-y-5">
             {/* Watchlist */}
-            <div className="bg-white rounded-xl border border-zinc-100 p-4">
+            <div className="bg-white rounded-xl border border-zinc-200 p-4">
               <div className="flex items-center gap-2 mb-3">
                 <Bookmark size={14} className="text-violet-500" />
-                <h2 className="text-sm font-semibold text-zinc-800">Your Watchlist</h2>
+                <h2 className="text-sm font-semibold text-zinc-900">Your Watchlist</h2>
               </div>
 
               {loading ? (
@@ -858,10 +860,10 @@ const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({
             </div>
 
             {/* PDUFA Dates */}
-            <div className="bg-white rounded-xl border border-zinc-100 p-4">
+            <div className="bg-white rounded-xl border border-zinc-200 p-4">
               <div className="flex items-center gap-2 mb-3">
                 <Clock size={14} className="text-blue-600" />
-                <h2 className="text-sm font-semibold text-zinc-800">
+                <h2 className="text-sm font-semibold text-zinc-900">
                   Upcoming PDUFA Dates
                 </h2>
               </div>
@@ -893,7 +895,7 @@ const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({
             </div>
 
             {/* AI Insight CTA */}
-            <div className="bg-gradient-to-br from-violet-50 to-blue-50 rounded-xl border border-violet-100/60 p-4">
+            <div className="bg-zinc-50 rounded-xl border border-violet-100/60 p-4">
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-6 h-6 rounded-lg bg-violet-100 flex items-center justify-center">
                   <TrendingUp size={13} className="text-violet-600" />
@@ -911,7 +913,7 @@ const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({
                 onClick={() =>
                   console.log('[RegulatoryIntelligenceFeed] AI Insights CTA clicked')
                 }
-                className="w-full text-xs font-semibold text-white bg-violet-600 hover:bg-violet-700 rounded-lg px-3 py-2 transition-colors"
+                className="w-full text-xs font-semibold text-white bg-violet-600 hover:bg-violet-700 rounded-lg px-3 py-2 transition-colors duration-150"
               >
                 Generate Insights Report
               </button>

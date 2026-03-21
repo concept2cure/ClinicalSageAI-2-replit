@@ -5,7 +5,7 @@
  *
  * @description
  * The brain behind personalized AI interactions. Loads comprehensive user
- * context for Lumen Cortex so the AI knows:
+ * context for AnA RI so the AI knows:
  * - Who the user is (name, title, department, expertise)
  * - What they're working on right now
  * - What they last worked on

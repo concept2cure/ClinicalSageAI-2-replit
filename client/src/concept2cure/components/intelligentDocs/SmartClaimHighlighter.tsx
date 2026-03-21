@@ -93,7 +93,7 @@ export const ClaimIndicator: React.FC<{
       <button
         onClick={onClick}
         title={config.tooltip}
-        className={`inline-flex items-center justify-center w-4 h-4 ml-0.5 rounded-full text-white text-[10px] font-bold ${config.color} hover:opacity-90 transition-opacity shadow-sm`}
+        className={`inline-flex items-center justify-center w-4 h-4 ml-0.5 rounded-full text-white text-xs font-semibold ${config.color} hover:opacity-90 transition-opacity shadow-sm`}
         data-testid={`button-claim-indicator-${claim.id}`}
       >
         {config.label}
@@ -226,7 +226,7 @@ export const ClaimTooltip: React.FC<{
       ) : (
         <button
           onClick={onLinkClick}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors duration-150"
           data-testid={`button-claim-link-source-${claim.id}`}
         >
           Link Source

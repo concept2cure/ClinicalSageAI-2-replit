@@ -282,13 +282,13 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
                     <p className="text-xs text-zinc-500 mt-1">{q.context}</p>
                   )}
                   <div className="flex items-center gap-2 mt-2">
-                    <Badge variant="outline" className={cn('text-[10px]', categoryInfo?.color)}>
+                    <Badge variant="outline" className={cn('text-xs', categoryInfo?.color)}>
                       {categoryInfo?.label}
                     </Badge>
                     <Badge
                       variant="outline"
                       className={cn(
-                        'text-[10px]',
+                        'text-xs',
                         q.priority === 'high' && 'bg-red-50 text-red-700',
                         q.priority === 'medium' && 'bg-amber-50 text-amber-700',
                         q.priority === 'low' && 'bg-zinc-50 text-zinc-700'
@@ -300,7 +300,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
                 </div>
                 <button
                   onClick={() => onRemove(q.id)}
-                  className="opacity-0 group-hover:opacity-100 p-1 rounded text-zinc-400 hover:text-red-600 transition-all"
+                  className="opacity-0 group-hover:opacity-100 p-1 rounded text-zinc-400 hover:text-red-600 transition-all duration-150"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -311,7 +311,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({
 
         {questions.length === 0 && (
           <div className="text-center py-6 text-sm text-zinc-500">
-            <MessageSquare className="h-8 w-8 mx-auto mb-2 text-zinc-300" />
+            <MessageSquare className="h-8 w-8 mx-auto mb-2 text-zinc-400" />
             <p>No questions added yet.</p>
             <p className="text-xs mt-1">Add specific questions you want FDA feedback on.</p>
           </div>
@@ -367,7 +367,7 @@ const SectionChecklist: React.FC<SectionChecklistProps> = ({
           <div
             key={section.id}
             className={cn(
-              'p-3 rounded-lg border transition-colors',
+              'p-3 rounded-lg border transition-colors duration-150',
               section.status === 'complete' && 'bg-green-50 border-green-200',
               section.status === 'in-progress' && 'bg-blue-50 border-blue-200',
               section.status === 'not-started' && 'bg-white border-zinc-200',
@@ -397,7 +397,7 @@ const SectionChecklist: React.FC<SectionChecklistProps> = ({
                     {section.title}
                   </span>
                   {section.required && (
-                    <Badge variant="outline" className="text-[10px] text-red-600 border-red-200">
+                    <Badge variant="outline" className="text-xs text-red-600 border-red-200">
                       Required
                     </Badge>
                   )}
@@ -666,7 +666,7 @@ export const PreSubPackageGenerator: React.FC<PreSubPackageGeneratorProps> = ({
             {/* Generate Tab */}
             <TabsContent value="generate" className="space-y-4 m-0">
               <div className="border border-zinc-200 rounded-md">
-                <div className="px-4 py-3 border-b border-zinc-100">
+                <div className="px-4 py-3 border-b border-zinc-200">
                   <h3 className="text-lg font-semibold">Package Summary</h3>
                   <p className="text-sm text-muted-foreground">
                     Review your pre-submission package before generating

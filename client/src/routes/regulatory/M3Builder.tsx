@@ -90,7 +90,7 @@ export default function M3Builder({ subId }: { subId: string }) {
     }
   };
 
-  const getStatusVariant = (status: string) => {
+  const getStatusVariant = (status: string): 'default' | 'secondary' | 'destructive' | 'outline' => {
     switch (status) {
       case 'READY':
         return 'default';
@@ -137,7 +137,7 @@ export default function M3Builder({ subId }: { subId: string }) {
                       <p className="text-sm text-gray-600 mt-1">{s.guidance || '—'}</p>
                     </div>
                   </div>
-                  <Badge variant={getStatusVariant(s.status) as any}>{s.status}</Badge>
+                  <Badge variant={getStatusVariant(s.status)}>{s.status}</Badge>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex flex-wrap gap-2">

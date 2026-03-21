@@ -160,7 +160,7 @@ const PreconditionSummary: React.FC<{
     <button
       onClick={onClick}
       className={cn(
-        "flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-colors",
+        "flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-colors duration-150",
         allPassed && "bg-green-100 text-green-700 hover:bg-green-200",
         hasFailed && "bg-red-100 text-red-700 hover:bg-red-200",
         !allPassed && !hasFailed && "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"

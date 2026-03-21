@@ -45,13 +45,13 @@ const StatPill: React.FC<StatPillProps> = ({ icon: Icon, label, value, color = '
   <div
     className={cn(
       'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border',
-      'bg-white border-zinc-200 text-zinc-600 hover:border-zinc-300 transition-colors',
+      'bg-white border-zinc-200 text-zinc-600 hover:border-zinc-300 transition-colors duration-150',
       pulse && 'animate-pulse'
     )}
     title={label}
   >
     <Icon className={cn('w-3.5 h-3.5', ICON_COLOR_MAP[color] || 'text-zinc-500')} />
-    <span className="text-zinc-800 font-semibold tabular-nums">{value}</span>
+    <span className="text-zinc-900 font-semibold tabular-nums">{value}</span>
     <span className="text-zinc-400 hidden sm:inline">{label}</span>
   </div>
 );
@@ -65,7 +65,7 @@ export const WorkspaceReadinessStrip: React.FC<Props> = ({
   if (isLoading) {
     return (
       <div className={cn('flex items-center gap-2 py-2 px-1', className)}>
-        <Loader2 className="w-3.5 h-3.5 text-zinc-300 animate-spin" />
+        <Loader2 className="w-3.5 h-3.5 text-zinc-400 animate-spin" />
         <span className="text-xs text-zinc-400">Loading workspace…</span>
       </div>
     );

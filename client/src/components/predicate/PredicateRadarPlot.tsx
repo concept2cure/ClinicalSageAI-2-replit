@@ -115,7 +115,7 @@ export function PredicateRadarPlot({
           Click a dot to select a predicate. The
           <Badge
             variant="outline"
-            className="mx-1 text-[9px] bg-green-50 text-green-700 border-green-200"
+            className="mx-1 text-[11px] bg-green-50 text-green-700 border-green-200"
           >
             sweet spot
           </Badge>
@@ -274,7 +274,7 @@ export function PredicateRadarPlot({
                       <span>Tox: {(pt.candidate.toxicity_score ?? 0).toFixed(3)}</span>
                     </div>
                     {pt.candidate.recommended && (
-                      <Badge variant="default" className="text-[9px]">
+                      <Badge variant="default" className="text-[11px]">
                         Recommended
                       </Badge>
                     )}

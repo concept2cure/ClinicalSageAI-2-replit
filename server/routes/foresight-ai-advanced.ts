@@ -1,5 +1,5 @@
 /**
- * ForesightAI™ Advanced API Routes
+ * AnA Predictions™ Advanced API Routes
  * Production endpoints for pharmaceutical companies using cutting-edge AI
  */
 
@@ -580,7 +580,7 @@ router.get('/cross-species/analyses', async (req, res) => {
 
 /**
  * CSR Ingestion Endpoint
- * Process CSR and extract insights for ForesightAI
+ * Process CSR and extract insights for AnA Predictions
  */
 const CSRIngestSchema = z.object({
   csrId: z.string(),
@@ -593,7 +593,7 @@ router.post('/csr/ingest', async (req, res) => {
     const { csrForesightOrchestrator } = await import('../services/csr-foresight-orchestrator');
     const params = CSRIngestSchema.parse(req.body);
     
-    console.log('[ForesightAI] Processing CSR ingestion:', params);
+    console.log('[AnA Predictions] Processing CSR ingestion:', params);
     
     const result = await csrForesightOrchestrator.ingestCSR(
       params.csrId,
@@ -602,7 +602,7 @@ router.post('/csr/ingest', async (req, res) => {
     
     res.json({
       success: true,
-      message: 'CSR successfully ingested and integrated with ForesightAI',
+      message: 'CSR successfully ingested and integrated with AnA Predictions',
       data: result
     });
   } catch (error) {

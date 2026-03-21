@@ -112,7 +112,7 @@ import predictiveSectionsRoutes from './routes/predictive-sections';
 // Import enterprise routes
 import enterpriseRoutes from './api/enterprise/routes.js';
 
-// Import ForesightAI routes
+// Import AnA Predictions routes
 import foresightApiRoutes from './routes/foresight-api';
 import foresightAIAdvancedRoutes from './routes/foresight-ai-advanced';
 import foresightFeedbackRoutes from './routes/foresight-feedback';
@@ -878,13 +878,13 @@ try {
   console.error('❌ Failed to mount AI Assistance routes:', error);
 }
 
-// Mount Lumen Cortex dedicated routes (10-K harvesting, observation terms)
+// Mount AnA RI dedicated routes (10-K harvesting, observation terms)
 try {
   const lumenCortexRoutes = await import('./routes/lumen-cortex');
   app.use('/api/lumen-cortex', lumenCortexRoutes.default);
-  console.log('✅ Lumen Cortex dedicated routes mounted (health, 10K harvest, observation terms)');
+  console.log('✅ AnA RI dedicated routes mounted (health, 10K harvest, observation terms)');
 } catch (error) {
-  console.error('❌ Failed to mount Lumen Cortex routes:', error);
+  console.error('❌ Failed to mount AnA RI routes:', error);
 }
 
 // Mount Nano Banana (Gemini image generation) routes
@@ -912,7 +912,7 @@ try {
   console.error('❌ Failed to mount PM Settings routes:', error);
 }
 
-// Mount Lumen Cortex (formerly ForesightAI) routes
+// Mount AnA RI (formerly ForesightAI) routes
 // Legacy routes maintained for backward compatibility
 try {
   // Shared deprecation middleware for all Foresight/Lumen legacy routes
@@ -935,15 +935,15 @@ try {
     },
     foresightFeedbackRoutes
   );
-  // New Lumen Cortex aliases
+  // New AnA RI aliases
   app.use('/api/lumen', foresightDeprecation, foresightApiRoutes);
   app.use('/api/lumen-ai', foresightDeprecation, foresightAIAdvancedRoutes);
-  console.log('✅ Lumen Cortex™ Intelligence API routes mounted (+ legacy /foresight aliases)');
+  console.log('✅ AnA RI Intelligence API routes mounted (+ legacy /foresight aliases)');
 } catch (error) {
-  console.error('Failed to mount Lumen Cortex routes:', error);
+  console.error('Failed to mount AnA RI routes:', error);
 }
 
-// Mount Lumen Cortex RAG routes (formerly ForesightAI RAG)
+// Mount AnA RI RAG routes (formerly ForesightAI RAG)
 try {
   const foresightRagRoutes = await import('./routes/foresight-rag-api.js');
   const foresightRagDeprecation = (req: Request, res: Response, next: () => void) => {
@@ -954,9 +954,9 @@ try {
   };
   app.use('/api/foresight/rag', foresightRagDeprecation, foresightRagRoutes.default);
   app.use('/api/lumen/rag', foresightRagDeprecation, foresightRagRoutes.default); // New alias
-  console.log('✅ Lumen Cortex RAG API routes mounted successfully');
+  console.log('✅ AnA RI RAG API routes mounted successfully');
 } catch (error) {
-  console.error('Failed to mount Lumen Cortex RAG routes:', error);
+  console.error('Failed to mount AnA RI RAG routes:', error);
 }
 
 // Mount Biotech AI Intelligence RAG routes
@@ -1295,6 +1295,16 @@ try {
   console.error('❌ Failed to mount CERV2 document routes:', error);
 }
 
+// Mount Document Comment CRUD routes
+try {
+  const commentModule = await import('./routes/comment-routes');
+  const commentRoutes = commentModule.default;
+  app.use('/api/comments', commentRoutes);
+  console.log('✅ Document comment CRUD routes mounted successfully');
+} catch (error) {
+  console.error('❌ Failed to mount comment routes:', error);
+}
+
 // Mount PubMed Literature Search routes (PRODUCTION with real NCBI API)
 try {
   const pubmedModule = await import('./routes/pubmed');
@@ -1348,14 +1358,14 @@ try {
   console.error('❌ Failed to mount Billing routes:', error);
 }
 
-// Mount Deep Research routes (connectors, orchestrator, usage metering)
+// Mount AnA Research routes (connectors, orchestrator, usage metering)
 try {
   const deepResearchModule = await import('./routes/deep-research.js');
   const deepResearchRouter = deepResearchModule.default;
   app.use('/api/deep-research', deepResearchRouter);
-  console.log('✅ Deep Research API routes mounted (connectors, jobs, usage)');
+  console.log('✅ AnA Research API routes mounted (connectors, jobs, usage)');
 } catch (error) {
-  console.error('❌ Failed to mount Deep Research routes:', error);
+  console.error('❌ Failed to mount AnA Research routes:', error);
 }
 
 // Mount Intelligent Report Engine routes (immutable reports, provenance, sealing)
@@ -3326,10 +3336,10 @@ try {
   console.error('❌ Failed to mount Ana Platform Control routes:', error);
 }
 
-// Mount Lumen Cortex Chat routes
+// Mount AnA RI Chat routes
 import chatRoutes from './routes/chat';
 app.use('/api/chat', chatRoutes);
-console.log('✅ Lumen Cortex Chat API routes mounted successfully');
+console.log('✅ AnA RI Chat API routes mounted successfully');
 
 // Mount AI Claims → Binder provenance route
 try {
@@ -3354,6 +3364,11 @@ try {
 import concept2cureRoutes from './routes/concept2cure';
 app.use('/api/concept2cure', concept2cureRoutes);
 console.log('✅ Concept2Cure API routes mounted successfully');
+
+// Mount Phase 3 Orchestration Engine routes
+import orchestrationRoutes from './routes/orchestration';
+app.use('/api/orchestration', orchestrationRoutes);
+console.log('✅ Orchestration Engine API routes mounted successfully');
 
 // Mount Client Intelligence Memory routes
 import clientIntelligenceRoutes from './routes/client-intelligence';
@@ -6158,6 +6173,21 @@ async function startServer() {
     console.error('⚠️ Auth schema bootstrap warning:', error.message);
   }
 
+  // Initialize Firebase Projection Publisher (Phase 3 real-time events)
+  try {
+    const { getFirestoreAdmin } = await import('./services/firebase-admin.js');
+    const { initFirebasePublisher } = await import('./services/firebase-projection.js');
+    const firestoreDb = await getFirestoreAdmin();
+    const publisher = initFirebasePublisher(firestoreDb);
+    if (firestoreDb) {
+      console.log('✅ Firebase projection publisher initialized');
+    } else {
+      console.log('⚠️ Firebase projection publisher disabled (no credentials configured)');
+    }
+  } catch (error: any) {
+    console.error('⚠️ Firebase projection publisher initialization warning:', error.message);
+  }
+
   // Start Python backend first
   debugLog('Initializing Python backend...');
   await startPythonBackend();
@@ -6604,9 +6634,9 @@ async function startServer() {
   try {
     const lumenCortexFtRoutes = await import('./routes/lumen-cortex-ft');
     app.use('/api/lumen-cortex-ft', lumenCortexFtRoutes.default);
-    console.log('✅ Lumen Cortex Fine-Tuning routes mounted at /api/lumen-cortex-ft');
+    console.log('✅ AnA RI Fine-Tuning routes mounted at /api/lumen-cortex-ft');
   } catch (error) {
-    console.error('❌ Failed to mount Lumen Cortex FT routes:', error);
+    console.error('❌ Failed to mount AnA RI FT routes:', error);
   }
 
   try {
@@ -6638,7 +6668,7 @@ async function startServer() {
   try {
     const agentSwarmRoutes = await import('./routes/agent-swarm');
     app.use('/api/agent-swarm', agentSwarmRoutes.default);
-    console.log('✅ Agent Swarm routes mounted at /api/agent-swarm');
+    console.log('✅ AnA Agents routes mounted at /api/agent-swarm');
   } catch (error) {
     console.error('❌ Failed to mount agent swarm routes:', error);
   }
@@ -6680,7 +6710,7 @@ async function startServer() {
 
     const snowglobeRoutes = await import('./routes/snowglobe');
     app.use('/api/snowglobe', snowglobeRoutes.default);
-    console.log('✅ Snow Globe routes mounted at /api/snowglobe');
+    console.log('✅ AnA Predictions routes mounted at /api/snowglobe');
   } catch (error) {
     console.error('❌ Failed to mount Mission Control routes:', error);
   }

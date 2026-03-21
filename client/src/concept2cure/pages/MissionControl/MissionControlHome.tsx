@@ -12,6 +12,7 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
 import { cn } from '@/lib/utils';
+import { LIFECYCLE, toLifecycleStage } from '../../components/ui/enterprise';
 import {
   Target,
   Compass,
@@ -117,11 +118,11 @@ function ReadinessRadar({ readiness, className }: { readiness: Record<string, nu
                   strokeDasharray={`${value}, 100`}
                 />
               </svg>
-              <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-zinc-700">
+              <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold text-zinc-700">
                 {value}
               </span>
             </div>
-            <p className="text-[10px] font-medium text-zinc-500 leading-tight">{axis.label}</p>
+            <p className="text-xs font-medium text-zinc-500 leading-tight">{axis.label}</p>
           </div>
         );
       })}
@@ -164,7 +165,7 @@ function CreateProgramPanel({ onCreated }: { onCreated: (id: number) => void }) 
           <input
             value={name}
             onChange={e => setName(e.target.value)}
-            className="w-full px-3 py-2 border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400"
+            className="w-full px-3 py-2 border border-zinc-200 rounded-lg text-sm focus-visible:ring-2 outline-none focus:ring-violet-500/20 focus:border-violet-400"
             placeholder="e.g., NeuroCure IND Program"
           />
         </div>
@@ -197,7 +198,7 @@ function CreateProgramPanel({ onCreated }: { onCreated: (id: number) => void }) 
           <select
             value={destType}
             onChange={e => setDestType(e.target.value)}
-            className="w-full px-3 py-2 border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+            className="w-full px-3 py-2 border border-zinc-200 rounded-lg text-sm focus-visible:ring-2 outline-none focus:ring-violet-500/20"
           >
             <option value="IND">IND (Investigational New Drug)</option>
             <option value="NDA">NDA (New Drug Application)</option>
@@ -215,7 +216,7 @@ function CreateProgramPanel({ onCreated }: { onCreated: (id: number) => void }) 
           <input
             value={indication}
             onChange={e => setIndication(e.target.value)}
-            className="w-full px-3 py-2 border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+            className="w-full px-3 py-2 border border-zinc-200 rounded-lg text-sm focus-visible:ring-2 outline-none focus:ring-violet-500/20"
             placeholder="e.g., Treatment of major depressive disorder"
           />
         </div>
@@ -223,7 +224,7 @@ function CreateProgramPanel({ onCreated }: { onCreated: (id: number) => void }) 
         <button
           onClick={handleCreate}
           disabled={!name.trim() || createProgram.isPending || scaffold.isPending}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-zinc-900 text-white rounded-lg text-sm font-medium hover:bg-zinc-800 disabled:opacity-50 transition-colors"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-zinc-900 text-white rounded-lg text-sm font-medium hover:bg-zinc-800 disabled:opacity-60 transition-colors duration-150"
         >
           {(createProgram.isPending || scaffold.isPending) ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -308,7 +309,7 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
           <select
             value={activeProgramId || ''}
             onChange={e => setSelectedProgramId(parseInt(e.target.value))}
-            className="text-sm font-semibold text-zinc-900 bg-transparent border-none focus:outline-none cursor-pointer"
+            className="text-sm font-semibold text-zinc-900 bg-transparent border-none outline-none cursor-pointer"
           >
             {programs.map((p: any) => (
               <option key={p.id} value={p.id}>{p.name}</option>
@@ -359,7 +360,7 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
             {/* Destination + Route */}
             <div className="bg-white rounded-xl border p-5">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-sm font-semibold text-zinc-800 flex items-center gap-2">
+                <h2 className="text-sm font-semibold text-zinc-900 flex items-center gap-2">
                   <Compass className="w-4 h-4 text-violet-500" />
                   Destination & Route
                 </h2>
@@ -372,10 +373,10 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
               {destinations.length > 0 ? (
                 <div className="grid grid-cols-3 gap-4">
                   {destinations.map((d: any) => (
-                    <div key={d.id} className="p-3 rounded-lg bg-zinc-50 border border-zinc-100">
+                    <div key={d.id} className="p-3 rounded-lg bg-zinc-50 border border-zinc-200">
                       <div className="flex items-center gap-2 mb-1">
                         <Globe className="w-3.5 h-3.5 text-blue-500" />
-                        <span className="text-sm font-medium text-zinc-800">{d.name}</span>
+                        <span className="text-sm font-medium text-zinc-900">{d.name}</span>
                       </div>
                       <p className="text-xs text-zinc-500">{d.destinationType} • {d.region}</p>
                       <div className={cn(
@@ -410,7 +411,7 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
                         b.severity === 'critical' ? 'text-red-500' : 'text-amber-500'
                       )} />
                       <div>
-                        <p className="text-sm font-medium text-zinc-800">{b.message}</p>
+                        <p className="text-sm font-medium text-zinc-900">{b.message}</p>
                         <p className="text-xs text-zinc-500 mt-0.5">Type: {b.type}</p>
                       </div>
                     </div>
@@ -421,7 +422,7 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
 
             {/* Next-Best Actions */}
             <div className="bg-white rounded-xl border p-5">
-              <h2 className="text-sm font-semibold text-zinc-800 flex items-center gap-2 mb-3">
+              <h2 className="text-sm font-semibold text-zinc-900 flex items-center gap-2 mb-3">
                 <Zap className="w-4 h-4 text-amber-500" />
                 Next-Best Actions
               </h2>
@@ -430,13 +431,13 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
                   {nextActions.map((a: any, i: number) => (
                     <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-zinc-50 hover:bg-zinc-100 transition-colors cursor-pointer">
                       <div className={cn(
-                        'w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white',
+                        'w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold text-white',
                         a.priority === 'critical' ? 'bg-red-500' : a.priority === 'high' ? 'bg-amber-500' : 'bg-blue-500'
                       )}>
                         {i + 1}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-zinc-800">{a.action}: {a.target}</p>
+                        <p className="text-sm font-medium text-zinc-900">{a.action}: {a.target}</p>
                         <p className="text-xs text-zinc-500">{a.reason}</p>
                       </div>
                       <ArrowRight className="w-4 h-4 text-zinc-400" />
@@ -451,34 +452,34 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
             {/* Artifacts in Motion */}
             <div className="bg-white rounded-xl border p-5">
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-semibold text-zinc-800 flex items-center gap-2">
+                <h2 className="text-sm font-semibold text-zinc-900 flex items-center gap-2">
                   <FileText className="w-4 h-4 text-blue-500" />
                   Artifacts in Motion
                 </h2>
                 <span className="text-xs text-zinc-500">{inMotion.length} active</span>
               </div>
 
-              {/* Lifecycle bar */}
+              {/* Lifecycle bar — canonical colors */}
               <div className="flex items-center gap-1 h-2 mb-4 rounded-full overflow-hidden bg-zinc-100">
                 {lifecycleCounts['approved'] && (
-                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${(lifecycleCounts['approved'] / (artifacts.length || 1)) * 100}%` }} />
+                  <div className={cn('h-full rounded-full', LIFECYCLE.approved.dot)} style={{ width: `${(lifecycleCounts['approved'] / (artifacts.length || 1)) * 100}%` }} />
                 )}
                 {lifecycleCounts['in-review'] && (
-                  <div className="h-full bg-blue-500 rounded-full" style={{ width: `${(lifecycleCounts['in-review'] / (artifacts.length || 1)) * 100}%` }} />
+                  <div className={cn('h-full rounded-full', LIFECYCLE.in_review.dot)} style={{ width: `${(lifecycleCounts['in-review'] / (artifacts.length || 1)) * 100}%` }} />
                 )}
                 {lifecycleCounts['drafting'] && (
-                  <div className="h-full bg-amber-400 rounded-full" style={{ width: `${(lifecycleCounts['drafting'] / (artifacts.length || 1)) * 100}%` }} />
+                  <div className={cn('h-full rounded-full', LIFECYCLE.draft.dot)} style={{ width: `${(lifecycleCounts['drafting'] / (artifacts.length || 1)) * 100}%` }} />
                 )}
                 {lifecycleCounts['planned'] && (
-                  <div className="h-full bg-zinc-300 rounded-full" style={{ width: `${(lifecycleCounts['planned'] / (artifacts.length || 1)) * 100}%` }} />
+                  <div className={cn('h-full rounded-full', LIFECYCLE.not_started.dot)} style={{ width: `${(lifecycleCounts['planned'] / (artifacts.length || 1)) * 100}%` }} />
                 )}
               </div>
 
               <div className="flex items-center gap-4 text-xs text-zinc-500 mb-4">
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" /> Approved ({lifecycleCounts['approved'] || 0})</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500" /> In Review ({lifecycleCounts['in-review'] || 0})</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400" /> Drafting ({lifecycleCounts['drafting'] || 0})</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-zinc-300" /> Planned ({lifecycleCounts['planned'] || 0})</span>
+                <span className="flex items-center gap-1"><span className={cn('w-2 h-2 rounded-full', LIFECYCLE.approved.dot)} /> Approved ({lifecycleCounts['approved'] || 0})</span>
+                <span className="flex items-center gap-1"><span className={cn('w-2 h-2 rounded-full', LIFECYCLE.in_review.dot)} /> In Review ({lifecycleCounts['in-review'] || 0})</span>
+                <span className="flex items-center gap-1"><span className={cn('w-2 h-2 rounded-full', LIFECYCLE.draft.dot)} /> Drafting ({lifecycleCounts['drafting'] || 0})</span>
+                <span className="flex items-center gap-1"><span className={cn('w-2 h-2 rounded-full', LIFECYCLE.not_started.dot)} /> Planned ({lifecycleCounts['planned'] || 0})</span>
               </div>
 
               {inMotion.length > 0 ? (
@@ -487,11 +488,10 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
                     <div key={a.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-zinc-50">
                       <div className={cn(
                         'w-2 h-2 rounded-full flex-shrink-0',
-                        a.lifecycleState === 'in-review' ? 'bg-blue-500' :
-                        a.lifecycleState === 'drafting' ? 'bg-amber-400' : 'bg-zinc-400'
+                        LIFECYCLE[toLifecycleStage(a.lifecycleState || 'not_started')].dot
                       )} />
                       <span className="text-xs font-mono text-zinc-500 w-12">{a.code}</span>
-                      <span className="text-sm text-zinc-800 flex-1 truncate">{a.title}</span>
+                      <span className="text-sm text-zinc-900 flex-1 truncate">{a.title}</span>
                       <span className="text-xs text-zinc-500 capitalize">{a.lifecycleState}</span>
                     </div>
                   ))}
@@ -504,7 +504,7 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
             {/* Risk Signals */}
             {risks.length > 0 && (
               <div className="bg-white rounded-xl border p-5">
-                <h2 className="text-sm font-semibold text-zinc-800 flex items-center gap-2 mb-3">
+                <h2 className="text-sm font-semibold text-zinc-900 flex items-center gap-2 mb-3">
                   <AlertTriangle className="w-4 h-4 text-amber-500" />
                   Risk Signals ({risks.filter((r: any) => r.status !== 'resolved').length} open)
                 </h2>
@@ -517,7 +517,7 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
                         r.severity === 'high' ? 'bg-amber-500' :
                         r.severity === 'medium' ? 'bg-yellow-400' : 'bg-zinc-400'
                       )} />
-                      <span className="text-sm text-zinc-800 flex-1">{r.title}</span>
+                      <span className="text-sm text-zinc-900 flex-1">{r.title}</span>
                       <span className={cn(
                         'text-xs font-medium px-2 py-0.5 rounded-full',
                         r.severity === 'critical' ? 'bg-red-100 text-red-700' :
@@ -537,15 +537,15 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
 
             {/* Readiness Radar */}
             <div className="bg-white rounded-xl border p-5">
-              <h2 className="text-sm font-semibold text-zinc-800 flex items-center gap-2 mb-4">
+              <h2 className="text-sm font-semibold text-zinc-900 flex items-center gap-2 mb-4">
                 <BarChart3 className="w-4 h-4 text-emerald-500" />
                 Readiness Profile
               </h2>
               <ReadinessRadar readiness={readiness} />
-              <div className="mt-4 pt-3 border-t border-zinc-100 text-center">
+              <div className="mt-4 pt-3 border-t border-zinc-200 text-center">
                 <p className="text-xs text-zinc-500">Overall Confidence</p>
                 <p className={cn(
-                  'text-2xl font-bold',
+                  'text-2xl font-semibold',
                   overallConfidence >= 70 ? 'text-emerald-600' :
                   overallConfidence >= 40 ? 'text-amber-600' : 'text-red-600'
                 )}>
@@ -556,7 +556,7 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
 
             {/* Summary Stats */}
             <div className="bg-white rounded-xl border p-5">
-              <h2 className="text-sm font-semibold text-zinc-800 mb-3">Program Summary</h2>
+              <h2 className="text-sm font-semibold text-zinc-900 mb-3">Program Summary</h2>
               <div className="space-y-2">
                 {[
                   { label: 'Total Artifacts', value: summary.totalArtifacts || 0, icon: FileText },
@@ -574,7 +574,7 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
                         <Icon className="w-3.5 h-3.5 text-zinc-400" />
                         {item.label}
                       </span>
-                      <span className="text-sm font-semibold text-zinc-800">{item.value}</span>
+                      <span className="text-sm font-semibold text-zinc-900">{item.value}</span>
                     </div>
                   );
                 })}
@@ -583,7 +583,7 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
 
             {/* Recent Activity (Provenance) */}
             <div className="bg-white rounded-xl border p-5">
-              <h2 className="text-sm font-semibold text-zinc-800 flex items-center gap-2 mb-3">
+              <h2 className="text-sm font-semibold text-zinc-900 flex items-center gap-2 mb-3">
                 <Activity className="w-4 h-4 text-blue-500" />
                 Recent Activity
               </h2>
@@ -594,7 +594,7 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
                       <div className="w-1.5 h-1.5 rounded-full bg-zinc-300 mt-1.5 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
                         <p className="text-xs text-zinc-700 truncate">{p.changeDescription}</p>
-                        <p className="text-[10px] text-zinc-400">
+                        <p className="text-xs text-zinc-400">
                           {new Date(p.createdAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
@@ -668,8 +668,8 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
                   <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center', `bg-${item.color}-50`)}>
                     <Icon className={cn('w-4 h-4', `text-${item.color}-600`)} />
                   </div>
-                  <span className="text-xs font-medium text-zinc-800 leading-tight">{item.label}</span>
-                  <span className="text-[10px] text-zinc-400 leading-tight">{item.desc}</span>
+                  <span className="text-xs font-medium text-zinc-900 leading-tight">{item.label}</span>
+                  <span className="text-xs text-zinc-400 leading-tight">{item.desc}</span>
                 </button>
               );
             })}
@@ -680,25 +680,25 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
         <div className="mt-4 flex gap-2">
           <button
             onClick={() => window.dispatchEvent(new CustomEvent('mc-navigate', { detail: { mode: 'notifications' } }))}
-            className="flex-1 flex items-center gap-2 p-3 rounded-xl border border-zinc-200 bg-white hover:shadow-sm hover:border-zinc-300 transition-all"
+            className="flex-1 flex items-center gap-2 p-3 rounded-xl border border-zinc-200 bg-white hover:shadow-sm hover:border-zinc-300 transition-all duration-150"
           >
             <Bell className="w-4 h-4 text-amber-600" />
             <div className="text-left">
-              <span className="text-xs font-medium text-zinc-800">Notifications</span>
-              <span className="text-[10px] text-zinc-400 block">Alerts & action items</span>
+              <span className="text-xs font-medium text-zinc-900">Notifications</span>
+              <span className="text-xs text-zinc-400 block">Alerts & action items</span>
             </div>
-            <ChevronRight className="w-3.5 h-3.5 text-zinc-300 ml-auto" />
+            <ChevronRight className="w-3.5 h-3.5 text-zinc-400 ml-auto" />
           </button>
           <button
             onClick={() => window.dispatchEvent(new CustomEvent('mc-navigate', { detail: { mode: 'collaboration-hub' } }))}
-            className="flex-1 flex items-center gap-2 p-3 rounded-xl border border-zinc-200 bg-white hover:shadow-sm hover:border-zinc-300 transition-all"
+            className="flex-1 flex items-center gap-2 p-3 rounded-xl border border-zinc-200 bg-white hover:shadow-sm hover:border-zinc-300 transition-all duration-150"
           >
             <MessageSquare className="w-4 h-4 text-blue-600" />
             <div className="text-left">
-              <span className="text-xs font-medium text-zinc-800">Collaboration Hub</span>
-              <span className="text-[10px] text-zinc-400 block">Threads & discussions</span>
+              <span className="text-xs font-medium text-zinc-900">Collaboration Hub</span>
+              <span className="text-xs text-zinc-400 block">Threads & discussions</span>
             </div>
-            <ChevronRight className="w-3.5 h-3.5 text-zinc-300 ml-auto" />
+            <ChevronRight className="w-3.5 h-3.5 text-zinc-400 ml-auto" />
           </button>
         </div>
       </div>

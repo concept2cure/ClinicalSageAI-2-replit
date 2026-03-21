@@ -195,14 +195,14 @@ const IssueCard: React.FC<IssueCardProps> = ({ issue, onResolve }) => {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-sm font-medium">{issue.title}</span>
-              <Badge variant="outline" className="text-[10px]">
+              <Badge variant="outline" className="text-xs">
                 {CATEGORY_LABELS[issue.category]}
               </Badge>
             </div>
             <p className="text-xs text-zinc-500 mt-1">{issue.description}</p>
           </div>
           <ChevronRight
-            className={cn('h-4 w-4 text-zinc-400 transition-transform', isExpanded && 'rotate-90')}
+            className={cn('h-4 w-4 text-zinc-400 transition-transform duration-150', isExpanded && 'rotate-90')}
           />
         </div>
       </div>
@@ -304,7 +304,7 @@ const ScoreCard: React.FC<ScoreCardProps> = ({ result }) => {
       <div className="flex items-center justify-between mb-4">
         <div>
           <div className="text-sm text-zinc-500">Consistency Score</div>
-          <div className={cn('text-3xl font-bold', getScoreColor(result.overallScore))}>
+          <div className={cn('text-3xl font-semibold', getScoreColor(result.overallScore))}>
             {result.overallScore}%
           </div>
           <div className={cn('text-sm', getScoreColor(result.overallScore))}>
@@ -438,7 +438,7 @@ export const IFUConsistencyChecker: React.FC<IFUConsistencyCheckerProps> = ({
           {/* Run check button */}
           {!result && (
             <div className="text-center py-8">
-              <FileCheck className="h-12 w-12 mx-auto text-zinc-300 mb-4" />
+              <FileCheck className="h-12 w-12 mx-auto text-zinc-400 mb-4" />
               <p className="text-sm text-zinc-600 mb-4">
                 Run a consistency check to identify discrepancies between your IFU and other
                 regulatory documents.

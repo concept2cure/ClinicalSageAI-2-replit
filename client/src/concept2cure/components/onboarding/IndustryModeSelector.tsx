@@ -209,7 +209,7 @@ const IndustryStep: React.FC<{
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-zinc-900">Welcome to Concept2Cure</h2>
+        <h2 className="text-2xl font-semibold text-zinc-900">Welcome to Concept2Cure</h2>
         <p className="mt-2 text-zinc-600">
           Let's personalize your workspace. What type of organization are you?
         </p>
@@ -221,7 +221,7 @@ const IndustryStep: React.FC<{
             key={industry.id}
             onClick={() => onSelect(industry.id)}
             className={cn(
-              'p-6 rounded-xl border-2 text-left transition-all',
+              'p-5 rounded-xl border text-left transition-all duration-150',
               selected === industry.id
                 ? `${industry.bgColor} border-current ${industry.color} ring-2 ring-offset-2`
                 : 'bg-white border-zinc-200 hover:border-zinc-300 hover:shadow-md'
@@ -265,7 +265,7 @@ const RoleStep: React.FC<{
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-zinc-900">What's your primary role?</h2>
+        <h2 className="text-2xl font-semibold text-zinc-900">What's your primary role?</h2>
         <p className="mt-2 text-zinc-600">
           This helps us show you the most relevant tools and views.
         </p>
@@ -280,7 +280,7 @@ const RoleStep: React.FC<{
               key={role.id}
               onClick={() => onSelect(role.id)}
               className={cn(
-                'p-4 rounded-lg border-2 text-left transition-all flex items-start gap-4',
+                'p-4 rounded-lg border text-left transition-all flex items-start gap-4',
                 selected === role.id
                   ? 'bg-blue-50 border-blue-500 ring-2 ring-blue-200'
                   : 'bg-white border-zinc-200 hover:border-zinc-300'
@@ -297,7 +297,7 @@ const RoleStep: React.FC<{
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold text-zinc-900">{role.label}</h3>
                   {isRecommended && (
-                    <span className="px-2 py-0.5 text-[10px] font-medium bg-green-100 text-green-700 rounded-full">
+                    <span className="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded-full">
                       Recommended
                     </span>
                   )}
@@ -325,12 +325,12 @@ const ConfirmationStep: React.FC<{
   
   return (
     <div className="space-y-6 text-center">
-      <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center">
+      <div className="w-14 h-14 mx-auto rounded-lg bg-blue-600 flex items-center justify-center">
         <Sparkles className="w-10 h-10 text-white" />
       </div>
       
       <div>
-        <h2 className="text-2xl font-bold text-zinc-900">You're all set!</h2>
+        <h2 className="text-2xl font-semibold text-zinc-900">You're all set!</h2>
         <p className="mt-2 text-zinc-600">
           Your workspace is configured for optimal productivity.
         </p>
@@ -346,7 +346,7 @@ const ConfirmationStep: React.FC<{
         </div>
         
         <div className="flex items-center">
-          <ArrowRight className="w-6 h-6 text-zinc-300" />
+          <ArrowRight className="w-6 h-6 text-zinc-400" />
         </div>
         
         <div className="px-6 py-4 rounded-xl bg-blue-50">
@@ -396,7 +396,7 @@ export const IndustryModeSelector: React.FC<IndustryModeSelectorProps> = ({
   
   return (
     <div className={cn(
-      'min-h-screen bg-gradient-to-br from-zinc-50 to-zinc-100 flex items-center justify-center p-8',
+      'min-h-screen bg-zinc-50 flex items-center justify-center p-8',
       className
     )}>
       <div className="w-full max-w-4xl">
@@ -406,14 +406,14 @@ export const IndustryModeSelector: React.FC<IndustryModeSelectorProps> = ({
             {[1, 2, 3].map(s => (
               <React.Fragment key={s}>
                 <div className={cn(
-                  'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors',
+                  'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors duration-150',
                   step >= s ? 'bg-blue-600 text-white' : 'bg-zinc-200 text-zinc-500'
                 )}>
                   {step > s ? <CheckCircle className="w-4 h-4" /> : s}
                 </div>
                 {s < 3 && (
                   <div className={cn(
-                    'w-12 h-1 rounded-full transition-colors',
+                    'w-12 h-1 rounded-full transition-colors duration-150',
                     step > s ? 'bg-blue-600' : 'bg-zinc-200'
                   )} />
                 )}
@@ -423,7 +423,7 @@ export const IndustryModeSelector: React.FC<IndustryModeSelectorProps> = ({
         </div>
         
         {/* Content */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="bg-white rounded-xl shadow-xl p-8">
           {step === 1 && (
             <IndustryStep
               selected={industry}
@@ -451,7 +451,7 @@ export const IndustryModeSelector: React.FC<IndustryModeSelectorProps> = ({
             <button
               onClick={() => setStep(Math.max(1, step - 1) as 1 | 2 | 3)}
               className={cn(
-                'px-4 py-2 text-sm font-medium rounded-lg transition-colors',
+                'px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-150',
                 step === 1 ? 'invisible' : 'text-zinc-600 hover:bg-zinc-100'
               )}
             >

@@ -459,12 +459,12 @@ export function CortexChatWidget({
                 onKeyPress={handleKeyPress}
                 placeholder={isServiceHealthy ? 'Type your message...' : 'Service unavailable'}
                 disabled={!isServiceHealthy || isSending}
-                className="flex-1 px-4 py-2 bg-gray-100 border-none rounded-lg focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2 bg-gray-100 border-none rounded-lg focus:ring-2 focus:ring-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed"
               />
               <button
                 onClick={handleSendMessage}
                 disabled={!inputValue.trim() || !isServiceHealthy || isSending}
-                className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                 aria-label="Send message"
               >
                 {isSending ? (

@@ -167,7 +167,7 @@ const NanoBananaImageGenerator: React.FC<NanoBananaImageGeneratorProps> = ({
         <button
           onClick={handleGenerate}
           disabled={isGenerating || !prompt.trim()}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 transition-colors disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 transition-colors disabled:opacity-60"
         >
           {isGenerating ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -192,14 +192,14 @@ const NanoBananaImageGenerator: React.FC<NanoBananaImageGeneratorProps> = ({
   return (
     <div className={cn('rounded-xl border border-zinc-200 bg-white overflow-hidden', className)}>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100 bg-gradient-to-r from-amber-50 to-orange-50">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 bg-gradient-to-r from-amber-50 to-orange-50">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-lg bg-amber-100 flex items-center justify-center">
             <ImageIcon className="w-4 h-4 text-amber-600" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-zinc-900">Nano Banana AI</h3>
-            <p className="text-[10px] text-zinc-500">Powered by Google Gemini</p>
+            <h3 className="text-sm font-semibold text-zinc-900">AnA Visual</h3>
+            <p className="text-[11px] text-zinc-500">Powered by Google Gemini</p>
           </div>
         </div>
         {/* Mode tabs */}
@@ -260,7 +260,7 @@ const NanoBananaImageGenerator: React.FC<NanoBananaImageGeneratorProps> = ({
         <button
           onClick={handleGenerate}
           disabled={isGenerating || !prompt.trim()}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {isGenerating ? (
             <>

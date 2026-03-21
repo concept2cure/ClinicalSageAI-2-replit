@@ -18,6 +18,7 @@
 
 import React, { useState, useMemo, useCallback, lazy, Suspense } from 'react';
 import { cn } from '@/lib/utils';
+import { SEVERITY } from '../../components/ui/enterprise';
 
 const ScenarioComparison = lazy(() => import('./ScenarioComparison'));
 import {
@@ -150,14 +151,14 @@ const CHAMBER_CONFIG: Record<
     icon: Shield,
     accent: 'text-violet-600',
     bg: 'bg-violet-50',
-    border: 'border-violet-200',
+    border: 'border-blue-200',
   },
   route_timing: {
     label: 'Route & Timing',
     icon: Clock,
-    accent: 'text-indigo-600',
-    bg: 'bg-indigo-50',
-    border: 'border-indigo-200',
+    accent: 'text-blue-600',
+    bg: 'bg-blue-50',
+    border: 'border-blue-200',
   },
   evidence_sufficiency: {
     label: 'Evidence Sufficiency',
@@ -180,24 +181,24 @@ const SEVERITY_STYLES: Record<
   { dot: string; badge: string; label: string }
 > = {
   critical: {
-    dot: 'bg-red-500',
-    badge: 'bg-red-100 text-red-700 border-red-200',
-    label: 'Critical',
+    dot: SEVERITY.critical.dot,
+    badge: `${SEVERITY.critical.bg} ${SEVERITY.critical.text} ${SEVERITY.critical.border}`,
+    label: SEVERITY.critical.label,
   },
   high: {
-    dot: 'bg-orange-500',
-    badge: 'bg-orange-100 text-orange-700 border-orange-200',
-    label: 'High',
+    dot: SEVERITY.high.dot,
+    badge: `${SEVERITY.high.bg} ${SEVERITY.high.text} ${SEVERITY.high.border}`,
+    label: SEVERITY.high.label,
   },
   medium: {
-    dot: 'bg-yellow-500',
-    badge: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-    label: 'Medium',
+    dot: SEVERITY.medium.dot,
+    badge: `${SEVERITY.medium.bg} ${SEVERITY.medium.text} ${SEVERITY.medium.border}`,
+    label: SEVERITY.medium.label,
   },
   low: {
-    dot: 'bg-emerald-500',
-    badge: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-    label: 'Low',
+    dot: SEVERITY.low.dot,
+    badge: `${SEVERITY.low.bg} ${SEVERITY.low.text} ${SEVERITY.low.border}`,
+    label: SEVERITY.low.label,
   },
 };
 
@@ -208,10 +209,10 @@ const EFFORT_STYLES: Record<EffortLevel, { badge: string; label: string }> = {
 };
 
 const SEVERITY_ORDER: Record<string, number> = {
-  critical: 0,
-  high: 1,
-  medium: 2,
-  low: 3,
+  critical: SEVERITY.critical.order,
+  high: SEVERITY.high.order,
+  medium: SEVERITY.medium.order,
+  low: SEVERITY.low.order,
 };
 
 // =============================================================================
@@ -307,7 +308,7 @@ function SkeletonCard({ className }: { className?: string }) {
 
 function SkeletonRow() {
   return (
-    <div className="flex animate-pulse items-center gap-3 border-b border-zinc-100 px-4 py-3">
+    <div className="flex animate-pulse items-center gap-3 border-b border-zinc-200 px-4 py-3">
       <div className="h-5 w-16 rounded bg-zinc-200" />
       <div className="h-4 flex-1 rounded bg-zinc-100" />
       <div className="h-4 w-12 rounded bg-zinc-100" />
@@ -365,12 +366,12 @@ function ScoreCard({
       {/* Header */}
       <div className="mb-2 flex items-center justify-between">
         <span className="text-xs font-medium text-zinc-500 leading-tight">{def.label}</span>
-        <Info className="h-3.5 w-3.5 text-zinc-300" />
+        <Info className="h-3.5 w-3.5 text-zinc-400" />
       </div>
 
       {/* Score value */}
       <div className="flex items-end gap-2">
-        <span className={cn('text-3xl font-bold tabular-nums', styles.text)}>
+        <span className={cn('text-3xl font-semibold tabular-nums', styles.text)}>
           {Math.round(entry.value)}
         </span>
         <span className={cn('mb-1 text-sm font-medium', styles.text)}>%</span>
@@ -383,7 +384,7 @@ function ScoreCard({
       <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-zinc-100">
         <div
           className={cn(
-            'h-full rounded-full transition-all',
+            'h-full rounded-full transition-all duration-150',
             band === 'green' && 'bg-emerald-400',
             band === 'amber' && 'bg-amber-400',
             band === 'red' && 'bg-red-400',
@@ -427,7 +428,7 @@ function ChamberCard({
           <Icon className={cn('h-5 w-5', config.accent)} />
         </div>
         <div className="flex-1">
-          <h3 className="text-sm font-semibold text-zinc-800">{config.label}</h3>
+          <h3 className="text-sm font-semibold text-zinc-900">{config.label}</h3>
           {score !== undefined && (
             <span className={cn('text-xs font-medium', bandStyle.text)}>
               Score: {Math.round(score)}%
@@ -446,7 +447,7 @@ function ChamberCard({
         onClick={onDeepDive}
         className={cn(
           'inline-flex items-center gap-1.5 self-start rounded-lg px-3 py-1.5 text-xs font-medium',
-          'border transition-colors',
+          'border transition-colors duration-150',
           config.border,
           config.accent,
           'hover:bg-zinc-50',
@@ -465,11 +466,11 @@ function FindingRow({ finding }: { finding: Finding }) {
   const chamber = CHAMBER_CONFIG[finding.chamber];
 
   return (
-    <div className="flex items-start gap-3 border-b border-zinc-100 px-4 py-3 last:border-b-0 hover:bg-zinc-50/50">
+    <div className="flex items-start gap-3 border-b border-zinc-200 px-4 py-3 last:border-b-0 hover:bg-zinc-50/50">
       {/* Severity badge */}
       <span
         className={cn(
-          'mt-0.5 inline-flex shrink-0 items-center rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider',
+          'mt-0.5 inline-flex shrink-0 items-center rounded-md border px-2 py-0.5 text-xs font-semibold uppercase tracking-wider',
           sev.badge,
         )}
       >
@@ -479,7 +480,7 @@ function FindingRow({ finding }: { finding: Finding }) {
       {/* Chamber tag */}
       <span
         className={cn(
-          'mt-0.5 inline-flex shrink-0 items-center rounded-md px-2 py-0.5 text-[10px] font-medium',
+          'mt-0.5 inline-flex shrink-0 items-center rounded-md px-2 py-0.5 text-xs font-medium',
           chamber.bg,
           chamber.accent,
         )}
@@ -502,15 +503,15 @@ function RemediationRow({ action }: { action: RemediationAction }) {
   const impactStyle = SEVERITY_STYLES[action.impact];
 
   return (
-    <div className="flex items-start gap-3 border-b border-zinc-100 px-4 py-3 last:border-b-0">
+    <div className="flex items-start gap-3 border-b border-zinc-200 px-4 py-3 last:border-b-0">
       {/* Priority number */}
-      <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white">
+      <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-semibold text-white">
         {action.priority}
       </span>
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-zinc-800">{action.title}</p>
+        <p className="text-sm font-medium text-zinc-900">{action.title}</p>
         <p className="mt-0.5 text-xs leading-relaxed text-zinc-500">{action.why}</p>
       </div>
 
@@ -518,7 +519,7 @@ function RemediationRow({ action }: { action: RemediationAction }) {
       <div className="flex shrink-0 flex-col gap-1">
         <span
           className={cn(
-            'inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium',
+            'inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium',
             effortStyle.badge,
           )}
         >
@@ -526,7 +527,7 @@ function RemediationRow({ action }: { action: RemediationAction }) {
         </span>
         <span
           className={cn(
-            'inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] font-semibold',
+            'inline-flex items-center rounded border px-1.5 py-0.5 text-xs font-semibold',
             impactStyle.badge,
           )}
         >
@@ -551,7 +552,7 @@ function ScenarioPill({
     <button
       onClick={onSelect}
       className={cn(
-        'flex shrink-0 items-center gap-2 rounded-xl border px-4 py-2.5 text-left transition-all',
+        'flex shrink-0 items-center gap-2 rounded-xl border px-4 py-2.5 text-left transition-all duration-150',
         isSelected
           ? 'border-blue-300 bg-blue-50 ring-1 ring-blue-200'
           : 'border-zinc-200 bg-white hover:border-zinc-300 hover:shadow-sm',
@@ -559,14 +560,14 @@ function ScenarioPill({
     >
       <div className="min-w-0">
         <div className="flex items-center gap-1.5">
-          <span className="truncate text-sm font-medium text-zinc-800">{scenario.name}</span>
+          <span className="truncate text-sm font-medium text-zinc-900">{scenario.name}</span>
           {scenario.isBaseline && (
-            <span className="shrink-0 rounded bg-blue-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-blue-600">
+            <span className="shrink-0 rounded bg-blue-100 px-1.5 py-0.5 text-xs font-semibold uppercase tracking-wider text-blue-600">
               Baseline
             </span>
           )}
         </div>
-        <span className="text-[11px] text-zinc-400">{formatTimestamp(scenario.lastRunAt)}</span>
+        <span className="text-xs text-zinc-400">{formatTimestamp(scenario.lastRunAt)}</span>
       </div>
     </button>
   );
@@ -583,16 +584,16 @@ function ProgramSelector({
 }) {
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6 px-4">
-      <div className="rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
+      <div className="rounded-xl bg-blue-50 p-6">
         <Sparkles className="h-12 w-12 text-blue-500" />
       </div>
       <div className="text-center">
-        <h2 className="text-xl font-semibold text-zinc-800">
+        <h2 className="text-xl font-semibold text-zinc-900">
           Select a Program to Begin
         </h2>
         <p className="mt-2 max-w-md text-sm text-zinc-500">
-          Choose a regulatory program to load the Snow Globe prediction engine.
-          All chambers, scores, and scenarios will be scoped to the selected program.
+          Choose a regulatory program to load the AnA Predictions engine.
+          All prediction chambers, scores, and scenarios will be scoped to the selected program.
         </p>
       </div>
       <button
@@ -828,8 +829,8 @@ export default function SnowGlobeHome({ programId }: SnowGlobeHomeProps) {
               <Sparkles className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold tracking-tight text-zinc-900">
-                AnA Snow Globe
+              <h1 className="text-xl font-semibold tracking-tight text-zinc-900">
+                AnA Predictions
               </h1>
               <p className="text-sm text-zinc-500">
                 Prediction &amp; Intelligence Engine
@@ -949,14 +950,14 @@ export default function SnowGlobeHome({ programId }: SnowGlobeHomeProps) {
           --------------------------------------------------------------- */}
           <div className="rounded-xl border border-zinc-200 bg-white shadow-sm">
             {/* Panel header */}
-            <div className="flex items-center justify-between border-b border-zinc-100 px-4 py-3">
+            <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 text-amber-500" />
-                <h3 className="text-sm font-semibold text-zinc-800">
+                <h3 className="text-sm font-semibold text-zinc-900">
                   Top Findings
                 </h3>
                 {topFindings && (
-                  <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-500">
+                  <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-500">
                     {(topFindings as Finding[]).length}
                   </span>
                 )}
@@ -994,10 +995,10 @@ export default function SnowGlobeHome({ programId }: SnowGlobeHomeProps) {
           --------------------------------------------------------------- */}
           <div className="rounded-xl border border-zinc-200 bg-white shadow-sm">
             {/* Panel header */}
-            <div className="flex items-center justify-between border-b border-zinc-100 px-4 py-3">
+            <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                <h3 className="text-sm font-semibold text-zinc-800">
+                <h3 className="text-sm font-semibold text-zinc-900">
                   Remediation Priorities
                 </h3>
               </div>
@@ -1019,7 +1020,7 @@ export default function SnowGlobeHome({ programId }: SnowGlobeHomeProps) {
             </div>
 
             {/* Create memo button */}
-            <div className="border-t border-zinc-100 px-4 py-3">
+            <div className="border-t border-zinc-200 px-4 py-3">
               <button
                 onClick={handleCreateMemo}
                 className={cn(
@@ -1093,8 +1094,8 @@ export default function SnowGlobeHome({ programId }: SnowGlobeHomeProps) {
       {/* Scenario Comparison Modal Overlay */}
       {showComparison && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="w-full max-w-5xl max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl border border-zinc-200">
-            <Suspense fallback={<div className="flex items-center justify-center p-12"><Loader2 className="h-8 w-8 animate-spin text-zinc-300" /></div>}>
+          <div className="w-full max-w-5xl max-h-[90vh] overflow-y-auto bg-white rounded-xl shadow-lg border border-zinc-200">
+            <Suspense fallback={<div className="flex items-center justify-center p-12"><Loader2 className="h-8 w-8 animate-spin text-zinc-400" /></div>}>
               <ScenarioComparison
                 programId={programId}
                 baselineId={null}

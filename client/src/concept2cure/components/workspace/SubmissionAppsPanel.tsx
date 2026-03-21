@@ -99,12 +99,12 @@ export const SubmissionAppsPanel: React.FC<SubmissionAppsPanelProps> = ({
   return (
     <div className="flex-1 flex flex-col bg-white min-h-0 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-2 px-4 h-10 border-b border-zinc-100 shrink-0">
+      <div className="flex items-center gap-2 px-4 h-10 border-b border-zinc-200 shrink-0">
         <Sparkles className="w-4 h-4 text-blue-500" />
-        <h2 className="text-sm font-semibold text-zinc-800">Submission Apps</h2>
+        <h2 className="text-sm font-semibold text-zinc-900">Submission Apps</h2>
         {projectName && (
           <>
-            <span className="text-zinc-300">·</span>
+            <span className="text-zinc-400">·</span>
             <span className="text-xs text-zinc-500 truncate">{projectName}</span>
           </>
         )}
@@ -125,19 +125,19 @@ export const SubmissionAppsPanel: React.FC<SubmissionAppsPanelProps> = ({
               <button
                 key={app.appId}
                 onClick={() => setSelectedApp(app)}
-                className="flex flex-col items-start gap-2 p-3 rounded-lg border border-zinc-100 hover:border-blue-200 hover:bg-blue-50/30 hover:shadow-sm hover:-translate-y-px transition-all duration-150 text-left focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none group"
+                className="flex flex-col items-start gap-2 p-3 rounded-lg border border-zinc-200 hover:border-blue-200 hover:bg-blue-50/30 hover:shadow-sm hover:-translate-y-px transition-all duration-150 text-left focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none group"
               >
                 <div className="flex items-center gap-2 w-full">
                   {APP_ICONS[app.appId] || <FileText className="w-5 h-5 text-zinc-400" />}
-                  <span className="text-xs font-semibold text-zinc-800 flex-1">{app.label}</span>
-                  <ChevronRight className="w-3.5 h-3.5 text-zinc-300 group-hover:text-blue-400 transition-colors" />
+                  <span className="text-xs font-semibold text-zinc-900 flex-1">{app.label}</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-blue-400 transition-colors duration-150" />
                 </div>
-                <p className="text-[11px] text-zinc-500 leading-snug">{app.description}</p>
+                <p className="text-xs text-zinc-500 leading-snug">{app.description}</p>
                 <div className="flex items-center gap-2 mt-auto">
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500">
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500">
                     CTD {app.defaultCtdSection}
                   </span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500">
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500">
                     {app.targetDocType.replace(/_/g, ' ')}
                   </span>
                 </div>
@@ -149,7 +149,7 @@ export const SubmissionAppsPanel: React.FC<SubmissionAppsPanelProps> = ({
           <div className="space-y-4 animate-in fade-in slide-in-from-right-2 duration-200">
             <button
               onClick={() => setSelectedApp(null)}
-              className="text-[11px] text-blue-600 hover:text-blue-700 font-medium focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded group/back"
+              className="text-xs text-blue-600 hover:text-blue-700 font-medium focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded group/back"
             >
               <span className="inline-block transition-transform duration-150 group-hover/back:-translate-x-0.5">
                 ←
@@ -160,44 +160,44 @@ export const SubmissionAppsPanel: React.FC<SubmissionAppsPanelProps> = ({
             <div className="flex items-center gap-3">
               {APP_ICONS[selectedApp.appId] || <FileText className="w-6 h-6 text-zinc-400" />}
               <div>
-                <h3 className="text-sm font-semibold text-zinc-800">{selectedApp.label}</h3>
-                <p className="text-[11px] text-zinc-500">{selectedApp.description}</p>
+                <h3 className="text-sm font-semibold text-zinc-900">{selectedApp.label}</h3>
+                <p className="text-xs text-zinc-500">{selectedApp.description}</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 p-3 rounded-lg bg-zinc-50 border border-zinc-100">
+            <div className="grid grid-cols-2 gap-3 p-3 rounded-lg bg-zinc-50 border border-zinc-200">
               <div>
-                <span className="text-[10px] text-zinc-400 uppercase tracking-wider">Creates</span>
-                <p className="text-[12px] text-zinc-700 font-medium">
+                <span className="text-xs text-zinc-400 uppercase tracking-wider">Creates</span>
+                <p className="text-sm text-zinc-700 font-medium">
                   {selectedApp.targetDocType.replace(/_/g, ' ')}
                 </p>
               </div>
               <div>
-                <span className="text-[10px] text-zinc-400 uppercase tracking-wider">
+                <span className="text-xs text-zinc-400 uppercase tracking-wider">
                   CTD section
                 </span>
-                <p className="text-[12px] text-zinc-700 font-medium">
+                <p className="text-sm text-zinc-700 font-medium">
                   {selectedApp.defaultCtdSection} — {getSectionLabel(selectedApp.defaultCtdSection)}
                 </p>
               </div>
               {selectedApp.templateKey && (
                 <div>
-                  <span className="text-[10px] text-zinc-400 uppercase tracking-wider">
+                  <span className="text-xs text-zinc-400 uppercase tracking-wider">
                     Template
                   </span>
-                  <p className="text-[12px] text-zinc-700 font-medium">{selectedApp.templateKey}</p>
+                  <p className="text-sm text-zinc-700 font-medium">{selectedApp.templateKey}</p>
                 </div>
               )}
               <div>
-                <span className="text-[10px] text-zinc-400 uppercase tracking-wider">
+                <span className="text-xs text-zinc-400 uppercase tracking-wider">
                   Required inputs
                 </span>
-                <p className="text-[12px] text-zinc-700">{selectedApp.requiredInputs.join(', ')}</p>
+                <p className="text-sm text-zinc-700">{selectedApp.requiredInputs.join(', ')}</p>
               </div>
             </div>
 
             {/* Transform & output path */}
-            <div className="flex items-center gap-2 text-[11px] text-zinc-500">
+            <div className="flex items-center gap-2 text-xs text-zinc-500">
               <span className="px-2 py-1 rounded bg-blue-50 text-blue-600 font-medium">Input</span>
               <ArrowRight className="w-3 h-3" />
               <span className="px-2 py-1 rounded bg-violet-50 text-violet-600 font-medium">
@@ -218,7 +218,7 @@ export const SubmissionAppsPanel: React.FC<SubmissionAppsPanelProps> = ({
                 onClick={handleRunApp}
                 disabled={!projectId || running}
                 className={cn(
-                  'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                  'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-150',
                   'focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
                   projectId && !running
                     ? 'bg-blue-600 text-white hover:bg-blue-700'

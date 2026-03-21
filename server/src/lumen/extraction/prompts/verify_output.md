@@ -1,4 +1,4 @@
-# Lumen Cortex — Extraction Verifier Prompt (Strict)
+# AnA RI — Extraction Verifier Prompt (Strict)
 
 You are a strict validator. You will be given:
 - the extraction output JSON

@@ -211,7 +211,7 @@ const ClientCard: React.FC<{
       {/* Header */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center gap-4 p-4 hover:bg-zinc-50 transition-colors"
+        className="w-full flex items-center gap-4 p-4 hover:bg-zinc-50 transition-colors duration-150"
       >
         <Building2 className="w-8 h-8 text-zinc-400" />
         <div className="flex-1 text-left">
@@ -384,7 +384,7 @@ const UtilizationChart: React.FC<{
       </div>
       
       {/* Legend */}
-      <div className="flex items-center gap-4 mt-4 pt-4 border-t border-zinc-100">
+      <div className="flex items-center gap-4 mt-4 pt-4 border-t border-zinc-200">
         <div className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded bg-red-500" />
           <span className="text-xs text-zinc-500">&gt;100%</span>
@@ -524,22 +524,22 @@ export const CROResourceDashboard: React.FC<CROResourceDashboardProps> = ({
         <div className="grid grid-cols-6 gap-4">
           <div className="p-3 bg-blue-50 rounded-lg">
             <p className="text-xs text-blue-600 mb-0.5">Total Contract Value</p>
-            <p className="text-lg font-bold text-blue-700">{formatCurrency(metrics.totalContractValue)}</p>
+            <p className="text-lg font-semibold text-blue-700">{formatCurrency(metrics.totalContractValue)}</p>
           </div>
           <div className="p-3 bg-green-50 rounded-lg">
             <p className="text-xs text-green-600 mb-0.5">Billed YTD</p>
-            <p className="text-lg font-bold text-green-700">{formatCurrency(metrics.totalBilled)}</p>
+            <p className="text-lg font-semibold text-green-700">{formatCurrency(metrics.totalBilled)}</p>
           </div>
           <div className="p-3 bg-violet-50 rounded-lg">
             <p className="text-xs text-violet-600 mb-0.5">Active Projects</p>
-            <p className="text-lg font-bold text-violet-700">{metrics.activeProjects}</p>
+            <p className="text-lg font-semibold text-violet-700">{metrics.activeProjects}</p>
           </div>
           <div className={cn(
             'p-3 rounded-lg',
             metrics.atRiskProjects > 0 ? 'bg-red-50' : 'bg-zinc-50'
           )}>
             <p className={cn('text-xs mb-0.5', metrics.atRiskProjects > 0 ? 'text-red-600' : 'text-zinc-500')}>At Risk</p>
-            <p className={cn('text-lg font-bold', metrics.atRiskProjects > 0 ? 'text-red-700' : 'text-zinc-600')}>
+            <p className={cn('text-lg font-semibold', metrics.atRiskProjects > 0 ? 'text-red-700' : 'text-zinc-600')}>
               {metrics.atRiskProjects}
             </p>
           </div>
@@ -550,13 +550,13 @@ export const CROResourceDashboard: React.FC<CROResourceDashboardProps> = ({
             <p className={cn('text-xs mb-0.5', metrics.avgUtilization > 90 ? 'text-amber-600' : 'text-zinc-500')}>
               Avg Utilization
             </p>
-            <p className={cn('text-lg font-bold', metrics.avgUtilization > 90 ? 'text-amber-700' : 'text-zinc-700')}>
+            <p className={cn('text-lg font-semibold', metrics.avgUtilization > 90 ? 'text-amber-700' : 'text-zinc-700')}>
               {metrics.avgUtilization.toFixed(0)}%
             </p>
           </div>
           <div className="p-3 bg-zinc-50 rounded-lg">
             <p className="text-xs text-zinc-500 mb-0.5">Clients</p>
-            <p className="text-lg font-bold text-zinc-700">{clients.length}</p>
+            <p className="text-lg font-semibold text-zinc-700">{clients.length}</p>
           </div>
         </div>
       </div>
@@ -611,7 +611,7 @@ export const CROResourceDashboard: React.FC<CROResourceDashboardProps> = ({
                     <p className="text-xs text-zinc-500">{project.burnRate}% of {formatCurrency(project.contractValue)}</p>
                   </div>
                   <div className={cn(
-                    'text-lg font-bold',
+                    'text-lg font-semibold',
                     getHealthColor(project.healthScore)
                   )}>
                     {project.healthScore}

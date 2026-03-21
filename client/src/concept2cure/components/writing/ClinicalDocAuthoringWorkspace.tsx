@@ -32,6 +32,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { LIFECYCLE, toLifecycleStage } from '../ui/enterprise';
 import {
   FileText,
   BookOpen,
@@ -199,14 +200,14 @@ const DOC_TYPE_CONFIG: Record<DocumentType, { label: string; shortLabel: string;
   ctd_2_5: { label: 'Clinical Overview', shortLabel: 'CTD 2.5', color: 'bg-blue-100 text-blue-700' },
   ctd_2_6: { label: 'Nonclinical Summaries', shortLabel: 'CTD 2.6', color: 'bg-teal-100 text-teal-700' },
   ctd_2_7: { label: 'Clinical Summary', shortLabel: 'CTD 2.7', color: 'bg-cyan-100 text-cyan-700' },
-  csr: { label: 'Clinical Study Report', shortLabel: 'CSR', color: 'bg-violet-100 text-violet-700' },
+  csr: { label: 'Clinical Study Report', shortLabel: 'CSR', color: 'bg-blue-100 text-blue-700' },
   ib: { label: "Investigator's Brochure", shortLabel: 'IB', color: 'bg-purple-100 text-purple-700' },
   protocol: { label: 'Protocol', shortLabel: 'Protocol', color: 'bg-amber-100 text-amber-700' },
   protocol_amendment: { label: 'Protocol Amendment', shortLabel: 'Amendment', color: 'bg-orange-100 text-orange-700' },
   informed_consent: { label: 'Informed Consent', shortLabel: 'ICF', color: 'bg-pink-100 text-pink-700' },
   regulatory_response: { label: 'Regulatory Response', shortLabel: 'Response', color: 'bg-red-100 text-red-700' },
   briefing_document: { label: 'Briefing Document', shortLabel: 'Briefing', color: 'bg-rose-100 text-rose-700' },
-  dsur: { label: 'DSUR', shortLabel: 'DSUR', color: 'bg-indigo-100 text-indigo-700' },
+  dsur: { label: 'DSUR', shortLabel: 'DSUR', color: 'bg-blue-100 text-blue-700' },
   psur: { label: 'PSUR', shortLabel: 'PSUR', color: 'bg-fuchsia-100 text-fuchsia-700' },
 };
 
@@ -254,10 +255,10 @@ const SectionTreeItem: React.FC<{
   const hasChildren = section.children && section.children.length > 0;
   
   const statusColors = {
-    not_started: 'bg-zinc-200',
-    draft: 'bg-blue-400',
-    review: 'bg-amber-400',
-    complete: 'bg-green-400',
+    not_started: LIFECYCLE.not_started.dot,
+    draft: LIFECYCLE.draft.dot,
+    review: LIFECYCLE.in_review.dot,
+    complete: LIFECYCLE.approved.dot,
   };
   
   return (
@@ -265,7 +266,7 @@ const SectionTreeItem: React.FC<{
       <button
         onClick={() => hasChildren ? setExpanded(!expanded) : onSelect?.(section)}
         className={cn(
-          'w-full flex items-center gap-2 px-2 py-1.5 text-left hover:bg-zinc-100 rounded transition-colors',
+          'w-full flex items-center gap-2 px-2 py-1.5 text-left hover:bg-zinc-100 rounded transition-colors duration-150',
           level === 0 && 'font-medium'
         )}
         style={{ paddingLeft: `${level * 16 + 8}px` }}
@@ -292,7 +293,7 @@ const SectionTreeItem: React.FC<{
         </span>
         
         {section.comments.filter(c => c.status === 'open').length > 0 && (
-          <span className="px-1.5 py-0.5 text-[10px] font-medium bg-amber-100 text-amber-700 rounded">
+          <span className="px-1.5 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 rounded">
             {section.comments.filter(c => c.status === 'open').length}
           </span>
         )}
@@ -334,7 +335,7 @@ const DocumentOutlineTree: React.FC<{
             placeholder="Search sections..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-8 pr-3 py-1.5 text-sm border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
           />
         </div>
       </div>
@@ -444,7 +445,7 @@ const ReviewCommentsPanel: React.FC<{
           const config = PRIORITY_CONFIG[priority];
           
           return (
-            <div key={priority} className="border-b border-zinc-100 last:border-0">
+            <div key={priority} className="border-b border-zinc-200 last:border-0">
               <div className="px-3 py-2 bg-zinc-50 flex items-center gap-2">
                 <span className={cn('px-2 py-0.5 text-xs font-medium rounded', config.color)}>
                   {config.label}
@@ -453,7 +454,7 @@ const ReviewCommentsPanel: React.FC<{
               </div>
               
               {comments.slice(0, 5).map((comment: any) => (
-                <div key={comment.id} className="p-3 border-t border-zinc-100 hover:bg-zinc-50">
+                <div key={comment.id} className="p-3 border-t border-zinc-200 hover:bg-zinc-50">
                   <div className="flex items-start justify-between mb-1">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-medium text-blue-600">{comment.sectionNumber}</span>
@@ -463,7 +464,7 @@ const ReviewCommentsPanel: React.FC<{
                     {comment.status === 'open' && (
                       <button
                         onClick={() => onCommentResolve?.(comment)}
-                        className="p-1 text-zinc-400 hover:text-green-600 transition-colors"
+                        className="p-1 text-zinc-400 hover:text-green-600 transition-colors duration-150"
                         title="Resolve"
                       >
                         <CheckCircle className="w-4 h-4" />
@@ -549,7 +550,7 @@ const SourceDocumentsPanel: React.FC<{
           const config = typeLabels[type] || typeLabels.other;
           
           return (
-            <div key={type} className="border-b border-zinc-100 last:border-0">
+            <div key={type} className="border-b border-zinc-200 last:border-0">
               <div className="px-3 py-2 bg-zinc-50 flex items-center gap-2 text-zinc-600">
                 {config.icon}
                 <span className="text-xs font-medium">{config.label}</span>
@@ -559,7 +560,7 @@ const SourceDocumentsPanel: React.FC<{
               {sources.slice(0, 5).map(source => (
                 <button
                   key={source.id}
-                  className="w-full px-3 py-2 text-left hover:bg-zinc-50 transition-colors border-t border-zinc-100"
+                  className="w-full px-3 py-2 text-left hover:bg-zinc-50 transition-colors border-t border-zinc-200"
                 >
                   <p className="text-sm text-zinc-900 truncate">{source.title}</p>
                   <div className="flex items-center gap-2 mt-0.5">
@@ -641,7 +642,7 @@ const DocumentList: React.FC<{
               key={doc.id}
               onClick={() => onDocumentSelect?.(doc)}
               className={cn(
-                'w-full p-3 text-left border-b border-zinc-100 transition-colors',
+                'w-full p-3 text-left border-b border-zinc-200 transition-colors duration-150',
                 isActive ? 'bg-blue-50' : 'hover:bg-zinc-50'
               )}
             >
@@ -668,7 +669,7 @@ const DocumentList: React.FC<{
                 </div>
                 <div className="h-1 bg-zinc-200 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-blue-500 rounded-full transition-all"
+                    className="h-full bg-blue-500 rounded-full transition-all duration-150"
                     style={{ width: `${progress}%` }}
                   />
                 </div>
@@ -722,7 +723,7 @@ const DocumentHeader: React.FC<{
               </span>
             )}
           </div>
-          <h2 className="text-xl font-bold text-zinc-900">{document.title}</h2>
+          <h2 className="text-xl font-semibold text-zinc-900">{document.title}</h2>
           <p className="text-sm text-zinc-500">{document.productName} • v{document.currentVersion}</p>
         </div>
         
@@ -816,7 +817,7 @@ export const ClinicalDocAuthoringWorkspace: React.FC<ClinicalDocAuthoringWorkspa
       <div className="flex-shrink-0 bg-white border-b border-zinc-200 p-4">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-xl font-bold text-zinc-900">Clinical Document Authoring</h1>
+            <h1 className="text-xl font-semibold text-zinc-900">Clinical Document Authoring</h1>
             <p className="text-sm text-zinc-500">Regulatory document workspace</p>
           </div>
           
@@ -830,25 +831,25 @@ export const ClinicalDocAuthoringWorkspace: React.FC<ClinicalDocAuthoringWorkspa
         <div className="grid grid-cols-5 gap-4">
           <div className="p-3 bg-zinc-100 rounded-lg">
             <p className="text-xs text-zinc-500">Documents</p>
-            <p className="text-xl font-bold text-zinc-900">{metrics.totalDocuments}</p>
+            <p className="text-xl font-semibold text-zinc-900">{metrics.totalDocuments}</p>
           </div>
           <div className="p-3 bg-blue-50 rounded-lg">
             <p className="text-xs text-blue-600">In Draft</p>
-            <p className="text-xl font-bold text-blue-700">{metrics.inDraft}</p>
+            <p className="text-xl font-semibold text-blue-700">{metrics.inDraft}</p>
           </div>
           <div className="p-3 bg-violet-50 rounded-lg">
             <p className="text-xs text-violet-600">In Review</p>
-            <p className="text-xl font-bold text-violet-700">{metrics.inReview}</p>
+            <p className="text-xl font-semibold text-violet-700">{metrics.inReview}</p>
           </div>
           <div className={cn('p-3 rounded-lg', metrics.openComments > 0 ? 'bg-amber-50' : 'bg-zinc-100')}>
             <p className={cn('text-xs', metrics.openComments > 0 ? 'text-amber-600' : 'text-zinc-500')}>Open Comments</p>
-            <p className={cn('text-xl font-bold', metrics.openComments > 0 ? 'text-amber-700' : 'text-zinc-900')}>
+            <p className={cn('text-xl font-semibold', metrics.openComments > 0 ? 'text-amber-700' : 'text-zinc-900')}>
               {metrics.openComments}
             </p>
           </div>
           <div className="p-3 bg-green-50 rounded-lg">
             <p className="text-xs text-green-600">Avg Progress</p>
-            <p className="text-xl font-bold text-green-700">{metrics.avgProgress}%</p>
+            <p className="text-xl font-semibold text-green-700">{metrics.avgProgress}%</p>
           </div>
         </div>
       </div>
@@ -890,7 +891,7 @@ export const ClinicalDocAuthoringWorkspace: React.FC<ClinicalDocAuthoringWorkspa
             ) : (
               <div className="h-full flex items-center justify-center bg-white rounded-xl border border-zinc-200">
                 <div className="text-center">
-                  <FileText className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
+                  <FileText className="w-12 h-12 text-zinc-400 mx-auto mb-3" />
                   <p className="text-sm text-zinc-500">Select a document to begin authoring</p>
                 </div>
               </div>

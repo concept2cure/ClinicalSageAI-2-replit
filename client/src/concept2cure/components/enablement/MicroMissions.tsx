@@ -209,7 +209,7 @@ export function MissionCard({ mission, completed, completionTime, onStart }: Mis
   return (
     <motion.div
       {...fade}
-      className="bg-white rounded-lg border border-zinc-100 p-5"
+      className="bg-white rounded-lg border border-zinc-200 p-5"
     >
       <h3 className="text-base font-semibold text-zinc-900">{mission.title}</h3>
       <p className="text-sm text-zinc-500 mt-1 leading-relaxed">{mission.description}</p>
@@ -282,10 +282,10 @@ export function MissionRunner({ mission, onComplete, onCancel }: MissionRunnerPr
   return (
     <motion.div
       {...fade}
-      className="bg-white border border-zinc-100 rounded-lg overflow-hidden"
+      className="bg-white border border-zinc-200 rounded-lg overflow-hidden"
     >
       {/* Header */}
-      <div className="px-5 py-4 border-b border-zinc-100 flex items-center justify-between">
+      <div className="px-5 py-4 border-b border-zinc-200 flex items-center justify-between">
         <div>
           <h3 className="text-sm font-semibold text-zinc-900">{mission.title}</h3>
           <p className="text-xs text-zinc-400 mt-0.5">
@@ -322,7 +322,7 @@ export function MissionRunner({ mission, onComplete, onCancel }: MissionRunnerPr
                     className={cn(
                       'text-sm',
                       idx < currentStep
-                        ? 'text-zinc-300'
+                        ? 'text-zinc-400'
                         : idx === currentStep
                         ? 'font-medium text-zinc-900'
                         : 'text-zinc-400'

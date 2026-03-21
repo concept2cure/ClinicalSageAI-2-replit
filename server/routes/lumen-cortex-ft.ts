@@ -1,8 +1,8 @@
 /**
  * =============================================================================
- * Lumen Cortex — Fine-Tuned Regulatory Model Service
+ * AnA RI — Fine-Tuned Regulatory Model Service
  * =============================================================================
- * Manages the Lumen Cortex fine-tuned model trained on FDA/EMA guidance documents:
+ * Manages the AnA RI fine-tuned model trained on FDA/EMA guidance documents:
  * - Model registry and versioning (LoRA adapters, full fine-tunes)
  * - Inference endpoints for regulatory text generation
  * - Training pipeline management (dataset curation, fine-tune jobs)
@@ -176,7 +176,7 @@ class ModelRegistry {
     // Register the base fine-tuned model
     const baseModel: LumenCortexModel = {
       id: 'lumen-cortex-v1',
-      name: 'Lumen Cortex Regulatory',
+      name: 'AnA RI Regulatory',
       version: '1.0.0',
       baseModel: 'gpt-4o',
       finetuneType: 'lora',
@@ -321,7 +321,7 @@ const registry = new ModelRegistry();
 // ---------------------------------------------------------------------------
 
 const REGULATORY_SYSTEM_PROMPTS: Record<string, string> = {
-  FDA: `You are Lumen Cortex, a regulatory AI assistant fine-tuned on FDA guidance documents, 21 CFR regulations, ICH guidelines, and thousands of approved CTD dossiers. When generating regulatory content:
+  FDA: `You are AnA RI, a regulatory AI assistant fine-tuned on FDA guidance documents, 21 CFR regulations, ICH guidelines, and thousands of approved CTD dossiers. When generating regulatory content:
 1. Always cite specific FDA guidance documents, CFR references, or ICH guidelines
 2. Follow CTD/eCTD section structure rigorously (ICH M4)
 3. Use FDA-accepted terminology and formatting conventions
@@ -329,20 +329,20 @@ const REGULATORY_SYSTEM_PROMPTS: Record<string, string> = {
 5. Note when information gaps exist that FDA reviewers would question
 6. Reference relevant FDA Form numbers where applicable`,
 
-  EMA: `You are Lumen Cortex, a regulatory AI assistant fine-tuned on EMA scientific guidelines, EU regulations, ICH guidelines, and Marketing Authorization Application dossiers. When generating regulatory content:
+  EMA: `You are AnA RI, a regulatory AI assistant fine-tuned on EMA scientific guidelines, EU regulations, ICH guidelines, and Marketing Authorization Application dossiers. When generating regulatory content:
 1. Cite EMA guidelines, EU directives/regulations, and ICH references
 2. Follow EU CTD module structure per EMA guidance
 3. Use EMA standard terminology and SmPC conventions
 4. Reference relevant EMA assessment report templates
 5. Note requirements specific to centralised/decentralised/mutual recognition procedures`,
 
-  ICH: `You are Lumen Cortex, a regulatory AI assistant trained on the complete ICH guideline corpus (Q1-Q14, E1-E19, M1-M13, S1-S10). Generate content that is harmonized across major regulatory bodies and strictly adheres to ICH technical requirements.`,
+  ICH: `You are AnA RI, a regulatory AI assistant trained on the complete ICH guideline corpus (Q1-Q14, E1-E19, M1-M13, S1-S10). Generate content that is harmonized across major regulatory bodies and strictly adheres to ICH technical requirements.`,
 };
 
 async function performInference(request: InferenceRequest): Promise<InferenceResponse> {
   const startTime = Date.now();
   const model = registry.getActiveModel();
-  if (!model) throw new Error('No active Lumen Cortex model');
+  if (!model) throw new Error('No active AnA RI model');
 
   const regulatoryBody = request.regulatoryContext?.regulatoryBody || 'FDA';
   const systemPrompt =
@@ -378,7 +378,7 @@ async function performInference(request: InferenceRequest): Promise<InferenceRes
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       routedTo = 'fallback';
-      content = `[Lumen Cortex inference unavailable — API key not configured]\n\nBased on the regulatory context provided, here is a structured response following ${regulatoryBody} guidelines for ${request.regulatoryContext?.submissionType || 'regulatory'} submissions.`;
+      content = `[AnA RI inference unavailable — API key not configured]\n\nBased on the regulatory context provided, here is a structured response following ${regulatoryBody} guidelines for ${request.regulatoryContext?.submissionType || 'regulatory'} submissions.`;
     } else {
       // Use fine-tuned model ID if available, otherwise base model with system prompt
       const modelId = process.env.LUMEN_CORTEX_MODEL_ID || model.baseModel;
@@ -400,7 +400,7 @@ async function performInference(request: InferenceRequest): Promise<InferenceRes
 
       if (!response.ok) {
         const errBody = await response.text().catch(() => 'unknown');
-        console.error(`[Lumen Cortex] OpenAI API error ${response.status}:`, errBody);
+        console.error(`[AnA RI] OpenAI API error ${response.status}:`, errBody);
         throw new Error(`OpenAI API returned ${response.status}`);
       }
 
@@ -455,7 +455,7 @@ async function performInference(request: InferenceRequest): Promise<InferenceRes
     }
   } catch (err) {
     routedTo = 'fallback';
-    content = `[Lumen Cortex fallback mode] Error during inference: ${String(err)}`;
+    content = `[AnA RI fallback mode] Error during inference: ${String(err)}`;
   }
 
   return {
@@ -480,7 +480,7 @@ const router = Router();
 
 /**
  * POST /inference
- * Generate regulatory content using Lumen Cortex fine-tuned model
+ * Generate regulatory content using AnA RI fine-tuned model
  */
 router.post('/inference', async (req: Request, res: Response) => {
   const body: InferenceRequest = req.body;
@@ -497,7 +497,7 @@ router.post('/inference', async (req: Request, res: Response) => {
 
 /**
  * POST /generate-section
- * Generate a specific CTD/eCTD section using Lumen Cortex
+ * Generate a specific CTD/eCTD section using AnA RI
  */
 router.post('/generate-section', async (req: Request, res: Response) => {
   const { sectionId, sectionTitle, projectContext, regulatoryContext, existingContent } = req.body;
@@ -550,7 +550,7 @@ Requirements:
 
 /**
  * GET /models
- * List all registered Lumen Cortex model versions
+ * List all registered AnA RI model versions
  */
 router.get('/models', (_req: Request, res: Response) => {
   const models = registry.getAllModels();
@@ -615,7 +615,7 @@ router.post('/training/start', async (req: Request, res: Response) => {
 
   const model: LumenCortexModel = {
     id: `lumen-cortex-${uuidv4().split('-')[0]}`,
-    name: `Lumen Cortex Fine-Tune ${new Date().toISOString().split('T')[0]}`,
+    name: `AnA RI Fine-Tune ${new Date().toISOString().split('T')[0]}`,
     version: '0.1.0-training',
     baseModel,
     finetuneType: finetuneType || 'lora',
@@ -711,7 +711,7 @@ router.get('/benchmarks', (_req: Request, res: Response) => {
 
 /**
  * GET /health
- * Health check for Lumen Cortex service
+ * Health check for AnA RI service
  */
 router.get('/health', (_req: Request, res: Response) => {
   const model = registry.getActiveModel();

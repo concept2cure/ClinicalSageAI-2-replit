@@ -13,6 +13,7 @@
 
 import React, { useState, useMemo, useCallback, DragEvent } from 'react';
 import { cn } from '@/lib/utils';
+import { LIFECYCLE, SEVERITY } from '../../components/ui/enterprise';
 import {
   LayoutGrid,
   Search,
@@ -69,20 +70,20 @@ interface Task {
 }
 
 const STATUS_META: Record<TaskStatus, { label: string; headerColor: string; dotColor: string }> = {
-  backlog:     { label: 'Backlog',     headerColor: 'bg-zinc-600',   dotColor: 'bg-zinc-400' },
-  todo:        { label: 'To Do',       headerColor: 'bg-blue-600',   dotColor: 'bg-blue-500' },
-  in_progress: { label: 'In Progress', headerColor: 'bg-amber-500',  dotColor: 'bg-amber-500' },
-  review:      { label: 'Review',      headerColor: 'bg-violet-600', dotColor: 'bg-violet-500' },
-  done:        { label: 'Done',        headerColor: 'bg-emerald-600', dotColor: 'bg-emerald-500' },
+  backlog:     { label: 'Backlog',     headerColor: 'bg-zinc-600',   dotColor: LIFECYCLE.not_started.dot },
+  todo:        { label: 'To Do',       headerColor: 'bg-blue-600',   dotColor: LIFECYCLE.draft.dot },
+  in_progress: { label: 'In Progress', headerColor: 'bg-amber-500',  dotColor: LIFECYCLE.draft.dot },
+  review:      { label: 'Review',      headerColor: 'bg-violet-600', dotColor: LIFECYCLE.in_review.dot },
+  done:        { label: 'Done',        headerColor: 'bg-emerald-600', dotColor: LIFECYCLE.approved.dot },
 };
 
 const COLUMN_ORDER: TaskStatus[] = ['backlog', 'todo', 'in_progress', 'review', 'done'];
 
 const PRIORITY_CONFIG: Record<TaskPriority, { label: string; bg: string; text: string; sortVal: number }> = {
-  critical: { label: 'Critical', bg: 'bg-red-100',    text: 'text-red-700',    sortVal: 0 },
-  high:     { label: 'High',     bg: 'bg-orange-100', text: 'text-orange-700', sortVal: 1 },
-  medium:   { label: 'Medium',   bg: 'bg-amber-100',  text: 'text-amber-700',  sortVal: 2 },
-  low:      { label: 'Low',      bg: 'bg-blue-100',   text: 'text-blue-700',   sortVal: 3 },
+  critical: { label: SEVERITY.critical.label, bg: SEVERITY.critical.bg,  text: SEVERITY.critical.text, sortVal: SEVERITY.critical.order },
+  high:     { label: SEVERITY.high.label,     bg: SEVERITY.high.bg,      text: SEVERITY.high.text,     sortVal: SEVERITY.high.order },
+  medium:   { label: SEVERITY.medium.label,   bg: SEVERITY.medium.bg,    text: SEVERITY.medium.text,   sortVal: SEVERITY.medium.order },
+  low:      { label: SEVERITY.low.label,      bg: SEVERITY.low.bg,       text: SEVERITY.low.text,      sortVal: SEVERITY.low.order },
 };
 
 const MODULE_CONFIG: Record<TaskModule, { bg: string; text: string }> = {
@@ -306,7 +307,7 @@ function TaskCard({
     >
       {/* Drag grip */}
       <div className="flex items-start gap-2">
-        <GripVertical className="w-4 h-4 text-zinc-300 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+        <GripVertical className="w-4 h-4 text-zinc-400 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
         <div className="flex-1 min-w-0 space-y-2">
           {/* Title */}
           <p className="text-sm font-semibold text-zinc-900 leading-snug">{task.title}</p>
@@ -346,7 +347,7 @@ function TaskCard({
       {/* Expanded detail */}
       {expanded && (
         <div
-          className="mt-3 pt-3 border-t border-zinc-100 space-y-3 text-sm"
+          className="mt-3 pt-3 border-t border-zinc-200 space-y-3 text-sm"
           onClick={(e) => e.stopPropagation()}
         >
           <p className="text-zinc-600">{task.description}</p>
@@ -381,7 +382,7 @@ function TaskCard({
                 onClick={() => onMoveToColumn(task.id, s)}
                 className={cn(
                   'flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium',
-                  'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 transition-colors',
+                  'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 transition-colors duration-150',
                 )}
               >
                 <ArrowRight className="w-3 h-3" />
@@ -439,12 +440,15 @@ function AddTaskModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Add task"
         className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 p-6 space-y-4"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-zinc-900">Add Task</h3>
-          <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600">
+          <button onClick={onClose} aria-label="Close" title="Close" className="text-zinc-400 hover:text-zinc-600 p-1 rounded-md focus-visible:ring-2 focus-visible:ring-blue-500 outline-none">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -452,23 +456,26 @@ function AddTaskModal({
         <form onSubmit={handleSubmit} className="space-y-3">
           {/* Title */}
           <div>
-            <label className="block text-xs font-medium text-zinc-600 mb-1">Title *</label>
+            <label htmlFor="task-title" className="block text-xs font-medium text-zinc-600 mb-1">Title *</label>
             <input
+              id="task-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
               placeholder="Task title"
               required
+              autoFocus
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-medium text-zinc-600 mb-1">Description</label>
+            <label htmlFor="task-desc" className="block text-xs font-medium text-zinc-600 mb-1">Description</label>
             <textarea
+              id="task-desc"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 outline-none resize-none"
               rows={3}
               placeholder="Task description"
             />
@@ -477,11 +484,12 @@ function AddTaskModal({
           {/* Row: Priority + Status */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-zinc-600 mb-1">Priority</label>
+              <label htmlFor="task-priority" className="block text-xs font-medium text-zinc-600 mb-1">Priority</label>
               <select
+                id="task-priority"
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as TaskPriority)}
-                className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
               >
                 {ALL_PRIORITIES.map((p) => (
                   <option key={p} value={p}>{PRIORITY_CONFIG[p].label}</option>
@@ -489,11 +497,12 @@ function AddTaskModal({
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-zinc-600 mb-1">Status</label>
+              <label htmlFor="task-status" className="block text-xs font-medium text-zinc-600 mb-1">Status</label>
               <select
+                id="task-status"
                 value={status}
                 onChange={(e) => setStatus(e.target.value as TaskStatus)}
-                className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
               >
                 {COLUMN_ORDER.map((s) => (
                   <option key={s} value={s}>{STATUS_META[s].label}</option>
@@ -505,32 +514,35 @@ function AddTaskModal({
           {/* Row: Assignee + Due Date */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-zinc-600 mb-1">Assignee</label>
+              <label htmlFor="task-assignee" className="block text-xs font-medium text-zinc-600 mb-1">Assignee</label>
               <input
+                id="task-assignee"
                 value={assignee}
                 onChange={(e) => setAssignee(e.target.value)}
-                className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                 placeholder="Name"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-zinc-600 mb-1">Due Date</label>
+              <label htmlFor="task-due-date" className="block text-xs font-medium text-zinc-600 mb-1">Due Date</label>
               <input
+                id="task-due-date"
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
               />
             </div>
           </div>
 
           {/* Module */}
           <div>
-            <label className="block text-xs font-medium text-zinc-600 mb-1">Module</label>
+            <label htmlFor="task-module" className="block text-xs font-medium text-zinc-600 mb-1">Module</label>
             <select
+              id="task-module"
               value={module}
               onChange={(e) => setModule(e.target.value as TaskModule)}
-              className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
             >
               {ALL_MODULES.map((m) => (
                 <option key={m} value={m}>{m}</option>
@@ -542,13 +554,13 @@ function AddTaskModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg text-sm font-medium text-zinc-600 hover:bg-zinc-100 transition-colors"
+              className="px-4 py-2 rounded-lg text-sm font-medium text-zinc-600 hover:bg-zinc-100 transition-colors duration-150"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+              className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-150"
             >
               Create Task
             </button>
@@ -730,7 +742,7 @@ export default function TaskBoard({ programId }: TaskBoardProps) {
             <LayoutGrid className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-zinc-900">Task Board</h2>
+            <h2 className="text-xl font-semibold text-zinc-900">Task Board</h2>
             <p className="text-sm text-zinc-500">{filteredTasks.length} tasks</p>
           </div>
         </div>
@@ -741,7 +753,7 @@ export default function TaskBoard({ programId }: TaskBoardProps) {
             <button
               onClick={() => setViewMode('board')}
               className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-150',
                 viewMode === 'board' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700',
               )}
             >
@@ -751,7 +763,7 @@ export default function TaskBoard({ programId }: TaskBoardProps) {
             <button
               onClick={() => setViewMode('list')}
               className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-150',
                 viewMode === 'list' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700',
               )}
             >
@@ -763,7 +775,7 @@ export default function TaskBoard({ programId }: TaskBoardProps) {
           {/* Add task */}
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors duration-150"
           >
             <Plus className="w-4 h-4" />
             Add Task
@@ -780,7 +792,7 @@ export default function TaskBoard({ programId }: TaskBoardProps) {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search tasks..."
-            className="w-full pl-9 pr-3 py-2 bg-white border border-zinc-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-9 pr-3 py-2 bg-white border border-zinc-200 rounded-lg text-sm focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
           />
         </div>
 
@@ -788,7 +800,7 @@ export default function TaskBoard({ programId }: TaskBoardProps) {
         <select
           value={priorityFilter}
           onChange={(e) => setPriorityFilter(e.target.value as TaskPriority | 'all')}
-          className="bg-white border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="bg-white border border-zinc-200 rounded-lg px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
         >
           <option value="all">All Priorities</option>
           {ALL_PRIORITIES.map((p) => (
@@ -800,7 +812,7 @@ export default function TaskBoard({ programId }: TaskBoardProps) {
         <select
           value={assigneeFilter}
           onChange={(e) => setAssigneeFilter(e.target.value)}
-          className="bg-white border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="bg-white border border-zinc-200 rounded-lg px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
         >
           <option value="all">All Assignees</option>
           {uniqueAssignees.map((a) => (
@@ -812,7 +824,7 @@ export default function TaskBoard({ programId }: TaskBoardProps) {
         <select
           value={moduleFilter}
           onChange={(e) => setModuleFilter(e.target.value as TaskModule | 'all')}
-          className="bg-white border border-zinc-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="bg-white border border-zinc-200 rounded-lg px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
         >
           <option value="all">All Modules</option>
           {ALL_MODULES.map((m) => (
@@ -845,7 +857,7 @@ export default function TaskBoard({ programId }: TaskBoardProps) {
                     {statusIcon(col)}
                     {meta.label}
                   </div>
-                  <span className="bg-white/20 text-xs font-bold px-2 py-0.5 rounded-full">
+                  <span className="bg-white/20 text-xs font-semibold px-2 py-0.5 rounded-full">
                     {colTasks.length}
                   </span>
                 </div>
@@ -878,7 +890,7 @@ export default function TaskBoard({ programId }: TaskBoardProps) {
                   onClick={() => {
                     setShowAddModal(true);
                   }}
-                  className="flex items-center justify-center gap-1.5 m-2 px-3 py-2 rounded-lg border border-dashed border-zinc-300 text-xs text-zinc-500 hover:border-blue-400 hover:text-blue-600 transition-colors"
+                  className="flex items-center justify-center gap-1.5 m-2 px-3 py-2 rounded-lg border border-dashed border-zinc-300 text-xs text-zinc-500 hover:border-blue-400 hover:text-blue-600 transition-colors duration-150"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   Add task
@@ -914,7 +926,7 @@ export default function TaskBoard({ programId }: TaskBoardProps) {
                     <tr
                       onClick={() => setExpandedTaskId(isExpanded ? null : task.id)}
                       className={cn(
-                        'border-b border-zinc-100 cursor-pointer hover:bg-zinc-50 transition-colors',
+                        'border-b border-zinc-200 cursor-pointer hover:bg-zinc-50 transition-colors duration-150',
                         isExpanded && 'bg-zinc-50',
                       )}
                     >
@@ -933,7 +945,7 @@ export default function TaskBoard({ programId }: TaskBoardProps) {
                       </td>
                       <td className="px-4 py-3">
                         <span className="flex items-center gap-2">
-                          <AvatarCircle initials={task.assigneeInitials} className="w-6 h-6 text-[10px]" />
+                          <AvatarCircle initials={task.assigneeInitials} className="w-6 h-6 text-xs" />
                           <span className="text-zinc-700">{task.assignee}</span>
                         </span>
                       </td>
@@ -990,7 +1002,7 @@ export default function TaskBoard({ programId }: TaskBoardProps) {
                                 <button
                                   key={s}
                                   onClick={() => moveTask(task.id, s)}
-                                  className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium bg-zinc-100 text-zinc-700 hover:bg-zinc-200 transition-colors"
+                                  className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium bg-zinc-100 text-zinc-700 hover:bg-zinc-200 transition-colors duration-150"
                                 >
                                   <ArrowRight className="w-3 h-3" />
                                   {STATUS_META[s].label}

@@ -193,7 +193,7 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div className="py-6 px-5 border-t border-zinc-100 first:border-t-0 first:pt-2">
+    <div className="py-6 px-5 border-t border-zinc-200 first:border-t-0 first:pt-2">
       {label && (
         <p className="text-xs font-medium text-zinc-900 mb-3">{label}</p>
       )}
@@ -282,7 +282,7 @@ function GuideContent() {
         </p>
       </div>
 
-      <div className="border-t border-zinc-100 pt-4 space-y-0">
+      <div className="border-t border-zinc-200 pt-4 space-y-0">
         {MOCK_GUIDE_ACTIONS.map((action, idx) => (
           <button
             key={action.title}
@@ -299,7 +299,7 @@ function GuideContent() {
                 {action.why}
               </p>
             </div>
-            <ArrowRight className="h-4 w-4 text-zinc-300 shrink-0 mt-0.5" />
+            <ArrowRight className="h-4 w-4 text-zinc-400 shrink-0 mt-0.5" />
           </button>
         ))}
       </div>
@@ -320,7 +320,7 @@ function DoItContent() {
         </button>
       </div>
 
-      <div className="border-t border-zinc-100 pt-4 space-y-3">
+      <div className="border-t border-zinc-200 pt-4 space-y-3">
         {MOCK_WALKTHROUGH_STEPS.map((step, idx) => {
           const isDone = step.status === "done";
           const isActive = step.status === "active";
@@ -333,7 +333,7 @@ function DoItContent() {
                   "text-sm tabular-nums shrink-0 w-5 text-right",
                   isDone && "text-zinc-400",
                   isActive && "font-medium text-zinc-900",
-                  isPending && "text-zinc-300"
+                  isPending && "text-zinc-400"
                 )}
               >
                 {isDone ? (
@@ -389,12 +389,12 @@ function AnaContent() {
         ))}
       </div>
 
-      <div className="border-t border-zinc-100 pt-4 space-y-3">
+      <div className="border-t border-zinc-200 pt-4 space-y-3">
         <textarea
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Ask AnA 1.0 anything..."
-          className="w-full rounded-lg border border-zinc-200 bg-white p-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-zinc-300 resize-none h-20"
+          className="w-full rounded-lg border border-zinc-200 bg-white p-3 text-sm text-zinc-900 placeholder:text-zinc-400 outline-none focus:border-zinc-300 resize-none h-20"
         />
         <div className="flex items-center justify-between">
           <button className="flex items-center gap-1.5 text-sm font-medium text-zinc-900 hover:text-zinc-600">
@@ -424,7 +424,7 @@ function FixContent() {
             key={issue.title}
             className={cn(
               "py-4",
-              idx < MOCK_ISSUES.length - 1 && "border-b border-zinc-100"
+              idx < MOCK_ISSUES.length - 1 && "border-b border-zinc-200"
             )}
           >
             <div className="flex items-start gap-3">
@@ -486,7 +486,7 @@ export function DrSageButton({
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
       transition={{ duration: 0.15 }}
-      className="fixed right-6 bottom-6 z-50 flex items-center justify-center h-12 w-12 rounded-full bg-zinc-900 text-white hover:bg-zinc-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2"
+      className="fixed right-6 bottom-6 z-50 flex items-center justify-center h-12 w-12 rounded-full bg-zinc-900 text-white hover:bg-zinc-800 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2"
     >
       <Sparkles className="h-5 w-5" />
     </motion.button>
@@ -544,18 +544,18 @@ export function DrSagePanel({
             className="fixed right-0 top-0 bottom-0 z-50 w-[400px] flex flex-col bg-white shadow-sm border-l border-zinc-200"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100 shrink-0">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 shrink-0">
               <h2 className="text-sm font-semibold text-zinc-900">Dr. Sage</h2>
               <button
                 onClick={onToggle}
-                className="h-6 w-6 flex items-center justify-center text-zinc-400 hover:text-zinc-600 transition-colors"
+                className="h-6 w-6 flex items-center justify-center text-zinc-400 hover:text-zinc-600 transition-colors duration-150"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
             {/* Tab navigation */}
-            <div className="px-5 border-b border-zinc-100 shrink-0 overflow-x-auto">
+            <div className="px-5 border-b border-zinc-200 shrink-0 overflow-x-auto">
               <div className="flex gap-4 min-w-max">
                 {TABS.map((tab) => {
                   const active = activeTab === tab.id;
@@ -564,7 +564,7 @@ export function DrSagePanel({
                       key={tab.id}
                       onClick={() => onTabChange(tab.id)}
                       className={cn(
-                        "relative py-3 text-sm whitespace-nowrap transition-colors",
+                        "relative py-3 text-sm whitespace-nowrap transition-colors duration-150",
                         active
                           ? "text-zinc-900"
                           : "text-zinc-400 hover:text-zinc-600"

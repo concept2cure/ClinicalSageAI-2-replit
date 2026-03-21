@@ -824,7 +824,7 @@ export default function INDFullSolution() {
             <button
               onClick={() => handleCreateFromDocuments(template)}
               disabled={isCreatingFromDocs}
-              className="inline-flex items-center px-3 py-1.5 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded text-sm disabled:opacity-50"
+              className="inline-flex items-center px-3 py-1.5 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded text-sm disabled:opacity-60"
             >
               {isCreatingFromDocs ? <Loader2 className="animate-spin h-4 w-4 mr-1" /> : null}
               Create from Uploaded Docs
@@ -832,7 +832,7 @@ export default function INDFullSolution() {
             <button
               onClick={() => handleDownloadTemplate(template.id)}
               disabled={isLoading}
-              className="inline-flex items-center px-3 py-1.5 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded text-sm disabled:opacity-50"
+              className="inline-flex items-center px-3 py-1.5 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded text-sm disabled:opacity-60"
             >
               {isLoading ? <Loader2 className="animate-spin h-4 w-4 mr-1" /> : null}
               Download Package
@@ -903,7 +903,7 @@ export default function INDFullSolution() {
                           <div className="flex items-center justify-between gap-3">
                             <p className="text-xs font-medium text-slate-800">{moduleName}</p>
                             <span
-                              className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium ${confidenceBadgeClass(
+                              className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ${confidenceBadgeClass(
                                 assessment.confidence
                               )}`}
                             >
@@ -1028,7 +1028,7 @@ export default function INDFullSolution() {
           <button
             onClick={() => handleDownloadModule(module.id)}
             disabled={isLoading}
-            className="inline-flex items-center px-3 py-1.5 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded text-sm disabled:opacity-50"
+            className="inline-flex items-center px-3 py-1.5 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded text-sm disabled:opacity-60"
           >
             {isLoading ? <Loader2 className="animate-spin h-4 w-4 mr-1" /> : null}
             Download Module
@@ -1666,7 +1666,7 @@ export default function INDFullSolution() {
               <button
                 onClick={startGuidedFlow}
                 disabled={isCreatingFromDocs}
-                className="w-full inline-flex items-center justify-center px-3 py-2 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded text-sm disabled:opacity-50"
+                className="w-full inline-flex items-center justify-center px-3 py-2 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded text-sm disabled:opacity-60"
               >
                 {isCreatingFromDocs ? <Loader2 className="animate-spin h-4 w-4 mr-1" /> : null}
                 {guidedFamily === 'ind' ? 'Start Guided Upload' : 'Open Family Workspace'}
@@ -2029,11 +2029,11 @@ export default function INDFullSolution() {
                   >
                     {acceptanceRatio}%
                   </p>
-                  <p className="text-[10px] text-slate-500">
+                  <p className="text-[11px] text-slate-500">
                     Lifetime: {indStats.kpiDerived?.lifetime?.acceptanceRatio ?? 0}%
                   </p>
                   <p
-                    className={`text-[10px] ${
+                    className={`text-[11px] ${
                       acceptanceRatioDelta > 0
                         ? 'text-emerald-700'
                         : acceptanceRatioDelta < 0
@@ -2058,11 +2058,11 @@ export default function INDFullSolution() {
                   >
                     {draftToExportConversion}%
                   </p>
-                  <p className="text-[10px] text-slate-500">
+                  <p className="text-[11px] text-slate-500">
                     Lifetime: {indStats.kpiDerived?.lifetime?.draftToExportConversion ?? 0}%
                   </p>
                   <p
-                    className={`text-[10px] ${
+                    className={`text-[11px] ${
                       draftToExportConversionDelta > 0
                         ? 'text-emerald-700'
                         : draftToExportConversionDelta < 0

@@ -71,10 +71,10 @@ const Section: React.FC<{
 }> = ({ title, icon: Icon, count, defaultOpen = true, children }) => {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="border-b border-zinc-100 last:border-0">
+    <div className="border-b border-zinc-200 last:border-0">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center gap-2 px-4 py-2.5 text-left hover:bg-zinc-50 transition-colors"
+        className="w-full flex items-center gap-2 px-4 py-2.5 text-left hover:bg-zinc-50 transition-colors duration-150"
       >
         {open ? (
           <ChevronDown className="w-3 h-3 text-zinc-400" />
@@ -84,7 +84,7 @@ const Section: React.FC<{
         <Icon className="w-3.5 h-3.5 text-zinc-500" />
         <span className="text-xs font-medium text-zinc-700 flex-1">{title}</span>
         {count !== undefined && (
-          <span className="text-[10px] text-zinc-400 tabular-nums">{count}</span>
+          <span className="text-xs text-zinc-400 tabular-nums">{count}</span>
         )}
       </button>
       {open && <div className="pb-3">{children}</div>}
@@ -106,7 +106,7 @@ const ContextUsageBar: React.FC<{
 
   return (
     <div className="px-4 py-2">
-      <div className="flex items-center justify-between text-[10px] text-zinc-500 mb-1">
+      <div className="flex items-center justify-between text-xs text-zinc-500 mb-1">
         <span>Context window</span>
         <span className="tabular-nums">
           {(used / 1000).toFixed(0)}K / {(max / 1000).toFixed(0)}K tokens
@@ -114,7 +114,7 @@ const ContextUsageBar: React.FC<{
       </div>
       <div className="h-1 rounded-full bg-zinc-100 overflow-hidden">
         <div
-          className={cn('h-full rounded-full transition-all', color)}
+          className={cn('h-full rounded-full transition-all duration-150', color)}
           style={{ width: `${Math.min(percent, 100)}%` }}
         />
       </div>
@@ -197,14 +197,14 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
   return (
     <div className={cn('flex flex-col h-full bg-white', className)}>
       {/* Project header */}
-      <div className="px-4 py-3 border-b border-zinc-100 flex-shrink-0">
+      <div className="px-4 py-3 border-b border-zinc-200 flex-shrink-0">
         <div className="flex items-center gap-2">
           <Brain className="w-4 h-4 text-violet-500" />
           <div className="flex-1 min-w-0">
-            <div className="text-xs font-semibold text-zinc-800 truncate">
+            <div className="text-xs font-semibold text-zinc-900 truncate">
               {activeProject?.name || 'Project Knowledge'}
             </div>
-            <div className="text-[10px] text-zinc-400">
+            <div className="text-xs text-zinc-400">
               {activeProject?.type || 'Submission'} &middot; {docs.length} files &middot; {artifacts.length} artifacts
             </div>
           </div>
@@ -261,10 +261,10 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
             {/* File list */}
             {isLoading ? (
               <div className="flex items-center justify-center py-6">
-                <Loader2 className="w-4 h-4 text-zinc-300 animate-spin" />
+                <Loader2 className="w-4 h-4 text-zinc-400 animate-spin" />
               </div>
             ) : docs.length === 0 ? (
-              <p className="text-[11px] text-zinc-400 text-center py-4">
+              <p className="text-xs text-zinc-400 text-center py-4">
                 Upload source documents to give AnA RI project context — just like Claude.ai projects.
               </p>
             ) : (
@@ -274,26 +274,31 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
                   return (
                     <li
                       key={doc.id}
-                      className="group flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-zinc-50 transition-colors"
+                      className="group flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-zinc-50 transition-colors duration-150"
                     >
                       <Icon className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0" />
                       <span className="flex-1 text-xs text-zinc-700 truncate min-w-0" title={doc.name}>
                         {doc.name}
                       </span>
-                      <span className="text-[10px] text-zinc-400 flex-shrink-0 tabular-nums">
+                      <span className="text-xs text-zinc-400 flex-shrink-0 tabular-nums">
                         {formatBytes(doc.size)}
                       </span>
                       {doc.tokenCount && (
-                        <span className="text-[10px] text-zinc-300 flex-shrink-0 tabular-nums">
+                        <span className="text-xs text-zinc-400 flex-shrink-0 tabular-nums">
                           {(doc.tokenCount / 1000).toFixed(0)}K
                         </span>
                       )}
                       <button
-                        onClick={() => removeDocument(doc.id)}
-                        className="flex-shrink-0 opacity-0 group-hover:opacity-100 p-1 rounded text-zinc-400 hover:text-red-500 hover:bg-red-50 transition-all"
+                        onClick={() => {
+                          if (window.confirm(`Remove "${doc.name}" from project knowledge?`)) {
+                            removeDocument(doc.id);
+                          }
+                        }}
+                        className="flex-shrink-0 opacity-0 group-hover:opacity-100 p-1.5 rounded text-zinc-400 hover:text-red-500 hover:bg-red-50 transition-all duration-150 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                         title="Remove file"
+                        aria-label={`Remove ${doc.name}`}
                       >
-                        <X className="w-3 h-3" />
+                        <X className="w-3.5 h-3.5" />
                       </button>
                     </li>
                   );
@@ -341,7 +346,7 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
             ) : (
               <button
                 onClick={handleStartEditing}
-                className="w-full text-left p-3 rounded-md border border-zinc-100 hover:border-zinc-200 hover:bg-zinc-50 transition-colors"
+                className="w-full text-left p-3 rounded-md border border-zinc-200 hover:border-zinc-200 hover:bg-zinc-50 transition-colors duration-150"
               >
                 {knowledge?.customInstructions ? (
                   <p className="text-xs text-zinc-700 whitespace-pre-wrap line-clamp-4">
@@ -352,7 +357,7 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
                     Add custom instructions for AnA RI on this project...
                   </p>
                 )}
-                <p className="text-[10px] text-zinc-400 mt-1">Click to edit</p>
+                <p className="text-xs text-zinc-400 mt-1">Click to edit</p>
               </button>
             )}
           </div>
@@ -362,7 +367,7 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
         <Section title="Generated Artifacts" icon={FileText} count={artifacts.length} defaultOpen={artifacts.length > 0}>
           <div className="px-4">
             {artifacts.length === 0 ? (
-              <p className="text-[11px] text-zinc-400 text-center py-4">
+              <p className="text-xs text-zinc-400 text-center py-4">
                 Documents you create or generate will appear here with full version history.
               </p>
             ) : (
@@ -370,19 +375,19 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
                 {artifacts.slice(0, 20).map((artifact) => (
                   <li
                     key={artifact.id}
-                    className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-zinc-50 transition-colors"
+                    className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-zinc-50 transition-colors duration-150"
                   >
                     <FileText className="w-3.5 h-3.5 text-violet-400 flex-shrink-0" />
                     <span className="flex-1 text-xs text-zinc-700 truncate min-w-0" title={artifact.title}>
                       {artifact.title}
                     </span>
-                    <span className="text-[10px] text-zinc-300 flex-shrink-0">
+                    <span className="text-xs text-zinc-400 flex-shrink-0">
                       v{artifact.version}
                     </span>
                   </li>
                 ))}
                 {artifacts.length > 20 && (
-                  <li className="text-[10px] text-zinc-400 px-2 py-1">
+                  <li className="text-xs text-zinc-400 px-2 py-1">
                     +{artifacts.length - 20} more artifacts
                   </li>
                 )}

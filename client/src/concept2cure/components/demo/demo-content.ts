@@ -66,11 +66,11 @@ export const WELCOME_STEP_2: DemoStep = {
   narration: 'There\'s more — pick another area to explore:',
   previewType: 'hero',
   choices: [
-    { label: 'AI Agents & Automation', description: 'Agent Swarm, SnowGlobe, Review Pulse', nextStepId: 'ai-swarm' },
+    { label: 'AI Agents & Automation', description: 'AnA Agents, AnA Predictions, Review Pulse', nextStepId: 'ai-swarm' },
     { label: 'Project Management', description: 'Mission Control, timelines, task boards', nextStepId: 'pm-mission' },
     { label: 'Security & Compliance', description: '21 CFR Part 11, audit trails, RBAC', nextStepId: 'sec-cfr' },
     { label: 'Collaboration & Reporting', description: 'Team, reviews, reports, post-market', nextStepId: 'collab-hub' },
-    { label: 'Nano Banana Visual AI', description: 'AI image generation, infographics, slide decks', nextStepId: 'nb-visual-ai' },
+    { label: 'AnA Visual', description: 'AI image generation, infographics, slide decks', nextStepId: 'nb-visual-ai' },
   ],
 };
 
@@ -78,15 +78,15 @@ export const WELCOME_STEP_2: DemoStep = {
 
 export const NANO_BANANA_DEMO_PATH: DemoPath = {
   id: 'nano-banana',
-  title: 'Nano Banana Visual AI',
+  title: 'AnA Visual',
   icon: '🍌',
   description: 'Generate 4K infographics, regulatory diagrams, and slide decks on demand',
-  salesHook: 'Your team spends 40+ hours per month creating presentation visuals. Nano Banana does it in seconds.',
+  salesHook: 'Your team spends 40+ hours per month creating presentation visuals. AnA Visual does it in seconds.',
   steps: [
     {
       id: 'nb-visual-ai',
       narration:
-        "**Nano Banana** is our visual AI engine — powered by Google Gemini's image generation.\n\n" +
+        "**AnA Visual** is our visual AI engine — powered by Google Gemini's image generation.\n\n" +
         'Instead of spending hours in PowerPoint or hiring a designer, your team can generate:\n' +
         '- **Publication-ready infographics** for advisory committees\n' +
         '- **Study design diagrams** (CONSORT, PK curves, patient flow)\n' +
@@ -99,7 +99,7 @@ export const NANO_BANANA_DEMO_PATH: DemoPath = {
     {
       id: 'nb-generate-demo',
       narration:
-        'Here\'s the magic: type a description like *"infographic showing IND submission timeline with milestones"* and Nano Banana generates a 4K image in under 12 seconds.\n\n' +
+        'Here\'s the magic: type a description like *"infographic showing IND submission timeline with milestones"* and AnA Visual generates a 4K image in under 12 seconds.\n\n' +
         '**Key capabilities:**\n' +
         '- Text renders accurately in images (logos, labels, chart text)\n' +
         '- Multiple styles: infographic, illustration, photorealistic, slide visual\n' +
@@ -112,11 +112,11 @@ export const NANO_BANANA_DEMO_PATH: DemoPath = {
     {
       id: 'nb-integration-demo',
       narration:
-        "Nano Banana isn't a standalone tool — it's woven into the platform:\n\n" +
+        "AnA Visual isn't a standalone tool — it's woven into the platform:\n\n" +
         '- **Reports**: Generate compliance visuals alongside readiness briefs\n' +
         '- **Document Builder**: Insert AI figures while authoring CSRs and CTDs\n' +
         '- **Dashboards**: Export analytics as infographics or slide decks\n' +
-        '- **AnA Chat**: Switch to Nano Banana mode and describe what you need\n' +
+        '- **AnA Chat**: Switch to AnA Visual mode and describe what you need\n' +
         '- **Training**: Auto-generate training materials with regulatory visuals\n\n' +
         'Every image includes a SynthID watermark for traceability. What would you like to explore next?',
       previewType: 'nano-banana-integrations',
@@ -192,7 +192,7 @@ const PATH_RESEARCH: DemoStep[] = [
   {
     id: 'res-engine',
     narration:
-      "The **Deep Research Engine** replaces your manual PubMed and ClinicalTrials.gov searches.\n\n" +
+      "**AnA Research** replaces your manual PubMed and ClinicalTrials.gov searches.\n\n" +
       'Ask a question in natural language — AnA queries across **ClinicalTrials.gov, PubMed, FDA, EMA, PMDA, and NMPA databases** simultaneously. ' +
       'Veeva Vault and Medidata connectors auto-populate your workspace with source data.\n\n' +
       'Instead of 5 browser tabs and a spreadsheet, everything is synthesized in one view.',
@@ -294,10 +294,10 @@ const PATH_AUTHORING: DemoStep[] = [
   {
     id: 'doc-sherpa',
     narration:
-      "**Document Sherpa** guides authors step-by-step through complex documents with best-practice suggestions, " +
+      "**AnA Guided Authoring** guides authors step-by-step through complex documents with best-practice suggestions, " +
       'IFU consistency checking, labeling compliance, and cross-reference validation.\n\n' +
       '**Regulatory submissions with unvalidated cross-references face a 52% higher refusal rate at the gateway.** ' +
-      'Sherpa catches these before you ever hit "submit".',
+      'AnA Guided Authoring catches these before you ever hit "submit".',
     previewType: 'doc-sherpa',
     choices: [EXPLORE_ANOTHER, START_TRIAL],
   },
@@ -357,7 +357,7 @@ const PATH_AI: DemoStep[] = [
   {
     id: 'ai-swarm',
     narration:
-      "This is the **Agent Swarm** — 12+ specialized AI agents that work in parallel on your submission.\n\n" +
+      "This is **AnA Agents** — 12+ specialized AI agents that work in parallel on your submission.\n\n" +
       '- **Predicate Researcher** — scans FDA databases\n' +
       '- **Evidence Agent** — gathers clinical evidence\n' +
       '- **Protocol Analyzer** — validates study design (ICH E6)\n' +
@@ -367,14 +367,14 @@ const PATH_AI: DemoStep[] = [
       '- **Compliance Agent** — checks against applicable CFR\n' +
       '- **Translator** — adapts for regional requirements\n' +
       '- **Compiler** — assembles eCTD packages\n\n' +
-      'They work simultaneously. What takes a team weeks, our swarm completes in hours.',
+      'They work simultaneously. What takes a team weeks, AnA Agents complete in hours.',
     previewType: 'ai-swarm',
     nextStep: 'ai-snowglobe',
   },
   {
     id: 'ai-snowglobe',
     narration:
-      "**SnowGlobe** is our prediction and simulation engine. Before you file, it models what-if scenarios:\n\n" +
+      "**AnA Predictions** is our prediction and simulation engine. Before you file, it models what-if scenarios:\n\n" +
       '- *What if we choose a different predicate device?*\n' +
       '- *What if FDA asks for additional clinical data?*\n' +
       '- *What\'s the probability of approval with this endpoint?*\n\n' +
@@ -590,7 +590,7 @@ export const PATH_SELECTOR_STEP: DemoStep = {
     { label: 'Research & Intelligence', description: 'ClinicalTrials.gov, PubMed, regulatory alerts', nextStepId: 'res-engine' },
     { label: 'Document Authoring', description: 'eCTD, CSR, templates, vault', nextStepId: 'doc-coauthor' },
     { label: 'CMC & Quality', description: 'Chemistry, manufacturing, controls', nextStepId: 'cmc-blueprint' },
-    { label: 'AI Agents & Automation', description: 'Agent Swarm, SnowGlobe, Review Pulse', nextStepId: 'ai-swarm' },
+    { label: 'AI Agents & Automation', description: 'AnA Agents, AnA Predictions, Review Pulse', nextStepId: 'ai-swarm' },
     { label: 'Project Management', description: 'Mission Control, timelines, task boards', nextStepId: 'pm-mission' },
     { label: 'Security & Compliance', description: '21 CFR Part 11, audit trails, RBAC', nextStepId: 'sec-cfr' },
     { label: 'Collaboration & Reporting', description: 'Team, reviews, reports, post-market', nextStepId: 'collab-hub' },
@@ -659,7 +659,7 @@ export const DEMO_PATHS: DemoPath[] = [
     id: 'authoring',
     title: 'Document Authoring',
     icon: 'FileText',
-    description: 'eCTD Co-Author, CSR Builder, templates, vault, version control, Document Sherpa',
+    description: 'eCTD Co-Author, CSR Builder, templates, vault, version control, AnA Guided Authoring',
     salesHook: 'Unvalidated cross-references face a 52% higher gateway refusal rate',
     steps: PATH_AUTHORING,
   },
@@ -675,7 +675,7 @@ export const DEMO_PATHS: DemoPath[] = [
     id: 'ai',
     title: 'AI Agents & Automation',
     icon: 'Bot',
-    description: 'Agent Swarm, SnowGlobe predictions, Review Pulse, AnA + Dr. Sage dual-AI',
+    description: 'AnA Agents, AnA Predictions, Review Pulse, AnA + Dr. Sage dual-AI',
     salesHook: 'Manual regulatory review cycles take 2-4 weeks — AI compresses this to hours',
     steps: PATH_AI,
   },

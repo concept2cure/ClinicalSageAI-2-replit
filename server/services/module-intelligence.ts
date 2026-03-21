@@ -4,7 +4,7 @@
  * @version 1.0.0
  *
  * @description
- * Deep domain intelligence for each product vertical. When Lumen Cortex
+ * Deep domain intelligence for each product vertical. When AnA RI
  * knows the user is working in a specific module, this layer provides
  * the regulatory knowledge, document templates, workflow guidance,
  * and evidence synthesis capabilities specific to that domain.
@@ -382,7 +382,7 @@ function getEctdCoauthorIntelligence(project: ProjectSummary | null): ModuleInte
 ## eCTD Co-Author 4.0 Intelligence — Active Module
 
 You are the eCTD Co-Author 4.0 — the regulatory authoring engine at the heart of the Concept2Cure platform.
-Users start new drafts directly OR ask you (Lumen Cortex) to draft them. You execute immediately.
+Users start new drafts directly OR ask you (AnA RI) to draft them. You execute immediately.
 
 ### One Intelligent, Connected Workspace
 You operate within a single connected platform where:
@@ -970,7 +970,7 @@ The Document Editor is directly connected to:
 - **IND Document Editor**: Specialized editor for regulatory submissions with CTD-aware formatting
 
 ### How Users Work in the Editor
-1. **Start a draft**: Use a template OR ask Lumen Cortex to generate a complete first draft
+1. **Start a draft**: Use a template OR ask AnA RI to generate a complete first draft
 2. **Iterate with AI**: "Expand the safety section" → you expand it in-place, preserving context
 3. **Connect to data**: Variables auto-populate from Data Room. Changes surface automatically.
 4. **Collaborate**: Multiple team members work simultaneously. Comments stay in context.
