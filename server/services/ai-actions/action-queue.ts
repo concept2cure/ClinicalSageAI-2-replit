@@ -113,15 +113,25 @@ export async function initializeActionQueue(): Promise<boolean> {
         logger.info(`Processing queued action`, { jobId, actionType: request.actionType });
         await job.progress(10);
 
-        // Execute the action through the normal dispatcher
-        // (forceExecution to bypass idempotency cache since this is a retry-safe queue)
         const response = await dispatchAction(request, { ...options, forceExecution: true });
 
         await job.progress(100);
         return response;
-      } finally {
-        inFlightJobs.delete(jobId);
+      } catch (err) {
+        // Only remove from in-flight if this was the last attempt (no more retries)
+        const maxAttempts = job.opts?.attempts || 3;
+        if (job.attemptsMade >= maxAttempts - 1) {
+          inFlightJobs.delete(jobId);
+        }
+        throw err;
       }
+    });
+
+    // Remove from in-flight on terminal states
+    actionQueue.on('completed', (job) => { inFlightJobs.delete(String(job.id)); });
+    actionQueue.on('failed', (job) => {
+      const maxAttempts = job.opts?.attempts || 3;
+      if (job.attemptsMade >= maxAttempts) inFlightJobs.delete(String(job.id));
     });
 
     // Event handlers for monitoring

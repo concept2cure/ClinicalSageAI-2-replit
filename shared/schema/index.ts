@@ -41,4 +41,5 @@ export { CSR_KNOWLEDGE_DB_TABLES, type CsrKnowledgeDbTableName } from './csr-kno
 export * from './regulatory-atoms';
 export * from './api-keys';
 export * from './ctd-projects';
+export * from './unified_workflow';
 export * from './support-admin';

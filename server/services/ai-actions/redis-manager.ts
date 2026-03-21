@@ -86,6 +86,14 @@ export async function initializeRedis(): Promise<boolean> {
     await client.ping();
     available = true;
     logger.info('Redis shared connection established');
+
+    // Eagerly initialize subscriber client (needed by Bull queues)
+    subscriberClient = createRedisClient('subscriber');
+    if (subscriberClient) {
+      await subscriberClient.connect();
+      logger.info('Redis subscriber connection established');
+    }
+
     return true;
   } catch (err: any) {
     logger.error('Failed to connect to Redis', { error: err.message });

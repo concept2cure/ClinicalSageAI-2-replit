@@ -68,11 +68,19 @@ const promoteArtifactHandler: AIActionHandler = {
     // 1. Fetch the artifact (org-scoped via shared utility)
     const artifact = await fetchArtifact(db, request.targetId!, ctx.user.organizationId);
 
-    // 2. Check artifact isn't already promoted (idempotency guard)
+    // 2. Check artifact status is promotable
+    const PROMOTABLE_STATUSES = ['draft', 'review'];
     if (artifact.status === 'locked') {
       throw new AIActionHandlerError(
         'ALREADY_LOCKED',
         'Artifact is locked and cannot be promoted again. Create a new version instead.',
+        409
+      );
+    }
+    if (artifact.status === 'approved' && (artifact.metadata as any)?.promotedToDocumentId) {
+      throw new AIActionHandlerError(
+        'ALREADY_PROMOTED',
+        `Artifact was already promoted to document ${(artifact.metadata as any).promotedToDocumentId}`,
         409
       );
     }

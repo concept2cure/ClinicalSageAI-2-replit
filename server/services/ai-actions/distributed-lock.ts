@@ -29,7 +29,9 @@ function memoryAcquire(key: string, owner: string, ttlMs: number): boolean {
 
 function memoryRelease(key: string, owner: string): boolean {
   const existing = memoryLocks.get(key);
-  if (!existing || existing.owner !== owner) return false;
+  if (!existing) return false;
+  // Allow release if: owner matches, OR lock has already expired
+  if (existing.owner !== owner && existing.expiresAt > Date.now()) return false;
   memoryLocks.delete(key);
   return true;
 }

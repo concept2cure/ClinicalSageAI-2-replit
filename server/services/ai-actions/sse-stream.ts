@@ -27,6 +27,7 @@ interface SSEConnection {
 const activeConnections = new Map<string, SSEConnection>();
 const MAX_CONNECTIONS_PER_USER = 5;
 const SSE_KEEPALIVE_MS = 15_000;
+const SSE_IDLE_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes max per connection
 
 // ---------------------------------------------------------------------------
 // SSE Handler
@@ -87,9 +88,19 @@ export function handleSSEStream(req: Request, res: Response): void {
     }
   }, SSE_KEEPALIVE_MS);
 
+  // Idle timeout — auto-close stale connections
+  const idleTimeout = setTimeout(() => {
+    try {
+      sendSSEEvent(res, 'timeout', { message: 'Connection idle timeout' });
+      res.end();
+    } catch { /* already closed */ }
+    cleanup();
+  }, SSE_IDLE_TIMEOUT_MS);
+
   // Cleanup on disconnect
   const cleanup = () => {
     clearInterval(keepalive);
+    clearTimeout(idleTimeout);
     activeConnections.delete(connectionId);
     logger.debug(`SSE connection closed`, { connectionId, jobId });
   };

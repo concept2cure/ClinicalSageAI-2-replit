@@ -6,6 +6,7 @@
  * All operations run in a transaction for atomicity.
  */
 
+import * as crypto from 'crypto';
 import { eq, and } from 'drizzle-orm';
 import { unifiedDocuments, workflowDocumentVersions } from '../../../../shared/schema/unified_workflow';
 import { registerActionHandler } from '../action-registry';
@@ -77,7 +78,7 @@ const handler: AIActionHandler = {
           content: {
             body: content,
             previousVersion: doc.latestVersion,
-            contentHash: require('crypto').createHash('sha256').update(content).digest('hex'),
+            contentHash: crypto.createHash('sha256').update(content).digest('hex'),
           },
           createdBy: ctx.user.userName,
           comments: changeReason,

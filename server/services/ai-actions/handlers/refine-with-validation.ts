@@ -10,7 +10,7 @@
  * Phase 2: Multi-pass refinement, diff preview, interactive acceptance.
  */
 
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { concept2cureArtifacts } from '../../../../shared/schema';
 import { registerActionHandler } from '../action-registry';
 import { fetchContentForProcessing, artifactWhereClause } from '../shared-utils';
@@ -118,11 +118,12 @@ const handler: AIActionHandler = {
     const updatedObjects = [];
     if (request.targetId && request.targetType === 'artifact') {
       try {
+        // Use SQL expression for atomic version increment (no read-then-write race)
         await db
           .update(concept2cureArtifacts)
           .set({
             content: refinedContent,
-            version: (await getArtifactVersion(db, request.targetId, ctx.user.organizationId)) + 1,
+            version: sql`COALESCE(${concept2cureArtifacts.version}, 1) + 1`,
             metadata: {
               lastRefinedAt: new Date().toISOString(),
               lastRefinedBy: ctx.user.userId,
@@ -249,27 +250,6 @@ ${content}
 ---
 
 Provide the complete revised content with all findings addressed.`;
-}
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-async function getArtifactVersion(
-  db: any,
-  targetId: string | number,
-  organizationId: number
-): Promise<number> {
-  try {
-    const [artifact] = await db
-      .select({ version: concept2cureArtifacts.version })
-      .from(concept2cureArtifacts)
-      .where(artifactWhereClause(targetId, organizationId))
-      .limit(1);
-    return artifact?.version || 1;
-  } catch {
-    return 1;
-  }
 }
 
 // ---------------------------------------------------------------------------

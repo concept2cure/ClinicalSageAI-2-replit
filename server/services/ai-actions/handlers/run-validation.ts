@@ -84,6 +84,7 @@ const handler: AIActionHandler = {
       // If validation service is unavailable, run basic structural validation
       console.warn('[AI Actions] RealTimeValidationService unavailable, falling back to basic validation:', err);
       validationResult = runBasicValidation(content, documentType || 'regulatory_submission');
+      validationResult._degraded = true;
     }
 
     // 3. Map to standard ValidationFinding format
@@ -138,9 +139,10 @@ const handler: AIActionHandler = {
           status: validationResult.isValid ? 'validated' : 'needs_review',
         },
       ],
-      warnings: validationResult.isValid
-        ? []
-        : [`${findings.length} validation finding(s) detected`],
+      warnings: [
+        ...(validationResult._degraded ? ['Validation ran in degraded mode (basic fallback) — AI-powered validation service was unavailable'] : []),
+        ...(validationResult.isValid ? [] : [`${findings.length} validation finding(s) detected`]),
+      ],
       errors: [],
       provenance: {
         actionId: ctx.actionId,

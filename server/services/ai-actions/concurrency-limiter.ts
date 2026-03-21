@@ -57,6 +57,35 @@ export async function acquireConcurrencySlot(
 // Redis implementation
 // ---------------------------------------------------------------------------
 
+// Lua script for atomic acquire: increments both counters only if within limits
+const ACQUIRE_SCRIPT = `
+  local org_key = KEYS[1]
+  local global_key = KEYS[2]
+  local max_per_org = tonumber(ARGV[1])
+  local max_global = tonumber(ARGV[2])
+  local ttl = tonumber(ARGV[3])
+
+  -- Check global limit
+  local global_count = tonumber(redis.call('GET', global_key) or '0')
+  if global_count >= max_global then
+    return 0
+  end
+
+  -- Atomically increment org counter
+  local org_count = redis.call('INCR', org_key)
+  redis.call('EXPIRE', org_key, ttl)
+
+  if org_count > max_per_org then
+    redis.call('DECR', org_key)
+    return 0
+  end
+
+  -- Atomically increment global counter
+  redis.call('INCR', global_key)
+  redis.call('EXPIRE', global_key, ttl)
+  return 1
+`;
+
 async function acquireRedis(
   orgKey: string,
   organizationId: number,
@@ -68,27 +97,17 @@ async function acquireRedis(
   const redisGlobalKey = `${REDIS_KEY_PREFIX}global`;
 
   try {
-    // Check global limit first
-    const globalCount = await redis.get(redisGlobalKey);
-    if (globalCount && parseInt(globalCount, 10) >= maxGlobal) {
-      logger.warn('Global concurrency limit reached', { current: globalCount, max: maxGlobal });
+    // Atomic acquire via Lua script — prevents counter desynchronization
+    const result = await redis.eval(
+      ACQUIRE_SCRIPT,
+      2, redisOrgKey, redisGlobalKey,
+      maxPerOrg, maxGlobal, REDIS_KEY_TTL
+    );
+
+    if (result === 0) {
+      logger.warn('Concurrency limit reached', { organizationId, orgKey });
       return null;
     }
-
-    // Increment org counter atomically
-    const orgCount = await redis.incr(redisOrgKey);
-    await redis.expire(redisOrgKey, REDIS_KEY_TTL);
-
-    if (orgCount > maxPerOrg) {
-      // Over limit — decrement back
-      await redis.decr(redisOrgKey);
-      logger.warn('Org concurrency limit reached', { organizationId, current: orgCount - 1, max: maxPerOrg });
-      return null;
-    }
-
-    // Increment global counter
-    await redis.incr(redisGlobalKey);
-    await redis.expire(redisGlobalKey, REDIS_KEY_TTL);
 
     return {
       orgKey,

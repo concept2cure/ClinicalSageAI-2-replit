@@ -179,7 +179,7 @@ async function attachToArtifact(
 function deduplicateSources(sources: SourceReference[]): SourceReference[] {
   const seen = new Set<string>();
   return sources.filter((s) => {
-    const key = s.sourceId || `${s.sourceType}:${s.title}`;
+    const key = s.sourceId || `${s.sourceType}:${s.title}:${s.url || ''}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;

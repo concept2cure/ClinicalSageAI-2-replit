@@ -183,10 +183,11 @@ function getCachedResponse(key: string): AIActionResponse | null {
 }
 
 function cacheResponse(key: string, response: AIActionResponse): void {
-  // LRU eviction
-  if (idempotencyCache.size >= MAX_IDEMPOTENCY_ENTRIES) {
+  // LRU eviction — loop to handle concurrent insertions safely
+  while (idempotencyCache.size >= MAX_IDEMPOTENCY_ENTRIES) {
     const firstKey = idempotencyCache.keys().next().value;
     if (firstKey) idempotencyCache.delete(firstKey);
+    else break;
   }
   idempotencyCache.set(key, {
     response,
