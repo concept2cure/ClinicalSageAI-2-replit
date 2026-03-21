@@ -28,6 +28,7 @@ import {
   Image as ImageIcon,
   Download,
 } from 'lucide-react';
+import { useProjectIntelligence, useReadinessScore } from '../../hooks/useIntelligence';
 
 marked.setOptions({ breaks: true, gfm: true });
 
@@ -156,6 +157,25 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   const screenName = contextProfile?.screenName || 'default';
   const screenLabel = SCREEN_LABELS[screenName] || '';
 
+  // Intelligence Layer context enrichment — provides Ana with project knowledge
+  const projectIdNum = contextProfile?.projectId ? Number(contextProfile.projectId) : null;
+  const { data: projectIntelligence } = useProjectIntelligence(projectIdNum);
+  const { data: readinessScore } = useReadinessScore(projectIdNum);
+
+  const intelligenceContext = useMemo(() => {
+    if (!projectIntelligence && !readinessScore) return undefined;
+    return {
+      regulatoryStrategy: projectIntelligence?.regulatoryStrategy || undefined,
+      targetIndication: projectIntelligence?.targetIndication || undefined,
+      targetPopulation: projectIntelligence?.targetPopulation || undefined,
+      riskFactors: projectIntelligence?.riskFactors?.slice(0, 3) || undefined,
+      keyDecisions: projectIntelligence?.keyDecisions?.slice(0, 3) || undefined,
+      readinessScore: readinessScore?.overallScore ?? undefined,
+      readinessTrend: readinessScore?.trend?.direction ?? undefined,
+      topGaps: readinessScore?.gaps?.slice(0, 3).map(g => g.description) || undefined,
+    };
+  }, [projectIntelligence, readinessScore]);
+
   // Close mode dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -189,15 +209,6 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       'Checking predicate devices and precedents...',
       'Let it flow, let it flow... through the review process 🏔️',
       'Building your regulatory snowglobe of insights...',
-    const ANA_THINKING_MESSAGES = [
-      'Analyzing your request...',
-      'Reviewing regulatory guidance...',
-      'Cross-referencing documents...',
-      'Checking FDA requirements...',
-      'Researching ICH guidelines...',
-      'Reviewing compliance standards...',
-      'Preparing your response...',
-      'Searching regulatory databases...',
     ];
     const DEEP_RESEARCH_THINKING = [
       'Querying ClinicalTrials.gov for matching studies...',
@@ -415,6 +426,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             projectId: contextProfile?.projectId,
             productType: contextProfile?.productType,
             userRole: contextProfile?.userRole,
+            ...intelligenceContext,
           },
         }),
       });
@@ -473,6 +485,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               activeDocument: contextProfile?.activeDocumentTitle || undefined,
               activeDocumentExcerpt: contextProfile?.activeDocumentExcerpt || undefined,
               activeDocumentCtdSection: contextProfile?.activeDocumentCtdSection || undefined,
+              ...intelligenceContext,
             },
             conversationHistory: messages.slice(-10).map(m => ({
               role: m.role,
@@ -538,24 +551,16 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   // ── Compact mode: just input bar + expandable overlay ──
   if (isCompact) {
     return (
-      <div className="flex-shrink-0 border-t border-[#E8E6DC] bg-white relative z-30">
+      <div className="flex-shrink-0 border-t border-zinc-200 bg-white relative z-30">
         {/* Expanded conversation overlay (slides up from bottom) */}
         {hasMessages && (
-          <div className="max-h-[50vh] overflow-y-auto zen-scroll border-t border-[#F5F4EF]" style={{ scrollbarWidth: 'thin' }}>
           <div className="max-h-[50vh] overflow-y-auto zen-scroll border-t border-zinc-200" style={{ scrollbarWidth: 'thin' }}>
             {messages.map(msg => {
               const isUser = msg.role === 'user';
               const htmlContent = !isUser ? renderMarkdown(msg.content) : '';
               return (
-                <div key={msg.id} className={cn('group px-4 py-3', isUser ? 'bg-[#FAF9F5]/60' : 'bg-white')}>
+                <div key={msg.id} className={cn('group px-4 py-3', isUser ? 'bg-zinc-50/60' : 'bg-white')}>
                   <div className="flex gap-2.5 max-w-3xl mx-auto">
-                    <div className={cn('w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5', isUser ? 'bg-[#4D4B45] text-white' : 'bg-[#D97757]')}>
-                      {isUser ? <span className="text-[9px] font-bold">{(contextProfile?.userRole?.[0] || 'Y').toUpperCase()}</span> : <Sparkles className="w-3 h-3 text-white" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="text-xs font-semibold text-[#2D2C28]">{isUser ? 'You' : 'AnA'}</span>
-                      {isUser ? (
-                        <p className="text-sm text-[#2D2C28] leading-relaxed whitespace-pre-wrap mt-0.5">{msg.content}</p>
                     <div className={cn('w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5', isUser ? 'bg-zinc-800 text-white' : 'bg-violet-600')}>
                       {isUser ? <span className="text-xs font-semibold">{(contextProfile?.userRole?.[0] || 'Y').toUpperCase()}</span> : <Sparkles className="w-3.5 h-3.5 text-white" />}
                     </div>
@@ -564,7 +569,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       {isUser ? (
                         <p className="text-sm text-zinc-900 leading-relaxed whitespace-pre-wrap mt-0.5">{msg.content}</p>
                       ) : (
-                        <div className="prose prose-sm prose-stone max-w-none mt-0.5 prose-p:text-[#4D4B45] prose-p:leading-relaxed prose-p:my-1.5 prose-strong:text-[#141413] [&>*:first-child]:mt-0 [&>*:last-child]:mb-0" dangerouslySetInnerHTML={{ __html: htmlContent }} />
+                        <div className="prose prose-sm prose-zinc max-w-none mt-0.5 prose-p:text-zinc-700 prose-p:leading-relaxed prose-p:my-1.5 prose-strong:text-zinc-900 [&>*:first-child]:mt-0 [&>*:last-child]:mb-0" dangerouslySetInnerHTML={{ __html: htmlContent }} />
                       )}
                     </div>
                   </div>
@@ -574,13 +579,6 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             {isThinking && (
               <div className="px-4 py-3 bg-white">
                 <div className="flex gap-2.5 max-w-3xl mx-auto">
-                  <div className="w-6 h-6 rounded-full bg-[#D97757] flex items-center justify-center flex-shrink-0 mt-0.5"><Sparkles className="w-3 h-3 text-white" /></div>
-                  <div>
-                    <span className="text-xs font-semibold text-[#2D2C28]">AnA</span>
-                    <div className="flex items-center gap-1 mt-1">
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_infinite]" />
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
                   <div className="w-7 h-7 rounded-full bg-violet-600 flex items-center justify-center flex-shrink-0 mt-0.5"><Sparkles className="w-3.5 h-3.5 text-white" /></div>
                   <div>
                     <span className="text-xs font-semibold text-zinc-900">AnA</span>
@@ -601,12 +599,6 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         <div className="px-4 py-2.5 bg-white">
           <div className="max-w-3xl mx-auto">
             <div className={cn(
-              'flex items-end gap-2 px-3.5 py-2.5 bg-[#FAF9F5] border rounded-2xl transition-colors duration-150',
-              isFocused ? 'border-[#D8D5CA] ring-2 ring-[#F5F4EF] bg-white shadow-sm' : 'border-[#E8E6DC] hover:border-[#D8D5CA]'
-            )}>
-              <div className="flex items-center gap-1.5 flex-shrink-0 self-center">
-                <Sparkles className="w-4 h-4 text-[#D97757]" />
-                {screenLabel && <span className="text-[10px] text-[#B0AEA5] font-medium hidden sm:inline">{screenLabel}</span>}
               'flex items-end gap-2 px-3.5 py-2.5 bg-zinc-50 border rounded-xl transition-colors duration-150',
               isFocused ? 'border-zinc-300 ring-2 ring-zinc-100 bg-white shadow-sm' : 'border-zinc-200 hover:border-zinc-300'
             )}>
@@ -614,14 +606,13 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 <Sparkles className="w-4 h-4 text-violet-500" />
                 {screenLabel && <span className="text-xs text-zinc-400 font-medium hidden sm:inline">{screenLabel}</span>}
               </div>
-              <textarea ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)} placeholder="Message AnA..." rows={1} className="flex-1 resize-none bg-transparent border-none outline-none text-[#141413] placeholder:text-[#B0AEA5] text-sm leading-6 min-h-[24px] max-h-[120px]" />
+              <textarea ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)} placeholder="Message AnA..." rows={1} className="flex-1 resize-none bg-transparent border-none outline-none text-zinc-900 placeholder:text-zinc-400 text-sm leading-6 min-h-[24px] max-h-[120px]" />
               {hasMessages && (
-                <button onClick={() => setMessages([])} className="flex-shrink-0 p-1.5 text-[#B0AEA5] hover:text-[#6B6962] rounded-lg transition-colors" title="New thread">
                 <button onClick={() => setMessages([])} className="flex-shrink-0 p-1.5 text-zinc-400 hover:text-zinc-600 rounded-lg transition-colors duration-150" title="New thread">
                   <RotateCcw className="w-3.5 h-3.5" />
                 </button>
               )}
-              <button onClick={() => handleSend()} disabled={!input.trim() || isThinking} className={cn('flex-shrink-0 p-2 rounded-full transition-colors duration-150', input.trim() && !isThinking ? 'bg-[#141413] text-white hover:bg-[#2D2C28]' : 'bg-[#E8E6DC] text-[#B0AEA5] cursor-not-allowed')} aria-label="Send message">
+              <button onClick={() => handleSend()} disabled={!input.trim() || isThinking} className={cn('flex-shrink-0 p-2 rounded-full transition-colors duration-150', input.trim() && !isThinking ? 'bg-zinc-900 text-white hover:bg-zinc-800' : 'bg-zinc-200 text-zinc-400 cursor-not-allowed')} aria-label="Send message">
                 <ArrowUp className="w-4 h-4" />
               </button>
             </div>
@@ -641,15 +632,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           <div className="flex flex-col items-center justify-center h-full px-6">
             <div className="max-w-2xl w-full text-center">
               {/* Greeting */}
-              <div className="mb-8">
-                <div className="w-10 h-10 rounded-full bg-[#D97757] flex items-center justify-center mx-auto mb-4">
-                  <Sparkles className="w-5 h-5 text-white" />
-                </div>
-                <h2 className="text-xl font-semibold text-[#141413]">{defaultGreeting}</h2>
-                {screenLabel && (
-                  <p className="text-sm text-[#B0AEA5] mt-1">{screenLabel}</p>
               <div className="mb-10">
-                <div className="w-14 h-14 rounded-lg bg-blue-600 flex items-center justify-center mx-auto mb-5 shadow-sm">
+                <div className="w-14 h-14 rounded-lg bg-violet-600 flex items-center justify-center mx-auto mb-5 shadow-sm">
                   <Sparkles className="w-7 h-7 text-white" />
                 </div>
                 <h2 className="text-2xl font-semibold text-zinc-900">{defaultGreeting}</h2>
@@ -665,14 +649,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     <button
                       key={action.id}
                       onClick={() => handleSuggestedAction(action)}
-                      className="text-left px-4 py-3 rounded-xl border border-[#E8E6DC] hover:border-[#D8D5CA] hover:bg-[#FAF9F5] transition-colors group"
+                      className="text-left px-5 py-4 rounded-xl border border-zinc-200 hover:border-violet-200 hover:shadow-md transition-all duration-150 group"
                     >
-                      <p className="text-sm font-medium text-[#4D4B45] group-hover:text-[#141413]">{action.label}</p>
-                      {action.description && (
-                        <p className="text-xs text-[#B0AEA5] mt-0.5 line-clamp-1">{action.description}</p>
-                      className="text-left px-5 py-4 rounded-xl border border-zinc-200 hover:border-blue-200 hover:shadow-md transition-all group"
-                    >
-                      <p className="text-sm font-medium text-zinc-900 group-hover:text-blue-900">{action.label}</p>
+                      <p className="text-sm font-medium text-zinc-900 group-hover:text-violet-900">{action.label}</p>
                       {action.description && (
                         <p className="text-xs text-zinc-500 mt-1 line-clamp-2">{action.description}</p>
                       )}
@@ -699,10 +678,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   onMouseEnter={() => !isUser && setShowActions(msg.id)}
                   onMouseLeave={() => setShowActions(null)}
                 >
-                  <div className="flex gap-2.5 max-w-3xl mx-auto">
+                  <div className="flex gap-3 max-w-3xl mx-auto">
                     <div className={cn(
-                      'w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5',
-                      isUser ? 'bg-[#4D4B45] text-white' : 'bg-[#D97757]'
                       'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm',
                       isUser ? 'bg-zinc-800 text-white' : 'bg-violet-600'
                     )}>
@@ -713,9 +690,6 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <span className="text-xs font-semibold text-[#2D2C28]">{isUser ? 'You' : 'AnA'}</span>
-                      {isUser ? (
-                        <p className="text-sm text-[#2D2C28] leading-relaxed whitespace-pre-wrap mt-0.5">{msg.content}</p>
                       <span className="text-xs font-semibold text-zinc-900">{isUser ? 'You' : 'AnA'}</span>
                       {isUser ? (
                         <p className="text-sm text-zinc-900 leading-relaxed whitespace-pre-wrap mt-0.5">{msg.content}</p>
@@ -774,16 +748,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           'flex items-center gap-0.5 mt-1 transition-opacity duration-150',
                           showActions === msg.id ? 'opacity-100' : 'opacity-0'
                         )}>
-                          <button onClick={() => handleCopy(msg.id, msg.content)} className="p-1 text-[#B0AEA5] hover:text-[#4D4B45] hover:bg-[#F5F4EF] rounded transition-colors" title="Copy">
-                            {copiedId === msg.id ? <Check className="w-3 h-3 text-green-600" /> : <Copy className="w-3 h-3" />}
-                          </button>
-                          <button onClick={() => console.info(`[chat-feedback] messageId=${msg.id} positive=true`)} className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors" title="Good"><ThumbsUp className="w-3 h-3" /></button>
-                          <button onClick={() => console.info(`[chat-feedback] messageId=${msg.id} positive=false`)} className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors" title="Bad"><ThumbsDown className="w-3 h-3" /></button>
                           <button onClick={() => handleCopy(msg.id, msg.content)} className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors duration-150" title="Copy">
                             {copiedId === msg.id ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
                           </button>
-                          <button className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors duration-150" title="Good"><ThumbsUp className="w-3.5 h-3.5" /></button>
-                          <button className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors duration-150" title="Bad"><ThumbsDown className="w-3.5 h-3.5" /></button>
+                          <button onClick={() => console.info(`[chat-feedback] messageId=${msg.id} positive=true`)} className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors duration-150" title="Good"><ThumbsUp className="w-3.5 h-3.5" /></button>
+                          <button onClick={() => console.info(`[chat-feedback] messageId=${msg.id} positive=false`)} className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors duration-150" title="Bad"><ThumbsDown className="w-3.5 h-3.5" /></button>
                         </div>
                       )}
                     </div>
@@ -794,20 +763,6 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
             {/* Thinking indicator */}
             {isThinking && (
-              <div className="px-4 py-3 bg-white">
-                <div className="flex gap-2.5 max-w-3xl mx-auto">
-                  <div className="w-6 h-6 rounded-full bg-[#D97757] flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Sparkles className="w-3 h-3 text-white" />
-                  </div>
-                  <div>
-                    <span className="text-xs font-semibold text-[#2D2C28]">AnA</span>
-                    <div className="flex items-center gap-2 mt-1">
-                      <div className="flex items-center gap-1">
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_infinite]" />
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#E8967A] animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
-                      </div>
-                      <span className="text-xs text-[#D97757] font-medium">{thinkingMsg || 'Thinking...'}</span>
               <div className="px-4 py-4 bg-white">
                 <div className="flex gap-3 max-w-3xl mx-auto">
                   <div className="w-8 h-8 rounded-full bg-violet-600 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
@@ -833,7 +788,6 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       </div>
 
       {/* ── Bottom input bar — always visible ── */}
-      <div className="flex-shrink-0 px-4 py-3 border-t border-[#F5F4EF] bg-white">
       <div className="flex-shrink-0 px-4 py-3 border-t border-zinc-200 bg-white">
         <div className="max-w-3xl mx-auto">
           {/* Clear conversation button */}
@@ -841,7 +795,6 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             <div className="flex justify-center mb-2">
               <button
                 onClick={() => setMessages([])}
-                className="flex items-center gap-1.5 px-3 py-1 text-xs text-[#B0AEA5] hover:text-[#6B6962] hover:bg-[#F5F4EF] rounded-full transition-colors"
                 className="flex items-center gap-1.5 px-3 py-1 text-xs text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-full transition-colors duration-150"
               >
                 <RotateCcw className="w-3 h-3" />
@@ -851,11 +804,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           )}
 
           <div className={cn(
-            'flex items-end gap-2 px-3.5 py-2.5 bg-[#FAF9F5] border rounded-2xl transition-colors duration-150',
             'flex items-end gap-2 px-3.5 py-2.5 bg-zinc-50 border rounded-xl transition-colors duration-150',
             isFocused
-              ? 'border-[#D8D5CA] ring-2 ring-[#F5F4EF] bg-white shadow-sm'
-              : 'border-[#E8E6DC] hover:border-[#D8D5CA]'
+              ? 'border-zinc-300 ring-2 ring-zinc-100 bg-white shadow-sm'
+              : 'border-zinc-200 hover:border-zinc-300'
           )}>
             {/* Mode selector — Claude.ai model-picker style */}
             <div className="relative flex-shrink-0 self-center" ref={modeDropdownRef}>
@@ -885,48 +837,36 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               </button>
 
               {showModeDropdown && (
-                <div className="absolute bottom-full left-0 mb-1.5 w-56 bg-white rounded-xl border border-[#E8E6DC] shadow-lg py-1 z-50">
+                <div className="absolute bottom-full left-0 mb-1.5 w-56 bg-white rounded-xl border border-zinc-200 shadow-lg py-1 z-50">
                   <button
                     type="button"
                     onClick={() => { setChatMode('standard'); setShowModeDropdown(false); }}
                     className={cn(
-                      'w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-[#FAF9F5] transition-colors',
-                      chatMode === 'standard' && 'bg-[#FAF9F5]'
-                    )}
-                  >
-                    <MessageSquare className="w-4 h-4 mt-0.5 text-[#8A8880] flex-shrink-0" />
-                    <div>
-                      <div className="text-sm font-medium text-[#141413]">AnA</div>
-                      <div className="text-[11px] text-[#B0AEA5] leading-tight">Fast regulatory co-pilot for everyday questions</div>
                       'w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-zinc-50 transition-colors duration-150',
                       chatMode === 'standard' && 'bg-zinc-50'
                     )}
                   >
-                    <MessageSquare className="w-4 h-4 mt-0.5 text-blue-600 flex-shrink-0" />
+                    <MessageSquare className="w-4 h-4 mt-0.5 text-violet-600 flex-shrink-0" />
                     <div>
                       <div className="text-sm font-medium text-zinc-900">AnA RI</div>
                       <div className="text-xs text-zinc-500 leading-tight">Regulatory intelligence co-pilot — drafting, analysis, guidance</div>
                     </div>
-                    {chatMode === 'standard' && <Check className="w-4 h-4 text-[#D97757] ml-auto mt-0.5 flex-shrink-0" />}
+                    {chatMode === 'standard' && <Check className="w-4 h-4 text-violet-600 ml-auto mt-0.5 flex-shrink-0" />}
                   </button>
                   <button
                     type="button"
                     onClick={() => { setChatMode('deep-research'); setShowModeDropdown(false); }}
                     className={cn(
-                      'w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-[#FAF9F5] transition-colors',
-                      chatMode === 'deep-research' && 'bg-[#FBF0EB]'
                       'w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-zinc-50 transition-colors duration-150',
                       chatMode === 'deep-research' && 'bg-violet-50'
                     )}
                   >
-                    <Zap className="w-4 h-4 mt-0.5 text-[#D97757] flex-shrink-0" />
+                    <Zap className="w-4 h-4 mt-0.5 text-violet-600 flex-shrink-0" />
                     <div>
-                      <div className="text-sm font-medium text-[#141413]">Deep Research</div>
-                      <div className="text-[11px] text-[#B0AEA5] leading-tight">Multi-source search across ClinicalTrials.gov, PubMed, FDA &amp; more</div>
                       <div className="text-sm font-medium text-zinc-900">AnA Research</div>
                       <div className="text-xs text-zinc-500 leading-tight">Deep multi-source search — ClinicalTrials.gov, PubMed, FDA, EMA</div>
                     </div>
-                    {chatMode === 'deep-research' && <Check className="w-4 h-4 text-[#D97757] ml-auto mt-0.5 flex-shrink-0" />}
+                    {chatMode === 'deep-research' && <Check className="w-4 h-4 text-violet-600 ml-auto mt-0.5 flex-shrink-0" />}
                   </button>
                   <div className="mx-2 my-0.5 border-t border-zinc-200" />
                   <button
@@ -958,7 +898,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               onBlur={() => setIsFocused(false)}
               placeholder={chatMode === 'deep-research' ? 'Ask AnA Research a question — searches regulatory databases and literature...' : chatMode === 'nano-banana' ? 'Describe what you need — diagrams, charts, infographics, presentations...' : 'Ask AnA RI anything about your regulatory work...'}
               rows={1}
-              className="flex-1 resize-none bg-transparent border-none outline-none text-[#141413] placeholder:text-[#B0AEA5] text-sm leading-6 min-h-[24px] max-h-[120px]"
+              className="flex-1 resize-none bg-transparent border-none outline-none text-zinc-900 placeholder:text-zinc-400 text-sm leading-6 min-h-[24px] max-h-[120px]"
             />
 
             {/* Send */}
@@ -968,8 +908,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               className={cn(
                 'flex-shrink-0 p-2 rounded-full transition-colors duration-150',
                 input.trim() && !isThinking
-                  ? 'bg-[#141413] text-white hover:bg-[#2D2C28]'
-                  : 'bg-[#E8E6DC] text-[#B0AEA5] cursor-not-allowed'
+                  ? 'bg-zinc-900 text-white hover:bg-zinc-800'
+                  : 'bg-zinc-200 text-zinc-400 cursor-not-allowed'
               )}
               aria-label="Send message"
             >

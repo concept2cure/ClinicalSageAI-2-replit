@@ -46,6 +46,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { useOperationalData } from '../../hooks/useOperationalData';
+import { useNextBestActions, useReadinessScore } from '../../hooks/useIntelligence';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ROLE DEFINITIONS
@@ -511,6 +512,7 @@ interface RoleDashboardProps {
   onNavigateToTask?: (taskId: string) => void;
   onAskAnA?: (question: string) => void;
   className?: string;
+  projectId?: number | string | null;
 }
 
 export const RoleDashboard: React.FC<RoleDashboardProps> = ({
@@ -519,11 +521,16 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
   onNavigateToTask,
   onAskAnA,
   className,
+  projectId,
 }) => {
   const [currentRole, setCurrentRole] = useState<UserRole>(initialRole);
   const [expandedStepId, setExpandedStepId] = useState<string | null>(null);
 
   const roleConfig = ROLE_CONFIGS[currentRole];
+
+  // Intelligence-powered data (enhances operational data)
+  const { data: intelligenceActions } = useNextBestActions(projectId ?? null, 5);
+  const { data: readinessData } = useReadinessScore(projectId ?? null);
 
   // Real operational data from backend
   const { data: operationalData, isLoading: isLoadingOps } = useOperationalData();
@@ -589,26 +596,43 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
     return [];
   }, [tasks, roleConfig.shortTitle]);
 
-  // Derive next actions from real operational tasks (incomplete, sorted by priority)
+  // Derive next actions: merge operational tasks + intelligence-powered actions
   const nextActions = useMemo(() => {
-    const incomplete = tasks
+    const fromTasks = tasks
       .filter(t => t.status !== 'completed' && t.status !== 'cancelled')
-      .slice(0, 3);
-    return incomplete.map((t, i) => ({
-      id: `action-${t.id}`,
-      name: t.title,
-      description: t.description || '',
-      stepType: (t.status === 'review' ? 'APPROVAL' : 'TASK') as 'TASK' | 'APPROVAL',
-      status: (t.status === 'in-progress' ? 'IN_PROGRESS' : t.status === 'blocked' ? 'BLOCKED' : 'READY') as 'READY' | 'IN_PROGRESS' | 'BLOCKED' | 'AWAITING_APPROVAL',
-      workflowName: t.project || 'Tasks',
-      workflowId: `workflow-${currentRole}`,
+      .slice(0, 2)
+      .map((t, i) => ({
+        id: `action-${t.id}`,
+        name: t.title,
+        description: t.description || '',
+        stepType: (t.status === 'review' ? 'APPROVAL' : 'TASK') as 'TASK' | 'APPROVAL',
+        status: (t.status === 'in-progress' ? 'IN_PROGRESS' : t.status === 'blocked' ? 'BLOCKED' : 'READY') as 'READY' | 'IN_PROGRESS' | 'BLOCKED' | 'AWAITING_APPROVAL',
+        workflowName: t.project || 'Tasks',
+        workflowId: `workflow-${currentRole}`,
+        workflowRunId: activeWorkflowRunId,
+        slaDueAt: t.dueDate ? new Date(t.dueDate) : undefined,
+        assigneeRole: t.assignee || roleConfig.shortTitle,
+        order: i + 1,
+        priority: (t.priority === 'critical' ? 'HIGH' : t.priority?.toUpperCase() || 'MEDIUM') as 'HIGH' | 'MEDIUM' | 'LOW',
+      }));
+
+    // Append intelligence-powered actions (converted to ActionableStep shape)
+    const fromIntelligence = (intelligenceActions?.actions ?? []).slice(0, 2).map((a, i) => ({
+      id: a.actionId,
+      name: a.title,
+      description: a.description,
+      stepType: 'TASK' as const,
+      status: 'READY' as const,
+      workflowName: `Intelligence: ${a.category.replace(/_/g, ' ')}`,
+      workflowId: `intelligence-${a.category}`,
       workflowRunId: activeWorkflowRunId,
-      slaDueAt: t.dueDate ? new Date(t.dueDate) : undefined,
-      assigneeRole: t.assignee || roleConfig.shortTitle,
-      order: i + 1,
-      priority: (t.priority === 'critical' ? 'HIGH' : t.priority?.toUpperCase() || 'MEDIUM') as 'HIGH' | 'MEDIUM' | 'LOW',
+      assigneeRole: roleConfig.shortTitle,
+      order: fromTasks.length + i + 1,
+      priority: (a.urgency === 'immediate' ? 'CRITICAL' : a.urgency === 'this_week' ? 'HIGH' : 'MEDIUM') as 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW',
     }));
-  }, [tasks, currentRole, activeWorkflowRunId, roleConfig.shortTitle]);
+
+    return [...fromTasks, ...fromIntelligence].slice(0, 5);
+  }, [tasks, currentRole, activeWorkflowRunId, roleConfig.shortTitle, intelligenceActions]);
 
   const handleRoleChange = (role: UserRole) => {
     setCurrentRole(role);
@@ -650,10 +674,33 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({
       {/* Content */}
       <ScrollArea className="flex-1">
         <div className="p-6 space-y-6">
-          {/* Metrics Grid */}
+          {/* Readiness + Metrics Grid */}
           <div>
             <h2 className="text-base font-semibold text-zinc-900 mb-4">Key Metrics</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {/* Intelligence-powered readiness metric */}
+              {readinessData && (
+                <div className="bg-white border border-zinc-200 rounded-xl p-4 shadow-sm">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Target className="w-3.5 h-3.5 text-blue-500" />
+                    <p className="text-xs text-zinc-500 font-medium">Readiness</p>
+                  </div>
+                  <p className={cn(
+                    'text-2xl font-bold',
+                    readinessData.overallScore >= 75 ? 'text-emerald-600'
+                      : readinessData.overallScore >= 50 ? 'text-amber-600'
+                      : 'text-red-600'
+                  )}>
+                    {readinessData.overallScore}%
+                  </p>
+                  <p className="text-xs text-zinc-400 mt-0.5 capitalize">
+                    {readinessData.trend?.direction ?? 'stable'}
+                    {readinessData.predictions?.approvalProbability
+                      ? ` • ${readinessData.predictions.approvalProbability}% approval`
+                      : ''}
+                  </p>
+                </div>
+              )}
               {metrics.map(metric => (
                 <MetricCard key={metric.id} metric={metric} colorClass={roleConfig.color} />
               ))}

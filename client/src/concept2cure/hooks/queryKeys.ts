@@ -64,4 +64,22 @@ export const queryKeys = {
     patents: () => ['concept2cure', 'patents'] as const,
     compliance: () => ['concept2cure', 'compliance'] as const,
   },
+
+  // ── Intelligence Layer ────────────────────────────────────────────────────
+  intelligence: {
+    dashboard: (projectId: number | string) =>
+      ['intelligence', 'dashboard', projectId] as const,
+    recommendations: (projectId: number | string) =>
+      ['intelligence', 'recommendations', projectId] as const,
+    readiness: (projectId: number | string) =>
+      ['intelligence', 'readiness', projectId] as const,
+    profile: (projectId: number | string) =>
+      ['intelligence', 'profile', projectId] as const,
+    nextActions: (projectId: number | string) =>
+      ['intelligence', 'next-actions', projectId] as const,
+    crossModule: (projectId: number | string) =>
+      ['intelligence', 'cross-module', projectId] as const,
+    feedbackSummary: (projectId: number | string) =>
+      ['intelligence', 'feedback-summary', projectId] as const,
+  },
 } as const;

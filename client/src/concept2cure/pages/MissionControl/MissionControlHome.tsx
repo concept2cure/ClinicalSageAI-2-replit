@@ -57,6 +57,7 @@ import {
   useProvenance,
 } from '../../hooks/useMissionControl';
 import SnowGlobeMissionControlCard from '../SnowGlobe/SnowGlobeMissionControlCard';
+import { useRecommendations, useCrossModuleAnalysis } from '../../hooks/useIntelligence';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -259,6 +260,10 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
   const { data: risks = [] } = useRisks(activeProgramId);
   const { data: readinessData } = useReadiness(activeProgramId);
   const { data: provenance = [] } = useProvenance(activeProgramId, { limit: 10 });
+
+  // Intelligence Layer — recommendations & cross-module analysis
+  const { data: intelligenceRecs } = useRecommendations(activeProgramId);
+  const { data: crossModuleData } = useCrossModuleAnalysis(activeProgramId);
 
   const readiness = readinessData?.readiness || {};
   const overallConfidence = readinessData?.overallConfidence || 0;
@@ -616,6 +621,78 @@ export const MissionControlHome: React.FC<MissionControlHomeProps> = ({
                 <p className="text-xs text-amber-700">
                   {summary.staleDependencies} upstream changes have not been reflected in dependent artifacts. Review dependency chain.
                 </p>
+              </div>
+            )}
+
+            {/* Intelligence Recommendations */}
+            {intelligenceRecs && intelligenceRecs.recommendations.length > 0 && (
+              <div className="bg-white rounded-xl border p-5">
+                <h2 className="text-sm font-semibold text-zinc-900 flex items-center gap-2 mb-3">
+                  <Sparkles className="w-4 h-4 text-violet-500" />
+                  Ana Recommendations
+                  <span className="ml-auto text-[10px] font-normal text-zinc-400 tabular-nums">
+                    {intelligenceRecs.totalGenerated} total
+                  </span>
+                </h2>
+                <div className="space-y-2">
+                  {intelligenceRecs.recommendations
+                    .filter(r => r.status === 'active')
+                    .slice(0, 5)
+                    .map(rec => (
+                    <div key={rec.recommendationId} className="p-2.5 rounded-lg bg-zinc-50">
+                      <div className="flex items-start gap-2">
+                        <span className={cn(
+                          'inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded-full shrink-0 mt-0.5',
+                          rec.severity === 'critical' ? 'bg-red-100 text-red-700' :
+                          rec.severity === 'high' ? 'bg-amber-100 text-amber-700' :
+                          rec.severity === 'medium' ? 'bg-blue-100 text-blue-700' :
+                          'bg-zinc-100 text-zinc-600'
+                        )}>
+                          {rec.severity}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-zinc-800">{rec.reason}</p>
+                          {rec.suggestedAction && (
+                            <p className="text-xs text-zinc-500 mt-0.5">{rec.suggestedAction}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Cross-Module Insights */}
+            {crossModuleData && crossModuleData.totalInsights > 0 && (
+              <div className="bg-white rounded-xl border p-5">
+                <h2 className="text-sm font-semibold text-zinc-900 flex items-center gap-2 mb-3">
+                  <GitBranch className="w-4 h-4 text-blue-500" />
+                  Cross-Module Insights
+                  {crossModuleData.bySeverity.critical > 0 && (
+                    <span className="ml-auto text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-red-50 text-red-600">
+                      {crossModuleData.bySeverity.critical} critical
+                    </span>
+                  )}
+                </h2>
+                <div className="space-y-1.5">
+                  {crossModuleData.insights.slice(0, 4).map(insight => (
+                    <div key={insight.insightId} className="flex items-start gap-2 p-2 rounded-lg hover:bg-zinc-50">
+                      <div className={cn(
+                        'w-2 h-2 rounded-full mt-1.5 flex-shrink-0',
+                        insight.severity === 'critical' ? 'bg-red-500' :
+                        insight.severity === 'high' ? 'bg-amber-500' :
+                        insight.severity === 'medium' ? 'bg-blue-400' : 'bg-zinc-300'
+                      )} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-zinc-800">{insight.description}</p>
+                        <p className="text-[10px] text-zinc-400 mt-0.5">
+                          {insight.sourceDocumentTitle} → {insight.targetDocumentTitle}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>

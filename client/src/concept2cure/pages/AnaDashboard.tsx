@@ -16,19 +16,24 @@ import {
   AlertTriangle,
   ArrowRight,
   CheckCircle2,
+  ChevronRight,
   Clock,
   Download,
   FileText,
   Inbox,
+  Layers,
   Loader2,
   RefreshCw,
   Search,
   Shield,
   Sparkles,
+  ThumbsUp,
+  ThumbsDown,
   TrendingUp,
   Zap,
 } from 'lucide-react';
 import { RunButton, ExportButton } from '../components/ui/ActionButton';
+import { useIntelligenceDashboard, useSubmitFeedback } from '../hooks/useIntelligence';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -107,6 +112,10 @@ export default function AnaDashboard({ projectId }: AnaDashboardProps) {
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [submissionType, setSubmissionType] = useState('NDA');
   const [exporting, setExporting] = useState(false);
+
+  // Intelligence Layer data (real backend)
+  const { data: intelligenceDashboard } = useIntelligenceDashboard(projectId ?? null);
+  const submitFeedback = useSubmitFeedback(projectId ?? null);
 
   const fetchDashboardData = useCallback(async () => {
     setLoading(true);
@@ -288,34 +297,46 @@ export default function AnaDashboard({ projectId }: AnaDashboardProps) {
               {/* Overview Tab */}
               {activeTab === 'overview' && (
                 <>
-                  {/* Quick Stats */}
+                  {/* Quick Stats — prefer intelligence data when available */}
                   <div className="grid grid-cols-4 gap-4">
-                    {[
-                      {
-                        label: 'Readiness Score',
-                        value: gapSummary ? `${gapSummary.readinessScore}%` : '—',
-                        icon: <TrendingUp className="w-4 h-4" aria-hidden="true" />,
-                        color: gapSummary ? readinessColor(gapSummary.readinessScore) : 'text-zinc-400',
-                      },
-                      {
-                        label: 'Critical Alerts',
-                        value: String(feed.filter(f => f.impact === 'critical').length),
-                        icon: <AlertTriangle className="w-4 h-4" aria-hidden="true" />,
-                        color: 'text-amber-600',
-                      },
-                      {
-                        label: 'Gaps Remaining',
-                        value: gapSummary ? String(gapSummary.missing + gapSummary.partial) : '—',
-                        icon: <Activity className="w-4 h-4" aria-hidden="true" />,
-                        color: 'text-red-600',
-                      },
-                      {
-                        label: 'Recommendations',
-                        value: String(recommendations.length),
-                        icon: <Zap className="w-4 h-4" aria-hidden="true" />,
-                        color: 'text-violet-600',
-                      },
-                    ].map((stat, i) => (
+                    {(() => {
+                      const liveScore = intelligenceDashboard?.readiness?.overallScore;
+                      const liveRecCount = intelligenceDashboard?.recommendations?.totalGenerated;
+                      const liveGapCount = intelligenceDashboard?.readiness?.gaps?.length;
+                      const liveCritical = intelligenceDashboard?.recommendations?.bySeverity?.critical;
+                      return [
+                        {
+                          label: 'Readiness Score',
+                          value: liveScore != null ? `${liveScore}%` : gapSummary ? `${gapSummary.readinessScore}%` : '—',
+                          icon: <TrendingUp className="w-4 h-4" aria-hidden="true" />,
+                          color: (() => {
+                            const s = liveScore ?? gapSummary?.readinessScore;
+                            return s != null ? readinessColor(s) : 'text-zinc-400';
+                          })(),
+                          sub: intelligenceDashboard?.readiness?.trend
+                            ? `${intelligenceDashboard.readiness.trend.direction === 'improving' ? '↑' : intelligenceDashboard.readiness.trend.direction === 'declining' ? '↓' : '→'} ${intelligenceDashboard.readiness.trend.direction}`
+                            : undefined,
+                        },
+                        {
+                          label: 'Critical Alerts',
+                          value: String(liveCritical ?? feed.filter(f => f.impact === 'critical').length),
+                          icon: <AlertTriangle className="w-4 h-4" aria-hidden="true" />,
+                          color: 'text-amber-600',
+                        },
+                        {
+                          label: 'Gaps Remaining',
+                          value: liveGapCount != null ? String(liveGapCount) : gapSummary ? String(gapSummary.missing + gapSummary.partial) : '—',
+                          icon: <Activity className="w-4 h-4" aria-hidden="true" />,
+                          color: 'text-red-600',
+                        },
+                        {
+                          label: 'Recommendations',
+                          value: String(liveRecCount ?? recommendations.length),
+                          icon: <Zap className="w-4 h-4" aria-hidden="true" />,
+                          color: 'text-violet-600',
+                        },
+                      ];
+                    })().map((stat, i) => (
                       <motion.div
                         key={stat.label}
                         initial={{ opacity: 0, y: 8 }}
@@ -327,8 +348,8 @@ export default function AnaDashboard({ projectId }: AnaDashboardProps) {
                     ))}
                   </div>
 
-                  {/* Readiness Gauge */}
-                  {gapSummary && (
+                  {/* Readiness Gauge — enhanced with 4-dimension breakdown */}
+                  {(gapSummary || intelligenceDashboard?.readiness) && (
                     <Card>
                       <div className="flex items-center justify-between mb-3">
                         <SectionLabel>{submissionType} Readiness</SectionLabel>
@@ -343,25 +364,131 @@ export default function AnaDashboard({ projectId }: AnaDashboardProps) {
                           ))}
                         </select>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <div className={`text-3xl font-bold tabular-nums ${readinessColor(gapSummary.readinessScore)}`}>
-                          {gapSummary.readinessScore}%
-                        </div>
-                        <div className="flex-1">
-                          <div className="h-3 bg-zinc-100 rounded-full overflow-hidden" role="progressbar" aria-valuenow={gapSummary.readinessScore} aria-valuemin={0} aria-valuemax={100}>
-                            <motion.div
-                              className={`h-full ${readinessBg(gapSummary.readinessScore)} rounded-full`}
-                              initial={{ width: 0 }}
-                              animate={{ width: `${gapSummary.readinessScore}%` }}
-                              transition={{ duration: 0.8, ease: 'easeOut' }}
-                            />
+                      {(() => {
+                        const score = intelligenceDashboard?.readiness?.overallScore ?? gapSummary?.readinessScore ?? 0;
+                        return (
+                          <div className="flex items-center gap-4">
+                            <div className={`text-3xl font-bold tabular-nums ${readinessColor(score)}`}>
+                              {score}%
+                            </div>
+                            <div className="flex-1">
+                              <div className="h-3 bg-zinc-100 rounded-full overflow-hidden" role="progressbar" aria-valuenow={score} aria-valuemin={0} aria-valuemax={100}>
+                                <motion.div
+                                  className={`h-full ${readinessBg(score)} rounded-full`}
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${score}%` }}
+                                  transition={{ duration: 0.8, ease: 'easeOut' }}
+                                />
+                              </div>
+                              {gapSummary && (
+                                <div className="flex justify-between mt-1.5 text-xs text-zinc-500">
+                                  <span>{gapSummary.completed} complete</span>
+                                  <span>{gapSummary.partial} partial</span>
+                                  <span>{gapSummary.missing} missing</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                          <div className="flex justify-between mt-1.5 text-xs text-zinc-500">
-                            <span>{gapSummary.completed} complete</span>
-                            <span>{gapSummary.partial} partial</span>
-                            <span>{gapSummary.missing} missing</span>
+                        );
+                      })()}
+
+                      {/* 4-Dimension Breakdown from Intelligence Layer */}
+                      {intelligenceDashboard?.readiness?.dimensions && (
+                        <div className="mt-5 pt-4 border-t border-zinc-100">
+                          <p className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider mb-3">Quality Dimensions</p>
+                          <div className="grid grid-cols-4 gap-3">
+                            {([
+                              { key: 'completeness', label: 'Completeness', color: 'emerald' },
+                              { key: 'quality', label: 'Quality', color: 'blue' },
+                              { key: 'consistency', label: 'Consistency', color: 'violet' },
+                              { key: 'compliance', label: 'Compliance', color: 'amber' },
+                            ] as const).map((dim) => {
+                              const val = intelligenceDashboard.readiness!.dimensions[dim.key];
+                              return (
+                                <div key={dim.key} className="text-center">
+                                  <div className="relative w-12 h-12 mx-auto mb-1.5">
+                                    <svg viewBox="0 0 36 36" className="w-12 h-12 -rotate-90">
+                                      <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#f4f4f5" strokeWidth="2.5" />
+                                      <circle
+                                        cx="18" cy="18" r="15.9155" fill="none"
+                                        stroke={dim.color === 'emerald' ? '#788c5d' : dim.color === 'blue' ? '#3b82f6' : dim.color === 'violet' ? '#8b5cf6' : '#f59e0b'}
+                                        strokeWidth="2.5"
+                                        strokeDasharray={`${val}, 100`}
+                                        strokeLinecap="round"
+                                      />
+                                    </svg>
+                                    <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold text-zinc-700 tabular-nums">
+                                      {val}
+                                    </span>
+                                  </div>
+                                  <p className="text-[10px] font-medium text-zinc-500">{dim.label}</p>
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
+                      )}
+
+                      {/* Predictions row */}
+                      {intelligenceDashboard?.readiness?.predictions && (
+                        <div className="mt-4 pt-3 border-t border-zinc-100 flex items-center gap-6 text-xs text-zinc-500">
+                          <span className="flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                            {intelligenceDashboard.readiness.predictions.approvalProbability}% approval probability
+                          </span>
+                          <span className="flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                            ~{intelligenceDashboard.readiness.predictions.estimatedReviewDays}d review
+                          </span>
+                          <span className="flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                            ~{intelligenceDashboard.readiness.predictions.estimatedDeficiencies} deficiencies
+                          </span>
+                        </div>
+                      )}
+                    </Card>
+                  )}
+
+                  {/* Next Best Actions — from Intelligence Layer */}
+                  {intelligenceDashboard?.nextActions && intelligenceDashboard.nextActions.actions.length > 0 && (
+                    <Card>
+                      <div className="flex items-center justify-between mb-3">
+                        <SectionLabel>Next Best Actions</SectionLabel>
+                        <span className="text-[10px] text-zinc-400 tabular-nums">{intelligenceDashboard.nextActions.totalActions} total</span>
+                      </div>
+                      <div className="space-y-1.5">
+                        {intelligenceDashboard.nextActions.actions.slice(0, 5).map((action, i) => (
+                          <motion.div
+                            key={action.actionId}
+                            initial={{ opacity: 0, x: -6 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: i * 0.04, duration: 0.15 }}
+                            className="flex items-center gap-3 p-3 rounded-lg bg-zinc-50/80 hover:bg-zinc-100/80 transition-colors group"
+                          >
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 ${
+                              action.urgency === 'immediate' ? 'bg-red-500' :
+                              action.urgency === 'this_week' ? 'bg-amber-500' :
+                              action.urgency === 'this_sprint' ? 'bg-blue-500' : 'bg-zinc-400'
+                            }`}>
+                              {i + 1}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-zinc-800 truncate">{action.title}</p>
+                              <p className="text-xs text-zinc-500 line-clamp-1 mt-0.5">{action.description}</p>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <Pill
+                                text={action.impactEstimate}
+                                className={
+                                  action.impactEstimate === 'high' ? 'bg-emerald-50 text-emerald-700'
+                                  : action.impactEstimate === 'medium' ? 'bg-blue-50 text-blue-700'
+                                  : 'bg-zinc-100 text-zinc-500'
+                                }
+                              />
+                              <ChevronRight className="w-3.5 h-3.5 text-zinc-300 group-hover:text-zinc-500 transition-colors" aria-hidden="true" />
+                            </div>
+                          </motion.div>
+                        ))}
                       </div>
                     </Card>
                   )}
@@ -399,40 +526,146 @@ export default function AnaDashboard({ projectId }: AnaDashboardProps) {
                     )}
                   </Card>
 
-                  {/* Ana Recommendations */}
-                  {recommendations.length > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.2, duration: 0.2 }}
-                      className="bg-violet-50 rounded-lg border border-violet-200 p-5"
-                    >
-                      <h3 className="text-sm font-semibold text-violet-800 mb-3 flex items-center gap-2">
-                        <Sparkles className="w-4 h-4" aria-hidden="true" />
-                        Ana Recommendations
-                      </h3>
-                      <div className="space-y-2">
-                        {recommendations.map((rec, i) => (
+                  {/* Cross-Module Insights — from Intelligence Layer */}
+                  {intelligenceDashboard?.crossModule && intelligenceDashboard.crossModule.totalInsights > 0 && (
+                    <Card>
+                      <div className="flex items-center justify-between mb-3">
+                        <SectionLabel>Cross-Module Insights</SectionLabel>
+                        <div className="flex items-center gap-2 text-[10px]">
+                          {intelligenceDashboard.crossModule.bySeverity.critical > 0 && (
+                            <span className="px-1.5 py-0.5 rounded-full bg-red-50 text-red-600 font-medium">
+                              {intelligenceDashboard.crossModule.bySeverity.critical} critical
+                            </span>
+                          )}
+                          <span className="text-zinc-400">{intelligenceDashboard.crossModule.documentsCovered} docs analyzed</span>
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        {intelligenceDashboard.crossModule.insights.slice(0, 4).map((insight, i) => (
                           <motion.div
-                            key={rec.id}
-                            initial={{ opacity: 0, x: -4 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.25 + i * 0.04 }}
-                            className="flex items-start gap-2 text-sm text-violet-700"
+                            key={insight.insightId}
+                            initial={{ opacity: 0, y: 4 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: i * 0.04, duration: 0.15 }}
+                            className="flex items-start gap-3 p-3 rounded-lg border border-zinc-100 hover:border-zinc-200 transition-colors"
                           >
-                            <Pill text={rec.priority} className={
-                              rec.priority === 'high'
-                                ? 'bg-red-100 text-red-700'
-                                : rec.priority === 'medium'
-                                ? 'bg-amber-100 text-amber-700'
-                                : 'bg-zinc-100 text-zinc-600'
-                            } />
-                            <span>{rec.text}</span>
+                            <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
+                              insight.severity === 'critical' ? 'bg-red-500' :
+                              insight.severity === 'high' ? 'bg-amber-500' :
+                              insight.severity === 'medium' ? 'bg-blue-400' : 'bg-zinc-300'
+                            }`} />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-zinc-800">{insight.description}</p>
+                              <p className="text-xs text-zinc-400 mt-1">
+                                {insight.sourceDocumentTitle} → {insight.targetDocumentTitle}
+                              </p>
+                            </div>
                           </motion.div>
                         ))}
                       </div>
-                    </motion.div>
+                    </Card>
                   )}
+
+                  {/* Ana Recommendations — enhanced with feedback buttons */}
+                  {(() => {
+                    const liveRecs = intelligenceDashboard?.recommendations?.recommendations;
+                    const hasLive = liveRecs && liveRecs.length > 0;
+                    const hasLocal = recommendations.length > 0;
+                    if (!hasLive && !hasLocal) return null;
+                    return (
+                      <motion.div
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2, duration: 0.2 }}
+                        className="bg-gradient-to-br from-violet-50 to-white rounded-lg border border-violet-100 p-5"
+                      >
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="text-sm font-semibold text-violet-800 flex items-center gap-2">
+                            <Sparkles className="w-4 h-4" aria-hidden="true" />
+                            Ana Recommendations
+                          </h3>
+                          {hasLive && (
+                            <span className="text-[10px] text-violet-400 tabular-nums">
+                              {intelligenceDashboard!.recommendations!.totalGenerated} generated
+                            </span>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          {hasLive ? (
+                            liveRecs!.slice(0, 5).map((rec, i) => (
+                              <motion.div
+                                key={rec.recommendationId}
+                                initial={{ opacity: 0, x: -4 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: 0.25 + i * 0.04 }}
+                                className="flex items-start gap-3 p-3 rounded-lg bg-white/70 border border-violet-100/50"
+                              >
+                                <Pill text={rec.severity} className={
+                                  rec.severity === 'critical' ? 'bg-red-100 text-red-700'
+                                  : rec.severity === 'high' ? 'bg-amber-100 text-amber-700'
+                                  : rec.severity === 'medium' ? 'bg-blue-100 text-blue-700'
+                                  : 'bg-zinc-100 text-zinc-600'
+                                } />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm text-violet-800">{rec.reason}</p>
+                                  {rec.suggestedAction && (
+                                    <p className="text-xs text-violet-500 mt-1">{rec.suggestedAction}</p>
+                                  )}
+                                </div>
+                                {rec.status === 'active' && (
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    <button
+                                      onClick={() => submitFeedback.mutate({
+                                        recommendationId: rec.recommendationId,
+                                        recommendationType: rec.type,
+                                        action: 'accepted',
+                                      })}
+                                      className="p-1.5 rounded-md hover:bg-emerald-50 text-zinc-400 hover:text-emerald-600 transition-colors"
+                                      title="Accept recommendation"
+                                      aria-label="Accept"
+                                    >
+                                      <ThumbsUp className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                      onClick={() => submitFeedback.mutate({
+                                        recommendationId: rec.recommendationId,
+                                        recommendationType: rec.type,
+                                        action: 'dismissed',
+                                      })}
+                                      className="p-1.5 rounded-md hover:bg-red-50 text-zinc-400 hover:text-red-500 transition-colors"
+                                      title="Dismiss recommendation"
+                                      aria-label="Dismiss"
+                                    >
+                                      <ThumbsDown className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                )}
+                              </motion.div>
+                            ))
+                          ) : (
+                            recommendations.map((rec, i) => (
+                              <motion.div
+                                key={rec.id}
+                                initial={{ opacity: 0, x: -4 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: 0.25 + i * 0.04 }}
+                                className="flex items-start gap-2 text-sm text-violet-700"
+                              >
+                                <Pill text={rec.priority} className={
+                                  rec.priority === 'high'
+                                    ? 'bg-red-100 text-red-700'
+                                    : rec.priority === 'medium'
+                                    ? 'bg-amber-100 text-amber-700'
+                                    : 'bg-zinc-100 text-zinc-600'
+                                } />
+                                <span>{rec.text}</span>
+                              </motion.div>
+                            ))
+                          )}
+                        </div>
+                      </motion.div>
+                    );
+                  })()}
                 </>
               )}
 
@@ -632,7 +865,7 @@ function EmptyState({ icon: Icon, title, description }: { icon: React.ElementTyp
   );
 }
 
-function StatCard({ label, value, icon, color }: { label: string; value: string; icon: React.ReactNode; color: string }) {
+function StatCard({ label, value, icon, color, sub }: { label: string; value: string; icon: React.ReactNode; color: string; sub?: string }) {
   return (
     <div className="bg-white rounded-lg border border-zinc-100 p-4">
       <div className="flex items-center justify-between mb-2">
@@ -640,6 +873,7 @@ function StatCard({ label, value, icon, color }: { label: string; value: string;
         <span className={color}>{icon}</span>
       </div>
       <div className={`text-2xl font-bold tabular-nums ${color}`}>{value}</div>
+      {sub && <p className="text-[10px] text-zinc-400 mt-1">{sub}</p>}
     </div>
   );
 }

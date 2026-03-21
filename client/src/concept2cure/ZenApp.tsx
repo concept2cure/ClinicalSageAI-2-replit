@@ -2940,7 +2940,7 @@ export const ZenApp: React.FC = () => {
                     <LoadingState size="page" />
                   }
                 >
-                  <ReviewReadiness onClose={() => setLayoutMode('projects')} />
+                  <ReviewReadiness onClose={() => setLayoutMode('projects')} projectId={activeProjectId} />
                 </Suspense>
               </ErrorBoundary>
             </div>

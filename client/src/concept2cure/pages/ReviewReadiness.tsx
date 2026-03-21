@@ -37,6 +37,7 @@ import { GenerateButton, ExportButton, RunButton } from '@/concept2cure/componen
 import { useProjects } from '@/concept2cure/hooks/useProjects';
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/concept2cure/hooks/queryKeys';
+import { useReadinessScore, useCrossModuleAnalysis } from '@/concept2cure/hooks/useIntelligence';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -854,15 +855,22 @@ function SnowGlobeView() {
 // Sub-View: Readiness Score
 // ---------------------------------------------------------------------------
 
-function ReadinessScoreView({ readinessModules, summary }: { readinessModules: ReadinessModule[]; summary: { total: number; draft: number; review: number; approved: number } }) {
+function ReadinessScoreView({ readinessModules, summary, projectId }: { readinessModules: ReadinessModule[]; summary: { total: number; draft: number; review: number; approved: number }; projectId?: number | string | null }) {
   const { generate, isGenerating } = useDeliverable();
+  const { data: liveReadiness } = useReadinessScore(projectId ?? null);
 
-  const overallReadiness = summary.total > 0
-    ? Math.round((summary.approved / summary.total) * 100)
-    : 0;
-  const approvalProbability = Math.min(95, Math.round(overallReadiness * 0.92));
-  const predictedReviewWeeks = overallReadiness >= 80 ? 44 : overallReadiness >= 50 ? 52 : 60;
-  const predictedDeficiencies = summary.draft + Math.floor(summary.review * 0.3);
+  // Use live intelligence data when available, fallback to computed
+  const overallReadiness = liveReadiness?.overallScore
+    ?? (summary.total > 0 ? Math.round((summary.approved / summary.total) * 100) : 0);
+  const approvalProbability = liveReadiness?.predictions?.approvalProbability
+    ?? Math.min(95, Math.round(overallReadiness * 0.92));
+  const predictedReviewWeeks = liveReadiness?.predictions?.estimatedReviewDays
+    ? Math.round(liveReadiness.predictions.estimatedReviewDays / 7)
+    : (overallReadiness >= 80 ? 44 : overallReadiness >= 50 ? 52 : 60);
+  const predictedDeficiencies = liveReadiness?.predictions?.estimatedDeficiencies
+    ?? (summary.draft + Math.floor(summary.review * 0.3));
+  const dimensions = liveReadiness?.dimensions;
+  const trendDirection = liveReadiness?.trend?.direction;
 
   return (
     <div className="px-8 py-8 space-y-6">
@@ -930,8 +938,81 @@ function ReadinessScoreView({ readinessModules, summary }: { readinessModules: R
             </div>
             <p className="text-xs text-zinc-400 mt-6">
               Powered by Submission Readiness Twin
+              {trendDirection && (
+                <span className={cn(
+                  'ml-2 font-medium capitalize',
+                  trendDirection === 'improving' ? 'text-emerald-600'
+                    : trendDirection === 'declining' ? 'text-red-600'
+                    : 'text-zinc-500'
+                )}>
+                  • Trend: {trendDirection}
+                </span>
+              )}
             </p>
           </div>
+
+          {/* 4-Dimension Breakdown (from intelligence API) */}
+          {dimensions && (
+            <div className="grid grid-cols-4 gap-4">
+              {(['completeness', 'quality', 'consistency', 'compliance'] as const).map(dim => (
+                <div key={dim} className="bg-white border border-zinc-200 rounded-lg p-4 text-center">
+                  <p className="text-xs text-zinc-400 uppercase tracking-wide capitalize">{dim}</p>
+                  <p className={cn(
+                    'text-2xl font-semibold mt-1',
+                    dimensions[dim] >= 75 ? 'text-green-600'
+                      : dimensions[dim] >= 50 ? 'text-amber-500'
+                      : 'text-red-500'
+                  )}>
+                    {dimensions[dim]}%
+                  </p>
+                  <div className="w-full h-1.5 bg-zinc-100 rounded-full mt-2 overflow-hidden">
+                    <div
+                      className={cn(
+                        'h-full rounded-full',
+                        dimensions[dim] >= 75 ? 'bg-green-500'
+                          : dimensions[dim] >= 50 ? 'bg-amber-400'
+                          : 'bg-red-400'
+                      )}
+                      style={{ width: `${dimensions[dim]}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Readiness Gaps (from intelligence API) */}
+          {liveReadiness && liveReadiness.gaps.length > 0 && (
+            <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden">
+              <div className="px-5 py-3 border-b border-zinc-200">
+                <h3 className="text-sm font-medium text-zinc-900">Readiness Gaps ({liveReadiness.gaps.length})</h3>
+              </div>
+              <div className="divide-y divide-zinc-100">
+                {liveReadiness.gaps.map(gap => (
+                  <div key={gap.id} className="px-5 py-3 flex items-start gap-3">
+                    <span className={cn(
+                      'w-2 h-2 rounded-full mt-1.5 flex-shrink-0',
+                      gap.severity === 'critical' ? 'bg-red-500'
+                        : gap.severity === 'high' ? 'bg-amber-500'
+                        : 'bg-blue-500'
+                    )} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-zinc-900">{gap.description}</p>
+                      <p className="text-xs text-zinc-500 mt-0.5">{gap.remediation}</p>
+                    </div>
+                    <span className={cn(
+                      'text-xs px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 capitalize',
+                      gap.severity === 'critical' ? 'bg-red-100 text-red-700'
+                        : gap.severity === 'high' ? 'bg-amber-100 text-amber-700'
+                        : 'bg-blue-100 text-blue-700'
+                    )}>
+                      {gap.severity}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Module Breakdown */}
           <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden">
@@ -1399,7 +1480,7 @@ function TraceabilityView({ traceability }: { traceability: TraceabilityClaim[] 
 // Main Component: ReviewReadiness
 // ---------------------------------------------------------------------------
 
-export function ReviewReadiness({ onClose }: { onClose: () => void }) {
+export function ReviewReadiness({ onClose, projectId }: { onClose: () => void; projectId?: number | string | null }) {
   const [activeTab, setActiveTab] = useState<TabKey>('quality');
   const { projects } = useProjects();
 
@@ -1449,7 +1530,7 @@ export function ReviewReadiness({ onClose }: { onClose: () => void }) {
       case 'snowglobe':
         return <SnowGlobeView />;
       case 'readiness':
-        return <ReadinessScoreView readinessModules={readinessModules} summary={summary} />;
+        return <ReadinessScoreView readinessModules={readinessModules} summary={summary} projectId={projectId} />;
       case 'evidence':
         return <EvidenceConfidenceView evidenceSections={evidenceSections} />;
       case 'audit':
