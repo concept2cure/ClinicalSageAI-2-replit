@@ -1,22 +1,18 @@
-# CLAUDE.md — Claude Code Instructions for ClinicalSageAI
-# CLAUDE.md — Claude Code Instructions for Concept2Cure.RI-2-replit
+# CLAUDE.md — Claude Code Instructions for Concept2Cure.RI
 
 > This file is automatically read by Claude Code at the start of every session.
 > These rules are NON-NEGOTIABLE and must be followed in every session.
 
 ## Branch Rules (NON-NEGOTIABLE)
 
-Claude Code MUST NOT create its own `claude/*` branches. All work goes through the established pipeline.
+**`concept2cure-v2` is the ONE AND ONLY branch.** It is the production branch, the development branch, and the source of truth. There is no other branch that matters.
 
-### Correct Pipeline
+### Branch Model
 
-```
-concept2cure-v2  →  (PR)  →  main
-```
-
-- **`main`** = live production app. NEVER commit directly.
-- **`concept2cure-v2`** = the single development branch. ALL work happens here.
+- **`concept2cure-v2`** = the sole production + development branch. ALL work happens here. ALL commits land here.
+- **`main`** = deprecated legacy branch. Do NOT use, do NOT target, do NOT merge to/from.
 - **`claude/*` branches** = FORBIDDEN. Do not create them. Ever.
+- **`feature/*` branches** = FORBIDDEN. Do not create them. Ever.
 
 ### Mandatory Steps at the Start of EVERY Session
 
@@ -31,10 +27,11 @@ If `git checkout concept2cure-v2` fails, stop and tell the user — do NOT creat
 
 | Action | Why |
 |--------|-----|
-| `git checkout -b claude/*` | Creates orphaned branches that bypass the product pipeline |
-| `git checkout -b feature/*` | Same problem — any new branch is forbidden |
-| Committing directly to `main` | Bypasses the development pipeline |
-| Opening a PR to `main` from anything other than `concept2cure-v2` | Breaks the merge flow |
+| `git checkout -b claude/*` | Creates orphaned branches — all work goes to `concept2cure-v2` |
+| `git checkout -b feature/*` | Same problem — no branch creation allowed |
+| `git checkout main` | `main` is deprecated — never switch to it |
+| Committing to any branch other than `concept2cure-v2` | There is only one branch |
+| Opening PRs to `main` | `main` is not the target anymore |
 
 ### Allowed Git Operations
 
@@ -47,8 +44,8 @@ git push origin concept2cure-v2
 ```
 
 ### Why This Exists
-Claude Code previously created 5+ orphaned `claude/*` branches, causing work to go missing
-and bypassing the `concept2cure-v2` → `main` pipeline. This rule prevents that.
+`concept2cure-v2` is the core and only product branch. All previous branching strategies
+(`main`, `claude/*`, `feature/*`) caused work to go missing. One branch, one truth.
 
 ---
 
@@ -138,8 +135,9 @@ If you think something needs rebuilding, **ask the user first**.
 
 ## Pull Request Rules
 
-When the user asks you to open a PR:
+PRs are generally not needed since `concept2cure-v2` is the single branch. If the user
+explicitly asks to open a PR (e.g., for code review purposes):
 - **From**: `concept2cure-v2`
-- **To**: `main`
 - **Title**: conventional commit style, e.g. `feat: add CSR knowledge database schema`
+- **Never** open a PR from or to `main` — it is deprecated
 - **Never** open a PR from a `claude/*` branch
