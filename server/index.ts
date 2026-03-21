@@ -3401,6 +3401,16 @@ try {
   console.error('❌ Failed to mount AI Actions routes:', error.message);
 }
 
+// Mount Phase 3 Orchestration routes (workflow orchestration, readiness, recommendations, continuity)
+try {
+  await import('./services/orchestration'); // Load orchestration engine + workflow templates
+  const orchestrationRoutes = (await import('./routes/orchestration')).default;
+  app.use('/api/orchestration', orchestrationRoutes);
+  console.log('✅ Phase 3 Orchestration API routes mounted at /api/orchestration');
+} catch (error: any) {
+  console.error('❌ Failed to mount Orchestration routes:', error.message);
+}
+
 // Mount Client Intelligence Memory routes
 import clientIntelligenceRoutes from './routes/client-intelligence';
 app.use('/api/client-intelligence', clientIntelligenceRoutes);

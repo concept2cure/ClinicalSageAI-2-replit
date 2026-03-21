@@ -557,6 +557,16 @@ export const ZenRouter: React.FC = () => {
               </PageTransition>
             )}
           </Route>
+          {/* Phase 3: Readiness Intelligence Dashboard */}
+          <Route path="/concept2cure/readiness">
+            {() => (
+              <PageTransition>
+                <ProtectedRoute>
+                  <ZenApp />
+                </ProtectedRoute>
+              </PageTransition>
+            )}
+          </Route>
         </Switch>
       </AnimatePresence>
     </PortalAuthProvider>

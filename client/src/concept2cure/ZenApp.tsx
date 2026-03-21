@@ -72,6 +72,8 @@ const EmbeddedDocumentArtifactsHub = lazy(() => import('./pages/DocumentArtifact
 const EmbeddedHAQManagerDashboard = lazy(() => import('./pages/HAQManagerDashboard'));
 const EmbeddedINDAutoDraftDashboard = lazy(() => import('./pages/INDAutoDraftDashboard'));
 const EmbeddedClinicalOperationsDashboard = lazy(() => import('./pages/ClinicalOperationsDashboard'));
+// Phase 3: Readiness Intelligence Dashboard
+const EmbeddedReadinessDashboard = lazy(() => import('./components/readiness/ProjectReadinessDashboard'));
 import {
   X,
   ChevronLeft,
@@ -865,7 +867,7 @@ export const ZenApp: React.FC = () => {
   // These routes render their dashboard inside the ZenApp shell so they get
   // persistent AI access (AnaPersistentPanel, DrSage, Command Palette, etc.)
   // ─────────────────────────────────────────────────────────────────────────────
-  type ShellDashboard = 'ectd-agent' | 'pharmacovigilance' | 'documents' | 'haq-manager' | 'ind-autodraft' | 'clinical-operations';
+  type ShellDashboard = 'ectd-agent' | 'pharmacovigilance' | 'documents' | 'haq-manager' | 'ind-autodraft' | 'clinical-operations' | 'readiness';
   const shellDashboardMap: Record<string, ShellDashboard> = {
     '/concept2cure/ectd-agent': 'ectd-agent',
     '/concept2cure/pharmacovigilance': 'pharmacovigilance',
@@ -873,6 +875,7 @@ export const ZenApp: React.FC = () => {
     '/concept2cure/haq-manager': 'haq-manager',
     '/concept2cure/ind-autodraft': 'ind-autodraft',
     '/concept2cure/clinical-operations': 'clinical-operations',
+    '/concept2cure/readiness': 'readiness',
   };
   const activeShellDashboard: ShellDashboard | null = shellDashboardMap[currentPath] ?? null;
 
@@ -2244,6 +2247,7 @@ export const ZenApp: React.FC = () => {
                     {activeShellDashboard === 'haq-manager' && <EmbeddedHAQManagerDashboard />}
                     {activeShellDashboard === 'ind-autodraft' && <EmbeddedINDAutoDraftDashboard />}
                     {activeShellDashboard === 'clinical-operations' && <EmbeddedClinicalOperationsDashboard />}
+                    {activeShellDashboard === 'readiness' && <EmbeddedReadinessDashboard projectId={selectedProjectId ?? 1} projectName={selectedProject?.name} />}
                   </Suspense>
                 </ErrorBoundary>
               </div>
