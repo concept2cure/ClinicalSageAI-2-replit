@@ -3365,6 +3365,11 @@ import accountIntelligenceRoutes from './routes/account-intelligence';
 app.use('/api/account-intelligence', accountIntelligenceRoutes);
 console.log('✅ Account Intelligence API routes mounted successfully');
 
+// Mount Intelligence Layer routes (recommendations, readiness, next actions, feedback, cross-module)
+import intelligenceLayerRoutes from './routes/intelligence';
+app.use('/api/intelligence', intelligenceLayerRoutes);
+console.log('✅ Intelligence Layer API routes mounted successfully');
+
 // Mount Universal Packager routes
 import universalPackagerRoutes from './routes/universal-packager';
 app.use('/api/packager', universalPackagerRoutes);

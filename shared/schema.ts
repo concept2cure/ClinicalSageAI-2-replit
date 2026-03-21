@@ -17868,7 +17868,7 @@ export const insertGapAnalysisResultSchema = createInsertSchemaOmit(gapAnalysisR
 });
 export type GapAnalysisResult = InferSelectModel<typeof gapAnalysisResults>;
 export type InsertGapAnalysisResult = z.infer<typeof insertGapAnalysisResultSchema>;
-=======
+
 // BILLING: API USAGE TRACKING
 // ============================================================
 
