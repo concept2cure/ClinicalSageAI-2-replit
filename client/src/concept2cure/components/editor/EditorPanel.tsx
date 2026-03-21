@@ -250,6 +250,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const [pendingCommentText, setPendingCommentText] = useState('');
   const [showNewCommentDialog, setShowNewCommentDialog] = useState(false);
   const [pendingCommentHighlight, setPendingCommentHighlight] = useState('');
+  const pendingCommentClientIdRef = useRef<string>('');
 
   // ── Review mode: snapshot content when entering review mode ─────────
   const handleToggleReviewMode = useCallback(() => {
@@ -339,9 +340,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   // ── Comment creation: show dialog to enter comment text ─────────────
   const handleAddCommentFromEditor = useCallback(
     (commentId: string, highlightedText: string, range: { from: number; to: number }) => {
+      pendingCommentClientIdRef.current = commentId;
       setPendingCommentHighlight(highlightedText);
       setShowNewCommentDialog(true);
-      // Pre-populate a pending comment entry
+      // Pre-populate a pending comment entry (optimistic — will be reconciled with server ID)
       setComments(prev => [
         ...prev,
         {
@@ -362,9 +364,17 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const handleSubmitComment = useCallback(
     async (text: string) => {
       if (!text.trim()) return;
+      const clientId = pendingCommentClientIdRef.current;
+
       // Update local state immediately (optimistic)
       setComments(prev => {
         const copy = [...prev];
+        const pending = copy.find(c => c.id === clientId && !c.text);
+        if (pending) {
+          Object.assign(pending, { text: text.trim() });
+          return [...copy];
+        }
+        // Fallback: update last empty entry
         const last = copy[copy.length - 1];
         if (last && !last.text) {
           copy[copy.length - 1] = { ...last, text: text.trim() };
@@ -375,17 +385,18 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       setPendingCommentText('');
       pushToast('Comment added', 'success');
 
-      // Persist to server
+      // Persist to server — createCommentOnServer will reconcile the ID
       if (activeArtifact?.id) {
         const docId = Number(activeArtifact.id);
         if (Number.isFinite(docId)) {
-          await createCommentOnServer(docId, {
+          await createCommentOnServer(docId, clientId, {
             content: text.trim(),
             highlightedText: pendingCommentHighlight || undefined,
           });
         }
       }
       setPendingCommentHighlight('');
+      pendingCommentClientIdRef.current = '';
     },
     [pushToast, activeArtifact, pendingCommentHighlight, createCommentOnServer]
   );
