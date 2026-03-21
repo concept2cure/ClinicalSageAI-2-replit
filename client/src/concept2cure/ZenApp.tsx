@@ -2225,8 +2225,81 @@ export const ZenApp: React.FC = () => {
             </>
           )}
 
+          {/* ── Shell-Embedded Dashboard Modules ──
+              These routes render their dashboard inside the ZenApp shell so they
+              get persistent AI access (sidebar, chat, command palette, etc.) */}
+          {activeShellDashboard !== null && (
+            <>
+              <div
+                className={cn(
+                  'flex-1 flex flex-col min-h-0 overflow-hidden',
+                  moduleAssistantOpen && 'mr-0'
+                )}
+              >
+                <ErrorBoundary>
+                  <Suspense fallback={<ModuleLoadingFallback />}>
+                    {activeShellDashboard === 'ectd-agent' && <EmbeddedECTDSubmissionDashboard />}
+                    {activeShellDashboard === 'pharmacovigilance' && <EmbeddedPharmacovigilanceDashboard />}
+                    {activeShellDashboard === 'documents' && <EmbeddedDocumentArtifactsHub />}
+                    {activeShellDashboard === 'haq-manager' && <EmbeddedHAQManagerDashboard />}
+                    {activeShellDashboard === 'ind-autodraft' && <EmbeddedINDAutoDraftDashboard />}
+                    {activeShellDashboard === 'clinical-operations' && <EmbeddedClinicalOperationsDashboard />}
+                  </Suspense>
+                </ErrorBoundary>
+              </div>
+
+              {/* Assistant toggle button (fixed right edge) */}
+              {!moduleAssistantOpen && (
+                <button
+                  onClick={() => setModuleAssistantOpen(true)}
+                  className="flex-shrink-0 w-10 flex flex-col items-center justify-center gap-1 bg-zinc-50 hover:bg-zinc-100 border-l border-zinc-200 transition-colors"
+                  title="Open AI Assistant"
+                  data-testid="shell-dashboard-assistant-toggle"
+                >
+                  <MessageSquare className="w-4 h-4 text-zinc-500" />
+                  <span
+                    className="text-[10px] text-zinc-400 writing-mode-vertical"
+                    style={{ writingMode: 'vertical-rl' }}
+                  >
+                    Assistant
+                  </span>
+                </button>
+              )}
+
+              {/* Collapsible assistant drawer */}
+              {moduleAssistantOpen && (
+                <div
+                  className="flex-shrink-0 w-[380px] flex flex-col border-l border-zinc-200 bg-white"
+                  data-testid="shell-dashboard-assistant-panel"
+                >
+                  <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100 bg-zinc-50">
+                    <span className="text-sm font-medium text-zinc-700">AI Assistant</span>
+                    <button
+                      onClick={() => setModuleAssistantOpen(false)}
+                      className="p-1 rounded hover:bg-zinc-200 text-zinc-400 hover:text-zinc-600"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="flex-1 min-h-0 overflow-hidden">
+                    <ZenChat
+                      projectId={activeProjectId || urlProjectId}
+                      projectName={activeProject?.name}
+                      submissionType={activeProject?.type || 'IND'}
+                      threadId={activeThreadId}
+                      greeting={`How can I help with ${activeShellDashboard.replace(/-/g, ' ')}?`}
+                      onNavigate={() => {}}
+                      onNewProject={() => {}}
+                      onThreadChange={handleThreadChange}
+                    />
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
           {/* Sherpa Mode - Convergent Canvas */}
-          {!embeddedModule && layoutMode === 'sherpa' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'sherpa' && (
             <div
               className="flex-1 flex flex-col min-h-0 overflow-y-auto"
               data-testid="workspace-sherpa"
@@ -2244,14 +2317,14 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
-          {!embeddedModule && layoutMode === 'analytics' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'analytics' && (
             <AnalyticsDashboardInline
               projects={projects || []}
               onBack={() => setLayoutMode('regulatory-workspace')}
             />
           )}
 
-          {!embeddedModule && layoutMode === 'timeline' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'timeline' && (
             <div className="flex-1 p-8 bg-white overflow-y-auto">
               <div className="max-w-3xl mx-auto">
                 <WorkflowTimeline
@@ -2296,14 +2369,14 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
-          {!embeddedModule && layoutMode === 'audit' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'audit' && (
             <div className="flex-1 overflow-y-auto bg-zinc-50" data-testid="workspace-audit">
               <ProductAuditQuestionnaire />
             </div>
           )}
 
           {/* Phase 7: Mission Control Dashboard */}
-          {!embeddedModule && layoutMode === 'mission-control' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'mission-control' && (
             <div
               className="flex-1 flex flex-col min-h-0 overflow-y-auto"
               data-testid="workspace-mission-control"
@@ -2317,7 +2390,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* Snow Globe — Prediction & Intelligence Engine */}
-          {!embeddedModule && layoutMode === 'snowglobe' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'snowglobe' && (
             <div
               className="flex-1 flex flex-col min-h-0 overflow-y-auto"
               data-testid="workspace-snowglobe"
@@ -2329,7 +2402,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* Snow Globe — Chamber Detail View */}
-          {!embeddedModule && layoutMode === 'snowglobe-chambers' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'snowglobe-chambers' && (
             <div
               className="flex-1 flex flex-col min-h-0 overflow-y-auto"
               data-testid="workspace-snowglobe-chambers"
@@ -2341,7 +2414,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* About & Training Center (Dr. Sage FDA Reviewer AI) */}
-          {!embeddedModule && layoutMode === 'about-training' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'about-training' && (
             <div
               className="flex-1 flex flex-col min-h-0 overflow-y-auto"
               data-testid="workspace-about-training"
@@ -2359,7 +2432,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── IND Workspace (eCTD filing hub — dossier construction) ──────────── */}
-          {!embeddedModule && layoutMode === 'ind-workspace' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'ind-workspace' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-ind">
               <div className="flex items-center gap-3 px-4 h-12 border-b border-zinc-100 bg-white flex-shrink-0">
                 <button
@@ -2447,7 +2520,7 @@ export const ZenApp: React.FC = () => {
           {/* Medical Device Dashboard — disabled (consolidated into RI Copilot workspace) */}
 
           {/* ── eCTD Co-Author (IND / NDA / BLA / 510k authoring) ─────────── */}
-          {!embeddedModule && layoutMode === 'ectd-coauthor' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'ectd-coauthor' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-ectd-coauthor">
               <WorkspaceHeader
                 title="eCTD Co-Author"
@@ -2509,7 +2582,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── CMC Platform (in-shell) ────────────────────────────────────── */}
-          {!embeddedModule && layoutMode === 'cmc' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'cmc' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-cmc">
               <WorkspaceHeader
                 title="CMC Platform"
@@ -2623,7 +2696,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── Document Vault (in-shell) ──────────────────────────────────── */}
-          {!embeddedModule && layoutMode === 'document-vault' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'document-vault' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-document-vault">
               <WorkspaceHeader
                 title="Document Vault"
@@ -2641,7 +2714,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── Clinical Trial Hub (in-shell) ──────────────────────────────── */}
-          {!embeddedModule && layoutMode === 'clinical-trial' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'clinical-trial' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-clinical-trial">
               <WorkspaceHeader
                 title="Clinical Trial Hub"
@@ -2659,7 +2732,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── Templates Library — browse and use regulatory templates ── */}
-          {!embeddedModule && layoutMode === 'templates' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'templates' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-templates">
               <WorkspaceHeader
                 title="Template Library"
@@ -2697,7 +2770,7 @@ export const ZenApp: React.FC = () => {
           {/* Dossier Navigator — disabled (consolidated into IND Workspace) */}
 
           {/* ── Submission Operations Workspace (split-pane: list | inspector) ── */}
-          {!embeddedModule && layoutMode === 'submission-workspace' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'submission-workspace' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-submission-ops">
               <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
                 <button
@@ -2754,7 +2827,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── Enablement Center — Dr. Sage + AnA 1.0 dual-AI hub ── */}
-          {!embeddedModule && layoutMode === 'enablement-center' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'enablement-center' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-enablement-center">
               <ErrorBoundary>
                 <Suspense
@@ -2781,7 +2854,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── Author Workspace — unified submission authoring ── */}
-          {!embeddedModule && layoutMode === 'author' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'author' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-author">
               {/* Author workspace routes to IND/eCTD/CMC/Clinical based on context */}
               <div className="flex items-center gap-3 px-4 h-12 border-b border-zinc-100 bg-white flex-shrink-0">
@@ -2859,7 +2932,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── Intelligence Hub — research, evidence, predictions ── */}
-          {!embeddedModule && layoutMode === 'intelligence-hub' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'intelligence-hub' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-intelligence-hub">
               <ErrorBoundary>
                 <Suspense
@@ -2876,7 +2949,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── Review & Readiness — quality, compliance, stress-testing ── */}
-          {!embeddedModule && layoutMode === 'review-readiness' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'review-readiness' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-review-readiness">
               <ErrorBoundary>
                 <Suspense
@@ -2893,7 +2966,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── Command Center — operations, submissions, governance ── */}
-          {!embeddedModule && layoutMode === 'command-center' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'command-center' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-command-center">
               <ErrorBoundary>
                 <Suspense
@@ -2910,7 +2983,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── Platform Admin — API keys, users, billing, modules (Regulatory Command Center) ── */}
-          {!embeddedModule && layoutMode === 'platform-admin' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'platform-admin' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-platform-admin">
               <ErrorBoundary>
                 <Suspense
@@ -2927,7 +3000,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── Biologics Dashboard — biologic/biosimilar pathway intelligence ── */}
-          {!embeddedModule && layoutMode === 'biologics-dashboard' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'biologics-dashboard' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-biologics">
               <ErrorBoundary>
                 <Suspense
@@ -2944,7 +3017,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── CTD Onboarding — client CTD ingestion wizard ── */}
-          {!embeddedModule && layoutMode === 'ctd-onboarding' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'ctd-onboarding' && (
             <div className="flex-1 flex flex-col min-h-0 p-6" data-testid="workspace-ctd-onboarding">
               <ErrorBoundary>
                 <Suspense
@@ -2961,7 +3034,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── Client Intelligence — company persona, document ingestion, memory ── */}
-          {!embeddedModule && layoutMode === 'client-intelligence' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'client-intelligence' && (
             <div
               className="flex-1 flex flex-col min-h-0"
               data-testid="workspace-client-intelligence"
@@ -2981,7 +3054,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── Collaboration Hub — threaded collaboration, reviews, decisions ── */}
-          {!embeddedModule && layoutMode === 'collaboration-hub' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'collaboration-hub' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-collaboration-hub">
               {/* Workspace header — breadcrumb pattern */}
               <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
@@ -3018,7 +3091,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── User Inbox — personal command center with worklist, approvals, alerts ── */}
-          {!embeddedModule && layoutMode === 'user-inbox' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'user-inbox' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-user-inbox">
               <ErrorBoundary>
                 <Suspense
@@ -3035,7 +3108,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── Client Branding — logo, letterhead, templates ── */}
-          {!embeddedModule && layoutMode === 'client-branding' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'client-branding' && (
             <div className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-[#FAFAF9]" data-testid="workspace-client-branding">
               <div className="p-6">
                 <ErrorBoundary>
@@ -3054,7 +3127,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── Biostatistics Platform — power, endpoints, design ── */}
-          {!embeddedModule && layoutMode === 'biostatistics' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'biostatistics' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-biostatistics">
               <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
                 <button
@@ -3088,7 +3161,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── Training Center — onboarding, courses, guides ── */}
-          {!embeddedModule && layoutMode === 'training-center' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'training-center' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-training-center">
               <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
                 <button
@@ -3117,10 +3190,10 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── Agent Hub — Agent Swarm showcase, setup, monitoring ── */}
-          {!embeddedModule && layoutMode === 'agent-hub' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'agent-hub' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-agent-hub">
           {/* Enterprise Integrations — connectors & API management */}
-          {!embeddedModule && layoutMode === 'integrations' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'integrations' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-integrations">
               <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
                 <button
@@ -3160,7 +3233,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── Document Sherpa — AI-guided authoring ── */}
-          {!embeddedModule && layoutMode === 'document-sherpa' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'document-sherpa' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-document-sherpa">
               <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
                 <button
@@ -3194,7 +3267,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── Review Pulse — PM signals, readiness, risk ── */}
-          {!embeddedModule && layoutMode === 'review-pulse' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'review-pulse' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-review-pulse">
               <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
                 <button
@@ -3228,7 +3301,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── Client Onboarding — setup wizard, configuration ── */}
-          {!embeddedModule && layoutMode === 'client-onboarding' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'client-onboarding' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-client-onboarding">
               <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
                 <button
@@ -3257,7 +3330,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── Knowledge Base — account-level skills, .MD upload, materials ── */}
-          {!embeddedModule && layoutMode === 'knowledge-base' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'knowledge-base' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-knowledge-base">
               <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
                 <button
@@ -3305,7 +3378,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── Project Knowledge — project-level context, uploads, sources ── */}
-          {!embeddedModule && layoutMode === 'project-knowledge' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'project-knowledge' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-project-knowledge">
               <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
                 <button
@@ -3340,7 +3413,7 @@ export const ZenApp: React.FC = () => {
 
           {/* ── Legal Center — IP, contracts, regulatory law ── */}
           {/* Artifacts Gallery — browsable outputs and templates */}
-          {!embeddedModule && layoutMode === 'artifacts' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'artifacts' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-artifacts">
               <Suspense fallback={<ModuleLoadingFallback />}>
                 <ArtifactsGalleryPage />
@@ -3348,7 +3421,7 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
-          {!embeddedModule && layoutMode === 'legal-center' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'legal-center' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-legal-center">
               <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
                 <button
@@ -3375,7 +3448,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── Document Builder — CSR + CTD wizard across global agencies ── */}
-          {!embeddedModule && layoutMode === 'document-builder' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'document-builder' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-document-builder">
               <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
                 <button
@@ -3402,7 +3475,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── Intelligent Report Engine — immutable records, atom provenance, quasi-indemnification ── */}
-          {!embeddedModule && layoutMode === 'report-engine' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'report-engine' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-report-engine">
               <Suspense
                 fallback={
@@ -3417,7 +3490,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── Ana Dashboard — regulatory intelligence, gap analysis, change impact ── */}
-          {!embeddedModule && layoutMode === 'ana-dashboard' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'ana-dashboard' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-ana-dashboard">
               <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-zinc-300" /></div>}>
                 <AnaDashboardPage projectId={activeProjectId} />
@@ -3426,7 +3499,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── Safety Narrative — ICH E3 §12 compliant narrative generation ── */}
-          {!embeddedModule && layoutMode === 'safety-narrative' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'safety-narrative' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-safety-narrative">
               <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-zinc-300" /></div>}>
                 <SafetyNarrativePage projectId={activeProjectId} />
@@ -3435,7 +3508,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── Ana Platform Control — agentic settings, modules, onboarding ── */}
-          {!embeddedModule && layoutMode === 'ana-platform-control' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'ana-platform-control' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-ana-platform-control">
               <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-zinc-300" /></div>}>
                 <AnaPlatformControlPage />
@@ -3451,7 +3524,7 @@ export const ZenApp: React.FC = () => {
           ) && <RedirectToWorkspace onRedirect={() => setLayoutMode('regulatory-workspace')} />}
 
           {/* ── Project Workspace (3-pane: tree | content | inspector) ───── */}
-          {!embeddedModule &&
+          {!embeddedModule && !activeShellDashboard &&
             layoutMode === 'regulatory-workspace' &&
             (riViewMode === 'intelligence' ? (
               <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-ri-copilot">
@@ -3537,7 +3610,7 @@ export const ZenApp: React.FC = () => {
               />
             ))}
           {/* Rules Engine Manager */}
-          {!embeddedModule && layoutMode === 'rules' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'rules' && (
             <div
               className="flex-1 flex flex-col min-h-0 overflow-y-auto"
               data-testid="workspace-rules"
@@ -3551,7 +3624,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── Projects Index ─────────────────────────────────────────────── */}
-          {!embeddedModule && layoutMode === 'projects' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'projects' && (
             <Suspense
               fallback={
                 <div className="flex-1 flex items-center justify-center">
@@ -3577,7 +3650,7 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* ── Project Workspace — Claude.ai-style project view ──────── */}
-          {!embeddedModule && layoutMode === 'workspace' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'workspace' && (
             <div className="flex-1 flex flex-col min-h-0">
               {/* ── Project Header — Claude.ai style: breadcrumb + title + star ── */}
               <div className="flex-shrink-0 bg-white px-6 pt-6 pb-4">
@@ -3689,7 +3762,7 @@ export const ZenApp: React.FC = () => {
               </div>
             </div>
           )}
-          {!embeddedModule && layoutMode === 'editor' && (
+          {!embeddedModule && !activeShellDashboard && layoutMode === 'editor' && (
             <div className="flex-1 flex min-w-0 min-h-0" data-testid="workspace-editor">
               <ErrorBoundary>
                 <Suspense
@@ -3712,7 +3785,7 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
           {/* assistant/ctd mode → redirect to workspace (ONE chat via AnA) */}
-          {!embeddedModule && (layoutMode === 'assistant' || layoutMode === 'ctd') && (
+          {!embeddedModule && !activeShellDashboard && (layoutMode === 'assistant' || layoutMode === 'ctd') && (
             <RedirectToWorkspace
               onRedirect={() =>
                 setLayoutMode(activeProjectId ? 'regulatory-workspace' : 'projects')

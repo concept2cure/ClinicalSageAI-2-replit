@@ -48,6 +48,7 @@ import {
   Layout,
   List,
 } from 'lucide-react';
+import { InlineAIMenu } from '../ui/InlineAIMenu';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -256,13 +257,20 @@ const TaskCard: React.FC<{
         </div>
         
         {/* Actions */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
           {task.pendingComments && task.pendingComments > 0 && (
             <span className="flex items-center gap-0.5 text-xs text-amber-600">
               <MessageSquare className="w-3.5 h-3.5" />
               {task.pendingComments}
             </span>
           )}
+          <InlineAIMenu
+            content={`${task.title} | Type: ${docConfig.label} | Stage: ${stageConfig.label} | Product: ${task.productName}${task.studyId ? ` | Study: ${task.studyId}` : ''} | Progress: ${task.progress}% | Due: ${formatDueDate(task.dueDate)}`}
+            title={task.title}
+            projectId={1}
+            actions={['summarize_selection', 'explain_selection', 'rewrite_selection']}
+            variant="icon"
+          />
           <button className="p-1 rounded hover:bg-zinc-100">
             <MoreHorizontal className="w-4 h-4 text-zinc-400" />
           </button>
@@ -366,18 +374,24 @@ const TaskCard: React.FC<{
             {formatDueDate(task.dueDate)}
           </span>
         </div>
-        
-        {onStartWriting && task.stage === 'draft' && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onStartWriting();
-            }}
-            className="px-3 py-1 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors"
-          >
-            Start Writing
-          </button>
-        )}
+
+        <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
+          <InlineAIMenu
+            content={`${task.title} | Type: ${docConfig.label} | Stage: ${stageConfig.label} | Product: ${task.productName}${task.studyId ? ` | Study: ${task.studyId}` : ''} | Progress: ${task.progress}%`}
+            title={task.title}
+            projectId={1}
+            actions={['summarize_selection', 'explain_selection', 'rewrite_selection']}
+            variant="icon"
+          />
+          {onStartWriting && task.stage === 'draft' && (
+            <button
+              onClick={onStartWriting}
+              className="px-3 py-1 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors"
+            >
+              Start Writing
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

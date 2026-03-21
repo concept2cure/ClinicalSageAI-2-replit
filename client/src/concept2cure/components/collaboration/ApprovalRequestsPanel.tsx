@@ -27,6 +27,7 @@ import {
   useDecideApproval,
   useDelegateApproval,
 } from '../../hooks/useMissionControl';
+import { InlineAIButton } from '../ui/InlineAIButton';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -187,6 +188,22 @@ const ApprovalRequestsPanel: React.FC<ApprovalRequestsPanelProps> = ({ programId
                           </span>
                         )}
                       </p>
+                    </div>
+                    <div className="flex items-center gap-1 flex-shrink-0" onClick={e => e.stopPropagation()}>
+                      <InlineAIButton
+                        actionType="summarize_selection"
+                        content={`Approval Request: ${req.title}. ${req.description || ''} Type: ${REQUEST_TYPE_LABELS[req.requestType] || req.requestType}. Status: ${statusConf.label}. Priority: ${priorityConf.label}. Requested by: ${req.requestedBy}${req.requestedByRole ? ` (${req.requestedByRole})` : ''}. Assigned to: ${req.assignedTo}${req.assignedToRole ? ` (${req.assignedToRole})` : ''}`}
+                        projectId={programId || 1}
+                        label="Summarize"
+                        size="sm"
+                      />
+                      <InlineAIButton
+                        actionType="explain_selection"
+                        content={`Approval Request: ${req.title}. ${req.description || ''} Type: ${REQUEST_TYPE_LABELS[req.requestType] || req.requestType}. Status: ${statusConf.label}. Priority: ${priorityConf.label}. Requested by: ${req.requestedBy}. Assigned to: ${req.assignedTo}${req.dueDate ? `. Due: ${new Date(req.dueDate).toLocaleDateString()}` : ''}`}
+                        projectId={programId || 1}
+                        label="Explain"
+                        size="sm"
+                      />
                     </div>
                     <div className="flex-shrink-0">
                       {isExpanded ? (
