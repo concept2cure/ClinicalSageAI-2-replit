@@ -67,7 +67,7 @@ import { recordDocumentAccess } from '../../hooks/useRecentDocuments';
 import { ReviewerAssignment } from './ReviewerAssignment';
 import { CollaborationPresence, CollaborationCursors } from './CollaborationPresence';
 import { DocumentWatermark } from './DocumentWatermark';
-import { useDocumentCollaboration } from '../../hooks/useDocumentCollaboration';
+import { useCollaboration } from '../../hooks/useCollaboration';
 import { SignatureWorkflow, SignatureList } from './SignatureWorkflow';
 import { SubmissionReadinessValidator } from '../submission/SubmissionReadinessValidator';
 import { ComplianceScannerPanel } from './ComplianceScannerPanel';
@@ -162,7 +162,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
   // ── Real-time collaboration ────────────────────────────────────────────
   const currentUser = getCurrentUser();
-  const collaboration = useDocumentCollaboration(activeArtifact?.id || null);
+  const collaboration = useCollaboration(activeArtifact?.id || null);
   const [, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle');
   const [aiLoading, setAiLoading] = useState(false);

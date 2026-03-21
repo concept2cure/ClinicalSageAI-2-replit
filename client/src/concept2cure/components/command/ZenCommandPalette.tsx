@@ -19,6 +19,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import {
   Search,
@@ -777,8 +778,6 @@ export const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({
     [flatList, selectedIndex, onClose]
   );
 
-  if (!isOpen) return null;
-
   // Pre-compute category start indices for absolute item indexing
   const categoryOffsets = new Map<CommandCategory, number>();
   let offset = 0;
@@ -788,20 +787,30 @@ export const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({
   }
 
   return (
+    <AnimatePresence>
+    {isOpen && (
     <>
       {/* Backdrop */}
-      <div
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.15 }}
         className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
         onClick={onClose}
         aria-hidden="true"
       />
 
       {/* Dialog */}
-      <div
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: -10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: -10 }}
+        transition={{ duration: 0.15, ease: [0.2, 0, 0, 1] }}
         role="dialog"
         aria-modal="true"
         aria-labelledby="command-palette-title"
-        className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-xl bg-white rounded-xl shadow-lg overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150"
+        className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-xl bg-white rounded-xl shadow-lg overflow-hidden z-50"
       >
         {/* Search input */}
         <div className="flex items-center gap-3 px-4 py-4 border-b border-zinc-200">
@@ -930,8 +939,10 @@ export const ZenCommandPalette: React.FC<ZenCommandPaletteProps> = ({
             <span>K to open</span>
           </div>
         </div>
-      </div>
+      </motion.div>
     </>
+    )}
+    </AnimatePresence>
   );
 };
 

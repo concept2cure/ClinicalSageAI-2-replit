@@ -54,6 +54,7 @@ import { queryKeys } from './hooks/queryKeys';
 import { WorkspaceReadinessStrip } from './components/workspace/WorkspaceReadinessStrip';
 import { ProjectWorkspaceShell } from './components/workspace/ProjectWorkspaceShell';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { IndustryMode } from './types/workspace';
 import ProductAuditQuestionnaire from '../components/ProductAuditQuestionnaire';
 import { isFeatureEnabled } from '@/flags/featureFlags';
@@ -131,6 +132,13 @@ const RedirectToWorkspace: React.FC<{ onRedirect: () => void }> = ({ onRedirect 
     onRedirect();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   return null;
+};
+
+// Page transition wrapper — smooth fade+slide for layout mode changes
+const pageTransitionVariants = {
+  initial: { opacity: 0, y: 8 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.18, ease: [0.2, 0, 0, 1] } },
+  exit: { opacity: 0, y: -8, transition: { duration: 0.12, ease: [0.4, 0, 1, 1] } },
 };
 
 // Lazy load the Convergent Canvas for the Sherpa System
@@ -2005,8 +2013,16 @@ export const ZenApp: React.FC = () => {
 
       {/* Main area — no top bar, exactly like Claude.ai */}
       <div className="flex-1 flex flex-col min-w-0 min-h-0">
-        {/* Content Area */}
-        <div className="flex-1 flex min-w-0 min-h-0">
+        {/* Content Area — AnimatePresence for smooth layout transitions */}
+        <AnimatePresence mode="wait">
+        <motion.div
+          key={embeddedModule || layoutMode}
+          variants={pageTransitionVariants}
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          className="flex-1 flex min-w-0 min-h-0"
+        >
           {/* ── Embedded Module Host ── */}
           {embeddedModule === '510k' && urlProjectId && (
             <>
@@ -3529,7 +3545,8 @@ export const ZenApp: React.FC = () => {
               }
             />
           )}
-        </div>
+        </motion.div>
+        </AnimatePresence>
 
         {/* AnA — THE single chat surface
             workspace/regulatory-workspace: rendered inline above (mode="full")

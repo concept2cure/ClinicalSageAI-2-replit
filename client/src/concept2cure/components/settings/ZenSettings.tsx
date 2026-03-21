@@ -13,6 +13,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import {
   X,
@@ -603,15 +604,27 @@ export const ZenSettings: React.FC<ZenSettingsProps> = ({ isOpen, onClose }) => 
   const [activeSection, setActiveSection] = useState<SettingsSection>('profile');
   const ActiveComponent = SECTION_COMPONENTS[activeSection];
 
-  if (!isOpen) return null;
-
   return (
+    <AnimatePresence>
+    {isOpen && (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50" onClick={onClose} />
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.15 }}
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+        onClick={onClose}
+      />
 
       {/* Modal */}
-      <div className="fixed inset-4 sm:inset-auto sm:top-[5%] sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-4xl sm:h-[90vh] bg-white rounded-xl shadow-lg overflow-hidden z-50 flex animate-in fade-in zoom-in-95 duration-150">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
+        className="fixed inset-4 sm:inset-auto sm:top-[5%] sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-4xl sm:h-[90vh] bg-white rounded-xl shadow-lg overflow-hidden z-50 flex">
         {/* Sidebar */}
         <div className="w-56 bg-zinc-50 border-r border-zinc-200 flex flex-col">
           {/* Header */}
@@ -665,8 +678,10 @@ export const ZenSettings: React.FC<ZenSettingsProps> = ({ isOpen, onClose }) => 
             <ActiveComponent />
           </div>
         </div>
-      </div>
+      </motion.div>
     </>
+    )}
+    </AnimatePresence>
   );
 };
 

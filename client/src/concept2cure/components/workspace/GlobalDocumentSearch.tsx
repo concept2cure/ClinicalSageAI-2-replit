@@ -7,6 +7,7 @@
  */
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
   X,
@@ -161,15 +162,27 @@ export function GlobalDocumentSearch({ isOpen, onClose, onOpenDocument }: Global
     onClose();
   }, [onOpenDocument, onClose]);
 
-  if (!isOpen) return null;
-
   return (
+    <AnimatePresence>
+    {isOpen && (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50" onClick={onClose} />
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.15 }}
+        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
+        onClick={onClose}
+      />
 
       {/* Dialog */}
-      <div className="fixed top-[10%] left-1/2 -translate-x-1/2 w-full max-w-2xl bg-white rounded-xl shadow-lg overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: -10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: -10 }}
+        transition={{ duration: 0.15, ease: [0.2, 0, 0, 1] }}
+        className="fixed top-[10%] left-1/2 -translate-x-1/2 w-full max-w-2xl bg-white rounded-xl shadow-lg overflow-hidden z-50">
         {/* Search input */}
         <div className="flex items-center gap-3 px-4 py-4 border-b border-zinc-200">
           <Search className="w-5 h-5 text-zinc-400 shrink-0" />
@@ -307,8 +320,10 @@ export function GlobalDocumentSearch({ isOpen, onClose, onOpenDocument }: Global
             <span>Open</span>
           </div>
         </div>
-      </div>
+      </motion.div>
     </>
+    )}
+    </AnimatePresence>
   );
 }
 

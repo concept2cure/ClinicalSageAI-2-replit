@@ -12,6 +12,7 @@
  */
 
 import React, { useState, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import {
   Plus,
@@ -377,26 +378,34 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
     }
   };
 
-  if (!isOpen) return null;
-
   return (
+    <AnimatePresence>
+    {isOpen && (
     <>
       {/* Backdrop */}
-      <div
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.15 }}
         className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
         onClick={onClose}
         aria-hidden="true"
       />
 
       {/* Modal */}
-      <div
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
         role="dialog"
         aria-modal="true"
         aria-labelledby="new-project-title"
         onKeyDown={e => {
           if (e.key === 'Escape') onClose();
         }}
-        className="fixed top-[10%] left-1/2 -translate-x-1/2 w-full max-w-lg bg-white rounded-xl shadow-lg z-50 animate-in fade-in zoom-in-95 duration-150"
+        className="fixed top-[10%] left-1/2 -translate-x-1/2 w-full max-w-lg bg-white rounded-xl shadow-lg z-50"
       >
         <form onSubmit={handleSubmit}>
           {/* Header */}
@@ -562,8 +571,10 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({ isOpen, onClos
             </button>
           </div>
         </form>
-      </div>
+      </motion.div>
     </>
+    )}
+    </AnimatePresence>
   );
 };
 
@@ -604,26 +615,34 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
   const starredProjects = filteredProjects.filter(p => p.starred);
   const regularProjects = filteredProjects.filter(p => !p.starred);
 
-  if (!isOpen) return null;
-
   return (
+    <AnimatePresence>
+    {isOpen && (
     <>
       {/* Backdrop */}
-      <div
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.15 }}
         className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
         onClick={onClose}
         aria-hidden="true"
       />
 
       {/* Modal */}
-      <div
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
         role="dialog"
         aria-modal="true"
         aria-labelledby="project-switcher-title"
         onKeyDown={e => {
           if (e.key === 'Escape') onClose();
         }}
-        className="fixed inset-4 sm:inset-auto sm:top-[6%] sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-[560px] bg-white rounded-xl shadow-lg z-50 flex flex-col max-h-[80vh] animate-in fade-in zoom-in-95 duration-150"
+        className="fixed inset-4 sm:inset-auto sm:top-[6%] sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-[560px] bg-white rounded-xl shadow-lg z-50 flex flex-col max-h-[80vh]"
       >
         {/* Header */}
         <div className="flex-shrink-0 px-4 py-3 border-b border-zinc-200">
@@ -799,8 +818,10 @@ export const ProjectSwitcher: React.FC<ProjectSwitcherProps> = ({
             </div>
           )}
         </div>
-      </div>
+      </motion.div>
     </>
+    )}
+    </AnimatePresence>
   );
 };
 
@@ -865,26 +886,34 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
     }
   };
 
-  if (!isOpen) return null;
-
   return (
+    <AnimatePresence>
+    {isOpen && (
     <>
       {/* Backdrop */}
-      <div
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.15 }}
         className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
         onClick={onClose}
         aria-hidden="true"
       />
 
       {/* Modal */}
-      <div
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
         role="dialog"
         aria-modal="true"
         aria-labelledby="edit-project-title"
         onKeyDown={e => {
           if (e.key === 'Escape') onClose();
         }}
-        className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-xl shadow-lg z-50 animate-in fade-in zoom-in-95 duration-150"
+        className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-xl shadow-lg z-50"
       >
         <form onSubmit={handleSubmit}>
           {/* Header */}
@@ -992,8 +1021,10 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
             </button>
           </div>
         </form>
-      </div>
+      </motion.div>
     </>
+    )}
+    </AnimatePresence>
   );
 };
 
