@@ -3357,12 +3357,10 @@ console.log('✅ Concept2Cure API routes mounted successfully');
 
 // Mount AI Actions unified execution API (Phase 1 — conversational OS spine)
 try {
-  // Initialize action registry and handlers (side-effect imports)
-  import('./services/ai-actions/index').then(() => {
-    console.log('✅ AI Action handlers registered');
-  }).catch(err => {
-    console.error('⚠️ AI Action handler registration failed (non-fatal):', err.message);
-  });
+  // Initialize action registry and handlers BEFORE mounting routes
+  // (handlers must be registered synchronously before any request can be dispatched)
+  await import('./services/ai-actions/index');
+  console.log('✅ AI Action handlers registered');
   const aiActionsRoutes = (await import('./routes/ai-actions')).default;
   app.use('/api/ai-actions', aiActionsRoutes);
   console.log('✅ AI Actions API routes mounted at /api/ai-actions');

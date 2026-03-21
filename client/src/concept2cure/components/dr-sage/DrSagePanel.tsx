@@ -422,11 +422,11 @@ function FixContent() {
     setFixingIndex(idx);
     try {
       // Route through unified AI action system — run validation + refinement
+      // Use inline content validation (no targetId needed when payload.content is provided)
       const result = await execute({
         actionType: 'run_validation',
-        targetType: 'artifact',
-        targetId: null,
-        projectId: 0, // Will be populated from context in Phase 2
+        targetType: 'document',
+        projectId: 1, // Phase 2: derive from workspace context
         sourceSurface: 'contextual_rail',
         payload: {
           content: issue.description,

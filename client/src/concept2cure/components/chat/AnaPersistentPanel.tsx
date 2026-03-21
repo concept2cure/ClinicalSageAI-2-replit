@@ -516,20 +516,21 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
     // Route AI-actionable intents through the unified action system
     // Phase 1: Map known intents to AI actions; fall through to chat for unknown
-    const aiActionMap: Record<string, AIActionType> = {
-      'validation.run': 'run_validation',
-      'artifact.promote': 'promote_artifact',
-      'document.export': 'export_document',
-      'document.version': 'save_document_version',
-      'document.route': 'route_document_to_module',
+    const aiActionMap: Record<string, { actionType: AIActionType; targetType: 'artifact' | 'document' }> = {
+      'validation.run': { actionType: 'run_validation', targetType: 'artifact' },
+      'artifact.promote': { actionType: 'promote_artifact', targetType: 'artifact' },
+      'document.export': { actionType: 'export_document', targetType: 'document' },
+      'document.version': { actionType: 'save_document_version', targetType: 'document' },
+      'document.route': { actionType: 'route_document_to_module', targetType: 'document' },
     };
-    const mappedAction = action.intent ? aiActionMap[action.intent] : undefined;
-    if (mappedAction && contextProfile?.projectId) {
+    const mappedEntry = action.intent ? aiActionMap[action.intent] : undefined;
+    const projectId = contextProfile?.projectId ? Number(contextProfile.projectId) : NaN;
+    if (mappedEntry && !isNaN(projectId)) {
       aiAction.execute({
-        actionType: mappedAction,
-        targetType: 'artifact',
+        actionType: mappedEntry.actionType,
+        targetType: mappedEntry.targetType,
         targetId: (action as any).targetId || null,
-        projectId: Number(contextProfile.projectId),
+        projectId,
         sourceSurface: 'global_panel' as AIActionSourceSurface,
         payload: (action as any).payload || {},
       }).then(result => {

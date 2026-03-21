@@ -19,7 +19,7 @@
  * Phase 2: Streaming, optimistic updates, action chaining.
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   AIActionType,
@@ -51,12 +51,24 @@ const AI_ACTIONS_ENDPOINT = '/api/ai-actions/execute';
 const AI_ACTIONS_TYPES_ENDPOINT = '/api/ai-actions/types';
 
 async function callAIAction(request: Omit<AIActionRequest, 'requestedBy'>): Promise<AIActionResponse> {
-  const response = await fetch(AI_ACTIONS_ENDPOINT, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include', // Send auth cookies
-    body: JSON.stringify(request),
-  });
+  let response: Response;
+  try {
+    response = await fetch(AI_ACTIONS_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include', // Send auth cookies
+      body: JSON.stringify(request),
+    });
+  } catch (err) {
+    // Network error (timeout, DNS failure, etc.)
+    throw new Error(`Network error calling AI action: ${err instanceof Error ? err.message : 'unknown'}`);
+  }
+
+  // Handle non-JSON error responses (502 from proxy, HTML error pages, etc.)
+  const contentType = response.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    throw new Error(`AI action returned non-JSON response (HTTP ${response.status})`);
+  }
 
   const data = await response.json();
 

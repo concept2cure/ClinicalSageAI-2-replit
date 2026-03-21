@@ -28,16 +28,17 @@ const handler: AIActionHandler = {
 
   validate(request: AIActionRequest): AIActionError[] {
     const errors: AIActionError[] = [];
-    if (!request.targetId) {
+    const hasInlineContent = request.payload?.content && typeof request.payload.content === 'string';
+    if (!request.targetId && !hasInlineContent) {
       errors.push({
         code: 'MISSING_TARGET',
-        message: 'targetId is required — artifact ID or document ID',
+        message: 'targetId is required (or provide payload.content for inline validation)',
       });
     }
-    if (!request.targetType || !['artifact', 'document'].includes(request.targetType)) {
+    if (!hasInlineContent && (!request.targetType || !['artifact', 'document'].includes(request.targetType))) {
       errors.push({
         code: 'INVALID_TARGET_TYPE',
-        message: 'targetType must be "artifact" or "document"',
+        message: 'targetType must be "artifact" or "document" (unless using inline content)',
       });
     }
     return errors;

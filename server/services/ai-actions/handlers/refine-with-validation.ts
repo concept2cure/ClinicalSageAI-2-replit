@@ -121,6 +121,7 @@ const handler: AIActionHandler = {
     const updatedObjects = [];
     if (request.targetId && request.targetType === 'artifact') {
       try {
+        const isNumericId = typeof request.targetId === 'number' || /^\d+$/.test(String(request.targetId));
         await db
           .update(concept2cureArtifacts)
           .set({
@@ -135,9 +136,12 @@ const handler: AIActionHandler = {
             updatedAt: new Date(),
           })
           .where(
-            typeof request.targetId === 'number' || /^\d+$/.test(String(request.targetId))
-              ? eq(concept2cureArtifacts.id, Number(request.targetId))
-              : eq(concept2cureArtifacts.artifactId, String(request.targetId))
+            and(
+              isNumericId
+                ? eq(concept2cureArtifacts.id, Number(request.targetId))
+                : eq(concept2cureArtifacts.artifactId, String(request.targetId)),
+              eq(concept2cureArtifacts.organizationId, ctx.user.organizationId)
+            )
           );
 
         updatedObjects.push({
@@ -315,13 +319,17 @@ async function getArtifactVersion(
   organizationId: number
 ): Promise<number> {
   try {
+    const isNumericId = typeof targetId === 'number' || /^\d+$/.test(String(targetId));
     const [artifact] = await db
       .select({ version: concept2cureArtifacts.version })
       .from(concept2cureArtifacts)
       .where(
-        typeof targetId === 'number' || /^\d+$/.test(String(targetId))
-          ? eq(concept2cureArtifacts.id, Number(targetId))
-          : eq(concept2cureArtifacts.artifactId, String(targetId))
+        and(
+          isNumericId
+            ? eq(concept2cureArtifacts.id, Number(targetId))
+            : eq(concept2cureArtifacts.artifactId, String(targetId)),
+          eq(concept2cureArtifacts.organizationId, organizationId)
+        )
       )
       .limit(1);
     return artifact?.version || 1;

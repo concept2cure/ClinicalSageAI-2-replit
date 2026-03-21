@@ -14,10 +14,8 @@
 
 import { eq, and } from 'drizzle-orm';
 import * as crypto from 'crypto';
-import { generateUUID } from '../../../utils/id-generator';
 import {
   concept2cureArtifacts,
-  regulatoryAuditLogs,
 } from '../../../../shared/schema';
 import { unifiedDocuments } from '../../../../shared/schema/unified_workflow';
 import { registerActionHandler } from '../action-registry';
@@ -27,7 +25,6 @@ import type {
   AIActionResponse,
   AIActionExecutionContext,
   AIActionError,
-  AIActionProvenance,
   AIActionObjectRef,
   AIActionModuleType,
 } from '../../../../shared/types/ai-actions';
@@ -289,17 +286,18 @@ function inferModuleFromContext(
   const submissionType = request.context?.submissionType as string | undefined;
   if (!submissionType) return request.module;
 
+  const normalized = submissionType.toLowerCase();
   const mapping: Record<string, AIActionModuleType> = {
-    'IND': 'ind',
-    'NDA': 'nda',
+    'ind': 'ind',
+    'nda': 'nda',
     '510(k)': '510k',
     '510k': '510k',
-    'CER': 'cer',
-    'IVDR': 'ivdr',
-    'CMC': 'cmc',
-    'eCTD': 'ectd',
+    'cer': 'cer',
+    'ivdr': 'ivdr',
+    'cmc': 'cmc',
+    'ectd': 'ectd',
   };
-  return mapping[submissionType.toUpperCase()] || request.module;
+  return mapping[normalized] || request.module;
 }
 
 function buildWarnings(artifact: any): string[] {

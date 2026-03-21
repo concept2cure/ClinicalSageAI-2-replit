@@ -10,9 +10,32 @@
 
 import { Router, Request, Response } from 'express';
 import { dispatchAction, getRegisteredActions } from '../services/ai-actions';
-import type { AIActionRequest, AIActionSourceSurface } from '../../shared/types/ai-actions';
+import type { AIActionRequest, AIActionResponse, AIActionSourceSurface } from '../../shared/types/ai-actions';
 
 const router = Router();
+
+/** Build a complete error response that satisfies the AIActionResponse contract. */
+function buildRouteError(actionType: string, errors: { code: string; message: string }[]): AIActionResponse {
+  return {
+    success: false,
+    actionType: actionType as any,
+    status: 'failed',
+    result: null,
+    createdObjects: [],
+    updatedObjects: [],
+    warnings: [],
+    errors,
+    provenance: {
+      actionId: 'none',
+      timestamp: new Date().toISOString(),
+      userId: 0,
+      organizationId: 0,
+      projectId: 0,
+      sourceSurface: 'api',
+    },
+    nextSuggestedActions: [],
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Helpers — mirror concept2cure.ts patterns for auth extraction
@@ -64,41 +87,29 @@ router.post('/execute', async (req: Request, res: Response) => {
       organizationId = getOrganizationId(req);
       userId = getUserId(req);
     } catch (err: any) {
-      return res.status(401).json({
-        success: false,
-        actionType: req.body?.actionType || 'unknown',
-        status: 'failed',
-        errors: [{ code: 'AUTH_REQUIRED', message: err.message }],
-      });
+      return res.status(401).json(
+        buildRouteError(req.body?.actionType || 'unknown', [{ code: 'AUTH_REQUIRED', message: err.message }])
+      );
     }
 
     // 2. Validate request body shape
     const body = req.body;
     if (!body || !body.actionType) {
-      return res.status(400).json({
-        success: false,
-        actionType: 'unknown',
-        status: 'failed',
-        errors: [{ code: 'INVALID_REQUEST', message: 'actionType is required in request body' }],
-      });
+      return res.status(400).json(
+        buildRouteError('unknown', [{ code: 'INVALID_REQUEST', message: 'actionType is required in request body' }])
+      );
     }
 
     if (!body.targetType) {
-      return res.status(400).json({
-        success: false,
-        actionType: body.actionType,
-        status: 'failed',
-        errors: [{ code: 'INVALID_REQUEST', message: 'targetType is required' }],
-      });
+      return res.status(400).json(
+        buildRouteError(body.actionType, [{ code: 'INVALID_REQUEST', message: 'targetType is required' }])
+      );
     }
 
     if (!body.projectId && body.projectId !== 0) {
-      return res.status(400).json({
-        success: false,
-        actionType: body.actionType,
-        status: 'failed',
-        errors: [{ code: 'INVALID_REQUEST', message: 'projectId is required' }],
-      });
+      return res.status(400).json(
+        buildRouteError(body.actionType, [{ code: 'INVALID_REQUEST', message: 'projectId is required' }])
+      );
     }
 
     // 3. Build canonical request
@@ -133,18 +144,9 @@ router.post('/execute', async (req: Request, res: Response) => {
     return res.status(httpStatus).json(response);
   } catch (err: any) {
     console.error('[AI Actions Route] Unhandled error:', err);
-    return res.status(500).json({
-      success: false,
-      actionType: req.body?.actionType || 'unknown',
-      status: 'failed',
-      result: null,
-      createdObjects: [],
-      updatedObjects: [],
-      warnings: [],
-      errors: [{ code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' }],
-      provenance: { timestamp: new Date().toISOString() },
-      nextSuggestedActions: [],
-    });
+    return res.status(500).json(
+      buildRouteError(req.body?.actionType || 'unknown', [{ code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' }])
+    );
   }
 });
 

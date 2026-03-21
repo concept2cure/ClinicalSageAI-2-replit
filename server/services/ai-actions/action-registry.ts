@@ -23,7 +23,6 @@ import type {
   AIActionExecutionContext,
   AIActionError,
   AIActionProvenance,
-  AIActionHandlerError as AIActionHandlerErrorType,
 } from '../../../shared/types/ai-actions';
 import { AIActionHandlerError } from '../../../shared/types/ai-actions';
 
@@ -140,8 +139,14 @@ export async function dispatchAction(
     }
   }
 
-  // 5. Log audit (non-blocking)
-  logAuditEntry(request, response, actionId, options, Date.now() - startTime).catch(
+  // 5. Compute audit data and attach to provenance BEFORE returning
+  const durationMs = Date.now() - startTime;
+  const integrityHash = computeIntegrityHash(request, response, actionId);
+  response.provenance.auditLogId = `ai-action-${actionId}`;
+  response.provenance.integrityHash = integrityHash;
+
+  // 6. Log audit (non-blocking — fire after provenance is attached)
+  logAuditEntry(request, response, actionId, options, durationMs, integrityHash).catch(
     (err) => console.error('[AI Actions] Audit log error:', err)
   );
 
@@ -216,11 +221,10 @@ async function logAuditEntry(
   response: AIActionResponse,
   actionId: string,
   options: DispatchOptions,
-  durationMs: number
+  durationMs: number,
+  integrityHash: string
 ): Promise<void> {
   try {
-    const integrityHash = computeIntegrityHash(request, response, actionId);
-
     await db.insert(regulatoryAuditLogs).values({
       auditId: `ai-action-${actionId}`,
       organizationId: options.user.organizationId,
@@ -260,9 +264,6 @@ async function logAuditEntry(
       },
     });
 
-    // Update provenance on the response with audit reference
-    response.provenance.auditLogId = `ai-action-${actionId}`;
-    response.provenance.integrityHash = integrityHash;
   } catch (err) {
     // Audit failures must never break the action
     console.error('[AI Actions] Failed to write audit log:', err);
