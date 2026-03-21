@@ -64,6 +64,27 @@ let initialized = false;
 // In-flight tracking for graceful shutdown
 const inFlightJobs = new Set<string>();
 
+// Job ownership: jobId → userId (for SSE access control)
+const jobOwnership = new Map<string, number>();
+const JOB_OWNERSHIP_TTL_MS = 10 * 60 * 1000; // 10 minutes
+
+/** Check if a user owns a specific job. */
+export function isJobOwner(jobId: string, userId: number): boolean {
+  return jobOwnership.get(jobId) === userId;
+}
+
+// Periodic cleanup of stale ownership entries
+setInterval(() => {
+  // Keep ownership map bounded — remove entries for completed/old jobs
+  if (jobOwnership.size > 2000) {
+    const iter = jobOwnership.keys();
+    for (let i = 0; i < 500; i++) {
+      const key = iter.next().value;
+      if (key) jobOwnership.delete(key);
+    }
+  }
+}, 60_000).unref();
+
 /**
  * Initialize the action queue. Call during server startup.
  */
@@ -198,8 +219,10 @@ export async function enqueueAction(
     { priority }
   );
 
-  logger.info(`Action enqueued`, { jobId: job.id, actionType: request.actionType });
-  return { jobId: String(job.id), queued: true };
+  const jobId = String(job.id);
+  jobOwnership.set(jobId, options.user.userId);
+  logger.info(`Action enqueued`, { jobId, actionType: request.actionType });
+  return { jobId, queued: true };
 }
 
 // ---------------------------------------------------------------------------

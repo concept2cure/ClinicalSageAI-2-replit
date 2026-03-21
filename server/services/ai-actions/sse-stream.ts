@@ -7,7 +7,7 @@
  */
 
 import { Request, Response } from 'express';
-import { onJobUpdate } from './action-queue';
+import { onJobUpdate, isJobOwner } from './action-queue';
 import type { AIActionResponse } from '../../../shared/types/ai-actions';
 import { createScopedLogger } from '../../utils/logger';
 
@@ -47,6 +47,12 @@ export function handleSSEStream(req: Request, res: Response): void {
 
   if (!userId) {
     res.status(401).json({ error: 'Authentication required' });
+    return;
+  }
+
+  // Verify job ownership — users can only stream their own jobs
+  if (!isJobOwner(jobId, userId)) {
+    res.status(403).json({ error: 'Not authorized to monitor this job' });
     return;
   }
 

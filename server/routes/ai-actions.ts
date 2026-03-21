@@ -174,8 +174,11 @@ router.post('/execute', async (req: Request, res: Response) => {
       const { jobId, queued, response: syncResponse } = await enqueueAction(actionRequest, dispatchOptions);
 
       if (!queued && syncResponse) {
-        // Queue unavailable — fell back to sync execution
-        return res.status(syncResponse.success ? 200 : 400).json(syncResponse);
+        // Queue unavailable — fell back to sync execution; signal this to client
+        return res.status(syncResponse.success ? 200 : 400).json({
+          ...syncResponse,
+          _meta: { fallback: true, reason: 'Async queue unavailable — executed synchronously' },
+        });
       }
 
       return res.status(202).json({

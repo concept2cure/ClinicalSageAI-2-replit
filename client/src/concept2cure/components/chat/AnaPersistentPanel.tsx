@@ -543,8 +543,18 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             ts: Date.now(),
           });
         }
-      }).catch(() => {
-        // Fall through — action execution failed, chat still sent
+      }).catch((err) => {
+        // Notify caller of failure so UI can reflect the error
+        if (onActionRun) {
+          onActionRun({
+            id: action.id,
+            intent: action.intent!,
+            label: action.label,
+            status: 'failed',
+            ts: Date.now(),
+            error: err instanceof Error ? err.message : 'Action execution failed',
+          });
+        }
       });
     }
 
