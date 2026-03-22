@@ -19,6 +19,7 @@ import {
 } from '../services/chat-thread-helpers.js';
 import { getEmbeddingService } from '../services/enhancedEmbeddingService.js';
 import { getIntelligencePrefix } from '../services/lumen-context-builder.js';
+import { processResponseActions } from '../services/ana-guidance-executor.js';
 import { createHash } from 'crypto';
 
 const router = Router();
@@ -435,6 +436,46 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       });
     }
 
+    // ── STEP 6b: GUIDANCE-TO-ACTION EXECUTION ──────────────────────────
+    // Process AnA's response for action signals and execute governed actions.
+    // Only runs when project context is available (org + project scoped).
+    let executedActions: Array<{
+      actionType: string;
+      executed: boolean;
+      confidence: string;
+      artifactId: string | null;
+      threadId: string | null;
+      error: string | null;
+    }> = [];
+
+    if (numericOrgId && project_id) {
+      try {
+        const actionResult = await processResponseActions(assistantMessage, {
+          projectId: typeof project_id === 'string' ? parseInt(project_id, 10) : project_id,
+          organizationId: numericOrgId,
+          userId: typeof userId === 'string' ? parseInt(userId, 10) || 0 : userId,
+          userName: (req as any).user?.name || 'AnA User',
+          threadId,
+        });
+
+        // Replace message with cleaned text (action blocks stripped)
+        if (actionResult.actions.length > 0) {
+          assistantMessage = actionResult.cleanedText;
+          executedActions = actionResult.actions.map(a => ({
+            actionType: a.actionType,
+            executed: a.executed,
+            confidence: a.confidence,
+            artifactId: a.artifactId,
+            threadId: a.threadId,
+            error: a.error,
+          }));
+        }
+      } catch (actionErr: any) {
+        // Non-fatal — chat still works, actions just don't execute
+        console.warn('[AnA RI] Guidance action processing failed:', actionErr?.message);
+      }
+    }
+
     // Save to legacy chat_messages for backward compat
     await saveMessage(threadId, 'user', message, model);
     await saveMessage(threadId, 'assistant', assistantMessage, model, usage.total_tokens);
@@ -647,6 +688,8 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       snapshotHashSha256,
       generationRunId,
       claims,
+      // AnA 1.0 RI — Executed guidance actions
+      executedActions: executedActions.length > 0 ? executedActions : undefined,
     });
   } catch (error: any) {
     console.error('[AnA] Chat error:', error);

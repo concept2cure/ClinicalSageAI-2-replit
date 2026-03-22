@@ -109,6 +109,15 @@ interface AnaMessage {
   images?: Array<{ base64: string; mimeType: string }>;
   /** Downloadable PPTX from Nano Banana */
   pptx?: { base64: string; filename: string; mimeType: string };
+  /** AnA 1.0 RI — Executed guidance actions */
+  executedActions?: Array<{
+    actionType: string;
+    executed: boolean;
+    confidence: string;
+    artifactId: string | null;
+    threadId: string | null;
+    error: string | null;
+  }>;
 }
 
 interface SuggestedAction {
@@ -796,6 +805,46 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               </div>
                             );
                           })()}
+                          {/* AnA 1.0 RI — Executed Guidance Actions */}
+                          {msg.executedActions && msg.executedActions.length > 0 && (
+                            <div className="mt-2 space-y-1.5">
+                              {msg.executedActions.map((action, i) => (
+                                <div
+                                  key={i}
+                                  className={cn(
+                                    'flex items-center gap-2 px-3 py-2 rounded-lg border text-xs',
+                                    action.executed && !action.error
+                                      ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                                      : action.error
+                                        ? 'bg-red-50 border-red-200 text-red-800'
+                                        : 'bg-zinc-50 border-zinc-200 text-zinc-600'
+                                  )}
+                                >
+                                  {action.executed && !action.error ? (
+                                    <Check className="w-3.5 h-3.5 flex-shrink-0" />
+                                  ) : action.error ? (
+                                    <span className="w-3.5 h-3.5 flex-shrink-0 text-red-500">!</span>
+                                  ) : (
+                                    <Zap className="w-3.5 h-3.5 flex-shrink-0" />
+                                  )}
+                                  <span className="font-medium">
+                                    {action.executed
+                                      ? `Created ${action.actionType.replace(/_/g, ' ')}`
+                                      : action.error
+                                        ? `Failed: ${action.error}`
+                                        : `Prepared ${action.actionType.replace(/_/g, ' ')} (${action.confidence})`
+                                    }
+                                  </span>
+                                  {action.artifactId && (
+                                    <span className="text-emerald-600 font-mono text-[10px]">{action.artifactId}</span>
+                                  )}
+                                  {action.threadId && (
+                                    <span className="text-emerald-600 font-mono text-[10px]">thread:{action.threadId.slice(0, 8)}</span>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
                           {/* Nano Banana PPTX download button */}
                           {msg.pptx && (
                             <button
