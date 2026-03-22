@@ -1,7 +1,8 @@
 /**
  * Intelligence Layer — Barrel Export
  *
- * Single entry point for all intelligence services.
+ * Single entry point for all intelligence services,
+ * including the Regulatory Intelligence Model (RIM).
  *
  * @module server/services/intelligence
  */
@@ -70,3 +71,55 @@ export {
   type CrossModuleReport,
   type CrossModuleContext,
 } from './cross-module-intelligence.js';
+
+// ── RIM: Regulatory Intelligence Model ──
+
+export {
+  generateJudgmentReport,
+  evaluateEvidenceSufficiency,
+  evaluateDefensibility,
+  evaluateReviewerSensitivity,
+  evaluateClaimRisk,
+  evaluateCrossSectionConsistency,
+  evaluateSubmissionRisk,
+  type JudgmentModel,
+  type JudgmentScore,
+  type JudgmentVerdict,
+  type JudgmentFactor,
+  type JudgmentFinding,
+  type JudgmentContext,
+  type JudgmentReport,
+  type JudgmentInput,
+} from './judgment-framework.js';
+
+export {
+  patternRegistry,
+  type PatternCategory,
+  type RegulatoryAgency,
+  type SubmissionType,
+  type CTDModule,
+  type RegulatoryPattern,
+  type PatternMatch,
+  type PatternSearchCriteria,
+} from './pattern-registry.js';
+
+export {
+  captureJudgmentSignals,
+  capturePatternSignals,
+  captureSignal,
+  querySignals,
+  getSignalSummary,
+  persistSignals,
+  type SignalType,
+  type IntelligenceSignal,
+  type SignalSummary,
+  type SignalQuery,
+} from './signal-capture.js';
+
+export {
+  runRIMAssessment,
+  quickPatternScan,
+  getProjectSignals,
+  type RIMContext,
+  type RIMAssessment,
+} from './rim.js';
