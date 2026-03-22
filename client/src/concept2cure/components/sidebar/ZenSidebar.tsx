@@ -470,7 +470,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             <NavItem
               icon={<Snowflake className="w-3.5 h-3.5" />}
               label="SnowGlobe"
-              subtitle="Predictions · Simulations"
+              subtitle="Experimental · Predictions"
               active={activeNavId === 'snowglobe'}
               accentColor="blue"
               onClick={() => onNavigate?.('snowglobe')}

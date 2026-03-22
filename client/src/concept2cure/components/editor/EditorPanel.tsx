@@ -72,6 +72,7 @@ import { SignatureWorkflow, SignatureList } from './SignatureWorkflow';
 import { SubmissionReadinessValidator } from '../submission/SubmissionReadinessValidator';
 import { ComplianceScannerPanel } from './ComplianceScannerPanel';
 import { AnAMemory } from '../intelligence/AnAMemory';
+import ArtifactProofPanel from './ArtifactProofPanel';
 import { getCurrentUser } from '../../utils/getCurrentUser';
 
 // ── Auth helper (same pattern as useProjects) ────────────────────────────────
@@ -184,7 +185,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const claimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Single secondary inspector panel (only one open at a time) ────────
-  type InspectorPanel = 'intelligence' | 'provenance' | 'compare' | 'audit' | 'dataroom' | 'inconsistency' | 'health' | 'versions' | 'batch-ai' | 'crossref' | 'comments' | 'review' | 'reviewers' | 'submission-readiness' | 'compliance-scanner' | 'ana-memory';
+  type InspectorPanel = 'intelligence' | 'provenance' | 'compare' | 'audit' | 'dataroom' | 'inconsistency' | 'health' | 'versions' | 'batch-ai' | 'crossref' | 'comments' | 'review' | 'reviewers' | 'submission-readiness' | 'compliance-scanner' | 'ana-memory' | 'proof';
   const [activeInspector, setActiveInspector] = useState<InspectorPanel | null>(null);
   const toggleInspector = useCallback((panel: InspectorPanel) => {
     setActiveInspector(prev => (prev === panel ? null : panel));
@@ -1815,6 +1816,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             <button data-testid="ribbon-provenance" onClick={() => toggleInspector('provenance')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'provenance' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><ShieldCheck className="w-3.5 h-3.5" />Provenance</button>
             <button data-testid="ribbon-audit" onClick={() => toggleInspector('audit')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'audit' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><ClipboardList className="w-3.5 h-3.5" />Audit Trail</button>
             <button data-testid="ribbon-submission" onClick={() => toggleInspector('submission-readiness')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'submission-readiness' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Shield className="w-3.5 h-3.5" />Submission</button>
+            <button data-testid="ribbon-proof" onClick={() => toggleInspector('proof')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'proof' ? 'bg-emerald-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Shield className="w-3.5 h-3.5" />Proof</button>
           </div>
           <span className="text-[9px] font-medium uppercase tracking-widest text-zinc-400 mt-0.5">Audit</span>
         </div>
@@ -2282,6 +2284,11 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               onExportAsArtifact={handleExportAudit}
               exportingAudit={exportingAudit}
             />
+          </div>
+        )}
+        {activeInspector === 'proof' && projectId && activeArtifact && (
+          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-150">
+            <ArtifactProofPanel projectId={projectId} artifact={activeArtifact} />
           </div>
         )}
         {/* Sprint 2A: Data Room Panel */}
