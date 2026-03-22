@@ -1008,8 +1008,71 @@ You are currently assisting with a 510(k) premarket notification.
 You are assisting with a ${subType === 'NDA' ? 'New Drug Application' : 'Biologics License Application'}.
 - Full CTD Modules 1-5 are required with complete clinical datasets
 - Ensure ISS/ISE (Integrated Summary of Safety/Efficacy) are comprehensive
-- REMS assessment may be required
-- Reference ICH E1/E3/E9 for clinical data formatting`);
+- REMS assessment may be required if safety signals warrant it
+- Reference ICH E1 for duration of exposure requirements (≥1500 patients for chronic use)
+- Reference ICH E3 for CSR format, ICH E9(R1) for estimand framework
+- Labeling per PLR format — Highlights, Full Prescribing Information, Medication Guide
+- FDA Prescription Drug User Fee Act (PDUFA) date awareness — plan for Advisory Committee if applicable`);
+  } else if (subType === 'ANDA') {
+    parts.push(`
+## ANDA Specific Guidance
+You are assisting with an Abbreviated New Drug Application (generic drug).
+- Bioequivalence data is the primary clinical requirement — BE study design per FDA guidance
+- Reference Listed Drug (RLD) comparison: strength, dosage form, route, labeling
+- Pharmaceutical equivalence per 21 CFR 320.1: same active ingredient, dosage form, route, strength
+- Biowaiver eligibility assessment per BCS classification (ICH M9)
+- ANDA-specific CMC: same Q1/Q2 composition not required, but dissolution similarity (f2 testing) is
+- Suitability petition (505(j)(2)(C)) if any differences from RLD
+- Patent certification (Paragraph I-IV) strategy — assess Orange Book patents
+- Flag any exclusivity blocks (NCE, ODE, pediatric, CGT)`);
+  } else if (subType === '505B2' || subType === '505(B)(2)') {
+    parts.push(`
+## 505(b)(2) Specific Guidance
+You are assisting with a 505(b)(2) application — the hybrid pathway.
+- Right to reference: identify which data comes from the RLD/published literature vs. new studies
+- Bridge study strategy: what new data is needed to support the proposed changes from the RLD
+- Suitability of the 505(b)(2) pathway: change in dosage form, route, strength, indication, or combination
+- Literature-based evidence: systematic review methodology, quality assessment of published studies
+- CMC data requirements: full Module 3 for new formulation; comparative dissolution/BA data
+- FDA Pre-IND/Type B meeting to confirm pathway acceptance is critical
+- Patent considerations: same Paragraph certification requirements as ANDA`);
+  } else if (subType === 'PMA') {
+    parts.push(`
+## PMA Specific Guidance
+You are assisting with a Premarket Approval application for a Class III medical device.
+- Full clinical trial data typically required — pivotal study with adequate sample size and endpoints
+- Nonclinical testing per applicable FDA guidance and recognized consensus standards
+- Manufacturing information: design controls (820.30), process validation, sterilization validation
+- Software documentation per IEC 62304 if applicable (Level of Concern assessment)
+- Risk management file per ISO 14971 — design FMEA, process FMEA, use FMEA
+- Labeling review: professional labeling, patient labeling, IFU compliance
+- Post-approval requirements: PAS/30-day supplements strategy, annual reports
+- Panel track vs. traditional PMA — assess which review pathway applies`);
+  } else if (subType === 'DENOVO' || subType === 'DE_NOVO') {
+    parts.push(`
+## De Novo Specific Guidance
+You are assisting with a De Novo classification request for a novel device.
+- No predicate device — must demonstrate reasonable assurance of safety and effectiveness
+- Regulatory history search: confirm no 510(k)-clearable predicate exists
+- Risk-benefit analysis specific to the intended use and patient population
+- Proposed classification: recommend Class I or II with special controls
+- Performance testing per recognized consensus standards where applicable
+- Clinical data may be required depending on device risk profile
+- Special controls proposal: define the controls needed for this device type
+- Post-De Novo: device becomes predicate for future 510(k) submissions`);
+  } else if (subType === 'MAA') {
+    parts.push(`
+## MAA Specific Guidance
+You are assisting with a Marketing Authorisation Application for the EMA.
+- CTD Modules 1-5 required — Module 1 is region-specific (EU administrative forms)
+- Centralised procedure (CP): mandatory for certain product types (biotech, orphan, HIV/cancer/diabetes/neurodegen/autoimmune/viral)
+- Decentralised procedure (DCP) or Mutual Recognition (MRP) for other products
+- Rapporteur/Co-rapporteur system — anticipate their assessment focus areas
+- EU-specific requirements: Risk Management Plan (RMP) per GVP Module V, PSUR/PBRER per ICH E2C(R2)
+- Paediatric Investigation Plan (PIP) or waiver per Regulation (EC) No 1901/2006
+- EU Orphan Designation if applicable (10-year market exclusivity)
+- Environmental Risk Assessment (ERA) per EMA guidelines
+- Conditional Marketing Authorisation or Authorisation under Exceptional Circumstances if data is limited`);
   }
 
   // ── Artifact Awareness ────────────────────────────────────────────────────
