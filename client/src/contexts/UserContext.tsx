@@ -342,11 +342,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
   // Handle project change
   const handleSetCurrentProject = useCallback((project: UserProject | null) => {
     setCurrentProject(project);
-    if (project) {
-      localStorage.setItem('currentProjectId', project.id);
-    } else {
-      localStorage.removeItem('currentProjectId');
-    }
+    try {
+      if (project) {
+        localStorage.setItem('currentProjectId', project.id);
+      } else {
+        localStorage.removeItem('currentProjectId');
+      }
+    } catch { /* private browsing */ }
   }, []);
 
   // Initial load

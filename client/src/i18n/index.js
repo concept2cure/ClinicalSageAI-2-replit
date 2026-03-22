@@ -14,8 +14,10 @@ const resources = {
 
 // Get the user's preferred language
 const getUserLanguage = () => {
-  const savedLng = localStorage.getItem('lng');
-  if (savedLng) return savedLng;
+  try {
+    const savedLng = localStorage.getItem('lng');
+    if (savedLng) return savedLng;
+  } catch { /* private browsing */ }
 
   const browserLng = navigator.language.slice(0, 2);
   return resources[browserLng] ? browserLng : 'en';
@@ -30,7 +32,7 @@ export const t = (key, namespace = 'common') => {
 
 // Change language
 export const changeLanguage = lng => {
-  localStorage.setItem('lng', lng);
+  try { localStorage.setItem('lng', lng); } catch { /* private browsing */ }
   window.location.reload();
 };
 
