@@ -162,7 +162,7 @@ const FormField: React.FC<{
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={3}
-        className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:ring-2 focus:ring-violet-300 focus:border-violet-400 outline-none resize-none bg-white"
+        className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 outline-none resize-none bg-white"
       />
     ) : (
       <input
@@ -170,7 +170,7 @@ const FormField: React.FC<{
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:ring-2 focus:ring-violet-300 focus:border-violet-400 outline-none bg-white"
+        className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 outline-none bg-white"
       />
     )}
     {hint && <p className="mt-1 text-xs text-zinc-400">{hint}</p>}
@@ -792,7 +792,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                   <h2 className="text-lg font-semibold text-zinc-900">Specifications</h2>
                   <p className="text-sm text-zinc-500">ICH Q6A/Q6B compliant quality specifications</p>
                 </div>
-                <button className="flex items-center gap-2 px-3 py-2 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700">
+                <button className="flex items-center gap-2 px-3 py-2 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none">
                   <Plus className="w-4 h-4" />
                   Add Specification
                 </button>
@@ -805,7 +805,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                   Add quality specifications for drug substance and drug product, or upload a CoA to auto-generate.
                 </p>
                 <div className="flex items-center justify-center gap-3">
-                  <button className="flex items-center gap-2 px-4 py-2 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700">
+                  <button className="flex items-center gap-2 px-4 py-2 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none">
                     <Plus className="w-4 h-4" />
                     Add Manually
                   </button>
@@ -829,7 +829,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                   <h2 className="text-lg font-semibold text-zinc-900">Stability Studies</h2>
                   <p className="text-sm text-zinc-500">ICH Q1A(R2) stability data management</p>
                 </div>
-                <button className="flex items-center gap-2 px-3 py-2 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700">
+                <button className="flex items-center gap-2 px-3 py-2 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none">
                   <Plus className="w-4 h-4" />
                   New Study
                 </button>
@@ -863,7 +863,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                 <p className="text-xs text-zinc-500 max-w-md mx-auto mb-4">
                   Create a stability study or upload stability data to track time-point results.
                 </p>
-                <button className="flex items-center gap-2 px-4 py-2 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700 mx-auto">
+                <button className="flex items-center gap-2 px-4 py-2 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none mx-auto">
                   <Plus className="w-4 h-4" />
                   Create Stability Protocol
                 </button>
@@ -879,7 +879,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                   <h2 className="text-lg font-semibold text-zinc-900">Impurity Profile</h2>
                   <p className="text-sm text-zinc-500">ICH Q3A/Q3B/Q3C/Q3D impurity management</p>
                 </div>
-                <button className="flex items-center gap-2 px-3 py-2 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700">
+                <button className="flex items-center gap-2 px-3 py-2 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none">
                   <Plus className="w-4 h-4" />
                   Add Impurity
                 </button>
@@ -922,7 +922,7 @@ export const CMCHub: React.FC<CMCHubProps> = ({
                 <p className="text-xs text-zinc-500 max-w-md mx-auto mb-4">
                   Add impurities manually or upload analytical data (HPLC chromatograms, CoA) to auto-detect.
                 </p>
-                <button className="flex items-center gap-2 px-4 py-2 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700 mx-auto">
+                <button className="flex items-center gap-2 px-4 py-2 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none mx-auto">
                   <Plus className="w-4 h-4" />
                   Add Impurity
                 </button>
