@@ -1,27 +1,29 @@
 /**
  * @fileoverview AnA 1.0 RI Guidance-to-Action Executor
  * @module server/services/ana-guidance-executor
- * @version 1.0.0
+ * @version 2.0.0
  *
- * @description
  * Converts AnA's high-confidence guidance into real governed actions.
- * This is the execution bridge between AnA's intelligence layer and
- * the platform's artifact/workflow/audit infrastructure.
- *
- * Execution flow:
- *   AnA response → detect action signals → confidence gate → execute → return artifact/thread IDs
+ * Creates real artifacts in concept2cureArtifacts with version tracking,
+ * content hashing, and audit trail — or review threads with comments.
  *
  * Confidence gating:
- *   strong    → auto-execute allowed
- *   moderate  → auto-execute OR one-step confirm
- *   provisional → prepare action payload only (no execution)
- *   uncertain → recommendation only (NO execution)
+ *   strong      → auto-execute
+ *   moderate    → auto-execute (user can undo via lifecycle)
+ *   provisional → prepare payload only (no DB mutation)
+ *   uncertain   → recommendation only (no execution, no payload)
  *
- * @compliance FDA 21 CFR Part 11 — all executions logged to audit trail
+ * @compliance FDA 21 CFR Part 11 — all executions audit-trailed
  */
 
 import { db } from '../db.js';
-import { concept2cureArtifacts, concept2cureArtifactVersions } from '../../shared/schema.js';
+import {
+  concept2cureArtifacts,
+  concept2cureArtifactVersions,
+  concept2cureReviewThreads,
+  concept2cureThreadComments,
+} from '../../shared/schema.js';
+import { eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { createHash } from 'crypto';
 
@@ -45,15 +47,14 @@ export interface AnaActionPayload {
   organizationId: number;
   userId: number;
   userName: string;
-  /** Existing artifact to update (for rewrites) */
-  artifactId?: string;
+  /** Existing artifact integer ID (for review_thread linking) */
+  existingArtifactId?: number;
   /** CTD section code if applicable */
   sectionCode?: string;
   /** The generated content */
   content: string;
   /** Title for the artifact */
   title: string;
-  /** Execution metadata */
   metadata: {
     runId: string;
     source: 'ana_guidance';
@@ -67,20 +68,19 @@ export interface AnaActionPayload {
 
 export interface AnaActionResult {
   success: boolean;
+  /** Whether DB mutation occurred */
   executed: boolean;
   actionType: AnaActionType;
   confidence: AnaConfidenceLevel;
-  /** Created artifact ID (null if not executed) */
+  /** External artifact_id string (e.g. ana_memo_a1b2c3d4) */
   artifactId: string | null;
-  /** Created artifact version ID */
-  versionId: string | null;
-  /** Created thread ID (for review_thread actions) */
+  /** Integer PK of the created artifact (for FK linking) */
+  artifactPk: number | null;
+  /** Thread external ID */
   threadId: string | null;
   /** The payload that was/would be executed */
   payload: AnaActionPayload;
-  /** Error message if execution failed */
   error: string | null;
-  /** Provenance for audit trail */
   provenance: {
     runId: string;
     executedAt: string;
@@ -93,10 +93,6 @@ export interface AnaActionResult {
 // SIGNAL DETECTION
 // ═══════════════════════════════════════════════════════════════════════════════
 
-/**
- * Structured action block format that AnA can embed in responses.
- * Format: ```ana-action\n{JSON}\n```
- */
 export interface DetectedActionSignal {
   type: AnaActionType;
   confidence: AnaConfidenceLevel;
@@ -107,32 +103,57 @@ export interface DetectedActionSignal {
   guidanceSummary?: string;
 }
 
+const VALID_ACTION_TYPES: Set<string> = new Set([
+  'rewrite', 'memo', 'strategy_note', 'reviewer_brief', 'risk_log', 'review_thread',
+]);
+const VALID_CONFIDENCE: Set<string> = new Set(['strong', 'moderate', 'provisional', 'uncertain']);
+
 /**
  * Detect structured action signals in AnA's response text.
- * Looks for ```ana-action JSON blocks embedded in the response.
+ * Primary: looks for ```ana-action JSON blocks.
+ * Fallback: looks for <!--ana-action JSON --> HTML comments (LLMs sometimes emit these).
  */
 export function detectActionSignals(responseText: string): DetectedActionSignal[] {
   const signals: DetectedActionSignal[] = [];
-  const pattern = /```ana-action\s*\n([\s\S]*?)\n```/g;
-  let match;
 
-  while ((match = pattern.exec(responseText)) !== null) {
-    try {
-      const parsed = JSON.parse(match[1]);
-      if (parsed.type && parsed.confidence && parsed.title && parsed.content) {
-        signals.push({
-          type: parsed.type,
-          confidence: parsed.confidence,
-          title: parsed.title,
-          content: parsed.content,
-          sectionCode: parsed.sectionCode,
-          decisionContext: parsed.decisionContext,
-          guidanceSummary: parsed.guidanceSummary,
-        });
+  // Primary pattern: fenced code block
+  const fencedPattern = /```ana-action\s*\n([\s\S]*?)\n```/g;
+  // Fallback: HTML comment pattern (LLMs sometimes wrap in comments)
+  const commentPattern = /<!--\s*ana-action\s*\n([\s\S]*?)\n\s*-->/g;
+
+  for (const pattern of [fencedPattern, commentPattern]) {
+    let match;
+    while ((match = pattern.exec(responseText)) !== null) {
+      try {
+        const raw = match[1].trim();
+        const parsed = JSON.parse(raw);
+
+        // Validate required fields and types
+        if (
+          typeof parsed.type === 'string' &&
+          typeof parsed.confidence === 'string' &&
+          typeof parsed.title === 'string' &&
+          typeof parsed.content === 'string' &&
+          VALID_ACTION_TYPES.has(parsed.type) &&
+          VALID_CONFIDENCE.has(parsed.confidence) &&
+          parsed.title.length > 0 &&
+          parsed.content.length > 0
+        ) {
+          signals.push({
+            type: parsed.type as AnaActionType,
+            confidence: parsed.confidence as AnaConfidenceLevel,
+            title: parsed.title,
+            content: parsed.content,
+            sectionCode: typeof parsed.sectionCode === 'string' ? parsed.sectionCode : undefined,
+            decisionContext: typeof parsed.decisionContext === 'string' ? parsed.decisionContext : undefined,
+            guidanceSummary: typeof parsed.guidanceSummary === 'string' ? parsed.guidanceSummary : undefined,
+          });
+        } else {
+          console.warn('[AnA Executor] Action signal missing required fields or invalid type/confidence');
+        }
+      } catch {
+        console.warn('[AnA Executor] Malformed JSON in action signal block, skipping');
       }
-    } catch {
-      // Malformed JSON — skip this block
-      console.warn('[AnA Executor] Malformed action signal block, skipping');
     }
   }
 
@@ -144,23 +165,46 @@ export function detectActionSignals(responseText: string): DetectedActionSignal[
  * render as visible code blocks in the chat UI.
  */
 export function stripActionSignals(responseText: string): string {
-  return responseText.replace(/```ana-action\s*\n[\s\S]*?\n```/g, '').trim();
+  return responseText
+    .replace(/```ana-action\s*\n[\s\S]*?\n```/g, '')
+    .replace(/<!--\s*ana-action\s*\n[\s\S]*?\n\s*-->/g, '')
+    .trim();
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONFIDENCE GATING
 // ═══════════════════════════════════════════════════════════════════════════════
 
-/**
- * Determines whether an action should be auto-executed based on confidence.
- *
- * strong    → auto-execute
- * moderate  → auto-execute (user can undo via artifact lifecycle)
- * provisional → prepare only (return payload, do not execute)
- * uncertain → no execution, recommendation only
- */
 export function shouldAutoExecute(confidence: AnaConfidenceLevel): boolean {
   return confidence === 'strong' || confidence === 'moderate';
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function makeProvenance(payload: AnaActionPayload) {
+  return {
+    runId: payload.metadata.runId,
+    executedAt: new Date().toISOString(),
+    executedBy: payload.userId,
+    source: 'ana_guidance' as const,
+  };
+}
+
+function failResult(payload: AnaActionPayload, error: string): AnaActionResult {
+  return {
+    success: false,
+    executed: false,
+    actionType: payload.type,
+    confidence: payload.metadata.confidence,
+    artifactId: null,
+    artifactPk: null,
+    threadId: null,
+    payload,
+    error,
+    provenance: makeProvenance(payload),
+  };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -168,52 +212,37 @@ export function shouldAutoExecute(confidence: AnaConfidenceLevel): boolean {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Execute a governed artifact creation action.
- * Creates a real artifact in concept2cureArtifacts with version tracking,
- * content hashing, and audit trail.
+ * Creates a real artifact in concept2cureArtifacts with:
+ * - Unique external artifactId
+ * - Content hash (SHA-256) for integrity
+ * - Version 1 snapshot in concept2cureArtifactVersions
+ * - Metadata linking back to AnA guidance run
+ * - Draft status (lifecycle starting point)
  */
 async function executeArtifactCreation(payload: AnaActionPayload): Promise<AnaActionResult> {
-  const runId = payload.metadata.runId;
-  const artifactId = `ana_${payload.type}_${uuidv4().slice(0, 8)}`;
-  const versionId = uuidv4();
+  const externalId = `ana_${payload.type}_${uuidv4().slice(0, 8)}`;
   const contentHash = createHash('sha256').update(payload.content, 'utf8').digest('hex');
 
-  const artifactTypeMap: Record<AnaActionType, string> = {
-    rewrite: 'markdown',
-    memo: 'markdown',
-    strategy_note: 'markdown',
-    reviewer_brief: 'markdown',
-    risk_log: 'markdown',
-    review_thread: 'markdown', // thread creation handled separately
-  };
-
-  const categoryMap: Record<AnaActionType, string> = {
-    rewrite: 'document',
-    memo: 'document',
-    strategy_note: 'document',
-    reviewer_brief: 'document',
-    risk_log: 'document',
-    review_thread: 'document',
-  };
-
   try {
-    // 1. Create the artifact
+    // 1. Insert artifact — returns the auto-generated integer PK
     const [artifact] = await db.insert(concept2cureArtifacts).values({
-      artifactId,
+      artifactId: externalId,
       organizationId: payload.organizationId,
       projectId: payload.projectId,
       title: payload.title,
       content: payload.content,
-      type: artifactTypeMap[payload.type],
-      category: categoryMap[payload.type],
+      contentHash,
+      type: 'markdown',
+      category: 'document',
       status: 'draft',
-      createdBy: payload.userId,
+      version: 1,
+      createdById: payload.userId,
       ctdSection: payload.sectionCode || null,
       metadata: {
         anaGenerated: true,
         anaActionType: payload.type,
         confidence: payload.metadata.confidence,
-        runId,
+        runId: payload.metadata.runId,
         source: 'ana_guidance',
         decisionContext: payload.metadata.decisionContext,
         guidanceSummary: payload.metadata.guidanceSummary,
@@ -222,20 +251,21 @@ async function executeArtifactCreation(payload: AnaActionPayload): Promise<AnaAc
       },
     }).returning();
 
-    // 2. Create version snapshot
+    const artifactPk = artifact.id; // integer PK from serial
+
+    // 2. Insert version snapshot — artifactId here is the integer FK
     await db.insert(concept2cureArtifactVersions).values({
-      versionId,
-      artifactId,
+      artifactId: artifactPk,
       organizationId: payload.organizationId,
       version: 1,
       content: payload.content,
       contentHash,
-      createdBy: payload.userId,
+      createdById: payload.userId,
       changeDescription: `AnA 1.0 RI auto-generated ${payload.type.replace(/_/g, ' ')} (confidence: ${payload.metadata.confidence})`,
     });
 
     console.log(
-      `[AnA Executor] Created ${payload.type} artifact: ${artifactId} (project=${payload.projectId}, confidence=${payload.metadata.confidence})`
+      `[AnA Executor] Created ${payload.type}: id=${artifactPk}, externalId=${externalId}, project=${payload.projectId}`
     );
 
     return {
@@ -243,38 +273,16 @@ async function executeArtifactCreation(payload: AnaActionPayload): Promise<AnaAc
       executed: true,
       actionType: payload.type,
       confidence: payload.metadata.confidence,
-      artifactId,
-      versionId,
+      artifactId: externalId,
+      artifactPk,
       threadId: null,
       payload,
       error: null,
-      provenance: {
-        runId,
-        executedAt: new Date().toISOString(),
-        executedBy: payload.userId,
-        source: 'ana_guidance',
-      },
+      provenance: makeProvenance(payload),
     };
   } catch (err: any) {
-    console.error(`[AnA Executor] Artifact creation failed for ${payload.type}:`, err?.message);
-
-    return {
-      success: false,
-      executed: false,
-      actionType: payload.type,
-      confidence: payload.metadata.confidence,
-      artifactId: null,
-      versionId: null,
-      threadId: null,
-      payload,
-      error: err?.message || 'Artifact creation failed',
-      provenance: {
-        runId,
-        executedAt: new Date().toISOString(),
-        executedBy: payload.userId,
-        source: 'ana_guidance',
-      },
-    };
+    console.error(`[AnA Executor] Artifact creation failed:`, err?.message);
+    return failResult(payload, err?.message || 'Artifact creation failed');
   }
 }
 
@@ -283,46 +291,62 @@ async function executeArtifactCreation(payload: AnaActionPayload): Promise<AnaAc
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Execute a review thread creation action.
- * Creates a real review thread with an initial comment in the
- * concept2cureReviewThreads / concept2cureThreadComments tables.
+ * Creates a review thread with an initial comment. Review threads REQUIRE
+ * an artifact FK (integer), so this first creates a memo artifact, then
+ * attaches the thread to it. Uses Drizzle ORM — no raw SQL.
  */
 async function executeReviewThreadCreation(payload: AnaActionPayload): Promise<AnaActionResult> {
-  const runId = payload.metadata.runId;
-  const threadId = uuidv4();
-  const commentId = uuidv4();
+  const threadExtId = uuidv4();
+  const commentExtId = uuidv4();
 
   try {
-    // Insert review thread
-    await db.execute({
-      sql: `INSERT INTO concept2cure_review_threads
-            (thread_id, organization_id, artifact_id, created_by_id, title, status, priority, created_at)
-            VALUES ($1, $2, $3, $4, $5, 'open', 'high', NOW())`,
-      args: [
-        threadId,
-        payload.organizationId,
-        payload.artifactId || null,
-        payload.userId,
-        payload.title,
-      ],
-    });
+    // Review threads require an artifact. If none provided, create a memo artifact first.
+    let artifactPk = payload.existingArtifactId || null;
+    let createdArtifactId: string | null = null;
 
-    // Insert initial comment
-    await db.execute({
-      sql: `INSERT INTO concept2cure_thread_comments
-            (comment_id, thread_id, author_id, author_name, body, kind, created_at)
-            VALUES ($1, $2, $3, $4, $5, 'comment', NOW())`,
-      args: [
-        commentId,
-        threadId,
-        payload.userId,
-        payload.userName,
-        payload.content,
-      ],
+    if (!artifactPk) {
+      const memoPayload: AnaActionPayload = {
+        ...payload,
+        type: 'memo',
+        title: `[Review Context] ${payload.title}`,
+      };
+      const memoResult = await executeArtifactCreation(memoPayload);
+      if (!memoResult.success || !memoResult.artifactPk) {
+        return failResult(payload, `Could not create backing artifact for review thread: ${memoResult.error}`);
+      }
+      artifactPk = memoResult.artifactPk;
+      createdArtifactId = memoResult.artifactId;
+    }
+
+    // Insert review thread via Drizzle ORM
+    const [thread] = await db.insert(concept2cureReviewThreads).values({
+      threadId: threadExtId,
+      orgId: payload.organizationId,
+      projectId: payload.projectId,
+      artifactId: artifactPk,
+      createdById: payload.userId,
+      createdByName: payload.userName,
+      title: payload.title,
+      status: 'open',
+      priority: 'high',
+    }).returning();
+
+    const threadPk = thread.id; // integer PK
+
+    // Insert initial comment via Drizzle ORM
+    await db.insert(concept2cureThreadComments).values({
+      commentId: commentExtId,
+      orgId: payload.organizationId,
+      threadId: threadPk,
+      artifactId: artifactPk,
+      authorId: payload.userId,
+      authorName: payload.userName,
+      body: payload.content,
+      kind: 'comment',
     });
 
     console.log(
-      `[AnA Executor] Created review thread: ${threadId} (project=${payload.projectId}, confidence=${payload.metadata.confidence})`
+      `[AnA Executor] Created review thread: threadId=${threadExtId}, artifactPk=${artifactPk}, project=${payload.projectId}`
     );
 
     return {
@@ -330,38 +354,16 @@ async function executeReviewThreadCreation(payload: AnaActionPayload): Promise<A
       executed: true,
       actionType: 'review_thread',
       confidence: payload.metadata.confidence,
-      artifactId: null,
-      versionId: null,
-      threadId,
+      artifactId: createdArtifactId,
+      artifactPk,
+      threadId: threadExtId,
       payload,
       error: null,
-      provenance: {
-        runId,
-        executedAt: new Date().toISOString(),
-        executedBy: payload.userId,
-        source: 'ana_guidance',
-      },
+      provenance: makeProvenance(payload),
     };
   } catch (err: any) {
     console.error(`[AnA Executor] Review thread creation failed:`, err?.message);
-
-    return {
-      success: false,
-      executed: false,
-      actionType: 'review_thread',
-      confidence: payload.metadata.confidence,
-      artifactId: null,
-      versionId: null,
-      threadId: null,
-      payload,
-      error: err?.message || 'Review thread creation failed',
-      provenance: {
-        runId,
-        executedAt: new Date().toISOString(),
-        executedBy: payload.userId,
-        source: 'ana_guidance',
-      },
-    };
+    return failResult(payload, err?.message || 'Review thread creation failed');
   }
 }
 
@@ -371,42 +373,22 @@ async function executeReviewThreadCreation(payload: AnaActionPayload): Promise<A
 
 /**
  * Execute an AnA guidance action with confidence gating.
- *
- * This is the main entry point. It:
- * 1. Validates the payload
- * 2. Checks confidence gating
- * 3. Routes to the appropriate executor
- * 4. Returns a governed result with IDs and provenance
- *
- * If confidence is provisional or uncertain, returns a prepared payload
- * without executing.
+ * Routes to artifact creation or review thread creation.
+ * Returns prepared-only payload for provisional/uncertain confidence.
  */
 export async function executeGuidanceAction(payload: AnaActionPayload): Promise<AnaActionResult> {
-  // Validate required fields
   if (!payload.type || !payload.projectId || !payload.organizationId || !payload.userId) {
-    return {
-      success: false,
-      executed: false,
-      actionType: payload.type,
-      confidence: payload.metadata.confidence,
-      artifactId: null,
-      versionId: null,
-      threadId: null,
-      payload,
-      error: 'Missing required fields: type, projectId, organizationId, userId',
-      provenance: {
-        runId: payload.metadata.runId,
-        executedAt: new Date().toISOString(),
-        executedBy: payload.userId || 0,
-        source: 'ana_guidance',
-      },
-    };
+    return failResult(payload, 'Missing required fields: type, projectId, organizationId, userId');
   }
 
-  // Confidence gating
+  if (!VALID_ACTION_TYPES.has(payload.type)) {
+    return failResult(payload, `Unknown action type: ${payload.type}`);
+  }
+
+  // Confidence gating — provisional and uncertain do NOT execute
   if (!shouldAutoExecute(payload.metadata.confidence)) {
     console.log(
-      `[AnA Executor] Confidence=${payload.metadata.confidence} — prepared payload only (no execution) for ${payload.type}`
+      `[AnA Executor] confidence=${payload.metadata.confidence} — no execution for ${payload.type}`
     );
     return {
       success: true,
@@ -414,25 +396,19 @@ export async function executeGuidanceAction(payload: AnaActionPayload): Promise<
       actionType: payload.type,
       confidence: payload.metadata.confidence,
       artifactId: null,
-      versionId: null,
+      artifactPk: null,
       threadId: null,
       payload,
       error: null,
-      provenance: {
-        runId: payload.metadata.runId,
-        executedAt: new Date().toISOString(),
-        executedBy: payload.userId,
-        source: 'ana_guidance',
-      },
+      provenance: makeProvenance(payload),
     };
   }
 
-  // Route to appropriate executor
+  // Route to executor
   if (payload.type === 'review_thread') {
     return executeReviewThreadCreation(payload);
   }
 
-  // All other types create artifacts
   return executeArtifactCreation(payload);
 }
 
@@ -441,12 +417,10 @@ export async function executeGuidanceAction(payload: AnaActionPayload): Promise<
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Process AnA's response text for action signals and execute them.
- * This is called from the chat response pipeline after AnA generates a response.
+ * Process AnA's response for action signals and execute them.
+ * Called from the chat pipeline after AI generation.
  *
- * Returns:
- * - The cleaned response text (action blocks stripped)
- * - Array of action results (executed or prepared)
+ * Returns cleaned text (action blocks stripped) and action results.
  */
 export async function processResponseActions(
   responseText: string,
@@ -496,8 +470,11 @@ export async function processResponseActions(
     actions.push(result);
   }
 
+  const executed = actions.filter(a => a.executed).length;
+  const prepared = actions.filter(a => !a.executed && !a.error).length;
+  const failed = actions.filter(a => a.error).length;
   console.log(
-    `[AnA Executor] Processed ${signals.length} action signals: ${actions.filter(a => a.executed).length} executed, ${actions.filter(a => !a.executed).length} prepared`
+    `[AnA Executor] ${signals.length} signals → ${executed} executed, ${prepared} prepared, ${failed} failed`
   );
 
   return { cleanedText, actions };

@@ -1,11 +1,12 @@
 /**
- * Tests for AnA 1.0 RI Guidance-to-Action Executor
+ * Tests for AnA 1.0 RI Guidance-to-Action Executor v2
  *
  * Validates:
- * - Action signal detection from AnA response text
+ * - Action signal detection (fenced blocks + HTML comment fallback)
+ * - Input validation (type enum, confidence enum, required fields)
  * - Confidence gating (strong/moderate execute, provisional/uncertain don't)
- * - Action signal stripping from response text
- * - Payload validation
+ * - Signal stripping from response text
+ * - Malformed input handling
  */
 
 import { describe, it, expect } from 'vitest';
@@ -41,6 +42,7 @@ The above memo has been prepared.`;
       expect(signals[0].confidence).toBe('strong');
       expect(signals[0].title).toBe('Risk Memo: Missing Stability Data');
       expect(signals[0].sectionCode).toBe('3.2.S.7');
+      expect(signals[0].decisionContext).toBe('can_we_proceed');
     });
 
     it('detects multiple action blocks', () => {
@@ -58,6 +60,45 @@ The above memo has been prepared.`;
       expect(signals).toHaveLength(2);
       expect(signals[0].type).toBe('memo');
       expect(signals[1].type).toBe('review_thread');
+    });
+
+    it('detects HTML comment fallback format', () => {
+      const response = `Analysis.
+
+<!-- ana-action
+{"type": "strategy_note", "confidence": "strong", "title": "Strategy Note", "content": "Strategic analysis content"}
+-->`;
+
+      const signals = detectActionSignals(response);
+      expect(signals).toHaveLength(1);
+      expect(signals[0].type).toBe('strategy_note');
+    });
+
+    it('rejects invalid action types', () => {
+      const response = `\`\`\`ana-action
+{"type": "invalid_type", "confidence": "strong", "title": "Test", "content": "Test"}
+\`\`\``;
+
+      const signals = detectActionSignals(response);
+      expect(signals).toHaveLength(0);
+    });
+
+    it('rejects invalid confidence levels', () => {
+      const response = `\`\`\`ana-action
+{"type": "memo", "confidence": "very_high", "title": "Test", "content": "Test"}
+\`\`\``;
+
+      const signals = detectActionSignals(response);
+      expect(signals).toHaveLength(0);
+    });
+
+    it('rejects empty title or content', () => {
+      const response = `\`\`\`ana-action
+{"type": "memo", "confidence": "strong", "title": "", "content": "Test"}
+\`\`\``;
+
+      const signals = detectActionSignals(response);
+      expect(signals).toHaveLength(0);
     });
 
     it('ignores malformed JSON blocks', () => {
@@ -82,12 +123,36 @@ The above memo has been prepared.`;
       const signals = detectActionSignals('Just a regular response with no actions.');
       expect(signals).toHaveLength(0);
     });
+
+    it('handles all valid action types', () => {
+      const types = ['rewrite', 'memo', 'strategy_note', 'reviewer_brief', 'risk_log', 'review_thread'];
+      for (const type of types) {
+        const response = `\`\`\`ana-action
+{"type": "${type}", "confidence": "strong", "title": "Test", "content": "Test content"}
+\`\`\``;
+        const signals = detectActionSignals(response);
+        expect(signals).toHaveLength(1);
+        expect(signals[0].type).toBe(type);
+      }
+    });
+
+    it('handles all valid confidence levels', () => {
+      const levels = ['strong', 'moderate', 'provisional', 'uncertain'];
+      for (const conf of levels) {
+        const response = `\`\`\`ana-action
+{"type": "memo", "confidence": "${conf}", "title": "Test", "content": "Test content"}
+\`\`\``;
+        const signals = detectActionSignals(response);
+        expect(signals).toHaveLength(1);
+        expect(signals[0].confidence).toBe(conf);
+      }
+    });
   });
 
   // ─── Signal Stripping ──────────────────────────────────────────────────
 
   describe('stripActionSignals', () => {
-    it('removes action blocks from response text', () => {
+    it('removes fenced action blocks from response text', () => {
       const response = `Here is the analysis.
 
 \`\`\`ana-action
@@ -102,6 +167,21 @@ The memo has been created.`;
       expect(cleaned).toContain('The memo has been created');
     });
 
+    it('removes HTML comment action blocks', () => {
+      const response = `Analysis.
+
+<!-- ana-action
+{"type": "memo", "confidence": "strong", "title": "Test", "content": "Test"}
+-->
+
+Done.`;
+
+      const cleaned = stripActionSignals(response);
+      expect(cleaned).not.toContain('ana-action');
+      expect(cleaned).toContain('Analysis');
+      expect(cleaned).toContain('Done');
+    });
+
     it('preserves non-action code blocks', () => {
       const response = `\`\`\`json
 {"regular": "code block"}
@@ -109,6 +189,11 @@ The memo has been created.`;
 
       const cleaned = stripActionSignals(response);
       expect(cleaned).toContain('regular');
+    });
+
+    it('returns original text when no action blocks', () => {
+      const text = 'No actions here.';
+      expect(stripActionSignals(text)).toBe(text);
     });
   });
 

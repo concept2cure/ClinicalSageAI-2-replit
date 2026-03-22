@@ -519,6 +519,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           content: data.response || data.answer || 'I\'m here to help with your regulatory work. What would you like to work on?',
           timestamp: new Date(),
           demo: data.demo || false,
+          executedActions: data.executedActions || undefined,
         }]);
       }
     } catch (err: any) {
