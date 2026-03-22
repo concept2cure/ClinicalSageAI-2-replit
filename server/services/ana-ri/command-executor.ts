@@ -844,30 +844,63 @@ export async function runComplianceScan(
     const doc = artifact.rows[0];
     const content = doc.content || '';
 
-    // Perform basic compliance checks (without calling external AI — fast, deterministic)
-    const issues: Array<{ rule: string; severity: string; finding: string }> = [];
+    // Comprehensive compliance checks — fast, deterministic
+    const issues: Array<{ rule: string; severity: string; finding: string; section?: string }> = [];
+    const sections = content.split(/^(#{1,3}\s+.+)$/gm).filter(Boolean);
 
-    // Check for required regulatory references
+    // Document-level checks
+    if (/\[insert|TBD|TODO|placeholder|coming soon/i.test(content)) {
+      const match = content.match(/\b(TBD|TODO|\[insert[^\]]*\]|placeholder|coming soon)\b/i);
+      issues.push({ rule: 'PLACEHOLDER', severity: 'critical', finding: `Contains placeholder text: "${match?.[0]}"` });
+    }
+
+    if (doc.ctd_section && content.length < 200) {
+      issues.push({ rule: 'LENGTH', severity: 'major', finding: `Section ${doc.ctd_section} has insufficient content (${content.length} chars)` });
+    }
+
     if (doc.ctd_section && /^[23]\./.test(doc.ctd_section)) {
       if (!/\b(?:ICH|CFR|FDA|EMA|ISO)\b/.test(content)) {
         issues.push({ rule: 'REG-REF', severity: 'major', finding: 'No regulatory references found in Module 2/3 section' });
       }
     }
 
-    // Check for evidence labels
     if (content.length > 500 && !/\[(?:KNOWN|INFERRED|MISSING)/.test(content)) {
-      issues.push({ rule: 'EVIDENCE', severity: 'minor', finding: 'Content lacks evidence classification labels' });
+      issues.push({ rule: 'EVIDENCE', severity: 'minor', finding: 'Content lacks evidence classification labels [KNOWN/INFERRED/MISSING]' });
     }
 
-    // Check for placeholder text
-    if (/\[insert|TBD|TODO|placeholder|coming soon/i.test(content)) {
-      issues.push({ rule: 'PLACEHOLDER', severity: 'critical', finding: 'Content contains placeholder text' });
+    // Section-level checks
+    const sectionHeaders = content.match(/^#{1,3}\s+.+$/gm) || [];
+    const sectionResults: Array<{ title: string; issues: number; score: number }> = [];
+
+    for (const header of sectionHeaders) {
+      const sectionTitle = header.replace(/^#{1,3}\s+/, '').trim();
+      const headerIdx = content.indexOf(header);
+      const nextHeaderIdx = content.indexOf('\n#', headerIdx + header.length);
+      const sectionContent = content.slice(headerIdx, nextHeaderIdx > -1 ? nextHeaderIdx : undefined);
+      let sectionIssueCount = 0;
+
+      if (sectionContent.length < 100 && !/summary|overview|context/i.test(sectionTitle)) {
+        issues.push({ rule: 'SECTION-LENGTH', severity: 'minor', finding: `Section "${sectionTitle}" is very short (${sectionContent.length} chars)`, section: sectionTitle });
+        sectionIssueCount++;
+      }
+
+      if (/\b(TBD|TODO|\[insert)/i.test(sectionContent)) {
+        issues.push({ rule: 'SECTION-PLACEHOLDER', severity: 'critical', finding: `Section "${sectionTitle}" contains placeholder text`, section: sectionTitle });
+        sectionIssueCount++;
+      }
+
+      sectionResults.push({
+        title: sectionTitle,
+        issues: sectionIssueCount,
+        score: sectionIssueCount === 0 ? 100 : Math.max(0, 100 - sectionIssueCount * 30),
+      });
     }
 
-    // Check minimum content length for substantive sections
-    if (doc.ctd_section && content.length < 200) {
-      issues.push({ rule: 'LENGTH', severity: 'major', finding: `Section ${doc.ctd_section} has insufficient content (${content.length} chars)` });
-    }
+    // Overall scoring (0-100)
+    const criticalCount = issues.filter(i => i.severity === 'critical').length;
+    const majorCount = issues.filter(i => i.severity === 'major').length;
+    const minorCount = issues.filter(i => i.severity === 'minor').length;
+    const overallScore = Math.max(0, 100 - criticalCount * 30 - majorCount * 15 - minorCount * 5);
 
     return {
       success: true,
@@ -876,13 +909,15 @@ export async function runComplianceScan(
         artifactId: params.artifactId,
         title: doc.title,
         ctdSection: doc.ctd_section,
-        issueCount: issues.length,
+        overallScore,
+        compliant: criticalCount === 0,
+        summary: { critical: criticalCount, major: majorCount, minor: minorCount, total: issues.length },
         issues,
-        compliant: issues.filter(i => i.severity === 'critical').length === 0,
+        sectionResults,
       },
       message: issues.length === 0
-        ? `Artifact "${doc.title}" passed compliance scan.`
-        : `Found ${issues.length} compliance issue(s) in "${doc.title}": ${issues.filter(i => i.severity === 'critical').length} critical, ${issues.filter(i => i.severity === 'major').length} major.`,
+        ? `Artifact "${doc.title}" passed compliance scan (score: ${overallScore}/100).`
+        : `Compliance scan: ${overallScore}/100 — ${criticalCount} critical, ${majorCount} major, ${minorCount} minor issue(s) in "${doc.title}".`,
     };
   } catch (err: any) {
     return { success: false, action: 'run_compliance_scan', message: 'Compliance scan failed.', error: err?.message };
@@ -890,7 +925,323 @@ export async function runComplianceScan(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 12. COMMAND REGISTRY
+// 12. DOCUMENT EXPORT
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Export an artifact to DOCX format. Returns base64-encoded buffer. */
+export async function exportArtifact(
+  ctx: CommandContext,
+  params: {
+    projectId: number;
+    artifactId: number;
+    format: 'docx' | 'pdf';
+  }
+): Promise<CommandResult> {
+  try {
+    // Load artifact
+    const artifact = await pool.query(
+      `SELECT artifact_id, title, content, ctd_section, version, status
+       FROM concept2cure_artifacts
+       WHERE artifact_id = $1 AND project_id = $2 AND organization_id = $3`,
+      [params.artifactId, params.projectId, ctx.organizationId]
+    );
+
+    if (artifact.rows.length === 0) {
+      return { success: false, action: 'export_artifact', message: `Artifact ${params.artifactId} not found.` };
+    }
+
+    const doc = artifact.rows[0];
+
+    if (params.format === 'docx') {
+      // Dynamic import to avoid startup dependency
+      const { generateDocxBuffer } = await import('../docxGenerator.js');
+      const buffer = await generateDocxBuffer(doc.title || 'Untitled', doc.content || '');
+      const base64 = buffer.toString('base64');
+
+      return {
+        success: true,
+        action: 'export_artifact',
+        data: {
+          artifactId: params.artifactId,
+          format: 'docx',
+          title: doc.title,
+          fileName: `${(doc.title || 'document').replace(/[^a-zA-Z0-9]/g, '_')}_v${doc.version}.docx`,
+          base64,
+          sizeBytes: buffer.length,
+        },
+        message: `Exported "${doc.title}" as DOCX (${Math.round(buffer.length / 1024)}KB, version ${doc.version}).`,
+      };
+    }
+
+    // PDF: convert markdown to simple text-based PDF
+    // For now, return the content as-is with metadata (PDF generation requires additional libs)
+    return {
+      success: true,
+      action: 'export_artifact',
+      data: {
+        artifactId: params.artifactId,
+        format: 'text',
+        title: doc.title,
+        content: doc.content,
+        version: doc.version,
+        status: doc.status,
+      },
+      message: `Exported "${doc.title}" content (version ${doc.version}). Full PDF generation requires the PDF service.`,
+    };
+  } catch (err: any) {
+    return { success: false, action: 'export_artifact', message: 'Export failed.', error: err?.message };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 13. VERSION DIFFING
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Compare two versions of an artifact */
+export async function compareVersions(
+  ctx: CommandContext,
+  params: {
+    artifactId: number;
+    versionA: number;
+    versionB: number;
+  }
+): Promise<CommandResult> {
+  try {
+    const versions = await pool.query(
+      `SELECT v.version, v.content, v.change_description, v.created_at,
+              u.name as author
+       FROM concept2cure_artifact_versions v
+       LEFT JOIN users u ON u.id = v.created_by_id
+       WHERE v.artifact_id = $1 AND v.version IN ($2, $3)
+       ORDER BY v.version`,
+      [params.artifactId, params.versionA, params.versionB]
+    );
+
+    if (versions.rows.length < 2) {
+      return { success: false, action: 'compare_versions', message: `Could not find both versions ${params.versionA} and ${params.versionB}.` };
+    }
+
+    const [older, newer] = versions.rows;
+    const olderLines = (older.content || '').split('\n');
+    const newerLines = (newer.content || '').split('\n');
+
+    // Simple line-level diff
+    const added: string[] = [];
+    const removed: string[] = [];
+    const olderSet = new Set(olderLines);
+    const newerSet = new Set(newerLines);
+
+    for (const line of newerLines) {
+      if (!olderSet.has(line) && line.trim()) added.push(line);
+    }
+    for (const line of olderLines) {
+      if (!newerSet.has(line) && line.trim()) removed.push(line);
+    }
+
+    // Detect modified sections (headers that changed)
+    const olderHeaders = olderLines.filter(l => /^#{1,3}\s/.test(l));
+    const newerHeaders = newerLines.filter(l => /^#{1,3}\s/.test(l));
+    const modifiedSections = newerHeaders.filter(h => !olderHeaders.includes(h));
+
+    return {
+      success: true,
+      action: 'compare_versions',
+      data: {
+        artifactId: params.artifactId,
+        versionA: { version: older.version, author: older.author, date: older.created_at },
+        versionB: { version: newer.version, author: newer.author, date: newer.created_at },
+        summary: {
+          linesAdded: added.length,
+          linesRemoved: removed.length,
+          sectionsModified: modifiedSections.length,
+        },
+        added: added.slice(0, 20),
+        removed: removed.slice(0, 20),
+        modifiedSections,
+        changeDescription: newer.change_description || 'No change description provided.',
+      },
+      message: `Version ${older.version} → ${newer.version}: +${added.length} lines, -${removed.length} lines, ${modifiedSections.length} section(s) modified.`,
+    };
+  } catch (err: any) {
+    return { success: false, action: 'compare_versions', message: 'Version comparison failed.', error: err?.message };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 14. MILESTONES
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Create a milestone */
+export async function createMilestone(
+  ctx: CommandContext,
+  params: {
+    packageId: number;
+    title: string;
+    description?: string;
+    targetDate?: string;
+    sortOrder?: number;
+  }
+): Promise<CommandResult> {
+  try {
+    const result = await pool.query(
+      `INSERT INTO c2c_milestones
+         (milestone_id, org_id, package_db_id, title, description,
+          target_date, gate_status, sort_order, created_by_id, created_at, updated_at)
+       VALUES (gen_random_uuid()::text, $1, $2, $3, $4, $5, 'open', $6, $7, NOW(), NOW())
+       RETURNING id, milestone_id, title, gate_status`,
+      [ctx.organizationId, params.packageId, params.title,
+       params.description || '', params.targetDate || null,
+       params.sortOrder || 0, ctx.userId]
+    );
+    const ms = result.rows[0];
+    return {
+      success: true,
+      action: 'create_milestone',
+      data: { milestoneId: ms.id, title: ms.title, gateStatus: ms.gate_status },
+      message: `Milestone "${params.title}" created.`,
+    };
+  } catch (err: any) {
+    return { success: false, action: 'create_milestone', message: 'Failed to create milestone.', error: err?.message };
+  }
+}
+
+/** Update a milestone */
+export async function updateMilestone(
+  ctx: CommandContext,
+  params: {
+    milestoneId: number;
+    updates: Record<string, unknown>;
+  }
+): Promise<CommandResult> {
+  try {
+    const allowedFields = ['title', 'description', 'target_date', 'gate_status', 'sort_order', 'block_reasons'];
+    const setClauses: string[] = [];
+    const values: unknown[] = [params.milestoneId, ctx.organizationId];
+    let paramIdx = 3;
+
+    for (const [key, value] of Object.entries(params.updates)) {
+      const snakeKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+      if (allowedFields.includes(snakeKey)) {
+        setClauses.push(`${snakeKey} = $${paramIdx}`);
+        values.push(snakeKey === 'block_reasons' ? JSON.stringify(value) : value);
+        paramIdx++;
+      }
+    }
+    if (setClauses.length === 0) {
+      return { success: false, action: 'update_milestone', message: 'No valid fields to update.' };
+    }
+
+    setClauses.push('updated_at = NOW()');
+    await pool.query(
+      `UPDATE c2c_milestones SET ${setClauses.join(', ')} WHERE id = $1 AND org_id = $2`,
+      values
+    );
+    return {
+      success: true,
+      action: 'update_milestone',
+      data: { milestoneId: params.milestoneId, updated: Object.keys(params.updates) },
+      message: `Milestone ${params.milestoneId} updated.`,
+    };
+  } catch (err: any) {
+    return { success: false, action: 'update_milestone', message: 'Failed to update milestone.', error: err?.message };
+  }
+}
+
+/** List milestones for a submission package */
+export async function listMilestones(
+  ctx: CommandContext,
+  packageId: number
+): Promise<CommandResult> {
+  try {
+    const result = await pool.query(
+      `SELECT id, milestone_id, title, description, target_date, gate_status, sort_order, created_at
+       FROM c2c_milestones
+       WHERE package_db_id = $1 AND org_id = $2
+       ORDER BY sort_order, target_date`,
+      [packageId, ctx.organizationId]
+    );
+    return {
+      success: true,
+      action: 'list_milestones',
+      data: { milestones: result.rows, count: result.rows.length },
+      message: `Found ${result.rows.length} milestone(s).`,
+    };
+  } catch (err: any) {
+    return { success: false, action: 'list_milestones', message: 'Failed to list milestones.', error: err?.message };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 15. SAFE VERSION REVERT
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Revert an artifact to a previous version (creates new version, non-destructive) */
+export async function revertToVersion(
+  ctx: CommandContext,
+  params: {
+    projectId: number;
+    artifactId: number;
+    targetVersion: number;
+    confirmed: boolean;
+  }
+): Promise<CommandResult> {
+  if (!params.confirmed) {
+    return {
+      success: false,
+      action: 'revert_to_version',
+      message: `Revert requires confirmation. Set confirmed=true to revert artifact ${params.artifactId} to version ${params.targetVersion}. This creates a new version with the old content — nothing is deleted.`,
+    };
+  }
+
+  try {
+    // Load the target version content
+    const versionResult = await pool.query(
+      `SELECT content, version FROM concept2cure_artifact_versions
+       WHERE artifact_id = $1 AND version = $2`,
+      [params.artifactId, params.targetVersion]
+    );
+
+    if (versionResult.rows.length === 0) {
+      return { success: false, action: 'revert_to_version', message: `Version ${params.targetVersion} not found.` };
+    }
+
+    const oldContent = versionResult.rows[0].content;
+
+    // Create a new version with the old content via tagArtifact
+    const result = await tagArtifact({
+      projectId: params.projectId,
+      organizationId: ctx.organizationId,
+      userId: ctx.userId,
+      sectionCode: '',
+      title: '',
+      content: oldContent,
+      artifactId: params.artifactId,
+      source: 'ana_ri',
+      metadata: {
+        revertedFrom: params.targetVersion,
+        revertedBy: ctx.userId,
+        revertedAt: new Date().toISOString(),
+        revertReason: `Reverted to version ${params.targetVersion} via AnA RI`,
+      },
+    });
+
+    return {
+      success: true,
+      action: 'revert_to_version',
+      data: {
+        artifactId: params.artifactId,
+        revertedToVersion: params.targetVersion,
+        newVersionId: result.versionId,
+      },
+      message: `Artifact ${params.artifactId} reverted to version ${params.targetVersion} content (created as new version).`,
+    };
+  } catch (err: any) {
+    return { success: false, action: 'revert_to_version', message: 'Revert failed.', error: err?.message };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 16. COMMAND REGISTRY
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type CommandName =
@@ -902,6 +1253,9 @@ export type CommandName =
   | 'create_review_thread' | 'add_review_comment'
   | 'search_artifacts' | 'list_team_members'
   | 'list_artifact_versions' | 'run_compliance_scan'
+  | 'export_artifact' | 'compare_versions'
+  | 'create_milestone' | 'update_milestone' | 'list_milestones'
+  | 'revert_to_version'
   | 'load_user_context' | 'load_conversation_history';
 
 export interface CommandDefinition {
@@ -933,6 +1287,12 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
   { name: 'run_compliance_scan', description: 'Run a compliance scan on an artifact', parameters: 'projectId, artifactId', example: '"Scan artifact 12 for compliance issues"' },
   { name: 'search_artifacts', description: 'Search artifacts by content or title', parameters: 'query, projectId?, limit?', example: '"Find all artifacts mentioning hepatotoxicity"' },
   { name: 'list_team_members', description: 'List team members in the organization', parameters: 'none', example: '"Who is on my team?"' },
+  { name: 'export_artifact', description: 'Export an artifact to DOCX format', parameters: 'projectId, artifactId, format (docx/pdf)', example: '"Export artifact 12 as a Word document"' },
+  { name: 'compare_versions', description: 'Compare two versions of an artifact (diff)', parameters: 'artifactId, versionA, versionB', example: '"What changed between version 1 and version 3 of artifact 12?"' },
+  { name: 'create_milestone', description: 'Create a submission milestone with target date', parameters: 'packageId, title, targetDate?, description?', example: '"Create a milestone for Pre-IND meeting by June 15"' },
+  { name: 'update_milestone', description: 'Update a milestone status or details', parameters: 'milestoneId, updates (gateStatus, targetDate, etc.)', example: '"Mark milestone 3 as completed"' },
+  { name: 'list_milestones', description: 'List milestones for a submission package', parameters: 'packageId', example: '"Show all milestones for the IND package"' },
+  { name: 'revert_to_version', description: 'Revert artifact to a previous version (non-destructive)', parameters: 'projectId, artifactId, targetVersion, confirmed=true', example: '"Revert artifact 12 to version 2"' },
 ];
 
 /**

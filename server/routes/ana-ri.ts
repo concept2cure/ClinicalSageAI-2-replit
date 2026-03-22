@@ -523,6 +523,24 @@ router.post('/execute', async (req: Request, res: Response) => {
       case 'run_compliance_scan':
         result = await executor.runComplianceScan(ctx, params || {});
         break;
+      case 'export_artifact':
+        result = await executor.exportArtifact(ctx, params || {});
+        break;
+      case 'compare_versions':
+        result = await executor.compareVersions(ctx, params || {});
+        break;
+      case 'create_milestone':
+        result = await executor.createMilestone(ctx, params || {});
+        break;
+      case 'update_milestone':
+        result = await executor.updateMilestone(ctx, params || {});
+        break;
+      case 'list_milestones':
+        result = await executor.listMilestones(ctx, params?.packageId);
+        break;
+      case 'revert_to_version':
+        result = await executor.revertToVersion(ctx, params || {});
+        break;
       case 'search_artifacts':
         result = await executor.searchArtifacts(ctx, params || {});
         break;
