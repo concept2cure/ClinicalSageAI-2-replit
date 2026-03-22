@@ -608,7 +608,7 @@ export async function createSubmissionPackage(
 ): Promise<CommandResult> {
   try {
     const result = await pool.query(
-      `INSERT INTO submission_packages
+      `INSERT INTO c2c_submission_packages
          (package_id, org_id, project_id, package_family, title, description,
           target_date, status, created_at, updated_at)
        VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, 'active', NOW(), NOW())
@@ -632,36 +632,65 @@ export async function createSubmissionPackage(
 // 7. REVIEW OPERATIONS
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Assign a reviewer to an artifact */
-export async function assignReviewer(
+/** Create a review thread on an artifact (uses existing review_threads table) */
+export async function createReviewThread(
   ctx: CommandContext,
   params: {
     projectId: number;
     artifactId: number;
-    reviewerId: number;
+    title: string;
+    content: string;
     reviewType?: string;
-    instructions?: string;
+    assigneeId?: number;
   }
 ): Promise<CommandResult> {
   try {
     const result = await pool.query(
-      `INSERT INTO concept2cure_review_assignments
-         (artifact_id, project_id, organization_id, reviewer_id,
-          review_type, instructions, status, assigned_by, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, NOW(), NOW())
-       RETURNING id`,
+      `INSERT INTO concept2cure_review_threads
+         (artifact_id, project_id, organization_id, title, content,
+          review_type, status, created_by_id, assignee_id, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, 'open', $7, $8, NOW(), NOW())
+       RETURNING id, title, status`,
       [params.artifactId, params.projectId, ctx.organizationId,
-       params.reviewerId, params.reviewType || 'standard',
-       params.instructions || '', ctx.userId]
+       params.title, params.content,
+       params.reviewType || 'standard', ctx.userId, params.assigneeId || null]
+    );
+    const thread = result.rows[0];
+    return {
+      success: true,
+      action: 'create_review_thread',
+      data: { threadId: thread?.id, title: params.title, artifactId: params.artifactId },
+      message: `Review thread "${params.title}" created on artifact ${params.artifactId}.`,
+    };
+  } catch (err: any) {
+    return { success: false, action: 'create_review_thread', message: 'Failed to create review thread.', error: err?.message };
+  }
+}
+
+/** Add a comment to a review thread */
+export async function addReviewComment(
+  ctx: CommandContext,
+  params: {
+    threadId: number;
+    content: string;
+  }
+): Promise<CommandResult> {
+  try {
+    const result = await pool.query(
+      `INSERT INTO concept2cure_review_comments
+         (thread_id, organization_id, content, created_by_id, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, NOW(), NOW())
+       RETURNING id`,
+      [params.threadId, ctx.organizationId, params.content, ctx.userId]
     );
     return {
       success: true,
-      action: 'assign_reviewer',
-      data: { assignmentId: result.rows[0]?.id, artifactId: params.artifactId, reviewerId: params.reviewerId },
-      message: `Reviewer ${params.reviewerId} assigned to artifact ${params.artifactId}.`,
+      action: 'add_review_comment',
+      data: { commentId: result.rows[0]?.id, threadId: params.threadId },
+      message: `Comment added to review thread ${params.threadId}.`,
     };
   } catch (err: any) {
-    return { success: false, action: 'assign_reviewer', message: 'Failed to assign reviewer.', error: err?.message };
+    return { success: false, action: 'add_review_comment', message: 'Failed to add comment.', error: err?.message };
   }
 }
 
@@ -755,7 +784,113 @@ export async function listTeamMembers(ctx: CommandContext): Promise<CommandResul
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 10. COMMAND REGISTRY
+// 10. VERSION HISTORY
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** List version history of an artifact */
+export async function listArtifactVersions(
+  ctx: CommandContext,
+  params: {
+    projectId: number;
+    artifactId: number;
+  }
+): Promise<CommandResult> {
+  try {
+    const result = await pool.query(
+      `SELECT v.id, v.version, v.change_description, v.created_by_id, v.created_at,
+              u.name as created_by_name
+       FROM concept2cure_artifact_versions v
+       LEFT JOIN users u ON u.id = v.created_by_id
+       WHERE v.artifact_id = $1
+       ORDER BY v.version DESC`,
+      [params.artifactId]
+    );
+    return {
+      success: true,
+      action: 'list_artifact_versions',
+      data: { versions: result.rows, count: result.rows.length, artifactId: params.artifactId },
+      message: `Found ${result.rows.length} version(s) of artifact ${params.artifactId}.`,
+    };
+  } catch (err: any) {
+    return { success: false, action: 'list_artifact_versions', message: 'Failed to load version history.', error: err?.message };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 11. COMPLIANCE SCAN (delegates to existing API)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Run compliance scan on an artifact's content */
+export async function runComplianceScan(
+  ctx: CommandContext,
+  params: {
+    projectId: number;
+    artifactId: number;
+  }
+): Promise<CommandResult> {
+  try {
+    // Load artifact content
+    const artifact = await pool.query(
+      `SELECT artifact_id, title, content, ctd_section, status
+       FROM concept2cure_artifacts
+       WHERE artifact_id = $1 AND project_id = $2 AND organization_id = $3`,
+      [params.artifactId, params.projectId, ctx.organizationId]
+    );
+
+    if (artifact.rows.length === 0) {
+      return { success: false, action: 'run_compliance_scan', message: `Artifact ${params.artifactId} not found.` };
+    }
+
+    const doc = artifact.rows[0];
+    const content = doc.content || '';
+
+    // Perform basic compliance checks (without calling external AI — fast, deterministic)
+    const issues: Array<{ rule: string; severity: string; finding: string }> = [];
+
+    // Check for required regulatory references
+    if (doc.ctd_section && /^[23]\./.test(doc.ctd_section)) {
+      if (!/\b(?:ICH|CFR|FDA|EMA|ISO)\b/.test(content)) {
+        issues.push({ rule: 'REG-REF', severity: 'major', finding: 'No regulatory references found in Module 2/3 section' });
+      }
+    }
+
+    // Check for evidence labels
+    if (content.length > 500 && !/\[(?:KNOWN|INFERRED|MISSING)/.test(content)) {
+      issues.push({ rule: 'EVIDENCE', severity: 'minor', finding: 'Content lacks evidence classification labels' });
+    }
+
+    // Check for placeholder text
+    if (/\[insert|TBD|TODO|placeholder|coming soon/i.test(content)) {
+      issues.push({ rule: 'PLACEHOLDER', severity: 'critical', finding: 'Content contains placeholder text' });
+    }
+
+    // Check minimum content length for substantive sections
+    if (doc.ctd_section && content.length < 200) {
+      issues.push({ rule: 'LENGTH', severity: 'major', finding: `Section ${doc.ctd_section} has insufficient content (${content.length} chars)` });
+    }
+
+    return {
+      success: true,
+      action: 'run_compliance_scan',
+      data: {
+        artifactId: params.artifactId,
+        title: doc.title,
+        ctdSection: doc.ctd_section,
+        issueCount: issues.length,
+        issues,
+        compliant: issues.filter(i => i.severity === 'critical').length === 0,
+      },
+      message: issues.length === 0
+        ? `Artifact "${doc.title}" passed compliance scan.`
+        : `Found ${issues.length} compliance issue(s) in "${doc.title}": ${issues.filter(i => i.severity === 'critical').length} critical, ${issues.filter(i => i.severity === 'major').length} major.`,
+    };
+  } catch (err: any) {
+    return { success: false, action: 'run_compliance_scan', message: 'Compliance scan failed.', error: err?.message };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 12. COMMAND REGISTRY
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type CommandName =
@@ -764,7 +899,9 @@ export type CommandName =
   | 'list_artifacts' | 'place_in_dossier'
   | 'create_task' | 'update_task' | 'list_tasks'
   | 'check_dossier_readiness' | 'create_submission_package'
-  | 'assign_reviewer' | 'search_artifacts' | 'list_team_members'
+  | 'create_review_thread' | 'add_review_comment'
+  | 'search_artifacts' | 'list_team_members'
+  | 'list_artifact_versions' | 'run_compliance_scan'
   | 'load_user_context' | 'load_conversation_history';
 
 export interface CommandDefinition {
@@ -790,7 +927,10 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
   { name: 'load_user_context', description: 'Load my full context (projects, history, artifacts)', parameters: 'none', example: '"What am I working on?"' },
   { name: 'load_conversation_history', description: 'Load my past conversations', parameters: 'projectId?, limit?', example: '"Show my recent conversations for this project"' },
   { name: 'create_submission_package', description: 'Create a submission package for regulatory filing', parameters: 'projectId, title, packageFamily (ind/510k/cer/nda/bla/pma), targetDate?', example: '"Create an IND submission package for project 5"' },
-  { name: 'assign_reviewer', description: 'Assign a reviewer to an artifact', parameters: 'projectId, artifactId, reviewerId, reviewType?, instructions?', example: '"Assign Dr. Smith to review the Clinical Overview"' },
+  { name: 'create_review_thread', description: 'Create a review thread on an artifact with comments', parameters: 'projectId, artifactId, title, content, assigneeId?', example: '"Create a review thread on artifact 12 asking about safety data gaps"' },
+  { name: 'add_review_comment', description: 'Add a comment to an existing review thread', parameters: 'threadId, content', example: '"Add a comment to review thread 5 noting the updated safety tables"' },
+  { name: 'list_artifact_versions', description: 'Show version history of an artifact', parameters: 'projectId, artifactId', example: '"Show me the version history of artifact 12"' },
+  { name: 'run_compliance_scan', description: 'Run a compliance scan on an artifact', parameters: 'projectId, artifactId', example: '"Scan artifact 12 for compliance issues"' },
   { name: 'search_artifacts', description: 'Search artifacts by content or title', parameters: 'query, projectId?, limit?', example: '"Find all artifacts mentioning hepatotoxicity"' },
   { name: 'list_team_members', description: 'List team members in the organization', parameters: 'none', example: '"Who is on my team?"' },
 ];

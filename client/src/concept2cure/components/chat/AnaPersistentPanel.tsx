@@ -589,9 +589,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify(cmd),
                 });
-                if (execRes.ok) {
-                  const result = await execRes.json();
+                const result = await execRes.json();
+                if (execRes.ok && result.success) {
                   commandResults.push(`**${result.action}**: ${result.message}`);
+                } else {
+                  commandResults.push(`**${result.action || cmd.command}** failed: ${result.message || result.error || 'Unknown error'}`);
                 }
               }
             } catch {

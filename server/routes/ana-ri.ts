@@ -511,8 +511,17 @@ router.post('/execute', async (req: Request, res: Response) => {
       case 'create_submission_package':
         result = await executor.createSubmissionPackage(ctx, params || {});
         break;
-      case 'assign_reviewer':
-        result = await executor.assignReviewer(ctx, params || {});
+      case 'create_review_thread':
+        result = await executor.createReviewThread(ctx, params || {});
+        break;
+      case 'add_review_comment':
+        result = await executor.addReviewComment(ctx, params || {});
+        break;
+      case 'list_artifact_versions':
+        result = await executor.listArtifactVersions(ctx, params || {});
+        break;
+      case 'run_compliance_scan':
+        result = await executor.runComplianceScan(ctx, params || {});
         break;
       case 'search_artifacts':
         result = await executor.searchArtifacts(ctx, params || {});
