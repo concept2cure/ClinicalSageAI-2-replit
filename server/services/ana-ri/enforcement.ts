@@ -175,7 +175,8 @@ export function validateArtifactQuality(
 ): ArtifactQualityResult {
   const issues: string[] = [];
   let score = 0;
-  const maxScore = 10;
+  const depthTypes = ['risk_memo', 'deficiency_preemption_memo', 'reviewer_question_brief'];
+  const maxScore = depthTypes.includes(actionType) ? 12 : 10;
 
   // Gate 1: Minimum content length
   if (content.length < 200) {
@@ -240,7 +241,6 @@ export function validateArtifactQuality(
   }
 
   // Gate 6: Semantic depth — check substance, not just structure
-  const depthTypes = ['risk_memo', 'deficiency_preemption_memo', 'reviewer_question_brief'];
   if (depthTypes.includes(actionType)) {
     // Check for root cause analysis (not just restating the problem)
     const hasRootCause = /because|due to|caused by|mechanism|underlying|root cause|driven by/i.test(content);
@@ -261,13 +261,12 @@ export function validateArtifactQuality(
   }
 
   // Determine grade
-  const effectiveMaxScore = depthTypes.includes(actionType) ? 12 : 10;
   let grade: ArtifactQualityResult['grade'];
   if (issues.length > 2 || content.length < 100) {
     grade = 'rejected';
-  } else if (score >= effectiveMaxScore * 0.8) {
+  } else if (score >= maxScore * 0.8) {
     grade = 'high';
-  } else if (score >= effectiveMaxScore * 0.5) {
+  } else if (score >= maxScore * 0.5) {
     grade = 'medium';
   } else {
     grade = 'low';

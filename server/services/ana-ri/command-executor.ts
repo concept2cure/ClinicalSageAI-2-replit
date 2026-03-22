@@ -340,28 +340,27 @@ export async function createTask(
     title: string;
     description?: string;
     assigneeId?: number;
-    priority?: 'low' | 'medium' | 'high' | 'critical';
+    priority?: 'low' | 'medium' | 'high' | 'urgent';
     dueDate?: string;
-    taskType?: string;
-    linkedArtifactId?: number;
+    moduleType?: string;
   }
 ): Promise<CommandResult> {
   try {
     const result = await pool.query(
       `INSERT INTO project_tasks
-         (project_id, organization_id, title, description, assignee_id,
-          priority, due_date, task_type, status, created_by_id, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', $9, NOW(), NOW())
-       RETURNING id, title, status, priority`,
+         (project_id, organization_id, name, description, assignee_id,
+          priority, due_date, module_type, status, created_by_id, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'todo', $9, NOW(), NOW())
+       RETURNING id, name, status, priority`,
       [params.projectId, ctx.organizationId, params.title, params.description || '',
        params.assigneeId || null, params.priority || 'medium',
-       params.dueDate || null, params.taskType || 'general', ctx.userId]
+       params.dueDate || null, params.moduleType || null, ctx.userId]
     );
     const task = result.rows[0];
     return {
       success: true,
       action: 'create_task',
-      data: { taskId: task.id, title: task.title, priority: task.priority, status: task.status },
+      data: { taskId: task.id, name: task.name, priority: task.priority, status: task.status },
       message: `Task "${params.title}" created (ID: ${task.id}).`,
     };
   } catch (err: any) {
@@ -379,7 +378,7 @@ export async function updateTask(
   }
 ): Promise<CommandResult> {
   try {
-    const allowedFields = ['title', 'description', 'status', 'priority', 'assignee_id', 'due_date'];
+    const allowedFields = ['name', 'description', 'status', 'priority', 'assignee_id', 'due_date', 'module_type'];
     const setClauses: string[] = [];
     const values: unknown[] = [params.taskId, params.projectId, ctx.organizationId];
     let paramIdx = 4;
@@ -421,8 +420,8 @@ export async function listTasks(
   filters?: { status?: string; priority?: string; assigneeId?: number }
 ): Promise<CommandResult> {
   try {
-    let query = `SELECT id, title, description, status, priority, assignee_id, due_date,
-                        task_type, created_at, updated_at
+    let query = `SELECT id, name, description, status, priority, assignee_id, due_date,
+                        module_type, created_at, updated_at
                  FROM project_tasks
                  WHERE project_id = $1 AND organization_id = $2`;
     const values: unknown[] = [projectId, ctx.organizationId];
@@ -632,34 +631,37 @@ export async function createSubmissionPackage(
 // 7. REVIEW OPERATIONS
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Create a review thread on an artifact (uses existing review_threads table) */
+/** Create a review thread on an artifact (matches concept2cure_review_threads schema) */
 export async function createReviewThread(
   ctx: CommandContext,
   params: {
     projectId: number;
     artifactId: number;
     title: string;
-    content: string;
-    reviewType?: string;
+    priority?: 'low' | 'medium' | 'high';
     assigneeId?: number;
+    assigneeName?: string;
   }
 ): Promise<CommandResult> {
   try {
+    const threadId = `thread_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     const result = await pool.query(
       `INSERT INTO concept2cure_review_threads
-         (artifact_id, project_id, organization_id, title, content,
-          review_type, status, created_by_id, assignee_id, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, 'open', $7, $8, NOW(), NOW())
-       RETURNING id, title, status`,
-      [params.artifactId, params.projectId, ctx.organizationId,
-       params.title, params.content,
-       params.reviewType || 'standard', ctx.userId, params.assigneeId || null]
+         (thread_id, org_id, project_id, artifact_id, title,
+          status, priority, created_by_id, created_by_name,
+          assignee_id, assignee_name, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, 'open', $6, $7, $8, $9, $10, NOW(), NOW())
+       RETURNING id, thread_id, title, status`,
+      [threadId, ctx.organizationId, params.projectId, params.artifactId,
+       params.title, params.priority || 'medium',
+       ctx.userId, ctx.userName || 'AnA RI',
+       params.assigneeId || null, params.assigneeName || null]
     );
     const thread = result.rows[0];
     return {
       success: true,
       action: 'create_review_thread',
-      data: { threadId: thread?.id, title: params.title, artifactId: params.artifactId },
+      data: { threadId: thread?.id, externalId: thread?.thread_id, title: params.title, artifactId: params.artifactId },
       message: `Review thread "${params.title}" created on artifact ${params.artifactId}.`,
     };
   } catch (err: any) {
@@ -667,26 +669,30 @@ export async function createReviewThread(
   }
 }
 
-/** Add a comment to a review thread */
+/** Add a comment to a review thread (matches concept2cure_thread_comments schema) */
 export async function addReviewComment(
   ctx: CommandContext,
   params: {
     threadId: number;
-    content: string;
+    artifactId: number;
+    body: string;
   }
 ): Promise<CommandResult> {
   try {
+    const commentId = `comment_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     const result = await pool.query(
-      `INSERT INTO concept2cure_review_comments
-         (thread_id, organization_id, content, created_by_id, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, NOW(), NOW())
-       RETURNING id`,
-      [params.threadId, ctx.organizationId, params.content, ctx.userId]
+      `INSERT INTO concept2cure_thread_comments
+         (comment_id, org_id, thread_id, artifact_id, author_id, author_name,
+          body, kind, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'comment', NOW(), NOW())
+       RETURNING id, comment_id`,
+      [commentId, ctx.organizationId, params.threadId, params.artifactId,
+       ctx.userId, ctx.userName || 'AnA RI', params.body]
     );
     return {
       success: true,
       action: 'add_review_comment',
-      data: { commentId: result.rows[0]?.id, threadId: params.threadId },
+      data: { commentId: result.rows[0]?.id, externalId: result.rows[0]?.comment_id, threadId: params.threadId },
       message: `Comment added to review thread ${params.threadId}.`,
     };
   } catch (err: any) {

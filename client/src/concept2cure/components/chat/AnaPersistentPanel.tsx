@@ -576,12 +576,17 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         const responseContent = data.response || data.answer || 'I\'m here to help with your regulatory work. What would you like to work on?';
 
         // Parse and execute any embedded commands from AnA
-        const commandBlocks = responseContent.match(/```command\n([\s\S]*?)```/g);
+        const commandBlocks = responseContent.match(/```command\s*\n([\s\S]*?)```/g);
         const commandResults: string[] = [];
+        let chainBroken = false;
         if (commandBlocks) {
           for (const block of commandBlocks) {
+            if (chainBroken) {
+              commandResults.push(`**${block.slice(0, 40)}...** skipped (previous command failed)`);
+              continue;
+            }
             try {
-              const jsonStr = block.replace(/```command\n?/, '').replace(/```$/, '').trim();
+              const jsonStr = block.replace(/^```command\s*\n?/, '').replace(/```$/, '').trim();
               const cmd = JSON.parse(jsonStr);
               if (cmd.command) {
                 const execRes = await fetch('/api/ana-ri/execute', {
@@ -592,12 +597,33 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 const result = await execRes.json();
                 if (execRes.ok && result.success) {
                   commandResults.push(`**${result.action}**: ${result.message}`);
+                  // Handle file downloads (export_artifact returns base64)
+                  if (result.data?.base64 && result.data?.fileName) {
+                    try {
+                      const mimeType = result.data.format === 'docx'
+                        ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                        : 'application/octet-stream';
+                      const byteChars = atob(result.data.base64);
+                      const byteArray = new Uint8Array(byteChars.length);
+                      for (let i = 0; i < byteChars.length; i++) byteArray[i] = byteChars.charCodeAt(i);
+                      const blob = new Blob([byteArray], { type: mimeType });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = result.data.fileName;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    } catch { /* download fallback handled by message */ }
+                  }
                 } else {
                   commandResults.push(`**${result.action || cmd.command}** failed: ${result.message || result.error || 'Unknown error'}`);
+                  chainBroken = true;
                 }
               }
-            } catch {
-              // Skip unparseable command blocks
+            } catch (parseErr) {
+              commandResults.push(`**Command parse error**: Could not execute command block`);
+              console.error('[AnA RI] Command parse error:', parseErr);
+              chainBroken = true;
             }
           }
         }
