@@ -254,21 +254,21 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   useEffect(() => {
     if (!isThinking) return;
     const STANDARD_THINKING = [
-      'Reviewing your regulatory landscape...',
+      'Analyzing regulatory requirements...',
       'Cross-referencing guidance documents...',
-      'Checking the latest FDA updates...',
-      'Let me dig into the CTD modules for you...',
-      'Analyzing your submission strategy...',
-      'Running compliance checks...',
-      'Connecting the regulatory dots...',
-      'Almost there — dotting the i\'s on 21 CFR Part 11...',
-      'Warming up the ELSA engines... no, not that one ❄️',
-      'Consulting my regulatory crystal ball...',
-      'Searching through 65 ICH guidelines...',
-      'Making sure everything is submission-ready...',
+      'Evaluating submission readiness...',
+      'Reviewing CTD module structure...',
+      'Assessing regulatory pathway options...',
+      'Running compliance analysis...',
+      'Checking ICH guideline alignment...',
+      'Reviewing 21 CFR Part 11 requirements...',
+      'Analyzing evidence strength...',
+      'Evaluating deficiency risk profile...',
+      'Assessing endpoint defensibility...',
+      'Reviewing regulatory precedent...',
       'Checking predicate devices and precedents...',
-      'Let it flow, let it flow... through the review process 🏔️',
-      'Building your regulatory snowglobe of insights...',
+      'Cross-referencing FDA guidance database...',
+      'Analyzing submission strategy...',
     ];
     const DEEP_RESEARCH_THINKING = [
       'Querying ClinicalTrials.gov for matching studies...',
@@ -295,9 +295,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     const hour = new Date().getHours();
     const timeGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
     if (contextProfile?.activeProject) {
-      return `${timeGreeting}! Ready to make progress on ${contextProfile.activeProject}. What shall we tackle?`;
+      return `${timeGreeting}. Ready to work on ${contextProfile.activeProject}. How can I help?`;
     }
-    return `${timeGreeting}! I'm AnA, your regulatory co-pilot. What would you like to work on?`;
+    return `${timeGreeting}. I'm AnA — regulatory intelligence for FDA, EMA, and ICH submissions. What are you working on?`;
   }, [greeting, contextProfile?.activeProject]);
 
   // Auto-scroll when new messages
@@ -888,13 +888,16 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                   disabled={isThinking}
                                   onClick={async () => {
                                     if (isThinking) return;
+                                    if (!contextProfile?.projectId) {
+                                      setMessages(prev => [...prev, {
+                                        id: `a-${Date.now()}`,
+                                        role: 'assistant',
+                                        content: `**Cannot create artifact** — No project selected. Please open a project first, then try again.`,
+                                        timestamp: new Date(),
+                                      }]);
+                                      return;
+                                    }
                                     setIsThinking(true);
-                                    setMessages(prev => [...prev, {
-                                      id: `u-${Date.now()}`,
-                                      role: 'user',
-                                      content: `Generate: ${action.label}`,
-                                      timestamp: new Date(),
-                                    }]);
                                     try {
                                       const res = await fetch('/api/ana-ri/generate', {
                                         method: 'POST',
@@ -905,22 +908,23 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                             role: m.role,
                                             content: m.content,
                                           })),
-                                          project_id: contextProfile?.projectId || undefined,
+                                          project_id: contextProfile.projectId,
                                           user_role: contextProfile?.userRole || undefined,
                                           intent_lens: intentLens !== 'auto' ? intentLens : undefined,
                                         }),
                                       });
                                       if (res.ok) {
                                         const data = await res.json();
-                                        const persistNote = data.artifactId
-                                          ? `\n\n---\n**Governed artifact created** — ID: ${data.artifactId} | Status: Draft | ${data.isNew ? 'New document' : 'Updated existing'}`
-                                          : data.persisted === false
-                                            ? '\n\n---\n**Note:** Content generated but artifact persistence failed. Copy this content manually.'
-                                            : '';
+                                        let statusLine = '';
+                                        if (data.artifactId) {
+                                          statusLine = `\n\n---\n**${action.label} created** | Artifact #${data.artifactId} | Quality: ${data.qualityGrade || 'draft'} | ${data.isNew ? 'New' : 'Updated'}`;
+                                        } else if (data.persisted === false) {
+                                          statusLine = '\n\n---\n**Warning:** Content generated but could not be saved to project. Please copy this content.';
+                                        }
                                         setMessages(prev => [...prev, {
                                           id: `a-${Date.now()}`,
                                           role: 'assistant',
-                                          content: data.content + persistNote,
+                                          content: data.content + statusLine,
                                           timestamp: new Date(),
                                         }]);
                                         setIsThinking(false);

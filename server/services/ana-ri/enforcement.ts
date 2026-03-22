@@ -239,13 +239,35 @@ export function validateArtifactQuality(
     issues.push(`Content does not match expected ${actionType} structure`);
   }
 
+  // Gate 6: Semantic depth — check substance, not just structure
+  const depthTypes = ['risk_memo', 'deficiency_preemption_memo', 'reviewer_question_brief'];
+  if (depthTypes.includes(actionType)) {
+    // Check for root cause analysis (not just restating the problem)
+    const hasRootCause = /because|due to|caused by|mechanism|underlying|root cause|driven by/i.test(content);
+    // Check for specific evidence references (not vague)
+    const hasSpecificEvidence = /\b(?:study|trial|data|finding|result|ICH|CFR|ISO|FDA|EMA)\s+\S+/i.test(content);
+    // Check for actionable mitigations (not platitudes)
+    const hasActionable = /\b(?:conduct|gather|provide|revise|modify|submit|generate|perform|complete|draft)\b/i.test(content);
+
+    if (hasRootCause && hasSpecificEvidence && hasActionable) {
+      score += 2;
+    } else {
+      const depthIssues: string[] = [];
+      if (!hasRootCause) depthIssues.push('no root cause analysis');
+      if (!hasSpecificEvidence) depthIssues.push('no specific evidence references');
+      if (!hasActionable) depthIssues.push('no actionable mitigations');
+      issues.push(`Lacks semantic depth: ${depthIssues.join(', ')}`);
+    }
+  }
+
   // Determine grade
+  const effectiveMaxScore = depthTypes.includes(actionType) ? 12 : 10;
   let grade: ArtifactQualityResult['grade'];
   if (issues.length > 2 || content.length < 100) {
     grade = 'rejected';
-  } else if (score >= 8) {
+  } else if (score >= effectiveMaxScore * 0.8) {
     grade = 'high';
-  } else if (score >= 5) {
+  } else if (score >= effectiveMaxScore * 0.5) {
     grade = 'medium';
   } else {
     grade = 'low';
@@ -254,7 +276,7 @@ export function validateArtifactQuality(
   return {
     pass: grade !== 'rejected',
     score,
-    maxScore,
+    maxScore: effectiveMaxScore,
     grade,
     issues,
   };
