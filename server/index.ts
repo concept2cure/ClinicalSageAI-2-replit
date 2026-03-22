@@ -3431,6 +3431,11 @@ import precedentEngineRoutes from './routes/precedent-engine';
 app.use('/api/precedent-engine', precedentEngineRoutes);
 console.log('✅ Precedent Engine routes mounted successfully');
 
+// Mount Cross-Jurisdictional Intelligence
+import crossJurisdictionalRoutes from './routes/cross-jurisdictional';
+app.use('/api/cross-jurisdictional', crossJurisdictionalRoutes);
+console.log('✅ Cross-Jurisdictional Intelligence routes mounted successfully');
+
 // Mount IND templates routes - temporarily disabled
 // app.use('/api/ind', indTemplatesRoutes);
 
