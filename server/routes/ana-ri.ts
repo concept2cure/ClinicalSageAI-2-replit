@@ -210,6 +210,80 @@ router.post('/chat', async (req: Request, res: Response) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// POST /api/ana-ri/generate — Generate Governed Artifact
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.post('/generate', async (req: Request, res: Response) => {
+  try {
+    const {
+      action_type,
+      conversation_context,
+      project_id,
+      title,
+      section_code,
+      user_role,
+      intent_lens,
+    } = req.body;
+
+    if (!action_type || typeof action_type !== 'string') {
+      return res.status(400).json({ error: 'action_type is required', code: 'INVALID_ACTION' });
+    }
+
+    if (!conversation_context || !Array.isArray(conversation_context) || conversation_context.length === 0) {
+      return res.status(400).json({ error: 'conversation_context is required', code: 'INVALID_CONTEXT' });
+    }
+
+    if (!project_id) {
+      return res.status(400).json({ error: 'project_id is required', code: 'MISSING_PROJECT' });
+    }
+
+    const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+    const userId = (req as any).userId || (req as any).user?.id;
+
+    if (!orgId) {
+      return res.status(403).json({ error: 'Organization context required', code: 'NO_ORG' });
+    }
+
+    const { generateArtifact } = await import('../services/ana-ri/artifact-generator.js');
+
+    const result = await generateArtifact({
+      actionType: action_type,
+      conversationContext: conversation_context,
+      projectId: Number(project_id),
+      organizationId: Number(orgId),
+      userId: userId ? Number(userId) : undefined,
+      userRole: user_role,
+      intentLens: intent_lens,
+      title,
+      sectionCode: section_code,
+    });
+
+    if (!result.success) {
+      return res.status(502).json({
+        error: result.error || 'Artifact generation failed',
+        code: 'GENERATION_FAILED',
+      });
+    }
+
+    return res.json({
+      content: result.content,
+      title: result.title,
+      artifactId: result.artifactId,
+      isNew: result.isNew,
+      provider: result.provider,
+      model: result.model,
+    });
+  } catch (error: any) {
+    console.error('[AnA RI] Generate error:', error);
+    return res.status(500).json({
+      error: 'Internal server error',
+      code: 'INTERNAL_ERROR',
+      message: error?.message,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // GET /api/ana-ri/deficiencies — Query Deficiency Taxonomy
 // ─────────────────────────────────────────────────────────────────────────────
 

@@ -197,6 +197,57 @@ export function buildRoleAdaptiveContext(
   lines.push('**Include these sections when relevant:**');
   lines.push(...template.specialSections.map(s => `- ${s}`));
 
+  // Add role-specific output structure instructions
+  lines.push('');
+  lines.push('**Output structure for this role:**');
+  switch (role) {
+    case 'ceo':
+      lines.push('- Lead with a one-line risk verdict (green/yellow/red signal)');
+      lines.push('- Use executive summary format — no more than 3 paragraphs before action items');
+      lines.push('- Include a "Board-Ready Summary" section that could be pasted into a board deck');
+      lines.push('- Quantify risks where possible: probability, timeline impact, cost exposure');
+      lines.push('- End with "CEO Decision Required" items if applicable');
+      break;
+    case 'ra_lead':
+      lines.push('- Lead with regulatory defensibility assessment (strong/adequate/weak/deficient)');
+      lines.push('- Cite specific regulatory references (21 CFR, ICH, guidance documents) inline');
+      lines.push('- Include a "Regulatory Cross-Reference" table mapping claims to citations');
+      lines.push('- Flag submission readiness gaps with specific remediation steps');
+      lines.push('- Use regulatory terminology precisely — do not simplify for non-experts');
+      break;
+    case 'medical_writer':
+      lines.push('- Lead with narrative quality assessment (structure, flow, persuasion)');
+      lines.push('- Show concrete before/after text comparisons for every critique');
+      lines.push('- Include a "Section Architecture" analysis with recommended restructuring');
+      lines.push('- Identify tone inconsistencies and provide corrected language');
+      lines.push('- End with a "Rewrite Priority" list ordered by impact on reviewer perception');
+      break;
+    case 'clinical_lead':
+      lines.push('- Lead with endpoint defensibility assessment');
+      lines.push('- Include a "Clinical Evidence Map" showing strength of each claim');
+      lines.push('- Flag statistical defensibility issues with specific concerns');
+      lines.push('- Connect every recommendation to its regulatory consequence');
+      lines.push('- Include "Safety Narrative" section addressing signal characterization');
+      break;
+    case 'cmc_lead':
+      lines.push('- Lead with control strategy coherence assessment');
+      lines.push('- Include Module 3 section references for every finding');
+      lines.push('- Map each concern to specific ICH Q guidelines (Q1-Q12)');
+      lines.push('- Include "Specification Justification" analysis if relevant');
+      lines.push('- Flag comparability/bridging gaps that could delay approval');
+      break;
+    case 'investor':
+      lines.push('- Lead with a probability-of-success assessment (high/medium/low with rationale)');
+      lines.push('- Include "Hidden Risk" section covering what management presentations may omit');
+      lines.push('- Add "Timeline Reality Check" comparing claimed vs realistic timelines');
+      lines.push('- Include competitive regulatory landscape context');
+      lines.push('- End with "Due Diligence Red Flags" and "De-Risking Milestones"');
+      break;
+    default:
+      lines.push('- Use balanced structure with both strategic overview and actionable detail');
+      break;
+  }
+
   return lines.join('\n');
 }
 

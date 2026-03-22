@@ -885,9 +885,51 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               .map(action => (
                                 <button
                                   key={action.type}
-                                  onClick={() => {
-                                    const actionPrompt = `Please generate a ${action.label.toLowerCase()} based on our conversation above.`;
-                                    handleSend(actionPrompt);
+                                  onClick={async () => {
+                                    setIsThinking(true);
+                                    setMessages(prev => [...prev, {
+                                      id: `u-${Date.now()}`,
+                                      role: 'user',
+                                      content: `Generate: ${action.label}`,
+                                      timestamp: new Date(),
+                                    }]);
+                                    try {
+                                      const res = await fetch('/api/ana-ri/generate', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                          action_type: action.type,
+                                          conversation_context: messages.slice(-15).map(m => ({
+                                            role: m.role,
+                                            content: m.content,
+                                          })),
+                                          project_id: contextProfile?.projectId || null,
+                                          user_role: contextProfile?.userRole || undefined,
+                                          intent_lens: intentLens !== 'auto' ? intentLens : undefined,
+                                        }),
+                                      });
+                                      if (res.ok) {
+                                        const data = await res.json();
+                                        setMessages(prev => [...prev, {
+                                          id: `a-${Date.now()}`,
+                                          role: 'assistant',
+                                          content: data.content + (data.artifactId
+                                            ? `\n\n---\n**Governed artifact created** — ID: ${data.artifactId} | Status: Draft | ${data.isNew ? 'New document' : 'Updated existing'}`
+                                            : ''),
+                                          timestamp: new Date(),
+                                        }]);
+                                      } else {
+                                        // Fallback: send as chat prompt
+                                        setIsThinking(false);
+                                        handleSend(`Please generate a ${action.label.toLowerCase()} based on our conversation above.`);
+                                        return;
+                                      }
+                                    } catch {
+                                      setIsThinking(false);
+                                      handleSend(`Please generate a ${action.label.toLowerCase()} based on our conversation above.`);
+                                      return;
+                                    }
+                                    setIsThinking(false);
                                   }}
                                   className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-[#E8E6DC] text-[#6B6962] hover:bg-[#FAF9F5] hover:border-[#D8D5CA] hover:text-[#4D4B45] transition-colors"
                                 >

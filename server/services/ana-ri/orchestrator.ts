@@ -225,7 +225,15 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
     systemPrompt += '\n\n' + roleContext;
   }
 
-  // 8. Determine suggested document actions
+  // 8. Inject conversation continuity context
+  if (input.conversationHistory && input.conversationHistory.length > 0) {
+    const continuityContext = buildContinuityContext(input.conversationHistory);
+    if (continuityContext) {
+      systemPrompt += '\n\n' + continuityContext;
+    }
+  }
+
+  // 9. Determine suggested document actions
   const suggestedActions = getSuggestedActions(detectedIntent.lens, detectedSubmissionType);
 
   return {
@@ -275,4 +283,88 @@ function getSuggestedActions(
   }
 
   return actions;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Conversation Continuity
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Extract working context from conversation history to maintain short-horizon continuity.
+ * Prevents AnA from acting memoryless inside an active thread.
+ */
+function buildContinuityContext(
+  history: Array<{ role: 'user' | 'assistant'; content: string }>
+): string | null {
+  if (history.length < 2) return null;
+
+  const lines: string[] = ['## CONVERSATION CONTINUITY'];
+
+  // Extract the active document/section under discussion
+  const allText = history.map(m => m.content).join(' ');
+
+  // Detect active document or section
+  const sectionMatches = allText.match(/(?:Section|Module|Chapter)\s+[\d.]+[A-Za-z]?(?:\s*[-–:]\s*[^\n.]{3,60})?/gi);
+  if (sectionMatches) {
+    const uniqueSections = [...new Set(sectionMatches.map(s => s.trim()))].slice(0, 3);
+    lines.push('');
+    lines.push('**Document/Section Under Discussion:**');
+    uniqueSections.forEach(s => lines.push(`- ${s}`));
+  }
+
+  // Detect active concern themes from recent assistant messages
+  const recentAssistant = history
+    .filter(m => m.role === 'assistant')
+    .slice(-3)
+    .map(m => m.content);
+
+  const concerns: string[] = [];
+  const concernPatterns: Array<{ pattern: RegExp; label: string }> = [
+    { pattern: /inadequate|insufficient|incomplete|missing/i, label: 'Evidence adequacy' },
+    { pattern: /safety signal|adverse event|toxicity/i, label: 'Safety concerns' },
+    { pattern: /endpoint|efficacy|clinical benefit/i, label: 'Efficacy/endpoint defensibility' },
+    { pattern: /specification|process validation|manufacturing/i, label: 'CMC/manufacturing quality' },
+    { pattern: /predicate|substantial equivalence/i, label: 'Device equivalence' },
+    { pattern: /labeling|indication|claim/i, label: 'Labeling/claims' },
+    { pattern: /statistical|multiplicity|sample size/i, label: 'Statistical rigor' },
+    { pattern: /timeline|milestone|delay/i, label: 'Timeline/feasibility' },
+  ];
+
+  for (const { pattern, label } of concernPatterns) {
+    if (recentAssistant.some(text => pattern.test(text))) {
+      concerns.push(label);
+    }
+  }
+
+  if (concerns.length > 0) {
+    lines.push('');
+    lines.push('**Active Concern Themes:**');
+    concerns.slice(0, 5).forEach(c => lines.push(`- ${c}`));
+  }
+
+  // Detect any previously recommended actions that the user might be following up on
+  const lastAssistant = recentAssistant[recentAssistant.length - 1] || '';
+  const actionMentions: string[] = [];
+  if (/risk memo|risk assessment/i.test(lastAssistant)) actionMentions.push('Risk assessment in progress');
+  if (/deficiency|preemption/i.test(lastAssistant)) actionMentions.push('Deficiency preemption analysis');
+  if (/rewrite|revise|improve/i.test(lastAssistant)) actionMentions.push('Document improvement');
+  if (/strategy|pathway/i.test(lastAssistant)) actionMentions.push('Strategy development');
+
+  if (actionMentions.length > 0) {
+    lines.push('');
+    lines.push('**Active Work Stream:**');
+    actionMentions.slice(0, 3).forEach(a => lines.push(`- ${a}`));
+  }
+
+  // Detect submission type from history if not caught in current message
+  const histSubmission = detectSubmissionType(allText);
+  if (histSubmission) {
+    lines.push('');
+    lines.push(`**Submission Context (from conversation):** ${histSubmission.toUpperCase()}`);
+  }
+
+  lines.push('');
+  lines.push('**Continuity instruction:** Build on the above context. Do not re-introduce yourself or ask the user to re-state what they already told you. Continue the working thread.');
+
+  return lines.length > 2 ? lines.join('\n') : null;
 }
