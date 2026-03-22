@@ -702,3 +702,157 @@ Let me know if you'd like me to expand on any section.`;
     });
   });
 });
+
+// ── Command Registry Tests ───────────────────────────────────────────────────
+
+import { COMMAND_REGISTRY, buildCommandContextForPrompt } from '../ana-ri/command-executor.js';
+
+describe('AnA RI Command System', () => {
+  describe('COMMAND_REGISTRY completeness', () => {
+    it('has all 27 commands registered', () => {
+      expect(COMMAND_REGISTRY.length).toBeGreaterThanOrEqual(27);
+    });
+
+    it('every command has name, description, parameters, and example', () => {
+      for (const cmd of COMMAND_REGISTRY) {
+        expect(cmd.name).toBeTruthy();
+        expect(cmd.description).toBeTruthy();
+        expect(cmd.parameters).toBeTruthy();
+        expect(cmd.example).toBeTruthy();
+      }
+    });
+
+    it('includes all critical workflow commands', () => {
+      const names = COMMAND_REGISTRY.map(c => c.name);
+      // Project
+      expect(names).toContain('create_project');
+      expect(names).toContain('list_projects');
+      // Documents
+      expect(names).toContain('create_artifact');
+      expect(names).toContain('update_artifact');
+      expect(names).toContain('list_artifacts');
+      // Tasks
+      expect(names).toContain('create_task');
+      expect(names).toContain('list_tasks');
+      // Dossier
+      expect(names).toContain('check_dossier_readiness');
+      expect(names).toContain('create_submission_package');
+      // Review
+      expect(names).toContain('create_review_thread');
+      expect(names).toContain('add_review_comment');
+      // Version management
+      expect(names).toContain('compare_versions');
+      expect(names).toContain('review_version_impact');
+      expect(names).toContain('list_artifact_versions');
+      expect(names).toContain('revert_to_version');
+      // Export
+      expect(names).toContain('export_artifact');
+      // Compliance
+      expect(names).toContain('run_compliance_scan');
+      // Milestones
+      expect(names).toContain('create_milestone');
+      expect(names).toContain('list_milestones');
+      // Context
+      expect(names).toContain('load_user_context');
+      expect(names).toContain('load_conversation_history');
+    });
+
+    it('has no duplicate command names', () => {
+      const names = COMMAND_REGISTRY.map(c => c.name);
+      const unique = new Set(names);
+      expect(unique.size).toBe(names.length);
+    });
+  });
+
+  describe('buildCommandContextForPrompt', () => {
+    it('returns a string with command list', () => {
+      const prompt = buildCommandContextForPrompt();
+      expect(typeof prompt).toBe('string');
+      expect(prompt.length).toBeGreaterThan(100);
+    });
+
+    it('includes command format instructions', () => {
+      const prompt = buildCommandContextForPrompt();
+      expect(prompt).toContain('command_name');
+      expect(prompt).toContain('params');
+    });
+  });
+});
+
+// ── Diff Service Integration Tests ───────────────────────────────────────────
+
+describe('AnA RI Diff Service Integration', () => {
+  it('diffText produces correct results for simple changes', async () => {
+    // Dynamic import to match how command-executor uses it
+    const { diffText } = await import('../versionDiffService.js');
+
+    const oldText = 'The primary endpoint is clinically meaningful.\nSafety data are adequate.';
+    const newText = 'The primary endpoint is clinically meaningful.\nSafety data are insufficient for chronic dosing.';
+
+    const result = diffText(oldText, newText);
+
+    expect(result.additions).toBeGreaterThan(0);
+    expect(result.deletions).toBeGreaterThan(0);
+    expect(result.changes.length).toBeGreaterThan(0);
+    expect(result.changes.some(c => c.type === 'add')).toBe(true);
+    expect(result.changes.some(c => c.type === 'delete')).toBe(true);
+  });
+
+  it('diffText handles identical content', async () => {
+    const { diffText } = await import('../versionDiffService.js');
+
+    const text = 'No changes here.\nExactly the same.';
+    const result = diffText(text, text);
+
+    expect(result.additions).toBe(0);
+    expect(result.deletions).toBe(0);
+  });
+
+  it('diffText handles empty strings', async () => {
+    const { diffText } = await import('../versionDiffService.js');
+
+    const result = diffText('', 'New content added.');
+    expect(result.additions).toBeGreaterThan(0);
+    expect(result.deletions).toBe(0);
+  });
+});
+
+// ── Quality Gate Regression Tests ────────────────────────────────────────────
+
+describe('AnA RI Quality Gate Regression', () => {
+  it('dynamic maxScore: depth types get 12, others get 10', () => {
+    const riskResult = validateArtifactQuality(
+      '## Risk Assessment\nCritical risk identified due to inadequate safety data **[KNOWN — ICH E1]**.\n\n## Mitigation\nConduct additional Phase IIIb study to gather 12-month exposure data.',
+      'risk_memo'
+    );
+    expect(riskResult.maxScore).toBe(12);
+
+    const strategyResult = validateArtifactQuality(
+      '## Strategy Note\nRecommend accelerated pathway based on regulatory precedent.',
+      'strategy_note'
+    );
+    expect(strategyResult.maxScore).toBe(10);
+  });
+
+  it('semantic depth gate rewards root cause + evidence + action', () => {
+    const withDepth = validateArtifactQuality(
+      '## Risk Assessment\nThe safety database is inadequate because only 150 patients were enrolled, falling short of ICH E1 requirements for 300 patients at 6 months. This creates a critical deficiency risk.\n\n## Mitigation\nConduct an additional Phase IIIb study to gather the required exposure data before filing.\n\n## Evidence\nICH E1 data **[KNOWN]**. Reviewer precedent from similar NDA rejections **[INFERRED]**.',
+      'risk_memo'
+    );
+
+    const withoutDepth = validateArtifactQuality(
+      '## Risk Assessment\nThere are some risks.\n\n## Mitigation\nConsider addressing them.\n\n## Evidence\nSome data exists.',
+      'risk_memo'
+    );
+
+    expect(withDepth.score).toBeGreaterThan(withoutDepth.score);
+  });
+
+  it('filler patterns are detected correctly', () => {
+    const fillerResult = validateArtifactQuality(
+      "I'd be happy to help! Feel free to ask. Don't hesitate to reach out. Here's an example of what you might want.",
+      'risk_memo'
+    );
+    expect(fillerResult.issues.some(i => i.includes('filler'))).toBe(true);
+  });
+});
