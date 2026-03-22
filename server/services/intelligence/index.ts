@@ -82,6 +82,7 @@ export {
   evaluateClaimRisk,
   evaluateCrossSectionConsistency,
   evaluateSubmissionRisk,
+  JUDGMENT_FRAMEWORK_VERSION,
   type JudgmentModel,
   type JudgmentScore,
   type JudgmentVerdict,
@@ -94,6 +95,7 @@ export {
 
 export {
   patternRegistry,
+  PATTERN_REGISTRY_VERSION,
   type PatternCategory,
   type RegulatoryAgency,
   type SubmissionType,
@@ -109,17 +111,31 @@ export {
   captureSignal,
   querySignals,
   getSignalSummary,
+  getSectionHistory,
+  getRecurringPatterns,
   persistSignals,
   type SignalType,
+  type SignalProvenance,
   type IntelligenceSignal,
   type SignalSummary,
   type SignalQuery,
+  type PersistenceResult,
+  type TrendConfidence,
 } from './signal-capture.js';
 
 export {
   runRIMAssessment,
   quickPatternScan,
   getProjectSignals,
+  RIM_VERSION,
   type RIMContext,
   type RIMAssessment,
+  type RIMRun,
+  type RIMRunStatus,
 } from './rim.js';
+
+export {
+  enrichChangeImpact,
+  type RIMChangeInsight,
+  type RIMChangeEnrichment,
+} from './rim-change-impact.js';

@@ -20,6 +20,12 @@
  */
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// VERSION — bumped when seed patterns change or matching logic changes
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const PATTERN_REGISTRY_VERSION = '1.1.0';
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -543,6 +549,18 @@ class PatternRegistryImpl {
       .filter(p => p.hitCount > 0)
       .sort((a, b) => b.hitCount - a.hitCount)
       .slice(0, limit);
+  }
+
+  /**
+   * Get the registry version (base version + learned pattern count).
+   * Format: "1.1.0+L5" means base v1.1.0 with 5 learned patterns added.
+   */
+  get version(): string {
+    const learnedCount = Array.from(this.patterns.values())
+      .filter(p => p.source === 'learned').length;
+    return learnedCount > 0
+      ? `${PATTERN_REGISTRY_VERSION}+L${learnedCount}`
+      : PATTERN_REGISTRY_VERSION;
   }
 
   /**

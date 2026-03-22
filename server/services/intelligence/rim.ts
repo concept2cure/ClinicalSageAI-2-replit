@@ -1,22 +1,15 @@
 /**
- * Regulatory Intelligence Model (RIM) — Orchestrator
+ * Regulatory Intelligence Model (RIM) — Orchestrator (Hardened)
  *
  * The central orchestrator for Concept2Cure's proprietary intelligence layer.
  *
- * RIM is NOT an LLM. It is a structured, evolving system that sits on top
- * of LLMs and becomes more valuable over time through:
- *
- *   1. Judgment Models — codified scoring & reasoning (judgment-framework.ts)
- *   2. Pattern Registry — regulatory prior knowledge (pattern-registry.ts)
- *   3. Signal Capture — intelligence accumulation (signal-capture.ts)
- *   4. Existing services — readiness, recommendations, evidence, cross-module
- *
- * This orchestrator:
- *   - Gathers context from existing services
- *   - Runs judgment models
- *   - Scans for regulatory patterns
- *   - Captures intelligence signals
- *   - Returns a unified RIM assessment
+ * Hardening guarantees:
+ *   1. Every run has a unique runId — traceable, replayable
+ *   2. Every signal carries provenance (framework version, pattern version, runId)
+ *   3. Persistence failures are surfaced, never silent
+ *   4. Runs are marked 'degraded' if persistence fails
+ *   5. Artifact + version linkage is explicit
+ *   6. Trend detection is grounded (min sample, version-compatible only)
  *
  * @module server/services/intelligence/rim
  */
@@ -24,13 +17,11 @@
 import {
   computeReadinessScore,
   type ReadinessScore,
-  type ReadinessContext,
 } from './readiness-scoring-engine.js';
 
 import {
   generateRecommendations,
   type Recommendation,
-  type RecommendationContext,
 } from './recommendation-engine.js';
 
 import {
@@ -45,6 +36,7 @@ import {
 
 import {
   generateJudgmentReport,
+  JUDGMENT_FRAMEWORK_VERSION,
   type JudgmentReport,
   type JudgmentContext,
   type JudgmentInput,
@@ -60,19 +52,28 @@ import {
   captureJudgmentSignals,
   capturePatternSignals,
   getSignalSummary,
+  getSectionHistory,
+  getRecurringPatterns,
   persistSignals,
   type SignalSummary,
+  type SignalProvenance,
+  type PersistenceResult,
 } from './signal-capture.js';
 
 import {
   getProjectIntelligence,
-  type ProjectIntelligenceSummary,
 } from './project-intelligence-service.js';
 
 import {
   getFeedbackSummary,
   type FeedbackSummary,
 } from './learning-loop-service.js';
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RIM VERSION
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const RIM_VERSION = '1.1.0';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -86,19 +87,45 @@ export interface RIMContext {
   readonly submissionType?: string;
   readonly targetAgency?: string;
   readonly textToScan?: string;
+  readonly artifactId?: string;
+  readonly artifactVersionId?: string;
+}
+
+export type RIMRunStatus = 'complete' | 'degraded' | 'partial';
+
+export interface RIMRun {
+  readonly runId: string;
+  readonly rimVersion: string;
+  readonly status: RIMRunStatus;
+  readonly degradedReason?: string;
+  readonly persistenceResult: PersistenceResult | null;
 }
 
 export interface RIMAssessment {
+  readonly run: RIMRun;
   readonly context: RIMContext;
   readonly judgment: JudgmentReport;
   readonly patternMatches: readonly PatternMatch[];
   readonly signalSummary: SignalSummary;
   readonly crossModuleReport: CrossModuleReport | null;
   readonly feedbackSummary: FeedbackSummary | null;
+  readonly priorSectionSignals: number;
+  readonly recurringPatterns: readonly { patternId: string; occurrences: number }[];
   readonly rimScore: number; // 0-100 unified RIM score
   readonly rimVerdict: string;
   readonly topActions: readonly string[];
   readonly assessedAt: string;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RUN ID GENERATION
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let runCounter = 0;
+
+function generateRunId(): string {
+  runCounter++;
+  return `rim_${Date.now()}_${runCounter}`;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -108,17 +135,29 @@ export interface RIMAssessment {
 /**
  * Run a full RIM assessment for a project.
  *
- * This is the main entry point. It:
- *   1. Gathers readiness, recommendations, evidence chains
- *   2. Runs all judgment models
- *   3. Scans for regulatory patterns
- *   4. Captures intelligence signals
- *   5. Returns a unified assessment
+ * Every run:
+ *   1. Gets a unique runId
+ *   2. Gathers context from existing services
+ *   3. Runs all judgment models
+ *   4. Scans for regulatory patterns
+ *   5. Captures signals with full provenance
+ *   6. Persists signals — surfaces failure, marks run degraded if needed
+ *   7. Checks for recurring patterns and section history
+ *   8. Returns unified assessment with run status
  */
 export async function runRIMAssessment(ctx: RIMContext): Promise<RIMAssessment> {
-  const { organizationId, projectId, userId, sectionCode, submissionType, targetAgency, textToScan } = ctx;
+  const runId = generateRunId();
+  const { organizationId, projectId, userId, sectionCode, submissionType, targetAgency, textToScan, artifactId, artifactVersionId } = ctx;
 
-  // ── Step 1: Gather existing intelligence ──
+  // Build provenance — attached to every signal this run produces
+  const provenance: SignalProvenance = {
+    judgmentFrameworkVersion: JUDGMENT_FRAMEWORK_VERSION,
+    patternRegistryVersion: patternRegistry.version,
+    runId,
+    runType: 'full_assessment',
+  };
+
+  // ── Step 1: Gather existing intelligence (parallel, fault-tolerant) ──
   const [readiness, recommendations, crossModule, intelligence, feedbackSummary] = await Promise.allSettled([
     computeReadinessScore({ organizationId, projectId, submissionType, targetAgency }),
     generateRecommendations({ organizationId, projectId, triggeredBy: 'rim_assessment' }),
@@ -177,7 +216,6 @@ export async function runRIMAssessment(ctx: RIMContext): Promise<RIMAssessment> 
       (criteria as { submissionType?: string }).submissionType = submissionType;
     }
     if (sectionCode) {
-      // Map section code to CTD module
       const modulePrefix = sectionCode.split('.')[0];
       (criteria as { ctdModule?: string }).ctdModule = modulePrefix;
     }
@@ -189,33 +227,64 @@ export async function runRIMAssessment(ctx: RIMContext): Promise<RIMAssessment> 
     );
   }
 
-  // ── Step 5: Capture intelligence signals ──
-  captureJudgmentSignals(organizationId, projectId, judgment, userId);
+  // ── Step 5: Capture intelligence signals with provenance ──
+  captureJudgmentSignals(
+    organizationId, projectId, judgment, provenance,
+    userId, artifactId, artifactVersionId,
+  );
 
   if (patternMatches.length > 0) {
-    capturePatternSignals(organizationId, projectId, patternMatches, sectionCode, userId);
+    capturePatternSignals(
+      organizationId, projectId, patternMatches, provenance,
+      sectionCode, userId, artifactId, artifactVersionId,
+    );
   }
 
   const signalSummary = getSignalSummary(organizationId, projectId);
 
-  // ── Step 6: Persist signals (async, non-blocking) ──
-  persistSignals(organizationId, projectId).catch(() => {
-    // Non-critical — signals are still in memory
-  });
+  // ── Step 6: Persist signals — NEVER silent ──
+  const persistenceResult = await persistSignals(organizationId, projectId, runId);
 
-  // ── Step 7: Compute unified RIM score ──
+  let runStatus: RIMRunStatus = 'complete';
+  let degradedReason: string | undefined;
+
+  if (!persistenceResult.success) {
+    runStatus = 'degraded';
+    degradedReason = `Persistence failed: ${persistenceResult.error}`;
+    console.warn(`[RIM] Run ${runId} degraded — ${degradedReason}`);
+  }
+
+  // ── Step 7: Check section history + recurring patterns ──
+  const priorSectionSignals = sectionCode
+    ? getSectionHistory(organizationId, projectId, sectionCode).length
+    : 0;
+
+  const recurringPatterns = getRecurringPatterns(
+    organizationId, projectId, sectionCode,
+  );
+
+  // ── Step 8: Compute unified RIM score ──
   const rimScore = computeRIMScore(judgment, patternMatches, feedbackResult);
-
-  // ── Step 8: Generate top actions ──
   const topActions = generateTopActions(judgment, patternMatches, recsResult);
 
+  const run: RIMRun = {
+    runId,
+    rimVersion: RIM_VERSION,
+    status: runStatus,
+    degradedReason,
+    persistenceResult,
+  };
+
   return {
+    run,
     context: ctx,
     judgment,
     patternMatches,
     signalSummary,
     crossModuleReport: crossModuleResult,
     feedbackSummary: feedbackResult,
+    priorSectionSignals,
+    recurringPatterns,
     rimScore,
     rimVerdict: rimScoreToVerdict(rimScore),
     topActions,
@@ -225,7 +294,7 @@ export async function runRIMAssessment(ctx: RIMContext): Promise<RIMAssessment> 
 
 /**
  * Quick scan: run only the pattern registry against text.
- * Lightweight, fast, no DB queries.
+ * Lightweight, fast, no DB queries. Still produces provenance.
  */
 export function quickPatternScan(
   text: string,
@@ -254,16 +323,13 @@ function computeRIMScore(
   patternMatches: readonly PatternMatch[],
   feedback: FeedbackSummary | null,
 ): number {
-  // Base: overall judgment risk score
   let score = judgment.overallRisk;
 
-  // Pattern penalty: each critical pattern match reduces score
   const criticalPatterns = patternMatches.filter(m => m.pattern.severity === 'critical');
   const highPatterns = patternMatches.filter(m => m.pattern.severity === 'high');
   score -= criticalPatterns.length * 8;
   score -= highPatterns.length * 4;
 
-  // Feedback bonus: high acceptance rate means our recommendations are useful
   if (feedback && feedback.totalFeedback >= 5) {
     if (feedback.acceptanceRate > 0.7) score += 5;
     if (feedback.resolutionRate > 0.5) score += 3;
@@ -287,25 +353,21 @@ function generateTopActions(
 ): string[] {
   const actions: Array<{ priority: number; action: string }> = [];
 
-  // From judgment findings
   for (const finding of judgment.topFindings) {
     const priority = finding.severity === 'critical' ? 0 : finding.severity === 'high' ? 1 : 2;
     actions.push({ priority, action: finding.remediation });
   }
 
-  // From pattern matches
   for (const match of patternMatches) {
     const priority = match.pattern.severity === 'critical' ? 0 : match.pattern.severity === 'high' ? 1 : 2;
     actions.push({ priority, action: match.pattern.remediation });
   }
 
-  // From active critical/high recommendations
   for (const rec of recommendations.filter(r => r.status === 'active' && (r.severity === 'critical' || r.severity === 'high'))) {
     const priority = rec.severity === 'critical' ? 0 : 1;
     actions.push({ priority, action: rec.suggestedAction });
   }
 
-  // Deduplicate and sort
   const seen = new Set<string>();
   return actions
     .sort((a, b) => a.priority - b.priority)

@@ -32,6 +32,12 @@ import type {
 import type { Recommendation } from './recommendation-engine.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// VERSION — bumped when scoring logic changes (enables provenance tracking)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const JUDGMENT_FRAMEWORK_VERSION = '1.1.0';
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -87,6 +93,7 @@ export interface JudgmentContext {
 }
 
 export interface JudgmentReport {
+  readonly frameworkVersion: string;
   readonly context: JudgmentContext;
   readonly scores: readonly JudgmentScore[];
   readonly overallRisk: number; // 0-100 composite
@@ -645,6 +652,7 @@ export function generateJudgmentReport(
     .slice(0, 10);
 
   return {
+    frameworkVersion: JUDGMENT_FRAMEWORK_VERSION,
     context: ctx,
     scores: allScores,
     overallRisk: submissionRisk.score,
