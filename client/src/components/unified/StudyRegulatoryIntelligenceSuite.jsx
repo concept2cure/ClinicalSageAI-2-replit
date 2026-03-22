@@ -497,7 +497,7 @@ export default function StudyRegulatoryIntelligenceSuite() {
         </div>
       </div>
 
-      {/* Main Content Area with Lumen AI Panel */}
+      {/* Main Content Area with AnA Assistant Panel */}
       <div className="flex-1 flex overflow-hidden">
         {/* Main Content */}
         <div className={`flex-1 flex flex-col ${lumenPanelOpen ? 'mr-0' : ''}`}>
