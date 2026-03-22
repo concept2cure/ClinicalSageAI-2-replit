@@ -5921,84 +5921,22 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
   );
 
   const renderAnalyticalMethods = () => {
-    const analyticalPerformanceMetrics = {
-      precision: 98.5,
-      accuracy: 99.2,
-      lod: 0.05,
-      loq: 0.15,
-      cpk: 1.45,
-      cp: 1.67,
-    };
+    // Derive performance metrics from actual analytical methods data
+    const analyticalPerformanceMetrics = analyticalMethods.length > 0
+      ? {
+          precision: analyticalMethods.reduce((sum, m) => sum + (parseFloat(m.precision) || 0), 0) / analyticalMethods.length || 0,
+          accuracy: analyticalMethods.reduce((sum, m) => sum + (parseFloat(m.accuracy) || 0), 0) / analyticalMethods.length || 0,
+          lod: analyticalMethods[0]?.lod || '--',
+          loq: analyticalMethods[0]?.loq || '--',
+          cpk: '--',
+          cp: '--',
+        }
+      : { precision: 0, accuracy: 0, lod: '--', loq: '--', cpk: '--', cp: '--' };
 
     const { toast } = useToast();
 
-    // Mock analytical methods data with comprehensive details
-    const methods = [
-      {
-        id: 'AM-001',
-        name: 'HPLC Assay for API',
-        technique: 'HPLC',
-        status: 'Validated',
-        validationStage: 'Complete',
-        owner: 'Dr. Sarah Chen',
-        analyte: 'Lisinopril',
-        matrix: 'Tablet',
-        precision: 99.1,
-        accuracy: 99.5,
-        lod: 0.03,
-        loq: 0.1,
-        lastUpdated: '2025-09-15',
-        nextReview: '2026-09-15',
-      },
-      {
-        id: 'AM-002',
-        name: 'Related Substances by UPLC',
-        technique: 'UPLC',
-        status: 'In Validation',
-        validationStage: 'Precision Study',
-        owner: 'Dr. Michael Rodriguez',
-        analyte: 'Impurities',
-        matrix: 'API',
-        precision: 97.8,
-        accuracy: 98.2,
-        lod: 0.01,
-        loq: 0.03,
-        lastUpdated: '2025-09-18',
-        nextReview: '2026-09-18',
-      },
-      {
-        id: 'AM-003',
-        name: 'Dissolution Testing',
-        technique: 'UV-Vis',
-        status: 'Validated',
-        validationStage: 'Complete',
-        owner: 'Dr. Emily Johnson',
-        analyte: 'Drug Release',
-        matrix: 'Tablet',
-        precision: 98.5,
-        accuracy: 99.0,
-        lod: 0.1,
-        loq: 0.3,
-        lastUpdated: '2025-09-10',
-        nextReview: '2026-09-10',
-      },
-      {
-        id: 'AM-004',
-        name: 'Residual Solvents by GC',
-        technique: 'GC-FID',
-        status: 'Transfer',
-        validationStage: 'Method Transfer',
-        owner: 'Dr. James Wilson',
-        analyte: 'Solvents',
-        matrix: 'API',
-        precision: 96.5,
-        accuracy: 97.8,
-        lod: 0.001,
-        loq: 0.005,
-        lastUpdated: '2025-09-20',
-        nextReview: '2026-09-20',
-      },
-    ];
+    // Use real analytical methods from API (loaded in main useEffect)
+    const methods = analyticalMethods;
 
     const filteredMethods = methods.filter(method => {
       const matchesSearch =
@@ -17554,99 +17492,21 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
 
           <TabsContent value="integrations" className="mt-6">
             {(() => {
-              // Biotech System Integrations
-              const biotechIntegrations = [
-                {
-                  id: 'lims',
-                  name: 'LIMS Integration',
-                  description: 'Laboratory Information Management System connectivity',
-                  status: 'connected',
-                  lastSync: '2 hours ago',
-                  icon: '🧪',
-                  provider: 'LabWare',
-                  dataPoints: 1247,
-                },
-                {
-                  id: 'mes',
-                  name: 'Manufacturing Execution System',
-                  description: 'Real-time production data and batch records',
-                  status: 'connected',
-                  lastSync: '15 min ago',
-                  icon: '🏭',
-                  provider: 'Werum PAS-X',
-                  dataPoints: 892,
-                },
-                {
-                  id: 'qms',
-                  name: 'Quality Management System',
-                  description: 'Quality control and deviation management',
-                  status: 'pending',
-                  lastSync: 'Never',
-                  icon: '✅',
-                  provider: 'TrackWise',
-                  dataPoints: 0,
-                },
-                {
-                  id: 'edms',
-                  name: 'Electronic Document Management',
-                  description: 'Document control and version management',
-                  status: 'connected',
-                  lastSync: '1 hour ago',
-                  icon: '📄',
-                  provider: 'Documentum',
-                  dataPoints: 3456,
-                },
-                {
-                  id: 'chromatography',
-                  name: 'Chromatography Data Systems',
-                  description: 'Waters Empower & Agilent OpenLab integration',
-                  status: 'connected',
-                  lastSync: '30 min ago',
-                  icon: '📊',
-                  provider: 'Multi-vendor',
-                  dataPoints: 567,
-                },
-                {
-                  id: 'erp',
-                  name: 'Enterprise Resource Planning',
-                  description: 'Material tracking and supply chain integration',
-                  status: 'connected',
-                  lastSync: '45 min ago',
-                  icon: '📦',
-                  provider: 'SAP',
-                  dataPoints: 2134,
-                },
-              ];
+              // Biotech System Integrations — loaded from API
+              const [biotechIntegrations, setBiotechIntegrations] = React.useState([]);
+              React.useEffect(() => {
+                fetch('/api/integrations/status', { credentials: 'include' })
+                  .then(r => r.ok ? r.json() : [])
+                  .then(data => setBiotechIntegrations(Array.isArray(data) ? data : data.data || []))
+                  .catch(() => {});
+              }, []);
 
+              // AI tools — capabilities list (no fabricated metrics)
               const aiAutomationTools = [
-                {
-                  name: 'Analytical Method AI',
-                  description: 'AI-powered method development and optimization',
-                  status: 'active',
-                  savings: '40% time reduction',
-                  icon: '🤖',
-                },
-                {
-                  name: 'Stability Prediction',
-                  description: 'ML-based stability trending and shelf-life prediction',
-                  status: 'active',
-                  savings: '60% faster predictions',
-                  icon: '📈',
-                },
-                {
-                  name: 'Batch Release AI',
-                  description: 'Automated batch disposition recommendations',
-                  status: 'active',
-                  savings: '75% faster release',
-                  icon: '🚀',
-                },
-                {
-                  name: 'Regulatory Writing Assistant',
-                  description: 'AI-powered CMC document generation',
-                  status: 'active',
-                  savings: '90% draft acceleration',
-                  icon: '✍️',
-                },
+                { name: 'Analytical Method AI', description: 'AI-powered method development and optimization', status: 'active', icon: '🤖' },
+                { name: 'Stability Prediction', description: 'ML-based stability trending and shelf-life prediction', status: 'active', icon: '📈' },
+                { name: 'Batch Release AI', description: 'Automated batch disposition recommendations', status: 'active', icon: '🚀' },
+                { name: 'Regulatory Writing Assistant', description: 'AI-powered CMC document generation', status: 'active', icon: '✍️' },
               ];
 
               return (
@@ -19559,149 +19419,36 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
 
           <TabsContent value="lineage" className="mt-6">
             {(() => {
-              // Manufacturing Genealogy Data
-              const batchGenealogy = {
-                batchId: 'BTC-2025-001',
-                productName: 'Therapeutic Monoclonal Antibody',
-                mfgDate: '2025-09-15',
-                status: 'Released',
-                parents: [
-                  {
-                    type: 'Drug Substance',
-                    batch: 'DS-BTC-2025-045',
-                    source: 'Upstream Processing',
-                  },
-                  { type: 'Excipients', batch: 'EXC-HIST-2025-012', source: 'Raw Materials' },
-                  { type: 'Container', batch: 'VIAL-GLX-2025-089', source: 'Packaging Materials' },
-                ],
-                children: [
-                  {
-                    type: 'Stability Sample',
-                    batch: 'STB-BTC-2025-001A',
-                    purpose: 'Long-term Studies',
-                  },
-                  {
-                    type: 'Retain Sample',
-                    batch: 'RET-BTC-2025-001B',
-                    purpose: 'Reference Testing',
-                  },
-                  { type: 'Commercial Units', batch: 'COM-BTC-2025-001C', purpose: 'Distribution' },
-                ],
-              };
+              // Manufacturing Genealogy — loaded from API
+              const [batchGenealogy, setBatchGenealogy] = React.useState({ batchId: '', productName: '', mfgDate: '', status: '', parents: [], children: [] });
+              const [lineageLoading, setLineageLoading] = React.useState(true);
+              React.useEffect(() => {
+                fetch('/api/cmc/batch/genealogy', { credentials: 'include' })
+                  .then(r => r.ok ? r.json() : {})
+                  .then(data => { if (data && data.batchId) setBatchGenealogy(data); })
+                  .catch(() => {})
+                  .finally(() => setLineageLoading(false));
+              }, []);
 
-              const lineageTraceability = [
-                {
-                  level: 1,
-                  batchId: 'BTC-2025-001',
-                  description: 'Final Drug Product',
-                  date: '2025-09-15',
-                  location: 'Fill/Finish Suite 3',
-                  operator: 'Manufacturing Team A',
-                  equipment: 'Filling Line FL-03',
-                  status: 'Released',
-                },
-                {
-                  level: 2,
-                  batchId: 'DS-BTC-2025-045',
-                  description: 'Drug Substance Bulk',
-                  date: '2025-09-10',
-                  location: 'Downstream Processing',
-                  operator: 'Purification Team B',
-                  equipment: 'Chromatography Skid CHS-02',
-                  status: 'Released',
-                },
-                {
-                  level: 3,
-                  batchId: 'HAR-BTC-2025-089',
-                  description: 'Harvest Pool',
-                  date: '2025-09-05',
-                  location: 'Bioreactor Suite 2',
-                  operator: 'Cell Culture Team C',
-                  equipment: 'Bioreactor BR-2000L-02',
-                  status: 'Released',
-                },
-                {
-                  level: 4,
-                  batchId: 'SEED-BTC-2025-023',
-                  description: 'Production Seed',
-                  date: '2025-08-28',
-                  location: 'Seed Train Lab',
-                  operator: 'Cell Banking Team',
-                  equipment: 'Shaker Incubator SI-250L-01',
-                  status: 'Released',
-                },
-                {
-                  level: 5,
-                  batchId: 'MCB-BTC-LOT-12',
-                  description: 'Master Cell Bank',
-                  date: '2024-03-15',
-                  location: 'Cell Banking Facility',
-                  operator: 'Cell Banking Team',
-                  equipment: 'Liquid Nitrogen Storage',
-                  status: 'Qualified',
-                },
-              ];
+              // Lineage loaded from API
+              const [lineageTraceability, setLineageTraceability] = React.useState([]);
+              const [supplierLineage, setSupplierLineage] = React.useState([]);
+              const [environmentalConditions, setEnvironmentalConditions] = React.useState([]);
+              React.useEffect(() => {
+                Promise.allSettled([
+                  fetch('/api/cmc/batch/lineage', { credentials: 'include' }).then(r => r.ok ? r.json() : []),
+                  fetch('/api/cmc/supply/materials', { credentials: 'include' }).then(r => r.ok ? r.json() : []),
+                  fetch('/api/cmc/facility/environmental-conditions', { credentials: 'include' }).then(r => r.ok ? r.json() : []),
+                ]).then(([lineageRes, supplierRes, envRes]) => {
+                  if (lineageRes.status === 'fulfilled') setLineageTraceability(Array.isArray(lineageRes.value) ? lineageRes.value : lineageRes.value?.data || []);
+                  if (supplierRes.status === 'fulfilled') setSupplierLineage(Array.isArray(supplierRes.value) ? supplierRes.value : supplierRes.value?.data || []);
+                  if (envRes.status === 'fulfilled') setEnvironmentalConditions(Array.isArray(envRes.value) ? envRes.value : envRes.value?.data || []);
+                });
+              }, []);
 
-              const supplierLineage = [
-                {
-                  material: 'Histidine (Excipient)',
-                  supplier: 'Ajinomoto Co.',
-                  lotNumber: 'HIS-2025-Q3-445',
-                  certification: 'USP/EP Compliant',
-                  receiptDate: '2025-08-20',
-                  testingStatus: 'Passed',
-                  usage: 'Buffer Component',
-                },
-                {
-                  material: 'Sucrose (Stabilizer)',
-                  supplier: 'Cargill Inc.',
-                  lotNumber: 'SUC-2025-07-889',
-                  certification: 'Pharmaceutical Grade',
-                  receiptDate: '2025-08-18',
-                  testingStatus: 'Passed',
-                  usage: 'Lyoprotectant',
-                },
-                {
-                  material: 'Glass Vials (Primary Packaging)',
-                  supplier: 'Gerresheimer AG',
-                  lotNumber: 'GVL-2025-334512',
-                  certification: 'Type I Borosilicate',
-                  receiptDate: '2025-09-01',
-                  testingStatus: 'Passed',
-                  usage: 'Container Closure',
-                },
-              ];
+              // Legacy data removed — the arrays below were hardcoded fake data
 
-              const environmentalConditions = [
-                {
-                  parameter: 'Temperature',
-                  specification: '2-8°C',
-                  actual: '4.2°C',
-                  status: 'In Spec',
-                  monitoring: 'Continuous',
-                },
-                {
-                  parameter: 'Relative Humidity',
-                  specification: '30-60%',
-                  actual: '45%',
-                  status: 'In Spec',
-                  monitoring: 'Continuous',
-                },
-                {
-                  parameter: 'Pressure Differential',
-                  specification: '>15 Pa',
-                  actual: '25 Pa',
-                  status: 'In Spec',
-                  monitoring: 'Continuous',
-                },
-                {
-                  parameter: 'Particle Count',
-                  specification: 'ISO 7',
-                  actual: 'ISO 6',
-                  status: 'In Spec',
-                  monitoring: 'Real-time',
-                },
-              ];
+
 
               return (
                 <div className="space-y-6">
@@ -22467,17 +22214,18 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
     }, [generateTemperatureData, connectionStatus, featureFlags.sc_enableTelemetry]);
 
     // ============================================================================
-    // SUPPLY READINESS GATES CONFIGURATION (Enhanced)
+    // SUPPLY READINESS GATES CONFIGURATION
+    // Gate definitions are structural; scores/status loaded from API at mount
     // ============================================================================
 
-    const baseReadinessGates = [
+    const baseReadinessGates = supplyGates.length > 0 ? supplyGates : [
       {
         id: 'po_received',
         label: 'PO Received',
         description: 'Purchase order processed and validated',
         icon: ShoppingCart,
-        status: 'pass',
-        score: 95,
+        status: 'pending',
+        score: 0,
         critical_multiplier: 1.2,
         blocking: true,
         category: 'procurement',
