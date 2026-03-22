@@ -734,7 +734,7 @@ export async function resolveAccountContext(
 
 /**
  * Format resolved account context into a prompt block for injection
- * into the Lumen system prompt.
+ * into the AnA 1.0 RI system prompt.
  */
 export function formatResolvedContextForPrompt(resolved: ResolvedAccountContext): string {
   const parts: string[] = [];

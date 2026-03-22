@@ -1,9 +1,9 @@
 /**
  * Concept2Cure Cortex Service
  *
- * Unified connectivity layer for Lumen Cortex and Project Cortex backends.
+ * Unified connectivity layer for AnA 1.0 RI and Project Cortex backends.
  * Provides typed access to:
- * - AI chat/reasoning (Lumen Cortex)
+ * - AI chat/reasoning (AnA 1.0 RI)
  * - Semantic search (Knowledge Graph)
  * - Regulatory intelligence (Project Cortex Data Farmers)
  * - Document analysis and extraction
@@ -299,7 +299,7 @@ export class CortexService {
   // ─────────────────────────────────────────────────────────────────────────────
 
   /**
-   * Send a message to Lumen Cortex and get AI response
+   * Send a message to AnA 1.0 RI and get AI response
    */
   async sendMessage(params: {
     message: string;

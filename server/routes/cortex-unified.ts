@@ -8,7 +8,7 @@
  * - cortexAdvisoryRoutes.ts (advisory features)
  * - cortexManagementRoutes.ts (management features)
  * - cortexQueryRoutes.ts (query operations)
- * - lumen-cortex.ts (Lumen integration)
+ * - lumen-cortex.ts (AnA 1.0 RI integration)
  *
  * @version 2.0.0
  * @module server/routes/cortex-unified
@@ -149,7 +149,7 @@ router.get('/docs', (_req: Request, res: Response) => {
         legacyPath: '/api/cortex/query/*',
       },
       '/lumen': {
-        description: 'Lumen integration features',
+        description: 'AnA 1.0 RI integration features',
         methods: ['GET', 'POST'],
         legacyPath: '/api/lumen-cortex/*',
       },
@@ -782,13 +782,13 @@ async function mountSubRouters() {
     logger.error('Failed to mount query routes:', error);
   }
 
-  // Lumen integration
+  // AnA 1.0 RI integration
   try {
     const lumenModule = await import('./lumen-cortex');
     router.use('/lumen', lumenModule.default);
-    logger.info('Mounted: /lumen (Lumen integration)');
+    logger.info('Mounted: /lumen (AnA 1.0 RI integration)');
   } catch (error) {
-    logger.error('Failed to mount Lumen routes:', error);
+    logger.error('Failed to mount AnA 1.0 RI routes:', error);
   }
 
   // Clinical intelligence (Foresight capabilities under Cortex gateway)

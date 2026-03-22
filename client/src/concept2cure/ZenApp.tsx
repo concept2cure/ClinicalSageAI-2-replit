@@ -8,7 +8,7 @@
  * Combines all zen components into a cohesive, elegant experience.
  *
  * NOW CONNECTED TO:
- * - Lumen Cortex (AI chat)
+ * - AnA 1.0 RI (AI chat)
  * - Project Cortex (data harvesting)
  * - Unified data layers
  *
