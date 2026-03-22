@@ -69,13 +69,13 @@ const openai = {
   },
 };
 
-// Advanced model selection for different tasks
+// Model selection for different tasks — uses real, available models
 const AI_MODELS = {
-  PREDICTION: 'gpt-5',        // Most advanced for complex predictions
-  ANALYSIS: 'gpt-4.1',        // Balanced for general analysis
-  NARRATIVE: 'gpt-4o',        // Optimized for document generation
-  REASONING: 'o3',            // Advanced reasoning for clinical decisions
-  FAST: 'gpt-4.1-mini'        // Quick responses for real-time features
+  PREDICTION: 'gpt-4o',        // Most capable available model for predictions
+  ANALYSIS: 'gpt-4o',          // Balanced for general analysis
+  NARRATIVE: 'gpt-4o',         // Optimized for document generation
+  REASONING: 'gpt-4o',         // Advanced reasoning for clinical decisions
+  FAST: 'gpt-4o-mini'          // Quick responses for real-time features
 };
 
 export class ForesightAIEngine {

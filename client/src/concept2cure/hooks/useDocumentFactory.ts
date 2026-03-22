@@ -77,7 +77,29 @@ export function useGenerateINDSection() {
         const err = await res.json().catch(() => ({ error: 'Section generation failed' }));
         throw new Error(err.error || 'Section generation failed');
       }
-      return res.json();
+      const data = await res.json();
+      const content = data.content || data.data?.content || '';
+
+      // Auto-persist as artifact if projectId provided and content is real
+      if (params.projectId && content && content.trim().length > 0) {
+        try {
+          await fetch('/api/knowledge-base/save-docx-as-artifact', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+              projectId: params.projectId,
+              title: `${params.sectionCode} — ${params.sectionTitle}`,
+              htmlContent: content,
+              ctdSection: params.sectionCode,
+              type: 'regulatory_document',
+            }),
+          });
+        } catch {
+          // Non-blocking — artifact save failure doesn't break generation
+        }
+      }
+
+      return data;
     },
   });
 }

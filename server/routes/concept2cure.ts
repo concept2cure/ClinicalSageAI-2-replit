@@ -602,10 +602,9 @@ const createArtifactSchema = z.object({
   type: z.string().min(1).max(50),
   category: z.enum(['document', 'interactive', 'visualization']),
   title: z.string().min(1, 'Title required').max(200),
-  content: z.string().max(1000000, 'Content too large'), // 1MB max
+  content: z.string().min(1, 'Content must not be empty').max(1000000, 'Content too large'), // 1MB max, no empty
   ctdSection: z.string().max(50).optional(),
   metadata: z.record(z.any()).optional(),
-  ctdSection: z.string().max(50).optional(),
 });
 
 const createSignatureSchema = z.object({
@@ -11284,6 +11283,59 @@ router.get('/team/workload', async (req: Request, res: Response) => {
   } catch (error: any) {
     logConcept2cureError('team workload fetch', error);
     return sendError(res, 500, 'Failed to fetch workload data');
+  }
+});
+
+/**
+ * POST /api/concept2cure/feedback
+ * Persist user feedback (thumbs up/down) on AI responses.
+ * Critical for RLHF quality loop — was previously console.info only.
+ */
+router.post('/feedback', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const organizationId =
+      (req as any).organizationId ||
+      parseInt(req.headers['x-organization-id'] as string, 10) ||
+      1;
+    const userId = getUserId(req);
+    const { messageId, positive, conversationId, comment } = req.body;
+
+    if (messageId === undefined || positive === undefined) {
+      return sendError(res, 400, 'messageId and positive (boolean) are required');
+    }
+
+    try {
+      await pool.query(
+        `CREATE TABLE IF NOT EXISTS ai_feedback (
+          id SERIAL PRIMARY KEY,
+          organization_id INTEGER NOT NULL,
+          user_id INTEGER,
+          message_id TEXT NOT NULL,
+          conversation_id TEXT,
+          positive BOOLEAN NOT NULL,
+          comment TEXT,
+          created_at TIMESTAMP DEFAULT NOW()
+        )`
+      );
+      await pool.query(
+        `INSERT INTO ai_feedback (organization_id, user_id, message_id, conversation_id, positive, comment)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [organizationId, userId, String(messageId), conversationId || null, positive, comment || null]
+      );
+    } catch (dbErr: any) {
+      console.warn('[Feedback] DB persist failed:', dbErr.message);
+    }
+
+    // Also log to audit trail for compliance
+    await logAuditEntry(req, 'FEEDBACK', 'ai_response', String(messageId), null, {
+      positive,
+      conversationId,
+    });
+
+    return sendSuccess(res, { recorded: true });
+  } catch (error: any) {
+    logConcept2cureError('feedback submission', error);
+    return sendError(res, 500, 'Failed to record feedback');
   }
 });
 

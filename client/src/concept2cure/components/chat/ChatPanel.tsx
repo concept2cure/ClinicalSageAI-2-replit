@@ -228,7 +228,14 @@ const MessageItem: React.FC<MessageItemProps> = ({
                     <>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <button className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded" onClick={() => console.info(`[chat-feedback] messageId=${message.id} positive=true`)}>
+                          <button className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded" onClick={() => {
+                            const feedbackToken = sessionStorage.getItem('trialsage_access_token') || localStorage.getItem('trialsage_access_token');
+                            fetch('/api/concept2cure/feedback', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json', ...(feedbackToken ? { Authorization: `Bearer ${feedbackToken}` } : {}) },
+                              body: JSON.stringify({ messageId: message.id, positive: true, conversationId: activeConversation?.id }),
+                            }).catch(() => {});
+                          }}>
                             <ThumbsUp className="h-3.5 w-3.5" />
                           </button>
                         </TooltipTrigger>
@@ -237,7 +244,14 @@ const MessageItem: React.FC<MessageItemProps> = ({
 
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <button className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded" onClick={() => console.info(`[chat-feedback] messageId=${message.id} positive=false`)}>
+                          <button className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded" onClick={() => {
+                            const feedbackToken = sessionStorage.getItem('trialsage_access_token') || localStorage.getItem('trialsage_access_token');
+                            fetch('/api/concept2cure/feedback', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json', ...(feedbackToken ? { Authorization: `Bearer ${feedbackToken}` } : {}) },
+                              body: JSON.stringify({ messageId: message.id, positive: false, conversationId: activeConversation?.id }),
+                            }).catch(() => {});
+                          }}>
                             <ThumbsDown className="h-3.5 w-3.5" />
                           </button>
                         </TooltipTrigger>
@@ -510,17 +524,54 @@ export const ChatPanel: React.FC = () => {
         content: response.answer,
       });
 
-      // If response includes artifacts, create them
+      // If response includes artifacts, persist them server-side then update local state
       if (response.artifacts && response.artifacts.length > 0) {
+        const token =
+          sessionStorage.getItem('trialsage_access_token') ||
+          localStorage.getItem('trialsage_access_token');
+        const authHeaders: Record<string, string> = {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        };
+
+        // Resolve numeric project ID (strip "proj_" prefix if present)
+        const numericProjectId = String(activeProject.id).replace(/^proj_/, '');
+
         for (const artifact of response.artifacts) {
-          createArtifact({
-            projectId: activeProject.id,
-            conversationId: activeConversation.id,
-            type: artifact.type === 'interactive' ? 'risk_heatmap' : 'document_section',
-            category: artifact.type === 'interactive' ? 'interactive' : 'document',
-            title: artifact.title,
-            content: artifact.content,
-          });
+          if (!artifact.content || artifact.content.trim().length === 0) continue;
+          try {
+            const createRes = await fetch(
+              `/api/concept2cure/projects/${numericProjectId}/artifacts`,
+              {
+                method: 'POST',
+                headers: authHeaders,
+                body: JSON.stringify({
+                  title: artifact.title,
+                  content: artifact.content,
+                  type: artifact.type === 'interactive' ? 'risk_heatmap' : 'document_section',
+                  category: artifact.type === 'interactive' ? 'interactive' : 'document',
+                  conversationId: activeConversation.id,
+                }),
+              }
+            );
+            if (createRes.ok) {
+              const payload = await createRes.json();
+              const persisted = payload.data ?? payload;
+              // Mirror into local state so UI reflects immediately
+              createArtifact({
+                projectId: activeProject.id,
+                conversationId: activeConversation.id,
+                type: artifact.type === 'interactive' ? 'risk_heatmap' : 'document_section',
+                category: artifact.type === 'interactive' ? 'interactive' : 'document',
+                title: persisted.title || artifact.title,
+                content: persisted.content || artifact.content,
+              });
+            } else {
+              console.warn('[ChatPanel] Server artifact creation failed:', createRes.status);
+            }
+          } catch (err) {
+            console.warn('[ChatPanel] Artifact persistence error:', err);
+          }
         }
       }
     } catch (error: any) {

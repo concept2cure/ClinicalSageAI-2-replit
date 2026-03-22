@@ -2352,18 +2352,49 @@ export const ZenApp: React.FC = () => {
                           submissionType={activeProject?.type || 'IND'}
                           onOpenSection={sectionCode => {
                             const ctd = sectionCode.replace(/^m/, '');
+                            // Navigate to editor — EditorPanel will load existing artifacts for this section
                             setPendingEditorContent({
-                              content: `<h1>${sectionCode.toUpperCase()} — Draft</h1><p>Section content for ${activeProject?.name || 'IND Application'}.</p>`,
+                              content: `<h1>${sectionCode.toUpperCase()} — Draft</h1><p>Loading section content…</p>`,
                               title: `${sectionCode.toUpperCase()} — ${activeProject?.name || 'IND Application'}`,
                               ctdSection: ctd,
                             });
                             setRiViewMode('editor');
                             setLayoutMode('regulatory-workspace');
                           }}
-                          onDraftWithAI={(sectionCode, sectionTitle) => {
+                          onDraftWithAI={async (sectionCode, sectionTitle) => {
                             const ctd = sectionCode.replace(/^m/, '');
+                            const token =
+                              sessionStorage.getItem('trialsage_access_token') ||
+                              localStorage.getItem('trialsage_access_token');
+                            const authHeaders: Record<string, string> = {
+                              'Content-Type': 'application/json',
+                              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                            };
+                            // Call real AI generation endpoint
+                            let content = '';
+                            try {
+                              const res = await fetch('/api/knowledge-base/generate-ind-section', {
+                                method: 'POST',
+                                headers: authHeaders,
+                                body: JSON.stringify({
+                                  sectionCode: ctd,
+                                  sectionTitle,
+                                  context: `CTD section for ${activeProject?.type || 'IND'} submission. Project: ${activeProject?.name || 'Untitled'}`,
+                                }),
+                              });
+                              if (res.ok) {
+                                const data = await res.json();
+                                content = data.content || data.data?.content || '';
+                              }
+                            } catch (err) {
+                              console.warn('[ZenApp] AI draft generation failed:', err);
+                            }
+                            // Fallback: minimal scaffold (NOT fake completeness)
+                            if (!content || content.trim().length === 0) {
+                              content = `<h1>${sectionTitle}</h1>\n<p><em>AI generation unavailable. Please draft this section manually or retry.</em></p>`;
+                            }
                             setPendingEditorContent({
-                              content: `<h1>${sectionTitle}</h1>\n<h2>Project: ${activeProject?.name || 'Untitled'} (${activeProject?.type || 'IND'})</h2>\n<p><strong>CTD Section:</strong> ${ctd}</p>\n<p><strong>Generated:</strong> ${new Date().toISOString().split('T')[0]}</p>\n<hr/>\n<h2>Section Content</h2>\n<p>[AI-assisted draft for ${sectionTitle}. This section should comply with ICH M4 guidelines and 21 CFR 312.23(a) requirements.]</p>`,
+                              content,
                               title: `${sectionTitle} — ${activeProject?.name || 'IND Application'}`,
                               ctdSection: ctd,
                             });
@@ -2783,15 +2814,49 @@ export const ZenApp: React.FC = () => {
                       submissionType={activeProject?.type || 'IND'}
                       onOpenSection={sectionCode => {
                         setPendingEditorContent({
-                          content: `<h1>${sectionCode.toUpperCase()} — Draft</h1><p>Section content for ${activeProject?.name || 'Application'}.</p>`,
+                          content: `<h1>${sectionCode.toUpperCase()} — Draft</h1><p>Loading section content…</p>`,
                           title: `${sectionCode.toUpperCase()} — ${activeProject?.name || 'Application'}`,
                           ctdSection: sectionCode.replace(/^m/, ''),
                         });
                         setLayoutMode('ectd-coauthor');
                       }}
-                      onDraftWithAI={sectionCode => {
+                      onDraftWithAI={async (sectionCode, sectionTitle) => {
+                        const ctd = sectionCode.replace(/^m/, '');
+                        const token =
+                          sessionStorage.getItem('trialsage_access_token') ||
+                          localStorage.getItem('trialsage_access_token');
+                        const authHeaders: Record<string, string> = {
+                          'Content-Type': 'application/json',
+                          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                        };
+                        let content = '';
+                        try {
+                          const res = await fetch('/api/knowledge-base/generate-ind-section', {
+                            method: 'POST',
+                            headers: authHeaders,
+                            body: JSON.stringify({
+                              sectionCode: ctd,
+                              sectionTitle: sectionTitle || sectionCode,
+                              context: `CTD section for ${activeProject?.type || 'IND'} submission.`,
+                            }),
+                          });
+                          if (res.ok) {
+                            const data = await res.json();
+                            content = data.content || data.data?.content || '';
+                          }
+                        } catch (err) {
+                          console.warn('[ZenApp] AI draft generation failed:', err);
+                        }
+                        if (!content || content.trim().length === 0) {
+                          content = `<h1>${sectionTitle || sectionCode}</h1>\n<p><em>AI generation unavailable. Please draft this section manually or retry.</em></p>`;
+                        }
+                        setPendingEditorContent({
+                          content,
+                          title: `${sectionTitle || sectionCode} — ${activeProject?.name || 'Application'}`,
+                          ctdSection: ctd,
+                        });
                         setLayoutMode('ectd-coauthor');
-                      }}
+                      }
                       onNavigateToCoAuthor={() => setLayoutMode('ectd-coauthor')}
                     />
                   </Suspense>

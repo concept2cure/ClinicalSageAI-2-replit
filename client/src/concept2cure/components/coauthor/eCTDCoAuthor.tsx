@@ -1113,8 +1113,26 @@ export const ECTDCoAuthorStandalone: React.FC<{
           content = data.content || data.data?.content || '';
         } else {
           console.warn(`[eCTD] Draft API returned ${res.status}, using scaffold fallback`);
-          // Fallback to scaffold template
           content = CTD_SECTION_SCAFFOLDS[section.number] || generateDefaultScaffold(section);
+        }
+
+        // Persist as a governed artifact via save-docx-as-artifact endpoint
+        if (content && content.trim().length > 0) {
+          try {
+            await fetch('/api/knowledge-base/save-docx-as-artifact', {
+              method: 'POST',
+              headers: getAuthHeaders(),
+              body: JSON.stringify({
+                projectId: docState.id?.replace(/^proj_/, '') || '0',
+                title: `${section.number} — ${section.title}`,
+                htmlContent: content,
+                ctdSection: section.number,
+                type: 'regulatory_document',
+              }),
+            });
+          } catch (artifactErr) {
+            console.warn('[eCTD] Artifact persistence failed (non-blocking):', artifactErr);
+          }
         }
 
         // Update the section with real content
@@ -1131,7 +1149,6 @@ export const ECTDCoAuthorStandalone: React.FC<{
         }));
       } catch (err) {
         console.warn('[eCTD] Draft section failed, using scaffold fallback:', err);
-        // Offline fallback — use scaffold template
         const content = CTD_SECTION_SCAFFOLDS[section.number] || generateDefaultScaffold(section);
         setDocState(prev => ({
           ...prev,
