@@ -169,6 +169,86 @@ export interface ClaimCheckResult {
   recommendation: string;
 }
 
+// ── CRL Trigger Types ───────────────────────────────────────────────────
+
+export interface CRLTrigger {
+  category: string;
+  description: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  confidence: number;
+  mitigation: string;
+  historicalRate: number;
+  supportingObjections: string[];
+}
+
+export interface CRLTriggerResult {
+  submissionType: string;
+  overallCRLRisk: 'low' | 'medium' | 'high';
+  triggers: CRLTrigger[];
+  totalPatterns: number;
+  criticalCount: number;
+}
+
+// ── RTF Trigger Types ───────────────────────────────────────────────────
+
+export interface RTFCheckItem {
+  section: string;
+  item: string;
+  required: boolean;
+  category: string;
+  description: string;
+}
+
+export interface RTFTriggerResult {
+  submissionType: string;
+  checklist: RTFCheckItem[];
+  triggers: Array<{
+    trigger: string;
+    frequency: number;
+    severity: 'low' | 'medium' | 'high' | 'critical';
+    description: string;
+  }>;
+  totalChecklistItems: number;
+  requiredItems: number;
+}
+
+// ── EMA Pattern Types ───────────────────────────────────────────────────
+
+export interface EMAQuestionPattern {
+  phase: 'Day 120' | 'Day 180';
+  category: string;
+  severity: 'major_objection' | 'other_concern';
+  pattern: string;
+  therapeuticAreas: string[];
+  frequency: number;
+  confidence: number;
+}
+
+export interface EMAPatternResult {
+  submissionType: string;
+  therapeuticArea: string;
+  day120Questions: EMAQuestionPattern[];
+  day180Questions: EMAQuestionPattern[];
+  majorObjectionCount: number;
+  otherConcernCount: number;
+}
+
+// ── Advisory Committee Types ────────────────────────────────────────────
+
+export interface AdvisoryCommitteeResult {
+  submissionType: string;
+  overallAdcomRisk: 'low' | 'medium' | 'high';
+  triggers: Array<{
+    trigger: string;
+    probability: number;
+    severity: 'low' | 'medium' | 'high' | 'critical';
+    description: string;
+  }>;
+  totalTriggers: number;
+  highProbabilityTriggers: number;
+  votingInsights: string[];
+}
+
 // ── Query keys ───────────────────────────────────────────────────────────────
 
 export const precedentKeys = {
@@ -176,6 +256,10 @@ export const precedentKeys = {
   search: (params: SearchParams) => [...precedentKeys.all, 'search', params] as const,
   risk: (params: RiskParams) => [...precedentKeys.all, 'risk', params] as const,
   strategy: (params: StrategyParams) => [...precedentKeys.all, 'strategy', params] as const,
+  crlTriggers: (params: RiskParams) => [...precedentKeys.all, 'crl-triggers', params] as const,
+  rtfTriggers: (params: RiskParams) => [...precedentKeys.all, 'rtf-triggers', params] as const,
+  emaPatterns: (params: RiskParams) => [...precedentKeys.all, 'ema-patterns', params] as const,
+  advisoryCommittee: (params: RiskParams) => [...precedentKeys.all, 'advisory-committee', params] as const,
 };
 
 // ── Hooks ────────────────────────────────────────────────────────────────────
@@ -266,5 +350,81 @@ export function useClaimCheck() {
       const json = await res.json();
       return json.data;
     },
+  });
+}
+
+/** CRL trigger pattern analysis */
+export function useCRLTriggers(params: RiskParams | null) {
+  return useQuery({
+    queryKey: precedentKeys.crlTriggers(params!),
+    queryFn: async (): Promise<CRLTriggerResult> => {
+      const res = await fetch(`${BASE}/crl-triggers`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(params),
+      });
+      if (!res.ok) throw new Error('CRL trigger analysis failed');
+      const json = await res.json();
+      return json.data;
+    },
+    enabled: !!params?.submissionType,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+/** RTF trigger pattern analysis */
+export function useRTFTriggers(params: RiskParams | null) {
+  return useQuery({
+    queryKey: precedentKeys.rtfTriggers(params!),
+    queryFn: async (): Promise<RTFTriggerResult> => {
+      const res = await fetch(`${BASE}/rtf-triggers`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(params),
+      });
+      if (!res.ok) throw new Error('RTF trigger analysis failed');
+      const json = await res.json();
+      return json.data;
+    },
+    enabled: !!params?.submissionType,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+/** EMA Day 120/180 question pattern analysis */
+export function useEMAPatterns(params: RiskParams | null) {
+  return useQuery({
+    queryKey: precedentKeys.emaPatterns(params!),
+    queryFn: async (): Promise<EMAPatternResult> => {
+      const res = await fetch(`${BASE}/ema-patterns`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(params),
+      });
+      if (!res.ok) throw new Error('EMA pattern analysis failed');
+      const json = await res.json();
+      return json.data;
+    },
+    enabled: !!params?.submissionType,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+/** Advisory Committee risk analysis */
+export function useAdvisoryCommittee(params: RiskParams | null) {
+  return useQuery({
+    queryKey: precedentKeys.advisoryCommittee(params!),
+    queryFn: async (): Promise<AdvisoryCommitteeResult> => {
+      const res = await fetch(`${BASE}/advisory-committee`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(params),
+      });
+      if (!res.ok) throw new Error('Advisory Committee analysis failed');
+      const json = await res.json();
+      return json.data;
+    },
+    enabled: !!params?.submissionType,
+    staleTime: 5 * 60 * 1000,
   });
 }

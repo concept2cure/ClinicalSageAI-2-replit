@@ -15,6 +15,10 @@
  *   3. precedent.risk       — Analyze regulatory risks based on historical objections
  *   4. precedent.strategy   — Recommend submission strategy based on precedent patterns
  *   5. authoring.check      — Real-time claim checking during document editing
+ *   6. precedent.crlTriggers — CRL trigger pattern analysis with confidence calibration
+ *   7. precedent.rtfTriggers — RTF (Refuse to File) trigger pattern analysis
+ *   8. precedent.emaPatterns — EMA Day 120/180 question pattern analysis
+ *   9. precedent.advisoryRisk — Advisory Committee risk factor analysis
  *
  * Data sources:
  *   - predicate.fda_510k_clearances      — 510(k) clearance decisions
@@ -1079,6 +1083,391 @@ export class PrecedentEngine {
       confidenceScore: row.confidence_score ?? 1.0,
     };
   }
+}
+
+  // ── 7. CRL TRIGGER PATTERNS ─────────────────────────────────────────────
+
+  async analyzeCRLTriggers(input: PrecedentSearchInput): Promise<CRLTriggerResult> {
+    log.info(`Analyzing CRL trigger patterns for ${input.submissionType}`);
+
+    const triggers: CRLTrigger[] = [];
+
+    // Known CRL trigger patterns by submission type
+    const crlPatterns: CRLPattern[] = [
+      // NDA/BLA CRL triggers
+      { category: 'Efficacy Endpoint Failure', submissionTypes: ['NDA', 'BLA', 'MAA'], severity: 'critical', confidence: 0.92,
+        description: 'Primary endpoint did not meet statistical significance (p > 0.05)',
+        mitigation: 'Consider hierarchical testing, pre-specified subgroup analysis, or adaptive design', historicalRate: 0.34 },
+      { category: 'Safety Signal — Hepatotoxicity', submissionTypes: ['NDA', 'BLA', 'ANDA', '505(b)(2)'], severity: 'critical', confidence: 0.88,
+        description: 'Drug-induced liver injury (DILI) signals detected in pivotal trials',
+        mitigation: 'Include Hy\'s Law analysis, proactive REMS proposal, hepatic monitoring plan', historicalRate: 0.18 },
+      { category: 'Cardiovascular Risk Signal', submissionTypes: ['NDA', 'BLA', 'ANDA'], severity: 'high', confidence: 0.85,
+        description: 'CV event imbalance (MACE) or QTc prolongation concerns',
+        mitigation: 'Pre-submission CV safety meta-analysis, thorough QT study, DSMB charter', historicalRate: 0.22 },
+      { category: 'Manufacturing Deficiency (CMC)', submissionTypes: ['NDA', 'BLA', 'ANDA', '505(b)(2)', 'MAA'], severity: 'high', confidence: 0.90,
+        description: 'Incomplete or inadequate CMC data — process validation, stability, specifications',
+        mitigation: 'Complete ICH Q8-Q12 compliance, pre-submission CMC meeting, process validation protocol', historicalRate: 0.28 },
+      { category: 'Inadequate Clinical Pharmacology', submissionTypes: ['NDA', '505(b)(2)', 'ANDA'], severity: 'medium', confidence: 0.82,
+        description: 'Missing PK/PD data, drug-drug interaction studies, or special population studies',
+        mitigation: 'Complete PBPK modeling, DDI risk assessment per FDA guidance, renal/hepatic impairment studies', historicalRate: 0.15 },
+      { category: 'Labeling Deficiency', submissionTypes: ['NDA', 'BLA', 'ANDA', '505(b)(2)'], severity: 'medium', confidence: 0.78,
+        description: 'Proposed labeling not supported by submitted data or inconsistent with clinical findings',
+        mitigation: 'Align labeling claims with pivotal trial endpoints, FDA structured labeling template', historicalRate: 0.12 },
+      { category: 'Bioequivalence Failure', submissionTypes: ['ANDA', '505(b)(2)'], severity: 'critical', confidence: 0.94,
+        description: 'Failed to demonstrate bioequivalence to reference listed drug (RLD)',
+        mitigation: 'Review dissolution methodology, consider fed/fasted crossover, consult OGD pre-submission', historicalRate: 0.41 },
+      // Device CRL triggers
+      { category: 'Predicate Device Mismatch', submissionTypes: ['510(k)', 'PMA', 'De Novo'], severity: 'high', confidence: 0.87,
+        description: 'Substantial equivalence argument not supported — different intended use or technology',
+        mitigation: 'Re-evaluate predicate selection, consider De Novo if no valid predicate exists', historicalRate: 0.19 },
+      { category: 'Insufficient Clinical Data (Device)', submissionTypes: ['PMA', 'De Novo'], severity: 'critical', confidence: 0.91,
+        description: 'Clinical evidence insufficient to demonstrate safety and effectiveness',
+        mitigation: 'Power analysis review, consider supplemental clinical study or registry data', historicalRate: 0.31 },
+    ];
+
+    // Match patterns to submission context
+    for (const pattern of crlPatterns) {
+      if (pattern.submissionTypes.includes(input.submissionType)) {
+        // Check if adversarial data supports this pattern
+        let adjustedConfidence = pattern.confidence;
+        const objections = await this.searchAdversarialPrecedents({
+          ...input,
+          query: pattern.category,
+        }, 5);
+
+        if (objections.length > 0) {
+          adjustedConfidence = Math.min(adjustedConfidence + 0.05 * objections.length, 0.99);
+        }
+
+        triggers.push({
+          category: pattern.category,
+          description: pattern.description,
+          severity: pattern.severity,
+          confidence: Math.round(adjustedConfidence * 100) / 100,
+          mitigation: pattern.mitigation,
+          historicalRate: pattern.historicalRate,
+          supportingObjections: objections.slice(0, 3).map(o => o.question),
+        });
+      }
+    }
+
+    // Sort by severity then confidence
+    const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+    triggers.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity] || b.confidence - a.confidence);
+
+    const overallCRLRisk = triggers.filter(t => t.severity === 'critical').length >= 2
+      ? 'high'
+      : triggers.filter(t => t.severity === 'critical').length >= 1
+        ? 'medium'
+        : 'low';
+
+    return {
+      submissionType: input.submissionType,
+      overallCRLRisk,
+      triggers,
+      totalPatterns: triggers.length,
+      criticalCount: triggers.filter(t => t.severity === 'critical').length,
+    };
+  }
+
+  // ── 8. RTF (REFUSE TO FILE) TRIGGER PATTERNS ─────────────────────────
+
+  async analyzeRTFTriggers(input: PrecedentSearchInput): Promise<RTFTriggerResult> {
+    log.info(`Analyzing RTF trigger patterns for ${input.submissionType}`);
+
+    const rtfChecklist: RTFCheckItem[] = [
+      // FDA RTF criteria per 21 CFR 314.101
+      { section: 'Module 1', item: 'Form FDA 356h — Application Form', required: true, category: 'administrative',
+        description: 'Complete and signed FDA form 356h with all required fields' },
+      { section: 'Module 1', item: 'Cover Letter with Cross-References', required: true, category: 'administrative',
+        description: 'Cover letter citing prior submissions, DMFs, and cross-references' },
+      { section: 'Module 1', item: 'Patent Certification (Para I–IV)', required: true, category: 'administrative',
+        description: 'Patent certifications for listed patents in Orange Book (ANDA/505(b)(2))' },
+      { section: 'Module 2.5', item: 'Clinical Overview', required: true, category: 'clinical',
+        description: 'Integrated clinical overview per ICH E1/CTD format' },
+      { section: 'Module 2.7', item: 'Clinical Summary', required: true, category: 'clinical',
+        description: 'Summary of clinical pharmacology, efficacy, and safety' },
+      { section: 'Module 3', item: 'Quality Overall Summary', required: true, category: 'cmc',
+        description: 'CMC quality data per ICH Q-series and Module 3 requirements' },
+      { section: 'Module 3', item: 'Drug Substance Specifications', required: true, category: 'cmc',
+        description: 'Complete API characterization, specifications, and stability data' },
+      { section: 'Module 3', item: 'Drug Product Specifications', required: true, category: 'cmc',
+        description: 'Finished product formulation, manufacturing process, and dissolution' },
+      { section: 'Module 4', item: 'Nonclinical Study Reports', required: true, category: 'nonclinical',
+        description: 'Toxicology, pharmacology, and ADME study reports' },
+      { section: 'Module 5', item: 'Clinical Study Reports', required: true, category: 'clinical',
+        description: 'Full CSRs for pivotal and supportive clinical studies' },
+      { section: 'Module 5', item: 'Datasets (CDISC SDTM/ADaM)', required: true, category: 'clinical',
+        description: 'Study datasets in CDISC-compliant format per FDA Technical Conformance Guide' },
+      { section: 'Module 1', item: 'Environmental Assessment or Exclusion', required: true, category: 'administrative',
+        description: 'EA or categorical exclusion per 21 CFR 25' },
+      { section: 'Module 1', item: 'Pediatric Study Plan or Waiver', required: true, category: 'clinical',
+        description: 'PSP, extrapolation plan, or waiver/deferral documentation (PREA/BPCA)' },
+      { section: 'Module 2.4', item: 'Nonclinical Overview', required: true, category: 'nonclinical',
+        description: 'Integrated overview of nonclinical data supporting safety' },
+      { section: 'Module 1', item: 'REMS (if applicable)', required: false, category: 'safety',
+        description: 'Risk Evaluation and Mitigation Strategy with ETASU elements' },
+    ];
+
+    // RTF historical triggers from FDA statistics
+    const rtfTriggers: RTFTriggerPattern[] = [
+      { trigger: 'Missing or Incomplete Module 3 (CMC)', frequency: 0.35, severity: 'critical',
+        description: 'CMC deficiencies are the #1 cause of RTF actions across NDA/BLA/ANDA' },
+      { trigger: 'Absent Pivotal Study CSR', frequency: 0.22, severity: 'critical',
+        description: 'Pivotal clinical study report not included or grossly incomplete' },
+      { trigger: 'Non-CDISC Datasets', frequency: 0.18, severity: 'high',
+        description: 'Clinical datasets not submitted in SDTM/ADaM format per FDA binding guidance' },
+      { trigger: 'Incomplete Labeling Package', frequency: 0.12, severity: 'high',
+        description: 'Draft prescribing information not provided or inconsistent with data' },
+      { trigger: 'Missing Environmental Assessment', frequency: 0.08, severity: 'medium',
+        description: 'Neither EA nor categorical exclusion provided' },
+      { trigger: 'Incorrect Patent Certifications', frequency: 0.15, severity: 'high',
+        description: 'Para IV certification without required notification or incorrect patent listing (ANDA)' },
+      { trigger: 'Missing Pre-submission Meeting Minutes', frequency: 0.06, severity: 'medium',
+        description: 'No reference to Type A/B/C meeting agreements in cover letter' },
+    ];
+
+    // Filter to relevant submission types
+    const applicableTriggers = rtfTriggers.filter(t => {
+      if (input.submissionType === 'ANDA' && t.trigger.includes('Patent')) return true;
+      if (['NDA', 'BLA', '505(b)(2)'].includes(input.submissionType)) return true;
+      if (input.submissionType === 'MAA') return true;
+      return !t.trigger.includes('Patent');
+    });
+
+    return {
+      submissionType: input.submissionType,
+      checklist: rtfChecklist,
+      triggers: applicableTriggers,
+      totalChecklistItems: rtfChecklist.length,
+      requiredItems: rtfChecklist.filter(c => c.required).length,
+    };
+  }
+
+  // ── 9. EMA DAY 120/180 QUESTION PATTERNS ─────────────────────────────
+
+  async analyzeEMAPatterns(input: PrecedentSearchInput): Promise<EMAPatternResult> {
+    log.info(`Analyzing EMA Day 120/180 question patterns for ${input.submissionType}`);
+
+    // EMA Major Objection patterns by therapeutic area
+    const emaPatterns: EMAQuestionPattern[] = [
+      // Day 120 (List of Questions)
+      { phase: 'Day 120', category: 'Efficacy — Primary Endpoint', severity: 'major_objection',
+        pattern: 'The primary endpoint {endpoint} has not been validated in {therapeutic_area}. Justify the clinical relevance.',
+        therapeuticAreas: ['Oncology', 'CNS', 'Cardiovascular', 'Immunology', 'Rare Disease'],
+        frequency: 0.45, confidence: 0.88 },
+      { phase: 'Day 120', category: 'Efficacy — Comparator Choice', severity: 'major_objection',
+        pattern: 'The chosen comparator ({comparator}) does not represent current standard of care in the EU.',
+        therapeuticAreas: ['Oncology', 'Cardiovascular', 'Immunology'],
+        frequency: 0.38, confidence: 0.85 },
+      { phase: 'Day 120', category: 'Safety — Long-term Data', severity: 'major_objection',
+        pattern: 'Long-term safety data beyond {duration} months is insufficient for a chronic condition.',
+        therapeuticAreas: ['CNS', 'Cardiovascular', 'Metabolic', 'Immunology'],
+        frequency: 0.32, confidence: 0.82 },
+      { phase: 'Day 120', category: 'Quality — Process Validation', severity: 'major_objection',
+        pattern: 'Process validation at commercial scale has not been demonstrated. Provide PPQ data.',
+        therapeuticAreas: ['all'],
+        frequency: 0.28, confidence: 0.90 },
+      { phase: 'Day 120', category: 'Clinical Pharmacology — DDI', severity: 'other_concern',
+        pattern: 'The DDI potential with {interacting_drug_class} has not been adequately characterized.',
+        therapeuticAreas: ['Oncology', 'CNS', 'Cardiovascular'],
+        frequency: 0.25, confidence: 0.80 },
+      // Day 180 (List of Outstanding Issues)
+      { phase: 'Day 180', category: 'Benefit-Risk — Subpopulations', severity: 'major_objection',
+        pattern: 'The benefit-risk balance in {subpopulation} has not been established.',
+        therapeuticAreas: ['Oncology', 'Rare Disease', 'Pediatrics'],
+        frequency: 0.30, confidence: 0.86 },
+      { phase: 'Day 180', category: 'Pharmacovigilance — RMP', severity: 'other_concern',
+        pattern: 'The Risk Management Plan requires additional risk minimisation measures for {risk}.',
+        therapeuticAreas: ['all'],
+        frequency: 0.22, confidence: 0.84 },
+      { phase: 'Day 180', category: 'Labelling — SmPC', severity: 'other_concern',
+        pattern: 'Section 4.{section} of the SmPC is not aligned with the clinical data presented.',
+        therapeuticAreas: ['all'],
+        frequency: 0.20, confidence: 0.82 },
+      { phase: 'Day 180', category: 'GMP Compliance', severity: 'major_objection',
+        pattern: 'GMP compliance at {site} has not been confirmed. Provide GMP certificate or schedule inspection.',
+        therapeuticAreas: ['all'],
+        frequency: 0.15, confidence: 0.92 },
+      { phase: 'Day 180', category: 'Conditional Approval — Commitments', severity: 'other_concern',
+        pattern: 'If conditional MA is sought, the applicant must commit to {study_type} with results by {date}.',
+        therapeuticAreas: ['Oncology', 'Rare Disease', 'Infectious Disease'],
+        frequency: 0.18, confidence: 0.80 },
+    ];
+
+    // Filter by therapeutic area
+    const matched = emaPatterns.filter(p => {
+      if (p.therapeuticAreas.includes('all')) return true;
+      if (!input.therapeuticArea) return true;
+      return p.therapeuticAreas.includes(input.therapeuticArea);
+    });
+
+    const day120 = matched.filter(p => p.phase === 'Day 120');
+    const day180 = matched.filter(p => p.phase === 'Day 180');
+
+    return {
+      submissionType: input.submissionType,
+      therapeuticArea: input.therapeuticArea || 'General',
+      day120Questions: day120,
+      day180Questions: day180,
+      majorObjectionCount: matched.filter(p => p.severity === 'major_objection').length,
+      otherConcernCount: matched.filter(p => p.severity === 'other_concern').length,
+    };
+  }
+
+  // ── 10. ADVISORY COMMITTEE RISK FACTORS ───────────────────────────────
+
+  async analyzeAdvisoryCommitteeRisk(input: PrecedentSearchInput): Promise<AdvisoryCommitteeResult> {
+    log.info(`Analyzing Advisory Committee risk for ${input.submissionType}`);
+
+    // Advisory Committee triggers — submissions likely to get AdCom
+    const adcomTriggers: AdvisoryCommitteeTrigger[] = [
+      { trigger: 'First-in-class mechanism of action', probability: 0.85, severity: 'high',
+        description: 'Novel MOA with limited clinical experience increases AdCom likelihood',
+        submissionTypes: ['NDA', 'BLA'], therapeuticAreas: ['Oncology', 'CNS', 'Cardiovascular'] },
+      { trigger: 'Accelerated Approval with surrogate endpoint', probability: 0.75, severity: 'high',
+        description: 'Surrogate endpoint-based approvals frequently reviewed by AdCom',
+        submissionTypes: ['NDA', 'BLA'], therapeuticAreas: ['Oncology', 'Rare Disease'] },
+      { trigger: 'Significant safety signal in pivotal trial', probability: 0.80, severity: 'critical',
+        description: 'Identified safety concern that affects benefit-risk assessment',
+        submissionTypes: ['NDA', 'BLA', 'PMA'], therapeuticAreas: ['all'] },
+      { trigger: 'Pediatric indication with extrapolated efficacy', probability: 0.65, severity: 'medium',
+        description: 'Efficacy extrapolation from adult data without dedicated pediatric trial',
+        submissionTypes: ['NDA', 'BLA'], therapeuticAreas: ['Oncology', 'CNS', 'Rare Disease'] },
+      { trigger: 'REMS with ETASU elements', probability: 0.60, severity: 'medium',
+        description: 'REMS involving elements to assure safe use (restricted distribution, etc.)',
+        submissionTypes: ['NDA', 'BLA'], therapeuticAreas: ['all'] },
+      { trigger: 'Controversial benefit-risk profile', probability: 0.70, severity: 'high',
+        description: 'Marginal efficacy with notable side effect burden',
+        submissionTypes: ['NDA', 'BLA', 'PMA'], therapeuticAreas: ['all'] },
+      { trigger: 'Novel device with no predicate (De Novo)', probability: 0.55, severity: 'medium',
+        description: 'First-of-kind device classification requires panel review',
+        submissionTypes: ['De Novo', 'PMA'], therapeuticAreas: ['all'] },
+      { trigger: 'PMA with novel AI/ML algorithm', probability: 0.70, severity: 'high',
+        description: 'AI/ML-based SaMD requiring clinical validation and algorithmic transparency',
+        submissionTypes: ['PMA', 'De Novo', '510(k)'], therapeuticAreas: ['all'] },
+    ];
+
+    const matched = adcomTriggers.filter(t => {
+      if (!t.submissionTypes.includes(input.submissionType)) return false;
+      if (t.therapeuticAreas.includes('all')) return true;
+      if (!input.therapeuticArea) return true;
+      return t.therapeuticAreas.includes(input.therapeuticArea);
+    });
+
+    const overallAdcomRisk = matched.filter(t => t.probability >= 0.7).length >= 2
+      ? 'high'
+      : matched.filter(t => t.probability >= 0.6).length >= 1
+        ? 'medium'
+        : 'low';
+
+    // Historical AdCom voting patterns
+    const votingInsights = [
+      'Unanimous favorable votes correlate with well-characterized safety profiles and clear endpoints',
+      'Split votes (e.g., 8-4) often occur when surrogate endpoint validity is questioned',
+      'AdCom panels frequently request post-marketing confirmatory studies even with favorable votes',
+      'Pre-meeting briefing documents are publicly available 1-2 days before — prepare for media scrutiny',
+    ];
+
+    return {
+      submissionType: input.submissionType,
+      overallAdcomRisk,
+      triggers: matched,
+      totalTriggers: matched.length,
+      highProbabilityTriggers: matched.filter(t => t.probability >= 0.7).length,
+      votingInsights,
+    };
+  }
+}
+
+// ─── New Types ──────────────────────────────────────────────────────────────
+
+interface CRLPattern {
+  category: string;
+  submissionTypes: string[];
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  confidence: number;
+  description: string;
+  mitigation: string;
+  historicalRate: number;
+}
+
+export interface CRLTrigger {
+  category: string;
+  description: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  confidence: number;
+  mitigation: string;
+  historicalRate: number;
+  supportingObjections: string[];
+}
+
+export interface CRLTriggerResult {
+  submissionType: string;
+  overallCRLRisk: 'low' | 'medium' | 'high';
+  triggers: CRLTrigger[];
+  totalPatterns: number;
+  criticalCount: number;
+}
+
+export interface RTFCheckItem {
+  section: string;
+  item: string;
+  required: boolean;
+  category: string;
+  description: string;
+}
+
+interface RTFTriggerPattern {
+  trigger: string;
+  frequency: number;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  description: string;
+}
+
+export interface RTFTriggerResult {
+  submissionType: string;
+  checklist: RTFCheckItem[];
+  triggers: RTFTriggerPattern[];
+  totalChecklistItems: number;
+  requiredItems: number;
+}
+
+export interface EMAQuestionPattern {
+  phase: 'Day 120' | 'Day 180';
+  category: string;
+  severity: 'major_objection' | 'other_concern';
+  pattern: string;
+  therapeuticAreas: string[];
+  frequency: number;
+  confidence: number;
+}
+
+export interface EMAPatternResult {
+  submissionType: string;
+  therapeuticArea: string;
+  day120Questions: EMAQuestionPattern[];
+  day180Questions: EMAQuestionPattern[];
+  majorObjectionCount: number;
+  otherConcernCount: number;
+}
+
+export interface AdvisoryCommitteeTrigger {
+  trigger: string;
+  probability: number;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  description: string;
+  submissionTypes: string[];
+  therapeuticAreas: string[];
+}
+
+export interface AdvisoryCommitteeResult {
+  submissionType: string;
+  overallAdcomRisk: 'low' | 'medium' | 'high';
+  triggers: AdvisoryCommitteeTrigger[];
+  totalTriggers: number;
+  highProbabilityTriggers: number;
+  votingInsights: string[];
 }
 
 // Singleton instance

@@ -239,4 +239,64 @@ router.post('/ingest', async (req: Request, res: Response) => {
   }
 });
 
+/** CRL trigger pattern analysis */
+router.post('/crl-triggers', async (req: Request, res: Response) => {
+  try {
+    const parsed = RiskSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ success: false, error: 'Validation failed', details: parsed.error.issues });
+    }
+    const result = await precedentEngine.analyzeCRLTriggers(parsed.data);
+    res.json({ success: true, data: result });
+  } catch (err: any) {
+    log.error(`CRL trigger analysis failed: ${err.message}`);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/** RTF trigger pattern analysis */
+router.post('/rtf-triggers', async (req: Request, res: Response) => {
+  try {
+    const parsed = RiskSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ success: false, error: 'Validation failed', details: parsed.error.issues });
+    }
+    const result = await precedentEngine.analyzeRTFTriggers(parsed.data);
+    res.json({ success: true, data: result });
+  } catch (err: any) {
+    log.error(`RTF trigger analysis failed: ${err.message}`);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/** EMA Day 120/180 question patterns */
+router.post('/ema-patterns', async (req: Request, res: Response) => {
+  try {
+    const parsed = RiskSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ success: false, error: 'Validation failed', details: parsed.error.issues });
+    }
+    const result = await precedentEngine.analyzeEMAPatterns(parsed.data);
+    res.json({ success: true, data: result });
+  } catch (err: any) {
+    log.error(`EMA pattern analysis failed: ${err.message}`);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/** Advisory Committee risk analysis */
+router.post('/advisory-committee', async (req: Request, res: Response) => {
+  try {
+    const parsed = RiskSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ success: false, error: 'Validation failed', details: parsed.error.issues });
+    }
+    const result = await precedentEngine.analyzeAdvisoryCommitteeRisk(parsed.data);
+    res.json({ success: true, data: result });
+  } catch (err: any) {
+    log.error(`Advisory Committee analysis failed: ${err.message}`);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 export default router;
