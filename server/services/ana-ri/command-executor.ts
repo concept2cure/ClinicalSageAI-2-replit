@@ -592,7 +592,170 @@ export async function loadConversationHistory(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 6. COMMAND REGISTRY
+// 6. SUBMISSION PACKAGING
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Create a submission package for a project */
+export async function createSubmissionPackage(
+  ctx: CommandContext,
+  params: {
+    projectId: number;
+    title: string;
+    packageFamily: 'ind' | '510k' | 'cer' | 'nda' | 'bla' | 'pma';
+    description?: string;
+    targetDate?: string;
+  }
+): Promise<CommandResult> {
+  try {
+    const result = await pool.query(
+      `INSERT INTO submission_packages
+         (package_id, org_id, project_id, package_family, title, description,
+          target_date, status, created_at, updated_at)
+       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, 'active', NOW(), NOW())
+       RETURNING package_id, title, package_family, status`,
+      [ctx.organizationId, params.projectId, params.packageFamily,
+       params.title, params.description || '', params.targetDate || null]
+    );
+    const pkg = result.rows[0];
+    return {
+      success: true,
+      action: 'create_submission_package',
+      data: { packageId: pkg.package_id, title: pkg.title, family: pkg.package_family },
+      message: `Submission package "${params.title}" created (${params.packageFamily.toUpperCase()}).`,
+    };
+  } catch (err: any) {
+    return { success: false, action: 'create_submission_package', message: 'Failed to create submission package.', error: err?.message };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 7. REVIEW OPERATIONS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Assign a reviewer to an artifact */
+export async function assignReviewer(
+  ctx: CommandContext,
+  params: {
+    projectId: number;
+    artifactId: number;
+    reviewerId: number;
+    reviewType?: string;
+    instructions?: string;
+  }
+): Promise<CommandResult> {
+  try {
+    const result = await pool.query(
+      `INSERT INTO concept2cure_review_assignments
+         (artifact_id, project_id, organization_id, reviewer_id,
+          review_type, instructions, status, assigned_by, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, NOW(), NOW())
+       RETURNING id`,
+      [params.artifactId, params.projectId, ctx.organizationId,
+       params.reviewerId, params.reviewType || 'standard',
+       params.instructions || '', ctx.userId]
+    );
+    return {
+      success: true,
+      action: 'assign_reviewer',
+      data: { assignmentId: result.rows[0]?.id, artifactId: params.artifactId, reviewerId: params.reviewerId },
+      message: `Reviewer ${params.reviewerId} assigned to artifact ${params.artifactId}.`,
+    };
+  } catch (err: any) {
+    return { success: false, action: 'assign_reviewer', message: 'Failed to assign reviewer.', error: err?.message };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 8. SEARCH ACROSS PROJECT
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Search artifacts by content or title */
+export async function searchArtifacts(
+  ctx: CommandContext,
+  params: {
+    query: string;
+    projectId?: number;
+    limit?: number;
+  }
+): Promise<CommandResult> {
+  try {
+    let sql = `SELECT artifact_id, title, status, ctd_section, project_id,
+                      ts_rank(to_tsvector('english', coalesce(title, '') || ' ' || coalesce(content, '')),
+                              plainto_tsquery('english', $2)) as relevance
+               FROM concept2cure_artifacts
+               WHERE organization_id = $1
+                 AND to_tsvector('english', coalesce(title, '') || ' ' || coalesce(content, ''))
+                     @@ plainto_tsquery('english', $2)`;
+    const values: unknown[] = [ctx.organizationId, params.query];
+    let paramIdx = 3;
+
+    if (params.projectId) {
+      sql += ` AND project_id = $${paramIdx}`;
+      values.push(params.projectId);
+      paramIdx++;
+    }
+
+    sql += ` ORDER BY relevance DESC LIMIT $${paramIdx}`;
+    values.push(params.limit || 20);
+
+    const result = await pool.query(sql, values);
+    return {
+      success: true,
+      action: 'search_artifacts',
+      data: { results: result.rows, count: result.rows.length },
+      message: `Found ${result.rows.length} artifact(s) matching "${params.query}".`,
+    };
+  } catch (err: any) {
+    // Fallback to ILIKE if full-text search fails (table may lack tsvector index)
+    try {
+      const fallback = await pool.query(
+        `SELECT artifact_id, title, status, ctd_section, project_id
+         FROM concept2cure_artifacts
+         WHERE organization_id = $1 AND (title ILIKE $2 OR content ILIKE $2)
+         ORDER BY updated_at DESC LIMIT $3`,
+        [ctx.organizationId, `%${params.query}%`, params.limit || 20]
+      );
+      return {
+        success: true,
+        action: 'search_artifacts',
+        data: { results: fallback.rows, count: fallback.rows.length },
+        message: `Found ${fallback.rows.length} artifact(s) matching "${params.query}".`,
+      };
+    } catch (fallbackErr: any) {
+      return { success: false, action: 'search_artifacts', message: 'Search failed.', error: fallbackErr?.message };
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 9. TEAM / USER OPERATIONS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** List team members in the organization */
+export async function listTeamMembers(ctx: CommandContext): Promise<CommandResult> {
+  try {
+    const result = await pool.query(
+      `SELECT u.id, u.name, u.email, u.title, u.department, ou.role
+       FROM users u
+       JOIN organization_users ou ON ou.user_id = u.id
+       WHERE ou.organization_id = $1
+       ORDER BY u.name
+       LIMIT 100`,
+      [ctx.organizationId]
+    );
+    return {
+      success: true,
+      action: 'list_team_members',
+      data: { members: result.rows, count: result.rows.length },
+      message: `Found ${result.rows.length} team member(s).`,
+    };
+  } catch (err: any) {
+    return { success: false, action: 'list_team_members', message: 'Failed to list team.', error: err?.message };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 10. COMMAND REGISTRY
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type CommandName =
@@ -600,7 +763,8 @@ export type CommandName =
   | 'create_artifact' | 'update_artifact' | 'update_artifact_status'
   | 'list_artifacts' | 'place_in_dossier'
   | 'create_task' | 'update_task' | 'list_tasks'
-  | 'check_dossier_readiness'
+  | 'check_dossier_readiness' | 'create_submission_package'
+  | 'assign_reviewer' | 'search_artifacts' | 'list_team_members'
   | 'load_user_context' | 'load_conversation_history';
 
 export interface CommandDefinition {
@@ -625,6 +789,10 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
   { name: 'check_dossier_readiness', description: 'Check submission readiness of the dossier', parameters: 'projectId', example: '"How ready is the dossier for project 5?"' },
   { name: 'load_user_context', description: 'Load my full context (projects, history, artifacts)', parameters: 'none', example: '"What am I working on?"' },
   { name: 'load_conversation_history', description: 'Load my past conversations', parameters: 'projectId?, limit?', example: '"Show my recent conversations for this project"' },
+  { name: 'create_submission_package', description: 'Create a submission package for regulatory filing', parameters: 'projectId, title, packageFamily (ind/510k/cer/nda/bla/pma), targetDate?', example: '"Create an IND submission package for project 5"' },
+  { name: 'assign_reviewer', description: 'Assign a reviewer to an artifact', parameters: 'projectId, artifactId, reviewerId, reviewType?, instructions?', example: '"Assign Dr. Smith to review the Clinical Overview"' },
+  { name: 'search_artifacts', description: 'Search artifacts by content or title', parameters: 'query, projectId?, limit?', example: '"Find all artifacts mentioning hepatotoxicity"' },
+  { name: 'list_team_members', description: 'List team members in the organization', parameters: 'none', example: '"Who is on my team?"' },
 ];
 
 /**

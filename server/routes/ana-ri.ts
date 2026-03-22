@@ -508,6 +508,18 @@ router.post('/execute', async (req: Request, res: Response) => {
       case 'check_dossier_readiness':
         result = await executor.checkDossierReadiness(ctx, params?.projectId);
         break;
+      case 'create_submission_package':
+        result = await executor.createSubmissionPackage(ctx, params || {});
+        break;
+      case 'assign_reviewer':
+        result = await executor.assignReviewer(ctx, params || {});
+        break;
+      case 'search_artifacts':
+        result = await executor.searchArtifacts(ctx, params || {});
+        break;
+      case 'list_team_members':
+        result = await executor.listTeamMembers(ctx);
+        break;
       case 'load_user_context':
         result = await executor.loadUserContext(ctx);
         break;
