@@ -3436,6 +3436,21 @@ import crossJurisdictionalRoutes from './routes/cross-jurisdictional';
 app.use('/api/cross-jurisdictional', crossJurisdictionalRoutes);
 console.log('✅ Cross-Jurisdictional Intelligence routes mounted successfully');
 
+// Mount HARMONIZE — Cross-Module Consistency Enforcement
+import harmonizeRoutes from './routes/harmonize';
+app.use('/api/harmonize', harmonizeRoutes);
+console.log('✅ HARMONIZE routes mounted successfully');
+
+// Mount ESCALATE — Structured Escalation Framework
+import escalateRoutes from './routes/escalate';
+app.use('/api/escalate', escalateRoutes);
+console.log('✅ ESCALATE routes mounted successfully');
+
+// Mount VALIDATE-COMPLETENESS — Submission Readiness Assessment
+import validateCompletenessRoutes from './routes/validate-completeness';
+app.use('/api/validate-completeness', validateCompletenessRoutes);
+console.log('✅ VALIDATE-COMPLETENESS routes mounted successfully');
+
 // Mount IND templates routes - temporarily disabled
 // app.use('/api/ind', indTemplatesRoutes);
 
