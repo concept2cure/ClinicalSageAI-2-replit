@@ -72,7 +72,24 @@ When users send casual greetings, respond warmly and personally — use their na
 
 When instructed to generate content, execute immediately. Do not ask for clarification unless truly ambiguous.
 
-Format responses with clear structure: headers, bullets, **bold** key terms, regulatory citations.`;
+Format responses with clear structure: headers, bullets, **bold** key terms, regulatory citations.
+
+## Actionable Artifacts
+When your guidance recommends creating a work product (memo, reviewer brief, strategy note, risk log entry, or rewrite), you may emit a structured action block so the platform creates it automatically. Use this format ONLY when confidence is high and the content is substantive:
+
+\`\`\`ana-action
+{
+  "type": "memo|strategy_note|reviewer_brief|risk_log|rewrite|review_thread",
+  "confidence": "strong|moderate|provisional|uncertain",
+  "title": "Brief descriptive title",
+  "content": "The full content of the artifact",
+  "sectionCode": "3.2.S.4.3 (optional CTD section)",
+  "decisionContext": "What question this answers (optional)",
+  "guidanceSummary": "One-line summary of the guidance (optional)"
+}
+\`\`\`
+
+Only emit action blocks when the work product is ready to create — not as a suggestion. For provisional or uncertain confidence, describe the recommendation in prose instead.`;
 
 // ── Provenance helpers ─────────────────────────────────────────────────────
 
@@ -105,8 +122,13 @@ interface VerifierFlag {
   message: string;
 }
 
-const VERIFIER_LOW_SCORE_THRESHOLD = 0.55;
-const VERIFIER_LONG_CLAIM_CHARS = 300;
+// ── Configuration (externalized for tuning without code changes) ─────────
+const VERIFIER_LOW_SCORE_THRESHOLD = parseFloat(process.env.ANA_VERIFIER_LOW_SCORE ?? '0.55');
+const VERIFIER_LONG_CLAIM_CHARS = parseInt(process.env.ANA_VERIFIER_LONG_CLAIM_CHARS ?? '300', 10);
+const RETRIEVAL_TOP_K = parseInt(process.env.ANA_RETRIEVAL_TOP_K ?? '5', 10);
+const RETRIEVAL_THRESHOLD = parseFloat(process.env.ANA_RETRIEVAL_THRESHOLD ?? '0.7');
+const GENERATION_TEMPERATURE = parseFloat(process.env.ANA_GENERATION_TEMPERATURE ?? '0.7');
+const GENERATION_MAX_TOKENS = parseInt(process.env.ANA_GENERATION_MAX_TOKENS ?? '4096', 10);
 
 /**
  * Run deterministic verifier rules on a claim + its citations.
@@ -136,7 +158,8 @@ function verifyClaim(
   }
 
   // Rule 2: Claim contains numbers but no citation snippet does
-  // Normalize: strip commas from numbers, ignore years (1900-2100) and trivial refs (≤9)
+  // Normalize: strip commas from numbers, ignore years (1900-2100), trivial refs (≤9),
+  // and common regulatory reference numbers (e.g. section numbers like 3.2.S.4.3)
   const stripCommas = (s: string) => s.replace(/(\d),(\d)/g, '$1$2');
   const normalizedClaim = stripCommas(claimText);
   const normalizedSnippets = stripCommas(snippets.join(' '));
@@ -144,14 +167,22 @@ function verifyClaim(
   const claimNumbers = normalizedClaim.match(/\d+\.?\d*/g) || [];
   const significantNumbers = claimNumbers.filter(n => {
     const val = parseFloat(n);
-    // Filter out: trivial refs (≤9), years (1900-2100)
+    // Filter out: trivial refs (≤9) unless decimal (e.g., 3.14, 0.05)
     if (val <= 9 && !n.includes('.')) return false;
+    // Filter out: years (1900-2100)
     if (val >= 1900 && val <= 2100 && !n.includes('.')) return false;
+    // Filter out: common CFR/ICH numbers (21, 11, 820, etc.)
+    if ([21, 11, 820, 312, 314, 510].includes(val) && !n.includes('.')) return false;
     return true;
   });
 
   if (significantNumbers.length > 0) {
-    const unmatchedNumbers = significantNumbers.filter(n => !normalizedSnippets.includes(n));
+    // Use word-boundary matching to avoid false positives from substring matches
+    const unmatchedNumbers = significantNumbers.filter(n => {
+      const escapedN = n.replace(/\./g, '\\.');
+      const boundary = new RegExp(`(?:^|\\b)${escapedN}(?:\\b|$)`);
+      return !boundary.test(normalizedSnippets);
+    });
     if (unmatchedNumbers.length > 0) {
       flags.push({
         rule: 'UNGROUNDED_NUMBERS',
@@ -203,8 +234,10 @@ const sendMessageHandler = async (req: Request, res: Response) => {
 
     // ── STEP 1: RESOLVE ORG (from session only — no header fallback for org) ──
     const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
-    const userId = (req as any).userId || (req as any).user?.id || 'anonymous';
+    const rawUserId = (req as any).userId || (req as any).user?.id;
+    const userId: number | string = rawUserId ?? 'anonymous';
     const numericOrgId = orgId ? (typeof orgId === 'string' ? Number(orgId) : orgId) : null;
+    const numericUserId = typeof userId === 'string' ? parseInt(userId, 10) || 0 : userId;
 
     // ── STEP 2: CREATE / VALIDATE THREAD ─────────────────────────────────────────
     const threadId = await getOrCreateThread(thread_id, (req as any).user?.id);
@@ -277,7 +310,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       if (orgUuid && !/^[0-9a-f-]{36}$/i.test(orgUuid)) {
         console.warn('[AnA RI] Invalid org UUID, skipping retrieval');
       } else {
-        const searchResults = await embeddingService.searchHybrid(message, 5, 0.7, orgUuid);
+        const searchResults = await embeddingService.searchHybrid(message, RETRIEVAL_TOP_K, RETRIEVAL_THRESHOLD, orgUuid);
         sources = searchResults.map(r => ({
           id: r.id,
           title: r.title,
@@ -305,16 +338,18 @@ const sendMessageHandler = async (req: Request, res: Response) => {
               `INSERT INTO ai_retrieval_runs
                  (organization_id, project_id, user_id, scope, embedding_model,
                   query_text, query_hash_sha256, snapshot_hash_sha256, top_k, threshold, result_count)
-               VALUES ($1, $2, $3, $4, 'text-embedding-3-small', $5, $6, $7, 5, 0.7, $8)
+               VALUES ($1, $2, $3, $4, 'text-embedding-3-small', $5, $6, $7, $8, $9, $10)
                RETURNING id`,
               [
                 numericOrgId,
                 project_id || null,
-                userId,
+                numericUserId,
                 orgUuid ? 'org' : 'global',
                 message,
                 queryHash,
                 snapshotHashSha256,
+                RETRIEVAL_TOP_K,
+                RETRIEVAL_THRESHOLD,
                 sources.length,
               ]
             );
@@ -392,10 +427,12 @@ const sendMessageHandler = async (req: Request, res: Response) => {
 
       const gwMessages = [
         { role: 'system' as const, content: systemPrompt },
-        ...previousMessages.map((m: any) => ({
-          role: m.role as 'user' | 'assistant',
-          content: m.content,
-        })),
+        ...previousMessages
+          .filter((m: any) => m.role === 'user' || m.role === 'assistant')
+          .map((m: any) => ({
+            role: m.role as 'user' | 'assistant',
+            content: m.content,
+          })),
         { role: 'user' as const, content: message },
       ];
 
@@ -406,11 +443,11 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       const gwResponse: GatewayResponse = await gw.route({
         taskType: 'chat',
         messages: gwMessages,
-        temperature: 0.7,
-        maxTokens: 2000,
+        temperature: GENERATION_TEMPERATURE,
+        maxTokens: GENERATION_MAX_TOKENS,
         callerModule: 'ana-ri-chat',
         organizationId: numericOrgId ?? undefined,
-        userId,
+        userId: numericUserId,
       });
 
       assistantMessage =
@@ -453,8 +490,8 @@ const sendMessageHandler = async (req: Request, res: Response) => {
         const actionResult = await processResponseActions(assistantMessage, {
           projectId: typeof project_id === 'string' ? parseInt(project_id, 10) : project_id,
           organizationId: numericOrgId,
-          userId: typeof userId === 'string' ? parseInt(userId, 10) || 0 : userId,
-          userName: (req as any).user?.name || 'AnA User',
+          userId: numericUserId,
+          userName: (req as any).user?.name || (req as any).user?.email || 'System',
           threadId,
         });
 

@@ -3243,8 +3243,8 @@ app.post('/api/ask-lumen', async (req: Request, res: Response) => {
       model,
     });
 
-    // System prompt for Lumen regulatory expert
-    const systemPrompt = `You are Lumen, an expert regulatory affairs AI assistant specializing in:
+    // System prompt for AnA regulatory expert
+    const systemPrompt = `You are AnA, an expert regulatory affairs AI assistant specializing in:
     - FDA submissions and regulatory compliance
     - Clinical trial documentation
     - Medical device protocols (510k, PMA)

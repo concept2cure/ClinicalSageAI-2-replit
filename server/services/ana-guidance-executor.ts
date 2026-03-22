@@ -108,6 +108,11 @@ const VALID_ACTION_TYPES: Set<string> = new Set([
 ]);
 const VALID_CONFIDENCE: Set<string> = new Set(['strong', 'moderate', 'provisional', 'uncertain']);
 
+// ── Safety limits — prevent runaway artifact creation ──────────────────────
+const MAX_ACTIONS_PER_RESPONSE = 5;
+const MAX_CONTENT_LENGTH = 100_000; // ~100KB per artifact
+const MAX_TITLE_LENGTH = 500;
+
 /**
  * Detect structured action signals in AnA's response text.
  * Primary: looks for ```ana-action JSON blocks.
@@ -122,6 +127,7 @@ export function detectActionSignals(responseText: string): DetectedActionSignal[
   const commentPattern = /<!--\s*ana-action\s*\n([\s\S]*?)\n\s*-->/g;
 
   for (const pattern of [fencedPattern, commentPattern]) {
+    if (signals.length >= MAX_ACTIONS_PER_RESPONSE) break;
     let match;
     while ((match = pattern.exec(responseText)) !== null) {
       try {
@@ -139,15 +145,27 @@ export function detectActionSignals(responseText: string): DetectedActionSignal[
           parsed.title.length > 0 &&
           parsed.content.length > 0
         ) {
+          // Enforce safety limits
+          const sanitizedTitle = parsed.title.slice(0, MAX_TITLE_LENGTH).replace(/[\x00-\x1f]/g, '');
+          const truncatedContent = parsed.content.length > MAX_CONTENT_LENGTH
+            ? parsed.content.slice(0, MAX_CONTENT_LENGTH) + '\n\n[Content truncated — exceeded maximum length]'
+            : parsed.content;
+
           signals.push({
             type: parsed.type as AnaActionType,
             confidence: parsed.confidence as AnaConfidenceLevel,
-            title: parsed.title,
-            content: parsed.content,
-            sectionCode: typeof parsed.sectionCode === 'string' ? parsed.sectionCode : undefined,
-            decisionContext: typeof parsed.decisionContext === 'string' ? parsed.decisionContext : undefined,
-            guidanceSummary: typeof parsed.guidanceSummary === 'string' ? parsed.guidanceSummary : undefined,
+            title: sanitizedTitle,
+            content: truncatedContent,
+            sectionCode: typeof parsed.sectionCode === 'string' ? parsed.sectionCode.slice(0, 50) : undefined,
+            decisionContext: typeof parsed.decisionContext === 'string' ? parsed.decisionContext.slice(0, 200) : undefined,
+            guidanceSummary: typeof parsed.guidanceSummary === 'string' ? parsed.guidanceSummary.slice(0, 500) : undefined,
           });
+
+          // Stop processing if we hit the max
+          if (signals.length >= MAX_ACTIONS_PER_RESPONSE) {
+            console.warn(`[AnA Executor] Hit max actions limit (${MAX_ACTIONS_PER_RESPONSE}), ignoring remaining signals`);
+            break;
+          }
         } else {
           console.warn('[AnA Executor] Action signal missing required fields or invalid type/confidence');
         }
@@ -220,6 +238,14 @@ function failResult(payload: AnaActionPayload, error: string): AnaActionResult {
  * - Draft status (lifecycle starting point)
  */
 async function executeArtifactCreation(payload: AnaActionPayload): Promise<AnaActionResult> {
+  // Pre-flight validation
+  if (!payload.content || payload.content.trim().length === 0) {
+    return failResult(payload, 'Artifact content is empty');
+  }
+  if (!payload.title || payload.title.trim().length === 0) {
+    return failResult(payload, 'Artifact title is empty');
+  }
+
   const externalId = `ana_${payload.type}_${uuidv4().slice(0, 8)}`;
   const contentHash = createHash('sha256').update(payload.content, 'utf8').digest('hex');
 

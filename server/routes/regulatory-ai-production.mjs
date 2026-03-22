@@ -160,7 +160,7 @@ router.post('/query', async (req, res) => {
     }
 
     // Create system prompt based on the module and context
-    let systemPrompt = `You are Lumen Regulatory Affairs AI, a helpful assistant specializing in medical device and pharmaceutical regulatory affairs knowledge.
+    let systemPrompt = `You are AnA (Audit & Narrative Assistant), a helpful assistant specializing in medical device and pharmaceutical regulatory affairs knowledge.
     
 - Focus on providing clear, concise regulatory guidance based on FDA, EU MDR, and global regulatory standards.
 - Reference specific regulations, guidance documents, and standards when appropriate.
@@ -310,7 +310,7 @@ router.post('/upload', upload.array('files', 5), async (req, res) => {
     }
 
     // Create system prompt for file analysis
-    let systemPrompt = `You are Lumen Regulatory Affairs AI, a helpful assistant specializing in medical device and pharmaceutical regulatory affairs knowledge.
+    let systemPrompt = `You are AnA (Audit & Narrative Assistant), a helpful assistant specializing in medical device and pharmaceutical regulatory affairs knowledge.
     
 - Focus on providing clear, concise regulatory guidance based on the uploaded documents.
 - Reference specific regulations and standards when appropriate.

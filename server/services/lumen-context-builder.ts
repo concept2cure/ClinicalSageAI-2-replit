@@ -259,6 +259,14 @@ Flag these patterns immediately when detected:
 - **Evidence added but not integrated** — A citation or data table is appended but the narrative argument doesn't reference or interpret it. Presence is not integration.
 - **Resolved-but-not-documented protocol deviations** — Changes made during the study that are explained verbally but not captured in the CSR deviation log.
 - **Statistical significance without clinical significance** — p-values without clinical interpretation; reviewers want to know if it matters to patients, not just whether it's statistically non-null.
+- **Safety signal acknowledged but not followed through** — An AE signal noted in Module 2.7.4 but not addressed in the benefit-risk analysis (Module 2.5.6). Reviewers track these cross-module.
+- **Inconsistent numerics across tables and text** — Sample sizes, percentages, or p-values that differ between the narrative and the supporting table. This is an RTF trigger.
+- **Post-hoc analyses masquerading as pre-specified** — Subgroup analyses or secondary endpoints that were not in the SAP but are presented without the "exploratory" qualifier.
+- **Concomitant medication contradictions** — Protocol exclusion criteria that conflict with concomitant medication data in Module 5. Reviewers will cross-check.
+- **CMC process-data mismatch** — Process validation data referencing manufacturing parameters that differ from the current process description. Scale-up changes not reflected.
+- **Stability trending not addressed** — Data trending toward out-of-specification without proactive shelf-life or retest-period justification per ICH Q1E.
+- **Missing dose justification chain** — Phase 3 dose selected without clear traceability to Phase 2 dose-response data and nonclinical NOAEL margins.
+- **Incomplete CIOMS-form mapping** — Individual case safety reports with coding discrepancies between verbatim terms and MedDRA preferred terms.
 
 ### Executive Pressure Calibration
 When advising leadership, RA VPs, or CEOs, calibrate your assessment:

@@ -43,7 +43,12 @@ const renderMarkdown = (content: string): string => {
       ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'id'],
     });
   } catch {
-    return content.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return content
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#x27;');
   }
 };
 
@@ -210,6 +215,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const initialMessageSentRef = useRef(false);
+  // Thread persistence — reuse thread_id across messages for continuous conversation
+  const threadIdRef = useRef<string | null>(null);
 
   const screenName = contextProfile?.screenName || 'default';
   const screenLabel = SCREEN_LABELS[screenName] || '';
@@ -493,6 +500,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           body: JSON.stringify({
             message: text,
             chatMode,
+            thread_id: threadIdRef.current || undefined,
             project_id: contextProfile?.projectId || undefined,
             submission_type: contextProfile?.productType || undefined,
             context: {
@@ -513,12 +521,16 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         }
         data = await response.json();
 
+        // Capture thread_id for conversation continuity
+        if (data.thread_id) {
+          threadIdRef.current = data.thread_id;
+        }
+
         setMessages(prev => [...prev, {
           id: `a-${Date.now()}`,
           role: 'assistant',
           content: data.response || data.answer || 'I\'m here to help with your regulatory work. What would you like to work on?',
           timestamp: new Date(),
-          demo: data.demo || false,
           executedActions: data.executedActions || undefined,
         }]);
       }
@@ -532,6 +544,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       }]);
     } finally {
       setIsThinking(false);
+      // Return focus to input after send completes
+      inputRef.current?.focus();
     }
   }, [input, isThinking, messages, contextProfile, chatMode]);
 
@@ -669,7 +683,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               </div>
               <textarea ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)} placeholder="Message AnA..." rows={1} className="flex-1 resize-none bg-transparent border-none outline-none text-[#141413] placeholder:text-[#B0AEA5] text-sm leading-6 min-h-[24px] max-h-[120px]" />
               {hasMessages && (
-                <button onClick={() => setMessages([])} className="flex-shrink-0 p-1.5 text-[#B0AEA5] hover:text-[#6B6962] rounded-lg transition-colors" title="New thread">
+                <button onClick={() => { setMessages([]); threadIdRef.current = null; }} className="flex-shrink-0 p-1.5 text-[#B0AEA5] hover:text-[#6B6962] rounded-lg transition-colors" title="New thread">
                   <RotateCcw className="w-3.5 h-3.5" />
                 </button>
               )}
@@ -687,7 +701,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-white">
       {/* ── Conversation area — fills available space ── */}
-      <div className="flex-1 overflow-y-auto zen-scroll" style={{ scrollbarWidth: 'thin' }}>
+      <div className="flex-1 overflow-y-auto zen-scroll" role="log" aria-live="polite" aria-label="Conversation with AnA" style={{ scrollbarWidth: 'thin' }}>
         {!hasMessages && !isThinking ? (
           /* ── Empty state: greeting + suggested actions ── */
           <div className="flex flex-col items-center justify-center h-full px-6">
@@ -920,7 +934,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           {hasMessages && (
             <div className="flex justify-center mb-2">
               <button
-                onClick={() => setMessages([])}
+                onClick={() => { setMessages([]); threadIdRef.current = null; }}
                 className="flex items-center gap-1.5 px-3 py-1 text-xs text-[#B0AEA5] hover:text-[#6B6962] hover:bg-[#F5F4EF] rounded-full transition-colors"
               >
                 <RotateCcw className="w-3 h-3" />

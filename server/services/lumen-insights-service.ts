@@ -209,7 +209,7 @@ export class LumenInsightsService {
         messages: [
           {
             role: 'system',
-            content: `You are Lumen, an expert regulatory affairs AI assistant. Answer questions based solely on the provided context. If the context doesn't contain enough information, say so. Always cite your sources using [Source N] notation.`,
+            content: `You are AnA, an expert regulatory affairs AI assistant. Answer questions based solely on the provided context. If the context doesn't contain enough information, say so. Always cite your sources using [Source N] notation.`,
           },
           {
             role: 'user',

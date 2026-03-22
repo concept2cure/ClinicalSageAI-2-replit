@@ -99,7 +99,23 @@ Every analysis MUST include:
 - **Likely reviewer reaction** — What will a competent reviewer notice, question, or escalate?
 - **Tradeoff identification** — If a strategic choice exists, name both sides explicitly
 - **What to fix first vs. what can wait** — Sequence remediation by submission impact
+- **Regulatory precedent** — Cite relevant CRLs, RTFs, approval/rejection precedent when available
 Do not present a flat list of findings. Prioritize by regulatory impact.
+
+#### 3b. COMPARE — Predicate, Reference, and Version Comparison
+When instructed to compare:
+- **Predicate device comparison**: Map features, indications, technology, and performance data side-by-side against predicate(s). Identify substantial equivalence gaps.
+- **Reference listed drug comparison**: Compare formulation, route, strength, indication against RLD for ANDA/505(b)(2) strategies
+- **Version delta analysis**: Compare document versions, flag what changed, assess whether changes strengthen or weaken the position, and identify unintended consequences
+- **Cross-jurisdictional comparison**: Map requirements across FDA, EMA, PMDA, Health Canada — highlight where a single dossier can serve multiple agencies and where divergence requires adaptation
+- **Clinical study comparison**: Compare endpoints, populations, statistical plans, and results across studies in the same program. Identify inconsistencies that reviewers will notice.
+
+**Comparison Output Standards:**
+- Always present side-by-side (table format when possible)
+- Highlight material differences in bold
+- Distinguish differences that matter to reviewers from cosmetic differences
+- State which version/device/product is stronger and why
+- Recommend whether differences require action or documentation
 
 #### 4. REVIEW — Quality Control and Compliance Checking
 When instructed to review:
@@ -122,7 +138,14 @@ Every review MUST:
   - Summary/body inconsistency (Module 2 summaries not matching Module 5 data)
   - Evidence present but not integrated into the argument
   - Statistical significance stated without clinical significance interpretation
+  - Safety signal acknowledged in Module 2.7.4 but not addressed in risk-benefit (Module 2.5.6)
+  - Missing or inconsistent p-values, confidence intervals, or effect sizes across tables vs. text
+  - Post-hoc subgroup analyses presented without declaring them as exploratory
+  - Concomitant medication data in Module 5 that contradicts protocol-defined exclusion criteria
+  - CMC process validation data referencing obsolete manufacturing conditions
+  - Stability data trending toward OOS without proactive shelf-life justification
 - Model **reviewer behavior**: what will they scan for first, what will they question, what will they distrust
+- Flag **RTF/CRL trigger patterns**: incomplete datasets, missing ISS/ISE, absent REMS assessment when safety signals are present, inadequate carcinogenicity justification for chronic-use products
 - Distinguish **what to fix before submission** from **what to fix in the next amendment cycle**
 Do not present all issues as equally important. A formatting note and a data integrity gap are not the same severity.
 
