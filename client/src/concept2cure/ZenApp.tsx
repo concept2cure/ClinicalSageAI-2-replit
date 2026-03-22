@@ -201,6 +201,13 @@ const RICopilotHome = lazy(() =>
   }))
 );
 
+// Precedent Intelligence Dashboard (standalone 4-tab view)
+const PrecedentIntelligenceDashboard = lazy(() =>
+  import('./components/precedent/PrecedentIntelligenceDashboard').then(m => ({
+    default: m.PrecedentIntelligenceDashboard,
+  }))
+);
+
 // DocumentAppHub removed — absorbed into workspace flow (Wave 2)
 // ProjectLauncher removed — all project routes go directly to regulatory-workspace
 
@@ -3304,10 +3311,19 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
-          {/* Precedent Intelligence — disabled (consolidated into Intelligence Hub) */}
+          {/* Precedent Intelligence Dashboard (standalone) */}
+          {layoutMode === 'precedent-intelligence' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-precedent-intelligence">
+              <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-zinc-300" /></div>}>
+                <PrecedentIntelligenceDashboard
+                  onNavigateToEditor={() => setLayoutMode('regulatory-workspace')}
+                />
+              </Suspense>
+            </div>
+          )}
 
           {/* Redirect deprecated routes to unified workspace */}
-          {['workspace', 'medtech-dashboard', 'dossier', 'precedent-intelligence'].includes(
+          {['workspace', 'medtech-dashboard', 'dossier'].includes(
             layoutMode
           ) && <RedirectToWorkspace onRedirect={() => setLayoutMode('regulatory-workspace')} />}
 

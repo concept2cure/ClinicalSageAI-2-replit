@@ -709,11 +709,11 @@ export function PrecedentIntelligenceDashboard({
                     <div className="text-right">
                       <RiskBadge level={riskResult.overallRisk} />
                       <p className="text-xs text-zinc-400 mt-1">
-                        Score: {riskResult.riskScore}/100
+                        Score: {Math.round(riskResult.riskScore * 100)}%
                       </p>
                     </div>
                   </div>
-                  <ScoreBar value={riskResult.riskScore} max={100} label="Risk Level" />
+                  <ScoreBar value={riskResult.riskScore} max={1} label="Risk Level" />
                 </div>
               </div>
 
@@ -725,19 +725,28 @@ export function PrecedentIntelligenceDashboard({
                   </div>
                   <div className="px-3 py-2">
                     <div className="space-y-2">
-                      {riskResult.factors.map((f, i) => (
+                      {riskResult.factors.map((f: any, i: number) => (
                         <div
                           key={i}
                           className="flex items-start gap-2 p-2 rounded bg-red-50/50 text-xs"
                         >
                           <AlertTriangle className="w-3.5 h-3.5 text-red-500 flex-shrink-0 mt-0.5" />
-                          <div>
-                            <span className="font-medium text-zinc-900">{f.factor}</span>
-                            <p className="text-zinc-500 mt-0.5">{f.detail}</p>
+                          <div className="flex-1 min-w-0">
+                            <span className="font-medium text-zinc-900">{f.category || f.factor}</span>
+                            <p className="text-zinc-500 mt-0.5">{f.description || f.detail}</p>
+                            {f.mitigation && (
+                              <p className="text-emerald-600 mt-1 flex items-start gap-1">
+                                <ShieldCheck className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                                {f.mitigation}
+                              </p>
+                            )}
                           </div>
-                          <Badge variant="outline" className="ml-auto flex-shrink-0 text-xs">
-                            {f.severity}
-                          </Badge>
+                          <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                            <RiskBadge level={f.severity} />
+                            {f.precedentCount > 0 && (
+                              <span className="text-zinc-400 text-xs">{f.precedentCount} case{f.precedentCount !== 1 ? 's' : ''}</span>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -755,17 +764,23 @@ export function PrecedentIntelligenceDashboard({
                   </div>
                   <div className="px-3 py-2">
                     <div className="space-y-1.5">
-                      {riskResult.safetySignals.map((s, i) => (
-                        <div
-                          key={i}
-                          className="flex items-center gap-2 p-2 rounded bg-zinc-50 text-xs"
-                        >
-                          <Zap className="w-3 h-3 text-red-400 flex-shrink-0" />
-                          <span className="font-medium text-zinc-700">{s.device}</span>
-                          <span className="text-zinc-500 flex-1 truncate">{s.signal}</span>
-                          <RiskBadge level={s.severity} />
-                        </div>
-                      ))}
+                      {riskResult.safetySignals.map((s: any, i: number) => {
+                        const sevLevel = typeof s.severity === 'number'
+                          ? (s.severity >= 0.75 ? 'critical' : s.severity >= 0.5 ? 'high' : s.severity >= 0.25 ? 'medium' : 'low')
+                          : s.severity;
+                        return (
+                          <div
+                            key={i}
+                            className="flex items-center gap-2 p-2 rounded bg-zinc-50 text-xs"
+                          >
+                            <Zap className="w-3 h-3 text-red-400 flex-shrink-0" />
+                            <span className="font-medium text-zinc-700">{s.deviceName || s.device}</span>
+                            <span className="text-zinc-500 flex-1 truncate">{s.description || s.signalType || s.signal}</span>
+                            {s.kNumber && <Badge variant="outline" className="text-xs">{s.kNumber}</Badge>}
+                            <RiskBadge level={sevLevel} />
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
@@ -913,7 +928,7 @@ export function PrecedentIntelligenceDashboard({
                   </div>
                   <div className="px-3 py-2">
                     <div className="space-y-2">
-                      {strategyResult.alternativeStrategies.map((alt, i) => (
+                      {strategyResult.alternativeStrategies.map((alt: any, i: number) => (
                         <div
                           key={i}
                           className="p-3 rounded-lg border border-zinc-200 bg-zinc-50/50"
@@ -922,9 +937,14 @@ export function PrecedentIntelligenceDashboard({
                             <span className="text-sm font-medium text-zinc-900">
                               {alt.strategy}
                             </span>
-                            <ScoreBar value={alt.confidence} label="" />
+                            <div className="flex items-center gap-2">
+                              {alt.precedentCount != null && (
+                                <span className="text-xs text-zinc-400">{alt.precedentCount} precedent{alt.precedentCount !== 1 ? 's' : ''}</span>
+                              )}
+                              <ScoreBar value={alt.successRate ?? alt.confidence ?? 0} label="" />
+                            </div>
                           </div>
-                          <p className="text-xs text-zinc-500">{alt.rationale}</p>
+                          <p className="text-xs text-zinc-500">{alt.description || alt.rationale}</p>
                         </div>
                       ))}
                     </div>

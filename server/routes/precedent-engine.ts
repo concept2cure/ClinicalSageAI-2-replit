@@ -16,10 +16,14 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { precedentEngine } from '../services/precedent-engine';
+import { authMiddleware } from '../auth.js';
 import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
 const log = createScopedLogger('precedent-routes');
+
+// All precedent-engine routes require authentication
+router.use(authMiddleware);
 
 // ─── Validation Schemas ──────────────────────────────────────────────────────
 
@@ -33,6 +37,7 @@ const SearchSchema = z.object({
   productCode: z.string().optional(),
   query: z.string().optional(),
   limit: z.number().int().min(1).max(50).optional(),
+  offset: z.number().int().min(0).optional(),
 });
 
 const CompareSchema = z.object({
@@ -109,11 +114,15 @@ router.post('/search', async (req: Request, res: Response) => {
       });
     }
 
-    const results = await precedentEngine.search(parsed.data);
+    const organizationId = (req as any).user?.organizationId;
+    const results = await precedentEngine.search(parsed.data, organizationId);
+    const offset = parsed.data.offset || 0;
+    const limit = parsed.data.limit || 10;
     res.json({
       success: true,
       data: results,
       count: results.length,
+      pagination: { offset, limit, hasMore: results.length === limit },
     });
   } catch (err: any) {
     log.error(`Search failed: ${err.message}`);

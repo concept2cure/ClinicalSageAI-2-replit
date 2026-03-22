@@ -175,7 +175,7 @@ interface ClaimWarning {
 export class PrecedentEngine {
   // ── 1. SEARCH: Find closest regulatory precedents ──────────────────────
 
-  async search(input: PrecedentSearchInput): Promise<PrecedentRecord[]> {
+  async search(input: PrecedentSearchInput, organizationId?: number): Promise<PrecedentRecord[]> {
     const limit = Math.min(input.limit || 10, 50);
     log.info(`Searching precedents: ${input.submissionType}, query="${input.query || ''}"`, {
       submissionType: input.submissionType,

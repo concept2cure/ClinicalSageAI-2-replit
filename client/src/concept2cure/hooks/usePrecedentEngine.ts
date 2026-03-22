@@ -105,10 +105,29 @@ export interface RiskParams {
 export interface RiskResult {
   overallRisk: 'low' | 'medium' | 'high' | 'critical';
   riskScore: number;
-  factors: Array<{ factor: string; severity: string; detail: string }>;
-  historicalObjections: Array<{ type: string; count: number; detail: string }>;
+  factors: Array<{
+    category: string;
+    description: string;
+    severity: 'low' | 'medium' | 'high' | 'critical';
+    precedentCount: number;
+    mitigation: string;
+  }>;
+  historicalObjections: Array<{
+    question: string;
+    agency: string;
+    failureMode: string;
+    therapeuticArea: string;
+    submissionType: string;
+    similarity: number;
+  }>;
   mitigationStrategies: string[];
-  safetySignals: Array<{ device: string; signal: string; severity: string }>;
+  safetySignals: Array<{
+    kNumber: string;
+    deviceName: string;
+    signalType: string;
+    severity: number;
+    description: string;
+  }>;
 }
 
 export interface StrategyParams {
@@ -123,7 +142,12 @@ export interface StrategyResult {
   recommendedStrategy: string;
   confidence: number;
   supportingPrecedents: PrecedentRecord[];
-  alternativeStrategies: Array<{ strategy: string; confidence: number; rationale: string }>;
+  alternativeStrategies: Array<{
+    strategy: string;
+    precedentCount: number;
+    successRate: number;
+    description: string;
+  }>;
   testingRequirements: string[];
   estimatedTimeline: string;
   keyRisks: string[];
