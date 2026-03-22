@@ -67,6 +67,7 @@ import {
   conversationWorkingMemory,
 } from '../../shared/schema';
 import * as crypto from 'crypto';
+import { guardEmptyContent, guardDemoContent } from '../middleware/documentLoopGuards';
 import { computeConversationHealth } from '../services/conversation-health.js';
 import {
   buildWorkingMemoryPrompt,
@@ -2523,7 +2524,7 @@ router.get('/projects/:projectId/artifacts', async (req: Request, res: Response)
  * POST /api/concept2cure/projects/:projectId/artifacts
  * Create a new artifact (database-backed with version control).
  */
-router.post('/projects/:projectId/artifacts', async (req: Request, res: Response) => {
+router.post('/projects/:projectId/artifacts', guardEmptyContent, guardDemoContent, async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
     const userId = getUserId(req);
