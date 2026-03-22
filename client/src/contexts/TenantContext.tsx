@@ -179,7 +179,6 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
               }
             }
           } catch (error) {
-            console.error(`Error fetching client workspaces for organization ${org.id}:`, error);
           }
         }
 
@@ -249,7 +248,6 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
           if (savedModule) setCurrentModule(savedModule);
         }
       } catch (error) {
-        console.error('Error loading tenant data:', error);
       } finally {
         setIsLoading(false);
       }
@@ -357,7 +355,6 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
             }
           }
         } catch (error) {
-          console.error(`Error fetching client workspaces for organization ${org.id}:`, error);
         }
       }
 
@@ -366,7 +363,6 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
 
       return allClientWorkspaces;
     } catch (error) {
-      console.error('Error refreshing client workspaces:', error);
       return [];
     }
   };

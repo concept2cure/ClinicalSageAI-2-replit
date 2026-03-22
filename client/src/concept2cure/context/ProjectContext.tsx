@@ -713,14 +713,12 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
           dispatch({ type: 'SET_CONVERSATIONS', payload: parsed.conversations });
         if (parsed.artifacts) dispatch({ type: 'SET_ARTIFACTS', payload: parsed.artifacts });
       } catch (e) {
-        console.error('Failed to load saved state:', e);
       }
     }
     if (savedProfile) {
       try {
         dispatch({ type: 'SET_USER_PROFILE', payload: JSON.parse(savedProfile) });
       } catch (e) {
-        console.error('Failed to load saved user profile:', e);
       }
     }
   }, []);
@@ -732,7 +730,6 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
         try {
           dispatch({ type: 'SET_USER_PROFILE', payload: JSON.parse(storageEvent.newValue) });
         } catch (e) {
-          console.error('Failed to sync user profile:', e);
         }
       }
     };

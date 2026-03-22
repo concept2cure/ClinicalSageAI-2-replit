@@ -549,7 +549,6 @@ export const ZenWorkspaceProvider: React.FC<ZenWorkspaceProviderProps> = ({
       
       localStorage.setItem(storageKey, JSON.stringify(sessionData));
     } catch (error) {
-      console.error('[Workspace] Failed to save session:', error);
     }
   }, [state, storageKey]);
   
@@ -587,7 +586,6 @@ export const ZenWorkspaceProvider: React.FC<ZenWorkspaceProviderProps> = ({
       
       return true;
     } catch (error) {
-      console.error('[Workspace] Failed to restore session:', error);
       return false;
     }
   }, [storageKey]);
