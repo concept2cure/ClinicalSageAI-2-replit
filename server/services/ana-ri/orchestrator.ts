@@ -213,8 +213,11 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
 
   // 6. Inject document action context
   const documentActionContext = buildDocumentActionContext(detectedIntent.lens);
-  systemPrompt += '\n\n' + documentActionContext;
-  const documentActionContextInjected = true;
+  let documentActionContextInjected = false;
+  if (documentActionContext) {
+    systemPrompt += '\n\n' + documentActionContext;
+    documentActionContextInjected = true;
+  }
 
   // 7. Inject role-adaptive context
   if (appliedRole !== 'general') {

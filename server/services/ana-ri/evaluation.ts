@@ -288,7 +288,7 @@ export function evaluateResponse(
     hasStructure,
     hasBullets,
     response.length > 300,
-    !/\b(maybe|perhaps|possibly|might want to consider)\b/i.test(response) || false,
+    !(/\b(maybe|perhaps|possibly|might want to consider)\b/i.test(response)),
     context.hasRewrite || false,
   ]);
   dimensions.push({

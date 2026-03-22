@@ -591,7 +591,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     } finally {
       setIsThinking(false);
     }
-  }, [input, isThinking, messages, contextProfile, chatMode]);
+  }, [input, isThinking, messages, contextProfile, chatMode, intentLens]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {

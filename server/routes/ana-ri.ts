@@ -77,12 +77,24 @@ router.post('/chat', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Message is required', code: 'INVALID_MESSAGE' });
     }
 
+    // Validate intent_lens if provided
+    const VALID_LENSES: IntentLens[] = ['auto', 'audit', 'improve', 'risk', 'strategy', 'compare'];
+    const validatedLens: IntentLens | undefined = intent_lens && VALID_LENSES.includes(intent_lens)
+      ? intent_lens as IntentLens
+      : undefined;
+
+    // Validate user_role if provided
+    const VALID_ROLES: UserRole[] = ['ceo', 'ra_lead', 'medical_writer', 'clinical_lead', 'cmc_lead', 'investor', 'general'];
+    const validatedRole: UserRole | undefined = user_role && VALID_ROLES.includes(user_role)
+      ? user_role as UserRole
+      : undefined;
+
     // Resolve org/user context
     const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
     const userId = (req as any).userId || (req as any).user?.id || 'anonymous';
 
     // Infer role if not provided
-    const effectiveRole: UserRole = user_role || inferRole({
+    const effectiveRole: UserRole = validatedRole || inferRole({
       screenName: req.body.context?.screenName,
       title: req.body.context?.userTitle,
       department: req.body.context?.department,
@@ -91,7 +103,7 @@ router.post('/chat', async (req: Request, res: Response) => {
     // Orchestrate — build the complete system prompt
     const orchestratorInput: OrchestratorInput = {
       message,
-      intentLens: intent_lens as IntentLens | undefined,
+      intentLens: validatedLens,
       userRole: effectiveRole,
       projectContext: project_context,
       documentContext: document_context,

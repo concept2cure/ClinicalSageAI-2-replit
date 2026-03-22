@@ -279,7 +279,7 @@ export function buildAnaRISystemPrompt(options: AnaRIPromptOptions = {}): string
 /**
  * Get the raw core prompt (for display/debug purposes).
  */
-export function getCorePompt(): string {
+export function getCorePrompt(): string {
   return ANA_RI_CORE_PROMPT;
 }
 
