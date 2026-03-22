@@ -1003,7 +1003,7 @@ export async function exportArtifact(
 // 13. VERSION DIFFING
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Compare two versions of an artifact */
+/** Compare two versions of an artifact using the existing diffText service */
 export async function compareVersions(
   ctx: CommandContext,
   params: {
@@ -1028,26 +1028,32 @@ export async function compareVersions(
     }
 
     const [older, newer] = versions.rows;
-    const olderLines = (older.content || '').split('\n');
-    const newerLines = (newer.content || '').split('\n');
+    const olderContent = older.content || '';
+    const newerContent = newer.content || '';
 
-    // Simple line-level diff
-    const added: string[] = [];
-    const removed: string[] = [];
-    const olderSet = new Set(olderLines);
-    const newerSet = new Set(newerLines);
-
-    for (const line of newerLines) {
-      if (!olderSet.has(line) && line.trim()) added.push(line);
+    if (olderContent === newerContent) {
+      return {
+        success: true,
+        action: 'compare_versions',
+        data: {
+          artifactId: params.artifactId,
+          versionA: { version: older.version, author: older.author, date: older.created_at },
+          versionB: { version: newer.version, author: newer.author, date: newer.created_at },
+          identical: true,
+        },
+        message: `Versions ${older.version} and ${newer.version} have identical content.`,
+      };
     }
-    for (const line of olderLines) {
-      if (!newerSet.has(line) && line.trim()) removed.push(line);
-    }
 
-    // Detect modified sections (headers that changed)
-    const olderHeaders = olderLines.filter(l => /^#{1,3}\s/.test(l));
-    const newerHeaders = newerLines.filter(l => /^#{1,3}\s/.test(l));
-    const modifiedSections = newerHeaders.filter(h => !olderHeaders.includes(h));
+    // Use the existing diff service for proper LCS-based diffing
+    const { diffText } = await import('../versionDiffService.js');
+    const diff = diffText(olderContent, newerContent);
+
+    // Extract section-level changes
+    const olderHeaders = olderContent.match(/^#{1,3}\s+.+$/gm) || [];
+    const newerHeaders = newerContent.match(/^#{1,3}\s+.+$/gm) || [];
+    const addedSections = newerHeaders.filter(h => !olderHeaders.includes(h));
+    const removedSections = olderHeaders.filter(h => !newerHeaders.includes(h));
 
     return {
       success: true,
@@ -1057,16 +1063,17 @@ export async function compareVersions(
         versionA: { version: older.version, author: older.author, date: older.created_at },
         versionB: { version: newer.version, author: newer.author, date: newer.created_at },
         summary: {
-          linesAdded: added.length,
-          linesRemoved: removed.length,
-          sectionsModified: modifiedSections.length,
+          linesAdded: diff.additions,
+          linesRemoved: diff.deletions,
+          addedSections: addedSections.length,
+          removedSections: removedSections.length,
         },
-        added: added.slice(0, 20),
-        removed: removed.slice(0, 20),
-        modifiedSections,
+        changes: diff.changes.slice(0, 30),
+        addedSections,
+        removedSections,
         changeDescription: newer.change_description || 'No change description provided.',
       },
-      message: `Version ${older.version} → ${newer.version}: +${added.length} lines, -${removed.length} lines, ${modifiedSections.length} section(s) modified.`,
+      message: `Version ${older.version} → ${newer.version}: +${diff.additions} lines, -${diff.deletions} lines. ${addedSections.length} section(s) added, ${removedSections.length} removed.`,
     };
   } catch (err: any) {
     return { success: false, action: 'compare_versions', message: 'Version comparison failed.', error: err?.message };
@@ -1181,7 +1188,11 @@ export async function listMilestones(
 // 15. SAFE VERSION REVERT
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Revert an artifact to a previous version (creates new version, non-destructive) */
+/**
+ * Revert an artifact to a previous version (non-destructive).
+ * Uses the same logic as POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/rollback
+ * which creates a NEW version with old content — nothing is deleted.
+ */
 export async function revertToVersion(
   ctx: CommandContext,
   params: {
@@ -1200,11 +1211,31 @@ export async function revertToVersion(
   }
 
   try {
+    // Verify artifact exists and is not locked
+    const artifactResult = await pool.query(
+      `SELECT id, artifact_id, version, status FROM concept2cure_artifacts
+       WHERE artifact_id = $1 AND organization_id = $2`,
+      [params.artifactId, ctx.organizationId]
+    );
+
+    if (artifactResult.rows.length === 0) {
+      return { success: false, action: 'revert_to_version', message: `Artifact ${params.artifactId} not found.` };
+    }
+
+    const artifact = artifactResult.rows[0];
+    if (artifact.status === 'locked') {
+      return { success: false, action: 'revert_to_version', message: 'Document is locked. Change status to draft or review before reverting.' };
+    }
+
+    if (params.targetVersion >= artifact.version) {
+      return { success: false, action: 'revert_to_version', message: `Cannot revert to version ${params.targetVersion} — current version is ${artifact.version}.` };
+    }
+
     // Load the target version content
     const versionResult = await pool.query(
       `SELECT content, version FROM concept2cure_artifact_versions
        WHERE artifact_id = $1 AND version = $2`,
-      [params.artifactId, params.targetVersion]
+      [artifact.id, params.targetVersion]
     );
 
     if (versionResult.rows.length === 0) {
@@ -1213,7 +1244,7 @@ export async function revertToVersion(
 
     const oldContent = versionResult.rows[0].content;
 
-    // Create a new version with the old content via tagArtifact
+    // Create new version with old content (same pattern as concept2cure.ts rollback endpoint)
     const result = await tagArtifact({
       projectId: params.projectId,
       organizationId: ctx.organizationId,
@@ -1221,7 +1252,7 @@ export async function revertToVersion(
       sectionCode: '',
       title: '',
       content: oldContent,
-      artifactId: params.artifactId,
+      artifactId: artifact.id,
       source: 'ana_ri',
       metadata: {
         revertedFrom: params.targetVersion,
@@ -1239,7 +1270,7 @@ export async function revertToVersion(
         revertedToVersion: params.targetVersion,
         newVersionId: result.versionId,
       },
-      message: `Artifact ${params.artifactId} reverted to version ${params.targetVersion} content (created as new version).`,
+      message: `Artifact ${params.artifactId} reverted to version ${params.targetVersion} content (created as new version ${result.versionId}).`,
     };
   } catch (err: any) {
     return { success: false, action: 'revert_to_version', message: 'Revert failed.', error: err?.message };
