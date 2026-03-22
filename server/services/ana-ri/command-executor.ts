@@ -1104,6 +1104,8 @@ export async function reviewVersionImpact(
     versionA: number;
     versionB: number;
     submissionType?: string;
+    /** If true, saves the impact analysis as a governed artifact in the project */
+    saveAsArtifact?: boolean;
   }
 ): Promise<CommandResult> {
   try {
@@ -1251,7 +1253,39 @@ What should be done BEFORE this version is submitted? Be specific.`;
       };
     }
 
-    // 5. Log the generation event
+    // 5. Persist as governed artifact if requested
+    let savedArtifactId: number | undefined;
+    if (params.saveAsArtifact) {
+      try {
+        const impactTitle = `Version Impact Review — ${artifactMeta.title || 'Artifact'} (v${older.version} → v${newer.version})`;
+        const tagResult = await tagArtifact({
+          projectId: params.projectId,
+          organizationId: ctx.organizationId,
+          userId: ctx.userId,
+          sectionCode: `ana-ri.version_impact.${params.artifactId}`,
+          title: impactTitle,
+          content: response.content,
+          status: 'draft',
+          source: 'ana_ri',
+          metadata: {
+            anaRiActionType: 'version_impact_review',
+            sourceArtifactId: params.artifactId,
+            versionA: older.version,
+            versionB: newer.version,
+            diffAdditions: diff.additions,
+            diffDeletions: diff.deletions,
+            generatedAt: new Date().toISOString(),
+            aiProvider: response.provider,
+            aiModel: response.model,
+          },
+        });
+        savedArtifactId = tagResult.artifactId;
+      } catch (err: any) {
+        console.error('[AnA RI] Failed to persist version impact artifact:', err?.message);
+      }
+    }
+
+    // 6. Log the generation event
     const { logGeneration } = await import('./enforcement.js');
     logGeneration({
       timestamp: new Date().toISOString(),
@@ -1260,7 +1294,8 @@ What should be done BEFORE this version is submitted? Be specific.`;
       projectId: params.projectId,
       organizationId: ctx.organizationId,
       userId: ctx.userId,
-      artifactCreated: false,
+      artifactCreated: !!savedArtifactId,
+      artifactId: savedArtifactId,
       anaRiOrchestrated: true,
       provider: response.provider,
       model: response.model,
@@ -1277,8 +1312,9 @@ What should be done BEFORE this version is submitted? Be specific.`;
         versionB: { version: newer.version, author: newer.author, date: newer.created_at },
         diff: { additions: diff.additions, deletions: diff.deletions },
         impact: response.content,
+        savedAsArtifactId: savedArtifactId,
       },
-      message: `Version Impact Review for "${artifactMeta.title}" (v${older.version} → v${newer.version}): +${diff.additions}/-${diff.deletions} lines analyzed.`,
+      message: `Version Impact Review for "${artifactMeta.title}" (v${older.version} → v${newer.version}): +${diff.additions}/-${diff.deletions} lines analyzed.${savedArtifactId ? ` Saved as artifact #${savedArtifactId}.` : ''}`,
     };
   } catch (err: any) {
     return { success: false, action: 'review_version_impact', message: 'Version impact review failed.', error: err?.message };
@@ -1531,7 +1567,7 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
   { name: 'list_team_members', description: 'List team members in the organization', parameters: 'none', example: '"Who is on my team?"' },
   { name: 'export_artifact', description: 'Export an artifact to DOCX format', parameters: 'projectId, artifactId, format (docx/pdf)', example: '"Export artifact 12 as a Word document"' },
   { name: 'compare_versions', description: 'Compare two versions of an artifact (structural diff)', parameters: 'artifactId, versionA, versionB', example: '"What changed between version 1 and version 3 of artifact 12?"' },
-  { name: 'review_version_impact', description: 'Analyze the REGULATORY IMPACT of changes between two versions — classifies changes, assesses reviewer sensitivity, rates defensibility', parameters: 'projectId, artifactId, versionA, versionB, submissionType?', example: '"What is the regulatory impact of the changes to the Clinical Overview?"' },
+  { name: 'review_version_impact', description: 'Analyze the REGULATORY IMPACT of changes between two versions — classifies changes, assesses reviewer sensitivity, rates defensibility. Can save as governed artifact.', parameters: 'projectId, artifactId, versionA, versionB, submissionType?, saveAsArtifact?', example: '"What is the regulatory impact of the changes to the Clinical Overview? Save it."' },
   { name: 'create_milestone', description: 'Create a submission milestone with target date', parameters: 'packageId, title, targetDate?, description?', example: '"Create a milestone for Pre-IND meeting by June 15"' },
   { name: 'update_milestone', description: 'Update a milestone status or details', parameters: 'milestoneId, updates (gateStatus, targetDate, etc.)', example: '"Mark milestone 3 as completed"' },
   { name: 'list_milestones', description: 'List milestones for a submission package', parameters: 'packageId', example: '"Show all milestones for the IND package"' },
