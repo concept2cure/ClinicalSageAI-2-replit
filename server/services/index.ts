@@ -36,7 +36,7 @@ export * as literature from './literature';
 
 export { default as openaiService } from './openai-service';
 export { default as kimiAIService } from './kimiAIService';
-export { default as regulatoryAIService } from './regulatoryAIServicePhase3';
+// regulatoryAIServicePhase3 — REMOVED (was a stub returning empty objects)
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // DOCUMENT SERVICES
@@ -162,7 +162,7 @@ export const SERVICE_REGISTRY = {
   // AI
   'ai.completion': 'ai/openai-orchestrator',
   'ai.assistant': 'openai-service',
-  'ai.regulatory': 'regulatoryAIServicePhase3',
+  // 'ai.regulatory': removed — was a stub
   'ai.kimi': 'kimiAIService',
 
   // Documents

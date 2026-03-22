@@ -1850,15 +1850,9 @@ try {
   console.error('❌ Failed to mount Workflow routes:', error);
 }
 
-// Mount AI Drafting API routes
-try {
-  const draftingModule = await import('./routes/drafting');
-  const draftingRoutes = draftingModule.default;
-  app.use('/api/v1/drafting', draftingRoutes);
-  console.log('✅ AI Drafting API routes mounted successfully');
-} catch (error) {
-  console.error('❌ Failed to mount AI Drafting routes:', error);
-}
+// AI Drafting stub route — REMOVED (was returning empty draft strings)
+// Real document drafting uses /api/knowledge-base/generate-ind-section
+// and /api/knowledge-base/save-docx-as-artifact instead.
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PLATFORM CONTROL PLANE & EXTERNAL API ROUTES

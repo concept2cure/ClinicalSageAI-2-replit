@@ -114,10 +114,15 @@ export interface GenerateINDPackageParams {
 export function useGenerateINDPackage() {
   return useMutation({
     mutationFn: async (params: GenerateINDPackageParams): Promise<Blob> => {
+      // Pass saveAsArtifact flag so server persists as governed artifact
       const res = await fetch('/api/knowledge-base/generate-ind-package', {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify(params),
+        body: JSON.stringify({
+          ...params,
+          saveAsArtifact: true,
+          artifactProjectId: params.projectId,
+        }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: 'Package generation failed' }));
@@ -159,11 +164,16 @@ export interface GenerateModule3Params {
 
 export function useGenerateModule3Docx() {
   return useMutation({
-    mutationFn: async (params: GenerateModule3Params): Promise<Blob> => {
+    mutationFn: async (params: GenerateModule3Params & { projectId?: string }): Promise<Blob> => {
+      // Pass saveAsArtifact flag so server persists as governed artifact
       const res = await fetch('/api/knowledge-base/generate-module3-docx', {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify(params),
+        body: JSON.stringify({
+          ...params,
+          saveAsArtifact: true,
+          artifactProjectId: params.projectId || undefined,
+        }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: 'Module 3 generation failed' }));
