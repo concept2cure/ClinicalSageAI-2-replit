@@ -899,13 +899,13 @@ try {
   console.error('❌ Failed to mount AI Assistance routes:', error);
 }
 
-// Mount Lumen Cortex dedicated routes (10-K harvesting, observation terms)
+// Mount AnA RI dedicated routes (10-K harvesting, observation terms)
 try {
   const lumenCortexRoutes = await import('./routes/lumen-cortex');
   app.use('/api/lumen-cortex', lumenCortexRoutes.default);
-  console.log('✅ Lumen Cortex dedicated routes mounted (health, 10K harvest, observation terms)');
+  console.log('✅ AnA RI dedicated routes mounted (health, 10K harvest, observation terms)');
 } catch (error) {
-  console.error('❌ Failed to mount Lumen Cortex routes:', error);
+  console.error('❌ Failed to mount AnA RI routes:', error);
 }
 
 // Mount Nano Banana (Gemini image generation) routes
@@ -933,7 +933,7 @@ try {
   console.error('❌ Failed to mount PM Settings routes:', error);
 }
 
-// Mount Lumen Cortex (formerly ForesightAI) routes
+// Mount AnA RI (formerly ForesightAI) routes
 // Legacy routes maintained for backward compatibility
 try {
   // Shared deprecation middleware for all Foresight/Lumen legacy routes
@@ -956,15 +956,15 @@ try {
     },
     foresightFeedbackRoutes
   );
-  // New Lumen Cortex aliases
+  // New AnA RI aliases
   app.use('/api/lumen', foresightDeprecation, foresightApiRoutes);
   app.use('/api/lumen-ai', foresightDeprecation, foresightAIAdvancedRoutes);
-  console.log('✅ Lumen Cortex™ Intelligence API routes mounted (+ legacy /foresight aliases)');
+  console.log('✅ AnA RI™ Intelligence API routes mounted (+ legacy /foresight aliases)');
 } catch (error) {
-  console.error('Failed to mount Lumen Cortex routes:', error);
+  console.error('Failed to mount AnA RI routes:', error);
 }
 
-// Mount Lumen Cortex RAG routes (formerly ForesightAI RAG)
+// Mount AnA RI RAG routes (formerly ForesightAI RAG)
 try {
   const foresightRagRoutes = await import('./routes/foresight-rag-api.js');
   const foresightRagDeprecation = (req: Request, res: Response, next: () => void) => {
@@ -975,9 +975,9 @@ try {
   };
   app.use('/api/foresight/rag', foresightRagDeprecation, foresightRagRoutes.default);
   app.use('/api/lumen/rag', foresightRagDeprecation, foresightRagRoutes.default); // New alias
-  console.log('✅ Lumen Cortex RAG API routes mounted successfully');
+  console.log('✅ AnA RI RAG API routes mounted successfully');
 } catch (error) {
-  console.error('Failed to mount Lumen Cortex RAG routes:', error);
+  console.error('Failed to mount AnA RI RAG routes:', error);
 }
 
 // Mount Biotech AI Intelligence RAG routes
@@ -3344,10 +3344,10 @@ try {
   console.error('❌ Failed to mount Ana Platform Control routes:', error);
 }
 
-// Mount Lumen Cortex Chat routes
+// Mount AnA RI Chat routes
 import chatRoutes from './routes/chat';
 app.use('/api/chat', chatRoutes);
-console.log('✅ Lumen Cortex Chat API routes mounted successfully');
+console.log('✅ AnA RI Chat API routes mounted successfully');
 
 // Mount AI Claims → Binder provenance route
 try {
@@ -6655,9 +6655,9 @@ async function startServer() {
   try {
     const lumenCortexFtRoutes = await import('./routes/lumen-cortex-ft');
     app.use('/api/lumen-cortex-ft', lumenCortexFtRoutes.default);
-    console.log('✅ Lumen Cortex Fine-Tuning routes mounted at /api/lumen-cortex-ft');
+    console.log('✅ AnA RI Fine-Tuning routes mounted at /api/lumen-cortex-ft');
   } catch (error) {
-    console.error('❌ Failed to mount Lumen Cortex FT routes:', error);
+    console.error('❌ Failed to mount AnA RI FT routes:', error);
   }
 
   try {

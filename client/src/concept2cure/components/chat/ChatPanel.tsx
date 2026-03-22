@@ -3,7 +3,7 @@
  *
  * Claude.ai-style chat interface with Lumen.
  * Left panel in the split-screen layout.
- * Now connected to real Lumen Cortex API.
+ * Now connected to real AnA 1.0 RI API.
  */
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -504,7 +504,7 @@ export const ChatPanel: React.FC = () => {
     setIsTyping(true);
 
     try {
-      // Call the actual Lumen Cortex API
+      // Call the actual AnA 1.0 RI API
       const response = await sendMessageAsync({
         message: content,
         threadId: threadId || undefined,

@@ -36,31 +36,10 @@ function ensureGateway() {
   return gateway;
 }
 
-// System prompt for regulatory AI assistant — AnA personality
-const REGULATORY_SYSTEM_PROMPT = `You are AnA — the regulatory intelligence co-pilot at the heart of Concept2Cure. You are not a generic chatbot. You are a named, trusted partner who combines the instincts of a 30-year FDA reviewer with the warmth of the best colleague anyone ever had.
+import { ANA_SYSTEM_PROMPT } from '../services/ana-personality';
 
-## Your Identity
-- **Name**: AnA (Audit & Narrative Assistant)
-- **Voice**: Confident but never arrogant. Precise but never cold. You speak like a senior regulatory strategist who genuinely cares about helping your team succeed.
-- **Personality**: You are the person in the room who has read every guidance document, remembers every precedent, and still makes time to ask how someone's weekend was. You bring calm authority to chaos.
-- **Style**: You lead with the answer, then explain why. You never hedge when you know. When you don't know, you say so directly — and point to who or what does.
-
-## What You Know
-You have deep expertise across FDA (CDER, CBER, CDRH), EMA, PMDA, Health Canada, and 30+ global agencies. You know ICH guidelines cold. You can draft a 510(k) substantial equivalence argument, an IND protocol, a CER, an eCTD module, CMC documentation, or a regulatory strategy memo from memory.
-
-## How You Work
-- **When asked to draft**: You draft. You produce the actual content — not a description of what it should contain. You write regulatory-grade prose immediately.
-- **When asked about strategy**: You give a concrete recommendation with reasoning, cite the relevant guidance, and suggest the next step.
-- **When greeting someone**: You are warm, specific, and proactive. If you know their project, you reference it. You suggest 2-3 concrete things you can help with right now. You never say "How can I help you today?" — you tell them what you can do.
-- **When something is ambiguous**: You use your judgment and regulatory expertise to produce the best output. You don't ask for clarification unless truly necessary.
-- **After every substantive response**: You suggest the logical next action.
-
-## Formatting
-- Clear headers and structure
-- Bullet points for lists
-- **Bold** for key regulatory terms, agency names, and guidance references
-- Cite specific 21 CFR sections, ICH guidelines, FDA guidances, and ISO standards when relevant
-- Keep it readable — you write for busy professionals, not academic journals`;
+// System prompt for regulatory AI assistant — uses canonical AnA personality
+const REGULATORY_SYSTEM_PROMPT = ANA_SYSTEM_PROMPT;
 
 // ── Provenance helpers ─────────────────────────────────────────────────────
 
@@ -216,7 +195,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       } catch (e: any) {
         // ai_threads table might not exist yet — skip check
         if (e?.code !== '42P01')
-          console.warn('[Lumen Cortex] Thread ownership check failed:', e.message);
+          console.warn('[AnA] Thread ownership check failed:', e.message);
       }
     }
 
@@ -230,7 +209,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
         );
       } catch (e: any) {
         if (e?.code !== '42P01') throw e;
-        console.warn('[Lumen Cortex] ai_threads table missing — provenance disabled');
+        console.warn('[AnA] ai_threads table missing — provenance disabled');
       }
     }
 
@@ -245,7 +224,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
         );
       } catch (e: any) {
         if (e?.code !== '42P01')
-          console.warn('[Lumen Cortex] ai_messages insert failed:', e.message);
+          console.warn('[AnA] ai_messages insert failed:', e.message);
       }
     }
 
@@ -263,7 +242,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       const embeddingService = getEmbeddingService(pool);
       // Bail early if org UUID is provided but clearly invalid
       if (orgUuid && !/^[0-9a-f-]{36}$/i.test(orgUuid)) {
-        console.warn('[Lumen Cortex] Invalid org UUID, skipping retrieval');
+        console.warn('[AnA] Invalid org UUID, skipping retrieval');
       } else {
         const searchResults = await embeddingService.searchHybrid(message, 5, 0.7, orgUuid);
         sources = searchResults.map(r => ({
@@ -336,13 +315,13 @@ const sendMessageHandler = async (req: Request, res: Response) => {
             }
           } catch (e: any) {
             if (e?.code !== '42P01')
-              console.warn('[Lumen Cortex] Retrieval persist failed:', e.message);
+              console.warn('[AnA] Retrieval persist failed:', e.message);
           }
         }
       }
     } catch (srcErr: any) {
       // Non-fatal — chat still works, just without grounded evidence
-      console.warn('[Lumen Cortex] Source retrieval failed:', srcErr.message);
+      console.warn('[AnA] Source retrieval failed:', srcErr.message);
     }
 
     // ── STEP 5: BUILD EVIDENCE-GROUNDED PROMPT ─────────────────────────
@@ -388,7 +367,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       ];
 
       console.log(
-        `[Lumen Cortex] Sending through AI Gateway (${sources.length} sources retrieved)...`
+        `[AnA] Sending through AI Gateway (${sources.length} sources retrieved)...`
       );
 
       const gwResponse: GatewayResponse = await gw.route({
@@ -414,10 +393,10 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       latencyMs = gwResponse.latencyMs;
 
       console.log(
-        `[Lumen Cortex] AI Gateway response via ${model} (${latencyMs}ms, req=${gwResponse.requestId})`
+        `[AnA] AI Gateway response via ${model} (${latencyMs}ms, req=${gwResponse.requestId})`
       );
     } catch (gwError: any) {
-      console.error('[Lumen Cortex] AI Gateway call failed:', gwError.message);
+      console.error('[AnA] AI Gateway call failed:', gwError.message);
       return res.status(503).json({
         error: 'AI provider call failed',
         code: 'AI_PROVIDER_UNAVAILABLE',
@@ -461,7 +440,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
         );
       } catch (e: any) {
         if (e?.code !== '42P01')
-          console.warn('[Lumen Cortex] Generation persist failed:', e.message);
+          console.warn('[AnA] Generation persist failed:', e.message);
       }
     }
 
@@ -567,7 +546,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
           });
           continue; // skip fallback below
         } catch (e: any) {
-          if (e?.code !== '42P01') console.warn('[Lumen Cortex] Claim persist failed:', e.message);
+          if (e?.code !== '42P01') console.warn('[AnA] Claim persist failed:', e.message);
         }
       }
 
