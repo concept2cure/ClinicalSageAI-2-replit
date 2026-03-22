@@ -27,7 +27,7 @@ export {
   createReviewThread, addReviewComment,
   searchArtifacts, listTeamMembers,
   listArtifactVersions, runComplianceScan,
-  exportArtifact, compareVersions,
+  exportArtifact, compareVersions, reviewVersionImpact,
   createMilestone, updateMilestone, listMilestones,
   revertToVersion,
   loadUserContext, loadConversationHistory,

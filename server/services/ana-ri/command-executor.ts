@@ -1081,7 +1081,212 @@ export async function compareVersions(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 14. MILESTONES
+// 14. VERSION IMPACT REVIEW (Regulatory Change Consequence Engine)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Review the regulatory impact of changes between two artifact versions.
+ *
+ * This is NOT just a diff. It answers:
+ * - What changed (structural diff via versionDiffService)
+ * - What kind of change (structural, evidentiary, claim, narrative, compliance)
+ * - Why it matters (reviewer sensitivity, challenge risk)
+ * - Whether defensibility improved, weakened, or got complicated
+ * - What to fix next
+ *
+ * Uses: diffText() for raw diff → AI gateway for regulatory reasoning
+ */
+export async function reviewVersionImpact(
+  ctx: CommandContext,
+  params: {
+    projectId: number;
+    artifactId: number;
+    versionA: number;
+    versionB: number;
+    submissionType?: string;
+  }
+): Promise<CommandResult> {
+  try {
+    // 1. Load both versions
+    const versions = await pool.query(
+      `SELECT v.version, v.content, v.change_description, v.created_at,
+              u.name as author
+       FROM concept2cure_artifact_versions v
+       LEFT JOIN users u ON u.id = v.created_by_id
+       WHERE v.artifact_id = $1 AND v.version IN ($2, $3)
+       ORDER BY v.version`,
+      [params.artifactId, params.versionA, params.versionB]
+    );
+
+    if (versions.rows.length < 2) {
+      return { success: false, action: 'review_version_impact', message: `Could not find both versions.` };
+    }
+
+    // Load artifact metadata for context
+    const artifactResult = await pool.query(
+      `SELECT title, ctd_section, status FROM concept2cure_artifacts
+       WHERE id = $1 AND organization_id = $2`,
+      [params.artifactId, ctx.organizationId]
+    );
+    const artifactMeta = artifactResult.rows[0] || {};
+
+    const [older, newer] = versions.rows;
+    const olderContent = older.content || '';
+    const newerContent = newer.content || '';
+
+    if (olderContent === newerContent) {
+      return {
+        success: true,
+        action: 'review_version_impact',
+        data: { identical: true },
+        message: `No changes between versions ${params.versionA} and ${params.versionB}.`,
+      };
+    }
+
+    // 2. Compute structural diff using existing service
+    const { diffText } = await import('../versionDiffService.js');
+    const diff = diffText(olderContent, newerContent);
+
+    // 3. Extract the meaningful changes (added and deleted chunks)
+    const addedChunks = diff.changes
+      .filter(c => c.type === 'add')
+      .map(c => c.content)
+      .join('\n');
+    const deletedChunks = diff.changes
+      .filter(c => c.type === 'delete')
+      .map(c => c.content)
+      .join('\n');
+
+    // 4. Send to AI gateway for regulatory impact analysis
+    const { getGateway } = await import('../ai-gateway/index.js');
+    const { buildAnaRISystemPrompt } = await import('./persona.js');
+
+    let gw;
+    try { gw = getGateway(); } catch { /* gateway unavailable */ }
+
+    if (!gw) {
+      // Fallback: return structural diff without AI reasoning
+      return {
+        success: true,
+        action: 'review_version_impact',
+        data: {
+          diff: { additions: diff.additions, deletions: diff.deletions },
+          aiReasoningAvailable: false,
+        },
+        message: `Diff: +${diff.additions}/-${diff.deletions} lines. AI reasoning unavailable — showing structural diff only.`,
+      };
+    }
+
+    const systemPrompt = buildAnaRISystemPrompt({ userRole: 'ra_lead', intentLens: 'audit' });
+
+    const analysisPrompt = `You are reviewing changes to a regulated document. Analyze the REGULATORY IMPACT of these changes.
+
+## Document Context
+- **Title**: ${artifactMeta.title || 'Unknown'}
+- **CTD Section**: ${artifactMeta.ctd_section || 'Unassigned'}
+- **Submission Type**: ${params.submissionType || 'Not specified'}
+- **Version**: ${older.version} → ${newer.version}
+- **Author**: ${newer.author || 'Unknown'}
+
+## What Was Removed (Version ${older.version})
+${deletedChunks || '(nothing removed)'}
+
+## What Was Added (Version ${newer.version})
+${addedChunks || '(nothing added)'}
+
+## Your Analysis (MANDATORY STRUCTURE)
+
+### Change Classification
+For each significant change, classify it as ONE of:
+- **Structural** — Section reorganization, heading changes, information flow
+- **Evidentiary** — Data references added, removed, or modified
+- **Claim-related** — Efficacy/safety/benefit-risk claims changed
+- **Narrative** — Tone, clarity, persuasion, or prose quality
+- **Compliance-sensitive** — Regulatory references, required language, formatting
+
+### Reviewer Sensitivity Assessment
+For each significant change:
+- Would a reviewer notice this? **[YES/NO]**
+- Would it trigger a question? **[LIKELY/POSSIBLE/UNLIKELY]**
+- What question would they ask?
+
+### Defensibility Impact
+Rate the overall change as ONE of:
+- **STRENGTHENED** — The revision makes the submission more defensible
+- **WEAKENED** — The revision introduces vulnerability
+- **COMPLICATED** — Mixed impact requiring careful handling
+- **NEUTRAL** — No regulatory impact
+
+Explain WHY in 2-3 sentences. Tag each claim as **[KNOWN/INFERRED/MISSING]**.
+
+### Risk Signals
+If the change introduces NEW risks:
+- What reviewer objection could arise?
+- What evidence is now missing that wasn't before?
+- What inconsistency could this create with other sections?
+
+### Recommended Actions
+What should be done BEFORE this version is submitted? Be specific.`;
+
+    const response = await gw.chat({
+      taskType: 'regulatory_review',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: analysisPrompt },
+      ],
+      maxTokens: 4096,
+      temperature: 0.2,
+      routingStrategy: 'quality_optimized',
+    });
+
+    if (!response.content) {
+      return {
+        success: true,
+        action: 'review_version_impact',
+        data: {
+          diff: { additions: diff.additions, deletions: diff.deletions },
+          aiReasoningAvailable: false,
+        },
+        message: `Diff: +${diff.additions}/-${diff.deletions} lines. AI analysis returned empty.`,
+      };
+    }
+
+    // 5. Log the generation event
+    const { logGeneration } = await import('./enforcement.js');
+    logGeneration({
+      timestamp: new Date().toISOString(),
+      route: 'ana-ri/command',
+      action: 'review_version_impact',
+      projectId: params.projectId,
+      organizationId: ctx.organizationId,
+      userId: ctx.userId,
+      artifactCreated: false,
+      anaRiOrchestrated: true,
+      provider: response.provider,
+      model: response.model,
+    });
+
+    return {
+      success: true,
+      action: 'review_version_impact',
+      data: {
+        artifactId: params.artifactId,
+        title: artifactMeta.title,
+        ctdSection: artifactMeta.ctd_section,
+        versionA: { version: older.version, author: older.author, date: older.created_at },
+        versionB: { version: newer.version, author: newer.author, date: newer.created_at },
+        diff: { additions: diff.additions, deletions: diff.deletions },
+        impact: response.content,
+      },
+      message: `Version Impact Review for "${artifactMeta.title}" (v${older.version} → v${newer.version}): +${diff.additions}/-${diff.deletions} lines analyzed.`,
+    };
+  } catch (err: any) {
+    return { success: false, action: 'review_version_impact', message: 'Version impact review failed.', error: err?.message };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 15. MILESTONES
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Create a milestone */
@@ -1290,7 +1495,7 @@ export type CommandName =
   | 'create_review_thread' | 'add_review_comment'
   | 'search_artifacts' | 'list_team_members'
   | 'list_artifact_versions' | 'run_compliance_scan'
-  | 'export_artifact' | 'compare_versions'
+  | 'export_artifact' | 'compare_versions' | 'review_version_impact'
   | 'create_milestone' | 'update_milestone' | 'list_milestones'
   | 'revert_to_version'
   | 'load_user_context' | 'load_conversation_history';
@@ -1325,7 +1530,8 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
   { name: 'search_artifacts', description: 'Search artifacts by content or title', parameters: 'query, projectId?, limit?', example: '"Find all artifacts mentioning hepatotoxicity"' },
   { name: 'list_team_members', description: 'List team members in the organization', parameters: 'none', example: '"Who is on my team?"' },
   { name: 'export_artifact', description: 'Export an artifact to DOCX format', parameters: 'projectId, artifactId, format (docx/pdf)', example: '"Export artifact 12 as a Word document"' },
-  { name: 'compare_versions', description: 'Compare two versions of an artifact (diff)', parameters: 'artifactId, versionA, versionB', example: '"What changed between version 1 and version 3 of artifact 12?"' },
+  { name: 'compare_versions', description: 'Compare two versions of an artifact (structural diff)', parameters: 'artifactId, versionA, versionB', example: '"What changed between version 1 and version 3 of artifact 12?"' },
+  { name: 'review_version_impact', description: 'Analyze the REGULATORY IMPACT of changes between two versions — classifies changes, assesses reviewer sensitivity, rates defensibility', parameters: 'projectId, artifactId, versionA, versionB, submissionType?', example: '"What is the regulatory impact of the changes to the Clinical Overview?"' },
   { name: 'create_milestone', description: 'Create a submission milestone with target date', parameters: 'packageId, title, targetDate?, description?', example: '"Create a milestone for Pre-IND meeting by June 15"' },
   { name: 'update_milestone', description: 'Update a milestone status or details', parameters: 'milestoneId, updates (gateStatus, targetDate, etc.)', example: '"Mark milestone 3 as completed"' },
   { name: 'list_milestones', description: 'List milestones for a submission package', parameters: 'packageId', example: '"Show all milestones for the IND package"' },

@@ -529,6 +529,9 @@ router.post('/execute', async (req: Request, res: Response) => {
       case 'compare_versions':
         result = await executor.compareVersions(ctx, params || {});
         break;
+      case 'review_version_impact':
+        result = await executor.reviewVersionImpact(ctx, params || {});
+        break;
       case 'create_milestone':
         result = await executor.createMilestone(ctx, params || {});
         break;
