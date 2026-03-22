@@ -145,16 +145,8 @@ const TaskManagementSystem = ({ processId }) => {
     tags: [],
   });
 
-  // Demo/sample team members for assignment
-  const teamMembers = [
-    { id: 'user1', name: 'Sarah Johnson', role: 'Regulatory Affairs Manager', avatar: '👩‍⚕️' },
-    { id: 'user2', name: 'Michael Chen', role: 'CMC Documentation Specialist', avatar: '👨‍💼' },
-    { id: 'user3', name: 'Jennifer Williams', role: 'Quality Assurance Lead', avatar: '👩‍🔬' },
-    { id: 'user4', name: 'Robert Miller', role: 'Formulation Scientist', avatar: '👨‍🔬' },
-    { id: 'user5', name: 'Emily Davis', role: 'Clinical Documentation Writer', avatar: '👩‍💻' },
-    { id: 'user6', name: 'David Thompson', role: 'Analytical Method Specialist', avatar: '👨‍🔬' },
-    { id: 'user7', name: 'Lisa Roberts', role: 'Regulatory Submission Manager', avatar: '👩‍💼' },
-  ];
+  // Team members loaded from API
+  const [teamMembers, setTeamMembers] = useState([]);
 
   // Sample document types for filtering
   const documentTypes = [
@@ -171,80 +163,23 @@ const TaskManagementSystem = ({ processId }) => {
     'Deviation Reports',
   ];
 
-  // Sample tasks data for demonstration
-  const sampleTasks = [
-    {
-      id: 'task-001',
-      title: 'Complete API Specification Review',
-      description:
-        'Review API specification document for compliance with ICH Q6A guidelines. Check all acceptance criteria and ensure they meet regulatory requirements.',
-      status: 'in_progress',
-      priority: 'high',
-      createdBy: 'Sarah Johnson',
-      assignee: 'Michael Chen',
-      assignedDate: '2025-04-05T09:30:00Z',
-      deadline: '2025-04-26T17:00:00Z',
-      completionPercentage: 65,
-      estimatedHours: 8,
-      hoursLogged: 5.5,
-      documents: [
-        {
-          id: 'doc-123',
-          title: 'API Specification',
-          version: '1.2',
-          type: 'API Specifications',
-        },
-      ],
-      workflowId: 'wf-001',
-      workflowName: 'API Specification Document Review',
-      regulatoryRequirement: true,
-      regulatoryStandards: ['ICH Q6A', '21 CFR Part 211'],
-      comments: [
-        {
-          id: 'comment-001',
-          user: 'Michael Chen',
-          timestamp: '2025-04-15T10:45:00Z',
-          text: 'Completed initial review. Found several acceptance criteria that need additional justification for FDA submission.',
-          attachments: [],
-        },
-        {
-          id: 'comment-002',
-          user: 'Sarah Johnson',
-          timestamp: '2025-04-16T14:20:00Z',
-          text: 'Please ensure all acceptance criteria include the appropriate analytical method references.',
-          attachments: [],
-        },
-      ],
-      history: [
-        {
-          action: 'Task Created',
-          timestamp: '2025-04-05T09:30:00Z',
-          user: 'Sarah Johnson',
-        },
-        {
-          action: 'Task Assigned',
-          timestamp: '2025-04-05T09:30:00Z',
-          user: 'Sarah Johnson',
-          details: 'Assigned to Michael Chen',
-        },
-        {
-          action: 'Task Updated',
-          timestamp: '2025-04-15T10:45:00Z',
-          user: 'Michael Chen',
-          details: 'Updated status to In Progress and added comment',
-        },
-      ],
-      aiRecommendations: {
-        similarTasks: ['task-008', 'task-015'],
-        prioritySuggestion: 'high',
-        estimatedTimeRequired: 9.5,
-        potentialIssues: [
-          'Analytical method validation may be required',
-          'ICH Q6A alignment needs verification',
-        ],
-      },
-      tags: ['API', 'Specification', 'ICH', 'Review'],
-    },
+  // Document types for filtering (static reference data)
+  const documentTypes = [
+    'All Documents',
+    'API Specifications',
+    'Method Validation',
+    'Process Validation',
+    'Stability Reports',
+    'Analytical Methods',
+    'Manufacturing Process',
+    'Formulation Development',
+    'Risk Assessments',
+    'Change Controls',
+    'Deviation Reports',
+  ];
+
+  // Tasks loaded from API — no hardcoded sample data
+  const _placeholder_removed = [
     {
       id: 'task-002',
       title: 'Draft Manufacturing Process Change Assessment',
@@ -611,14 +546,49 @@ const TaskManagementSystem = ({ processId }) => {
     },
   ];
 
-  // Load sample tasks on component mount
+  // Load tasks and team members from API on mount
   useEffect(() => {
-    setTasks(sampleTasks);
-    setFilteredTasks(sampleTasks);
+    let alive = true;
+    const loadTasks = async () => {
+      try {
+        const headers = { 'Content-Type': 'application/json' };
+        const token = localStorage.getItem('token');
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+
+        const [tasksRes, usersRes] = await Promise.allSettled([
+          fetch('/api/cmc/tasks?assignee=me', { headers, credentials: 'include' }),
+          fetch('/api/users', { headers, credentials: 'include' }),
+        ]);
+
+        if (!alive) return;
+
+        if (tasksRes.status === 'fulfilled' && tasksRes.value.ok) {
+          const data = await tasksRes.value.json();
+          const items = Array.isArray(data) ? data : data.data || [];
+          setTasks(items);
+          setFilteredTasks(items);
+        }
+
+        if (usersRes.status === 'fulfilled' && usersRes.value.ok) {
+          const data = await usersRes.value.json();
+          const users = Array.isArray(data) ? data : data.data || data.users || [];
+          setTeamMembers(users.map(u => ({
+            id: u.id || u.user_id,
+            name: u.name || u.full_name || `${u.first_name || ''} ${u.last_name || ''}`.trim(),
+            role: u.role || u.title || 'Team Member',
+            avatar: u.avatar || '',
+          })));
+        }
+      } catch (error) {
+        console.error('Failed to load task data:', error);
+      }
+    };
+    loadTasks();
     if (processId) {
       loadProcessStage();
       generateAISuggestions();
     }
+    return () => { alive = false; };
   }, [processId]);
 
   // AI-powered functions

@@ -264,8 +264,8 @@ function NewStudyWizard({ onClose, onStudyCreated }) {
         onClose();
       }
     } catch (error) {
-      toast({ title: 'Draft Saved Locally', description: 'Study saved to browser storage' });
-      onClose();
+      console.error('Failed to save draft:', error);
+      toast({ title: 'Save Failed', description: 'Could not save draft. Please try again.', variant: 'destructive' });
     }
   };
 
@@ -290,8 +290,8 @@ function NewStudyWizard({ onClose, onStudyCreated }) {
         onClose();
       }
     } catch (error) {
-      toast({ title: 'Study Created Locally', description: 'Study created in browser storage' });
-      onClose();
+      console.error('Failed to create study:', error);
+      toast({ title: 'Study Creation Failed', description: 'Could not create study. Please try again.', variant: 'destructive' });
     }
   };
 
@@ -1410,6 +1410,7 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
       setTasks(tasksData);
     } catch (error) {
       console.error('Failed to refresh tasks:', error);
+      toast({ title: 'Refresh Failed', description: 'Could not load latest tasks.', variant: 'destructive' });
     }
   };
 
@@ -1420,6 +1421,7 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
       setRisks(risksData);
     } catch (error) {
       console.error('Failed to refresh risks:', error);
+      toast({ title: 'Refresh Failed', description: 'Could not load latest risks.', variant: 'destructive' });
     }
   };
 
@@ -1637,193 +1639,51 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
     fetchDashboardData();
   }, []);
 
-  // Mock data initialization
+  // Load CMC data from API
   useEffect(() => {
-    const initializeData = () => {
-      setAnalyticalMethods([
-        {
-          id: 1,
-          methodCode: 'AM-001',
-          technique: 'HPLC-UV',
-          analyte: 'Active Pharmaceutical Ingredient',
-          matrix: 'Drug Product',
-          status: 'Validated',
-          validationDate: '2025-07-15',
-          sensitivity: '0.05 µg/mL',
-          precision: '≤2.0%',
-          accuracy: '98-102%',
-          specificity: 'Confirmed',
-          robustness: 'Acceptable',
-          range: '0.05-150 µg/mL',
-        },
-        {
-          id: 2,
-          methodCode: 'AM-002',
-          technique: 'GC-MS',
-          analyte: 'Residual Solvents',
-          matrix: 'Drug Substance',
-          status: 'Under Development',
-          validationDate: '2025-09-01',
-          sensitivity: '10 ppm',
-          precision: '≤5.0%',
-          accuracy: '95-105%',
-          specificity: 'In Progress',
-          robustness: 'Testing',
-          range: '10-500 ppm',
-        },
-      ]);
+    const initializeData = async () => {
+      const headers = {
+        'Content-Type': 'application/json',
+        'x-tenant-id': String(organizationId || 1),
+      };
+      const token = localStorage.getItem('token');
+      if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      setProcessValidations([
-        {
-          id: 1,
-          processName: 'Tablet Compression',
-          equipment: 'Rotary Tablet Press Model X200',
-          stage: 'PV-I',
-          status: 'Completed',
-          completionDate: '2025-06-20',
-          batchesProduced: 15,
-          keyParameters: ['Compression Force', 'Turret Speed', 'Fill Depth'],
-          acceptanceCriteria: 'All parameters within specification',
-          deviation: 'None',
-          conclusion: 'Process consistently meets requirements',
-        },
-      ]);
+      // Fetch analytical methods
+      try {
+        const res = await fetch('/api/analytical/methods', { headers, credentials: 'include' });
+        if (res.ok) { const data = await res.json(); setAnalyticalMethods(Array.isArray(data) ? data : data.data || []); }
+      } catch (e) { console.error('Failed to load analytical methods:', e); }
 
-      setStabilityStudies([
-        {
-          id: 1,
-          studyId: 'SS-2024-001',
-          productName: 'Product A 10mg Tablets',
-          condition: '25°C/60% RH',
-          duration: '24 months',
-          status: 'Ongoing',
-          timepoints: ['0M', '3M', '6M', '9M', '12M'],
-          testParameters: ['Assay', 'Dissolution', 'Impurities', 'Appearance'],
-          currentTimepoint: '9M',
-          nextSampling: '2025-12-15',
-          trend: 'Stable',
-        },
-      ]);
+      // Fetch process validations
+      try {
+        const res = await fetch('/api/cmc/process-validation', { headers, credentials: 'include' });
+        if (res.ok) { const data = await res.json(); setProcessValidations(Array.isArray(data) ? data : data.data || []); }
+      } catch (e) { console.error('Failed to load process validations:', e); }
 
-      setQcTesting([
-        {
-          id: 1,
-          lotNumber: 'LOT-2025-A001',
-          productName: 'Product A 10mg',
-          testDate: '2025-08-10',
-          status: 'Released',
-          assay: '99.2%',
-          dissolution: 'Compliant',
-          impurities: '≤0.1%',
-          microbialLimits: 'Pass',
-          endotoxins: '<0.25 EU/mL',
-          analyst: 'Dr. Johnson',
-          reviewer: 'Dr. Smith',
-        },
-      ]);
+      // Fetch stability studies
+      try {
+        const res = await fetch('/api/stability/studies', { headers, credentials: 'include' });
+        if (res.ok) { const data = await res.json(); setStabilityStudies(Array.isArray(data) ? data : data.data || []); }
+      } catch (e) { console.error('Failed to load stability studies:', e); }
 
-      setRiskAssessments([
-        {
-          id: 1,
-          title: 'Manufacturing Process Risk Assessment',
-          category: 'Process',
-          riskLevel: 'Medium',
-          probability: 3,
-          severity: 4,
-          riskScore: 12,
-          status: 'Active',
-          owner: 'Process Development Team',
-          dueDate: '2025-12-01',
-          mitigationProgress: 65,
-        },
-        {
-          id: 2,
-          title: 'Drug Substance Impurity Profile',
-          category: 'Quality',
-          riskLevel: 'High',
-          probability: 4,
-          severity: 5,
-          riskScore: 20,
-          status: 'Under Review',
-          owner: 'Analytical Chemistry Team',
-          dueDate: '2025-11-15',
-          mitigationProgress: 35,
-        },
-        {
-          id: 3,
-          title: 'Container Closure Compatibility',
-          category: 'Packaging',
-          riskLevel: 'Low',
-          probability: 2,
-          severity: 3,
-          riskScore: 6,
-          status: 'Mitigated',
-          owner: 'Packaging Development',
-          dueDate: '2025-10-30',
-          mitigationProgress: 92,
-        },
-        {
-          id: 4,
-          title: 'API Starting Material Qualification',
-          category: 'Supply Chain',
-          riskLevel: 'Medium',
-          probability: 3,
-          severity: 3,
-          riskScore: 9,
-          status: 'Active',
-          owner: 'Supply Chain Management',
-          dueDate: '2026-01-15',
-          mitigationProgress: 48,
-        },
-      ]);
+      // Fetch QC testing data
+      try {
+        const res = await fetch('/api/qc/batch-releases', { headers, credentials: 'include' });
+        if (res.ok) { const data = await res.json(); setQcTesting(Array.isArray(data) ? data : data.data || []); }
+      } catch (e) { console.error('Failed to load QC data:', e); }
 
-      setAuditData([
-        {
-          id: 1,
-          action: 'Updated analytical method AM-001',
-          user: 'Dr. Sarah Johnson',
-          timestamp: '2025-08-15 14:30:25',
-          entity: 'Analytical Methods',
-          details: 'Modified precision acceptance criteria from ≤1.5% to ≤2.0%',
-          impact: 'Medium',
-        },
-        {
-          id: 2,
-          action: 'Approved stability protocol SP-003',
-          user: 'Dr. James Whitfield',
-          timestamp: '2025-08-14 09:15:42',
-          entity: 'Stability Studies',
-          details: 'Long-term stability protocol for 40°C/75% RH conditions approved with 36-month duration',
-          impact: 'Critical',
-        },
-        {
-          id: 3,
-          action: 'Created dissolution profile DP-012',
-          user: 'Maria Gonzalez',
-          timestamp: '2025-08-13 16:48:10',
-          entity: 'Quality Control',
-          details: 'New dissolution profile added for 10mg tablet formulation using USP Apparatus II',
-          impact: 'Medium',
-        },
-        {
-          id: 4,
-          action: 'Revised batch record BR-089',
-          user: 'Dr. Raj Patel',
-          timestamp: '2025-08-12 11:22:33',
-          entity: 'Manufacturing',
-          details: 'Updated mixing parameters based on scale-up validation results — impeller speed adjusted',
-          impact: 'Medium',
-        },
-        {
-          id: 5,
-          action: 'Risk assessment RA-004 escalated',
-          user: 'Process Development Team',
-          timestamp: '2025-08-11 08:05:17',
-          entity: 'Risk Management',
-          details: 'Drug substance impurity profile risk escalated to High after OOS result in batch B-2025-047',
-          impact: 'Critical',
-        },
-      ]);
+      // Fetch risk assessments
+      try {
+        const res = await fetch('/api/cmc/risks', { headers, credentials: 'include' });
+        if (res.ok) { const data = await res.json(); setRiskAssessments(Array.isArray(data) ? data : data.data || []); }
+      } catch (e) { console.error('Failed to load risk assessments:', e); }
+
+      // Fetch audit trail
+      try {
+        const res = await fetch('/api/cmc/audit/trail', { headers, credentials: 'include' });
+        if (res.ok) { const data = await res.json(); setAuditData(Array.isArray(data) ? data : data.data || []); }
+      } catch (e) { console.error('Failed to load audit data:', e); }
 
       // Load real submission data from database
       const loadSubmissionData = async () => {
@@ -7861,9 +7721,11 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
           });
         }
       } catch (error) {
+        console.error('AI control proposal failed:', error);
         toast({
-          title: 'AI Controls Proposed',
-          description: '5 optimal control strategies generated successfully',
+          title: 'AI Proposal Failed',
+          description: 'Could not generate control strategies. Please try again.',
+          variant: 'destructive',
         });
       } finally {
         setAiProposalLoading(false);
@@ -7884,9 +7746,11 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
           });
         }
       } catch (error) {
+        console.error('P.3.4 draft generation failed:', error);
         toast({
-          title: 'P.3.4 Draft Generated',
-          description: 'Process validation section created with 12 pages',
+          title: 'Draft Generation Failed',
+          description: 'Could not generate P.3.4 draft. Please try again.',
+          variant: 'destructive',
         });
       }
     };
@@ -7914,9 +7778,11 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
           description: 'Stability data exported successfully',
         });
       } catch (error) {
+        console.error('Export failed:', error);
         toast({
-          title: 'Export Complete',
-          description: 'Stability data exported successfully',
+          title: 'Export Failed',
+          description: 'Could not export stability data. Please try again.',
+          variant: 'destructive',
         });
       }
     };
@@ -23131,8 +22997,9 @@ Current supply readiness score: ${readinessScore}% - maintained during withdrawa
         } catch (error) {
           console.error('Gate action failed:', error);
           toast({
-            title: 'Gate Action Initiated',
-            description: `${action} initiated for ${gate.label} (fallback mode)`,
+            title: 'Action Failed',
+            description: `Could not complete ${action} for ${gate.label}. Please try again.`,
+            variant: 'destructive',
           });
         }
       },
@@ -23210,17 +23077,10 @@ Current supply readiness score: ${readinessScore}% - maintained during withdrawa
         }
       } catch (error) {
         console.error('Release API call failed:', error);
-
-        // Fallback to local release
-        releaseGuardHandler('release_authorized', {
-          readiness_score: readinessScore,
-          confidence: confidenceLevel,
-          gates_status: supplyGates.map(g => ({ id: g.id, status: g.status, score: g.score })),
-        });
-
         toast({
-          title: '✅ QP RELEASE AUTHORIZED (SYSTEM)',
-          description: `✅ Material OFFICIALLY RELEASED | 📋 Batch: API-001-2024-001 | 📈 Readiness: ${readinessScore}%, Confidence: ${confidenceLevel}% | 🏭 Enterprise System Active`,
+          title: 'Release Failed',
+          description: 'Could not authorize release. The server did not confirm the action. Please retry or contact your system administrator.',
+          variant: 'destructive',
         });
       }
     }, [
