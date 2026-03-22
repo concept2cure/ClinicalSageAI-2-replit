@@ -169,14 +169,16 @@ router.post('/chat', async (req: Request, res: Response) => {
 
     // Persist message and response if we have org context
     let threadId = thread_id;
+    let persistenceFailed = false;
     if (orgId) {
       try {
-        const thread = await getOrCreateThread(orgId, userId, threadId);
-        threadId = thread.id;
-        await saveMessage(threadId, 'user', message, orgId, userId);
-        await saveMessage(threadId, 'assistant', response.content, orgId);
+        // getOrCreateThread(threadId, userId?, prefix?) — returns thread ID string
+        threadId = await getOrCreateThread(thread_id || null, typeof userId === 'number' ? userId : undefined, 'ana-ri');
+        await saveMessage(threadId, 'user', message);
+        await saveMessage(threadId, 'assistant', response.content);
       } catch (e: any) {
-        console.warn('[AnA RI] Thread persistence failed:', e?.message);
+        console.error('[AnA RI] Thread persistence failed:', e?.message);
+        persistenceFailed = true;
       }
     }
 
@@ -225,8 +227,16 @@ router.post('/generate', async (req: Request, res: Response) => {
       intent_lens,
     } = req.body;
 
-    if (!action_type || typeof action_type !== 'string') {
-      return res.status(400).json({ error: 'action_type is required', code: 'INVALID_ACTION' });
+    const VALID_ACTIONS = [
+      'risk_memo', 'deficiency_preemption_memo', 'evidence_memo',
+      'strategy_note', 'reviewer_question_brief', 'rewritten_section',
+      'revised_artifact', 'attach_to_dossier',
+    ];
+    if (!action_type || typeof action_type !== 'string' || !VALID_ACTIONS.includes(action_type)) {
+      return res.status(400).json({
+        error: `Invalid action_type. Must be one of: ${VALID_ACTIONS.join(', ')}`,
+        code: 'INVALID_ACTION',
+      });
     }
 
     if (!conversation_context || !Array.isArray(conversation_context) || conversation_context.length === 0) {

@@ -49,7 +49,11 @@ export interface ArtifactGenerationResult {
   artifactId?: number;
   /** Whether this is a new artifact or update */
   isNew?: boolean;
-  /** Error message if failed */
+  /** Whether the artifact was persisted to DB */
+  persisted?: boolean;
+  /** Persistence error if content was generated but DB write failed */
+  persistenceError?: string;
+  /** Error message if generation itself failed */
   error?: string;
   /** AI provider/model used */
   provider?: string;
@@ -370,8 +374,9 @@ export async function generateArtifact(
     { role: 'system', content: systemPrompt },
   ];
 
-  // Include conversation context (last 15 messages for artifact generation)
-  for (const msg of conversationContext.slice(-15)) {
+  // Include conversation context (last 20 messages — matches /chat endpoint)
+  const usedContext = conversationContext.slice(-20);
+  for (const msg of usedContext) {
     messages.push({ role: msg.role, content: msg.content });
   }
 
@@ -391,10 +396,17 @@ export async function generateArtifact(
 
   let response;
   try {
+    // Per-action token budgets — revised_artifact and risk_memo need more room
+    const TOKEN_BUDGETS: Partial<Record<DocumentActionType, number>> = {
+      revised_artifact: 12000,
+      risk_memo: 10000,
+    };
+    const maxTokens = TOKEN_BUDGETS[actionType] || 8192;
+
     response = await gateway.chat({
       taskType: 'document_drafting',
       messages,
-      maxTokens: 8192,
+      maxTokens,
       temperature: 0.2,
       routingStrategy: 'quality_optimized',
     });
@@ -416,6 +428,7 @@ export async function generateArtifact(
 
   // 5. Persist as governed artifact
   let artifactResult: TagArtifactResult | undefined;
+  let persistenceError: string | undefined;
   try {
     const tagParams: TagArtifactParams = {
       projectId,
@@ -431,16 +444,17 @@ export async function generateArtifact(
         anaRiIntentLens: intentLens || 'auto',
         anaRiUserRole: userRole || 'general',
         generatedAt: new Date().toISOString(),
-        aiProvider: response.provider,
-        aiModel: response.model,
-        conversationLength: conversationContext.length,
+        aiProvider: response.provider || 'unknown',
+        aiModel: response.model || 'unknown',
+        conversationMessagesUsed: usedContext.length,
+        conversationMessagesTotal: conversationContext.length,
       },
     };
 
     artifactResult = await tagArtifact(tagParams);
   } catch (err: any) {
-    // Artifact persistence failed — still return the content
     console.error('[AnA RI] Artifact persistence failed:', err?.message);
+    persistenceError = err?.message || 'Unknown persistence error';
   }
 
   return {
@@ -449,8 +463,10 @@ export async function generateArtifact(
     title: artifactTitle,
     artifactId: artifactResult?.artifactId,
     isNew: artifactResult?.isNew,
-    provider: response.provider,
-    model: response.model,
+    persisted: !!artifactResult,
+    persistenceError,
+    provider: response.provider || 'unknown',
+    model: response.model || 'unknown',
   };
 }
 

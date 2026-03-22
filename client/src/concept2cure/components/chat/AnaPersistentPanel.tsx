@@ -727,7 +727,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               </div>
               <textarea ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)} placeholder="Message AnA..." rows={1} className="flex-1 resize-none bg-transparent border-none outline-none text-[#141413] placeholder:text-[#B0AEA5] text-sm leading-6 min-h-[24px] max-h-[120px]" />
               {hasMessages && (
-                <button onClick={() => setMessages([])} className="flex-shrink-0 p-1.5 text-[#B0AEA5] hover:text-[#6B6962] rounded-lg transition-colors" title="New thread">
+                <button onClick={() => { setMessages([]); setLastOrchestration(null); }} className="flex-shrink-0 p-1.5 text-[#B0AEA5] hover:text-[#6B6962] rounded-lg transition-colors" title="New thread">
                   <RotateCcw className="w-3.5 h-3.5" />
                 </button>
               )}
@@ -885,7 +885,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                               .map(action => (
                                 <button
                                   key={action.type}
+                                  disabled={isThinking}
                                   onClick={async () => {
+                                    if (isThinking) return;
                                     setIsThinking(true);
                                     setMessages(prev => [...prev, {
                                       id: `u-${Date.now()}`,
@@ -899,39 +901,44 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                         headers: { 'Content-Type': 'application/json' },
                                         body: JSON.stringify({
                                           action_type: action.type,
-                                          conversation_context: messages.slice(-15).map(m => ({
+                                          conversation_context: messages.slice(-20).map(m => ({
                                             role: m.role,
                                             content: m.content,
                                           })),
-                                          project_id: contextProfile?.projectId || null,
+                                          project_id: contextProfile?.projectId || undefined,
                                           user_role: contextProfile?.userRole || undefined,
                                           intent_lens: intentLens !== 'auto' ? intentLens : undefined,
                                         }),
                                       });
                                       if (res.ok) {
                                         const data = await res.json();
+                                        const persistNote = data.artifactId
+                                          ? `\n\n---\n**Governed artifact created** — ID: ${data.artifactId} | Status: Draft | ${data.isNew ? 'New document' : 'Updated existing'}`
+                                          : data.persisted === false
+                                            ? '\n\n---\n**Note:** Content generated but artifact persistence failed. Copy this content manually.'
+                                            : '';
                                         setMessages(prev => [...prev, {
                                           id: `a-${Date.now()}`,
                                           role: 'assistant',
-                                          content: data.content + (data.artifactId
-                                            ? `\n\n---\n**Governed artifact created** — ID: ${data.artifactId} | Status: Draft | ${data.isNew ? 'New document' : 'Updated existing'}`
-                                            : ''),
+                                          content: data.content + persistNote,
                                           timestamp: new Date(),
                                         }]);
-                                      } else {
-                                        // Fallback: send as chat prompt
                                         setIsThinking(false);
+                                      } else {
+                                        // Fallback: send as chat prompt (handleSend manages isThinking)
                                         handleSend(`Please generate a ${action.label.toLowerCase()} based on our conversation above.`);
-                                        return;
                                       }
                                     } catch {
-                                      setIsThinking(false);
+                                      // Fallback: send as chat prompt (handleSend manages isThinking)
                                       handleSend(`Please generate a ${action.label.toLowerCase()} based on our conversation above.`);
-                                      return;
                                     }
-                                    setIsThinking(false);
                                   }}
-                                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-[#E8E6DC] text-[#6B6962] hover:bg-[#FAF9F5] hover:border-[#D8D5CA] hover:text-[#4D4B45] transition-colors"
+                                  className={cn(
+                                    "inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-colors",
+                                    isThinking
+                                      ? "border-[#E8E6DC] text-[#D8D5CA] cursor-not-allowed"
+                                      : "border-[#E8E6DC] text-[#6B6962] hover:bg-[#FAF9F5] hover:border-[#D8D5CA] hover:text-[#4D4B45]"
+                                  )}
                                 >
                                   {action.icon}
                                   {action.label}
@@ -985,7 +992,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           {hasMessages && (
             <div className="flex justify-center mb-2">
               <button
-                onClick={() => setMessages([])}
+                onClick={() => { setMessages([]); setLastOrchestration(null); }}
                 className="flex items-center gap-1.5 px-3 py-1 text-xs text-[#B0AEA5] hover:text-[#6B6962] hover:bg-[#F5F4EF] rounded-full transition-colors"
               >
                 <RotateCcw className="w-3 h-3" />
@@ -1031,7 +1038,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 <div className="absolute bottom-full left-0 mb-1.5 w-56 bg-white rounded-xl border border-[#E8E6DC] shadow-lg py-1 z-50">
                   <button
                     type="button"
-                    onClick={() => { setChatMode('standard'); setShowModeDropdown(false); }}
+                    onClick={() => { setChatMode('standard'); setIntentLens('auto'); setShowModeDropdown(false); }}
                     className={cn(
                       'w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-[#FAF9F5] transition-colors',
                       chatMode === 'standard' && 'bg-[#FAF9F5]'

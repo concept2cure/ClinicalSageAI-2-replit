@@ -227,7 +227,7 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
 
   // 8. Inject conversation continuity context
   if (input.conversationHistory && input.conversationHistory.length > 0) {
-    const continuityContext = buildContinuityContext(input.conversationHistory);
+    const continuityContext = buildContinuityContext(input.conversationHistory, detectedSubmissionType);
     if (continuityContext) {
       systemPrompt += '\n\n' + continuityContext;
     }
@@ -292,19 +292,24 @@ function getSuggestedActions(
 /**
  * Extract working context from conversation history to maintain short-horizon continuity.
  * Prevents AnA from acting memoryless inside an active thread.
+ *
+ * @param currentSubmissionType - The submission type already detected from the current message,
+ *   so we don't inject a conflicting one from history.
  */
 function buildContinuityContext(
-  history: Array<{ role: 'user' | 'assistant'; content: string }>
+  history: Array<{ role: 'user' | 'assistant'; content: string }>,
+  currentSubmissionType: SubmissionType | null
 ): string | null {
   if (history.length < 2) return null;
 
   const lines: string[] = ['## CONVERSATION CONTINUITY'];
 
-  // Extract the active document/section under discussion
-  const allText = history.map(m => m.content).join(' ');
+  // Only look at recent messages (last 6) to avoid noise from old context
+  const recentHistory = history.slice(-6);
 
-  // Detect active document or section
-  const sectionMatches = allText.match(/(?:Section|Module|Chapter)\s+[\d.]+[A-Za-z]?(?:\s*[-–:]\s*[^\n.]{3,60})?/gi);
+  // Extract the active document/section under discussion from recent messages only
+  const recentText = recentHistory.map(m => m.content).join(' ');
+  const sectionMatches = recentText.match(/(?:Section|Module|Chapter)\s+[\d.]+[A-Za-z]?(?:\s*[-–:]\s*[^\n.]{3,60})?/gi);
   if (sectionMatches) {
     const uniqueSections = [...new Set(sectionMatches.map(s => s.trim()))].slice(0, 3);
     lines.push('');
@@ -313,21 +318,22 @@ function buildContinuityContext(
   }
 
   // Detect active concern themes from recent assistant messages
-  const recentAssistant = history
+  // Use narrower patterns that require problem-context, not just mention
+  const recentAssistant = recentHistory
     .filter(m => m.role === 'assistant')
-    .slice(-3)
+    .slice(-2)
     .map(m => m.content);
 
   const concerns: string[] = [];
   const concernPatterns: Array<{ pattern: RegExp; label: string }> = [
-    { pattern: /inadequate|insufficient|incomplete|missing/i, label: 'Evidence adequacy' },
-    { pattern: /safety signal|adverse event|toxicity/i, label: 'Safety concerns' },
-    { pattern: /endpoint|efficacy|clinical benefit/i, label: 'Efficacy/endpoint defensibility' },
-    { pattern: /specification|process validation|manufacturing/i, label: 'CMC/manufacturing quality' },
-    { pattern: /predicate|substantial equivalence/i, label: 'Device equivalence' },
-    { pattern: /labeling|indication|claim/i, label: 'Labeling/claims' },
-    { pattern: /statistical|multiplicity|sample size/i, label: 'Statistical rigor' },
-    { pattern: /timeline|milestone|delay/i, label: 'Timeline/feasibility' },
+    // Require problem-indicating context words alongside domain terms
+    { pattern: /(?:inadequate|insufficient|incomplete|missing|weak|deficient)\s+\w*\s*(?:evidence|data|support|justification)/i, label: 'Evidence adequacy' },
+    { pattern: /safety signal|adverse event.*(?:concern|risk|unresolved)|toxicity.*(?:finding|signal)/i, label: 'Safety concerns' },
+    { pattern: /endpoint.*(?:weak|inadequate|not.*justified|concern)|efficacy.*(?:insufficient|marginal)/i, label: 'Efficacy/endpoint defensibility' },
+    { pattern: /(?:process validation|manufacturing).*(?:insufficient|inadequate|gap)|specification.*(?:not.*justified|weak)/i, label: 'CMC/manufacturing quality' },
+    { pattern: /(?:predicate|equivalence).*(?:inadequate|not.*demonstrated|weak)/i, label: 'Device equivalence' },
+    { pattern: /(?:labeling|claim).*(?:unsupported|overstate|not.*reflect)/i, label: 'Labeling/claims' },
+    { pattern: /(?:statistical|multiplicity|sample size).*(?:inadequate|concern|not.*controlled)/i, label: 'Statistical rigor' },
   ];
 
   for (const { pattern, label } of concernPatterns) {
@@ -339,16 +345,16 @@ function buildContinuityContext(
   if (concerns.length > 0) {
     lines.push('');
     lines.push('**Active Concern Themes:**');
-    concerns.slice(0, 5).forEach(c => lines.push(`- ${c}`));
+    concerns.slice(0, 4).forEach(c => lines.push(`- ${c}`));
   }
 
-  // Detect any previously recommended actions that the user might be following up on
+  // Detect any previously recommended actions from the last assistant message only
   const lastAssistant = recentAssistant[recentAssistant.length - 1] || '';
   const actionMentions: string[] = [];
-  if (/risk memo|risk assessment/i.test(lastAssistant)) actionMentions.push('Risk assessment in progress');
-  if (/deficiency|preemption/i.test(lastAssistant)) actionMentions.push('Deficiency preemption analysis');
-  if (/rewrite|revise|improve/i.test(lastAssistant)) actionMentions.push('Document improvement');
-  if (/strategy|pathway/i.test(lastAssistant)) actionMentions.push('Strategy development');
+  if (/(?:create|generate).*risk memo|risk assessment.*(?:recommend|suggest)/i.test(lastAssistant)) actionMentions.push('Risk assessment in progress');
+  if (/(?:create|generate).*deficiency|preemption.*memo/i.test(lastAssistant)) actionMentions.push('Deficiency preemption analysis');
+  if (/(?:rewrite|revise).*(?:section|document|text)/i.test(lastAssistant)) actionMentions.push('Document improvement');
+  if (/(?:strategy|pathway).*(?:recommend|note|assessment)/i.test(lastAssistant)) actionMentions.push('Strategy development');
 
   if (actionMentions.length > 0) {
     lines.push('');
@@ -356,11 +362,14 @@ function buildContinuityContext(
     actionMentions.slice(0, 3).forEach(a => lines.push(`- ${a}`));
   }
 
-  // Detect submission type from history if not caught in current message
-  const histSubmission = detectSubmissionType(allText);
-  if (histSubmission) {
-    lines.push('');
-    lines.push(`**Submission Context (from conversation):** ${histSubmission.toUpperCase()}`);
+  // Only inject historical submission type if no current detection exists
+  // This prevents conflicts between deficiency context (built from current) and continuity
+  if (!currentSubmissionType) {
+    const histSubmission = detectSubmissionType(recentText);
+    if (histSubmission) {
+      lines.push('');
+      lines.push(`**Submission Context (from conversation):** ${histSubmission.toUpperCase()}`);
+    }
   }
 
   lines.push('');

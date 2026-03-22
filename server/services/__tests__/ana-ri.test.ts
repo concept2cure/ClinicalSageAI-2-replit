@@ -137,11 +137,38 @@ describe('AnA RI Orchestrator', () => {
         message: 'What about the safety signal?',
         conversationHistory: [
           { role: 'user', content: 'Review Section 2.7.4 of the Clinical Overview' },
-          { role: 'assistant', content: 'The safety signal for hepatotoxicity needs further characterization. The adverse event rate is higher than background.' },
+          { role: 'assistant', content: 'The safety signal for hepatotoxicity is an unresolved adverse event concern. The adverse event rate is higher than background.' },
         ],
       });
       expect(result.systemPrompt).toContain('CONVERSATION CONTINUITY');
       expect(result.systemPrompt).toContain('Safety concerns');
+    });
+
+    it('continuity context does not inject conflicting submission type', () => {
+      const result = orchestrate({
+        message: 'Review this NDA submission',
+        conversationHistory: [
+          { role: 'user', content: 'We were discussing the IND last time' },
+          { role: 'assistant', content: 'The IND application has several issues.' },
+        ],
+      });
+      // Current message detects NDA, so continuity should NOT inject IND
+      expect(result.detectedSubmissionType).toBe('nda');
+      // Should not contain IND submission context from history
+      expect(result.systemPrompt).not.toContain('Submission Context (from conversation): IND');
+    });
+
+    it('continuity concern patterns require problem context, not just mention', () => {
+      const result = orchestrate({
+        message: 'Continue',
+        conversationHistory: [
+          { role: 'user', content: 'Tell me about endpoints' },
+          { role: 'assistant', content: 'The primary efficacy endpoint is well-validated and the sample size is adequate.' },
+        ],
+      });
+      // Positive mentions of "endpoint" and "sample size" should NOT trigger concern themes
+      expect(result.systemPrompt).not.toContain('Efficacy/endpoint defensibility');
+      expect(result.systemPrompt).not.toContain('Statistical rigor');
     });
 
     it('suggested actions match intent lens', () => {
@@ -392,5 +419,108 @@ describe('AnA RI Persona', () => {
 
     const autoPrompt = buildAnaRISystemPrompt({ intentLens: 'auto' });
     expect(autoPrompt).not.toContain('ACTIVE INTENT LENS');
+  });
+});
+
+// ── Edge Case Tests ──────────────────────────────────────────────────────────
+
+describe('AnA RI Edge Cases', () => {
+  describe('intent detection edge cases', () => {
+    it('handles empty string without crashing', () => {
+      const result = detectIntent('');
+      expect(result.lens).toBe('auto');
+      expect(result.confidence).toBe(0);
+    });
+
+    it('handles very long messages', () => {
+      const longMessage = 'audit '.repeat(1000);
+      const result = detectIntent(longMessage);
+      expect(result.lens).toBe('audit');
+    });
+
+    it('resolves ties deterministically — highest score wins', () => {
+      // "Fix the deficiency gap" matches both audit (gap, deficiency) and improve (fix)
+      // audit gets 2 matches, improve gets 1 — audit should win
+      const result = detectIntent('Fix the deficiency gap in the submission');
+      expect(result.lens).toBe('audit');
+    });
+  });
+
+  describe('submission type edge cases', () => {
+    it('returns null for empty string', () => {
+      expect(detectSubmissionType('')).toBeNull();
+    });
+
+    it('detects de novo from message', () => {
+      expect(detectSubmissionType('This is a de novo classification request')).toBe('de_novo');
+    });
+
+    it('detects PMA from message', () => {
+      expect(detectSubmissionType('PMA premarket approval submission')).toBe('pma');
+    });
+  });
+
+  describe('orchestrator edge cases', () => {
+    it('handles empty conversation history', () => {
+      const result = orchestrate({
+        message: 'Hello',
+        conversationHistory: [],
+      });
+      // Should not inject continuity with empty history
+      expect(result.systemPrompt).not.toContain('CONVERSATION CONTINUITY');
+    });
+
+    it('handles single-message history', () => {
+      const result = orchestrate({
+        message: 'Continue',
+        conversationHistory: [
+          { role: 'user', content: 'First message' },
+        ],
+      });
+      // buildContinuityContext requires >= 2 messages
+      expect(result.systemPrompt).not.toContain('CONVERSATION CONTINUITY');
+    });
+  });
+
+  describe('evaluation edge cases', () => {
+    it('handles empty response', () => {
+      const result = evaluateResponse('', {});
+      expect(result.grade).toBe('failing');
+    });
+
+    it('calculateDimensionScore boundary: exactly 3 signals = score 3', () => {
+      // A response with exactly 3 positive signals in reviewer_rigor
+      const response = '## Assessment\nThe reviewer would challenge the gap in ICH E9. This creates a major risk.';
+      const result = evaluateResponse(response, {});
+      const rigor = result.dimensions.find(d => d.dimension === 'reviewer_rigor');
+      expect(rigor).toBeDefined();
+      expect(rigor!.score).toBeGreaterThanOrEqual(2);
+    });
+  });
+});
+
+// ── Artifact Generator Types Test ────────────────────────────────────────────
+
+import { getArtifactTypes } from '../ana-ri/artifact-generator.js';
+
+describe('AnA RI Artifact Generator', () => {
+  it('returns all 8 artifact types with titles', () => {
+    const types = getArtifactTypes();
+    expect(types.length).toBe(8);
+    expect(types.every(t => t.title.length > 0)).toBe(true);
+    expect(types.every(t => t.artifactType.length > 0)).toBe(true);
+  });
+
+  it('includes all expected action types', () => {
+    const types = getArtifactTypes();
+    const typeNames = types.map(t => t.type);
+    expect(typeNames).toContain('risk_memo');
+    expect(typeNames).toContain('deficiency_preemption_memo');
+    expect(typeNames).toContain('strategy_note');
+    expect(typeNames).toContain('reviewer_question_brief');
+    expect(typeNames).toContain('rewritten_section');
+    expect(typeNames).toContain('revised_artifact');
+    expect(typeNames).toContain('evidence_memo');
+    expect(typeNames).toContain('attach_to_dossier');
   });
 });
