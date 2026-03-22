@@ -68,7 +68,7 @@ import {
 } from '../../shared/schema';
 import * as crypto from 'crypto';
 import { computeConversationHealth } from '../services/conversation-health.js';
-import { interceptComplianceScan, interceptArtifactChange } from '../services/intelligence/rim-interceptors.js';
+import { interceptComplianceScan, interceptArtifactChange, interceptFeedback } from '../services/intelligence/rim-interceptors.js';
 import {
   buildWorkingMemoryPrompt,
   storeWorkingMemory,
@@ -4566,6 +4566,25 @@ router.put(
           snapshotId: snapshotRecord?.snapshotId || null,
         }
       );
+
+      // RIM: capture status change as feedback signal (non-blocking)
+      const feedbackMap: Record<string, 'accepted' | 'rejected'> = {
+        approved: 'accepted',
+        locked: 'accepted',
+        draft: 'rejected', // regression = rejection of current state
+      };
+      const feedbackType = feedbackMap[status];
+      if (feedbackType) {
+        interceptFeedback({
+          organizationId,
+          projectId: parseInt(req.params.projectId, 10),
+          userId,
+          artifactId: req.params.artifactId,
+          artifactVersionId: artifact.id?.toString(),
+          sectionCode: artifact.ctdSection || undefined,
+          feedbackType,
+        });
+      }
 
       return sendSuccess(res, {
         artifactId: updated.artifactId,

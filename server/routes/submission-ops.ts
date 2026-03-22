@@ -42,6 +42,7 @@ import { randomUUID } from 'crypto';
 import { resolvePolicy, resolveAllPolicies } from '../submission-ops/policy-engine';
 import { computePackageReadiness } from '../submission-ops/readiness-engine';
 import { runAutomationSweep } from '../submission-ops/automation-runner';
+import { getProjectSignals, analyzeCrossArtifactIntelligence } from '../services/intelligence/index.js';
 
 const router = Router();
 
@@ -533,7 +534,21 @@ router.get('/packages/:packageId/readiness', async (req: Request, res: Response)
     if (!pkg) return res.status(404).json({ error: 'Package not found' });
 
     const readiness = await computePackageReadiness(orgId, pkg.id);
-    res.json({ data: readiness });
+
+    // Enrich with RIM signal summary (non-blocking, best-effort)
+    let rimSignals = null;
+    let rimCrossArtifact = null;
+    try {
+      rimSignals = getProjectSignals(orgId, pkg.id);
+      const crossArtifact = analyzeCrossArtifactIntelligence(orgId, pkg.id);
+      if (crossArtifact.totalIssues > 0) {
+        rimCrossArtifact = crossArtifact;
+      }
+    } catch {
+      // RIM enrichment is non-critical
+    }
+
+    res.json({ data: readiness, rimSignals, rimCrossArtifact });
   } catch (e: any) {
     res.status(500).json({ error: e.message });
   }

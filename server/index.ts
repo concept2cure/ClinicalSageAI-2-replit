@@ -6439,6 +6439,14 @@ async function startServer() {
   }
 
   try {
+    const intelligenceRoutes = await import('./routes/intelligence');
+    app.use('/api/intelligence', intelligenceRoutes.default);
+    console.log('✅ Intelligence + RIM routes mounted at /api/intelligence');
+  } catch (error) {
+    console.error('Failed to mount intelligence routes:', error);
+  }
+
+  try {
     const aiCompletionRoutes = await import('./routes/ai-completion');
     app.use('/api', aiCompletionRoutes.default);
     console.log('✅ AI Completion routes mounted at /api/ai/completion');
@@ -7027,6 +7035,19 @@ async function startServer() {
     console.log('✅ Audit chain integrity monitor started (5-min interval)');
   } catch (err) {
     console.warn('⚠️ Chain integrity monitor failed to start:', err);
+  }
+
+  // Load RIM pattern registry from persistence (restores learned patterns + hit counts)
+  try {
+    const { loadPatternRegistry, patternRegistry } = await import('./services/intelligence/pattern-registry.js');
+    const result = await loadPatternRegistry(1); // org 1 as default; per-org load on first request
+    if (result.loaded) {
+      console.log(`✅ RIM pattern registry loaded (${patternRegistry.size} patterns, ${result.learnedCount} learned)`);
+    } else {
+      console.log(`ℹ️ RIM pattern registry: no persisted data found, using ${patternRegistry.size} seed patterns`);
+    }
+  } catch (err) {
+    console.warn('⚠️ RIM pattern registry load failed (using seed patterns only):', err);
   }
 
   // Start the HTTP server
