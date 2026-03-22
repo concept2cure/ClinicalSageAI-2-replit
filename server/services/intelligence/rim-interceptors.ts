@@ -1,15 +1,12 @@
 /**
  * RIM Interceptors — Automatic Signal Capture at Key Pipeline Points
  *
- * These interceptors wire RIM into the actual AnA flow so signals
- * are captured automatically during normal operation, not just
- * when someone explicitly calls runRIMAssessment().
+ * All interceptors use the centralized `rim-integration.ts` helper for:
+ *   - provenance construction (buildProvenance)
+ *   - pattern scanning (integratePatternScan)
+ *   - signal capture (integrateSignal)
  *
- * Intercept points:
- *   1. Chat response — scan AnA output for regulatory patterns
- *   2. Compliance scan — capture structured compliance findings
- *   3. Artifact creation/update — capture artifact change signals
- *   4. Claim verification — capture claim quality signals
+ * No inline provenance construction. No direct captureSignal calls.
  *
  * All interceptors are fire-and-forget (non-blocking). They MUST NOT
  * slow down the primary pipeline. Failures are logged, never thrown.
@@ -18,27 +15,10 @@
  */
 
 import {
-  captureSignal,
-  capturePatternSignals,
-  type SignalProvenance,
-  type IntelligenceSignal,
-} from './signal-capture.js';
-
-import { patternRegistry } from './pattern-registry.js';
-import { JUDGMENT_FRAMEWORK_VERSION } from './judgment-framework.js';
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// PROVENANCE FACTORY
-// ═══════════════════════════════════════════════════════════════════════════════
-
-function makeProvenance(runType: SignalProvenance['runType']): SignalProvenance {
-  return {
-    judgmentFrameworkVersion: JUDGMENT_FRAMEWORK_VERSION,
-    patternRegistryVersion: patternRegistry.version,
-    runId: `auto_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-    runType,
-  };
-}
+  integratePatternScan,
+  integrateSignal,
+  type RIMIntegrationContext,
+} from './rim-integration.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 1. CHAT RESPONSE INTERCEPTOR
@@ -60,42 +40,28 @@ export interface ChatInterceptInput {
  * Intercept AnA chat responses to:
  *   - scan for regulatory pattern matches in the generated text
  *   - capture claim quality as a signal
- *
- * Call after STEP 9 (claims verification) in chat.ts.
- * Non-blocking — wrap in try/catch, never await in the response path.
  */
 export function interceptChatResponse(input: ChatInterceptInput): void {
   try {
-    const provenance = makeProvenance('pattern_scan');
     const {
       organizationId, projectId, userId, sectionCode,
       assistantMessage, claimCount, supportedClaimRate,
       model, provider,
     } = input;
 
-    // Pattern scan on the generated text
-    const matches = patternRegistry.scanText(
-      assistantMessage,
-      sectionCode ?? 'chat_response',
-    );
+    const ctx: RIMIntegrationContext = {
+      organizationId, projectId, userId, sectionCode,
+      runType: 'chat_intercept',
+    };
 
-    if (matches.length > 0) {
-      capturePatternSignals(
-        organizationId, projectId, matches, provenance,
-        sectionCode, userId,
-      );
-    }
+    // Pattern scan on the generated text
+    integratePatternScan(ctx, assistantMessage, sectionCode ?? 'chat_response');
 
     // Capture claim quality as a signal
     if (claimCount > 0) {
       const qualityScore = Math.round(supportedClaimRate * 100);
-      captureSignal({
+      integrateSignal(ctx, {
         type: 'judgment',
-        provenance,
-        organizationId,
-        projectId,
-        userId,
-        sectionCode,
         riskLevel: qualityScore >= 70 ? 'none' : qualityScore >= 40 ? 'medium' : 'high',
         reviewerSensitivity: qualityScore >= 70 ? 'unlikely_question' : 'possible_question',
         defensibilityVerdict: qualityScore >= 70 ? 'pass' : qualityScore >= 40 ? 'needs_attention' : 'at_risk',
@@ -109,7 +75,6 @@ export function interceptChatResponse(input: ChatInterceptInput): void {
           source: 'chat_interceptor',
           claimCount,
           supportedClaimRate,
-          patternMatchCount: matches.length,
           model,
           provider,
         },
@@ -142,13 +107,9 @@ export interface ComplianceScanInterceptInput {
 
 /**
  * Intercept compliance scan results to capture structured compliance signals.
- *
- * Call after compliance scan returns results in concept2cure.ts.
- * Non-blocking.
  */
 export function interceptComplianceScan(input: ComplianceScanInterceptInput): void {
   try {
-    const provenance = makeProvenance('manual_capture');
     const {
       organizationId, projectId, userId, sectionCode,
       issues, scannedLength,
@@ -156,18 +117,18 @@ export function interceptComplianceScan(input: ComplianceScanInterceptInput): vo
 
     if (issues.length === 0) return;
 
+    const ctx: RIMIntegrationContext = {
+      organizationId, projectId, userId, sectionCode,
+      runType: 'compliance_intercept',
+    };
+
     const errorCount = issues.filter(i => i.type === 'error').length;
     const warningCount = issues.filter(i => i.type === 'warning').length;
 
     // Capture overall compliance scan result
     const score = Math.max(0, 100 - (errorCount * 20) - (warningCount * 8));
-    captureSignal({
+    integrateSignal(ctx, {
       type: 'compliance_scan',
-      provenance,
-      organizationId,
-      projectId,
-      userId,
-      sectionCode,
       riskLevel: errorCount > 0 ? 'high' : warningCount > 2 ? 'medium' : 'low',
       reviewerSensitivity: errorCount > 0 ? 'likely_question' : 'possible_question',
       defensibilityVerdict: score >= 70 ? 'acceptable' : score >= 40 ? 'needs_attention' : 'at_risk',
@@ -179,8 +140,7 @@ export function interceptComplianceScan(input: ComplianceScanInterceptInput): vo
       patternIds: [],
       metadata: {
         source: 'compliance_scan_interceptor',
-        errorCount,
-        warningCount,
+        errorCount, warningCount,
         infoCount: issues.filter(i => i.type === 'info').length,
         totalIssues: issues.length,
         scannedLength,
@@ -188,15 +148,10 @@ export function interceptComplianceScan(input: ComplianceScanInterceptInput): vo
       },
     });
 
-    // Capture individual critical compliance errors as separate signals
+    // Capture individual critical compliance errors
     for (const issue of issues.filter(i => i.type === 'error')) {
-      captureSignal({
+      integrateSignal(ctx, {
         type: 'compliance_scan',
-        provenance,
-        organizationId,
-        projectId,
-        userId,
-        sectionCode,
         riskLevel: 'critical',
         reviewerSensitivity: 'likely_question',
         defensibilityVerdict: 'at_risk',
@@ -232,36 +187,30 @@ export interface ArtifactChangeInterceptInput {
   title: string;
   contentLength: number;
   source: 'lumen_cortex' | 'manual' | 'import' | 'template';
-  content?: string; // optional — for pattern scanning on creates
+  content?: string;
 }
 
 /**
- * Intercept artifact creation/updates to:
- *   - capture artifact change signals
- *   - scan new content for regulatory patterns
- *
- * Call after artifact creation/update in concept2cure.ts.
- * Non-blocking.
+ * Intercept artifact creation/updates to capture change signals
+ * and scan new content for regulatory patterns.
  */
 export function interceptArtifactChange(input: ArtifactChangeInterceptInput): void {
   try {
-    const provenance = makeProvenance('manual_capture');
     const {
       organizationId, projectId, userId,
       artifactId, artifactVersionId, sectionCode,
       changeType, title, contentLength, source, content,
     } = input;
 
-    // Capture the artifact change as a signal
-    captureSignal({
+    const ctx: RIMIntegrationContext = {
+      organizationId, projectId, userId,
+      artifactId, artifactVersionId, sectionCode,
+      runType: 'artifact_intercept',
+    };
+
+    // Capture the artifact change
+    integrateSignal(ctx, {
       type: 'artifact_change',
-      provenance,
-      organizationId,
-      projectId,
-      userId,
-      artifactId,
-      artifactVersionId,
-      sectionCode,
       riskLevel: changeType === 'delete' ? 'medium' : 'none',
       reviewerSensitivity: 'unlikely_question',
       defensibilityVerdict: 'pass',
@@ -271,26 +220,14 @@ export function interceptArtifactChange(input: ArtifactChangeInterceptInput): vo
       patternIds: [],
       metadata: {
         source: 'artifact_change_interceptor',
-        changeType,
-        title,
-        contentLength,
+        changeType, title, contentLength,
         artifactSource: source,
       },
     });
 
-    // Pattern scan on new content (creates/updates with content)
+    // Pattern scan on new content
     if (content && content.length > 50 && (changeType === 'create' || changeType === 'update')) {
-      const matches = patternRegistry.scanText(
-        content,
-        sectionCode ?? `artifact:${artifactId}`,
-      );
-
-      if (matches.length > 0) {
-        capturePatternSignals(
-          organizationId, projectId, matches, provenance,
-          sectionCode, userId, artifactId, artifactVersionId,
-        );
-      }
+      integratePatternScan(ctx, content, sectionCode ?? `artifact:${artifactId}`);
     }
   } catch (err) {
     console.warn('[RIM] Artifact change interceptor failed (non-blocking):', err instanceof Error ? err.message : err);
@@ -309,30 +246,26 @@ export interface FeedbackInterceptInput {
   artifactVersionId?: string;
   sectionCode?: string;
   feedbackType: 'accepted' | 'rejected' | 'edited' | 'regenerated';
-  editDelta?: number; // approximate character change count
+  editDelta?: number;
 }
 
 /**
- * Capture user feedback on AnA output.
- *
- * This is the feedback loop data:
- *   - accepted = AnA output was good, user kept it
- *   - rejected = AnA output was bad, user discarded it
- *   - edited = AnA output was partially useful, user modified it
- *   - regenerated = AnA output was unsatisfactory, user asked for new output
- *
- * Non-blocking.
+ * Capture user feedback on AnA output (accept/reject/edit/regenerate).
  */
 export function interceptFeedback(input: FeedbackInterceptInput): void {
   try {
-    const provenance = makeProvenance('manual_capture');
     const {
       organizationId, projectId, userId,
       artifactId, artifactVersionId, sectionCode,
       feedbackType, editDelta,
     } = input;
 
-    // Map feedback to quality signal
+    const ctx: RIMIntegrationContext = {
+      organizationId, projectId, userId,
+      artifactId, artifactVersionId, sectionCode,
+      runType: 'feedback_intercept',
+    };
+
     const scoreMap = { accepted: 90, edited: 60, rejected: 20, regenerated: 10 };
     const riskMap = {
       accepted: 'none' as const,
@@ -341,15 +274,8 @@ export function interceptFeedback(input: FeedbackInterceptInput): void {
       regenerated: 'high' as const,
     };
 
-    captureSignal({
+    integrateSignal(ctx, {
       type: 'feedback',
-      provenance,
-      organizationId,
-      projectId,
-      userId,
-      artifactId,
-      artifactVersionId,
-      sectionCode,
       riskLevel: riskMap[feedbackType],
       reviewerSensitivity: 'unlikely_question',
       defensibilityVerdict: feedbackType === 'accepted' ? 'pass'

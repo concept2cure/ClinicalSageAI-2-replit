@@ -158,3 +158,14 @@ export {
   type CrossArtifactIssue,
   type CrossArtifactReport,
 } from './rim-cross-artifact.js';
+
+export {
+  buildProvenance,
+  integratePatternScan,
+  integrateJudgmentReport,
+  integrateSignal,
+  persistPatterns,
+  type RIMRunType,
+  type RIMIntegrationResult,
+  type RIMIntegrationContext,
+} from './rim-integration.js';

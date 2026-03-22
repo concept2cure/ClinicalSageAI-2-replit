@@ -20,12 +20,8 @@
  * @module server/services/intelligence/signal-capture
  */
 
-import { db } from '../../db.js';
-import { eq, and, sql, desc } from 'drizzle-orm';
-import {
-  projectMemoryEntries,
-  projectIntelligenceProfiles,
-} from '../../../shared/schema.js';
+// DB imports are lazy — only loaded inside persistSignals() to avoid
+// failing module load in test environments without a database.
 import type { JudgmentScore, JudgmentReport, JudgmentVerdict } from './judgment-framework.js';
 import type { PatternMatch } from './pattern-registry.js';
 
@@ -441,6 +437,11 @@ export async function persistSignals(
   }
 
   try {
+    // Lazy imports — avoids failing module load in test environments
+    const { db } = await import('../../db.js');
+    const { eq, and } = await import('drizzle-orm');
+    const { projectIntelligenceProfiles, projectMemoryEntries } = await import('../../../shared/schema.js');
+
     // Get the project intelligence profile
     const [profile] = await db
       .select({ id: projectIntelligenceProfiles.id })
