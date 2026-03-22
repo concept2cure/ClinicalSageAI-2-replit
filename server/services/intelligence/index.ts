@@ -95,6 +95,8 @@ export {
 
 export {
   patternRegistry,
+  persistPatternRegistry,
+  loadPatternRegistry,
   PATTERN_REGISTRY_VERSION,
   type PatternCategory,
   type RegulatoryAgency,
@@ -139,3 +141,20 @@ export {
   type RIMChangeInsight,
   type RIMChangeEnrichment,
 } from './rim-change-impact.js';
+
+export {
+  interceptChatResponse,
+  interceptComplianceScan,
+  interceptArtifactChange,
+  interceptFeedback,
+  type ChatInterceptInput,
+  type ComplianceScanInterceptInput,
+  type ArtifactChangeInterceptInput,
+  type FeedbackInterceptInput,
+} from './rim-interceptors.js';
+
+export {
+  analyzeCrossArtifactIntelligence,
+  type CrossArtifactIssue,
+  type CrossArtifactReport,
+} from './rim-cross-artifact.js';

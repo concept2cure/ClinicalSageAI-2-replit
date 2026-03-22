@@ -588,6 +588,125 @@ class PatternRegistryImpl {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// PERSISTENCE — save/load learned patterns to survive restarts
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Persist learned patterns and hit counts to the database.
+ * Call periodically or on significant pattern changes.
+ */
+export async function persistPatternRegistry(
+  organizationId: number,
+): Promise<{ success: boolean; patternCount: number; error?: string }> {
+  try {
+    // Dynamic import to avoid circular dependencies
+    const { db } = await import('../../db.js');
+    const { projectIntelligenceProfiles, projectMemoryEntries } = await import('../../../shared/schema.js');
+    const { eq } = await import('drizzle-orm');
+
+    // Find any profile for this org to store patterns
+    const [profile] = await db
+      .select({ id: projectIntelligenceProfiles.id })
+      .from(projectIntelligenceProfiles)
+      .where(eq(projectIntelligenceProfiles.organizationId, organizationId))
+      .limit(1);
+
+    if (!profile) {
+      return { success: false, patternCount: 0, error: 'No intelligence profile found' };
+    }
+
+    const patterns = patternRegistry.exportPatterns();
+    const learnedPatterns = patterns.filter(p => p.source === 'learned');
+    const hitPatterns = patterns.filter(p => p.hitCount > 0);
+
+    await db.insert(projectMemoryEntries).values({
+      profileId: profile.id,
+      organizationId,
+      category: 'rim_pattern_registry',
+      content: JSON.stringify({
+        version: patternRegistry.version,
+        learnedPatterns,
+        hitCounts: Object.fromEntries(hitPatterns.map(p => [p.id, p.hitCount])),
+        lastMatchDates: Object.fromEntries(
+          hitPatterns.filter(p => p.lastMatchedAt).map(p => [p.id, p.lastMatchedAt]),
+        ),
+        exportedAt: new Date().toISOString(),
+      }),
+      source: 'rim_pattern_registry',
+      importance: 'high',
+      metadata: {
+        totalPatterns: patterns.length,
+        learnedCount: learnedPatterns.length,
+        activePatterns: hitPatterns.length,
+      },
+    });
+
+    return { success: true, patternCount: patterns.length };
+  } catch (err) {
+    const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+    console.error(`[RIM] Pattern registry persistence failed: ${errorMsg}`);
+    return { success: false, patternCount: 0, error: errorMsg };
+  }
+}
+
+/**
+ * Load learned patterns from the database on startup.
+ */
+export async function loadPatternRegistry(
+  organizationId: number,
+): Promise<{ loaded: boolean; learnedCount: number; error?: string }> {
+  try {
+    const { db } = await import('../../db.js');
+    const { projectMemoryEntries } = await import('../../../shared/schema.js');
+    const { eq, and, desc } = await import('drizzle-orm');
+
+    // Find the most recent pattern registry export
+    const [entry] = await db
+      .select({ content: projectMemoryEntries.content })
+      .from(projectMemoryEntries)
+      .where(and(
+        eq(projectMemoryEntries.organizationId, organizationId),
+        eq(projectMemoryEntries.category, 'rim_pattern_registry'),
+      ))
+      .orderBy(desc(projectMemoryEntries.createdAt))
+      .limit(1);
+
+    if (!entry?.content) {
+      return { loaded: false, learnedCount: 0 };
+    }
+
+    const data = JSON.parse(entry.content);
+
+    // Import learned patterns
+    if (data.learnedPatterns && Array.isArray(data.learnedPatterns)) {
+      patternRegistry.importPatterns(data.learnedPatterns);
+    }
+
+    // Restore hit counts
+    if (data.hitCounts) {
+      for (const [id, count] of Object.entries(data.hitCounts)) {
+        const pattern = patternRegistry.getPattern(id);
+        if (pattern && typeof count === 'number') {
+          // Update hit count by re-importing with correct count
+          patternRegistry.importPatterns([{
+            ...pattern,
+            hitCount: count as number,
+            lastMatchedAt: data.lastMatchDates?.[id] ?? pattern.lastMatchedAt,
+          }]);
+        }
+      }
+    }
+
+    const learnedCount = data.learnedPatterns?.length ?? 0;
+    return { loaded: true, learnedCount };
+  } catch (err) {
+    const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+    console.warn(`[RIM] Pattern registry load failed: ${errorMsg}`);
+    return { loaded: false, learnedCount: 0, error: errorMsg };
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // SINGLETON EXPORT
 // ═══════════════════════════════════════════════════════════════════════════════
 

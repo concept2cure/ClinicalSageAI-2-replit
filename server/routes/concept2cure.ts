@@ -68,6 +68,7 @@ import {
 } from '../../shared/schema';
 import * as crypto from 'crypto';
 import { computeConversationHealth } from '../services/conversation-health.js';
+import { interceptComplianceScan, interceptArtifactChange } from '../services/intelligence/rim-interceptors.js';
 import {
   buildWorkingMemoryPrompt,
   storeWorkingMemory,
@@ -1734,6 +1735,21 @@ router.post('/ai/compliance-scan', async (req: Request, res: Response) => {
       issues = [];
     }
 
+    // RIM: capture compliance signals (non-blocking)
+    const orgId = (req as any).organizationId || (req as any).user?.organizationId;
+    if (orgId && issues.length > 0) {
+      interceptComplianceScan({
+        organizationId: orgId,
+        projectId: parseInt(req.body.projectId || '0', 10),
+        userId: (req as any).user?.id,
+        sectionCode: ctdSection,
+        documentType,
+        submissionType,
+        issues,
+        scannedLength: truncated.length,
+      });
+    }
+
     return sendSuccess(res, { issues, scannedLength: truncated.length });
   } catch (error: any) {
     logger.error('Compliance scan failed', { error: error.message });
@@ -2644,6 +2660,21 @@ router.post('/projects/:projectId/artifacts', async (req: Request, res: Response
       ipAddress: getClientIp(req),
     });
 
+    // RIM: capture artifact creation signal (non-blocking)
+    interceptArtifactChange({
+      organizationId,
+      projectId: parseInt(req.params.projectId, 10),
+      userId,
+      artifactId,
+      artifactVersionId: newDbArtifact.id?.toString(),
+      sectionCode: ctdSection || undefined,
+      changeType: 'create',
+      title: sanitizedTitle,
+      contentLength: sanitizedContent.length,
+      source: data.metadata?.generationMethod === 'ai' ? 'lumen_cortex' : 'manual',
+      content: sanitizedContent,
+    });
+
     logger.info('Created artifact', { projectId: req.params.projectId, artifactId });
     return sendSuccess(res.status(201), newArtifact);
   } catch (error: any) {
@@ -2830,6 +2861,21 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
         ipAddress: getClientIp(req),
       });
     }
+
+    // RIM: capture artifact update signal (non-blocking)
+    interceptArtifactChange({
+      organizationId,
+      projectId: parseInt(req.params.projectId, 10),
+      userId,
+      artifactId: req.params.artifactId,
+      artifactVersionId: dbArtifact.id?.toString(),
+      sectionCode: newCtdSection || undefined,
+      changeType: 'update',
+      title: newTitle,
+      contentLength: newContent?.length ?? 0,
+      source: 'manual',
+      content: sanitizedContent || undefined,
+    });
 
     logger.info('Updated artifact', {
       artifactId: req.params.artifactId,
