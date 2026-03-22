@@ -128,14 +128,16 @@ interface ZenChatProps {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const ANA_THINKING_PHRASES = [
-  'Analyzing your request...',
-  'Reviewing regulatory guidance...',
-  'Cross-referencing documents...',
-  'Checking FDA guidance...',
-  'Researching ICH guidelines...',
+  'Pulling up the relevant guidance...',
+  'Reviewing regulatory precedents...',
+  'Cross-referencing your dossier...',
+  'Checking the latest FDA thinking...',
+  'Working through the ICH guidelines...',
   'Reviewing compliance requirements...',
-  'Preparing your response...',
-  'Searching regulatory databases...',
+  'Building something solid for you...',
+  'This one deserves a thorough answer...',
+  'Thinking through the regulatory implications...',
+  'Finding the precedent that matters here...',
 ];
 
 const ThinkingIndicator: React.FC = () => {

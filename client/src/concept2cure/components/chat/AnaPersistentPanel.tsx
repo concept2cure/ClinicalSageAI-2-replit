@@ -184,33 +184,36 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   useEffect(() => {
     if (!isThinking) return;
     const STANDARD_THINKING = [
-      'Reviewing your regulatory landscape...',
-      'Cross-referencing guidance documents...',
-      'Checking the latest FDA updates...',
-      'Let me dig into the CTD modules for you...',
-      'Analyzing your submission strategy...',
-      'Running compliance checks...',
-      'Connecting the regulatory dots...',
-      'Almost there — dotting the i\'s on 21 CFR Part 11...',
-      'Warming up the ELSA engines... no, not that one ❄️',
-      'Consulting my regulatory crystal ball...',
-      'Searching through 65 ICH guidelines...',
-      'Making sure everything is submission-ready...',
-      'Checking predicate devices and precedents...',
-      'Let it flow, let it flow... through the review process 🏔️',
-      'Building your regulatory snowglobe of insights...',
+      'Pulling up the relevant guidance...',
+      'Cross-referencing precedents — I want to get this right...',
+      'Checking the latest FDA thinking on this...',
+      'Working through the CTD modules...',
+      'Mapping your submission strategy...',
+      'Running this against the compliance framework...',
+      'Connecting the dots across your dossier...',
+      'Almost there — making sure every citation lands...',
+      'Thinking through the regulatory implications...',
+      'Reviewing ICH guidelines for the right approach...',
+      'Checking what reviewers typically flag here...',
+      'Building something solid for you...',
+      'Pulling from 30 years of review experience...',
+      'This is a good question — let me think carefully...',
+      'Finding the precedent that matters most here...',
+      'Working on it — this one deserves a thorough answer...',
     ];
     const DEEP_RESEARCH_THINKING = [
-      'Querying ClinicalTrials.gov for matching studies...',
-      'Searching PubMed for relevant literature...',
-      'Checking FDA approval histories...',
+      'Searching ClinicalTrials.gov for matching studies...',
+      'Pulling from PubMed — casting a wide net...',
+      'Checking FDA approval histories for similar products...',
       'Scanning EMA assessment reports...',
-      'Aggregating results across data sources...',
+      'Aggregating results across all data sources...',
       'Cross-referencing regulatory precedents...',
       'Building the competitive landscape...',
-      'Claude is synthesizing findings into a briefing...',
+      'Synthesizing findings into a briefing...',
       'Analyzing evidence coverage gaps...',
       'Ranking results by regulatory relevance...',
+      'This is substantive research — give me a moment...',
+      'Found some interesting precedents — pulling them together...',
     ];
     const ANA_THINKING_MESSAGES = chatMode === 'deep-research' ? DEEP_RESEARCH_THINKING : STANDARD_THINKING;
     setThinkingMsg(ANA_THINKING_MESSAGES[Math.floor(Math.random() * ANA_THINKING_MESSAGES.length)]);
@@ -225,9 +228,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     const hour = new Date().getHours();
     const timeGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
     if (contextProfile?.activeProject) {
-      return `${timeGreeting}! Ready to make progress on ${contextProfile.activeProject}. What shall we tackle?`;
+      return `${timeGreeting}. I've been reviewing ${contextProfile.activeProject} — ready when you are. What should we move forward on?`;
     }
-    return `${timeGreeting}! I'm AnA, your regulatory co-pilot. What would you like to work on?`;
+    return `${timeGreeting}. I'm AnA, your regulatory co-pilot. I can draft documents, review strategy, run gap analyses, or help you think through your next submission move. What are we working on?`;
   }, [greeting, contextProfile?.activeProject]);
 
   // Auto-scroll when new messages
