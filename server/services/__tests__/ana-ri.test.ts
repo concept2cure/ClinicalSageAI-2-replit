@@ -524,3 +524,181 @@ describe('AnA RI Artifact Generator', () => {
     expect(typeNames).toContain('attach_to_dossier');
   });
 });
+
+// ── Enforcement Layer Tests ──────────────────────────────────────────────────
+
+import {
+  validateResponseStructure,
+  checkEvidenceDiscipline,
+  validateArtifactQuality,
+  logGeneration,
+  getGenerationLog,
+  getGenerationStats,
+  buildArtifactContract,
+} from '../ana-ri/enforcement.js';
+
+describe('AnA RI Enforcement Layer', () => {
+  describe('validateResponseStructure', () => {
+    it('passes structured response with required sections', () => {
+      const response = `## Overall Assessment
+The submission has critical gaps.
+
+## Reviewer Concerns
+- Inadequate safety database **[KNOWN — ICH E1]**
+- Endpoint not validated **[MISSING]**
+
+## Risk Signals
+- RTF risk: high **[INFERRED]**
+
+## Recommended Actions
+- Create deficiency preemption memo`;
+
+      const result = validateResponseStructure(response);
+      expect(result.valid).toBe(true);
+      expect(result.present).toContain('Overall Assessment');
+      expect(result.present).toContain('Reviewer Concerns / Risks');
+      expect(result.present).toContain('Recommended Actions');
+    });
+
+    it('fails unstructured response', () => {
+      const response = 'Looks fine. No issues found.';
+      const result = validateResponseStructure(response);
+      expect(result.valid).toBe(false);
+      expect(result.missing.length).toBeGreaterThan(0);
+    });
+
+    it('detects evidence labels', () => {
+      const response = 'The data is adequate **[KNOWN]** but long-term safety is **[MISSING]** and efficacy is **[INFERRED]**.';
+      const result = validateResponseStructure(response);
+      expect(result.present).toContain('Evidence: Known');
+      expect(result.present).toContain('Evidence: Inferred');
+      expect(result.present).toContain('Evidence: Missing');
+    });
+  });
+
+  describe('checkEvidenceDiscipline', () => {
+    it('flags substantive response without evidence labels', () => {
+      const response = `## Overall Assessment
+The submission has significant risks across multiple dimensions.
+The primary endpoint lacks validation and the safety database is insufficient.
+The regulatory strategy needs reconsideration given the competitive landscape.
+This is a long substantive response that should have evidence labels but doesn't.
+We identified several deficiency patterns that need immediate attention.`;
+      const result = checkEvidenceDiscipline(response);
+      expect(result.compliant).toBe(false);
+      expect(result.hasUnlabeledClaims).toBe(true);
+    });
+
+    it('passes response with evidence labels', () => {
+      const response = `## Assessment
+The endpoint is validated **[KNOWN — per ICH E9]**.
+Safety data are insufficient **[MISSING — no 12-month data]**.
+Approval likelihood is moderate **[INFERRED — based on precedent]**.`;
+      const result = checkEvidenceDiscipline(response);
+      expect(result.compliant).toBe(true);
+      expect(result.knownCount).toBe(1);
+      expect(result.inferredCount).toBe(1);
+      expect(result.missingCount).toBe(1);
+    });
+
+    it('passes short casual responses without labels', () => {
+      const response = 'Hello! How can I help you today?';
+      const result = checkEvidenceDiscipline(response);
+      expect(result.compliant).toBe(true); // Short responses don't need labels
+    });
+  });
+
+  describe('validateArtifactQuality', () => {
+    it('passes high-quality artifact', () => {
+      const content = `# Regulatory Risk Assessment Memo
+
+## Executive Summary
+This NDA submission faces critical risks in the safety database per ICH E1 **[KNOWN]**.
+
+## Critical Risks
+### Inadequate Safety Database — Severity: Critical
+- **Evidence Status**: **[KNOWN — only 150 patients vs 300 required]**
+- **Mitigation**: Conduct additional Phase IIIb study
+- **Residual Risk**: Medium after mitigation
+
+## Major Risks
+### Endpoint Validation Gap — Severity: Major
+- **Evidence Status**: **[MISSING — no validation study]**
+
+## Recommendation
+Conditional go — address safety exposure before filing.`;
+
+      const result = validateArtifactQuality(content, 'risk_memo');
+      expect(result.pass).toBe(true);
+      expect(result.grade).not.toBe('rejected');
+      expect(result.issues.length).toBe(0);
+    });
+
+    it('rejects too-short artifact', () => {
+      const result = validateArtifactQuality('Short.', 'risk_memo');
+      expect(result.pass).toBe(false);
+      expect(result.grade).toBe('rejected');
+    });
+
+    it('flags generic AI filler', () => {
+      const content = `I'd be happy to help! Here's an example of a risk memo.
+Feel free to modify this template. Don't hesitate to ask if you need more.
+Let me know if you'd like me to expand on any section.`;
+      const result = validateArtifactQuality(content, 'risk_memo');
+      expect(result.issues.some(i => i.includes('filler'))).toBe(true);
+    });
+
+    it('flags missing structure', () => {
+      const content = 'This is a long enough response that has no markdown headers or structure at all. '.repeat(10);
+      const result = validateArtifactQuality(content, 'strategy_note');
+      expect(result.issues.some(i => i.includes('structured sections'))).toBe(true);
+    });
+  });
+
+  describe('buildArtifactContract', () => {
+    it('builds complete contract with all required fields', () => {
+      const contract = buildArtifactContract({
+        documentType: 'risk_memo',
+        projectId: 1,
+        organizationId: 1,
+        intentLens: 'risk',
+        userRole: 'ra_lead',
+        content: '## Risk Assessment\nCritical risks identified **[KNOWN]**.',
+        provider: 'anthropic',
+        model: 'claude-sonnet-4',
+        conversationLength: 5,
+      });
+
+      expect(contract.source).toBe('ana_ri');
+      expect(contract.version).toBe(1);
+      expect(contract.status).toBe('draft');
+      expect(contract.provenance.generatedBy).toBe('AnA RI');
+      expect(contract.structureSections.length).toBeGreaterThan(0);
+      expect(contract.provenance.evidenceLabels).toBeGreaterThan(0);
+    });
+  });
+
+  describe('generation observability', () => {
+    it('logs and retrieves generation events', () => {
+      logGeneration({
+        timestamp: new Date().toISOString(),
+        route: '/api/ana-ri/test',
+        action: 'test_action',
+        artifactCreated: true,
+        anaRiOrchestrated: true,
+        artifactId: 999,
+      });
+
+      const log = getGenerationLog({ route: '/api/ana-ri/test' });
+      expect(log.length).toBeGreaterThan(0);
+      expect(log[log.length - 1].action).toBe('test_action');
+    });
+
+    it('tracks generation stats', () => {
+      const stats = getGenerationStats();
+      expect(stats.total).toBeGreaterThan(0);
+      expect(typeof stats.withArtifact).toBe('number');
+      expect(typeof stats.anaRiOrchestrated).toBe('number');
+    });
+  });
+});

@@ -13,3 +13,9 @@ export { DOCUMENT_ACTIONS, getActionsForLens, getAllActions, getAction, buildDoc
 export { ROLE_TEMPLATES, buildRoleAdaptiveContext, getRoleTemplate, inferRole, type RoleResponseTemplate } from './role-adapter.js';
 export { evaluateResponse, getFullRubric, EVALUATION_RUBRIC, type EvaluationResult, type QualityDimension } from './evaluation.js';
 export { generateArtifact, getArtifactTypes, type ArtifactGenerationRequest, type ArtifactGenerationResult } from './artifact-generator.js';
+export {
+  validateResponseStructure, checkEvidenceDiscipline, validateArtifactQuality,
+  logGeneration, getGenerationLog, getGenerationStats, buildArtifactContract,
+  type StructureValidationResult, type EvidenceDisciplineResult, type ArtifactQualityResult,
+  type GenerationEvent, type GovernedArtifactContract,
+} from './enforcement.js';

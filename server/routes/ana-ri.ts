@@ -37,6 +37,13 @@ import {
 } from '../services/ana-ri/evaluation.js';
 import { inferRole } from '../services/ana-ri/role-adapter.js';
 import {
+  logGeneration,
+  getGenerationLog,
+  getGenerationStats,
+  checkEvidenceDiscipline,
+  validateResponseStructure,
+} from '../services/ana-ri/enforcement.js';
+import {
   getOrCreateThread,
   saveChatMessage as saveMessage,
 } from '../services/chat-thread-helpers.js';
@@ -182,6 +189,26 @@ router.post('/chat', async (req: Request, res: Response) => {
       }
     }
 
+    // Check evidence discipline and structure
+    const evidenceCheck = checkEvidenceDiscipline(response.content);
+    const structureCheck = validateResponseStructure(response.content);
+
+    // Log generation event for observability
+    logGeneration({
+      timestamp: new Date().toISOString(),
+      route: '/api/ana-ri/chat',
+      action: 'chat',
+      projectId: req.body.project_context?.projectId,
+      organizationId: orgId ? Number(orgId) : undefined,
+      userId,
+      artifactCreated: false,
+      anaRiOrchestrated: true,
+      evidenceCompliant: evidenceCheck.compliant,
+      structureScore: structureCheck.score,
+      provider: response.provider,
+      model: response.model,
+    });
+
     return res.json({
       response: response.content,
       thread_id: threadId,
@@ -196,6 +223,15 @@ router.post('/chat', async (req: Request, res: Response) => {
         grade: evaluation.grade,
         overallScore: evaluation.overallScore,
         maxScore: evaluation.maxOverallScore,
+      },
+      evidence: {
+        compliant: evidenceCheck.compliant,
+        labels: evidenceCheck.totalLabels,
+      },
+      structure: {
+        valid: structureCheck.valid,
+        score: structureCheck.score,
+        maxScore: structureCheck.maxScore,
       },
       provider: response.provider,
       model: response.model,
@@ -382,6 +418,26 @@ router.post('/evaluate', (req: Request, res: Response) => {
 
   const evaluation = evaluateResponse(response, context || {});
   return res.json(evaluation);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/ana-ri/observability — Runtime generation stats and log
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.get('/observability', (_req: Request, res: Response) => {
+  const stats = getGenerationStats();
+  return res.json(stats);
+});
+
+router.get('/observability/log', (_req: Request, res: Response) => {
+  const { route, artifact, orchestrated, limit } = _req.query;
+  const log = getGenerationLog({
+    route: route as string | undefined,
+    artifactCreated: artifact === 'true' ? true : artifact === 'false' ? false : undefined,
+    anaRiOrchestrated: orchestrated === 'true' ? true : orchestrated === 'false' ? false : undefined,
+    limit: limit ? Number(limit) : 100,
+  });
+  return res.json({ count: log.length, events: log });
 });
 
 export default router;

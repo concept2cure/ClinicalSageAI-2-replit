@@ -15,6 +15,13 @@ import { tagArtifact, type TagArtifactParams, type TagArtifactResult } from '../
 import { buildAnaRISystemPrompt } from './persona.js';
 import type { DocumentActionType } from './document-actions.js';
 import type { IntentLens, UserRole } from './persona.js';
+import {
+  validateArtifactQuality,
+  checkEvidenceDiscipline,
+  validateResponseStructure,
+  logGeneration,
+  buildArtifactContract,
+} from './enforcement.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -53,6 +60,8 @@ export interface ArtifactGenerationResult {
   persisted?: boolean;
   /** Persistence error if content was generated but DB write failed */
   persistenceError?: string;
+  /** Quality gate grade */
+  qualityGrade?: string;
   /** Error message if generation itself failed */
   error?: string;
   /** AI provider/model used */
@@ -426,7 +435,35 @@ export async function generateArtifact(
   const generatedContent = response.content;
   const artifactTitle = titleOverride || DEFAULT_TITLES[actionType] || 'AnA RI Generated Document';
 
-  // 5. Persist as governed artifact
+  // 5. Quality gate — reject garbage before persisting
+  const qualityResult = validateArtifactQuality(generatedContent, actionType);
+  const evidenceResult = checkEvidenceDiscipline(generatedContent);
+  const structureResult = validateResponseStructure(generatedContent);
+
+  if (!qualityResult.pass) {
+    console.error(`[AnA RI] Quality gate REJECTED artifact: ${qualityResult.issues.join('; ')}`);
+    logGeneration({
+      timestamp: new Date().toISOString(),
+      route: '/api/ana-ri/generate',
+      action: actionType,
+      projectId,
+      organizationId,
+      userId,
+      artifactCreated: false,
+      anaRiOrchestrated: true,
+      qualityGrade: qualityResult.grade,
+      evidenceCompliant: evidenceResult.compliant,
+      structureScore: structureResult.score,
+    });
+    return {
+      success: false,
+      content: generatedContent,
+      title: artifactTitle,
+      error: `Quality gate rejected: ${qualityResult.issues.join('; ')}`,
+    };
+  }
+
+  // 6. Persist as governed artifact
   let artifactResult: TagArtifactResult | undefined;
   let persistenceError: string | undefined;
   try {
@@ -448,6 +485,12 @@ export async function generateArtifact(
         aiModel: response.model || 'unknown',
         conversationMessagesUsed: usedContext.length,
         conversationMessagesTotal: conversationContext.length,
+        qualityGrade: qualityResult.grade,
+        qualityScore: qualityResult.score,
+        evidenceLabels: evidenceResult.totalLabels,
+        evidenceCompliant: evidenceResult.compliant,
+        structureScore: structureResult.score,
+        structureSections: structureResult.present,
       },
     };
 
@@ -457,6 +500,24 @@ export async function generateArtifact(
     persistenceError = err?.message || 'Unknown persistence error';
   }
 
+  // 7. Log generation event for observability
+  logGeneration({
+    timestamp: new Date().toISOString(),
+    route: '/api/ana-ri/generate',
+    action: actionType,
+    projectId,
+    organizationId,
+    userId,
+    artifactCreated: !!artifactResult,
+    artifactId: artifactResult?.artifactId,
+    provider: response.provider || 'unknown',
+    model: response.model || 'unknown',
+    anaRiOrchestrated: true,
+    qualityGrade: qualityResult.grade,
+    evidenceCompliant: evidenceResult.compliant,
+    structureScore: structureResult.score,
+  });
+
   return {
     success: true,
     content: generatedContent,
@@ -465,6 +526,7 @@ export async function generateArtifact(
     isNew: artifactResult?.isNew,
     persisted: !!artifactResult,
     persistenceError,
+    qualityGrade: qualityResult.grade,
     provider: response.provider || 'unknown',
     model: response.model || 'unknown',
   };
