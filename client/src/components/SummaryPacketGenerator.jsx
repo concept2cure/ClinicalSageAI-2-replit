@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { isValidSessionId } from '@/components/ProtocolUploadPanel';
+import { toast } from '@/hooks/use-toast';
 
 export default function SummaryPacketGenerator({ sessionId }) {
   const [inputs, setInputs] = useState({
@@ -24,7 +25,7 @@ export default function SummaryPacketGenerator({ sessionId }) {
 
   const handleGenerate = async () => {
     if (!isValidSessionId(sessionId)) {
-      alert('Session ID is missing or invalid. Please start or select a study session.');
+      toast({ title: 'Session ID is missing or invalid. Please start or select a study session.' });
       return;
     }
 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import api from '../services/api';
+import { toast } from '@/hooks/use-toast';
 
 export default function ProjectForm({ onCreated }) {
   const [form, setForm] = useState({
@@ -30,7 +31,7 @@ export default function ProjectForm({ onCreated }) {
         nct_number: '',
       });
     } catch (err) {
-      alert(err.response?.data?.detail || err.message);
+      toast({ title: err.response?.data?.detail || err.message });
     } finally {
       setBusy(false);
     }

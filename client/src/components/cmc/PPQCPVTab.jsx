@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+import { toast } from '@/hooks/use-toast';
   ResponsiveContainer,
   LineChart,
   Line,
@@ -43,7 +44,7 @@ export default function PPQCPVTab({ processId }) {
       setDate('');
       setNotes('');
       await loadPPQ();
-    } else alert('Failed');
+    } else toast({ title: 'Failed' });
   }
 
   // CPV
@@ -68,8 +69,8 @@ export default function PPQCPVTab({ processId }) {
     });
     if (r.ok) {
       await loadCPV();
-      alert(`Imported ${(await r.json()).inserted} points`);
-    } else alert('Import failed');
+      toast({ title: `Imported ${(await r.json()).inserted} points` });
+    } else toast({ title: 'Import failed' });
   }
 
   useEffect(() => {

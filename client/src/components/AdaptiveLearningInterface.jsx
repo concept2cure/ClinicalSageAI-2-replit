@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { useLearningService } from '@/hooks/useLearningService';
 import { Progress } from '@/components/ui/progress';
+import { toast } from '@/hooks/use-toast';
 
 // The userId would normally come from authentication context
 // Using a placeholder for now
@@ -94,7 +95,7 @@ const AdaptiveLearningInterface = () => {
     });
 
     // In a real app, we'd navigate to the module content here
-    alert(`Starting module ${moduleId}. In a real app, we'd navigate to the module content.`);
+    toast({ title: `Starting module ${moduleId}. In a real app, we'd navigate to the module content.` });
   };
 
   // Format a relevance score into a friendlier text

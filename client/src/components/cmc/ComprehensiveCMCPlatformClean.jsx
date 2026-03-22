@@ -651,14 +651,14 @@ function AssignmentDialogContent({ studyId, onClose }) {
         body: JSON.stringify({ user_id: user, role, due_date: due || null }),
       });
       if (r.ok) {
-        alert('Assigned successfully!');
+        toast({ title: 'Assigned successfully!' });
         onClose();
       } else {
         const d = await r.json().catch(() => ({}));
-        alert(d.error || 'Assignment failed');
+        toast({ title: d.error || 'Assignment failed' });
       }
     } catch (err) {
-      alert('Assignment failed: ' + err.message);
+      toast({ title: 'Assignment failed: ' + err.message });
     }
   }
 
@@ -745,7 +745,7 @@ function BulkAssignmentDialogContent({ studyId, onClose }) {
     try {
       const validAssignments = assignments.filter(a => a.task && a.user);
       if (validAssignments.length === 0) {
-        alert('Please add at least one valid assignment');
+        toast({ title: 'Please add at least one valid assignment' });
         return;
       }
 
@@ -756,14 +756,14 @@ function BulkAssignmentDialogContent({ studyId, onClose }) {
       });
 
       if (r.ok) {
-        alert(`${validAssignments.length} assignments created successfully!`);
+        toast({ title: `${validAssignments.length} assignments created successfully!` });
         onClose();
       } else {
         const d = await r.json().catch(() => ({}));
-        alert(d.error || 'Bulk assignment failed');
+        toast({ title: d.error || 'Bulk assignment failed' });
       }
     } catch (err) {
-      alert('Bulk assignment failed: ' + err.message);
+      toast({ title: 'Bulk assignment failed: ' + err.message });
     }
   }
 
@@ -26413,28 +26413,28 @@ const CMCModal = ({ isOpen, onClose, type, item, onSubmit }) => {
       );
 
       if (missingFields.length > 0) {
-        alert(`Please fill in the following required fields: ${missingFields.join(', ')}`);
+        toast({ title: `Please fill in the following required fields: ${missingFields.join(', ')}` });
         return;
       }
 
       // Validate scientific formats
       if (formData.precisionTarget && !isValidRSDFormat(formData.precisionTarget)) {
-        alert('Precision Target must be in format "≤X.X% RSD" (e.g., "≤2.0% RSD")');
+        toast({ title: 'Precision Target must be in format "≤X.X% RSD" (e.g., "≤2.0% RSD")' });
         return;
       }
 
       if (formData.accuracyTarget && !isValidAccuracyFormat(formData.accuracyTarget)) {
-        alert('Accuracy Target must be in format "XX-XX%" (e.g., "98-102%")');
+        toast({ title: 'Accuracy Target must be in format "XX-XX%" (e.g., "98-102%")' });
         return;
       }
 
       if (formData.detectionLimit && !isValidConcentrationFormat(formData.detectionLimit)) {
-        alert('Detection Limit must include units (e.g., "0.05 μg/mL")');
+        toast({ title: 'Detection Limit must include units (e.g., "0.05 μg/mL")' });
         return;
       }
 
       if (formData.quantitationLimit && !isValidConcentrationFormat(formData.quantitationLimit)) {
-        alert('Quantitation Limit must include units (e.g., "0.15 μg/mL")');
+        toast({ title: 'Quantitation Limit must include units (e.g., "0.15 μg/mL")' });
         return;
       }
     }

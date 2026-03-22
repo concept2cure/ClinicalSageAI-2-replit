@@ -7,6 +7,7 @@ import useSectionSync from '@/hooks/useSectionSync';
 // Professional rich text editor (standalone implementation)
 const Editor = null; // Using professional fallback editor
 import {
+import { toast } from '@/hooks/use-toast';
   ArrowLeft,
   Save,
   Download,
@@ -1076,11 +1077,11 @@ ${currentContent
           window.document.body.removeChild(a);
           window.URL.revokeObjectURL(a.href);
 
-          alert(
+          toast({ title: 
             'Downloaded as HTML file (Word format not supported). You can open this in Word or any browser.'
-          );
+           });
         } catch (fallbackError) {
-          alert('Download failed. Please manually select and copy the text from the editor.');
+          toast({ title: 'Download failed. Please manually select and copy the text from the editor.' });
         }
       }
     }, 0);

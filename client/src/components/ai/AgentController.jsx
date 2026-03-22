@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle, CheckCircle, Copy, Save, Upload, Download } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 export const AgentController = () => {
   const [command, setCommand] = useState('');
@@ -197,7 +198,7 @@ ${approved ? '🚀 EXECUTE WITH APPROVAL' : '⚠️ DO NOT EXECUTE - AWAITING AP
           localStorage.setItem('agentCommands', JSON.stringify(data.savedCommands || []));
           localStorage.setItem('agentHistory', JSON.stringify(data.commandHistory || []));
         } catch (error) {
-          alert('Error importing commands: Invalid file format');
+          toast({ title: 'Error importing commands: Invalid file format' });
         }
       };
       reader.readAsText(file);

@@ -33,6 +33,7 @@ import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
 import { Progress } from './ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { toast } from '@/hooks/use-toast';
 
 const RiskMitigationPlanDialog = ({
   isOpen,
@@ -426,7 +427,7 @@ const RiskMitigationPlanDialog = ({
 
   const handleImplementAction = async () => {
     if (!selectedAssignee || !dueDate) {
-      alert('⚠️ Please assign to a team member and set a due date before implementing the plan.');
+      toast({ title: '⚠️ Please assign to a team member and set a due date before implementing the plan.' });
       return;
     }
 
@@ -469,7 +470,7 @@ const RiskMitigationPlanDialog = ({
         console.log('✅ Mitigation plan implemented successfully:', result);
 
         // Show comprehensive success feedback
-        alert(`✅ MITIGATION PLAN SUCCESSFULLY IMPLEMENTED!
+        toast({ title: `✅ MITIGATION PLAN SUCCESSFULLY IMPLEMENTED!
 
 📋 IMPLEMENTATION DETAILS:
 • Implementation ID: ${implementationData.trackingId}
@@ -495,7 +496,7 @@ ${emailRecipients ? `• Additional notifications sent to: ${emailRecipients}` :
 3. Automated reminders will be sent as due date approaches
 4. You can monitor implementation status in the Tracking tab
 
-Implementation is now live and being monitored!`);
+Implementation is now live and being monitored!` });
 
         onImplementPlan?.(implementationData);
         onClose();
@@ -505,7 +506,7 @@ Implementation is now live and being monitored!`);
       }
     } catch (error) {
       console.error('❌ Failed to implement mitigation plan:', error);
-      alert(`❌ IMPLEMENTATION FAILED
+      toast({ title: `❌ IMPLEMENTATION FAILED
 
 Error: ${error.message}
 
@@ -514,7 +515,7 @@ Please verify:
 • All required fields are completed
 • Team member selection is valid
 
-Contact system administrator if the problem persists.`);
+Contact system administrator if the problem persists.` });
     } finally {
       setIsImplementing(false);
     }

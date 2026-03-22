@@ -21,6 +21,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { FileText, Download, CheckCircle2, Clipboard, ClipboardCheck } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 const RegulatoryDocumentGenerator = () => {
   const [activeTab, setActiveTab] = useState('module3');
@@ -330,7 +331,7 @@ One production batch per year will be placed on long-term stability as part of t
   const copyToClipboard = () => {
     navigator.clipboard.writeText(generatedContent);
     // Show a success message (could be improved with a toast notification)
-    alert('Content copied to clipboard!');
+    toast({ title: 'Content copied to clipboard!' });
   };
 
   return (

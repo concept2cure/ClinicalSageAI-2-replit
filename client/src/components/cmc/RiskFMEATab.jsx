@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Plus, X } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 const RiskFMEATab = ({ processId }) => {
   const [rows, setRows] = useState([]);
@@ -45,11 +46,11 @@ const RiskFMEATab = ({ processId }) => {
         setFm('');
         await load();
       } else {
-        alert('Failed to add FMEA item');
+        toast({ title: 'Failed to add FMEA item' });
       }
     } catch (error) {
       console.error('Error adding FMEA:', error);
-      alert('Failed to add FMEA item');
+      toast({ title: 'Failed to add FMEA item' });
     }
   };
 

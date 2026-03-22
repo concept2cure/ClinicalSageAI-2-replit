@@ -40,6 +40,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useLocation } from 'wouter';
+import { toast } from '@/hooks/use-toast';
 
 const SmartWorkflowsInterface = lazy(() => import('@/components/cmc/SmartWorkflowsInterface'));
 const CMCBlueprintGenerator = lazy(() => import('@/components/cmc/CMCBlueprintGenerator'));
@@ -77,7 +78,7 @@ const CMCGenerator = () => {
 
   const handleGenerateBlueprint = async () => {
     if (!drugName.trim()) {
-      alert('Please enter a drug name or code.');
+      toast({ title: 'Please enter a drug name or code.' });
       return;
     }
 
@@ -109,7 +110,7 @@ const CMCGenerator = () => {
       if (response.ok) {
         setGeneratedBlueprint(result);
         setRiskAlerts(result.riskAlerts || []);
-        alert('Enhanced CMC Blueprint generated successfully!');
+        toast({ title: 'Enhanced CMC Blueprint generated successfully!' });
       } else {
         throw new Error(result.error || 'Failed to generate CMC blueprint');
       }
@@ -124,9 +125,9 @@ const CMCGenerator = () => {
       if (fallbackResponse.ok) {
         const result = await fallbackResponse.json();
         setGeneratedBlueprint(result);
-        alert('Basic CMC Blueprint generated successfully!');
+        toast({ title: 'Basic CMC Blueprint generated successfully!' });
       } else {
-        alert('Error: ' + error.message);
+        toast({ title: 'Error: ' + error.message });
       }
     } finally {
       setIsGenerating(false);
@@ -144,7 +145,7 @@ const CMCGenerator = () => {
   // Advanced CMC Features
   const handleQbDAnalysis = async () => {
     if (!drugName.trim()) {
-      alert('Please enter a drug name first.');
+      toast({ title: 'Please enter a drug name first.' });
       return;
     }
 
@@ -159,12 +160,12 @@ const CMCGenerator = () => {
       const result = await response.json();
       if (response.ok) {
         setQbdAnalysis(result.data);
-        alert('QbD Analysis completed successfully!');
+        toast({ title: 'QbD Analysis completed successfully!' });
       } else {
         throw new Error(result.error || 'Failed to perform QbD analysis');
       }
     } catch (error) {
-      alert('Error: ' + error.message);
+      toast({ title: 'Error: ' + error.message });
     } finally {
       setIsLoadingAdvanced(false);
     }
@@ -172,7 +173,7 @@ const CMCGenerator = () => {
 
   const handleMethodValidation = async () => {
     if (!drugName.trim()) {
-      alert('Please enter a drug name first.');
+      toast({ title: 'Please enter a drug name first.' });
       return;
     }
 
@@ -187,12 +188,12 @@ const CMCGenerator = () => {
       const result = await response.json();
       if (response.ok) {
         setMethodValidation(result.data);
-        alert('Method Validation Protocol generated successfully!');
+        toast({ title: 'Method Validation Protocol generated successfully!' });
       } else {
         throw new Error(result.error || 'Failed to generate method validation');
       }
     } catch (error) {
-      alert('Error: ' + error.message);
+      toast({ title: 'Error: ' + error.message });
     } finally {
       setIsLoadingAdvanced(false);
     }
@@ -212,7 +213,7 @@ const CMCGenerator = () => {
 
   const handleAdvancedRiskAssessment = async () => {
     if (!drugName.trim()) {
-      alert('Please enter a drug name first.');
+      toast({ title: 'Please enter a drug name first.' });
       return;
     }
 
@@ -227,12 +228,12 @@ const CMCGenerator = () => {
       const result = await response.json();
       if (response.ok) {
         setRiskAlerts(result.data);
-        alert('Advanced Risk Assessment completed!');
+        toast({ title: 'Advanced Risk Assessment completed!' });
       } else {
         throw new Error(result.error || 'Failed to perform risk assessment');
       }
     } catch (error) {
-      alert('Error: ' + error.message);
+      toast({ title: 'Error: ' + error.message });
     } finally {
       setIsLoadingAdvanced(false);
     }

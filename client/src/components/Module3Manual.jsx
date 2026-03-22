@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { postJson } from '../services/api';
+import { toast } from '@/hooks/use-toast';
 
 export default function Module3Manual({ project }) {
   const blank = {
@@ -23,7 +24,7 @@ export default function Module3Manual({ project }) {
       window.open(`/api/ind/${project.project_id}/module3/manual`, '_blank');
       setForm(blank);
     } catch (e) {
-      alert(e.response?.data?.detail || e.message);
+      toast({ title: e.response?.data?.detail || e.message });
     } finally {
       setBusy(false);
     }

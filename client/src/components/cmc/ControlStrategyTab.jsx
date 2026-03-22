@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Save, Trash2, Plus } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 export default function ControlStrategyTab({ processId }) {
   const [paramName, setParam] = useState('');
@@ -53,11 +54,11 @@ export default function ControlStrategyTab({ processId }) {
         fetchControlStrategy(); // Refresh the list
       } else {
         console.error('❌ Failed to save control strategy');
-        alert('Failed to save control strategy');
+        toast({ title: 'Failed to save control strategy' });
       }
     } catch (error) {
       console.error('Error saving control strategy:', error);
-      alert('Error saving control strategy');
+      toast({ title: 'Error saving control strategy' });
     } finally {
       setSaving(false);
     }

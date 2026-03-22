@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
+import { toast } from '@/hooks/use-toast';
   Select,
   SelectTrigger,
   SelectContent,
@@ -30,8 +31,8 @@ export default function DesignSpaceTab({ processId }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ factors, status }),
     });
-    if (r.ok) alert('Design Space saved');
-    else alert('Failed');
+    if (r.ok) toast({ title: 'Design Space saved' });
+    else toast({ title: 'Failed' });
   }
 
   return (

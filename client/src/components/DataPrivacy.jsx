@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import api from '../services/api';
+import { toast } from '@/hooks/use-toast';
 export default function DataPrivacy() {
   const [users, set] = useState({});
   const [sel, setSel] = useState('');
@@ -8,7 +9,7 @@ export default function DataPrivacy() {
   const exp = () => window.open(`/api/user/${sel}/export`, '_blank');
   const purge = () => {
     if (window.confirm('Permanently purge user?'))
-      api.post(`/api/user/${sel}/purge`).then(() => alert('Scheduled'));
+      api.post(`/api/user/${sel}/purge`).then(() => toast({ title: 'Scheduled' }));
   };
   return (
     <div className="p-4">

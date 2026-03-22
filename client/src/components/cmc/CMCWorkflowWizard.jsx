@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import {
+import { toast } from '@/hooks/use-toast';
   Select,
   SelectContent,
   SelectItem,
@@ -183,11 +184,11 @@ const CMCWorkflowWizard = ({ onProjectCreated }) => {
       });
 
       if (response.ok) {
-        alert('Draft saved successfully! You can continue later.');
+        toast({ title: 'Draft saved successfully! You can continue later.' });
       } else {
         // Fallback to localStorage
         localStorage.setItem('cmc_wizard_draft', JSON.stringify(draftData));
-        alert('Draft saved locally. You can continue later.');
+        toast({ title: 'Draft saved locally. You can continue later.' });
       }
     } catch (error) {
       console.error('Error saving draft:', error);
@@ -199,7 +200,7 @@ const CMCWorkflowWizard = ({ onProjectCreated }) => {
         savedAt: new Date().toISOString(),
       };
       localStorage.setItem('cmc_wizard_draft', JSON.stringify(draftData));
-      alert('Draft saved locally. You can continue later.');
+      toast({ title: 'Draft saved locally. You can continue later.' });
     } finally {
       setIsSavingDraft(false);
     }
@@ -223,7 +224,7 @@ const CMCWorkflowWizard = ({ onProjectCreated }) => {
       }
     } catch (error) {
       console.error('Error creating CMC project:', error);
-      alert('Error creating project: ' + error.message);
+      toast({ title: 'Error creating project: ' + error.message });
     } finally {
       setIsCreating(false);
     }

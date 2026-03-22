@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Settings, Zap, FileText } from 'lucide-react';
 import NewProcessWizard from './NewProcessWizard';
+import { toast } from '@/hooks/use-toast';
 
 const ProcessCreationForm = ({ onCancel, onSuccess }) => {
   const [showWizard, setShowWizard] = useState(false);
@@ -32,7 +33,7 @@ const ProcessCreationForm = ({ onCancel, onSuccess }) => {
       onSuccess?.(data);
     } catch (e) {
       console.error(e);
-      window.alert(`Create failed: ${e.message || e}`);
+      window.toast({ title: `Create failed: ${e.message || e}` });
     } finally {
       setCreating(false);
     }

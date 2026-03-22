@@ -127,10 +127,10 @@ const CMCDocumentAuthoring = ({ activeDocId, onDocChange, activeSectionId, onSec
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
 
-      alert(`Document exported successfully as ${format.toUpperCase()}`);
+      toast({ title: `Document exported successfully as ${format.toUpperCase()}` });
     } catch (error) {
       console.error('Export error:', error);
-      alert(`Export failed: ${error.message}`);
+      toast({ title: `Export failed: ${error.message}` });
     } finally {
       setIsExporting(false);
     }
@@ -149,11 +149,11 @@ const CMCDocumentAuthoring = ({ activeDocId, onDocChange, activeSectionId, onSec
       if (!response.ok) throw new Error('Submit failed');
 
       const result = await response.json();
-      alert('Document submitted for review successfully');
+      toast({ title: 'Document submitted for review successfully' });
       // Refresh document list or update status
     } catch (error) {
       console.error('Submit error:', error);
-      alert(`Submit failed: ${error.message}`);
+      toast({ title: `Submit failed: ${error.message}` });
     } finally {
       setIsSubmitting(false);
     }
@@ -173,12 +173,12 @@ const CMCDocumentAuthoring = ({ activeDocId, onDocChange, activeSectionId, onSec
       if (!response.ok) throw new Error('Sign failed');
 
       const result = await response.json();
-      alert(`Document signed successfully. SHA256: ${result.doc_sha256.substring(0, 12)}...`);
+      toast({ title: `Document signed successfully. SHA256: ${result.doc_sha256.substring(0, 12)}...` });
       setShowSignDialog(false);
       // Refresh document list or update status
     } catch (error) {
       console.error('Sign error:', error);
-      alert(`Sign failed: ${error.message}`);
+      toast({ title: `Sign failed: ${error.message}` });
     } finally {
       setIsSigning(false);
     }
@@ -198,12 +198,12 @@ const CMCDocumentAuthoring = ({ activeDocId, onDocChange, activeSectionId, onSec
       if (!response.ok) throw new Error('Send to packager failed');
 
       const result = await response.json();
-      alert('Document sent to eCTD packager successfully');
+      toast({ title: 'Document sent to eCTD packager successfully' });
       setShowPackagerDialog(false);
       // Refresh document list or update status
     } catch (error) {
       console.error('Send to packager error:', error);
-      alert(`Send to packager failed: ${error.message}`);
+      toast({ title: `Send to packager failed: ${error.message}` });
     } finally {
       setIsSendingToPackager(false);
     }
@@ -887,7 +887,7 @@ const CMCDocumentAuthoring = ({ activeDocId, onDocChange, activeSectionId, onSec
                           size="sm"
                           onClick={() => {
                             // Step 7: Insert token functionality
-                            alert('Token insertion UI would open here');
+                            toast({ title: 'Token insertion UI would open here' });
                           }}
                           data-testid="button-insert-token"
                         >
@@ -899,7 +899,7 @@ const CMCDocumentAuthoring = ({ activeDocId, onDocChange, activeSectionId, onSec
                           size="sm"
                           onClick={() => {
                             // Step 7: Refresh all tokens
-                            alert('Refreshing all document tokens...');
+                            toast({ title: 'Refreshing all document tokens...' });
                           }}
                           data-testid="button-refresh-tokens"
                         >

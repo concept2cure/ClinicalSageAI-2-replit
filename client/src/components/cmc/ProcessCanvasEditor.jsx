@@ -3,6 +3,7 @@ import React, { useCallback, useState } from 'react';
 // import "@xyflow/react/dist/style.css";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { toast } from '@/hooks/use-toast';
 
 export default function ProcessCanvasEditor({ processId, units, onSaved }) {
   const startNodes = units.map((u, i) => ({
@@ -41,7 +42,7 @@ export default function ProcessCanvasEditor({ processId, units, onSaved }) {
       onSaved && onSaved();
     } else {
       console.error('❌ Failed to save layout');
-      alert('Failed to save layout');
+      toast({ title: 'Failed to save layout' });
     }
   }, [nodes, processId, onSaved]);
 
@@ -72,7 +73,7 @@ export default function ProcessCanvasEditor({ processId, units, onSaved }) {
       setNewUnitType('');
     } else {
       console.error('❌ Failed to add unit');
-      alert('Add failed');
+      toast({ title: 'Add failed' });
     }
   }
 

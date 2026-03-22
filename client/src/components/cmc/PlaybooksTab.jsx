@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { toast } from '@/hooks/use-toast';
 
 export default function PlaybooksTab({ processId }) {
   const [playbooks, setPlaybooks] = useState([]);
@@ -33,20 +34,20 @@ export default function PlaybooksTab({ processId }) {
       const data = await r.json();
 
       if (!r.ok) {
-        alert(data.error || 'Playbook failed');
+        toast({ title: data.error || 'Playbook failed' });
         return;
       }
 
       const message =
         (dryRun ? 'Preview' : 'Applied') + ':\n' + JSON.stringify(data.summary, null, 2);
-      alert(message);
+      toast({ title: message });
 
       if (!dryRun) {
         location.reload();
       }
     } catch (error) {
       console.error('Error running playbook:', error);
-      alert('Failed to run playbook');
+      toast({ title: 'Failed to run playbook' });
     } finally {
       setRunning(null);
     }

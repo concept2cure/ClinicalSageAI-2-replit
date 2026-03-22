@@ -22,6 +22,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
+import { toast } from '@/hooks/use-toast';
   FolderOpen,
   Search,
   UploadCloud,
@@ -103,7 +104,7 @@ export default function DocumentVaultPanel({
   const handleUpload = async () => {
     try {
       if (!uploadFile) {
-        alert('Please select a file to upload');
+        toast({ title: 'Please select a file to upload' });
         return;
       }
 
@@ -132,7 +133,7 @@ export default function DocumentVaultPanel({
       setShowUploadDialog(false);
     } catch (error) {
       console.error('Error uploading document:', error);
-      alert('Failed to upload document. Please try again.');
+      toast({ title: 'Failed to upload document. Please try again.' });
     }
   };
 
@@ -142,7 +143,7 @@ export default function DocumentVaultPanel({
       await documentApiService.downloadDocument(document.id, document.name);
     } catch (error) {
       console.error('Error downloading document:', error);
-      alert('Failed to download document. Please try again.');
+      toast({ title: 'Failed to download document. Please try again.' });
     }
   };
 

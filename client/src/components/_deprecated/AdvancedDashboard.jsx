@@ -3,6 +3,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
+import { toast } from '@/hooks/use-toast';
   Loader2,
   Download,
   ChevronDown,
@@ -70,7 +71,7 @@ export default function AdvancedDashboard({ filteredData }) {
 
   const handleExportPDF = () => {
     // In a real implementation, this would trigger a PDF export
-    alert('PDF export functionality would be implemented here');
+    toast({ title: 'PDF export functionality would be implemented here' });
   };
 
   if (loading) {

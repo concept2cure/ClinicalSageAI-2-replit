@@ -31,6 +31,7 @@ import {
   Bar,
 } from 'recharts';
 import {
+import { toast } from '@/hooks/use-toast';
   TrendingUp,
   TrendingDown,
   AlertTriangle,
@@ -150,9 +151,9 @@ const SystemSuitabilityTrending = ({ methodId, onClose }) => {
 
         // Show alerts if any were generated
         if (result.alerts && result.alerts.length > 0) {
-          alert(`Run added with ${result.alerts.length} alerts generated!`);
+          toast({ title: `Run added with ${result.alerts.length} alerts generated!` });
         } else {
-          alert('System suitability run added successfully!');
+          toast({ title: 'System suitability run added successfully!' });
         }
 
         // Refresh data
@@ -164,7 +165,7 @@ const SystemSuitabilityTrending = ({ methodId, onClose }) => {
       }
     } catch (error) {
       console.error('Error adding run:', error);
-      alert('Failed to add system suitability run');
+      toast({ title: 'Failed to add system suitability run' });
     } finally {
       setAddingRun(false);
     }
