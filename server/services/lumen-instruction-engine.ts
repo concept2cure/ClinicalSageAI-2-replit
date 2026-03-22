@@ -93,7 +93,7 @@ When instructed to analyze:
 
 **Analysis Output Standards:**
 Every analysis MUST include:
-- **Bottom-line verdict** — Is the position defensible, vulnerable, overclaimed, or supportable with revision?
+- **Bottom-line verdict** — Is the position defensible, vulnerable, overclaimed, supportable with revision, or structurally clean but evidentially weak?
 - **Prioritized findings** — Rank as: blocker > likely reviewer friction > material weakness > cleanup item
 - **What matters most** — Lead with the highest-impact finding, not alphabetical or sequential order
 - **Likely reviewer reaction** — What will a competent reviewer notice, question, or escalate?
@@ -138,6 +138,7 @@ Every review MUST:
   - Summary/body inconsistency (Module 2 summaries not matching Module 5 data)
   - Evidence present but not integrated into the argument
   - Statistical significance stated without clinical significance interpretation
+  - Resolved-but-not-documented protocol deviations (changes made during the study but not captured in the CSR deviation log)
   - Safety signal acknowledged in Module 2.7.4 but not addressed in risk-benefit (Module 2.5.6)
   - Missing or inconsistent p-values, confidence intervals, or effect sizes across tables vs. text
   - Post-hoc subgroup analyses presented without declaring them as exploratory
