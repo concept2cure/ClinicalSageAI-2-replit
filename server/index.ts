@@ -3451,6 +3451,16 @@ import validateCompletenessRoutes from './routes/validate-completeness';
 app.use('/api/validate-completeness', validateCompletenessRoutes);
 console.log('✅ VALIDATE-COMPLETENESS routes mounted successfully');
 
+// Mount AnA Gold Standard Pack — Quality Benchmark
+import anaGoldStandardRoutes from './routes/ana-gold-standard';
+app.use('/api/ana-gold-standard', anaGoldStandardRoutes);
+console.log('✅ AnA Gold Standard Pack routes mounted successfully');
+
+// Mount AnA Continuous Evaluation Loop — Real-Time Quality Monitoring
+import anaContinuousEvalRoutes from './routes/ana-continuous-eval';
+app.use('/api/ana-continuous-eval', anaContinuousEvalRoutes);
+console.log('✅ AnA Continuous Evaluation Loop routes mounted successfully');
+
 // Mount IND templates routes - temporarily disabled
 // app.use('/api/ind', indTemplatesRoutes);
 
