@@ -337,11 +337,14 @@ export function PrecedentIntelligenceDashboard({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="510(k)">510(k)</SelectItem>
-                      <SelectItem value="PMA">PMA</SelectItem>
-                      <SelectItem value="De Novo">De Novo</SelectItem>
+                      <SelectItem value="PMA">PMA (Class III Device)</SelectItem>
+                      <SelectItem value="De Novo">De Novo (Novel Device)</SelectItem>
                       <SelectItem value="IND">IND</SelectItem>
                       <SelectItem value="NDA">NDA</SelectItem>
+                      <SelectItem value="ANDA">ANDA (Generic)</SelectItem>
+                      <SelectItem value="505(b)(2)">505(b)(2) (Hybrid)</SelectItem>
                       <SelectItem value="BLA">BLA</SelectItem>
+                      <SelectItem value="MAA">MAA (EMA)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

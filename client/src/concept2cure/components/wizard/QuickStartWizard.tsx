@@ -134,10 +134,17 @@ const SUBMISSION_CONFIG: Record<SubmissionType, {
   },
   anda: {
     label: 'ANDA (Abbreviated NDA)',
-    description: 'Generic drug applications',
+    description: 'Generic drug applications — bioequivalence to RLD',
     regions: ['us'],
     avgTimeline: '10-15 months',
-    modules: ['1', '2', '3'],
+    modules: ['1', '2', '3', '5'],
+  },
+  '505b2': {
+    label: '505(b)(2) Hybrid Application',
+    description: 'New drug application relying on FDA findings for listed drug',
+    regions: ['us'],
+    avgTimeline: '10-12 months review',
+    modules: ['1', '2', '3', '4', '5'],
   },
   '510k': {
     label: '510(k) Premarket Notification',
@@ -148,10 +155,17 @@ const SUBMISSION_CONFIG: Record<SubmissionType, {
   },
   pma: {
     label: 'PMA (Premarket Approval)',
-    description: 'Class III medical device approval',
+    description: 'Class III medical device approval — clinical evidence required',
     regions: ['us'],
     avgTimeline: '180 days review',
-    modules: ['1'],
+    modules: ['1', '2', '3', '4'],
+  },
+  de_novo: {
+    label: 'De Novo Classification',
+    description: 'Novel low-to-moderate risk device with no predicate',
+    regions: ['us'],
+    avgTimeline: '150+ days review',
+    modules: ['1', '2', '3'],
   },
   maa: {
     label: 'MAA (Marketing Authorization Application)',
