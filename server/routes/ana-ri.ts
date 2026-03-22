@@ -440,4 +440,106 @@ router.get('/observability/log', (_req: Request, res: Response) => {
   return res.json({ count: log.length, events: log });
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/ana-ri/execute — Execute AnA commands (project/doc/task ops)
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.post('/execute', async (req: Request, res: Response) => {
+  try {
+    const { command, params } = req.body;
+
+    if (!command || typeof command !== 'string') {
+      return res.status(400).json({ error: 'command is required', code: 'INVALID_COMMAND' });
+    }
+
+    const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+    const userId = (req as any).userId || (req as any).user?.id;
+
+    if (!orgId || !userId) {
+      return res.status(403).json({ error: 'Authentication required', code: 'NO_AUTH' });
+    }
+
+    const { CommandContext } = await import('../services/ana-ri/command-executor.js');
+    const executor = await import('../services/ana-ri/command-executor.js');
+
+    const ctx = {
+      userId: Number(userId),
+      organizationId: Number(orgId),
+      activeProjectId: params?.projectId ? Number(params.projectId) : undefined,
+      userName: (req as any).user?.name,
+      userRole: (req as any).user?.title,
+    };
+
+    let result;
+    switch (command) {
+      case 'create_project':
+        result = await executor.createProject(ctx, params || {});
+        break;
+      case 'list_projects':
+        result = await executor.listProjects(ctx);
+        break;
+      case 'update_project':
+        result = await executor.updateProject(ctx, params?.projectId, params?.updates || {});
+        break;
+      case 'create_artifact':
+        result = await executor.createArtifact(ctx, params || {});
+        break;
+      case 'update_artifact':
+        result = await executor.updateArtifact(ctx, params || {});
+        break;
+      case 'update_artifact_status':
+        result = await executor.updateArtifactStatus(ctx, params || {});
+        break;
+      case 'list_artifacts':
+        result = await executor.listArtifacts(ctx, params?.projectId, params?.filters);
+        break;
+      case 'place_in_dossier':
+        result = await executor.placeInDossier(ctx, params || {});
+        break;
+      case 'create_task':
+        result = await executor.createTask(ctx, params || {});
+        break;
+      case 'update_task':
+        result = await executor.updateTask(ctx, params || {});
+        break;
+      case 'list_tasks':
+        result = await executor.listTasks(ctx, params?.projectId, params?.filters);
+        break;
+      case 'check_dossier_readiness':
+        result = await executor.checkDossierReadiness(ctx, params?.projectId);
+        break;
+      case 'load_user_context':
+        result = await executor.loadUserContext(ctx);
+        break;
+      case 'load_conversation_history':
+        result = await executor.loadConversationHistory(ctx, params);
+        break;
+      default:
+        return res.status(400).json({
+          error: `Unknown command: ${command}`,
+          code: 'UNKNOWN_COMMAND',
+          availableCommands: executor.COMMAND_REGISTRY.map((c: any) => c.name),
+        });
+    }
+
+    return res.json(result);
+  } catch (error: any) {
+    console.error('[AnA RI] Command execution error:', error);
+    return res.status(500).json({
+      error: 'Command execution failed',
+      code: 'EXECUTION_ERROR',
+      message: error?.message,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/ana-ri/commands — List available commands
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.get('/commands', async (_req: Request, res: Response) => {
+  const { COMMAND_REGISTRY } = await import('../services/ana-ri/command-executor.js');
+  return res.json({ commands: COMMAND_REGISTRY });
+});
+
 export default router;

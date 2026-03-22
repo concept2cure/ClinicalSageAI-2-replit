@@ -573,10 +573,43 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           setLastOrchestration(data.orchestration);
         }
 
+        const responseContent = data.response || data.answer || 'I\'m here to help with your regulatory work. What would you like to work on?';
+
+        // Parse and execute any embedded commands from AnA
+        const commandBlocks = responseContent.match(/```command\n([\s\S]*?)```/g);
+        const commandResults: string[] = [];
+        if (commandBlocks) {
+          for (const block of commandBlocks) {
+            try {
+              const jsonStr = block.replace(/```command\n?/, '').replace(/```$/, '').trim();
+              const cmd = JSON.parse(jsonStr);
+              if (cmd.command) {
+                const execRes = await fetch('/api/ana-ri/execute', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(cmd),
+                });
+                if (execRes.ok) {
+                  const result = await execRes.json();
+                  commandResults.push(`**${result.action}**: ${result.message}`);
+                }
+              }
+            } catch {
+              // Skip unparseable command blocks
+            }
+          }
+        }
+
+        // Clean command blocks from visible response and append results
+        let cleanContent = responseContent.replace(/```command\n[\s\S]*?```/g, '').trim();
+        if (commandResults.length > 0) {
+          cleanContent += '\n\n---\n**Executed:**\n' + commandResults.map(r => `- ${r}`).join('\n');
+        }
+
         setMessages(prev => [...prev, {
           id: `a-${Date.now()}`,
           role: 'assistant',
-          content: data.response || data.answer || 'I\'m here to help with your regulatory work. What would you like to work on?',
+          content: cleanContent,
           timestamp: new Date(),
         }]);
       }

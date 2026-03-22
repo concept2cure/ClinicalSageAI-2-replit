@@ -13,6 +13,7 @@ import { buildAnaRISystemPrompt, type AnaRIPromptOptions, type IntentLens, type 
 import { buildDeficiencyContext, type SubmissionType } from './deficiency-taxonomy.js';
 import { buildDocumentActionContext, type DocumentActionType } from './document-actions.js';
 import { buildRoleAdaptiveContext } from './role-adapter.js';
+import { buildCommandContextForPrompt } from './command-executor.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Intent Detection
@@ -225,7 +226,10 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
     systemPrompt += '\n\n' + roleContext;
   }
 
-  // 8. Inject conversation continuity context
+  // 8. Inject command capabilities
+  systemPrompt += '\n\n' + buildCommandContextForPrompt();
+
+  // 9. Inject conversation continuity context
   if (input.conversationHistory && input.conversationHistory.length > 0) {
     const continuityContext = buildContinuityContext(input.conversationHistory, detectedSubmissionType);
     if (continuityContext) {
@@ -233,7 +237,7 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
     }
   }
 
-  // 9. Determine suggested document actions
+  // 10. Determine suggested document actions
   const suggestedActions = getSuggestedActions(detectedIntent.lens, detectedSubmissionType);
 
   return {

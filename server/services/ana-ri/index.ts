@@ -19,3 +19,12 @@ export {
   type StructureValidationResult, type EvidenceDisciplineResult, type ArtifactQualityResult,
   type GenerationEvent, type GovernedArtifactContract,
 } from './enforcement.js';
+export {
+  createProject, listProjects, updateProject,
+  createArtifact, updateArtifact, updateArtifactStatus, listArtifacts, placeInDossier,
+  createTask, updateTask, listTasks,
+  checkDossierReadiness,
+  loadUserContext, loadConversationHistory,
+  buildCommandContextForPrompt, COMMAND_REGISTRY,
+  type CommandContext, type CommandResult, type CommandName,
+} from './command-executor.js';
