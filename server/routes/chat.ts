@@ -221,7 +221,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       } catch (e: any) {
         // ai_threads table might not exist yet — skip check
         if (e?.code !== '42P01')
-          console.warn('[Lumen Cortex] Thread ownership check failed:', e.message);
+          console.warn('[AnA] Thread ownership check failed:', e.message);
       }
     }
 
@@ -235,7 +235,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
         );
       } catch (e: any) {
         if (e?.code !== '42P01') throw e;
-        console.warn('[Lumen Cortex] ai_threads table missing — provenance disabled');
+        console.warn('[AnA] ai_threads table missing — provenance disabled');
       }
     }
 
@@ -250,7 +250,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
         );
       } catch (e: any) {
         if (e?.code !== '42P01')
-          console.warn('[Lumen Cortex] ai_messages insert failed:', e.message);
+          console.warn('[AnA] ai_messages insert failed:', e.message);
       }
     }
 
@@ -268,7 +268,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       const embeddingService = getEmbeddingService(pool);
       // Bail early if org UUID is provided but clearly invalid
       if (orgUuid && !/^[0-9a-f-]{36}$/i.test(orgUuid)) {
-        console.warn('[Lumen Cortex] Invalid org UUID, skipping retrieval');
+        console.warn('[AnA] Invalid org UUID, skipping retrieval');
       } else {
         const searchResults = await embeddingService.searchHybrid(message, 5, 0.7, orgUuid);
         sources = searchResults.map(r => ({
@@ -341,13 +341,13 @@ const sendMessageHandler = async (req: Request, res: Response) => {
             }
           } catch (e: any) {
             if (e?.code !== '42P01')
-              console.warn('[Lumen Cortex] Retrieval persist failed:', e.message);
+              console.warn('[AnA] Retrieval persist failed:', e.message);
           }
         }
       }
     } catch (srcErr: any) {
       // Non-fatal — chat still works, just without grounded evidence
-      console.warn('[Lumen Cortex] Source retrieval failed:', srcErr.message);
+      console.warn('[AnA] Source retrieval failed:', srcErr.message);
     }
 
     // ── STEP 5: BUILD EVIDENCE-GROUNDED PROMPT ─────────────────────────
@@ -393,7 +393,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       ];
 
       console.log(
-        `[Lumen Cortex] Sending through AI Gateway (${sources.length} sources retrieved)...`
+        `[AnA] Sending through AI Gateway (${sources.length} sources retrieved)...`
       );
 
       const gwResponse: GatewayResponse = await gw.route({
@@ -419,10 +419,10 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       latencyMs = gwResponse.latencyMs;
 
       console.log(
-        `[Lumen Cortex] AI Gateway response via ${model} (${latencyMs}ms, req=${gwResponse.requestId})`
+        `[AnA] AI Gateway response via ${model} (${latencyMs}ms, req=${gwResponse.requestId})`
       );
     } catch (gwError: any) {
-      console.error('[Lumen Cortex] AI Gateway call failed:', gwError.message);
+      console.error('[AnA] AI Gateway call failed:', gwError.message);
       return res.status(503).json({
         error: 'AI provider call failed',
         code: 'AI_PROVIDER_UNAVAILABLE',
@@ -466,7 +466,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
         );
       } catch (e: any) {
         if (e?.code !== '42P01')
-          console.warn('[Lumen Cortex] Generation persist failed:', e.message);
+          console.warn('[AnA] Generation persist failed:', e.message);
       }
     }
 
@@ -572,7 +572,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
           });
           continue; // skip fallback below
         } catch (e: any) {
-          if (e?.code !== '42P01') console.warn('[Lumen Cortex] Claim persist failed:', e.message);
+          if (e?.code !== '42P01') console.warn('[AnA] Claim persist failed:', e.message);
         }
       }
 

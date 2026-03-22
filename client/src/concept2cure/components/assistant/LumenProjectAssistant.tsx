@@ -255,7 +255,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
 
         setMessages(prev => [...prev, assistantMessage]);
       } catch (error) {
-        console.error('Lumen error:', error);
+        console.error('AnA assistant error:', error);
       } finally {
         setIsThinking(false);
       }
