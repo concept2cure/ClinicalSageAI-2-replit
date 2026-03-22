@@ -10997,21 +10997,32 @@ router.post('/conversations/:conversationId/promote', authMiddleware, async (req
       return sendError(res, 404, 'No messages in specified range');
     }
 
-    // Generate document content using AI
+    // Generate document content using AI + Intelligence Engine
     let documentContent: string;
     try {
-      const { getOpenAIClient } = await import('../services/openai-client');
       const conversationText = messages
         .map((m: any) => `[${m.role}]: ${m.content}`)
         .join('\n\n');
 
+      // Run intelligence pipeline on conversation content for structured signals
+      let intelligenceContext = '';
+      try {
+        const { runIntelligencePipeline, buildConstrainedPrompt } = await import(
+          '../services/intelligence-engine/index.js'
+        );
+        const analysis = runIntelligencePipeline(conversationText);
+        intelligenceContext = buildConstrainedPrompt(analysis, 'generate_memo');
+      } catch {
+        // Graceful degradation
+      }
+
+      const systemPrompt = intelligenceContext ||
+        `You are a regulatory affairs document specialist. Extract and organize the conversation content into a formal ${type.replace(/_/g, ' ')} document. Use proper document structure with headings, and maintain regulatory precision. Output in Markdown format.`;
+
       const aiResult = await ai.chat({
         model: 'gpt-4o-mini',
         messages: [
-          {
-            role: 'system',
-            content: `You are a regulatory affairs document specialist. Extract and organize the conversation content into a formal ${type.replace(/_/g, ' ')} document. Use proper document structure with headings, and maintain regulatory precision. Output in Markdown format.`,
-          },
+          { role: 'system', content: systemPrompt },
           {
             role: 'user',
             content: `Create a "${title}" (${type.replace(/_/g, ' ')}) from this conversation:\n\n${conversationText}`,
@@ -11021,6 +11032,33 @@ router.post('/conversations/:conversationId/promote', authMiddleware, async (req
         temperature: 0.3,
       });
       documentContent = aiResult.content || '';
+
+      // Evaluation gate: check output quality
+      try {
+        const { evaluateOutput } = await import('../services/intelligence-engine/index.js');
+        const evaluation = evaluateOutput(documentContent);
+        if (!evaluation.passed && intelligenceContext) {
+          // Regenerate with tighter constraints
+          const retryResult = await ai.chat({
+            model: 'gpt-4o-mini',
+            messages: [
+              {
+                role: 'system',
+                content: `${systemPrompt}\n\nIMPORTANT: Your output MUST include: a clear verdict/recommendation, prioritized findings with severity levels, specific evidence references, and actionable next steps. Rejected reasons: ${evaluation.rejectionReasons.join('; ')}`,
+              },
+              {
+                role: 'user',
+                content: `Create a "${title}" (${type.replace(/_/g, ' ')}) from this conversation:\n\n${conversationText}`,
+              },
+            ],
+            max_tokens: 4000,
+            temperature: 0.2,
+          });
+          documentContent = retryResult.content || documentContent;
+        }
+      } catch {
+        // Use original if evaluation/retry fails
+      }
     } catch {
       // Fallback: raw conversation export
       documentContent = `# ${title}\n\n_Promoted from conversation on ${new Date().toISOString()}_\n\n` +
@@ -11113,21 +11151,47 @@ router.post('/conversations/:conversationId/extract-decisions', authMiddleware, 
     }
 
     try {
-      const { getOpenAIClient } = await import('../services/openai-client');
       const conversationText = messages
         .map((m: any) => `[${m.role}]: ${m.content}`)
         .join('\n\n');
+
+      // Run intelligence pipeline for structured risk/decision signals
+      let intelligenceSignals: Record<string, unknown> = {};
+      try {
+        const { runIntelligencePipeline } = await import('../services/intelligence-engine/index.js');
+        const analysis = runIntelligencePipeline(conversationText);
+        intelligenceSignals = {
+          defensibilityScore: analysis.defensibility.score,
+          riskLevel: analysis.defensibility.riskLevel,
+          riskClassifications: analysis.riskClassifications.classifications.map(r => ({
+            category: r.category,
+            severity: r.severity,
+            finding: r.finding,
+          })),
+          reviewerQuestions: analysis.reviewerQuestions.map(q => ({
+            question: q.question,
+            severity: q.severity,
+            category: q.category,
+          })),
+        };
+      } catch {
+        // Graceful degradation
+      }
 
       const aiResult = await ai.chat({
         model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
-            content: 'Extract structured information from this regulatory conversation. Return ONLY valid JSON.',
+            content: `Extract structured information from this regulatory conversation. You have intelligence signals available. Return ONLY valid JSON.${
+              Object.keys(intelligenceSignals).length > 0
+                ? `\n\nIntelligence signals:\n${JSON.stringify(intelligenceSignals, null, 2)}`
+                : ''
+            }`,
           },
           {
             role: 'user',
-            content: `Extract all decisions, risks, open questions, and action items from this conversation:\n\n${conversationText}\n\nRespond with JSON: { "decisions": [...], "risks": [...], "openQuestions": [...], "actionItems": [...] }`,
+            content: `Extract all decisions, risks, open questions, and action items from this conversation:\n\n${conversationText}\n\nRespond with JSON: { "decisions": [...], "risks": [...], "openQuestions": [...], "actionItems": [...], "intelligenceSignals": {...} }`,
           },
         ],
         max_tokens: 2000,
@@ -11140,6 +11204,11 @@ router.post('/conversations/:conversationId/extract-decisions', authMiddleware, 
         decisions: [], risks: [], openQuestions: [], actionItems: [],
       };
 
+      // Merge intelligence signals into response
+      if (Object.keys(intelligenceSignals).length > 0) {
+        extracted.intelligenceSignals = intelligenceSignals;
+      }
+
       return sendSuccess(res, extracted);
     } catch (aiError: any) {
       logger.error(`Decision extraction failed: ${aiError.message}`);
@@ -11148,6 +11217,95 @@ router.post('/conversations/:conversationId/extract-decisions', authMiddleware, 
   } catch (error: any) {
     logConcept2cureError('decision extraction', error);
     return sendError(res, 500, 'Failed to extract decisions');
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// INTELLIGENCE ENGINE — Deterministic regulatory intelligence analysis
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * POST /api/concept2cure/intelligence/analyze
+ *
+ * Runs the full Intelligence Engine pipeline on provided content.
+ * Returns deterministic analysis: claim/evidence alignment, consistency,
+ * defensibility scoring, risk classification, and reviewer questions.
+ *
+ * No LLM dependency — all results are reproducible.
+ */
+router.post('/intelligence/analyze', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { runIntelligencePipeline, emitRIMSignals, buildConstrainedPrompt } = await import(
+      '../services/intelligence-engine/index.js'
+    );
+
+    const analyzeSchema = z.object({
+      content: z.string().min(10).max(200000),
+      sections: z
+        .array(
+          z.object({
+            id: z.string(),
+            name: z.string(),
+            content: z.string(),
+          })
+        )
+        .optional(),
+      includeConstrainedPrompt: z.enum(['explain_risk', 'suggest_remediation', 'generate_memo', 'rewrite_section']).optional(),
+    });
+
+    const parsed = analyzeSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return sendError(res, 400, 'Invalid analysis request', parsed.error.format());
+    }
+
+    const { content, sections, includeConstrainedPrompt } = parsed.data;
+    const startTime = Date.now();
+
+    // Run full deterministic pipeline
+    const analysis = runIntelligencePipeline(content, sections);
+    const rimSignals = emitRIMSignals(analysis);
+
+    // Optionally build a constrained LLM prompt
+    let constrainedPrompt: string | undefined;
+    if (includeConstrainedPrompt) {
+      constrainedPrompt = buildConstrainedPrompt(analysis, includeConstrainedPrompt);
+    }
+
+    return sendSuccess(res, {
+      analysis,
+      rimSignals,
+      constrainedPrompt,
+      executionTimeMs: Date.now() - startTime,
+    });
+  } catch (error: any) {
+    logger.error(`Intelligence analysis failed: ${error.message}`);
+    return sendError(res, 500, 'Intelligence analysis failed');
+  }
+});
+
+/**
+ * POST /api/concept2cure/intelligence/evaluate
+ *
+ * Run the evaluation gate on any output text to check quality.
+ */
+router.post('/intelligence/evaluate', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { evaluateOutput } = await import('../services/intelligence-engine/index.js');
+
+    const evalSchema = z.object({
+      output: z.string().min(1).max(100000),
+    });
+
+    const parsed = evalSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return sendError(res, 400, 'Invalid evaluation request', parsed.error.format());
+    }
+
+    const evaluation = evaluateOutput(parsed.data.output);
+    return sendSuccess(res, evaluation);
+  } catch (error: any) {
+    logger.error(`Evaluation gate failed: ${error.message}`);
+    return sendError(res, 500, 'Evaluation failed');
   }
 });
 
