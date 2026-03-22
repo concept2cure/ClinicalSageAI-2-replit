@@ -41,7 +41,6 @@ export default function DossierTree({ documentId, region }: DossierTreeProps) {
         const structure = generateCTDStructure(region);
         setTreeData(structure);
       } catch (error) {
-        console.error('Failed to load dossier structure:', error);
       } finally {
         setLoading(false);
       }

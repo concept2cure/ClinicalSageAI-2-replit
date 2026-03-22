@@ -201,7 +201,6 @@ const ExecutivePlaybookPanel: React.FC<ExecutivePlaybookProps> = ({ subId }) => 
       const data = await response.json();
       setSimulation(data);
     } catch (error) {
-      console.error('Failed to simulate RPI:', error);
     }
   };
 

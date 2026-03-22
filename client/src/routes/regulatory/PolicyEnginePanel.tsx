@@ -287,7 +287,6 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
       const policyData = await response.json();
       setPolicy(policyData);
     } catch (error) {
-      console.error('Failed to load policy:', error);
     } finally {
       setLoading(false);
     }
@@ -299,7 +298,6 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
       const versionsData = await response.json();
       setVersions(versionsData);
     } catch (error) {
-      console.error('Failed to load versions:', error);
     }
   };
 
@@ -315,7 +313,6 @@ const PolicyEnginePanel: React.FC<PolicyEngineProps> = ({ subId }) => {
       const evalData = await response.json();
       setEvaluation(evalData);
     } catch (error) {
-      console.error('Failed to evaluate policy:', error);
     } finally {
       setLoading(false);
     }

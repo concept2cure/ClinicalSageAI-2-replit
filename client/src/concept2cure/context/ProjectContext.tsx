@@ -319,7 +319,7 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
   const [state, dispatch] = useReducer(projectReducer, initialState);
 
   // Generate unique IDs
-  const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  const generateId = () => crypto.randomUUID();
 
   // ─────────────────────────────────────────────────────────────────────────
   // PROJECT ACTIONS

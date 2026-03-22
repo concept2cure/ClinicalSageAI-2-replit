@@ -534,16 +534,13 @@ export default function CERV2Page({
   const [faers, setFaers] = useState([]);
   const [showESTARDemo, setShowESTARDemo] = useState(false);
   const [cerDocumentId, setCerDocumentId] = useState(() => {
-    const prefix = 'CER-';
-    return prefix + Math.floor(100000 + Math.random() * 900000);
+    return 'CER-' + crypto.randomUUID().slice(0, 6).toUpperCase();
   });
   const [pmaDocumentId, setPmaDocumentId] = useState(() => {
-    const prefix = 'PMA-';
-    return prefix + Math.floor(100000 + Math.random() * 900000);
+    return 'PMA-' + crypto.randomUUID().slice(0, 6).toUpperCase();
   });
   const [k510DocumentId, setK510DocumentId] = useState(() => {
-    const prefix = '510K-';
-    return prefix + Math.floor(100000 + Math.random() * 900000);
+    return '510K-' + crypto.randomUUID().slice(0, 6).toUpperCase();
   });
   const [comparators, setComparators] = useState([]);
   const [sections, setSections] = useState([]);
@@ -646,7 +643,7 @@ export default function CERV2Page({
       console.error('Failed to create project on server:', error);
       // Fallback: create locally so the UI isn't broken
       const fallbackProject = {
-        id: `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        id: `local-${crypto.randomUUID()}`,
         deviceName: projectData.deviceName || 'Untitled Device',
         deviceType: documentType,
         manufacturer: projectData.manufacturer || '',

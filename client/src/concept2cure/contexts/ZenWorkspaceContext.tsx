@@ -172,7 +172,7 @@ type WorkspaceAction =
 // INITIAL STATE
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const generateSessionId = () => `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+const generateSessionId = () => `session-${crypto.randomUUID()}`;
 
 const initialState: WorkspaceState = {
   userId: '',
@@ -417,7 +417,7 @@ export const ZenWorkspaceProvider: React.FC<ZenWorkspaceProviderProps> = ({
     const now = new Date().toISOString();
     const project: ActiveProject = {
       ...data,
-      id: `proj-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `proj-${Date.now()}-${crypto.randomUUID().slice(0, 9)}`,
       createdAt: now,
       updatedAt: now,
       artifacts: [],
@@ -467,7 +467,7 @@ export const ZenWorkspaceProvider: React.FC<ZenWorkspaceProviderProps> = ({
     const now = new Date().toISOString();
     const newArtifact: ProjectArtifact = {
       ...artifact,
-      id: `art-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `art-${Date.now()}-${crypto.randomUUID().slice(0, 9)}`,
       createdAt: now,
       updatedAt: now,
     };
@@ -496,7 +496,7 @@ export const ZenWorkspaceProvider: React.FC<ZenWorkspaceProviderProps> = ({
   const addTask = useCallback((projectId: string, task: Omit<ProjectTask, 'id'>) => {
     const newTask: ProjectTask = {
       ...task,
-      id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `task-${Date.now()}-${crypto.randomUUID().slice(0, 9)}`,
     };
     
     dispatch({ type: 'ADD_TASK_TO_PROJECT', payload: { projectId, task: newTask } });

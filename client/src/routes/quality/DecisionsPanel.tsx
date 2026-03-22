@@ -10,7 +10,6 @@ export default function DecisionsPanel({ batchId }: { batchId: string }) {
         const data = await r.json();
         setLogs(Array.isArray(data) ? data : []);
       } catch (e) {
-        console.error('Failed to load decisions:', e);
         setLogs([]);
       }
     })();

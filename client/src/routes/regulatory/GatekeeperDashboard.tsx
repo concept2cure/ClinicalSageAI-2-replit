@@ -40,7 +40,6 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
       setTimelineData(timeline);
       setHistory(hist);
     } catch (error) {
-      console.error('Failed to load dashboard data:', error);
     } finally {
       setLoading(false);
     }
@@ -60,7 +59,6 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
       setGatekeeperData(result);
       loadData(); // Refresh all data
     } catch (error) {
-      console.error('Gatekeeper run failed:', error);
     } finally {
       setLoading(false);
     }
@@ -77,7 +75,6 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
       });
       loadData(); // Refresh data after fixes
     } catch (error) {
-      console.error('Auto-fix failed:', error);
     } finally {
       setLoading(false);
     }
@@ -107,7 +104,6 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
       a.click();
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Failed to download calendar:', error);
     }
   };
 

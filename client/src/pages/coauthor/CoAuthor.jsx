@@ -2172,7 +2172,7 @@ export default function CoAuthor({ sharedData = {}, onDocumentUpdate = () => {} 
     // Get or retrieve session from localStorage
     let storedSessionId = localStorage.getItem('ind_session_id');
     if (!storedSessionId) {
-      storedSessionId = `SESSION-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      storedSessionId = `SESSION-${crypto.randomUUID()}`;
       localStorage.setItem('ind_session_id', storedSessionId);
     }
     setSessionId(storedSessionId);

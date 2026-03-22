@@ -52,7 +52,6 @@ export default function M3Builder({ subId }: { subId: string }) {
       const r = await fetch(`/api/reg/sections/${secId}/suggestions`).then(r => r.json());
       return r;
     } catch (error) {
-      console.error('Failed to load suggestions:', error);
       return [];
     }
   }
@@ -62,7 +61,6 @@ export default function M3Builder({ subId }: { subId: string }) {
       await fetch(`/api/reg/suggestions/${sugId}/accept`, { method: 'POST' });
       await load();
     } catch (error) {
-      console.error('Accept failed:', error);
     }
   }
 
@@ -71,7 +69,6 @@ export default function M3Builder({ subId }: { subId: string }) {
       await fetch(`/api/reg/suggestions/${sugId}/reject`, { method: 'POST' });
       await load();
     } catch (error) {
-      console.error('Reject failed:', error);
     }
   }
 
