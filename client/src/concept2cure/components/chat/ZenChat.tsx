@@ -1215,7 +1215,12 @@ export const ZenChat: React.FC<ZenChatProps> = ({
                 onCopy={() => handleCopy(message.content)}
                 onRegenerate={message.role === 'assistant' ? handleRegenerate : undefined}
                 onFeedback={(positive: boolean) => {
-                  console.info(`[chat-feedback] messageId=${message.id} positive=${positive}`);
+                  const fbToken = sessionStorage.getItem('trialsage_access_token') || localStorage.getItem('trialsage_access_token');
+                  fetch('/api/concept2cure/feedback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', ...(fbToken ? { Authorization: `Bearer ${fbToken}` } : {}) },
+                    body: JSON.stringify({ messageId: message.id, positive }),
+                  }).catch(() => {});
                 }}
                 onNavigate={handleNavigate}
                 onSaveArtifact={handleSaveArtifact}

@@ -58,6 +58,18 @@ interface AnaMessage {
   images?: Array<{ base64: string; mimeType: string }>;
   /** Downloadable PPTX from Nano Banana */
   pptx?: { base64: string; filename: string; mimeType: string };
+  /** Whether this message has been saved as an artifact */
+  savedAsArtifact?: boolean;
+}
+
+// ─── Auth helper ──────────────────────────────────────────────────────────────
+function getAuthHeaders(): Record<string, string> {
+  const token =
+    sessionStorage.getItem('trialsage_access_token') ||
+    localStorage.getItem('trialsage_access_token');
+  return token
+    ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+    : { 'Content-Type': 'application/json' };
 }
 
 interface SuggestedAction {
@@ -264,7 +276,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         // Launch job
         const launchRes = await fetch('/api/deep-research/jobs', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
           body: JSON.stringify({
             query: { indication: text, keywords: text.split(/\s+/).filter(w => w.length > 3) },
             connectorIds: ['clinical_trials_gov', 'pubmed', 'fda_drugs', 'ema_epar'],
@@ -392,7 +404,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         // Route to Nano Banana (Gemini image gen) endpoint
         const response = await fetch('/api/nano-banana/chat', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
           body: JSON.stringify({
             message: text,
             conversationHistory: messages.slice(-10).map(m => ({
@@ -429,7 +441,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         // Standard mode → Cortex unified chat
         const response = await fetch('/api/cortex/chat', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
           body: JSON.stringify({
             message: text,
             chatMode,
@@ -453,13 +465,40 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         }
         data = await response.json();
 
+        const assistantContent = data.response || data.answer || 'I\'m here to help with your regulatory work. What would you like to work on?';
+
         setMessages(prev => [...prev, {
           id: `a-${Date.now()}`,
           role: 'assistant',
-          content: data.response || data.answer || 'I\'m here to help with your regulatory work. What would you like to work on?',
+          content: assistantContent,
           timestamp: new Date(),
-          demo: data.demo || false,
         }]);
+
+        // Auto-persist substantial AI responses as artifacts when project context exists
+        if (contextProfile?.projectId && assistantContent.length > 500) {
+          const numericProjectId = String(contextProfile.projectId).replace(/^proj_/, '');
+          // Extract code blocks > 200 chars as artifacts
+          const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
+          let match;
+          while ((match = codeBlockRegex.exec(assistantContent)) !== null) {
+            const blockContent = match[2].trim();
+            if (blockContent.length < 200) continue;
+            try {
+              await fetch(`/api/concept2cure/projects/${numericProjectId}/artifacts`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({
+                  title: `AI Draft — ${new Date().toISOString().split('T')[0]}`,
+                  content: blockContent,
+                  type: 'document_section',
+                  category: 'document',
+                }),
+              });
+            } catch {
+              // Non-blocking
+            }
+          }
+        }
       }
     } catch (err: any) {
       setMessages(prev => [...prev, {
@@ -751,8 +790,50 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           <button onClick={() => handleCopy(msg.id, msg.content)} className="p-1 text-[#B0AEA5] hover:text-[#4D4B45] hover:bg-[#F5F4EF] rounded transition-colors" title="Copy">
                             {copiedId === msg.id ? <Check className="w-3 h-3 text-green-600" /> : <Copy className="w-3 h-3" />}
                           </button>
-                          <button onClick={() => console.info(`[chat-feedback] messageId=${msg.id} positive=true`)} className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors" title="Good"><ThumbsUp className="w-3 h-3" /></button>
-                          <button onClick={() => console.info(`[chat-feedback] messageId=${msg.id} positive=false`)} className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors" title="Bad"><ThumbsDown className="w-3 h-3" /></button>
+                          <button onClick={() => {
+                            fetch('/api/concept2cure/feedback', {
+                              method: 'POST',
+                              headers: getAuthHeaders(),
+                              body: JSON.stringify({ messageId: msg.id, positive: true }),
+                            }).catch(() => {});
+                          }} className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors" title="Good"><ThumbsUp className="w-3 h-3" /></button>
+                          <button onClick={() => {
+                            fetch('/api/concept2cure/feedback', {
+                              method: 'POST',
+                              headers: getAuthHeaders(),
+                              body: JSON.stringify({ messageId: msg.id, positive: false }),
+                            }).catch(() => {});
+                          }} className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors" title="Bad"><ThumbsDown className="w-3 h-3" /></button>
+                          {/* Save to Vault — persist AI response as a governed artifact */}
+                          {contextProfile?.projectId && msg.content.length > 100 && !msg.savedAsArtifact && (
+                            <button
+                              onClick={async () => {
+                                const numProjId = String(contextProfile.projectId).replace(/^proj_/, '');
+                                try {
+                                  const saveRes = await fetch(`/api/concept2cure/projects/${numProjId}/artifacts`, {
+                                    method: 'POST',
+                                    headers: getAuthHeaders(),
+                                    body: JSON.stringify({
+                                      title: `AnA Response — ${new Date().toISOString().split('T')[0]}`,
+                                      content: msg.content,
+                                      type: 'document_section',
+                                      category: 'document',
+                                    }),
+                                  });
+                                  if (saveRes.ok) {
+                                    setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, savedAsArtifact: true } : m));
+                                  }
+                                } catch { /* non-blocking */ }
+                              }}
+                              className="p-1 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
+                              title="Save to Vault"
+                            >
+                              <Download className="w-3 h-3" />
+                            </button>
+                          )}
+                          {msg.savedAsArtifact && (
+                            <span className="text-[10px] text-emerald-600 font-medium ml-1">Saved</span>
+                          )}
                         </div>
                       )}
                     </div>
