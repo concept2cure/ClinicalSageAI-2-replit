@@ -1,5 +1,5 @@
 /**
- * Lumen Cortex Chat - Claude-like Conversational AI Interface
+ * AnA 1.0 RI Chat - Claude-like Conversational AI Interface
  *
  * A modern, enterprise-grade chat interface for regulatory AI assistance.
  * Provides Claude-like conversational experience with markdown rendering.

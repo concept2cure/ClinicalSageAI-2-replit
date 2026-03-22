@@ -2,7 +2,7 @@
  * RegulatoryIntelligencePanel — Unified intelligence panel for document workspace.
  *
  * 5 tabs wired to live APIs:
- *   Insights    → Lumen Cortex regulatory-analysis + CSR search
+ *   Insights    → AnA 1.0 RI regulatory-analysis + CSR search
  *   Precedents  → Precedent Engine search + compare
  *   Risk        → Foresight AI risk-analysis/clinical + Foresight score
  *   Strategy    → Precedent Engine strategy + recommendations

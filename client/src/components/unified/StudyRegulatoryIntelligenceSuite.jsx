@@ -261,7 +261,7 @@ export default function StudyRegulatoryIntelligenceSuite() {
     });
   }, [activeTab]);
 
-  // Lumen AI Query Handler
+  // AnA 1.0 RI Query Handler
   const handleLumenQuery = async () => {
     if (!lumenQuery.trim()) {
       toast({
@@ -289,7 +289,7 @@ export default function StudyRegulatoryIntelligenceSuite() {
         }),
       });
 
-      if (!response.ok) throw new Error('Failed to get Lumen AI response');
+      if (!response.ok) throw new Error('Failed to get AnA 1.0 RI response');
 
       const result = await response.json();
       setLumenResponses(prev => [
@@ -309,7 +309,7 @@ export default function StudyRegulatoryIntelligenceSuite() {
         description: 'Successfully received guidance',
       });
     } catch (error) {
-      console.error('Lumen AI error:', error);
+      console.error('AnA 1.0 RI error:', error);
       toast({
         title: '❌ Query Failed',
         description: 'Failed to get AnA RI response',
@@ -606,9 +606,9 @@ export default function StudyRegulatoryIntelligenceSuite() {
           </Tabs>
         </div>
 
-        {/* Lumen AI Assistant Panel */}
+        {/* AnA Assistant Panel */}
 
-        {/* Lumen AI Assistant Panel */}
+        {/* AnA Assistant Panel */}
         {lumenPanelOpen && (
           <div className="w-96 border-l bg-white dark:bg-gray-900 flex flex-col">
             <div className="p-6 border-b">

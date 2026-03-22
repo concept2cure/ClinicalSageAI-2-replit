@@ -432,10 +432,10 @@ type LayoutMode =
   | 'report-engine'
   | 'about-training'
   | 'user-inbox'
-  | 'client-branding';
+  | 'client-branding'
   | 'ana-dashboard'
   | 'safety-narrative'
-  | 'ana-platform-control';
+  | 'ana-platform-control'
   | 'integrations';
 
 const INDUSTRY_MODES: IndustryMode[] = [

@@ -188,7 +188,7 @@ const modulesStructure = [
       { name: 'Nonclinical Data', href: '/ind-wizard/nonclinical' },
       { name: 'FDA Forms', href: '/ind-wizard/forms' },
       { name: 'Medical Writer', href: '/ind-wizard/medical-writer' },
-      { name: 'ASK LUMEN AI', href: '/ind-wizard/ai-assistant' },
+      { name: 'ASK AnA', href: '/ind-wizard/ai-assistant' },
     ],
   },
   {

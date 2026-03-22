@@ -1,7 +1,7 @@
 /**
  * Concept2Cure Cortex Hooks
  *
- * React Query hooks for Lumen Cortex and Project Cortex integration.
+ * React Query hooks for AnA 1.0 RI and Project Cortex integration.
  * Provides reactive data fetching, caching, and state management.
  *
  * @module concept2cure/hooks/useCortex
