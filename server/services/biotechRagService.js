@@ -4,12 +4,7 @@
  */
 
 import { db } from '../db';
-import {
-  ragDocuments,
-  ragChunks,
-  ragQueries,
-  ragKnowledgeGraph
-} from '@shared/schema';
+import { ragDocuments, ragChunks, ragQueries, ragKnowledgeGraph } from '@shared/schema';
 import { eq, and, sql, desc, inArray, like, ilike, or } from 'drizzle-orm';
 import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
@@ -20,7 +15,6 @@ import * as cheerio from 'cheerio';
 // Initialize OpenAI if API key is available
 let openai = null;
 try {
-
 } catch (error) {
   console.log('OpenAI initialization failed, using fallback embeddings');
 }
@@ -32,12 +26,14 @@ class FallbackEmbeddings {
     this.idf = new Map();
     this.dimensions = 384; // Smaller than OpenAI for efficiency
   }
-import { ai } from '../lib/unified-ai-client';
 
   async generateEmbedding(text) {
     // Simple tokenization
-    const tokens = text.toLowerCase().split(/\W+/).filter(t => t.length > 2);
-    
+    const tokens = text
+      .toLowerCase()
+      .split(/\W+/)
+      .filter(t => t.length > 2);
+
     // Build vocabulary
     tokens.forEach(token => {
       if (!this.vocabulary.has(token)) {
@@ -48,7 +44,7 @@ import { ai } from '../lib/unified-ai-client';
     // Create sparse vector
     const vector = new Array(Math.min(this.dimensions, this.vocabulary.size)).fill(0);
     const tokenCounts = new Map();
-    
+
     tokens.forEach(token => {
       tokenCounts.set(token, (tokenCounts.get(token) || 0) + 1);
     });
@@ -68,18 +64,18 @@ import { ai } from '../lib/unified-ai-client';
     if (magnitude > 0) {
       return vector.map(val => val / magnitude);
     }
-    
+
     return vector;
   }
 
   cosineSimilarity(vec1, vec2) {
     if (!vec1 || !vec2 || vec1.length !== vec2.length) return 0;
-    
+
     let dotProduct = 0;
     for (let i = 0; i < vec1.length; i++) {
       dotProduct += vec1[i] * vec2[i];
     }
-    
+
     return dotProduct;
   }
 }
@@ -101,14 +97,17 @@ class BiotechRagService {
    */
   async generateEmbedding(text, model = 'text-embedding-3-small') {
     // Check cache first
-    const cacheKey = crypto.createHash('md5').update(text + model).digest('hex');
+    const cacheKey = crypto
+      .createHash('md5')
+      .update(text + model)
+      .digest('hex');
     const cached = this.embedCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < this.cacheTimeout) {
       return cached.embedding;
     }
 
     let embedding;
-    
+
     if (openai) {
       try {
         const response = await openai.embeddings.create({
@@ -129,7 +128,7 @@ class BiotechRagService {
     // Cache the embedding
     this.embedCache.set(cacheKey, {
       embedding,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
 
     return embedding;
@@ -141,10 +140,10 @@ class BiotechRagService {
   chunkDocument(text, metadata = {}) {
     const chunks = [];
     const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
-    
+
     let currentChunk = '';
     let currentSection = metadata.section || '';
-    
+
     sentences.forEach((sentence, index) => {
       // Check for section headers (common in biotech documents)
       const headerMatch = sentence.match(/^(\d+\.?\d*\.?\d*\.?)\s+([A-Z][^.!?]+)/);
@@ -154,7 +153,7 @@ class BiotechRagService {
           chunks.push({
             content: currentChunk.trim(),
             section: currentSection,
-            index: chunks.length
+            index: chunks.length,
           });
         }
         currentSection = headerMatch[2].trim();
@@ -164,9 +163,9 @@ class BiotechRagService {
         chunks.push({
           content: currentChunk.trim(),
           section: currentSection,
-          index: chunks.length
+          index: chunks.length,
         });
-        
+
         // Start new chunk with overlap
         const overlap = sentences.slice(Math.max(0, index - 2), index).join(' ');
         currentChunk = overlap + ' ' + sentence;
@@ -180,7 +179,7 @@ class BiotechRagService {
       chunks.push({
         content: currentChunk.trim(),
         section: currentSection,
-        index: chunks.length
+        index: chunks.length,
       });
     }
 
@@ -199,13 +198,13 @@ class BiotechRagService {
       genes: [],
       proteins: [],
       pathways: [],
-      cells: []
+      cells: [],
     };
 
     // Drug name patterns (simplified - production would use NER models)
     const drugPatterns = [
       /\b[A-Z][a-z]+mab\b/g, // Monoclonal antibodies
-      /\b[A-Z][a-z]+nib\b/g,  // Kinase inhibitors
+      /\b[A-Z][a-z]+nib\b/g, // Kinase inhibitors
       /\b[A-Z][a-z]+stat\b/g, // Statins
       /\b[A-Z][a-z]+pril\b/g, // ACE inhibitors
       /\b[A-Z][a-z]+sartan\b/g, // ARBs
@@ -223,9 +222,9 @@ class BiotechRagService {
     // Protein patterns
     const proteinPatterns = [
       /\bCD\d+[a-zA-Z]?\b/g, // CD markers
-      /\bHLA-[A-Z]\d*\b/g,   // HLA types
+      /\bHLA-[A-Z]\d*\b/g, // HLA types
       /\bIL-?\d+[a-zA-Z]?\b/g, // Interleukins
-      /\bTNF[a-zA-Z]?\b/g,   // TNF family
+      /\bTNF[a-zA-Z]?\b/g, // TNF family
     ];
 
     proteinPatterns.forEach(pattern => {
@@ -234,7 +233,14 @@ class BiotechRagService {
     });
 
     // Biomarker indicators
-    const biomarkerKeywords = ['biomarker', 'marker', 'indicator', 'expression', 'mutation', 'variant'];
+    const biomarkerKeywords = [
+      'biomarker',
+      'marker',
+      'indicator',
+      'expression',
+      'mutation',
+      'variant',
+    ];
     biomarkerKeywords.forEach(keyword => {
       const regex = new RegExp(`(\\w+)\\s+${keyword}`, 'gi');
       const matches = text.match(regex) || [];
@@ -272,22 +278,27 @@ class BiotechRagService {
       fileBuffer,
       fileName,
       mimeType,
-      metadata = {}
+      metadata = {},
     } = documentData;
 
     try {
       // Generate document ID
       const documentId = `doc_${uuidv4()}`;
-      const fileHash = crypto.createHash('sha256').update(content || fileBuffer).digest('hex');
+      const fileHash = crypto
+        .createHash('sha256')
+        .update(content || fileBuffer)
+        .digest('hex');
 
       // Extract text content based on file type
       let textContent = content;
-      
+
       if (!textContent && fileBuffer) {
         if (mimeType === 'application/pdf') {
           const pdfData = await pdfParse(fileBuffer);
           textContent = pdfData.text;
-        } else if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+        } else if (
+          mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        ) {
           const result = await mammoth.extractRawText({ buffer: fileBuffer });
           textContent = result.value;
         } else if (mimeType === 'text/html') {
@@ -303,45 +314,48 @@ class BiotechRagService {
       }
 
       // Create document record
-      const [document] = await db.insert(ragDocuments).values({
-        organizationId,
-        documentId,
-        title,
-        documentType,
-        fileName,
-        fileHash,
-        fileSize: fileBuffer ? fileBuffer.length : content.length,
-        mimeType,
-        status: 'processing',
-        wordCount: textContent.split(/\s+/).length,
-        language: 'en',
-        ...metadata,
-        metadata: {
-          ingestionDate: new Date().toISOString(),
-          ...metadata.metadata
-        }
-      }).returning();
+      const [document] = await db
+        .insert(ragDocuments)
+        .values({
+          organizationId,
+          documentId,
+          title,
+          documentType,
+          fileName,
+          fileHash,
+          fileSize: fileBuffer ? fileBuffer.length : content.length,
+          mimeType,
+          status: 'processing',
+          wordCount: textContent.split(/\s+/).length,
+          language: 'en',
+          ...metadata,
+          metadata: {
+            ingestionDate: new Date().toISOString(),
+            ...metadata.metadata,
+          },
+        })
+        .returning();
 
       // Chunk the document
       const chunks = this.chunkDocument(textContent, metadata);
-      
+
       // Process chunks in batches to avoid overwhelming the API
       const batchSize = 10;
       const processedChunks = [];
-      
+
       for (let i = 0; i < chunks.length; i += batchSize) {
         const batch = chunks.slice(i, i + batchSize);
-        
-        const chunkPromises = batch.map(async (chunk) => {
+
+        const chunkPromises = batch.map(async chunk => {
           const chunkId = `chunk_${uuidv4()}`;
           const contentHash = crypto.createHash('md5').update(chunk.content).digest('hex');
-          
+
           // Extract entities
           const entities = this.extractBiotechEntities(chunk.content);
-          
+
           // Generate embedding
           const embedding = await this.generateEmbedding(chunk.content);
-          
+
           // Extract keywords (simple approach - production would use NLP)
           const keywords = chunk.content
             .split(/\W+/)
@@ -351,7 +365,7 @@ class BiotechRagService {
               acc[lower] = (acc[lower] || 0) + 1;
               return acc;
             }, {});
-          
+
           const topKeywords = Object.entries(keywords)
             .sort((a, b) => b[1] - a[1])
             .slice(0, 10)
@@ -372,8 +386,8 @@ class BiotechRagService {
             entities,
             keywords: topKeywords,
             metadata: {
-              processedAt: new Date().toISOString()
-            }
+              processedAt: new Date().toISOString(),
+            },
           };
         });
 
@@ -391,13 +405,14 @@ class BiotechRagService {
       });
 
       // Update document status
-      await db.update(ragDocuments)
+      await db
+        .update(ragDocuments)
         .set({
           status: 'indexed',
           chunkCount: processedChunks.length,
           averageEmbedding: avgEmbedding,
           indexedAt: new Date(),
-          updatedAt: new Date()
+          updatedAt: new Date(),
         })
         .where(eq(ragDocuments.id, document.id));
 
@@ -408,26 +423,26 @@ class BiotechRagService {
         documentId: document.id,
         status: 'indexed',
         chunksProcessed: processedChunks.length,
-        entities: this.aggregateEntities(processedChunks)
+        entities: this.aggregateEntities(processedChunks),
       };
-
     } catch (error) {
       console.error('Document ingestion error:', error);
-      
+
       // Update document status to failed
       if (document?.id) {
-        await db.update(ragDocuments)
+        await db
+          .update(ragDocuments)
           .set({
             status: 'failed',
             processingStatus: {
               error: error.message,
-              failedAt: new Date().toISOString()
+              failedAt: new Date().toISOString(),
             },
-            updatedAt: new Date()
+            updatedAt: new Date(),
           })
           .where(eq(ragDocuments.id, document.id));
       }
-      
+
       throw error;
     }
   }
@@ -437,10 +452,10 @@ class BiotechRagService {
    */
   async extractKnowledgeGraph(documentId, chunks, organizationId) {
     const relationships = [];
-    
+
     chunks.forEach(chunk => {
       const { entities } = chunk;
-      
+
       // Create drug-target relationships
       entities.drugs?.forEach(drug => {
         entities.targets?.forEach(target => {
@@ -457,11 +472,11 @@ class BiotechRagService {
             sourceChunkIds: [chunk.chunkId],
             confidence: 0.7, // Would be calculated based on context
             metadata: {
-              extractedAt: new Date().toISOString()
-            }
+              extractedAt: new Date().toISOString(),
+            },
           });
         });
-        
+
         // Create drug-disease relationships
         entities.diseases?.forEach(disease => {
           relationships.push({
@@ -477,12 +492,12 @@ class BiotechRagService {
             sourceChunkIds: [chunk.chunkId],
             confidence: 0.6,
             metadata: {
-              extractedAt: new Date().toISOString()
-            }
+              extractedAt: new Date().toISOString(),
+            },
           });
         });
       });
-      
+
       // Create biomarker-disease relationships
       entities.biomarkers?.forEach(biomarker => {
         entities.diseases?.forEach(disease => {
@@ -499,8 +514,8 @@ class BiotechRagService {
             sourceChunkIds: [chunk.chunkId],
             confidence: 0.5,
             metadata: {
-              extractedAt: new Date().toISOString()
-            }
+              extractedAt: new Date().toISOString(),
+            },
           });
         });
       });
@@ -514,19 +529,23 @@ class BiotechRagService {
           await db.insert(ragKnowledgeGraph).values(rel);
         } catch (error) {
           // Update existing relationship if it exists
-          if (error.code === '23505') { // Unique violation
-            await db.update(ragKnowledgeGraph)
+          if (error.code === '23505') {
+            // Unique violation
+            await db
+              .update(ragKnowledgeGraph)
               .set({
                 confidence: sql`GREATEST(confidence, ${rel.confidence})`,
                 sourceDocumentIds: sql`array_append(source_document_ids, ${documentId})`,
                 sourceChunkIds: sql`array_append(source_chunk_ids, ${rel.sourceChunkIds[0]})`,
-                updatedAt: new Date()
+                updatedAt: new Date(),
               })
-              .where(and(
-                eq(ragKnowledgeGraph.entityId, rel.entityId),
-                eq(ragKnowledgeGraph.relatedEntityId, rel.relatedEntityId),
-                eq(ragKnowledgeGraph.relationshipType, rel.relationshipType)
-              ));
+              .where(
+                and(
+                  eq(ragKnowledgeGraph.entityId, rel.entityId),
+                  eq(ragKnowledgeGraph.relatedEntityId, rel.relatedEntityId),
+                  eq(ragKnowledgeGraph.relationshipType, rel.relationshipType)
+                )
+              );
           }
         }
       }
@@ -543,14 +562,15 @@ class BiotechRagService {
       minScore = 0.5,
       searchMode = 'hybrid',
       filters = {},
-      includeGraph = false
+      includeGraph = false,
     } = options;
 
     // Check cache
-    const cacheKey = crypto.createHash('md5')
+    const cacheKey = crypto
+      .createHash('md5')
       .update(JSON.stringify({ query, options }))
       .digest('hex');
-    
+
     const cached = this.queryCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < this.cacheTimeout) {
       return cached.results;
@@ -562,7 +582,7 @@ class BiotechRagService {
     try {
       // Enhance query with biotech context
       const enhancedQuery = await this.enhanceQuery(query);
-      
+
       // Generate query embedding
       const queryEmbedding = await this.generateEmbedding(enhancedQuery);
 
@@ -580,12 +600,7 @@ class BiotechRagService {
       // Perform keyword search
       let keywordResults = [];
       if (searchMode === 'keyword' || searchMode === 'hybrid') {
-        keywordResults = await this.keywordSearch(
-          query,
-          organizationId,
-          topK * 2,
-          filters
-        );
+        keywordResults = await this.keywordSearch(query, organizationId, topK * 2, filters);
       }
 
       // Combine and re-rank results
@@ -620,8 +635,8 @@ class BiotechRagService {
         resultsCount: filteredResults.length,
         responseTime: Date.now() - startTime,
         metadata: {
-          timestamp: new Date().toISOString()
-        }
+          timestamp: new Date().toISOString(),
+        },
       });
 
       const results = {
@@ -631,17 +646,16 @@ class BiotechRagService {
         results: filteredResults,
         graphResults,
         totalResults: filteredResults.length,
-        responseTime: Date.now() - startTime
+        responseTime: Date.now() - startTime,
       };
 
       // Cache results
       this.queryCache.set(cacheKey, {
         results,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
 
       return results;
-
     } catch (error) {
       console.error('Search error:', error);
       throw error;
@@ -653,7 +667,8 @@ class BiotechRagService {
    */
   async semanticSearch(queryEmbedding, organizationId, limit, filters) {
     // Get all chunks for the organization
-    let chunksQuery = db.select()
+    let chunksQuery = db
+      .select()
       .from(ragChunks)
       .innerJoin(ragDocuments, eq(ragChunks.documentId, ragDocuments.id))
       .where(eq(ragDocuments.organizationId, organizationId))
@@ -670,7 +685,7 @@ class BiotechRagService {
     const similarities = chunks.map(({ rag_chunks, rag_documents }) => {
       const chunkEmbedding = rag_chunks.embedding;
       let similarity = 0;
-      
+
       if (openai && chunkEmbedding) {
         // Cosine similarity for OpenAI embeddings
         similarity = this.cosineSimilarity(queryEmbedding, chunkEmbedding);
@@ -688,15 +703,13 @@ class BiotechRagService {
         score: similarity,
         metadata: {
           documentType: rag_documents.documentType,
-          entities: rag_chunks.entities
-        }
+          entities: rag_chunks.entities,
+        },
       };
     });
 
     // Sort by similarity and return top results
-    return similarities
-      .sort((a, b) => b.score - a.score)
-      .slice(0, limit);
+    return similarities.sort((a, b) => b.score - a.score).slice(0, limit);
   }
 
   /**
@@ -704,28 +717,24 @@ class BiotechRagService {
    */
   async keywordSearch(query, organizationId, limit, filters) {
     const searchTerms = query.toLowerCase().split(/\s+/);
-    
-    // Build search conditions
-    const searchConditions = searchTerms.map(term =>
-      ilike(ragChunks.content, `%${term}%`)
-    );
 
-    let baseQuery = db.select({
-      chunkId: ragChunks.chunkId,
-      documentId: ragDocuments.documentId,
-      documentTitle: ragDocuments.title,
-      content: ragChunks.content,
-      section: ragChunks.sectionTitle,
-      documentType: ragDocuments.documentType,
-      entities: ragChunks.entities
-    })
-    .from(ragChunks)
-    .innerJoin(ragDocuments, eq(ragChunks.documentId, ragDocuments.id))
-    .where(and(
-      eq(ragDocuments.organizationId, organizationId),
-      or(...searchConditions)
-    ))
-    .limit(limit);
+    // Build search conditions
+    const searchConditions = searchTerms.map(term => ilike(ragChunks.content, `%${term}%`));
+
+    let baseQuery = db
+      .select({
+        chunkId: ragChunks.chunkId,
+        documentId: ragDocuments.documentId,
+        documentTitle: ragDocuments.title,
+        content: ragChunks.content,
+        section: ragChunks.sectionTitle,
+        documentType: ragDocuments.documentType,
+        entities: ragChunks.entities,
+      })
+      .from(ragChunks)
+      .innerJoin(ragDocuments, eq(ragChunks.documentId, ragDocuments.id))
+      .where(and(eq(ragDocuments.organizationId, organizationId), or(...searchConditions)))
+      .limit(limit);
 
     // Apply filters
     if (filters.documentType) {
@@ -738,7 +747,7 @@ class BiotechRagService {
     return results.map(result => {
       let score = 0;
       const contentLower = result.content.toLowerCase();
-      
+
       searchTerms.forEach(term => {
         const regex = new RegExp(term, 'gi');
         const matches = contentLower.match(regex);
@@ -750,8 +759,8 @@ class BiotechRagService {
         score: score / searchTerms.length,
         metadata: {
           documentType: result.documentType,
-          entities: result.entities
-        }
+          entities: result.entities,
+        },
       };
     });
   }
@@ -762,13 +771,13 @@ class BiotechRagService {
   reRankResults(semanticResults, keywordResults, queryEmbedding, topK) {
     // Combine results with weighted scoring
     const resultMap = new Map();
-    
+
     // Add semantic results (weight: 0.7)
     semanticResults.forEach(result => {
       resultMap.set(result.chunkId, {
         ...result,
         finalScore: result.score * 0.7,
-        matchType: 'semantic'
+        matchType: 'semantic',
       });
     });
 
@@ -782,7 +791,7 @@ class BiotechRagService {
         resultMap.set(result.chunkId, {
           ...result,
           finalScore: result.score * 0.3,
-          matchType: 'keyword'
+          matchType: 'keyword',
         });
       }
     });
@@ -793,7 +802,7 @@ class BiotechRagService {
       .slice(0, topK)
       .map(r => ({
         ...r,
-        score: r.finalScore
+        score: r.finalScore,
       }));
   }
 
@@ -803,12 +812,12 @@ class BiotechRagService {
   async searchKnowledgeGraph(query, organizationId) {
     // Extract entities from query
     const queryEntities = this.extractBiotechEntities(query);
-    
+
     const entityNames = [
       ...queryEntities.drugs,
       ...queryEntities.targets,
       ...queryEntities.diseases,
-      ...queryEntities.biomarkers
+      ...queryEntities.biomarkers,
     ];
 
     if (entityNames.length === 0) {
@@ -816,19 +825,22 @@ class BiotechRagService {
     }
 
     // Search for entities in knowledge graph
-    const graphResults = await db.select()
+    const graphResults = await db
+      .select()
       .from(ragKnowledgeGraph)
-      .where(and(
-        eq(ragKnowledgeGraph.organizationId, organizationId),
-        or(
-          ...entityNames.map(name => 
-            or(
-              ilike(ragKnowledgeGraph.entityName, `%${name}%`),
-              ilike(ragKnowledgeGraph.relatedEntityName, `%${name}%`)
+      .where(
+        and(
+          eq(ragKnowledgeGraph.organizationId, organizationId),
+          or(
+            ...entityNames.map(name =>
+              or(
+                ilike(ragKnowledgeGraph.entityName, `%${name}%`),
+                ilike(ragKnowledgeGraph.relatedEntityName, `%${name}%`)
+              )
             )
           )
         )
-      ))
+      )
       .limit(20);
 
     return graphResults;
@@ -840,18 +852,28 @@ class BiotechRagService {
   async enhanceQuery(query) {
     // Add biotech-specific context
     const biotechKeywords = [
-      'clinical trial', 'regulatory', 'FDA', 'EMA', 'efficacy', 'safety',
-      'adverse event', 'biomarker', 'endpoint', 'protocol', 'IND', 'NDA',
-      'pharmacokinetics', 'pharmacodynamics', 'dose response'
+      'clinical trial',
+      'regulatory',
+      'FDA',
+      'EMA',
+      'efficacy',
+      'safety',
+      'adverse event',
+      'biomarker',
+      'endpoint',
+      'protocol',
+      'IND',
+      'NDA',
+      'pharmacokinetics',
+      'pharmacodynamics',
+      'dose response',
     ];
 
     let enhanced = query;
-    
+
     // Check if query mentions any biotech concepts
     const queryLower = query.toLowerCase();
-    const relevantKeywords = biotechKeywords.filter(kw => 
-      queryLower.includes(kw.toLowerCase())
-    );
+    const relevantKeywords = biotechKeywords.filter(kw => queryLower.includes(kw.toLowerCase()));
 
     if (relevantKeywords.length === 0) {
       // Add general biotech context if no specific keywords found
@@ -870,31 +892,30 @@ class BiotechRagService {
       return {
         answer: `Based on the available information:\n\n${context.slice(0, 1000)}...`,
         confidence: 0.5,
-        sources: []
+        sources: [],
       };
     }
 
     try {
-      const systemPrompt = `You are a biotech AI assistant specializing in pharmaceutical research, clinical trials, and regulatory affairs. 
+      const systemPrompt = `You are a biotech AI assistant specializing in pharmaceutical research, clinical trials, and regulatory affairs.
       Answer questions based on the provided context. Be precise and cite relevant information.`;
 
       const aiResult = await ai.chat({
         model: options.model || 'gpt-4-turbo-preview',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Context:\n${context}\n\nQuestion: ${query}` }
+          { role: 'user', content: `Context:\n${context}\n\nQuestion: ${query}` },
         ],
         temperature: 0.3,
-        max_tokens: options.maxTokens || 1000
+        max_tokens: options.maxTokens || 1000,
       });
 
       return {
         answer: aiResult.content,
         confidence: 0.9,
         model: response.model,
-        usage: response.usage
+        usage: response.usage,
       };
-
     } catch (error) {
       console.error('Answer generation error:', error);
       throw error;
@@ -906,17 +927,17 @@ class BiotechRagService {
    */
   cosineSimilarity(vec1, vec2) {
     if (!vec1 || !vec2 || vec1.length !== vec2.length) return 0;
-    
+
     let dotProduct = 0;
     let norm1 = 0;
     let norm2 = 0;
-    
+
     for (let i = 0; i < vec1.length; i++) {
       dotProduct += vec1[i] * vec2[i];
       norm1 += vec1[i] * vec1[i];
       norm2 += vec2[i] * vec2[i];
     }
-    
+
     const denominator = Math.sqrt(norm1) * Math.sqrt(norm2);
     return denominator === 0 ? 0 : dotProduct / denominator;
   }
@@ -931,7 +952,7 @@ class BiotechRagService {
       diseases: new Set(),
       biomarkers: new Set(),
       genes: new Set(),
-      proteins: new Set()
+      proteins: new Set(),
     };
 
     chunks.forEach(chunk => {
@@ -958,13 +979,16 @@ class BiotechRagService {
   async synthesizeDocuments(query, documentIds, organizationId) {
     try {
       // Get chunks from specified documents
-      const chunks = await db.select()
+      const chunks = await db
+        .select()
         .from(ragChunks)
         .innerJoin(ragDocuments, eq(ragChunks.documentId, ragDocuments.id))
-        .where(and(
-          eq(ragDocuments.organizationId, organizationId),
-          inArray(ragDocuments.id, documentIds)
-        ))
+        .where(
+          and(
+            eq(ragDocuments.organizationId, organizationId),
+            inArray(ragDocuments.id, documentIds)
+          )
+        )
         .limit(100);
 
       // Group chunks by document
@@ -973,7 +997,7 @@ class BiotechRagService {
         if (!documentChunks[rag_documents.id]) {
           documentChunks[rag_documents.id] = {
             title: rag_documents.title,
-            chunks: []
+            chunks: [],
           };
         }
         documentChunks[rag_documents.id].chunks.push(rag_chunks.content);
@@ -996,10 +1020,9 @@ class BiotechRagService {
         documentCount: documentIds.length,
         sources: Object.entries(documentChunks).map(([id, doc]) => ({
           documentId: id,
-          title: doc.title
-        }))
+          title: doc.title,
+        })),
       };
-
     } catch (error) {
       console.error('Document synthesis error:', error);
       throw error;

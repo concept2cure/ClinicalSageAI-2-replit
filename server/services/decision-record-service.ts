@@ -23,17 +23,35 @@ const log = createScopedLogger('decision-record');
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export type RecommendationType =
-  | 'regulatory_strategy' | 'study_design' | 'endpoint_selection'
-  | 'dose_selection' | 'comparator_selection' | 'statistical_method'
-  | 'manufacturing_change' | 'labeling_change' | 'submission_timing'
-  | 'risk_mitigation' | 'protocol_amendment' | 'data_package';
+  | 'regulatory_strategy'
+  | 'study_design'
+  | 'endpoint_selection'
+  | 'dose_selection'
+  | 'comparator_selection'
+  | 'statistical_method'
+  | 'manufacturing_change'
+  | 'labeling_change'
+  | 'submission_timing'
+  | 'risk_mitigation'
+  | 'protocol_amendment'
+  | 'data_package';
 
 export type ActionState =
-  | 'proposed' | 'under_review' | 'approved' | 'rejected'
-  | 'executed' | 'deferred' | 'escalated' | 'superseded';
+  | 'proposed'
+  | 'under_review'
+  | 'approved'
+  | 'rejected'
+  | 'executed'
+  | 'deferred'
+  | 'escalated'
+  | 'superseded';
 
 export type EvidenceBasis =
-  | 'rules_based' | 'validation_based' | 'ai_inferred' | 'expert_judgment' | 'precedent_based';
+  | 'rules_based'
+  | 'validation_based'
+  | 'ai_inferred'
+  | 'expert_judgment'
+  | 'precedent_based';
 
 export interface DecisionRecord {
   id: string;
@@ -83,12 +101,12 @@ export interface CreateDecisionInput {
 
 // ─── Service ─────────────────────────────────────────────────────────────────
 
-class DecisionRecordService {
-
+export class DecisionRecordService {
   async create(input: CreateDecisionInput): Promise<DecisionRecord> {
     log.info('Creating decision record', { code: input.decisionCode, project: input.projectId });
 
-    const result = await pool!.query(`
+    const result = await pool!.query(
+      `
       INSERT INTO decision_records (
         organization_id, project_id, decision_code, title, domain_track,
         recommendation_type, recommendation_summary, recommendation_rationale,
@@ -96,13 +114,24 @@ class DecisionRecordService {
         decided_by, notes, decision_context
       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
       RETURNING *
-    `, [
-      input.organizationId, input.projectId, input.decisionCode, input.title,
-      input.domainTrack, input.recommendationType, input.recommendationSummary,
-      input.recommendationRationale ?? null, input.confidenceLevel ?? 'moderate',
-      input.evidenceBasis ?? null, input.relatedAssumptionIds ?? [],
-      input.decidedBy, input.notes ?? null, JSON.stringify(input.decisionContext ?? {})
-    ]);
+    `,
+      [
+        input.organizationId,
+        input.projectId,
+        input.decisionCode,
+        input.title,
+        input.domainTrack,
+        input.recommendationType,
+        input.recommendationSummary,
+        input.recommendationRationale ?? null,
+        input.confidenceLevel ?? 'moderate',
+        input.evidenceBasis ?? null,
+        input.relatedAssumptionIds ?? [],
+        input.decidedBy,
+        input.notes ?? null,
+        JSON.stringify(input.decisionContext ?? {}),
+      ]
+    );
 
     return this.map(result.rows[0]);
   }
@@ -119,39 +148,58 @@ class DecisionRecordService {
     const params: (string | number)[] = [input.organizationId];
     let idx = 2;
 
-    if (input.projectId) { conditions.push(`project_id = $${idx++}`); params.push(input.projectId); }
-    if (input.domainTrack) { conditions.push(`domain_track = $${idx++}`); params.push(input.domainTrack); }
-    if (input.actionState) { conditions.push(`action_state = $${idx++}`); params.push(input.actionState); }
-    if (input.recommendationType) { conditions.push(`recommendation_type = $${idx++}`); params.push(input.recommendationType); }
+    if (input.projectId) {
+      conditions.push(`project_id = $${idx++}`);
+      params.push(input.projectId);
+    }
+    if (input.domainTrack) {
+      conditions.push(`domain_track = $${idx++}`);
+      params.push(input.domainTrack);
+    }
+    if (input.actionState) {
+      conditions.push(`action_state = $${idx++}`);
+      params.push(input.actionState);
+    }
+    if (input.recommendationType) {
+      conditions.push(`recommendation_type = $${idx++}`);
+      params.push(input.recommendationType);
+    }
 
     const limit = input.limit ?? 50;
     params.push(limit);
 
-    const result = await pool!.query(`
+    const result = await pool!.query(
+      `
       SELECT * FROM decision_records WHERE ${conditions.join(' AND ')}
       ORDER BY created_at DESC LIMIT $${idx}
-    `, params);
+    `,
+      params
+    );
 
     return result.rows.map(this.map);
   }
 
   async getById(id: string, organizationId: number): Promise<DecisionRecord | null> {
     const result = await pool!.query(
-      'SELECT * FROM decision_records WHERE id = $1 AND organization_id = $2', [id, organizationId]
+      'SELECT * FROM decision_records WHERE id = $1 AND organization_id = $2',
+      [id, organizationId]
     );
     return result.rows.length ? this.map(result.rows[0]) : null;
   }
 
-  async transition(id: string, input: {
-    organizationId: number;
-    actionState: ActionState;
-    performedBy: string;
-    reason?: string;
-    escalatedTo?: string;
-    executedArtifactId?: number;
-    executedArtifactVersion?: number;
-    executedWorkflowRunId?: string;
-  }): Promise<DecisionRecord | null> {
+  async transition(
+    id: string,
+    input: {
+      organizationId: number;
+      actionState: ActionState;
+      performedBy: string;
+      reason?: string;
+      escalatedTo?: string;
+      executedArtifactId?: number;
+      executedArtifactVersion?: number;
+      executedWorkflowRunId?: string;
+    }
+  ): Promise<DecisionRecord | null> {
     log.info('Transitioning decision', { id, newState: input.actionState });
 
     const sets: string[] = ['action_state = $1', 'updated_at = NOW()'];
@@ -159,33 +207,43 @@ class DecisionRecordService {
     let idx = 2;
 
     if (input.actionState === 'approved') {
-      sets.push(`approved_by = $${idx++}`); params.push(input.performedBy);
+      sets.push(`approved_by = $${idx++}`);
+      params.push(input.performedBy);
       sets.push(`approved_at = NOW()`);
     }
     if (input.actionState === 'rejected') {
-      sets.push(`rejection_reason = $${idx++}`); params.push(input.reason ?? null);
+      sets.push(`rejection_reason = $${idx++}`);
+      params.push(input.reason ?? null);
     }
     if (input.actionState === 'escalated') {
-      sets.push(`escalated_to = $${idx++}`); params.push(input.escalatedTo ?? input.performedBy);
-      sets.push(`escalation_reason = $${idx++}`); params.push(input.reason ?? null);
+      sets.push(`escalated_to = $${idx++}`);
+      params.push(input.escalatedTo ?? input.performedBy);
+      sets.push(`escalation_reason = $${idx++}`);
+      params.push(input.reason ?? null);
     }
     if (input.executedArtifactId) {
-      sets.push(`executed_artifact_id = $${idx++}`); params.push(input.executedArtifactId);
+      sets.push(`executed_artifact_id = $${idx++}`);
+      params.push(input.executedArtifactId);
     }
     if (input.executedArtifactVersion) {
-      sets.push(`executed_artifact_version = $${idx++}`); params.push(input.executedArtifactVersion);
+      sets.push(`executed_artifact_version = $${idx++}`);
+      params.push(input.executedArtifactVersion);
     }
     if (input.executedWorkflowRunId) {
-      sets.push(`executed_workflow_run_id = $${idx++}`); params.push(input.executedWorkflowRunId);
+      sets.push(`executed_workflow_run_id = $${idx++}`);
+      params.push(input.executedWorkflowRunId);
     }
 
     params.push(id, input.organizationId);
 
-    const result = await pool!.query(`
+    const result = await pool!.query(
+      `
       UPDATE decision_records SET ${sets.join(', ')}
       WHERE id = $${idx++} AND organization_id = $${idx}
       RETURNING *
-    `, params);
+    `,
+      params
+    );
 
     const record = result.rows.length ? this.map(result.rows[0]) : null;
 
@@ -201,7 +259,9 @@ class DecisionRecordService {
       const triggerType = triggerMap[input.actionState];
       if (triggerType) {
         this.propagateDecisionChange(record, triggerType as any, input.reason).catch(err => {
-          log.warn('Decision propagation failed (non-blocking)', { error: err instanceof Error ? err.message : String(err) });
+          log.warn('Decision propagation failed (non-blocking)', {
+            error: err instanceof Error ? err.message : String(err),
+          });
         });
       }
     }
@@ -209,7 +269,11 @@ class DecisionRecordService {
     return record;
   }
 
-  private async propagateDecisionChange(decision: DecisionRecord, triggerType: string, reason?: string): Promise<void> {
+  private async propagateDecisionChange(
+    decision: DecisionRecord,
+    triggerType: string,
+    reason?: string
+  ): Promise<void> {
     try {
       const { reactiveDependencyService } = await import('./reactive-dependency-service');
       await reactiveDependencyService.propagateChange({

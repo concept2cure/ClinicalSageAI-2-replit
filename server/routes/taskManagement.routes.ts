@@ -1,20 +1,20 @@
 import { Router, Request, Response } from 'express';
-import { DbStorage } from '../storage';
+import { db } from '../db';
 import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
 import { and, eq, or, desc, asc, inArray, gte, lte, like, sql } from 'drizzle-orm';
-import { 
+import {
   unifiedTasks,
   taskTemplates,
   taskAutomation,
   taskDependencies,
   crossModuleTaskLinks,
   users,
-  projects
+  projects,
 } from '../../shared/schema';
 
 const router = Router();
-const storage = DbStorage.getInstance();
+const storage = { db };
 
 // Task creation schema
 const createTaskSchema = z.object({
@@ -47,7 +47,12 @@ const bulkCreateTasksSchema = z.object({
 const createDependencySchema = z.object({
   predecessorTaskId: z.string(),
   successorTaskId: z.string(),
-  dependencyType: z.enum(['finish-to-start', 'start-to-start', 'finish-to-finish', 'start-to-finish']),
+  dependencyType: z.enum([
+    'finish-to-start',
+    'start-to-start',
+    'finish-to-finish',
+    'start-to-finish',
+  ]),
   lagTime: z.number().default(0),
   isBlocking: z.boolean().default(true),
 });
@@ -98,10 +103,18 @@ async function calculateCriticalPath(projectId: number) {
     const dependencies = await storage.db
       .selectFrom('taskDependencies')
       .selectAll()
-      .where((eb) =>
+      .where(eb =>
         eb.or([
-          eb('predecessorTaskId', 'in', tasks.map(t => t.taskId)),
-          eb('successorTaskId', 'in', tasks.map(t => t.taskId))
+          eb(
+            'predecessorTaskId',
+            'in',
+            tasks.map(t => t.taskId)
+          ),
+          eb(
+            'successorTaskId',
+            'in',
+            tasks.map(t => t.taskId)
+          ),
         ])
       )
       .execute();
@@ -113,7 +126,7 @@ async function calculateCriticalPath(projectId: number) {
       graph[task.taskId] = {
         task,
         successors: [],
-        duration
+        duration,
       };
     });
 
@@ -130,11 +143,11 @@ async function calculateCriticalPath(projectId: number) {
 
     function dfs(nodeId: string, path: string[], totalDuration: number) {
       if (!graph[nodeId]) return;
-      
+
       visited.add(nodeId);
       const node = graph[nodeId];
       const currentDuration = totalDuration + node.duration;
-      
+
       if (node.successors.length === 0) {
         if (currentDuration > maxDuration) {
           maxDuration = currentDuration;
@@ -152,8 +165,8 @@ async function calculateCriticalPath(projectId: number) {
     }
 
     // Find all root nodes (no predecessors)
-    const rootNodes = tasks.filter(task => 
-      !dependencies.some(dep => dep.successorTaskId === task.taskId)
+    const rootNodes = tasks.filter(
+      task => !dependencies.some(dep => dep.successorTaskId === task.taskId)
     );
 
     rootNodes.forEach(root => {
@@ -164,7 +177,7 @@ async function calculateCriticalPath(projectId: number) {
     return {
       criticalPath,
       totalDuration: maxDuration,
-      tasks: criticalPath.map(taskId => graph[taskId]?.task)
+      tasks: criticalPath.map(taskId => graph[taskId]?.task),
     };
   } catch (error) {
     console.error('Error calculating critical path:', error);
@@ -178,9 +191,8 @@ async function getOptimalAssignee(organizationId: number, taskData: any) {
     // Get all users and their current workload
     const workloadQuery = await storage.db
       .selectFrom('users')
-      .leftJoin(
-        'unifiedTasks',
-        (join) => join
+      .leftJoin('unifiedTasks', join =>
+        join
           .onRef('users.id', '=', 'unifiedTasks.assigneeId')
           .on('unifiedTasks.status', 'in', ['pending', 'in-progress'])
       )
@@ -189,7 +201,9 @@ async function getOptimalAssignee(organizationId: number, taskData: any) {
         'users.name',
         'users.email',
         storage.db.fn.count('unifiedTasks.id').as('activeTaskCount'),
-        storage.db.fn.sum(storage.db.fn.coalesce('unifiedTasks.estimatedHours', 8)).as('totalHours')
+        storage.db.fn
+          .sum(storage.db.fn.coalesce('unifiedTasks.estimatedHours', 8))
+          .as('totalHours'),
       ])
       .where('users.organizationId', '=', organizationId)
       .groupBy(['users.id', 'users.name', 'users.email'])
@@ -219,11 +233,11 @@ router.post('/tasks', async (req: Request, res: Response) => {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     const taskId = `TASK-${Date.now()}-${uuidv4().substr(0, 8)}`;
-    
+
     // Auto-assign if not specified
     let assigneeId = validatedData.assigneeId;
     let assigneeName = null;
-    
+
     if (!assigneeId) {
       const optimalAssignee = await getOptimalAssignee(organizationId, validatedData);
       if (optimalAssignee) {
@@ -231,7 +245,7 @@ router.post('/tasks', async (req: Request, res: Response) => {
         assigneeName = optimalAssignee.name;
       }
     }
-    
+
     const newTask = await storage.db
       .insertInto('unifiedTasks')
       .values({
@@ -249,16 +263,16 @@ router.post('/tasks', async (req: Request, res: Response) => {
       })
       .returningAll()
       .executeTakeFirst();
-    
-    res.json({ 
-      success: true, 
-      data: newTask 
+
+    res.json({
+      success: true,
+      data: newTask,
     });
   } catch (error) {
     console.error('Error creating task:', error);
-    res.status(400).json({ 
-      success: false, 
-      error: error instanceof z.ZodError ? error.errors : 'Failed to create task' 
+    res.status(400).json({
+      success: false,
+      error: error instanceof z.ZodError ? error.errors : 'Failed to create task',
     });
   }
 });
@@ -273,20 +287,20 @@ router.post('/tasks/bulk-create', async (req: Request, res: Response) => {
     }
     const createdTasks = [];
     const taskIdMapping: Record<string, string> = {};
-    
+
     // Create all tasks
     for (const taskData of validatedData.tasks) {
       const taskId = `TASK-${Date.now()}-${uuidv4().substr(0, 8)}`;
-      
+
       // Store temporary ID mapping for dependencies
       if (taskData.title) {
         taskIdMapping[taskData.title] = taskId;
       }
-      
+
       // Auto-assign if needed
       let assigneeId = taskData.assigneeId;
       let assigneeName = null;
-      
+
       if (!assigneeId) {
         const optimalAssignee = await getOptimalAssignee(organizationId, taskData);
         if (optimalAssignee) {
@@ -294,7 +308,7 @@ router.post('/tasks/bulk-create', async (req: Request, res: Response) => {
           assigneeName = optimalAssignee.name;
         }
       }
-      
+
       const newTask = await storage.db
         .insertInto('unifiedTasks')
         .values({
@@ -312,12 +326,12 @@ router.post('/tasks/bulk-create', async (req: Request, res: Response) => {
         })
         .returningAll()
         .executeTakeFirst();
-      
+
       if (newTask) {
         createdTasks.push(newTask);
       }
     }
-    
+
     // Create dependencies if requested
     if (validatedData.linkDependencies) {
       for (let i = 0; i < validatedData.tasks.length; i++) {
@@ -342,17 +356,17 @@ router.post('/tasks/bulk-create', async (req: Request, res: Response) => {
         }
       }
     }
-    
-    res.json({ 
-      success: true, 
+
+    res.json({
+      success: true,
       data: createdTasks,
-      count: createdTasks.length 
+      count: createdTasks.length,
     });
   } catch (error) {
     console.error('Error bulk creating tasks:', error);
-    res.status(400).json({ 
-      success: false, 
-      error: error instanceof z.ZodError ? error.errors : 'Failed to bulk create tasks' 
+    res.status(400).json({
+      success: false,
+      error: error instanceof z.ZodError ? error.errors : 'Failed to bulk create tasks',
     });
   }
 });
@@ -366,48 +380,48 @@ router.post('/tasks/from-template/:templateId', async (req: Request, res: Respon
     if (!organizationId) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
-    
+
     // Get template
     const template = await storage.db
       .selectFrom('taskTemplates')
       .selectAll()
       .where('templateId', '=', templateId)
       .executeTakeFirst();
-    
+
     if (!template) {
-      return res.status(404).json({ 
-        success: false, 
-        error: 'Template not found' 
+      return res.status(404).json({
+        success: false,
+        error: 'Template not found',
       });
     }
-    
+
     const taskDefinitions = template.tasks as any[];
     const createdTasks = [];
     const taskIdMapping: Record<string, string> = {};
-    
+
     // Create tasks from template
     for (let i = 0; i < taskDefinitions.length; i++) {
       const taskDef = taskDefinitions[i];
       const taskId = `TASK-${Date.now()}-${uuidv4().substr(0, 8)}`;
-      
+
       taskIdMapping[taskDef.id || i.toString()] = taskId;
-      
+
       // Calculate dates if needed
       let taskStartDate = startDate;
       let taskDueDate = null;
-      
+
       if (adjustDates && taskDef.dayOffset) {
         const start = new Date(startDate);
         start.setDate(start.getDate() + taskDef.dayOffset);
         taskStartDate = start.toISOString();
-        
+
         if (taskDef.duration) {
           const due = new Date(start);
           due.setDate(due.getDate() + taskDef.duration);
           taskDueDate = due.toISOString();
         }
       }
-      
+
       const newTask = await storage.db
         .insertInto('unifiedTasks')
         .values({
@@ -433,12 +447,12 @@ router.post('/tasks/from-template/:templateId', async (req: Request, res: Respon
         })
         .returningAll()
         .executeTakeFirst();
-      
+
       if (newTask) {
         createdTasks.push(newTask);
       }
     }
-    
+
     // Create dependencies from template
     if (template.dependencies) {
       const dependencies = template.dependencies as any[];
@@ -460,7 +474,7 @@ router.post('/tasks/from-template/:templateId', async (req: Request, res: Respon
         }
       }
     }
-    
+
     // Update template usage statistics
     await storage.db
       .updateTable('taskTemplates')
@@ -471,18 +485,18 @@ router.post('/tasks/from-template/:templateId', async (req: Request, res: Respon
       })
       .where('templateId', '=', templateId)
       .execute();
-    
-    res.json({ 
-      success: true, 
+
+    res.json({
+      success: true,
       data: createdTasks,
       count: createdTasks.length,
-      template: template.name 
+      template: template.name,
     });
   } catch (error) {
     console.error('Error creating tasks from template:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to create tasks from template' 
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create tasks from template',
     });
   }
 });
@@ -491,28 +505,27 @@ router.post('/tasks/from-template/:templateId', async (req: Request, res: Respon
 router.get('/tasks/by-module/:moduleId', async (req: Request, res: Response) => {
   try {
     const moduleId = req.params.moduleId;
-    const organizationId = req.query.organizationId ? parseInt(req.query.organizationId as string) : 1;
+    const organizationId = req.query.organizationId
+      ? parseInt(req.query.organizationId as string)
+      : 1;
     const status = req.query.status as string;
     const priority = req.query.priority as string;
-    
+
     let query = storage.db
       .selectFrom('unifiedTasks')
       .selectAll()
       .where('organizationId', '=', organizationId)
       .where('moduleType', '=', moduleId);
-    
+
     if (status) {
       query = query.where('status', '=', status);
     }
     if (priority) {
       query = query.where('priority', '=', priority);
     }
-    
-    const tasks = await query
-      .orderBy('dueDate', 'asc')
-      .orderBy('priority', 'desc')
-      .execute();
-    
+
+    const tasks = await query.orderBy('dueDate', 'asc').orderBy('priority', 'desc').execute();
+
     res.json({
       success: true,
       data: tasks,
@@ -520,9 +533,9 @@ router.get('/tasks/by-module/:moduleId', async (req: Request, res: Response) => 
     });
   } catch (error) {
     console.error('Error fetching tasks by module:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to fetch tasks by module' 
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch tasks by module',
     });
   }
 });
@@ -532,7 +545,7 @@ router.post('/tasks/dependencies', async (req: Request, res: Response) => {
   try {
     const validatedData = createDependencySchema.parse(req.body);
     const dependencyId = `DEP-${Date.now()}-${uuidv4().substr(0, 8)}`;
-    
+
     const newDependency = await storage.db
       .insertInto('taskDependencies')
       .values({
@@ -544,16 +557,16 @@ router.post('/tasks/dependencies', async (req: Request, res: Response) => {
       })
       .returningAll()
       .executeTakeFirst();
-    
-    res.json({ 
-      success: true, 
-      data: newDependency 
+
+    res.json({
+      success: true,
+      data: newDependency,
     });
   } catch (error) {
     console.error('Error creating dependency:', error);
-    res.status(400).json({ 
-      success: false, 
-      error: error instanceof z.ZodError ? error.errors : 'Failed to create dependency' 
+    res.status(400).json({
+      success: false,
+      error: error instanceof z.ZodError ? error.errors : 'Failed to create dependency',
     });
   }
 });
@@ -562,18 +575,18 @@ router.post('/tasks/dependencies', async (req: Request, res: Response) => {
 router.get('/tasks/critical-path/:projectId', async (req: Request, res: Response) => {
   try {
     const projectId = parseInt(req.params.projectId);
-    
+
     const criticalPath = await calculateCriticalPath(projectId);
-    
+
     res.json({
       success: true,
       data: criticalPath,
     });
   } catch (error) {
     console.error('Error calculating critical path:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to calculate critical path' 
+    res.status(500).json({
+      success: false,
+      error: 'Failed to calculate critical path',
     });
   }
 });
@@ -583,7 +596,7 @@ router.post('/tasks/auto-assign', async (req: Request, res: Response) => {
   try {
     const { taskIds, organizationId = 1 } = req.body;
     const assignmentResults = [];
-    
+
     for (const taskId of taskIds) {
       // Get task details
       const task = await storage.db
@@ -591,12 +604,12 @@ router.post('/tasks/auto-assign', async (req: Request, res: Response) => {
         .selectAll()
         .where('taskId', '=', taskId)
         .executeTakeFirst();
-      
+
       if (!task) continue;
-      
+
       // Find optimal assignee
       const optimalAssignee = await getOptimalAssignee(organizationId, task);
-      
+
       if (optimalAssignee) {
         // Update task assignment
         await storage.db
@@ -610,7 +623,7 @@ router.post('/tasks/auto-assign', async (req: Request, res: Response) => {
           })
           .where('taskId', '=', taskId)
           .execute();
-        
+
         assignmentResults.push({
           taskId,
           assignedTo: optimalAssignee.name,
@@ -618,7 +631,7 @@ router.post('/tasks/auto-assign', async (req: Request, res: Response) => {
         });
       }
     }
-    
+
     res.json({
       success: true,
       data: assignmentResults,
@@ -626,9 +639,9 @@ router.post('/tasks/auto-assign', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error auto-assigning tasks:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to auto-assign tasks' 
+    res.status(500).json({
+      success: false,
+      error: 'Failed to auto-assign tasks',
     });
   }
 });
@@ -636,65 +649,71 @@ router.post('/tasks/auto-assign', async (req: Request, res: Response) => {
 // Get task analytics
 router.get('/tasks/analytics', async (req: Request, res: Response) => {
   try {
-    const organizationId = req.query.organizationId ? parseInt(req.query.organizationId as string) : 1;
+    const organizationId = req.query.organizationId
+      ? parseInt(req.query.organizationId as string)
+      : 1;
     const projectId = req.query.projectId ? parseInt(req.query.projectId as string) : null;
-    
+
     // Base query
     let baseCondition = storage.db.eb('organizationId', '=', organizationId);
     if (projectId) {
       baseCondition = storage.db.eb.and([
         baseCondition,
-        storage.db.eb('projectId', '=', projectId)
+        storage.db.eb('projectId', '=', projectId),
       ]);
     }
-    
+
     // Task statistics
     const taskStats = await storage.db
       .selectFrom('unifiedTasks')
       .select([
         storage.db.fn.count('id').as('totalTasks'),
-        storage.db.fn.countAll().filter(storage.db.eb('status', '=', 'completed')).as('completedTasks'),
-        storage.db.fn.countAll().filter(storage.db.eb('status', '=', 'in-progress')).as('inProgressTasks'),
-        storage.db.fn.countAll().filter(storage.db.eb('status', '=', 'blocked')).as('blockedTasks'),
-        storage.db.fn.countAll().filter(storage.db.eb('status', '=', 'pending')).as('pendingTasks'),
+        storage.db.fn
+          .countAll()
+          .filter(storage.db.eb('status', '=', 'completed'))
+          .as('completedTasks'),
+        storage.db.fn
+          .countAll()
+          .filter(storage.db.eb('status', '=', 'in-progress'))
+          .as('inProgressTasks'),
+        storage.db.fn
+          .countAll()
+          .filter(storage.db.eb('status', '=', 'blocked'))
+          .as('blockedTasks'),
+        storage.db.fn
+          .countAll()
+          .filter(storage.db.eb('status', '=', 'pending'))
+          .as('pendingTasks'),
         storage.db.fn.avg('completionPercentage').as('avgCompletion'),
       ])
       .where(baseCondition)
       .executeTakeFirst();
-    
+
     // Tasks by module
     const tasksByModule = await storage.db
       .selectFrom('unifiedTasks')
-      .select([
-        'moduleType',
-        storage.db.fn.count('id').as('count')
-      ])
+      .select(['moduleType', storage.db.fn.count('id').as('count')])
       .where(baseCondition)
       .groupBy('moduleType')
       .execute();
-    
+
     // Tasks by priority
     const tasksByPriority = await storage.db
       .selectFrom('unifiedTasks')
-      .select([
-        'priority',
-        storage.db.fn.count('id').as('count')
-      ])
+      .select(['priority', storage.db.fn.count('id').as('count')])
       .where(baseCondition)
       .groupBy('priority')
       .execute();
-    
+
     // Overdue tasks
     const overdueTasks = await storage.db
       .selectFrom('unifiedTasks')
-      .select([
-        storage.db.fn.count('id').as('count')
-      ])
+      .select([storage.db.fn.count('id').as('count')])
       .where(baseCondition)
       .where('dueDate', '<', new Date())
       .where('status', '!=', 'completed')
       .executeTakeFirst();
-    
+
     // Team productivity (top performers)
     const teamProductivity = await storage.db
       .selectFrom('unifiedTasks')
@@ -702,7 +721,10 @@ router.get('/tasks/analytics', async (req: Request, res: Response) => {
       .select([
         'users.name',
         storage.db.fn.count('unifiedTasks.id').as('totalTasks'),
-        storage.db.fn.countAll().filter(storage.db.eb('unifiedTasks.status', '=', 'completed')).as('completedTasks'),
+        storage.db.fn
+          .countAll()
+          .filter(storage.db.eb('unifiedTasks.status', '=', 'completed'))
+          .as('completedTasks'),
         storage.db.fn.avg('unifiedTasks.completionPercentage').as('avgCompletion'),
       ])
       .where(baseCondition)
@@ -710,7 +732,7 @@ router.get('/tasks/analytics', async (req: Request, res: Response) => {
       .orderBy('completedTasks', 'desc')
       .limit(10)
       .execute();
-    
+
     res.json({
       success: true,
       data: {
@@ -723,9 +745,9 @@ router.get('/tasks/analytics', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error fetching task analytics:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to fetch task analytics' 
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch task analytics',
     });
   }
 });
@@ -739,7 +761,7 @@ router.post('/templates', async (req: Request, res: Response) => {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     const templateId = `TMPL-${Date.now()}-${uuidv4().substr(0, 8)}`;
-    
+
     const newTemplate = await storage.db
       .insertInto('taskTemplates')
       .values({
@@ -755,16 +777,16 @@ router.post('/templates', async (req: Request, res: Response) => {
       })
       .returningAll()
       .executeTakeFirst();
-    
-    res.json({ 
-      success: true, 
-      data: newTemplate 
+
+    res.json({
+      success: true,
+      data: newTemplate,
     });
   } catch (error) {
     console.error('Error creating template:', error);
-    res.status(400).json({ 
-      success: false, 
-      error: error instanceof z.ZodError ? error.errors : 'Failed to create template' 
+    res.status(400).json({
+      success: false,
+      error: error instanceof z.ZodError ? error.errors : 'Failed to create template',
     });
   }
 });
@@ -778,7 +800,7 @@ router.post('/automation', async (req: Request, res: Response) => {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     const automationId = `AUTO-${Date.now()}-${uuidv4().substr(0, 8)}`;
-    
+
     const newAutomation = await storage.db
       .insertInto('taskAutomation')
       .values({
@@ -796,16 +818,16 @@ router.post('/automation', async (req: Request, res: Response) => {
       })
       .returningAll()
       .executeTakeFirst();
-    
-    res.json({ 
-      success: true, 
-      data: newAutomation 
+
+    res.json({
+      success: true,
+      data: newAutomation,
     });
   } catch (error) {
     console.error('Error creating automation:', error);
-    res.status(400).json({ 
-      success: false, 
-      error: error instanceof z.ZodError ? error.errors : 'Failed to create automation' 
+    res.status(400).json({
+      success: false,
+      error: error instanceof z.ZodError ? error.errors : 'Failed to create automation',
     });
   }
 });
@@ -815,21 +837,21 @@ router.post('/tasks/:taskId/notify', async (req: Request, res: Response) => {
   try {
     const { taskId } = req.params;
     const { event, data } = req.body;
-    
+
     // Emit WebSocket event (to be integrated with actual WebSocket server)
     // io.to('tasks').emit(event, { taskId, ...data });
-    
-    res.json({ 
-      success: true, 
+
+    res.json({
+      success: true,
       message: 'Notification sent',
       event,
-      taskId
+      taskId,
     });
   } catch (error) {
     console.error('Error sending notification:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to send notification' 
+    res.status(500).json({
+      success: false,
+      error: 'Failed to send notification',
     });
   }
 });

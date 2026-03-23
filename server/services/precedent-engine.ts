@@ -1083,7 +1083,6 @@ export class PrecedentEngine {
       confidenceScore: row.confidence_score ?? 1.0,
     };
   }
-}
 
   // ── 7. CRL TRIGGER PATTERNS ─────────────────────────────────────────────
 
@@ -1095,34 +1094,98 @@ export class PrecedentEngine {
     // Known CRL trigger patterns by submission type
     const crlPatterns: CRLPattern[] = [
       // NDA/BLA CRL triggers
-      { category: 'Efficacy Endpoint Failure', submissionTypes: ['NDA', 'BLA', 'MAA'], severity: 'critical', confidence: 0.92,
+      {
+        category: 'Efficacy Endpoint Failure',
+        submissionTypes: ['NDA', 'BLA', 'MAA'],
+        severity: 'critical',
+        confidence: 0.92,
         description: 'Primary endpoint did not meet statistical significance (p > 0.05)',
-        mitigation: 'Consider hierarchical testing, pre-specified subgroup analysis, or adaptive design', historicalRate: 0.34 },
-      { category: 'Safety Signal — Hepatotoxicity', submissionTypes: ['NDA', 'BLA', 'ANDA', '505(b)(2)'], severity: 'critical', confidence: 0.88,
+        mitigation:
+          'Consider hierarchical testing, pre-specified subgroup analysis, or adaptive design',
+        historicalRate: 0.34,
+      },
+      {
+        category: 'Safety Signal — Hepatotoxicity',
+        submissionTypes: ['NDA', 'BLA', 'ANDA', '505(b)(2)'],
+        severity: 'critical',
+        confidence: 0.88,
         description: 'Drug-induced liver injury (DILI) signals detected in pivotal trials',
-        mitigation: 'Include Hy\'s Law analysis, proactive REMS proposal, hepatic monitoring plan', historicalRate: 0.18 },
-      { category: 'Cardiovascular Risk Signal', submissionTypes: ['NDA', 'BLA', 'ANDA'], severity: 'high', confidence: 0.85,
+        mitigation: "Include Hy's Law analysis, proactive REMS proposal, hepatic monitoring plan",
+        historicalRate: 0.18,
+      },
+      {
+        category: 'Cardiovascular Risk Signal',
+        submissionTypes: ['NDA', 'BLA', 'ANDA'],
+        severity: 'high',
+        confidence: 0.85,
         description: 'CV event imbalance (MACE) or QTc prolongation concerns',
-        mitigation: 'Pre-submission CV safety meta-analysis, thorough QT study, DSMB charter', historicalRate: 0.22 },
-      { category: 'Manufacturing Deficiency (CMC)', submissionTypes: ['NDA', 'BLA', 'ANDA', '505(b)(2)', 'MAA'], severity: 'high', confidence: 0.90,
-        description: 'Incomplete or inadequate CMC data — process validation, stability, specifications',
-        mitigation: 'Complete ICH Q8-Q12 compliance, pre-submission CMC meeting, process validation protocol', historicalRate: 0.28 },
-      { category: 'Inadequate Clinical Pharmacology', submissionTypes: ['NDA', '505(b)(2)', 'ANDA'], severity: 'medium', confidence: 0.82,
-        description: 'Missing PK/PD data, drug-drug interaction studies, or special population studies',
-        mitigation: 'Complete PBPK modeling, DDI risk assessment per FDA guidance, renal/hepatic impairment studies', historicalRate: 0.15 },
-      { category: 'Labeling Deficiency', submissionTypes: ['NDA', 'BLA', 'ANDA', '505(b)(2)'], severity: 'medium', confidence: 0.78,
-        description: 'Proposed labeling not supported by submitted data or inconsistent with clinical findings',
-        mitigation: 'Align labeling claims with pivotal trial endpoints, FDA structured labeling template', historicalRate: 0.12 },
-      { category: 'Bioequivalence Failure', submissionTypes: ['ANDA', '505(b)(2)'], severity: 'critical', confidence: 0.94,
+        mitigation: 'Pre-submission CV safety meta-analysis, thorough QT study, DSMB charter',
+        historicalRate: 0.22,
+      },
+      {
+        category: 'Manufacturing Deficiency (CMC)',
+        submissionTypes: ['NDA', 'BLA', 'ANDA', '505(b)(2)', 'MAA'],
+        severity: 'high',
+        confidence: 0.9,
+        description:
+          'Incomplete or inadequate CMC data — process validation, stability, specifications',
+        mitigation:
+          'Complete ICH Q8-Q12 compliance, pre-submission CMC meeting, process validation protocol',
+        historicalRate: 0.28,
+      },
+      {
+        category: 'Inadequate Clinical Pharmacology',
+        submissionTypes: ['NDA', '505(b)(2)', 'ANDA'],
+        severity: 'medium',
+        confidence: 0.82,
+        description:
+          'Missing PK/PD data, drug-drug interaction studies, or special population studies',
+        mitigation:
+          'Complete PBPK modeling, DDI risk assessment per FDA guidance, renal/hepatic impairment studies',
+        historicalRate: 0.15,
+      },
+      {
+        category: 'Labeling Deficiency',
+        submissionTypes: ['NDA', 'BLA', 'ANDA', '505(b)(2)'],
+        severity: 'medium',
+        confidence: 0.78,
+        description:
+          'Proposed labeling not supported by submitted data or inconsistent with clinical findings',
+        mitigation:
+          'Align labeling claims with pivotal trial endpoints, FDA structured labeling template',
+        historicalRate: 0.12,
+      },
+      {
+        category: 'Bioequivalence Failure',
+        submissionTypes: ['ANDA', '505(b)(2)'],
+        severity: 'critical',
+        confidence: 0.94,
         description: 'Failed to demonstrate bioequivalence to reference listed drug (RLD)',
-        mitigation: 'Review dissolution methodology, consider fed/fasted crossover, consult OGD pre-submission', historicalRate: 0.41 },
+        mitigation:
+          'Review dissolution methodology, consider fed/fasted crossover, consult OGD pre-submission',
+        historicalRate: 0.41,
+      },
       // Device CRL triggers
-      { category: 'Predicate Device Mismatch', submissionTypes: ['510(k)', 'PMA', 'De Novo'], severity: 'high', confidence: 0.87,
-        description: 'Substantial equivalence argument not supported — different intended use or technology',
-        mitigation: 'Re-evaluate predicate selection, consider De Novo if no valid predicate exists', historicalRate: 0.19 },
-      { category: 'Insufficient Clinical Data (Device)', submissionTypes: ['PMA', 'De Novo'], severity: 'critical', confidence: 0.91,
+      {
+        category: 'Predicate Device Mismatch',
+        submissionTypes: ['510(k)', 'PMA', 'De Novo'],
+        severity: 'high',
+        confidence: 0.87,
+        description:
+          'Substantial equivalence argument not supported — different intended use or technology',
+        mitigation:
+          'Re-evaluate predicate selection, consider De Novo if no valid predicate exists',
+        historicalRate: 0.19,
+      },
+      {
+        category: 'Insufficient Clinical Data (Device)',
+        submissionTypes: ['PMA', 'De Novo'],
+        severity: 'critical',
+        confidence: 0.91,
         description: 'Clinical evidence insufficient to demonstrate safety and effectiveness',
-        mitigation: 'Power analysis review, consider supplemental clinical study or registry data', historicalRate: 0.31 },
+        mitigation: 'Power analysis review, consider supplemental clinical study or registry data',
+        historicalRate: 0.31,
+      },
     ];
 
     // Match patterns to submission context
@@ -1130,10 +1193,13 @@ export class PrecedentEngine {
       if (pattern.submissionTypes.includes(input.submissionType)) {
         // Check if adversarial data supports this pattern
         let adjustedConfidence = pattern.confidence;
-        const objections = await this.searchAdversarialPrecedents({
-          ...input,
-          query: pattern.category,
-        }, 5);
+        const objections = await this.searchAdversarialPrecedents(
+          {
+            ...input,
+            query: pattern.category,
+          },
+          5
+        );
 
         if (objections.length > 0) {
           adjustedConfidence = Math.min(adjustedConfidence + 0.05 * objections.length, 0.99);
@@ -1153,13 +1219,16 @@ export class PrecedentEngine {
 
     // Sort by severity then confidence
     const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
-    triggers.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity] || b.confidence - a.confidence);
+    triggers.sort(
+      (a, b) => severityOrder[a.severity] - severityOrder[b.severity] || b.confidence - a.confidence
+    );
 
-    const overallCRLRisk = triggers.filter(t => t.severity === 'critical').length >= 2
-      ? 'high'
-      : triggers.filter(t => t.severity === 'critical').length >= 1
-        ? 'medium'
-        : 'low';
+    const overallCRLRisk =
+      triggers.filter(t => t.severity === 'critical').length >= 2
+        ? 'high'
+        : triggers.filter(t => t.severity === 'critical').length >= 1
+          ? 'medium'
+          : 'low';
 
     return {
       submissionType: input.submissionType,
@@ -1177,54 +1246,158 @@ export class PrecedentEngine {
 
     const rtfChecklist: RTFCheckItem[] = [
       // FDA RTF criteria per 21 CFR 314.101
-      { section: 'Module 1', item: 'Form FDA 356h — Application Form', required: true, category: 'administrative',
-        description: 'Complete and signed FDA form 356h with all required fields' },
-      { section: 'Module 1', item: 'Cover Letter with Cross-References', required: true, category: 'administrative',
-        description: 'Cover letter citing prior submissions, DMFs, and cross-references' },
-      { section: 'Module 1', item: 'Patent Certification (Para I–IV)', required: true, category: 'administrative',
-        description: 'Patent certifications for listed patents in Orange Book (ANDA/505(b)(2))' },
-      { section: 'Module 2.5', item: 'Clinical Overview', required: true, category: 'clinical',
-        description: 'Integrated clinical overview per ICH E1/CTD format' },
-      { section: 'Module 2.7', item: 'Clinical Summary', required: true, category: 'clinical',
-        description: 'Summary of clinical pharmacology, efficacy, and safety' },
-      { section: 'Module 3', item: 'Quality Overall Summary', required: true, category: 'cmc',
-        description: 'CMC quality data per ICH Q-series and Module 3 requirements' },
-      { section: 'Module 3', item: 'Drug Substance Specifications', required: true, category: 'cmc',
-        description: 'Complete API characterization, specifications, and stability data' },
-      { section: 'Module 3', item: 'Drug Product Specifications', required: true, category: 'cmc',
-        description: 'Finished product formulation, manufacturing process, and dissolution' },
-      { section: 'Module 4', item: 'Nonclinical Study Reports', required: true, category: 'nonclinical',
-        description: 'Toxicology, pharmacology, and ADME study reports' },
-      { section: 'Module 5', item: 'Clinical Study Reports', required: true, category: 'clinical',
-        description: 'Full CSRs for pivotal and supportive clinical studies' },
-      { section: 'Module 5', item: 'Datasets (CDISC SDTM/ADaM)', required: true, category: 'clinical',
-        description: 'Study datasets in CDISC-compliant format per FDA Technical Conformance Guide' },
-      { section: 'Module 1', item: 'Environmental Assessment or Exclusion', required: true, category: 'administrative',
-        description: 'EA or categorical exclusion per 21 CFR 25' },
-      { section: 'Module 1', item: 'Pediatric Study Plan or Waiver', required: true, category: 'clinical',
-        description: 'PSP, extrapolation plan, or waiver/deferral documentation (PREA/BPCA)' },
-      { section: 'Module 2.4', item: 'Nonclinical Overview', required: true, category: 'nonclinical',
-        description: 'Integrated overview of nonclinical data supporting safety' },
-      { section: 'Module 1', item: 'REMS (if applicable)', required: false, category: 'safety',
-        description: 'Risk Evaluation and Mitigation Strategy with ETASU elements' },
+      {
+        section: 'Module 1',
+        item: 'Form FDA 356h — Application Form',
+        required: true,
+        category: 'administrative',
+        description: 'Complete and signed FDA form 356h with all required fields',
+      },
+      {
+        section: 'Module 1',
+        item: 'Cover Letter with Cross-References',
+        required: true,
+        category: 'administrative',
+        description: 'Cover letter citing prior submissions, DMFs, and cross-references',
+      },
+      {
+        section: 'Module 1',
+        item: 'Patent Certification (Para I–IV)',
+        required: true,
+        category: 'administrative',
+        description: 'Patent certifications for listed patents in Orange Book (ANDA/505(b)(2))',
+      },
+      {
+        section: 'Module 2.5',
+        item: 'Clinical Overview',
+        required: true,
+        category: 'clinical',
+        description: 'Integrated clinical overview per ICH E1/CTD format',
+      },
+      {
+        section: 'Module 2.7',
+        item: 'Clinical Summary',
+        required: true,
+        category: 'clinical',
+        description: 'Summary of clinical pharmacology, efficacy, and safety',
+      },
+      {
+        section: 'Module 3',
+        item: 'Quality Overall Summary',
+        required: true,
+        category: 'cmc',
+        description: 'CMC quality data per ICH Q-series and Module 3 requirements',
+      },
+      {
+        section: 'Module 3',
+        item: 'Drug Substance Specifications',
+        required: true,
+        category: 'cmc',
+        description: 'Complete API characterization, specifications, and stability data',
+      },
+      {
+        section: 'Module 3',
+        item: 'Drug Product Specifications',
+        required: true,
+        category: 'cmc',
+        description: 'Finished product formulation, manufacturing process, and dissolution',
+      },
+      {
+        section: 'Module 4',
+        item: 'Nonclinical Study Reports',
+        required: true,
+        category: 'nonclinical',
+        description: 'Toxicology, pharmacology, and ADME study reports',
+      },
+      {
+        section: 'Module 5',
+        item: 'Clinical Study Reports',
+        required: true,
+        category: 'clinical',
+        description: 'Full CSRs for pivotal and supportive clinical studies',
+      },
+      {
+        section: 'Module 5',
+        item: 'Datasets (CDISC SDTM/ADaM)',
+        required: true,
+        category: 'clinical',
+        description: 'Study datasets in CDISC-compliant format per FDA Technical Conformance Guide',
+      },
+      {
+        section: 'Module 1',
+        item: 'Environmental Assessment or Exclusion',
+        required: true,
+        category: 'administrative',
+        description: 'EA or categorical exclusion per 21 CFR 25',
+      },
+      {
+        section: 'Module 1',
+        item: 'Pediatric Study Plan or Waiver',
+        required: true,
+        category: 'clinical',
+        description: 'PSP, extrapolation plan, or waiver/deferral documentation (PREA/BPCA)',
+      },
+      {
+        section: 'Module 2.4',
+        item: 'Nonclinical Overview',
+        required: true,
+        category: 'nonclinical',
+        description: 'Integrated overview of nonclinical data supporting safety',
+      },
+      {
+        section: 'Module 1',
+        item: 'REMS (if applicable)',
+        required: false,
+        category: 'safety',
+        description: 'Risk Evaluation and Mitigation Strategy with ETASU elements',
+      },
     ];
 
     // RTF historical triggers from FDA statistics
     const rtfTriggers: RTFTriggerPattern[] = [
-      { trigger: 'Missing or Incomplete Module 3 (CMC)', frequency: 0.35, severity: 'critical',
-        description: 'CMC deficiencies are the #1 cause of RTF actions across NDA/BLA/ANDA' },
-      { trigger: 'Absent Pivotal Study CSR', frequency: 0.22, severity: 'critical',
-        description: 'Pivotal clinical study report not included or grossly incomplete' },
-      { trigger: 'Non-CDISC Datasets', frequency: 0.18, severity: 'high',
-        description: 'Clinical datasets not submitted in SDTM/ADaM format per FDA binding guidance' },
-      { trigger: 'Incomplete Labeling Package', frequency: 0.12, severity: 'high',
-        description: 'Draft prescribing information not provided or inconsistent with data' },
-      { trigger: 'Missing Environmental Assessment', frequency: 0.08, severity: 'medium',
-        description: 'Neither EA nor categorical exclusion provided' },
-      { trigger: 'Incorrect Patent Certifications', frequency: 0.15, severity: 'high',
-        description: 'Para IV certification without required notification or incorrect patent listing (ANDA)' },
-      { trigger: 'Missing Pre-submission Meeting Minutes', frequency: 0.06, severity: 'medium',
-        description: 'No reference to Type A/B/C meeting agreements in cover letter' },
+      {
+        trigger: 'Missing or Incomplete Module 3 (CMC)',
+        frequency: 0.35,
+        severity: 'critical',
+        description: 'CMC deficiencies are the #1 cause of RTF actions across NDA/BLA/ANDA',
+      },
+      {
+        trigger: 'Absent Pivotal Study CSR',
+        frequency: 0.22,
+        severity: 'critical',
+        description: 'Pivotal clinical study report not included or grossly incomplete',
+      },
+      {
+        trigger: 'Non-CDISC Datasets',
+        frequency: 0.18,
+        severity: 'high',
+        description: 'Clinical datasets not submitted in SDTM/ADaM format per FDA binding guidance',
+      },
+      {
+        trigger: 'Incomplete Labeling Package',
+        frequency: 0.12,
+        severity: 'high',
+        description: 'Draft prescribing information not provided or inconsistent with data',
+      },
+      {
+        trigger: 'Missing Environmental Assessment',
+        frequency: 0.08,
+        severity: 'medium',
+        description: 'Neither EA nor categorical exclusion provided',
+      },
+      {
+        trigger: 'Incorrect Patent Certifications',
+        frequency: 0.15,
+        severity: 'high',
+        description:
+          'Para IV certification without required notification or incorrect patent listing (ANDA)',
+      },
+      {
+        trigger: 'Missing Pre-submission Meeting Minutes',
+        frequency: 0.06,
+        severity: 'medium',
+        description: 'No reference to Type A/B/C meeting agreements in cover letter',
+      },
     ];
 
     // Filter to relevant submission types
@@ -1252,47 +1425,105 @@ export class PrecedentEngine {
     // EMA Major Objection patterns by therapeutic area
     const emaPatterns: EMAQuestionPattern[] = [
       // Day 120 (List of Questions)
-      { phase: 'Day 120', category: 'Efficacy — Primary Endpoint', severity: 'major_objection',
-        pattern: 'The primary endpoint {endpoint} has not been validated in {therapeutic_area}. Justify the clinical relevance.',
+      {
+        phase: 'Day 120',
+        category: 'Efficacy — Primary Endpoint',
+        severity: 'major_objection',
+        pattern:
+          'The primary endpoint {endpoint} has not been validated in {therapeutic_area}. Justify the clinical relevance.',
         therapeuticAreas: ['Oncology', 'CNS', 'Cardiovascular', 'Immunology', 'Rare Disease'],
-        frequency: 0.45, confidence: 0.88 },
-      { phase: 'Day 120', category: 'Efficacy — Comparator Choice', severity: 'major_objection',
-        pattern: 'The chosen comparator ({comparator}) does not represent current standard of care in the EU.',
+        frequency: 0.45,
+        confidence: 0.88,
+      },
+      {
+        phase: 'Day 120',
+        category: 'Efficacy — Comparator Choice',
+        severity: 'major_objection',
+        pattern:
+          'The chosen comparator ({comparator}) does not represent current standard of care in the EU.',
         therapeuticAreas: ['Oncology', 'Cardiovascular', 'Immunology'],
-        frequency: 0.38, confidence: 0.85 },
-      { phase: 'Day 120', category: 'Safety — Long-term Data', severity: 'major_objection',
-        pattern: 'Long-term safety data beyond {duration} months is insufficient for a chronic condition.',
+        frequency: 0.38,
+        confidence: 0.85,
+      },
+      {
+        phase: 'Day 120',
+        category: 'Safety — Long-term Data',
+        severity: 'major_objection',
+        pattern:
+          'Long-term safety data beyond {duration} months is insufficient for a chronic condition.',
         therapeuticAreas: ['CNS', 'Cardiovascular', 'Metabolic', 'Immunology'],
-        frequency: 0.32, confidence: 0.82 },
-      { phase: 'Day 120', category: 'Quality — Process Validation', severity: 'major_objection',
-        pattern: 'Process validation at commercial scale has not been demonstrated. Provide PPQ data.',
+        frequency: 0.32,
+        confidence: 0.82,
+      },
+      {
+        phase: 'Day 120',
+        category: 'Quality — Process Validation',
+        severity: 'major_objection',
+        pattern:
+          'Process validation at commercial scale has not been demonstrated. Provide PPQ data.',
         therapeuticAreas: ['all'],
-        frequency: 0.28, confidence: 0.90 },
-      { phase: 'Day 120', category: 'Clinical Pharmacology — DDI', severity: 'other_concern',
-        pattern: 'The DDI potential with {interacting_drug_class} has not been adequately characterized.',
+        frequency: 0.28,
+        confidence: 0.9,
+      },
+      {
+        phase: 'Day 120',
+        category: 'Clinical Pharmacology — DDI',
+        severity: 'other_concern',
+        pattern:
+          'The DDI potential with {interacting_drug_class} has not been adequately characterized.',
         therapeuticAreas: ['Oncology', 'CNS', 'Cardiovascular'],
-        frequency: 0.25, confidence: 0.80 },
+        frequency: 0.25,
+        confidence: 0.8,
+      },
       // Day 180 (List of Outstanding Issues)
-      { phase: 'Day 180', category: 'Benefit-Risk — Subpopulations', severity: 'major_objection',
+      {
+        phase: 'Day 180',
+        category: 'Benefit-Risk — Subpopulations',
+        severity: 'major_objection',
         pattern: 'The benefit-risk balance in {subpopulation} has not been established.',
         therapeuticAreas: ['Oncology', 'Rare Disease', 'Pediatrics'],
-        frequency: 0.30, confidence: 0.86 },
-      { phase: 'Day 180', category: 'Pharmacovigilance — RMP', severity: 'other_concern',
-        pattern: 'The Risk Management Plan requires additional risk minimisation measures for {risk}.',
+        frequency: 0.3,
+        confidence: 0.86,
+      },
+      {
+        phase: 'Day 180',
+        category: 'Pharmacovigilance — RMP',
+        severity: 'other_concern',
+        pattern:
+          'The Risk Management Plan requires additional risk minimisation measures for {risk}.',
         therapeuticAreas: ['all'],
-        frequency: 0.22, confidence: 0.84 },
-      { phase: 'Day 180', category: 'Labelling — SmPC', severity: 'other_concern',
+        frequency: 0.22,
+        confidence: 0.84,
+      },
+      {
+        phase: 'Day 180',
+        category: 'Labelling — SmPC',
+        severity: 'other_concern',
         pattern: 'Section 4.{section} of the SmPC is not aligned with the clinical data presented.',
         therapeuticAreas: ['all'],
-        frequency: 0.20, confidence: 0.82 },
-      { phase: 'Day 180', category: 'GMP Compliance', severity: 'major_objection',
-        pattern: 'GMP compliance at {site} has not been confirmed. Provide GMP certificate or schedule inspection.',
+        frequency: 0.2,
+        confidence: 0.82,
+      },
+      {
+        phase: 'Day 180',
+        category: 'GMP Compliance',
+        severity: 'major_objection',
+        pattern:
+          'GMP compliance at {site} has not been confirmed. Provide GMP certificate or schedule inspection.',
         therapeuticAreas: ['all'],
-        frequency: 0.15, confidence: 0.92 },
-      { phase: 'Day 180', category: 'Conditional Approval — Commitments', severity: 'other_concern',
-        pattern: 'If conditional MA is sought, the applicant must commit to {study_type} with results by {date}.',
+        frequency: 0.15,
+        confidence: 0.92,
+      },
+      {
+        phase: 'Day 180',
+        category: 'Conditional Approval — Commitments',
+        severity: 'other_concern',
+        pattern:
+          'If conditional MA is sought, the applicant must commit to {study_type} with results by {date}.',
         therapeuticAreas: ['Oncology', 'Rare Disease', 'Infectious Disease'],
-        frequency: 0.18, confidence: 0.80 },
+        frequency: 0.18,
+        confidence: 0.8,
+      },
     ];
 
     // Filter by therapeutic area
@@ -1317,35 +1548,77 @@ export class PrecedentEngine {
 
   // ── 10. ADVISORY COMMITTEE RISK FACTORS ───────────────────────────────
 
-  async analyzeAdvisoryCommitteeRisk(input: PrecedentSearchInput): Promise<AdvisoryCommitteeResult> {
+  async analyzeAdvisoryCommitteeRisk(
+    input: PrecedentSearchInput
+  ): Promise<AdvisoryCommitteeResult> {
     log.info(`Analyzing Advisory Committee risk for ${input.submissionType}`);
 
     // Advisory Committee triggers — submissions likely to get AdCom
     const adcomTriggers: AdvisoryCommitteeTrigger[] = [
-      { trigger: 'First-in-class mechanism of action', probability: 0.85, severity: 'high',
+      {
+        trigger: 'First-in-class mechanism of action',
+        probability: 0.85,
+        severity: 'high',
         description: 'Novel MOA with limited clinical experience increases AdCom likelihood',
-        submissionTypes: ['NDA', 'BLA'], therapeuticAreas: ['Oncology', 'CNS', 'Cardiovascular'] },
-      { trigger: 'Accelerated Approval with surrogate endpoint', probability: 0.75, severity: 'high',
+        submissionTypes: ['NDA', 'BLA'],
+        therapeuticAreas: ['Oncology', 'CNS', 'Cardiovascular'],
+      },
+      {
+        trigger: 'Accelerated Approval with surrogate endpoint',
+        probability: 0.75,
+        severity: 'high',
         description: 'Surrogate endpoint-based approvals frequently reviewed by AdCom',
-        submissionTypes: ['NDA', 'BLA'], therapeuticAreas: ['Oncology', 'Rare Disease'] },
-      { trigger: 'Significant safety signal in pivotal trial', probability: 0.80, severity: 'critical',
+        submissionTypes: ['NDA', 'BLA'],
+        therapeuticAreas: ['Oncology', 'Rare Disease'],
+      },
+      {
+        trigger: 'Significant safety signal in pivotal trial',
+        probability: 0.8,
+        severity: 'critical',
         description: 'Identified safety concern that affects benefit-risk assessment',
-        submissionTypes: ['NDA', 'BLA', 'PMA'], therapeuticAreas: ['all'] },
-      { trigger: 'Pediatric indication with extrapolated efficacy', probability: 0.65, severity: 'medium',
+        submissionTypes: ['NDA', 'BLA', 'PMA'],
+        therapeuticAreas: ['all'],
+      },
+      {
+        trigger: 'Pediatric indication with extrapolated efficacy',
+        probability: 0.65,
+        severity: 'medium',
         description: 'Efficacy extrapolation from adult data without dedicated pediatric trial',
-        submissionTypes: ['NDA', 'BLA'], therapeuticAreas: ['Oncology', 'CNS', 'Rare Disease'] },
-      { trigger: 'REMS with ETASU elements', probability: 0.60, severity: 'medium',
+        submissionTypes: ['NDA', 'BLA'],
+        therapeuticAreas: ['Oncology', 'CNS', 'Rare Disease'],
+      },
+      {
+        trigger: 'REMS with ETASU elements',
+        probability: 0.6,
+        severity: 'medium',
         description: 'REMS involving elements to assure safe use (restricted distribution, etc.)',
-        submissionTypes: ['NDA', 'BLA'], therapeuticAreas: ['all'] },
-      { trigger: 'Controversial benefit-risk profile', probability: 0.70, severity: 'high',
+        submissionTypes: ['NDA', 'BLA'],
+        therapeuticAreas: ['all'],
+      },
+      {
+        trigger: 'Controversial benefit-risk profile',
+        probability: 0.7,
+        severity: 'high',
         description: 'Marginal efficacy with notable side effect burden',
-        submissionTypes: ['NDA', 'BLA', 'PMA'], therapeuticAreas: ['all'] },
-      { trigger: 'Novel device with no predicate (De Novo)', probability: 0.55, severity: 'medium',
+        submissionTypes: ['NDA', 'BLA', 'PMA'],
+        therapeuticAreas: ['all'],
+      },
+      {
+        trigger: 'Novel device with no predicate (De Novo)',
+        probability: 0.55,
+        severity: 'medium',
         description: 'First-of-kind device classification requires panel review',
-        submissionTypes: ['De Novo', 'PMA'], therapeuticAreas: ['all'] },
-      { trigger: 'PMA with novel AI/ML algorithm', probability: 0.70, severity: 'high',
+        submissionTypes: ['De Novo', 'PMA'],
+        therapeuticAreas: ['all'],
+      },
+      {
+        trigger: 'PMA with novel AI/ML algorithm',
+        probability: 0.7,
+        severity: 'high',
         description: 'AI/ML-based SaMD requiring clinical validation and algorithmic transparency',
-        submissionTypes: ['PMA', 'De Novo', '510(k)'], therapeuticAreas: ['all'] },
+        submissionTypes: ['PMA', 'De Novo', '510(k)'],
+        therapeuticAreas: ['all'],
+      },
     ];
 
     const matched = adcomTriggers.filter(t => {
@@ -1355,11 +1628,12 @@ export class PrecedentEngine {
       return t.therapeuticAreas.includes(input.therapeuticArea);
     });
 
-    const overallAdcomRisk = matched.filter(t => t.probability >= 0.7).length >= 2
-      ? 'high'
-      : matched.filter(t => t.probability >= 0.6).length >= 1
-        ? 'medium'
-        : 'low';
+    const overallAdcomRisk =
+      matched.filter(t => t.probability >= 0.7).length >= 2
+        ? 'high'
+        : matched.filter(t => t.probability >= 0.6).length >= 1
+          ? 'medium'
+          : 'low';
 
     // Historical AdCom voting patterns
     const votingInsights = [

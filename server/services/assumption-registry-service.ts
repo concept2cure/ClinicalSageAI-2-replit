@@ -21,21 +21,55 @@ const log = createScopedLogger('assumption-registry');
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-export type DomainTrack = 'clinical' | 'nonclinical' | 'cmc' | 'biostatistics' | 'regulatory'
-  | 'pharmacology' | 'safety' | 'labeling' | 'commercial';
+export type DomainTrack =
+  | 'clinical'
+  | 'nonclinical'
+  | 'cmc'
+  | 'biostatistics'
+  | 'regulatory'
+  | 'pharmacology'
+  | 'safety'
+  | 'labeling'
+  | 'commercial';
 
 export type AssumptionCategory =
-  | 'efficacy' | 'safety' | 'statistical' | 'design' | 'population'
-  | 'endpoint' | 'dosing' | 'manufacturing' | 'regulatory_pathway'
-  | 'comparator' | 'dropout' | 'missing_data' | 'effect_size'
-  | 'prevalence' | 'enrollment' | 'timeline' | 'cost';
+  | 'efficacy'
+  | 'safety'
+  | 'statistical'
+  | 'design'
+  | 'population'
+  | 'endpoint'
+  | 'dosing'
+  | 'manufacturing'
+  | 'regulatory_pathway'
+  | 'comparator'
+  | 'dropout'
+  | 'missing_data'
+  | 'effect_size'
+  | 'prevalence'
+  | 'enrollment'
+  | 'timeline'
+  | 'cost';
 
 export type ConfidenceLevel = 'definitive' | 'high' | 'moderate' | 'low' | 'speculative';
 
-export type AssumptionStatus = 'active' | 'under_review' | 'superseded' | 'withdrawn' | 'challenged';
+export type AssumptionStatus =
+  | 'active'
+  | 'under_review'
+  | 'superseded'
+  | 'withdrawn'
+  | 'challenged';
 
-export type SourceType = 'protocol' | 'sap' | 'literature' | 'precedent' | 'expert_opinion'
-  | 'regulatory_guidance' | 'historical_data' | 'modeling' | 'sponsor_decision';
+export type SourceType =
+  | 'protocol'
+  | 'sap'
+  | 'literature'
+  | 'precedent'
+  | 'expert_opinion'
+  | 'regulatory_guidance'
+  | 'historical_data'
+  | 'modeling'
+  | 'sponsor_decision';
 
 export interface AssumptionRecord {
   id: string;
@@ -87,12 +121,12 @@ export interface CreateAssumptionInput {
 
 // ─── Service ─────────────────────────────────────────────────────────────────
 
-class AssumptionRegistryService {
-
+export class AssumptionRegistryService {
   async create(input: CreateAssumptionInput): Promise<AssumptionRecord> {
     log.info('Creating assumption', { code: input.assumptionCode, project: input.projectId });
 
-    const result = await pool!.query(`
+    const result = await pool!.query(
+      `
       INSERT INTO assumption_records (
         organization_id, project_id, assumption_code, title, domain_track,
         category, assumed_value, unit, rationale,
@@ -101,21 +135,36 @@ class AssumptionRegistryService {
         linked_section_code, created_by
       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
       RETURNING *
-    `, [
-      input.organizationId, input.projectId, input.assumptionCode, input.title,
-      input.domainTrack, input.category, input.assumedValue, input.unit ?? null,
-      input.rationale, input.sourceType, input.sourceReference ?? null,
-      input.confidenceLevel ?? 'moderate', input.applicableRegulators ?? [],
-      input.linkedArtifactId ?? null, input.linkedArtifactVersion ?? null,
-      input.linkedSectionCode ?? null, input.createdBy
-    ]);
+    `,
+      [
+        input.organizationId,
+        input.projectId,
+        input.assumptionCode,
+        input.title,
+        input.domainTrack,
+        input.category,
+        input.assumedValue,
+        input.unit ?? null,
+        input.rationale,
+        input.sourceType,
+        input.sourceReference ?? null,
+        input.confidenceLevel ?? 'moderate',
+        input.applicableRegulators ?? [],
+        input.linkedArtifactId ?? null,
+        input.linkedArtifactVersion ?? null,
+        input.linkedSectionCode ?? null,
+        input.createdBy,
+      ]
+    );
 
     const record = this.map(result.rows[0]);
 
     // Auto-detect assumption drift after creation
     // Runs async — does not block the create response
     this.triggerDriftDetection(input.organizationId, input.projectId).catch(err => {
-      log.warn('Assumption drift detection failed (non-blocking)', { error: err instanceof Error ? err.message : String(err) });
+      log.warn('Assumption drift detection failed (non-blocking)', {
+        error: err instanceof Error ? err.message : String(err),
+      });
     });
 
     return record;
@@ -128,7 +177,10 @@ class AssumptionRegistryService {
   private async triggerDriftDetection(organizationId: number, projectId: number): Promise<void> {
     try {
       const { contradictionEngineService } = await import('./contradiction-engine-service');
-      const findings = await contradictionEngineService.detectAssumptionDrift(organizationId, projectId);
+      const findings = await contradictionEngineService.detectAssumptionDrift(
+        organizationId,
+        projectId
+      );
       if (findings.length > 0) {
         log.info('Assumption drift detected', { projectId, count: findings.length });
       }
@@ -150,53 +202,80 @@ class AssumptionRegistryService {
     const params: (string | number)[] = [input.organizationId];
     let idx = 2;
 
-    if (input.projectId) { conditions.push(`project_id = $${idx++}`); params.push(input.projectId); }
-    if (input.domainTrack) { conditions.push(`domain_track = $${idx++}`); params.push(input.domainTrack); }
-    if (input.category) { conditions.push(`category = $${idx++}`); params.push(input.category); }
-    if (input.status) { conditions.push(`status = $${idx++}`); params.push(input.status); }
-    if (input.linkedArtifactId) { conditions.push(`linked_artifact_id = $${idx++}`); params.push(input.linkedArtifactId); }
+    if (input.projectId) {
+      conditions.push(`project_id = $${idx++}`);
+      params.push(input.projectId);
+    }
+    if (input.domainTrack) {
+      conditions.push(`domain_track = $${idx++}`);
+      params.push(input.domainTrack);
+    }
+    if (input.category) {
+      conditions.push(`category = $${idx++}`);
+      params.push(input.category);
+    }
+    if (input.status) {
+      conditions.push(`status = $${idx++}`);
+      params.push(input.status);
+    }
+    if (input.linkedArtifactId) {
+      conditions.push(`linked_artifact_id = $${idx++}`);
+      params.push(input.linkedArtifactId);
+    }
 
     const limit = input.limit ?? 50;
     params.push(limit);
 
-    const result = await pool!.query(`
+    const result = await pool!.query(
+      `
       SELECT * FROM assumption_records
       WHERE ${conditions.join(' AND ')}
       ORDER BY created_at DESC
       LIMIT $${idx}
-    `, params);
+    `,
+      params
+    );
 
     return result.rows.map(this.map);
   }
 
   async getById(id: string, organizationId: number): Promise<AssumptionRecord | null> {
     const result = await pool!.query(
-      'SELECT * FROM assumption_records WHERE id = $1 AND organization_id = $2', [id, organizationId]
+      'SELECT * FROM assumption_records WHERE id = $1 AND organization_id = $2',
+      [id, organizationId]
     );
     return result.rows.length ? this.map(result.rows[0]) : null;
   }
 
-  async supersede(id: string, input: {
-    organizationId: number;
-    replacementId: string;
-    reason: string;
-    performedBy: string;
-  }): Promise<AssumptionRecord | null> {
+  async supersede(
+    id: string,
+    input: {
+      organizationId: number;
+      replacementId: string;
+      reason: string;
+      performedBy: string;
+    }
+  ): Promise<AssumptionRecord | null> {
     log.info('Superseding assumption', { id, replacementId: input.replacementId });
 
-    const result = await pool!.query(`
+    const result = await pool!.query(
+      `
       UPDATE assumption_records
       SET status = 'superseded', superseded_by = $1, supersession_reason = $2, updated_at = NOW()
       WHERE id = $3 AND organization_id = $4
       RETURNING *
-    `, [input.replacementId, input.reason, id, input.organizationId]);
+    `,
+      [input.replacementId, input.reason, id, input.organizationId]
+    );
 
     const record = result.rows.length ? this.map(result.rows[0]) : null;
 
     // Reactive propagation: mark downstream objects stale
     if (record) {
       this.propagateChange(record, 'assumption_superseded', input.reason).catch(err => {
-        log.warn('Reactive propagation failed (non-blocking)', { error: err instanceof Error ? err.message : String(err) });
+        log.warn('Reactive propagation failed (non-blocking)', {
+          error: err instanceof Error ? err.message : String(err),
+        });
       });
     }
 
@@ -207,7 +286,15 @@ class AssumptionRegistryService {
    * Propagate assumption change to downstream dependencies.
    * Marks linked artifacts/decisions as stale.
    */
-  private async propagateChange(assumption: AssumptionRecord, triggerType: 'assumption_superseded' | 'assumption_updated' | 'assumption_challenged' | 'assumption_withdrawn', reason: string): Promise<void> {
+  private async propagateChange(
+    assumption: AssumptionRecord,
+    triggerType:
+      | 'assumption_superseded'
+      | 'assumption_updated'
+      | 'assumption_challenged'
+      | 'assumption_withdrawn',
+    reason: string
+  ): Promise<void> {
     try {
       const { reactiveDependencyService } = await import('./reactive-dependency-service');
       await reactiveDependencyService.propagateChange({
@@ -224,13 +311,21 @@ class AssumptionRegistryService {
     }
   }
 
-  async updateStatus(id: string, organizationId: number, status: AssumptionStatus, reviewedBy?: string): Promise<AssumptionRecord | null> {
-    const result = await pool!.query(`
+  async updateStatus(
+    id: string,
+    organizationId: number,
+    status: AssumptionStatus,
+    reviewedBy?: string
+  ): Promise<AssumptionRecord | null> {
+    const result = await pool!.query(
+      `
       UPDATE assumption_records
       SET status = $1, reviewed_by = $2, reviewed_at = CASE WHEN $2 IS NOT NULL THEN NOW() ELSE reviewed_at END, updated_at = NOW()
       WHERE id = $3 AND organization_id = $4
       RETURNING *
-    `, [status, reviewedBy ?? null, id, organizationId]);
+    `,
+      [status, reviewedBy ?? null, id, organizationId]
+    );
 
     const record = result.rows.length ? this.map(result.rows[0]) : null;
 
@@ -241,14 +336,19 @@ class AssumptionRegistryService {
         withdrawn: 'assumption_withdrawn',
       };
       this.propagateChange(record, triggerMap[status], `Assumption ${status}`).catch(err => {
-        log.warn('Status change propagation failed (non-blocking)', { error: err instanceof Error ? err.message : String(err) });
+        log.warn('Status change propagation failed (non-blocking)', {
+          error: err instanceof Error ? err.message : String(err),
+        });
       });
     }
 
     return record;
   }
 
-  async getByProject(organizationId: number, projectId: number): Promise<{
+  async getByProject(
+    organizationId: number,
+    projectId: number
+  ): Promise<{
     total: number;
     byDomain: Record<string, number>;
     byStatus: Record<string, number>;

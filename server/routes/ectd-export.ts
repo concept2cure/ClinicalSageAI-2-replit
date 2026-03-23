@@ -13,10 +13,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import {
-  generateEctdPackage,
-  validateEctdPackage,
-} from '../services/ectdExportService';
+import { generateEctdPackage, validateEctdPackage } from '../services/ectdExportService';
 
 const router = Router();
 
@@ -33,18 +30,14 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
   // SECURITY: Always derive org from authenticated context — never from body
   const organizationId =
     (req as any).organizationId ||
-    (req as any).user?.organizationId;
-
-  if (!organizationId) {
-    return res.status(403).json({ error: 'Organization context required' });
-  }
-  // Organization ID: pull from auth context only (never trust client body)
-  const organizationId =
-    (req as any).organizationId ||
     (req as any).user?.organizationId ||
     (req as any).tenantId ||
     (req as any).tenantContext?.organizationId ||
     1;
+
+  if (!organizationId) {
+    return res.status(403).json({ error: 'Organization context required' });
+  }
 
   const {
     region = 'FDA',
@@ -81,20 +74,14 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
 
     // Set headers for file download
     res.setHeader('Content-Type', 'application/zip');
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename="${result.filename}"`
-    );
+    res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
     res.setHeader('X-ECTD-Total-Modules', String(result.stats.totalModules));
     res.setHeader('X-ECTD-Total-Files', String(result.stats.totalFiles));
     res.setHeader('X-ECTD-Generated-At', result.stats.generatedAt);
     if (validation) {
       res.setHeader('X-ECTD-Valid', String(validation.valid));
       if (validation.errors.length > 0) {
-        res.setHeader(
-          'X-ECTD-Validation-Errors',
-          String(validation.errors.length)
-        );
+        res.setHeader('X-ECTD-Validation-Errors', String(validation.errors.length));
       }
     }
 

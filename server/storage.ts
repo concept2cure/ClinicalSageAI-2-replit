@@ -3843,3 +3843,6 @@ if (pool) {
 }
 
 export { storage };
+
+// Alias for backward compatibility
+export { DatabaseStorage as DbStorage };

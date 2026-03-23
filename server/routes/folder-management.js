@@ -1,6 +1,7 @@
 import express from 'express';
 import { z } from 'zod';
-import { getPool } from '../db.js';
+import { pool as folderPool } from '../db.js';
+const getPool = () => folderPool;
 import { asyncHandler } from '../middleware/errorHandler.js';
 
 const router = express.Router();
@@ -15,7 +16,9 @@ const createFolderBody = z.object({
 });
 
 // GET /api/folders - Get folder tree or list
-router.get('/folders', asyncHandler(async (req, res) => {
+router.get(
+  '/folders',
+  asyncHandler(async (req, res) => {
     const { tree, organizationId = 1 } = req.query;
 
     const result = await pool.query(
@@ -47,10 +50,13 @@ router.get('/folders', asyncHandler(async (req, res) => {
     } else {
       res.json(result.rows);
     }
-}));
+  })
+);
 
 // POST /api/folders - Create new folder
-router.post('/folders', asyncHandler(async (req, res) => {
+router.post(
+  '/folders',
+  asyncHandler(async (req, res) => {
     const validated = createFolderBody.parse(req.body);
     const organizationId = req.body.organizationId;
     if (!organizationId) {
@@ -65,10 +71,13 @@ router.post('/folders', asyncHandler(async (req, res) => {
     );
 
     res.status(201).json(result.rows[0]);
-}));
+  })
+);
 
 // PATCH /api/folders/:id - Rename folder
-router.patch('/folders/:id', asyncHandler(async (req, res) => {
+router.patch(
+  '/folders/:id',
+  asyncHandler(async (req, res) => {
     const { name } = req.body;
 
     if (!name) {
@@ -85,10 +94,13 @@ router.patch('/folders/:id', asyncHandler(async (req, res) => {
     }
 
     res.json(result.rows[0]);
-}));
+  })
+);
 
 // DELETE /api/folders/:id - Delete folder (only if empty)
-router.delete('/folders/:id', asyncHandler(async (req, res) => {
+router.delete(
+  '/folders/:id',
+  asyncHandler(async (req, res) => {
     // Check if folder has documents
     const docCheck = await pool.query(
       'SELECT COUNT(*) as count FROM documents WHERE folder_id = $1',
@@ -109,16 +121,16 @@ router.delete('/folders/:id', asyncHandler(async (req, res) => {
       return res.status(400).json({ error: 'Cannot delete folder with subfolders' });
     }
 
-    const result = await pool.query(
-      'DELETE FROM document_folders WHERE id = $1 RETURNING id',
-      [req.params.id]
-    );
+    const result = await pool.query('DELETE FROM document_folders WHERE id = $1 RETURNING id', [
+      req.params.id,
+    ]);
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Folder not found' });
     }
 
     res.json({ success: true, id: result.rows[0].id });
-}));
+  })
+);
 
 export default router;

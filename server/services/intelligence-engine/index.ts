@@ -14,7 +14,10 @@
  */
 
 import { createHash } from 'crypto';
-import { analyzeDocument as analyzeClaimEvidence, analyzeClaimEvidence as analyzeSingle } from './claim-evidence-engine';
+import {
+  analyzeDocument as analyzeClaimEvidence,
+  analyzeClaimEvidence as analyzeSingle,
+} from './claim-evidence-engine';
 import { analyzeConsistency, extractAssertions, type DocumentSection } from './consistency-engine';
 import { computeDefensibility } from './defensibility-engine';
 import { generateReviewerQuestions } from './reviewer-question-engine';
@@ -50,9 +53,10 @@ export function runIntelligencePipeline(
   const claimEvidence = analyzeClaimEvidence(content);
 
   // Module 2: Cross-Section Consistency
-  const consistency = sections && sections.length > 1
-    ? analyzeConsistency(sections)
-    : analyzeConsistency(splitIntoSections(content));
+  const consistency =
+    sections && sections.length > 1
+      ? analyzeConsistency(sections)
+      : analyzeConsistency(splitIntoSections(content));
 
   // Module 3: Defensibility Scoring
   const defensibility = computeDefensibility(claimEvidence, consistency, content);
@@ -65,7 +69,11 @@ export function runIntelligencePipeline(
 
   // Module 6: Evaluation Gate on formatted output
   const formattedOutput = formatAnalysisForEvaluation(
-    claimEvidence, consistency, defensibility, reviewerQuestions, riskClassifications
+    claimEvidence,
+    consistency,
+    defensibility,
+    reviewerQuestions,
+    riskClassifications
   );
   const evaluation = evaluateIntelligenceOutput(formattedOutput);
 
@@ -104,7 +112,9 @@ export function buildConstrainedPrompt(
       .filter(a => a.alignment !== 'aligned')
       .slice(0, 3);
     for (const a of worst) {
-      signals.push(`  * ${a.alignment}: "${a.claimText.slice(0, 80)}" (claim: ${a.claimStrength}, evidence: ${a.evidenceStrength})`);
+      signals.push(
+        `  * ${a.alignment}: "${a.claimText.slice(0, 80)}" (claim: ${a.claimStrength}, evidence: ${a.evidenceStrength})`
+      );
     }
   }
 
@@ -118,7 +128,9 @@ export function buildConstrainedPrompt(
   }
 
   // Defensibility signals
-  signals.push(`\nDEFENSIBILITY SCORE: ${analysis.defensibility.score}/100 (${analysis.defensibility.riskLevel} risk)`);
+  signals.push(
+    `\nDEFENSIBILITY SCORE: ${analysis.defensibility.score}/100 (${analysis.defensibility.riskLevel} risk)`
+  );
   signals.push(`- Evidence presence: ${analysis.defensibility.breakdown.evidencePresence}/25`);
   signals.push(`- Claim precision: ${analysis.defensibility.breakdown.claimPrecision}/25`);
   signals.push(`- Consistency: ${analysis.defensibility.breakdown.consistency}/25`);
@@ -204,7 +216,9 @@ export function emitRIMSignals(analysis: IntelligenceAnalysis): RIMSignal[] {
 
   // Inconsistency signals
   if (analysis.consistency.inconsistencies.length > 0) {
-    const highCount = analysis.consistency.inconsistencies.filter(i => i.severity === 'high').length;
+    const highCount = analysis.consistency.inconsistencies.filter(
+      i => i.severity === 'high'
+    ).length;
     signals.push({
       type: 'inconsistency',
       severity: highCount >= 2 ? 'high' : 'medium',
@@ -226,7 +240,10 @@ export function emitRIMSignals(analysis: IntelligenceAnalysis): RIMSignal[] {
   }
 
   // Risk escalation
-  if (analysis.riskClassifications.overallRisk === 'critical' || analysis.riskClassifications.overallRisk === 'high') {
+  if (
+    analysis.riskClassifications.overallRisk === 'critical' ||
+    analysis.riskClassifications.overallRisk === 'high'
+  ) {
     signals.push({
       type: 'risk_escalation',
       severity: analysis.riskClassifications.overallRisk === 'critical' ? 'critical' : 'high',
@@ -312,7 +329,9 @@ function formatAnalysisForEvaluation(
   }
 
   if (claimEvidence.overstatedCount > 0 || claimEvidence.unsupportedCount > 0) {
-    lines.push(`\nClaim/Evidence findings: ${claimEvidence.overstatedCount} overstated, ${claimEvidence.unsupportedCount} unsupported`);
+    lines.push(
+      `\nClaim/Evidence findings: ${claimEvidence.overstatedCount} overstated, ${claimEvidence.unsupportedCount} unsupported`
+    );
     lines.push(`Action: Moderate claim language and add evidence references`);
   }
 
@@ -321,7 +340,7 @@ function formatAnalysisForEvaluation(
 
 // ─── Re-exports ──────────────────────────────────────────────────────────────
 
-export { analyzeClaimEvidence, analyzeSingle } from './claim-evidence-engine';
+export { analyzeClaimEvidence, analyzeDocument as analyzeSingle } from './claim-evidence-engine';
 export { analyzeConsistency, extractAssertions } from './consistency-engine';
 export { computeDefensibility } from './defensibility-engine';
 export { generateReviewerQuestions } from './reviewer-question-engine';

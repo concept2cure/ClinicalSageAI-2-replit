@@ -12,61 +12,71 @@ const FDA_REQUIREMENTS_MAP = {
   device_desc: {
     name: 'Device Description',
     required: true,
-    sections: ['physical_characteristics', 'materials_composition', 'design_drawings', 'specifications']
+    sections: [
+      'physical_characteristics',
+      'materials_composition',
+      'design_drawings',
+      'specifications',
+    ],
   },
   performance: {
     name: 'Performance Data',
     required: true,
-    sections: ['bench_testing', 'animal_testing', 'computational_modeling', 'validation_verification']
+    sections: [
+      'bench_testing',
+      'animal_testing',
+      'computational_modeling',
+      'validation_verification',
+    ],
   },
   biocompat: {
     name: 'Biocompatibility',
     required: true,
-    sections: ['iso_10993', 'cytotoxicity', 'sensitization', 'irritation', 'systemic_toxicity', 'hemocompatibility']
+    sections: [
+      'iso_10993',
+      'cytotoxicity',
+      'sensitization',
+      'irritation',
+      'systemic_toxicity',
+      'hemocompatibility',
+    ],
   },
   sterilization: {
     name: 'Sterilization',
     required: true,
-    sections: ['validation', 'sterility_assurance', 'residuals', 'packaging']
+    sections: ['validation', 'sterility_assurance', 'residuals', 'packaging'],
   },
   software: {
     name: 'Software',
     required: false,
-    sections: ['sds', 'svvp', 'cybersecurity', 'hazard_analysis']
+    sections: ['sds', 'svvp', 'cybersecurity', 'hazard_analysis'],
   },
   clinical: {
     name: 'Clinical',
     required: false,
-    sections: ['protocol', 'results', 'statistical_analysis', 'adverse_events']
+    sections: ['protocol', 'results', 'statistical_analysis', 'adverse_events'],
   },
   labeling: {
     name: 'Labeling',
     required: true,
-    sections: ['device_label', 'ifu', 'patient_labeling', 'physician_labeling']
+    sections: ['device_label', 'ifu', 'patient_labeling', 'physician_labeling'],
   },
   manufacturing: {
     name: 'Manufacturing',
     required: true,
-    sections: ['process_flow', 'quality_controls', 'device_history', 'facility_info']
-  }
+    sections: ['process_flow', 'quality_controls', 'device_history', 'facility_info'],
+  },
 };
 
 export class EvidenceManagementService {
-  private openai: OpenAI | null = null;
-
   constructor() {
     // Initialize OpenAI if API key exists
-    }
+  }
 
   /**
    * Extract data from uploaded evidence files using AI
    */
   async extractDataFromFile(fileContent: string, fileName: string, fileType: string) {
-    if (!this.openai) {
-      return this.basicDataExtraction(fileContent, fileName);
-    }
-import { ai } from '../lib/unified-ai-client';
-
     try {
       const prompt = `
         Analyze this test report/evidence document and extract key information:
@@ -91,11 +101,11 @@ import { ai } from '../lib/unified-ai-client';
       const response = await this.ai.chat({
         model: 'gpt-4o',
         messages: [{ role: 'user', content: prompt }],
-        temperature: 0.3
+        temperature: 0.3,
       });
 
       const extracted = JSON.parse(aiResult.content || '{}');
-      
+
       return {
         test_type: extracted.test_type || this.inferTestType(fileName),
         test_standard: extracted.test_standard || null,
@@ -105,7 +115,7 @@ import { ai } from '../lib/unified-ai-client';
         results: extracted.test_results || null,
         findings: extracted.key_findings || null,
         issues: extracted.deviations || null,
-        ai_extracted: true
+        ai_extracted: true,
       };
     } catch (error) {
       console.error('AI extraction failed:', error);
@@ -126,7 +136,7 @@ import { ai } from '../lib/unified-ai-client';
       results: null,
       findings: null,
       issues: null,
-      ai_extracted: false
+      ai_extracted: false,
     };
   }
 
@@ -153,7 +163,7 @@ import { ai } from '../lib/unified-ai-client';
       /ISO\s+\d{4,5}(?:-\d+)?/gi,
       /ASTM\s+[A-Z]\d+/gi,
       /IEC\s+\d{5}/gi,
-      /FDA\s+guidance/gi
+      /FDA\s+guidance/gi,
     ];
 
     for (const regex of standards) {
@@ -181,15 +191,15 @@ import { ai } from '../lib/unified-ai-client';
     let section = null;
 
     // Map test types to FDA requirements
-    const mappings: { [key: string]: { req: string, section: string } } = {
-      'biocompatibility': { req: 'biocompat', section: 'iso_10993' },
-      'cytotoxicity': { req: 'biocompat', section: 'cytotoxicity' },
-      'bench_testing': { req: 'performance', section: 'bench_testing' },
-      'sterilization': { req: 'sterilization', section: 'validation' },
-      'clinical': { req: 'clinical', section: 'results' },
-      'labeling': { req: 'labeling', section: 'device_label' },
-      'software': { req: 'software', section: 'svvp' },
-      'manufacturing': { req: 'manufacturing', section: 'process_flow' }
+    const mappings: { [key: string]: { req: string; section: string } } = {
+      biocompatibility: { req: 'biocompat', section: 'iso_10993' },
+      cytotoxicity: { req: 'biocompat', section: 'cytotoxicity' },
+      bench_testing: { req: 'performance', section: 'bench_testing' },
+      sterilization: { req: 'sterilization', section: 'validation' },
+      clinical: { req: 'clinical', section: 'results' },
+      labeling: { req: 'labeling', section: 'device_label' },
+      software: { req: 'software', section: 'svvp' },
+      manufacturing: { req: 'manufacturing', section: 'process_flow' },
     };
 
     const mapping = mappings[testType];
@@ -201,8 +211,8 @@ import { ai } from '../lib/unified-ai-client';
     // Update file with FDA requirement mapping
     if (requirement) {
       await db.execute(sql`
-        UPDATE device_data_center 
-        SET 
+        UPDATE device_data_center
+        SET
           fda_requirement = ${requirement},
           fda_section = ${section},
           extracted_data = ${JSON.stringify(extractedData)}::jsonb,
@@ -220,13 +230,13 @@ import { ai } from '../lib/unified-ai-client';
   async performGapAnalysis(projectId: string, organizationId: number) {
     // Get all files for the project
     const files = await db.execute(sql`
-      SELECT 
+      SELECT
         fda_requirement,
         fda_section,
         regulatory_status,
         COUNT(*) as file_count
       FROM device_data_center
-      WHERE 
+      WHERE
         project_id = ${projectId}
         AND organization_id = ${organizationId}
       GROUP BY fda_requirement, fda_section, regulatory_status
@@ -239,14 +249,14 @@ import { ai } from '../lib/unified-ai-client';
 
     for (const [reqId, reqData] of Object.entries(FDA_REQUIREMENTS_MAP)) {
       const reqFiles = files.filter((f: any) => f.fda_requirement === reqId);
-      
+
       if (reqFiles.length === 0 && reqData.required) {
         gaps.push({
           requirement: reqId,
           name: reqData.name,
           status: 'missing',
           severity: 'critical',
-          sections_missing: reqData.sections
+          sections_missing: reqData.sections,
         });
       } else if (reqFiles.length > 0) {
         const approved = reqFiles.filter((f: any) => f.regulatory_status === 'approved');
@@ -255,7 +265,7 @@ import { ai } from '../lib/unified-ai-client';
             requirement: reqId,
             name: reqData.name,
             status: 'complete',
-            file_count: reqFiles.length
+            file_count: reqFiles.length,
           });
         } else {
           partial.push({
@@ -263,7 +273,7 @@ import { ai } from '../lib/unified-ai-client';
             name: reqData.name,
             status: 'partial',
             approved: approved.length,
-            total: reqFiles.length
+            total: reqFiles.length,
           });
         }
       }
@@ -274,7 +284,7 @@ import { ai } from '../lib/unified-ai-client';
       fulfilled,
       partial,
       completeness: Math.round((fulfilled.length / Object.keys(FDA_REQUIREMENTS_MAP).length) * 100),
-      critical_gaps: gaps.filter(g => g.severity === 'critical').length
+      critical_gaps: gaps.filter(g => g.severity === 'critical').length,
     };
   }
 
@@ -291,16 +301,16 @@ import { ai } from '../lib/unified-ai-client';
       const extracted = file.extracted_data || {};
       const date = extracted.test_date || file.created_at;
       const lab = extracted.test_lab || file.test_lab_name || 'Unknown Lab';
-      
+
       if (format === 'custom') {
         return {
           id: file.id,
           citation: `${file.file_name} - ${file.test_type || 'Test Report'}, ${lab}, ${date}`,
           reference: `[${file.file_name}]`,
-          details: extracted
+          details: extracted,
         };
       }
-      
+
       // Add other citation formats as needed
       return { id: file.id, citation: file.file_name };
     });
@@ -314,7 +324,7 @@ import { ai } from '../lib/unified-ai-client';
   async linkToWorkflowStage(fileId: string, workflowStage: number, stageData: any) {
     await db.execute(sql`
       UPDATE device_data_center
-      SET 
+      SET
         workflow_stage = ${workflowStage},
         workflow_data = ${JSON.stringify(stageData)}::jsonb,
         updated_at = NOW()
@@ -333,11 +343,11 @@ import { ai } from '../lib/unified-ai-client';
       3: ['performance', 'validation_verification'],
       4: ['labeling', 'ifu'],
       5: ['manufacturing', 'quality'],
-      6: ['all_evidence']
+      6: ['all_evidence'],
     };
 
     const requirements = stageRequirements[stage] || [];
-    
+
     if (requirements.includes('all_evidence')) {
       return db.execute(sql`
         SELECT * FROM device_data_center
@@ -348,7 +358,7 @@ import { ai } from '../lib/unified-ai-client';
 
     return db.execute(sql`
       SELECT * FROM device_data_center
-      WHERE 
+      WHERE
         project_id = ${projectId}
         AND fda_requirement = ANY(${requirements})
       ORDER BY fda_requirement, created_at DESC
@@ -361,14 +371,14 @@ import { ai } from '../lib/unified-ai-client';
   async autoPopulateForm(formId: string, projectId: string) {
     // Get relevant evidence files
     const evidence = await db.execute(sql`
-      SELECT 
+      SELECT
         fda_requirement,
         fda_section,
         extracted_data,
         file_name,
         id
       FROM device_data_center
-      WHERE 
+      WHERE
         project_id = ${projectId}
         AND regulatory_status = 'approved'
         AND extracted_data IS NOT NULL
@@ -376,7 +386,7 @@ import { ai } from '../lib/unified-ai-client';
 
     // Map evidence to form fields
     const formData: any = {};
-    
+
     for (const file of evidence) {
       const extracted = file.extracted_data;
       if (!extracted) continue;
@@ -387,13 +397,13 @@ import { ai } from '../lib/unified-ai-client';
           test_results: extracted.results,
           test_standards: extracted.test_standard,
           test_date: extracted.test_date,
-          evidence_refs: [...(formData.performance_testing?.evidence_refs || []), file.id]
+          evidence_refs: [...(formData.performance_testing?.evidence_refs || []), file.id],
         };
       } else if (file.fda_requirement === 'biocompat') {
         formData.biocompatibility = {
           iso_10993_compliance: extracted.results === 'Pass',
           test_lab: extracted.test_lab,
-          evidence_refs: [...(formData.biocompatibility?.evidence_refs || []), file.id]
+          evidence_refs: [...(formData.biocompatibility?.evidence_refs || []), file.id],
         };
       }
       // Add more mappings as needed
@@ -408,7 +418,7 @@ import { ai } from '../lib/unified-ai-client';
   async submitForReview(fileId: string, reviewerId: string) {
     await db.execute(sql`
       UPDATE device_data_center
-      SET 
+      SET
         review_status = 'pending',
         reviewer_id = ${reviewerId},
         review_requested_at = NOW(),
@@ -423,17 +433,19 @@ import { ai } from '../lib/unified-ai-client';
   async approveEvidence(fileId: string, reviewerId: string, comments?: string) {
     await db.execute(sql`
       UPDATE device_data_center
-      SET 
+      SET
         review_status = 'approved',
         reviewer_id = ${reviewerId},
         review_completed_at = NOW(),
         regulatory_status = 'approved',
-        review_comments = COALESCE(review_comments, '[]'::jsonb) || ${JSON.stringify([{
-          reviewer: reviewerId,
-          action: 'approved',
-          comment: comments,
-          timestamp: new Date().toISOString()
-        }])}::jsonb
+        review_comments = COALESCE(review_comments, '[]'::jsonb) || ${JSON.stringify([
+          {
+            reviewer: reviewerId,
+            action: 'approved',
+            comment: comments,
+            timestamp: new Date().toISOString(),
+          },
+        ])}::jsonb
       WHERE id = ${fileId}
     `);
   }
@@ -444,16 +456,18 @@ import { ai } from '../lib/unified-ai-client';
   async requestChanges(fileId: string, reviewerId: string, comments: string) {
     await db.execute(sql`
       UPDATE device_data_center
-      SET 
+      SET
         review_status = 'changes_requested',
         reviewer_id = ${reviewerId},
         regulatory_status = 'draft',
-        review_comments = COALESCE(review_comments, '[]'::jsonb) || ${JSON.stringify([{
-          reviewer: reviewerId,
-          action: 'changes_requested',
-          comment: comments,
-          timestamp: new Date().toISOString()
-        }])}::jsonb
+        review_comments = COALESCE(review_comments, '[]'::jsonb) || ${JSON.stringify([
+          {
+            reviewer: reviewerId,
+            action: 'changes_requested',
+            comment: comments,
+            timestamp: new Date().toISOString(),
+          },
+        ])}::jsonb
       WHERE id = ${fileId}
     `);
   }
@@ -463,7 +477,7 @@ import { ai } from '../lib/unified-ai-client';
    */
   async exportEvidencePackage(projectId: string, organizationId: number) {
     const evidence = await db.execute(sql`
-      SELECT 
+      SELECT
         fda_requirement,
         fda_section,
         file_name,
@@ -471,7 +485,7 @@ import { ai } from '../lib/unified-ai-client';
         regulatory_status,
         extracted_data
       FROM device_data_center
-      WHERE 
+      WHERE
         project_id = ${projectId}
         AND organization_id = ${organizationId}
         AND regulatory_status = 'approved'
@@ -484,18 +498,18 @@ import { ai } from '../lib/unified-ai-client';
       if (!organized[file.fda_requirement]) {
         organized[file.fda_requirement] = {
           requirement: FDA_REQUIREMENTS_MAP[file.fda_requirement]?.name,
-          sections: {}
+          sections: {},
         };
       }
-      
+
       if (!organized[file.fda_requirement].sections[file.fda_section]) {
         organized[file.fda_requirement].sections[file.fda_section] = [];
       }
-      
+
       organized[file.fda_requirement].sections[file.fda_section].push({
         file_name: file.file_name,
         file_path: file.file_path,
-        data: file.extracted_data
+        data: file.extracted_data,
       });
     }
 
@@ -503,7 +517,7 @@ import { ai } from '../lib/unified-ai-client';
       project_id: projectId,
       exported_at: new Date().toISOString(),
       evidence_structure: organized,
-      file_count: evidence.length
+      file_count: evidence.length,
     };
   }
 }
