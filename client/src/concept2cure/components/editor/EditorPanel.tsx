@@ -676,9 +676,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const handleSave = useCallback(
     async (content: string, _metadata: Record<string, unknown>) => {
       if (!projectId || !activeArtifact) return;
-      // Block saves on locked documents client-side
-      if (activeArtifact?.status === 'locked') {
-        setLockRejection('Document is locked — edits are not permitted. Unlock to continue.');
+      // Capability-gated save — canonical DocumentMode decides save availability
+      if (modeCaps && !modeCaps.canSave) {
+        setLockRejection('Editing is not available in the current mode. Switch to edit mode to save.');
         setTimeout(() => setLockRejection(null), 5000);
         return;
       }
@@ -761,7 +761,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   // ── Auto-save: debounced save 5s after last edit ──────────────────────
   const triggerAutoSave = useCallback(
     (html: string) => {
-      if (!activeArtifact || activeArtifact.status === 'locked') return;
+      if (!activeArtifact) return;
+      // Capability-gated auto-save — suppressed when mode disallows saving
+      if (modeCaps && !modeCaps.canSave) return;
       if (html === lastSavedContentRef.current) return;
 
       setIsDirty(true);
@@ -1089,7 +1091,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     async (newStatus: string, reason?: string) => {
       if (!activeArtifact) return;
 
-      // Quality gate: run checks when advancing to review or approved
+      // Quality gate: run checks when advancing to review or approved.
+      // NOTE: Raw status read is intentional domain state inspection for workflow
+      // transition direction — this is NOT a behavioral gate, it determines
+      // whether quality checks should fire before the status mutation.
       const isAdvancing = (newStatus === 'review' || newStatus === 'approved') &&
         (activeArtifact.status === 'draft' || activeArtifact.status === 'review');
 
@@ -1726,11 +1731,13 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   <PenTool className="w-3 h-3 text-zinc-400" />
                   Sign & Approve (Part 11)
                 </button>
-                {/* Status change — forward transitions only; regressions use lock overlay / GovernedDocumentPanel */}
-                {activeArtifact?.status !== 'locked' && (
+                {/* Status change — gated by capability layer, not raw status */}
+                {modeCaps?.canToggleLock && (
                   <button
                     role="menuitem"
                     onClick={() => {
+                      // NOTE: Raw status read here is intentional domain state inspection
+                      // to determine the correct next transition target.
                       const current = activeArtifact?.status || 'draft';
                       const next =
                         current === 'approved'
@@ -1745,6 +1752,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                     className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 disabled:opacity-60 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
                   >
                     <Lock className="w-3 h-3 text-zinc-400" />
+                    {/* Display label uses raw status — intentional display-only read */}
                     {activeArtifact?.status === 'approved'
                       ? 'Lock'
                       : activeArtifact?.status === 'review'
@@ -2101,7 +2109,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         <div
           className={cn('min-h-0 overflow-hidden relative', activeInspector ? 'flex-1' : 'w-full')}
         >
-          {activeArtifact?.status === 'locked' && (
+          {/* Locked overlay — gated by canonical mode, not raw status */}
+          {modeCaps && !modeCaps.editable && modeCtx?.mode === 'readonly' && activeArtifact?.status === 'locked' && (
             <div className="absolute inset-0 z-10 bg-red-50/40 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
               <div className="bg-white/90 border border-red-200 rounded-lg px-6 py-4 shadow text-center pointer-events-auto max-w-xs">
                 <Lock className="w-6 h-6 text-red-500 mx-auto mb-2" />
@@ -2144,8 +2153,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             cursors={collaboration.cursors}
             currentUserId={currentUser.id}
           />
-          {/* Guided empty state for new/blank documents */}
-          {activeArtifact && (!activeArtifact.content || activeArtifact.content.replace(/<[^>]*>/g, '').trim().length < 10) && activeArtifact.status !== 'locked' && (
+          {/* Guided empty state for new/blank documents — only in editable modes */}
+          {activeArtifact && (!activeArtifact.content || activeArtifact.content.replace(/<[^>]*>/g, '').trim().length < 10) && modeCaps?.editable !== false && (
             <div className="absolute inset-x-0 top-0 z-10 flex items-start justify-center pt-20 pointer-events-none">
               <div className="pointer-events-auto bg-white/95 backdrop-blur-sm border border-zinc-200 rounded-xl shadow-lg p-5 max-w-md w-full mx-4">
                 <div className="text-center mb-4">
@@ -2203,7 +2212,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             showCompliance={false}
             showTraceability={false}
             embedded
-            isReadOnly={activeArtifact?.status === 'locked'}
+            isReadOnly={modeCaps ? !modeCaps.editable : false}
             documentMode={modeCtx?.mode}
             onSave={handleSave}
             onAIAction={(action, selectedText) => {

@@ -70,6 +70,8 @@ import { cn } from '@/lib/utils';
 import {
   DocumentModeProvider,
   useDocumentMode,
+  resolveDocumentMode,
+  MODE_CAPABILITIES,
   type WorkflowStage,
 } from '../../contexts/DocumentModeContext';
 
@@ -185,6 +187,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   // New document creation
   const [showNewDoc, setShowNewDoc] = useState(false);
   const [showNewDocDialog, setShowNewDocDialog] = useState(false);
+  // Feedback message when cut/move is blocked by capability
+  const [cutBlockedMessage, setCutBlockedMessage] = useState<string | null>(null);
   const [newDocTitle, setNewDocTitle] = useState('');
   const [creatingNew, setCreatingNew] = useState(false);
 
@@ -585,17 +589,30 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     [artifacts, selectedDocId, pendingMove]
   );
 
-  // ── Cut (start pending move) ─────────────────────────────────────────────
+  // ── Cut (start pending move) — capability-gated ──────────────────────────
   const handleCutDocument = useCallback((art: TreeArtifact) => {
-    if (art.status === 'locked') return; // Cannot move locked docs
+    // Derive capabilities from canonical mode resolution
+    const artMode = resolveDocumentMode(workflowStage, art.status as any);
+    const artCaps = MODE_CAPABILITIES[artMode];
+    if (!artCaps.canMoveDocument) {
+      // Provide user feedback instead of silent return
+      setCutBlockedMessage(`"${art.title}" cannot be moved in the current mode.`);
+      setTimeout(() => setCutBlockedMessage(null), 4000);
+      return;
+    }
     setPendingMove({ artifact: art, fromSection: art.ctdSection || null });
-  }, []);
+  }, [workflowStage]);
 
   // ── Paste here (complete pending move via governed dialog) ───────────────
   const handlePasteHere = useCallback(
     (ctdSection: string) => {
       if (!pendingMove) return;
-      if (pendingMove.artifact.status === 'locked') {
+      // Re-check capabilities at paste time (status may have changed)
+      const artMode = resolveDocumentMode(workflowStage, pendingMove.artifact.status as any);
+      const artCaps = MODE_CAPABILITIES[artMode];
+      if (!artCaps.canMoveDocument) {
+        setCutBlockedMessage(`"${pendingMove.artifact.title}" can no longer be moved.`);
+        setTimeout(() => setCutBlockedMessage(null), 4000);
         setPendingMove(null);
         return;
       }
@@ -961,6 +978,17 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             <kbd className="ml-1 text-xs px-1.5 py-0.5 rounded bg-amber-200/60 text-amber-800 font-mono">
               Esc
             </kbd>
+          </button>
+        </div>
+      )}
+
+      {/* ── Cut/move blocked feedback ───────────────────────────────────── */}
+      {cutBlockedMessage && (
+        <div className="flex items-center gap-2.5 px-4 h-9 border-b border-red-200 bg-red-50 shrink-0 animate-in fade-in duration-200">
+          <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
+          <span className="text-xs text-red-800 font-medium">{cutBlockedMessage}</span>
+          <button onClick={() => setCutBlockedMessage(null)} className="ml-auto">
+            <X className="w-3.5 h-3.5 text-red-400 hover:text-red-600" />
           </button>
         </div>
       )}

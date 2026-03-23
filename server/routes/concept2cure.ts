@@ -2967,7 +2967,8 @@ router.put(
         return sendError(res, 404, 'Artifact not found');
       }
 
-      // Locked artifacts cannot be moved
+      // Server-side placement enforcement — authoritative lock guard.
+      // Client gates via ModeCapabilities.canRelocate; this is the server backup.
       if (dbArtifact.status === 'locked') {
         return sendError(res, 423, 'Document is locked. Unlock before changing placement.');
       }

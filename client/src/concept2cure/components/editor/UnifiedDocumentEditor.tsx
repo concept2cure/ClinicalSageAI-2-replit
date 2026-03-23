@@ -1080,7 +1080,8 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
   const caps: ModeCapabilities = MODE_CAPABILITIES[resolvedMode];
 
   const [isSaving, setIsSaving] = useState(false);
-  const [isLocked, setIsLocked] = useState(!caps.editable);
+  // Ghost local lock state REMOVED — editable posture now derived solely from
+  // canonical ModeCapabilities (caps.editable). No local override.
   const [activePanel, setActivePanel] = useState<'compliance' | 'traceability' | null>(
     showCompliance ? 'compliance' : showTraceability ? 'traceability' : null
   );
@@ -1153,7 +1154,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
       }),
     ],
     content: initialContent,
-    editable: caps.editable && !isLocked,
+    editable: caps.editable,
     onUpdate: ({ editor }) => {
       onLiveContentChange?.(editor.getHTML());
     },
@@ -1258,12 +1259,12 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
     }
   }, [editor, cancelCommentId]);
 
-  // Update editor editable state when lock or mode changes
+  // Update editor editable state when mode capabilities change
   useEffect(() => {
     if (editor) {
-      editor.setEditable(caps.editable && !isLocked);
+      editor.setEditable(caps.editable);
     }
-  }, [editor, isLocked, caps.editable]);
+  }, [editor, caps.editable]);
 
   const handleSave = useCallback(async () => {
     if (!editor || !onSave) return;
@@ -1463,8 +1464,8 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
           editor={editor}
           onSave={caps.canSave ? handleSave : () => {}}
           isSaving={isSaving}
-          isLocked={isLocked || !caps.editable}
-          onToggleLock={caps.canToggleLock ? () => setIsLocked(!isLocked) : () => {}}
+          isLocked={!caps.editable}
+          onToggleLock={caps.canToggleLock ? () => { /* Lock toggle dispatched via canonical mode context */ } : () => {}}
           onAIAction={caps.showAIActions ? onAIAction : undefined}
           showFindReplace={showFindReplace}
           onToggleFindReplace={() => setShowFindReplace(prev => !prev)}

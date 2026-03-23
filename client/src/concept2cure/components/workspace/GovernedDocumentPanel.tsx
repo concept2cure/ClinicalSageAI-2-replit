@@ -39,6 +39,7 @@ import {
 import { cn } from '@/lib/utils';
 import { ReviewThreadsPanel } from './ReviewThreadsPanel';
 import { getGovWorkflowTailoring } from '../../config/industry-tailoring';
+import { useDocumentModeOptional } from '../../contexts/DocumentModeContext';
 
 // ── Auth helper ──────────────────────────────────────────────────────────────
 function getAuthHeaders(): Record<string, string> {
@@ -205,6 +206,8 @@ export function GovernedDocumentPanel({
   onClose,
 }: GovernedDocumentPanelProps) {
   const tailoring = getGovWorkflowTailoring(industryMode);
+  const modeCtx = useDocumentModeOptional();
+  const modeCaps = modeCtx?.capabilities;
   const [events, setEvents] = useState<ProvenanceEvent[]>([]);
   const [versions, setVersions] = useState<VersionEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -508,10 +511,10 @@ export function GovernedDocumentPanel({
           <VersionsTab
             versions={versions}
             currentVersion={artifact.version || 1}
-            isLocked={currentStatus === 'locked'}
+            isLocked={modeCaps ? !modeCaps.canRollback : currentStatus === 'locked'}
             rollingBack={rollingBack}
             onRollback={handleRollback}
-            canRollback={permissions?.canRollback !== false}
+            canRollback={modeCaps ? modeCaps.canRollback : permissions?.canRollback !== false}
             onOpenDiff={onOpenDiff}
             approvedVersionId={artifact.approvedVersionId}
             publishedVersionId={artifact.publishedVersionId}

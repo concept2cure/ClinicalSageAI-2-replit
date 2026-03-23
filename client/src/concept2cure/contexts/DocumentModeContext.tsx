@@ -71,6 +71,16 @@ export interface ModeCapabilities {
   showReviewToggle: boolean;
   /** Whether the document canvas is visible at all */
   canvasVisible: boolean;
+  /** Whether the user can approve / sign documents in this mode */
+  canApprove: boolean;
+  /** Whether the user can sign (e-signature) documents in this mode */
+  canSign: boolean;
+  /** Whether artifacts can be relocated (CTD placement change) in this mode */
+  canRelocate: boolean;
+  /** Whether version rollback is available in this mode */
+  canRollback: boolean;
+  /** Whether cut/paste (document move) operations are available */
+  canMoveDocument: boolean;
 }
 
 /** Reasons why an edit escalation might be denied. */
@@ -133,6 +143,11 @@ const MODE_CAPABILITIES: Record<DocumentMode, ModeCapabilities> = {
     showEditButton: false,
     showReviewToggle: false,
     canvasVisible: false,
+    canApprove: false,
+    canSign: false,
+    canRelocate: false,
+    canRollback: false,
+    canMoveDocument: false,
   },
   preview: {
     editable: false,
@@ -144,6 +159,11 @@ const MODE_CAPABILITIES: Record<DocumentMode, ModeCapabilities> = {
     showEditButton: false,
     showReviewToggle: false,
     canvasVisible: true,
+    canApprove: false,
+    canSign: false,
+    canRelocate: false,
+    canRollback: false,
+    canMoveDocument: false,
   },
   view: {
     editable: false,
@@ -155,6 +175,11 @@ const MODE_CAPABILITIES: Record<DocumentMode, ModeCapabilities> = {
     showEditButton: true,
     showReviewToggle: false,
     canvasVisible: true,
+    canApprove: true,
+    canSign: true,
+    canRelocate: true,
+    canRollback: false,
+    canMoveDocument: true,
   },
   edit: {
     editable: true,
@@ -166,6 +191,11 @@ const MODE_CAPABILITIES: Record<DocumentMode, ModeCapabilities> = {
     showEditButton: false,
     showReviewToggle: true,
     canvasVisible: true,
+    canApprove: true,
+    canSign: true,
+    canRelocate: true,
+    canRollback: true,
+    canMoveDocument: true,
   },
   readonly: {
     editable: false,
@@ -177,6 +207,11 @@ const MODE_CAPABILITIES: Record<DocumentMode, ModeCapabilities> = {
     showEditButton: false,
     showReviewToggle: false,
     canvasVisible: true,
+    canApprove: false,
+    canSign: false,
+    canRelocate: false,
+    canRollback: false,
+    canMoveDocument: false,
   },
 };
 
