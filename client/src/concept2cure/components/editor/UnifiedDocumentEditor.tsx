@@ -182,6 +182,8 @@ export interface UnifiedDocumentEditorProps {
   className?: string;
   /** Live content callback for outline sync */
   onLiveContentChange?: (html: string) => void;
+  /** Canonical lock/unlock toggle — dispatches server mutation via parent */
+  onLockToggle?: () => void;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1070,6 +1072,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
   collaborators,
   className = '',
   onLiveContentChange,
+  onLockToggle,
 }) => {
   // ── Resolve document mode ────────────────────────────────────────────────
   // Priority: explicit prop > context > legacy isReadOnly fallback
@@ -1465,7 +1468,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
           onSave={caps.canSave ? handleSave : () => {}}
           isSaving={isSaving}
           isLocked={!caps.editable}
-          onToggleLock={caps.canToggleLock ? () => { /* Lock toggle dispatched via canonical mode context */ } : () => {}}
+          onToggleLock={caps.canToggleLock && onLockToggle ? onLockToggle : () => {}}
           onAIAction={caps.showAIActions ? onAIAction : undefined}
           showFindReplace={showFindReplace}
           onToggleFindReplace={() => setShowFindReplace(prev => !prev)}

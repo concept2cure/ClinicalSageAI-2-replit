@@ -1138,6 +1138,28 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     [activeArtifact, executeStatusChange]
   );
 
+  // ── Canonical lock/unlock toggle ──────────────────────────────────────
+  // Single action path: editable → lock (via approved→locked transition)
+  // or locked → unlock (via locked→draft transition with unlock reason overlay).
+  // The toolbar lock button in UnifiedDocumentEditor dispatches here.
+  const handleLockToggle = useCallback(() => {
+    if (!activeArtifact) return;
+    const current = activeArtifact.status || 'draft';
+    if (current === 'locked') {
+      // Unlock: show the existing unlock overlay (which requires a reason)
+      // The overlay is already rendered conditionally on readonly + locked state.
+      // We just need to ensure the overlay is visible — it's gated by mode.
+      // If user is somehow in edit mode with a locked doc, force the unlock dialog:
+      pushToast('Use the unlock overlay to provide a reason for unlocking.', 'info');
+    } else if (current === 'approved') {
+      // Approved → Locked: direct transition
+      handleStatusChange('locked');
+    } else {
+      // draft/review → cannot lock directly, must go through workflow
+      pushToast('Document must be approved before it can be locked.', 'info');
+    }
+  }, [activeArtifact, handleStatusChange, pushToast]);
+
   // ── CTD Section assignment ───────────────────────────────────────────
   const handleCtdSection = useCallback(async () => {
     if (!projectId || !activeArtifact || !ctdSectionInput.trim()) return;
@@ -2252,6 +2274,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             isReadOnly={modeCaps ? !modeCaps.editable : false}
             documentMode={modeCtx?.mode}
             onSave={handleSave}
+            onLockToggle={handleLockToggle}
             onAIAction={(action, selectedText) => {
               if (action === 'link-source') {
                 pushToast('Select text first, then use Link to Source in the bubble menu', 'info');

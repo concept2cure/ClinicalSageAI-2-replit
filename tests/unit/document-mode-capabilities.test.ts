@@ -213,3 +213,117 @@ describe('Stage default modes', () => {
   it('review → view', () => expect(STAGE_DEFAULT_MODE['review']).toBe('view'));
   it('submissions → readonly', () => expect(STAGE_DEFAULT_MODE['submissions']).toBe('readonly'));
 });
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 7. Lock toggle canonical flow validation
+// ═══════════════════════════════════════════════════════════════════════════════
+
+describe('Lock toggle canonical flow', () => {
+  it('locking an approved artifact in section-workspace transitions to readonly', () => {
+    // Before lock: approved artifact in edit mode
+    const beforeMode = resolveDocumentMode('section-workspace', 'approved');
+    expect(beforeMode).toBe('edit');
+    expect(MODE_CAPABILITIES[beforeMode].canToggleLock).toBe(true);
+
+    // After lock: locked artifact forces readonly
+    const afterMode = resolveDocumentMode('section-workspace', 'locked');
+    expect(afterMode).toBe('readonly');
+    expect(MODE_CAPABILITIES[afterMode].editable).toBe(false);
+    expect(MODE_CAPABILITIES[afterMode].canSave).toBe(false);
+    expect(MODE_CAPABILITIES[afterMode].canToggleLock).toBe(false);
+  });
+
+  it('unlocking from locked back to draft restores edit capabilities', () => {
+    const lockedMode = resolveDocumentMode('section-workspace', 'locked');
+    expect(lockedMode).toBe('readonly');
+
+    const unlockedMode = resolveDocumentMode('section-workspace', 'draft');
+    expect(unlockedMode).toBe('edit');
+    expect(MODE_CAPABILITIES[unlockedMode].editable).toBe(true);
+    expect(MODE_CAPABILITIES[unlockedMode].canSave).toBe(true);
+  });
+
+  it('submissions stage stays readonly even after unlock', () => {
+    const mode = resolveDocumentMode('submissions', 'draft');
+    expect(mode).toBe('readonly');
+    expect(MODE_CAPABILITIES[mode].canToggleLock).toBe(false);
+  });
+
+  it('locked artifact cannot be toggled from readonly mode', () => {
+    const mode = resolveDocumentMode('section-workspace', 'locked');
+    const caps = MODE_CAPABILITIES[mode];
+    expect(caps.canToggleLock).toBe(false);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 8. Edit escalation gate — shell entry point validation
+// ═══════════════════════════════════════════════════════════════════════════════
+
+describe('Edit escalation gate for shell entry points', () => {
+  it('documents stage with draft artifact allows escalation', () => {
+    const result = canEscalateToEdit('documents', 'draft');
+    expect(result.allowed).toBe(true);
+    expect(result.reason).toBeUndefined();
+  });
+
+  it('documents stage with locked artifact blocks escalation with reason', () => {
+    const result = canEscalateToEdit('documents', 'locked');
+    expect(result.allowed).toBe(false);
+    expect(result.reason).toBeDefined();
+    expect(result.reason).toContain('locked');
+  });
+
+  it('dossier stage blocks escalation with helpful reason', () => {
+    const result = canEscalateToEdit('dossier', 'draft');
+    expect(result.allowed).toBe(false);
+    expect(result.reason).toContain('Section Workspace');
+  });
+
+  it('submissions stage blocks with clear reason', () => {
+    const result = canEscalateToEdit('submissions', 'draft');
+    expect(result.allowed).toBe(false);
+    expect(result.reason).toContain('locked during submission');
+  });
+
+  it('review stage with review-status artifact allows escalation', () => {
+    const result = canEscalateToEdit('review', 'review');
+    expect(result.allowed).toBe(true);
+  });
+
+  it('review stage with approved artifact blocks (wrong status for review editing)', () => {
+    const result = canEscalateToEdit('review', 'approved');
+    expect(result.allowed).toBe(true);
+    expect(result.reason).toContain('approved');
+  });
+
+  it('section-workspace with approved artifact warns but allows', () => {
+    const result = canEscalateToEdit('section-workspace', 'approved');
+    expect(result.allowed).toBe(true);
+    expect(result.reason).toBeTruthy();
+    expect(result.reason).toContain('reset');
+  });
+
+  it('project-home cannot escalate', () => {
+    const result = canEscalateToEdit('project-home', 'draft');
+    expect(result.allowed).toBe(false);
+    expect(result.reason).toContain('not available');
+  });
+
+  it('every blocked escalation provides a non-empty reason string', () => {
+    const blockedCases: [WorkflowStage, string][] = [
+      ['submissions', 'draft'],
+      ['dossier', 'draft'],
+      ['project-home', 'draft'],
+      ['documents', 'locked'],
+      ['section-workspace', 'locked'],
+      ['review', 'locked'],
+    ];
+    for (const [stage, status] of blockedCases) {
+      const result = canEscalateToEdit(stage, status);
+      expect(result.allowed).toBe(false);
+      expect(result.reason).toBeTruthy();
+      expect(result.reason!.length).toBeGreaterThan(10);
+    }
+  });
+});

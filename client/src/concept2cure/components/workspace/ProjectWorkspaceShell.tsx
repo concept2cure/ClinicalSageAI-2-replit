@@ -245,12 +245,11 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     }
   }, [initialContent, initialTitle]);
 
-  // If openArtifactId is provided, switch to edit mode for that artifact
+  // If openArtifactId is provided, attempt gated edit mode for that artifact
   useEffect(() => {
     if (!openArtifactId) return;
-    setSelectedDocId(openArtifactId);
-    setMode('edit');
-  }, [openArtifactId]);
+    gatedEditMode(openArtifactId);
+  }, [openArtifactId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Load artifacts ───────────────────────────────────────────────────────
   const loadArtifacts = useCallback(async () => {
@@ -836,6 +835,39 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     setMode('dashboard');
   }, []);
 
+  // ── Canonical edit-mode entry gate ──────────────────────────────────
+  // Every shell-level transition into edit mode for an EXISTING document
+  // must go through this helper. Returns true if the transition succeeded.
+  const gatedEditMode = useCallback(
+    (artifactId: string, opts?: { showGovernedPanel?: boolean; inspector?: string }) => {
+      // Look up the artifact to get its status for escalation check
+      const art = artifacts.find(a => a.id === artifactId);
+      const artStatus = art?.status as string | undefined;
+      const escalation = canEscalateToEdit(workflowStage, artStatus);
+
+      if (!escalation.allowed) {
+        pushShellToast(escalation.reason || 'Cannot edit in the current context.', 'info');
+        // Fall through to view mode instead of silently failing
+        setSelectedDocId(artifactId);
+        setMode('view');
+        if (opts?.showGovernedPanel) setShowGovernedPanel(true);
+        return false;
+      }
+
+      // Warn but allow (e.g. approved artifact)
+      if (escalation.reason) {
+        pushShellToast(escalation.reason, 'info');
+      }
+
+      setSelectedDocId(artifactId);
+      setMode('edit');
+      if (opts?.showGovernedPanel) setShowGovernedPanel(true);
+      if (opts?.inspector) setEditorInitialInspector(opts.inspector);
+      return true;
+    },
+    [artifacts, workflowStage, pushShellToast]
+  );
+
   // Which docs to show in the center pane when browsing
   const browseLabel =
     leftRailMode === 'dossier'
@@ -1399,8 +1431,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               onClose={closePhase4Panel}
               onCreateDraft={handlePhase4CreateDraft}
               onOpenEditor={(artId: string) => {
-                setSelectedDocId(artId);
-                setMode('edit');
+                gatedEditMode(artId);
                 closePhase4Panel();
               }}
               onOpenPlacement={(artId?: string) => {
@@ -1418,8 +1449,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               artifactId={phase4Ctx.artifactId}
               onClose={closePhase4Panel}
               onOpenEditor={(artId: string) => {
-                setSelectedDocId(artId);
-                setMode('edit');
+                gatedEditMode(artId);
                 closePhase4Panel();
               }}
               onOpenPlacement={(artId: string) => {
@@ -1429,8 +1459,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               }}
               onOpenProvenance={() => {
                 if (phase4Ctx.artifactId) {
-                  setSelectedDocId(phase4Ctx.artifactId);
-                  setMode('edit');
+                  gatedEditMode(phase4Ctx.artifactId);
                 }
                 closePhase4Panel();
               }}
@@ -1475,8 +1504,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 projectId={projectId}
                 onNavigateToArtifact={artifactId => {
                   closePhase4Panel();
-                  setSelectedDocId(artifactId);
-                  setMode('edit');
+                  gatedEditMode(artifactId);
                 }}
               />
             </div>
@@ -1488,9 +1516,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               submissionType={submissionType}
               artifacts={artifacts}
               onOpenDocument={(docId: string) => {
-                setSelectedDocId(docId);
-                setMode('edit');
-                setShowGovernedPanel(true);
+                gatedEditMode(docId, { showGovernedPanel: true });
               }}
               onCreateDocument={() => setShowNewDocDialog(true)}
               onOpenEditor={() => setMode('browse')}
@@ -1559,8 +1585,9 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             onClose={() => setShowGovernedPanel(false)}
             onOpenDiff={() => {
               setShowGovernedPanel(false);
-              setMode('edit');
-              setEditorInitialInspector('compare');
+              if (activeArtifact) {
+                gatedEditMode(activeArtifact.id, { inspector: 'compare' });
+              }
             }}
           />
         )}
