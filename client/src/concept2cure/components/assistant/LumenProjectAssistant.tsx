@@ -1,10 +1,10 @@
 /**
- * @fileoverview Lumen Project Assistant
+ * @fileoverview AnA Project Assistant
  * @module concept2cure/components/assistant/LumenProjectAssistant
  * @version 1.0.0
  *
  * @description
- * Enhanced Lumen Cortex integration with deep project context awareness.
+ * Enhanced AnA 1.0 RI integration with deep project context awareness.
  * Guides users to screens, helps with tasks, generates documents.
  *
  * @author Concept2Cure UI Team
@@ -241,7 +241,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
       setIsThinking(true);
 
       try {
-        // In production, this would call the Lumen Cortex API
+        // In production, this would call the AnA 1.0 RI API
         // Simulated response for now
         await new Promise(resolve => setTimeout(resolve, 1500));
 
@@ -255,7 +255,7 @@ export const LumenProjectAssistant: React.FC<LumenProjectAssistantProps> = ({
 
         setMessages(prev => [...prev, assistantMessage]);
       } catch (error) {
-        console.error('Lumen error:', error);
+        console.error('AnA error:', error);
       } finally {
         setIsThinking(false);
       }

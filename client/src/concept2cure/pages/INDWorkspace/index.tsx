@@ -7,7 +7,7 @@
  * Highly focused, minimalist workspace for IND (Investigational New Drug) filing.
  * Displays real-time CTD module progress, section navigator, and context-aware
  * AI drafting panel. Connects to the IND Pyramid engine, eCTD section map,
- * CoAuthor document editor, and Lumen Cortex chat.
+ * CoAuthor document editor, and AnA 1.0 RI chat.
  *
  * Design: Ultra-clean, no visual noise. Content-first. Breathing room.
  * Inspired by Linear/Notion/Arc — dense information, minimal chrome.

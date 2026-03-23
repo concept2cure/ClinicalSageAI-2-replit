@@ -25,7 +25,7 @@
  * - The Center Stage morphs instantly from "Data Grid" to "Document" to "Wargame Simulation"
  *
  * THE SHERPA TEAM:
- * - Lumen Cortex (The Expedition Leader)
+ * - AnA 1.0 RI (The Expedition Leader)
  * - eCTD Co-Author (The Heavy Lifter)
  * - CMC Wizard (The Gear Master)
  * - CERV2 (The Pathfinder)

@@ -72,10 +72,10 @@ export default {
         success: true,
         documentId: response.data.result.documentId,
         processingStats: response.data.result.processingStats,
-        message: 'Document successfully processed and integrated into Lumen AI knowledge base',
+        message: 'Document successfully processed and integrated into AnA knowledge base',
       };
     } catch (error) {
-      console.error('Error uploading document to Lumen AI:', error);
+      console.error('Error uploading document to AnA:', error);
       throw new Error(`Document upload failed: ${error.response?.data?.message || error.message}`);
     }
   },

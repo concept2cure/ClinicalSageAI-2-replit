@@ -4,7 +4,7 @@
  * @version 2.0.0
  * 
  * @description
- * Connects to Lumen Cortex API for AI-powered regulatory guidance.
+ * Connects to AnA 1.0 RI API for AI-powered regulatory guidance.
  * Handles message streaming, conversation history, and artifact generation.
  * 
  * @compliance
@@ -25,7 +25,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { Message, Artifact, SubmissionType } from '../types';
 
 /**
- * Response structure from the Lumen Cortex API
+ * Response structure from the AnA 1.0 RI API
  * @interface ChatResponse
  */
 interface ChatResponse {
@@ -214,7 +214,7 @@ function parseArtifacts(response: string, projectId: string): Artifact[] {
  * React Query hook for AI chat interactions
  * 
  * @description
- * Provides mutation functions for sending messages to Lumen Cortex AI
+ * Provides mutation functions for sending messages to AnA 1.0 RI AI
  * with automatic artifact extraction and error handling.
  * 
  * @example

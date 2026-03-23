@@ -9,12 +9,12 @@
  * - Shows current project/submission context
  * - Real-time risk level indicator
  * - Deadline countdown
- * - Lumen Cortex connection status
+ * - AnA Cortex connection status
  *
  * THE SHERPA METAPHOR:
  * "The Context Ribbon is your compass and altimeter.
  * It shows where you are on the mountain, how much time until the storm,
- * and whether your guide (Lumen) is connected."
+ * and whether your guide (AnA) is connected."
  */
 
 import React from 'react';

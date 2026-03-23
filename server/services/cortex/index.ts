@@ -1,7 +1,7 @@
 /**
  * Unified Cortex Intelligence Services
  *
- * Consolidates all LUMEN CORTEX related services.
+ * Consolidates all AnA 1.0 RI CORTEX related services.
  *
  * Consolidated from:
  * - cortexComplianceService.ts

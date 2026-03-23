@@ -19,6 +19,7 @@ import {
 } from '../services/chat-thread-helpers.js';
 import { getEmbeddingService } from '../services/enhancedEmbeddingService.js';
 import { getIntelligencePrefix } from '../services/lumen-context-builder.js';
+import { processResponseActions } from '../services/ana-guidance-executor.js';
 import { createHash } from 'crypto';
 
 const router = Router();
@@ -37,35 +38,58 @@ function ensureGateway() {
 }
 
 // System prompt for regulatory AI assistant
-const REGULATORY_SYSTEM_PROMPT = `You are AnA (Audit & Narrative Assistant), an expert RI Co-pilot for regulatory affairs in the life sciences industry. You specialize in:
+const REGULATORY_SYSTEM_PROMPT = `You are AnA (Audit & Narrative Assistant), a senior regulatory intelligence operator with the judgment of someone who has reviewed hundreds of submissions and sat across from FDA reviewers. You are the RI Co-pilot for the Concept2Cure platform.
 
-- FDA 510(k) medical device submissions
-- IND (Investigational New Drug) applications
-- Clinical trial design and protocol optimization
-- 21 CFR Part 11 compliance
-- EU MDR (Medical Device Regulation)
-- Clinical Evaluation Reports (CER)
-- eCTD submissions
-- CMC (Chemistry, Manufacturing, Controls)
+## Expertise
+- FDA 510(k), PMA, De Novo, IND, NDA, BLA submissions
+- Clinical trial design, protocol optimization, statistical strategy
+- 21 CFR Part 11 compliance, GxP frameworks
+- EU MDR/IVDR, CER, eCTD Module 1-5
+- CMC (ICH Q1A-Q14), nonclinical (ICH M3, S-series)
+- Cross-jurisdictional regulatory strategy
 
-You provide:
-1. Clear, actionable regulatory guidance
-2. Risk assessments and gap analyses
-3. Document review and improvement suggestions
-4. Submission strategy recommendations
-5. Timeline and milestone planning
+## What You Deliver
+1. **Verdicts, not summaries** — Assess whether content is defensible, vulnerable, overclaimed, or supportable with revision
+2. **Prioritized findings** — Rank issues as blockers, likely reviewer friction, material weaknesses, or cleanup items. Lead with what matters most.
+3. **Tradeoff reasoning** — When a choice is clearer but riskier, stronger but less supported, or safer but less persuasive, name the tradeoff explicitly
+4. **Reviewer psychology** — Model what a reviewer will notice, question, distrust, let pass, or escalate
+5. **Evidence-grounded guidance** — Cite specific CFR sections, ICH guidelines, and regulatory precedent
+6. **Decision guidance** — After every analysis, state: what to do next, whether to proceed/revise/escalate, and what artifact to create
+7. **Role-aware recommendations** — Adapt guidance to the user's role: executives get risk concentration and timeline impact; RA leads get reviewer sensitivity and defensibility; medical writers get text-level fixes; clinical leads get evidence interpretation limits
 
-Always cite relevant FDA guidance documents, ISO standards, or regulations when applicable. Be precise, professional, and thorough in your responses. If you're unsure about something, say so and suggest where the user might find authoritative information.
+## Judgment Standards
+- Never present all issues as equally important
+- Never hedge with "this could potentially be a concern" — state the assessment
+- When work is weak, say so directly and explain what to fix first
+- When work is strong, acknowledge it briefly and move on
+- Flag scar-tissue patterns: overclaimed conclusions, summary/body inconsistencies, language drift between sections, evidence added but not integrated into arguments
 
-When users send casual greetings (hello, hi, hey, etc.), respond warmly and personally. Use their name if available, reference their current project context, and suggest 2-3 specific ways you can help. Never respond to greetings with generic prompts like "Could you share more details?" — be a warm, knowledgeable colleague who proactively offers relevant assistance.
+## Tone
+Calm, sharp, disciplined, experienced. Constructive but slightly hard to impress. No filler language, no excessive praise, no "Great question!" openers. Lead with the bottom line, then support it.
 
-When instructed to generate content (draft a document, build a section, create a table), execute immediately. Do not ask for clarification unless truly ambiguous — use your regulatory expertise and available project context to produce the best possible output.
+## Communication Rules
+When users send casual greetings, respond warmly and personally — use their name, reference their current project, and offer 2-3 specific next steps. You are a trusted senior colleague, not a support chatbot.
 
-Format your responses with clear structure using:
-- Headers for main sections
-- Bullet points for lists
-- **Bold** for key terms
-- Code blocks for regulatory references`;
+When instructed to generate content, execute immediately. Do not ask for clarification unless truly ambiguous.
+
+Format responses with clear structure: headers, bullets, **bold** key terms, regulatory citations.
+
+## Actionable Artifacts
+When your guidance recommends creating a work product (memo, reviewer brief, strategy note, risk log entry, or rewrite), you may emit a structured action block so the platform creates it automatically. Use this format ONLY when confidence is high and the content is substantive:
+
+\`\`\`ana-action
+{
+  "type": "memo|strategy_note|reviewer_brief|risk_log|rewrite|review_thread",
+  "confidence": "strong|moderate|provisional|uncertain",
+  "title": "Brief descriptive title",
+  "content": "The full content of the artifact",
+  "sectionCode": "3.2.S.4.3 (optional CTD section)",
+  "decisionContext": "What question this answers (optional)",
+  "guidanceSummary": "One-line summary of the guidance (optional)"
+}
+\`\`\`
+
+Only emit action blocks when the work product is ready to create — not as a suggestion. For provisional or uncertain confidence, describe the recommendation in prose instead.`;
 
 // ── Provenance helpers ─────────────────────────────────────────────────────
 
@@ -98,8 +122,13 @@ interface VerifierFlag {
   message: string;
 }
 
-const VERIFIER_LOW_SCORE_THRESHOLD = 0.55;
-const VERIFIER_LONG_CLAIM_CHARS = 300;
+// ── Configuration (externalized for tuning without code changes) ─────────
+const VERIFIER_LOW_SCORE_THRESHOLD = parseFloat(process.env.ANA_VERIFIER_LOW_SCORE ?? '0.55');
+const VERIFIER_LONG_CLAIM_CHARS = parseInt(process.env.ANA_VERIFIER_LONG_CLAIM_CHARS ?? '300', 10);
+const RETRIEVAL_TOP_K = parseInt(process.env.ANA_RETRIEVAL_TOP_K ?? '5', 10);
+const RETRIEVAL_THRESHOLD = parseFloat(process.env.ANA_RETRIEVAL_THRESHOLD ?? '0.7');
+const GENERATION_TEMPERATURE = parseFloat(process.env.ANA_GENERATION_TEMPERATURE ?? '0.7');
+const GENERATION_MAX_TOKENS = parseInt(process.env.ANA_GENERATION_MAX_TOKENS ?? '4096', 10);
 
 /**
  * Run deterministic verifier rules on a claim + its citations.
@@ -129,7 +158,8 @@ function verifyClaim(
   }
 
   // Rule 2: Claim contains numbers but no citation snippet does
-  // Normalize: strip commas from numbers, ignore years (1900-2100) and trivial refs (≤9)
+  // Normalize: strip commas from numbers, ignore years (1900-2100), trivial refs (≤9),
+  // and common regulatory reference numbers (e.g. section numbers like 3.2.S.4.3)
   const stripCommas = (s: string) => s.replace(/(\d),(\d)/g, '$1$2');
   const normalizedClaim = stripCommas(claimText);
   const normalizedSnippets = stripCommas(snippets.join(' '));
@@ -137,14 +167,22 @@ function verifyClaim(
   const claimNumbers = normalizedClaim.match(/\d+\.?\d*/g) || [];
   const significantNumbers = claimNumbers.filter(n => {
     const val = parseFloat(n);
-    // Filter out: trivial refs (≤9), years (1900-2100)
+    // Filter out: trivial refs (≤9) unless decimal (e.g., 3.14, 0.05)
     if (val <= 9 && !n.includes('.')) return false;
+    // Filter out: years (1900-2100)
     if (val >= 1900 && val <= 2100 && !n.includes('.')) return false;
+    // Filter out: common CFR/ICH numbers (21, 11, 820, etc.)
+    if ([21, 11, 820, 312, 314, 510].includes(val) && !n.includes('.')) return false;
     return true;
   });
 
   if (significantNumbers.length > 0) {
-    const unmatchedNumbers = significantNumbers.filter(n => !normalizedSnippets.includes(n));
+    // Use word-boundary matching to avoid false positives from substring matches
+    const unmatchedNumbers = significantNumbers.filter(n => {
+      const escapedN = n.replace(/\./g, '\\.');
+      const boundary = new RegExp(`(?:^|\\b)${escapedN}(?:\\b|$)`);
+      return !boundary.test(normalizedSnippets);
+    });
     if (unmatchedNumbers.length > 0) {
       flags.push({
         rule: 'UNGROUNDED_NUMBERS',
@@ -196,8 +234,10 @@ const sendMessageHandler = async (req: Request, res: Response) => {
 
     // ── STEP 1: RESOLVE ORG (from session only — no header fallback for org) ──
     const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
-    const userId = (req as any).userId || (req as any).user?.id || 'anonymous';
+    const rawUserId = (req as any).userId || (req as any).user?.id;
+    const userId: number | string = rawUserId ?? 'anonymous';
     const numericOrgId = orgId ? (typeof orgId === 'string' ? Number(orgId) : orgId) : null;
+    const numericUserId = typeof userId === 'string' ? parseInt(userId, 10) || 0 : userId;
 
     // ── STEP 2: CREATE / VALIDATE THREAD ─────────────────────────────────────────
     const threadId = await getOrCreateThread(thread_id, (req as any).user?.id);
@@ -221,7 +261,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       } catch (e: any) {
         // ai_threads table might not exist yet — skip check
         if (e?.code !== '42P01')
-          console.warn('[Lumen Cortex] Thread ownership check failed:', e.message);
+          console.warn('[AnA RI] Thread ownership check failed:', e.message);
       }
     }
 
@@ -235,7 +275,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
         );
       } catch (e: any) {
         if (e?.code !== '42P01') throw e;
-        console.warn('[Lumen Cortex] ai_threads table missing — provenance disabled');
+        console.warn('[AnA RI] ai_threads table missing — provenance disabled');
       }
     }
 
@@ -250,7 +290,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
         );
       } catch (e: any) {
         if (e?.code !== '42P01')
-          console.warn('[Lumen Cortex] ai_messages insert failed:', e.message);
+          console.warn('[AnA RI] ai_messages insert failed:', e.message);
       }
     }
 
@@ -268,9 +308,9 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       const embeddingService = getEmbeddingService(pool);
       // Bail early if org UUID is provided but clearly invalid
       if (orgUuid && !/^[0-9a-f-]{36}$/i.test(orgUuid)) {
-        console.warn('[Lumen Cortex] Invalid org UUID, skipping retrieval');
+        console.warn('[AnA RI] Invalid org UUID, skipping retrieval');
       } else {
-        const searchResults = await embeddingService.searchHybrid(message, 5, 0.7, orgUuid);
+        const searchResults = await embeddingService.searchHybrid(message, RETRIEVAL_TOP_K, RETRIEVAL_THRESHOLD, orgUuid);
         sources = searchResults.map(r => ({
           id: r.id,
           title: r.title,
@@ -298,16 +338,18 @@ const sendMessageHandler = async (req: Request, res: Response) => {
               `INSERT INTO ai_retrieval_runs
                  (organization_id, project_id, user_id, scope, embedding_model,
                   query_text, query_hash_sha256, snapshot_hash_sha256, top_k, threshold, result_count)
-               VALUES ($1, $2, $3, $4, 'text-embedding-3-small', $5, $6, $7, 5, 0.7, $8)
+               VALUES ($1, $2, $3, $4, 'text-embedding-3-small', $5, $6, $7, $8, $9, $10)
                RETURNING id`,
               [
                 numericOrgId,
                 project_id || null,
-                userId,
+                numericUserId,
                 orgUuid ? 'org' : 'global',
                 message,
                 queryHash,
                 snapshotHashSha256,
+                RETRIEVAL_TOP_K,
+                RETRIEVAL_THRESHOLD,
                 sources.length,
               ]
             );
@@ -341,13 +383,13 @@ const sendMessageHandler = async (req: Request, res: Response) => {
             }
           } catch (e: any) {
             if (e?.code !== '42P01')
-              console.warn('[Lumen Cortex] Retrieval persist failed:', e.message);
+              console.warn('[AnA RI] Retrieval persist failed:', e.message);
           }
         }
       }
     } catch (srcErr: any) {
       // Non-fatal — chat still works, just without grounded evidence
-      console.warn('[Lumen Cortex] Source retrieval failed:', srcErr.message);
+      console.warn('[AnA RI] Source retrieval failed:', srcErr.message);
     }
 
     // ── STEP 5: BUILD EVIDENCE-GROUNDED PROMPT ─────────────────────────
@@ -385,25 +427,27 @@ const sendMessageHandler = async (req: Request, res: Response) => {
 
       const gwMessages = [
         { role: 'system' as const, content: systemPrompt },
-        ...previousMessages.map((m: any) => ({
-          role: m.role as 'user' | 'assistant',
-          content: m.content,
-        })),
+        ...previousMessages
+          .filter((m: any) => m.role === 'user' || m.role === 'assistant')
+          .map((m: any) => ({
+            role: m.role as 'user' | 'assistant',
+            content: m.content,
+          })),
         { role: 'user' as const, content: message },
       ];
 
       console.log(
-        `[Lumen Cortex] Sending through AI Gateway (${sources.length} sources retrieved)...`
+        `[AnA RI] Sending through AI Gateway (${sources.length} sources retrieved)...`
       );
 
       const gwResponse: GatewayResponse = await gw.route({
         taskType: 'chat',
         messages: gwMessages,
-        temperature: 0.7,
-        maxTokens: 2000,
-        callerModule: 'lumen-cortex-chat',
+        temperature: GENERATION_TEMPERATURE,
+        maxTokens: GENERATION_MAX_TOKENS,
+        callerModule: 'ana-ri-chat',
         organizationId: numericOrgId ?? undefined,
-        userId,
+        userId: numericUserId,
       });
 
       assistantMessage =
@@ -419,14 +463,54 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       latencyMs = gwResponse.latencyMs;
 
       console.log(
-        `[Lumen Cortex] AI Gateway response via ${model} (${latencyMs}ms, req=${gwResponse.requestId})`
+        `[AnA RI] AI Gateway response via ${model} (${latencyMs}ms, req=${gwResponse.requestId})`
       );
     } catch (gwError: any) {
-      console.error('[Lumen Cortex] AI Gateway call failed:', gwError.message);
+      console.error('[AnA RI] AI Gateway call failed:', gwError.message);
       return res.status(503).json({
         error: 'AI provider call failed',
         code: 'AI_PROVIDER_UNAVAILABLE',
       });
+    }
+
+    // ── STEP 6b: GUIDANCE-TO-ACTION EXECUTION ──────────────────────────
+    // Process AnA's response for action signals and execute governed actions.
+    // Only runs when project context is available (org + project scoped).
+    let executedActions: Array<{
+      actionType: string;
+      executed: boolean;
+      confidence: string;
+      artifactId: string | null;
+      threadId: string | null;
+      error: string | null;
+    }> = [];
+
+    if (numericOrgId && project_id) {
+      try {
+        const actionResult = await processResponseActions(assistantMessage, {
+          projectId: typeof project_id === 'string' ? parseInt(project_id, 10) : project_id,
+          organizationId: numericOrgId,
+          userId: numericUserId,
+          userName: (req as any).user?.name || (req as any).user?.email || 'System',
+          threadId,
+        });
+
+        // Replace message with cleaned text (action blocks stripped)
+        if (actionResult.actions.length > 0) {
+          assistantMessage = actionResult.cleanedText;
+          executedActions = actionResult.actions.map(a => ({
+            actionType: a.actionType,
+            executed: a.executed,
+            confidence: a.confidence,
+            artifactId: a.artifactId,
+            threadId: a.threadId,
+            error: a.error,
+          }));
+        }
+      } catch (actionErr: any) {
+        // Non-fatal — chat still works, actions just don't execute
+        console.warn('[AnA RI] Guidance action processing failed:', actionErr?.message);
+      }
     }
 
     // Save to legacy chat_messages for backward compat
@@ -466,7 +550,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
         );
       } catch (e: any) {
         if (e?.code !== '42P01')
-          console.warn('[Lumen Cortex] Generation persist failed:', e.message);
+          console.warn('[AnA RI] Generation persist failed:', e.message);
       }
     }
 
@@ -572,7 +656,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
           });
           continue; // skip fallback below
         } catch (e: any) {
-          if (e?.code !== '42P01') console.warn('[Lumen Cortex] Claim persist failed:', e.message);
+          if (e?.code !== '42P01') console.warn('[AnA RI] Claim persist failed:', e.message);
         }
       }
 
@@ -641,6 +725,8 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       snapshotHashSha256,
       generationRunId,
       claims,
+      // AnA 1.0 RI — Executed guidance actions
+      executedActions: executedActions.length > 0 ? executedActions : undefined,
     });
   } catch (error: any) {
     console.error('[AnA] Chat error:', error);
@@ -814,7 +900,7 @@ router.post('/stream', async (req: Request, res: Response) => {
           content: chunk,
         })}\n\n`);
       },
-      callerModule: 'lumen-cortex-chat-stream',
+      callerModule: 'ana-ri-chat-stream',
     });
 
     // Send final event

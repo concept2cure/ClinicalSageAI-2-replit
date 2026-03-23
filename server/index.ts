@@ -899,13 +899,13 @@ try {
   console.error('❌ Failed to mount AI Assistance routes:', error);
 }
 
-// Mount Lumen Cortex dedicated routes (10-K harvesting, observation terms)
+// Mount AnA Cortex dedicated routes (10-K harvesting, observation terms)
 try {
   const lumenCortexRoutes = await import('./routes/lumen-cortex');
   app.use('/api/lumen-cortex', lumenCortexRoutes.default);
-  console.log('✅ Lumen Cortex dedicated routes mounted (health, 10K harvest, observation terms)');
+  console.log('✅ AnA Cortex dedicated routes mounted (health, 10K harvest, observation terms)');
 } catch (error) {
-  console.error('❌ Failed to mount Lumen Cortex routes:', error);
+  console.error('❌ Failed to mount AnA Cortex routes:', error);
 }
 
 // Mount Nano Banana (Gemini image generation) routes
@@ -933,10 +933,10 @@ try {
   console.error('❌ Failed to mount PM Settings routes:', error);
 }
 
-// Mount Lumen Cortex (formerly ForesightAI) routes
+// Mount AnA Cortex (formerly ForesightAI) routes
 // Legacy routes maintained for backward compatibility
 try {
-  // Shared deprecation middleware for all Foresight/Lumen legacy routes
+  // Shared deprecation middleware for all Foresight/legacy routes
   const foresightDeprecation = (req: Request, res: Response, next: () => void) => {
     res.setHeader('Deprecation', 'true');
     res.setHeader('Sunset', '2026-04-01');
@@ -956,15 +956,15 @@ try {
     },
     foresightFeedbackRoutes
   );
-  // New Lumen Cortex aliases
+  // Legacy Lumen Cortex aliases (kept for backward compat, API paths unchanged)
   app.use('/api/lumen', foresightDeprecation, foresightApiRoutes);
   app.use('/api/lumen-ai', foresightDeprecation, foresightAIAdvancedRoutes);
-  console.log('✅ Lumen Cortex™ Intelligence API routes mounted (+ legacy /foresight aliases)');
+  console.log('✅ AnA Cortex Intelligence API routes mounted (+ legacy /foresight aliases)');
 } catch (error) {
-  console.error('Failed to mount Lumen Cortex routes:', error);
+  console.error('Failed to mount AnA Cortex routes:', error);
 }
 
-// Mount Lumen Cortex RAG routes (formerly ForesightAI RAG)
+// Mount AnA Cortex RAG routes (formerly ForesightAI RAG)
 try {
   const foresightRagRoutes = await import('./routes/foresight-rag-api.js');
   const foresightRagDeprecation = (req: Request, res: Response, next: () => void) => {
@@ -975,9 +975,9 @@ try {
   };
   app.use('/api/foresight/rag', foresightRagDeprecation, foresightRagRoutes.default);
   app.use('/api/lumen/rag', foresightRagDeprecation, foresightRagRoutes.default); // New alias
-  console.log('✅ Lumen Cortex RAG API routes mounted successfully');
+  console.log('✅ AnA Cortex RAG API routes mounted successfully');
 } catch (error) {
-  console.error('Failed to mount Lumen Cortex RAG routes:', error);
+  console.error('Failed to mount AnA Cortex RAG routes:', error);
 }
 
 // Mount Biotech AI Intelligence RAG routes
@@ -3243,8 +3243,8 @@ app.post('/api/ask-lumen', async (req: Request, res: Response) => {
       model,
     });
 
-    // System prompt for Lumen regulatory expert
-    const systemPrompt = `You are Lumen, an expert regulatory affairs AI assistant specializing in:
+    // System prompt for AnA regulatory expert
+    const systemPrompt = `You are AnA, an expert regulatory affairs AI assistant specializing in:
     - FDA submissions and regulatory compliance
     - Clinical trial documentation
     - Medical device protocols (510k, PMA)
@@ -3350,10 +3350,10 @@ try {
   console.error('❌ Failed to mount Ana Platform Control routes:', error);
 }
 
-// Mount Lumen Cortex Chat routes
+// Mount AnA Chat routes
 import chatRoutes from './routes/chat';
 app.use('/api/chat', chatRoutes);
-console.log('✅ Lumen Cortex Chat API routes mounted successfully');
+console.log('✅ AnA Chat API routes mounted successfully');
 
 // Mount AI Claims → Binder provenance route
 try {
@@ -5171,9 +5171,9 @@ app.get('/api/lumen/regulatory-intelligence', async (req: Request, res: Response
   }
 });
 
-// Lumen AI Regulatory Analysis endpoint
+// AnA Regulatory Analysis endpoint
 app.post('/api/lumen/regulatory-analysis', async (req: Request, res: Response) => {
-  console.log('🔥 Lumen AI Regulatory Analysis endpoint hit!');
+  console.log('[AnA RI] Regulatory Analysis endpoint hit');
   try {
     // Add cache-busting headers
     res.set({
@@ -5222,9 +5222,9 @@ app.post('/api/lumen/regulatory-analysis', async (req: Request, res: Response) =
   }
 });
 
-// Lumen AI ICH E6(R3) Guidance endpoint
+// AnA ICH E6(R3) Guidance endpoint
 app.post('/api/lumen/ich-e6r3-guidance', async (req: Request, res: Response) => {
-  console.log('🔥 Lumen AI ICH E6(R3) Guidance endpoint hit!');
+  console.log('[AnA RI] ICH E6(R3) Guidance endpoint hit');
   try {
     // Add cache-busting headers
     res.set({
@@ -6661,9 +6661,9 @@ async function startServer() {
   try {
     const lumenCortexFtRoutes = await import('./routes/lumen-cortex-ft');
     app.use('/api/lumen-cortex-ft', lumenCortexFtRoutes.default);
-    console.log('✅ Lumen Cortex Fine-Tuning routes mounted at /api/lumen-cortex-ft');
+    console.log('✅ AnA Cortex Fine-Tuning routes mounted at /api/lumen-cortex-ft');
   } catch (error) {
-    console.error('❌ Failed to mount Lumen Cortex FT routes:', error);
+    console.error('❌ Failed to mount AnA Cortex FT routes:', error);
   }
 
   try {

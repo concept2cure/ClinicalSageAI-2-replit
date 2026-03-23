@@ -8,7 +8,7 @@
  * making AI feel like working with a team of experts, not a chatbot.
  *
  * THE SHERPA TEAM:
- * - Lumen Author (Drafter): "The Porter who carries the heavy pack"
+ * - AnA Author (Drafter): "The Porter who carries the heavy pack"
  * - Dr. Stat (Statistician): "The Technical Specialist who verifies the equipment"
  * - The Auditor (Critic): "The Risk Assessor who marks the crevasses"
  * - System Core (Synthesizer): "The Expedition Leader who coordinates"

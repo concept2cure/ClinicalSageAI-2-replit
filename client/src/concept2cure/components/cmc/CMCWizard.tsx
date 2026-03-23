@@ -11,7 +11,7 @@
  * A single impurity or unstable batch can destroy the entire mission.
  * The FDA (the mountain) is unforgiving of bad equipment.
  *
- * HOW LUMEN ACTS AS SHERPA:
+ * HOW ANA ACTS AS SHERPA:
  * - Equipment Check: As you enter manufacturing data, the "ICH Guardrails" act like a checklist.
  *   "Warning: Impurity A is at 0.20%. That is too high for this altitude (Qualification Threshold)."
  * - Repair Kit: When a flaw is found, the AI generates the "Justification Narrative,"

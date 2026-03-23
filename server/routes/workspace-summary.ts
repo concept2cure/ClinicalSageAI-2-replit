@@ -185,7 +185,7 @@ router.get('/workspace/summary', async (req: Request, res: Response) => {
     }
     nextActions.push({
       id: 'ask_lumen',
-      label: 'Ask Lumen a regulatory question',
+      label: 'Ask AnA a regulatory question',
       intent: 'chat.new',
       description: 'AI trained on FDA, ICH, ISO 14971 and CE guidelines.',
     });
@@ -269,7 +269,7 @@ router.get('/workspace/summary', async (req: Request, res: Response) => {
         nextActions: [
           { id: 'upload_docs', label: 'Upload documents', intent: 'vault.upload' },
           { id: 'new_project', label: 'Create a project', intent: 'project.new' },
-          { id: 'ask_lumen', label: 'Ask Lumen a regulatory question', intent: 'chat.new' },
+          { id: 'ask_lumen', label: 'Ask AnA a regulatory question', intent: 'chat.new' },
         ],
       },
     });
