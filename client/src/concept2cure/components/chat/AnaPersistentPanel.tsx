@@ -122,7 +122,7 @@ const SCREEN_LABELS: Record<string, string> = {
   cmc: 'CMC Platform',
   'deep-research': 'Deep Research',
   'document-builder': 'Document Builder',
-  'precedent-intelligence': 'Precedent Intelligence',
+  'precedent-intelligence': 'Precedent Intelligence & Governed Operating Layer',
   projects: 'Home',
 };
 

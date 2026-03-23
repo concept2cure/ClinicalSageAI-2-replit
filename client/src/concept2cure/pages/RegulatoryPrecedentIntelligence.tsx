@@ -35,7 +35,7 @@ import {
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-type TabKey = 'crl' | 'rtf' | 'ema' | 'advisory' | 'cross-jurisdictional' | 'calibration';
+type TabKey = 'crl' | 'rtf' | 'ema' | 'advisory' | 'cross-jurisdictional' | 'calibration' | 'assumptions' | 'decisions' | 'contradictions';
 
 interface Tab {
   key: TabKey;
@@ -61,6 +61,9 @@ const tabs: Tab[] = [
   { key: 'advisory', label: 'Advisory Committee' },
   { key: 'cross-jurisdictional', label: 'Cross-Jurisdictional' },
   { key: 'calibration', label: 'Calibration' },
+  { key: 'assumptions', label: 'Assumptions' },
+  { key: 'decisions', label: 'Decisions' },
+  { key: 'contradictions', label: 'Contradictions' },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -428,6 +431,207 @@ function CalibrationPanel() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// GOVERNED INTELLIGENCE PANELS (Sprint 2)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const GOV_API = '/api/governed-intelligence';
+
+function AssumptionsPanel() {
+  const { data, isLoading } = useQuery({
+    queryKey: ['governed-intel', 'assumptions'],
+    queryFn: async () => {
+      const res = await fetch(`${GOV_API}/assumptions/search`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'active', limit: 30 }),
+      });
+      if (!res.ok) return { assumptions: [], count: 0 };
+      return res.json();
+    },
+  });
+
+  const assumptions = data?.assumptions ?? [];
+
+  if (isLoading) return <LoadingCards count={4} />;
+
+  if (assumptions.length === 0) {
+    return (
+      <EnterpriseCard>
+        <EmptyState
+          icon={Layers}
+          title="No Assumptions Registered"
+          description="Register structured assumptions with source attribution, confidence levels, and regulator compatibility. Assumptions are project-bound and traceable."
+        />
+      </EnterpriseCard>
+    );
+  }
+
+  const byDomain: Record<string, number> = {};
+  for (const a of assumptions) {
+    byDomain[a.domainTrack] = (byDomain[a.domainTrack] ?? 0) + 1;
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <MetricCard label="Active Assumptions" value={String(assumptions.length)} icon={Layers} iconClassName="bg-blue-100 text-blue-600" />
+        <MetricCard label="Domains" value={String(Object.keys(byDomain).length)} icon={Activity} iconClassName="bg-purple-100 text-purple-600" />
+      </div>
+      <EnterpriseCard noPadding>
+        <CardSection border={false}>
+          <CardHeader icon={Layers} iconClassName="bg-blue-100 text-blue-600" title="Assumption Registry" subtitle="Structured, project-bound assumptions" />
+        </CardSection>
+        {assumptions.slice(0, 15).map((a: Record<string, unknown>) => (
+          <CardSection key={a.id as string}>
+            <ListItem
+              icon={Layers}
+              iconClassName="bg-blue-100 text-blue-600"
+              title={a.title as string}
+              subtitle={`${formatCategory(a.domainTrack as string)} · ${formatCategory(a.category as string)} · Value: ${a.assumedValue as string}`}
+              meta={
+                <StatusPill
+                  label={a.confidenceLevel as string}
+                  variant={(a.confidenceLevel as string) === 'definitive' ? 'success' : (a.confidenceLevel as string) === 'high' ? 'info' : 'warning'}
+                />
+              }
+              chevron
+            />
+          </CardSection>
+        ))}
+      </EnterpriseCard>
+    </div>
+  );
+}
+
+function DecisionsPanel() {
+  const { data, isLoading } = useQuery({
+    queryKey: ['governed-intel', 'decisions'],
+    queryFn: async () => {
+      const res = await fetch(`${GOV_API}/decisions/search`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ limit: 30 }),
+      });
+      if (!res.ok) return { decisions: [], count: 0 };
+      return res.json();
+    },
+  });
+
+  const decisions = data?.decisions ?? [];
+
+  if (isLoading) return <LoadingCards count={4} />;
+
+  if (decisions.length === 0) {
+    return (
+      <EnterpriseCard>
+        <EmptyState
+          icon={CheckCircle}
+          title="No Decision Records"
+          description="Decision records track the full lifecycle: proposed → under_review → approved → executed. Each links to assumptions, artifacts, and workflow runs."
+        />
+      </EnterpriseCard>
+    );
+  }
+
+  const stateVariant: Record<string, 'default' | 'info' | 'success' | 'warning' | 'danger' | 'purple'> = {
+    proposed: 'default', under_review: 'info', approved: 'success',
+    rejected: 'danger', executed: 'purple', deferred: 'warning',
+    escalated: 'danger', superseded: 'default',
+  };
+
+  return (
+    <div className="space-y-6">
+      <EnterpriseCard noPadding>
+        <CardSection border={false}>
+          <CardHeader icon={CheckCircle} iconClassName="bg-emerald-100 text-emerald-600" title="Decision Records" subtitle="Recommendation → Approval → Execution lifecycle" />
+        </CardSection>
+        {decisions.slice(0, 15).map((d: Record<string, unknown>) => (
+          <CardSection key={d.id as string}>
+            <ListItem
+              icon={CheckCircle}
+              iconClassName="bg-emerald-100 text-emerald-600"
+              title={d.title as string}
+              subtitle={`${formatCategory(d.domainTrack as string)} · ${formatCategory(d.recommendationType as string)}`}
+              meta={
+                <StatusPill
+                  label={formatCategory(d.actionState as string)}
+                  variant={stateVariant[d.actionState as string] ?? 'default'}
+                  dot
+                />
+              }
+              chevron
+            />
+          </CardSection>
+        ))}
+      </EnterpriseCard>
+    </div>
+  );
+}
+
+function ContradictionsPanel() {
+  const { data, isLoading } = useQuery({
+    queryKey: ['governed-intel', 'contradictions'],
+    queryFn: async () => {
+      const res = await fetch(`${GOV_API}/contradictions/search`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ limit: 30 }),
+      });
+      if (!res.ok) return { findings: [], count: 0 };
+      return res.json();
+    },
+  });
+
+  const findings = data?.findings ?? [];
+
+  if (isLoading) return <LoadingCards count={4} />;
+
+  if (findings.length === 0) {
+    return (
+      <EnterpriseCard>
+        <EmptyState
+          icon={AlertTriangle}
+          title="No Contradiction Findings"
+          description="Run a project contradiction scan to detect assumption drift, decision/action inconsistencies, and cross-jurisdictional divergences. Each finding includes source classification, severity, and consequence paths."
+        />
+      </EnterpriseCard>
+    );
+  }
+
+  const severityVariant: Record<string, 'default' | 'info' | 'success' | 'warning' | 'danger'> = {
+    critical: 'danger', high: 'danger', medium: 'warning', low: 'default',
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <MetricCard label="Total Findings" value={String(findings.length)} icon={AlertTriangle} iconClassName="bg-red-100 text-red-600" />
+        <MetricCard label="Unresolved" value={String(findings.filter((f: Record<string, unknown>) => f.reviewState === 'unresolved').length)} icon={XCircle} iconClassName="bg-amber-100 text-amber-600" />
+      </div>
+      <EnterpriseCard noPadding>
+        <CardSection border={false}>
+          <CardHeader icon={AlertTriangle} iconClassName="bg-red-100 text-red-600" title="Contradiction Findings" subtitle="Structured-first detection with source classification" />
+        </CardSection>
+        {findings.slice(0, 15).map((f: Record<string, unknown>) => (
+          <CardSection key={f.id as string}>
+            <ListItem
+              icon={AlertTriangle}
+              iconClassName={f.severity === 'critical' ? 'bg-red-100 text-red-600' : f.severity === 'high' ? 'bg-orange-100 text-orange-600' : 'bg-amber-100 text-amber-600'}
+              title={f.title as string}
+              subtitle={`${formatCategory(f.contradictionType as string)} · Source: ${formatCategory(f.sourceClassification as string)} · ${formatCategory(f.authorityState as string)}`}
+              meta={
+                <div className="flex items-center gap-2">
+                  <StatusPill label={f.severity as string} variant={severityVariant[f.severity as string] ?? 'default'} dot />
+                  <StatusPill label={formatCategory(f.reviewState as string)} variant={f.reviewState === 'unresolved' ? 'warning' : 'success'} />
+                </div>
+              }
+              chevron
+            />
+          </CardSection>
+        ))}
+      </EnterpriseCard>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -456,6 +660,9 @@ const TAB_CONTEXT: Record<TabKey, string> = {
   advisory: 'FDA Advisory Committee risk modeling (ODAC, CRDAC, EMDAC) with voting patterns, panelist sensitivity, and preparation plans',
   'cross-jurisdictional': 'Cross-jurisdictional intelligence: ICH harmonization, Project Orbis, Access Consortium, divergence mapping, filing sequence optimization',
   calibration: 'Confidence calibration with Brier scoring, recency decay, backtesting accuracy, and overconfidence bias tracking',
+  assumptions: 'Assumption Registry: structured, project-bound assumptions with source attribution, confidence, regulator compatibility, and supersession tracking',
+  decisions: 'Decision Records: recommendation → approval → execution lifecycle with confidence, evidence basis, and artifact linkage',
+  contradictions: 'Contradiction Detection: structured-first cross-artifact comparison with source classification, approval authority, overlay rules, and consequence paths',
 };
 
 export default function RegulatoryPrecedentIntelligence({ onClose, onContextChange }: Props) {
@@ -480,6 +687,9 @@ export default function RegulatoryPrecedentIntelligence({ onClose, onContextChan
       case 'advisory': return <AdvisoryCommitteePanel />;
       case 'cross-jurisdictional': return <CrossJurisdictionalPanel />;
       case 'calibration': return <CalibrationPanel />;
+      case 'assumptions': return <AssumptionsPanel />;
+      case 'decisions': return <DecisionsPanel />;
+      case 'contradictions': return <ContradictionsPanel />;
       default: return null;
     }
   }, [activeTab]);
@@ -501,7 +711,7 @@ export default function RegulatoryPrecedentIntelligence({ onClose, onContextChan
           icon={Shield}
           iconClassName="bg-blue-100 text-blue-600"
           title="Regulatory Precedent Intelligence"
-          subtitle="CRL/RTF patterns · EMA taxonomy · Advisory Committee risk · Cross-jurisdictional filing"
+          subtitle="Precedent patterns · Assumptions · Decisions · Contradictions · Overlays"
           level={1}
         />
       </div>
