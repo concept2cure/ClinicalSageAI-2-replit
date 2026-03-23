@@ -3,6 +3,7 @@ import { csrReports, csrDetails } from 'shared/schema';
 import { eq, and, like, desc } from 'drizzle-orm';
 import path from 'path';
 import fs from 'fs';
+import { OperatingSystemIntegration } from './operating-system-integration';
 
 // Define the file paths
 const SAP_DIR = path.join(process.cwd(), 'data/sap');
@@ -25,6 +26,13 @@ export interface SapRequestData {
   duration_weeks?: number;
   statistical_methods?: string;
   dropout_rate?: number;
+  // Operating system context (optional — for assumption capture)
+  organizationId?: number;
+  projectId?: number;
+  sourceArtifactId?: number;
+  regulatorBody?: string;
+  jurisdiction?: string;
+  createdById?: number;
 }
 
 export interface GeneratedSapData {
@@ -184,10 +192,38 @@ Study Information:
         await this.storeSapSegments(protocol_id, sapContent);
       }
 
+      // Capture structured assumptions into the operating system layer
+      let assumptionCapture;
+      if (protocolData.organizationId && protocolData.projectId) {
+        try {
+          const osIntegration = OperatingSystemIntegration.getInstance();
+          assumptionCapture = await osIntegration.captureFromSapGeneration({
+            organizationId: protocolData.organizationId,
+            projectId: protocolData.projectId,
+            indication,
+            phase,
+            sampleSize: sample_size,
+            dropoutRate: dropout_rate,
+            primaryEndpoint: primary_endpoint,
+            effectSize: requiredEffectSize,
+            alpha: 0.05,
+            power: powerForPrimary,
+            regulatorBody: protocolData.regulatorBody,
+            jurisdiction: protocolData.jurisdiction,
+            sourceArtifactId: protocolData.sourceArtifactId,
+            createdById: protocolData.createdById,
+          });
+        } catch (err) {
+          console.warn('Operating system assumption capture failed (non-fatal):', err);
+        }
+      }
+
       return {
         protocol_id,
         sapContent,
         sapPath,
+        assumptions: assumptionCapture?.assumptions,
+        decision: assumptionCapture?.decision,
       };
     } catch (error) {
       console.error('Error in SAP generator service:', error);
