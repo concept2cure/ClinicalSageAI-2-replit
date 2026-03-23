@@ -42,56 +42,11 @@ function ensureGateway() {
 import { buildAnaRISystemPrompt } from '../services/ana-ri/persona.js';
 import { orchestrate } from '../services/ana-ri/orchestrator.js';
 
-## Expertise
-- FDA 510(k), PMA, De Novo, IND, NDA, BLA submissions
-- Clinical trial design, protocol optimization, statistical strategy
-- 21 CFR Part 11 compliance, GxP frameworks
-- EU MDR/IVDR, CER, eCTD Module 1-5
-- CMC (ICH Q1A-Q14), nonclinical (ICH M3, S-series)
-- Cross-jurisdictional regulatory strategy
-
-## What You Deliver
-1. **Verdicts, not summaries** — Assess whether content is defensible, vulnerable, overclaimed, or supportable with revision
-2. **Prioritized findings** — Rank issues as blockers, likely reviewer friction, material weaknesses, or cleanup items. Lead with what matters most.
-3. **Tradeoff reasoning** — When a choice is clearer but riskier, stronger but less supported, or safer but less persuasive, name the tradeoff explicitly
-4. **Reviewer psychology** — Model what a reviewer will notice, question, distrust, let pass, or escalate
-5. **Evidence-grounded guidance** — Cite specific CFR sections, ICH guidelines, and regulatory precedent
-6. **Decision guidance** — After every analysis, state: what to do next, whether to proceed/revise/escalate, and what artifact to create
-7. **Role-aware recommendations** — Adapt guidance to the user's role: executives get risk concentration and timeline impact; RA leads get reviewer sensitivity and defensibility; medical writers get text-level fixes; clinical leads get evidence interpretation limits
-
-## Judgment Standards
-- Never present all issues as equally important
-- Never hedge with "this could potentially be a concern" — state the assessment
-- When work is weak, say so directly and explain what to fix first
-- When work is strong, acknowledge it briefly and move on
-- Flag scar-tissue patterns: overclaimed conclusions, summary/body inconsistencies, language drift between sections, evidence added but not integrated into arguments
-
-## Tone
-Calm, sharp, disciplined, experienced. Constructive but slightly hard to impress. No filler language, no excessive praise, no "Great question!" openers. Lead with the bottom line, then support it.
-
-## Communication Rules
-When users send casual greetings, respond warmly and personally — use their name, reference their current project, and offer 2-3 specific next steps. You are a trusted senior colleague, not a support chatbot.
-
-When instructed to generate content, execute immediately. Do not ask for clarification unless truly ambiguous.
-
-Format responses with clear structure: headers, bullets, **bold** key terms, regulatory citations.
-
-## Actionable Artifacts
-When your guidance recommends creating a work product (memo, reviewer brief, strategy note, risk log entry, or rewrite), you may emit a structured action block so the platform creates it automatically. Use this format ONLY when confidence is high and the content is substantive:
-
-\`\`\`ana-action
-{
-  "type": "memo|strategy_note|reviewer_brief|risk_log|rewrite|review_thread",
-  "confidence": "strong|moderate|provisional|uncertain",
-  "title": "Brief descriptive title",
-  "content": "The full content of the artifact",
-  "sectionCode": "3.2.S.4.3 (optional CTD section)",
-  "decisionContext": "What question this answers (optional)",
-  "guidanceSummary": "One-line summary of the guidance (optional)"
-}
-\`\`\`
-
-Only emit action blocks when the work product is ready to create — not as a suggestion. For provisional or uncertain confidence, describe the recommendation in prose instead.`;
+// Build the default regulatory system prompt using AnA RI persona
+const REGULATORY_SYSTEM_PROMPT = buildAnaRISystemPrompt({
+  userRole: 'general',
+  intentLens: 'auto',
+});
 
 // ── Provenance helpers ─────────────────────────────────────────────────────
 
@@ -262,8 +217,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
         }
       } catch (e: any) {
         // ai_threads table might not exist yet — skip check
-        if (e?.code !== '42P01')
-          console.warn('[AnA] Thread ownership check failed:', e.message);
+        if (e?.code !== '42P01') console.warn('[AnA] Thread ownership check failed:', e.message);
       }
     }
 
@@ -291,8 +245,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
           [threadId, message]
         );
       } catch (e: any) {
-        if (e?.code !== '42P01')
-          console.warn('[AnA] ai_messages insert failed:', e.message);
+        if (e?.code !== '42P01') console.warn('[AnA] ai_messages insert failed:', e.message);
       }
     }
 
@@ -312,7 +265,12 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       if (orgUuid && !/^[0-9a-f-]{36}$/i.test(orgUuid)) {
         console.warn('[AnA] Invalid org UUID, skipping retrieval');
       } else {
-        const searchResults = await embeddingService.searchHybrid(message, RETRIEVAL_TOP_K, RETRIEVAL_THRESHOLD, orgUuid);
+        const searchResults = await embeddingService.searchHybrid(
+          message,
+          RETRIEVAL_TOP_K,
+          RETRIEVAL_THRESHOLD,
+          orgUuid
+        );
         sources = searchResults.map(r => ({
           id: r.id,
           title: r.title,
@@ -384,8 +342,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
               });
             }
           } catch (e: any) {
-            if (e?.code !== '42P01')
-              console.warn('[AnA] Retrieval persist failed:', e.message);
+            if (e?.code !== '42P01') console.warn('[AnA] Retrieval persist failed:', e.message);
           }
         }
       }
@@ -424,8 +381,31 @@ const sendMessageHandler = async (req: Request, res: Response) => {
 
     try {
       // Inject client/project intelligence so AnA reads SKILL/.MD context
-      const intelligencePrefix = await getIntelligencePrefix(numericOrgId ?? undefined, project_id).catch(() => '');
-      const systemPrompt = intelligencePrefix + (system_prompt || REGULATORY_SYSTEM_PROMPT) + evidenceBlock;
+      const intelligencePrefix = await getIntelligencePrefix(
+        numericOrgId ?? undefined,
+        project_id
+      ).catch(() => '');
+
+      // Build conversation history for orchestrator continuity analysis
+      const conversationHistory = previousMessages
+        .filter((m: any) => m.role === 'user' || m.role === 'assistant')
+        .map((m: any) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+
+      // Run the orchestrator for intent detection, deficiency context, and continuity
+      const orchestratorResult = orchestrate({
+        message,
+        conversationHistory,
+      });
+
+      console.log(
+        `[AnA] Orchestrator: intent=${orchestratorResult.detectedIntent.lens}, ` +
+          `submission=${orchestratorResult.detectedSubmissionType || 'none'}, ` +
+          `deficiency=${orchestratorResult.orchestrationMeta.deficiencyContextInjected}`
+      );
+
+      // Use the orchestrator's enriched system prompt instead of the basic one
+      const basePrompt = system_prompt || orchestratorResult.systemPrompt;
+      const systemPrompt = intelligencePrefix + basePrompt + evidenceBlock;
 
       const gwMessages = [
         { role: 'system' as const, content: systemPrompt },
@@ -438,9 +418,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
         { role: 'user' as const, content: message },
       ];
 
-      console.log(
-        `[AnA] Sending through AI Gateway (${sources.length} sources retrieved)...`
-      );
+      console.log(`[AnA] Sending through AI Gateway (${sources.length} sources retrieved)...`);
 
       const gwResponse: GatewayResponse = await gw.route({
         taskType: 'chat',
@@ -551,8 +529,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
           [threadId, assistantMessage, generationRunId]
         );
       } catch (e: any) {
-        if (e?.code !== '42P01')
-          console.warn('[AnA] Generation persist failed:', e.message);
+        if (e?.code !== '42P01') console.warn('[AnA] Generation persist failed:', e.message);
       }
     }
 
@@ -710,7 +687,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
     if (numericOrgId) {
       interceptChatResponse({
         organizationId: numericOrgId,
-        projectId: parseInt(projectId || '0', 10),
+        projectId: parseInt(String(project_id || '0'), 10),
         userId: (req as any).user?.id,
         sectionCode: (req as any).body?.section_code,
         assistantMessage,
@@ -877,12 +854,13 @@ router.post('/stream', async (req: Request, res: Response) => {
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
+      Connection: 'keep-alive',
       'X-Accel-Buffering': 'no',
     });
 
-    // Build messages
-    const systemContent = system_prompt || REGULATORY_SYSTEM_PROMPT;
+    // Build messages — use orchestrator for enriched prompt with intent detection
+    const orchestratorResult = orchestrate({ message });
+    const systemContent = system_prompt || orchestratorResult.systemPrompt;
     const gwMessages: GatewayMessage[] = [
       { role: 'system', content: systemContent },
       { role: 'user', content: message },
@@ -912,29 +890,35 @@ router.post('/stream', async (req: Request, res: Response) => {
       maxTokens: 4096,
       stream: true,
       onStream: (chunk: string, metadata?: any) => {
-        res.write(`data: ${JSON.stringify({
-          type: metadata?.type || 'text',
-          content: chunk,
-        })}\n\n`);
+        res.write(
+          `data: ${JSON.stringify({
+            type: metadata?.type || 'text',
+            content: chunk,
+          })}\n\n`
+        );
       },
       callerModule: 'ana-ri-chat-stream',
     });
 
     // Send final event
-    res.write(`data: ${JSON.stringify({
-      type: 'done',
-      model: gwResponse.model,
-      provider: gwResponse.provider,
-      usage: gwResponse.usage,
-      latencyMs: gwResponse.latencyMs,
-    })}\n\n`);
+    res.write(
+      `data: ${JSON.stringify({
+        type: 'done',
+        model: gwResponse.model,
+        provider: gwResponse.provider,
+        usage: gwResponse.usage,
+        latencyMs: gwResponse.latencyMs,
+      })}\n\n`
+    );
 
     res.end();
   } catch (error: any) {
     console.error('[Chat Stream] Error:', error.message);
     if (res.headersSent) {
       // SECURITY: Don't leak internal error details to client
-      res.write(`data: ${JSON.stringify({ type: 'error', error: 'An error occurred while generating the response' })}\n\n`);
+      res.write(
+        `data: ${JSON.stringify({ type: 'error', error: 'An error occurred while generating the response' })}\n\n`
+      );
       res.end();
     } else {
       res.status(500).json({ error: 'An error occurred while generating the response' });

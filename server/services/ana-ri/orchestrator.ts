@@ -9,7 +9,12 @@
  * @module server/services/ana-ri/orchestrator
  */
 
-import { buildAnaRISystemPrompt, type AnaRIPromptOptions, type IntentLens, type UserRole } from './persona.js';
+import {
+  buildAnaRISystemPrompt,
+  type AnaRIPromptOptions,
+  type IntentLens,
+  type UserRole,
+} from './persona.js';
 import { buildDeficiencyContext, type SubmissionType } from './deficiency-taxonomy.js';
 import { buildDocumentActionContext, type DocumentActionType } from './document-actions.js';
 import { buildRoleAdaptiveContext } from './role-adapter.js';
@@ -174,23 +179,29 @@ export interface OrchestratorOutput {
  */
 export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
   // 1. Detect intent
-  const detectedIntent = input.intentLens && input.intentLens !== 'auto'
-    ? { lens: input.intentLens, confidence: 1, signals: ['explicit'] }
-    : detectIntent(input.message);
+  const detectedIntent =
+    input.intentLens && input.intentLens !== 'auto'
+      ? { lens: input.intentLens, confidence: 1, signals: ['explicit'] }
+      : detectIntent(input.message);
 
-  const intentSource = input.intentLens && input.intentLens !== 'auto'
-    ? 'explicit' as const
-    : detectedIntent.lens !== 'auto' ? 'detected' as const : 'default' as const;
+  const intentSource =
+    input.intentLens && input.intentLens !== 'auto'
+      ? ('explicit' as const)
+      : detectedIntent.lens !== 'auto'
+        ? ('detected' as const)
+        : ('default' as const);
 
   // 2. Detect submission type
   const detectedSubmissionType = input.submissionType || detectSubmissionType(input.message);
   const submissionTypeSource = input.submissionType
-    ? 'explicit' as const
-    : detectedSubmissionType ? 'detected' as const : 'none' as const;
+    ? ('explicit' as const)
+    : detectedSubmissionType
+      ? ('detected' as const)
+      : ('none' as const);
 
   // 3. Determine role
   const appliedRole = input.userRole || 'general';
-  const roleSource = input.userRole ? 'explicit' as const : 'default' as const;
+  const roleSource = input.userRole ? ('explicit' as const) : ('default' as const);
 
   // 4. Build base system prompt
   const promptOptions: AnaRIPromptOptions = {
@@ -227,11 +238,15 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
   }
 
   // 8. Inject command capabilities (condensed to save tokens)
-  systemPrompt += '\n\n## OPERATIONAL COMMANDS\nYou can execute platform commands. Available: create_project, list_projects, update_project, create_artifact, update_artifact, update_artifact_status, list_artifacts, place_in_dossier, create_task, update_task, list_tasks, check_dossier_readiness, create_submission_package, create_review_thread, add_review_comment, search_artifacts, list_team_members, list_artifact_versions, run_compliance_scan, export_artifact, compare_versions, review_version_impact, create_milestone, update_milestone, list_milestones, revert_to_version, load_user_context, load_conversation_history.\n\nWhen you decide to act (not just advise), embed commands:\n```command\n{"command":"command_name","params":{...}}\n```\nMultiple commands execute sequentially. Chain stops on failure.';
+  systemPrompt +=
+    '\n\n## OPERATIONAL COMMANDS\nYou can execute platform commands. Available: create_project, list_projects, update_project, create_artifact, update_artifact, update_artifact_status, list_artifacts, place_in_dossier, create_task, update_task, list_tasks, check_dossier_readiness, create_submission_package, create_review_thread, add_review_comment, search_artifacts, list_team_members, list_artifact_versions, run_compliance_scan, export_artifact, compare_versions, review_version_impact, create_milestone, update_milestone, list_milestones, revert_to_version, load_user_context, load_conversation_history.\n\nWhen you decide to act (not just advise), embed commands:\n```command\n{"command":"command_name","params":{...}}\n```\nMultiple commands execute sequentially. Chain stops on failure.';
 
   // 9. Inject conversation continuity context
   if (input.conversationHistory && input.conversationHistory.length > 0) {
-    const continuityContext = buildContinuityContext(input.conversationHistory, detectedSubmissionType);
+    const continuityContext = buildContinuityContext(
+      input.conversationHistory,
+      detectedSubmissionType
+    );
     if (continuityContext) {
       systemPrompt += '\n\n' + continuityContext;
     }
@@ -313,7 +328,9 @@ function buildContinuityContext(
 
   // Extract the active document/section under discussion from recent messages only
   const recentText = recentHistory.map(m => m.content).join(' ');
-  const sectionMatches = recentText.match(/(?:Section|Module|Chapter)\s+[\d.]+[A-Za-z]?(?:\s*[-–:]\s*[^\n.]{3,60})?/gi);
+  const sectionMatches = recentText.match(
+    /(?:Section|Module|Chapter)\s+[\d.]+[A-Za-z]?(?:\s*[-–:]\s*[^\n.]{3,60})?/gi
+  );
   if (sectionMatches) {
     const uniqueSections = [...new Set(sectionMatches.map(s => s.trim()))].slice(0, 3);
     lines.push('');
@@ -331,13 +348,38 @@ function buildContinuityContext(
   const concerns: string[] = [];
   const concernPatterns: Array<{ pattern: RegExp; label: string }> = [
     // Require problem-indicating context words alongside domain terms
-    { pattern: /(?:inadequate|insufficient|incomplete|missing|weak|deficient)\s+\w*\s*(?:evidence|data|support|justification)/i, label: 'Evidence adequacy' },
-    { pattern: /safety signal|adverse event.*(?:concern|risk|unresolved)|toxicity.*(?:finding|signal)/i, label: 'Safety concerns' },
-    { pattern: /endpoint.*(?:weak|inadequate|not.*justified|concern)|efficacy.*(?:insufficient|marginal)/i, label: 'Efficacy/endpoint defensibility' },
-    { pattern: /(?:process validation|manufacturing).*(?:insufficient|inadequate|gap)|specification.*(?:not.*justified|weak)/i, label: 'CMC/manufacturing quality' },
-    { pattern: /(?:predicate|equivalence).*(?:inadequate|not.*demonstrated|weak)/i, label: 'Device equivalence' },
-    { pattern: /(?:labeling|claim).*(?:unsupported|overstate|not.*reflect)/i, label: 'Labeling/claims' },
-    { pattern: /(?:statistical|multiplicity|sample size).*(?:inadequate|concern|not.*controlled)/i, label: 'Statistical rigor' },
+    {
+      pattern:
+        /(?:inadequate|insufficient|incomplete|missing|weak|deficient)\s+\w*\s*(?:evidence|data|support|justification)/i,
+      label: 'Evidence adequacy',
+    },
+    {
+      pattern:
+        /safety signal|adverse event.*(?:concern|risk|unresolved)|toxicity.*(?:finding|signal)/i,
+      label: 'Safety concerns',
+    },
+    {
+      pattern:
+        /endpoint.*(?:weak|inadequate|not.*justified|concern)|efficacy.*(?:insufficient|marginal)/i,
+      label: 'Efficacy/endpoint defensibility',
+    },
+    {
+      pattern:
+        /(?:process validation|manufacturing).*(?:insufficient|inadequate|gap)|specification.*(?:not.*justified|weak)/i,
+      label: 'CMC/manufacturing quality',
+    },
+    {
+      pattern: /(?:predicate|equivalence).*(?:inadequate|not.*demonstrated|weak)/i,
+      label: 'Device equivalence',
+    },
+    {
+      pattern: /(?:labeling|claim).*(?:unsupported|overstate|not.*reflect)/i,
+      label: 'Labeling/claims',
+    },
+    {
+      pattern: /(?:statistical|multiplicity|sample size).*(?:inadequate|concern|not.*controlled)/i,
+      label: 'Statistical rigor',
+    },
   ];
 
   for (const { pattern, label } of concernPatterns) {
@@ -355,10 +397,14 @@ function buildContinuityContext(
   // Detect any previously recommended actions from the last assistant message only
   const lastAssistant = recentAssistant[recentAssistant.length - 1] || '';
   const actionMentions: string[] = [];
-  if (/(?:create|generate).*risk memo|risk assessment.*(?:recommend|suggest)/i.test(lastAssistant)) actionMentions.push('Risk assessment in progress');
-  if (/(?:create|generate).*deficiency|preemption.*memo/i.test(lastAssistant)) actionMentions.push('Deficiency preemption analysis');
-  if (/(?:rewrite|revise).*(?:section|document|text)/i.test(lastAssistant)) actionMentions.push('Document improvement');
-  if (/(?:strategy|pathway).*(?:recommend|note|assessment)/i.test(lastAssistant)) actionMentions.push('Strategy development');
+  if (/(?:create|generate).*risk memo|risk assessment.*(?:recommend|suggest)/i.test(lastAssistant))
+    actionMentions.push('Risk assessment in progress');
+  if (/(?:create|generate).*deficiency|preemption.*memo/i.test(lastAssistant))
+    actionMentions.push('Deficiency preemption analysis');
+  if (/(?:rewrite|revise).*(?:section|document|text)/i.test(lastAssistant))
+    actionMentions.push('Document improvement');
+  if (/(?:strategy|pathway).*(?:recommend|note|assessment)/i.test(lastAssistant))
+    actionMentions.push('Strategy development');
 
   if (actionMentions.length > 0) {
     lines.push('');
@@ -376,8 +422,151 @@ function buildContinuityContext(
     }
   }
 
+  // Detect conversation phase (depth of engagement)
+  const phase = detectConversationPhase(history);
+  if (phase !== 'initial') {
+    lines.push('');
+    lines.push(`**Conversation Phase:** ${phase}`);
+    switch (phase) {
+      case 'deep_dive':
+        lines.push(
+          'The user is drilling into detail. Give comprehensive, specific answers. Avoid high-level summaries they have already seen.'
+        );
+        break;
+      case 'iterative_refinement':
+        lines.push(
+          'The user is refining previous output. Focus only on what changed or what they asked to modify. Do NOT regenerate unchanged content.'
+        );
+        break;
+      case 'topic_shift':
+        lines.push(
+          'The user has shifted topics. Acknowledge the pivot naturally and bring relevant context from earlier discussion if applicable.'
+        );
+        break;
+      case 'follow_up':
+        lines.push(
+          'The user is following up on your last response. Reference your previous analysis directly. Do not repeat context they already have.'
+        );
+        break;
+      case 'summarization':
+        lines.push(
+          'The user wants a summary or synthesis. Consolidate the discussion into actionable intelligence.'
+        );
+        break;
+    }
+  }
+
+  // Extract key entities/terms mentioned across the conversation to maintain vocabulary consistency
+  const keyTerms = extractKeyRegTerms(recentHistory.map(m => m.content).join(' '));
+  if (keyTerms.length > 0) {
+    lines.push('');
+    lines.push('**Key Regulatory Terms in Thread:**');
+    lines.push(keyTerms.slice(0, 8).join(', '));
+  }
+
   lines.push('');
-  lines.push('**Continuity instruction:** Build on the above context. Do not re-introduce yourself or ask the user to re-state what they already told you. Continue the working thread.');
+  lines.push(
+    '**Continuity instruction:** Build on the above context. Do not re-introduce yourself or ask the user to re-state what they already told you. Continue the working thread.'
+  );
 
   return lines.length > 2 ? lines.join('\n') : null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Conversation Phase Detection
+// ─────────────────────────────────────────────────────────────────────────────
+
+type ConversationPhase =
+  | 'initial'
+  | 'deep_dive'
+  | 'iterative_refinement'
+  | 'topic_shift'
+  | 'follow_up'
+  | 'summarization';
+
+/**
+ * Detect what phase the conversation is in based on message patterns.
+ * This helps AnA calibrate the depth and style of the response.
+ */
+function detectConversationPhase(
+  history: Array<{ role: 'user' | 'assistant'; content: string }>
+): ConversationPhase {
+  if (history.length < 2) return 'initial';
+
+  const userMessages = history.filter(m => m.role === 'user');
+  const lastUser = userMessages[userMessages.length - 1]?.content || '';
+  const prevUser = userMessages[userMessages.length - 2]?.content || '';
+  const lower = lastUser.toLowerCase();
+
+  // Summarization phase
+  if (
+    /\b(summarize|summary|synthesize|wrap up|consolidate|key takeaways|action items|recap)\b/i.test(
+      lower
+    )
+  ) {
+    return 'summarization';
+  }
+
+  // Iterative refinement — user is asking to modify/adjust previous output
+  if (
+    /\b(change|modify|adjust|tweak|make it|instead|rather|also add|remove the|less|more)\b/i.test(
+      lower
+    ) &&
+    lower.length < 200
+  ) {
+    return 'iterative_refinement';
+  }
+
+  // Follow-up — short message that references "it", "that", "this" or "the above"
+  if (
+    lower.length < 100 &&
+    /\b(what about|how about|and |also |can you|tell me more|explain|elaborate|expand|the above|that|this)\b/i.test(
+      lower
+    )
+  ) {
+    return 'follow_up';
+  }
+
+  // Topic shift — new message introduces very different keywords from previous
+  if (prevUser) {
+    const prevTerms = new Set(prevUser.toLowerCase().match(/\b[a-z]{4,}\b/g) || []);
+    const currTerms = new Set(lower.match(/\b[a-z]{4,}\b/g) || []);
+    const overlap = [...currTerms].filter(t => prevTerms.has(t)).length;
+    const unionSize = new Set([...prevTerms, ...currTerms]).size;
+    if (unionSize > 5 && overlap / unionSize < 0.15) {
+      return 'topic_shift';
+    }
+  }
+
+  // Deep dive — long detailed message in a multi-turn conversation
+  if (userMessages.length >= 3 && lastUser.length > 200) {
+    return 'deep_dive';
+  }
+
+  return 'follow_up';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Regulatory Term Extraction
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Extract key regulatory terms used in the conversation for vocabulary consistency */
+function extractKeyRegTerms(text: string): string[] {
+  const patterns: RegExp[] = [
+    /\b(?:IND|NDA|BLA|510\(?k\)?|PMA|De Novo|CER|IVDR|EU MDR|eCTD)\b/gi,
+    /\bICH [A-Z]\d+(?:\([A-Z]\d+\))?/gi,
+    /\b21 CFR (?:Part )?\d+(?:\.\d+)?/gi,
+    /\b(?:Module [1-5]|Section \d+\.\d+(?:\.\d+)?)\b/gi,
+    /\b(?:RTF|CRL|REMS|ETASU|PDUFA|GDUFA|MDUFA|BsUFA)\b/g,
+    /\b(?:pre-?IND|pre-?NDA|pre-?BLA|pre-?submission|Type [A-D] meeting)\b/gi,
+    /\b(?:substantial equivalence|bioequivalence|clinical hold|refuse to file|complete response)\b/gi,
+    /\b(?:breakthrough therapy|fast track|priority review|accelerated approval|orphan drug)\b/gi,
+  ];
+
+  const terms = new Set<string>();
+  for (const pattern of patterns) {
+    const matches = text.match(pattern);
+    if (matches) matches.forEach(m => terms.add(m.trim()));
+  }
+  return [...terms];
 }

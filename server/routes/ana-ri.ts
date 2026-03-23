@@ -27,14 +27,8 @@ import {
   getDeficiencyCategories,
   type SubmissionType,
 } from '../services/ana-ri/deficiency-taxonomy.js';
-import {
-  getAllActions,
-  getActionsForLens,
-} from '../services/ana-ri/document-actions.js';
-import {
-  evaluateResponse,
-  getFullRubric,
-} from '../services/ana-ri/evaluation.js';
+import { getAllActions, getActionsForLens } from '../services/ana-ri/document-actions.js';
+import { evaluateResponse, getFullRubric } from '../services/ana-ri/evaluation.js';
 import { inferRole } from '../services/ana-ri/role-adapter.js';
 import {
   logGeneration,
@@ -86,26 +80,34 @@ router.post('/chat', async (req: Request, res: Response) => {
 
     // Validate intent_lens if provided
     const VALID_LENSES: IntentLens[] = ['auto', 'audit', 'improve', 'risk', 'strategy', 'compare'];
-    const validatedLens: IntentLens | undefined = intent_lens && VALID_LENSES.includes(intent_lens)
-      ? intent_lens as IntentLens
-      : undefined;
+    const validatedLens: IntentLens | undefined =
+      intent_lens && VALID_LENSES.includes(intent_lens) ? (intent_lens as IntentLens) : undefined;
 
     // Validate user_role if provided
-    const VALID_ROLES: UserRole[] = ['ceo', 'ra_lead', 'medical_writer', 'clinical_lead', 'cmc_lead', 'investor', 'general'];
-    const validatedRole: UserRole | undefined = user_role && VALID_ROLES.includes(user_role)
-      ? user_role as UserRole
-      : undefined;
+    const VALID_ROLES: UserRole[] = [
+      'ceo',
+      'ra_lead',
+      'medical_writer',
+      'clinical_lead',
+      'cmc_lead',
+      'investor',
+      'general',
+    ];
+    const validatedRole: UserRole | undefined =
+      user_role && VALID_ROLES.includes(user_role) ? (user_role as UserRole) : undefined;
 
     // Resolve org/user context
     const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
     const userId = (req as any).userId || (req as any).user?.id || 'anonymous';
 
     // Infer role if not provided
-    const effectiveRole: UserRole = validatedRole || inferRole({
-      screenName: req.body.context?.screenName,
-      title: req.body.context?.userTitle,
-      department: req.body.context?.department,
-    });
+    const effectiveRole: UserRole =
+      validatedRole ||
+      inferRole({
+        screenName: req.body.context?.screenName,
+        title: req.body.context?.userTitle,
+        department: req.body.context?.department,
+      });
 
     // Orchestrate — build the complete system prompt
     const orchestratorInput: OrchestratorInput = {
@@ -121,9 +123,7 @@ router.post('/chat', async (req: Request, res: Response) => {
     const orchestration = orchestrate(orchestratorInput);
 
     // Build message history for the AI gateway
-    const messages: GatewayMessage[] = [
-      { role: 'system', content: orchestration.systemPrompt },
-    ];
+    const messages: GatewayMessage[] = [{ role: 'system', content: orchestration.systemPrompt }];
 
     // Add conversation history
     if (conversation_history && Array.isArray(conversation_history)) {
@@ -147,12 +147,12 @@ router.post('/chat', async (req: Request, res: Response) => {
       });
     }
 
-    const response = await gw.chat({
+    const response = await gw.route({
       taskType: 'regulatory_review',
       messages,
       maxTokens: 4096,
       temperature: 0.3,
-      routingStrategy: 'quality_optimized',
+      strategy: 'quality_optimized',
     });
 
     if (!response.content) {
@@ -180,7 +180,11 @@ router.post('/chat', async (req: Request, res: Response) => {
     if (orgId) {
       try {
         // getOrCreateThread(threadId, userId?, prefix?) — returns thread ID string
-        threadId = await getOrCreateThread(thread_id || null, typeof userId === 'number' ? userId : undefined, 'ana-ri');
+        threadId = await getOrCreateThread(
+          thread_id || null,
+          typeof userId === 'number' ? userId : undefined,
+          'ana-ri'
+        );
         await saveMessage(threadId, 'user', message);
         await saveMessage(threadId, 'assistant', response.content);
       } catch (e: any) {
@@ -264,9 +268,14 @@ router.post('/generate', async (req: Request, res: Response) => {
     } = req.body;
 
     const VALID_ACTIONS = [
-      'risk_memo', 'deficiency_preemption_memo', 'evidence_memo',
-      'strategy_note', 'reviewer_question_brief', 'rewritten_section',
-      'revised_artifact', 'attach_to_dossier',
+      'risk_memo',
+      'deficiency_preemption_memo',
+      'evidence_memo',
+      'strategy_note',
+      'reviewer_question_brief',
+      'rewritten_section',
+      'revised_artifact',
+      'attach_to_dossier',
     ];
     if (!action_type || typeof action_type !== 'string' || !VALID_ACTIONS.includes(action_type)) {
       return res.status(400).json({
@@ -275,8 +284,14 @@ router.post('/generate', async (req: Request, res: Response) => {
       });
     }
 
-    if (!conversation_context || !Array.isArray(conversation_context) || conversation_context.length === 0) {
-      return res.status(400).json({ error: 'conversation_context is required', code: 'INVALID_CONTEXT' });
+    if (
+      !conversation_context ||
+      !Array.isArray(conversation_context) ||
+      conversation_context.length === 0
+    ) {
+      return res
+        .status(400)
+        .json({ error: 'conversation_context is required', code: 'INVALID_CONTEXT' });
     }
 
     if (!project_id) {
@@ -380,9 +395,7 @@ router.get('/deficiencies/critical', (_req: Request, res: Response) => {
 router.get('/actions', (_req: Request, res: Response) => {
   const { lens } = _req.query;
 
-  const actions = lens
-    ? getActionsForLens(lens as IntentLens)
-    : getAllActions();
+  const actions = lens ? getActionsForLens(lens as IntentLens) : getAllActions();
 
   return res.json({
     count: actions.length,
@@ -434,7 +447,8 @@ router.get('/observability/log', (_req: Request, res: Response) => {
   const log = getGenerationLog({
     route: route as string | undefined,
     artifactCreated: artifact === 'true' ? true : artifact === 'false' ? false : undefined,
-    anaRiOrchestrated: orchestrated === 'true' ? true : orchestrated === 'false' ? false : undefined,
+    anaRiOrchestrated:
+      orchestrated === 'true' ? true : orchestrated === 'false' ? false : undefined,
     limit: limit ? Number(limit) : 100,
   });
   return res.json({ count: log.length, events: log });

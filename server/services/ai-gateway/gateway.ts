@@ -55,7 +55,8 @@ const DEFAULT_MODELS: ModelConfig[] = [
       'summarization',
       'general',
     ],
-    enabled: true,
+    // Platform uses Anthropic Claude exclusively — OpenAI disabled
+    enabled: false,
   },
   {
     id: 'gpt-4o-mini',
@@ -66,7 +67,8 @@ const DEFAULT_MODELS: ModelConfig[] = [
     costPer1kInput: 0.00015,
     costPer1kOutput: 0.0006,
     capabilities: ['chat', 'general', 'summarization'],
-    enabled: true,
+    // Platform uses Anthropic Claude exclusively — OpenAI disabled
+    enabled: false,
   },
   {
     id: 'claude-opus-4',
@@ -128,6 +130,7 @@ const DEFAULT_MODELS: ModelConfig[] = [
     costPer1kInput: 0.0008,
     costPer1kOutput: 0.0008,
     capabilities: ['chat', 'document_analysis', 'general'],
+    // Disabled — platform uses Anthropic Claude exclusively
     enabled: false, // Enable via KIMI_API_KEY or MOONSHOT_API_KEY
   },
   {
@@ -144,17 +147,17 @@ const DEFAULT_MODELS: ModelConfig[] = [
 ];
 
 // Task → preferred provider order
-// Claude is primary for regulatory, document drafting, analysis, and code generation
+// Platform uses Anthropic Claude exclusively for all tasks
 const TASK_PROVIDER_PREFERENCES: Record<TaskType, ProviderName[]> = {
-  chat: ['anthropic', 'openai', 'moonshot'],
-  document_analysis: ['anthropic', 'openai', 'moonshot'],
-  document_drafting: ['anthropic', 'openai'],
-  structured_output: ['anthropic', 'openai'],
-  regulatory_review: ['anthropic', 'openai'],
-  code_generation: ['anthropic', 'openai'],
-  summarization: ['anthropic', 'openai', 'moonshot'],
-  embedding: ['openai'],
-  general: ['anthropic', 'openai', 'moonshot'],
+  chat: ['anthropic'],
+  document_analysis: ['anthropic'],
+  document_drafting: ['anthropic'],
+  structured_output: ['anthropic'],
+  regulatory_review: ['anthropic'],
+  code_generation: ['anthropic'],
+  summarization: ['anthropic'],
+  embedding: ['anthropic'],
+  general: ['anthropic'],
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -559,9 +562,10 @@ export class AIGateway {
     if (request.tools && request.tools.length > 0) {
       params.tools = request.tools;
       if (request.toolChoice) {
-        params.tool_choice = typeof request.toolChoice === 'string'
-          ? { type: request.toolChoice }
-          : request.toolChoice;
+        params.tool_choice =
+          typeof request.toolChoice === 'string'
+            ? { type: request.toolChoice }
+            : request.toolChoice;
       }
     }
 
@@ -597,12 +601,13 @@ export class AIGateway {
     }
 
     // Calculate cache stats if prompt caching was used
-    const cacheStats = response.usage?.cache_creation_input_tokens !== undefined
-      ? {
-          cacheCreationInputTokens: response.usage.cache_creation_input_tokens || 0,
-          cacheReadInputTokens: response.usage.cache_read_input_tokens || 0,
-        }
-      : undefined;
+    const cacheStats =
+      response.usage?.cache_creation_input_tokens !== undefined
+        ? {
+            cacheCreationInputTokens: response.usage.cache_creation_input_tokens || 0,
+            cacheReadInputTokens: response.usage.cache_read_input_tokens || 0,
+          }
+        : undefined;
 
     const inputTokens = response.usage?.input_tokens || 0;
     const outputTokens = response.usage?.output_tokens || 0;
@@ -694,9 +699,10 @@ export class AIGateway {
     if (request.tools && request.tools.length > 0) {
       params.tools = request.tools;
       if (request.toolChoice) {
-        params.tool_choice = typeof request.toolChoice === 'string'
-          ? { type: request.toolChoice }
-          : request.toolChoice;
+        params.tool_choice =
+          typeof request.toolChoice === 'string'
+            ? { type: request.toolChoice }
+            : request.toolChoice;
       }
     }
 
@@ -983,7 +989,9 @@ export class AIGateway {
         if (!health.healthy) {
           health.healthy = true;
           health.consecutiveFailures = 0;
-          console.log(`[AI Gateway] Provider ${provider} auto-recovered after ${backoffMs / 1000}s backoff`);
+          console.log(
+            `[AI Gateway] Provider ${provider} auto-recovered after ${backoffMs / 1000}s backoff`
+          );
         }
       }, backoffMs);
     }

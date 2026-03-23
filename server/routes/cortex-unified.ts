@@ -31,6 +31,12 @@ import jwt from 'jsonwebtoken';
 import { getTool, toOpenAITools, fromOpenAIName, logToolRun } from '../services/toolRegistry';
 import '../services/tools/index'; // ensure tools are registered
 import { ai } from '../lib/unified-ai-client';
+import {
+  orchestrate,
+  detectIntent,
+  detectSubmissionType,
+} from '../services/ana-ri/orchestrator.js';
+import type { UserRole, IntentLens } from '../services/ana-ri/persona.js';
 
 const logger = createScopedLogger('cortex-unified');
 const router = Router();
@@ -268,18 +274,12 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
       sectionCode: section_code || undefined,
     });
 
-    const systemPrompt = modePrefix ? `${modePrefix}${baseSystemPrompt}` : baseSystemPrompt;
-
     // Get or create thread (prefix 'cortex' to distinguish from legacy chat)
     const threadId = await getOrCreateThread(thread_id, userId, 'cortex');
 
     // Token budget: model max (128k for gpt-4o-mini) minus system prompt, new message, and response buffer
     const MODEL_MAX_TOKENS = 128_000;
     const RESPONSE_BUFFER = 4_000;
-    const systemTokenEstimate = Math.ceil(systemPrompt.length / 4);
-    const messageTokenEstimate = Math.ceil(message.length / 4);
-    const historyBudget =
-      MODEL_MAX_TOKENS - systemTokenEstimate - messageTokenEstimate - RESPONSE_BUFFER;
 
     // Load working memory summary if available
     let workingMemorySummary: string | null = null;
@@ -296,7 +296,14 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
       // Table may not exist yet — silently skip
     }
 
-    // Use windowed messages to stay within token budget
+    // ── ORCHESTRATOR: Enrich system prompt with intent detection, deficiency
+    //    context, submission-type intelligence, and conversation continuity ──
+    // Load conversation history first (needed for continuity context)
+    const systemTokenEstimate = Math.ceil(baseSystemPrompt.length / 4);
+    const messageTokenEstimate = Math.ceil(message.length / 4);
+    const historyBudget =
+      MODEL_MAX_TOKENS - systemTokenEstimate - messageTokenEstimate - RESPONSE_BUFFER;
+
     const { messages: previousMessages, wasTruncated } = await getWindowedMessages(
       threadId,
       historyBudget,
@@ -306,6 +313,101 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
     if (wasTruncated) {
       logger.info(`Thread ${threadId}: conversation truncated to fit token budget`);
     }
+
+    // Map user role from client context
+    const userRoleMap: Record<string, UserRole> = {
+      ceo: 'ceo',
+      founder: 'ceo',
+      executive: 'ceo',
+      ra_lead: 'ra_lead',
+      regulatory: 'ra_lead',
+      regulatory_affairs: 'ra_lead',
+      medical_writer: 'medical_writer',
+      writer: 'medical_writer',
+      clinical_lead: 'clinical_lead',
+      clinical: 'clinical_lead',
+      cmc_lead: 'cmc_lead',
+      cmc: 'cmc_lead',
+      investor: 'investor',
+      diligence: 'investor',
+    };
+    const resolvedUserRole: UserRole =
+      (clientContext?.userRole && userRoleMap[clientContext.userRole.toLowerCase()]) || 'general';
+
+    // Build conversation history for orchestrator continuity analysis
+    const conversationHistory = previousMessages
+      .filter((m: any) => m.role === 'user' || m.role === 'assistant')
+      .map((m: any) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+
+    // Run the orchestrator — intent detection + deficiency context + role adaption + continuity
+    const orchestratorResult = orchestrate({
+      message,
+      userRole: resolvedUserRole,
+      projectContext: context.project
+        ? {
+            productName: context.project.name,
+            therapeuticArea: context.project.therapeuticArea || undefined,
+            submissionType: context.project.submissionType,
+            targetAgency: undefined,
+            phase: context.project.phase || undefined,
+          }
+        : undefined,
+      submissionType: submission_type || undefined,
+      conversationHistory,
+    });
+
+    // Compose the final system prompt: base context + orchestrator enrichments
+    // The base prompt (from lumen-context-builder) already has the core AnA identity,
+    // project context, user intelligence, and section-specific guidance.
+    // The orchestrator adds: intent lens, deficiency patterns, role-adaptive context,
+    // conversation continuity, and document action context.
+    const orchestratorEnrichment = orchestratorResult.systemPrompt;
+
+    // Extract only the dynamic overlays (skip the base identity which is already in baseSystemPrompt)
+    // The orchestrator prompt starts with the core AnA RI prompt, then appends overlays.
+    // We want just the overlays — everything after the core prompt ends.
+    const overlayMarkers = [
+      '## CURRENT USER ROLE',
+      '## ACTIVE INTENT LENS',
+      '## CURRENT PROJECT CONTEXT',
+      '## CURRENT DOCUMENT CONTEXT',
+      '## DEFICIENCY',
+      '## DOCUMENT ACTION',
+      '## ROLE-ADAPTIVE',
+      '## OPERATIONAL COMMANDS',
+      '## CONVERSATION CONTINUITY',
+    ];
+    const overlayParts: string[] = [];
+    for (const marker of overlayMarkers) {
+      const idx = orchestratorEnrichment.indexOf(marker);
+      if (idx !== -1) {
+        // Find the next marker or end of string
+        let endIdx = orchestratorEnrichment.length;
+        for (const nextMarker of overlayMarkers) {
+          if (nextMarker === marker) continue;
+          const nextIdx = orchestratorEnrichment.indexOf(nextMarker, idx + marker.length);
+          if (nextIdx !== -1 && nextIdx < endIdx && nextIdx > idx) {
+            endIdx = nextIdx;
+          }
+        }
+        overlayParts.push(orchestratorEnrichment.substring(idx, endIdx).trim());
+      }
+    }
+
+    const dynamicOverlays = overlayParts.length > 0 ? '\n\n' + overlayParts.join('\n\n') : '';
+
+    // Log orchestration metadata for debugging
+    logger.info(
+      `[AnA RI] Orchestrator: intent=${orchestratorResult.detectedIntent.lens} ` +
+        `(${orchestratorResult.orchestrationMeta.intentSource}, conf=${orchestratorResult.detectedIntent.confidence.toFixed(2)}), ` +
+        `submission=${orchestratorResult.detectedSubmissionType || 'none'} ` +
+        `(${orchestratorResult.orchestrationMeta.submissionTypeSource}), ` +
+        `role=${orchestratorResult.appliedRole}, ` +
+        `deficiency=${orchestratorResult.orchestrationMeta.deficiencyContextInjected}, ` +
+        `docActions=${orchestratorResult.orchestrationMeta.documentActionContextInjected}`
+    );
+
+    const systemPrompt = (modePrefix ? modePrefix : '') + baseSystemPrompt + dynamicOverlays;
 
     // Shared message array for both paths
     const aiMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
@@ -358,13 +460,27 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
         logger.warn(`[Stream] Response error: ${err.message}`);
       });
 
+      // Send initial intelligence metadata so UI can display intent/context immediately
+      if (!streamAborted) {
+        res.write(
+          `data: ${JSON.stringify({
+            type: 'thinking',
+            intent: orchestratorResult.detectedIntent.lens,
+            intentConfidence: orchestratorResult.detectedIntent.confidence,
+            submissionType: orchestratorResult.detectedSubmissionType,
+            role: orchestratorResult.appliedRole,
+            phase: 'analyzing',
+          })}\n\n`
+        );
+      }
+
       try {
         const openaiTools = toOpenAITools();
 
         if (openaiTools.length === 0) {
           // ── Fast path: no tools registered — stream directly ─────────────
           const streamResponse = await ai.chat(aiMessages as any, {
-            model: 'gpt-4o-mini',
+            taskType: 'chat',
             maxTokens: 4000,
             temperature: 0.7,
             callerModule: 'cortex-unified/chat-stream',
@@ -384,7 +500,7 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
         } else {
           // ── Phase 1: Non-streaming call with tool schemas ──────────────────
           const initialResponse = await ai.chat({
-            model: 'gpt-4o-mini',
+            taskType: 'chat',
             messages: aiMessages as any,
             tools: openaiTools.length > 0 ? (openaiTools as any) : undefined,
             maxTokens: 4000,
@@ -426,6 +542,9 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
             });
 
             // Notify client that tools are being executed
+            res.write(
+              `data: ${JSON.stringify({ type: 'thinking', phase: 'executing_tools', toolCount: dedupedCalls.length })}\n\n`
+            );
             res.write(
               `data: ${JSON.stringify({ type: 'status', text: `Running ${dedupedCalls.length} tool(s)...` })}\n\n`
             );
@@ -517,7 +636,7 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
 
             // ── Phase 3: Stream the final LLM response with tool results ───
             const finalResponse = await ai.chat(aiMessages as any, {
-              model: 'gpt-4o-mini',
+              taskType: 'chat',
               maxTokens: 4000,
               temperature: 0.4,
               callerModule: 'cortex-unified/chat-stream-final',
@@ -554,9 +673,31 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
       await saveChatMessage(threadId, 'user', message, streamModel);
       await saveChatMessage(threadId, 'assistant', fullContent, streamModel, 0);
 
+      // ── AUTO-SUMMARIZE: Generate working memory summary after extended conversations ──
+      // This runs async (fire-and-forget) to avoid blocking the response
+      if (previousMessages.length >= 10 && !streamAborted) {
+        generateWorkingMemorySummary(
+          threadId,
+          previousMessages,
+          message,
+          fullContent,
+          organizationId
+        ).catch(err => logger.warn(`[WorkingMemory] Auto-summarization failed: ${err.message}`));
+      }
+
       // Include artifacts in the done event so the client can display them
       res.write(
-        `data: ${JSON.stringify({ type: 'done', thread_id: threadId, artifacts: toolArtifacts.length > 0 ? toolArtifacts : undefined })}\n\n`
+        `data: ${JSON.stringify({
+          type: 'done',
+          thread_id: threadId,
+          artifacts: toolArtifacts.length > 0 ? toolArtifacts : undefined,
+          intelligence: {
+            intent: orchestratorResult.detectedIntent.lens,
+            intentConfidence: orchestratorResult.detectedIntent.confidence,
+            submissionType: orchestratorResult.detectedSubmissionType,
+            suggestedActions: orchestratorResult.suggestedActions,
+          },
+        })}\n\n`
       );
       res.end();
       return;
@@ -610,6 +751,17 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
       saveChatMessage(threadId, 'assistant', assistantMessage, model, usage.total_tokens),
     ]);
 
+    // Auto-summarize for long conversations (fire-and-forget)
+    if (previousMessages.length >= 10) {
+      generateWorkingMemorySummary(
+        threadId,
+        previousMessages,
+        message,
+        assistantMessage,
+        organizationId
+      ).catch(err => logger.warn(`[WorkingMemory] Auto-summarization failed: ${err.message}`));
+    }
+
     res.json({
       answer: assistantMessage,
       response: assistantMessage,
@@ -624,6 +776,12 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
         documentsTotal: context.documents?.totalDocuments || 0,
         documentsCompleted: context.documents?.completedDocuments || 0,
         sectionCode: section_code || null,
+      },
+      intelligence: {
+        intent: orchestratorResult.detectedIntent.lens,
+        intentConfidence: orchestratorResult.detectedIntent.confidence,
+        submissionType: orchestratorResult.detectedSubmissionType,
+        suggestedActions: orchestratorResult.suggestedActions,
       },
     });
   } catch (error: any) {
