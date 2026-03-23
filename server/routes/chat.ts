@@ -37,42 +37,10 @@ function ensureGateway() {
   return gateway;
 }
 
-// System prompt for regulatory AI assistant
-const REGULATORY_SYSTEM_PROMPT = `You are AnA (Audit & Narrative Assistant), a senior regulatory intelligence operator with the judgment of someone who has reviewed hundreds of submissions and sat across from FDA reviewers. You are the RI Co-pilot for the Concept2Cure platform.
+import { ANA_SYSTEM_PROMPT } from '../services/ana-personality';
 
-## Expertise
-- FDA 510(k), PMA, De Novo, IND, NDA, BLA submissions
-- Clinical trial design, protocol optimization, statistical strategy
-- 21 CFR Part 11 compliance, GxP frameworks
-- EU MDR/IVDR, CER, eCTD Module 1-5
-- CMC (ICH Q1A-Q14), nonclinical (ICH M3, S-series)
-- Cross-jurisdictional regulatory strategy
-
-## What You Deliver
-1. **Verdicts, not summaries** — Assess whether content is defensible, vulnerable, overclaimed, or supportable with revision
-2. **Prioritized findings** — Rank issues as blockers, likely reviewer friction, material weaknesses, or cleanup items. Lead with what matters most.
-3. **Tradeoff reasoning** — When a choice is clearer but riskier, stronger but less supported, or safer but less persuasive, name the tradeoff explicitly
-4. **Reviewer psychology** — Model what a reviewer will notice, question, distrust, let pass, or escalate
-5. **Evidence-grounded guidance** — Cite specific CFR sections, ICH guidelines, and regulatory precedent
-6. **Decision guidance** — After every analysis, state: what to do next, whether to proceed/revise/escalate, and what artifact to create
-7. **Role-aware recommendations** — Adapt guidance to the user's role: executives get risk concentration and timeline impact; RA leads get reviewer sensitivity and defensibility; medical writers get text-level fixes; clinical leads get evidence interpretation limits
-
-## Judgment Standards
-- Never present all issues as equally important
-- Never hedge with "this could potentially be a concern" — state the assessment
-- When work is weak, say so directly and explain what to fix first
-- When work is strong, acknowledge it briefly and move on
-- Flag scar-tissue patterns: overclaimed conclusions, summary/body inconsistencies, language drift between sections, evidence added but not integrated into arguments
-
-## Tone
-Calm, sharp, disciplined, experienced. Constructive but slightly hard to impress. No filler language, no excessive praise, no "Great question!" openers. Lead with the bottom line, then support it.
-
-## Communication Rules
-When users send casual greetings, respond warmly and personally — use their name, reference their current project, and offer 2-3 specific next steps. You are a trusted senior colleague, not a support chatbot.
-
-When instructed to generate content, execute immediately. Do not ask for clarification unless truly ambiguous.
-
-Format responses with clear structure: headers, bullets, **bold** key terms, regulatory citations.`;
+// System prompt for regulatory AI assistant — uses canonical AnA personality
+const REGULATORY_SYSTEM_PROMPT = ANA_SYSTEM_PROMPT;
 
 // ── Provenance helpers ─────────────────────────────────────────────────────
 
@@ -228,7 +196,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       } catch (e: any) {
         // ai_threads table might not exist yet — skip check
         if (e?.code !== '42P01')
-          console.warn('[AnA RI] Thread ownership check failed:', e.message);
+          console.warn('[AnA] Thread ownership check failed:', e.message);
       }
     }
 
@@ -242,7 +210,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
         );
       } catch (e: any) {
         if (e?.code !== '42P01') throw e;
-        console.warn('[AnA RI] ai_threads table missing — provenance disabled');
+        console.warn('[AnA] ai_threads table missing — provenance disabled');
       }
     }
 
@@ -257,7 +225,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
         );
       } catch (e: any) {
         if (e?.code !== '42P01')
-          console.warn('[AnA RI] ai_messages insert failed:', e.message);
+          console.warn('[AnA] ai_messages insert failed:', e.message);
       }
     }
 
@@ -275,7 +243,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       const embeddingService = getEmbeddingService(pool);
       // Bail early if org UUID is provided but clearly invalid
       if (orgUuid && !/^[0-9a-f-]{36}$/i.test(orgUuid)) {
-        console.warn('[AnA RI] Invalid org UUID, skipping retrieval');
+        console.warn('[AnA] Invalid org UUID, skipping retrieval');
       } else {
         const searchResults = await embeddingService.searchHybrid(message, 5, 0.7, orgUuid);
         sources = searchResults.map(r => ({
@@ -348,13 +316,13 @@ const sendMessageHandler = async (req: Request, res: Response) => {
             }
           } catch (e: any) {
             if (e?.code !== '42P01')
-              console.warn('[AnA RI] Retrieval persist failed:', e.message);
+              console.warn('[AnA] Retrieval persist failed:', e.message);
           }
         }
       }
     } catch (srcErr: any) {
       // Non-fatal — chat still works, just without grounded evidence
-      console.warn('[AnA RI] Source retrieval failed:', srcErr.message);
+      console.warn('[AnA] Source retrieval failed:', srcErr.message);
     }
 
     // ── STEP 5: BUILD EVIDENCE-GROUNDED PROMPT ─────────────────────────
@@ -400,7 +368,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       ];
 
       console.log(
-        `[AnA RI] Sending through AI Gateway (${sources.length} sources retrieved)...`
+        `[AnA] Sending through AI Gateway (${sources.length} sources retrieved)...`
       );
 
       const gwResponse: GatewayResponse = await gw.route({
@@ -426,10 +394,10 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       latencyMs = gwResponse.latencyMs;
 
       console.log(
-        `[AnA RI] AI Gateway response via ${model} (${latencyMs}ms, req=${gwResponse.requestId})`
+        `[AnA] AI Gateway response via ${model} (${latencyMs}ms, req=${gwResponse.requestId})`
       );
     } catch (gwError: any) {
-      console.error('[AnA RI] AI Gateway call failed:', gwError.message);
+      console.error('[AnA] AI Gateway call failed:', gwError.message);
       return res.status(503).json({
         error: 'AI provider call failed',
         code: 'AI_PROVIDER_UNAVAILABLE',
@@ -513,7 +481,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
         );
       } catch (e: any) {
         if (e?.code !== '42P01')
-          console.warn('[AnA RI] Generation persist failed:', e.message);
+          console.warn('[AnA] Generation persist failed:', e.message);
       }
     }
 
@@ -619,7 +587,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
           });
           continue; // skip fallback below
         } catch (e: any) {
-          if (e?.code !== '42P01') console.warn('[AnA RI] Claim persist failed:', e.message);
+          if (e?.code !== '42P01') console.warn('[AnA] Claim persist failed:', e.message);
         }
       }
 
