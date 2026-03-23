@@ -4,6 +4,7 @@ import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { CheckCircle, Circle, FileText, AlertTriangle, Info } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 const ECTDPyramidTemplateSelector = ({ onTemplateSelect, selectedTemplate }) => {
   const [templates, setTemplates] = useState([]);
@@ -331,7 +332,7 @@ const handleTemplateSelect = async templateId => {
     }
   } catch (error) {
     console.error('Error selecting template:', error);
-    alert(`Error loading template: ${error.message}`);
+    toast({ title: `Error loading template: ${error.message}` });
   } finally {
     setLoading(false);
   }

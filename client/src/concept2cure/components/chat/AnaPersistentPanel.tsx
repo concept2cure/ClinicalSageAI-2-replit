@@ -29,6 +29,16 @@ import {
   MessageSquare,
   Image as ImageIcon,
   Download,
+  Search,
+  PenTool,
+  AlertTriangle,
+  Target,
+  GitCompare,
+  Shield,
+  FileSearch,
+  HelpCircle,
+  FileEdit,
+  FolderPlus,
 } from 'lucide-react';
 
 marked.setOptions({ breaks: true, gfm: true });
@@ -114,15 +124,18 @@ interface AnaMessage {
   images?: Array<{ base64: string; mimeType: string }>;
   /** Downloadable PPTX from Nano Banana */
   pptx?: { base64: string; filename: string; mimeType: string };
-  /** AnA 1.0 RI — Executed guidance actions */
-  executedActions?: Array<{
-    actionType: string;
-    executed: boolean;
-    confidence: string;
-    artifactId: string | null;
-    threadId: string | null;
-    error: string | null;
-  }>;
+  /** Whether this message has been saved as an artifact */
+  savedAsArtifact?: boolean;
+}
+
+// ─── Auth helper ──────────────────────────────────────────────────────────────
+function getAuthHeaders(): Record<string, string> {
+  const token =
+    sessionStorage.getItem('trialsage_access_token') ||
+    localStorage.getItem('trialsage_access_token');
+  return token
+    ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+    : { 'Content-Type': 'application/json' };
 }
 
 interface SuggestedAction {
@@ -132,6 +145,60 @@ interface SuggestedAction {
   description?: string;
 }
 
+// ─── AnA RI Types ─────────────────────────────────────────────────────────────
+
+type IntentLens = 'auto' | 'audit' | 'improve' | 'risk' | 'strategy' | 'compare';
+
+interface IntentLensOption {
+  id: IntentLens;
+  label: string;
+  description: string;
+  icon: React.ReactNode;
+}
+
+const INTENT_LENSES: IntentLensOption[] = [
+  { id: 'auto', label: 'Auto', description: 'AnA detects intent automatically', icon: <Sparkles className="w-3.5 h-3.5" /> },
+  { id: 'audit', label: 'Audit', description: 'Review like a regulator', icon: <Search className="w-3.5 h-3.5" /> },
+  { id: 'improve', label: 'Improve', description: 'Strengthen writing and structure', icon: <PenTool className="w-3.5 h-3.5" /> },
+  { id: 'risk', label: 'Risk', description: 'Predict deficiencies and rejections', icon: <AlertTriangle className="w-3.5 h-3.5" /> },
+  { id: 'strategy', label: 'Strategy', description: 'Regulatory pathway analysis', icon: <Target className="w-3.5 h-3.5" /> },
+  { id: 'compare', label: 'Compare', description: 'Side-by-side analysis', icon: <GitCompare className="w-3.5 h-3.5" /> },
+];
+
+interface AnaRIOrchestration {
+  detectedIntent: { lens: IntentLens; confidence: number; signals: string[] };
+  detectedSubmissionType: string | null;
+  appliedRole: string;
+  suggestedActions: string[];
+}
+
+type DocumentActionType =
+  | 'risk_memo'
+  | 'deficiency_preemption_memo'
+  | 'evidence_memo'
+  | 'strategy_note'
+  | 'reviewer_question_brief'
+  | 'rewritten_section'
+  | 'revised_artifact'
+  | 'attach_to_dossier';
+
+interface DocumentActionConfig {
+  type: DocumentActionType;
+  label: string;
+  icon: React.ReactNode;
+}
+
+const DOCUMENT_ACTION_CONFIGS: DocumentActionConfig[] = [
+  { type: 'revised_artifact', label: 'Revise Document', icon: <FileEdit className="w-3.5 h-3.5" /> },
+  { type: 'risk_memo', label: 'Create Risk Memo', icon: <AlertTriangle className="w-3.5 h-3.5" /> },
+  { type: 'deficiency_preemption_memo', label: 'Deficiency Preemption', icon: <Shield className="w-3.5 h-3.5" /> },
+  { type: 'rewritten_section', label: 'Rewrite Section', icon: <PenTool className="w-3.5 h-3.5" /> },
+  { type: 'strategy_note', label: 'Strategy Note', icon: <Target className="w-3.5 h-3.5" /> },
+  { type: 'evidence_memo', label: 'Evidence Memo', icon: <FileSearch className="w-3.5 h-3.5" /> },
+  { type: 'reviewer_question_brief', label: 'Reviewer Brief', icon: <HelpCircle className="w-3.5 h-3.5" /> },
+  { type: 'attach_to_dossier', label: 'Attach to Dossier', icon: <FolderPlus className="w-3.5 h-3.5" /> },
+];
+
 interface AnaPersistentPanelProps {
   contextProfile?: {
     productType?: string;
@@ -139,6 +206,8 @@ interface AnaPersistentPanelProps {
     screenName?: string;
     activeProject?: string;
     projectId?: string;
+    /** Page-specific context for deeper awareness (active tab, filters, etc.) */
+    moduleContext?: Record<string, unknown>;
   };
   /** Suggested actions shown as quick-start chips when conversation is empty */
   suggestedActions?: SuggestedAction[];
@@ -185,6 +254,7 @@ const SCREEN_LABELS: Record<string, string> = {
   cmc: 'CMC Platform',
   'deep-research': 'Deep Research',
   'document-builder': 'Document Builder',
+  'precedent-intelligence': 'Precedent Intelligence & Governed Operating Layer',
   projects: 'Home',
 };
 
@@ -212,6 +282,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   const [showModeDropdown, setShowModeDropdown] = useState(false);
   const modeDropdownRef = useRef<HTMLDivElement>(null);
   const [showActions, setShowActions] = useState<string | null>(null);
+  // AnA RI state
+  const [intentLens, setIntentLens] = useState<IntentLens>('auto');
+  const [lastOrchestration, setLastOrchestration] = useState<AnaRIOrchestration | null>(null);
+  const [showLensDropdown, setShowLensDropdown] = useState(false);
+  const lensDropdownRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const initialMessageSentRef = useRef(false);
@@ -234,38 +309,53 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     }
   }, [showModeDropdown]);
 
+  // Close lens dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (lensDropdownRef.current && !lensDropdownRef.current.contains(e.target as Node)) {
+        setShowLensDropdown(false);
+      }
+    };
+    if (showLensDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showLensDropdown]);
+
   // AnA personality — rotating thinking messages
   const [thinkingMsg, setThinkingMsg] = useState('');
   useEffect(() => {
     if (!isThinking) return;
     const STANDARD_THINKING = [
-      'Reviewing your regulatory landscape...',
+      'Analyzing regulatory requirements...',
       'Cross-referencing guidance documents...',
-      'Checking the latest FDA guidance...',
-      'Analyzing CTD module dependencies...',
-      'Assessing submission defensibility...',
-      'Running compliance cross-checks...',
-      'Evaluating reviewer sensitivity points...',
-      'Verifying 21 CFR Part 11 alignment...',
-      'Checking ICH guideline requirements...',
-      'Assessing evidence integration...',
-      'Reviewing predicate device precedents...',
-      'Evaluating cross-section consistency...',
-      'Analyzing risk-benefit positioning...',
-      'Checking regulatory precedent patterns...',
-      'Prioritizing findings by submission impact...',
+      'Evaluating submission readiness...',
+      'Reviewing CTD module structure...',
+      'Assessing regulatory pathway options...',
+      'Running compliance analysis...',
+      'Checking ICH guideline alignment...',
+      'Reviewing 21 CFR Part 11 requirements...',
+      'Analyzing evidence strength...',
+      'Evaluating deficiency risk profile...',
+      'Assessing endpoint defensibility...',
+      'Reviewing regulatory precedent...',
+      'Checking predicate devices and precedents...',
+      'Cross-referencing FDA guidance database...',
+      'Analyzing submission strategy...',
     ];
     const DEEP_RESEARCH_THINKING = [
-      'Querying ClinicalTrials.gov for matching studies...',
-      'Searching PubMed for relevant literature...',
-      'Checking FDA approval histories...',
+      'Searching ClinicalTrials.gov for matching studies...',
+      'Pulling from PubMed — casting a wide net...',
+      'Checking FDA approval histories for similar products...',
       'Scanning EMA assessment reports...',
-      'Aggregating results across data sources...',
+      'Aggregating results across all data sources...',
       'Cross-referencing regulatory precedents...',
       'Building the competitive landscape...',
-      'Claude is synthesizing findings into a briefing...',
+      'Synthesizing findings into a briefing...',
       'Analyzing evidence coverage gaps...',
       'Ranking results by regulatory relevance...',
+      'This is substantive research — give me a moment...',
+      'Found some interesting precedents — pulling them together...',
     ];
     const ANA_THINKING_MESSAGES = chatMode === 'deep-research' ? DEEP_RESEARCH_THINKING : STANDARD_THINKING;
     setThinkingMsg(ANA_THINKING_MESSAGES[Math.floor(Math.random() * ANA_THINKING_MESSAGES.length)]);
@@ -280,9 +370,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     const hour = new Date().getHours();
     const timeGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
     if (contextProfile?.activeProject) {
-      return `${timeGreeting}! Ready to make progress on ${contextProfile.activeProject}. What shall we tackle?`;
+      return `${timeGreeting}. Ready to work on ${contextProfile.activeProject}. How can I help?`;
     }
-    return `${timeGreeting}. I'm AnA, your regulatory intelligence partner. What are we working on?`;
+    return `${timeGreeting}. I'm AnA — regulatory intelligence for FDA, EMA, and ICH submissions. What are you working on?`;
   }, [greeting, contextProfile?.activeProject]);
 
   // Auto-scroll when new messages
@@ -331,7 +421,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         // Launch job
         const launchRes = await fetch('/api/deep-research/jobs', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
           body: JSON.stringify({
             query: { indication: text, keywords: text.split(/\s+/).filter(w => w.length > 3) },
             connectorIds: ['clinical_trials_gov', 'pubmed', 'fda_drugs', 'ema_epar'],
@@ -459,7 +549,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         // Route to Nano Banana (Gemini image gen) endpoint
         const response = await fetch('/api/nano-banana/chat', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
           body: JSON.stringify({
             message: text,
             conversationHistory: messages.slice(-10).map(m => ({
@@ -493,8 +583,32 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           pptx: data.pptx,
         }]);
       } else {
-        // Standard mode → Cortex unified chat
-        const response = await fetch('/api/cortex/chat', {
+        // Standard mode → AnA RI orchestrated chat (falls back to Cortex)
+        const anaRiPayload = {
+          message: text,
+          intent_lens: intentLens !== 'auto' ? intentLens : undefined,
+          user_role: contextProfile?.userRole || undefined,
+          project_context: contextProfile?.activeProject ? {
+            productName: contextProfile.activeProject,
+            submissionType: contextProfile.productType,
+          } : undefined,
+          submission_type: contextProfile?.productType || undefined,
+          context: {
+            screen: contextProfile?.screenName,
+            project: contextProfile?.activeProject,
+            projectId: contextProfile?.projectId,
+            productType: contextProfile?.productType,
+            userRole: contextProfile?.userRole,
+            screenName: contextProfile?.screenName,
+          },
+          conversation_history: messages.slice(-10).map(m => ({
+            role: m.role,
+            content: m.content,
+          })),
+        };
+
+        // Try AnA RI first, fallback to Cortex
+        let response = await fetch('/api/ana-ri/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -509,6 +623,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               projectId: contextProfile?.projectId,
               productType: contextProfile?.productType,
               userRole: contextProfile?.userRole,
+              ...(contextProfile?.moduleContext || {}),
             },
             conversationHistory: messages.slice(-10).map(m => ({
               role: m.role,
@@ -516,8 +631,33 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             })),
           }),
         });
+
         if (!response.ok) {
-          throw new Error(`Request failed (${response.status})`);
+          // Fallback to Cortex unified chat
+          response = await fetch('/api/cortex/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              message: text,
+              chatMode,
+              project_id: contextProfile?.projectId || undefined,
+              submission_type: contextProfile?.productType || undefined,
+              context: {
+                screen: contextProfile?.screenName,
+                project: contextProfile?.activeProject,
+                projectId: contextProfile?.projectId,
+                productType: contextProfile?.productType,
+                userRole: contextProfile?.userRole,
+              },
+              conversationHistory: messages.slice(-10).map(m => ({
+                role: m.role,
+                content: m.content,
+              })),
+            }),
+          });
+          if (!response.ok) {
+            throw new Error(`Request failed (${response.status})`);
+          }
         }
         data = await response.json();
 
@@ -529,10 +669,36 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         setMessages(prev => [...prev, {
           id: `a-${Date.now()}`,
           role: 'assistant',
-          content: data.response || data.answer || 'I\'m here to help with your regulatory work. What would you like to work on?',
+          content: cleanContent,
           timestamp: new Date(),
           executedActions: data.executedActions || undefined,
         }]);
+
+        // Auto-persist substantial AI responses as artifacts when project context exists
+        if (contextProfile?.projectId && assistantContent.length > 500) {
+          const numericProjectId = String(contextProfile.projectId).replace(/^proj_/, '');
+          // Extract code blocks > 200 chars as artifacts
+          const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
+          let match;
+          while ((match = codeBlockRegex.exec(assistantContent)) !== null) {
+            const blockContent = match[2].trim();
+            if (blockContent.length < 200) continue;
+            try {
+              await fetch(`/api/concept2cure/projects/${numericProjectId}/artifacts`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({
+                  title: `AI Draft — ${new Date().toISOString().split('T')[0]}`,
+                  content: blockContent,
+                  type: 'document_section',
+                  category: 'document',
+                }),
+              });
+            } catch {
+              // Non-blocking
+            }
+          }
+        }
       }
     } catch (err: any) {
       setMessages(prev => [...prev, {
@@ -547,7 +713,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       // Return focus to input after send completes
       inputRef.current?.focus();
     }
-  }, [input, isThinking, messages, contextProfile, chatMode]);
+  }, [input, isThinking, messages, contextProfile, chatMode, intentLens]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -891,8 +1057,133 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           <button onClick={() => handleCopy(msg.id, msg.content)} className="p-1 text-[#B0AEA5] hover:text-[#4D4B45] hover:bg-[#F5F4EF] rounded transition-colors" title="Copy">
                             {copiedId === msg.id ? <Check className="w-3 h-3 text-green-600" /> : <Copy className="w-3 h-3" />}
                           </button>
-                          <button onClick={() => console.info(`[chat-feedback] messageId=${msg.id} positive=true`)} className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors" title="Good"><ThumbsUp className="w-3 h-3" /></button>
-                          <button onClick={() => console.info(`[chat-feedback] messageId=${msg.id} positive=false`)} className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors" title="Bad"><ThumbsDown className="w-3 h-3" /></button>
+                          <button onClick={() => {
+                            fetch('/api/concept2cure/feedback', {
+                              method: 'POST',
+                              headers: getAuthHeaders(),
+                              body: JSON.stringify({ messageId: msg.id, positive: true }),
+                            }).catch(() => {});
+                          }} className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors" title="Good"><ThumbsUp className="w-3 h-3" /></button>
+                          <button onClick={() => {
+                            fetch('/api/concept2cure/feedback', {
+                              method: 'POST',
+                              headers: getAuthHeaders(),
+                              body: JSON.stringify({ messageId: msg.id, positive: false }),
+                            }).catch(() => {});
+                          }} className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors" title="Bad"><ThumbsDown className="w-3 h-3" /></button>
+                          {/* Save to Vault — persist AI response as a governed artifact */}
+                          {contextProfile?.projectId && msg.content.length > 100 && !msg.savedAsArtifact && (
+                            <button
+                              onClick={async () => {
+                                const numProjId = String(contextProfile.projectId).replace(/^proj_/, '');
+                                try {
+                                  const saveRes = await fetch(`/api/concept2cure/projects/${numProjId}/artifacts`, {
+                                    method: 'POST',
+                                    headers: getAuthHeaders(),
+                                    body: JSON.stringify({
+                                      title: `AnA Response — ${new Date().toISOString().split('T')[0]}`,
+                                      content: msg.content,
+                                      type: 'document_section',
+                                      category: 'document',
+                                    }),
+                                  });
+                                  if (saveRes.ok) {
+                                    setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, savedAsArtifact: true } : m));
+                                  }
+                                } catch { /* non-blocking */ }
+                              }}
+                              className="p-1 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
+                              title="Save to Vault"
+                            >
+                              <Download className="w-3 h-3" />
+                            </button>
+                          )}
+                          {msg.savedAsArtifact && (
+                            <span className="text-[10px] text-emerald-600 font-medium ml-1">Saved</span>
+                          )}
+                        </div>
+                      )}
+                      {/* AnA RI Document Action Row — shown on the last assistant message */}
+                      {!isUser && msg.id === messages.filter(m => m.role === 'assistant').at(-1)?.id && lastOrchestration && (
+                        <div className="mt-3 pt-3 border-t border-[#F5F4EF]">
+                          <p className="text-[10px] font-medium text-[#B0AEA5] uppercase tracking-wide mb-2">Document Actions</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {DOCUMENT_ACTION_CONFIGS
+                              .filter(a => !lastOrchestration.suggestedActions.length || lastOrchestration.suggestedActions.includes(a.type) || ['revised_artifact', 'attach_to_dossier'].includes(a.type))
+                              .slice(0, 5)
+                              .map(action => (
+                                <button
+                                  key={action.type}
+                                  disabled={isThinking}
+                                  onClick={async () => {
+                                    if (isThinking) return;
+                                    if (!contextProfile?.projectId) {
+                                      setMessages(prev => [...prev, {
+                                        id: `a-${Date.now()}`,
+                                        role: 'assistant',
+                                        content: `**Cannot create artifact** — No project selected. Please open a project first, then try again.`,
+                                        timestamp: new Date(),
+                                      }]);
+                                      return;
+                                    }
+                                    setIsThinking(true);
+                                    try {
+                                      const res = await fetch('/api/ana-ri/generate', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                          action_type: action.type,
+                                          conversation_context: messages.slice(-20).map(m => ({
+                                            role: m.role,
+                                            content: m.content,
+                                          })),
+                                          project_id: contextProfile.projectId,
+                                          user_role: contextProfile?.userRole || undefined,
+                                          intent_lens: intentLens !== 'auto' ? intentLens : undefined,
+                                        }),
+                                      });
+                                      if (res.ok) {
+                                        const data = await res.json();
+                                        let statusLine = '';
+                                        if (data.artifactId) {
+                                          statusLine = `\n\n---\n**${action.label} created** | Artifact #${data.artifactId} | Quality: ${data.qualityGrade || 'draft'} | ${data.isNew ? 'New' : 'Updated'}`;
+                                        } else if (data.persisted === false) {
+                                          statusLine = '\n\n---\n**Warning:** Content generated but could not be saved to project. Please copy this content.';
+                                        }
+                                        setMessages(prev => [...prev, {
+                                          id: `a-${Date.now()}`,
+                                          role: 'assistant',
+                                          content: data.content + statusLine,
+                                          timestamp: new Date(),
+                                        }]);
+                                        setIsThinking(false);
+                                      } else {
+                                        // Fallback: send as chat prompt (handleSend manages isThinking)
+                                        handleSend(`Please generate a ${action.label.toLowerCase()} based on our conversation above.`);
+                                      }
+                                    } catch {
+                                      // Fallback: send as chat prompt (handleSend manages isThinking)
+                                      handleSend(`Please generate a ${action.label.toLowerCase()} based on our conversation above.`);
+                                    }
+                                  }}
+                                  className={cn(
+                                    "inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-colors",
+                                    isThinking
+                                      ? "border-[#E8E6DC] text-[#D8D5CA] cursor-not-allowed"
+                                      : "border-[#E8E6DC] text-[#6B6962] hover:bg-[#FAF9F5] hover:border-[#D8D5CA] hover:text-[#4D4B45]"
+                                  )}
+                                >
+                                  {action.icon}
+                                  {action.label}
+                                </button>
+                              ))}
+                          </div>
+                          {lastOrchestration.detectedSubmissionType && (
+                            <p className="text-[10px] text-[#B0AEA5] mt-2">
+                              Detected: {lastOrchestration.detectedSubmissionType.toUpperCase()} submission
+                              {lastOrchestration.detectedIntent.lens !== 'auto' && ` | ${lastOrchestration.detectedIntent.lens} lens`}
+                            </p>
+                          )}
                         </div>
                       )}
                     </div>
@@ -980,7 +1271,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 <div className="absolute bottom-full left-0 mb-1.5 w-56 bg-white rounded-xl border border-[#E8E6DC] shadow-lg py-1 z-50">
                   <button
                     type="button"
-                    onClick={() => { setChatMode('standard'); setShowModeDropdown(false); }}
+                    onClick={() => { setChatMode('standard'); setIntentLens('auto'); setShowModeDropdown(false); }}
                     className={cn(
                       'w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-[#FAF9F5] transition-colors',
                       chatMode === 'standard' && 'bg-[#FAF9F5]'
@@ -1028,6 +1319,57 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               )}
             </div>
 
+            {/* AnA RI Intent Lens selector — only in standard mode */}
+            {chatMode === 'standard' && (
+              <div className="relative flex-shrink-0 self-center" ref={lensDropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setShowLensDropdown(prev => !prev)}
+                  className={cn(
+                    'flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors',
+                    intentLens !== 'auto'
+                      ? 'bg-[#FBF0EB] text-[#D97757] hover:bg-[#F5E1D6]'
+                      : 'text-[#B0AEA5] hover:bg-[#F5F4EF] hover:text-[#6B6962]'
+                  )}
+                  title="Intent lens"
+                >
+                  {INTENT_LENSES.find(l => l.id === intentLens)?.icon}
+                  <span className="hidden sm:inline">
+                    {INTENT_LENSES.find(l => l.id === intentLens)?.label}
+                  </span>
+                  <ChevronDown className="w-3 h-3 opacity-50" />
+                </button>
+
+                {showLensDropdown && (
+                  <div className="absolute bottom-full left-0 mb-1.5 w-52 bg-white rounded-xl border border-[#E8E6DC] shadow-lg py-1 z-50">
+                    {INTENT_LENSES.map(lens => (
+                      <button
+                        key={lens.id}
+                        type="button"
+                        onClick={() => { setIntentLens(lens.id); setShowLensDropdown(false); }}
+                        className={cn(
+                          'w-full flex items-start gap-3 px-3 py-2 text-left hover:bg-[#FAF9F5] transition-colors',
+                          intentLens === lens.id && 'bg-[#FAF9F5]'
+                        )}
+                      >
+                        <span className={cn(
+                          'mt-0.5 flex-shrink-0',
+                          intentLens === lens.id ? 'text-[#D97757]' : 'text-[#8A8880]'
+                        )}>
+                          {lens.icon}
+                        </span>
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium text-[#141413]">{lens.label}</div>
+                          <div className="text-[10px] text-[#B0AEA5] leading-tight">{lens.description}</div>
+                        </div>
+                        {intentLens === lens.id && <Check className="w-4 h-4 text-[#D97757] ml-auto mt-0.5 flex-shrink-0" />}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Input */}
             <textarea
               ref={inputRef}
@@ -1036,7 +1378,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               onKeyDown={handleKeyDown}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
-              placeholder={chatMode === 'deep-research' ? 'Ask a deep research question...' : chatMode === 'nano-banana' ? 'Describe an image, infographic, or presentation...' : 'Message AnA...'}
+              placeholder={chatMode === 'deep-research' ? 'Ask a deep research question...' : chatMode === 'nano-banana' ? 'Describe an image, infographic, or presentation...' : intentLens !== 'auto' ? `Message AnA (${intentLens} lens)...` : 'Message AnA...'}
               rows={1}
               className="flex-1 resize-none bg-transparent border-none outline-none text-[#141413] placeholder:text-[#B0AEA5] text-sm leading-6 min-h-[24px] max-h-[120px]"
             />

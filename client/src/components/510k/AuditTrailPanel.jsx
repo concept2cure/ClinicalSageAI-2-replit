@@ -6,6 +6,7 @@ import { ShieldCheck, History, FileCheck, Download, AlertTriangle } from 'lucide
 import { Button } from '@/components/ui/button';
 import SignOffAuditTrail from './SignOffAuditTrail';
 import ManagerSignOffService from '../../services/ManagerSignOffService';
+import { toast } from '@/hooks/use-toast';
 
 /**
  * 510(k) Audit Trail Panel
@@ -42,9 +43,9 @@ const AuditTrailPanel = ({ deviceProfile, organizationId }) => {
       setIsExporting(false);
 
       // Show alert for demo purposes
-      alert(
+      toast({ title: 
         'In a production environment, this would generate a comprehensive FDA-compliant audit log PDF for regulatory submissions.'
-      );
+       });
     }, 1500);
   };
 

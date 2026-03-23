@@ -19,14 +19,12 @@ export default function KnowledgeGraphPanel() {
       
       // Check if the response is successful and contains JSON
       if (!r.ok) {
-        console.warn('Quality graph API not available (requires FEATURE_QUALITY=1)');
         setData({ nodes: [], edges: [], error: 'Quality graph feature not enabled' });
         return;
       }
       
       const contentType = r.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
-        console.warn('Quality graph API returned non-JSON response');
         setData({ nodes: [], edges: [], error: 'Quality graph feature not available' });
         return;
       }
@@ -34,7 +32,6 @@ export default function KnowledgeGraphPanel() {
       const jsonData = await r.json();
       setData(jsonData);
     } catch (error) {
-      console.warn('Failed to fetch quality graph data:', error);
       setData({ nodes: [], edges: [], error: 'Unable to load quality graph data' });
     }
   }

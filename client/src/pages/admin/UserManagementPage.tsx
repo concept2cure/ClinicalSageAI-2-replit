@@ -12,6 +12,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { toast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import {
   Table,
@@ -152,8 +153,7 @@ export default function UserManagementPage() {
       });
     },
     onError: (error: Error) => {
-      console.error('Failed to invite user:', error);
-      alert(`Failed to invite user: ${error.message}`);
+      toast({ title: 'Invite Failed', description: error.message, variant: 'destructive' });
     },
   });
 
@@ -174,8 +174,7 @@ export default function UserManagementPage() {
       setSelectedUser(null);
     },
     onError: (error: Error) => {
-      console.error('Failed to update user:', error);
-      alert(`Failed to update user: ${error.message}`);
+      toast({ title: 'Update Failed', description: error.message, variant: 'destructive' });
     },
   });
 

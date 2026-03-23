@@ -10,7 +10,6 @@ export default function DependenciesPanel({ studyId }: { studyId: string }) {
         setD(await r.json());
       }
     } catch (err) {
-      console.error('Failed to load dependencies:', err);
     }
   }
   useEffect(() => {

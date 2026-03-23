@@ -16,6 +16,7 @@ import {
   Download,
   Loader2,
 } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 import SSTPanel from '../quality/SSTPanel';
 import DissolutionPanel from '../quality/DissolutionPanel';
 import GenealogyGraph from '../quality/GenealogyGraph';
@@ -185,8 +186,8 @@ export default function QualityTab() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Dosage Form</label>
-                  <select className="w-full border rounded-md p-2">
+                  <label htmlFor="micro-dosage-form" className="block text-sm font-medium mb-2">Dosage Form</label>
+                  <select id="micro-dosage-form" className="w-full border rounded-md p-2" aria-label="Dosage form selection">
                     <option>Oral Solid</option>
                     <option>Topical</option>
                     <option>Non-sterile Aqueous</option>
@@ -194,8 +195,8 @@ export default function QualityTab() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">Region</label>
-                  <select className="w-full border rounded-md p-2">
+                  <label htmlFor="micro-region" className="block text-sm font-medium mb-2">Region</label>
+                  <select id="micro-region" className="w-full border rounded-md p-2" aria-label="Region selection">
                     <option>GLOBAL</option>
                     <option>USP</option>
                     <option>EP</option>
@@ -226,11 +227,13 @@ export default function QualityTab() {
                       }
                     );
                     const result = await response.json();
-                    alert(
-                      `Evaluation: ${result.evaluation?.pass ? 'PASS' : 'FAIL'} - ${result.evaluation?.reasons?.join('; ') || 'No issues'}`
-                    );
+                    toast({
+                      title: `Micro Evaluation: ${result.evaluation?.pass ? 'PASS' : 'FAIL'}`,
+                      description: result.evaluation?.reasons?.join('; ') || 'No issues detected',
+                      variant: result.evaluation?.pass ? 'default' : 'destructive',
+                    });
                   } catch (error) {
-                    alert('Evaluation failed');
+                    toast({ title: 'Evaluation Failed', description: 'Microbiology evaluation could not be completed', variant: 'destructive' });
                   }
                 }}
               >
@@ -295,20 +298,20 @@ export default function QualityTab() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Region</label>
-                  <select className="w-full border rounded-md p-2">
+                  <label htmlFor="ectd-region" className="block text-sm font-medium mb-2">Region</label>
+                  <select id="ectd-region" className="w-full border rounded-md p-2" aria-label="eCTD target region">
                     <option>FDA</option>
                     <option>EMA</option>
                     <option>PMDA</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">Sequence</label>
-                  <input type="text" defaultValue="0001" className="w-full border rounded-md p-2" />
+                  <label htmlFor="ectd-sequence" className="block text-sm font-medium mb-2">Sequence</label>
+                  <input id="ectd-sequence" type="text" defaultValue="0001" className="w-full border rounded-md p-2" aria-label="eCTD sequence number" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">Operation</label>
-                  <select className="w-full border rounded-md p-2">
+                  <label htmlFor="ectd-operation" className="block text-sm font-medium mb-2">Operation</label>
+                  <select id="ectd-operation" className="w-full border rounded-md p-2" aria-label="eCTD operation type">
                     <option>new</option>
                     <option>replace</option>
                     <option>append</option>
@@ -333,10 +336,10 @@ export default function QualityTab() {
                       a.click();
                       URL.revokeObjectURL(url);
                     } else {
-                      alert('eCTD export failed');
+                      toast({ title: 'Export Failed', description: 'eCTD package export failed', variant: 'destructive' });
                     }
                   } catch (error) {
-                    alert('eCTD export failed');
+                    toast({ title: 'Export Failed', description: 'eCTD package export failed', variant: 'destructive' });
                   }
                 }}
               >

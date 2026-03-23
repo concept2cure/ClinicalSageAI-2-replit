@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import LoadingSpinner from '../common/LoadingSpinner';
+import { toast } from '@/hooks/use-toast';
 
 export default function AdvisorRiskHeatmapV2({ sidebar = false }) {
   const [missingSections, setMissingSections] = useState([]);
@@ -197,16 +198,16 @@ export default function AdvisorRiskHeatmapV2({ sidebar = false }) {
                 // Open Document Editor button
                 modal.querySelector('#openDocumentEditor').addEventListener('click', () => {
                   // Since we don't have the document editor built yet, show a message
-                  alert(`Document Editor for "${section}" is under development. Coming soon!`);
+                  toast({ title: `Document Editor for "${section}" is under development. Coming soon!` });
                   // Keep the modal open so they can try other options
                 });
 
                 // View Detailed Analysis button
                 modal.querySelector('#viewAnalysis').addEventListener('click', () => {
                   // For now, just show an information message
-                  alert(
+                  toast({ title: 
                     `Detailed risk analysis for "${section}" is being generated. This feature will be available in the next release.`
-                  );
+                   });
                   // Keep the modal open
                 });
 

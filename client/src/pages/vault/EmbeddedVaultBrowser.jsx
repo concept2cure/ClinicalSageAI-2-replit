@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import NavigationBanner from '../../components/common/NavigationBanner';
 import EmbeddedFileBrowser from '../../components/ectd/EmbeddedFileBrowser';
 import DocumentViewer from '../../components/document-management/DocumentViewer';
+import { toast } from '@/hooks/use-toast';
 
 /**
  * Embedded VAULT Document Browser Page
@@ -62,7 +63,7 @@ const EmbeddedVaultBrowser = () => {
       case 'download':
         // Simulate download
         setTimeout(() => {
-          alert(`Downloaded ${file.name}`);
+          toast({ title: `Downloaded ${file.name}` });
         }, 1000);
         break;
       case 'edit':

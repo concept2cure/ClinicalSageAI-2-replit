@@ -272,7 +272,7 @@ const MetricCard: React.FC<MetricCardProps> = ({ metric, colorClass }) => {
         <div className="flex items-start justify-between">
           <div>
             <p className="text-xs text-zinc-500 font-medium tracking-wide">{metric.label}</p>
-            <p className={cn('text-3xl font-semibold mt-1.5', COLOR_TEXT_700[colorClass] || 'text-zinc-900')}>
+            <p className={cn('text-2xl font-semibold mt-1.5', COLOR_TEXT_700[colorClass] || 'text-zinc-900')}>
               {typeof metric.value === 'number' && metric.value % 1 !== 0
                 ? metric.value.toFixed(1)
                 : metric.value}

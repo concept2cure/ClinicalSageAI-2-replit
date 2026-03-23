@@ -39,12 +39,20 @@ import {
   Sparkles,
   ShieldCheck,
   Zap,
+  Ban,
+  ClipboardCheck,
+  Globe,
+  Users,
 } from 'lucide-react';
 import {
   usePrecedentSearch,
   usePrecedentCompare,
   usePrecedentRisk,
   usePrecedentStrategy,
+  useCRLTriggers,
+  useRTFTriggers,
+  useEMAPatterns,
+  useAdvisoryCommittee,
   type SearchParams,
   type CompareParams,
   type CompareResult,
@@ -208,6 +216,46 @@ export function PrecedentIntelligenceDashboard({
     : null;
   const { data: strategyResult, isLoading: strategyLoading } = usePrecedentStrategy(strategyParams);
 
+  // ── CRL triggers state ─────────────────────────────────────────────────
+  const [crlActive, setCrlActive] = useState(false);
+  const crlParams = crlActive
+    ? {
+        submissionType: searchSubmissionType,
+        deviceName: compareDeviceName || projectDeviceName || undefined,
+        indication: compareIndication || projectIndication || undefined,
+        therapeuticArea: searchTherapeuticArea || projectTherapeuticArea || undefined,
+        deviceClass: searchDeviceClass || projectDeviceClass || undefined,
+      }
+    : null;
+  const { data: crlResult, isLoading: crlLoading } = useCRLTriggers(crlParams);
+
+  // ── RTF triggers state ─────────────────────────────────────────────────
+  const [rtfActive, setRtfActive] = useState(false);
+  const rtfParams = rtfActive
+    ? { submissionType: searchSubmissionType }
+    : null;
+  const { data: rtfResult, isLoading: rtfLoading } = useRTFTriggers(rtfParams);
+
+  // ── EMA patterns state ─────────────────────────────────────────────────
+  const [emaActive, setEmaActive] = useState(false);
+  const emaParams = emaActive
+    ? {
+        submissionType: searchSubmissionType,
+        therapeuticArea: searchTherapeuticArea || projectTherapeuticArea || undefined,
+      }
+    : null;
+  const { data: emaResult, isLoading: emaLoading } = useEMAPatterns(emaParams);
+
+  // ── Advisory Committee state ───────────────────────────────────────────
+  const [adcomActive, setAdcomActive] = useState(false);
+  const adcomParams = adcomActive
+    ? {
+        submissionType: searchSubmissionType,
+        therapeuticArea: searchTherapeuticArea || projectTherapeuticArea || undefined,
+      }
+    : null;
+  const { data: adcomResult, isLoading: adcomLoading } = useAdvisoryCommittee(adcomParams);
+
   // ═══════════════════════════════════════════════════════════════════════════
   // RENDER
   // ═══════════════════════════════════════════════════════════════════════════
@@ -242,6 +290,30 @@ export function PrecedentIntelligenceDashboard({
             >
               <Compass className="w-3.5 h-3.5" /> Strategy
             </TabsTrigger>
+            <TabsTrigger
+              value="crl"
+              className="gap-1.5 data-[state=active]:bg-red-50 data-[state=active]:text-red-700"
+            >
+              <Ban className="w-3.5 h-3.5" /> CRL
+            </TabsTrigger>
+            <TabsTrigger
+              value="rtf"
+              className="gap-1.5 data-[state=active]:bg-orange-50 data-[state=active]:text-orange-700"
+            >
+              <ClipboardCheck className="w-3.5 h-3.5" /> RTF
+            </TabsTrigger>
+            <TabsTrigger
+              value="ema"
+              className="gap-1.5 data-[state=active]:bg-sky-50 data-[state=active]:text-sky-700"
+            >
+              <Globe className="w-3.5 h-3.5" /> EMA
+            </TabsTrigger>
+            <TabsTrigger
+              value="adcom"
+              className="gap-1.5 data-[state=active]:bg-purple-50 data-[state=active]:text-purple-700"
+            >
+              <Users className="w-3.5 h-3.5" /> AdCom
+            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -265,11 +337,14 @@ export function PrecedentIntelligenceDashboard({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="510(k)">510(k)</SelectItem>
-                      <SelectItem value="PMA">PMA</SelectItem>
-                      <SelectItem value="De Novo">De Novo</SelectItem>
+                      <SelectItem value="PMA">PMA (Class III Device)</SelectItem>
+                      <SelectItem value="De Novo">De Novo (Novel Device)</SelectItem>
                       <SelectItem value="IND">IND</SelectItem>
                       <SelectItem value="NDA">NDA</SelectItem>
+                      <SelectItem value="ANDA">ANDA (Generic)</SelectItem>
+                      <SelectItem value="505(b)(2)">505(b)(2) (Hybrid)</SelectItem>
                       <SelectItem value="BLA">BLA</SelectItem>
+                      <SelectItem value="MAA">MAA (EMA)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -709,11 +784,11 @@ export function PrecedentIntelligenceDashboard({
                     <div className="text-right">
                       <RiskBadge level={riskResult.overallRisk} />
                       <p className="text-xs text-zinc-400 mt-1">
-                        Score: {riskResult.riskScore}/100
+                        Score: {Math.round(riskResult.riskScore * 100)}%
                       </p>
                     </div>
                   </div>
-                  <ScoreBar value={riskResult.riskScore} max={100} label="Risk Level" />
+                  <ScoreBar value={riskResult.riskScore} max={1} label="Risk Level" />
                 </div>
               </div>
 
@@ -725,19 +800,28 @@ export function PrecedentIntelligenceDashboard({
                   </div>
                   <div className="px-3 py-2">
                     <div className="space-y-2">
-                      {riskResult.factors.map((f, i) => (
+                      {riskResult.factors.map((f: any, i: number) => (
                         <div
                           key={i}
                           className="flex items-start gap-2 p-2 rounded bg-red-50/50 text-xs"
                         >
                           <AlertTriangle className="w-3.5 h-3.5 text-red-500 flex-shrink-0 mt-0.5" />
-                          <div>
-                            <span className="font-medium text-zinc-900">{f.factor}</span>
-                            <p className="text-zinc-500 mt-0.5">{f.detail}</p>
+                          <div className="flex-1 min-w-0">
+                            <span className="font-medium text-zinc-900">{f.category || f.factor}</span>
+                            <p className="text-zinc-500 mt-0.5">{f.description || f.detail}</p>
+                            {f.mitigation && (
+                              <p className="text-emerald-600 mt-1 flex items-start gap-1">
+                                <ShieldCheck className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                                {f.mitigation}
+                              </p>
+                            )}
                           </div>
-                          <Badge variant="outline" className="ml-auto flex-shrink-0 text-xs">
-                            {f.severity}
-                          </Badge>
+                          <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                            <RiskBadge level={f.severity} />
+                            {f.precedentCount > 0 && (
+                              <span className="text-zinc-400 text-xs">{f.precedentCount} case{f.precedentCount !== 1 ? 's' : ''}</span>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -755,17 +839,23 @@ export function PrecedentIntelligenceDashboard({
                   </div>
                   <div className="px-3 py-2">
                     <div className="space-y-1.5">
-                      {riskResult.safetySignals.map((s, i) => (
-                        <div
-                          key={i}
-                          className="flex items-center gap-2 p-2 rounded bg-zinc-50 text-xs"
-                        >
-                          <Zap className="w-3 h-3 text-red-400 flex-shrink-0" />
-                          <span className="font-medium text-zinc-700">{s.device}</span>
-                          <span className="text-zinc-500 flex-1 truncate">{s.signal}</span>
-                          <RiskBadge level={s.severity} />
-                        </div>
-                      ))}
+                      {riskResult.safetySignals.map((s: any, i: number) => {
+                        const sevLevel = typeof s.severity === 'number'
+                          ? (s.severity >= 0.75 ? 'critical' : s.severity >= 0.5 ? 'high' : s.severity >= 0.25 ? 'medium' : 'low')
+                          : s.severity;
+                        return (
+                          <div
+                            key={i}
+                            className="flex items-center gap-2 p-2 rounded bg-zinc-50 text-xs"
+                          >
+                            <Zap className="w-3 h-3 text-red-400 flex-shrink-0" />
+                            <span className="font-medium text-zinc-700">{s.deviceName || s.device}</span>
+                            <span className="text-zinc-500 flex-1 truncate">{s.description || s.signalType || s.signal}</span>
+                            {s.kNumber && <Badge variant="outline" className="text-xs">{s.kNumber}</Badge>}
+                            <RiskBadge level={sevLevel} />
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
@@ -913,7 +1003,7 @@ export function PrecedentIntelligenceDashboard({
                   </div>
                   <div className="px-3 py-2">
                     <div className="space-y-2">
-                      {strategyResult.alternativeStrategies.map((alt, i) => (
+                      {strategyResult.alternativeStrategies.map((alt: any, i: number) => (
                         <div
                           key={i}
                           className="p-3 rounded-lg border border-zinc-200 bg-zinc-50/50"
@@ -922,9 +1012,14 @@ export function PrecedentIntelligenceDashboard({
                             <span className="text-sm font-medium text-zinc-900">
                               {alt.strategy}
                             </span>
-                            <ScoreBar value={alt.confidence} label="" />
+                            <div className="flex items-center gap-2">
+                              {alt.precedentCount != null && (
+                                <span className="text-xs text-zinc-400">{alt.precedentCount} precedent{alt.precedentCount !== 1 ? 's' : ''}</span>
+                              )}
+                              <ScoreBar value={alt.successRate ?? alt.confidence ?? 0} label="" />
+                            </div>
                           </div>
-                          <p className="text-xs text-zinc-500">{alt.rationale}</p>
+                          <p className="text-xs text-zinc-500">{alt.description || alt.rationale}</p>
                         </div>
                       ))}
                     </div>
@@ -991,6 +1086,360 @@ export function PrecedentIntelligenceDashboard({
                   </Button>
                 </div>
               )}
+            </>
+          )}
+        </TabsContent>
+
+        {/* ─── CRL TRIGGERS TAB ─────────────────────────────────────────── */}
+        <TabsContent value="crl" className="flex-1 overflow-y-auto p-4 space-y-4 mt-0">
+          <div className="border border-border/40 rounded-sm bg-background">
+            <div className="px-3 py-2 border-b border-border/30 pb-3">
+              <h3 className="text-sm font-semibold flex items-center gap-2">
+                <Ban className="w-4 h-4 text-red-600" />
+                Complete Response Letter (CRL) Trigger Analysis
+              </h3>
+            </div>
+            <div className="px-3 py-2">
+              <p className="text-xs text-zinc-500 mb-3">
+                Identifies CRL trigger patterns based on historical FDA actions, calibrated with confidence scores.
+              </p>
+              <Button
+                onClick={() => setCrlActive(true)}
+                disabled={crlLoading || !searchSubmissionType}
+                className="bg-red-600 hover:bg-red-700 text-white"
+                size="sm"
+              >
+                {crlLoading ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Ban className="w-4 h-4 mr-1" />}
+                Analyze CRL Risk
+              </Button>
+            </div>
+          </div>
+
+          {crlResult && (
+            <>
+              <div className={cn(
+                'border border-border/40 rounded-sm bg-background border-l-4',
+                crlResult.overallCRLRisk === 'low' && 'border-l-emerald-500',
+                crlResult.overallCRLRisk === 'medium' && 'border-l-amber-500',
+                crlResult.overallCRLRisk === 'high' && 'border-l-red-500',
+              )}>
+                <div className="px-3 py-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <h3 className="text-lg font-semibold text-zinc-900">CRL Risk Assessment</h3>
+                      <p className="text-xs text-zinc-500">{crlResult.totalPatterns} patterns analyzed, {crlResult.criticalCount} critical</p>
+                    </div>
+                    <RiskBadge level={crlResult.overallCRLRisk} />
+                  </div>
+                </div>
+              </div>
+
+              {crlResult.triggers.map((t: any, i: number) => (
+                <div key={i} className="border border-border/40 rounded-sm bg-background">
+                  <div className="px-3 py-2">
+                    <div className="flex items-start justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className={cn('w-4 h-4 flex-shrink-0',
+                          t.severity === 'critical' ? 'text-red-600' : t.severity === 'high' ? 'text-amber-600' : 'text-zinc-400'
+                        )} />
+                        <span className="text-sm font-medium text-zinc-900">{t.category}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <RiskBadge level={t.severity} />
+                        <Badge variant="outline" className="text-xs">{Math.round(t.confidence * 100)}% conf</Badge>
+                      </div>
+                    </div>
+                    <p className="text-xs text-zinc-500 ml-6 mb-2">{t.description}</p>
+                    <div className="ml-6 flex items-center gap-3 mb-2">
+                      <span className="text-xs text-zinc-400">Historical rate: {Math.round(t.historicalRate * 100)}%</span>
+                      <ScoreBar value={t.historicalRate} label="" />
+                    </div>
+                    <div className="ml-6 p-2 bg-emerald-50/50 rounded text-xs text-emerald-700 flex items-start gap-1">
+                      <ShieldCheck className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                      <span><strong>Mitigation:</strong> {t.mitigation}</span>
+                    </div>
+                    {t.supportingObjections?.length > 0 && (
+                      <div className="ml-6 mt-2 space-y-1">
+                        {t.supportingObjections.map((q: string, j: number) => (
+                          <div key={j} className="text-xs text-zinc-400 flex items-start gap-1 p-1">
+                            <FileText className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                            <span className="italic">{q}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+        </TabsContent>
+
+        {/* ─── RTF TRIGGERS TAB ─────────────────────────────────────────── */}
+        <TabsContent value="rtf" className="flex-1 overflow-y-auto p-4 space-y-4 mt-0">
+          <div className="border border-border/40 rounded-sm bg-background">
+            <div className="px-3 py-2 border-b border-border/30 pb-3">
+              <h3 className="text-sm font-semibold flex items-center gap-2">
+                <ClipboardCheck className="w-4 h-4 text-orange-600" />
+                Refuse to File (RTF) Trigger Analysis
+              </h3>
+            </div>
+            <div className="px-3 py-2">
+              <p className="text-xs text-zinc-500 mb-3">
+                CTD module checklist and historical RTF trigger patterns per 21 CFR 314.101.
+              </p>
+              <Button
+                onClick={() => setRtfActive(true)}
+                disabled={rtfLoading || !searchSubmissionType}
+                className="bg-orange-600 hover:bg-orange-700 text-white"
+                size="sm"
+              >
+                {rtfLoading ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <ClipboardCheck className="w-4 h-4 mr-1" />}
+                Run RTF Check
+              </Button>
+            </div>
+          </div>
+
+          {rtfResult && (
+            <>
+              <div className="border border-border/40 rounded-sm bg-background">
+                <div className="px-3 py-2 border-b border-border/30 pb-2">
+                  <h3 className="text-sm font-semibold flex items-center gap-2">
+                    <ClipboardCheck className="w-4 h-4 text-orange-600" />
+                    Submission Checklist ({rtfResult.requiredItems} required of {rtfResult.totalChecklistItems})
+                  </h3>
+                </div>
+                <div className="px-3 py-2">
+                  <div className="space-y-1">
+                    {rtfResult.checklist.map((c: any, i: number) => (
+                      <div key={i} className="flex items-center gap-2 p-2 rounded text-xs hover:bg-zinc-50">
+                        <div className={cn('w-5 h-5 rounded border flex items-center justify-center flex-shrink-0',
+                          c.required ? 'border-orange-300 bg-orange-50' : 'border-zinc-200'
+                        )}>
+                          {c.required && <AlertTriangle className="w-3 h-3 text-orange-500" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-xs flex-shrink-0">{c.section}</Badge>
+                            <span className="font-medium text-zinc-800 truncate">{c.item}</span>
+                          </div>
+                          <p className="text-zinc-500 mt-0.5">{c.description}</p>
+                        </div>
+                        <Badge variant="secondary" className={cn('text-xs flex-shrink-0',
+                          c.category === 'clinical' && 'bg-blue-50 text-blue-700',
+                          c.category === 'cmc' && 'bg-purple-50 text-purple-700',
+                          c.category === 'nonclinical' && 'bg-green-50 text-green-700',
+                          c.category === 'administrative' && 'bg-zinc-100 text-zinc-700',
+                          c.category === 'safety' && 'bg-red-50 text-red-700',
+                        )}>{c.category}</Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="border border-border/40 rounded-sm bg-background">
+                <div className="px-3 py-2 border-b border-border/30 pb-2">
+                  <h3 className="text-sm font-semibold">Historical RTF Triggers</h3>
+                </div>
+                <div className="px-3 py-2 space-y-2">
+                  {rtfResult.triggers.map((t: any, i: number) => (
+                    <div key={i} className="flex items-start gap-2 p-2 rounded bg-red-50/30 text-xs">
+                      <Ban className="w-3.5 h-3.5 text-red-500 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-medium text-zinc-900">{t.trigger}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-zinc-400">{Math.round(t.frequency * 100)}% freq</span>
+                            <RiskBadge level={t.severity} />
+                          </div>
+                        </div>
+                        <p className="text-zinc-500">{t.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+        </TabsContent>
+
+        {/* ─── EMA PATTERNS TAB ─────────────────────────────────────────── */}
+        <TabsContent value="ema" className="flex-1 overflow-y-auto p-4 space-y-4 mt-0">
+          <div className="border border-border/40 rounded-sm bg-background">
+            <div className="px-3 py-2 border-b border-border/30 pb-3">
+              <h3 className="text-sm font-semibold flex items-center gap-2">
+                <Globe className="w-4 h-4 text-sky-600" />
+                EMA Day 120 / Day 180 Question Patterns
+              </h3>
+            </div>
+            <div className="px-3 py-2">
+              <p className="text-xs text-zinc-500 mb-3">
+                Common Major Objections and Other Concerns raised during EMA centralised procedure assessment.
+              </p>
+              <Button
+                onClick={() => setEmaActive(true)}
+                disabled={emaLoading || !searchSubmissionType}
+                className="bg-sky-600 hover:bg-sky-700 text-white"
+                size="sm"
+              >
+                {emaLoading ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Globe className="w-4 h-4 mr-1" />}
+                Analyze EMA Patterns
+              </Button>
+            </div>
+          </div>
+
+          {emaResult && (
+            <>
+              <div className="border border-border/40 rounded-sm bg-background border-l-4 border-l-sky-500">
+                <div className="px-3 py-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-base font-semibold text-zinc-900">EMA Assessment Patterns</h3>
+                      <p className="text-xs text-zinc-500">{emaResult.therapeuticArea} — {emaResult.submissionType}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Badge className="bg-red-100 text-red-700">{emaResult.majorObjectionCount} Major Objection{emaResult.majorObjectionCount !== 1 ? 's' : ''}</Badge>
+                      <Badge className="bg-amber-100 text-amber-700">{emaResult.otherConcernCount} Other Concern{emaResult.otherConcernCount !== 1 ? 's' : ''}</Badge>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {emaResult.day120Questions.length > 0 && (
+                <div className="border border-border/40 rounded-sm bg-background">
+                  <div className="px-3 py-2 border-b border-border/30 pb-2">
+                    <h3 className="text-sm font-semibold text-sky-700">Day 120 — List of Questions</h3>
+                  </div>
+                  <div className="px-3 py-2 space-y-2">
+                    {emaResult.day120Questions.map((q: any, i: number) => (
+                      <div key={i} className={cn('p-3 rounded text-xs border',
+                        q.severity === 'major_objection' ? 'border-red-200 bg-red-50/30' : 'border-amber-200 bg-amber-50/30'
+                      )}>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-medium text-zinc-900">{q.category}</span>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className={cn('text-xs',
+                              q.severity === 'major_objection' ? 'border-red-300 text-red-700' : 'border-amber-300 text-amber-700'
+                            )}>
+                              {q.severity === 'major_objection' ? 'Major Objection' : 'Other Concern'}
+                            </Badge>
+                            <span className="text-zinc-400">{Math.round(q.confidence * 100)}% conf</span>
+                          </div>
+                        </div>
+                        <p className="text-zinc-600 italic mb-1">&ldquo;{q.pattern}&rdquo;</p>
+                        <div className="flex items-center gap-3 text-zinc-400">
+                          <span>Frequency: {Math.round(q.frequency * 100)}%</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {emaResult.day180Questions.length > 0 && (
+                <div className="border border-border/40 rounded-sm bg-background">
+                  <div className="px-3 py-2 border-b border-border/30 pb-2">
+                    <h3 className="text-sm font-semibold text-sky-700">Day 180 — Outstanding Issues</h3>
+                  </div>
+                  <div className="px-3 py-2 space-y-2">
+                    {emaResult.day180Questions.map((q: any, i: number) => (
+                      <div key={i} className={cn('p-3 rounded text-xs border',
+                        q.severity === 'major_objection' ? 'border-red-200 bg-red-50/30' : 'border-amber-200 bg-amber-50/30'
+                      )}>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-medium text-zinc-900">{q.category}</span>
+                          <Badge variant="outline" className={cn('text-xs',
+                            q.severity === 'major_objection' ? 'border-red-300 text-red-700' : 'border-amber-300 text-amber-700'
+                          )}>
+                            {q.severity === 'major_objection' ? 'Major Objection' : 'Other Concern'}
+                          </Badge>
+                        </div>
+                        <p className="text-zinc-600 italic">&ldquo;{q.pattern}&rdquo;</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </TabsContent>
+
+        {/* ─── ADVISORY COMMITTEE TAB ───────────────────────────────────── */}
+        <TabsContent value="adcom" className="flex-1 overflow-y-auto p-4 space-y-4 mt-0">
+          <div className="border border-border/40 rounded-sm bg-background">
+            <div className="px-3 py-2 border-b border-border/30 pb-3">
+              <h3 className="text-sm font-semibold flex items-center gap-2">
+                <Users className="w-4 h-4 text-purple-600" />
+                Advisory Committee (AdCom) Risk Analysis
+              </h3>
+            </div>
+            <div className="px-3 py-2">
+              <p className="text-xs text-zinc-500 mb-3">
+                Predicts likelihood of Advisory Committee referral and identifies contributing factors.
+              </p>
+              <Button
+                onClick={() => setAdcomActive(true)}
+                disabled={adcomLoading || !searchSubmissionType}
+                className="bg-purple-600 hover:bg-purple-700 text-white"
+                size="sm"
+              >
+                {adcomLoading ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Users className="w-4 h-4 mr-1" />}
+                Analyze AdCom Risk
+              </Button>
+            </div>
+          </div>
+
+          {adcomResult && (
+            <>
+              <div className={cn(
+                'border border-border/40 rounded-sm bg-background border-l-4',
+                adcomResult.overallAdcomRisk === 'low' && 'border-l-emerald-500',
+                adcomResult.overallAdcomRisk === 'medium' && 'border-l-amber-500',
+                adcomResult.overallAdcomRisk === 'high' && 'border-l-purple-500',
+              )}>
+                <div className="px-3 py-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold text-zinc-900">AdCom Referral Risk</h3>
+                      <p className="text-xs text-zinc-500">{adcomResult.totalTriggers} triggers, {adcomResult.highProbabilityTriggers} high-probability</p>
+                    </div>
+                    <RiskBadge level={adcomResult.overallAdcomRisk} />
+                  </div>
+                </div>
+              </div>
+
+              {adcomResult.triggers.map((t: any, i: number) => (
+                <div key={i} className="border border-border/40 rounded-sm bg-background">
+                  <div className="px-3 py-2">
+                    <div className="flex items-start justify-between mb-1">
+                      <span className="text-sm font-medium text-zinc-900">{t.trigger}</span>
+                      <div className="flex items-center gap-2">
+                        <RiskBadge level={t.severity} />
+                        <Badge variant="outline" className="text-xs">{Math.round(t.probability * 100)}% prob</Badge>
+                      </div>
+                    </div>
+                    <p className="text-xs text-zinc-500">{t.description}</p>
+                    <ScoreBar value={t.probability} label="Probability" />
+                  </div>
+                </div>
+              ))}
+
+              <div className="border border-border/40 rounded-sm bg-background">
+                <div className="px-3 py-2 border-b border-border/30 pb-2">
+                  <h3 className="text-sm font-semibold flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-purple-500" /> Voting Pattern Insights
+                  </h3>
+                </div>
+                <div className="px-3 py-2 space-y-1.5">
+                  {adcomResult.votingInsights.map((v: string, i: number) => (
+                    <div key={i} className="text-xs text-zinc-600 flex items-start gap-2 p-2 bg-purple-50/30 rounded">
+                      <Sparkles className="w-3 h-3 text-purple-400 flex-shrink-0 mt-0.5" />
+                      {v}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </>
           )}
         </TabsContent>

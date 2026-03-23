@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import dayjs from 'dayjs';
 import InfoTip from '@/components/InfoTip';
 import HelpDrawer from '@/components/HelpDrawer';
+import { toast } from '@/hooks/use-toast';
 
 export default function SamplingWorkbench({ studyId }: { studyId: string }) {
   const [due, setDue] = useState<any[]>([]);
@@ -30,7 +31,7 @@ export default function SamplingWorkbench({ studyId }: { studyId: string }) {
       body: JSON.stringify({ tp_id: tp.tp_id }),
     });
     const d = await r.json();
-    if (!r.ok) return alert(d.error || 'Create sample failed');
+    if (!r.ok) { toast({ title: 'Error', description: d.error || 'Create sample failed', variant: 'destructive' }); return; }
     await load();
     window.open(`/api/stability/samples/${d.sample_id}/barcode.png`, '_blank');
   }
@@ -40,7 +41,7 @@ export default function SamplingWorkbench({ studyId }: { studyId: string }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sample_id: sample.sample_id }),
     });
-    if (!r.ok) return alert('Collect failed');
+    if (!r.ok) { toast({ title: 'Error', description: 'Sample collection failed', variant: 'destructive' }); return; }
     load();
   }
 

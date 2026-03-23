@@ -253,13 +253,13 @@ export const DocumentHealth: React.FC<DocumentHealthProps> = ({
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Overall Score Header */}
-      <div className={cn('p-4 border-b', getScoreBg(overallScore))}>
+      <div className={cn('px-5 py-4 border-b border-zinc-100', getScoreBg(overallScore))}>
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <TrendingUp className={cn('w-5 h-5', getScoreColor(overallScore))} />
             <span className="text-sm font-semibold text-zinc-900">Document Health</span>
           </div>
-          <span className={cn('text-3xl font-semibold', getScoreColor(overallScore))}>
+          <span className={cn('text-2xl font-semibold', getScoreColor(overallScore))}>
             {overallScore}
           </span>
         </div>
@@ -287,7 +287,7 @@ export const DocumentHealth: React.FC<DocumentHealthProps> = ({
           return (
             <div key={dim.id} className="border-b border-zinc-100">
               {/* Dimension header */}
-              <div className="flex items-center gap-2 px-4 py-3">
+              <div className="flex items-center gap-2 px-5 py-3">
                 <Icon className={cn('w-4 h-4 shrink-0', getScoreColor(dim.score))} />
                 <span className="text-xs font-semibold text-zinc-700 flex-1">{dim.label}</span>
                 <span className={cn('text-sm font-semibold', getScoreColor(dim.score))}>
@@ -303,7 +303,7 @@ export const DocumentHealth: React.FC<DocumentHealthProps> = ({
 
               {/* Issues */}
               {hasIssues && (
-                <div className="px-4 pb-3 space-y-1.5">
+                <div className="px-5 pb-3 space-y-1.5">
                   {dim.issues.map((issue, i) => (
                     <div key={i} className="flex items-start gap-2 text-xs">
                       <AlertTriangle className="w-3 h-3 text-amber-500 mt-0.5 shrink-0" />
@@ -328,7 +328,7 @@ export const DocumentHealth: React.FC<DocumentHealthProps> = ({
 
               {/* All good */}
               {!hasIssues && (
-                <div className="px-4 pb-3 flex items-center gap-1.5 text-xs text-emerald-600">
+                <div className="px-5 pb-3 flex items-center gap-1.5 text-xs text-emerald-600">
                   <CheckCircle className="w-3 h-3" />
                   <span>All checks passed</span>
                 </div>

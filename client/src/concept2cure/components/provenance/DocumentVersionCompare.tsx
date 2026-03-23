@@ -221,6 +221,8 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
   const [versionB, setVersionB] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<'side-by-side' | 'unified'>('side-by-side');
   const [rollingBack, setRollingBack] = useState(false);
+  const [reviewingImpact, setReviewingImpact] = useState(false);
+  const [impactResult, setImpactResult] = useState<{ content: string; savedId?: number } | null>(null);
   const [rollbackResult, setRollbackResult] = useState<{
     success: boolean;
     message: string;
@@ -302,6 +304,38 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
     },
     [projectId, artifactId, fetchVersions, onRollbackComplete]
   );
+
+  // ── Review Regulatory Impact handler ──────────────────────────────────────
+  const handleReviewImpact = useCallback(async (vA: number, vB: number, save: boolean = false) => {
+    setReviewingImpact(true);
+    setImpactResult(null);
+    try {
+      const res = await fetch('/api/ana-ri/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        body: JSON.stringify({
+          command: 'review_version_impact',
+          params: {
+            projectId: Number(projectId),
+            artifactId: Number(artifactId),
+            versionA: vA,
+            versionB: vB,
+            saveAsArtifact: save,
+          },
+        }),
+      });
+      const result = await res.json();
+      if (result.success && result.data?.impact) {
+        setImpactResult({ content: result.data.impact, savedId: result.data.savedAsArtifactId });
+      } else {
+        setImpactResult({ content: `Impact review failed: ${result.message || result.error || 'Unknown error'}` });
+      }
+    } catch (err: any) {
+      setImpactResult({ content: `Impact review failed: ${err?.message || 'Network error'}` });
+    } finally {
+      setReviewingImpact(false);
+    }
+  }, [projectId, artifactId]);
 
   const selectedA = versions.find(v => v.version === versionA);
   const selectedB = versions.find(v => v.version === versionB);
@@ -433,6 +467,21 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
           <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-zinc-200">
             <DiffStats textA={textA} textB={textB} />
             <div className="flex items-center gap-1">
+              {/* Regulatory Impact Review button */}
+              {versionA !== null && versionB !== null && versionA !== versionB && (
+                <button
+                  onClick={() => handleReviewImpact(versionA, versionB)}
+                  disabled={reviewingImpact}
+                  className="px-2 py-0.5 text-xs rounded bg-[#FBF0EB] text-[#D97757] hover:bg-[#F5E1D6] disabled:opacity-60 flex items-center gap-0.5 font-medium"
+                >
+                  {reviewingImpact ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-3 h-3" />
+                  )}
+                  Review Impact
+                </button>
+              )}
               {/* Rollback button */}
               {versionA && versionA !== currentVersion && (
                 <button
@@ -486,6 +535,44 @@ const DocumentVersionCompare: React.FC<DocumentVersionCompareProps> = ({
             <AlertTriangle className="w-3.5 h-3.5" />
           )}
           {rollbackResult.message}
+        </div>
+      )}
+
+      {/* Regulatory Impact Review result */}
+      {impactResult && (
+        <div className="border-b border-zinc-200 bg-[#FAF9F5]">
+          <div className="px-3 py-2 flex items-center justify-between border-b border-[#F5F4EF]">
+            <span className="text-xs font-semibold text-[#D97757] flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5" />
+              Regulatory Impact Review
+            </span>
+            <div className="flex items-center gap-1">
+              {versionA !== null && versionB !== null && (
+                <button
+                  onClick={() => handleReviewImpact(versionA, versionB, true)}
+                  disabled={reviewingImpact}
+                  className="px-2 py-0.5 text-xs rounded bg-[#D97757] text-white hover:bg-[#C56847] disabled:opacity-60 flex items-center gap-0.5 font-medium"
+                >
+                  Save as Artifact
+                </button>
+              )}
+              <button
+                onClick={() => setImpactResult(null)}
+                className="text-zinc-400 hover:text-zinc-600 p-0.5"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+          <div className="px-3 py-2 max-h-64 overflow-y-auto text-xs text-zinc-700 prose prose-xs prose-zinc max-w-none whitespace-pre-wrap">
+            {impactResult.content}
+          </div>
+          {impactResult.savedId && (
+            <div className="px-3 py-1.5 border-t border-[#F5F4EF] text-xs text-emerald-700 bg-emerald-50 flex items-center gap-1">
+              <CheckCircle className="w-3.5 h-3.5" />
+              Saved as governed artifact #{impactResult.savedId}
+            </div>
+          )}
         </div>
       )}
 

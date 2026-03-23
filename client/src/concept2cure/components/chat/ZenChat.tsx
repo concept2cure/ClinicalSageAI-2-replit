@@ -128,16 +128,16 @@ interface ZenChatProps {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const ANA_THINKING_PHRASES = [
-  'Assessing regulatory defensibility...',
-  'Cross-referencing guidance documents...',
-  'Evaluating submission posture...',
-  'Checking FDA reviewer sensitivity points...',
-  'Analyzing ICH guideline requirements...',
-  'Reviewing compliance cross-references...',
-  'Prioritizing findings by impact...',
-  'Evaluating evidence integration...',
-  'Checking cross-section consistency...',
-  'Assessing reviewer likely reaction...',
+  'Pulling up the relevant guidance...',
+  'Reviewing regulatory precedents...',
+  'Cross-referencing your dossier...',
+  'Checking the latest FDA thinking...',
+  'Working through the ICH guidelines...',
+  'Reviewing compliance requirements...',
+  'Building something solid for you...',
+  'This one deserves a thorough answer...',
+  'Thinking through the regulatory implications...',
+  'Finding the precedent that matters here...',
 ];
 
 const ThinkingIndicator: React.FC = () => {
@@ -1113,7 +1113,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
   // Handle action card intent — call server action + invalidate workspace-summary cache
   const handleRunIntent = useCallback(
     async (intent: string, label = intent) => {
-      const runId = `run_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      const runId = `run_${crypto.randomUUID().slice(0, 12)}`;
       onActionRun?.({ id: runId, intent, label, status: 'running', ts: Date.now() });
       try {
         const orgId =
@@ -1217,7 +1217,12 @@ export const ZenChat: React.FC<ZenChatProps> = ({
                 onCopy={() => handleCopy(message.content)}
                 onRegenerate={message.role === 'assistant' ? handleRegenerate : undefined}
                 onFeedback={(positive: boolean) => {
-                  console.info(`[chat-feedback] messageId=${message.id} positive=${positive}`);
+                  const fbToken = sessionStorage.getItem('trialsage_access_token') || localStorage.getItem('trialsage_access_token');
+                  fetch('/api/concept2cure/feedback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', ...(fbToken ? { Authorization: `Bearer ${fbToken}` } : {}) },
+                    body: JSON.stringify({ messageId: message.id, positive }),
+                  }).catch(() => {});
                 }}
                 onNavigate={handleNavigate}
                 onSaveArtifact={handleSaveArtifact}

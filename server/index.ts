@@ -899,13 +899,13 @@ try {
   console.error('❌ Failed to mount AI Assistance routes:', error);
 }
 
-// Mount AnA Cortex dedicated routes (10-K harvesting, observation terms)
+// Mount AnA Intelligence dedicated routes (10-K harvesting, observation terms)
 try {
   const lumenCortexRoutes = await import('./routes/lumen-cortex');
   app.use('/api/lumen-cortex', lumenCortexRoutes.default);
-  console.log('✅ AnA Cortex dedicated routes mounted (health, 10K harvest, observation terms)');
+  console.log('✅ AnA Intelligence dedicated routes mounted (health, 10K harvest, observation terms)');
 } catch (error) {
-  console.error('❌ Failed to mount AnA Cortex routes:', error);
+  console.error('❌ Failed to mount AnA Intelligence routes:', error);
 }
 
 // Mount Nano Banana (Gemini image generation) routes
@@ -933,7 +933,7 @@ try {
   console.error('❌ Failed to mount PM Settings routes:', error);
 }
 
-// Mount AnA Cortex (formerly ForesightAI) routes
+// Mount AnA Intelligence (formerly ForesightAI) routes
 // Legacy routes maintained for backward compatibility
 try {
   // Shared deprecation middleware for all Foresight/legacy routes
@@ -956,15 +956,15 @@ try {
     },
     foresightFeedbackRoutes
   );
-  // Legacy Lumen Cortex aliases (kept for backward compat, API paths unchanged)
+  // New AnA Intelligence aliases
   app.use('/api/lumen', foresightDeprecation, foresightApiRoutes);
   app.use('/api/lumen-ai', foresightDeprecation, foresightAIAdvancedRoutes);
-  console.log('✅ AnA Cortex Intelligence API routes mounted (+ legacy /foresight aliases)');
+  console.log('✅ AnA Intelligence™ Intelligence API routes mounted (+ legacy /foresight aliases)');
 } catch (error) {
-  console.error('Failed to mount AnA Cortex routes:', error);
+  console.error('Failed to mount AnA Intelligence routes:', error);
 }
 
-// Mount AnA Cortex RAG routes (formerly ForesightAI RAG)
+// Mount AnA Intelligence RAG routes (formerly ForesightAI RAG)
 try {
   const foresightRagRoutes = await import('./routes/foresight-rag-api.js');
   const foresightRagDeprecation = (req: Request, res: Response, next: () => void) => {
@@ -975,9 +975,9 @@ try {
   };
   app.use('/api/foresight/rag', foresightRagDeprecation, foresightRagRoutes.default);
   app.use('/api/lumen/rag', foresightRagDeprecation, foresightRagRoutes.default); // New alias
-  console.log('✅ AnA Cortex RAG API routes mounted successfully');
+  console.log('✅ AnA Intelligence RAG API routes mounted successfully');
 } catch (error) {
-  console.error('Failed to mount AnA Cortex RAG routes:', error);
+  console.error('Failed to mount AnA Intelligence RAG routes:', error);
 }
 
 // Mount Biotech AI Intelligence RAG routes
@@ -1830,6 +1830,16 @@ try {
   console.error('❌ Failed to mount Biostatistics Platform routes:', error);
 }
 
+// Mount AnA Biostats Operating Function routes
+try {
+  const anaBiostatsModule = await import('./routes/ana-biostats');
+  const anaBiostatsRoutes = anaBiostatsModule.default;
+  app.use('/api/ana-biostats', anaBiostatsRoutes);
+  console.log('✅ AnA Biostats Operating Function routes mounted successfully');
+} catch (error) {
+  console.error('❌ Failed to mount AnA Biostats routes:', error);
+}
+
 // Mount Content Atoms API routes
 try {
   const atomsModule = await import('./routes/atoms.js');
@@ -1850,15 +1860,9 @@ try {
   console.error('❌ Failed to mount Workflow routes:', error);
 }
 
-// Mount AI Drafting API routes
-try {
-  const draftingModule = await import('./routes/drafting');
-  const draftingRoutes = draftingModule.default;
-  app.use('/api/v1/drafting', draftingRoutes);
-  console.log('✅ AI Drafting API routes mounted successfully');
-} catch (error) {
-  console.error('❌ Failed to mount AI Drafting routes:', error);
-}
+// AI Drafting stub route — REMOVED (was returning empty draft strings)
+// Real document drafting uses /api/knowledge-base/generate-ind-section
+// and /api/knowledge-base/save-docx-as-artifact instead.
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PLATFORM CONTROL PLANE & EXTERNAL API ROUTES
@@ -3232,11 +3236,11 @@ app.post('/api/retention/run-job', async (_req: Request, res: Response) => {
   });
 });
 
-// Add missing Lumen AI endpoint
+// Add missing AnA RI endpoint
 app.post('/api/ask-lumen', async (req: Request, res: Response) => {
   try {
     const { query, context, sessionId, documentContent, model = 'openai' } = req.body;
-    debugLog('Lumen AI request received', {
+    debugLog('AnA RI request received', {
       query: query?.substring(0, 100),
       context,
       sessionId,
@@ -3320,7 +3324,7 @@ For "${query}", I suggest consulting the latest ICH guidelines and FDA guidance 
       sessionId: sessionId,
     });
   } catch (error) {
-    console.error('Error in Lumen AI endpoint:', error);
+    console.error('Error in AnA RI endpoint:', error);
     res.status(500).json({
       success: false,
       error: 'Internal server error',
@@ -3341,6 +3345,15 @@ try {
   console.error('❌ Failed to mount AnA Features routes:', error);
 }
 
+// Mount AnA RI routes (regulatory intelligence copilot)
+try {
+  const anaRiModule = await import('./routes/ana-ri');
+  app.use('/api/ana-ri', anaRiModule.default);
+  console.log('✅ AnA RI routes mounted (/api/ana-ri)');
+} catch (error) {
+  console.error('❌ Failed to mount AnA RI routes:', error);
+}
+
 // Mount Ana Platform Control routes (agentic settings, modules, onboarding)
 try {
   const anaPlatformModule = await import('./routes/ana-platform-control');
@@ -3350,10 +3363,10 @@ try {
   console.error('❌ Failed to mount Ana Platform Control routes:', error);
 }
 
-// Mount AnA Chat routes
+// Mount AnA Intelligence Chat routes
 import chatRoutes from './routes/chat';
 app.use('/api/chat', chatRoutes);
-console.log('✅ AnA Chat API routes mounted successfully');
+console.log('✅ AnA Intelligence Chat API routes mounted successfully');
 
 // Mount AI Claims → Binder provenance route
 try {
@@ -3411,6 +3424,15 @@ try {
   console.error('❌ Failed to mount Orchestration routes:', error.message);
 }
 
+// Mount Resolution Orchestration Layer routes (Sprint 4)
+try {
+  const resolutionRoutes = (await import('./routes/resolution')).default;
+  app.use('/api/resolution', resolutionRoutes);
+  console.log('✅ Resolution Orchestration API routes mounted at /api/resolution');
+} catch (error: any) {
+  console.error('❌ Failed to mount Resolution routes:', error.message);
+}
+
 // Mount Client Intelligence Memory routes
 import clientIntelligenceRoutes from './routes/client-intelligence';
 app.use('/api/client-intelligence', clientIntelligenceRoutes);
@@ -3430,6 +3452,36 @@ console.log('✅ Universal Packager API routes mounted successfully');
 import precedentEngineRoutes from './routes/precedent-engine';
 app.use('/api/precedent-engine', precedentEngineRoutes);
 console.log('✅ Precedent Engine routes mounted successfully');
+
+// Mount Cross-Jurisdictional Intelligence
+import crossJurisdictionalRoutes from './routes/cross-jurisdictional';
+app.use('/api/cross-jurisdictional', crossJurisdictionalRoutes);
+console.log('✅ Cross-Jurisdictional Intelligence routes mounted successfully');
+
+// Mount HARMONIZE — Cross-Module Consistency Enforcement
+import harmonizeRoutes from './routes/harmonize';
+app.use('/api/harmonize', harmonizeRoutes);
+console.log('✅ HARMONIZE routes mounted successfully');
+
+// Mount ESCALATE — Structured Escalation Framework
+import escalateRoutes from './routes/escalate';
+app.use('/api/escalate', escalateRoutes);
+console.log('✅ ESCALATE routes mounted successfully');
+
+// Mount VALIDATE-COMPLETENESS — Submission Readiness Assessment
+import validateCompletenessRoutes from './routes/validate-completeness';
+app.use('/api/validate-completeness', validateCompletenessRoutes);
+console.log('✅ VALIDATE-COMPLETENESS routes mounted successfully');
+
+// Mount AnA Gold Standard Pack — Quality Benchmark
+import anaGoldStandardRoutes from './routes/ana-gold-standard';
+app.use('/api/ana-gold-standard', anaGoldStandardRoutes);
+console.log('✅ AnA Gold Standard Pack routes mounted successfully');
+
+// Mount AnA Continuous Evaluation Loop — Real-Time Quality Monitoring
+import anaContinuousEvalRoutes from './routes/ana-continuous-eval';
+app.use('/api/ana-continuous-eval', anaContinuousEvalRoutes);
+console.log('✅ AnA Continuous Evaluation Loop routes mounted successfully');
 
 // Mount IND templates routes - temporarily disabled
 // app.use('/api/ind', indTemplatesRoutes);
@@ -5135,7 +5187,7 @@ app.get('/api/vault/list', async (req: Request, res: Response) => {
   }
 });
 
-// Lumen AI Regulatory Intelligence endpoint
+// AnA RI Regulatory Intelligence endpoint
 app.get('/api/lumen/regulatory-intelligence', async (req: Request, res: Response) => {
   try {
     // Return regulatory intelligence data
@@ -5171,9 +5223,9 @@ app.get('/api/lumen/regulatory-intelligence', async (req: Request, res: Response
   }
 });
 
-// AnA Regulatory Analysis endpoint
+// AnA RI Regulatory Analysis endpoint
 app.post('/api/lumen/regulatory-analysis', async (req: Request, res: Response) => {
-  console.log('[AnA RI] Regulatory Analysis endpoint hit');
+  console.log('🔥 AnA RI Regulatory Analysis endpoint hit!');
   try {
     // Add cache-busting headers
     res.set({
@@ -5222,9 +5274,9 @@ app.post('/api/lumen/regulatory-analysis', async (req: Request, res: Response) =
   }
 });
 
-// AnA ICH E6(R3) Guidance endpoint
+// AnA RI ICH E6(R3) Guidance endpoint
 app.post('/api/lumen/ich-e6r3-guidance', async (req: Request, res: Response) => {
-  console.log('[AnA RI] ICH E6(R3) Guidance endpoint hit');
+  console.log('🔥 AnA RI ICH E6(R3) Guidance endpoint hit!');
   try {
     // Add cache-busting headers
     res.set({
@@ -6439,6 +6491,14 @@ async function startServer() {
   }
 
   try {
+    const intelligenceRoutes = await import('./routes/intelligence');
+    app.use('/api/intelligence', intelligenceRoutes.default);
+    console.log('✅ Intelligence + RIM routes mounted at /api/intelligence');
+  } catch (error) {
+    console.error('Failed to mount intelligence routes:', error);
+  }
+
+  try {
     const aiCompletionRoutes = await import('./routes/ai-completion');
     app.use('/api', aiCompletionRoutes.default);
     console.log('✅ AI Completion routes mounted at /api/ai/completion');
@@ -6661,9 +6721,9 @@ async function startServer() {
   try {
     const lumenCortexFtRoutes = await import('./routes/lumen-cortex-ft');
     app.use('/api/lumen-cortex-ft', lumenCortexFtRoutes.default);
-    console.log('✅ AnA Cortex Fine-Tuning routes mounted at /api/lumen-cortex-ft');
+    console.log('✅ AnA Intelligence Fine-Tuning routes mounted at /api/lumen-cortex-ft');
   } catch (error) {
-    console.error('❌ Failed to mount AnA Cortex FT routes:', error);
+    console.error('❌ Failed to mount AnA Intelligence FT routes:', error);
   }
 
   try {
@@ -7027,6 +7087,19 @@ async function startServer() {
     console.log('✅ Audit chain integrity monitor started (5-min interval)');
   } catch (err) {
     console.warn('⚠️ Chain integrity monitor failed to start:', err);
+  }
+
+  // Load RIM pattern registry from persistence (restores learned patterns + hit counts)
+  try {
+    const { loadPatternRegistry, patternRegistry } = await import('./services/intelligence/pattern-registry.js');
+    const result = await loadPatternRegistry(1); // org 1 as default; per-org load on first request
+    if (result.loaded) {
+      console.log(`✅ RIM pattern registry loaded (${patternRegistry.size} patterns, ${result.learnedCount} learned)`);
+    } else {
+      console.log(`ℹ️ RIM pattern registry: no persisted data found, using ${patternRegistry.size} seed patterns`);
+    }
+  } catch (err) {
+    console.warn('⚠️ RIM pattern registry load failed (using seed patterns only):', err);
   }
 
   // Start the HTTP server

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { listDocs, uploadDoc } from '../hooks/useDocuShare';
 import {
+import { toast } from '@/hooks/use-toast';
   FolderOpen,
   FileText,
   Search,
@@ -120,7 +121,7 @@ export default function DocuShareVault() {
       };
 
       setDocs([newDoc, ...docs]);
-      alert('Document uploaded successfully (Demo Mode)');
+      toast({ title: 'Document uploaded successfully (Demo Mode)' });
       return;
     }
 

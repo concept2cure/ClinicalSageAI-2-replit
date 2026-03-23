@@ -52,6 +52,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import {
+import { toast } from '@/hooks/use-toast';
   ChevronDown,
   FileText,
   Search,
@@ -664,11 +665,11 @@ const DocumentAuthoringComponent = () => {
         console.log('Export history entry deleted successfully');
       } else {
         const error = await response.json();
-        alert(`Failed to delete: ${error.error || 'Unknown error'}`);
+        toast({ title: `Failed to delete: ${error.error || 'Unknown error'}` });
       }
     } catch (error) {
       console.error('Error deleting export history:', error);
-      alert('Failed to delete export history entry');
+      toast({ title: 'Failed to delete export history entry' });
     } finally {
       setDeletingExportId(null);
     }
@@ -788,11 +789,11 @@ const DocumentAuthoringComponent = () => {
         console.log('Comment added successfully');
       } else {
         const error = await response.json();
-        alert(`Failed to add comment: ${error.error || 'Unknown error'}`);
+        toast({ title: `Failed to add comment: ${error.error || 'Unknown error'}` });
       }
     } catch (error) {
       console.error('Error adding comment:', error);
-      alert('Failed to add comment');
+      toast({ title: 'Failed to add comment' });
     }
   };
 
@@ -818,11 +819,11 @@ const DocumentAuthoringComponent = () => {
         console.log(`Comment ${status} successfully`);
       } else {
         const error = await response.json();
-        alert(`Failed to update comment: ${error.error || 'Unknown error'}`);
+        toast({ title: `Failed to update comment: ${error.error || 'Unknown error'}` });
       }
     } catch (error) {
       console.error('Error updating comment:', error);
-      alert('Failed to update comment');
+      toast({ title: 'Failed to update comment' });
     }
   };
 
@@ -847,11 +848,11 @@ const DocumentAuthoringComponent = () => {
         console.log('Comment deleted successfully');
       } else {
         const error = await response.json();
-        alert(`Failed to delete comment: ${error.error || 'Unknown error'}`);
+        toast({ title: `Failed to delete comment: ${error.error || 'Unknown error'}` });
       }
     } catch (error) {
       console.error('Error deleting comment:', error);
-      alert('Failed to delete comment');
+      toast({ title: 'Failed to delete comment' });
     }
   };
 
@@ -880,21 +881,21 @@ const DocumentAuthoringComponent = () => {
         setReviewStatus('pending');
         setReviewComments('');
         console.log('Review submitted successfully');
-        alert(`Document ${reviewStatus.replace('_', ' ')} successfully!`);
+        toast({ title: `Document ${reviewStatus.replace('_', ' ')} successfully!` });
       } else {
         const error = await response.json();
-        alert(`Failed to submit review: ${error.error || 'Unknown error'}`);
+        toast({ title: `Failed to submit review: ${error.error || 'Unknown error'}` });
       }
     } catch (error) {
       console.error('Error submitting review:', error);
-      alert('Failed to submit review');
+      toast({ title: 'Failed to submit review' });
     }
   };
 
   // Request review from selected users
   const requestReview = async () => {
     if (!currentDocument?.id || selectedReviewers.length === 0) {
-      alert('Please select at least one reviewer');
+      toast({ title: 'Please select at least one reviewer' });
       return;
     }
 
@@ -916,14 +917,14 @@ const DocumentAuthoringComponent = () => {
         setShowRequestReviewDialog(false);
         setSelectedReviewers([]);
         console.log('Review requested successfully');
-        alert(`Review requested from ${selectedReviewers.length} reviewer(s)`);
+        toast({ title: `Review requested from ${selectedReviewers.length} reviewer(s)` });
       } else {
         const error = await response.json();
-        alert(`Failed to request review: ${error.error || 'Unknown error'}`);
+        toast({ title: `Failed to request review: ${error.error || 'Unknown error'}` });
       }
     } catch (error) {
       console.error('Error requesting review:', error);
-      alert('Failed to request review');
+      toast({ title: 'Failed to request review' });
     }
   };
 
@@ -1014,7 +1015,7 @@ const DocumentAuthoringComponent = () => {
   // Export document function
   const exportDocument = async (format) => {
     if (!currentDocument?.id) {
-      alert('No document selected for export');
+      toast({ title: 'No document selected for export' });
       return;
     }
 
@@ -1051,11 +1052,11 @@ const DocumentAuthoringComponent = () => {
         setTimeout(() => fetchExportHistory(), 1000);
       } else {
         const error = await response.json();
-        alert(`Export failed: ${error.message || 'Unknown error'}`);
+        toast({ title: `Export failed: ${error.message || 'Unknown error'}` });
       }
     } catch (error) {
       console.error('Export error:', error);
-      alert('Export failed. Please try again.');
+      toast({ title: 'Export failed. Please try again.' });
     } finally {
       setIsExporting(false);
     }
@@ -1064,7 +1065,7 @@ const DocumentAuthoringComponent = () => {
   // Submit document for review
   const submitDocument = async () => {
     if (!currentDocument?.id) {
-      alert('No document selected for submission');
+      toast({ title: 'No document selected for submission' });
       return;
     }
 
@@ -1094,14 +1095,14 @@ const DocumentAuthoringComponent = () => {
         setCurrentDocument(prev => ({ ...prev, status: 'IN_REVIEW' }));
         setShowSubmitDialog(false);
         setSubmitComment('');
-        alert('Document submitted for review successfully!');
+        toast({ title: 'Document submitted for review successfully!' });
       } else {
         const error = await response.json();
-        alert(`Submission failed: ${error.error || 'Unknown error'}`);
+        toast({ title: `Submission failed: ${error.error || 'Unknown error'}` });
       }
     } catch (error) {
       console.error('Submit error:', error);
-      alert('Submission failed. Please try again.');
+      toast({ title: 'Submission failed. Please try again.' });
     } finally {
       setIsSubmitting(false);
     }
@@ -1110,12 +1111,12 @@ const DocumentAuthoringComponent = () => {
   // Sign document electronically
   const signDocument = async () => {
     if (!currentDocument?.id) {
-      alert('No document selected for signing');
+      toast({ title: 'No document selected for signing' });
       return;
     }
 
     if (!signatureData.pin || !signatureData.reason) {
-      alert('PIN and reason are required for signing');
+      toast({ title: 'PIN and reason are required for signing' });
       return;
     }
 
@@ -1140,14 +1141,14 @@ const DocumentAuthoringComponent = () => {
         setSignatureData({ pin: '', reason: '', meaning: 'REVIEWER' });
         // Fetch updated signatures
         await fetchSignatures();
-        alert('Document signed successfully!');
+        toast({ title: 'Document signed successfully!' });
       } else {
         const error = await response.json();
-        alert(`Signing failed: ${error.error || 'Unknown error'}`);
+        toast({ title: `Signing failed: ${error.error || 'Unknown error'}` });
       }
     } catch (error) {
       console.error('Sign error:', error);
-      alert('Signing failed. Please try again.');
+      toast({ title: 'Signing failed. Please try again.' });
     } finally {
       setIsSigning(false);
     }
@@ -1156,7 +1157,7 @@ const DocumentAuthoringComponent = () => {
   // Freeze document to prevent edits
   const freezeDocument = async () => {
     if (!currentDocument?.id) {
-      alert('No document selected for freezing');
+      toast({ title: 'No document selected for freezing' });
       return;
     }
 
@@ -1183,14 +1184,14 @@ const DocumentAuthoringComponent = () => {
         setDocumentState('LOCKED');
         setShowFreezeDialog(false);
         setFreezeReason('');
-        alert('Document frozen successfully!');
+        toast({ title: 'Document frozen successfully!' });
       } else {
         const error = await response.json();
-        alert(`Freeze failed: ${error.error || 'Unknown error'}`);
+        toast({ title: `Freeze failed: ${error.error || 'Unknown error'}` });
       }
     } catch (error) {
       console.error('Freeze error:', error);
-      alert('Freeze operation failed. Please try again.');
+      toast({ title: 'Freeze operation failed. Please try again.' });
     } finally {
       setIsFreezing(false);
     }
@@ -1247,7 +1248,7 @@ const DocumentAuthoringComponent = () => {
   // Apply Template to Document
   const applyTemplate = async (templateId) => {
     if (!currentDocument?.id) {
-      alert('Please create or select a document first');
+      toast({ title: 'Please create or select a document first' });
       return;
     }
 
@@ -1277,13 +1278,13 @@ const DocumentAuthoringComponent = () => {
         ]);
         
         // Show success message
-        alert('Template applied successfully!');
+        toast({ title: 'Template applied successfully!' });
       } else {
-        alert('Failed to apply template');
+        toast({ title: 'Failed to apply template' });
       }
     } catch (error) {
       console.error('Error applying template:', error);
-      alert('Failed to apply template');
+      toast({ title: 'Failed to apply template' });
     }
   };
 
@@ -1461,7 +1462,7 @@ const DocumentAuthoringComponent = () => {
   const [recomputeLoading, setRecomputeLoading] = useState(false);
   const recomputeWithLimsData = async () => {
     if (!currentDocument?.id) {
-      alert('No document selected for recomputation');
+      toast({ title: 'No document selected for recomputation' });
       return;
     }
 
@@ -1499,19 +1500,19 @@ const DocumentAuthoringComponent = () => {
               content: result.content_md,
               lastModified: new Date().toISOString(),
             }));
-            alert(
+            toast({ title: 
               `✅ Document recomputed with fresh LIMS data (${result.dataPoints.linearity + result.dataPoints.accuracy + result.dataPoints.precision} data points)`
-            );
+             });
           } else {
-            alert('❌ Failed to recompute document');
+            toast({ title: '❌ Failed to recompute document' });
           }
         } else {
-          alert('❌ No linked analytical method found for this document');
+          toast({ title: '❌ No linked analytical method found for this document' });
         }
       }
     } catch (error) {
       console.error('Recompute failed:', error);
-      alert('❌ Recompute failed: ' + error.message);
+      toast({ title: '❌ Recompute failed: ' + error.message });
     } finally {
       setRecomputeLoading(false);
     }
@@ -1549,7 +1550,7 @@ const DocumentAuthoringComponent = () => {
       console.log('Word document imported successfully');
     } catch (error) {
       console.error('Failed to import Word document:', error);
-      alert('Failed to import Word document. Please try again.');
+      toast({ title: 'Failed to import Word document. Please try again.' });
     } finally {
       setIsUploading(false);
       event.target.value = ''; // Reset file input
@@ -1558,7 +1559,7 @@ const DocumentAuthoringComponent = () => {
 
   const handleWordDownload = async () => {
     if (!documentContent) {
-      alert('No content to export');
+      toast({ title: 'No content to export' });
       return;
     }
 
@@ -1594,7 +1595,7 @@ const DocumentAuthoringComponent = () => {
       console.log('Word document exported successfully');
     } catch (error) {
       console.error('Failed to export Word document:', error);
-      alert('Failed to export Word document. Please try again.');
+      toast({ title: 'Failed to export Word document. Please try again.' });
     } finally {
       setIsDownloading(false);
     }
@@ -4258,7 +4259,7 @@ export function TemplatesDrawer({ open, onClose, docId, locale, onApply }) {
       body: JSON.stringify({ templateKey, mode }),
     });
     const x = await r.json();
-    if (!r.ok) return alert(x?.error || 'Apply failed.');
+    if (!r.ok) { toast({ title: x?.error || 'Apply failed.' }); return; };
     onApply?.(x);
     onClose();
   }
@@ -4318,12 +4319,12 @@ export function ReviewerChecklistDrawer({ open, onClose, docId, sectionId, secti
       method:"POST", headers:{ "Content-Type":"application/json" },
       body: JSON.stringify({ section_id: sectionId, region })
     });
-    const x = await r.json(); if (!r.ok) return alert(x?.error || "Compose failed");
+    const x = await r.json(); if (!r.ok) { toast({ title: x?.error || "Compose failed" }); return; };
     setData(x.checklist); setItems(x.items);
   }
   async function update(itemId, patch) {
     const r = await fetch(`/api/authoring/checklist/items/${itemId}`, { method:"PATCH", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(patch) });
-    const x = await r.json(); if (!r.ok) return alert(x?.error || "Update failed");
+    const x = await r.json(); if (!r.ok) { toast({ title: x?.error || "Update failed" }); return; };
     setItems(prev => prev.map(it => it.item_id===itemId ? x : it));
   }
   function jump(citeId){ window.dispatchEvent(new CustomEvent("cmc-jump-token", { detail: { citeId } })); }
@@ -4386,7 +4387,7 @@ export function ChangeRequestsDrawer({ open, onClose, docId, sectionId, onCreate
   }
   async function apply(crId) {
     const r = await fetch(`/api/authoring/cr/${crId}/apply`, { method:"POST" });
-    if (r.ok) { load(); alert("Change applied!"); }
+    if (r.ok) { load(); toast({ title: "Change applied!" }); }
   }
 
   React.useEffect(()=>{ if (open && docId) load(); }, [open, docId]);
@@ -4451,7 +4452,7 @@ export function CreateChangeRequestModal({ open, onClose, docId, sectionId, curr
   }, [open, currentContent]);
 
   async function submit() {
-    if (!title) return alert("Title required");
+    if (!title) { toast({ title: "Title required" }); return; };
     const patch = kind === "CONTENT" ? JSON.parse(content || "{}") : { cites: [] };
     const r = await fetch(`/api/authoring/docs/${docId}/cr`, {
       method: "POST",
@@ -4463,7 +4464,7 @@ export function CreateChangeRequestModal({ open, onClose, docId, sectionId, curr
       onClose();
       setTitle(""); setReason(""); setContent("");
     } else {
-      alert("Failed to create change request");
+      toast({ title: "Failed to create change request" });
     }
   }
 

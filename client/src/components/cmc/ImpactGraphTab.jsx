@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { GitBranch, RefreshCw } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 export default function ImpactGraphTab({ processId }) {
   const [data, setData] = useState(null);
@@ -68,13 +69,13 @@ export default function ImpactGraphTab({ processId }) {
       const r = await fetch(`/api/process/processes/${processId}/impact/apply`, { method: 'POST' });
       const result = await r.json();
       if (r.ok) {
-        alert(`Created ${result.created} task(s).`);
+        toast({ title: `Created ${result.created} task(s).` });
       } else {
-        alert(result.error || 'Failed');
+        toast({ title: result.error || 'Failed' });
       }
     } catch (error) {
       console.error('Error applying fixes:', error);
-      alert('Failed to apply fixes');
+      toast({ title: 'Failed to apply fixes' });
     } finally {
       setApplying(false);
     }

@@ -88,7 +88,7 @@ export const SubmissionProvider = ({ children }) => {
    */
   const addDocument = useCallback((document) => {
     const newDocument = {
-      id: `doc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `doc_${Date.now()}_${crypto.randomUUID().slice(0, 9)}`,
       uploadedAt: new Date().toISOString(),
       uploadedBy: 'IND Wizard',
       status: 'uploaded',
@@ -238,7 +238,7 @@ export const SubmissionProvider = ({ children }) => {
    * Initialize a new submission
    */
   const initializeSubmission = useCallback((type = 'IND') => {
-    const newSubmissionId = `SUB_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const newSubmissionId = `SUB_${Date.now()}_${crypto.randomUUID().slice(0, 9)}`;
     setSubmissionId(newSubmissionId);
     setSubmissionType(type);
     setSubmissionStatus('draft');

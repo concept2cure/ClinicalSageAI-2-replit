@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import InfoTip from '@/components/InfoTip';
+import { toast } from '@/hooks/use-toast';
 
 export default function GatekeeperPanel({ batchId }: { batchId: string }) {
   const [out, setOut] = useState<any>(null);
@@ -17,7 +18,7 @@ export default function GatekeeperPanel({ batchId }: { batchId: string }) {
       body: JSON.stringify({ blocker_ids: ids }),
     });
     const d = await r.json();
-    alert(`Applied ${d.applied} fixes`);
+    toast({ title: 'Fixes Applied', description: `Applied ${d.applied} fixes` });
     setOut(d.after);
   }
   useEffect(() => {

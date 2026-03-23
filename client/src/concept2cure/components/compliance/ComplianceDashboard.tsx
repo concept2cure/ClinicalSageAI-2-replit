@@ -189,7 +189,7 @@ const CategoryScoreBar: React.FC<CategoryScoreBarProps> = ({ label, score, icon 
 
   return (
     <div className="flex items-center gap-3">
-      <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-zinc-100 text-zinc-600">
+      <div className="w-8 h-8 flex items-center justify-center rounded-md bg-zinc-100 text-zinc-600 flex-shrink-0">
         {icon}
       </div>
       <div className="flex-1">
@@ -197,9 +197,9 @@ const CategoryScoreBar: React.FC<CategoryScoreBarProps> = ({ label, score, icon 
           <span className="text-sm font-medium text-zinc-700">{label}</span>
           <span className="text-sm text-zinc-500">{score}%</span>
         </div>
-        <div className="w-full h-2 bg-zinc-200 rounded-full overflow-hidden">
+        <div className="w-full h-1.5 bg-zinc-100 rounded-full overflow-hidden">
           <div
-            className={`h-full rounded-full transition-all duration-500 ${getScoreColor(score)}`}
+            className={`h-full rounded-full transition-all duration-300 ${getScoreColor(score)}`}
             style={{ width: `${score}%` }}
           />
         </div>
@@ -250,12 +250,12 @@ const ViolationCard: React.FC<ViolationCardProps> = ({
   const Icon = config.icon;
 
   return (
-    <div className={`border rounded-lg ${config.bgColor} ${config.borderColor}`}>
+    <div className={`border rounded-xl ${config.bgColor} ${config.borderColor}`}>
       <button
         onClick={onToggle}
-        className="w-full p-3 flex items-start gap-3 text-left"
+        className="w-full p-5 flex items-start gap-3 text-left"
       >
-        <Icon className={`w-5 h-5 flex-shrink-0 mt-0.5 ${config.iconColor}`} />
+        <Icon className={`w-4 h-4 flex-shrink-0 mt-0.5 ${config.iconColor}`} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-medium text-zinc-500">
@@ -280,9 +280,9 @@ const ViolationCard: React.FC<ViolationCardProps> = ({
       </button>
 
       {isExpanded && (
-        <div className="px-3 pb-3 ml-8 space-y-2">
+        <div className="px-5 pb-5 ml-8 space-y-2">
           {violation.suggestion && (
-            <div className="p-2 bg-white rounded-lg">
+            <div className="p-2 bg-white rounded-xl">
               <p className="text-xs text-zinc-500 mb-1">Suggestion:</p>
               <p className="text-sm text-zinc-700">{violation.suggestion}</p>
             </div>
@@ -412,11 +412,11 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
   return (
     <div className={`flex flex-col h-full bg-white ${className}`}>
       {/* Header */}
-      <div className="p-4 border-b border-zinc-200">
+      <div className="px-5 py-4 border-b border-zinc-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-              <Shield className="w-5 h-5 text-blue-600" />
+            <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+              <Shield size={18} strokeWidth={2} className="text-blue-600" />
             </div>
             <div>
               <h2 className="font-semibold text-zinc-900">Compliance Dashboard</h2>
@@ -430,19 +430,19 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
               <button
                 onClick={onRefresh}
                 disabled={isLoading}
-                className="p-2 hover:bg-zinc-100 rounded-lg transition-colors disabled:opacity-60"
+                className="p-2 hover:bg-zinc-100 rounded-lg transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none disabled:opacity-60"
                 title="Refresh"
               >
-                <RefreshCw className={`w-5 h-5 text-zinc-600 ${isLoading ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-4 h-4 text-zinc-600 ${isLoading ? 'animate-spin' : ''}`} />
               </button>
             )}
             {onExport && (
               <button
                 onClick={onExport}
-                className="p-2 hover:bg-zinc-100 rounded-lg transition-colors duration-150"
+                className="p-2 hover:bg-zinc-100 rounded-lg transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none"
                 title="Export Report"
               >
-                <Download className="w-5 h-5 text-zinc-600" />
+                <Download className="w-4 h-4 text-zinc-600" />
               </button>
             )}
           </div>
@@ -450,7 +450,7 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
       </div>
 
       {/* Score Overview */}
-      <div className="p-4 border-b border-zinc-200 bg-zinc-50">
+      <div className="px-5 py-4 border-b border-zinc-100 bg-zinc-50">
         <div className="flex items-center gap-6">
           <ScoreRing score={score.overall} label="Overall" />
           <div className="flex-1">
@@ -487,7 +487,7 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
       </div>
 
       {/* Category Breakdown */}
-      <div className="p-4 border-b border-zinc-200">
+      <div className="px-5 py-4 border-b border-zinc-100">
         <h3 className="text-sm font-medium text-zinc-700 mb-3">
           Category Breakdown
         </h3>
@@ -506,7 +506,7 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
       {/* Violations Section */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Filters */}
-        <div className="p-3 border-b border-zinc-200 flex items-center gap-2">
+        <div className="px-5 py-3 border-b border-zinc-100 flex items-center gap-2">
           <Filter className="w-4 h-4 text-zinc-400" />
           <select
             value={severityFilter}
@@ -539,7 +539,7 @@ export const ComplianceDashboard: React.FC<ComplianceDashboardProps> = ({
         </div>
 
         {/* Violations List */}
-        <div className="flex-1 overflow-y-auto p-3 space-y-2">
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-2">
           {filteredViolations.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-zinc-500">
               <CheckCircle className="w-12 h-12 mb-3 text-green-500" />

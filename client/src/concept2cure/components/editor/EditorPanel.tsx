@@ -72,6 +72,7 @@ import { SignatureWorkflow, SignatureList } from './SignatureWorkflow';
 import { SubmissionReadinessValidator } from '../submission/SubmissionReadinessValidator';
 import { ComplianceScannerPanel } from './ComplianceScannerPanel';
 import { AnAMemory } from '../intelligence/AnAMemory';
+import ArtifactProofPanel from './ArtifactProofPanel';
 import { getCurrentUser } from '../../utils/getCurrentUser';
 
 // ── Auth helper (same pattern as useProjects) ────────────────────────────────
@@ -184,7 +185,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const claimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Single secondary inspector panel (only one open at a time) ────────
-  type InspectorPanel = 'intelligence' | 'provenance' | 'compare' | 'audit' | 'dataroom' | 'inconsistency' | 'health' | 'versions' | 'batch-ai' | 'crossref' | 'comments' | 'review' | 'reviewers' | 'submission-readiness' | 'compliance-scanner' | 'ana-memory';
+  type InspectorPanel = 'intelligence' | 'provenance' | 'compare' | 'audit' | 'dataroom' | 'inconsistency' | 'health' | 'versions' | 'batch-ai' | 'crossref' | 'comments' | 'review' | 'reviewers' | 'submission-readiness' | 'compliance-scanner' | 'ana-memory' | 'proof';
   const [activeInspector, setActiveInspector] = useState<InspectorPanel | null>(null);
   const toggleInspector = useCallback((panel: InspectorPanel) => {
     setActiveInspector(prev => (prev === panel ? null : panel));
@@ -1207,7 +1208,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 setOpenArtifactNotFound(false);
                 loadArtifacts();
               }}
-              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-150"
+              className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none shadow-sm"
             >
               Refresh documents
             </button>
@@ -1216,7 +1217,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 setOpenArtifactNotFound(false);
                 setShowArtifactList(true);
               }}
-              className="px-4 py-2 text-sm border border-zinc-300 text-zinc-600 rounded-lg hover:bg-zinc-50 transition-colors duration-150"
+              className="px-4 py-2 text-sm font-medium border border-zinc-200 text-zinc-700 rounded-lg hover:bg-zinc-50 hover:border-zinc-300 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none"
             >
               Open artifact list
             </button>
@@ -1282,7 +1283,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             <select
               value={filterStatus}
               onChange={e => setFilterStatus(e.target.value)}
-              className="px-2 py-1 text-xs border border-zinc-200 rounded-md bg-white focus:ring-1 focus:ring-blue-400"
+              className="px-2 py-1 text-xs border border-zinc-200 rounded-md bg-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 outline-none"
             >
               {statusOptions.map(s => (
                 <option key={s} value={s}>
@@ -1293,7 +1294,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             <select
               value={filterType}
               onChange={e => setFilterType(e.target.value)}
-              className="px-2 py-1 text-xs border border-zinc-200 rounded-md bg-white focus:ring-1 focus:ring-blue-400"
+              className="px-2 py-1 text-xs border border-zinc-200 rounded-md bg-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 outline-none"
             >
               {typeOptions.map(t => (
                 <option key={t} value={t}>
@@ -1304,7 +1305,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             <select
               value={filterCtd}
               onChange={e => setFilterCtd(e.target.value)}
-              className="px-2 py-1 text-xs border border-zinc-200 rounded-md bg-white focus:ring-1 focus:ring-blue-400"
+              className="px-2 py-1 text-xs border border-zinc-200 rounded-md bg-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 outline-none"
             >
               {ctdOptions.map(c => (
                 <option key={c} value={c}>
@@ -1339,7 +1340,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               onChange={e => setNewDocTitle(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleCreateNew()}
               placeholder="New document title..."
-              className="flex-1 px-3 py-2 text-sm border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/30"
+              className="flex-1 px-3 py-2 text-sm border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
             />
             <button
               onClick={handleCreateNew}
@@ -1815,6 +1816,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             <button data-testid="ribbon-provenance" onClick={() => toggleInspector('provenance')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'provenance' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><ShieldCheck className="w-3.5 h-3.5" />Provenance</button>
             <button data-testid="ribbon-audit" onClick={() => toggleInspector('audit')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'audit' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><ClipboardList className="w-3.5 h-3.5" />Audit Trail</button>
             <button data-testid="ribbon-submission" onClick={() => toggleInspector('submission-readiness')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'submission-readiness' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Shield className="w-3.5 h-3.5" />Submission</button>
+            <button data-testid="ribbon-proof" onClick={() => toggleInspector('proof')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'proof' ? 'bg-emerald-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Shield className="w-3.5 h-3.5" />Proof</button>
           </div>
           <span className="text-[9px] font-medium uppercase tracking-widest text-zinc-400 mt-0.5">Audit</span>
         </div>
@@ -1962,7 +1964,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             onChange={e => setCtdSectionInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleCtdSection()}
             placeholder="e.g. 3.2.S"
-            className="w-28 px-2 py-1 text-xs border border-zinc-200 rounded bg-white focus:ring-1 focus:ring-blue-400"
+            className="w-28 px-2 py-1 text-xs border border-zinc-200 rounded bg-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 outline-none"
           />
           <button
             onClick={handleCtdSection}
@@ -2096,7 +2098,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   value={unlockReason}
                   onChange={e => setUnlockReason(e.target.value)}
                   placeholder="Reason for unlocking (min 5 chars)"
-                  className="w-full px-2 py-1.5 text-xs border border-red-200 rounded-md mb-2 focus-visible:ring-2 outline-none focus:ring-red-400"
+                  className="w-full px-2 py-1.5 text-xs border border-red-200 rounded-lg mb-2 focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-1 outline-none"
                 />
                 <button
                   onClick={() => {
@@ -2282,6 +2284,11 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               onExportAsArtifact={handleExportAudit}
               exportingAudit={exportingAudit}
             />
+          </div>
+        )}
+        {activeInspector === 'proof' && projectId && activeArtifact && (
+          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-150">
+            <ArtifactProofPanel projectId={projectId} artifact={activeArtifact} />
           </div>
         )}
         {/* Sprint 2A: Data Room Panel */}
@@ -2653,7 +2660,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               }}
               placeholder="Type your comment…"
               rows={3}
-              className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/30 resize-none"
+              className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 outline-none resize-none"
             />
             <div className="flex items-center justify-between mt-3">
               <span className="text-[10px] text-zinc-400">Ctrl+Enter to submit</span>

@@ -470,7 +470,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             <NavItem
               icon={<Snowflake className="w-3.5 h-3.5" />}
               label="SnowGlobe"
-              subtitle="Predictions · Simulations"
+              subtitle="Experimental · Predictions"
               active={activeNavId === 'snowglobe'}
               accentColor="blue"
               onClick={() => onNavigate?.('snowglobe')}
@@ -493,6 +493,14 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               subtitle="Evidence · Precedents · Alerts"
               active={activeNavId === 'intelligence-hub'}
               onClick={() => onNavigate?.('intelligence-hub')}
+            />
+            <NavItem
+              icon={<Shield className="w-3.5 h-3.5" />}
+              label="Precedent Intelligence"
+              subtitle="CRL · RTF · EMA · AdComm"
+              active={activeNavId === 'precedent-intelligence'}
+              accentColor="blue"
+              onClick={() => onNavigate?.('precedent-intelligence')}
             />
             <NavItem
               icon={<FlaskConical className="w-3.5 h-3.5" />}

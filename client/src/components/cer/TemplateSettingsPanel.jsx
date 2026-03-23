@@ -15,6 +15,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Check, Edit, FileText, Layout, Settings } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 export default function TemplateSettingsPanel() {
   const [currentTab, setCurrentTab] = useState('template-selection');
@@ -241,7 +242,7 @@ export default function TemplateSettingsPanel() {
     // In a real app, we would save settings to the server
     console.log('Saving template settings:', templateSettings);
     console.log('JSON config:', jsonConfig);
-    alert('Template settings saved successfully');
+    toast({ title: 'Template settings saved successfully' });
   };
 
   return (

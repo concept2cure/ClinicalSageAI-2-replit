@@ -490,7 +490,7 @@ export const RulesManager: React.FC<RulesManagerProps> = ({ onBack }) => {
     (data: RuleFormData) => {
       createRule.mutate(
         {
-          ruleId: `rule_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+          ruleId: `rule_${crypto.randomUUID().slice(0, 12)}`,
           organizationId: 1, // set by server from JWT
           ...data,
           conditions: null,

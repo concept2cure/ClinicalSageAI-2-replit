@@ -23,7 +23,6 @@ export default function GenealogyGraphPanel({ batchId }: GenealogyGraphPanelProp
       const data = await response.json();
       setGraphData(data);
     } catch (e) {
-      console.error('Failed to load genealogy graph:', e);
     } finally {
       setLoading(false);
     }

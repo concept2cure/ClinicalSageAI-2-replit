@@ -21,6 +21,7 @@ import { getEmbeddingService } from '../services/enhancedEmbeddingService.js';
 import { getIntelligencePrefix } from '../services/lumen-context-builder.js';
 import { processResponseActions } from '../services/ana-guidance-executor.js';
 import { createHash } from 'crypto';
+import { interceptChatResponse } from '../services/intelligence/rim-interceptors.js';
 
 const router = Router();
 
@@ -37,8 +38,9 @@ function ensureGateway() {
   return gateway;
 }
 
-// System prompt for regulatory AI assistant
-const REGULATORY_SYSTEM_PROMPT = `You are AnA (Audit & Narrative Assistant), a senior regulatory intelligence operator with the judgment of someone who has reviewed hundreds of submissions and sat across from FDA reviewers. You are the RI Co-pilot for the Concept2Cure platform.
+// System prompt for regulatory AI assistant — powered by AnA RI orchestrator
+import { buildAnaRISystemPrompt } from '../services/ana-ri/persona.js';
+import { orchestrate } from '../services/ana-ri/orchestrator.js';
 
 ## Expertise
 - FDA 510(k), PMA, De Novo, IND, NDA, BLA submissions
@@ -261,7 +263,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       } catch (e: any) {
         // ai_threads table might not exist yet — skip check
         if (e?.code !== '42P01')
-          console.warn('[AnA RI] Thread ownership check failed:', e.message);
+          console.warn('[AnA] Thread ownership check failed:', e.message);
       }
     }
 
@@ -275,7 +277,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
         );
       } catch (e: any) {
         if (e?.code !== '42P01') throw e;
-        console.warn('[AnA RI] ai_threads table missing — provenance disabled');
+        console.warn('[AnA] ai_threads table missing — provenance disabled');
       }
     }
 
@@ -290,7 +292,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
         );
       } catch (e: any) {
         if (e?.code !== '42P01')
-          console.warn('[AnA RI] ai_messages insert failed:', e.message);
+          console.warn('[AnA] ai_messages insert failed:', e.message);
       }
     }
 
@@ -308,7 +310,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       const embeddingService = getEmbeddingService(pool);
       // Bail early if org UUID is provided but clearly invalid
       if (orgUuid && !/^[0-9a-f-]{36}$/i.test(orgUuid)) {
-        console.warn('[AnA RI] Invalid org UUID, skipping retrieval');
+        console.warn('[AnA] Invalid org UUID, skipping retrieval');
       } else {
         const searchResults = await embeddingService.searchHybrid(message, RETRIEVAL_TOP_K, RETRIEVAL_THRESHOLD, orgUuid);
         sources = searchResults.map(r => ({
@@ -383,13 +385,13 @@ const sendMessageHandler = async (req: Request, res: Response) => {
             }
           } catch (e: any) {
             if (e?.code !== '42P01')
-              console.warn('[AnA RI] Retrieval persist failed:', e.message);
+              console.warn('[AnA] Retrieval persist failed:', e.message);
           }
         }
       }
     } catch (srcErr: any) {
       // Non-fatal — chat still works, just without grounded evidence
-      console.warn('[AnA RI] Source retrieval failed:', srcErr.message);
+      console.warn('[AnA] Source retrieval failed:', srcErr.message);
     }
 
     // ── STEP 5: BUILD EVIDENCE-GROUNDED PROMPT ─────────────────────────
@@ -437,7 +439,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       ];
 
       console.log(
-        `[AnA RI] Sending through AI Gateway (${sources.length} sources retrieved)...`
+        `[AnA] Sending through AI Gateway (${sources.length} sources retrieved)...`
       );
 
       const gwResponse: GatewayResponse = await gw.route({
@@ -463,10 +465,10 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       latencyMs = gwResponse.latencyMs;
 
       console.log(
-        `[AnA RI] AI Gateway response via ${model} (${latencyMs}ms, req=${gwResponse.requestId})`
+        `[AnA] AI Gateway response via ${model} (${latencyMs}ms, req=${gwResponse.requestId})`
       );
     } catch (gwError: any) {
-      console.error('[AnA RI] AI Gateway call failed:', gwError.message);
+      console.error('[AnA] AI Gateway call failed:', gwError.message);
       return res.status(503).json({
         error: 'AI provider call failed',
         code: 'AI_PROVIDER_UNAVAILABLE',
@@ -550,7 +552,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
         );
       } catch (e: any) {
         if (e?.code !== '42P01')
-          console.warn('[AnA RI] Generation persist failed:', e.message);
+          console.warn('[AnA] Generation persist failed:', e.message);
       }
     }
 
@@ -656,7 +658,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
           });
           continue; // skip fallback below
         } catch (e: any) {
-          if (e?.code !== '42P01') console.warn('[AnA RI] Claim persist failed:', e.message);
+          if (e?.code !== '42P01') console.warn('[AnA] Claim persist failed:', e.message);
         }
       }
 
@@ -703,6 +705,21 @@ const sendMessageHandler = async (req: Request, res: Response) => {
     const supportedClaims = claims.filter(c => c.status === 'SUPPORTED').length;
     const citationCoverage = sources.length > 0 ? citedRefs.size / sources.length : 0;
     const supportedClaimRate = claims.length > 0 ? supportedClaims / claims.length : 0;
+
+    // ── RIM: Intercept for regulatory pattern capture (non-blocking) ──
+    if (numericOrgId) {
+      interceptChatResponse({
+        organizationId: numericOrgId,
+        projectId: parseInt(projectId || '0', 10),
+        userId: (req as any).user?.id,
+        sectionCode: (req as any).body?.section_code,
+        assistantMessage,
+        claimCount: claims.length,
+        supportedClaimRate,
+        model,
+        provider,
+      });
+    }
 
     // ── RESPONSE (backward compat + provenance chain) ──────────────────
     res.json({

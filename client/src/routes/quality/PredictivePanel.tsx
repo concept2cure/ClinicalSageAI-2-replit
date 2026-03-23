@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { toast } from '@/hooks/use-toast';
 
 export default function PredictivePanel({ batchId }: { batchId: string }) {
   const [predictions, setPredictions] = useState<any[]>([]);
@@ -22,7 +23,7 @@ export default function PredictivePanel({ batchId }: { batchId: string }) {
     setLoading(true);
     const r = await fetch(`/api/quality/batches/${batchId}/predictive/run`, { method: 'POST' });
     const d = await r.json();
-    if (!r.ok) return alert(d.error || 'Analysis failed');
+    if (!r.ok) { toast({ title: 'Error', description: d.error || 'Predictive analysis failed', variant: 'destructive' }); return; }
     await load();
   }
 

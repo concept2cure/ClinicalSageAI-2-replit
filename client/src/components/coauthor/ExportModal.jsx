@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/select';
 import { Download, FileText, Table, FileImage, Settings, Loader2 } from 'lucide-react';
 import coauthorService from '@/services/coauthorService';
+import { toast } from '@/hooks/use-toast';
 
 export default function ExportModal({ content, onClose }) {
   const [exportFormat, setExportFormat] = useState('docx');
@@ -67,7 +68,7 @@ export default function ExportModal({ content, onClose }) {
       console.log('Export successful:', result);
     } catch (error) {
       console.error('Export failed:', error);
-      alert(`Export failed: ${error.message}`);
+      toast({ title: `Export failed: ${error.message}` });
       setExporting(false);
     }
   };

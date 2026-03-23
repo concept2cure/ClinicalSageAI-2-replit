@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * LumenTrialGuide.AI Database Table Verification
+ * Concept2Cure Database Table Verification
  *
  * This script checks if the database tables are properly set up
  * after running the schema migration.

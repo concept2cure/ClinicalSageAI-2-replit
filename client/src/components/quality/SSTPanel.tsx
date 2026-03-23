@@ -9,13 +9,26 @@ import {
   SelectContent,
   SelectItem,
 } from '@/components/ui/select';
+import { toast } from '@/hooks/use-toast';
+
+interface SSTResult {
+  created_at: string;
+  pass: boolean;
+  payload_json: Record<string, number>;
+}
+
+interface SSTTemplate {
+  template_id: string;
+  name: string;
+  family: string;
+}
 
 export default function SSTPanel({ testId }: { testId: string }) {
   const [json, setJson] = useState<string>(
     '{"plates":5000,"tailing":1.2,"r2":0.9999,"rsd":1.2,"temp":37.0}'
   );
-  const [latest, setLatest] = useState<any>(null);
-  const [tpls, setTpls] = useState<any[]>([]);
+  const [latest, setLatest] = useState<SSTResult | null>(null);
+  const [tpls, setTpls] = useState<SSTTemplate[]>([]);
   const [tpl, setTpl] = useState<string>('');
   const [family, setFamily] = useState<string>('');
 
@@ -37,7 +50,10 @@ export default function SSTPanel({ testId }: { testId: string }) {
       body: JSON.stringify({ payload_json: payload, pass }),
     });
     const d = await r.json();
-    if (!r.ok) return alert(d.error || 'SST failed');
+    if (!r.ok) {
+      toast({ title: 'SST Error', description: d.error || 'SST recording failed', variant: 'destructive' });
+      return;
+    }
     await loadLatest();
   }
   async function apply() {
@@ -47,7 +63,7 @@ export default function SSTPanel({ testId }: { testId: string }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ template_id: tpl }),
     });
-    alert('SST template applied to test.');
+    toast({ title: 'Template Applied', description: 'SST template applied to test successfully.' });
     loadLatest();
   }
 
@@ -107,7 +123,7 @@ export default function SSTPanel({ testId }: { testId: string }) {
               <SelectValue placeholder="Choose SST template" />
             </SelectTrigger>
             <SelectContent>
-              {tpls.map((t: any) => (
+              {tpls.map((t) => (
                 <SelectItem key={t.template_id} value={t.template_id}>
                   {t.name}
                 </SelectItem>
@@ -126,11 +142,14 @@ export default function SSTPanel({ testId }: { testId: string }) {
           {validity ? `• age ~ ${validity.ageH}h` : ''}
         </div>
 
+        <label htmlFor="sst-json" className="sr-only">SST parameters JSON</label>
         <Textarea
+          id="sst-json"
           value={json}
           onChange={e => setJson(e.target.value)}
           className="font-mono"
           rows={6}
+          aria-label="SST parameters JSON"
         />
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => save(true)}>

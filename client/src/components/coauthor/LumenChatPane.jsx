@@ -33,6 +33,7 @@ import {
   CardFooter,
 } from '@/components/ui/card';
 import { CitationList, ConfidenceBadge } from '@/components/ai/AIResponseBlock';
+import { toast } from '@/hooks/use-toast';
 
 // Default welcome message
 const defaultMessages = [
@@ -420,9 +421,9 @@ export default function LumenChatPane({ contextId, projectId }) {
         const result = await resp.json();
         // Brief success indicator
         setError(null);
-        alert(
+        toast({ title: 
           `Claim added to binder (${result.claimKey}, ${result.evidenceCount} evidence attached)`
-        );
+         });
       } catch (err) {
         console.error('Add to binder failed:', err);
         setError(`Failed to add claim to binder: ${err.message}`);
