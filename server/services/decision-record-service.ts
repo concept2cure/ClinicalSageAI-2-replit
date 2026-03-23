@@ -1,486 +1,261 @@
 /**
  * Decision Record Service
  *
- * Formal decision architecture: analysis → judgment → recommendation →
- * confidence → action → approval → supersession.
+ * Part 2: Makes recommendation, confidence, action, approval, rejection,
+ * provisional state, and escalation explicit platform objects.
  *
- * Every material decision becomes queryable and auditable.
- * Supports regulatory flows, biostatistics flows, and governed artifact paths.
+ * Extends DecisionLineageService by adding structured decision records with:
+ * - Recommendation type and summary
+ * - Confidence and evidence basis
+ * - Action state: proposed → under_review → approved/rejected → executed
+ * - Escalation state
+ * - Executed artifact linkage (provisional vs executed distinction)
+ * - Related assumption linkage
  *
  * @module server/services/decision-record-service
  */
 
-import { db } from '../db';
-import { eq, and, desc, sql } from 'drizzle-orm';
-import {
-  decisionRecords,
-  assumptionRecords,
-  type DecisionRecord,
-} from '../../shared/schema/operating-system';
+import { pool } from '../db.js';
+import { createScopedLogger } from '../utils/logger';
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// TYPES
-// ═══════════════════════════════════════════════════════════════════════════════
+const log = createScopedLogger('decision-record');
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+export type RecommendationType =
+  | 'regulatory_strategy' | 'study_design' | 'endpoint_selection'
+  | 'dose_selection' | 'comparator_selection' | 'statistical_method'
+  | 'manufacturing_change' | 'labeling_change' | 'submission_timing'
+  | 'risk_mitigation' | 'protocol_amendment' | 'data_package';
+
+export type ActionState =
+  | 'proposed' | 'under_review' | 'approved' | 'rejected'
+  | 'executed' | 'deferred' | 'escalated' | 'superseded';
+
+export type EvidenceBasis =
+  | 'rules_based' | 'validation_based' | 'ai_inferred' | 'expert_judgment' | 'precedent_based';
+
+export interface DecisionRecord {
+  id: string;
+  organizationId: number;
+  projectId: number;
+  decisionCode: string;
+  title: string;
+  domainTrack: string;
+  recommendationType: RecommendationType;
+  recommendationSummary: string;
+  recommendationRationale: string | null;
+  confidenceLevel: string;
+  evidenceBasis: EvidenceBasis | null;
+  actionState: ActionState;
+  approvedBy: string | null;
+  approvedAt: string | null;
+  rejectionReason: string | null;
+  executedArtifactId: number | null;
+  executedArtifactVersion: number | null;
+  executedWorkflowRunId: string | null;
+  relatedAssumptionIds: string[];
+  escalatedTo: string | null;
+  escalationReason: string | null;
+  notes: string | null;
+  decisionContext: Record<string, unknown>;
+  decidedBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export interface CreateDecisionInput {
   organizationId: number;
   projectId: number;
-  contextType: DecisionRecord['contextType'];
-  contextDescription?: string;
-  relatedArtifactId?: number;
-  relatedArtifactVersionId?: number;
-  relatedRunId?: string;
-  relatedAssumptionIds?: string[];
-  recommendationType?: string;
+  decisionCode: string;
+  title: string;
+  domainTrack: string;
+  recommendationType: RecommendationType;
   recommendationSummary: string;
-  recommendationDetail?: string;
-  confidence: DecisionRecord['confidence'];
-  evidenceSources?: string[];
-  actionState?: DecisionRecord['actionState'];
-  actionDescription?: string;
-  approvalState?: DecisionRecord['approvalState'];
-  domainTrack?: DecisionRecord['domainTrack'];
-  regulatorBody?: string;
-  jurisdiction?: string;
-  regulatoryReference?: string;
-  governanceBoundary?: DecisionRecord['governanceBoundary'];
-  linkedSectionCodes?: string[];
-  linkedAssumptionIds?: string[];
+  recommendationRationale?: string;
+  confidenceLevel?: string;
+  evidenceBasis?: EvidenceBasis;
+  relatedAssumptionIds?: string[];
+  decidedBy: string;
   notes?: string;
-  provenance?: Record<string, unknown>;
-  createdById?: number;
+  decisionContext?: Record<string, unknown>;
 }
 
-export interface UpdateDecisionInput {
-  actionState?: DecisionRecord['actionState'];
-  actionDescription?: string;
-  approvalState?: DecisionRecord['approvalState'];
-  escalationState?: DecisionRecord['escalationState'];
-  escalationReason?: string;
-  executedArtifactId?: number;
-  executedArtifactVersionId?: number;
-  confidence?: DecisionRecord['confidence'];
-  governanceBoundary?: DecisionRecord['governanceBoundary'];
-  notes?: string;
-  updatedById?: number;
-}
+// ─── Service ─────────────────────────────────────────────────────────────────
 
-export interface DecisionQueryOptions {
-  organizationId: number;
-  projectId: number;
-  contextType?: DecisionRecord['contextType'];
-  actionState?: DecisionRecord['actionState'];
-  approvalState?: DecisionRecord['approvalState'];
-  confidence?: DecisionRecord['confidence'];
-  governanceBoundary?: DecisionRecord['governanceBoundary'];
-  regulatorBody?: string;
-  relatedArtifactId?: number;
-  includeSuperseded?: boolean;
-}
+class DecisionRecordService {
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// SERVICE
-// ═══════════════════════════════════════════════════════════════════════════════
+  async create(input: CreateDecisionInput): Promise<DecisionRecord> {
+    log.info('Creating decision record', { code: input.decisionCode, project: input.projectId });
 
-export class DecisionRecordService {
-  private static instance: DecisionRecordService;
+    const result = await pool!.query(`
+      INSERT INTO decision_records (
+        organization_id, project_id, decision_code, title, domain_track,
+        recommendation_type, recommendation_summary, recommendation_rationale,
+        confidence_level, evidence_basis, related_assumption_ids,
+        decided_by, notes, decision_context
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+      RETURNING *
+    `, [
+      input.organizationId, input.projectId, input.decisionCode, input.title,
+      input.domainTrack, input.recommendationType, input.recommendationSummary,
+      input.recommendationRationale ?? null, input.confidenceLevel ?? 'moderate',
+      input.evidenceBasis ?? null, input.relatedAssumptionIds ?? [],
+      input.decidedBy, input.notes ?? null, JSON.stringify(input.decisionContext ?? {})
+    ]);
 
-  static getInstance(): DecisionRecordService {
-    if (!DecisionRecordService.instance) {
-      DecisionRecordService.instance = new DecisionRecordService();
-    }
-    return DecisionRecordService.instance;
+    return this.map(result.rows[0]);
   }
 
-  private getDb() {
-    if (!db) throw new Error('Database unavailable');
-    return db;
+  async search(input: {
+    organizationId: number;
+    projectId?: number;
+    domainTrack?: string;
+    actionState?: ActionState;
+    recommendationType?: RecommendationType;
+    limit?: number;
+  }): Promise<DecisionRecord[]> {
+    const conditions: string[] = ['organization_id = $1'];
+    const params: (string | number)[] = [input.organizationId];
+    let idx = 2;
+
+    if (input.projectId) { conditions.push(`project_id = $${idx++}`); params.push(input.projectId); }
+    if (input.domainTrack) { conditions.push(`domain_track = $${idx++}`); params.push(input.domainTrack); }
+    if (input.actionState) { conditions.push(`action_state = $${idx++}`); params.push(input.actionState); }
+    if (input.recommendationType) { conditions.push(`recommendation_type = $${idx++}`); params.push(input.recommendationType); }
+
+    const limit = input.limit ?? 50;
+    params.push(limit);
+
+    const result = await pool!.query(`
+      SELECT * FROM decision_records WHERE ${conditions.join(' AND ')}
+      ORDER BY created_at DESC LIMIT $${idx}
+    `, params);
+
+    return result.rows.map(this.map);
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // CREATE
-  // ─────────────────────────────────────────────────────────────────────────
+  async getById(id: string, organizationId: number): Promise<DecisionRecord | null> {
+    const result = await pool!.query(
+      'SELECT * FROM decision_records WHERE id = $1 AND organization_id = $2', [id, organizationId]
+    );
+    return result.rows.length ? this.map(result.rows[0]) : null;
+  }
 
-  async createDecision(input: CreateDecisionInput): Promise<DecisionRecord> {
-    const database = this.getDb();
+  async transition(id: string, input: {
+    organizationId: number;
+    actionState: ActionState;
+    performedBy: string;
+    reason?: string;
+    escalatedTo?: string;
+    executedArtifactId?: number;
+    executedArtifactVersion?: number;
+    executedWorkflowRunId?: string;
+  }): Promise<DecisionRecord | null> {
+    log.info('Transitioning decision', { id, newState: input.actionState });
 
-    if (!input.organizationId || !input.projectId) {
-      throw new Error('organizationId and projectId are required');
+    const sets: string[] = ['action_state = $1', 'updated_at = NOW()'];
+    const params: (string | number | null)[] = [input.actionState];
+    let idx = 2;
+
+    if (input.actionState === 'approved') {
+      sets.push(`approved_by = $${idx++}`); params.push(input.performedBy);
+      sets.push(`approved_at = NOW()`);
     }
-    if (!input.contextType || !input.recommendationSummary?.trim()) {
-      throw new Error('contextType and recommendationSummary are required');
+    if (input.actionState === 'rejected') {
+      sets.push(`rejection_reason = $${idx++}`); params.push(input.reason ?? null);
+    }
+    if (input.actionState === 'escalated') {
+      sets.push(`escalated_to = $${idx++}`); params.push(input.escalatedTo ?? input.performedBy);
+      sets.push(`escalation_reason = $${idx++}`); params.push(input.reason ?? null);
+    }
+    if (input.executedArtifactId) {
+      sets.push(`executed_artifact_id = $${idx++}`); params.push(input.executedArtifactId);
+    }
+    if (input.executedArtifactVersion) {
+      sets.push(`executed_artifact_version = $${idx++}`); params.push(input.executedArtifactVersion);
+    }
+    if (input.executedWorkflowRunId) {
+      sets.push(`executed_workflow_run_id = $${idx++}`); params.push(input.executedWorkflowRunId);
     }
 
-    const [record] = await database
-      .insert(decisionRecords)
-      .values({
-        organizationId: input.organizationId,
-        projectId: input.projectId,
-        contextType: input.contextType,
-        contextDescription: input.contextDescription,
-        relatedArtifactId: input.relatedArtifactId,
-        relatedArtifactVersionId: input.relatedArtifactVersionId,
-        relatedRunId: input.relatedRunId,
-        relatedAssumptionIds: input.relatedAssumptionIds ?? [],
-        recommendationType: input.recommendationType,
-        recommendationSummary: input.recommendationSummary,
-        recommendationDetail: input.recommendationDetail,
-        confidence: input.confidence,
-        evidenceSources: input.evidenceSources ?? [],
-        actionState: input.actionState ?? 'recommended_only',
-        actionDescription: input.actionDescription,
-        approvalState: input.approvalState ?? 'not_required',
-        domainTrack: input.domainTrack,
-        regulatorBody: input.regulatorBody,
-        jurisdiction: input.jurisdiction,
-        regulatoryReference: input.regulatoryReference,
-        governanceBoundary: input.governanceBoundary ?? 'advisory',
-        linkedSectionCodes: input.linkedSectionCodes ?? [],
-        linkedAssumptionIds: input.linkedAssumptionIds ?? [],
-        notes: input.notes,
-        provenance: input.provenance,
-        createdById: input.createdById,
-        updatedById: input.createdById,
-      })
-      .returning();
+    params.push(id, input.organizationId);
 
-    // Cross-link related assumptions
-    if (input.relatedAssumptionIds?.length) {
-      for (const assumptionId of input.relatedAssumptionIds) {
-        try {
-          const [assumption] = await database
-            .select()
-            .from(assumptionRecords)
-            .where(eq(assumptionRecords.id, assumptionId));
+    const result = await pool!.query(`
+      UPDATE decision_records SET ${sets.join(', ')}
+      WHERE id = $${idx++} AND organization_id = $${idx}
+      RETURNING *
+    `, params);
 
-          if (assumption) {
-            const currentDecisionIds = (assumption.linkedDecisionIds as string[]) ?? [];
-            if (!currentDecisionIds.includes(record.id)) {
-              currentDecisionIds.push(record.id);
-              await database
-                .update(assumptionRecords)
-                .set({ linkedDecisionIds: currentDecisionIds, updatedAt: new Date() })
-                .where(eq(assumptionRecords.id, assumptionId));
-            }
-          }
-        } catch {
-          // Non-fatal — assumption may not exist
-        }
+    const record = result.rows.length ? this.map(result.rows[0]) : null;
+
+    // Reactive propagation: mark downstream objects when decision changes materially
+    if (record) {
+      const triggerMap: Record<string, string> = {
+        approved: 'decision_approved',
+        rejected: 'decision_rejected',
+        executed: 'decision_executed',
+        escalated: 'decision_escalated',
+        superseded: 'decision_superseded',
+      };
+      const triggerType = triggerMap[input.actionState];
+      if (triggerType) {
+        this.propagateDecisionChange(record, triggerType as any, input.reason).catch(err => {
+          log.warn('Decision propagation failed (non-blocking)', { error: err instanceof Error ? err.message : String(err) });
+        });
       }
     }
 
     return record;
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // READ
-  // ─────────────────────────────────────────────────────────────────────────
-
-  async getDecision(id: string, organizationId: number): Promise<DecisionRecord | null> {
-    const database = this.getDb();
-    const [record] = await database
-      .select()
-      .from(decisionRecords)
-      .where(and(
-        eq(decisionRecords.id, id),
-        eq(decisionRecords.organizationId, organizationId)
-      ));
-    return record ?? null;
+  private async propagateDecisionChange(decision: DecisionRecord, triggerType: string, reason?: string): Promise<void> {
+    try {
+      const { reactiveDependencyService } = await import('./reactive-dependency-service');
+      await reactiveDependencyService.propagateChange({
+        organizationId: decision.organizationId,
+        projectId: decision.projectId,
+        triggerType: triggerType as any,
+        sourceType: 'decision',
+        sourceId: decision.id,
+        sourceLabel: decision.title,
+        reason: reason ?? `Decision transitioned to ${decision.actionState}`,
+      });
+    } catch {
+      // Silently skip if tables don't exist yet
+    }
   }
 
-  async queryDecisions(options: DecisionQueryOptions): Promise<DecisionRecord[]> {
-    const database = this.getDb();
-
-    const conditions = [
-      eq(decisionRecords.organizationId, options.organizationId),
-      eq(decisionRecords.projectId, options.projectId),
-    ];
-
-    if (options.contextType) {
-      conditions.push(eq(decisionRecords.contextType, options.contextType));
-    }
-    if (options.actionState) {
-      conditions.push(eq(decisionRecords.actionState, options.actionState));
-    }
-    if (options.approvalState) {
-      conditions.push(eq(decisionRecords.approvalState, options.approvalState));
-    }
-    if (options.confidence) {
-      conditions.push(eq(decisionRecords.confidence, options.confidence));
-    }
-    if (options.governanceBoundary) {
-      conditions.push(eq(decisionRecords.governanceBoundary, options.governanceBoundary));
-    }
-    if (options.regulatorBody) {
-      conditions.push(eq(decisionRecords.regulatorBody, options.regulatorBody));
-    }
-    if (options.relatedArtifactId) {
-      conditions.push(eq(decisionRecords.relatedArtifactId, options.relatedArtifactId));
-    }
-    if (!options.includeSuperseded) {
-      conditions.push(sql`${decisionRecords.actionState} != 'superseded'`);
-    }
-
-    return database
-      .select()
-      .from(decisionRecords)
-      .where(and(...conditions))
-      .orderBy(desc(decisionRecords.updatedAt));
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // UPDATE
-  // ─────────────────────────────────────────────────────────────────────────
-
-  async updateDecision(
-    id: string,
-    organizationId: number,
-    input: UpdateDecisionInput
-  ): Promise<DecisionRecord> {
-    const database = this.getDb();
-    const existing = await this.getDecision(id, organizationId);
-    if (!existing) throw new Error(`Decision ${id} not found`);
-    if (existing.actionState === 'superseded') {
-      throw new Error('Cannot update a superseded decision');
-    }
-
-    const [updated] = await database
-      .update(decisionRecords)
-      .set({
-        ...input,
-        updatedAt: new Date(),
-      })
-      .where(and(
-        eq(decisionRecords.id, id),
-        eq(decisionRecords.organizationId, organizationId)
-      ))
-      .returning();
-
-    return updated;
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // LIFECYCLE
-  // ─────────────────────────────────────────────────────────────────────────
-
-  async executeDecision(
-    id: string,
-    organizationId: number,
-    executedArtifactId: number,
-    executedArtifactVersionId?: number,
-    executorId?: number,
-    actionDescription?: string
-  ): Promise<DecisionRecord> {
-    const database = this.getDb();
-    const existing = await this.getDecision(id, organizationId);
-    if (!existing) throw new Error(`Decision ${id} not found`);
-
-    if (existing.actionState === 'executed') {
-      throw new Error('Decision is already executed');
-    }
-    if (existing.actionState === 'superseded') {
-      throw new Error('Cannot execute a superseded decision');
-    }
-
-    // Check approval gate
-    if (existing.approvalState === 'pending_review') {
-      throw new Error('Decision requires approval before execution. Approval state: pending_review');
-    }
-    if (existing.approvalState === 'rejected') {
-      throw new Error('Decision was rejected and cannot be executed');
-    }
-
-    // Advance governance boundary to at least governed_draft, but don't demote
-    const boundaryOrder: Record<string, number> = {
-      advisory: 0, governed_draft: 1, approved: 2, locked: 3, submission_ready: 4,
+  private map(row: Record<string, unknown>): DecisionRecord {
+    return {
+      id: row.id as string,
+      organizationId: row.organization_id as number,
+      projectId: row.project_id as number,
+      decisionCode: row.decision_code as string,
+      title: row.title as string,
+      domainTrack: row.domain_track as string,
+      recommendationType: row.recommendation_type as RecommendationType,
+      recommendationSummary: row.recommendation_summary as string,
+      recommendationRationale: row.recommendation_rationale as string | null,
+      confidenceLevel: row.confidence_level as string,
+      evidenceBasis: row.evidence_basis as EvidenceBasis | null,
+      actionState: row.action_state as ActionState,
+      approvedBy: row.approved_by as string | null,
+      approvedAt: (row.approved_at as Date)?.toISOString() ?? null,
+      rejectionReason: row.rejection_reason as string | null,
+      executedArtifactId: row.executed_artifact_id as number | null,
+      executedArtifactVersion: row.executed_artifact_version as number | null,
+      executedWorkflowRunId: row.executed_workflow_run_id as string | null,
+      relatedAssumptionIds: (row.related_assumption_ids as string[]) ?? [],
+      escalatedTo: row.escalated_to as string | null,
+      escalationReason: row.escalation_reason as string | null,
+      notes: row.notes as string | null,
+      decisionContext: (row.decision_context as Record<string, unknown>) ?? {},
+      decidedBy: row.decided_by as string,
+      createdAt: (row.created_at as Date)?.toISOString() ?? '',
+      updatedAt: (row.updated_at as Date)?.toISOString() ?? '',
     };
-    const currentLevel = boundaryOrder[existing.governanceBoundary ?? 'advisory'] ?? 0;
-    const targetLevel = boundaryOrder['governed_draft'];
-    const newBoundary = currentLevel >= targetLevel
-      ? existing.governanceBoundary
-      : 'governed_draft' as const;
-
-    const [updated] = await database
-      .update(decisionRecords)
-      .set({
-        actionState: 'executed',
-        actionDescription: actionDescription ?? existing.actionDescription,
-        executedArtifactId,
-        executedArtifactVersionId,
-        governanceBoundary: newBoundary,
-        updatedById: executorId,
-        updatedAt: new Date(),
-      })
-      .where(and(
-        eq(decisionRecords.id, id),
-        eq(decisionRecords.organizationId, organizationId)
-      ))
-      .returning();
-
-    return updated;
-  }
-
-  async approveDecision(
-    id: string,
-    organizationId: number,
-    approverId: number
-  ): Promise<DecisionRecord> {
-    const database = this.getDb();
-    const existing = await this.getDecision(id, organizationId);
-    if (!existing) throw new Error(`Decision ${id} not found`);
-
-    if (existing.approvalState !== 'pending_review') {
-      throw new Error(`Cannot approve decision with approval state: ${existing.approvalState}`);
-    }
-
-    const [updated] = await database
-      .update(decisionRecords)
-      .set({
-        approvalState: 'approved',
-        approvedById: approverId,
-        approvedAt: new Date(),
-        updatedById: approverId,
-        updatedAt: new Date(),
-      })
-      .where(and(
-        eq(decisionRecords.id, id),
-        eq(decisionRecords.organizationId, organizationId)
-      ))
-      .returning();
-
-    return updated;
-  }
-
-  async rejectDecision(
-    id: string,
-    organizationId: number,
-    rejectorId: number,
-    reason: string
-  ): Promise<DecisionRecord> {
-    const database = this.getDb();
-    const existing = await this.getDecision(id, organizationId);
-    if (!existing) throw new Error(`Decision ${id} not found`);
-    if (existing.actionState === 'rejected') {
-      throw new Error('Decision is already rejected');
-    }
-    if (existing.actionState === 'superseded') {
-      throw new Error('Cannot reject a superseded decision');
-    }
-
-    const [updated] = await database
-      .update(decisionRecords)
-      .set({
-        actionState: 'rejected',
-        approvalState: 'rejected',
-        rejectedById: rejectorId,
-        rejectedAt: new Date(),
-        rejectionReason: reason,
-        updatedById: rejectorId,
-        updatedAt: new Date(),
-      })
-      .where(and(
-        eq(decisionRecords.id, id),
-        eq(decisionRecords.organizationId, organizationId)
-      ))
-      .returning();
-
-    return updated;
-  }
-
-  async escalateDecision(
-    id: string,
-    organizationId: number,
-    reason: string,
-    userId?: number
-  ): Promise<DecisionRecord> {
-    const database = this.getDb();
-    const existing = await this.getDecision(id, organizationId);
-    if (!existing) throw new Error(`Decision ${id} not found`);
-
-    const [updated] = await database
-      .update(decisionRecords)
-      .set({
-        escalationState: 'opened',
-        escalationReason: reason,
-        updatedById: userId,
-        updatedAt: new Date(),
-      })
-      .where(and(
-        eq(decisionRecords.id, id),
-        eq(decisionRecords.organizationId, organizationId)
-      ))
-      .returning();
-
-    return updated;
-  }
-
-  async supersedeDecision(
-    id: string,
-    organizationId: number,
-    newDecisionInput: CreateDecisionInput,
-    reason: string
-  ): Promise<{ superseded: DecisionRecord; replacement: DecisionRecord }> {
-    const database = this.getDb();
-    const existing = await this.getDecision(id, organizationId);
-    if (!existing) throw new Error(`Decision ${id} not found`);
-
-    // Create replacement
-    const replacement = await this.createDecision(newDecisionInput);
-
-    // Supersede old
-    const [superseded] = await database
-      .update(decisionRecords)
-      .set({
-        actionState: 'superseded',
-        supersededById: replacement.id,
-        supersessionReason: reason,
-        updatedById: newDecisionInput.createdById,
-        updatedAt: new Date(),
-      })
-      .where(and(
-        eq(decisionRecords.id, id),
-        eq(decisionRecords.organizationId, organizationId)
-      ))
-      .returning();
-
-    return { superseded, replacement };
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // GOVERNANCE BOUNDARY ENFORCEMENT
-  // ─────────────────────────────────────────────────────────────────────────
-
-  /**
-   * Check whether a decision's governance boundary allows execution.
-   * advisory decisions can inform but not directly produce governed output.
-   */
-  validateGovernanceBoundary(decision: DecisionRecord): {
-    canExecute: boolean;
-    reason: string;
-  } {
-    if (decision.governanceBoundary === 'advisory') {
-      if (decision.confidence === 'uncertain' || decision.confidence === 'provisional') {
-        return {
-          canExecute: false,
-          reason: 'Advisory decision with provisional/uncertain confidence cannot be directly executed. Requires review upgrade.',
-        };
-      }
-    }
-
-    if (decision.approvalState === 'pending_review') {
-      return {
-        canExecute: false,
-        reason: 'Decision is pending review and cannot be executed until approved.',
-      };
-    }
-
-    if (decision.approvalState === 'rejected') {
-      return {
-        canExecute: false,
-        reason: 'Decision has been rejected.',
-      };
-    }
-
-    return { canExecute: true, reason: 'Decision meets governance requirements.' };
   }
 }
+
+export const decisionRecordService = new DecisionRecordService();

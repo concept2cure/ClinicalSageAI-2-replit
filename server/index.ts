@@ -3444,6 +3444,16 @@ import precedentEngineRoutes from './routes/precedent-engine';
 app.use('/api/precedent-engine', precedentEngineRoutes);
 console.log('✅ Precedent Engine routes mounted successfully');
 
+// Mount Regulatory Precedent Intelligence Engine
+import regulatoryPrecedentIntelligenceRoutes from './routes/regulatory-precedent-intelligence';
+app.use('/api/regulatory-precedent-intelligence', regulatoryPrecedentIntelligenceRoutes);
+console.log('✅ Regulatory Precedent Intelligence routes mounted successfully');
+
+// Mount Governed Intelligence (Assumptions, Decisions, Contradictions, Overlays)
+import governedIntelligenceRoutes from './routes/assumption-decision-contradiction';
+app.use('/api/governed-intelligence', governedIntelligenceRoutes);
+console.log('✅ Governed Intelligence routes mounted successfully');
+
 // Mount IND templates routes - temporarily disabled
 // app.use('/api/ind', indTemplatesRoutes);
 

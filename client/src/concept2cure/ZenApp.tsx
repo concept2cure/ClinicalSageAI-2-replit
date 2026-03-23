@@ -266,6 +266,9 @@ const ProjectKnowledgePanel = lazy(() =>
 const IntelligenceHub = lazy(() =>
   import('./pages/IntelligenceHub').then(m => ({ default: m.IntelligenceHub }))
 );
+const RegulatoryPrecedentIntelligence = lazy(() =>
+  import('./pages/RegulatoryPrecedentIntelligence')
+);
 const ReviewReadiness = lazy(() =>
   import('./pages/ReviewReadiness').then(m => ({ default: m.ReviewReadiness }))
 );
@@ -957,6 +960,9 @@ export const ZenApp: React.FC = () => {
 
   // Guard: prevents URL-sync from reverting a navigation that's in-flight
   const navInProgressRef = useRef(false);
+
+  // Page-level context for AnA awareness (active tab, filters, etc.)
+  const [moduleContext, setModuleContext] = useState<Record<string, unknown>>({});
 
   // Account-level custom instructions for Knowledge Base
   const [customInstructions, setCustomInstructions] = useState('');
@@ -1956,6 +1962,9 @@ export const ZenApp: React.FC = () => {
               break;
             case 'intelligence-hub':
               setLayoutMode('intelligence-hub');
+              break;
+            case 'precedent-intelligence':
+              setLayoutMode('precedent-intelligence');
               break;
             case 'review-readiness':
               setLayoutMode('review-readiness');
@@ -3391,10 +3400,25 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
-          {/* Precedent Intelligence — disabled (consolidated into Intelligence Hub) */}
+          {/* ── Regulatory Precedent Intelligence ── */}
+          {!embeddedModule && layoutMode === 'precedent-intelligence' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-precedent-intelligence">
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
+                    </div>
+                  }
+                >
+                  <RegulatoryPrecedentIntelligence onClose={() => setLayoutMode('projects')} onContextChange={setModuleContext} />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
 
           {/* Redirect deprecated routes to unified workspace */}
-          {['workspace', 'medtech-dashboard', 'dossier', 'precedent-intelligence'].includes(
+          {['workspace', 'medtech-dashboard', 'dossier'].includes(
             layoutMode
           ) && <RedirectToWorkspace onRedirect={() => setLayoutMode('regulatory-workspace')} />}
 
@@ -3683,6 +3707,7 @@ export const ZenApp: React.FC = () => {
               screenName: layoutMode,
               activeProject: activeProject?.name,
               projectId: activeProjectId,
+              moduleContext,
             }}
             greeting={
               layoutMode === 'deep-research'

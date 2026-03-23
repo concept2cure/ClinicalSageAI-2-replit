@@ -1,582 +1,305 @@
 /**
  * Assumption Registry Service
  *
- * First-class operating service for structured, project-bound, reusable,
- * reviewable, version-aware assumptions. Every critical assumption becomes
- * queryable, linkable, and auditable.
+ * Part 1: Makes critical assumptions explicit, structured, project-bound,
+ * reviewable, traceable, and reusable across the platform.
  *
- * Supports: biostatistics flows, document generation, AnA analysis,
- * contradiction-readiness, and regulator/body overlay compatibility.
+ * Assumptions are first-class governed objects with:
+ * - Project binding and artifact linkage
+ * - Source attribution and confidence
+ * - Domain track and regulator compatibility
+ * - Status lifecycle: active → under_review → superseded/withdrawn/challenged
+ * - Multi-tenant enforcement via organization_id
  *
  * @module server/services/assumption-registry-service
  */
 
-import { db } from '../db';
-import { eq, and, desc, sql } from 'drizzle-orm';
-import {
-  assumptionRecords,
-  assumptionHistory,
-  contradictionLinks,
-  type AssumptionRecord,
-} from '../../shared/schema/operating-system';
+import { pool } from '../db.js';
+import { createScopedLogger } from '../utils/logger';
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// TYPES
-// ═══════════════════════════════════════════════════════════════════════════════
+const log = createScopedLogger('assumption-registry');
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+export type DomainTrack = 'clinical' | 'nonclinical' | 'cmc' | 'biostatistics' | 'regulatory'
+  | 'pharmacology' | 'safety' | 'labeling' | 'commercial';
+
+export type AssumptionCategory =
+  | 'efficacy' | 'safety' | 'statistical' | 'design' | 'population'
+  | 'endpoint' | 'dosing' | 'manufacturing' | 'regulatory_pathway'
+  | 'comparator' | 'dropout' | 'missing_data' | 'effect_size'
+  | 'prevalence' | 'enrollment' | 'timeline' | 'cost';
+
+export type ConfidenceLevel = 'definitive' | 'high' | 'moderate' | 'low' | 'speculative';
+
+export type AssumptionStatus = 'active' | 'under_review' | 'superseded' | 'withdrawn' | 'challenged';
+
+export type SourceType = 'protocol' | 'sap' | 'literature' | 'precedent' | 'expert_opinion'
+  | 'regulatory_guidance' | 'historical_data' | 'modeling' | 'sponsor_decision';
+
+export interface AssumptionRecord {
+  id: string;
+  organizationId: number;
+  projectId: number;
+  assumptionCode: string;
+  title: string;
+  domainTrack: DomainTrack;
+  category: AssumptionCategory;
+  assumedValue: string;
+  unit: string | null;
+  rationale: string;
+  sourceType: SourceType;
+  sourceReference: string | null;
+  confidenceLevel: ConfidenceLevel;
+  applicableRegulators: string[];
+  linkedArtifactId: number | null;
+  linkedArtifactVersion: number | null;
+  linkedSectionCode: string | null;
+  status: AssumptionStatus;
+  supersededBy: string | null;
+  supersessionReason: string | null;
+  createdBy: string;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export interface CreateAssumptionInput {
   organizationId: number;
   projectId: number;
-  category: AssumptionRecord['category'];
-  name: string;
-  description?: string;
-  valueType?: AssumptionRecord['valueType'];
-  numericValue?: number;
-  textValue?: string;
-  jsonValue?: Record<string, unknown>;
+  assumptionCode: string;
+  title: string;
+  domainTrack: DomainTrack;
+  category: AssumptionCategory;
+  assumedValue: string;
   unit?: string;
-  rationale?: string;
-  sourceType?: AssumptionRecord['sourceType'];
-  sourceArtifactId?: number;
-  sourceArtifactVersionId?: number;
-  sourceRunId?: string;
-  sourceDescription?: string;
-  domainTrack?: AssumptionRecord['domainTrack'];
-  regulatorBody?: string;
-  jurisdiction?: string;
-  regulatoryReference?: string;
-  confidence?: AssumptionRecord['confidence'];
-  linkedArtifactIds?: number[];
-  linkedSectionCodes?: string[];
-  createdById?: number;
+  rationale: string;
+  sourceType: SourceType;
+  sourceReference?: string;
+  confidenceLevel?: ConfidenceLevel;
+  applicableRegulators?: string[];
+  linkedArtifactId?: number;
+  linkedArtifactVersion?: number;
+  linkedSectionCode?: string;
+  createdBy: string;
 }
 
-export interface UpdateAssumptionInput {
-  name?: string;
-  description?: string;
-  numericValue?: number;
-  textValue?: string;
-  jsonValue?: Record<string, unknown>;
-  unit?: string;
-  rationale?: string;
-  confidence?: AssumptionRecord['confidence'];
-  status?: AssumptionRecord['status'];
-  regulatorBody?: string;
-  jurisdiction?: string;
-  regulatoryReference?: string;
-  linkedArtifactIds?: number[];
-  linkedArtifactVersionIds?: number[];
-  linkedSectionCodes?: string[];
-  linkedDecisionIds?: string[];
-  updatedById?: number;
-  changeReason?: string;
-}
+// ─── Service ─────────────────────────────────────────────────────────────────
 
-export interface AssumptionQueryOptions {
-  organizationId: number;
-  projectId: number;
-  category?: AssumptionRecord['category'];
-  status?: AssumptionRecord['status'];
-  confidence?: AssumptionRecord['confidence'];
-  regulatorBody?: string;
-  sourceArtifactId?: number;
-  includeSuperseded?: boolean;
-}
+class AssumptionRegistryService {
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// SERVICE
-// ═══════════════════════════════════════════════════════════════════════════════
+  async create(input: CreateAssumptionInput): Promise<AssumptionRecord> {
+    log.info('Creating assumption', { code: input.assumptionCode, project: input.projectId });
 
-export class AssumptionRegistryService {
-  private static instance: AssumptionRegistryService;
+    const result = await pool!.query(`
+      INSERT INTO assumption_records (
+        organization_id, project_id, assumption_code, title, domain_track,
+        category, assumed_value, unit, rationale,
+        source_type, source_reference, confidence_level,
+        applicable_regulators, linked_artifact_id, linked_artifact_version,
+        linked_section_code, created_by
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+      RETURNING *
+    `, [
+      input.organizationId, input.projectId, input.assumptionCode, input.title,
+      input.domainTrack, input.category, input.assumedValue, input.unit ?? null,
+      input.rationale, input.sourceType, input.sourceReference ?? null,
+      input.confidenceLevel ?? 'moderate', input.applicableRegulators ?? [],
+      input.linkedArtifactId ?? null, input.linkedArtifactVersion ?? null,
+      input.linkedSectionCode ?? null, input.createdBy
+    ]);
 
-  static getInstance(): AssumptionRegistryService {
-    if (!AssumptionRegistryService.instance) {
-      AssumptionRegistryService.instance = new AssumptionRegistryService();
-    }
-    return AssumptionRegistryService.instance;
-  }
+    const record = this.map(result.rows[0]);
 
-  private getDb() {
-    if (!db) throw new Error('Database unavailable');
-    return db;
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // CREATE
-  // ─────────────────────────────────────────────────────────────────────────
-
-  async createAssumption(input: CreateAssumptionInput): Promise<AssumptionRecord> {
-    const database = this.getDb();
-
-    if (!input.organizationId || !input.projectId) {
-      throw new Error('organizationId and projectId are required');
-    }
-    if (!input.category || !input.name?.trim()) {
-      throw new Error('category and name are required');
-    }
-
-    const [record] = await database
-      .insert(assumptionRecords)
-      .values({
-        organizationId: input.organizationId,
-        projectId: input.projectId,
-        category: input.category,
-        name: input.name,
-        description: input.description,
-        valueType: input.valueType ?? 'text',
-        numericValue: input.numericValue,
-        textValue: input.textValue,
-        jsonValue: input.jsonValue,
-        unit: input.unit,
-        rationale: input.rationale,
-        sourceType: input.sourceType ?? 'manual',
-        sourceArtifactId: input.sourceArtifactId,
-        sourceArtifactVersionId: input.sourceArtifactVersionId,
-        sourceRunId: input.sourceRunId,
-        sourceDescription: input.sourceDescription,
-        domainTrack: input.domainTrack,
-        regulatorBody: input.regulatorBody,
-        jurisdiction: input.jurisdiction,
-        regulatoryReference: input.regulatoryReference,
-        confidence: input.confidence ?? 'provisional',
-        status: 'draft',
-        version: 1,
-        linkedArtifactIds: input.linkedArtifactIds ?? [],
-        linkedSectionCodes: input.linkedSectionCodes ?? [],
-        createdById: input.createdById,
-        updatedById: input.createdById,
-      })
-      .returning();
-
-    // Record history
-    await this.recordHistory(record, 'created', input.createdById);
+    // Auto-detect assumption drift after creation
+    // Runs async — does not block the create response
+    this.triggerDriftDetection(input.organizationId, input.projectId).catch(err => {
+      log.warn('Assumption drift detection failed (non-blocking)', { error: err instanceof Error ? err.message : String(err) });
+    });
 
     return record;
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // READ
-  // ─────────────────────────────────────────────────────────────────────────
-
-  async getAssumption(id: string, organizationId: number): Promise<AssumptionRecord | null> {
-    const database = this.getDb();
-    const [record] = await database
-      .select()
-      .from(assumptionRecords)
-      .where(and(
-        eq(assumptionRecords.id, id),
-        eq(assumptionRecords.organizationId, organizationId)
-      ));
-    return record ?? null;
+  /**
+   * Trigger assumption drift detection for a project.
+   * Called automatically after assumption creation/update.
+   */
+  private async triggerDriftDetection(organizationId: number, projectId: number): Promise<void> {
+    try {
+      const { contradictionEngineService } = await import('./contradiction-engine-service');
+      const findings = await contradictionEngineService.detectAssumptionDrift(organizationId, projectId);
+      if (findings.length > 0) {
+        log.info('Assumption drift detected', { projectId, count: findings.length });
+      }
+    } catch {
+      // Contradiction engine may not have tables yet — silently skip
+    }
   }
 
-  async queryAssumptions(options: AssumptionQueryOptions): Promise<AssumptionRecord[]> {
-    const database = this.getDb();
+  async search(input: {
+    organizationId: number;
+    projectId?: number;
+    domainTrack?: DomainTrack;
+    category?: AssumptionCategory;
+    status?: AssumptionStatus;
+    linkedArtifactId?: number;
+    limit?: number;
+  }): Promise<AssumptionRecord[]> {
+    const conditions: string[] = ['organization_id = $1'];
+    const params: (string | number)[] = [input.organizationId];
+    let idx = 2;
 
-    const conditions = [
-      eq(assumptionRecords.organizationId, options.organizationId),
-      eq(assumptionRecords.projectId, options.projectId),
-    ];
+    if (input.projectId) { conditions.push(`project_id = $${idx++}`); params.push(input.projectId); }
+    if (input.domainTrack) { conditions.push(`domain_track = $${idx++}`); params.push(input.domainTrack); }
+    if (input.category) { conditions.push(`category = $${idx++}`); params.push(input.category); }
+    if (input.status) { conditions.push(`status = $${idx++}`); params.push(input.status); }
+    if (input.linkedArtifactId) { conditions.push(`linked_artifact_id = $${idx++}`); params.push(input.linkedArtifactId); }
 
-    if (options.category) {
-      conditions.push(eq(assumptionRecords.category, options.category));
-    }
-    if (options.status) {
-      conditions.push(eq(assumptionRecords.status, options.status));
-    }
-    if (options.confidence) {
-      conditions.push(eq(assumptionRecords.confidence, options.confidence));
-    }
-    if (options.regulatorBody) {
-      conditions.push(eq(assumptionRecords.regulatorBody, options.regulatorBody));
-    }
-    if (options.sourceArtifactId) {
-      conditions.push(eq(assumptionRecords.sourceArtifactId, options.sourceArtifactId));
-    }
-    if (!options.includeSuperseded) {
-      conditions.push(sql`${assumptionRecords.status} != 'superseded'`);
-    }
+    const limit = input.limit ?? 50;
+    params.push(limit);
 
-    return database
-      .select()
-      .from(assumptionRecords)
-      .where(and(...conditions))
-      .orderBy(desc(assumptionRecords.updatedAt));
+    const result = await pool!.query(`
+      SELECT * FROM assumption_records
+      WHERE ${conditions.join(' AND ')}
+      ORDER BY created_at DESC
+      LIMIT $${idx}
+    `, params);
+
+    return result.rows.map(this.map);
   }
 
-  async getAssumptionsByArtifact(
-    artifactId: number,
-    organizationId: number
-  ): Promise<AssumptionRecord[]> {
-    const database = this.getDb();
-    return database
-      .select()
-      .from(assumptionRecords)
-      .where(and(
-        eq(assumptionRecords.organizationId, organizationId),
-        eq(assumptionRecords.sourceArtifactId, artifactId),
-        sql`${assumptionRecords.status} != 'superseded'`
-      ))
-      .orderBy(desc(assumptionRecords.updatedAt));
+  async getById(id: string, organizationId: number): Promise<AssumptionRecord | null> {
+    const result = await pool!.query(
+      'SELECT * FROM assumption_records WHERE id = $1 AND organization_id = $2', [id, organizationId]
+    );
+    return result.rows.length ? this.map(result.rows[0]) : null;
   }
 
-  async getAssumptionHistory(assumptionId: string, organizationId: number) {
-    const database = this.getDb();
-    return database
-      .select()
-      .from(assumptionHistory)
-      .where(and(
-        eq(assumptionHistory.assumptionId, assumptionId),
-        eq(assumptionHistory.organizationId, organizationId)
-      ))
-      .orderBy(desc(assumptionHistory.createdAt));
+  async supersede(id: string, input: {
+    organizationId: number;
+    replacementId: string;
+    reason: string;
+    performedBy: string;
+  }): Promise<AssumptionRecord | null> {
+    log.info('Superseding assumption', { id, replacementId: input.replacementId });
+
+    const result = await pool!.query(`
+      UPDATE assumption_records
+      SET status = 'superseded', superseded_by = $1, supersession_reason = $2, updated_at = NOW()
+      WHERE id = $3 AND organization_id = $4
+      RETURNING *
+    `, [input.replacementId, input.reason, id, input.organizationId]);
+
+    const record = result.rows.length ? this.map(result.rows[0]) : null;
+
+    // Reactive propagation: mark downstream objects stale
+    if (record) {
+      this.propagateChange(record, 'assumption_superseded', input.reason).catch(err => {
+        log.warn('Reactive propagation failed (non-blocking)', { error: err instanceof Error ? err.message : String(err) });
+      });
+    }
+
+    return record;
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // UPDATE
-  // ─────────────────────────────────────────────────────────────────────────
-
-  async updateAssumption(
-    id: string,
-    organizationId: number,
-    input: UpdateAssumptionInput
-  ): Promise<AssumptionRecord> {
-    const database = this.getDb();
-
-    const existing = await this.getAssumption(id, organizationId);
-    if (!existing) {
-      throw new Error(`Assumption ${id} not found`);
+  /**
+   * Propagate assumption change to downstream dependencies.
+   * Marks linked artifacts/decisions as stale.
+   */
+  private async propagateChange(assumption: AssumptionRecord, triggerType: 'assumption_superseded' | 'assumption_updated' | 'assumption_challenged' | 'assumption_withdrawn', reason: string): Promise<void> {
+    try {
+      const { reactiveDependencyService } = await import('./reactive-dependency-service');
+      await reactiveDependencyService.propagateChange({
+        organizationId: assumption.organizationId,
+        projectId: assumption.projectId,
+        triggerType,
+        sourceType: 'assumption',
+        sourceId: assumption.id,
+        sourceLabel: assumption.title,
+        reason,
+      });
+    } catch {
+      // Reactive service may not have tables yet — silently skip
     }
-    if (existing.status === 'superseded') {
-      throw new Error('Cannot update a superseded assumption');
-    }
-    if (existing.status === 'approved' && input.status !== 'superseded') {
-      throw new Error('Cannot modify an approved assumption — supersede it instead');
-    }
-
-    // Separate non-DB fields from the update payload
-    const { changeReason, ...dbFields } = input;
-
-    const [updated] = await database
-      .update(assumptionRecords)
-      .set({
-        ...dbFields,
-        version: existing.version + 1,
-        updatedAt: new Date(),
-      })
-      .where(and(
-        eq(assumptionRecords.id, id),
-        eq(assumptionRecords.organizationId, organizationId)
-      ))
-      .returning();
-
-    await this.recordHistory(updated, 'updated', input.updatedById, changeReason);
-
-    return updated;
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // LIFECYCLE
-  // ─────────────────────────────────────────────────────────────────────────
+  async updateStatus(id: string, organizationId: number, status: AssumptionStatus, reviewedBy?: string): Promise<AssumptionRecord | null> {
+    const result = await pool!.query(`
+      UPDATE assumption_records
+      SET status = $1, reviewed_by = $2, reviewed_at = CASE WHEN $2 IS NOT NULL THEN NOW() ELSE reviewed_at END, updated_at = NOW()
+      WHERE id = $3 AND organization_id = $4
+      RETURNING *
+    `, [status, reviewedBy ?? null, id, organizationId]);
 
-  async reviewAssumption(
-    id: string,
-    organizationId: number,
-    reviewerId: number
-  ): Promise<AssumptionRecord> {
-    const database = this.getDb();
-    const existing = await this.getAssumption(id, organizationId);
-    if (!existing) throw new Error(`Assumption ${id} not found`);
-    if (existing.status !== 'draft') {
-      throw new Error(`Cannot review assumption in status: ${existing.status}`);
+    const record = result.rows.length ? this.map(result.rows[0]) : null;
+
+    // Propagate on material status changes
+    if (record && (status === 'challenged' || status === 'withdrawn')) {
+      const triggerMap: Record<string, 'assumption_challenged' | 'assumption_withdrawn'> = {
+        challenged: 'assumption_challenged',
+        withdrawn: 'assumption_withdrawn',
+      };
+      this.propagateChange(record, triggerMap[status], `Assumption ${status}`).catch(err => {
+        log.warn('Status change propagation failed (non-blocking)', { error: err instanceof Error ? err.message : String(err) });
+      });
     }
 
-    const [updated] = await database
-      .update(assumptionRecords)
-      .set({
-        status: 'review',
-        reviewedById: reviewerId,
-        reviewedAt: new Date(),
-        updatedById: reviewerId,
-        updatedAt: new Date(),
-      })
-      .where(and(
-        eq(assumptionRecords.id, id),
-        eq(assumptionRecords.organizationId, organizationId)
-      ))
-      .returning();
-
-    await this.recordHistory(updated, 'reviewed', reviewerId);
-    return updated;
+    return record;
   }
 
-  async approveAssumption(
-    id: string,
-    organizationId: number,
-    approverId: number
-  ): Promise<AssumptionRecord> {
-    const database = this.getDb();
-    const existing = await this.getAssumption(id, organizationId);
-    if (!existing) throw new Error(`Assumption ${id} not found`);
-    if (existing.status !== 'review') {
-      throw new Error(`Cannot approve assumption in status: ${existing.status}. Must be in review.`);
+  async getByProject(organizationId: number, projectId: number): Promise<{
+    total: number;
+    byDomain: Record<string, number>;
+    byStatus: Record<string, number>;
+    active: AssumptionRecord[];
+  }> {
+    const all = await this.search({ organizationId, projectId, limit: 200 });
+    const byDomain: Record<string, number> = {};
+    const byStatus: Record<string, number> = {};
+
+    for (const a of all) {
+      byDomain[a.domainTrack] = (byDomain[a.domainTrack] ?? 0) + 1;
+      byStatus[a.status] = (byStatus[a.status] ?? 0) + 1;
     }
 
-    const [updated] = await database
-      .update(assumptionRecords)
-      .set({
-        status: 'approved',
-        confidence: 'strong',
-        approvedById: approverId,
-        approvedAt: new Date(),
-        updatedById: approverId,
-        updatedAt: new Date(),
-      })
-      .where(and(
-        eq(assumptionRecords.id, id),
-        eq(assumptionRecords.organizationId, organizationId)
-      ))
-      .returning();
-
-    await this.recordHistory(updated, 'approved', approverId);
-    return updated;
+    return {
+      total: all.length,
+      byDomain,
+      byStatus,
+      active: all.filter(a => a.status === 'active'),
+    };
   }
 
-  async rejectAssumption(
-    id: string,
-    organizationId: number,
-    rejectorId: number,
-    reason: string
-  ): Promise<AssumptionRecord> {
-    const database = this.getDb();
-    const existing = await this.getAssumption(id, organizationId);
-    if (!existing) throw new Error(`Assumption ${id} not found`);
-    if (existing.status === 'superseded') {
-      throw new Error('Cannot reject a superseded assumption');
-    }
-    if (existing.status === 'rejected') {
-      throw new Error('Assumption is already rejected');
-    }
-
-    const [updated] = await database
-      .update(assumptionRecords)
-      .set({
-        status: 'rejected',
-        rejectedById: rejectorId,
-        rejectedAt: new Date(),
-        rejectionReason: reason,
-        updatedById: rejectorId,
-        updatedAt: new Date(),
-      })
-      .where(and(
-        eq(assumptionRecords.id, id),
-        eq(assumptionRecords.organizationId, organizationId)
-      ))
-      .returning();
-
-    await this.recordHistory(updated, 'rejected', rejectorId, reason);
-    return updated;
-  }
-
-  async supersedeAssumption(
-    id: string,
-    organizationId: number,
-    newAssumptionInput: CreateAssumptionInput,
-    reason: string
-  ): Promise<{ superseded: AssumptionRecord; replacement: AssumptionRecord }> {
-    const database = this.getDb();
-    const existing = await this.getAssumption(id, organizationId);
-    if (!existing) throw new Error(`Assumption ${id} not found`);
-    if (existing.status === 'superseded') {
-      throw new Error('Assumption is already superseded');
-    }
-
-    // Create replacement
-    const replacement = await this.createAssumption({
-      ...newAssumptionInput,
-      linkedArtifactIds: existing.linkedArtifactIds as number[] ?? [],
-      linkedSectionCodes: existing.linkedSectionCodes as string[] ?? [],
-    });
-
-    // Supersede the old one
-    const [superseded] = await database
-      .update(assumptionRecords)
-      .set({
-        status: 'superseded',
-        supersededById: replacement.id,
-        supersessionReason: reason,
-        updatedAt: new Date(),
-        updatedById: newAssumptionInput.createdById,
-      })
-      .where(and(
-        eq(assumptionRecords.id, id),
-        eq(assumptionRecords.organizationId, organizationId)
-      ))
-      .returning();
-
-    await this.recordHistory(superseded, 'superseded', newAssumptionInput.createdById, reason);
-
-    return { superseded, replacement };
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // LINKAGE
-  // ─────────────────────────────────────────────────────────────────────────
-
-  async linkToArtifact(
-    assumptionId: string,
-    organizationId: number,
-    artifactId: number,
-    artifactVersionId?: number
-  ): Promise<AssumptionRecord> {
-    const database = this.getDb();
-    const existing = await this.getAssumption(assumptionId, organizationId);
-    if (!existing) throw new Error(`Assumption ${assumptionId} not found`);
-
-    const currentIds = (existing.linkedArtifactIds as number[]) ?? [];
-    const currentVersionIds = (existing.linkedArtifactVersionIds as number[]) ?? [];
-
-    if (!currentIds.includes(artifactId)) {
-      currentIds.push(artifactId);
-    }
-    if (artifactVersionId && !currentVersionIds.includes(artifactVersionId)) {
-      currentVersionIds.push(artifactVersionId);
-    }
-
-    const [updated] = await database
-      .update(assumptionRecords)
-      .set({
-        linkedArtifactIds: currentIds,
-        linkedArtifactVersionIds: currentVersionIds,
-        updatedAt: new Date(),
-      })
-      .where(and(
-        eq(assumptionRecords.id, assumptionId),
-        eq(assumptionRecords.organizationId, organizationId)
-      ))
-      .returning();
-
-    return updated;
-  }
-
-  async linkToDecision(
-    assumptionId: string,
-    organizationId: number,
-    decisionId: string
-  ): Promise<AssumptionRecord> {
-    const database = this.getDb();
-    const existing = await this.getAssumption(assumptionId, organizationId);
-    if (!existing) throw new Error(`Assumption ${assumptionId} not found`);
-
-    const currentDecisionIds = (existing.linkedDecisionIds as string[]) ?? [];
-    if (!currentDecisionIds.includes(decisionId)) {
-      currentDecisionIds.push(decisionId);
-    }
-
-    const [updated] = await database
-      .update(assumptionRecords)
-      .set({
-        linkedDecisionIds: currentDecisionIds,
-        updatedAt: new Date(),
-      })
-      .where(and(
-        eq(assumptionRecords.id, assumptionId),
-        eq(assumptionRecords.organizationId, organizationId)
-      ))
-      .returning();
-
-    return updated;
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // CONTRADICTION READINESS
-  // ─────────────────────────────────────────────────────────────────────────
-
-  async createContradictionLink(
-    organizationId: number,
-    projectId: number,
-    sourceType: string,
-    sourceId: string,
-    targetType: string,
-    targetId: string,
-    comparisonType: string,
-    options?: {
-      sourceLabel?: string;
-      targetLabel?: string;
-      fieldPath?: string;
-      domainTrack?: string;
-      regulatorBody?: string;
-      sectionCodes?: string[];
-      createdById?: number;
-    }
-  ) {
-    const database = this.getDb();
-    const [link] = await database
-      .insert(contradictionLinks)
-      .values({
-        organizationId,
-        projectId,
-        sourceType,
-        sourceId,
-        targetType,
-        targetId,
-        comparisonType,
-        sourceLabel: options?.sourceLabel,
-        targetLabel: options?.targetLabel,
-        fieldPath: options?.fieldPath,
-        domainTrack: options?.domainTrack as any,
-        regulatorBody: options?.regulatorBody,
-        sectionCodes: options?.sectionCodes ?? [],
-        createdById: options?.createdById,
-      })
-      .returning();
-    return link;
-  }
-
-  async getContradictionLinks(projectId: number, organizationId: number) {
-    const database = this.getDb();
-    return database
-      .select()
-      .from(contradictionLinks)
-      .where(and(
-        eq(contradictionLinks.organizationId, organizationId),
-        eq(contradictionLinks.projectId, projectId),
-        eq(contradictionLinks.isActive, true)
-      ))
-      .orderBy(desc(contradictionLinks.createdAt));
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // PRIVATE
-  // ─────────────────────────────────────────────────────────────────────────
-
-  private async recordHistory(
-    record: AssumptionRecord,
-    action: string,
-    userId?: number | null,
-    reason?: string
-  ) {
-    const database = this.getDb();
-    await database.insert(assumptionHistory).values({
-      assumptionId: record.id,
-      organizationId: record.organizationId,
-      version: record.version,
-      category: record.category,
-      name: record.name,
-      valueType: record.valueType,
-      numericValue: record.numericValue,
-      textValue: record.textValue,
-      jsonValue: record.jsonValue as Record<string, unknown> | undefined,
-      unit: record.unit,
-      rationale: record.rationale,
-      confidence: record.confidence,
-      status: record.status,
-      regulatorBody: record.regulatorBody,
-      jurisdiction: record.jurisdiction,
-      changeAction: action,
-      changeReason: reason,
-      changedById: userId,
-    });
+  private map(row: Record<string, unknown>): AssumptionRecord {
+    return {
+      id: row.id as string,
+      organizationId: row.organization_id as number,
+      projectId: row.project_id as number,
+      assumptionCode: row.assumption_code as string,
+      title: row.title as string,
+      domainTrack: row.domain_track as DomainTrack,
+      category: row.category as AssumptionCategory,
+      assumedValue: row.assumed_value as string,
+      unit: row.unit as string | null,
+      rationale: row.rationale as string,
+      sourceType: row.source_type as SourceType,
+      sourceReference: row.source_reference as string | null,
+      confidenceLevel: row.confidence_level as ConfidenceLevel,
+      applicableRegulators: (row.applicable_regulators as string[]) ?? [],
+      linkedArtifactId: row.linked_artifact_id as number | null,
+      linkedArtifactVersion: row.linked_artifact_version as number | null,
+      linkedSectionCode: row.linked_section_code as string | null,
+      status: row.status as AssumptionStatus,
+      supersededBy: row.superseded_by as string | null,
+      supersessionReason: row.supersession_reason as string | null,
+      createdBy: row.created_by as string,
+      reviewedBy: row.reviewed_by as string | null,
+      reviewedAt: (row.reviewed_at as Date)?.toISOString() ?? null,
+      createdAt: (row.created_at as Date)?.toISOString() ?? '',
+      updatedAt: (row.updated_at as Date)?.toISOString() ?? '',
+    };
   }
 }
+
+export const assumptionRegistryService = new AssumptionRegistryService();

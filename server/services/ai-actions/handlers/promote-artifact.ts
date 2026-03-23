@@ -86,28 +86,22 @@ const promoteArtifactHandler: AIActionHandler = {
       );
     }
 
-    // 2b. Check governance boundary transition (advisory → governed_draft)
-    if (request.projectId) {
-      try {
-        const osIntegration = OperatingSystemIntegration.getInstance();
-        const transitionResult = await osIntegration.checkArtifactGovernanceTransition(
-          ctx.user.organizationId,
-          request.projectId,
-          artifact.id,
-          'advisory',
-          'governed_draft',
-          ctx.user.userId,
+    // 2b. Check contradiction governance — hard block if unresolved blocking findings
+    try {
+      const { contradictionEngineService } = await import('../../contradiction-engine-service');
+      const { blocked, blockingFindings } = await contradictionEngineService.checkPromotionBlocked(
+        ctx.user.organizationId, request.projectId!, artifact.id
+      );
+      if (blocked) {
+        throw new AIActionHandlerError(
+          'PROMOTION_BLOCKED',
+          `Artifact promotion blocked by ${blockingFindings.length} unresolved contradiction(s). Resolve before promoting.`,
+          409
         );
-        if (!transitionResult.allowed) {
-          console.warn(
-            `Governance boundary check: promotion would be blocked by ${transitionResult.blockedReasons.length} rule(s). ` +
-            `Proceeding with advisory warning. Reasons: ${transitionResult.blockedReasons.join('; ')}`
-          );
-          // Record the transition attempt but don't block (initial rollout — warn, don't enforce)
-        }
-      } catch (err) {
-        console.warn('Governance boundary check failed (non-fatal):', err);
       }
+    } catch (e) {
+      if (e instanceof AIActionHandlerError) throw e;
+      // Contradiction check failure shouldn't block (table may not exist yet)
     }
 
     // 3. Prepare promotion data
