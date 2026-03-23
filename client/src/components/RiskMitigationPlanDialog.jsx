@@ -124,7 +124,7 @@ const RiskMitigationPlanDialog = ({
 
   const fetchEnhancedRiskAnalytics = async () => {
     try {
-      // Connect to REAL Lumen AI Regulatory Analysis Hub
+      // Connect to REAL AnA 1.0 RI Regulatory Analysis Hub
       const response = await fetch('/api/lumen-cortex/regulatory-analysis', {
         method: 'POST',
         headers: {
@@ -149,7 +149,7 @@ const RiskMitigationPlanDialog = ({
       if (response.ok) {
         const analysisData = await response.json();
 
-        // Transform real Lumen AI response to risk assessment format
+        // Transform real AnA 1.0 RI response to risk assessment format
         const realRiskAssessment = {
           riskScore: analysisData.overall_confidence_score || 85,
           ich_framework: 'ICH E6(R3)',
@@ -195,14 +195,14 @@ const RiskMitigationPlanDialog = ({
 
         setRiskAssessment(realRiskAssessment);
         setCostAnalysis(realCostAnalysis);
-        console.log('✅ REAL Lumen AI regulatory risk analytics loaded');
+        console.log('✅ REAL AnA 1.0 RI regulatory risk analytics loaded');
       } else {
         // Only if API fails, use authentic ICH E6(R3) analysis
-        console.warn('Lumen AI regulatory analysis unavailable, using authentic ICH E6(R3) backup');
+        console.warn('AnA 1.0 RI regulatory analysis unavailable, using authentic ICH E6(R3) backup');
         await fetchAuthenticRiskAssessment();
       }
     } catch (error) {
-      console.error('Error connecting to Lumen AI Regulatory Analysis:', error);
+      console.error('Error connecting to AnA 1.0 RI Regulatory Analysis:', error);
       await fetchAuthenticRiskAssessment();
     }
   };
@@ -260,7 +260,7 @@ const RiskMitigationPlanDialog = ({
 
   const fetchRegulatoryGuidance = async () => {
     try {
-      // Connect to REAL Lumen AI Regulatory Intelligence Hub
+      // Connect to REAL AnA 1.0 RI Regulatory Intelligence Hub
       const response = await fetch('/api/lumen-cortex/ich-e6r3-guidance', {
         method: 'POST',
         headers: {
@@ -284,7 +284,7 @@ const RiskMitigationPlanDialog = ({
       if (response.ok) {
         const guidanceData = await response.json();
 
-        // Transform real Lumen AI response to UI format
+        // Transform real AnA 1.0 RI response to UI format
         const realGuidance =
           guidanceData.ich_e6r3_sections_covered?.map(section => ({
             title: `${section.section_title}`,
@@ -302,17 +302,17 @@ const RiskMitigationPlanDialog = ({
 
         setRegulatoryGuidance(realGuidance.length > 0 ? realGuidance : []);
         console.log(
-          '✅ REAL Lumen AI ICH E6(R3) guidance loaded:',
+          '✅ REAL AnA 1.0 RI ICH E6(R3) guidance loaded:',
           realGuidance.length,
           'sections'
         );
       } else {
         // Only if API fails, use authentic ICH E6(R3) data
-        console.warn('Lumen AI API unavailable, using authentic ICH E6(R3) backup data');
+        console.warn('AnA 1.0 RI API unavailable, using authentic ICH E6(R3) backup data');
         await fetchAuthenticICHGuidance();
       }
     } catch (error) {
-      console.error('Error connecting to Lumen AI Intelligence Hub:', error);
+      console.error('Error connecting to AnA 1.0 RI Intelligence Hub:', error);
       await fetchAuthenticICHGuidance();
     }
   };

@@ -1,10 +1,10 @@
 /**
- * @fileoverview AnA RI Instruction Engine
+ * @fileoverview AnA 1.0 Regulatory Intelligence — Instruction Engine
  * @module server/services/lumen-instruction-engine
- * @version 1.0.0
+ * @version 2.0.0
  *
  * @description
- * The Instruction Engine gives AnA RI the ability to accept, understand,
+ * The Instruction Engine gives AnA 1.0 RI the ability to accept, understand,
  * and execute complex multi-step instructions from users. This includes:
  *
  * 1. Generating tables, figures, and entire CTD sections from source data
@@ -13,8 +13,8 @@
  * 4. Driving the Dossier Manager: section lifecycle, cross-section updates, audit readiness
  * 5. Powering the Document Editor: high-volume authoring, versioning, real-time collaboration context
  *
- * This module exports system prompt addons that are injected into Lumen's context
- * by the lumen-context-builder, making Lumen aware of all these capabilities.
+ * This module exports system prompt addons that are injected into AnA's context
+ * by the context builder, making AnA 1.0 RI aware of all these capabilities.
  *
  * @compliance FDA 21 CFR Part 11. All instructions logged to audit trail.
  */
@@ -48,7 +48,7 @@ export interface WorkflowStep {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * The master instruction prompt that makes Lumen understand it can accept
+ * The master instruction prompt that makes AnA 1.0 RI understand it can accept
  * complex instructions and execute them. This is the "instruct" capability.
  */
 export function getInstructionEnginePrompt(): string {
@@ -91,6 +91,16 @@ When instructed to analyze:
 - Surface regulatory precedents from FDA guidance documents
 - Provide competitive landscape analysis
 
+**Analysis Output Standards:**
+Every analysis MUST include:
+- **Bottom-line verdict** — Is the position defensible, vulnerable, overclaimed, or supportable with revision?
+- **Prioritized findings** — Rank as: blocker > likely reviewer friction > material weakness > cleanup item
+- **What matters most** — Lead with the highest-impact finding, not alphabetical or sequential order
+- **Likely reviewer reaction** — What will a competent reviewer notice, question, or escalate?
+- **Tradeoff identification** — If a strategic choice exists, name both sides explicitly
+- **What to fix first vs. what can wait** — Sequence remediation by submission impact
+Do not present a flat list of findings. Prioritize by regulatory impact.
+
 #### 4. REVIEW — Quality Control and Compliance Checking
 When instructed to review:
 - Check cross-references between CTD modules for consistency
@@ -100,6 +110,21 @@ When instructed to review:
 - Check for abbreviation consistency, numbering continuity
 - Verify GLP/GCP/GMP compliance statements
 - Suggest improvements with specific regulatory justification
+
+**Review Output Standards:**
+Every review MUST:
+- Issue a **clear verdict** on the section: pass, pass with conditions, revise, or reject
+- **Rank every issue** by severity: blocker, likely reviewer friction, material weakness, cleanup
+- Flag **scar-tissue patterns** when detected:
+  - Stronger claim without stronger evidence
+  - Cleaner prose that weakens precision (editorial polish removing necessary hedging)
+  - Section-to-section language drift (same finding described differently across modules)
+  - Summary/body inconsistency (Module 2 summaries not matching Module 5 data)
+  - Evidence present but not integrated into the argument
+  - Statistical significance stated without clinical significance interpretation
+- Model **reviewer behavior**: what will they scan for first, what will they question, what will they distrust
+- Distinguish **what to fix before submission** from **what to fix in the next amendment cycle**
+Do not present all issues as equally important. A formatting note and a data integrity gap are not the same severity.
 
 #### 5. INSTRUCT-BACK — When You Need Clarification
 If an instruction is ambiguous or missing critical parameters, ask ONE clarifying question
@@ -113,7 +138,10 @@ Should I include the completed Phase 1 data from Study XYZ-001, or just the prot
 4. **Mark uncertainties** — Use [TODO], [DATA NEEDED], [VERIFY] markers for unknowns
 5. **Version-aware** — Note which version of a document you're working from
 6. **Traceable** — Every claim must trace to a source (document, study, database)
-7. **Cross-reference** — Link to related sections using CTD section codes (e.g., "See Section 3.2.S.4.3")`;
+7. **Cross-reference** — Link to related sections using CTD section codes (e.g., "See Section 3.2.S.4.3")
+8. **Guide, don't just inform** — After every analysis or review, state the recommended next action: revise, escalate, document, or proceed. Do not leave the user with findings and no direction.
+9. **Signal confidence** — When guidance depends on incomplete information, say so. Distinguish strong recommendations from provisional assessments.
+10. **Recommend the artifact** — When the next step involves creating a work product, name it: revision, memo, reviewer brief, strategy note, risk entry, or escalation summary.`;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -121,7 +149,7 @@ Should I include the completed Phase 1 data from Study XYZ-001, or just the prot
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * The complete 5-step workflow that Lumen orchestrates for dossier assembly.
+ * The complete 5-step workflow that AnA 1.0 RI orchestrates for dossier assembly.
  * Draft → Assemble → Review → Verify → Publish
  */
 export function getDossierWorkflowPrompt(): string {
@@ -410,11 +438,23 @@ and present data strategically — but the USER makes every critical decision.
    - Frame safety signals with appropriate context and risk mitigation
    - Position the benefit-risk balance compellingly but honestly
    - Anticipate reviewer questions and address them proactively
+   - When a framing choice exists, name the tradeoff: "This framing is stronger but less supported" or "This is safer but less persuasive"
 4. **Gap Identification**: Before submission, you identify:
    - Missing data that reviewers will request
    - Weak arguments that need strengthening
    - Sections where additional supporting evidence would help
    - Areas where the narrative doesn't flow logically
+5. **Reviewer-Aware Narrative Assessment**: For every major narrative section, assess:
+   - What a reviewer will notice first (inconsistencies, missing references, bold claims)
+   - Where trust erodes (post-hoc analyses presented as pre-specified, favorable safety framing without signal acknowledgment)
+   - What will generate information requests vs. what will pass without comment
+   - Whether the narrative integrates evidence or merely appends it
+
+6. **Decision-Forward Guidance**: After every narrative assessment, provide:
+   - Bottom-line recommendation: proceed, revise, or escalate
+   - What to fix first (by regulatory impact, not discovery order)
+   - Whether to create a memo, revision request, or strategy note
+   - Confidence level: strong enough to act on, or provisional pending missing data
 
 ### Insight Synthesis Capabilities
 - **Cross-Study Analysis**: Compare results across multiple studies, identify trends
@@ -486,7 +526,7 @@ You help teams achieve more predictable timelines by:
 
 /**
  * Assemble all instruction engine prompts based on enabled modules.
- * Returns a combined prompt string to be injected into Lumen's system prompt.
+ * Returns a combined prompt string to be injected into AnA's system prompt.
  */
 export function assembleInstructionEnginePrompt(enabledModules: string[]): string {
   const parts: string[] = [];

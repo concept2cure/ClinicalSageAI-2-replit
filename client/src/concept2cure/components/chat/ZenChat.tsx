@@ -128,14 +128,16 @@ interface ZenChatProps {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const ANA_THINKING_PHRASES = [
-  'Analyzing your request...',
-  'Reviewing regulatory guidance...',
-  'Cross-referencing documents...',
-  'Checking FDA guidance...',
-  'Researching ICH guidelines...',
-  'Reviewing compliance requirements...',
-  'Preparing your response...',
-  'Searching regulatory databases...',
+  'Assessing regulatory defensibility...',
+  'Cross-referencing guidance documents...',
+  'Evaluating submission posture...',
+  'Checking FDA reviewer sensitivity points...',
+  'Analyzing ICH guideline requirements...',
+  'Reviewing compliance cross-references...',
+  'Prioritizing findings by impact...',
+  'Evaluating evidence integration...',
+  'Checking cross-section consistency...',
+  'Assessing reviewer likely reaction...',
 ];
 
 const ThinkingIndicator: React.FC = () => {
@@ -644,7 +646,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             {greeting?.text || 'Hi — what are you working on?'}
           </h1>
           <p className="text-sm text-zinc-500 max-w-md mx-auto">
-            {greeting?.subtitle || 'I can draft documents, find evidence, check compliance, or help plan your submission strategy.'}
+            {greeting?.subtitle || 'I draft regulatory documents, assess submission defensibility, identify reviewer friction points, and guide your regulatory strategy.'}
           </p>
         </div>
 

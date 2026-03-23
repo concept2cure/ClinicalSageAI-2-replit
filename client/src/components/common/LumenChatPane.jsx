@@ -14,7 +14,7 @@ import { Bot, User, Send, RefreshCw } from 'lucide-react';
 
 export default function LumenChatPane({ contextId }) {
   const [history, setHistory] = useState([
-    // Start with an initial greeting from Lumen
+    // Start with an initial greeting from AnA
     {
       id: 0,
       from: 'lumen',
@@ -53,14 +53,14 @@ export default function LumenChatPane({ contextId }) {
     setLoading(true);
 
     try {
-      // Get response from Lumen service
+      // Get response from AnA service
       const reply = await lumenService.chat({
         sessionId: contextId,
         context: history.map(m => `${m.from}: ${m.text}`).join('\n'),
         message: userMsg,
       });
 
-      // Add Lumen response to history
+      // Add AnA response to history
       setHistory(h => [
         ...h,
         {
@@ -71,7 +71,7 @@ export default function LumenChatPane({ contextId }) {
         },
       ]);
     } catch (error) {
-      console.error('Error getting response from Lumen:', error);
+      console.error('Error getting response from AnA:', error);
 
       // Add error message to history
       setHistory(h => [

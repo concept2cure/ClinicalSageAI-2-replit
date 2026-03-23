@@ -1,9 +1,9 @@
 /**
  * Concept2Cure - Chat Panel
  *
- * Claude.ai-style chat interface with Lumen.
+ * Claude.ai-style chat interface with AnA 1.0 RI.
  * Left panel in the split-screen layout.
- * Now connected to real Lumen Cortex API.
+ * Connected to AnA 1.0 Regulatory Intelligence API.
  */
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -490,7 +490,7 @@ export const ChatPanel: React.FC = () => {
     setIsTyping(true);
 
     try {
-      // Call the actual Lumen Cortex API
+      // Call the AnA 1.0 RI API
       const response = await sendMessageAsync({
         message: content,
         threadId: threadId || undefined,

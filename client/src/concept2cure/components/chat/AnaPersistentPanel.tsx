@@ -47,6 +47,57 @@ const renderMarkdown = (content: string): string => {
   }
 };
 
+// ─── Verdict & Confidence Signal Detection ──────────────────────────────────
+
+interface VerdictSignal {
+  type: 'verdict' | 'priority' | 'confidence' | 'action';
+  label: string;
+  color: string;
+  bgColor: string;
+}
+
+/**
+ * Detects AnA 1.0 RI seniority signals in response text and returns
+ * badges to render beneath the message. Matches the verdict vocabulary,
+ * prioritization hierarchy, and confidence levels from the AnA doctrine.
+ */
+function detectVerdictSignals(content: string): VerdictSignal[] {
+  const signals: VerdictSignal[] = [];
+  const lower = content.toLowerCase();
+
+  // Verdict detection
+  if (/\bdefensible\b/.test(lower) && /\bverdict\b/i.test(content))
+    signals.push({ type: 'verdict', label: 'Defensible', color: 'text-emerald-700', bgColor: 'bg-emerald-50 border-emerald-200' });
+  else if (/\bvulnerable\b/.test(lower) && /\bverdict\b/i.test(content))
+    signals.push({ type: 'verdict', label: 'Vulnerable', color: 'text-amber-700', bgColor: 'bg-amber-50 border-amber-200' });
+  else if (/\boverclaimed\b/.test(lower))
+    signals.push({ type: 'verdict', label: 'Overclaimed', color: 'text-red-700', bgColor: 'bg-red-50 border-red-200' });
+  else if (/\bsupportable with revision\b/.test(lower))
+    signals.push({ type: 'verdict', label: 'Supportable with Revision', color: 'text-blue-700', bgColor: 'bg-blue-50 border-blue-200' });
+
+  // Priority detection
+  if (/\bblocker\b/.test(lower) && (/\bfix before\b/.test(lower) || /\brtf\b/.test(lower) || /\bcrl\b/.test(lower)))
+    signals.push({ type: 'priority', label: 'Blocker Identified', color: 'text-red-700', bgColor: 'bg-red-50 border-red-200' });
+  else if (/\breviewer friction\b/.test(lower))
+    signals.push({ type: 'priority', label: 'Reviewer Friction', color: 'text-amber-700', bgColor: 'bg-amber-50 border-amber-200' });
+
+  // Confidence detection
+  if (/\bstrong\b.*\bact on this\b/.test(lower))
+    signals.push({ type: 'confidence', label: 'High Confidence', color: 'text-emerald-700', bgColor: 'bg-emerald-50 border-emerald-200' });
+  else if (/\bprovisional\b.*\bpending\b/.test(lower))
+    signals.push({ type: 'confidence', label: 'Provisional', color: 'text-amber-700', bgColor: 'bg-amber-50 border-amber-200' });
+
+  // Action detection
+  if (/\bescalat(e|ion)\b/.test(lower) && /\bwarrant\b/.test(lower))
+    signals.push({ type: 'action', label: 'Escalation Recommended', color: 'text-violet-700', bgColor: 'bg-violet-50 border-violet-200' });
+  else if (/\bno[- ]go\b/.test(lower))
+    signals.push({ type: 'action', label: 'No-Go', color: 'text-red-700', bgColor: 'bg-red-50 border-red-200' });
+  else if (/\bproceed\b/.test(lower) && /\bmitigation\b/.test(lower))
+    signals.push({ type: 'action', label: 'Proceed with Mitigation', color: 'text-blue-700', bgColor: 'bg-blue-50 border-blue-200' });
+
+  return signals;
+}
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface AnaMessage {
@@ -58,6 +109,15 @@ interface AnaMessage {
   images?: Array<{ base64: string; mimeType: string }>;
   /** Downloadable PPTX from Nano Banana */
   pptx?: { base64: string; filename: string; mimeType: string };
+  /** AnA 1.0 RI — Executed guidance actions */
+  executedActions?: Array<{
+    actionType: string;
+    executed: boolean;
+    confidence: string;
+    artifactId: string | null;
+    threadId: string | null;
+    error: string | null;
+  }>;
 }
 
 interface SuggestedAction {
@@ -174,19 +234,19 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     const STANDARD_THINKING = [
       'Reviewing your regulatory landscape...',
       'Cross-referencing guidance documents...',
-      'Checking the latest FDA updates...',
-      'Let me dig into the CTD modules for you...',
-      'Analyzing your submission strategy...',
-      'Running compliance checks...',
-      'Connecting the regulatory dots...',
-      'Almost there — dotting the i\'s on 21 CFR Part 11...',
-      'Warming up the ELSA engines... no, not that one ❄️',
-      'Consulting my regulatory crystal ball...',
-      'Searching through 65 ICH guidelines...',
-      'Making sure everything is submission-ready...',
-      'Checking predicate devices and precedents...',
-      'Let it flow, let it flow... through the review process 🏔️',
-      'Building your regulatory snowglobe of insights...',
+      'Checking the latest FDA guidance...',
+      'Analyzing CTD module dependencies...',
+      'Assessing submission defensibility...',
+      'Running compliance cross-checks...',
+      'Evaluating reviewer sensitivity points...',
+      'Verifying 21 CFR Part 11 alignment...',
+      'Checking ICH guideline requirements...',
+      'Assessing evidence integration...',
+      'Reviewing predicate device precedents...',
+      'Evaluating cross-section consistency...',
+      'Analyzing risk-benefit positioning...',
+      'Checking regulatory precedent patterns...',
+      'Prioritizing findings by submission impact...',
     ];
     const DEEP_RESEARCH_THINKING = [
       'Querying ClinicalTrials.gov for matching studies...',
@@ -215,7 +275,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     if (contextProfile?.activeProject) {
       return `${timeGreeting}! Ready to make progress on ${contextProfile.activeProject}. What shall we tackle?`;
     }
-    return `${timeGreeting}! I'm AnA, your regulatory co-pilot. What would you like to work on?`;
+    return `${timeGreeting}. I'm AnA, your regulatory intelligence partner. What are we working on?`;
   }, [greeting, contextProfile?.activeProject]);
 
   // Auto-scroll when new messages
@@ -459,6 +519,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           content: data.response || data.answer || 'I\'m here to help with your regulatory work. What would you like to work on?',
           timestamp: new Date(),
           demo: data.demo || false,
+          executedActions: data.executedActions || undefined,
         }]);
       }
     } catch (err: any) {
@@ -633,9 +694,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             <div className="max-w-2xl w-full text-center">
               {/* Greeting */}
               <div className="mb-8">
-                <div className="w-10 h-10 rounded-full bg-[#D97757] flex items-center justify-center mx-auto mb-4">
+                <div className="w-10 h-10 rounded-full bg-[#D97757] flex items-center justify-center mx-auto mb-3">
                   <Sparkles className="w-5 h-5 text-white" />
                 </div>
+                <p className="text-[10px] font-semibold tracking-wider text-[#B0AEA5] uppercase mb-3">AnA 1.0 Regulatory Intelligence</p>
                 <h2 className="text-xl font-semibold text-[#141413]">{defaultGreeting}</h2>
                 {screenLabel && (
                   <p className="text-sm text-[#B0AEA5] mt-1">{screenLabel}</p>
@@ -717,6 +779,70 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                   alt={`Generated image ${idx + 1}`}
                                   className="rounded-lg border border-zinc-200 max-w-sm shadow-sm"
                                 />
+                              ))}
+                            </div>
+                          )}
+                          {/* AnA 1.0 RI — Verdict & Confidence Signals */}
+                          {(() => {
+                            const signals = detectVerdictSignals(msg.content);
+                            if (signals.length === 0) return null;
+                            return (
+                              <div className="flex flex-wrap gap-1.5 mt-2">
+                                {signals.map((s, i) => (
+                                  <span
+                                    key={i}
+                                    className={cn(
+                                      'inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-full border',
+                                      s.color, s.bgColor
+                                    )}
+                                  >
+                                    {s.type === 'verdict' && <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60" />}
+                                    {s.type === 'priority' && <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60" />}
+                                    {s.type === 'confidence' && <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60" />}
+                                    {s.type === 'action' && <Zap className="w-2.5 h-2.5" />}
+                                    {s.label}
+                                  </span>
+                                ))}
+                              </div>
+                            );
+                          })()}
+                          {/* AnA 1.0 RI — Executed Guidance Actions */}
+                          {msg.executedActions && msg.executedActions.length > 0 && (
+                            <div className="mt-2 space-y-1.5">
+                              {msg.executedActions.map((action, i) => (
+                                <div
+                                  key={i}
+                                  className={cn(
+                                    'flex items-center gap-2 px-3 py-2 rounded-lg border text-xs',
+                                    action.executed && !action.error
+                                      ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                                      : action.error
+                                        ? 'bg-red-50 border-red-200 text-red-800'
+                                        : 'bg-zinc-50 border-zinc-200 text-zinc-600'
+                                  )}
+                                >
+                                  {action.executed && !action.error ? (
+                                    <Check className="w-3.5 h-3.5 flex-shrink-0" />
+                                  ) : action.error ? (
+                                    <span className="w-3.5 h-3.5 flex-shrink-0 text-red-500">!</span>
+                                  ) : (
+                                    <Zap className="w-3.5 h-3.5 flex-shrink-0" />
+                                  )}
+                                  <span className="font-medium">
+                                    {action.executed
+                                      ? `Created ${action.actionType.replace(/_/g, ' ')}`
+                                      : action.error
+                                        ? `Failed: ${action.error}`
+                                        : `Prepared ${action.actionType.replace(/_/g, ' ')} (${action.confidence})`
+                                    }
+                                  </span>
+                                  {action.artifactId && (
+                                    <span className="text-emerald-600 font-mono text-[10px]">{action.artifactId}</span>
+                                  )}
+                                  {action.threadId && (
+                                    <span className="text-emerald-600 font-mono text-[10px]">thread:{action.threadId.slice(0, 8)}</span>
+                                  )}
+                                </div>
                               ))}
                             </div>
                           )}

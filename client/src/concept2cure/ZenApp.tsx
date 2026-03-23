@@ -8,7 +8,7 @@
  * Combines all zen components into a cohesive, elegant experience.
  *
  * NOW CONNECTED TO:
- * - Lumen Cortex (AI chat)
+ * - AnA 1.0 RI (AI chat)
  * - Project Cortex (data harvesting)
  * - Unified data layers
  *
@@ -439,10 +439,10 @@ type LayoutMode =
   | 'report-engine'
   | 'about-training'
   | 'user-inbox'
-  | 'client-branding';
+  | 'client-branding'
   | 'ana-dashboard'
   | 'safety-narrative'
-  | 'ana-platform-control';
+  | 'ana-platform-control'
   | 'integrations';
 
 const INDUSTRY_MODES: IndustryMode[] = [

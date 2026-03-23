@@ -13,8 +13,8 @@
  * Writing a 200-page Clinical Overview is exhausting "grunt work."
  * It weighs down your high-priced scientists.
  *
- * HOW LUMEN ACTS AS SHERPA:
- * - Carrying the Load: You don't write from scratch. Click "Draft" and Lumen
+ * HOW ANA ACTS AS SHERPA:
+ * - Carrying the Load: You don't write from scratch. Click "Draft" and AnA
  *   carries the burden of the first draft, citing every claim using "Smart Tags"
  *   (the ropes that connect you to the data).
  * - Safety Lines: If you try to write a claim that isn't supported by data,
