@@ -3411,6 +3411,15 @@ try {
   console.error('❌ Failed to mount Orchestration routes:', error.message);
 }
 
+// Mount Resolution Orchestration Layer routes (Sprint 4)
+try {
+  const resolutionRoutes = (await import('./routes/resolution')).default;
+  app.use('/api/resolution', resolutionRoutes);
+  console.log('✅ Resolution Orchestration API routes mounted at /api/resolution');
+} catch (error: any) {
+  console.error('❌ Failed to mount Resolution routes:', error.message);
+}
+
 // Mount Client Intelligence Memory routes
 import clientIntelligenceRoutes from './routes/client-intelligence';
 app.use('/api/client-intelligence', clientIntelligenceRoutes);
