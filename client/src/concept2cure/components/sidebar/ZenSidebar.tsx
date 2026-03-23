@@ -27,13 +27,6 @@ import {
   PenLine,
   ShieldCheck,
   Send,
-  Inbox,
-  Users,
-  BarChart3,
-  GraduationCap,
-  Key,
-  Layers,
-  BookOpen,
 } from 'lucide-react';
 import logoSrc from '@/assets/concept2cure-logo.jpg';
 
@@ -335,17 +328,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
           <Send className="w-4 h-4" />
         </button>
 
-        <div className="w-8 border-t border-zinc-200 my-1" />
-        <button
-          onClick={() => onNavigate?.('user-inbox')}
-          aria-label="My Inbox"
-          className={cn(
-            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
-            activeNavId === 'user-inbox' ? 'bg-amber-50 text-amber-600' : 'text-zinc-500 hover:bg-zinc-200'
-          )}
-        >
-          <Inbox className="w-4 h-4" />
-        </button>
+        {/* [BATCH 2] user-inbox icon removed from collapsed rail */}
 
         <button
           onClick={onToggleCollapse}
@@ -465,64 +448,9 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
             />
           </WorkspaceGroup>
 
-          {/* ── OPERATE — daily work ─────────────────────────────────── */}
-          <WorkspaceGroup label="Operate">
-            <NavItem
-              icon={<Inbox className="w-3.5 h-3.5" />}
-              label="My Inbox"
-              subtitle="Tasks · Approvals · Alerts"
-              active={activeNavId === 'user-inbox'}
-              onClick={() => onNavigate?.('user-inbox')}
-            />
-            <NavItem
-              icon={<Users className="w-3.5 h-3.5" />}
-              label="Collaboration"
-              subtitle="Threads · Reviews · Decisions"
-              active={activeNavId === 'collaboration-hub'}
-              accentColor="blue"
-              onClick={() => onNavigate?.('collaboration-hub')}
-            />
-            <NavItem
-              icon={<Layers className="w-3.5 h-3.5" />}
-              label="Artifacts"
-              subtitle="Outputs · Documents"
-              active={activeNavId === 'artifacts'}
-              onClick={() => onNavigate?.('artifacts')}
-            />
-          </WorkspaceGroup>
-
-          {/* ── ADMIN — settings & configuration ──────────────────────── */}
-          <WorkspaceGroup label="Admin" defaultOpen={false}>
-            <NavItem
-              icon={<BarChart3 className="w-3.5 h-3.5" />}
-              label="Command Center"
-              subtitle="Operations & analytics"
-              active={activeNavId === 'command-center'}
-              onClick={() => onNavigate?.('command-center')}
-            />
-            <NavItem
-              icon={<BookOpen className="w-3.5 h-3.5" />}
-              label="Knowledge Base"
-              subtitle="Skills · Materials · Context"
-              active={activeNavId === 'knowledge-base'}
-              accentColor="emerald"
-              onClick={() => onNavigate?.('knowledge-base')}
-            />
-            <NavItem
-              icon={<GraduationCap className="w-3.5 h-3.5" />}
-              label="Academy"
-              subtitle="Training · Guides"
-              active={activeNavId === 'enablement-center'}
-              onClick={() => onNavigate?.('enablement-center')}
-            />
-            <NavItem
-              icon={<Key className="w-3.5 h-3.5" />}
-              label="Platform Admin"
-              subtitle="Users · API Keys · Billing"
-              active={activeNavId === 'platform-admin'}
-              onClick={() => onNavigate?.('platform-admin')}
-            />
-          </WorkspaceGroup>
+          {/* [BATCH 2] Operate group (user-inbox, collaboration-hub, artifacts) removed.
+              Admin group (command-center, knowledge-base, enablement-center, platform-admin) removed.
+              These are now AnA actions, contextual drawers, or deleted destinations. */}
 
           <div className="mx-2 my-1.5 border-t border-zinc-100" />
 
