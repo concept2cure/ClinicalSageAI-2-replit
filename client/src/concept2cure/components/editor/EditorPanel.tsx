@@ -83,7 +83,6 @@ function getAuthHeaders(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-
 // ── Types ────────────────────────────────────────────────────────────────────
 interface Artifact {
   id: string;
@@ -185,7 +184,24 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const claimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Single secondary inspector panel (only one open at a time) ────────
-  type InspectorPanel = 'intelligence' | 'provenance' | 'compare' | 'audit' | 'dataroom' | 'inconsistency' | 'health' | 'versions' | 'batch-ai' | 'crossref' | 'comments' | 'review' | 'reviewers' | 'submission-readiness' | 'compliance-scanner' | 'ana-memory' | 'proof';
+  type InspectorPanel =
+    | 'intelligence'
+    | 'provenance'
+    | 'compare'
+    | 'audit'
+    | 'dataroom'
+    | 'inconsistency'
+    | 'health'
+    | 'versions'
+    | 'batch-ai'
+    | 'crossref'
+    | 'comments'
+    | 'review'
+    | 'reviewers'
+    | 'submission-readiness'
+    | 'compliance-scanner'
+    | 'ana-memory'
+    | 'proof';
   const [activeInspector, setActiveInspector] = useState<InspectorPanel | null>(null);
   const toggleInspector = useCallback((panel: InspectorPanel) => {
     setActiveInspector(prev => (prev === panel ? null : panel));
@@ -205,7 +221,12 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const [changingStatus, setChangingStatus] = useState(false);
 
   // ── Toast notification queue ──────────────────────────────────────────
-  type ToastItem = { id: number; message: string; type: 'success' | 'error' | 'info'; onUndo?: () => void };
+  type ToastItem = {
+    id: number;
+    message: string;
+    type: 'success' | 'error' | 'info';
+    onUndo?: () => void;
+  };
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const toastIdRef = useRef(0);
   const pushToast = useCallback(
@@ -260,16 +281,18 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
   // ── Review mode state ───────────────────────────────────────────────
   const [isReviewMode, setIsReviewMode] = useState(false);
-  const [trackedChanges, setTrackedChanges] = useState<Array<{
-    id: string;
-    type: 'addition' | 'deletion' | 'modification';
-    originalText: string;
-    newText: string;
-    author: string;
-    timestamp: string;
-    accepted?: boolean;
-    rejected?: boolean;
-  }>>([]);
+  const [trackedChanges, setTrackedChanges] = useState<
+    Array<{
+      id: string;
+      type: 'addition' | 'deletion' | 'modification';
+      originalText: string;
+      newText: string;
+      author: string;
+      timestamp: string;
+      accepted?: boolean;
+      rejected?: boolean;
+    }>
+  >([]);
   const reviewSnapshotRef = useRef<string>('');
 
   // ── New comment dialog state ───────────────────────────────────────
@@ -316,10 +339,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         if (!newSentences.includes(sentence)) {
           // Check if it was modified (find a close match)
           const modified = newSentences.find(
-            ns => !oldSentences.includes(ns) && (
-              ns.slice(0, 30) === sentence.slice(0, 30) ||
-              ns.slice(-30) === sentence.slice(-30)
-            )
+            ns =>
+              !oldSentences.includes(ns) &&
+              (ns.slice(0, 30) === sentence.slice(0, 30) || ns.slice(-30) === sentence.slice(-30))
           );
           if (modified) {
             changes.push({
@@ -346,7 +368,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       // Find added sentences
       const modifiedNewTexts = changes.filter(c => c.type === 'modification').map(c => c.newText);
       for (const sentence of newSentences) {
-        if (!oldSentences.includes(sentence) && !modifiedNewTexts.includes(sentence.slice(0, 200))) {
+        if (
+          !oldSentences.includes(sentence) &&
+          !modifiedNewTexts.includes(sentence.slice(0, 200))
+        ) {
           changes.push({
             id: `tc-${Date.now()}-${changes.length}`,
             type: 'addition',
@@ -546,8 +571,15 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       headers,
     })
       .then(r => (r.ok ? r.json() : Promise.reject(new Error(`${r.status}`))))
-      .then(d => { if (!cancelled) setSignatures(d.data ?? d ?? []); })
-      .catch(() => { if (!cancelled) { setSignatures([]); handleError(); } });
+      .then(d => {
+        if (!cancelled) setSignatures(d.data ?? d ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSignatures([]);
+          handleError();
+        }
+      });
     // Fetch provenance count
     fetch(`/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/provenance`, {
       headers,
@@ -560,17 +592,31 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           setProvenanceCount(events);
         }
       })
-      .catch(() => { if (!cancelled) { setProvenanceCount(0); handleError(); } });
+      .catch(() => {
+        if (!cancelled) {
+          setProvenanceCount(0);
+          handleError();
+        }
+      });
     // Fetch integrity verification
     fetch(
       `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/verify-integrity`,
-      { headers },
+      { headers }
     )
       .then(r => (r.ok ? r.json() : Promise.reject(new Error(`${r.status}`))))
-      .then(d => { if (!cancelled && d) setIntegrityVerified((d.data ?? d)?.verified ?? null); })
-      .catch(() => { if (!cancelled) { setIntegrityVerified(null); handleError(); } });
+      .then(d => {
+        if (!cancelled && d) setIntegrityVerified((d.data ?? d)?.verified ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setIntegrityVerified(null);
+          handleError();
+        }
+      });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [projectId, activeArtifact?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Auto-create artifact from initial content (eCTD handoff) ──────────────
@@ -756,7 +802,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         autoSaveTimerRef.current = null;
       }, 5000);
     },
-    [activeArtifact, handleSave],
+    [activeArtifact, handleSave]
   );
 
   // Cleanup auto-save timer on unmount
@@ -1032,12 +1078,17 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
   // ── Status change (with optional quality gate) ─────────────────────
   const executeStatusChange = useCallback(
-    async (newStatus: string, reason?: string) => {
+    async (
+      newStatus: string,
+      reason?: string,
+      attestation?: { meaning: string; attestationText: string }
+    ) => {
       if (!projectId || !activeArtifact) return;
       setChangingStatus(true);
       try {
-        const body: Record<string, string> = { status: newStatus };
+        const body: Record<string, unknown> = { status: newStatus };
         if (reason) body.reason = reason;
+        if (attestation) body.attestation = attestation;
         const res = await fetch(
           `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/status`,
           {
@@ -1069,12 +1120,31 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     [projectId, activeArtifact, loadArtifacts]
   );
 
+  // ── Lock toggle — canonical server mutation ───────────────────────
+  const handleToggleLock = useCallback(() => {
+    if (!activeArtifact) return;
+    const status = activeArtifact.status || 'draft';
+    if (status === 'locked') {
+      // Unlock: locked → draft (regression, needs reason)
+      executeStatusChange('draft', 'Unlocked via editor toolbar');
+    } else if (status === 'approved') {
+      // Lock: approved → locked (needs attestation)
+      executeStatusChange('locked', undefined, {
+        meaning: 'Released',
+        attestationText: 'Document locked via editor toolbar by authorized user',
+      });
+    } else {
+      pushToast(`Cannot lock — document must be approved first (current: ${status})`, 'error');
+    }
+  }, [activeArtifact, executeStatusChange, pushToast]);
+
   const handleStatusChange = useCallback(
     async (newStatus: string, reason?: string) => {
       if (!activeArtifact) return;
 
       // Quality gate: run checks when advancing to review or approved
-      const isAdvancing = (newStatus === 'review' || newStatus === 'approved') &&
+      const isAdvancing =
+        (newStatus === 'review' || newStatus === 'approved') &&
         (activeArtifact.status === 'draft' || activeArtifact.status === 'review');
 
       if (isAdvancing && activeArtifact.content) {
@@ -1083,7 +1153,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
         // Check document length
         const wordCount = content.split(/\s+/).filter(Boolean).length;
-        if (wordCount < 50) warnings.push(`Document is very short (${wordCount} words) — consider expanding before review.`);
+        if (wordCount < 50)
+          warnings.push(
+            `Document is very short (${wordCount} words) — consider expanding before review.`
+          );
 
         // Check for placeholder text
         if (/\[.*?\]|TODO|TBD|FIXME|lorem ipsum/i.test(content)) {
@@ -1092,7 +1165,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
         // Check CTD section assignment
         if (!activeArtifact.ctdSection) {
-          warnings.push('No CTD section assigned — reviewers won\'t know the dossier placement.');
+          warnings.push("No CTD section assigned — reviewers won't know the dossier placement.");
         }
 
         // Check for headings (structure)
@@ -1174,8 +1247,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           <FileText className="w-10 h-10 mx-auto mb-3 text-zinc-300" />
           <p className="text-sm font-medium text-zinc-600 mb-1">No project selected</p>
           <p className="text-xs text-zinc-500 leading-relaxed mb-4">
-            Select a project to access its regulatory documents, version history,
-            and audit trail.
+            Select a project to access its regulatory documents, version history, and audit trail.
           </p>
           {onNavigateToProject && (
             <button
@@ -1410,7 +1482,11 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               </p>
               {artifacts.length > 0 && (
                 <button
-                  onClick={() => { setFilterStatus('all'); setFilterType('all'); setFilterCtd('all'); }}
+                  onClick={() => {
+                    setFilterStatus('all');
+                    setFilterType('all');
+                    setFilterCtd('all');
+                  }}
                   className="mt-3 px-3 py-1.5 text-xs font-medium text-zinc-600 bg-zinc-100 rounded-lg hover:bg-zinc-200 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
                 >
                   Clear all filters
@@ -1541,7 +1617,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         <DocumentStatusTimeline
           currentStatus={activeArtifact?.status || 'draft'}
           documentTitle={activeArtifact?.title}
-          onChangeStatus={(newStatus) => handleStatusChange(newStatus)}
+          onChangeStatus={newStatus => handleStatusChange(newStatus)}
           compact
         />
         {saveStatus === 'saved' && !isDirty && (
@@ -1581,8 +1657,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg bg-zinc-100 text-zinc-600 font-medium tabular-nums hover:bg-zinc-200 transition-colors cursor-pointer"
               title="Open version compare — click to see all versions"
             >
-              <GitCompare className="w-3 h-3" />
-              v{activeArtifact.version}
+              <GitCompare className="w-3 h-3" />v{activeArtifact.version}
             </button>
             {signatures.length > 0 && (
               <button
@@ -1613,12 +1688,20 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                     ? 'bg-emerald-50 text-emerald-600 ring-emerald-200/60 hover:bg-emerald-100'
                     : 'bg-red-50 text-red-600 ring-red-200/60 hover:bg-red-100'
                 )}
-                title={integrityVerified ? 'Integrity verified — view audit' : 'Integrity modified — view audit'}
+                title={
+                  integrityVerified
+                    ? 'Integrity verified — view audit'
+                    : 'Integrity modified — view audit'
+                }
               >
                 {integrityVerified ? (
-                  <><CheckCircle className="w-3 h-3" /> Verified</>
+                  <>
+                    <CheckCircle className="w-3 h-3" /> Verified
+                  </>
                 ) : (
-                  <><AlertTriangle className="w-3 h-3" /> Modified</>
+                  <>
+                    <AlertTriangle className="w-3 h-3" /> Modified
+                  </>
                 )}
               </button>
             )}
@@ -1648,130 +1731,136 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
         {/* Overflow: Save, Export, Sign, Review, CTD, Audit export */}
         <div className="relative">
-            <button
-              onClick={() => setOverflowOpen(!overflowOpen)}
-              aria-label="More actions"
-              aria-expanded={overflowOpen}
-              className="px-2 py-1.5 text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150"
+          <button
+            onClick={() => setOverflowOpen(!overflowOpen)}
+            aria-label="More actions"
+            aria-expanded={overflowOpen}
+            className="px-2 py-1.5 text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 rounded-lg focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors duration-150"
+          >
+            <ChevronDown className="w-4 h-4" />
+          </button>
+          {overflowOpen && (
+            <div
+              role="menu"
+              onKeyDown={e => {
+                if (e.key === 'Escape') {
+                  e.stopPropagation();
+                  setOverflowOpen(false);
+                }
+              }}
+              className="absolute right-0 top-full mt-1 w-48 bg-white border border-zinc-200 rounded-lg shadow-lg z-50 py-1"
             >
-              <ChevronDown className="w-4 h-4" />
-            </button>
-            {overflowOpen && (
-              <div
-                role="menu"
-                onKeyDown={e => {
-                  if (e.key === 'Escape') {
-                    e.stopPropagation();
-                    setOverflowOpen(false);
-                  }
+              {/* Save */}
+              <button
+                role="menuitem"
+                onClick={() => {
+                  activeArtifact && handleSave(activeArtifact.content, {});
+                  setOverflowOpen(false);
                 }}
-                className="absolute right-0 top-full mt-1 w-48 bg-white border border-zinc-200 rounded-lg shadow-lg z-50 py-1"
+                className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
               >
-                {/* Save */}
+                <Check className="w-3 h-3 text-zinc-400" />
+                Save
+              </button>
+              {/* Export */}
+              <button
+                role="menuitem"
+                onClick={() => {
+                  setShowExportDialog(true);
+                  setOverflowOpen(false);
+                }}
+                className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+              >
+                <Download className="w-3 h-3 text-zinc-400" />
+                Export…
+              </button>
+              <button
+                role="menuitem"
+                onClick={() => {
+                  handleExportMarkdown();
+                  setOverflowOpen(false);
+                }}
+                className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+              >
+                <Download className="w-3 h-3 text-zinc-400" />
+                Markdown (.md)
+              </button>
+              <div className="border-t border-zinc-200 my-1" />
+              {/* Sign — opens Part 11 compliant dialog */}
+              <button
+                role="menuitem"
+                onClick={() => {
+                  setShowSignatureDialog(true);
+                  setOverflowOpen(false);
+                }}
+                disabled={!activeArtifact}
+                className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 disabled:opacity-60 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+              >
+                <PenTool className="w-3 h-3 text-zinc-400" />
+                Sign & Approve (Part 11)
+              </button>
+              {/* Status change — forward transitions only; regressions use lock overlay / GovernedDocumentPanel */}
+              {activeArtifact?.status !== 'locked' && (
                 <button
                   role="menuitem"
                   onClick={() => {
-                    activeArtifact && handleSave(activeArtifact.content, {});
+                    const current = activeArtifact?.status || 'draft';
+                    const next =
+                      current === 'approved'
+                        ? 'locked'
+                        : current === 'review'
+                          ? 'approved'
+                          : 'review';
+                    handleStatusChange(next);
                     setOverflowOpen(false);
                   }}
-                  className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
-                >
-                  <Check className="w-3 h-3 text-zinc-400" />
-                  Save
-                </button>
-                {/* Export */}
-                <button
-                  role="menuitem"
-                  onClick={() => { setShowExportDialog(true); setOverflowOpen(false); }}
-                  className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
-                >
-                  <Download className="w-3 h-3 text-zinc-400" />
-                  Export…
-                </button>
-                <button
-                  role="menuitem"
-                  onClick={() => { handleExportMarkdown(); setOverflowOpen(false); }}
-                  className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
-                >
-                  <Download className="w-3 h-3 text-zinc-400" />
-                  Markdown (.md)
-                </button>
-                <div className="border-t border-zinc-200 my-1" />
-                {/* Sign — opens Part 11 compliant dialog */}
-                <button
-                  role="menuitem"
-                  onClick={() => {
-                    setShowSignatureDialog(true);
-                    setOverflowOpen(false);
-                  }}
-                  disabled={!activeArtifact}
+                  disabled={changingStatus || !activeArtifact}
                   className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 disabled:opacity-60 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
                 >
-                  <PenTool className="w-3 h-3 text-zinc-400" />
-                  Sign & Approve (Part 11)
+                  <Lock className="w-3 h-3 text-zinc-400" />
+                  {activeArtifact?.status === 'approved'
+                    ? 'Lock'
+                    : activeArtifact?.status === 'review'
+                      ? 'Approve'
+                      : 'Submit for Review'}
                 </button>
-                {/* Status change — forward transitions only; regressions use lock overlay / GovernedDocumentPanel */}
-                {activeArtifact?.status !== 'locked' && (
-                  <button
-                    role="menuitem"
-                    onClick={() => {
-                      const current = activeArtifact?.status || 'draft';
-                      const next =
-                        current === 'approved'
-                          ? 'locked'
-                          : current === 'review'
-                            ? 'approved'
-                            : 'review';
-                      handleStatusChange(next);
-                      setOverflowOpen(false);
-                    }}
-                    disabled={changingStatus || !activeArtifact}
-                    className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 disabled:opacity-60 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
-                  >
-                    <Lock className="w-3 h-3 text-zinc-400" />
-                    {activeArtifact?.status === 'approved'
-                      ? 'Lock'
-                      : activeArtifact?.status === 'review'
-                        ? 'Approve'
-                        : 'Submit for Review'}
-                  </button>
-                )}
-                <div className="border-t border-zinc-200 my-1" />
-                <button
-                  onClick={() => {
-                    handleClaimCheck();
-                    setOverflowOpen(false);
-                  }}
-                  disabled={claimCheckMutation.isPending || !activeArtifact?.content}
-                  className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 disabled:opacity-60"
-                >
-                  <ShieldCheck className="w-3 h-3 inline mr-1.5 text-amber-500" />
-                  Check Claims
-                </button>
-                <button
-                  onClick={() => {
-                    setShowCtdInput(!showCtdInput);
-                    setOverflowOpen(false);
-                  }}
-                  className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700"
-                >
-                  <MapPin className="w-3 h-3 inline mr-1.5 text-zinc-400" />
-                  Set CTD Section
-                </button>
-                <button
-                  onClick={() => {
-                    handleExportAudit();
-                    setOverflowOpen(false);
-                  }}
-                  disabled={exportingAudit}
-                  className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 disabled:opacity-60"
-                >
-                  <ClipboardList className="w-3 h-3 inline mr-1.5 text-zinc-400" />
-                  Export Audit
-                </button>
-              </div>
-            )}
-          </div>
+              )}
+              <div className="border-t border-zinc-200 my-1" />
+              <button
+                onClick={() => {
+                  handleClaimCheck();
+                  setOverflowOpen(false);
+                }}
+                disabled={claimCheckMutation.isPending || !activeArtifact?.content}
+                className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 disabled:opacity-60"
+              >
+                <ShieldCheck className="w-3 h-3 inline mr-1.5 text-amber-500" />
+                Check Claims
+              </button>
+              <button
+                onClick={() => {
+                  setShowCtdInput(!showCtdInput);
+                  setOverflowOpen(false);
+                }}
+                className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700"
+              >
+                <MapPin className="w-3 h-3 inline mr-1.5 text-zinc-400" />
+                Set CTD Section
+              </button>
+              <button
+                onClick={() => {
+                  handleExportAudit();
+                  setOverflowOpen(false);
+                }}
+                disabled={exportingAudit}
+                className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 disabled:opacity-60"
+              >
+                <ClipboardList className="w-3 h-3 inline mr-1.5 text-zinc-400" />
+                Export Audit
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ── Ribbon toolbar — categorized inspector panels with group labels ── */}
@@ -1779,46 +1868,273 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         {/* AI & Intelligence */}
         <div className="flex flex-col items-center pr-3 mr-3 border-r border-zinc-200 py-1">
           <div className="flex items-center gap-0.5">
-            <button data-testid="ribbon-intelligence" onClick={() => toggleInspector('intelligence')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'intelligence' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Brain className="w-3.5 h-3.5" />Intelligence</button>
-            <button data-testid="ribbon-batch-ai" onClick={() => toggleInspector('batch-ai')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'batch-ai' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Layers className="w-3.5 h-3.5" />Batch AI</button>
-            <button data-testid="ribbon-health" onClick={() => toggleInspector('health')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'health' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><ShieldCheck className="w-3.5 h-3.5" />Health</button>
-            <button data-testid="ribbon-compliance" onClick={() => toggleInspector('compliance-scanner')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'compliance-scanner' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><AlertTriangle className="w-3.5 h-3.5" />Compliance</button>
-            <button data-testid="ribbon-memory" onClick={() => toggleInspector('ana-memory')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'ana-memory' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Brain className="w-3.5 h-3.5" />Memory</button>
+            <button
+              data-testid="ribbon-intelligence"
+              onClick={() => toggleInspector('intelligence')}
+              className={cn(
+                'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap',
+                activeInspector === 'intelligence'
+                  ? 'bg-blue-600 text-white font-medium shadow-sm'
+                  : 'text-zinc-600 hover:bg-white hover:shadow-sm'
+              )}
+            >
+              <Brain className="w-3.5 h-3.5" />
+              Intelligence
+            </button>
+            <button
+              data-testid="ribbon-batch-ai"
+              onClick={() => toggleInspector('batch-ai')}
+              className={cn(
+                'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap',
+                activeInspector === 'batch-ai'
+                  ? 'bg-blue-600 text-white font-medium shadow-sm'
+                  : 'text-zinc-600 hover:bg-white hover:shadow-sm'
+              )}
+            >
+              <Layers className="w-3.5 h-3.5" />
+              Batch AI
+            </button>
+            <button
+              data-testid="ribbon-health"
+              onClick={() => toggleInspector('health')}
+              className={cn(
+                'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap',
+                activeInspector === 'health'
+                  ? 'bg-blue-600 text-white font-medium shadow-sm'
+                  : 'text-zinc-600 hover:bg-white hover:shadow-sm'
+              )}
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              Health
+            </button>
+            <button
+              data-testid="ribbon-compliance"
+              onClick={() => toggleInspector('compliance-scanner')}
+              className={cn(
+                'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap',
+                activeInspector === 'compliance-scanner'
+                  ? 'bg-blue-600 text-white font-medium shadow-sm'
+                  : 'text-zinc-600 hover:bg-white hover:shadow-sm'
+              )}
+            >
+              <AlertTriangle className="w-3.5 h-3.5" />
+              Compliance
+            </button>
+            <button
+              data-testid="ribbon-memory"
+              onClick={() => toggleInspector('ana-memory')}
+              className={cn(
+                'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap',
+                activeInspector === 'ana-memory'
+                  ? 'bg-blue-600 text-white font-medium shadow-sm'
+                  : 'text-zinc-600 hover:bg-white hover:shadow-sm'
+              )}
+            >
+              <Brain className="w-3.5 h-3.5" />
+              Memory
+            </button>
           </div>
-          <span className="text-[9px] font-medium uppercase tracking-widest text-zinc-400 mt-0.5">AI</span>
+          <span className="text-[9px] font-medium uppercase tracking-widest text-zinc-400 mt-0.5">
+            AI
+          </span>
         </div>
 
         {/* Review & Collaboration */}
         <div className="flex flex-col items-center pr-3 mr-3 border-r border-zinc-200 py-1">
           <div className="flex items-center gap-0.5">
-            <button data-testid="ribbon-comments" onClick={() => toggleInspector('comments')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap relative', activeInspector === 'comments' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><MessageSquare className="w-3.5 h-3.5" />Comments{comments.filter(c => !c.resolved).length > 0 && (<span className={cn('ml-1 inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full text-[10px] font-semibold', activeInspector === 'comments' ? 'bg-white text-blue-600' : 'bg-amber-500 text-white')}>{comments.filter(c => !c.resolved).length}</span>)}</button>
-            <button data-testid="ribbon-review" onClick={() => toggleInspector('review')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', isReviewMode ? 'bg-amber-500 text-white font-medium shadow-sm' : activeInspector === 'review' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Eye className="w-3.5 h-3.5" />Review{isReviewMode && <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}</button>
-            <button data-testid="ribbon-reviewers" onClick={() => toggleInspector('reviewers')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'reviewers' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Users className="w-3.5 h-3.5" />Reviewers</button>
-            <button data-testid="ribbon-versions" onClick={() => toggleInspector('versions')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'versions' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><GitCompare className="w-3.5 h-3.5" />History</button>
-            <button data-testid="ribbon-compare" onClick={() => toggleInspector('compare')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'compare' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><GitCompare className="w-3.5 h-3.5" />Compare</button>
+            <button
+              data-testid="ribbon-comments"
+              onClick={() => toggleInspector('comments')}
+              className={cn(
+                'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap relative',
+                activeInspector === 'comments'
+                  ? 'bg-blue-600 text-white font-medium shadow-sm'
+                  : 'text-zinc-600 hover:bg-white hover:shadow-sm'
+              )}
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              Comments
+              {comments.filter(c => !c.resolved).length > 0 && (
+                <span
+                  className={cn(
+                    'ml-1 inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full text-[10px] font-semibold',
+                    activeInspector === 'comments'
+                      ? 'bg-white text-blue-600'
+                      : 'bg-amber-500 text-white'
+                  )}
+                >
+                  {comments.filter(c => !c.resolved).length}
+                </span>
+              )}
+            </button>
+            <button
+              data-testid="ribbon-review"
+              onClick={() => toggleInspector('review')}
+              className={cn(
+                'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap',
+                isReviewMode
+                  ? 'bg-amber-500 text-white font-medium shadow-sm'
+                  : activeInspector === 'review'
+                    ? 'bg-blue-600 text-white font-medium shadow-sm'
+                    : 'text-zinc-600 hover:bg-white hover:shadow-sm'
+              )}
+            >
+              <Eye className="w-3.5 h-3.5" />
+              Review
+              {isReviewMode && <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}
+            </button>
+            <button
+              data-testid="ribbon-reviewers"
+              onClick={() => toggleInspector('reviewers')}
+              className={cn(
+                'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap',
+                activeInspector === 'reviewers'
+                  ? 'bg-blue-600 text-white font-medium shadow-sm'
+                  : 'text-zinc-600 hover:bg-white hover:shadow-sm'
+              )}
+            >
+              <Users className="w-3.5 h-3.5" />
+              Reviewers
+            </button>
+            <button
+              data-testid="ribbon-versions"
+              onClick={() => toggleInspector('versions')}
+              className={cn(
+                'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap',
+                activeInspector === 'versions'
+                  ? 'bg-blue-600 text-white font-medium shadow-sm'
+                  : 'text-zinc-600 hover:bg-white hover:shadow-sm'
+              )}
+            >
+              <GitCompare className="w-3.5 h-3.5" />
+              History
+            </button>
+            <button
+              data-testid="ribbon-compare"
+              onClick={() => toggleInspector('compare')}
+              className={cn(
+                'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap',
+                activeInspector === 'compare'
+                  ? 'bg-blue-600 text-white font-medium shadow-sm'
+                  : 'text-zinc-600 hover:bg-white hover:shadow-sm'
+              )}
+            >
+              <GitCompare className="w-3.5 h-3.5" />
+              Compare
+            </button>
           </div>
-          <span className="text-[9px] font-medium uppercase tracking-widest text-zinc-400 mt-0.5">Review</span>
+          <span className="text-[9px] font-medium uppercase tracking-widest text-zinc-400 mt-0.5">
+            Review
+          </span>
         </div>
 
         {/* Compliance & References */}
         <div className="flex flex-col items-center pr-3 mr-3 border-r border-zinc-200 py-1">
           <div className="flex items-center gap-0.5">
-            <button data-testid="ribbon-crossref" onClick={() => toggleInspector('crossref')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'crossref' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Link2 className="w-3.5 h-3.5" />Cross-Refs</button>
-            <button data-testid="ribbon-inconsistency" onClick={() => toggleInspector('inconsistency')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'inconsistency' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Zap className="w-3.5 h-3.5" />Issues</button>
-            <button data-testid="ribbon-dataroom" onClick={() => toggleInspector('dataroom')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'dataroom' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Database className="w-3.5 h-3.5" />Data Room</button>
+            <button
+              data-testid="ribbon-crossref"
+              onClick={() => toggleInspector('crossref')}
+              className={cn(
+                'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap',
+                activeInspector === 'crossref'
+                  ? 'bg-blue-600 text-white font-medium shadow-sm'
+                  : 'text-zinc-600 hover:bg-white hover:shadow-sm'
+              )}
+            >
+              <Link2 className="w-3.5 h-3.5" />
+              Cross-Refs
+            </button>
+            <button
+              data-testid="ribbon-inconsistency"
+              onClick={() => toggleInspector('inconsistency')}
+              className={cn(
+                'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap',
+                activeInspector === 'inconsistency'
+                  ? 'bg-blue-600 text-white font-medium shadow-sm'
+                  : 'text-zinc-600 hover:bg-white hover:shadow-sm'
+              )}
+            >
+              <Zap className="w-3.5 h-3.5" />
+              Issues
+            </button>
+            <button
+              data-testid="ribbon-dataroom"
+              onClick={() => toggleInspector('dataroom')}
+              className={cn(
+                'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap',
+                activeInspector === 'dataroom'
+                  ? 'bg-blue-600 text-white font-medium shadow-sm'
+                  : 'text-zinc-600 hover:bg-white hover:shadow-sm'
+              )}
+            >
+              <Database className="w-3.5 h-3.5" />
+              Data Room
+            </button>
           </div>
-          <span className="text-[9px] font-medium uppercase tracking-widest text-zinc-400 mt-0.5">Compliance</span>
+          <span className="text-[9px] font-medium uppercase tracking-widest text-zinc-400 mt-0.5">
+            Compliance
+          </span>
         </div>
 
         {/* Audit & Provenance */}
         <div className="flex flex-col items-center py-1">
           <div className="flex items-center gap-0.5">
-            <button data-testid="ribbon-provenance" onClick={() => toggleInspector('provenance')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'provenance' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><ShieldCheck className="w-3.5 h-3.5" />Provenance</button>
-            <button data-testid="ribbon-audit" onClick={() => toggleInspector('audit')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'audit' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><ClipboardList className="w-3.5 h-3.5" />Audit Trail</button>
-            <button data-testid="ribbon-submission" onClick={() => toggleInspector('submission-readiness')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'submission-readiness' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Shield className="w-3.5 h-3.5" />Submission</button>
-            <button data-testid="ribbon-proof" onClick={() => toggleInspector('proof')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'proof' ? 'bg-emerald-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Shield className="w-3.5 h-3.5" />Proof</button>
+            <button
+              data-testid="ribbon-provenance"
+              onClick={() => toggleInspector('provenance')}
+              className={cn(
+                'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap',
+                activeInspector === 'provenance'
+                  ? 'bg-blue-600 text-white font-medium shadow-sm'
+                  : 'text-zinc-600 hover:bg-white hover:shadow-sm'
+              )}
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              Provenance
+            </button>
+            <button
+              data-testid="ribbon-audit"
+              onClick={() => toggleInspector('audit')}
+              className={cn(
+                'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap',
+                activeInspector === 'audit'
+                  ? 'bg-blue-600 text-white font-medium shadow-sm'
+                  : 'text-zinc-600 hover:bg-white hover:shadow-sm'
+              )}
+            >
+              <ClipboardList className="w-3.5 h-3.5" />
+              Audit Trail
+            </button>
+            <button
+              data-testid="ribbon-submission"
+              onClick={() => toggleInspector('submission-readiness')}
+              className={cn(
+                'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap',
+                activeInspector === 'submission-readiness'
+                  ? 'bg-blue-600 text-white font-medium shadow-sm'
+                  : 'text-zinc-600 hover:bg-white hover:shadow-sm'
+              )}
+            >
+              <Shield className="w-3.5 h-3.5" />
+              Submission
+            </button>
+            <button
+              data-testid="ribbon-proof"
+              onClick={() => toggleInspector('proof')}
+              className={cn(
+                'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap',
+                activeInspector === 'proof'
+                  ? 'bg-emerald-600 text-white font-medium shadow-sm'
+                  : 'text-zinc-600 hover:bg-white hover:shadow-sm'
+              )}
+            >
+              <Shield className="w-3.5 h-3.5" />
+              Proof
+            </button>
           </div>
-          <span className="text-[9px] font-medium uppercase tracking-widest text-zinc-400 mt-0.5">Audit</span>
+          <span className="text-[9px] font-medium uppercase tracking-widest text-zinc-400 mt-0.5">
+            Audit
+          </span>
         </div>
       </div>
 
@@ -1880,7 +2196,11 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 </span>
               </div>
               <div className="px-4 py-3 text-sm text-zinc-700 overflow-y-auto max-h-48 zen-scroll leading-relaxed">
-                {aiResult.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 800)}
+                {aiResult
+                  .replace(/<[^>]+>/g, ' ')
+                  .replace(/\s+/g, ' ')
+                  .trim()
+                  .slice(0, 800)}
                 {aiResult.length > 800 && <span className="text-zinc-400"> ...</span>}
               </div>
             </div>
@@ -2015,7 +2335,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   onClick={() => {
                     if (stage !== currentStatus && !changingStatus) {
                       if (stage === 'locked' || stage === 'approved') {
-                        if (confirm(`${stageLabels[stage]}: ${stageDescriptions[stage]}. Proceed?`)) {
+                        if (
+                          confirm(`${stageLabels[stage]}: ${stageDescriptions[stage]}. Proceed?`)
+                        ) {
                           handleStatusChange(stage);
                         }
                       } else {
@@ -2044,10 +2366,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   {stageLabels[stage]}
                 </button>
                 {idx < arr.length - 1 && (
-                  <div className={cn(
-                    'w-6 h-px',
-                    isCompleted ? 'bg-emerald-300' : 'bg-zinc-200'
-                  )} />
+                  <div className={cn('w-6 h-px', isCompleted ? 'bg-emerald-300' : 'bg-zinc-200')} />
                 )}
               </React.Fragment>
             );
@@ -2124,59 +2443,64 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             enabled={activeArtifact?.status !== 'approved'}
           />
           {/* Live collaboration cursors */}
-          <CollaborationCursors
-            cursors={collaboration.cursors}
-            currentUserId={currentUser.id}
-          />
+          <CollaborationCursors cursors={collaboration.cursors} currentUserId={currentUser.id} />
           {/* Guided empty state for new/blank documents */}
-          {activeArtifact && (!activeArtifact.content || activeArtifact.content.replace(/<[^>]*>/g, '').trim().length < 10) && activeArtifact.status !== 'locked' && (
-            <div className="absolute inset-x-0 top-0 z-10 flex items-start justify-center pt-20 pointer-events-none">
-              <div className="pointer-events-auto bg-white/95 backdrop-blur-sm border border-zinc-200 rounded-xl shadow-lg p-5 max-w-md w-full mx-4">
-                <div className="text-center mb-4">
-                  <PenTool className="w-6 h-6 text-violet-500 mx-auto mb-2" />
-                  <h3 className="text-sm font-semibold text-zinc-900">Get started with your document</h3>
-                  <p className="text-xs text-zinc-500 mt-1">Choose a quick action or just start typing below</p>
+          {activeArtifact &&
+            (!activeArtifact.content ||
+              activeArtifact.content.replace(/<[^>]*>/g, '').trim().length < 10) &&
+            activeArtifact.status !== 'locked' && (
+              <div className="absolute inset-x-0 top-0 z-10 flex items-start justify-center pt-20 pointer-events-none">
+                <div className="pointer-events-auto bg-white/95 backdrop-blur-sm border border-zinc-200 rounded-xl shadow-lg p-5 max-w-md w-full mx-4">
+                  <div className="text-center mb-4">
+                    <PenTool className="w-6 h-6 text-violet-500 mx-auto mb-2" />
+                    <h3 className="text-sm font-semibold text-zinc-900">
+                      Get started with your document
+                    </h3>
+                    <p className="text-xs text-zinc-500 mt-1">
+                      Choose a quick action or just start typing below
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => handleAIEdit('expand')}
+                      className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-violet-100 transition-colors text-left"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                      AI Generate Draft
+                    </button>
+                    <button
+                      onClick={() => {
+                        const template = `<h1>${activeArtifact.title || 'Document Title'}</h1><h2>1. Introduction</h2><p></p><h2>2. Background</h2><p></p><h2>3. Methods</h2><p></p><h2>4. Results</h2><p></p><h2>5. Discussion</h2><p></p><h2>6. Conclusions</h2><p></p>`;
+                        setActiveArtifact({ ...activeArtifact, content: template });
+                        setIsDirty(true);
+                      }}
+                      className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors text-left"
+                    >
+                      <FileText className="w-3.5 h-3.5 shrink-0" />
+                      Standard Outline
+                    </button>
+                    <button
+                      onClick={() => toggleInspector('intelligence')}
+                      className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors text-left"
+                    >
+                      <Brain className="w-3.5 h-3.5 shrink-0" />
+                      Ask AnA RI
+                    </button>
+                    <button
+                      onClick={() => toggleInspector('health')}
+                      className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-amber-700 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors text-left"
+                    >
+                      <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+                      Check Health
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-zinc-400 text-center mt-3">
+                    Tip: Type <kbd className="px-1 py-0.5 bg-zinc-100 rounded text-zinc-500">/</kbd>{' '}
+                    for slash commands
+                  </p>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => handleAIEdit('expand')}
-                    className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-violet-100 transition-colors text-left"
-                  >
-                    <Sparkles className="w-3.5 h-3.5 shrink-0" />
-                    AI Generate Draft
-                  </button>
-                  <button
-                    onClick={() => {
-                      const template = `<h1>${activeArtifact.title || 'Document Title'}</h1><h2>1. Introduction</h2><p></p><h2>2. Background</h2><p></p><h2>3. Methods</h2><p></p><h2>4. Results</h2><p></p><h2>5. Discussion</h2><p></p><h2>6. Conclusions</h2><p></p>`;
-                      setActiveArtifact({ ...activeArtifact, content: template });
-                      setIsDirty(true);
-                    }}
-                    className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors text-left"
-                  >
-                    <FileText className="w-3.5 h-3.5 shrink-0" />
-                    Standard Outline
-                  </button>
-                  <button
-                    onClick={() => toggleInspector('intelligence')}
-                    className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors text-left"
-                  >
-                    <Brain className="w-3.5 h-3.5 shrink-0" />
-                    Ask AnA RI
-                  </button>
-                  <button
-                    onClick={() => toggleInspector('health')}
-                    className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-amber-700 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors text-left"
-                  >
-                    <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
-                    Check Health
-                  </button>
-                </div>
-                <p className="text-[10px] text-zinc-400 text-center mt-3">
-                  Tip: Type <kbd className="px-1 py-0.5 bg-zinc-100 rounded text-zinc-500">/</kbd> for slash commands
-                </p>
               </div>
-            </div>
-          )}
+            )}
           <UnifiedDocumentEditor
             key={activeArtifact?.id}
             documentId={activeArtifact?.id}
@@ -2188,13 +2512,16 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             showTraceability={false}
             embedded
             isReadOnly={activeArtifact?.status === 'locked'}
+            onToggleLock={handleToggleLock}
             onSave={handleSave}
             onAIAction={(action, selectedText) => {
               if (action === 'link-source') {
                 pushToast('Select text first, then use Link to Source in the bubble menu', 'info');
                 return;
               }
-              handleAIEdit(action as 'rewrite' | 'expand' | 'summarize' | 'regulatory-tone' | 'add-references');
+              handleAIEdit(
+                action as 'rewrite' | 'expand' | 'summarize' | 'regulatory-tone' | 'add-references'
+              );
             }}
             onAddComment={handleAddCommentFromEditor}
             cancelCommentId={cancelCommentId}
@@ -2296,7 +2623,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-150">
             <DataRoomPanel
               projectId={projectId}
-              onSourceSelect={(source) => {
+              onSourceSelect={source => {
                 pushToast(`Viewing source: ${source.title}`, 'info');
               }}
               onUpload={() => {
@@ -2313,7 +2640,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               activeArtifactId={activeArtifact.id}
               activeArtifactTitle={activeArtifact.title}
               activeContent={activeArtifact.content}
-              onNavigateToArtifact={(artifactId) => {
+              onNavigateToArtifact={artifactId => {
                 const target = artifacts.find(a => a.id === artifactId);
                 if (target) {
                   setActiveArtifact(target);
@@ -2342,7 +2669,14 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 };
                 const action = fixActions[dimId] || 'rewrite';
                 pushToast(`Applying AI fix for ${dimId} issue #${idx + 1}…`, 'info');
-                handleAIEdit(action as 'rewrite' | 'expand' | 'summarize' | 'regulatory-tone' | 'add-references');
+                handleAIEdit(
+                  action as
+                    | 'rewrite'
+                    | 'expand'
+                    | 'summarize'
+                    | 'regulatory-tone'
+                    | 'add-references'
+                );
               }}
             />
           </div>
@@ -2359,8 +2693,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               }))}
               currentContent={activeArtifact.content || ''}
               currentVersion={activeArtifact.version || 1}
-              onRestore={(version) => {
-                setActiveArtifact(prev => prev ? { ...prev, content: version.content } : null);
+              onRestore={version => {
+                setActiveArtifact(prev => (prev ? { ...prev, content: version.content } : null));
                 pushToast(`Restored to version ${version.version}`, 'success');
               }}
               onClose={() => setActiveInspector(null)}
@@ -2373,8 +2707,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             <BatchAIPanel
               content={activeArtifact.content || ''}
               submissionType={submissionType}
-              onApply={(newContent) => {
-                setActiveArtifact(prev => prev ? { ...prev, content: newContent } : null);
+              onApply={newContent => {
+                setActiveArtifact(prev => (prev ? { ...prev, content: newContent } : null));
                 pushToast('Batch AI changes applied', 'success');
               }}
               onClose={() => setActiveInspector(null)}
@@ -2393,10 +2727,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 ctdSection: a.ctdSection,
                 content: a.content,
               }))}
-              onInsertReference={(refText) => {
+              onInsertReference={refText => {
                 pushToast(`Reference inserted: ${refText}`, 'success');
               }}
-              onNavigateToSection={(sectionId) => {
+              onNavigateToSection={sectionId => {
                 const target = artifacts.find(a => a.id === sectionId);
                 if (target) {
                   setActiveArtifact(target);
@@ -2413,35 +2747,48 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             <CommentThreadPanel
               comments={comments}
               currentUserId={getCurrentUser().id}
-              onResolve={(commentId) => {
-                setComments(prev => prev.map(c => c.id === commentId ? { ...c, resolved: true } : c));
+              onResolve={commentId => {
+                setComments(prev =>
+                  prev.map(c => (c.id === commentId ? { ...c, resolved: true } : c))
+                );
                 updateCommentOnServer(commentId, { status: 'resolved' });
                 pushToast('Comment resolved', 'success');
               }}
-              onReopen={(commentId) => {
-                setComments(prev => prev.map(c => c.id === commentId ? { ...c, resolved: false } : c));
+              onReopen={commentId => {
+                setComments(prev =>
+                  prev.map(c => (c.id === commentId ? { ...c, resolved: false } : c))
+                );
                 updateCommentOnServer(commentId, { status: 'open' });
               }}
               onReply={(commentId, text) => {
                 const user = getCurrentUser();
-                setComments(prev => prev.map(c => c.id === commentId ? {
-                  ...c,
-                  replies: [...c.replies, {
-                    id: `reply-${Date.now()}`,
-                    text,
-                    authorId: user.id,
-                    authorName: user.name,
-                    createdAt: new Date().toISOString(),
-                  }],
-                } : c));
+                setComments(prev =>
+                  prev.map(c =>
+                    c.id === commentId
+                      ? {
+                          ...c,
+                          replies: [
+                            ...c.replies,
+                            {
+                              id: `reply-${Date.now()}`,
+                              text,
+                              authorId: user.id,
+                              authorName: user.name,
+                              createdAt: new Date().toISOString(),
+                            },
+                          ],
+                        }
+                      : c
+                  )
+                );
                 addReplyOnServer(commentId, text);
               }}
-              onDelete={(commentId) => {
+              onDelete={commentId => {
                 setComments(prev => prev.filter(c => c.id !== commentId));
                 deleteCommentOnServer(commentId);
                 pushToast('Comment deleted', 'success');
               }}
-              onNavigateToComment={(commentId) => {
+              onNavigateToComment={commentId => {
                 // Find the comment mark in the editor DOM and scroll to it
                 const commentEl = document.querySelector(`[data-comment-id="${commentId}"]`);
                 if (commentEl) {
@@ -2483,11 +2830,15 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               isReviewMode={isReviewMode}
               onToggleReviewMode={handleToggleReviewMode}
               changes={trackedChanges}
-              onAcceptChange={(changeId) => {
-                setTrackedChanges(prev => prev.map(c => c.id === changeId ? { ...c, accepted: true } : c));
+              onAcceptChange={changeId => {
+                setTrackedChanges(prev =>
+                  prev.map(c => (c.id === changeId ? { ...c, accepted: true } : c))
+                );
               }}
-              onRejectChange={(changeId) => {
-                setTrackedChanges(prev => prev.map(c => c.id === changeId ? { ...c, rejected: true } : c));
+              onRejectChange={changeId => {
+                setTrackedChanges(prev =>
+                  prev.map(c => (c.id === changeId ? { ...c, rejected: true } : c))
+                );
               }}
               onAcceptAll={() => {
                 setTrackedChanges(prev => prev.map(c => ({ ...c, accepted: true })));
@@ -2527,7 +2878,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 content: a.content,
                 type: a.type,
               }))}
-              onNavigateToArtifact={(artifactId) => {
+              onNavigateToArtifact={artifactId => {
                 const target = artifacts.find(a => a.id === artifactId);
                 if (target) {
                   setActiveArtifact(target);
@@ -2572,7 +2923,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           documentTitle={activeArtifact.title}
           documentContent={activeArtifact.content || ''}
           ctdSection={activeArtifact.ctdSection}
-          onExport={async (format) => {
+          onExport={async format => {
             switch (format) {
               case 'docx':
                 await handleExportDocx();
@@ -2597,14 +2948,19 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-5">
             <div className="flex items-center gap-2 mb-3">
               <AlertTriangle className="w-5 h-5 text-amber-500" />
-              <h3 className="text-sm font-semibold text-zinc-900">Quality Check — Review Before Proceeding</h3>
+              <h3 className="text-sm font-semibold text-zinc-900">
+                Quality Check — Review Before Proceeding
+              </h3>
             </div>
             <p className="text-xs text-zinc-500 mb-3">
               The following issues were detected. You can proceed anyway or go back to fix them.
             </p>
             <ul className="space-y-2 mb-4">
               {qualityGateDialog.warnings.map((w, i) => (
-                <li key={i} className="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
+                <li
+                  key={i}
+                  className="flex items-start gap-2 text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2"
+                >
                   <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
                   {w}
                 </li>
@@ -2612,7 +2968,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             </ul>
             <div className="flex items-center justify-end gap-2">
               <button
-                onClick={() => setQualityGateDialog({ show: false, targetStatus: '', warnings: [] })}
+                onClick={() =>
+                  setQualityGateDialog({ show: false, targetStatus: '', warnings: [] })
+                }
                 className="px-3 py-1.5 text-xs font-medium text-zinc-600 bg-zinc-100 rounded-lg hover:bg-zinc-200 transition-colors duration-150"
               >
                 Go Back & Fix
@@ -2642,7 +3000,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             </div>
             {pendingCommentHighlight && (
               <div className="border-l-2 border-blue-300 pl-2 py-1 bg-blue-50 rounded-r text-xs text-zinc-500 italic mb-3 truncate">
-                &ldquo;{pendingCommentHighlight.slice(0, 100)}{pendingCommentHighlight.length > 100 ? '…' : ''}&rdquo;
+                &ldquo;{pendingCommentHighlight.slice(0, 100)}
+                {pendingCommentHighlight.length > 100 ? '…' : ''}&rdquo;
               </div>
             )}
             <textarea
@@ -2750,17 +3109,20 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           documentVersion={activeArtifact.version}
           documentContent={activeArtifact.content || ''}
           documentStatus={activeArtifact.status}
-          onSignatureComplete={(sig) => {
-            setSignatures(prev => [...prev, {
-              signatureId: sig.id,
-              signatureType: sig.meaning,
-              signerName: sig.signerName,
-              signerEmail: '',
-              signerRole: sig.signerTitle,
-              signedAt: sig.signedAt,
-              signatureHash: sig.signatureHash,
-              status: 'valid',
-            }]);
+          onSignatureComplete={sig => {
+            setSignatures(prev => [
+              ...prev,
+              {
+                signatureId: sig.id,
+                signatureType: sig.meaning,
+                signerName: sig.signerName,
+                signerEmail: '',
+                signerRole: sig.signerTitle,
+                signedAt: sig.signedAt,
+                signatureHash: sig.signatureHash,
+                status: 'valid',
+              },
+            ]);
             pushToast('Electronic signature applied successfully', 'success');
             loadArtifacts();
           }}

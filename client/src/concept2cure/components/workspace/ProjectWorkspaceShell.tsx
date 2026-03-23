@@ -76,6 +76,7 @@ const ENABLE_GOVERNED_DND = false;
 const EditorPanel = lazy(() => import('../editor/EditorPanel').then(m => ({ default: m.default })));
 
 import { NewDocumentDialog } from './NewDocumentDialog';
+import { canEscalateToEdit } from '../../contexts/DocumentModeContext';
 
 // ── Auth helper ──────────────────────────────────────────────────────────────
 function getAuthHeaders(): Record<string, string> {
@@ -143,7 +144,9 @@ interface ProjectWorkspaceShellProps {
   openArtifactId?: string;
   onOpenArtifactConsumed?: () => void;
   /** Callback when the active document changes — used for chat context awareness */
-  onActiveDocumentChange?: (doc: { title: string; ctdSection?: string; excerpt: string } | null) => void;
+  onActiveDocumentChange?: (
+    doc: { title: string; ctdSection?: string; excerpt: string } | null
+  ) => void;
   /** Navigate to a different layout mode (e.g., submission-builder, template-library) */
   onNavigate?: (mode: string) => void;
 }
@@ -233,12 +236,19 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     }
   }, [initialContent, initialTitle]);
 
-  // If openArtifactId is provided, switch to edit mode for that artifact
+  // If openArtifactId is provided, switch to edit mode for that artifact (gated)
   useEffect(() => {
     if (!openArtifactId) return;
+    const art = artifacts.find(a => a.id === openArtifactId);
+    if (!tryOpenForEdit(art?.status)) {
+      // Still select the doc for viewing, but don't enter edit mode
+      setSelectedDocId(openArtifactId);
+      setMode('browse');
+      return;
+    }
     setSelectedDocId(openArtifactId);
     setMode('edit');
-  }, [openArtifactId]);
+  }, [openArtifactId, artifacts, tryOpenForEdit]);
 
   // ── Load artifacts ───────────────────────────────────────────────────────
   const loadArtifacts = useCallback(async () => {
@@ -300,6 +310,23 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       setTimeout(() => setShellToasts(prev => prev.filter(t => t.id !== id)), 5000);
     },
     []
+  );
+
+  // ── Escalation gate — checks if opening an existing artifact in edit mode is allowed ──
+  const tryOpenForEdit = useCallback(
+    (artifactStatus?: string): boolean => {
+      const check = canEscalateToEdit('section-workspace', artifactStatus as any);
+      if (!check.allowed) {
+        pushShellToast(check.reason || 'Editing is not available for this document', 'error');
+        return false;
+      }
+      if (check.reason) {
+        // Allowed with warning (e.g. approved → editing will reset to draft)
+        pushShellToast(check.reason, 'info');
+      }
+      return true;
+    },
+    [pushShellToast]
   );
 
   // ── Global keyboard shortcuts ────────────────────────────────────────────
@@ -450,72 +477,78 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   );
 
   // ── Create from dialog (blank or template) ─────────────────────────────
-  const handleDialogCreateBlank = useCallback(async (title: string, ctdSection?: string) => {
-    if (!projectId) return;
-    setCreatingNew(true);
-    try {
-      const res = await fetch(`/api/concept2cure/projects/${projectId}/artifacts`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-        body: JSON.stringify({
-          title,
-          content: '<p>Begin editing your document here...</p>',
-          type: 'regulatory_document',
-          category: 'document',
-          ...(ctdSection ? { ctdSection } : {}),
-        }),
-      });
-      if (res.ok) {
-        const payload = await res.json();
-        const created = payload.data ?? payload;
-        setShowNewDocDialog(false);
-        await loadArtifacts();
-        setSelectedDocId(created.id);
-        setMode('edit');
-        pushShellToast(`Created "${title}"`, 'success');
-      } else {
-        pushShellToast('Document creation failed', 'error');
+  const handleDialogCreateBlank = useCallback(
+    async (title: string, ctdSection?: string) => {
+      if (!projectId) return;
+      setCreatingNew(true);
+      try {
+        const res = await fetch(`/api/concept2cure/projects/${projectId}/artifacts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+          body: JSON.stringify({
+            title,
+            content: '<p>Begin editing your document here...</p>',
+            type: 'regulatory_document',
+            category: 'document',
+            ...(ctdSection ? { ctdSection } : {}),
+          }),
+        });
+        if (res.ok) {
+          const payload = await res.json();
+          const created = payload.data ?? payload;
+          setShowNewDocDialog(false);
+          await loadArtifacts();
+          setSelectedDocId(created.id);
+          setMode('edit');
+          pushShellToast(`Created "${title}"`, 'success');
+        } else {
+          pushShellToast('Document creation failed', 'error');
+        }
+      } catch {
+        pushShellToast('Network error — document not created', 'error');
+      } finally {
+        setCreatingNew(false);
       }
-    } catch {
-      pushShellToast('Network error — document not created', 'error');
-    } finally {
-      setCreatingNew(false);
-    }
-  }, [projectId, loadArtifacts, pushShellToast]);
+    },
+    [projectId, loadArtifacts, pushShellToast]
+  );
 
-  const handleDialogCreateFromTemplate = useCallback(async (templateId: string, title: string, ctdSection?: string) => {
-    if (!projectId) return;
-    setCreatingNew(true);
-    try {
-      const res = await fetch(`/api/concept2cure/projects/${projectId}/artifacts`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-        body: JSON.stringify({
-          title,
-          content: `<h1>${title}</h1><p>Generated from template <code>${templateId}</code>${ctdSection ? ` for CTD section ${ctdSection}` : ''}.</p>`,
-          type: 'regulatory_document',
-          category: 'document',
-          ...(ctdSection ? { ctdSection } : {}),
-          templateId,
-        }),
-      });
-      if (res.ok) {
-        const payload = await res.json();
-        const created = payload.data ?? payload;
-        setShowNewDocDialog(false);
-        await loadArtifacts();
-        setSelectedDocId(created.id);
-        setMode('edit');
-        pushShellToast(`Created "${title}" from template`, 'success');
-      } else {
-        pushShellToast('Template creation failed', 'error');
+  const handleDialogCreateFromTemplate = useCallback(
+    async (templateId: string, title: string, ctdSection?: string) => {
+      if (!projectId) return;
+      setCreatingNew(true);
+      try {
+        const res = await fetch(`/api/concept2cure/projects/${projectId}/artifacts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+          body: JSON.stringify({
+            title,
+            content: `<h1>${title}</h1><p>Generated from template <code>${templateId}</code>${ctdSection ? ` for CTD section ${ctdSection}` : ''}.</p>`,
+            type: 'regulatory_document',
+            category: 'document',
+            ...(ctdSection ? { ctdSection } : {}),
+            templateId,
+          }),
+        });
+        if (res.ok) {
+          const payload = await res.json();
+          const created = payload.data ?? payload;
+          setShowNewDocDialog(false);
+          await loadArtifacts();
+          setSelectedDocId(created.id);
+          setMode('edit');
+          pushShellToast(`Created "${title}" from template`, 'success');
+        } else {
+          pushShellToast('Template creation failed', 'error');
+        }
+      } catch {
+        pushShellToast('Network error', 'error');
+      } finally {
+        setCreatingNew(false);
       }
-    } catch {
-      pushShellToast('Network error', 'error');
-    } finally {
-      setCreatingNew(false);
-    }
-  }, [projectId, loadArtifacts, pushShellToast]);
+    },
+    [projectId, loadArtifacts, pushShellToast]
+  );
 
   // ── Placement confirmation handler ───────────────────────────────────────
   const handlePlacementConfirm = useCallback(
@@ -785,12 +818,16 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   );
 
   // ── Handlers ─────────────────────────────────────────────────────────────
-  const handleSelectDoc = useCallback((doc: TreeArtifact) => {
-    setSelectedDocId(doc.id);
-    setMode('edit');
-    setShowGovernedPanel(true);
-    setSectionReqs(null); // close reqs panel when opening governed panel
-  }, []);
+  const handleSelectDoc = useCallback(
+    (doc: TreeArtifact) => {
+      if (!tryOpenForEdit(doc.status)) return;
+      setSelectedDocId(doc.id);
+      setMode('edit');
+      setShowGovernedPanel(true);
+      setSectionReqs(null); // close reqs panel when opening governed panel
+    },
+    [tryOpenForEdit]
+  );
 
   const handleSelectFolder = useCallback((folderKey: string) => {
     setSelectedFolder(folderKey);
@@ -875,7 +912,10 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           <>
             <span className="text-zinc-300">/</span>
             <button
-              onClick={() => { setSelectedDocId(undefined); setMode('dashboard'); }}
+              onClick={() => {
+                setSelectedDocId(undefined);
+                setMode('dashboard');
+              }}
               className="text-xs text-blue-600 hover:text-blue-800 font-medium"
             >
               Dashboard
@@ -928,9 +968,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               </span>
             </>
           ) : (
-            <span className="text-xs text-amber-600 ml-1">
-              Select a dossier section to paste
-            </span>
+            <span className="text-xs text-amber-600 ml-1">Select a dossier section to paste</span>
           )}
           {pendingMove.artifact.status === 'approved' && (
             <span className="text-xs px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-medium">
@@ -954,9 +992,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       {mode === 'browse' && activeArtifact && (
         <div className="flex items-center gap-2.5 px-4 h-9 border-b border-blue-100 bg-blue-50/40 shrink-0">
           <FileText className="w-3.5 h-3.5 text-blue-500" />
-          <span className="text-xs text-blue-800 font-medium truncate">
-            {activeArtifact.title}
-          </span>
+          <span className="text-xs text-blue-800 font-medium truncate">{activeArtifact.title}</span>
           {activeArtifact.ctdSection && (
             <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100/60 text-blue-600 font-medium">
               {activeArtifact.ctdSection}
@@ -975,7 +1011,9 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             {activeArtifact.status || 'draft'}
           </span>
           <button
-            onClick={() => setMode('edit')}
+            onClick={() => {
+              if (tryOpenForEdit(activeArtifact.status)) setMode('edit');
+            }}
             className="ml-auto text-xs text-blue-600 hover:text-blue-800 font-medium"
           >
             Open →
@@ -1113,177 +1151,182 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       <div className="flex-1 flex min-h-0">
         {/* Left: Tree panel with mode toggle — hidden in dashboard mode for full-width layout */}
         {mode !== 'dashboard' && (
-        <div className="w-[200px] 2xl:w-[240px] border-r border-zinc-200 shrink-0 flex flex-col bg-white">
-          {/* Mode toggle tabs */}
-          <div className="flex border-b border-zinc-200 shrink-0 bg-zinc-50/60">
-            {[
-              { key: 'files' as LeftRailMode, icon: Files, label: 'Files', disabled: false },
-              { key: 'dossier' as LeftRailMode, icon: BookOpen, label: 'Dossier', disabled: false },
-              {
-                key: 'templates' as LeftRailMode,
-                icon: Layers,
-                label: 'Tmpl',
-                disabled: false,
-              },
-              {
-                key: 'outline' as LeftRailMode,
-                icon: List,
-                label: 'Outline',
-                disabled: !outlineAvailable,
-              },
-            ].map(tab => (
-              <button
-                key={tab.key}
-                onClick={() => !tab.disabled && setLeftRailMode(tab.key)}
-                disabled={tab.disabled}
-                className={cn(
-                  'flex-1 flex items-center justify-center gap-1 py-2.5 text-xs font-medium transition-colors duration-150',
-                  leftRailMode === tab.key
-                    ? 'text-zinc-900 bg-white border-b-2 border-zinc-900'
-                    : tab.disabled
-                      ? 'text-zinc-400 cursor-not-allowed'
-                      : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100/60'
-                )}
-                data-testid={`rail-mode-${tab.key}`}
-                title={tab.disabled ? 'Open a document to use Outline' : tab.label}
-              >
-                <tab.icon className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">{tab.label}</span>
-              </button>
-            ))}
-          </div>
-
-          {/* ── Active document context band ──────────────────────────────── */}
-          {activeArtifact && (
-            <div
-              className="border-b border-zinc-200 bg-zinc-50/60 px-2.5 py-2 shrink-0"
-              data-testid="active-doc-context"
-            >
-              <div className="flex items-center gap-1.5 mb-0.5">
-                <FileText className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                <span className="text-xs font-medium text-zinc-700 truncate flex-1">
-                  {activeArtifact.title}
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {activeArtifact.ctdSection && (
-                  <span className="text-xs px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-700 font-medium">
-                    {activeArtifact.ctdSection}
-                  </span>
-                )}
-                {activeArtifact.templateId && (
-                  <span className="text-xs px-1.5 py-0.5 rounded-md bg-violet-50 text-violet-700">
-                    {activeArtifact.templateId.replace('tpl-', '')}
-                  </span>
-                )}
-                <span
+          <div className="w-[200px] 2xl:w-[240px] border-r border-zinc-200 shrink-0 flex flex-col bg-white">
+            {/* Mode toggle tabs */}
+            <div className="flex border-b border-zinc-200 shrink-0 bg-zinc-50/60">
+              {[
+                { key: 'files' as LeftRailMode, icon: Files, label: 'Files', disabled: false },
+                {
+                  key: 'dossier' as LeftRailMode,
+                  icon: BookOpen,
+                  label: 'Dossier',
+                  disabled: false,
+                },
+                {
+                  key: 'templates' as LeftRailMode,
+                  icon: Layers,
+                  label: 'Tmpl',
+                  disabled: false,
+                },
+                {
+                  key: 'outline' as LeftRailMode,
+                  icon: List,
+                  label: 'Outline',
+                  disabled: !outlineAvailable,
+                },
+              ].map(tab => (
+                <button
+                  key={tab.key}
+                  onClick={() => !tab.disabled && setLeftRailMode(tab.key)}
+                  disabled={tab.disabled}
                   className={cn(
-                    'text-xs px-1.5 py-0.5 rounded-md font-medium',
-                    activeArtifact.status === 'locked'
-                      ? 'bg-red-50 text-red-700'
-                      : activeArtifact.status === 'approved'
-                        ? 'bg-green-50 text-green-700'
-                        : activeArtifact.status === 'review'
-                          ? 'bg-yellow-50 text-yellow-700'
-                          : 'bg-zinc-100 text-zinc-500'
+                    'flex-1 flex items-center justify-center gap-1 py-2.5 text-xs font-medium transition-colors duration-150',
+                    leftRailMode === tab.key
+                      ? 'text-zinc-900 bg-white border-b-2 border-zinc-900'
+                      : tab.disabled
+                        ? 'text-zinc-400 cursor-not-allowed'
+                        : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100/60'
                   )}
+                  data-testid={`rail-mode-${tab.key}`}
+                  title={tab.disabled ? 'Open a document to use Outline' : tab.label}
                 >
-                  {activeArtifact.status || 'draft'}
-                </span>
-                {activeArtifact.version && (
-                  <span className="text-xs text-zinc-400">v{activeArtifact.version}</span>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Tree content based on mode */}
-          {loading && artifacts.length === 0 ? (
-            <div className="flex-1 flex flex-col gap-2.5 p-4">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="flex items-center gap-2.5 animate-pulse">
-                  <div className="w-3.5 h-3.5 rounded bg-zinc-200" />
-                  <div
-                    className="h-3.5 rounded bg-zinc-100"
-                    style={{ width: `${60 + (i % 3) * 20}%` }}
-                  />
-                </div>
+                  <tab.icon className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">{tab.label}</span>
+                </button>
               ))}
-              <span className="text-xs text-zinc-400 mt-1">Loading files...</span>
             </div>
-          ) : leftRailMode === 'files' ? (
-            <ProjectFileTree
-              artifacts={artifacts}
-              selectedId={selectedDocId}
-              onSelect={handleSelectDoc}
-              onSelectFolder={handleSelectFolder}
-              selectedFolder={selectedFolder}
-              onCreateNew={() => setShowNewDoc(true)}
-              onCutDocument={handleCutDocument}
-              onOpenPlacement={art =>
-                handleOpenPlacementForDoc(art, art.ctdSection ? 'relocate' : 'place')
-              }
-              onCopyCtdPath={handleCopyCtdPath}
-              pendingMove={pendingMove}
-              onPasteHere={pendingMove ? handlePasteHere : undefined}
-            />
-          ) : leftRailMode === 'dossier' ? (
-            <DossierTree
-              artifacts={artifacts}
-              selectedSection={selectedCtdSection}
-              onSelectSection={handleSelectSection}
-              onPlaceArtifact={selectedDocId || pendingMove ? handlePlaceArtifact : undefined}
-              metrics={dossierMetrics}
-              pendingMove={pendingMove}
-              onPasteHere={pendingMove ? handlePasteHere : undefined}
-              onViewRequirements={handleViewSectionReqs}
-              onOpenTransformCanvas={(ctdSection: string) => openTransformCanvas(ctdSection)}
-              onOpenProgramTwin={openProgramTwin}
-              onOpenSubmissionApps={(ctdSection: string) => openSubmissionApps(ctdSection)}
-            />
-          ) : leftRailMode === 'outline' ? (
-            outlineAvailable ? (
-              <DocumentOutlineTree
-                content={activeDocContent}
-                title={activeDocTitle || activeArtifact?.title || ''}
-                templateKey={activeArtifact?.templateId}
-                ctdSection={activeArtifact?.ctdSection}
-                onNavigate={handleOutlineNavigate}
-                onCreateSubsection={handleCreateSubsection}
-              />
-            ) : (
-              <div className="flex-1 flex items-center justify-center p-4">
-                <p className="text-xs text-zinc-400 text-center">
-                  Open a document to view its outline
-                </p>
-              </div>
-            )
-          ) : (
-            <TemplateTree
-              onCreateFromTemplate={handleCreateFromTemplate}
-              onOpenTransformCanvas={(ctdSection: string, templateKey: string) =>
-                openTransformCanvas(ctdSection, templateKey)
-              }
-            />
-          )}
 
-          {/* Project-level Review Pulse button */}
-          <div className="shrink-0 border-t border-zinc-200 p-2">
-            <button
-              onClick={openReviewPulse}
-              className={cn(
-                'w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-xs font-medium transition-colors duration-150',
-                phase4Panel === 'pulse'
-                  ? 'text-rose-700 bg-rose-50'
-                  : 'text-zinc-500 hover:text-rose-600 hover:bg-rose-50'
-              )}
-              title="Review Pulse — project-wide review status"
-            >
-              <Activity className="w-3.5 h-3.5" />
-              Review Pulse
-            </button>
+            {/* ── Active document context band ──────────────────────────────── */}
+            {activeArtifact && (
+              <div
+                className="border-b border-zinc-200 bg-zinc-50/60 px-2.5 py-2 shrink-0"
+                data-testid="active-doc-context"
+              >
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <FileText className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                  <span className="text-xs font-medium text-zinc-700 truncate flex-1">
+                    {activeArtifact.title}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {activeArtifact.ctdSection && (
+                    <span className="text-xs px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-700 font-medium">
+                      {activeArtifact.ctdSection}
+                    </span>
+                  )}
+                  {activeArtifact.templateId && (
+                    <span className="text-xs px-1.5 py-0.5 rounded-md bg-violet-50 text-violet-700">
+                      {activeArtifact.templateId.replace('tpl-', '')}
+                    </span>
+                  )}
+                  <span
+                    className={cn(
+                      'text-xs px-1.5 py-0.5 rounded-md font-medium',
+                      activeArtifact.status === 'locked'
+                        ? 'bg-red-50 text-red-700'
+                        : activeArtifact.status === 'approved'
+                          ? 'bg-green-50 text-green-700'
+                          : activeArtifact.status === 'review'
+                            ? 'bg-yellow-50 text-yellow-700'
+                            : 'bg-zinc-100 text-zinc-500'
+                    )}
+                  >
+                    {activeArtifact.status || 'draft'}
+                  </span>
+                  {activeArtifact.version && (
+                    <span className="text-xs text-zinc-400">v{activeArtifact.version}</span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Tree content based on mode */}
+            {loading && artifacts.length === 0 ? (
+              <div className="flex-1 flex flex-col gap-2.5 p-4">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="flex items-center gap-2.5 animate-pulse">
+                    <div className="w-3.5 h-3.5 rounded bg-zinc-200" />
+                    <div
+                      className="h-3.5 rounded bg-zinc-100"
+                      style={{ width: `${60 + (i % 3) * 20}%` }}
+                    />
+                  </div>
+                ))}
+                <span className="text-xs text-zinc-400 mt-1">Loading files...</span>
+              </div>
+            ) : leftRailMode === 'files' ? (
+              <ProjectFileTree
+                artifacts={artifacts}
+                selectedId={selectedDocId}
+                onSelect={handleSelectDoc}
+                onSelectFolder={handleSelectFolder}
+                selectedFolder={selectedFolder}
+                onCreateNew={() => setShowNewDoc(true)}
+                onCutDocument={handleCutDocument}
+                onOpenPlacement={art =>
+                  handleOpenPlacementForDoc(art, art.ctdSection ? 'relocate' : 'place')
+                }
+                onCopyCtdPath={handleCopyCtdPath}
+                pendingMove={pendingMove}
+                onPasteHere={pendingMove ? handlePasteHere : undefined}
+              />
+            ) : leftRailMode === 'dossier' ? (
+              <DossierTree
+                artifacts={artifacts}
+                selectedSection={selectedCtdSection}
+                onSelectSection={handleSelectSection}
+                onPlaceArtifact={selectedDocId || pendingMove ? handlePlaceArtifact : undefined}
+                metrics={dossierMetrics}
+                pendingMove={pendingMove}
+                onPasteHere={pendingMove ? handlePasteHere : undefined}
+                onViewRequirements={handleViewSectionReqs}
+                onOpenTransformCanvas={(ctdSection: string) => openTransformCanvas(ctdSection)}
+                onOpenProgramTwin={openProgramTwin}
+                onOpenSubmissionApps={(ctdSection: string) => openSubmissionApps(ctdSection)}
+              />
+            ) : leftRailMode === 'outline' ? (
+              outlineAvailable ? (
+                <DocumentOutlineTree
+                  content={activeDocContent}
+                  title={activeDocTitle || activeArtifact?.title || ''}
+                  templateKey={activeArtifact?.templateId}
+                  ctdSection={activeArtifact?.ctdSection}
+                  onNavigate={handleOutlineNavigate}
+                  onCreateSubsection={handleCreateSubsection}
+                />
+              ) : (
+                <div className="flex-1 flex items-center justify-center p-4">
+                  <p className="text-xs text-zinc-400 text-center">
+                    Open a document to view its outline
+                  </p>
+                </div>
+              )
+            ) : (
+              <TemplateTree
+                onCreateFromTemplate={handleCreateFromTemplate}
+                onOpenTransformCanvas={(ctdSection: string, templateKey: string) =>
+                  openTransformCanvas(ctdSection, templateKey)
+                }
+              />
+            )}
+
+            {/* Project-level Review Pulse button */}
+            <div className="shrink-0 border-t border-zinc-200 p-2">
+              <button
+                onClick={openReviewPulse}
+                className={cn(
+                  'w-full flex items-center gap-2 px-2.5 py-2 rounded-md text-xs font-medium transition-colors duration-150',
+                  phase4Panel === 'pulse'
+                    ? 'text-rose-700 bg-rose-50'
+                    : 'text-zinc-500 hover:text-rose-600 hover:bg-rose-50'
+                )}
+                title="Review Pulse — project-wide review status"
+              >
+                <Activity className="w-3.5 h-3.5" />
+                Review Pulse
+              </button>
+            </div>
           </div>
-        </div>
         )}
 
         {/* Center + Right: Content area */}
@@ -1343,6 +1386,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               onClose={closePhase4Panel}
               onCreateDraft={handlePhase4CreateDraft}
               onOpenEditor={(artId: string) => {
+                const art = artifacts.find(a => a.id === artId);
+                if (!tryOpenForEdit(art?.status)) return;
                 setSelectedDocId(artId);
                 setMode('edit');
                 closePhase4Panel();
@@ -1362,6 +1407,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               artifactId={phase4Ctx.artifactId}
               onClose={closePhase4Panel}
               onOpenEditor={(artId: string) => {
+                const art = artifacts.find(a => a.id === artId);
+                if (!tryOpenForEdit(art?.status)) return;
                 setSelectedDocId(artId);
                 setMode('edit');
                 closePhase4Panel();
@@ -1373,6 +1420,11 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               }}
               onOpenProvenance={() => {
                 if (phase4Ctx.artifactId) {
+                  const art = artifacts.find(a => a.id === phase4Ctx.artifactId);
+                  if (!tryOpenForEdit(art?.status)) {
+                    closePhase4Panel();
+                    return;
+                  }
                   setSelectedDocId(phase4Ctx.artifactId);
                   setMode('edit');
                 }
@@ -1418,7 +1470,13 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               <ReviewPulseDashboard
                 projectId={projectId}
                 onNavigateToArtifact={artifactId => {
+                  const art = artifacts.find(a => a.id === artifactId);
                   closePhase4Panel();
+                  if (!tryOpenForEdit(art?.status)) {
+                    setSelectedDocId(artifactId);
+                    setMode('browse');
+                    return;
+                  }
                   setSelectedDocId(artifactId);
                   setMode('edit');
                 }}
@@ -1432,6 +1490,12 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               submissionType={submissionType}
               artifacts={artifacts}
               onOpenDocument={(docId: string) => {
+                const art = artifacts.find(a => a.id === docId);
+                if (!tryOpenForEdit(art?.status)) {
+                  setSelectedDocId(docId);
+                  setMode('browse');
+                  return;
+                }
                 setSelectedDocId(docId);
                 setMode('edit');
                 setShowGovernedPanel(true);
@@ -1502,6 +1566,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             onStatusChange={handleGovernedStatusChange}
             onClose={() => setShowGovernedPanel(false)}
             onOpenDiff={() => {
+              if (!tryOpenForEdit(activeArtifact.status)) return;
               setShowGovernedPanel(false);
               setMode('edit');
               setEditorInitialInspector('compare');

@@ -144,6 +144,8 @@ export interface UnifiedDocumentEditorProps {
   documentType?: string;
   submissionType?: string;
   isReadOnly?: boolean;
+  /** Callback when user clicks lock/unlock in toolbar — parent handles server mutation */
+  onToggleLock?: () => void;
   showTraceability?: boolean;
   showCompliance?: boolean;
   /** Hide the document header bar (title/type/panel toggles) when embedded in EditorPanel which provides its own */
@@ -254,7 +256,16 @@ interface ToolbarProps {
   onToggleFindReplace: () => void;
 }
 
-const Toolbar: React.FC<ToolbarProps> = ({ editor, onSave, isSaving, isLocked, onToggleLock, onAIAction, showFindReplace, onToggleFindReplace }) => {
+const Toolbar: React.FC<ToolbarProps> = ({
+  editor,
+  onSave,
+  isSaving,
+  isLocked,
+  onToggleLock,
+  onAIAction,
+  showFindReplace,
+  onToggleFindReplace,
+}) => {
   const [aiDropdownOpen, setAiDropdownOpen] = useState(false);
 
   if (!editor) return null;
@@ -487,8 +498,18 @@ const AI_TOOLBAR_ACTIONS = [
   { id: 'rewrite', label: 'Rewrite', icon: Sparkles, description: 'Improve clarity & precision' },
   { id: 'expand', label: 'Expand', icon: Maximize2, description: 'Add detail & evidence' },
   { id: 'summarize', label: 'Summarize', icon: Minimize2, description: 'Executive summary' },
-  { id: 'regulatory-tone', label: 'Regulatory Tone', icon: FileCheck, description: 'FDA/EMA language' },
-  { id: 'add-references', label: 'Add References', icon: BookOpen, description: 'Insert citations' },
+  {
+    id: 'regulatory-tone',
+    label: 'Regulatory Tone',
+    icon: FileCheck,
+    description: 'FDA/EMA language',
+  },
+  {
+    id: 'add-references',
+    label: 'Add References',
+    icon: BookOpen,
+    description: 'Insert citations',
+  },
 ];
 
 interface SmartToolbarProps {
@@ -533,12 +554,15 @@ const FindReplaceBar: React.FC<FindReplaceBarProps> = ({ editor, onClose }) => {
     findInputRef.current?.focus();
   }, []);
 
-  const handleFind = useCallback((value: string) => {
-    setFindText(value);
-    if (editor) {
-      (editor.commands as Record<string, (arg: string) => boolean>).setSearchTerm(value);
-    }
-  }, [editor]);
+  const handleFind = useCallback(
+    (value: string) => {
+      setFindText(value);
+      if (editor) {
+        (editor.commands as Record<string, (arg: string) => boolean>).setSearchTerm(value);
+      }
+    },
+    [editor]
+  );
 
   const handleReplace = useCallback(() => {
     if (editor) {
@@ -575,10 +599,18 @@ const FindReplaceBar: React.FC<FindReplaceBarProps> = ({ editor, onClose }) => {
       <span className="text-xs text-zinc-500 min-w-[50px]">
         {results.length > 0 ? `${currentIndex + 1}/${results.length}` : 'No results'}
       </span>
-      <button onClick={() => (editor?.commands as Record<string, () => boolean>)?.prevMatch?.()} className="p-1 hover:bg-zinc-200 rounded" title="Previous">
+      <button
+        onClick={() => (editor?.commands as Record<string, () => boolean>)?.prevMatch?.()}
+        className="p-1 hover:bg-zinc-200 rounded"
+        title="Previous"
+      >
         <ChevronDown className="w-3.5 h-3.5 rotate-180 text-zinc-600" />
       </button>
-      <button onClick={() => (editor?.commands as Record<string, () => boolean>)?.nextMatch?.()} className="p-1 hover:bg-zinc-200 rounded" title="Next">
+      <button
+        onClick={() => (editor?.commands as Record<string, () => boolean>)?.nextMatch?.()}
+        className="p-1 hover:bg-zinc-200 rounded"
+        title="Next"
+      >
         <ChevronDown className="w-3.5 h-3.5 text-zinc-600" />
       </button>
       <div className="w-px h-5 bg-zinc-300" />
@@ -590,13 +622,24 @@ const FindReplaceBar: React.FC<FindReplaceBarProps> = ({ editor, onClose }) => {
         placeholder="Replace..."
         className="w-32 px-2 py-1 text-xs bg-white border border-zinc-200 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
       />
-      <button onClick={handleReplace} className="px-2 py-1 text-xs bg-white border border-zinc-200 rounded hover:bg-zinc-100">
+      <button
+        onClick={handleReplace}
+        className="px-2 py-1 text-xs bg-white border border-zinc-200 rounded hover:bg-zinc-100"
+      >
         Replace
       </button>
-      <button onClick={handleReplaceAll} className="px-2 py-1 text-xs bg-white border border-zinc-200 rounded hover:bg-zinc-100">
+      <button
+        onClick={handleReplaceAll}
+        className="px-2 py-1 text-xs bg-white border border-zinc-200 rounded hover:bg-zinc-100"
+      >
         All
       </button>
-      <button onClick={onClose} aria-label="Close find and replace" title="Close" className="p-1 hover:bg-zinc-200 rounded ml-auto focus-visible:ring-2 focus-visible:ring-blue-500 outline-none">
+      <button
+        onClick={onClose}
+        aria-label="Close find and replace"
+        title="Close"
+        className="p-1 hover:bg-zinc-200 rounded ml-auto focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
+      >
         <X className="w-3.5 h-3.5 text-zinc-500" />
       </button>
     </div>
@@ -631,7 +674,12 @@ const SourceTracerPopover: React.FC<SourceTracerPopoverProps> = ({
           <FileText className="w-4 h-4 text-blue-500" />
           <span className="text-xs font-semibold text-zinc-900">{source.title}</span>
         </div>
-        <button onClick={onClose} aria-label="Close source details" title="Close" className="p-1.5 hover:bg-zinc-100 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none">
+        <button
+          onClick={onClose}
+          aria-label="Close source details"
+          title="Close"
+          className="p-1.5 hover:bg-zinc-100 rounded focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
+        >
           <X className="w-3 h-3 text-zinc-400" />
         </button>
       </div>
@@ -693,17 +741,23 @@ const StatusBar: React.FC<StatusBarProps> = ({ editor, complianceScore, collabor
     <div className="flex items-center gap-4 px-4 py-1.5 border-t border-zinc-200 bg-zinc-50 text-xs text-zinc-500">
       <span>{words.toLocaleString()} words</span>
       <span>{chars.toLocaleString()} chars</span>
-      <span>~{pages} pg{pages !== 1 ? 's' : ''}</span>
+      <span>
+        ~{pages} pg{pages !== 1 ? 's' : ''}
+      </span>
       <span className="flex items-center gap-1">
         <Clock className="w-3 h-3" />
         {readingTime} min read
       </span>
       {complianceScore !== undefined && (
-        <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full ${
-          complianceScore >= 90 ? 'bg-emerald-100 text-emerald-700' :
-          complianceScore >= 70 ? 'bg-amber-100 text-amber-700' :
-          'bg-red-100 text-red-700'
-        }`}>
+        <span
+          className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full ${
+            complianceScore >= 90
+              ? 'bg-emerald-100 text-emerald-700'
+              : complianceScore >= 70
+                ? 'bg-amber-100 text-amber-700'
+                : 'bg-red-100 text-red-700'
+          }`}
+        >
           <FileCheck className="w-3 h-3" />
           {complianceScore}% compliant
         </span>
@@ -762,9 +816,7 @@ const CompliancePanel: React.FC<CompliancePanelProps> = ({ score, issues, onIssu
       {/* Score Header */}
       <div className="p-4 border-b border-zinc-200">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-zinc-600">
-            Compliance Score
-          </span>
+          <span className="text-sm font-medium text-zinc-600">Compliance Score</span>
           <span className={`text-2xl font-semibold ${getScoreColor(score)}`}>{score}%</span>
         </div>
         <div className="w-full bg-zinc-200 rounded-full h-2">
@@ -818,9 +870,7 @@ const CompliancePanel: React.FC<CompliancePanelProps> = ({ score, issues, onIssu
                     <FileText className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-zinc-500">
-                      {issue.rule}
-                    </p>
+                    <p className="text-xs font-medium text-zinc-500">{issue.rule}</p>
                     <p className="text-sm text-zinc-700">{issue.message}</p>
                     {issue.suggestion && (
                       <p className="text-xs text-zinc-500 mt-1 italic">
@@ -881,10 +931,7 @@ const TraceabilityPanel: React.FC<TraceabilityPanelProps> = ({
             {links.map(link => {
               const source = getSourceById(link.sourceId);
               return (
-                <div
-                  key={link.id}
-                  className="p-3 bg-white rounded-lg border border-zinc-200"
-                >
+                <div key={link.id} className="p-3 bg-white rounded-lg border border-zinc-200">
                   <div className="flex items-start justify-between gap-2">
                     <button
                       onClick={() => onLinkClick?.(link)}
@@ -959,10 +1006,7 @@ const LinkSourceModal: React.FC<LinkSourceModalProps> = ({
         <div className="p-4 border-b border-zinc-200">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-zinc-900">Link to Source</h3>
-            <button
-              onClick={onClose}
-              className="p-1 hover:bg-zinc-100 rounded"
-            >
+            <button onClick={onClose} className="p-1 hover:bg-zinc-100 rounded">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -1001,9 +1045,7 @@ const LinkSourceModal: React.FC<LinkSourceModalProps> = ({
                   <div className="flex items-start gap-3">
                     <FileText className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-zinc-900">
-                        {source.title}
-                      </p>
+                      <p className="font-medium text-zinc-900">{source.title}</p>
                       <div className="flex items-center gap-2 mt-1 text-xs text-zinc-500">
                         <span className="px-2 py-0.5 bg-zinc-200 rounded">
                           {source.documentType}
@@ -1038,6 +1080,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
   documentType = 'General',
   submissionType,
   isReadOnly = false,
+  onToggleLock,
   showTraceability = true,
   showCompliance = true,
   embedded = false,
@@ -1058,7 +1101,6 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
   onLiveContentChange,
 }) => {
   const [isSaving, setIsSaving] = useState(false);
-  const [isLocked, setIsLocked] = useState(isReadOnly);
   const [activePanel, setActivePanel] = useState<'compliance' | 'traceability' | null>(
     showCompliance ? 'compliance' : showTraceability ? 'traceability' : null
   );
@@ -1067,7 +1109,10 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
   const [selectedRange, setSelectedRange] = useState<{ from: number; to: number } | null>(null);
   const [approvalPanelOpen, setApprovalPanelOpen] = useState(false);
   const [approvalSelectedText, setApprovalSelectedText] = useState('');
-  const [approvalSelectionRange, setApprovalSelectionRange] = useState<{ from: number; to: number } | null>(null);
+  const [approvalSelectionRange, setApprovalSelectionRange] = useState<{
+    from: number;
+    to: number;
+  } | null>(null);
   // Sprint 1 state
   const [showFindReplace, setShowFindReplace] = useState(false);
   const [viewMode, setViewMode] = useState<'content' | 'template'>('content');
@@ -1078,10 +1123,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
   const [comments, setComments] = useState<CommentThread[]>([]);
 
   // Slash command extension (memoized to avoid re-creation)
-  const slashCommandExt = useMemo(
-    () => createSlashCommandExtension(onAIAction),
-    [onAIAction]
-  );
+  const slashCommandExt = useMemo(() => createSlashCommandExtension(onAIAction), [onAIAction]);
 
   const editor = useEditor({
     extensions: [
@@ -1131,7 +1173,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
       }),
     ],
     content: initialContent,
-    editable: !isLocked,
+    editable: !isReadOnly,
     onUpdate: ({ editor }) => {
       onLiveContentChange?.(editor.getHTML());
     },
@@ -1164,8 +1206,8 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
       const target = event.target as HTMLElement;
       const traceEl = target.closest('[data-traceability]');
       if (traceEl) {
-        const sourceId = traceEl.getAttribute('data-source-id') ||
-          (traceEl as HTMLElement).dataset.sourceId;
+        const sourceId =
+          traceEl.getAttribute('data-source-id') || (traceEl as HTMLElement).dataset.sourceId;
         // Find the source
         const matched = sources.find(s => s.id === sourceId);
         if (matched) {
@@ -1236,12 +1278,12 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
     }
   }, [editor, cancelCommentId]);
 
-  // Update editor editable state when lock changes
+  // Update editor editable state when readOnly prop changes
   useEffect(() => {
     if (editor) {
-      editor.setEditable(!isLocked);
+      editor.setEditable(!isReadOnly);
     }
-  }, [editor, isLocked]);
+  }, [editor, isReadOnly]);
 
   const handleSave = useCallback(async () => {
     if (!editor || !onSave) return;
@@ -1345,9 +1387,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
             <div>
               <h1 className="font-semibold text-zinc-900">{documentTitle}</h1>
               <div className="flex items-center gap-2 text-xs text-zinc-500">
-                <span className="px-2 py-0.5 bg-zinc-200 rounded">
-                  {documentType}
-                </span>
+                <span className="px-2 py-0.5 bg-zinc-200 rounded">{documentType}</span>
                 {submissionType && (
                   <span className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded">
                     {submissionType}
@@ -1407,7 +1447,9 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
             {/* Panel Toggles */}
             {showTraceability && (
               <button
-                onClick={() => setActivePanel(activePanel === 'traceability' ? null : 'traceability')}
+                onClick={() =>
+                  setActivePanel(activePanel === 'traceability' ? null : 'traceability')
+                }
                 className={`p-2 rounded transition-colors ${
                   activePanel === 'traceability'
                     ? 'bg-blue-100 text-blue-600'
@@ -1440,17 +1482,15 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
         editor={editor}
         onSave={handleSave}
         isSaving={isSaving}
-        isLocked={isLocked}
-        onToggleLock={() => setIsLocked(!isLocked)}
+        isLocked={isReadOnly}
+        onToggleLock={onToggleLock || (() => {})}
         onAIAction={onAIAction}
         showFindReplace={showFindReplace}
         onToggleFindReplace={() => setShowFindReplace(prev => !prev)}
       />
 
       {/* Find & Replace Bar */}
-      {showFindReplace && (
-        <FindReplaceBar editor={editor} onClose={handleCloseFindReplace} />
-      )}
+      {showFindReplace && <FindReplaceBar editor={editor} onClose={handleCloseFindReplace} />}
 
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
@@ -1613,10 +1653,13 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
                   <Layers className="w-5 h-5 text-blue-500" />
                   <h2 className="font-semibold text-zinc-900">Template Structure</h2>
                   <span className="text-xs text-zinc-500 ml-auto">
-                    {templateStructure.filter(s => {
-                      const html = editor?.getHTML() || '';
-                      return html.toLowerCase().includes(s.label.toLowerCase());
-                    }).length}/{templateStructure.length} sections filled
+                    {
+                      templateStructure.filter(s => {
+                        const html = editor?.getHTML() || '';
+                        return html.toLowerCase().includes(s.label.toLowerCase());
+                      }).length
+                    }
+                    /{templateStructure.length} sections filled
                   </span>
                 </div>
                 <div className="space-y-2">
@@ -1634,7 +1677,9 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
                         onClick={() => {
                           setViewMode('content');
                           // Scroll to section heading if exists
-                          const el = document.getElementById(`outline-${section.key.toLowerCase().replace(/\s+/g, '-')}`);
+                          const el = document.getElementById(
+                            `outline-${section.key.toLowerCase().replace(/\s+/g, '-')}`
+                          );
                           el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         }}
                       >
@@ -1651,7 +1696,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
                         </div>
                         {!isFilled && (
                           <button
-                            onClick={(e) => {
+                            onClick={e => {
                               e.stopPropagation();
                               onAIAction?.('generate-section', section.label);
                             }}
@@ -1704,11 +1749,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
       </div>
 
       {/* Status Bar */}
-      <StatusBar
-        editor={editor}
-        complianceScore={complianceScore}
-        collaborators={collaborators}
-      />
+      <StatusBar editor={editor} complianceScore={complianceScore} collaborators={collaborators} />
 
       {/* Link Source Modal */}
       <LinkSourceModal
@@ -1731,7 +1772,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
               setApprovalSelectedText('');
               setApprovalSelectionRange(null);
             }}
-            onAnnotationCreated={(annotation) => {
+            onAnnotationCreated={annotation => {
               // Optionally highlight the annotated text
               if (editor && approvalSelectionRange) {
                 editor
@@ -1749,7 +1790,10 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
       <SourceTracerPopover
         source={tracerSource}
         position={tracerPosition}
-        onClose={() => { setTracerSource(null); setTracerPosition(null); }}
+        onClose={() => {
+          setTracerSource(null);
+          setTracerPosition(null);
+        }}
       />
     </div>
   );
