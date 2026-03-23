@@ -8,9 +8,11 @@ import {
   stabilityStudies,
   complianceTracking,
   regulatoryDocuments,
+  insertRegulatoryDocumentSchema,
 } from '../../../shared/cmc-schema';
 import { eq, desc, and, inArray } from 'drizzle-orm';
 import { authenticateToken } from '../../middleware/auth.js';
+import { z } from 'zod';
 
 const router = Router();
 
@@ -480,12 +482,38 @@ router.post('/projects/:projectId/documents', async (req, res) => {
     }
 
     const { projectId } = req.params;
-    const documentData = { ...req.body, projectId };
+    const orgIdFromAuth = Number(getOrgId(req));
+    const organizationId =
+      Number(req.body?.organizationId) ||
+      (Number.isFinite(orgIdFromAuth) ? orgIdFromAuth : 0);
+
+    if (!organizationId || organizationId <= 0) {
+      return res.status(400).json({ error: 'Valid organizationId is required' });
+    }
+
+    const validatedDocumentData = insertRegulatoryDocumentSchema
+      .omit({
+        id: true,
+        createdAt: true,
+        updatedAt: true,
+      })
+      .partial()
+      .required({
+        documentType: true,
+        title: true,
+      })
+      .parse({
+        ...req.body,
+        projectId,
+        organizationId,
+        status: req.body?.status || 'draft',
+        version: req.body?.version || '1.0',
+      });
 
     const [newDocument] = await db
       .insert(regulatoryDocuments)
       .values({
-        ...documentData,
+        ...validatedDocumentData,
         createdAt: new Date(),
         updatedAt: new Date(),
       })
@@ -494,6 +522,12 @@ router.post('/projects/:projectId/documents', async (req, res) => {
     res.json({ success: true, data: newDocument });
   } catch (error) {
     console.error('Error creating regulatory document:', error);
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        error: 'Invalid document payload',
+        issues: error.issues.map(issue => ({ path: issue.path.join('.'), message: issue.message })),
+      });
+    }
     res.status(500).json({ error: 'Failed to create regulatory document' });
   }
 });
@@ -592,48 +626,6 @@ router.get('/projects/:projectId/analytical-methods', async (req, res) => {
   } catch (error) {
     console.error('Error fetching analytical methods:', error);
     res.status(500).json({ error: 'Failed to fetch analytical methods' });
-  }
-});
-
-router.get('/projects/:projectId/documents', async (req, res) => {
-  try {
-    if (!db) {
-      return res.status(500).json({ error: 'Database not available' });
-    }
-
-    const { projectId } = req.params;
-
-    const documents = await db
-      .select()
-      .from(regulatoryDocuments)
-      .where(eq(regulatoryDocuments.projectId, projectId))
-      .orderBy(desc(regulatoryDocuments.createdAt));
-
-    res.json({ success: true, data: documents });
-  } catch (error) {
-    console.error('Error fetching documents:', error);
-    res.status(500).json({ error: 'Failed to fetch documents' });
-  }
-});
-
-router.get('/projects/:projectId/compliance', async (req, res) => {
-  try {
-    if (!db) {
-      return res.status(500).json({ error: 'Database not available' });
-    }
-
-    const { projectId } = req.params;
-
-    const compliance = await db
-      .select()
-      .from(complianceTracking)
-      .where(eq(complianceTracking.projectId, projectId))
-      .orderBy(desc(complianceTracking.createdAt));
-
-    res.json({ success: true, data: compliance });
-  } catch (error) {
-    console.error('Error fetching compliance:', error);
-    res.status(500).json({ error: 'Failed to fetch compliance' });
   }
 });
 

@@ -1,26 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
 import {
   Table,
   TableBody,
@@ -35,10 +17,8 @@ import {
   Package,
   Microscope,
   Shield,
-  ExternalLink,
   Plus,
   Edit,
-  Trash2,
   Eye,
   AlertCircle,
   CheckCircle,
@@ -46,27 +26,21 @@ import {
   BarChart3,
   FlaskConical,
   Users,
-  Calendar,
   FileCheck,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import CMCReportsTab from './cmc/CMCReportsTab';
 
 export default function CMCModule() {
   const [activeTab, setActiveTab] = useState('projects');
   const [projects, setProjects] = useState([]);
   const [drugSubstances, setDrugSubstances] = useState([]);
   const [drugProducts, setDrugProducts] = useState([]);
-  const [analyticalMethods, setAnalyticalMethods] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [selectedProject, setSelectedProject] = useState(null);
+  const [selectedProjectId, setSelectedProjectId] = useState('');
   const { toast } = useToast();
 
-  useEffect(() => {
-    document.title = 'Concept2Cure | CMC Module';
-    loadCMCData();
-  }, []);
-
-  const loadCMCData = async () => {
+  const loadCMCData = useCallback(async () => {
     setLoading(true);
     try {
       const [projectsRes, substancesRes, productsRes] = await Promise.all([
@@ -78,14 +52,32 @@ export default function CMCModule() {
       if (projectsRes.ok) {
         const projectsData = await projectsRes.json();
         setProjects(projectsData.data || []);
+        if ((projectsData.data || []).length > 0) {
+          setSelectedProjectId(current => current || projectsData.data[0].id);
+        }
       }
       if (substancesRes.ok) {
         const substancesData = await substancesRes.json();
-        setDrugSubstances(substancesData.data || []);
+        setDrugSubstances(
+          (substancesData.data || []).map(substance => ({
+            ...substance,
+            name: substance.name || substance.substanceName || 'Unnamed Substance',
+            chemicalName: substance.chemicalName || substance.substanceName || '-',
+            casNumber: substance.casNumber || substance.cas || '-',
+            status: substance.status || 'draft',
+          }))
+        );
       }
       if (productsRes.ok) {
         const productsData = await productsRes.json();
-        setDrugProducts(productsData.data || []);
+        setDrugProducts(
+          (productsData.data || []).map(product => ({
+            ...product,
+            name: product.name || product.productName || 'Unnamed Product',
+            containerType: product.containerType || product.containerClosure || '-',
+            status: product.status || 'draft',
+          }))
+        );
       }
     } catch (error) {
       console.error('Error loading CMC data:', error);
@@ -97,7 +89,12 @@ export default function CMCModule() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    document.title = 'Concept2Cure | CMC Module';
+    loadCMCData();
+  }, [loadCMCData]);
 
   const getStatusBadge = status => {
     const statusConfig = {
@@ -133,12 +130,13 @@ export default function CMCModule() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-6">
+            <TabsList className="grid w-full grid-cols-7">
               <TabsTrigger value="projects">Projects</TabsTrigger>
               <TabsTrigger value="substances">Drug Substances</TabsTrigger>
               <TabsTrigger value="products">Drug Products</TabsTrigger>
               <TabsTrigger value="analytics">Analytical Methods</TabsTrigger>
               <TabsTrigger value="compliance">Compliance</TabsTrigger>
+              <TabsTrigger value="reports">Reports</TabsTrigger>
               <TabsTrigger value="templates">Templates</TabsTrigger>
             </TabsList>
 
@@ -616,6 +614,16 @@ export default function CMCModule() {
                   </CardContent>
                 </Card>
               </div>
+            </TabsContent>
+
+            <TabsContent value="reports" className="space-y-6">
+              <CMCReportsTab
+                projects={projects}
+                selectedProjectId={selectedProjectId}
+                onSelectedProjectIdChange={setSelectedProjectId}
+                drugSubstances={drugSubstances}
+                drugProducts={drugProducts}
+              />
             </TabsContent>
 
             <TabsContent value="templates" className="space-y-6">
