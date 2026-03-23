@@ -216,9 +216,13 @@ router.post('/bundles/:id/items', async (req: Request, res: Response) => {
 
 router.put('/bundles/:bundleId/items/:itemId', async (req: Request, res: Response) => {
   try {
+    const orgId = getOrganizationId(req);
     const userId = getUserId(req);
     const { status } = req.body;
-    const item = await updateBundleItemStatus(req.params.bundleId, req.params.itemId, status, userId);
+    if (!status || !['pending', 'in_progress', 'completed', 'skipped', 'failed'].includes(status)) {
+      return res.status(400).json({ success: false, error: 'Invalid status. Must be one of: pending, in_progress, completed, skipped, failed' });
+    }
+    const item = await updateBundleItemStatus(orgId, req.params.bundleId, req.params.itemId, status, userId);
     res.json({ success: true, item });
   } catch (error: any) {
     res.status(400).json({ success: false, error: error.message });

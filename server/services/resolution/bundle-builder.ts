@@ -220,11 +220,26 @@ export async function transitionBundleState(
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export async function updateBundleItemStatus(
+  organizationId: number,
   bundleId: string,
   itemId: string,
   status: BundleItemStatus,
   userId?: number
 ): Promise<ResolutionBundleItem> {
+  // Verify the bundle belongs to this organization before updating items
+  const [bundle] = await db
+    .select()
+    .from(resolutionBundles)
+    .where(and(
+      eq(resolutionBundles.id, bundleId),
+      eq(resolutionBundles.organizationId, organizationId)
+    ))
+    .limit(1);
+
+  if (!bundle) {
+    throw new Error(`Bundle ${bundleId} not found`);
+  }
+
   const updateData: Record<string, unknown> = { status };
   if (status === 'completed') {
     updateData.completedAt = new Date();
