@@ -3,7 +3,7 @@
  * Project Cortex: Master Orchestrator
  *
  * Coordinates all data farmer microservices to continuously harvest
- * regulatory intelligence from multiple sources into the Lumen Cortex.
+ * regulatory intelligence from multiple sources into the AnA Intelligence Layer.
  *
  * Architecture: "Fleet of Data Farmers"
  * - ClinicalTrials.gov Farmer

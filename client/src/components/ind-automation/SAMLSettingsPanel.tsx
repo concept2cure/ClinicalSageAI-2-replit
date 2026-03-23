@@ -232,7 +232,7 @@ const SAMLSettingsPanel: React.FC = () => {
                   name="sp_entity_id"
                   value={settings.sp_entity_id}
                   onChange={handleChange}
-                  placeholder="e.g., https://lumentrial.ai/saml/metadata"
+                  placeholder="e.g., https://concept2cure.ai/saml/metadata"
                   required
                 />
               </div>
@@ -246,7 +246,7 @@ const SAMLSettingsPanel: React.FC = () => {
                   name="sp_acs_url"
                   value={settings.sp_acs_url}
                   onChange={handleChange}
-                  placeholder="e.g., https://lumentrial.ai/api/saml/acs"
+                  placeholder="e.g., https://concept2cure.ai/api/saml/acs"
                   required
                 />
               </div>

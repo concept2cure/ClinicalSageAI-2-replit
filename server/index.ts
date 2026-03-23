@@ -899,13 +899,13 @@ try {
   console.error('❌ Failed to mount AI Assistance routes:', error);
 }
 
-// Mount AnA Cortex dedicated routes (10-K harvesting, observation terms)
+// Mount AnA Intelligence dedicated routes (10-K harvesting, observation terms)
 try {
   const lumenCortexRoutes = await import('./routes/lumen-cortex');
   app.use('/api/lumen-cortex', lumenCortexRoutes.default);
-  console.log('✅ AnA Cortex dedicated routes mounted (health, 10K harvest, observation terms)');
+  console.log('✅ AnA Intelligence dedicated routes mounted (health, 10K harvest, observation terms)');
 } catch (error) {
-  console.error('❌ Failed to mount AnA Cortex routes:', error);
+  console.error('❌ Failed to mount AnA Intelligence routes:', error);
 }
 
 // Mount Nano Banana (Gemini image generation) routes
@@ -933,7 +933,7 @@ try {
   console.error('❌ Failed to mount PM Settings routes:', error);
 }
 
-// Mount AnA Cortex (formerly ForesightAI) routes
+// Mount AnA Intelligence (formerly ForesightAI) routes
 // Legacy routes maintained for backward compatibility
 try {
   // Shared deprecation middleware for all Foresight/legacy routes
@@ -956,15 +956,15 @@ try {
     },
     foresightFeedbackRoutes
   );
-  // Legacy Lumen Cortex aliases (kept for backward compat, API paths unchanged)
+  // New AnA Intelligence aliases
   app.use('/api/lumen', foresightDeprecation, foresightApiRoutes);
   app.use('/api/lumen-ai', foresightDeprecation, foresightAIAdvancedRoutes);
-  console.log('✅ AnA Cortex Intelligence API routes mounted (+ legacy /foresight aliases)');
+  console.log('✅ AnA Intelligence™ Intelligence API routes mounted (+ legacy /foresight aliases)');
 } catch (error) {
-  console.error('Failed to mount AnA Cortex routes:', error);
+  console.error('Failed to mount AnA Intelligence routes:', error);
 }
 
-// Mount AnA Cortex RAG routes (formerly ForesightAI RAG)
+// Mount AnA Intelligence RAG routes (formerly ForesightAI RAG)
 try {
   const foresightRagRoutes = await import('./routes/foresight-rag-api.js');
   const foresightRagDeprecation = (req: Request, res: Response, next: () => void) => {
@@ -975,9 +975,9 @@ try {
   };
   app.use('/api/foresight/rag', foresightRagDeprecation, foresightRagRoutes.default);
   app.use('/api/lumen/rag', foresightRagDeprecation, foresightRagRoutes.default); // New alias
-  console.log('✅ AnA Cortex RAG API routes mounted successfully');
+  console.log('✅ AnA Intelligence RAG API routes mounted successfully');
 } catch (error) {
-  console.error('Failed to mount AnA Cortex RAG routes:', error);
+  console.error('Failed to mount AnA Intelligence RAG routes:', error);
 }
 
 // Mount Biotech AI Intelligence RAG routes
@@ -3236,11 +3236,11 @@ app.post('/api/retention/run-job', async (_req: Request, res: Response) => {
   });
 });
 
-// Add missing Lumen AI endpoint
+// Add missing AnA RI endpoint
 app.post('/api/ask-lumen', async (req: Request, res: Response) => {
   try {
     const { query, context, sessionId, documentContent, model = 'openai' } = req.body;
-    debugLog('Lumen AI request received', {
+    debugLog('AnA RI request received', {
       query: query?.substring(0, 100),
       context,
       sessionId,
@@ -3324,7 +3324,7 @@ For "${query}", I suggest consulting the latest ICH guidelines and FDA guidance 
       sessionId: sessionId,
     });
   } catch (error) {
-    console.error('Error in Lumen AI endpoint:', error);
+    console.error('Error in AnA RI endpoint:', error);
     res.status(500).json({
       success: false,
       error: 'Internal server error',
@@ -3363,10 +3363,10 @@ try {
   console.error('❌ Failed to mount Ana Platform Control routes:', error);
 }
 
-// Mount AnA Chat routes
+// Mount AnA Intelligence Chat routes
 import chatRoutes from './routes/chat';
 app.use('/api/chat', chatRoutes);
-console.log('✅ AnA Chat API routes mounted successfully');
+console.log('✅ AnA Intelligence Chat API routes mounted successfully');
 
 // Mount AI Claims → Binder provenance route
 try {
@@ -3444,15 +3444,35 @@ import precedentEngineRoutes from './routes/precedent-engine';
 app.use('/api/precedent-engine', precedentEngineRoutes);
 console.log('✅ Precedent Engine routes mounted successfully');
 
-// Mount Regulatory Precedent Intelligence Engine
-import regulatoryPrecedentIntelligenceRoutes from './routes/regulatory-precedent-intelligence';
-app.use('/api/regulatory-precedent-intelligence', regulatoryPrecedentIntelligenceRoutes);
-console.log('✅ Regulatory Precedent Intelligence routes mounted successfully');
+// Mount Cross-Jurisdictional Intelligence
+import crossJurisdictionalRoutes from './routes/cross-jurisdictional';
+app.use('/api/cross-jurisdictional', crossJurisdictionalRoutes);
+console.log('✅ Cross-Jurisdictional Intelligence routes mounted successfully');
 
-// Mount Governed Intelligence (Assumptions, Decisions, Contradictions, Overlays)
-import governedIntelligenceRoutes from './routes/assumption-decision-contradiction';
-app.use('/api/governed-intelligence', governedIntelligenceRoutes);
-console.log('✅ Governed Intelligence routes mounted successfully');
+// Mount HARMONIZE — Cross-Module Consistency Enforcement
+import harmonizeRoutes from './routes/harmonize';
+app.use('/api/harmonize', harmonizeRoutes);
+console.log('✅ HARMONIZE routes mounted successfully');
+
+// Mount ESCALATE — Structured Escalation Framework
+import escalateRoutes from './routes/escalate';
+app.use('/api/escalate', escalateRoutes);
+console.log('✅ ESCALATE routes mounted successfully');
+
+// Mount VALIDATE-COMPLETENESS — Submission Readiness Assessment
+import validateCompletenessRoutes from './routes/validate-completeness';
+app.use('/api/validate-completeness', validateCompletenessRoutes);
+console.log('✅ VALIDATE-COMPLETENESS routes mounted successfully');
+
+// Mount AnA Gold Standard Pack — Quality Benchmark
+import anaGoldStandardRoutes from './routes/ana-gold-standard';
+app.use('/api/ana-gold-standard', anaGoldStandardRoutes);
+console.log('✅ AnA Gold Standard Pack routes mounted successfully');
+
+// Mount AnA Continuous Evaluation Loop — Real-Time Quality Monitoring
+import anaContinuousEvalRoutes from './routes/ana-continuous-eval';
+app.use('/api/ana-continuous-eval', anaContinuousEvalRoutes);
+console.log('✅ AnA Continuous Evaluation Loop routes mounted successfully');
 
 // Mount IND templates routes - temporarily disabled
 // app.use('/api/ind', indTemplatesRoutes);
@@ -5158,7 +5178,7 @@ app.get('/api/vault/list', async (req: Request, res: Response) => {
   }
 });
 
-// Lumen AI Regulatory Intelligence endpoint
+// AnA RI Regulatory Intelligence endpoint
 app.get('/api/lumen/regulatory-intelligence', async (req: Request, res: Response) => {
   try {
     // Return regulatory intelligence data
@@ -5194,9 +5214,9 @@ app.get('/api/lumen/regulatory-intelligence', async (req: Request, res: Response
   }
 });
 
-// AnA Regulatory Analysis endpoint
+// AnA RI Regulatory Analysis endpoint
 app.post('/api/lumen/regulatory-analysis', async (req: Request, res: Response) => {
-  console.log('[AnA RI] Regulatory Analysis endpoint hit');
+  console.log('🔥 AnA RI Regulatory Analysis endpoint hit!');
   try {
     // Add cache-busting headers
     res.set({
@@ -5245,9 +5265,9 @@ app.post('/api/lumen/regulatory-analysis', async (req: Request, res: Response) =
   }
 });
 
-// AnA ICH E6(R3) Guidance endpoint
+// AnA RI ICH E6(R3) Guidance endpoint
 app.post('/api/lumen/ich-e6r3-guidance', async (req: Request, res: Response) => {
-  console.log('[AnA RI] ICH E6(R3) Guidance endpoint hit');
+  console.log('🔥 AnA RI ICH E6(R3) Guidance endpoint hit!');
   try {
     // Add cache-busting headers
     res.set({
@@ -6692,9 +6712,9 @@ async function startServer() {
   try {
     const lumenCortexFtRoutes = await import('./routes/lumen-cortex-ft');
     app.use('/api/lumen-cortex-ft', lumenCortexFtRoutes.default);
-    console.log('✅ AnA Cortex Fine-Tuning routes mounted at /api/lumen-cortex-ft');
+    console.log('✅ AnA Intelligence Fine-Tuning routes mounted at /api/lumen-cortex-ft');
   } catch (error) {
-    console.error('❌ Failed to mount AnA Cortex FT routes:', error);
+    console.error('❌ Failed to mount AnA Intelligence FT routes:', error);
   }
 
   try {
