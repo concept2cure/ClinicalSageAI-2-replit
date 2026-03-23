@@ -8,7 +8,7 @@
  * Combines all zen components into a cohesive, elegant experience.
  *
  * NOW CONNECTED TO:
- * - Lumen Cortex (AI chat)
+ * - AnA 1.0 RI (AI chat)
  * - Project Cortex (data harvesting)
  * - Unified data layers
  *
@@ -47,7 +47,6 @@ import { useProjects } from './hooks/useProjects';
 import { useCortexThreads, useCortexHealth } from './hooks/useCortex';
 import { usePlatformContext } from './hooks/useLicense';
 import { useWorkspaceSummary } from './hooks/useWorkspaceSummary';
-import { useProjectTasks } from './hooks/useProjectTasks';
 
 import { WorkspaceReadinessStrip } from './components/workspace/WorkspaceReadinessStrip';
 import { ProjectWorkspaceShell } from './components/workspace/ProjectWorkspaceShell';
@@ -201,6 +200,13 @@ const RICopilotHome = lazy(() =>
   }))
 );
 
+// Precedent Intelligence Dashboard (standalone 4-tab view)
+const PrecedentIntelligenceDashboard = lazy(() =>
+  import('./components/precedent/PrecedentIntelligenceDashboard').then(m => ({
+    default: m.PrecedentIntelligenceDashboard,
+  }))
+);
+
 // DocumentAppHub removed — absorbed into workspace flow (Wave 2)
 // ProjectLauncher removed — all project routes go directly to regulatory-workspace
 
@@ -260,6 +266,9 @@ const ProjectKnowledgePanel = lazy(() =>
 const IntelligenceHub = lazy(() =>
   import('./pages/IntelligenceHub').then(m => ({ default: m.IntelligenceHub }))
 );
+const RegulatoryPrecedentIntelligence = lazy(() =>
+  import('./pages/RegulatoryPrecedentIntelligence')
+);
 const ReviewReadiness = lazy(() =>
   import('./pages/ReviewReadiness').then(m => ({ default: m.ReviewReadiness }))
 );
@@ -283,6 +292,11 @@ const ClientBrandingSettings = lazy(() => import('./components/settings/ClientBr
 // Biostatistics Platform — statistical analysis, power calculations, endpoints
 const BiostatPlatformDashboard = lazy(
   () => import('@/components/biostat/BiostatPlatformDashboard')
+);
+
+// AnA Biostats Panel — structured input, computation, judgment, governed documents
+const AnaBiostatsPanel = lazy(
+  () => import('@/concept2cure/components/biostats/AnaBiostatsPanel')
 );
 
 // Training Center — client onboarding, courses, certifications
@@ -340,6 +354,7 @@ const PANEL_COMPONENTS: Record<string, React.LazyExoticComponent<React.Component
   ectd: ECTDNavigatorPanel,
   intelligence: RegulatoryIntelligenceFullPanel,
   'doc-editor': EditorPanel,
+  'ana-biostats': AnaBiostatsPanel,
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -356,6 +371,7 @@ type ToolPanel =
   | 'intelligence'
   | 'vault'
   | 'doc-editor'
+  | 'ana-biostats'
   | null;
 
 type LayoutMode =
@@ -493,6 +509,11 @@ const TOOL_PANELS: Record<
     title: 'Document Editor',
     icon: PenLine,
     component: 'EditorPanel',
+  },
+  'ana-biostats': {
+    title: 'AnA Biostats',
+    icon: FlaskConical,
+    component: 'AnaBiostatsPanel',
   },
 };
 
@@ -940,6 +961,9 @@ export const ZenApp: React.FC = () => {
 
   // Guard: prevents URL-sync from reverting a navigation that's in-flight
   const navInProgressRef = useRef(false);
+
+  // Page-level context for AnA awareness (active tab, filters, etc.)
+  const [moduleContext, setModuleContext] = useState<Record<string, unknown>>({});
 
   // Account-level custom instructions for Knowledge Base
   const [customInstructions, setCustomInstructions] = useState('');
@@ -1940,6 +1964,9 @@ export const ZenApp: React.FC = () => {
             case 'intelligence-hub':
               setLayoutMode('intelligence-hub');
               break;
+            case 'precedent-intelligence':
+              setLayoutMode('precedent-intelligence');
+              break;
             case 'review-readiness':
               setLayoutMode('review-readiness');
               break;
@@ -2243,6 +2270,11 @@ export const ZenApp: React.FC = () => {
               className="flex-1 flex flex-col min-h-0 overflow-y-auto"
               data-testid="workspace-mission-control"
             >
+              {/* Experimental banner */}
+              <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 border-b border-amber-200 text-amber-800 text-xs font-medium">
+                <span className="px-1.5 py-0.5 bg-amber-200 text-amber-900 rounded text-[10px] font-bold uppercase">Experimental</span>
+                Mission Control uses in-memory storage. Data is not persisted across restarts.
+              </div>
               <ErrorBoundary>
                 <Suspense fallback={<ModuleLoadingFallback />}>
                   <MissionControl />
@@ -2257,6 +2289,11 @@ export const ZenApp: React.FC = () => {
               className="flex-1 flex flex-col min-h-0 overflow-y-auto"
               data-testid="workspace-snowglobe"
             >
+              {/* Experimental banner */}
+              <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 border-b border-amber-200 text-amber-800 text-xs font-medium">
+                <span className="px-1.5 py-0.5 bg-amber-200 text-amber-900 rounded text-[10px] font-bold uppercase">Experimental</span>
+                SnowGlobe uses demo program data. Results are illustrative, not production data.
+              </div>
               <Suspense fallback={<ModuleLoadingFallback />}>
                 <SnowGlobeHome programId={activeProjectId ? Number(activeProjectId) : null} />
               </Suspense>
@@ -2345,18 +2382,49 @@ export const ZenApp: React.FC = () => {
                           submissionType={activeProject?.type || 'IND'}
                           onOpenSection={sectionCode => {
                             const ctd = sectionCode.replace(/^m/, '');
+                            // Navigate to editor — EditorPanel will load existing artifacts for this section
                             setPendingEditorContent({
-                              content: `<h1>${sectionCode.toUpperCase()} — Draft</h1><p>Section content for ${activeProject?.name || 'IND Application'}.</p>`,
+                              content: `<h1>${sectionCode.toUpperCase()} — Draft</h1><p>Loading section content…</p>`,
                               title: `${sectionCode.toUpperCase()} — ${activeProject?.name || 'IND Application'}`,
                               ctdSection: ctd,
                             });
                             setRiViewMode('editor');
                             setLayoutMode('regulatory-workspace');
                           }}
-                          onDraftWithAI={(sectionCode, sectionTitle) => {
+                          onDraftWithAI={async (sectionCode, sectionTitle) => {
                             const ctd = sectionCode.replace(/^m/, '');
+                            const token =
+                              sessionStorage.getItem('trialsage_access_token') ||
+                              localStorage.getItem('trialsage_access_token');
+                            const authHeaders: Record<string, string> = {
+                              'Content-Type': 'application/json',
+                              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                            };
+                            // Call real AI generation endpoint
+                            let content = '';
+                            try {
+                              const res = await fetch('/api/knowledge-base/generate-ind-section', {
+                                method: 'POST',
+                                headers: authHeaders,
+                                body: JSON.stringify({
+                                  sectionCode: ctd,
+                                  sectionTitle,
+                                  context: `CTD section for ${activeProject?.type || 'IND'} submission. Project: ${activeProject?.name || 'Untitled'}`,
+                                }),
+                              });
+                              if (res.ok) {
+                                const data = await res.json();
+                                content = data.content || data.data?.content || '';
+                              }
+                            } catch (err) {
+                              console.warn('[ZenApp] AI draft generation failed:', err);
+                            }
+                            // Fallback: minimal scaffold (NOT fake completeness)
+                            if (!content || content.trim().length === 0) {
+                              content = `<h1>${sectionTitle}</h1>\n<p><em>AI generation unavailable. Please draft this section manually or retry.</em></p>`;
+                            }
                             setPendingEditorContent({
-                              content: `<h1>${sectionTitle}</h1>\n<h2>Project: ${activeProject?.name || 'Untitled'} (${activeProject?.type || 'IND'})</h2>\n<p><strong>CTD Section:</strong> ${ctd}</p>\n<p><strong>Generated:</strong> ${new Date().toISOString().split('T')[0]}</p>\n<hr/>\n<h2>Section Content</h2>\n<p>[AI-assisted draft for ${sectionTitle}. This section should comply with ICH M4 guidelines and 21 CFR 312.23(a) requirements.]</p>`,
+                              content,
                               title: `${sectionTitle} — ${activeProject?.name || 'IND Application'}`,
                               ctdSection: ctd,
                             });
@@ -2778,15 +2846,49 @@ export const ZenApp: React.FC = () => {
                       submissionType={activeProject?.type || 'IND'}
                       onOpenSection={sectionCode => {
                         setPendingEditorContent({
-                          content: `<h1>${sectionCode.toUpperCase()} — Draft</h1><p>Section content for ${activeProject?.name || 'Application'}.</p>`,
+                          content: `<h1>${sectionCode.toUpperCase()} — Draft</h1><p>Loading section content…</p>`,
                           title: `${sectionCode.toUpperCase()} — ${activeProject?.name || 'Application'}`,
                           ctdSection: sectionCode.replace(/^m/, ''),
                         });
                         setLayoutMode('ectd-coauthor');
                       }}
-                      onDraftWithAI={sectionCode => {
+                      onDraftWithAI={async (sectionCode, sectionTitle) => {
+                        const ctd = sectionCode.replace(/^m/, '');
+                        const token =
+                          sessionStorage.getItem('trialsage_access_token') ||
+                          localStorage.getItem('trialsage_access_token');
+                        const authHeaders: Record<string, string> = {
+                          'Content-Type': 'application/json',
+                          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                        };
+                        let content = '';
+                        try {
+                          const res = await fetch('/api/knowledge-base/generate-ind-section', {
+                            method: 'POST',
+                            headers: authHeaders,
+                            body: JSON.stringify({
+                              sectionCode: ctd,
+                              sectionTitle: sectionTitle || sectionCode,
+                              context: `CTD section for ${activeProject?.type || 'IND'} submission.`,
+                            }),
+                          });
+                          if (res.ok) {
+                            const data = await res.json();
+                            content = data.content || data.data?.content || '';
+                          }
+                        } catch (err) {
+                          console.warn('[ZenApp] AI draft generation failed:', err);
+                        }
+                        if (!content || content.trim().length === 0) {
+                          content = `<h1>${sectionTitle || sectionCode}</h1>\n<p><em>AI generation unavailable. Please draft this section manually or retry.</em></p>`;
+                        }
+                        setPendingEditorContent({
+                          content,
+                          title: `${sectionTitle || sectionCode} — ${activeProject?.name || 'Application'}`,
+                          ctdSection: ctd,
+                        });
                         setLayoutMode('ectd-coauthor');
-                      }}
+                      }
                       onNavigateToCoAuthor={() => setLayoutMode('ectd-coauthor')}
                     />
                   </Suspense>
@@ -3325,10 +3427,19 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
-          {/* Precedent Intelligence — disabled (consolidated into Intelligence Hub) */}
+          {/* Precedent Intelligence Dashboard (standalone) */}
+          {layoutMode === 'precedent-intelligence' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-precedent-intelligence">
+              <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-zinc-300" /></div>}>
+                <PrecedentIntelligenceDashboard
+                  onNavigateToEditor={() => setLayoutMode('regulatory-workspace')}
+                />
+              </Suspense>
+            </div>
+          )}
 
           {/* Redirect deprecated routes to unified workspace */}
-          {['workspace', 'medtech-dashboard', 'dossier', 'precedent-intelligence'].includes(
+          {['workspace', 'medtech-dashboard', 'dossier'].includes(
             layoutMode
           ) && <RedirectToWorkspace onRedirect={() => setLayoutMode('regulatory-workspace')} />}
 
@@ -3617,6 +3728,7 @@ export const ZenApp: React.FC = () => {
               screenName: layoutMode,
               activeProject: activeProject?.name,
               projectId: activeProjectId,
+              moduleContext,
             }}
             greeting={
               layoutMode === 'deep-research'

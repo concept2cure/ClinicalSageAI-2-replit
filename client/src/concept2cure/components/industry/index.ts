@@ -116,20 +116,6 @@ export {
   type RedlineAlert,
 } from '../coauthor/eCTDCoAuthor';
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// CMC WIZARD COMPONENTS - "THE GEAR MASTER"
-// ═══════════════════════════════════════════════════════════════════════════════
-export {
-  CMCWizard,
-  type ICHGuideline,
-  type GuardrailStatus,
-  type ICHGuardrail,
-  type Impurity,
-  type StabilityCondition,
-  type StabilityParameter,
-  type DrugSubstance,
-  type Specification,
-} from '../cmc/CMCWizard';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // LAYOUT & INTEGRATION - "THE CONVERGENT CANVAS"

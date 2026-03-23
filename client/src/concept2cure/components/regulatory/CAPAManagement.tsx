@@ -1254,12 +1254,12 @@ export function CAPAManagement() {
             </div>
             <Button
               variant="outline"
-              className="border-purple-300 text-purple-700 hover:bg-purple-100"
+              className="border-purple-300 text-purple-700 hover:bg-purple-100 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none"
             >
               <BarChart3 className="w-4 h-4 mr-2" />
               View Trends
             </Button>
-            <Button className="bg-purple-600 hover:bg-purple-700">
+            <Button className="bg-purple-600 hover:bg-purple-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none">
               <Brain className="w-4 h-4 mr-2" />
               RI Analysis
             </Button>

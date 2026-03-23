@@ -86,7 +86,7 @@ export default function TrialSuccessPredictorV2() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      protocol_id: `TS-${Math.floor(Math.random() * 10000)}`,
+      protocol_id: `TS-${crypto.randomUUID().slice(0, 8)}`,
       indication: "",
       phase: "",
       sample_size: 200,
@@ -138,7 +138,6 @@ export default function TrialSuccessPredictorV2() {
       
       setAnalysisResult(result);
     } catch (error) {
-      console.error("Error analyzing protocol:", error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to analyze protocol",
@@ -170,7 +169,7 @@ export default function TrialSuccessPredictorV2() {
         formData.append("text", protocolText);
       }
       
-      formData.append("protocol_id", `TS-${Math.floor(Math.random() * 10000)}`);
+      formData.append("protocol_id", `TS-${crypto.randomUUID().slice(0, 8)}`);
 
       const response = await fetch("/api/protocol/full-analyze", {
         method: "POST",
@@ -199,7 +198,6 @@ export default function TrialSuccessPredictorV2() {
         });
       }
     } catch (error) {
-      console.error("Error analyzing protocol text:", error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to analyze protocol text",

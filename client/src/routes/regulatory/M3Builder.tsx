@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, CheckCircle, Clock, Loader2 } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 export default function M3Builder({ subId }: { subId: string }) {
   const [data, setData] = React.useState<any>({ sections: [], leaves: [] });
@@ -14,11 +15,8 @@ export default function M3Builder({ subId }: { subId: string }) {
       const r = await fetch(`/api/reg/submissions/${subId}/m3`);
       if (r.ok) {
         setData(await r.json());
-      } else {
-        console.error('Failed to load M3 data');
       }
     } catch (error) {
-      console.error('Error loading M3 data:', error);
     } finally {
       setLoading(false);
     }
@@ -33,7 +31,7 @@ export default function M3Builder({ subId }: { subId: string }) {
       await fetch(`/api/reg/sections/${secId}/automap`, { method: 'POST' });
       await load();
     } catch (error) {
-      console.error('Auto-map failed:', error);
+      toast({ title: 'Error', description: 'Auto-map failed', variant: 'destructive' });
     }
   }
 
@@ -42,10 +40,10 @@ export default function M3Builder({ subId }: { subId: string }) {
       const s = await fetch(`/api/reg/sections/${secId}/draft`, { method: 'POST' }).then(r =>
         r.json()
       );
-      alert('AI draft ready in Suggestions list.');
+      toast({ title: 'Draft Ready', description: 'AI draft is ready in Suggestions list' });
       await load();
     } catch (error) {
-      console.error('Draft failed:', error);
+      toast({ title: 'Error', description: 'Draft generation failed', variant: 'destructive' });
     }
   }
 
@@ -54,7 +52,6 @@ export default function M3Builder({ subId }: { subId: string }) {
       const r = await fetch(`/api/reg/sections/${secId}/suggestions`).then(r => r.json());
       return r;
     } catch (error) {
-      console.error('Failed to load suggestions:', error);
       return [];
     }
   }
@@ -64,7 +61,6 @@ export default function M3Builder({ subId }: { subId: string }) {
       await fetch(`/api/reg/suggestions/${sugId}/accept`, { method: 'POST' });
       await load();
     } catch (error) {
-      console.error('Accept failed:', error);
     }
   }
 
@@ -73,7 +69,6 @@ export default function M3Builder({ subId }: { subId: string }) {
       await fetch(`/api/reg/suggestions/${sugId}/reject`, { method: 'POST' });
       await load();
     } catch (error) {
-      console.error('Reject failed:', error);
     }
   }
 
@@ -162,7 +157,7 @@ export default function M3Builder({ subId }: { subId: string }) {
                       size="sm"
                       onClick={async () => {
                         const sug = await listSug(s.sec_id);
-                        if (!sug.length) return alert('No suggestions yet.');
+                        if (!sug.length) { toast({ title: 'No Suggestions', description: 'No AI suggestions available yet', variant: 'destructive' }); return; }
                         const top = sug[0];
                         const pick = confirm(
                           `Accept latest suggestion?\n\n${(top.draft_md || '').slice(0, 300)}…`
@@ -178,7 +173,7 @@ export default function M3Builder({ subId }: { subId: string }) {
                       size="sm"
                       onClick={async () => {
                         const sug = await listSug(s.sec_id);
-                        if (!sug.length) return alert('No suggestions.');
+                        if (!sug.length) { toast({ title: 'No Suggestions', description: 'No suggestions to reject' }); return; }
                         await reject(sug[0].sug_id);
                       }}
                       data-testid={`reject-${s.code}`}

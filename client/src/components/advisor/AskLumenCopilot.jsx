@@ -1,4 +1,4 @@
-// client/src/components/advisor/AskLumenCopilot.jsx
+// client/src/components/advisor/AskLumenCopilot.jsx — AnA RI Co-pilot (legacy filename retained)
 import { useState, useEffect, useRef } from 'react';
 import { Send, PlusCircle, Paperclip, Trash2, Bot, User } from 'lucide-react';
 
@@ -6,7 +6,7 @@ export default function AskLumenCopilot({ readinessData, playbook }) {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: `Hello, I'm Lumen, your Regulatory Intelligence Advisor. I can help you navigate your ${playbook} submission strategy. What would you like to know about your regulatory readiness or submission requirements?`,
+      content: `Hello, I'm AnA, your Regulatory Intelligence Advisor. I can help you navigate your ${playbook} submission strategy. What would you like to know about your regulatory readiness or submission requirements?`,
     },
   ]);
   const [input, setInput] = useState('');
@@ -227,7 +227,7 @@ export default function AskLumenCopilot({ readinessData, playbook }) {
                   </div>
                   <span className="text-xs font-semibold">
                     {message.role === 'assistant'
-                      ? `Lumen (${modes[activeMode].label} Mode)`
+                      ? `AnA (${modes[activeMode].label} Mode)`
                       : 'You'}
                   </span>
                 </div>

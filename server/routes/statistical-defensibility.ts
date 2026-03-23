@@ -12,6 +12,7 @@
 
 import { Router, Request, Response } from 'express';
 import { statisticalDefensibilityService } from '../services/statistical-defensibility-service';
+import { OperatingSystemIntegration } from '../services/operating-system-integration';
 
 const router = Router();
 
@@ -54,7 +55,33 @@ router.post('/assess', async (req: Request, res: Response) => {
       estimandStrategy,
     });
 
-    res.json({ success: true, data: report });
+    // Capture decision record in operating system layer
+    let decisionRecord;
+    const orgId = (req as any).organizationId ?? (req as any).user?.organizationId;
+    const projectId = req.body.projectId;
+    if (orgId && projectId) {
+      try {
+        const osIntegration = OperatingSystemIntegration.getInstance();
+        decisionRecord = await osIntegration.captureFromDefensibilityAssessment({
+          organizationId: orgId,
+          projectId,
+          overallScore: report.overallScore,
+          overallRating: report.overallRating,
+          criticalIssueCount: report.criticalIssues.length,
+          majorIssueCount: report.majorIssues.length,
+          reviewerRiskLevel: report.reviewerRiskLevel,
+          recommendations: report.recommendations,
+          relatedArtifactId: req.body.relatedArtifactId,
+          regulatorBody: req.body.regulatorBody,
+          jurisdiction: req.body.jurisdiction,
+          createdById: (req as any).user?.id,
+        });
+      } catch (err) {
+        console.warn('Operating system decision capture failed (non-fatal):', err);
+      }
+    }
+
+    res.json({ success: true, data: report, decisionRecord });
   } catch (error: any) {
     console.error('Defensibility assessment error:', error);
     res.status(500).json({ success: false, error: error.message });

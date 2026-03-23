@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import {
+import { toast } from '@/hooks/use-toast';
   HelpCircle,
   Download,
   Send,
@@ -61,7 +62,7 @@ export default function IRStudio({ submissionId }) {
 
   async function createQ() {
     if (!title.trim()) {
-      alert('Please enter a question title');
+      toast({ title: 'Please enter a question title' });
       return;
     }
 
@@ -90,7 +91,7 @@ export default function IRStudio({ submissionId }) {
       setPriority('High');
       load();
     } catch (error) {
-      alert(`Create failed: ${error.message}`);
+      toast({ title: `Create failed: ${error.message}` });
     }
   }
 
@@ -109,7 +110,7 @@ export default function IRStudio({ submissionId }) {
       setSelected(data.question);
       setFinalMd(data.ai_draft_md || '');
     } catch (error) {
-      alert(`AI draft failed: ${error.message}`);
+      toast({ title: `AI draft failed: ${error.message}` });
     } finally {
       setBusy(false);
     }
@@ -134,9 +135,9 @@ export default function IRStudio({ submissionId }) {
       }
 
       load();
-      alert('Saved successfully');
+      toast({ title: 'Saved successfully' });
     } catch (error) {
-      alert(`Save failed: ${error.message}`);
+      toast({ title: `Save failed: ${error.message}` });
     }
   }
 
@@ -154,9 +155,9 @@ export default function IRStudio({ submissionId }) {
       }
 
       load();
-      alert('Successfully submitted');
+      toast({ title: 'Successfully submitted' });
     } catch (error) {
-      alert(`Submit failed: ${error.message}`);
+      toast({ title: `Submit failed: ${error.message}` });
     }
   }
 
@@ -181,7 +182,7 @@ export default function IRStudio({ submissionId }) {
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      alert(`Package failed: ${error.message}`);
+      toast({ title: `Package failed: ${error.message}` });
     }
   }
 

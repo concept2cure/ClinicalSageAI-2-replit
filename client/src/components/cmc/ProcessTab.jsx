@@ -119,56 +119,14 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import PortfolioDashboard from './PortfolioDashboard';
 
-// Mock data for demonstration
-const mockValidationData = {
-  overview: {
-    totalProcesses: 12,
-    stage1: 3,
-    stage2: 5,
-    stage3: 4,
-    complianceScore: 94,
-  },
-  cpps: [
-    { id: 1, name: 'Compression Force', target: '10-15 kN', current: '12.5 kN', status: 'In Control' },
-    { id: 2, name: 'Blend Time', target: '15±2 min', current: '14.8 min', status: 'In Control' },
-    { id: 3, name: 'Granulation Temp', target: '60±5°C', current: '62°C', status: 'In Control' },
-    { id: 4, name: 'Coating Weight', target: '3±0.5%', current: '3.2%', status: 'Warning' },
-  ],
-  cqas: [
-    { id: 1, name: 'Assay', spec: '95-105%', result: '99.8%', status: 'Pass' },
-    { id: 2, name: 'Dissolution', spec: 'Q=80% at 30min', result: '85%', status: 'Pass' },
-    { id: 3, name: 'Impurities', spec: '<0.5%', result: '0.3%', status: 'Pass' },
-    { id: 4, name: 'Water Content', spec: '<3%', result: '2.1%', status: 'Pass' },
-  ],
-  ppqBatches: [
-    { id: 'PPQ-001', date: '2025-01-15', status: 'Completed', cpk: 1.45, yield: '98.5%' },
-    { id: 'PPQ-002', date: '2025-01-18', status: 'Completed', cpk: 1.52, yield: '99.1%' },
-    { id: 'PPQ-003', date: '2025-01-21', status: 'In Progress', cpk: '--', yield: '--' },
-  ],
-  equipment: [
-    { id: 1, name: 'Tablet Press X200', iq: 'Complete', oq: 'Complete', pq: 'Complete', nextCal: '2025-03-15' },
-    { id: 2, name: 'Blender V50', iq: 'Complete', oq: 'Complete', pq: 'In Progress', nextCal: '2025-02-28' },
-    { id: 3, name: 'Coater C100', iq: 'Complete', oq: 'In Progress', pq: 'Pending', nextCal: '2025-04-10' },
-  ],
+// Empty initial state — data loaded from API
+const emptyValidationData = {
+  overview: { totalProcesses: 0, stage1: 0, stage2: 0, stage3: 0, complianceScore: 0 },
+  cpps: [],
+  cqas: [],
+  ppqBatches: [],
+  equipment: [],
 };
-
-// Process control chart data
-const controlChartData = [
-  { batch: 'B001', value: 99.2, ucl: 105, lcl: 95, target: 100 },
-  { batch: 'B002', value: 100.1, ucl: 105, lcl: 95, target: 100 },
-  { batch: 'B003', value: 98.7, ucl: 105, lcl: 95, target: 100 },
-  { batch: 'B004', value: 101.3, ucl: 105, lcl: 95, target: 100 },
-  { batch: 'B005', value: 99.8, ucl: 105, lcl: 95, target: 100 },
-  { batch: 'B006', value: 100.5, ucl: 105, lcl: 95, target: 100 },
-];
-
-// FMEA Risk Matrix data
-const fmeaData = [
-  { step: 'Blending', risk: 'Non-uniform blend', severity: 8, occurrence: 3, detection: 4, rpn: 96 },
-  { step: 'Compression', risk: 'Weight variation', severity: 7, occurrence: 4, detection: 3, rpn: 84 },
-  { step: 'Coating', risk: 'Color variation', severity: 4, occurrence: 5, detection: 5, rpn: 100 },
-  { step: 'Packaging', risk: 'Wrong label', severity: 9, occurrence: 2, detection: 2, rpn: 36 },
-];
 
 const ProcessTab = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -177,48 +135,173 @@ const ProcessTab = () => {
   const [showFMEADialog, setShowFMEADialog] = useState(false);
   const [showDoEDialog, setShowDoEDialog] = useState(false);
   const [showEquipmentDialog, setShowEquipmentDialog] = useState(false);
-  const [validationData, setValidationData] = useState(mockValidationData);
+  const [validationData, setValidationData] = useState(emptyValidationData);
+  const [controlChartData, setControlChartData] = useState([]);
+  const [fmeaData, setFmeaData] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [dataLoading, setDataLoading] = useState(true);
   const [showCriticalPathView, setShowCriticalPathView] = useState(false);
   const { toast } = useToast();
 
-  // Function to handle generating PPQ protocol
-  const handleGenerateProtocol = () => {
+  // Load process validation data from API
+  useEffect(() => {
+    let alive = true;
+    const loadData = async () => {
+      setDataLoading(true);
+      const headers = { 'Content-Type': 'application/json' };
+      const token = localStorage.getItem('token');
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      try {
+        // Fetch process validation overview
+        const [valRes, cppRes, equipRes, chartRes, fmeaRes] = await Promise.allSettled([
+          fetch('/api/cmc/process-validation', { headers, credentials: 'include' }),
+          fetch('/api/cmc/cpp-cqa/matrix', { headers, credentials: 'include' }),
+          fetch('/api/cmc/equipment/qualification', { headers, credentials: 'include' }),
+          fetch('/api/cmc/process/control-chart', { headers, credentials: 'include' }),
+          fetch('/api/cmc/process/fmea', { headers, credentials: 'include' }),
+        ]);
+
+        if (!alive) return;
+
+        // Process validation data
+        if (valRes.status === 'fulfilled' && valRes.value.ok) {
+          const data = await valRes.value.json();
+          const items = Array.isArray(data) ? data : data.data || [];
+          const stage1 = items.filter(p => p.stage === 'design' || p.stage === 'Stage 1').length;
+          const stage2 = items.filter(p => p.stage === 'qualification' || p.stage === 'Stage 2' || p.stage === 'PPQ').length;
+          const stage3 = items.filter(p => p.stage === 'verification' || p.stage === 'Stage 3' || p.stage === 'CPV').length;
+          setValidationData(prev => ({
+            ...prev,
+            overview: { totalProcesses: items.length, stage1, stage2, stage3, complianceScore: items.length > 0 ? Math.round(items.filter(p => p.status === 'Completed' || p.status === 'Approved').length / items.length * 100) : 0 },
+            ppqBatches: items.filter(p => p.stage === 'qualification' || p.stage === 'PPQ').map(p => ({ id: p.id || p.processName, date: p.created_at || p.completionDate, status: p.status, cpk: p.cpk || '--', yield: p.yield || '--' })),
+          }));
+        }
+
+        // CPP/CQA matrix
+        if (cppRes.status === 'fulfilled' && cppRes.value.ok) {
+          const data = await cppRes.value.json();
+          if (data.cpps) setValidationData(prev => ({ ...prev, cpps: data.cpps }));
+          if (data.cqas) setValidationData(prev => ({ ...prev, cqas: data.cqas }));
+        }
+
+        // Equipment qualification
+        if (equipRes.status === 'fulfilled' && equipRes.value.ok) {
+          const data = await equipRes.value.json();
+          const items = Array.isArray(data) ? data : data.data || [];
+          setValidationData(prev => ({ ...prev, equipment: items }));
+        }
+
+        // Control chart data
+        if (chartRes.status === 'fulfilled' && chartRes.value.ok) {
+          const data = await chartRes.value.json();
+          setControlChartData(Array.isArray(data) ? data : data.data || []);
+        }
+
+        // FMEA data
+        if (fmeaRes.status === 'fulfilled' && fmeaRes.value.ok) {
+          const data = await fmeaRes.value.json();
+          setFmeaData(Array.isArray(data) ? data : data.data || []);
+        }
+      } catch (error) {
+        console.error('Failed to load process validation data:', error);
+        if (alive) {
+          toast({ title: 'Data Load Error', description: 'Could not load process validation data from server.', variant: 'destructive' });
+        }
+      } finally {
+        if (alive) setDataLoading(false);
+      }
+    };
+    loadData();
+    return () => { alive = false; };
+  }, [toast]);
+
+  // Generate PPQ protocol via API
+  const handleGenerateProtocol = async () => {
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      toast({
-        title: '✅ PPQ Protocol Generated',
-        description: 'Process Performance Qualification protocol has been generated successfully.',
+    try {
+      const response = await fetch('/api/cmc/process-validation/generate-ppq-protocol', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ parameters: validationData.cpps }),
       });
+      if (response.ok) {
+        toast({ title: 'PPQ Protocol Generated', description: 'Process Performance Qualification protocol created successfully.' });
+      } else {
+        throw new Error('Server error');
+      }
+    } catch (error) {
+      console.error('Protocol generation failed:', error);
+      toast({ title: 'Generation Failed', description: 'Could not generate PPQ protocol. Please try again.', variant: 'destructive' });
+    } finally {
+      setLoading(false);
       setShowProtocolDialog(false);
-    }, 2000);
+    }
   };
 
-  // Function to handle FMEA analysis
-  const handleFMEAAnalysis = () => {
-    toast({
-      title: '🔍 FMEA Analysis Started',
-      description: 'Risk assessment matrix is being calculated for all process steps.',
-    });
+  // Run FMEA analysis via API
+  const handleFMEAAnalysis = async () => {
+    try {
+      const response = await fetch('/api/cmc/process/fmea', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ processSteps: fmeaData.map(f => f.step) }),
+      });
+      if (response.ok) {
+        const result = await response.json();
+        setFmeaData(Array.isArray(result) ? result : result.data || fmeaData);
+        toast({ title: 'FMEA Analysis Complete', description: 'Risk assessment matrix updated.' });
+      } else {
+        throw new Error('Server error');
+      }
+    } catch (error) {
+      console.error('FMEA analysis failed:', error);
+      toast({ title: 'Analysis Failed', description: 'Could not complete FMEA analysis.', variant: 'destructive' });
+    }
     setShowFMEADialog(false);
   };
 
-  // Function to handle DoE execution
-  const handleDoEExecution = () => {
-    toast({
-      title: '🧪 DoE Execution Initiated',
-      description: 'Design of Experiments study has been scheduled for execution.',
-    });
+  // Schedule DoE execution via API
+  const handleDoEExecution = async () => {
+    try {
+      const response = await fetch('/api/cmc/process/doe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ parameters: validationData.cpps }),
+      });
+      if (response.ok) {
+        toast({ title: 'DoE Study Scheduled', description: 'Design of Experiments study has been scheduled.' });
+      } else {
+        throw new Error('Server error');
+      }
+    } catch (error) {
+      console.error('DoE scheduling failed:', error);
+      toast({ title: 'Scheduling Failed', description: 'Could not schedule DoE study.', variant: 'destructive' });
+    }
     setShowDoEDialog(false);
   };
 
-  // Function to handle equipment qualification
-  const handleEquipmentQualification = (type) => {
-    toast({
-      title: `🔧 ${type} Qualification Started`,
-      description: `${type} protocol has been initiated for the selected equipment.`,
-    });
+  // Start equipment qualification via API
+  const handleEquipmentQualification = async (type) => {
+    try {
+      const response = await fetch('/api/cmc/equipment/qualification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ qualificationType: type }),
+      });
+      if (response.ok) {
+        toast({ title: `${type} Qualification Started`, description: `${type} protocol initiated for selected equipment.` });
+      } else {
+        throw new Error('Server error');
+      }
+    } catch (error) {
+      console.error('Equipment qualification failed:', error);
+      toast({ title: 'Qualification Failed', description: `Could not start ${type} qualification.`, variant: 'destructive' });
+    }
     setShowEquipmentDialog(false);
   };
 

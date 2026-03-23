@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import {
+import { toast } from '@/hooks/use-toast';
   FileText,
   Brain,
   FileUp,
@@ -18,7 +19,7 @@ const EmbeddedCodingAgent = () => {
     {
       type: 'assistant',
       content:
-        "👋 Welcome! I'm your Lumen Regulatory Affairs AI Expert with advanced Relation Extraction Intelligence.\n\nI can assist you with:\n\n• **CSR Intelligence Engine**: Access to 3,021 real clinical study reports from Canada, EMA, and FDA\n• **Relation Extraction**: Extract regulatory relationships, compliance obligations, and cross-document connections\n• **Knowledge Graph Construction**: Build regulatory knowledge graphs for dependency analysis\n• **Inconsistency Detection**: Identify conflicts across multiple regulatory documents\n• **FDA submission guidance** (IND, NDA, 510(k), PMA)\n• **Medical device protocols** and clinical evaluation reports\n• **Pharmaceutical regulatory documentation**\n• **Clinical trial protocols** and study designs with real data access\n• **Regulatory compliance analysis** with relationship mapping\n• **Medical writing best practices** with cross-reference validation\n\nPowered by OpenAI Pro (GPT-4o) with specialized regulatory training and real database access.\nHow can I assist with your regulatory needs today?",
+        "Welcome. I'm AnA — your regulatory intelligence partner with advanced Relation Extraction Intelligence.\n\nI can assist you with:\n\n• **CSR Intelligence Engine**: Access to 3,021 real clinical study reports from Canada, EMA, and FDA\n• **Relation Extraction**: Extract regulatory relationships, compliance obligations, and cross-document connections\n• **Knowledge Graph Construction**: Build regulatory knowledge graphs for dependency analysis\n• **Inconsistency Detection**: Identify conflicts across multiple regulatory documents\n• **FDA submission guidance** (IND, NDA, 510(k), PMA)\n• **Medical device protocols** and clinical evaluation reports\n• **Pharmaceutical regulatory documentation**\n• **Clinical trial protocols** and study designs with real data access\n• **Regulatory compliance analysis** with relationship mapping\n• **Medical writing best practices** with cross-reference validation\n\nWhat are we working on?",
     },
   ]);
   const [inputValue, setInputValue] = useState('');
@@ -745,7 +746,7 @@ const EmbeddedCodingAgent = () => {
                 }, 100);
               } catch (error) {
                 console.error('PDF download failed:', error);
-                alert('Failed to download PDF. Please try again.');
+                toast({ title: 'Failed to download PDF. Please try again.' });
               }
             }}
           >

@@ -2,7 +2,7 @@
  * Concept2Cure - Split Screen Layout
  * 
  * Claude.ai-style split view with:
- * - Left panel: Chat with Lumen (always visible)
+ * - Left panel: Chat with AnA (always visible)
  * - Right panel: Artifact viewer (appears when artifact is active)
  * - Resizable divider
  * 

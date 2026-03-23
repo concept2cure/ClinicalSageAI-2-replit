@@ -145,16 +145,8 @@ const TaskManagementSystem = ({ processId }) => {
     tags: [],
   });
 
-  // Demo/sample team members for assignment
-  const teamMembers = [
-    { id: 'user1', name: 'Sarah Johnson', role: 'Regulatory Affairs Manager', avatar: '👩‍⚕️' },
-    { id: 'user2', name: 'Michael Chen', role: 'CMC Documentation Specialist', avatar: '👨‍💼' },
-    { id: 'user3', name: 'Jennifer Williams', role: 'Quality Assurance Lead', avatar: '👩‍🔬' },
-    { id: 'user4', name: 'Robert Miller', role: 'Formulation Scientist', avatar: '👨‍🔬' },
-    { id: 'user5', name: 'Emily Davis', role: 'Clinical Documentation Writer', avatar: '👩‍💻' },
-    { id: 'user6', name: 'David Thompson', role: 'Analytical Method Specialist', avatar: '👨‍🔬' },
-    { id: 'user7', name: 'Lisa Roberts', role: 'Regulatory Submission Manager', avatar: '👩‍💼' },
-  ];
+  // Team members loaded from API
+  const [teamMembers, setTeamMembers] = useState([]);
 
   // Sample document types for filtering
   const documentTypes = [
@@ -171,454 +163,65 @@ const TaskManagementSystem = ({ processId }) => {
     'Deviation Reports',
   ];
 
-  // Sample tasks data for demonstration
-  const sampleTasks = [
-    {
-      id: 'task-001',
-      title: 'Complete API Specification Review',
-      description:
-        'Review API specification document for compliance with ICH Q6A guidelines. Check all acceptance criteria and ensure they meet regulatory requirements.',
-      status: 'in_progress',
-      priority: 'high',
-      createdBy: 'Sarah Johnson',
-      assignee: 'Michael Chen',
-      assignedDate: '2025-04-05T09:30:00Z',
-      deadline: '2025-04-26T17:00:00Z',
-      completionPercentage: 65,
-      estimatedHours: 8,
-      hoursLogged: 5.5,
-      documents: [
-        {
-          id: 'doc-123',
-          title: 'API Specification',
-          version: '1.2',
-          type: 'API Specifications',
-        },
-      ],
-      workflowId: 'wf-001',
-      workflowName: 'API Specification Document Review',
-      regulatoryRequirement: true,
-      regulatoryStandards: ['ICH Q6A', '21 CFR Part 211'],
-      comments: [
-        {
-          id: 'comment-001',
-          user: 'Michael Chen',
-          timestamp: '2025-04-15T10:45:00Z',
-          text: 'Completed initial review. Found several acceptance criteria that need additional justification for FDA submission.',
-          attachments: [],
-        },
-        {
-          id: 'comment-002',
-          user: 'Sarah Johnson',
-          timestamp: '2025-04-16T14:20:00Z',
-          text: 'Please ensure all acceptance criteria include the appropriate analytical method references.',
-          attachments: [],
-        },
-      ],
-      history: [
-        {
-          action: 'Task Created',
-          timestamp: '2025-04-05T09:30:00Z',
-          user: 'Sarah Johnson',
-        },
-        {
-          action: 'Task Assigned',
-          timestamp: '2025-04-05T09:30:00Z',
-          user: 'Sarah Johnson',
-          details: 'Assigned to Michael Chen',
-        },
-        {
-          action: 'Task Updated',
-          timestamp: '2025-04-15T10:45:00Z',
-          user: 'Michael Chen',
-          details: 'Updated status to In Progress and added comment',
-        },
-      ],
-      aiRecommendations: {
-        similarTasks: ['task-008', 'task-015'],
-        prioritySuggestion: 'high',
-        estimatedTimeRequired: 9.5,
-        potentialIssues: [
-          'Analytical method validation may be required',
-          'ICH Q6A alignment needs verification',
-        ],
-      },
-      tags: ['API', 'Specification', 'ICH', 'Review'],
-    },
-    {
-      id: 'task-002',
-      title: 'Draft Manufacturing Process Change Assessment',
-      description:
-        'Prepare assessment document for the proposed changes to tablet compression parameters. Include impact analysis on product quality and validation requirements.',
-      status: 'not_started',
-      priority: 'urgent',
-      createdBy: 'Lisa Roberts',
-      assignee: 'Robert Miller',
-      assignedDate: '2025-04-12T14:15:00Z',
-      deadline: '2025-04-22T17:00:00Z',
-      completionPercentage: 0,
-      estimatedHours: 12,
-      hoursLogged: 0,
-      documents: [
-        {
-          id: 'doc-345',
-          title: 'Manufacturing Process Description',
-          version: '2.3',
-          type: 'Manufacturing Process',
-        },
-        {
-          id: 'doc-346',
-          title: 'Change Control Form',
-          version: '1.0',
-          type: 'Change Controls',
-        },
-      ],
-      workflowId: 'wf-002',
-      workflowName: 'Manufacturing Process Change Control',
-      regulatoryRequirement: true,
-      regulatoryStandards: ['ICH Q10', '21 CFR Part 211.100'],
-      comments: [],
-      history: [
-        {
-          action: 'Task Created',
-          timestamp: '2025-04-12T14:15:00Z',
-          user: 'Lisa Roberts',
-        },
-        {
-          action: 'Task Assigned',
-          timestamp: '2025-04-12T14:15:00Z',
-          user: 'Lisa Roberts',
-          details: 'Assigned to Robert Miller',
-        },
-      ],
-      aiRecommendations: {
-        similarTasks: ['task-012', 'task-023'],
-        prioritySuggestion: 'urgent',
-        estimatedTimeRequired: 14,
-        potentialIssues: [
-          'Process validation may need updating',
-          'Stability impact assessment recommended',
-        ],
-      },
-      tags: ['Manufacturing', 'Change Control', 'Impact Assessment'],
-    },
-    {
-      id: 'task-003',
-      title: 'Finalize Stability Protocol',
-      description:
-        'Complete the stability protocol for the new formulation. Include testing schedule, storage conditions, and acceptance criteria according to ICH Q1A(R2) guidelines.',
-      status: 'in_progress',
-      priority: 'medium',
-      createdBy: 'Jennifer Williams',
-      assignee: 'Emily Davis',
-      assignedDate: '2025-04-08T11:00:00Z',
-      deadline: '2025-04-30T17:00:00Z',
-      completionPercentage: 75,
-      estimatedHours: 10,
-      hoursLogged: 7.5,
-      documents: [
-        {
-          id: 'doc-567',
-          title: 'Stability Protocol',
-          version: '0.8',
-          type: 'Stability Reports',
-        },
-      ],
-      workflowId: 'wf-003',
-      workflowName: 'Stability Testing Documentation',
-      regulatoryRequirement: true,
-      regulatoryStandards: ['ICH Q1A(R2)', 'ICH Q1B'],
-      comments: [
-        {
-          id: 'comment-003',
-          user: 'Emily Davis',
-          timestamp: '2025-04-14T09:20:00Z',
-          text: 'Draft protocol is 75% complete. Need input on photo-stability testing requirements.',
-          attachments: [],
-        },
-      ],
-      history: [
-        {
-          action: 'Task Created',
-          timestamp: '2025-04-08T11:00:00Z',
-          user: 'Jennifer Williams',
-        },
-        {
-          action: 'Task Assigned',
-          timestamp: '2025-04-08T11:00:00Z',
-          user: 'Jennifer Williams',
-          details: 'Assigned to Emily Davis',
-        },
-        {
-          action: 'Task Updated',
-          timestamp: '2025-04-14T09:20:00Z',
-          user: 'Emily Davis',
-          details: 'Updated progress to 75% and added comment',
-        },
-      ],
-      aiRecommendations: {
-        similarTasks: ['task-019', 'task-027'],
-        prioritySuggestion: 'medium',
-        estimatedTimeRequired: 10,
-        potentialIssues: [
-          'Photo-stability testing requirements need clarification',
-          'Consider temperature excursion protocols',
-        ],
-      },
-      tags: ['Stability', 'Protocol', 'ICH', 'Documentation'],
-    },
-    {
-      id: 'task-004',
-      title: 'Update Method Validation Report',
-      description:
-        'Update the HPLC method validation report to include additional specificity data requested by regulatory affairs.',
-      status: 'completed',
-      priority: 'medium',
-      createdBy: 'Jennifer Williams',
-      assignee: 'David Thompson',
-      assignedDate: '2025-04-02T13:45:00Z',
-      deadline: '2025-04-15T17:00:00Z',
-      completionPercentage: 100,
-      completedDate: '2025-04-14T16:30:00Z',
-      estimatedHours: 6,
-      hoursLogged: 8,
-      documents: [
-        {
-          id: 'doc-234',
-          title: 'HPLC Method Validation Report',
-          version: '1.2',
-          type: 'Method Validation',
-        },
-      ],
-      workflowId: 'wf-005',
-      workflowName: 'Method Validation Documentation',
-      regulatoryRequirement: true,
-      regulatoryStandards: ['ICH Q2(R1)', 'USP <1225>'],
-      comments: [
-        {
-          id: 'comment-004',
-          user: 'David Thompson',
-          timestamp: '2025-04-10T11:10:00Z',
-          text: 'Additional specificity experiments completed. Drafting updated report sections.',
-          attachments: [],
-        },
-        {
-          id: 'comment-005',
-          user: 'David Thompson',
-          timestamp: '2025-04-14T16:30:00Z',
-          text: 'Report updated with all requested specificity data and submitted for review.',
-          attachments: [],
-        },
-      ],
-      history: [
-        {
-          action: 'Task Created',
-          timestamp: '2025-04-02T13:45:00Z',
-          user: 'Jennifer Williams',
-        },
-        {
-          action: 'Task Assigned',
-          timestamp: '2025-04-02T13:45:00Z',
-          user: 'Jennifer Williams',
-          details: 'Assigned to David Thompson',
-        },
-        {
-          action: 'Task Updated',
-          timestamp: '2025-04-10T11:10:00Z',
-          user: 'David Thompson',
-          details: 'Added progress update comment',
-        },
-        {
-          action: 'Task Completed',
-          timestamp: '2025-04-14T16:30:00Z',
-          user: 'David Thompson',
-        },
-      ],
-      aiRecommendations: {
-        similarTasks: ['task-011', 'task-022'],
-        prioritySuggestion: 'medium',
-        estimatedTimeRequired: 7,
-        potentialIssues: ['Consider system suitability revisions', 'Check robustness parameters'],
-      },
-      tags: ['Method Validation', 'HPLC', 'ICH', 'Documentation'],
-    },
-    {
-      id: 'task-005',
-      title: 'Prepare Risk Assessment for Excipient Change',
-      description:
-        'Create risk assessment documentation for the proposed change of disintegrant supplier, focusing on product performance and stability impact.',
-      status: 'not_started',
-      priority: 'high',
-      createdBy: 'Sarah Johnson',
-      assignee: 'Lisa Roberts',
-      assignedDate: '2025-04-18T10:30:00Z',
-      deadline: '2025-04-28T17:00:00Z',
-      completionPercentage: 0,
-      estimatedHours: 14,
-      hoursLogged: 0,
-      documents: [
-        {
-          id: 'doc-789',
-          title: 'Excipient Change Request',
-          version: '1.0',
-          type: 'Change Controls',
-        },
-      ],
-      workflowId: 'wf-006',
-      workflowName: 'Excipient Supplier Change Control',
-      regulatoryRequirement: true,
-      regulatoryStandards: ['ICH Q9', 'ICH Q10', '21 CFR Part 211.84'],
-      comments: [],
-      history: [
-        {
-          action: 'Task Created',
-          timestamp: '2025-04-18T10:30:00Z',
-          user: 'Sarah Johnson',
-        },
-        {
-          action: 'Task Assigned',
-          timestamp: '2025-04-18T10:30:00Z',
-          user: 'Sarah Johnson',
-          details: 'Assigned to Lisa Roberts',
-        },
-      ],
-      aiRecommendations: {
-        similarTasks: ['task-016', 'task-024'],
-        prioritySuggestion: 'high',
-        estimatedTimeRequired: 16,
-        potentialIssues: [
-          'Disintegration testing comparison needed',
-          'Stability testing impact assessment required',
-        ],
-      },
-      tags: ['Risk Assessment', 'Excipients', 'Supplier Change', 'ICH Q9'],
-    },
-    {
-      id: 'task-006',
-      title: 'Draft Analytical Method Transfer Protocol',
-      description:
-        'Prepare protocol for transferring the dissolution method to the contract testing laboratory. Include acceptance criteria for successful transfer.',
-      status: 'in_progress',
-      priority: 'medium',
-      createdBy: 'Jennifer Williams',
-      assignee: 'David Thompson',
-      assignedDate: '2025-04-15T13:00:00Z',
-      deadline: '2025-04-29T17:00:00Z',
-      completionPercentage: 30,
-      estimatedHours: 8,
-      hoursLogged: 2.5,
-      documents: [
-        {
-          id: 'doc-456',
-          title: 'Dissolution Method SOP',
-          version: '2.1',
-          type: 'Analytical Methods',
-        },
-      ],
-      workflowId: 'wf-007',
-      workflowName: 'Method Transfer to CRO',
-      regulatoryRequirement: true,
-      regulatoryStandards: ['ICH Q2(R1)', 'USP <1224>'],
-      comments: [
-        {
-          id: 'comment-006',
-          user: 'David Thompson',
-          timestamp: '2025-04-17T15:40:00Z',
-          text: 'Initial draft in progress. Need to clarify comparative testing requirements with CRO.',
-          attachments: [],
-        },
-      ],
-      history: [
-        {
-          action: 'Task Created',
-          timestamp: '2025-04-15T13:00:00Z',
-          user: 'Jennifer Williams',
-        },
-        {
-          action: 'Task Assigned',
-          timestamp: '2025-04-15T13:00:00Z',
-          user: 'Jennifer Williams',
-          details: 'Assigned to David Thompson',
-        },
-        {
-          action: 'Task Updated',
-          timestamp: '2025-04-17T15:40:00Z',
-          user: 'David Thompson',
-          details: 'Added progress update comment',
-        },
-      ],
-      aiRecommendations: {
-        similarTasks: ['task-020', 'task-032'],
-        prioritySuggestion: 'medium',
-        estimatedTimeRequired: 9,
-        potentialIssues: [
-          'Consider sample homogeneity requirements',
-          'Add reference standard handling section',
-        ],
-      },
-      tags: ['Method Transfer', 'Dissolution', 'Protocol', 'CRO'],
-    },
-    {
-      id: 'task-007',
-      title: 'Review Drug Product Stability Data',
-      description:
-        'Review and analyze 12-month stability data for the drug product. Prepare summary report highlighting any trends or out-of-specification results.',
-      status: 'not_started',
-      priority: 'urgent',
-      createdBy: 'Robert Miller',
-      assignee: 'Emily Davis',
-      assignedDate: '2025-04-19T09:15:00Z',
-      deadline: '2025-04-24T17:00:00Z',
-      completionPercentage: 0,
-      estimatedHours: 10,
-      hoursLogged: 0,
-      documents: [
-        {
-          id: 'doc-678',
-          title: '12-Month Stability Report',
-          version: '1.0',
-          type: 'Stability Reports',
-        },
-      ],
-      workflowId: 'wf-008',
-      workflowName: 'Stability Data Review',
-      regulatoryRequirement: true,
-      regulatoryStandards: ['ICH Q1A(R2)', 'ICH Q1E'],
-      comments: [],
-      history: [
-        {
-          action: 'Task Created',
-          timestamp: '2025-04-19T09:15:00Z',
-          user: 'Robert Miller',
-        },
-        {
-          action: 'Task Assigned',
-          timestamp: '2025-04-19T09:15:00Z',
-          user: 'Robert Miller',
-          details: 'Assigned to Emily Davis',
-        },
-      ],
-      aiRecommendations: {
-        similarTasks: ['task-018', 'task-029'],
-        prioritySuggestion: 'urgent',
-        estimatedTimeRequired: 12,
-        potentialIssues: [
-          'Check for dissolution trend analysis',
-          'Ensure statistical evaluation of data',
-        ],
-      },
-      tags: ['Stability', 'Data Review', 'ICH', 'Drug Product'],
-    },
+  // Document types for filtering (static reference data)
+  const documentTypes = [
+    'All Documents',
+    'API Specifications',
+    'Method Validation',
+    'Process Validation',
+    'Stability Reports',
+    'Analytical Methods',
+    'Manufacturing Process',
+    'Formulation Development',
+    'Risk Assessments',
+    'Change Controls',
+    'Deviation Reports',
   ];
 
-  // Load sample tasks on component mount
+
+  // Load tasks and team members from API on mount
   useEffect(() => {
-    setTasks(sampleTasks);
-    setFilteredTasks(sampleTasks);
+    let alive = true;
+    const loadTasks = async () => {
+      try {
+        const headers = { 'Content-Type': 'application/json' };
+        const token = localStorage.getItem('token');
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+
+        const [tasksRes, usersRes] = await Promise.allSettled([
+          fetch('/api/cmc/tasks?assignee=me', { headers, credentials: 'include' }),
+          fetch('/api/users', { headers, credentials: 'include' }),
+        ]);
+
+        if (!alive) return;
+
+        if (tasksRes.status === 'fulfilled' && tasksRes.value.ok) {
+          const data = await tasksRes.value.json();
+          const items = Array.isArray(data) ? data : data.data || [];
+          setTasks(items);
+          setFilteredTasks(items);
+        }
+
+        if (usersRes.status === 'fulfilled' && usersRes.value.ok) {
+          const data = await usersRes.value.json();
+          const users = Array.isArray(data) ? data : data.data || data.users || [];
+          setTeamMembers(users.map(u => ({
+            id: u.id || u.user_id,
+            name: u.name || u.full_name || `${u.first_name || ''} ${u.last_name || ''}`.trim(),
+            role: u.role || u.title || 'Team Member',
+            avatar: u.avatar || '',
+          })));
+        }
+      } catch (error) {
+        console.error('Failed to load task data:', error);
+      }
+    };
+    loadTasks();
     if (processId) {
       loadProcessStage();
       generateAISuggestions();
     }
+    return () => { alive = false; };
   }, [processId]);
 
   // AI-powered functions

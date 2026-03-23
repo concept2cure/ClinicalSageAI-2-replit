@@ -264,8 +264,8 @@ function NewStudyWizard({ onClose, onStudyCreated }) {
         onClose();
       }
     } catch (error) {
-      toast({ title: 'Draft Saved Locally', description: 'Study saved to browser storage' });
-      onClose();
+      console.error('Failed to save draft:', error);
+      toast({ title: 'Save Failed', description: 'Could not save draft. Please try again.', variant: 'destructive' });
     }
   };
 
@@ -290,8 +290,8 @@ function NewStudyWizard({ onClose, onStudyCreated }) {
         onClose();
       }
     } catch (error) {
-      toast({ title: 'Study Created Locally', description: 'Study created in browser storage' });
-      onClose();
+      console.error('Failed to create study:', error);
+      toast({ title: 'Study Creation Failed', description: 'Could not create study. Please try again.', variant: 'destructive' });
     }
   };
 
@@ -651,14 +651,14 @@ function AssignmentDialogContent({ studyId, onClose }) {
         body: JSON.stringify({ user_id: user, role, due_date: due || null }),
       });
       if (r.ok) {
-        alert('Assigned successfully!');
+        toast({ title: 'Assigned successfully!' });
         onClose();
       } else {
         const d = await r.json().catch(() => ({}));
-        alert(d.error || 'Assignment failed');
+        toast({ title: d.error || 'Assignment failed' });
       }
     } catch (err) {
-      alert('Assignment failed: ' + err.message);
+      toast({ title: 'Assignment failed: ' + err.message });
     }
   }
 
@@ -745,7 +745,7 @@ function BulkAssignmentDialogContent({ studyId, onClose }) {
     try {
       const validAssignments = assignments.filter(a => a.task && a.user);
       if (validAssignments.length === 0) {
-        alert('Please add at least one valid assignment');
+        toast({ title: 'Please add at least one valid assignment' });
         return;
       }
 
@@ -756,14 +756,14 @@ function BulkAssignmentDialogContent({ studyId, onClose }) {
       });
 
       if (r.ok) {
-        alert(`${validAssignments.length} assignments created successfully!`);
+        toast({ title: `${validAssignments.length} assignments created successfully!` });
         onClose();
       } else {
         const d = await r.json().catch(() => ({}));
-        alert(d.error || 'Bulk assignment failed');
+        toast({ title: d.error || 'Bulk assignment failed' });
       }
     } catch (err) {
-      alert('Bulk assignment failed: ' + err.message);
+      toast({ title: 'Bulk assignment failed: ' + err.message });
     }
   }
 
@@ -1410,6 +1410,7 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
       setTasks(tasksData);
     } catch (error) {
       console.error('Failed to refresh tasks:', error);
+      toast({ title: 'Refresh Failed', description: 'Could not load latest tasks.', variant: 'destructive' });
     }
   };
 
@@ -1420,6 +1421,7 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
       setRisks(risksData);
     } catch (error) {
       console.error('Failed to refresh risks:', error);
+      toast({ title: 'Refresh Failed', description: 'Could not load latest risks.', variant: 'destructive' });
     }
   };
 
@@ -1637,193 +1639,51 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
     fetchDashboardData();
   }, []);
 
-  // Mock data initialization
+  // Load CMC data from API
   useEffect(() => {
-    const initializeData = () => {
-      setAnalyticalMethods([
-        {
-          id: 1,
-          methodCode: 'AM-001',
-          technique: 'HPLC-UV',
-          analyte: 'Active Pharmaceutical Ingredient',
-          matrix: 'Drug Product',
-          status: 'Validated',
-          validationDate: '2025-07-15',
-          sensitivity: '0.05 µg/mL',
-          precision: '≤2.0%',
-          accuracy: '98-102%',
-          specificity: 'Confirmed',
-          robustness: 'Acceptable',
-          range: '0.05-150 µg/mL',
-        },
-        {
-          id: 2,
-          methodCode: 'AM-002',
-          technique: 'GC-MS',
-          analyte: 'Residual Solvents',
-          matrix: 'Drug Substance',
-          status: 'Under Development',
-          validationDate: '2025-09-01',
-          sensitivity: '10 ppm',
-          precision: '≤5.0%',
-          accuracy: '95-105%',
-          specificity: 'In Progress',
-          robustness: 'Testing',
-          range: '10-500 ppm',
-        },
-      ]);
+    const initializeData = async () => {
+      const headers = {
+        'Content-Type': 'application/json',
+        'x-tenant-id': String(organizationId || 1),
+      };
+      const token = localStorage.getItem('token');
+      if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      setProcessValidations([
-        {
-          id: 1,
-          processName: 'Tablet Compression',
-          equipment: 'Rotary Tablet Press Model X200',
-          stage: 'PV-I',
-          status: 'Completed',
-          completionDate: '2025-06-20',
-          batchesProduced: 15,
-          keyParameters: ['Compression Force', 'Turret Speed', 'Fill Depth'],
-          acceptanceCriteria: 'All parameters within specification',
-          deviation: 'None',
-          conclusion: 'Process consistently meets requirements',
-        },
-      ]);
+      // Fetch analytical methods
+      try {
+        const res = await fetch('/api/analytical/methods', { headers, credentials: 'include' });
+        if (res.ok) { const data = await res.json(); setAnalyticalMethods(Array.isArray(data) ? data : data.data || []); }
+      } catch (e) { console.error('Failed to load analytical methods:', e); }
 
-      setStabilityStudies([
-        {
-          id: 1,
-          studyId: 'SS-2024-001',
-          productName: 'Product A 10mg Tablets',
-          condition: '25°C/60% RH',
-          duration: '24 months',
-          status: 'Ongoing',
-          timepoints: ['0M', '3M', '6M', '9M', '12M'],
-          testParameters: ['Assay', 'Dissolution', 'Impurities', 'Appearance'],
-          currentTimepoint: '9M',
-          nextSampling: '2025-12-15',
-          trend: 'Stable',
-        },
-      ]);
+      // Fetch process validations
+      try {
+        const res = await fetch('/api/cmc/process-validation', { headers, credentials: 'include' });
+        if (res.ok) { const data = await res.json(); setProcessValidations(Array.isArray(data) ? data : data.data || []); }
+      } catch (e) { console.error('Failed to load process validations:', e); }
 
-      setQcTesting([
-        {
-          id: 1,
-          lotNumber: 'LOT-2025-A001',
-          productName: 'Product A 10mg',
-          testDate: '2025-08-10',
-          status: 'Released',
-          assay: '99.2%',
-          dissolution: 'Compliant',
-          impurities: '≤0.1%',
-          microbialLimits: 'Pass',
-          endotoxins: '<0.25 EU/mL',
-          analyst: 'Dr. Johnson',
-          reviewer: 'Dr. Smith',
-        },
-      ]);
+      // Fetch stability studies
+      try {
+        const res = await fetch('/api/stability/studies', { headers, credentials: 'include' });
+        if (res.ok) { const data = await res.json(); setStabilityStudies(Array.isArray(data) ? data : data.data || []); }
+      } catch (e) { console.error('Failed to load stability studies:', e); }
 
-      setRiskAssessments([
-        {
-          id: 1,
-          title: 'Manufacturing Process Risk Assessment',
-          category: 'Process',
-          riskLevel: 'Medium',
-          probability: 3,
-          severity: 4,
-          riskScore: 12,
-          status: 'Active',
-          owner: 'Process Development Team',
-          dueDate: '2025-12-01',
-          mitigationProgress: 65,
-        },
-        {
-          id: 2,
-          title: 'Drug Substance Impurity Profile',
-          category: 'Quality',
-          riskLevel: 'High',
-          probability: 4,
-          severity: 5,
-          riskScore: 20,
-          status: 'Under Review',
-          owner: 'Analytical Chemistry Team',
-          dueDate: '2025-11-15',
-          mitigationProgress: 35,
-        },
-        {
-          id: 3,
-          title: 'Container Closure Compatibility',
-          category: 'Packaging',
-          riskLevel: 'Low',
-          probability: 2,
-          severity: 3,
-          riskScore: 6,
-          status: 'Mitigated',
-          owner: 'Packaging Development',
-          dueDate: '2025-10-30',
-          mitigationProgress: 92,
-        },
-        {
-          id: 4,
-          title: 'API Starting Material Qualification',
-          category: 'Supply Chain',
-          riskLevel: 'Medium',
-          probability: 3,
-          severity: 3,
-          riskScore: 9,
-          status: 'Active',
-          owner: 'Supply Chain Management',
-          dueDate: '2026-01-15',
-          mitigationProgress: 48,
-        },
-      ]);
+      // Fetch QC testing data
+      try {
+        const res = await fetch('/api/qc/batch-releases', { headers, credentials: 'include' });
+        if (res.ok) { const data = await res.json(); setQcTesting(Array.isArray(data) ? data : data.data || []); }
+      } catch (e) { console.error('Failed to load QC data:', e); }
 
-      setAuditData([
-        {
-          id: 1,
-          action: 'Updated analytical method AM-001',
-          user: 'Dr. Sarah Johnson',
-          timestamp: '2025-08-15 14:30:25',
-          entity: 'Analytical Methods',
-          details: 'Modified precision acceptance criteria from ≤1.5% to ≤2.0%',
-          impact: 'Medium',
-        },
-        {
-          id: 2,
-          action: 'Approved stability protocol SP-003',
-          user: 'Dr. James Whitfield',
-          timestamp: '2025-08-14 09:15:42',
-          entity: 'Stability Studies',
-          details: 'Long-term stability protocol for 40°C/75% RH conditions approved with 36-month duration',
-          impact: 'Critical',
-        },
-        {
-          id: 3,
-          action: 'Created dissolution profile DP-012',
-          user: 'Maria Gonzalez',
-          timestamp: '2025-08-13 16:48:10',
-          entity: 'Quality Control',
-          details: 'New dissolution profile added for 10mg tablet formulation using USP Apparatus II',
-          impact: 'Medium',
-        },
-        {
-          id: 4,
-          action: 'Revised batch record BR-089',
-          user: 'Dr. Raj Patel',
-          timestamp: '2025-08-12 11:22:33',
-          entity: 'Manufacturing',
-          details: 'Updated mixing parameters based on scale-up validation results — impeller speed adjusted',
-          impact: 'Medium',
-        },
-        {
-          id: 5,
-          action: 'Risk assessment RA-004 escalated',
-          user: 'Process Development Team',
-          timestamp: '2025-08-11 08:05:17',
-          entity: 'Risk Management',
-          details: 'Drug substance impurity profile risk escalated to High after OOS result in batch B-2025-047',
-          impact: 'Critical',
-        },
-      ]);
+      // Fetch risk assessments
+      try {
+        const res = await fetch('/api/cmc/risks', { headers, credentials: 'include' });
+        if (res.ok) { const data = await res.json(); setRiskAssessments(Array.isArray(data) ? data : data.data || []); }
+      } catch (e) { console.error('Failed to load risk assessments:', e); }
+
+      // Fetch audit trail
+      try {
+        const res = await fetch('/api/cmc/audit/trail', { headers, credentials: 'include' });
+        if (res.ok) { const data = await res.json(); setAuditData(Array.isArray(data) ? data : data.data || []); }
+      } catch (e) { console.error('Failed to load audit data:', e); }
 
       // Load real submission data from database
       const loadSubmissionData = async () => {
@@ -6061,84 +5921,22 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
   );
 
   const renderAnalyticalMethods = () => {
-    const analyticalPerformanceMetrics = {
-      precision: 98.5,
-      accuracy: 99.2,
-      lod: 0.05,
-      loq: 0.15,
-      cpk: 1.45,
-      cp: 1.67,
-    };
+    // Derive performance metrics from actual analytical methods data
+    const analyticalPerformanceMetrics = analyticalMethods.length > 0
+      ? {
+          precision: analyticalMethods.reduce((sum, m) => sum + (parseFloat(m.precision) || 0), 0) / analyticalMethods.length || 0,
+          accuracy: analyticalMethods.reduce((sum, m) => sum + (parseFloat(m.accuracy) || 0), 0) / analyticalMethods.length || 0,
+          lod: analyticalMethods[0]?.lod || '--',
+          loq: analyticalMethods[0]?.loq || '--',
+          cpk: '--',
+          cp: '--',
+        }
+      : { precision: 0, accuracy: 0, lod: '--', loq: '--', cpk: '--', cp: '--' };
 
     const { toast } = useToast();
 
-    // Mock analytical methods data with comprehensive details
-    const methods = [
-      {
-        id: 'AM-001',
-        name: 'HPLC Assay for API',
-        technique: 'HPLC',
-        status: 'Validated',
-        validationStage: 'Complete',
-        owner: 'Dr. Sarah Chen',
-        analyte: 'Lisinopril',
-        matrix: 'Tablet',
-        precision: 99.1,
-        accuracy: 99.5,
-        lod: 0.03,
-        loq: 0.1,
-        lastUpdated: '2025-09-15',
-        nextReview: '2026-09-15',
-      },
-      {
-        id: 'AM-002',
-        name: 'Related Substances by UPLC',
-        technique: 'UPLC',
-        status: 'In Validation',
-        validationStage: 'Precision Study',
-        owner: 'Dr. Michael Rodriguez',
-        analyte: 'Impurities',
-        matrix: 'API',
-        precision: 97.8,
-        accuracy: 98.2,
-        lod: 0.01,
-        loq: 0.03,
-        lastUpdated: '2025-09-18',
-        nextReview: '2026-09-18',
-      },
-      {
-        id: 'AM-003',
-        name: 'Dissolution Testing',
-        technique: 'UV-Vis',
-        status: 'Validated',
-        validationStage: 'Complete',
-        owner: 'Dr. Emily Johnson',
-        analyte: 'Drug Release',
-        matrix: 'Tablet',
-        precision: 98.5,
-        accuracy: 99.0,
-        lod: 0.1,
-        loq: 0.3,
-        lastUpdated: '2025-09-10',
-        nextReview: '2026-09-10',
-      },
-      {
-        id: 'AM-004',
-        name: 'Residual Solvents by GC',
-        technique: 'GC-FID',
-        status: 'Transfer',
-        validationStage: 'Method Transfer',
-        owner: 'Dr. James Wilson',
-        analyte: 'Solvents',
-        matrix: 'API',
-        precision: 96.5,
-        accuracy: 97.8,
-        lod: 0.001,
-        loq: 0.005,
-        lastUpdated: '2025-09-20',
-        nextReview: '2026-09-20',
-      },
-    ];
+    // Use real analytical methods from API (loaded in main useEffect)
+    const methods = analyticalMethods;
 
     const filteredMethods = methods.filter(method => {
       const matchesSearch =
@@ -7861,9 +7659,11 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
           });
         }
       } catch (error) {
+        console.error('AI control proposal failed:', error);
         toast({
-          title: 'AI Controls Proposed',
-          description: '5 optimal control strategies generated successfully',
+          title: 'AI Proposal Failed',
+          description: 'Could not generate control strategies. Please try again.',
+          variant: 'destructive',
         });
       } finally {
         setAiProposalLoading(false);
@@ -7884,9 +7684,11 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
           });
         }
       } catch (error) {
+        console.error('P.3.4 draft generation failed:', error);
         toast({
-          title: 'P.3.4 Draft Generated',
-          description: 'Process validation section created with 12 pages',
+          title: 'Draft Generation Failed',
+          description: 'Could not generate P.3.4 draft. Please try again.',
+          variant: 'destructive',
         });
       }
     };
@@ -7914,9 +7716,11 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
           description: 'Stability data exported successfully',
         });
       } catch (error) {
+        console.error('Export failed:', error);
         toast({
-          title: 'Export Complete',
-          description: 'Stability data exported successfully',
+          title: 'Export Failed',
+          description: 'Could not export stability data. Please try again.',
+          variant: 'destructive',
         });
       }
     };
@@ -17688,99 +17492,21 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
 
           <TabsContent value="integrations" className="mt-6">
             {(() => {
-              // Biotech System Integrations
-              const biotechIntegrations = [
-                {
-                  id: 'lims',
-                  name: 'LIMS Integration',
-                  description: 'Laboratory Information Management System connectivity',
-                  status: 'connected',
-                  lastSync: '2 hours ago',
-                  icon: '🧪',
-                  provider: 'LabWare',
-                  dataPoints: 1247,
-                },
-                {
-                  id: 'mes',
-                  name: 'Manufacturing Execution System',
-                  description: 'Real-time production data and batch records',
-                  status: 'connected',
-                  lastSync: '15 min ago',
-                  icon: '🏭',
-                  provider: 'Werum PAS-X',
-                  dataPoints: 892,
-                },
-                {
-                  id: 'qms',
-                  name: 'Quality Management System',
-                  description: 'Quality control and deviation management',
-                  status: 'pending',
-                  lastSync: 'Never',
-                  icon: '✅',
-                  provider: 'TrackWise',
-                  dataPoints: 0,
-                },
-                {
-                  id: 'edms',
-                  name: 'Electronic Document Management',
-                  description: 'Document control and version management',
-                  status: 'connected',
-                  lastSync: '1 hour ago',
-                  icon: '📄',
-                  provider: 'Documentum',
-                  dataPoints: 3456,
-                },
-                {
-                  id: 'chromatography',
-                  name: 'Chromatography Data Systems',
-                  description: 'Waters Empower & Agilent OpenLab integration',
-                  status: 'connected',
-                  lastSync: '30 min ago',
-                  icon: '📊',
-                  provider: 'Multi-vendor',
-                  dataPoints: 567,
-                },
-                {
-                  id: 'erp',
-                  name: 'Enterprise Resource Planning',
-                  description: 'Material tracking and supply chain integration',
-                  status: 'connected',
-                  lastSync: '45 min ago',
-                  icon: '📦',
-                  provider: 'SAP',
-                  dataPoints: 2134,
-                },
-              ];
+              // Biotech System Integrations — loaded from API
+              const [biotechIntegrations, setBiotechIntegrations] = React.useState([]);
+              React.useEffect(() => {
+                fetch('/api/integrations/status', { credentials: 'include' })
+                  .then(r => r.ok ? r.json() : [])
+                  .then(data => setBiotechIntegrations(Array.isArray(data) ? data : data.data || []))
+                  .catch(() => {});
+              }, []);
 
+              // AI tools — capabilities list (no fabricated metrics)
               const aiAutomationTools = [
-                {
-                  name: 'Analytical Method AI',
-                  description: 'AI-powered method development and optimization',
-                  status: 'active',
-                  savings: '40% time reduction',
-                  icon: '🤖',
-                },
-                {
-                  name: 'Stability Prediction',
-                  description: 'ML-based stability trending and shelf-life prediction',
-                  status: 'active',
-                  savings: '60% faster predictions',
-                  icon: '📈',
-                },
-                {
-                  name: 'Batch Release AI',
-                  description: 'Automated batch disposition recommendations',
-                  status: 'active',
-                  savings: '75% faster release',
-                  icon: '🚀',
-                },
-                {
-                  name: 'Regulatory Writing Assistant',
-                  description: 'AI-powered CMC document generation',
-                  status: 'active',
-                  savings: '90% draft acceleration',
-                  icon: '✍️',
-                },
+                { name: 'Analytical Method AI', description: 'AI-powered method development and optimization', status: 'active', icon: '🤖' },
+                { name: 'Stability Prediction', description: 'ML-based stability trending and shelf-life prediction', status: 'active', icon: '📈' },
+                { name: 'Batch Release AI', description: 'Automated batch disposition recommendations', status: 'active', icon: '🚀' },
+                { name: 'Regulatory Writing Assistant', description: 'AI-powered CMC document generation', status: 'active', icon: '✍️' },
               ];
 
               return (
@@ -19693,149 +19419,36 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
 
           <TabsContent value="lineage" className="mt-6">
             {(() => {
-              // Manufacturing Genealogy Data
-              const batchGenealogy = {
-                batchId: 'BTC-2025-001',
-                productName: 'Therapeutic Monoclonal Antibody',
-                mfgDate: '2025-09-15',
-                status: 'Released',
-                parents: [
-                  {
-                    type: 'Drug Substance',
-                    batch: 'DS-BTC-2025-045',
-                    source: 'Upstream Processing',
-                  },
-                  { type: 'Excipients', batch: 'EXC-HIST-2025-012', source: 'Raw Materials' },
-                  { type: 'Container', batch: 'VIAL-GLX-2025-089', source: 'Packaging Materials' },
-                ],
-                children: [
-                  {
-                    type: 'Stability Sample',
-                    batch: 'STB-BTC-2025-001A',
-                    purpose: 'Long-term Studies',
-                  },
-                  {
-                    type: 'Retain Sample',
-                    batch: 'RET-BTC-2025-001B',
-                    purpose: 'Reference Testing',
-                  },
-                  { type: 'Commercial Units', batch: 'COM-BTC-2025-001C', purpose: 'Distribution' },
-                ],
-              };
+              // Manufacturing Genealogy — loaded from API
+              const [batchGenealogy, setBatchGenealogy] = React.useState({ batchId: '', productName: '', mfgDate: '', status: '', parents: [], children: [] });
+              const [lineageLoading, setLineageLoading] = React.useState(true);
+              React.useEffect(() => {
+                fetch('/api/cmc/batch/genealogy', { credentials: 'include' })
+                  .then(r => r.ok ? r.json() : {})
+                  .then(data => { if (data && data.batchId) setBatchGenealogy(data); })
+                  .catch(() => {})
+                  .finally(() => setLineageLoading(false));
+              }, []);
 
-              const lineageTraceability = [
-                {
-                  level: 1,
-                  batchId: 'BTC-2025-001',
-                  description: 'Final Drug Product',
-                  date: '2025-09-15',
-                  location: 'Fill/Finish Suite 3',
-                  operator: 'Manufacturing Team A',
-                  equipment: 'Filling Line FL-03',
-                  status: 'Released',
-                },
-                {
-                  level: 2,
-                  batchId: 'DS-BTC-2025-045',
-                  description: 'Drug Substance Bulk',
-                  date: '2025-09-10',
-                  location: 'Downstream Processing',
-                  operator: 'Purification Team B',
-                  equipment: 'Chromatography Skid CHS-02',
-                  status: 'Released',
-                },
-                {
-                  level: 3,
-                  batchId: 'HAR-BTC-2025-089',
-                  description: 'Harvest Pool',
-                  date: '2025-09-05',
-                  location: 'Bioreactor Suite 2',
-                  operator: 'Cell Culture Team C',
-                  equipment: 'Bioreactor BR-2000L-02',
-                  status: 'Released',
-                },
-                {
-                  level: 4,
-                  batchId: 'SEED-BTC-2025-023',
-                  description: 'Production Seed',
-                  date: '2025-08-28',
-                  location: 'Seed Train Lab',
-                  operator: 'Cell Banking Team',
-                  equipment: 'Shaker Incubator SI-250L-01',
-                  status: 'Released',
-                },
-                {
-                  level: 5,
-                  batchId: 'MCB-BTC-LOT-12',
-                  description: 'Master Cell Bank',
-                  date: '2024-03-15',
-                  location: 'Cell Banking Facility',
-                  operator: 'Cell Banking Team',
-                  equipment: 'Liquid Nitrogen Storage',
-                  status: 'Qualified',
-                },
-              ];
+              // Lineage loaded from API
+              const [lineageTraceability, setLineageTraceability] = React.useState([]);
+              const [supplierLineage, setSupplierLineage] = React.useState([]);
+              const [environmentalConditions, setEnvironmentalConditions] = React.useState([]);
+              React.useEffect(() => {
+                Promise.allSettled([
+                  fetch('/api/cmc/batch/lineage', { credentials: 'include' }).then(r => r.ok ? r.json() : []),
+                  fetch('/api/cmc/supply/materials', { credentials: 'include' }).then(r => r.ok ? r.json() : []),
+                  fetch('/api/cmc/facility/environmental-conditions', { credentials: 'include' }).then(r => r.ok ? r.json() : []),
+                ]).then(([lineageRes, supplierRes, envRes]) => {
+                  if (lineageRes.status === 'fulfilled') setLineageTraceability(Array.isArray(lineageRes.value) ? lineageRes.value : lineageRes.value?.data || []);
+                  if (supplierRes.status === 'fulfilled') setSupplierLineage(Array.isArray(supplierRes.value) ? supplierRes.value : supplierRes.value?.data || []);
+                  if (envRes.status === 'fulfilled') setEnvironmentalConditions(Array.isArray(envRes.value) ? envRes.value : envRes.value?.data || []);
+                });
+              }, []);
 
-              const supplierLineage = [
-                {
-                  material: 'Histidine (Excipient)',
-                  supplier: 'Ajinomoto Co.',
-                  lotNumber: 'HIS-2025-Q3-445',
-                  certification: 'USP/EP Compliant',
-                  receiptDate: '2025-08-20',
-                  testingStatus: 'Passed',
-                  usage: 'Buffer Component',
-                },
-                {
-                  material: 'Sucrose (Stabilizer)',
-                  supplier: 'Cargill Inc.',
-                  lotNumber: 'SUC-2025-07-889',
-                  certification: 'Pharmaceutical Grade',
-                  receiptDate: '2025-08-18',
-                  testingStatus: 'Passed',
-                  usage: 'Lyoprotectant',
-                },
-                {
-                  material: 'Glass Vials (Primary Packaging)',
-                  supplier: 'Gerresheimer AG',
-                  lotNumber: 'GVL-2025-334512',
-                  certification: 'Type I Borosilicate',
-                  receiptDate: '2025-09-01',
-                  testingStatus: 'Passed',
-                  usage: 'Container Closure',
-                },
-              ];
+              // Legacy data removed — the arrays below were hardcoded fake data
 
-              const environmentalConditions = [
-                {
-                  parameter: 'Temperature',
-                  specification: '2-8°C',
-                  actual: '4.2°C',
-                  status: 'In Spec',
-                  monitoring: 'Continuous',
-                },
-                {
-                  parameter: 'Relative Humidity',
-                  specification: '30-60%',
-                  actual: '45%',
-                  status: 'In Spec',
-                  monitoring: 'Continuous',
-                },
-                {
-                  parameter: 'Pressure Differential',
-                  specification: '>15 Pa',
-                  actual: '25 Pa',
-                  status: 'In Spec',
-                  monitoring: 'Continuous',
-                },
-                {
-                  parameter: 'Particle Count',
-                  specification: 'ISO 7',
-                  actual: 'ISO 6',
-                  status: 'In Spec',
-                  monitoring: 'Real-time',
-                },
-              ];
+
 
               return (
                 <div className="space-y-6">
@@ -22601,17 +22214,18 @@ const ComprehensiveCMCPlatform = ({ onDocumentCreated } = {}) => {
     }, [generateTemperatureData, connectionStatus, featureFlags.sc_enableTelemetry]);
 
     // ============================================================================
-    // SUPPLY READINESS GATES CONFIGURATION (Enhanced)
+    // SUPPLY READINESS GATES CONFIGURATION
+    // Gate definitions are structural; scores/status loaded from API at mount
     // ============================================================================
 
-    const baseReadinessGates = [
+    const baseReadinessGates = supplyGates.length > 0 ? supplyGates : [
       {
         id: 'po_received',
         label: 'PO Received',
         description: 'Purchase order processed and validated',
         icon: ShoppingCart,
-        status: 'pass',
-        score: 95,
+        status: 'pending',
+        score: 0,
         critical_multiplier: 1.2,
         blocking: true,
         category: 'procurement',
@@ -23131,8 +22745,9 @@ Current supply readiness score: ${readinessScore}% - maintained during withdrawa
         } catch (error) {
           console.error('Gate action failed:', error);
           toast({
-            title: 'Gate Action Initiated',
-            description: `${action} initiated for ${gate.label} (fallback mode)`,
+            title: 'Action Failed',
+            description: `Could not complete ${action} for ${gate.label}. Please try again.`,
+            variant: 'destructive',
           });
         }
       },
@@ -23210,17 +22825,10 @@ Current supply readiness score: ${readinessScore}% - maintained during withdrawa
         }
       } catch (error) {
         console.error('Release API call failed:', error);
-
-        // Fallback to local release
-        releaseGuardHandler('release_authorized', {
-          readiness_score: readinessScore,
-          confidence: confidenceLevel,
-          gates_status: supplyGates.map(g => ({ id: g.id, status: g.status, score: g.score })),
-        });
-
         toast({
-          title: '✅ QP RELEASE AUTHORIZED (SYSTEM)',
-          description: `✅ Material OFFICIALLY RELEASED | 📋 Batch: API-001-2024-001 | 📈 Readiness: ${readinessScore}%, Confidence: ${confidenceLevel}% | 🏭 Enterprise System Active`,
+          title: 'Release Failed',
+          description: 'Could not authorize release. The server did not confirm the action. Please retry or contact your system administrator.',
+          variant: 'destructive',
         });
       }
     }, [
@@ -26413,28 +26021,28 @@ const CMCModal = ({ isOpen, onClose, type, item, onSubmit }) => {
       );
 
       if (missingFields.length > 0) {
-        alert(`Please fill in the following required fields: ${missingFields.join(', ')}`);
+        toast({ title: `Please fill in the following required fields: ${missingFields.join(', ')}` });
         return;
       }
 
       // Validate scientific formats
       if (formData.precisionTarget && !isValidRSDFormat(formData.precisionTarget)) {
-        alert('Precision Target must be in format "≤X.X% RSD" (e.g., "≤2.0% RSD")');
+        toast({ title: 'Precision Target must be in format "≤X.X% RSD" (e.g., "≤2.0% RSD")' });
         return;
       }
 
       if (formData.accuracyTarget && !isValidAccuracyFormat(formData.accuracyTarget)) {
-        alert('Accuracy Target must be in format "XX-XX%" (e.g., "98-102%")');
+        toast({ title: 'Accuracy Target must be in format "XX-XX%" (e.g., "98-102%")' });
         return;
       }
 
       if (formData.detectionLimit && !isValidConcentrationFormat(formData.detectionLimit)) {
-        alert('Detection Limit must include units (e.g., "0.05 μg/mL")');
+        toast({ title: 'Detection Limit must include units (e.g., "0.05 μg/mL")' });
         return;
       }
 
       if (formData.quantitationLimit && !isValidConcentrationFormat(formData.quantitationLimit)) {
-        alert('Quantitation Limit must include units (e.g., "0.15 μg/mL")');
+        toast({ title: 'Quantitation Limit must include units (e.g., "0.15 μg/mL")' });
         return;
       }
     }

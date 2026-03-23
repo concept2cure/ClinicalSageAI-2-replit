@@ -50,6 +50,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
+import { toast } from '@/hooks/use-toast';
 
 const RiskManagementPanel = ({ jobId, deviceName, manufacturer, onAddToCER, sections = [] }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -338,7 +339,7 @@ const RiskManagementPanel = ({ jobId, deviceName, manufacturer, onAddToCER, sect
   // AI-powered risk analysis functions
   const runAiRiskIdentification = async () => {
     if (!deviceName) {
-      alert('Please ensure a device name is provided before running AI analysis');
+      toast({ title: 'Please ensure a device name is provided before running AI analysis' });
       return;
     }
 

@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { Upload, X, UploadCloud } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { toast } from '@/hooks/use-toast';
 
 /**
  * File Uploader component with drop zone and file listing
@@ -32,7 +33,7 @@ export const FileUploader = ({
   const processFiles = files => {
     // Check for max files limit
     if (multiple && selectedFiles.length + files.length > maxFiles) {
-      alert(`You can only upload a maximum of ${maxFiles} files.`);
+      toast({ title: `You can only upload a maximum of ${maxFiles} files.` });
       return;
     }
 
@@ -41,9 +42,9 @@ export const FileUploader = ({
     const oversizedFiles = files.filter(file => file.size > maxSizeBytes);
 
     if (oversizedFiles.length > 0) {
-      alert(
+      toast({ title: 
         `Some files exceed the maximum size of ${maxSizeMB}MB: ${oversizedFiles.map(f => f.name).join(', ')}`
-      );
+       });
       return;
     }
 

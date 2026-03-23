@@ -66,7 +66,6 @@ export const TooltipLearningProvider = ({ children }) => {
         setExpertiseLevels(JSON.parse(savedExpertiseLevels));
       }
     } catch (error) {
-      console.error('Error loading tooltip learning settings:', error);
       // Continue with default settings on error
     }
   }, []);
@@ -78,7 +77,6 @@ export const TooltipLearningProvider = ({ children }) => {
       localStorage.setItem('tooltipLearningSeenTooltips', JSON.stringify(seenTooltips));
       localStorage.setItem('tooltipLearningExpertiseLevels', JSON.stringify(expertiseLevels));
     } catch (error) {
-      console.error('Error saving tooltip learning settings:', error);
     }
   }, [settings, seenTooltips, expertiseLevels]);
 

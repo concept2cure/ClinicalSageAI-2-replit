@@ -6,6 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { toast } from '@/hooks/use-toast';
 import {
   Dialog,
   DialogContent,
@@ -91,7 +92,6 @@ const ExecutivePlaybookPanel: React.FC<ExecutivePlaybookProps> = ({ subId }) => 
       const data = await response.json();
       setCards(data);
     } catch (error) {
-      console.error('Failed to load playbook cards:', error);
     } finally {
       setLoading(false);
     }
@@ -105,13 +105,13 @@ const ExecutivePlaybookPanel: React.FC<ExecutivePlaybookProps> = ({ subId }) => 
       const response = await fetch(`/api/reg/playbook/${subId}/generate`);
       const data = await response.json();
       if (data.error) {
-        alert(`Generation failed: ${data.error}`);
+        toast({ title: 'Generation Failed', description: data.error, variant: 'destructive' });
       } else {
         setCards(data.cards);
-        alert(`Generated ${data.generated} new recommendations`);
+        toast({ title: 'Playbook Generated', description: `Generated ${data.generated} new recommendations` });
       }
     } catch (error) {
-      alert('Failed to generate playbook');
+      toast({ title: 'Error', description: 'Failed to generate playbook', variant: 'destructive' });
     } finally {
       setGenerating(false);
     }
@@ -127,13 +127,13 @@ const ExecutivePlaybookPanel: React.FC<ExecutivePlaybookProps> = ({ subId }) => 
       });
       const result = await response.json();
       if (result.error) {
-        alert(`Accept failed: ${result.error}`);
+        toast({ title: 'Accept Failed', description: result.error, variant: 'destructive' });
       } else {
-        alert(`Card accepted! Task created: ${result.task.title}`);
+        toast({ title: 'Card Accepted', description: `Task created: ${result.task.title}` });
         loadCards();
       }
     } catch (error) {
-      alert('Failed to accept card');
+      toast({ title: 'Error', description: 'Failed to accept card', variant: 'destructive' });
     }
   };
 
@@ -152,7 +152,7 @@ const ExecutivePlaybookPanel: React.FC<ExecutivePlaybookProps> = ({ subId }) => 
       });
       const result = await response.json();
       if (result.error) {
-        alert(`Snooze failed: ${result.error}`);
+        toast({ title: 'Snooze Failed', description: result.error, variant: 'destructive' });
       } else {
         setShowSnoozeDialog(null);
         setSnoozeDate('');
@@ -160,7 +160,7 @@ const ExecutivePlaybookPanel: React.FC<ExecutivePlaybookProps> = ({ subId }) => 
         loadCards();
       }
     } catch (error) {
-      alert('Failed to snooze card');
+      toast({ title: 'Error', description: 'Failed to snooze card', variant: 'destructive' });
     }
   };
 
@@ -178,14 +178,14 @@ const ExecutivePlaybookPanel: React.FC<ExecutivePlaybookProps> = ({ subId }) => 
       });
       const result = await response.json();
       if (result.error) {
-        alert(`Reject failed: ${result.error}`);
+        toast({ title: 'Reject Failed', description: result.error, variant: 'destructive' });
       } else {
         setShowRejectDialog(null);
         setRejectReason('');
         loadCards();
       }
     } catch (error) {
-      alert('Failed to reject card');
+      toast({ title: 'Error', description: 'Failed to reject card', variant: 'destructive' });
     }
   };
 
@@ -201,7 +201,6 @@ const ExecutivePlaybookPanel: React.FC<ExecutivePlaybookProps> = ({ subId }) => 
       const data = await response.json();
       setSimulation(data);
     } catch (error) {
-      console.error('Failed to simulate RPI:', error);
     }
   };
 

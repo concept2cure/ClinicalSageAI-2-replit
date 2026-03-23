@@ -11,7 +11,6 @@ export default function AssignmentsPanel({ studyId }: { studyId: string }) {
         setRows(await r.json());
       }
     } catch (err) {
-      console.error('Failed to load assignments:', err);
     }
   }
   useEffect(() => {
@@ -27,7 +26,6 @@ export default function AssignmentsPanel({ studyId }: { studyId: string }) {
       });
       if (r.ok) load();
     } catch (err) {
-      console.error('Failed to mark done:', err);
     }
   }
 

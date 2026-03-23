@@ -34,23 +34,33 @@ const verifyRequestSchema = z.object({
   sources: z.array(z.string()).optional()
 });
 
-// Rate limiting tracking (in production, use Redis)
+// Rate limiting tracking with TTL cleanup to prevent unbounded memory growth
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+
+// Periodic cleanup of expired entries (every 5 minutes)
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, value] of rateLimitStore) {
+    if (value.resetTime < now) {
+      rateLimitStore.delete(key);
+    }
+  }
+}, 5 * 60 * 1000);
 
 // Rate limiting middleware function
 function checkRateLimit(clientId: string, maxRequests: number = 10, windowMs: number = 60000): boolean {
   const now = Date.now();
   const clientData = rateLimitStore.get(clientId);
-  
+
   if (!clientData || clientData.resetTime < now) {
     rateLimitStore.set(clientId, { count: 1, resetTime: now + windowMs });
     return true;
   }
-  
+
   if (clientData.count >= maxRequests) {
     return false;
   }
-  
+
   clientData.count++;
   return true;
 }

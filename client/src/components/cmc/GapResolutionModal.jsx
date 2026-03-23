@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import {
+import { toast } from '@/hooks/use-toast';
   CheckCircle2,
   Clock,
   AlertTriangle,
@@ -61,14 +62,14 @@ const GapResolutionModal = ({ isOpen, onClose, data }) => {
           setCurrentStep(stepNumber + 1);
         } else {
           // All steps completed
-          alert('Gap resolution completed successfully!');
+          toast({ title: 'Gap resolution completed successfully!' });
           onComplete?.();
           onClose();
         }
       }
     } catch (error) {
       console.error('Error completing step:', error);
-      alert('Failed to complete step');
+      toast({ title: 'Failed to complete step' });
     } finally {
       setIsCompleting(false);
     }

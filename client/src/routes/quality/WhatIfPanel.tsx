@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import InfoTip from '@/components/InfoTip';
+import { toast } from '@/hooks/use-toast';
 
 export default function WhatIfPanel({ batchId }: { batchId: string }) {
   interface TestRecord { test_id: string; name: string; value?: string; pass?: boolean }
@@ -39,8 +40,8 @@ export default function WhatIfPanel({ batchId }: { batchId: string }) {
       body: JSON.stringify({ overrides }),
     });
     const d = await r.json();
-    if (!r.ok) return alert(d.error || 'What-if failed');
-    alert(`Decision: ${d.decision?.decision} (risk ${d.decision?.risk || '—'})`);
+    if (!r.ok) { toast({ title: 'Error', description: d.error || 'What-if simulation failed', variant: 'destructive' }); return; }
+    toast({ title: `Decision: ${d.decision?.decision}`, description: `Risk level: ${d.decision?.risk || 'N/A'}` });
   }
 
   return (

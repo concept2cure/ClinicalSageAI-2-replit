@@ -71,7 +71,6 @@ export const CollaborationProvider = ({ children, initialProjectId, initialModul
       const mockMessages = generateMockMessages();
       setMessages(mockMessages);
     } catch (err) {
-      console.error('Error fetching messages:', err);
       setError(prev => ({ ...prev, messages: err.message }));
     } finally {
       setLoading(prev => ({ ...prev, messages: false }));
@@ -89,7 +88,6 @@ export const CollaborationProvider = ({ children, initialProjectId, initialModul
       const mockTasks = generateMockTasks();
       setTasks(mockTasks);
     } catch (err) {
-      console.error('Error fetching tasks:', err);
       setError(prev => ({ ...prev, tasks: err.message }));
     } finally {
       setLoading(prev => ({ ...prev, tasks: false }));
@@ -107,7 +105,6 @@ export const CollaborationProvider = ({ children, initialProjectId, initialModul
       const mockMilestones = generateMockMilestones();
       setMilestones(mockMilestones);
     } catch (err) {
-      console.error('Error fetching milestones:', err);
       setError(prev => ({ ...prev, milestones: err.message }));
     } finally {
       setLoading(prev => ({ ...prev, milestones: false }));
@@ -125,7 +122,6 @@ export const CollaborationProvider = ({ children, initialProjectId, initialModul
       const mockApprovals = generateMockApprovals();
       setApprovals(mockApprovals);
     } catch (err) {
-      console.error('Error fetching approvals:', err);
       setError(prev => ({ ...prev, approvals: err.message }));
     } finally {
       setLoading(prev => ({ ...prev, approvals: false }));
@@ -143,7 +139,6 @@ export const CollaborationProvider = ({ children, initialProjectId, initialModul
       const mockTeam = generateMockTeam();
       setTeamMembers(mockTeam);
     } catch (err) {
-      console.error('Error fetching team members:', err);
       setError(prev => ({ ...prev, team: err.message }));
     } finally {
       setLoading(prev => ({ ...prev, team: false }));
@@ -174,7 +169,6 @@ export const CollaborationProvider = ({ children, initialProjectId, initialModul
 
       return message;
     } catch (err) {
-      console.error('Error sending message:', err);
       throw err;
     }
   };
@@ -205,7 +199,6 @@ export const CollaborationProvider = ({ children, initialProjectId, initialModul
 
       return aiSuggestion;
     } catch (err) {
-      console.error('Error generating AI suggestion:', err);
       throw err;
     }
   };
@@ -240,7 +233,6 @@ export const CollaborationProvider = ({ children, initialProjectId, initialModul
 
       return task;
     } catch (err) {
-      console.error('Error creating task:', err);
       throw err;
     }
   };
@@ -274,7 +266,6 @@ export const CollaborationProvider = ({ children, initialProjectId, initialModul
       }
       return null;
     } catch (err) {
-      console.error('Error updating task:', err);
       throw err;
     }
   };
@@ -309,7 +300,6 @@ export const CollaborationProvider = ({ children, initialProjectId, initialModul
 
       return { ...milestone, status: 'completed' };
     } catch (err) {
-      console.error('Error completing milestone:', err);
       throw err;
     }
   };
@@ -361,7 +351,6 @@ export const CollaborationProvider = ({ children, initialProjectId, initialModul
         note,
       };
     } catch (err) {
-      console.error('Error processing approval:', err);
       throw err;
     }
   };
@@ -397,7 +386,6 @@ export const CollaborationProvider = ({ children, initialProjectId, initialModul
 
       return request;
     } catch (err) {
-      console.error('Error creating approval request:', err);
       throw err;
     }
   };

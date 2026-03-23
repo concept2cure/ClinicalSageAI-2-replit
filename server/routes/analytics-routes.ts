@@ -1224,7 +1224,7 @@ router.get('/export', async (req, res) => {
       doc.pipe(res);
 
       // Add content to the PDF based on type
-      doc.fontSize(25).text('Lumen Analytics Report', 100, 80);
+      doc.fontSize(25).text('ClinicalSage Analytics Report', 100, 80);
       doc.fontSize(16).text(`Generated on: ${new Date().toLocaleString()}`, 100, 120);
 
       doc.fontSize(14).text('Report Type:', 100, 160);

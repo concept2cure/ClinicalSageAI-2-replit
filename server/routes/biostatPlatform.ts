@@ -23,6 +23,12 @@ import { regulatoryOutcomeOptimizerService } from '../services/regulatory-outcom
 import { estimandEngineService } from '../services/estimand-engine-service';
 import { CollaborativeSapService } from '../services/collaborative-sap-service';
 import { ExternalControlArmService } from '../services/external-control-arm-service';
+import {
+  runJudgmentPipeline,
+  runPipelineAndGenerateArtifact,
+  runPipelineForRole,
+} from '../services/biostatistics-judgment';
+import type { StudyDesignInput, StakeholderRole, StatisticalArtifactType } from '../services/biostatistics-judgment';
 
 const collaborativeSapService = new CollaborativeSapService();
 const externalControlArmService = new ExternalControlArmService();
@@ -906,6 +912,97 @@ router.get('/knowledge/trend/:concept', authMiddleware, async (req: Request, res
     const { startYear, endYear, granularity } = req.query;
 
     const result = await biostatKnowledgeGraphService.getMethodTrend(concept, orgId);
+    res.json({ success: true, data: result });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CAPABILITY 8: Biostatistics Judgment Layer
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * POST /api/biostat/judgment/analyze
+ * Run the full biostatistics judgment pipeline on a study design.
+ *
+ * Returns: power adequacy, assumption fragility, endpoint-method defensibility,
+ * risk classification, tradeoff analysis, and role-aware interpretations.
+ */
+router.post('/judgment/analyze', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const input = req.body as StudyDesignInput;
+
+    if (!input.projectId || !input.studyType || !input.endpointType || !input.statisticalMethod) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: projectId, studyType, endpointType, statisticalMethod',
+      });
+    }
+
+    const report = runJudgmentPipeline(input);
+    res.json({ success: true, data: report });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/biostat/judgment/role-interpretation
+ * Run the judgment pipeline and return interpretation for a specific role.
+ *
+ * Body: { ...StudyDesignInput, role: StakeholderRole }
+ */
+router.post('/judgment/role-interpretation', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { role, ...input } = req.body;
+    const validRoles: StakeholderRole[] = ['ceo', 'ra_lead', 'clinical_lead', 'medical_writer', 'biostatistician'];
+
+    if (!validRoles.includes(role)) {
+      return res.status(400).json({
+        success: false,
+        error: `Invalid role. Must be one of: ${validRoles.join(', ')}`,
+      });
+    }
+
+    const result = runPipelineForRole(input as StudyDesignInput, role as StakeholderRole);
+    res.json({ success: true, data: result });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/biostat/judgment/generate-artifact
+ * Run the judgment pipeline and generate a governed statistical artifact.
+ *
+ * Body: { ...StudyDesignInput, artifactType: StatisticalArtifactType }
+ */
+router.post('/judgment/generate-artifact', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { artifactType, ...input } = req.body;
+    const validTypes: StatisticalArtifactType[] = [
+      'statistical_risk_memo',
+      'design_assumption_note',
+      'sample_size_rationale',
+      'sap_section_draft',
+      'scenario_comparison_brief',
+    ];
+
+    if (!validTypes.includes(artifactType)) {
+      return res.status(400).json({
+        success: false,
+        error: `Invalid artifactType. Must be one of: ${validTypes.join(', ')}`,
+      });
+    }
+
+    const userId = resolveUserId(req);
+    const result = runPipelineAndGenerateArtifact(
+      input as StudyDesignInput,
+      artifactType as StatisticalArtifactType,
+      `ana_biostatistics_user_${userId}`,
+    );
+
     res.json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });

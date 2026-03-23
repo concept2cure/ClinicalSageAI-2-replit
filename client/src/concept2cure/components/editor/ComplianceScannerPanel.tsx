@@ -337,7 +337,7 @@ export function ComplianceScannerPanel({
                                 e.stopPropagation();
                                 onFixIssue(issue);
                               }}
-                              className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-violet-700 bg-violet-100 rounded hover:bg-violet-200 transition-colors duration-150"
+                              className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-violet-700 bg-violet-100 rounded-lg hover:bg-violet-200 transition-colors duration-150"
                               title={`Replace with "${issue.suggestion}"`}
                             >
                               <Zap className="w-3 h-3" />

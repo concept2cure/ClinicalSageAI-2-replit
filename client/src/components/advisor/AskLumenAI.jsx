@@ -1,4 +1,4 @@
-// /client/src/components/advisor/AskLumenAI.jsx
+// /client/src/components/advisor/AskLumenAI.jsx — AnA RI Co-pilot (legacy filename retained)
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, UserRound, Bot } from 'lucide-react';
@@ -148,7 +148,7 @@ export default function AskLumenAI() {
                 </div>
                 <div>
                   <p className="text-xs font-medium mb-1">
-                    {message.role === 'user' ? 'You' : `Lumen (${modes[activeMode].label})`}
+                    {message.role === 'user' ? 'You' : `AnA (${modes[activeMode].label})`}
                   </p>
                   <p className="text-sm whitespace-pre-line">{message.content}</p>
                 </div>

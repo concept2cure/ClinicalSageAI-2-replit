@@ -33,8 +33,8 @@ import type { UserIntelligence, ProjectSummary } from './user-intelligence.js';
 
 export interface ModuleIntelligence {
   moduleId: string;
-  systemPromptAddon: string; // Added to Lumen's system prompt
-  availableCapabilities: string[]; // What Lumen can do in this module
+  systemPromptAddon: string; // Added to AnA 1.0 RI's system prompt
+  availableCapabilities: string[]; // What AnA can do in this module
   documentTypes: DocumentType[]; // Templates and doc types available
   workflowStages: WorkflowStage[]; // Standard workflow for this module
   regulatoryReferences: RegulatoryReference[]; // Key guidelines
@@ -49,7 +49,7 @@ export interface DocumentType {
   template: string; // Template identifier
   requiredFields: string[]; // Fields that must be populated
   regulatoryBasis: string; // Which regulation requires this
-  aiDraftable: boolean; // Can Lumen draft this?
+  aiDraftable: boolean; // Can AnA draft this?
   estimatedHours: number; // Estimated time to complete
 }
 

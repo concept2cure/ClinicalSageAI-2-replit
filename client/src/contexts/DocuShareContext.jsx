@@ -250,7 +250,6 @@ export function DocuShareProvider({
           throw new Error('No documents available');
         }
       } catch (err) {
-        console.error('Error fetching documents:', err);
         setError('Unable to connect to document service');
 
         // Use demo documents specific to the module
@@ -292,7 +291,6 @@ export function DocuShareProvider({
       setDocs(Array.isArray(data) ? data : []);
       setError(null);
     } catch (err) {
-      console.error('Error uploading document:', err);
       setError('Unable to upload document');
     }
   };
@@ -344,7 +342,6 @@ export function DocuShareProvider({
         throw new Error('No documents available');
       }
     } catch (err) {
-      console.error('Error refreshing documents:', err);
       // Keep using demo mode
     } finally {
       setLoading(false);

@@ -37,9 +37,7 @@ export const AuthProvider = ({ children }) => {
         window.setUserRole = newRole => {
           if (['viewer', 'editor', 'admin'].includes(newRole)) {
             setRole(newRole);
-            console.log(`Role changed to: ${newRole}`);
           } else {
-            console.error(`Invalid role: ${newRole}. Valid roles are: viewer, editor, admin`);
           }
         };
       }

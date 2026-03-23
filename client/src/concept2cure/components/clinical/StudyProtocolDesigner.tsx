@@ -7,7 +7,7 @@
  * - Comparator protocol benchmarking
  * - Regulatory-ready protocol templates
  *
- * Powered by Lumen Cortex AI with study design expertise
+ * Powered by AnA 1.0 RI with study design expertise
  *
  * @module concept2cure/components/clinical/StudyProtocolDesigner
  * @version 1.0.0
@@ -698,7 +698,7 @@ export const StudyProtocolDesigner: React.FC<StudyProtocolDesignerProps> = ({
     setProtocolSections(prev =>
       prev.map(s => (s.id === sectionId ? { ...s, status: 'ai_draft' } : s))
     );
-    // Would call Lumen Cortex API here
+    // Would call AnA 1.0 RI API here
   };
 
   const selectedDesign = STUDY_DESIGNS.find(d => d.type === designType);

@@ -88,8 +88,6 @@ const LoadingPage = () => (
 
 // Eagerly load the landing pages for faster initial render
 import UnifiedSubmissionCenter from './pages/ind/UnifiedSubmissionCenter';
-const ClientPortalV3 = lazy(() => import('./pages/client-portal/v3'));
-
 // Import Lumen Cortex AI Assistant
 const LumenCortex = lazy(() => import('./pages/LumenCortex'));
 
@@ -408,14 +406,6 @@ function MainApp() {
               {() => (
                 <Suspense fallback={<LoadingPage />}>
                   <ZenRouter />
-                </Suspense>
-              )}
-            </Route>
-            {/* V3 Portal - New Elegant UI */}
-            <Route path="/v3">
-              {() => (
-                <Suspense fallback={<LoadingPage />}>
-                  <ClientPortalV3 />
                 </Suspense>
               )}
             </Route>

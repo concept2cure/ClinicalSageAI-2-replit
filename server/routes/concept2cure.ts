@@ -67,7 +67,9 @@ import {
   conversationWorkingMemory,
 } from '../../shared/schema';
 import * as crypto from 'crypto';
+import { guardEmptyContent, guardDemoContent } from '../middleware/documentLoopGuards';
 import { computeConversationHealth } from '../services/conversation-health.js';
+import { interceptComplianceScan, interceptArtifactChange, interceptFeedback } from '../services/intelligence/rim-interceptors.js';
 import {
   buildWorkingMemoryPrompt,
   storeWorkingMemory,
@@ -602,10 +604,9 @@ const createArtifactSchema = z.object({
   type: z.string().min(1).max(50),
   category: z.enum(['document', 'interactive', 'visualization']),
   title: z.string().min(1, 'Title required').max(200),
-  content: z.string().max(1000000, 'Content too large'), // 1MB max
+  content: z.string().min(1, 'Content must not be empty').max(1000000, 'Content too large'), // 1MB max, no empty
   ctdSection: z.string().max(50).optional(),
   metadata: z.record(z.any()).optional(),
-  ctdSection: z.string().max(50).optional(),
 });
 
 const createSignatureSchema = z.object({
@@ -1734,6 +1735,21 @@ router.post('/ai/compliance-scan', async (req: Request, res: Response) => {
       issues = [];
     }
 
+    // RIM: capture compliance signals (non-blocking)
+    const orgId = (req as any).organizationId || (req as any).user?.organizationId;
+    if (orgId && issues.length > 0) {
+      interceptComplianceScan({
+        organizationId: orgId,
+        projectId: parseInt(req.body.projectId || '0', 10),
+        userId: (req as any).user?.id,
+        sectionCode: ctdSection,
+        documentType,
+        submissionType,
+        issues,
+        scannedLength: truncated.length,
+      });
+    }
+
     return sendSuccess(res, { issues, scannedLength: truncated.length });
   } catch (error: any) {
     logger.error('Compliance scan failed', { error: error.message });
@@ -2524,7 +2540,7 @@ router.get('/projects/:projectId/artifacts', async (req: Request, res: Response)
  * POST /api/concept2cure/projects/:projectId/artifacts
  * Create a new artifact (database-backed with version control).
  */
-router.post('/projects/:projectId/artifacts', async (req: Request, res: Response) => {
+router.post('/projects/:projectId/artifacts', guardEmptyContent, guardDemoContent, async (req: Request, res: Response) => {
   try {
     const organizationId = getOrganizationId(req);
     const userId = getUserId(req);
@@ -2642,6 +2658,21 @@ router.post('/projects/:projectId/artifacts', async (req: Request, res: Response
       backendRoute: 'POST /api/concept2cure/projects/:projectId/artifacts',
       backendService: 'concept2cure',
       ipAddress: getClientIp(req),
+    });
+
+    // RIM: capture artifact creation signal (non-blocking)
+    interceptArtifactChange({
+      organizationId,
+      projectId: parseInt(req.params.projectId, 10),
+      userId,
+      artifactId,
+      artifactVersionId: newDbArtifact.id?.toString(),
+      sectionCode: ctdSection || undefined,
+      changeType: 'create',
+      title: sanitizedTitle,
+      contentLength: sanitizedContent.length,
+      source: data.metadata?.generationMethod === 'ai' ? 'lumen_cortex' : 'manual',
+      content: sanitizedContent,
     });
 
     logger.info('Created artifact', { projectId: req.params.projectId, artifactId });
@@ -2830,6 +2861,21 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
         ipAddress: getClientIp(req),
       });
     }
+
+    // RIM: capture artifact update signal (non-blocking)
+    interceptArtifactChange({
+      organizationId,
+      projectId: parseInt(req.params.projectId, 10),
+      userId,
+      artifactId: req.params.artifactId,
+      artifactVersionId: dbArtifact.id?.toString(),
+      sectionCode: newCtdSection || undefined,
+      changeType: 'update',
+      title: newTitle,
+      contentLength: newContent?.length ?? 0,
+      source: 'manual',
+      content: sanitizedContent || undefined,
+    });
 
     logger.info('Updated artifact', {
       artifactId: req.params.artifactId,
@@ -4254,6 +4300,26 @@ router.put(
         }
       }
 
+      // ── Contradiction governance gate ───────────────────────────────
+      // Hard block promotion if unresolved contradictions with blocks_promotion authority
+      if (status === 'approved' || status === 'locked') {
+        try {
+          const { contradictionEngineService } = await import('../services/contradiction-engine-service');
+          const { blocked, blockingFindings, warningFindings } = await contradictionEngineService.checkPromotionBlocked(
+            organizationId, Number(req.params.projectId), artifact.id
+          );
+          if (blocked) {
+            return sendError(res, 409, `Promotion blocked by ${blockingFindings.length} unresolved contradiction finding(s). Resolve contradictions before promoting.`, {
+              blockingFindings: blockingFindings.map(f => ({ id: f.id, title: f.title, severity: f.severity, contradictionType: f.contradictionType, authorityState: f.authorityState })),
+              warningFindings: warningFindings.map(f => ({ id: f.id, title: f.title, severity: f.severity })),
+            });
+          }
+        } catch (contradictionError) {
+          // Log but don't block on contradiction check failure (table may not exist yet)
+          console.warn('Contradiction check skipped:', contradictionError instanceof Error ? contradictionError.message : contradictionError);
+        }
+      }
+
       // ── P12: Review quorum gate ─────────────────────────────────────
       // Block review → approved if reviewers are assigned but not all approved.
       // Withdrawn assignments are excluded from the quorum check.
@@ -4520,6 +4586,25 @@ router.put(
           snapshotId: snapshotRecord?.snapshotId || null,
         }
       );
+
+      // RIM: capture status change as feedback signal (non-blocking)
+      const feedbackMap: Record<string, 'accepted' | 'rejected'> = {
+        approved: 'accepted',
+        locked: 'accepted',
+        draft: 'rejected', // regression = rejection of current state
+      };
+      const feedbackType = feedbackMap[status];
+      if (feedbackType) {
+        interceptFeedback({
+          organizationId,
+          projectId: parseInt(req.params.projectId, 10),
+          userId,
+          artifactId: req.params.artifactId,
+          artifactVersionId: artifact.id?.toString(),
+          sectionCode: artifact.ctdSection || undefined,
+          feedbackType,
+        });
+      }
 
       return sendSuccess(res, {
         artifactId: updated.artifactId,
@@ -10997,21 +11082,32 @@ router.post('/conversations/:conversationId/promote', authMiddleware, async (req
       return sendError(res, 404, 'No messages in specified range');
     }
 
-    // Generate document content using AI
+    // Generate document content using AI + Intelligence Engine
     let documentContent: string;
     try {
-      const { getOpenAIClient } = await import('../services/openai-client');
       const conversationText = messages
         .map((m: any) => `[${m.role}]: ${m.content}`)
         .join('\n\n');
 
+      // Run intelligence pipeline on conversation content for structured signals
+      let intelligenceContext = '';
+      try {
+        const { runIntelligencePipeline, buildConstrainedPrompt } = await import(
+          '../services/intelligence-engine/index.js'
+        );
+        const analysis = runIntelligencePipeline(conversationText);
+        intelligenceContext = buildConstrainedPrompt(analysis, 'generate_memo');
+      } catch {
+        // Graceful degradation
+      }
+
+      const systemPrompt = intelligenceContext ||
+        `You are a regulatory affairs document specialist. Extract and organize the conversation content into a formal ${type.replace(/_/g, ' ')} document. Use proper document structure with headings, and maintain regulatory precision. Output in Markdown format.`;
+
       const aiResult = await ai.chat({
         model: 'gpt-4o-mini',
         messages: [
-          {
-            role: 'system',
-            content: `You are a regulatory affairs document specialist. Extract and organize the conversation content into a formal ${type.replace(/_/g, ' ')} document. Use proper document structure with headings, and maintain regulatory precision. Output in Markdown format.`,
-          },
+          { role: 'system', content: systemPrompt },
           {
             role: 'user',
             content: `Create a "${title}" (${type.replace(/_/g, ' ')}) from this conversation:\n\n${conversationText}`,
@@ -11021,6 +11117,33 @@ router.post('/conversations/:conversationId/promote', authMiddleware, async (req
         temperature: 0.3,
       });
       documentContent = aiResult.content || '';
+
+      // Evaluation gate: check output quality
+      try {
+        const { evaluateOutput } = await import('../services/intelligence-engine/index.js');
+        const evaluation = evaluateOutput(documentContent);
+        if (!evaluation.passed && intelligenceContext) {
+          // Regenerate with tighter constraints
+          const retryResult = await ai.chat({
+            model: 'gpt-4o-mini',
+            messages: [
+              {
+                role: 'system',
+                content: `${systemPrompt}\n\nIMPORTANT: Your output MUST include: a clear verdict/recommendation, prioritized findings with severity levels, specific evidence references, and actionable next steps. Rejected reasons: ${evaluation.rejectionReasons.join('; ')}`,
+              },
+              {
+                role: 'user',
+                content: `Create a "${title}" (${type.replace(/_/g, ' ')}) from this conversation:\n\n${conversationText}`,
+              },
+            ],
+            max_tokens: 4000,
+            temperature: 0.2,
+          });
+          documentContent = retryResult.content || documentContent;
+        }
+      } catch {
+        // Use original if evaluation/retry fails
+      }
     } catch {
       // Fallback: raw conversation export
       documentContent = `# ${title}\n\n_Promoted from conversation on ${new Date().toISOString()}_\n\n` +
@@ -11113,21 +11236,47 @@ router.post('/conversations/:conversationId/extract-decisions', authMiddleware, 
     }
 
     try {
-      const { getOpenAIClient } = await import('../services/openai-client');
       const conversationText = messages
         .map((m: any) => `[${m.role}]: ${m.content}`)
         .join('\n\n');
+
+      // Run intelligence pipeline for structured risk/decision signals
+      let intelligenceSignals: Record<string, unknown> = {};
+      try {
+        const { runIntelligencePipeline } = await import('../services/intelligence-engine/index.js');
+        const analysis = runIntelligencePipeline(conversationText);
+        intelligenceSignals = {
+          defensibilityScore: analysis.defensibility.score,
+          riskLevel: analysis.defensibility.riskLevel,
+          riskClassifications: analysis.riskClassifications.classifications.map(r => ({
+            category: r.category,
+            severity: r.severity,
+            finding: r.finding,
+          })),
+          reviewerQuestions: analysis.reviewerQuestions.map(q => ({
+            question: q.question,
+            severity: q.severity,
+            category: q.category,
+          })),
+        };
+      } catch {
+        // Graceful degradation
+      }
 
       const aiResult = await ai.chat({
         model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
-            content: 'Extract structured information from this regulatory conversation. Return ONLY valid JSON.',
+            content: `Extract structured information from this regulatory conversation. You have intelligence signals available. Return ONLY valid JSON.${
+              Object.keys(intelligenceSignals).length > 0
+                ? `\n\nIntelligence signals:\n${JSON.stringify(intelligenceSignals, null, 2)}`
+                : ''
+            }`,
           },
           {
             role: 'user',
-            content: `Extract all decisions, risks, open questions, and action items from this conversation:\n\n${conversationText}\n\nRespond with JSON: { "decisions": [...], "risks": [...], "openQuestions": [...], "actionItems": [...] }`,
+            content: `Extract all decisions, risks, open questions, and action items from this conversation:\n\n${conversationText}\n\nRespond with JSON: { "decisions": [...], "risks": [...], "openQuestions": [...], "actionItems": [...], "intelligenceSignals": {...} }`,
           },
         ],
         max_tokens: 2000,
@@ -11140,6 +11289,11 @@ router.post('/conversations/:conversationId/extract-decisions', authMiddleware, 
         decisions: [], risks: [], openQuestions: [], actionItems: [],
       };
 
+      // Merge intelligence signals into response
+      if (Object.keys(intelligenceSignals).length > 0) {
+        extracted.intelligenceSignals = intelligenceSignals;
+      }
+
       return sendSuccess(res, extracted);
     } catch (aiError: any) {
       logger.error(`Decision extraction failed: ${aiError.message}`);
@@ -11148,6 +11302,95 @@ router.post('/conversations/:conversationId/extract-decisions', authMiddleware, 
   } catch (error: any) {
     logConcept2cureError('decision extraction', error);
     return sendError(res, 500, 'Failed to extract decisions');
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// INTELLIGENCE ENGINE — Deterministic regulatory intelligence analysis
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * POST /api/concept2cure/intelligence/analyze
+ *
+ * Runs the full Intelligence Engine pipeline on provided content.
+ * Returns deterministic analysis: claim/evidence alignment, consistency,
+ * defensibility scoring, risk classification, and reviewer questions.
+ *
+ * No LLM dependency — all results are reproducible.
+ */
+router.post('/intelligence/analyze', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { runIntelligencePipeline, emitRIMSignals, buildConstrainedPrompt } = await import(
+      '../services/intelligence-engine/index.js'
+    );
+
+    const analyzeSchema = z.object({
+      content: z.string().min(10).max(200000),
+      sections: z
+        .array(
+          z.object({
+            id: z.string(),
+            name: z.string(),
+            content: z.string(),
+          })
+        )
+        .optional(),
+      includeConstrainedPrompt: z.enum(['explain_risk', 'suggest_remediation', 'generate_memo', 'rewrite_section']).optional(),
+    });
+
+    const parsed = analyzeSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return sendError(res, 400, 'Invalid analysis request', parsed.error.format());
+    }
+
+    const { content, sections, includeConstrainedPrompt } = parsed.data;
+    const startTime = Date.now();
+
+    // Run full deterministic pipeline
+    const analysis = runIntelligencePipeline(content, sections);
+    const rimSignals = emitRIMSignals(analysis);
+
+    // Optionally build a constrained LLM prompt
+    let constrainedPrompt: string | undefined;
+    if (includeConstrainedPrompt) {
+      constrainedPrompt = buildConstrainedPrompt(analysis, includeConstrainedPrompt);
+    }
+
+    return sendSuccess(res, {
+      analysis,
+      rimSignals,
+      constrainedPrompt,
+      executionTimeMs: Date.now() - startTime,
+    });
+  } catch (error: any) {
+    logger.error(`Intelligence analysis failed: ${error.message}`);
+    return sendError(res, 500, 'Intelligence analysis failed');
+  }
+});
+
+/**
+ * POST /api/concept2cure/intelligence/evaluate
+ *
+ * Run the evaluation gate on any output text to check quality.
+ */
+router.post('/intelligence/evaluate', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { evaluateOutput } = await import('../services/intelligence-engine/index.js');
+
+    const evalSchema = z.object({
+      output: z.string().min(1).max(100000),
+    });
+
+    const parsed = evalSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return sendError(res, 400, 'Invalid evaluation request', parsed.error.format());
+    }
+
+    const evaluation = evaluateOutput(parsed.data.output);
+    return sendSuccess(res, evaluation);
+  } catch (error: any) {
+    logger.error(`Evaluation gate failed: ${error.message}`);
+    return sendError(res, 500, 'Evaluation failed');
   }
 });
 
@@ -11284,6 +11527,59 @@ router.get('/team/workload', async (req: Request, res: Response) => {
   } catch (error: any) {
     logConcept2cureError('team workload fetch', error);
     return sendError(res, 500, 'Failed to fetch workload data');
+  }
+});
+
+/**
+ * POST /api/concept2cure/feedback
+ * Persist user feedback (thumbs up/down) on AI responses.
+ * Critical for RLHF quality loop — was previously console.info only.
+ */
+router.post('/feedback', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const organizationId =
+      (req as any).organizationId ||
+      parseInt(req.headers['x-organization-id'] as string, 10) ||
+      1;
+    const userId = getUserId(req);
+    const { messageId, positive, conversationId, comment } = req.body;
+
+    if (messageId === undefined || positive === undefined) {
+      return sendError(res, 400, 'messageId and positive (boolean) are required');
+    }
+
+    try {
+      await pool.query(
+        `CREATE TABLE IF NOT EXISTS ai_feedback (
+          id SERIAL PRIMARY KEY,
+          organization_id INTEGER NOT NULL,
+          user_id INTEGER,
+          message_id TEXT NOT NULL,
+          conversation_id TEXT,
+          positive BOOLEAN NOT NULL,
+          comment TEXT,
+          created_at TIMESTAMP DEFAULT NOW()
+        )`
+      );
+      await pool.query(
+        `INSERT INTO ai_feedback (organization_id, user_id, message_id, conversation_id, positive, comment)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [organizationId, userId, String(messageId), conversationId || null, positive, comment || null]
+      );
+    } catch (dbErr: any) {
+      console.warn('[Feedback] DB persist failed:', dbErr.message);
+    }
+
+    // Also log to audit trail for compliance
+    await logAuditEntry(req, 'FEEDBACK', 'ai_response', String(messageId), null, {
+      positive,
+      conversationId,
+    });
+
+    return sendSuccess(res, { recorded: true });
+  } catch (error: any) {
+    logConcept2cureError('feedback submission', error);
+    return sendError(res, 500, 'Failed to record feedback');
   }
 });
 

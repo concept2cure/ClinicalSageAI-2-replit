@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { toast } from '@/hooks/use-toast';
 
 export function isValidSessionId(id) {
   return typeof id === 'string' && id.trim().length > 0;
@@ -22,7 +23,7 @@ export default function ProtocolUploadPanel({ sessionId }) {
     if (isValidSessionId(sessionId)) {
       formData.append('session_id', sessionId);
     } else {
-      alert('Session ID is missing or invalid. Please start or select a study session.');
+      toast({ title: 'Session ID is missing or invalid. Please start or select a study session.' });
       return;
     }
 
@@ -39,7 +40,7 @@ export default function ProtocolUploadPanel({ sessionId }) {
       const data = await res.json();
       setResult(data);
     } catch (err) {
-      alert('Upload failed. Please try again or check your session.');
+      toast({ title: 'Upload failed. Please try again or check your session.' });
       console.error(err);
     } finally {
       setLoading(false);

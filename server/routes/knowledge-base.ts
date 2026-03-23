@@ -855,6 +855,9 @@ router.post('/save-docx-as-artifact', async (req: Request, res: Response) => {
     if (!projectId || !title || !htmlContent) {
       return res.status(400).json({ error: 'projectId, title, and htmlContent are required' });
     }
+    if (typeof htmlContent === 'string' && htmlContent.trim().length === 0) {
+      return res.status(400).json({ error: 'Content must not be empty — no empty artifact creation allowed' });
+    }
 
     const user = (req as any).user;
     const orgId = user?.organizationId;

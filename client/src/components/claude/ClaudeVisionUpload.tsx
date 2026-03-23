@@ -7,6 +7,7 @@
 
 import React, { useState, useRef } from 'react';
 import { useClaudeAI } from '../../hooks/useClaudeAI';
+import { toast } from '@/hooks/use-toast';
 import {
   Upload,
   Image as ImageIcon,
@@ -54,12 +55,12 @@ export function ClaudeVisionUpload({
     if (!file) return;
 
     if (!ALLOWED_TYPES.includes(file.type)) {
-      alert('Please upload a JPEG, PNG, GIF, or WebP image.');
+      toast({ title: 'Invalid File Type', description: 'Please upload a JPEG, PNG, GIF, or WebP image.', variant: 'destructive' });
       return;
     }
 
     if (file.size > MAX_FILE_SIZE) {
-      alert('File size must be under 20MB.');
+      toast({ title: 'File Too Large', description: 'File size must be under 20MB.', variant: 'destructive' });
       return;
     }
 

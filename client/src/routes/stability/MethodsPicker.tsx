@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { toast } from '@/hooks/use-toast';
 
 export default function MethodsPicker({ test, onLinked }: { test: any; onLinked: () => void }) {
   const [q, setQ] = useState('');
@@ -11,7 +12,7 @@ export default function MethodsPicker({ test, onLinked }: { test: any; onLinked:
       const r = await fetch(`/api/stability/methods?q=${encodeURIComponent(q)}`);
       setRows(await r.json());
     } catch (error) {
-      console.error('Search failed:', error);
+      // search failed silently
     }
   }
 
@@ -23,10 +24,9 @@ export default function MethodsPicker({ test, onLinked }: { test: any; onLinked:
         body: JSON.stringify({ method_id }),
       });
       if (r.ok) onLinked();
-      else alert('Link failed');
+      else toast({ title: 'Error', description: 'Method linking failed', variant: 'destructive' });
     } catch (error) {
-      console.error('Link failed:', error);
-      alert('Link failed');
+      toast({ title: 'Error', description: 'Method linking failed', variant: 'destructive' });
     }
   }
 

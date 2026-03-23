@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Upload, FileText } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 export default function UnitSOPList({ units, onRefresh }) {
   const [files, setFiles] = useState({});
@@ -34,16 +35,16 @@ export default function UnitSOPList({ units, onRefresh }) {
       });
 
       if (response.ok) {
-        alert('SOP uploaded successfully!');
+        toast({ title: 'SOP uploaded successfully!' });
         setFiles(prev => ({ ...prev, [unit.unit_id]: null }));
         setTitles(prev => ({ ...prev, [unit.unit_id]: '' }));
         onRefresh && onRefresh();
       } else {
-        alert('Upload failed');
+        toast({ title: 'Upload failed' });
       }
     } catch (error) {
       console.error('Error uploading SOP:', error);
-      alert('Upload failed');
+      toast({ title: 'Upload failed' });
     } finally {
       setUploading(prev => ({ ...prev, [unit.unit_id]: false }));
     }

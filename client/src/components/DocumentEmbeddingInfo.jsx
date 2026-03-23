@@ -16,6 +16,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { toast } from '@/hooks/use-toast';
 
 const DocumentEmbeddingInfo = ({ document, isExpanded, onToggleExpand }) => {
   const [activeTab, setActiveTab] = useState('info');
@@ -293,7 +294,7 @@ const DocumentEmbeddingInfo = ({ document, isExpanded, onToggleExpand }) => {
               onClick={e => {
                 e.stopPropagation();
                 // This would trigger a re-processing action
-                alert(`Reprocess document: ${document.title || document.filename}`);
+                toast({ title: `Reprocess document: ${document.title || document.filename}` });
               }}
             >
               <RotateCw className="h-3.5 w-3.5 mr-1" />

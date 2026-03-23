@@ -4,7 +4,7 @@
  * Manages the deep-learning intelligence system for client organizations.
  * Ingests documents (PDF, DOCX, XLSX, CSV, TXT), extracts knowledge atoms,
  * and persists them as searchable, embeddable memory entries that feed
- * into the Lumen Context Builder so all agents (AnA, etc.) become
+ * into the AnA 1.0 RI Context Builder so all agents become
  * intimately aware of each client's identity, pipeline, and needs.
  *
  * @module server/services/client-intelligence-memory
@@ -705,7 +705,7 @@ export async function getDocumentChecklist(
 
 /**
  * Build a comprehensive client intelligence summary for injection into
- * the Lumen Context Builder system prompt.
+ * the AnA 1.0 RI Context Builder system prompt.
  */
 export async function buildClientIntelligenceContext(
   organizationId: number,
@@ -1196,7 +1196,7 @@ export async function getProjectIngestedDocuments(
 }
 
 /**
- * Build project intelligence context for the Lumen system prompt.
+ * Build project intelligence context for the AnA 1.0 RI system prompt.
  */
 export async function buildProjectIntelligenceContext(
   projectId: number

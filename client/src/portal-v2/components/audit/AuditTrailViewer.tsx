@@ -13,6 +13,7 @@ import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { auditLogger } from '../../utils/logger';
 import { Loader2 } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 import {
   History,
   Search,
@@ -233,7 +234,7 @@ export function AuditTrailViewer() {
 
     // In production, this would verify the cryptographic hash chain
     setVerifyingHash(null);
-    alert('Hash chain verification successful ✓');
+    toast({ title: 'Verification Complete', description: 'Hash chain verification successful' });
   }, []);
 
   // Export audit trail

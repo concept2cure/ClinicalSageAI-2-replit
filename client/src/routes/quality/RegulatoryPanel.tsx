@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { toast } from '@/hooks/use-toast';
 
 export default function RegulatoryPanel({ batchId }: { batchId: string }) {
   const [compliance, setCompliance] = useState<any>(null);
@@ -29,7 +30,7 @@ export default function RegulatoryPanel({ batchId }: { batchId: string }) {
     const r = await fetch(`/api/quality/batches/${batchId}/regulatory/report?region=${region}`, {
       method: 'POST',
     });
-    if (!r.ok) return alert('Report generation failed');
+    if (!r.ok) { toast({ title: 'Error', description: 'Report generation failed', variant: 'destructive' }); return; }
     const blob = await r.blob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

@@ -490,7 +490,7 @@ router.post('/inference', async (req: Request, res: Response) => {
     const result = await performInference(body);
     res.json({ success: true, data: result });
   } catch (err) {
-    console.error('[LumenCortex] Inference failed:', err);
+    console.error('[AnA Cortex] Inference failed:', err);
     res.status(500).json({ success: false, error: String(err) });
   }
 });
@@ -543,7 +543,7 @@ Requirements:
       },
     });
   } catch (err) {
-    console.error('[LumenCortex] Section generation failed:', err);
+    console.error('[AnA Cortex] Section generation failed:', err);
     res.status(500).json({ success: false, error: String(err) });
   }
 });

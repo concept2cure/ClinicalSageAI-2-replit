@@ -56,6 +56,8 @@ interface VersionHistoryProps {
   currentVersionId: string;
   onRestoreVersion: (versionId: string) => void;
   onCompareVersions?: (versionA: string, versionB: string) => void;
+  /** Project ID for regulatory impact review */
+  projectId?: string | number;
   className?: string;
 }
 
@@ -315,6 +317,7 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
   currentVersionId,
   onRestoreVersion,
   onCompareVersions,
+  projectId,
   className,
 }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -324,6 +327,8 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
   const [showRestoreDialog, setShowRestoreDialog] = useState(false);
   const [restoreTargetId, setRestoreTargetId] = useState<string | null>(null);
   const [showDiffView, setShowDiffView] = useState(false);
+  const [reviewingImpact, setReviewingImpact] = useState(false);
+  const [impactContent, setImpactContent] = useState<string | null>(null);
 
   // Sort versions newest first
   const sortedVersions = useMemo(() => {
@@ -489,14 +494,57 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
       </AlertDialog>
 
       {/* Diff view dialog */}
-      <Dialog open={showDiffView} onOpenChange={setShowDiffView}>
-        <DialogContent className="max-w-3xl">
+      <Dialog open={showDiffView} onOpenChange={(open) => { setShowDiffView(open); if (!open) setImpactContent(null); }}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <GitCompare className="h-5 w-5 text-purple-600" />
               Compare Versions
             </DialogTitle>
+            <DialogDescription className="flex items-center gap-2 pt-1">
+              {selectedVersion && compareTarget && projectId && (
+                <button
+                  onClick={async () => {
+                    setReviewingImpact(true);
+                    setImpactContent(null);
+                    try {
+                      const token = sessionStorage.getItem('trialsage_access_token') || localStorage.getItem('trialsage_access_token');
+                      const res = await fetch('/api/ana-ri/execute', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+                        body: JSON.stringify({
+                          command: 'review_version_impact',
+                          params: {
+                            projectId: Number(projectId),
+                            artifactId: Number(artifact.id),
+                            versionA: selectedVersion.versionNumber,
+                            versionB: compareTarget.versionNumber,
+                            saveAsArtifact: true,
+                          },
+                        }),
+                      });
+                      const result = await res.json();
+                      setImpactContent(result.success ? result.data?.impact || result.message : `Failed: ${result.message}`);
+                    } catch { setImpactContent('Impact review failed — network error.'); }
+                    finally { setReviewingImpact(false); }
+                  }}
+                  disabled={reviewingImpact}
+                  className="px-2.5 py-1 text-xs rounded-md bg-[#FBF0EB] text-[#D97757] hover:bg-[#F5E1D6] disabled:opacity-60 flex items-center gap-1 font-medium"
+                >
+                  {reviewingImpact ? <span className="animate-spin">⏳</span> : <Sparkles className="w-3.5 h-3.5" />}
+                  Review Regulatory Impact
+                </button>
+              )}
+            </DialogDescription>
           </DialogHeader>
+          {impactContent && (
+            <div className="bg-[#FAF9F5] border border-[#F5F4EF] rounded-lg p-3 mb-2 text-xs text-zinc-700 whitespace-pre-wrap max-h-60 overflow-y-auto">
+              <div className="flex items-center gap-1.5 mb-2 text-[#D97757] font-semibold text-xs">
+                <Sparkles className="w-3.5 h-3.5" /> Regulatory Impact Analysis
+              </div>
+              {impactContent}
+            </div>
+          )}
           {selectedVersion && compareTarget && (
             <DiffView versionA={selectedVersion} versionB={compareTarget} />
           )}

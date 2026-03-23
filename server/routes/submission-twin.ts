@@ -10,6 +10,7 @@
 import { Router, Request, Response } from 'express';
 import { authenticateToken } from '../middleware/auth';
 import { submissionTwinService } from '../services/submission-twin-service';
+import { enrichChangeImpact } from '../services/intelligence/rim-change-impact.js';
 
 const router = Router();
 const auth = authenticateToken;
@@ -241,7 +242,14 @@ router.post('/change-impact/:packageId', auth, async (req: Request, res: Respons
     const impacts = await submissionTwinService.analyzeChangeImpact(
       packageId, changedArtifactId, changeDescription, changeType, orgId
     );
-    res.json({ success: true, data: impacts });
+
+    // Enrich with RIM intelligence if section context is available
+    const sectionCode = req.body.sectionCode;
+    const rimEnrichment = sectionCode
+      ? enrichChangeImpact(orgId, req.body.projectId ?? 0, sectionCode)
+      : null;
+
+    res.json({ success: true, data: impacts, rimIntelligence: rimEnrichment });
   } catch (error: any) {
     handleError(res, error);
   }

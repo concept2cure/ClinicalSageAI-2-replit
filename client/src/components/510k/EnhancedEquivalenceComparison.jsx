@@ -39,6 +39,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { toast } from '@/hooks/use-toast';
 
 /**
  * Enhanced Equivalence Comparison Component
@@ -329,9 +330,9 @@ const EnhancedEquivalenceComparison = ({
     }, 0);
 
     // Alert user
-    alert(
+    toast({ title: 
       'Equivalence report data exported successfully. This JSON file can be used for FDA 510(k) submission preparation.'
-    );
+     });
   };
 
   // Enhanced AI assistance for non-equivalent features with regulatory context

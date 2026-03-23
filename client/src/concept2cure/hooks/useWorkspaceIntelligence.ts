@@ -1,9 +1,9 @@
 /**
- * useWorkspaceIntelligence — React Query hooks for Lumen, Foresight, and CSR APIs.
+ * useWorkspaceIntelligence — React Query hooks for AnA 1.0 RI, Foresight, and CSR APIs.
  *
  * Endpoints wired:
- * - Lumen Cortex:  POST /api/lumen-cortex/regulatory-analysis
- * - Lumen Cortex:  GET  /api/lumen-cortex/intelligence
+ * - AnA 1.0 RI:    POST /api/lumen-cortex/regulatory-analysis
+ * - AnA 1.0 RI:    GET  /api/lumen-cortex/intelligence
  * - CSR Search:    GET  /api/csr-search/fast-query
  * - Foresight:     POST /api/foresight/score
  * - Foresight AI:  POST /api/foresight-ai/risk-analysis/clinical
@@ -115,7 +115,7 @@ export const workspaceIntelKeys = {
   risk: (params: ClinicalRiskParams | null) => [...workspaceIntelKeys.all, 'risk', params] as const,
 };
 
-// ── Lumen Cortex: Regulatory Analysis (mutation — user-triggered) ────────────
+// ── AnA 1.0 RI: Regulatory Analysis (mutation — user-triggered) ──────────────
 export function useRegulatoryAnalysis() {
   return useMutation({
     mutationFn: async (query: string): Promise<RegulatoryAnalysisResult> => {
@@ -131,7 +131,7 @@ export function useRegulatoryAnalysis() {
   });
 }
 
-// ── Lumen Cortex: Intelligence Feeds (auto-fetched) ──────────────────────────
+// ── AnA 1.0 RI: Intelligence Feeds (auto-fetched) ────────────────────────────
 export function useIntelligenceFeeds() {
   return useQuery({
     queryKey: workspaceIntelKeys.feeds(),

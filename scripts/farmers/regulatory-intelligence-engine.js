@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * ═══════════════════════════════════════════════════════════════════════════
- *                    LUMEN CORTEX: REGULATORY INTELLIGENCE ENGINE
+ *                    AnA RI: REGULATORY INTELLIGENCE ENGINE
  * ═══════════════════════════════════════════════════════════════════════════
  *
  * The cognitive brain of TrialSage - understands WHY submissions fail and
@@ -1044,7 +1044,7 @@ async function main() {
   logger.info(`
 ╔════════════════════════════════════════════════════════════════════════════╗
 ║                                                                            ║
-║  🧠  ${colors.bright}LUMEN CORTEX: REGULATORY INTELLIGENCE ENGINE${colors.reset}  🧠                    ║
+║  🧠  ${colors.bright}AnA RI: REGULATORY INTELLIGENCE ENGINE${colors.reset}  🧠                    ║
 ║                                                                            ║
 ║  ${colors.cyan}"Understanding WHY submissions fail to ensure they succeed"${colors.reset}              ║
 ║                                                                            ║
