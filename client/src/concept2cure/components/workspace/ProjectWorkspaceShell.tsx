@@ -67,6 +67,11 @@ import {
   Activity,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  DocumentModeProvider,
+  useDocumentMode,
+  type WorkflowStage,
+} from '../../contexts/DocumentModeContext';
 
 // Feature flag for governed drag-and-drop (Phase 3C groundwork)
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -823,6 +828,15 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   // Outline available only when doc is open
   const outlineAvailable = mode === 'edit' && !!selectedDocId;
 
+  // ── Derive workflow stage from shell mode + left rail ──────────────────
+  const workflowStage: WorkflowStage = (() => {
+    if (mode === 'dashboard') return 'project-home';
+    if (mode === 'edit') return 'section-workspace';
+    // browse mode — varies by left rail
+    if (leftRailMode === 'dossier') return 'dossier';
+    return 'documents';
+  })();
+
   // ── No project guard ────────────────────────────────────────────────────
   if (!projectId) {
     return (
@@ -852,6 +866,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   }
 
   return (
+    <DocumentModeProvider initialStage={workflowStage} key={workflowStage}>
     <div className="flex-1 flex flex-col min-h-0" data-testid="project-workspace-shell">
       {/* ── Compact breadcrumb bar ────────────────────────────────────────── */}
       <div className="flex items-center gap-3 px-4 h-11 border-b border-zinc-200 bg-white shrink-0">
@@ -1559,6 +1574,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         </div>
       )}
     </div>
+    </DocumentModeProvider>
   );
 };
 
