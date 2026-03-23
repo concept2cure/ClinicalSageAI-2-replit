@@ -74,6 +74,10 @@ import { ComplianceScannerPanel } from './ComplianceScannerPanel';
 import { AnAMemory } from '../intelligence/AnAMemory';
 import ArtifactProofPanel from './ArtifactProofPanel';
 import { getCurrentUser } from '../../utils/getCurrentUser';
+import {
+  useDocumentModeOptional,
+  type DocumentMode,
+} from '../../contexts/DocumentModeContext';
 
 // ── Auth helper (same pattern as useProjects) ────────────────────────────────
 function getAuthHeaders(): Record<string, string> {
@@ -157,6 +161,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   initialInspector,
   onNavigateToProject,
 }) => {
+  // ── Document mode context (stage-aware) ──────────────────────────────
+  const modeCtx = useDocumentModeOptional();
+
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
   const [activeArtifact, setActiveArtifact] = useState<Artifact | null>(null);
   const [loading, setLoading] = useState(false);
@@ -279,6 +286,15 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const [pendingCommentHighlight, setPendingCommentHighlight] = useState('');
   const pendingCommentClientIdRef = useRef<string>('');
   const [cancelCommentId, setCancelCommentId] = useState<string | null>(null);
+
+  // ── Sync artifact status into DocumentModeContext ───────────────────
+  React.useEffect(() => {
+    if (modeCtx && activeArtifact?.status) {
+      modeCtx.setArtifactStatus(activeArtifact.status);
+    } else if (modeCtx && !activeArtifact) {
+      modeCtx.setArtifactStatus(null);
+    }
+  }, [activeArtifact?.status, activeArtifact?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Review mode: snapshot content when entering review mode ─────────
   const handleToggleReviewMode = useCallback(() => {
@@ -2188,6 +2204,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             showTraceability={false}
             embedded
             isReadOnly={activeArtifact?.status === 'locked'}
+            documentMode={modeCtx?.mode}
             onSave={handleSave}
             onAIAction={(action, selectedText) => {
               if (action === 'link-source') {

@@ -81,6 +81,12 @@ import {
   Type,
 } from 'lucide-react';
 import InlineApprovalPanel from './InlineApprovalPanel';
+import {
+  useDocumentModeOptional,
+  type DocumentMode,
+  type ModeCapabilities,
+  MODE_CAPABILITIES,
+} from '../../contexts/DocumentModeContext';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -143,7 +149,14 @@ export interface UnifiedDocumentEditorProps {
   documentTitle?: string;
   documentType?: string;
   submissionType?: string;
+  /** @deprecated Use documentMode instead. Kept for backward compat. */
   isReadOnly?: boolean;
+  /**
+   * Stage-aware document mode. When provided, overrides isReadOnly and
+   * controls toolbar visibility, AI actions, save, and lock toggle.
+   * Falls back to DocumentModeContext if available, then to isReadOnly.
+   */
+  documentMode?: DocumentMode;
   showTraceability?: boolean;
   showCompliance?: boolean;
   /** Hide the document header bar (title/type/panel toggles) when embedded in EditorPanel which provides its own */
@@ -1038,6 +1051,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
   documentType = 'General',
   submissionType,
   isReadOnly = false,
+  documentMode: documentModeProp,
   showTraceability = true,
   showCompliance = true,
   embedded = false,
@@ -1057,8 +1071,16 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
   className = '',
   onLiveContentChange,
 }) => {
+  // ── Resolve document mode ────────────────────────────────────────────────
+  // Priority: explicit prop > context > legacy isReadOnly fallback
+  const modeCtx = useDocumentModeOptional();
+  const resolvedMode: DocumentMode = documentModeProp
+    ?? modeCtx?.mode
+    ?? (isReadOnly ? 'readonly' : 'edit');
+  const caps: ModeCapabilities = MODE_CAPABILITIES[resolvedMode];
+
   const [isSaving, setIsSaving] = useState(false);
-  const [isLocked, setIsLocked] = useState(isReadOnly);
+  const [isLocked, setIsLocked] = useState(!caps.editable);
   const [activePanel, setActivePanel] = useState<'compliance' | 'traceability' | null>(
     showCompliance ? 'compliance' : showTraceability ? 'traceability' : null
   );
@@ -1131,7 +1153,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
       }),
     ],
     content: initialContent,
-    editable: !isLocked,
+    editable: caps.editable && !isLocked,
     onUpdate: ({ editor }) => {
       onLiveContentChange?.(editor.getHTML());
     },
@@ -1236,12 +1258,12 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
     }
   }, [editor, cancelCommentId]);
 
-  // Update editor editable state when lock changes
+  // Update editor editable state when lock or mode changes
   useEffect(() => {
     if (editor) {
-      editor.setEditable(!isLocked);
+      editor.setEditable(caps.editable && !isLocked);
     }
-  }, [editor, isLocked]);
+  }, [editor, isLocked, caps.editable]);
 
   const handleSave = useCallback(async () => {
     if (!editor || !onSave) return;
@@ -1435,17 +1457,19 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
         </div>
       )}
 
-      {/* Formatting Toolbar */}
-      <Toolbar
-        editor={editor}
-        onSave={handleSave}
-        isSaving={isSaving}
-        isLocked={isLocked}
-        onToggleLock={() => setIsLocked(!isLocked)}
-        onAIAction={onAIAction}
-        showFindReplace={showFindReplace}
-        onToggleFindReplace={() => setShowFindReplace(prev => !prev)}
-      />
+      {/* Formatting Toolbar — hidden in preview/none modes */}
+      {caps.showToolbar && (
+        <Toolbar
+          editor={editor}
+          onSave={caps.canSave ? handleSave : () => {}}
+          isSaving={isSaving}
+          isLocked={isLocked || !caps.editable}
+          onToggleLock={caps.canToggleLock ? () => setIsLocked(!isLocked) : () => {}}
+          onAIAction={caps.showAIActions ? onAIAction : undefined}
+          showFindReplace={showFindReplace}
+          onToggleFindReplace={() => setShowFindReplace(prev => !prev)}
+        />
+      )}
 
       {/* Find & Replace Bar */}
       {showFindReplace && (
