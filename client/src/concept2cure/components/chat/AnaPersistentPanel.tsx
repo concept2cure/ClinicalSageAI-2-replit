@@ -238,26 +238,22 @@ interface AnaPersistentPanelProps {
 
 // ─── Context labels ──────────────────────────────────────────────────────────
 
+// [BATCH 4] Trimmed to surviving first-class + specialist modes only
 const SCREEN_LABELS: Record<string, string> = {
-  'regulatory-workspace': 'Regulatory Workspace',
-  'ind-workspace': 'IND Workspace',
-  author: 'Author',
-  'collaboration-hub': 'Collaboration',
-  'intelligence-hub': 'Intelligence',
-  'review-readiness': 'Review & Readiness',
-  'command-center': 'Command Center',
-  biostatistics: 'Biostatistics',
-  'agent-hub': 'Agent Hub',
-  snowglobe: 'SnowGlobe',
-  'review-pulse': 'Review Pulse',
-  'legal-center': 'Legal Center',
-  'training-center': 'Training Center',
-  'knowledge-base': 'Knowledge Base',
-  cmc: 'CMC Platform',
-  'deep-research': 'Deep Research',
-  'document-builder': 'Document Builder',
-  'precedent-intelligence': 'Precedent Intelligence & Governed Operating Layer',
   projects: 'Home',
+  'project-home': 'Project Home',
+  'dossier-map': 'Dossier',
+  documents: 'Documents',
+  review: 'Review',
+  submissions: 'Submissions',
+  'section-workspace': 'Section Workspace',
+  'regulatory-workspace': 'Workspace',
+  'review-readiness': 'Review & Readiness',
+  biostatistics: 'Biostatistics',
+  'deep-research': 'Deep Research',
+  'precedent-intelligence': 'Precedent Intelligence',
+  'report-engine': 'Report Engine',
+  'safety-narrative': 'Safety Narrative',
 };
 
 // ─── Component ───────────────────────────────────────────────────────────────
