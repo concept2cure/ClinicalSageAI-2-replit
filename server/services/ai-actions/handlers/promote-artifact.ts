@@ -17,6 +17,7 @@ import * as crypto from 'crypto';
 import {
   concept2cureArtifacts,
 } from '../../../../shared/schema';
+import { OperatingSystemIntegration } from '../../operating-system-integration';
 import { unifiedDocuments, workflowDocumentVersions } from '../../../../shared/schema/unified_workflow';
 import { fetchArtifact } from '../shared-utils';
 import { registerActionHandler } from '../action-registry';
@@ -83,6 +84,30 @@ const promoteArtifactHandler: AIActionHandler = {
         `Artifact was already promoted to document ${(artifact.metadata as any).promotedToDocumentId}`,
         409
       );
+    }
+
+    // 2b. Check governance boundary transition (advisory → governed_draft)
+    if (request.projectId) {
+      try {
+        const osIntegration = OperatingSystemIntegration.getInstance();
+        const transitionResult = await osIntegration.checkArtifactGovernanceTransition(
+          ctx.user.organizationId,
+          request.projectId,
+          artifact.id,
+          'advisory',
+          'governed_draft',
+          ctx.user.userId,
+        );
+        if (!transitionResult.allowed) {
+          console.warn(
+            `Governance boundary check: promotion would be blocked by ${transitionResult.blockedReasons.length} rule(s). ` +
+            `Proceeding with advisory warning. Reasons: ${transitionResult.blockedReasons.join('; ')}`
+          );
+          // Record the transition attempt but don't block (initial rollout — warn, don't enforce)
+        }
+      } catch (err) {
+        console.warn('Governance boundary check failed (non-fatal):', err);
+      }
     }
 
     // 3. Prepare promotion data
