@@ -59,8 +59,8 @@ import { isFeatureEnabled } from '@/flags/featureFlags';
 const EmbeddedCERV2Page = lazy(() => import('@/pages/csr/CERV2Page'));
 // Lazy-load PMA Workspace for embedded module rendering
 const EmbeddedPMAWorkspace = lazy(() => import('./components/pma/PMAWorkspace'));
-// DTC Landing Page (public, no auth)
-const LandingPage = lazy(() => import('./pages/LandingPage'));
+// [BATCH 1 DELETED] LandingPage, CommandCenterHub, IntelligenceHub, AnaDashboard,
+// AboutTrainingCenter, LegalCenter, IntegrationsPage, SubmissionOpsCommandCenter, INDWorkspace, PricingPage
 // Full Document Builder wizard (CSR + CTD across global agencies)
 const FullDocumentBuilder = lazy(() => import('./components/builder/FullDocumentBuilder'));
 import {
@@ -153,10 +153,7 @@ const FirstRunExperience = lazy(() => import('./components/enablement/FirstRunEx
 const SnowGlobeHome = lazy(() => import('./pages/SnowGlobe/SnowGlobeHome'));
 const SnowGlobeChambers = lazy(() => import('./pages/SnowGlobe/SnowGlobeChambers'));
 
-// About & Training Center (with Dr. Sage FDA Reviewer AI)
-const AboutTrainingCenter = lazy(() =>
-  import('./pages/AboutTrainingCenter').then(m => ({ default: m.AboutTrainingCenter }))
-);
+// [BATCH 1 DELETED] AboutTrainingCenter
 
 // Lazy load Phase 7 Mission Control components
 const MissionControl = lazy(() =>
@@ -166,22 +163,14 @@ const RulesManager = lazy(() =>
   import('./pages/MissionControl/RulesManager').then(m => ({ default: m.RulesManager }))
 );
 
-// Lazy load IND Workspace (eCTD filing hub)
-const INDWorkspace = lazy(() =>
-  import('./pages/INDWorkspace').then(m => ({ default: m.INDWorkspace }))
-);
+// [BATCH 1 DELETED] INDWorkspace
 
 // IND Workspace Right Rail (section-specific CTD context)
 const INDRightRail = lazy(() =>
   import('./components/workspace/INDRightRail').then(m => ({ default: m.INDRightRail }))
 );
 
-// Lazy load Phase 15 Submission Operations Command Center
-const SubmissionOpsCommandCenter = lazy(() =>
-  import('./pages/SubmissionOpsCommandCenter').then(m => ({
-    default: m.SubmissionOpsCommandCenter,
-  }))
-);
+// [BATCH 1 DELETED] SubmissionOpsCommandCenter
 
 // ─── Regulatory module standalones ────────────────────────────────────────────
 // Document Editor panel (bridge to UnifiedDocumentEditor + live APIs)
@@ -250,9 +239,7 @@ const IntelligentReportGenerator = lazy(
   () => import('./components/reports/IntelligentReportGenerator')
 );
 
-const AnaDashboardPage = lazy(() =>
-  import('./pages/AnaDashboard')
-);
+// [BATCH 1 DELETED] AnaDashboard
 
 const SafetyNarrativePage = lazy(() =>
   import('./pages/SafetyNarrative')
@@ -283,18 +270,14 @@ const SubmissionReadinessView = lazy(() =>
 );
 
 // ─── New intent-organized workspace lazy loads ──────────────────────────────
-const IntelligenceHub = lazy(() =>
-  import('./pages/IntelligenceHub').then(m => ({ default: m.IntelligenceHub }))
-);
+// [BATCH 1 DELETED] IntelligenceHub
 const RegulatoryPrecedentIntelligence = lazy(() =>
   import('./pages/RegulatoryPrecedentIntelligence')
 );
 const ReviewReadiness = lazy(() =>
   import('./pages/ReviewReadiness').then(m => ({ default: m.ReviewReadiness }))
 );
-const CommandCenterHub = lazy(() =>
-  import('./pages/CommandCenterHub').then(m => ({ default: m.CommandCenterHub }))
-);
+// [BATCH 1 DELETED] CommandCenterHub
 
 const ClientIntelligencePage = lazy(() => import('./pages/ClientIntelligencePage'));
 
@@ -323,9 +306,7 @@ const AnaBiostatsPanel = lazy(
 const TrainingManagementPage = lazy(
   () => import('@/portal-v2/components/admin/TrainingManagement')
 );
-const IntegrationsPage = lazy(() =>
-  import('./pages/IntegrationsPage')
-);
+// [BATCH 1 DELETED] IntegrationsPage
 
 // Agent Hub and Review Pulse removed — shell-only modules not demo-ready
 
@@ -340,10 +321,7 @@ const OnboardingWizardPage = lazy(
 // Project Knowledge — project-level context, uploads, sources
 // Already lazy-loaded: ProjectKnowledgePanel
 
-// Legal Center — IP, contracts, regulatory law
-const LegalCenterPage = lazy(() =>
-  import('./pages/LegalCenter').then(m => ({ default: m.default }))
-);
+// [BATCH 1 DELETED] LegalCenter
 
 // Platform Home — Claude.ai-style landing dashboard
 const PlatformHome = lazy(() => import('./components/home/PlatformHome'));
@@ -1978,8 +1956,9 @@ export const ZenApp: React.FC = () => {
             case 'ectd-coauthor':
               setLayoutMode('ectd-coauthor');
               break;
+            // [BATCH 1] ind-workspace → removed, redirect to documents
             case 'ind-workspace':
-              setLayoutMode('ind-workspace');
+              setLayoutMode('documents');
               break;
             case 'cmc':
               setLayoutMode('cmc');
@@ -1996,11 +1975,10 @@ export const ZenApp: React.FC = () => {
             case 'snowglobe':
               setLayoutMode('snowglobe');
               break;
+            // [BATCH 1] about-training, submission-workspace → removed
             case 'about-training':
-              setLayoutMode('about-training');
-              break;
             case 'submission-workspace':
-              setLayoutMode('submission-workspace');
+              setLayoutMode('projects'); // redirect to home
               break;
             case 'enablement-center':
               setLayoutMode('enablement-center');
@@ -2025,11 +2003,13 @@ export const ZenApp: React.FC = () => {
               setLayoutMode('project-home');
               break;
             // ── New intent-organized workspaces ──
+            // [BATCH 1] author → removed (INDWorkspace dependency deleted), redirect to documents
             case 'author':
-              setLayoutMode('author');
+              setLayoutMode('documents');
               break;
+            // [BATCH 1] intelligence-hub → removed, redirect to projects
             case 'intelligence-hub':
-              setLayoutMode('intelligence-hub');
+              setLayoutMode('projects');
               break;
             case 'precedent-intelligence':
               setLayoutMode('precedent-intelligence');
@@ -2037,8 +2017,9 @@ export const ZenApp: React.FC = () => {
             case 'review-readiness':
               setLayoutMode('review-readiness');
               break;
+            // [BATCH 1] command-center → removed, redirect to projects
             case 'command-center':
-              setLayoutMode('command-center');
+              setLayoutMode('projects');
               break;
             case 'client-intelligence':
               setLayoutMode('client-intelligence');
@@ -2070,8 +2051,9 @@ export const ZenApp: React.FC = () => {
             case 'project-knowledge':
               setLayoutMode('project-knowledge');
               break;
+            // [BATCH 1] legal-center → removed, redirect to projects
             case 'legal-center':
-              setLayoutMode('legal-center');
+              setLayoutMode('projects');
               break;
             case 'artifacts':
               setLayoutMode('artifacts');
@@ -2094,16 +2076,18 @@ export const ZenApp: React.FC = () => {
             case 'report-engine':
               setLayoutMode('report-engine');
               break;
+            // [BATCH 1] ana-dashboard → removed, redirect to projects
             case 'ana-dashboard':
-              setLayoutMode('ana-dashboard');
+              setLayoutMode('projects');
               break;
             case 'safety-narrative':
               setLayoutMode('safety-narrative');
               break;
             case 'ana-platform-control':
               setLayoutMode('ana-platform-control');
+            // [BATCH 1] integrations → removed, redirect to projects
             case 'integrations':
-              setLayoutMode('integrations');
+              setLayoutMode('projects');
               break;
             default:
               break;
@@ -2382,140 +2366,9 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* About & Training Center (Dr. Sage FDA Reviewer AI) */}
-          {!embeddedModule && layoutMode === 'about-training' && (
-            <div
-              className="flex-1 flex flex-col min-h-0 overflow-y-auto"
-              data-testid="workspace-about-training"
-            >
-              <Suspense
-                fallback={
-                  <div className="flex-1 flex items-center justify-center bg-white">
-                    <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto" />
-                  </div>
-                }
-              >
-                <AboutTrainingCenter />
-              </Suspense>
-            </div>
-          )}
+          {/* [BATCH 1 DELETED] about-training renderer removed */}
 
-          {/* ── IND Workspace (eCTD filing hub — dossier construction) ──────────── */}
-          {!embeddedModule && layoutMode === 'ind-workspace' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-ind">
-              <div className="flex items-center gap-3 px-4 h-12 border-b border-zinc-100 bg-white flex-shrink-0">
-                <button
-                  onClick={() => setLayoutMode('regulatory-workspace')}
-                  className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  <span>Chat</span>
-                </button>
-                <div className="w-px h-4 bg-zinc-200" />
-                <ShieldCheck className="w-4 h-4 text-violet-500" />
-                <span className="text-sm font-medium text-zinc-900">
-                  {submissionWorkspaceLabel} — Dossier Construction
-                </span>
-                <span className="text-xs text-zinc-400 ml-1 hidden sm:inline">
-                  CTD sections · Status tracking · eCTD compile
-                </span>
-              </div>
-              {/* No-project guard */}
-              {!activeProjectId ? (
-                <div className="flex-1 flex items-center justify-center bg-zinc-50/50 p-8">
-                  <div className="max-w-md text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-violet-50 flex items-center justify-center">
-                      <ShieldCheck className="w-8 h-8 text-violet-600" />
-                    </div>
-                    <h2 className="text-xl font-semibold text-zinc-900 mb-2">IND Workspace</h2>
-                    <p className="text-sm text-zinc-500 mb-6">
-                      Select a project to open its dossier and begin drafting CTD sections.
-                    </p>
-                    <button
-                      onClick={() => setProjectSwitcherOpen(true)}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-violet-600 text-white text-sm font-medium hover:bg-violet-700 transition-colors shadow-sm"
-                    >
-                      <FolderOpen className="w-4 h-4" />
-                      Select Project
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex-1 flex min-h-0">
-                  {/* Main area: IND section tree */}
-                  <div className="flex-1 overflow-auto">
-                    <ErrorBoundary>
-                      <Suspense fallback={<ModuleLoadingFallback />}>
-                        <INDWorkspace
-                          projectId={activeProjectId}
-                          projectName={activeProject?.name || 'Untitled Project'}
-                          submissionType={activeProject?.type || 'IND'}
-                          onOpenSection={sectionCode => {
-                            const ctd = sectionCode.replace(/^m/, '');
-                            // Navigate to editor — EditorPanel will load existing artifacts for this section
-                            setPendingEditorContent({
-                              content: `<h1>${sectionCode.toUpperCase()} — Draft</h1><p>Loading section content…</p>`,
-                              title: `${sectionCode.toUpperCase()} — ${activeProject?.name || 'IND Application'}`,
-                              ctdSection: ctd,
-                            });
-                            setRiViewMode('editor');
-                            setLayoutMode('regulatory-workspace');
-                          }}
-                          onDraftWithAI={async (sectionCode, sectionTitle) => {
-                            const ctd = sectionCode.replace(/^m/, '');
-                            const token =
-                              sessionStorage.getItem('trialsage_access_token') ||
-                              localStorage.getItem('trialsage_access_token');
-                            const authHeaders: Record<string, string> = {
-                              'Content-Type': 'application/json',
-                              ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                            };
-                            // Call real AI generation endpoint
-                            let content = '';
-                            try {
-                              const res = await fetch('/api/knowledge-base/generate-ind-section', {
-                                method: 'POST',
-                                headers: authHeaders,
-                                body: JSON.stringify({
-                                  sectionCode: ctd,
-                                  sectionTitle,
-                                  context: `CTD section for ${activeProject?.type || 'IND'} submission. Project: ${activeProject?.name || 'Untitled'}`,
-                                }),
-                              });
-                              if (res.ok) {
-                                const data = await res.json();
-                                content = data.content || data.data?.content || '';
-                              }
-                            } catch (err) {
-                              console.warn('[ZenApp] AI draft generation failed:', err);
-                            }
-                            // Fallback: minimal scaffold (NOT fake completeness)
-                            if (!content || content.trim().length === 0) {
-                              content = `<h1>${sectionTitle}</h1>\n<p><em>AI generation unavailable. Please draft this section manually or retry.</em></p>`;
-                            }
-                            setPendingEditorContent({
-                              content,
-                              title: `${sectionTitle} — ${activeProject?.name || 'IND Application'}`,
-                              ctdSection: ctd,
-                            });
-                            setRiViewMode('editor');
-                            setLayoutMode('regulatory-workspace');
-                          }}
-                          onNavigateToCoAuthor={() => setLayoutMode('ectd-coauthor')}
-                        />
-                      </Suspense>
-                    </ErrorBoundary>
-                  </div>
-                  {/* Right rail: Section context tabs */}
-                  <INDRightRail
-                    projectName={activeProject?.name}
-                    submissionType={activeProject?.type}
-                    indication={activeProject?.description}
-                  />
-                </div>
-              )}
-            </div>
-          )}
-
+          {/* [BATCH 1 DELETED] ind-workspace renderer removed */}
           {/* Medical Device Dashboard — disabled (consolidated into RI Copilot workspace) */}
 
           {/* ── eCTD Co-Author (IND / NDA / BLA / 510k authoring) ─────────── */}
@@ -2768,63 +2621,7 @@ export const ZenApp: React.FC = () => {
 
           {/* Dossier Navigator — disabled (consolidated into IND Workspace) */}
 
-          {/* ── Submission Operations Workspace (split-pane: list | inspector) ── */}
-          {!embeddedModule && layoutMode === 'submission-workspace' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-submission-ops">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
-                <button
-                  onClick={() => setLayoutMode('regulatory-workspace')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Workspace</span>
-                </button>
-                <span className="text-zinc-200">·</span>
-                <ShieldCheck className="w-3.5 h-3.5 text-violet-500" />
-                <span className="text-xs font-medium text-zinc-800">
-                  {submissionWorkspaceLabel} — Submission Ops
-                </span>
-              </div>
-              {!activeProjectId ? (
-                <div className="flex-1 flex items-center justify-center bg-zinc-50/50 p-8">
-                  <div className="max-w-md text-center">
-                    <ShieldCheck className="w-10 h-10 mx-auto mb-3 text-violet-400" />
-                    <h2 className="text-lg font-semibold text-zinc-900 mb-2">
-                      Submission Operations
-                    </h2>
-                    <p className="text-sm text-zinc-500 mb-4">
-                      Select a project to view its submission readiness and blockers.
-                    </p>
-                    <button
-                      onClick={() => setProjectSwitcherOpen(true)}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-600 text-white text-sm font-medium hover:bg-violet-700 transition-colors"
-                    >
-                      Select Project
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <ErrorBoundary>
-                  <Suspense
-                    fallback={
-                      <div className="flex-1 flex items-center justify-center">
-                        <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
-                      </div>
-                    }
-                  >
-                    <SubmissionOpsCommandCenter
-                      projectId={activeProjectId}
-                      projectName={activeProject?.name}
-                      onNavigateToArtifact={artifactId => {
-                        setLayoutMode('regulatory-workspace');
-                      }}
-                    />
-                  </Suspense>
-                </ErrorBoundary>
-              )}
-            </div>
-          )}
-
+          {/* [BATCH 1 DELETED] submission-workspace renderer removed */}
           {/* ── Enablement Center — Dr. Sage + AnA 1.0 dual-AI hub ── */}
           {!embeddedModule && layoutMode === 'enablement-center' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-enablement-center">
@@ -2852,135 +2649,11 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
-          {/* ── Author Workspace — unified submission authoring ── */}
-          {!embeddedModule && layoutMode === 'author' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-author">
-              {/* Author workspace routes to IND/eCTD/CMC/Clinical based on context */}
-              <div className="flex items-center gap-3 px-4 h-12 border-b border-zinc-100 bg-white flex-shrink-0">
-                <button
-                  onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  <span>Home</span>
-                </button>
-                <div className="w-px h-4 bg-zinc-200" />
-                <PenLine className="w-4 h-4 text-zinc-500" />
-                <span className="text-sm font-medium text-zinc-900">Author</span>
-                {activeProject && (
-                  <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
-                    {activeProject.name}
-                  </span>
-                )}
-                <div className="ml-auto flex items-center gap-1">
-                  <div className="flex items-center rounded-md border border-zinc-200 overflow-hidden">
-                    {[
-                      { key: 'ind-workspace', label: 'Dossier' },
-                      { key: 'ectd-coauthor', label: 'Co-Author' },
-                      { key: 'cmc', label: 'CMC' },
-                      { key: 'clinical-trial', label: 'Clinical' },
-                      { key: 'templates', label: 'Templates' },
-                    ].map(tab => (
-                      <button
-                        key={tab.key}
-                        onClick={() => setLayoutMode(tab.key as LayoutMode)}
-                        className={cn(
-                          'px-2.5 py-1 text-[11px] font-medium transition-colors',
-                          layoutMode === tab.key
-                            ? 'bg-zinc-100 text-zinc-900'
-                            : 'text-zinc-500 hover:bg-zinc-50'
-                        )}
-                      >
-                        {tab.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              {/* Default: show IND workspace */}
-              <div className="flex-1 flex min-h-0 overflow-auto">
-                <ErrorBoundary>
-                  <Suspense
-                    fallback={
-                      <div className="flex-1 flex items-center justify-center bg-white">
-                        <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
-                      </div>
-                    }
-                  >
-                    <INDWorkspace
-                      projectId={activeProjectId}
-                      projectName={activeProject?.name || 'Untitled Project'}
-                      submissionType={activeProject?.type || 'IND'}
-                      onOpenSection={sectionCode => {
-                        setPendingEditorContent({
-                          content: `<h1>${sectionCode.toUpperCase()} — Draft</h1><p>Loading section content…</p>`,
-                          title: `${sectionCode.toUpperCase()} — ${activeProject?.name || 'Application'}`,
-                          ctdSection: sectionCode.replace(/^m/, ''),
-                        });
-                        setLayoutMode('ectd-coauthor');
-                      }}
-                      onDraftWithAI={async (sectionCode, sectionTitle) => {
-                        const ctd = sectionCode.replace(/^m/, '');
-                        const token =
-                          sessionStorage.getItem('trialsage_access_token') ||
-                          localStorage.getItem('trialsage_access_token');
-                        const authHeaders: Record<string, string> = {
-                          'Content-Type': 'application/json',
-                          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                        };
-                        let content = '';
-                        try {
-                          const res = await fetch('/api/knowledge-base/generate-ind-section', {
-                            method: 'POST',
-                            headers: authHeaders,
-                            body: JSON.stringify({
-                              sectionCode: ctd,
-                              sectionTitle: sectionTitle || sectionCode,
-                              context: `CTD section for ${activeProject?.type || 'IND'} submission.`,
-                            }),
-                          });
-                          if (res.ok) {
-                            const data = await res.json();
-                            content = data.content || data.data?.content || '';
-                          }
-                        } catch (err) {
-                          console.warn('[ZenApp] AI draft generation failed:', err);
-                        }
-                        if (!content || content.trim().length === 0) {
-                          content = `<h1>${sectionTitle || sectionCode}</h1>\n<p><em>AI generation unavailable. Please draft this section manually or retry.</em></p>`;
-                        }
-                        setPendingEditorContent({
-                          content,
-                          title: `${sectionTitle || sectionCode} — ${activeProject?.name || 'Application'}`,
-                          ctdSection: ctd,
-                        });
-                        setLayoutMode('ectd-coauthor');
-                      }}
-                      onNavigateToCoAuthor={() => setLayoutMode('ectd-coauthor')}
-                    />
-                  </Suspense>
-                </ErrorBoundary>
-              </div>
-            </div>
-          )}
+          {/* [BATCH 1] Author workspace removed — INDWorkspace dependency deleted.
+              'author' mode now redirects to documents via onNavigate. */}
+          {/* end author block removal */}
 
-          {/* ── Intelligence Hub — research, evidence, predictions ── */}
-          {!embeddedModule && layoutMode === 'intelligence-hub' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-intelligence-hub">
-              <ErrorBoundary>
-                <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
-                    </div>
-                  }
-                >
-                  <IntelligenceHub onClose={() => setLayoutMode('projects')} />
-                </Suspense>
-              </ErrorBoundary>
-            </div>
-          )}
-
+          {/* [BATCH 1 DELETED] intelligence-hub renderer removed */}
           {/* ── Review & Readiness — quality, compliance, stress-testing ── */}
           {!embeddedModule && layoutMode === 'review-readiness' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-review-readiness">
@@ -2998,23 +2671,7 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
-          {/* ── Command Center — operations, submissions, governance ── */}
-          {!embeddedModule && layoutMode === 'command-center' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-command-center">
-              <ErrorBoundary>
-                <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
-                    </div>
-                  }
-                >
-                  <CommandCenterHub onClose={() => setLayoutMode('projects')} />
-                </Suspense>
-              </ErrorBoundary>
-            </div>
-          )}
-
+          {/* [BATCH 1 DELETED] command-center renderer removed */}
           {/* ── Platform Admin — API keys, users, billing, modules (Regulatory Command Center) ── */}
           {!embeddedModule && layoutMode === 'platform-admin' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-platform-admin">
@@ -3222,36 +2879,7 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
-          {/* Enterprise Integrations — connectors & API management */}
-          {!embeddedModule && layoutMode === 'integrations' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-integrations">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
-                <button
-                  onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Home</span>
-                </button>
-                <span className="text-zinc-200">&middot;</span>
-                <Link2 className="w-3.5 h-3.5 text-blue-500" />
-                <span className="text-xs font-medium text-zinc-800">Integrations</span>
-              </div>
-              <ErrorBoundary>
-                <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
-                    </div>
-                  }
-                >
-                  <IntegrationsPage />
-                </Suspense>
-              </ErrorBoundary>
-            </div>
-          )}
-
-
+          {/* [BATCH 1 DELETED] integrations renderer removed */}
           {/* ── Client Onboarding — setup wizard, configuration ── */}
           {!embeddedModule && layoutMode === 'client-onboarding' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-client-onboarding">
@@ -3373,32 +3001,7 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
-          {!embeddedModule && layoutMode === 'legal-center' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-legal-center">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
-                <button
-                  onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Home</span>
-                </button>
-                <span className="text-zinc-200">&middot;</span>
-                <Scale className="w-3.5 h-3.5 text-blue-500" />
-                <span className="text-xs font-medium text-zinc-800">Legal Center</span>
-              </div>
-              <Suspense
-                fallback={
-                  <div className="flex-1 flex items-center justify-center">
-                    <Loader2 className="w-5 h-5 animate-spin text-zinc-300" />
-                  </div>
-                }
-              >
-                <LegalCenterPage onClose={() => setLayoutMode('projects')} />
-              </Suspense>
-            </div>
-          )}
-
+          {/* [BATCH 1 DELETED] legal-center renderer removed */}
           {/* ── Document Builder — CSR + CTD wizard across global agencies ── */}
           {!embeddedModule && layoutMode === 'document-builder' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-document-builder">
@@ -3441,15 +3044,7 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
-          {/* ── Ana Dashboard — regulatory intelligence, gap analysis, change impact ── */}
-          {!embeddedModule && layoutMode === 'ana-dashboard' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-ana-dashboard">
-              <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-zinc-300" /></div>}>
-                <AnaDashboardPage projectId={activeProjectId} />
-              </Suspense>
-            </div>
-          )}
-
+          {/* [BATCH 1 DELETED] ana-dashboard renderer removed */}
           {/* ── Safety Narrative — ICH E3 §12 compliant narrative generation ── */}
           {!embeddedModule && layoutMode === 'safety-narrative' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-safety-narrative">

@@ -38,8 +38,7 @@ const PMAWorkspacePage = lazy(() => import('../components/pma/PMAWorkspace'));
 // DocumentArtifactsHub, HAQManagerDashboard, INDAutoDraftDashboard are now rendered inside
 // ZenApp shell (lazy-loaded there) so they get persistent AI access.
 
-// DTC Landing Page — public, renders at / for unauthenticated users
-const LandingPage = lazy(() => import('../pages/LandingPage'));
+// [BATCH 1 DELETED] LandingPage — replaced with auth redirect
 
 // Interactive Demo — public, AnA-narrated platform walkthrough
 const InteractiveDemoPage = lazy(() => import('../pages/InteractiveDemoPage'));
@@ -47,8 +46,7 @@ const InteractiveDemoPage = lazy(() => import('../pages/InteractiveDemoPage'));
 // Error pages
 const ErrorPages = lazy(() => import('../pages/ErrorPages'));
 
-// Pricing page
-const PricingPage = lazy(() => import('../pages/PricingPage'));
+// [BATCH 1 DELETED] PricingPage — orphaned, removed
 
 // Legal pages
 const TermsOfService = lazy(() => import('../pages/legal/TermsOfService'));
@@ -271,29 +269,18 @@ const PageTransition: React.FC<PageTransitionProps> = ({ children }) => (
 // LANDING PAGE ROUTE (public → landing, authenticated → redirect to app)
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// [BATCH 1] Landing page deleted — redirect to login or app
 const LandingPageRoute: React.FC = () => {
   const { isAuthenticated, isLoading } = usePortalAuth();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      setLocation('/concept2cure');
+    if (!isLoading) {
+      setLocation(isAuthenticated ? '/concept2cure' : '/concept2cure/login');
     }
   }, [isAuthenticated, isLoading, setLocation]);
 
-  if (isLoading) {
-    return <ZenLoadingScreen message="Loading..." />;
-  }
-
-  if (isAuthenticated) {
-    return null; // Will redirect
-  }
-
-  return (
-    <Suspense fallback={<ZenLoadingScreen message="Loading..." />}>
-      <LandingPage />
-    </Suspense>
-  );
+  return <ZenLoadingScreen message="Loading..." />;
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -431,10 +418,7 @@ export const ZenRouter: React.FC = () => {
             )}
           </Route>
 
-          {/* Pricing Page — public */}
-          <Route path="/concept2cure/pricing">
-            {() => (<PageTransition><Suspense fallback={<ZenLoadingScreen message="Loading pricing..." />}><PricingPage /></Suspense></PageTransition>)}
-          </Route>
+          {/* [BATCH 1 DELETED] Pricing route removed */}
 
           {/* Legal Pages — public, no auth required */}
           <Route path="/concept2cure/legal/terms">
