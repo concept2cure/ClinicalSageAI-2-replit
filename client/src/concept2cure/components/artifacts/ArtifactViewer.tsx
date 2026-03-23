@@ -16,6 +16,7 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { LIFECYCLE, toLifecycleStage } from '../ui/enterprise';
+import { useDocumentModeOptional } from '../../contexts/DocumentModeContext';
 import {
   X,
   Maximize2,
@@ -154,6 +155,8 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
   isEditable = false,
   className,
 }) => {
+  const modeCtx = useDocumentModeOptional();
+  const modeCaps = modeCtx?.capabilities;
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(artifact.content);
@@ -364,8 +367,8 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
             </button>
           )}
           
-          {/* Edit toggle */}
-          {isEditable && !artifact.isLocked && (
+          {/* Edit toggle — gated by canonical capability, not raw lock state */}
+          {(modeCaps ? modeCaps.editable : (isEditable && !artifact.isLocked)) && (
             <button
               onClick={() => setIsEditing(!isEditing)}
               className={cn(
@@ -515,8 +518,8 @@ export const ArtifactViewer: React.FC<ArtifactViewerProps> = ({
         </div>
       )}
       
-      {/* Footer - View Mode with Sign */}
-      {!isEditing && artifact.status === 'review' && onSign && (
+      {/* Footer - View Mode with Sign — capability-gated, status for eligibility only */}
+      {!isEditing && (modeCaps ? modeCaps.canSign : true) && artifact.status === 'review' && onSign && (
         <div className="flex items-center justify-between px-4 py-3 border-t border-zinc-200 bg-amber-50">
           <div className="flex items-center gap-2 text-amber-700">
             <AlertCircle className="w-4 h-4" />

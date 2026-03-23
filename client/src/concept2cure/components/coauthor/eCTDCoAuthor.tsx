@@ -32,6 +32,7 @@ import React, { useState, useCallback } from 'react';
 import DOMPurify from 'dompurify';
 import { cn } from '@/lib/utils';
 import { LIFECYCLE } from '../ui/enterprise';
+import { useDocumentModeOptional } from '../../contexts/DocumentModeContext';
 import {
   FileText,
   Sparkles,
@@ -463,6 +464,8 @@ const SectionEditor: React.FC<{
   onApprove?: () => void;
   onSubmitForReview?: () => void;
 }> = ({ section, onDraft, onVerifyClaim, onResolveAlert, onOpenInEditor, onApprove, onSubmitForReview }) => {
+  const modeCtx = useDocumentModeOptional();
+  const modeCaps = modeCtx?.capabilities;
   const statusConfig = STATUS_CONFIG[section.status];
   const moduleConfig = MODULE_CONFIG[section.module];
 
@@ -532,8 +535,8 @@ const SectionEditor: React.FC<{
           </button>
         )}
 
-        {/* Approve with E-Signature (in_review → approved) */}
-        {onApprove && section.status === 'in_review' && (
+        {/* Approve with E-Signature — capability-gated + domain status eligibility */}
+        {onApprove && (modeCaps ? modeCaps.canApprove : true) && section.status === 'in_review' && (
           <button
             onClick={onApprove}
             className="px-3 py-1.5 text-sm font-medium bg-green-700 text-white rounded-lg hover:bg-green-800 flex items-center gap-2 ml-1"
@@ -544,7 +547,7 @@ const SectionEditor: React.FC<{
           </button>
         )}
 
-        {/* Locked indicator */}
+        {/* Locked indicator — display-only status badge, intentionally reads raw status */}
         {section.status === 'locked' && (
           <span className="px-3 py-1.5 text-sm font-medium bg-zinc-200 text-zinc-600 rounded-lg flex items-center gap-2 ml-1">
             <Lock className="w-4 h-4" />

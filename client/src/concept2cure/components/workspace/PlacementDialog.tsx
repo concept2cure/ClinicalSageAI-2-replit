@@ -20,6 +20,7 @@ import {
   type DossierNode,
 } from '../../models/ctdHierarchy';
 import type { TreeArtifact } from './ProjectFileTree';
+import { useDocumentModeOptional } from '../../contexts/DocumentModeContext';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -194,17 +195,22 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
 }) => {
   const [selectedSection, setSelectedSection] = useState(initialTarget || '');
   const [reason, setReason] = useState('');
+  const modeCtx = useDocumentModeOptional();
+  const modeCaps = modeCtx?.capabilities;
 
   const config = OP_CONFIG[operation];
   const currentSection = artifact.ctdSection || null;
 
-  const isLocked = artifact.status === 'locked';
+  // Capability-gated: canRelocate from canonical mode layer is the authority.
+  // Raw status retained as display-only for messaging.
+  const isLocked = artifact.status === 'locked'; // display-only
+  const relocateBlocked = operation === 'relocate' && (modeCaps ? !modeCaps.canRelocate : isLocked);
 
   const canConfirm =
     selectedSection &&
     reason.trim().length >= 5 &&
     (operation !== 'relocate' || selectedSection !== currentSection) &&
-    !(operation === 'relocate' && isLocked);
+    !relocateBlocked;
 
   const handleConfirm = useCallback(() => {
     if (!canConfirm) return;
@@ -296,12 +302,12 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
             )}
           </div>
 
-          {/* Impact statement — relocate */}
+          {/* Impact statement — relocate (display uses raw status for messaging only) */}
           {operation === 'relocate' && (
             <div
               className={cn(
                 'flex items-start gap-2 px-3 py-2 rounded-lg text-xs',
-                isLocked
+                relocateBlocked
                   ? 'bg-red-50/60 border border-red-200 text-red-800'
                   : 'bg-amber-50/60 border border-amber-100 text-amber-800'
               )}
@@ -309,18 +315,18 @@ export const PlacementDialog: React.FC<PlacementDialogProps> = ({
               <AlertTriangle
                 className={cn(
                   'w-3.5 h-3.5 shrink-0 mt-0.5',
-                  isLocked ? 'text-red-600' : 'text-amber-600'
+                  relocateBlocked ? 'text-red-600' : 'text-amber-600'
                 )}
               />
               <div>
                 <p className="font-medium">
-                  {isLocked
-                    ? 'Document Locked — Relocation Blocked'
+                  {relocateBlocked
+                    ? 'Relocation Blocked — Not Available in Current Mode'
                     : 'Regulatory Placement Impact'}
                 </p>
-                <p className={cn('mt-0.5', isLocked ? 'text-red-700' : 'text-amber-700')}>
-                  {isLocked
-                    ? 'This document is locked. Unlock it before relocating.'
+                <p className={cn('mt-0.5', relocateBlocked ? 'text-red-700' : 'text-amber-700')}>
+                  {relocateBlocked
+                    ? 'This document cannot be relocated in the current mode. Switch to an editable stage to relocate.'
                     : 'Relocating this document changes its position in the CTD submission structure.'}
                   {artifact.status === 'approved' &&
                     ' This document is currently approved — relocation will require re-review.'}

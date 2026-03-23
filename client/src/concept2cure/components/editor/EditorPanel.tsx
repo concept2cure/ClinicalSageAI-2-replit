@@ -74,6 +74,7 @@ import { ComplianceScannerPanel } from './ComplianceScannerPanel';
 import { AnAMemory } from '../intelligence/AnAMemory';
 import ArtifactProofPanel from './ArtifactProofPanel';
 import { getCurrentUser } from '../../utils/getCurrentUser';
+import { useDocumentModeOptional, type DocumentMode } from '../../contexts/DocumentModeContext';
 
 // ── Auth helper (same pattern as useProjects) ────────────────────────────────
 function getAuthHeaders(): Record<string, string> {
@@ -255,6 +256,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const lastSavedContentRef = useRef<string>('');
+  const modeCtx = useDocumentModeOptional();
+  const modeCaps = modeCtx?.capabilities;
+  const currentDocumentMode: DocumentMode | undefined = modeCtx?.mode;
 
   // ── Artifact list filters (P5) ────────────────────────────────────────
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -302,6 +306,14 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const [pendingCommentHighlight, setPendingCommentHighlight] = useState('');
   const pendingCommentClientIdRef = useRef<string>('');
   const [cancelCommentId, setCancelCommentId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (modeCtx && activeArtifact?.status) {
+      modeCtx.setArtifactStatus(activeArtifact.status);
+    } else if (modeCtx && !activeArtifact) {
+      modeCtx.setArtifactStatus(null);
+    }
+  }, [modeCtx, activeArtifact?.status, activeArtifact?.id]);
 
   // ── Review mode: snapshot content when entering review mode ─────────
   const handleToggleReviewMode = useCallback(() => {
@@ -706,9 +718,11 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const handleSave = useCallback(
     async (content: string, _metadata: Record<string, unknown>) => {
       if (!projectId || !activeArtifact) return;
-      // Block saves on locked documents client-side
-      if (activeArtifact?.status === 'locked') {
-        setLockRejection('Document is locked — edits are not permitted. Unlock to continue.');
+      // Capability-gated save — canonical DocumentMode decides save availability
+      if (modeCaps && !modeCaps.canSave) {
+        setLockRejection(
+          'Editing is not available in the current mode. Switch to edit mode to save.'
+        );
         setTimeout(() => setLockRejection(null), 5000);
         return;
       }
@@ -791,7 +805,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   // ── Auto-save: debounced save 5s after last edit ──────────────────────
   const triggerAutoSave = useCallback(
     (html: string) => {
-      if (!activeArtifact || activeArtifact.status === 'locked') return;
+      if (!activeArtifact) return;
+      // Capability-gated auto-save — suppressed when mode disallows saving
+      if (modeCaps && !modeCaps.canSave) return;
       if (html === lastSavedContentRef.current) return;
 
       setIsDirty(true);
@@ -2404,39 +2420,43 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         <div
           className={cn('min-h-0 overflow-hidden relative', activeInspector ? 'flex-1' : 'w-full')}
         >
-          {activeArtifact?.status === 'locked' && (
-            <div className="absolute inset-0 z-10 bg-red-50/40 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
-              <div className="bg-white/90 border border-red-200 rounded-lg px-6 py-4 shadow text-center pointer-events-auto max-w-xs">
-                <Lock className="w-6 h-6 text-red-500 mx-auto mb-2" />
-                <p className="text-sm font-semibold text-red-800">Document Locked</p>
-                <p className="text-xs text-red-600 mt-1 mb-3">
-                  This document is locked and read-only. Provide a reason to unlock.
-                </p>
-                <input
-                  type="text"
-                  value={unlockReason}
-                  onChange={e => setUnlockReason(e.target.value)}
-                  placeholder="Reason for unlocking (min 5 chars)"
-                  className="w-full px-2 py-1.5 text-xs border border-red-200 rounded-lg mb-2 focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-1 outline-none"
-                />
-                <button
-                  onClick={() => {
-                    handleStatusChange('draft', unlockReason.trim());
-                    setUnlockReason('');
-                  }}
-                  disabled={changingStatus || unlockReason.trim().length < 5}
-                  className="px-3 py-1.5 text-xs font-medium bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:opacity-60 flex items-center gap-1.5 mx-auto"
-                >
-                  {changingStatus ? (
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                  ) : (
-                    <Unlock className="w-3 h-3" />
-                  )}
-                  Unlock to Edit
-                </button>
+          {/* Locked overlay — gated by canonical mode, not raw status */}
+          {modeCaps &&
+            !modeCaps.editable &&
+            modeCtx?.mode === 'readonly' &&
+            activeArtifact?.status === 'locked' && (
+              <div className="absolute inset-0 z-10 bg-red-50/40 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
+                <div className="bg-white/90 border border-red-200 rounded-lg px-6 py-4 shadow text-center pointer-events-auto max-w-xs">
+                  <Lock className="w-6 h-6 text-red-500 mx-auto mb-2" />
+                  <p className="text-sm font-semibold text-red-800">Document Locked</p>
+                  <p className="text-xs text-red-600 mt-1 mb-3">
+                    This document is locked and read-only. Provide a reason to unlock.
+                  </p>
+                  <input
+                    type="text"
+                    value={unlockReason}
+                    onChange={e => setUnlockReason(e.target.value)}
+                    placeholder="Reason for unlocking (min 5 chars)"
+                    className="w-full px-2 py-1.5 text-xs border border-red-200 rounded-lg mb-2 focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-1 outline-none"
+                  />
+                  <button
+                    onClick={() => {
+                      handleStatusChange('draft', unlockReason.trim());
+                      setUnlockReason('');
+                    }}
+                    disabled={changingStatus || unlockReason.trim().length < 5}
+                    className="px-3 py-1.5 text-xs font-medium bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:opacity-60 flex items-center gap-1.5 mx-auto"
+                  >
+                    {changingStatus ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <Unlock className="w-3 h-3" />
+                    )}
+                    Unlock to Edit
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
           {/* Document watermark overlay (DRAFT, UNDER REVIEW, etc.) */}
           <DocumentWatermark
             status={activeArtifact?.status || 'draft'}
@@ -2511,7 +2531,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             showCompliance={false}
             showTraceability={false}
             embedded
-            isReadOnly={activeArtifact?.status === 'locked'}
+            isReadOnly={modeCaps ? !modeCaps.editable : activeArtifact?.status === 'locked'}
+            documentMode={currentDocumentMode}
             onToggleLock={handleToggleLock}
             onSave={handleSave}
             onAIAction={(action, selectedText) => {
