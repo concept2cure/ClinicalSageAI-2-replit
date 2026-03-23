@@ -232,6 +232,8 @@ interface AnaPersistentPanelProps {
   mode?: 'full' | 'compact';
   /** Pre-select the chat mode (standard, deep-research, or nano-banana) */
   defaultChatMode?: 'standard' | 'deep-research' | 'nano-banana';
+  /** Document mode from stage-aware context — controls AI action availability */
+  documentMode?: 'none' | 'preview' | 'view' | 'edit' | 'readonly';
 }
 
 // ─── Context labels ──────────────────────────────────────────────────────────
@@ -269,7 +271,13 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   onNavigate,
   mode = 'full',
   defaultChatMode = 'standard',
+  documentMode,
 }) => {
+  // Stage-aware behavior: derive action availability from documentMode
+  const isEditContext = documentMode === 'edit' || documentMode === undefined;
+  const isReadOnlyContext = documentMode === 'readonly' || documentMode === 'preview';
+
+  const EDIT_ONLY_INTENTS = /draft|write|generate|create|rewrite/i;
   // AI Action system — unified execution spine (Phase 1)
   const aiAction = useAIAction();
 
@@ -847,7 +855,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 <Sparkles className="w-4 h-4 text-[#D97757]" />
                 {screenLabel && <span className="text-[10px] text-[#B0AEA5] font-medium hidden sm:inline">{screenLabel}</span>}
               </div>
-              <textarea ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)} placeholder="Message AnA..." rows={1} className="flex-1 resize-none bg-transparent border-none outline-none text-[#141413] placeholder:text-[#B0AEA5] text-sm leading-6 min-h-[24px] max-h-[120px]" />
+              <textarea ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)} placeholder={isReadOnlyContext ? "Ask AnA to explain..." : "Message AnA..."} rows={1} className="flex-1 resize-none bg-transparent border-none outline-none text-[#141413] placeholder:text-[#B0AEA5] text-sm leading-6 min-h-[24px] max-h-[120px]" />
               {hasMessages && (
                 <button onClick={() => { setMessages([]); threadIdRef.current = null; }} className="flex-shrink-0 p-1.5 text-[#B0AEA5] hover:text-[#6B6962] rounded-lg transition-colors" title="New thread">
                   <RotateCcw className="w-3.5 h-3.5" />
@@ -884,23 +892,37 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 )}
               </div>
 
-              {/* Suggested actions */}
-              {suggestedActions && suggestedActions.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-lg mx-auto">
-                  {suggestedActions.slice(0, 4).map(action => (
-                    <button
-                      key={action.id}
-                      onClick={() => handleSuggestedAction(action)}
-                      className="text-left px-4 py-3 rounded-xl border border-[#E8E6DC] hover:border-[#D8D5CA] hover:bg-[#FAF9F5] transition-colors group"
-                    >
-                      <p className="text-sm font-medium text-[#4D4B45] group-hover:text-[#141413]">{action.label}</p>
-                      {action.description && (
-                        <p className="text-xs text-[#B0AEA5] mt-0.5 line-clamp-1">{action.description}</p>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              )}
+              {/* Suggested actions — filtered by stage-aware documentMode */}
+              {(() => {
+                const filteredActions = (suggestedActions || []).filter(action =>
+                  isReadOnlyContext ? !EDIT_ONLY_INTENTS.test(action.intent || '') && !EDIT_ONLY_INTENTS.test(action.label || '') : true
+                );
+                return (
+                  <>
+                    {filteredActions.length > 0 && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-lg mx-auto">
+                        {filteredActions.slice(0, 4).map(action => (
+                          <button
+                            key={action.id}
+                            onClick={() => handleSuggestedAction(action)}
+                            className="text-left px-4 py-3 rounded-xl border border-[#E8E6DC] hover:border-[#D8D5CA] hover:bg-[#FAF9F5] transition-colors group"
+                          >
+                            <p className="text-sm font-medium text-[#4D4B45] group-hover:text-[#141413]">{action.label}</p>
+                            {action.description && (
+                              <p className="text-xs text-[#B0AEA5] mt-0.5 line-clamp-1">{action.description}</p>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {isReadOnlyContext && filteredActions.length === 0 && (
+                      <div className="px-4 py-3 text-xs text-zinc-500">
+                        AnA is in explain mode. Ask questions about this document.
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           </div>
         ) : (
@@ -1110,6 +1132,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           <div className="flex flex-wrap gap-1.5">
                             {DOCUMENT_ACTION_CONFIGS
                               .filter(a => !lastOrchestration.suggestedActions.length || lastOrchestration.suggestedActions.includes(a.type) || ['revised_artifact', 'attach_to_dossier'].includes(a.type))
+                              .filter(a => isReadOnlyContext ? !EDIT_ONLY_INTENTS.test(a.type) && !EDIT_ONLY_INTENTS.test(a.label) : true)
                               .slice(0, 5)
                               .map(action => (
                                 <button
@@ -1378,7 +1401,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               onKeyDown={handleKeyDown}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
-              placeholder={chatMode === 'deep-research' ? 'Ask a deep research question...' : chatMode === 'nano-banana' ? 'Describe an image, infographic, or presentation...' : intentLens !== 'auto' ? `Message AnA (${intentLens} lens)...` : 'Message AnA...'}
+              placeholder={isReadOnlyContext ? 'Ask AnA to explain...' : chatMode === 'deep-research' ? 'Ask a deep research question...' : chatMode === 'nano-banana' ? 'Describe an image, infographic, or presentation...' : intentLens !== 'auto' ? `Message AnA (${intentLens} lens)...` : 'Message AnA...'}
               rows={1}
               className="flex-1 resize-none bg-transparent border-none outline-none text-[#141413] placeholder:text-[#B0AEA5] text-sm leading-6 min-h-[24px] max-h-[120px]"
             />

@@ -77,6 +77,7 @@ import { getCurrentUser } from '../../utils/getCurrentUser';
 import {
   useDocumentModeOptional,
   type DocumentMode,
+  MODE_CAPABILITIES,
 } from '../../contexts/DocumentModeContext';
 
 // ── Auth helper (same pattern as useProjects) ────────────────────────────────
@@ -163,6 +164,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 }) => {
   // ── Document mode context (stage-aware) ──────────────────────────────
   const modeCtx = useDocumentModeOptional();
+  const modeCaps = modeCtx ? MODE_CAPABILITIES[modeCtx.mode] : null;
 
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
   const [activeArtifact, setActiveArtifact] = useState<Artifact | null>(null);
@@ -267,6 +269,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
   // ── Review mode state ───────────────────────────────────────────────
   const [isReviewMode, setIsReviewMode] = useState(false);
+  // Review mode is only available when mode capabilities allow it
+  const reviewModeAvailable = modeCaps?.showReviewToggle ?? true;
   const [trackedChanges, setTrackedChanges] = useState<Array<{
     id: string;
     type: 'addition' | 'deletion' | 'modification';
@@ -675,6 +679,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   // ── Save to artifacts API ────────────────────────────────────────────────
   const handleSave = useCallback(
     async (content: string, _metadata: Record<string, unknown>) => {
+      if (modeCaps && !modeCaps.canSave) return;
       if (!projectId || !activeArtifact) return;
       // Capability-gated save — canonical DocumentMode decides save availability
       if (modeCaps && !modeCaps.canSave) {
@@ -831,6 +836,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   // ── AI Edit ──────────────────────────────────────────────────────────────
   const handleAIEdit = useCallback(
     async (action: AIAction) => {
+      if (modeCaps && !modeCaps.showAIActions) return;
       if (!activeArtifact) return;
       setAiLoading(true);
       setAiMenuOpen(false);
@@ -1731,6 +1737,22 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   <PenTool className="w-3 h-3 text-zinc-400" />
                   Sign & Approve (Part 11)
                 </button>
+                {/* Edit escalation button — shown when mode capabilities indicate view mode */}
+                {modeCaps?.showEditButton && (
+                  <button
+                    role="menuitem"
+                    onClick={() => {
+                      const result = modeCtx?.requestEdit();
+                      if (!result?.allowed && result?.reason) {
+                        pushToast(result.reason, 'info');
+                      }
+                    }}
+                    className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                  >
+                    <PenTool className="w-3 h-3 text-blue-500" />
+                    Edit
+                  </button>
+                )}
                 {/* Status change — gated by capability layer, not raw status */}
                 {modeCaps?.canToggleLock && (
                   <button
@@ -1816,7 +1838,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         <div className="flex flex-col items-center pr-3 mr-3 border-r border-zinc-200 py-1">
           <div className="flex items-center gap-0.5">
             <button data-testid="ribbon-comments" onClick={() => toggleInspector('comments')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap relative', activeInspector === 'comments' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><MessageSquare className="w-3.5 h-3.5" />Comments{comments.filter(c => !c.resolved).length > 0 && (<span className={cn('ml-1 inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full text-[10px] font-semibold', activeInspector === 'comments' ? 'bg-white text-blue-600' : 'bg-amber-500 text-white')}>{comments.filter(c => !c.resolved).length}</span>)}</button>
-            <button data-testid="ribbon-review" onClick={() => toggleInspector('review')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', isReviewMode ? 'bg-amber-500 text-white font-medium shadow-sm' : activeInspector === 'review' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Eye className="w-3.5 h-3.5" />Review{isReviewMode && <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}</button>
+            {reviewModeAvailable && <button data-testid="ribbon-review" onClick={() => toggleInspector('review')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', isReviewMode ? 'bg-amber-500 text-white font-medium shadow-sm' : activeInspector === 'review' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Eye className="w-3.5 h-3.5" />Review{isReviewMode && <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}</button>}
             <button data-testid="ribbon-reviewers" onClick={() => toggleInspector('reviewers')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'reviewers' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Users className="w-3.5 h-3.5" />Reviewers</button>
             <button data-testid="ribbon-versions" onClick={() => toggleInspector('versions')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'versions' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><GitCompare className="w-3.5 h-3.5" />History</button>
             <button data-testid="ribbon-compare" onClick={() => toggleInspector('compare')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'compare' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><GitCompare className="w-3.5 h-3.5" />Compare</button>
@@ -2076,6 +2098,21 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               </React.Fragment>
             );
           })}
+          {/* Edit escalation button — visible in view mode */}
+          {modeCaps?.showEditButton && (
+            <button
+              onClick={() => {
+                const result = modeCtx?.requestEdit();
+                if (!result?.allowed && result?.reason) {
+                  pushToast(result.reason, 'info');
+                }
+              }}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors"
+            >
+              <PenTool className="w-3 h-3" />
+              Edit
+            </button>
+          )}
           {/* Claim status + last updated */}
           <div className="flex items-center gap-3 ml-auto text-xs text-zinc-400">
             {claimStatus === 'checking' && (
