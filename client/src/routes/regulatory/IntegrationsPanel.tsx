@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { toast } from '@/hooks/use-toast';
 import {
   Mail,
   Calendar,
@@ -43,7 +44,7 @@ export default function IntegrationsPanel({ subId }: IntegrationsPanelProps) {
       const data = await response.json();
       setGmailRows(data);
     } catch (error) {
-      console.error('Failed to load Gmail data:', error);
+      // silent fail on load
     }
   }
 
@@ -62,17 +63,15 @@ export default function IntegrationsPanel({ subId }: IntegrationsPanelProps) {
       const result = await response.json();
 
       if (result.error) {
-        alert(`Gmail ingest error: ${result.error}`);
+        toast({ title: 'Gmail Ingest Error', description: result.error, variant: 'destructive' });
         setIntegrationStatus(prev => ({ ...prev, gmail: 'error' }));
       } else {
-        alert(
-          `Gmail ingest completed: ${result.saved} emails processed, ${result.createdQuestions} questions created, ${result.createdObls} obligations created`
-        );
+        toast({ title: 'Gmail Ingest Complete', description: `${result.saved} emails processed, ${result.createdQuestions} questions created, ${result.createdObls} obligations created` });
         setIntegrationStatus(prev => ({ ...prev, gmail: 'connected' }));
         loadGmailData();
       }
     } catch (error) {
-      alert('Gmail ingest failed: Network error');
+      toast({ title: 'Gmail Ingest Failed', description: 'Network error', variant: 'destructive' });
       setIntegrationStatus(prev => ({ ...prev, gmail: 'error' }));
     } finally {
       setBusyGmail(false);
@@ -82,7 +81,7 @@ export default function IntegrationsPanel({ subId }: IntegrationsPanelProps) {
   // Push to Google Calendar
   async function pushToCalendar() {
     if (!subId) {
-      alert('No submission selected');
+      toast({ title: 'No Submission', description: 'Please select a submission first', variant: 'destructive' });
       return;
     }
 
@@ -96,14 +95,14 @@ export default function IntegrationsPanel({ subId }: IntegrationsPanelProps) {
       const result = await response.json();
 
       if (result.error) {
-        alert(`Calendar push failed: ${result.error}`);
+        toast({ title: 'Calendar Push Failed', description: result.error, variant: 'destructive' });
         setIntegrationStatus(prev => ({ ...prev, calendar: 'error' }));
       } else {
-        alert(`Successfully pushed ${result.pushed} events to calendar: ${result.calendarId}`);
+        toast({ title: 'Calendar Updated', description: `Pushed ${result.pushed} events to ${result.calendarId}` });
         setIntegrationStatus(prev => ({ ...prev, calendar: 'connected' }));
       }
     } catch (error) {
-      alert('Calendar push failed: Network error');
+      toast({ title: 'Calendar Push Failed', description: 'Network error', variant: 'destructive' });
       setIntegrationStatus(prev => ({ ...prev, calendar: 'error' }));
     } finally {
       setBusyCalendar(false);

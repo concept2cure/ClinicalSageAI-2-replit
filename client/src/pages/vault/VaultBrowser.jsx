@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'wouter';
 import NavigationBanner from '../../components/common/NavigationBanner';
 import EmbeddedFileBrowser from '../../components/ectd/EmbeddedFileBrowser';
+import { toast } from '@/hooks/use-toast';
 
 /**
  * VAULT Document Browser Page
@@ -73,7 +74,7 @@ const VaultBrowser = () => {
               localStorage.setItem('ectd_selected_documents', JSON.stringify(selectedDocs));
 
               // Notify the user that the file is now available in CoAuthor
-              alert(`The file "${file.name}" has been opened and added to your eCTD dossier.`);
+              toast({ title: `The file "${file.name}" has been opened and added to your eCTD dossier.` });
             }
           }}
           onFileAction={(action, file) => {

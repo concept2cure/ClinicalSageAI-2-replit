@@ -165,7 +165,7 @@ router.get('/summary/:session_id', (req, res) => {
     }
 
     // Determine base directory for sessions
-    const baseDir = fs.existsSync('/mnt/data') ? '/mnt/data/lumen_reports_backend' : 'data';
+    const baseDir = fs.existsSync('/mnt/data') ? '/mnt/data/ana_reports_backend' : 'data';
 
     const sessionDir = path.join(baseDir, 'sessions', session_id);
 
@@ -230,7 +230,7 @@ router.get('/export-log/:session_id', (req, res) => {
     }
 
     // Determine base directory for sessions
-    const baseDir = fs.existsSync('/mnt/data') ? '/mnt/data/lumen_reports_backend' : 'data';
+    const baseDir = fs.existsSync('/mnt/data') ? '/mnt/data/ana_reports_backend' : 'data';
 
     const sessionDir = path.join(baseDir, 'sessions', session_id);
     const exportLogPath = path.join(sessionDir, 'export_log.json');

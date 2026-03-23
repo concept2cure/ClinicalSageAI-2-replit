@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { TestTube, Settings, AlertCircle } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 export default function SSTTemplatesPanel() {
   const [rows, setRows] = useState<any[]>([]);
@@ -21,7 +22,6 @@ export default function SSTTemplatesPanel() {
       const data = await r.json();
       setRows(Array.isArray(data) ? data : []);
     } catch (e) {
-      console.error('Failed to load SST templates:', e);
       setRows([]);
     }
   }
@@ -41,14 +41,14 @@ export default function SSTTemplatesPanel() {
       });
       if (!r.ok) {
         const error = await r.json();
-        alert(`Save failed: ${error.error || 'Unknown error'}`);
+        toast({ title: 'Save Failed', description: error.error || 'Unknown error', variant: 'destructive' });
         return;
       }
       load();
       setTest('');
       setJson('{"plates":{"min":3000},"tailing":{"max":2.0},"r2":{"min":0.999}}');
     } catch (e) {
-      alert('Invalid JSON format');
+      toast({ title: 'Invalid Input', description: 'Please enter valid JSON format', variant: 'destructive' });
     } finally {
       setLoading(false);
     }

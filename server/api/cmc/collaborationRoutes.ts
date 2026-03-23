@@ -226,33 +226,7 @@ router.get('/activity/:workflowId', async (req, res) => {
         action: 'commented',
       }));
 
-    // Sample task updates (in production, fetch from task history)
-    const taskUpdates = [
-      {
-        id: `update-${Date.now()}-1`,
-        type: 'task_update',
-        workflowId,
-        user: 'Emily Rodriguez',
-        userId: 'emily-id',
-        action: 'completed',
-        taskName: 'Quality Specifications',
-        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-        details: 'All acceptance criteria defined and approved',
-      },
-      {
-        id: `update-${Date.now()}-2`,
-        type: 'task_update',
-        workflowId,
-        user: 'David Park',
-        userId: 'david-id',
-        action: 'started',
-        taskName: 'Analytical Methods',
-        timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), // 3 hours ago
-        details: 'Beginning method validation protocol development',
-      },
-    ];
-
-    const allActivity = [...workflowComments, ...taskUpdates]
+    const allActivity = [...workflowComments]
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
       .slice(0, Number(limit));
 
@@ -277,66 +251,43 @@ router.get('/team/:workflowId', async (req, res) => {
   try {
     const { workflowId } = req.params;
 
-    // Sample team data (in production, fetch from database)
-    const teamMembers = [
-      {
-        id: 'sarah-id',
-        name: 'Sarah Chen',
-        role: 'CMC Lead',
-        email: 'sarah.chen@company.com',
-        avatar: '/avatars/sarah.jpg',
-        status: 'online',
-        lastSeen: new Date().toISOString(),
-        permissions: ['read', 'write', 'approve'],
-      },
-      {
-        id: 'mike-id',
-        name: 'Mike Johnson',
-        role: 'Process Engineer',
-        email: 'mike.johnson@company.com',
-        avatar: '/avatars/mike.jpg',
-        status: 'online',
-        lastSeen: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5 minutes ago
-        permissions: ['read', 'write'],
-      },
-      {
-        id: 'lisa-id',
-        name: 'Lisa Wong',
-        role: 'Stability Scientist',
-        email: 'lisa.wong@company.com',
-        avatar: '/avatars/lisa.jpg',
-        status: 'away',
-        lastSeen: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 minutes ago
-        permissions: ['read', 'write'],
-      },
-      {
-        id: 'david-id',
-        name: 'David Park',
-        role: 'Analytical Lead',
-        email: 'david.park@company.com',
-        avatar: '/avatars/david.jpg',
-        status: 'offline',
-        lastSeen: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-        permissions: ['read', 'write'],
-      },
-      {
-        id: 'emily-id',
-        name: 'Emily Rodriguez',
-        role: 'QC Manager',
-        email: 'emily.rodriguez@company.com',
-        avatar: '/avatars/emily.jpg',
-        status: 'online',
-        lastSeen: new Date().toISOString(),
-        permissions: ['read', 'write', 'approve'],
-      },
-    ];
+    // Fetch team from users table
+    let teamMembers: any[] = [];
+    try {
+      const usersRes = await fetch(`http://localhost:${process.env.PORT || 5000}/api/users`, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (usersRes.ok) {
+        const users = await usersRes.json();
+        teamMembers = (Array.isArray(users) ? users : users.data || []).map((u: any) => ({
+          id: u.id || u.user_id,
+          name: u.name || u.full_name || `${u.first_name || ''} ${u.last_name || ''}`.trim(),
+          role: u.role || u.title || 'Team Member',
+          email: u.email || '',
+          status: 'offline',
+          lastSeen: u.last_login || new Date().toISOString(),
+          permissions: ['read', 'write'],
+        }));
+      }
+    } catch (e) {
+      // Users endpoint unavailable — return empty team
+    }
+
+    // Merge presence data
+    teamMembers = teamMembers.map(m => {
+      const presence = activeUsers.get(`${workflowId}-${m.id}`);
+      if (presence) {
+        return { ...m, status: presence.status, lastSeen: presence.lastSeen };
+      }
+      return m;
+    });
 
     res.json({
       success: true,
       data: {
         members: teamMembers,
         totalMembers: teamMembers.length,
-        onlineCount: teamMembers.filter(m => m.status === 'online').length,
+        onlineCount: teamMembers.filter((m: any) => m.status === 'online').length,
       },
     });
   } catch (error) {

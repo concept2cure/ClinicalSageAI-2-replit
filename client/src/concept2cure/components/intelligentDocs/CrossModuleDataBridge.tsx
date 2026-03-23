@@ -12,7 +12,7 @@
  * - Clinical Trials → Study data and endpoints
  * - Vault/DMS → Uploaded documents
  * - MAUDE/FAERS → Safety databases
- * - Lumen Cortex → Intelligence feeds
+ * - AnA 1.0 RI → Intelligence feeds
  *
  * The bridge automatically:
  * - Detects when data becomes available in other modules

@@ -16,10 +16,14 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { precedentEngine } from '../services/precedent-engine';
+import { authMiddleware } from '../auth.js';
 import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
 const log = createScopedLogger('precedent-routes');
+
+// All precedent-engine routes require authentication
+router.use(authMiddleware);
 
 // ─── Validation Schemas ──────────────────────────────────────────────────────
 
@@ -33,6 +37,7 @@ const SearchSchema = z.object({
   productCode: z.string().optional(),
   query: z.string().optional(),
   limit: z.number().int().min(1).max(50).optional(),
+  offset: z.number().int().min(0).optional(),
 });
 
 const CompareSchema = z.object({
@@ -109,11 +114,15 @@ router.post('/search', async (req: Request, res: Response) => {
       });
     }
 
-    const results = await precedentEngine.search(parsed.data);
+    const organizationId = (req as any).user?.organizationId;
+    const results = await precedentEngine.search(parsed.data, organizationId);
+    const offset = parsed.data.offset || 0;
+    const limit = parsed.data.limit || 10;
     res.json({
       success: true,
       data: results,
       count: results.length,
+      pagination: { offset, limit, hasMore: results.length === limit },
     });
   } catch (err: any) {
     log.error(`Search failed: ${err.message}`);
@@ -226,6 +235,66 @@ router.post('/ingest', async (req: Request, res: Response) => {
     res.status(201).json({ success: true, data: { id } });
   } catch (err: any) {
     log.error(`Ingest failed: ${err.message}`);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/** CRL trigger pattern analysis */
+router.post('/crl-triggers', async (req: Request, res: Response) => {
+  try {
+    const parsed = RiskSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ success: false, error: 'Validation failed', details: parsed.error.issues });
+    }
+    const result = await precedentEngine.analyzeCRLTriggers(parsed.data);
+    res.json({ success: true, data: result });
+  } catch (err: any) {
+    log.error(`CRL trigger analysis failed: ${err.message}`);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/** RTF trigger pattern analysis */
+router.post('/rtf-triggers', async (req: Request, res: Response) => {
+  try {
+    const parsed = RiskSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ success: false, error: 'Validation failed', details: parsed.error.issues });
+    }
+    const result = await precedentEngine.analyzeRTFTriggers(parsed.data);
+    res.json({ success: true, data: result });
+  } catch (err: any) {
+    log.error(`RTF trigger analysis failed: ${err.message}`);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/** EMA Day 120/180 question patterns */
+router.post('/ema-patterns', async (req: Request, res: Response) => {
+  try {
+    const parsed = RiskSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ success: false, error: 'Validation failed', details: parsed.error.issues });
+    }
+    const result = await precedentEngine.analyzeEMAPatterns(parsed.data);
+    res.json({ success: true, data: result });
+  } catch (err: any) {
+    log.error(`EMA pattern analysis failed: ${err.message}`);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/** Advisory Committee risk analysis */
+router.post('/advisory-committee', async (req: Request, res: Response) => {
+  try {
+    const parsed = RiskSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ success: false, error: 'Validation failed', details: parsed.error.issues });
+    }
+    const result = await precedentEngine.analyzeAdvisoryCommitteeRisk(parsed.data);
+    res.json({ success: true, data: result });
+  } catch (err: any) {
+    log.error(`Advisory Committee analysis failed: ${err.message}`);
     res.status(500).json({ success: false, error: err.message });
   }
 });

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { toast } from '@/hooks/use-toast';
 
 function Stat({ label, value }) {
   return (
@@ -25,7 +26,7 @@ export default function QualityDashboard() {
         <Stat label="Open Deviations" value={stats.deviationsOpen ?? 0} />
         <Stat label="Open CAPAs" value={stats.capasOpen ?? 0} />
       </div>
-      <Button className="mt-6" onClick={() => alert('Open Deviation Form')}>
+      <Button className="mt-6" onClick={() => toast({ title: 'Open Deviation Form' })}>
         Log New Deviation
       </Button>
     </div>

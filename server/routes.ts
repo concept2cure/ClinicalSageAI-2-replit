@@ -28,6 +28,7 @@ import aiAssistanceRoutes from './routes/ai-assistance.js';
 // @ts-ignore - JavaScript route file
 import contentPlanRoutes from './routes/content-plan.js';
 import intelligentReportsRoutes from './routes/intelligent-reports';
+import operatingSystemRoutes from './routes/operating-system';
 
 // Create a simple router for basic API routes
 const router = express.Router();
@@ -677,6 +678,9 @@ export default function registerRoutes(app: Express): void {
   // Mount Claude Intelligence routes (document drafting, vision, batch, streaming)
   const claudeIntelligenceRoutes = require('./routes/claude-intelligence').default;
   app.use('/api/claude', claudeIntelligenceRoutes);
+
+  // Operating System Foundation — Assumptions, Decisions, Governance Boundaries, Contradiction Links
+  app.use('/api/operating-system', operatingSystemRoutes);
   
   // Basic health and status routes are now available
   console.log('✅ Basic API routes mounted');

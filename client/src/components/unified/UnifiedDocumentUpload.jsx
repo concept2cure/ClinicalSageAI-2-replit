@@ -31,7 +31,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
  * UNIFIED DOCUMENT UPLOAD COMPONENT
  *
  * This component provides document upload functionality for ALL modules:
- * - Lumen AI Agent
+ * - AnA 1.0 RI Agent
  * - eCTD Co-Author
  * - CER v2 Generator
  * - IND Wizard
@@ -79,9 +79,9 @@ const UnifiedDocumentUpload = ({
 
   const moduleConfigs = {
     'lumen-ai': {
-      name: 'Lumen AI Agent',
+      name: 'AnA 1.0 RI Agent',
       icon: '🤖',
-      description: 'Upload documents to enhance Lumen AI knowledge base',
+      description: 'Upload documents to enhance AnA 1.0 RI knowledge base',
       color: 'bg-blue-100 border-blue-200',
     },
     coauthor: {

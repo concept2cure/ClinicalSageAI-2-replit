@@ -13,4 +13,4 @@
  * The previous placeholder has been replaced per REGULATORY_UX_AUDIT_2026-02-13
  * recommendation P0-1: "Wire CMC Wizard to real ComprehensiveCMCPlatform."
  */
-export { default } from '@/components/cmc/ComprehensiveCMCPlatform';
+export { default } from '@/components/cmc/ComprehensiveCMCPlatformClean';

@@ -14,7 +14,7 @@
  * - Their org's license/tier and enabled modules
  * - Cross-project awareness of all their work
  *
- * This is the service that transforms Lumen from a generic chatbot into
+ * This is the service that transforms AnA 1.0 RI from a generic chatbot into
  * a personalized regulatory intelligence partner.
  *
  * @compliance FDA 21 CFR Part 11 — all context reads are non-mutating
@@ -34,7 +34,7 @@ export interface UserIdentity {
   department: string | null; // "Regulatory Affairs"
   bio: string | null;
   avatar: string | null;
-  greetingName: string; // How Lumen addresses them (from prefs or parsed name)
+  greetingName: string; // How AnA addresses them (from prefs or parsed name)
   role: string; // admin, manager, member, viewer
   expertiseLevel: string; // novice, intermediate, expert
   communicationStyle: string; // concise, detailed, academic
@@ -470,7 +470,7 @@ async function loadConversationMemory(
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Load complete user intelligence — everything Lumen needs to be a
+ * Load complete user intelligence — everything AnA 1.0 RI needs to be a
  * personalized, context-aware assistant.
  *
  * All sub-queries run in parallel and fail independently, so partial

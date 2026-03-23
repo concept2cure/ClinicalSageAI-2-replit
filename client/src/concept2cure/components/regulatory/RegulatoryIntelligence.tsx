@@ -721,7 +721,7 @@ function GlobalLandscape() {
         {Object.entries(AGENCY_CONFIG).map(([agency, config]) => (
           <div key={agency} className="border border-border/40 rounded-sm bg-background">
             <div className="px-3 py-2 border-b border-border/30 pb-2">
-              <h3 className="text-sm font-semibold flex items-center gap-2 text-lg">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
                 <span className="text-2xl">{config.flag}</span>
                 {config.label}
               </h3>

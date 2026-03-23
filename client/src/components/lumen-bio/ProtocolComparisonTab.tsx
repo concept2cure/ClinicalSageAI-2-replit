@@ -17,6 +17,7 @@ import {
   FileText,
 } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
+import { toast } from '@/hooks/use-toast';
 
 interface ProtocolComparisonTabProps {
   protocolText: string;
@@ -182,9 +183,9 @@ const ProtocolComparisonTab: React.FC<ProtocolComparisonTabProps> = ({ protocolT
         version_text: protocolText,
       });
 
-      alert('Protocol promoted to active version!');
+      toast({ title: 'Protocol Promoted', description: 'Protocol promoted to active version.' });
     } catch (error) {
-      console.error('Error promoting protocol version:', error);
+      toast({ title: 'Error', description: 'Failed to promote protocol version', variant: 'destructive' });
     }
   };
 

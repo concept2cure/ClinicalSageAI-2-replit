@@ -3,6 +3,13 @@
  * @module server/routes/mission-control
  * @version 1.0.0
  *
+ * ⚠️  EXPERIMENTAL — IN-MEMORY ONLY
+ *
+ * This module uses in-memory Maps for data storage. All data is lost on
+ * server restart. It is NOT production-ready and must NOT be presented as
+ * a real system capability. Database migration to pm_artifacts table is
+ * required before production use.
+ *
  * @description
  * Full CRUD + intelligence endpoints for the Concept2Cure PM engine.
  * Programs → Destinations → Route Plans → Artifacts → Evidence →
@@ -17,6 +24,13 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 
 const router = Router();
+
+// Mark ALL responses as experimental — in-memory only, not production-ready
+router.use((_req, res, next) => {
+  res.setHeader('X-Data-Source', 'in-memory-experimental');
+  res.setHeader('X-Warning', 'Mission Control uses in-memory storage. Data is not persisted.');
+  next();
+});
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // HELPERS

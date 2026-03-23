@@ -60,7 +60,7 @@ export const zenColors = {
   },
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // AI - Special color for Lumen AI persona (like Claude's warm tones)
+  // AI - Special color for AnA AI persona (like Claude's warm tones)
   // ─────────────────────────────────────────────────────────────────────────────
   ai: {
     DEFAULT: '#6a9bcc',     // Violet - AI/assistant identity

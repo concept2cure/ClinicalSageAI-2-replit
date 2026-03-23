@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { queryClient, apiRequest } from '../../lib/queryClient';
 import { useToast } from '../../hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
 
 /**
  * Staff Oversight Panel Component
@@ -516,7 +517,7 @@ export default function StaffOversightPanel() {
                       </button>
 
                       <button
-                        onClick={() => alert('View audit log for user: ' + user.id)}
+                        onClick={() => toast({ title: 'View audit log for user: ' + user.id })}
                         className="text-blue-600 hover:text-blue-900"
                       >
                         <FileText className="h-5 w-5" />

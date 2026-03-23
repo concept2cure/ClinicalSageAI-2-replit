@@ -112,11 +112,9 @@ const ObligationsLedger: React.FC<ObligationsLedgerProps> = ({ subId }) => {
 
         setObligations(transformedObligations);
       } else {
-        console.error('Failed to fetch obligations:', result.error);
         setObligations([]);
       }
     } catch (error) {
-      console.error('Error fetching obligations:', error);
       setObligations([]);
     } finally {
       setLoading(false);

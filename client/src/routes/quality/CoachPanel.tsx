@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import InfoTip from '@/components/InfoTip';
+import { toast } from '@/hooks/use-toast';
 
 export default function CoachPanel({ batchId }: { batchId: string }) {
   const [rows, setRows] = useState<any[]>([]);
@@ -21,7 +22,7 @@ export default function CoachPanel({ batchId }: { batchId: string }) {
       body: JSON.stringify({ reco_ids: ids }),
     });
     const d = await r.json();
-    if (!r.ok) return alert(d.error || 'Apply failed');
+    if (!r.ok) { toast({ title: 'Error', description: d.error || 'Apply failed', variant: 'destructive' }); return; }
     load();
   }
   useEffect(() => {

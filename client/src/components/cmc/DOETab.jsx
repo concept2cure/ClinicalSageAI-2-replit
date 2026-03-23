@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Download, Calculator, TrendingUp } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 export default function DOETab({ processId }) {
   const [factors, setFactors] = useState('');
@@ -11,7 +12,7 @@ export default function DOETab({ processId }) {
 
   const downloadTemplate = async () => {
     if (!factors.trim()) {
-      alert('Please enter factors (comma-separated)');
+      toast({ title: 'Please enter factors (comma-separated)' });
       return;
     }
 
@@ -32,11 +33,11 @@ export default function DOETab({ processId }) {
         URL.revokeObjectURL(url);
       } else {
         const error = await response.json();
-        alert(error.error || 'Failed to generate template');
+        toast({ title: error.error || 'Failed to generate template' });
       }
     } catch (error) {
       console.error('Error downloading DOE template:', error);
-      alert('Failed to download template');
+      toast({ title: 'Failed to download template' });
     } finally {
       setGenerating(false);
     }

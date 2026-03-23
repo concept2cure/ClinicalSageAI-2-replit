@@ -8,7 +8,7 @@ const SimpleCodingAgent = () => {
     {
       type: 'assistant',
       content:
-        "👋 Welcome! I'm your Lumen Regulatory Affairs AI Expert.\n\nI can assist you with:\n\n• **FDA submission guidance** (IND, NDA, 510(k), PMA)\n• **Medical device protocols** and clinical evaluation reports\n• **Pharmaceutical regulatory documentation**\n• **Clinical trial protocols** and study designs\n• **Regulatory compliance analysis**\n• **Medical writing best practices**\n• **Code generation and review**\n• **Project assistance and debugging**\n\nPowered by OpenAI GPT-4o with specialized regulatory training.\nHow can I assist you today?",
+        "Welcome. I'm AnA — your regulatory intelligence partner.\n\nI can assist you with:\n\n• **FDA submission guidance** (IND, NDA, 510(k), PMA)\n• **Medical device protocols** and clinical evaluation reports\n• **Pharmaceutical regulatory documentation**\n• **Clinical trial protocols** and study designs\n• **Regulatory compliance analysis**\n• **Medical writing best practices**\n• **Code generation and review**\n• **Project assistance and debugging**\n\nWhat are we working on?",
       timestamp: new Date().toISOString(),
     },
   ]);

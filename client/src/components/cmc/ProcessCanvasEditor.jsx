@@ -3,6 +3,7 @@ import React, { useCallback, useState } from 'react';
 // import "@xyflow/react/dist/style.css";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { toast } from '@/hooks/use-toast';
 
 export default function ProcessCanvasEditor({ processId, units, onSaved }) {
   const startNodes = units.map((u, i) => ({
@@ -41,7 +42,7 @@ export default function ProcessCanvasEditor({ processId, units, onSaved }) {
       onSaved && onSaved();
     } else {
       console.error('❌ Failed to save layout');
-      alert('Failed to save layout');
+      toast({ title: 'Failed to save layout' });
     }
   }, [nodes, processId, onSaved]);
 
@@ -72,7 +73,7 @@ export default function ProcessCanvasEditor({ processId, units, onSaved }) {
       setNewUnitType('');
     } else {
       console.error('❌ Failed to add unit');
-      alert('Add failed');
+      toast({ title: 'Add failed' });
     }
   }
 
@@ -100,16 +101,32 @@ export default function ProcessCanvasEditor({ processId, units, onSaved }) {
           Save Layout
         </Button>
       </div>
-      <div style={{ height: 360 }}>
+      <div style={{ height: 360, overflow: 'auto' }}>
         <div
-          className="h-full bg-gray-50 border border-gray-200 rounded-md flex items-center justify-center"
+          className="h-full bg-gray-50 border border-gray-200 rounded-md p-4"
           data-testid="canvas-process-flow"
         >
-          <div className="text-center">
-            <div className="text-lg font-medium text-gray-700 mb-2">Process Canvas Editor</div>
-            <p className="text-sm text-gray-500">{nodes.length} units configured</p>
-            <p className="text-xs text-gray-400">Visual editor loading...</p>
-          </div>
+          {nodes.length === 0 ? (
+            <div className="flex items-center justify-center h-full text-gray-500">
+              No process units defined. Add a unit above to get started.
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-center gap-2">
+              {nodes.map((node, i) => (
+                <React.Fragment key={node.id}>
+                  <div className="flex flex-col items-center">
+                    <div className="bg-white border-2 border-blue-300 rounded-lg px-4 py-3 shadow-sm min-w-[120px] text-center hover:border-blue-500 transition-colors">
+                      <div className="text-sm font-semibold text-gray-800">{node.data.label}</div>
+                      <div className="text-xs text-gray-400 mt-1">Step {i + 1}</div>
+                    </div>
+                  </div>
+                  {i < nodes.length - 1 && (
+                    <div className="text-gray-400 text-lg font-bold select-none">&rarr;</div>
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

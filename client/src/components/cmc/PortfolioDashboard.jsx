@@ -28,95 +28,46 @@ export default function PortfolioDashboard() {
   const [rows, setRows] = useState([]);
   const [busy, setBusy] = useState(false);
   const [activePortfolioTab, setActivePortfolioTab] = useState('overview');
+  const [portfolioMetrics, setPortfolioMetrics] = useState({
+    totalSubmissions: 0, activePrograms: 0, averageRPI: 0, criticalIssues: 0,
+    totalValue: 0, complianceScore: 0, onTimeDelivery: 0, agencyMeetings: 0,
+  });
+  const [multiProgramAnalytics, setMultiProgramAnalytics] = useState([]);
+  const [crossSubmissionInsights, setCrossSubmissionInsights] = useState([]);
   const { toast } = useToast();
 
-  // Enhanced portfolio data with real regulatory metrics
-  const portfolioMetrics = {
-    totalSubmissions: 15,
-    activePrograms: 8,
-    averageRPI: 94.2,
-    criticalIssues: 3,
-    totalValue: 2400000,
-    complianceScore: 96.5,
-    onTimeDelivery: 89,
-    agencyMeetings: 12,
-  };
-
-  const multiProgramAnalytics = [
-    {
-      program: 'Oncology Platform',
-      products: ['BTC-2025-A', 'BTC-2025-B', 'BTC-2024-C'],
-      regions: ['FDA', 'EMA', 'PMDA'],
-      status: 'Active',
-      rpi: 95.2,
-      criticalPath: 'FDA IND Response',
-      nextMilestone: 'Type C Meeting',
-      daysToMilestone: 15,
-      totalValue: 850000,
-      riskLevel: 'Medium',
-    },
-    {
-      program: 'Rare Disease Portfolio',
-      products: ['RD-2025-X', 'RD-2024-Y'],
-      regions: ['FDA', 'EMA'],
-      status: 'Active',
-      rpi: 92.8,
-      criticalPath: 'EMA Scientific Advice',
-      nextMilestone: 'Day 120 Response',
-      daysToMilestone: 8,
-      totalValue: 650000,
-      riskLevel: 'High',
-    },
-    {
-      program: 'Biosimilar Initiative',
-      products: ['BS-2025-P', 'BS-2024-Q'],
-      regions: ['FDA', 'Health Canada'],
-      status: 'Planning',
-      rpi: 88.5,
-      criticalPath: 'Analytical Comparability',
-      nextMilestone: 'Manufacturing Readiness',
-      daysToMilestone: 45,
-      totalValue: 450000,
-      riskLevel: 'Low',
-    },
-  ];
-
-  const crossSubmissionInsights = [
-    {
-      category: 'Module 3 Quality',
-      totalSections: 145,
-      completed: 128,
-      inProgress: 12,
-      pending: 5,
-      commonGaps: [
-        'Container Closure Integrity',
-        'Process Validation Stage 3',
-        'Stability Commitment Protocols',
-      ],
-    },
-    {
-      category: 'Regulatory Commitments',
-      totalCommitments: 89,
-      fulfilled: 76,
-      inProgress: 8,
-      overdue: 5,
-      commonGaps: ['Post-market Surveillance', 'Phase IV Studies', 'Updated Risk Assessment'],
-    },
-    {
-      category: 'Information Requests',
-      totalIRs: 34,
-      responded: 28,
-      inProgress: 4,
-      overdue: 2,
-      commonGaps: ['Clinical Pharmacology', 'Manufacturing Details', 'Quality Specifications'],
-    },
-  ];
-
   async function load() {
-    const r = await fetch('/api/cmc/blueprint/portfolio/overview')
-      .then(r => r.json())
-      .catch(() => []);
-    setRows(r);
+    try {
+      const headers = { 'Content-Type': 'application/json' };
+      const token = localStorage.getItem('token');
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const [overviewRes, metricsRes, programsRes, insightsRes] = await Promise.allSettled([
+        fetch('/api/cmc/blueprint/portfolio/overview', { headers, credentials: 'include' }),
+        fetch('/api/cmc/blueprint/portfolio/metrics', { headers, credentials: 'include' }),
+        fetch('/api/cmc/blueprint/portfolio/programs', { headers, credentials: 'include' }),
+        fetch('/api/cmc/blueprint/portfolio/insights', { headers, credentials: 'include' }),
+      ]);
+
+      if (overviewRes.status === 'fulfilled' && overviewRes.value.ok) {
+        const data = await overviewRes.value.json();
+        setRows(Array.isArray(data) ? data : data.data || []);
+      }
+      if (metricsRes.status === 'fulfilled' && metricsRes.value.ok) {
+        const data = await metricsRes.value.json();
+        if (data && typeof data === 'object') setPortfolioMetrics(prev => ({ ...prev, ...data }));
+      }
+      if (programsRes.status === 'fulfilled' && programsRes.value.ok) {
+        const data = await programsRes.value.json();
+        setMultiProgramAnalytics(Array.isArray(data) ? data : data.data || []);
+      }
+      if (insightsRes.status === 'fulfilled' && insightsRes.value.ok) {
+        const data = await insightsRes.value.json();
+        setCrossSubmissionInsights(Array.isArray(data) ? data : data.data || []);
+      }
+    } catch (error) {
+      console.error('Failed to load portfolio data:', error);
+    }
   }
 
   useEffect(() => {
@@ -125,28 +76,54 @@ export default function PortfolioDashboard() {
 
   async function snapshot() {
     setBusy(true);
-    await fetch('/api/cmc/blueprint/portfolio/snapshot/save', { method: 'POST' });
-    setBusy(false);
-    toast({
-      title: 'Portfolio Snapshot',
-      description: 'RPI snapshots saved successfully for regulatory tracking.',
-    });
+    try {
+      const response = await fetch('/api/cmc/blueprint/portfolio/snapshot/save', { method: 'POST', credentials: 'include' });
+      if (response.ok) {
+        toast({ title: 'Portfolio Snapshot', description: 'RPI snapshots saved successfully.' });
+      } else {
+        throw new Error('Save failed');
+      }
+    } catch (error) {
+      toast({ title: 'Snapshot Failed', description: 'Could not save portfolio snapshot.', variant: 'destructive' });
+    } finally {
+      setBusy(false);
+    }
   }
 
   const generatePortfolioReport = async () => {
-    toast({
-      title: 'Portfolio Report',
-      description: 'Generating comprehensive multi-program analytics report...',
-    });
-    // Implementation would connect to backend analytics engine
+    try {
+      const response = await fetch('/api/cmc/blueprint/portfolio/report', { method: 'POST', credentials: 'include' });
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `portfolio_report_${new Date().toISOString().split('T')[0]}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        toast({ title: 'Report Generated', description: 'Portfolio report downloaded.' });
+      } else {
+        throw new Error('Generation failed');
+      }
+    } catch (error) {
+      toast({ title: 'Report Failed', description: 'Could not generate portfolio report.', variant: 'destructive' });
+    }
   };
 
   const optimizeResourceAllocation = async () => {
-    toast({
-      title: 'Resource Optimization',
-      description: 'AI-powered resource allocation analysis initiated across all programs.',
-    });
-    // Implementation would use AI to optimize resource allocation
+    try {
+      const response = await fetch('/api/cmc/blueprint/portfolio/optimize', { method: 'POST', credentials: 'include' });
+      if (response.ok) {
+        const result = await response.json();
+        toast({ title: 'Optimization Complete', description: result.message || 'Resource allocation optimized.' });
+      } else {
+        throw new Error('Optimization failed');
+      }
+    } catch (error) {
+      toast({ title: 'Optimization Failed', description: 'Could not run resource optimization.', variant: 'destructive' });
+    }
   };
 
   return (

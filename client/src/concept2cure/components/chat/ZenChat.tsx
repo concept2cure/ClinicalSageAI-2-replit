@@ -128,14 +128,16 @@ interface ZenChatProps {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const ANA_THINKING_PHRASES = [
-  'Analyzing your request...',
-  'Reviewing regulatory guidance...',
-  'Cross-referencing documents...',
-  'Checking FDA guidance...',
-  'Researching ICH guidelines...',
+  'Pulling up the relevant guidance...',
+  'Reviewing regulatory precedents...',
+  'Cross-referencing your dossier...',
+  'Checking the latest FDA thinking...',
+  'Working through the ICH guidelines...',
   'Reviewing compliance requirements...',
-  'Preparing your response...',
-  'Searching regulatory databases...',
+  'Building something solid for you...',
+  'This one deserves a thorough answer...',
+  'Thinking through the regulatory implications...',
+  'Finding the precedent that matters here...',
 ];
 
 const ThinkingIndicator: React.FC = () => {
@@ -644,7 +646,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             {greeting?.text || 'Hi — what are you working on?'}
           </h1>
           <p className="text-sm text-zinc-500 max-w-md mx-auto">
-            {greeting?.subtitle || 'I can draft documents, find evidence, check compliance, or help plan your submission strategy.'}
+            {greeting?.subtitle || 'I draft regulatory documents, assess submission defensibility, identify reviewer friction points, and guide your regulatory strategy.'}
           </p>
         </div>
 
@@ -1111,7 +1113,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
   // Handle action card intent — call server action + invalidate workspace-summary cache
   const handleRunIntent = useCallback(
     async (intent: string, label = intent) => {
-      const runId = `run_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      const runId = `run_${crypto.randomUUID().slice(0, 12)}`;
       onActionRun?.({ id: runId, intent, label, status: 'running', ts: Date.now() });
       try {
         const orgId =
@@ -1215,7 +1217,12 @@ export const ZenChat: React.FC<ZenChatProps> = ({
                 onCopy={() => handleCopy(message.content)}
                 onRegenerate={message.role === 'assistant' ? handleRegenerate : undefined}
                 onFeedback={(positive: boolean) => {
-                  console.info(`[chat-feedback] messageId=${message.id} positive=${positive}`);
+                  const fbToken = sessionStorage.getItem('trialsage_access_token') || localStorage.getItem('trialsage_access_token');
+                  fetch('/api/concept2cure/feedback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', ...(fbToken ? { Authorization: `Bearer ${fbToken}` } : {}) },
+                    body: JSON.stringify({ messageId: message.id, positive }),
+                  }).catch(() => {});
                 }}
                 onNavigate={handleNavigate}
                 onSaveArtifact={handleSaveArtifact}

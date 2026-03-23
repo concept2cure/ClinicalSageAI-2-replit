@@ -25,6 +25,10 @@ import {
   recordFeedback,
   getFeedbackSummary,
   analyzeCrossModuleRelationships,
+  runRIMAssessment,
+  getProjectSignals,
+  enrichChangeImpact,
+  analyzeCrossArtifactIntelligence,
 } from '../services/intelligence/index.js';
 
 const router = Router();
@@ -408,6 +412,113 @@ router.get('/projects/:projectId/dashboard', async (req: Request, res: Response)
   } catch (error) {
     console.error('[intelligence] Dashboard generation failed:', error);
     return res.status(500).json({ error: 'Failed to generate intelligence dashboard' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 8. RIM — REGULATORY INTELLIGENCE MODEL
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * POST /api/intelligence/projects/:projectId/rim/assess
+ *
+ * Run a full RIM assessment for a project. Returns judgment scores,
+ * pattern matches, signal summary, and unified RIM score.
+ */
+router.post('/projects/:projectId/rim/assess', async (req: Request, res: Response) => {
+  try {
+    const projectId = Number(req.params.projectId);
+    const organizationId = getOrgId(req);
+
+    if (!projectId || !organizationId) {
+      return res.status(400).json({ error: 'Missing projectId or organization context' });
+    }
+
+    const { sectionCode, submissionType, targetAgency, textToScan, artifactId, artifactVersionId } = req.body;
+
+    const assessment = await runRIMAssessment({
+      organizationId,
+      projectId,
+      userId: (req as any).user?.id,
+      sectionCode,
+      submissionType,
+      targetAgency,
+      textToScan,
+      artifactId,
+      artifactVersionId,
+    });
+
+    return res.json(assessment);
+  } catch (error) {
+    console.error('[intelligence] RIM assessment failed:', error);
+    return res.status(500).json({ error: 'Failed to run RIM assessment' });
+  }
+});
+
+/**
+ * GET /api/intelligence/projects/:projectId/rim/signals
+ *
+ * Get the current signal summary for a project.
+ */
+router.get('/projects/:projectId/rim/signals', async (req: Request, res: Response) => {
+  try {
+    const projectId = Number(req.params.projectId);
+    const organizationId = getOrgId(req);
+
+    if (!projectId || !organizationId) {
+      return res.status(400).json({ error: 'Missing projectId or organization context' });
+    }
+
+    const summary = getProjectSignals(organizationId, projectId);
+    return res.json(summary);
+  } catch (error) {
+    console.error('[intelligence] Signal summary failed:', error);
+    return res.status(500).json({ error: 'Failed to get signal summary' });
+  }
+});
+
+/**
+ * GET /api/intelligence/projects/:projectId/rim/cross-artifact
+ *
+ * Analyze cross-artifact patterns from accumulated RIM signals.
+ */
+router.get('/projects/:projectId/rim/cross-artifact', async (req: Request, res: Response) => {
+  try {
+    const projectId = Number(req.params.projectId);
+    const organizationId = getOrgId(req);
+
+    if (!projectId || !organizationId) {
+      return res.status(400).json({ error: 'Missing projectId or organization context' });
+    }
+
+    const report = analyzeCrossArtifactIntelligence(organizationId, projectId);
+    return res.json(report);
+  } catch (error) {
+    console.error('[intelligence] Cross-artifact analysis failed:', error);
+    return res.status(500).json({ error: 'Failed to analyze cross-artifact intelligence' });
+  }
+});
+
+/**
+ * GET /api/intelligence/projects/:projectId/rim/section/:sectionCode
+ *
+ * Get RIM enrichment for a specific section (trends, recurring patterns, persisting issues).
+ */
+router.get('/projects/:projectId/rim/section/:sectionCode', async (req: Request, res: Response) => {
+  try {
+    const projectId = Number(req.params.projectId);
+    const organizationId = getOrgId(req);
+    const sectionCode = req.params.sectionCode;
+
+    if (!projectId || !organizationId || !sectionCode) {
+      return res.status(400).json({ error: 'Missing required parameters' });
+    }
+
+    const enrichment = enrichChangeImpact(organizationId, projectId, sectionCode);
+    return res.json(enrichment);
+  } catch (error) {
+    console.error('[intelligence] Section enrichment failed:', error);
+    return res.status(500).json({ error: 'Failed to get section intelligence' });
   }
 });
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { toast } from '@/hooks/use-toast';
 
 export default function ErpImportPanel() {
   const [file, setFile] = useState<File | null>(null);
@@ -10,8 +11,8 @@ export default function ErpImportPanel() {
     fd.append('file', file);
     const r = await fetch(`/api/quality/genealogy/import/erp`, { method: 'POST', body: fd });
     const d = await r.json();
-    if (!r.ok) return alert(d.error || 'Import failed');
-    alert(`Imported ${d.imported} / failed ${d.failed}`);
+    if (!r.ok) { toast({ title: 'Import Failed', description: d.error || 'ERP import failed', variant: 'destructive' }); return; }
+    toast({ title: 'Import Complete', description: `Imported ${d.imported} / failed ${d.failed}` });
   }
   return (
     <Card>

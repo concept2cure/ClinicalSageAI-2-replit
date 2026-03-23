@@ -191,7 +191,7 @@ export class ProtocolAnalyzerService {
           /(?:sponsor|conducted by|developed by)[^:]*?(?:is|will be)\s+([^\n\.]+)/i
         );
 
-      const sponsor = sponsorMatch ? sponsorMatch[1].trim() : 'Lumen Biosciences';
+      const sponsor = sponsorMatch ? sponsorMatch[1].trim() : 'Unknown Sponsor';
 
       // Generate a summary (in a real implementation, this would use an AI summarizer)
       const summary = `Protocol for a ${phase} clinical trial investigating ${indication} with ${sample_size} participants over ${duration_weeks} weeks. The primary endpoint is ${primary_endpoint}.`;

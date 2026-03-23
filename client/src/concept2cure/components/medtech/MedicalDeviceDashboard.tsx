@@ -355,7 +355,7 @@ const PredicatePathfinder: React.FC<{
           </div>
           <button
             onClick={onPredicateSearch}
-            className="px-3 py-1.5 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+            className="px-3 py-1.5 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none flex items-center gap-2"
           >
             <Search className="w-4 h-4" />
             Search Predicates
@@ -547,7 +547,7 @@ const MAUDEHazardMonitor: React.FC<{
             key={alert.id}
             onClick={() => onAlertClick?.(alert)}
             className={cn(
-              'w-full p-3 text-left border-b border-zinc-200 hover:bg-zinc-50 transition-colors duration-150',
+              'w-full p-3 text-left border-b border-zinc-200 hover:bg-zinc-50 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none',
               alert.eventType === 'death' && 'border-l-4 border-l-red-500',
               alert.eventType === 'injury' && 'border-l-4 border-l-amber-500',
               alert.eventType === 'malfunction' && 'border-l-4 border-l-blue-500'
@@ -695,7 +695,7 @@ const SubmissionCard: React.FC<{
   return (
     <button
       onClick={onClick}
-      className="w-full bg-white rounded-xl border border-zinc-200 p-4 text-left hover:shadow-md hover:border-blue-300 transition-all duration-150"
+      className="w-full bg-white rounded-xl border border-zinc-200 p-4 text-left hover:shadow-md hover:border-blue-300 transition-all duration-150 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none"
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
@@ -899,11 +899,11 @@ export const MedicalDeviceDashboard: React.FC<MedicalDeviceDashboardProps> = ({
           </div>
 
           <div className="flex items-center gap-3">
-            <button className="px-4 py-2 text-sm font-medium bg-white/10 hover:bg-white/20 rounded-lg backdrop-blur transition-colors flex items-center gap-2">
+            <button className="px-4 py-2 text-sm font-medium bg-white/10 hover:bg-white/20 rounded-lg backdrop-blur transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none flex items-center gap-2">
               <Database className="w-4 h-4" />
               MAUDE Search
             </button>
-            <button className="px-4 py-2 text-sm font-medium bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors flex items-center gap-2">
+            <button className="px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none flex items-center gap-2">
               <Flag className="w-4 h-4" />
               New Submission
             </button>
@@ -912,21 +912,21 @@ export const MedicalDeviceDashboard: React.FC<MedicalDeviceDashboardProps> = ({
 
         {/* Metrics */}
         <div className="grid grid-cols-5 gap-4">
-          <div className="p-3 bg-white/10 rounded-lg backdrop-blur">
+          <div className="p-3 bg-white/10 rounded-xl backdrop-blur">
             <p className="text-xs text-blue-200">510(k) Active</p>
             <p className="text-2xl font-semibold">{metrics.total510k}</p>
           </div>
-          <div className="p-3 bg-white/10 rounded-lg backdrop-blur">
+          <div className="p-3 bg-white/10 rounded-xl backdrop-blur">
             <p className="text-xs text-blue-200">PMA Active</p>
             <p className="text-2xl font-semibold">{metrics.totalPMA}</p>
           </div>
-          <div className="p-3 bg-white/10 rounded-lg backdrop-blur">
+          <div className="p-3 bg-white/10 rounded-xl backdrop-blur">
             <p className="text-xs text-blue-200">Submitted</p>
             <p className="text-2xl font-semibold">{metrics.submitted}</p>
           </div>
           <div
             className={cn(
-              'p-3 rounded-lg',
+              'p-3 rounded-xl',
               metrics.needsAction > 0 ? 'bg-amber-500/30' : 'bg-white/10'
             )}
           >
@@ -935,7 +935,7 @@ export const MedicalDeviceDashboard: React.FC<MedicalDeviceDashboardProps> = ({
           </div>
           <div
             className={cn(
-              'p-3 rounded-lg',
+              'p-3 rounded-xl',
               metrics.criticalAlerts > 0 ? 'bg-red-500/30' : 'bg-white/10'
             )}
           >

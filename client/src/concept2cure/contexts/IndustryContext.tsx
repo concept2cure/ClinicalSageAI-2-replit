@@ -31,6 +31,7 @@ export type SubmissionType =
   | 'IND'
   | 'NDA'
   | 'ANDA'
+  | '505B2'
   | 'BLA'
   | '510K'
   | 'PMA'
@@ -88,7 +89,7 @@ const SEGMENT_CONFIGS: Record<IndustrySegment, SegmentConfig> = {
   pharma: {
     segment: 'pharma',
     label: 'Pharmaceutical',
-    submissionTypes: ['IND', 'NDA', 'ANDA', 'BLA', 'MAA', 'CTA', 'IMPD'],
+    submissionTypes: ['IND', 'NDA', 'ANDA', '505B2', 'BLA', 'MAA', 'CTA', 'IMPD'],
     primaryDocCategories: ['ectd', 'csr', 'protocol', 'sap', 'ib', 'cmc', 'sop', 'fda-form'],
     defaultSubmissionType: 'IND',
     defaultTemplateId: 'ind-full',
@@ -128,7 +129,7 @@ const SEGMENT_CONFIGS: Record<IndustrySegment, SegmentConfig> = {
   cro: {
     segment: 'cro',
     label: 'Contract Research',
-    submissionTypes: ['IND', 'NDA', 'BLA', '510K', 'PMA', 'CER', 'MAA'],
+    submissionTypes: ['IND', 'NDA', 'ANDA', '505B2', 'BLA', '510K', 'PMA', 'DE_NOVO', 'CER', 'MAA'],
     primaryDocCategories: ['ectd', '510k', 'pma', 'csr', 'protocol', 'sap', 'cer', 'sop'],
     defaultSubmissionType: 'IND',
     defaultTemplateId: 'ind-full',
@@ -148,7 +149,7 @@ const SEGMENT_CONFIGS: Record<IndustrySegment, SegmentConfig> = {
   regulatory: {
     segment: 'regulatory',
     label: 'Regulatory Affairs',
-    submissionTypes: ['IND', 'NDA', 'BLA', '510K', 'PMA', 'DE_NOVO', 'CER', 'MAA', 'IVDR'],
+    submissionTypes: ['IND', 'NDA', 'ANDA', '505B2', 'BLA', '510K', 'PMA', 'DE_NOVO', 'CER', 'MAA', 'IVDR'],
     primaryDocCategories: ['ectd', '510k', 'pma', 'estar', 'cer', 'ivdr', 'csr', 'protocol', 'sap', 'ib', 'cmc', 'sop', 'fda-form'],
     defaultSubmissionType: 'IND',
     defaultTemplateId: 'ind-full',
@@ -158,8 +159,8 @@ const SEGMENT_CONFIGS: Record<IndustrySegment, SegmentConfig> = {
   medical_writing: {
     segment: 'medical_writing',
     label: 'Medical Writing',
-    submissionTypes: ['IND', 'NDA', 'BLA', '510K', 'CER', 'MAA'],
-    primaryDocCategories: ['ectd', '510k', 'cer', 'csr', 'protocol', 'sap', 'ib', 'sop'],
+    submissionTypes: ['IND', 'NDA', 'ANDA', '505B2', 'BLA', '510K', 'PMA', 'DE_NOVO', 'CER', 'MAA'],
+    primaryDocCategories: ['ectd', '510k', 'pma', 'cer', 'csr', 'protocol', 'sap', 'ib', 'sop'],
     defaultSubmissionType: 'IND',
     defaultTemplateId: 'ind-full',
     pathwayDefault: 'FDA',

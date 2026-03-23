@@ -8,7 +8,7 @@
  * - cortexAdvisoryRoutes.ts (advisory features)
  * - cortexManagementRoutes.ts (management features)
  * - cortexQueryRoutes.ts (query operations)
- * - lumen-cortex.ts (Lumen integration)
+ * - lumen-cortex.ts (AnA 1.0 RI integration)
  *
  * @version 2.0.0
  * @module server/routes/cortex-unified
@@ -149,7 +149,7 @@ router.get('/docs', (_req: Request, res: Response) => {
         legacyPath: '/api/cortex/query/*',
       },
       '/lumen': {
-        description: 'Lumen integration features',
+        description: 'AnA 1.0 RI integration features',
         methods: ['GET', 'POST'],
         legacyPath: '/api/lumen-cortex/*',
       },
@@ -216,7 +216,32 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
         modePrefix = `The user is currently on the "${clientContext.screen}" screen.`;
         if (clientContext.project) modePrefix += ` Active project: ${clientContext.project}.`;
         if (clientContext.userRole) modePrefix += ` User role: ${clientContext.userRole}.`;
+        // Inject module context (active tab, description) for deeper awareness
+        if (clientContext.moduleContext) {
+          const mc = clientContext.moduleContext;
+          if (mc.activeTab) modePrefix += ` Active tab: ${mc.activeTabLabel || mc.activeTab}.`;
+          if (mc.tabDescription) modePrefix += ` Context: ${mc.tabDescription}.`;
+        }
         modePrefix += '\nAdapt your responses to be relevant to their current workflow context.\n\n';
+      }
+
+      // Governed intelligence context: inject live contradiction/assumption data when on precedent-intelligence
+      if (clientContext?.screen === 'precedent-intelligence' && numericProjectId) {
+        try {
+          const { contradictionEngineService } = await import('../services/contradiction-engine-service');
+          const findings = await contradictionEngineService.searchFindings({
+            organizationId, projectId: numericProjectId, reviewState: 'unresolved', limit: 5,
+          });
+          if (findings.length > 0) {
+            modePrefix += `\n[LIVE GOVERNED INTELLIGENCE — ${findings.length} unresolved contradiction(s) in this project]\n`;
+            for (const f of findings) {
+              modePrefix += `- ${f.severity.toUpperCase()}: ${f.title} (${f.contradictionType}, authority: ${f.authorityState}, source: ${f.sourceClassification})\n`;
+            }
+            modePrefix += `\nWhen asked about contradictions, provide this real data. Do not summarize vaguely.\n\n`;
+          }
+        } catch {
+          // Table may not exist — silently skip
+        }
       }
     }
 
@@ -782,13 +807,13 @@ async function mountSubRouters() {
     logger.error('Failed to mount query routes:', error);
   }
 
-  // Lumen integration
+  // AnA 1.0 RI integration
   try {
     const lumenModule = await import('./lumen-cortex');
     router.use('/lumen', lumenModule.default);
-    logger.info('Mounted: /lumen (Lumen integration)');
+    logger.info('Mounted: /lumen (AnA 1.0 RI integration)');
   } catch (error) {
-    logger.error('Failed to mount Lumen routes:', error);
+    logger.error('Failed to mount AnA 1.0 RI routes:', error);
   }
 
   // Clinical intelligence (Foresight capabilities under Cortex gateway)

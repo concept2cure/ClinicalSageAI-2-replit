@@ -118,7 +118,7 @@ const REFERENCE_PATTERNS: Array<{ pattern: RegExp; extractor: (match: RegExpExec
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function generateId(): string {
-  return Math.random().toString(36).substring(2, 10);
+  return crypto.randomUUID().slice(0, 8);
 }
 
 function getStatusColor(status: ReferenceStatus): string {

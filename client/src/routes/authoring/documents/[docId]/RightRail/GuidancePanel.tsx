@@ -184,7 +184,6 @@ export default function GuidancePanel({ region, section }: GuidancePanelProps) {
       setGuidance(mockGuidance.filter(item => item.section === section || item.section === 'all'));
       setChecklists(mockChecklists.filter(item => item.section === section));
     } catch (error) {
-      console.error('Failed to load guidance:', error);
     } finally {
       setLoading(false);
     }

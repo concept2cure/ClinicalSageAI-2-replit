@@ -141,3 +141,57 @@ explicitly asks to open a PR (e.g., for code review purposes):
 - **Title**: conventional commit style, e.g. `feat: add CSR knowledge database schema`
 - **Never** open a PR from or to `main` — it is deprecated
 - **Never** open a PR from a `claude/*` branch
+
+---
+
+## Regulatory Intelligence Model (RIM) — System Rules
+
+RIM is Concept2Cure's proprietary, non-LLM intelligence layer. It sits on top of LLMs
+and accumulates regulatory judgment over time. It is NOT a model to train — it is a
+structured, versioned, compounding intelligence system.
+
+### Architecture
+
+```
+server/services/intelligence/
+├── judgment-framework.ts      # 6 codified scoring models
+├── pattern-registry.ts        # Regulatory prior knowledge (seed + learned)
+├── signal-capture.ts          # Two-layer signal accumulation
+├── rim.ts                     # Central orchestrator
+├── rim-interceptors.ts        # Auto-capture at chat, compliance, artifact points
+├── rim-change-impact.ts       # Version impact review enrichment
+├── rim-cross-artifact.ts      # Cross-document intelligence
+└── index.ts                   # Barrel export
+```
+
+### System Invariants (MUST HOLD)
+
+1. **Persistence is source of truth** — memory is cache only
+2. **Every signal has provenance** — `judgmentFrameworkVersion`, `patternRegistryVersion`, `runId`
+3. **Every signal is anchored** — `projectId`, `artifactId`, `artifactVersionId`, `sectionCode`, `runId`
+4. **No silent persistence failure** — runs marked `degraded` if persistence fails
+5. **Trends include confidence** — `TrendConfidence: high | moderate | low | insufficient`
+6. **Interceptors are non-blocking** — NEVER slow down the primary pipeline
+
+### Do NOT
+
+- Build or fine-tune an LLM
+- Create analytics dashboards for RIM signals
+- Introduce model training pipelines
+- Duplicate existing intelligence services
+- Expose RIM scores directly to end users (internal intelligence only)
+
+### Do
+
+- Extend existing services in `server/services/intelligence/`
+- Add new seed patterns to `pattern-registry.ts` when real deficiency patterns are identified
+- Wire new analysis endpoints through interceptors for signal capture
+- Use `enrichChangeImpact()` to surface RIM intelligence in version impact review
+- Bump version constants when scoring logic or patterns change
+
+### Version Constants
+
+When modifying scoring logic or patterns, bump the corresponding version:
+- `JUDGMENT_FRAMEWORK_VERSION` in `judgment-framework.ts`
+- `PATTERN_REGISTRY_VERSION` in `pattern-registry.ts`
+- `RIM_VERSION` in `rim.ts`

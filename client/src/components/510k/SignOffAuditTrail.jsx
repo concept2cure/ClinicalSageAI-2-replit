@@ -17,6 +17,7 @@ import {
   ChevronUp,
 } from 'lucide-react';
 import ManagerSignOffService from '../../services/ManagerSignOffService';
+import { toast } from '@/hooks/use-toast';
 
 /**
  * Sign-Off Audit Trail Component
@@ -59,7 +60,7 @@ const SignOffAuditTrail = ({ deviceName, exportable = false }) => {
     const auditData = Object.values(signOffHistory);
     console.log('[SignOffAuditTrail] Audit data:', auditData);
 
-    alert('Audit report generation would be implemented in production.');
+    toast({ title: 'Audit report generation would be implemented in production.' });
   };
 
   // Sort sign-offs chronologically

@@ -107,8 +107,7 @@ export default function WeeklyDigestViewer({
             variant="outline"
             size="sm"
             onClick={() => {
-              // This would trigger a PDF or email export in the real implementation
-              alert('Export functionality would be implemented here');
+              // Export not yet implemented
             }}
           >
             Export Report
