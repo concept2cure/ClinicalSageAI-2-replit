@@ -22,6 +22,7 @@ import {
   concept2cureArtifactVersions,
   concept2cureReviewThreads,
   concept2cureThreadComments,
+  concept2cureProvenanceEvents,
 } from '../../shared/schema.js';
 import { eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
@@ -108,6 +109,11 @@ const VALID_ACTION_TYPES: Set<string> = new Set([
 ]);
 const VALID_CONFIDENCE: Set<string> = new Set(['strong', 'moderate', 'provisional', 'uncertain']);
 
+// ── Safety limits — prevent runaway artifact creation ──────────────────────
+const MAX_ACTIONS_PER_RESPONSE = 5;
+const MAX_CONTENT_LENGTH = 100_000; // ~100KB per artifact
+const MAX_TITLE_LENGTH = 500;
+
 /**
  * Detect structured action signals in AnA's response text.
  * Primary: looks for ```ana-action JSON blocks.
@@ -122,6 +128,7 @@ export function detectActionSignals(responseText: string): DetectedActionSignal[
   const commentPattern = /<!--\s*ana-action\s*\n([\s\S]*?)\n\s*-->/g;
 
   for (const pattern of [fencedPattern, commentPattern]) {
+    if (signals.length >= MAX_ACTIONS_PER_RESPONSE) break;
     let match;
     while ((match = pattern.exec(responseText)) !== null) {
       try {
@@ -139,15 +146,27 @@ export function detectActionSignals(responseText: string): DetectedActionSignal[
           parsed.title.length > 0 &&
           parsed.content.length > 0
         ) {
+          // Enforce safety limits
+          const sanitizedTitle = parsed.title.slice(0, MAX_TITLE_LENGTH).replace(/[\x00-\x1f]/g, '');
+          const truncatedContent = parsed.content.length > MAX_CONTENT_LENGTH
+            ? parsed.content.slice(0, MAX_CONTENT_LENGTH) + '\n\n[Content truncated — exceeded maximum length]'
+            : parsed.content;
+
           signals.push({
             type: parsed.type as AnaActionType,
             confidence: parsed.confidence as AnaConfidenceLevel,
-            title: parsed.title,
-            content: parsed.content,
-            sectionCode: typeof parsed.sectionCode === 'string' ? parsed.sectionCode : undefined,
-            decisionContext: typeof parsed.decisionContext === 'string' ? parsed.decisionContext : undefined,
-            guidanceSummary: typeof parsed.guidanceSummary === 'string' ? parsed.guidanceSummary : undefined,
+            title: sanitizedTitle,
+            content: truncatedContent,
+            sectionCode: typeof parsed.sectionCode === 'string' ? parsed.sectionCode.slice(0, 50) : undefined,
+            decisionContext: typeof parsed.decisionContext === 'string' ? parsed.decisionContext.slice(0, 200) : undefined,
+            guidanceSummary: typeof parsed.guidanceSummary === 'string' ? parsed.guidanceSummary.slice(0, 500) : undefined,
           });
+
+          // Stop processing if we hit the max
+          if (signals.length >= MAX_ACTIONS_PER_RESPONSE) {
+            console.warn(`[AnA Executor] Hit max actions limit (${MAX_ACTIONS_PER_RESPONSE}), ignoring remaining signals`);
+            break;
+          }
         } else {
           console.warn('[AnA Executor] Action signal missing required fields or invalid type/confidence');
         }
@@ -220,52 +239,90 @@ function failResult(payload: AnaActionPayload, error: string): AnaActionResult {
  * - Draft status (lifecycle starting point)
  */
 async function executeArtifactCreation(payload: AnaActionPayload): Promise<AnaActionResult> {
+  // Pre-flight validation
+  if (!payload.content || payload.content.trim().length === 0) {
+    return failResult(payload, 'Artifact content is empty');
+  }
+  if (!payload.title || payload.title.trim().length === 0) {
+    return failResult(payload, 'Artifact title is empty');
+  }
+
   const externalId = `ana_${payload.type}_${uuidv4().slice(0, 8)}`;
   const contentHash = createHash('sha256').update(payload.content, 'utf8').digest('hex');
 
   try {
-    // 1. Insert artifact — returns the auto-generated integer PK
-    const [artifact] = await db.insert(concept2cureArtifacts).values({
-      artifactId: externalId,
-      organizationId: payload.organizationId,
-      projectId: payload.projectId,
-      title: payload.title,
-      content: payload.content,
-      contentHash,
-      type: 'markdown',
-      category: 'document',
-      status: 'draft',
-      version: 1,
-      createdById: payload.userId,
-      ctdSection: payload.sectionCode || null,
-      metadata: {
-        anaGenerated: true,
-        anaActionType: payload.type,
-        confidence: payload.metadata.confidence,
-        runId: payload.metadata.runId,
-        source: 'ana_guidance',
-        decisionContext: payload.metadata.decisionContext,
-        guidanceSummary: payload.metadata.guidanceSummary,
-        threadId: payload.metadata.threadId,
-        conversationId: payload.metadata.conversationId,
-      },
-    }).returning();
+    // Transaction wrapping — artifact + version + provenance must all succeed or all roll back.
+    // This ensures no orphaned artifacts without version history (21 CFR Part 11 § 11.10(c)).
+    const result = await db.transaction(async (tx) => {
+      // 1. Insert artifact — returns the auto-generated integer PK
+      const [artifact] = await tx.insert(concept2cureArtifacts).values({
+        artifactId: externalId,
+        organizationId: payload.organizationId,
+        projectId: payload.projectId,
+        title: payload.title,
+        content: payload.content,
+        contentHash,
+        type: 'markdown',
+        category: 'document',
+        status: 'draft',
+        version: 1,
+        createdById: payload.userId,
+        ctdSection: payload.sectionCode || null,
+        metadata: {
+          anaGenerated: true,
+          anaActionType: payload.type,
+          confidence: payload.metadata.confidence,
+          runId: payload.metadata.runId,
+          source: 'ana_guidance',
+          decisionContext: payload.metadata.decisionContext,
+          guidanceSummary: payload.metadata.guidanceSummary,
+          threadId: payload.metadata.threadId,
+          conversationId: payload.metadata.conversationId,
+        },
+      }).returning();
 
-    const artifactPk = artifact.id; // integer PK from serial
+      const artifactPk = artifact.id; // integer PK from serial
 
-    // 2. Insert version snapshot — artifactId here is the integer FK
-    await db.insert(concept2cureArtifactVersions).values({
-      artifactId: artifactPk,
-      organizationId: payload.organizationId,
-      version: 1,
-      content: payload.content,
-      contentHash,
-      createdById: payload.userId,
-      changeDescription: `AnA 1.0 RI auto-generated ${payload.type.replace(/_/g, ' ')} (confidence: ${payload.metadata.confidence})`,
+      // 2. Insert version snapshot — artifactId here is the integer FK
+      const [version] = await tx.insert(concept2cureArtifactVersions).values({
+        artifactId: artifactPk,
+        organizationId: payload.organizationId,
+        version: 1,
+        content: payload.content,
+        contentHash,
+        createdById: payload.userId,
+        changeDescription: `AnA 1.0 RI auto-generated ${payload.type.replace(/_/g, ' ')} (confidence: ${payload.metadata.confidence})`,
+      }).returning();
+
+      // 3. Provenance event — 21 CFR Part 11 § 11.10(e) audit trail
+      await tx.insert(concept2cureProvenanceEvents).values({
+        eventId: uuidv4(),
+        artifactId: artifactPk,
+        artifactVersionId: version.id,
+        organizationId: payload.organizationId,
+        eventType: 'generation',
+        eventAction: 'ai_generate',
+        actorId: payload.userId,
+        actorName: payload.userName,
+        sourceDescription: `AnA 1.0 RI auto-generated ${payload.type.replace(/_/g, ' ')}`,
+        backendRoute: 'POST /api/chat',
+        backendService: 'ana-guidance-executor',
+        details: {
+          confidence: payload.metadata.confidence,
+          runId: payload.metadata.runId,
+          source: 'ana_guidance',
+          contentHash,
+          externalId,
+          decisionContext: payload.metadata.decisionContext,
+          guidanceSummary: payload.metadata.guidanceSummary,
+        },
+      });
+
+      return artifactPk;
     });
 
     console.log(
-      `[AnA Executor] Created ${payload.type}: id=${artifactPk}, externalId=${externalId}, project=${payload.projectId}`
+      `[AnA Executor] Created ${payload.type}: id=${result}, externalId=${externalId}, project=${payload.projectId}, org=${payload.organizationId}`
     );
 
     return {
@@ -274,14 +331,14 @@ async function executeArtifactCreation(payload: AnaActionPayload): Promise<AnaAc
       actionType: payload.type,
       confidence: payload.metadata.confidence,
       artifactId: externalId,
-      artifactPk,
+      artifactPk: result,
       threadId: null,
       payload,
       error: null,
       provenance: makeProvenance(payload),
     };
   } catch (err: any) {
-    console.error(`[AnA Executor] Artifact creation failed:`, err?.message);
+    console.error(`[AnA Executor] Artifact creation failed (org=${payload.organizationId}, project=${payload.projectId}):`, err?.message);
     return failResult(payload, err?.message || 'Artifact creation failed');
   }
 }
@@ -318,35 +375,61 @@ async function executeReviewThreadCreation(payload: AnaActionPayload): Promise<A
       createdArtifactId = memoResult.artifactId;
     }
 
-    // Insert review thread via Drizzle ORM
-    const [thread] = await db.insert(concept2cureReviewThreads).values({
-      threadId: threadExtId,
-      orgId: payload.organizationId,
-      projectId: payload.projectId,
-      artifactId: artifactPk,
-      createdById: payload.userId,
-      createdByName: payload.userName,
-      title: payload.title,
-      status: 'open',
-      priority: 'high',
-    }).returning();
+    // Transaction: thread + comment + provenance must all succeed together
+    const threadPk = await db.transaction(async (tx) => {
+      // Insert review thread via Drizzle ORM
+      const [thread] = await tx.insert(concept2cureReviewThreads).values({
+        threadId: threadExtId,
+        orgId: payload.organizationId,
+        projectId: payload.projectId,
+        artifactId: artifactPk,
+        createdById: payload.userId,
+        createdByName: payload.userName,
+        title: payload.title,
+        status: 'open',
+        priority: 'high',
+      }).returning();
 
-    const threadPk = thread.id; // integer PK
+      const pk = thread.id;
 
-    // Insert initial comment via Drizzle ORM
-    await db.insert(concept2cureThreadComments).values({
-      commentId: commentExtId,
-      orgId: payload.organizationId,
-      threadId: threadPk,
-      artifactId: artifactPk,
-      authorId: payload.userId,
-      authorName: payload.userName,
-      body: payload.content,
-      kind: 'comment',
+      // Insert initial comment via Drizzle ORM
+      await tx.insert(concept2cureThreadComments).values({
+        commentId: commentExtId,
+        orgId: payload.organizationId,
+        threadId: pk,
+        artifactId: artifactPk,
+        authorId: payload.userId,
+        authorName: payload.userName,
+        body: payload.content,
+        kind: 'comment',
+      });
+
+      // Provenance event — 21 CFR Part 11 § 11.10(e) audit trail
+      await tx.insert(concept2cureProvenanceEvents).values({
+        eventId: uuidv4(),
+        artifactId: artifactPk!,
+        organizationId: payload.organizationId,
+        eventType: 'generation',
+        eventAction: 'ai_generate',
+        actorId: payload.userId,
+        actorName: payload.userName,
+        sourceDescription: `AnA 1.0 RI created review thread for ${payload.title}`,
+        backendRoute: 'POST /api/chat',
+        backendService: 'ana-guidance-executor',
+        details: {
+          confidence: payload.metadata.confidence,
+          runId: payload.metadata.runId,
+          source: 'ana_guidance',
+          threadExtId,
+          commentExtId,
+        },
+      });
+
+      return pk;
     });
 
     console.log(
-      `[AnA Executor] Created review thread: threadId=${threadExtId}, artifactPk=${artifactPk}, project=${payload.projectId}`
+      `[AnA Executor] Created review thread: threadId=${threadExtId}, artifactPk=${artifactPk}, project=${payload.projectId}, org=${payload.organizationId}`
     );
 
     return {
@@ -362,7 +445,7 @@ async function executeReviewThreadCreation(payload: AnaActionPayload): Promise<A
       provenance: makeProvenance(payload),
     };
   } catch (err: any) {
-    console.error(`[AnA Executor] Review thread creation failed:`, err?.message);
+    console.error(`[AnA Executor] Review thread creation failed (org=${payload.organizationId}, project=${payload.projectId}):`, err?.message);
     return failResult(payload, err?.message || 'Review thread creation failed');
   }
 }
@@ -379,6 +462,10 @@ async function executeReviewThreadCreation(payload: AnaActionPayload): Promise<A
 export async function executeGuidanceAction(payload: AnaActionPayload): Promise<AnaActionResult> {
   if (!payload.type || !payload.projectId || !payload.organizationId || !payload.userId) {
     return failResult(payload, 'Missing required fields: type, projectId, organizationId, userId');
+  }
+
+  if (payload.organizationId <= 0 || payload.projectId <= 0 || payload.userId <= 0) {
+    return failResult(payload, 'Invalid IDs: organizationId, projectId, and userId must be positive integers');
   }
 
   if (!VALID_ACTION_TYPES.has(payload.type)) {

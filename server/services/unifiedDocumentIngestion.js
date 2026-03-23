@@ -1432,7 +1432,7 @@ export class UnifiedDocumentIngestion {
       case 'lumen-ai':
         return {
           ...baseResponse,
-          message: 'Document successfully integrated into Lumen AI knowledge base',
+          message: 'Document successfully integrated into AnA knowledge base',
           knowledgeBaseEntry: moduleData.knowledgeBaseEntry,
           chatReady: true,
           expertiseArea: moduleData.knowledgeBaseEntry.expertiseArea,

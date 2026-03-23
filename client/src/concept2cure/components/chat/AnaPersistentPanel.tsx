@@ -53,7 +53,12 @@ const renderMarkdown = (content: string): string => {
       ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'id'],
     });
   } catch {
-    return content.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return content
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#x27;');
   }
 };
 
@@ -282,6 +287,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const initialMessageSentRef = useRef(false);
+  // Thread persistence — reuse thread_id across messages for continuous conversation
+  const threadIdRef = useRef<string | null>(null);
 
   const screenName = contextProfile?.screenName || 'default';
   const screenLabel = SCREEN_LABELS[screenName] || '';
@@ -601,7 +608,24 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         let response = await fetch('/api/ana-ri/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(anaRiPayload),
+          body: JSON.stringify({
+            message: text,
+            chatMode,
+            thread_id: threadIdRef.current || undefined,
+            project_id: contextProfile?.projectId || undefined,
+            submission_type: contextProfile?.productType || undefined,
+            context: {
+              screen: contextProfile?.screenName,
+              project: contextProfile?.activeProject,
+              projectId: contextProfile?.projectId,
+              productType: contextProfile?.productType,
+              userRole: contextProfile?.userRole,
+            },
+            conversationHistory: messages.slice(-10).map(m => ({
+              role: m.role,
+              content: m.content,
+            })),
+          }),
         });
 
         if (!response.ok) {
@@ -633,70 +657,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         }
         data = await response.json();
 
-        // Capture orchestration metadata from AnA RI
-        if (data.orchestration) {
-          setLastOrchestration(data.orchestration);
-        }
-
-        const responseContent = data.response || data.answer || 'I\'m here to help with your regulatory work. What would you like to work on?';
-
-        // Parse and execute any embedded commands from AnA
-        const commandBlocks = responseContent.match(/```command\s*\n([\s\S]*?)```/g);
-        const commandResults: string[] = [];
-        let chainBroken = false;
-        if (commandBlocks) {
-          for (const block of commandBlocks) {
-            if (chainBroken) {
-              commandResults.push(`**${block.slice(0, 40)}...** skipped (previous command failed)`);
-              continue;
-            }
-            try {
-              const jsonStr = block.replace(/^```command\s*\n?/, '').replace(/```$/, '').trim();
-              const cmd = JSON.parse(jsonStr);
-              if (cmd.command) {
-                const execRes = await fetch('/api/ana-ri/execute', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify(cmd),
-                });
-                const result = await execRes.json();
-                if (execRes.ok && result.success) {
-                  commandResults.push(`**${result.action}**: ${result.message}`);
-                  // Handle file downloads (export_artifact returns base64)
-                  if (result.data?.base64 && result.data?.fileName) {
-                    try {
-                      const mimeType = result.data.format === 'docx'
-                        ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-                        : 'application/octet-stream';
-                      const byteChars = atob(result.data.base64);
-                      const byteArray = new Uint8Array(byteChars.length);
-                      for (let i = 0; i < byteChars.length; i++) byteArray[i] = byteChars.charCodeAt(i);
-                      const blob = new Blob([byteArray], { type: mimeType });
-                      const url = URL.createObjectURL(blob);
-                      const a = document.createElement('a');
-                      a.href = url;
-                      a.download = result.data.fileName;
-                      a.click();
-                      URL.revokeObjectURL(url);
-                    } catch { /* download fallback handled by message */ }
-                  }
-                } else {
-                  commandResults.push(`**${result.action || cmd.command}** failed: ${result.message || result.error || 'Unknown error'}`);
-                  chainBroken = true;
-                }
-              }
-            } catch (parseErr) {
-              commandResults.push(`**Command parse error**: Could not execute command block`);
-              console.error('[AnA RI] Command parse error:', parseErr);
-              chainBroken = true;
-            }
-          }
-        }
-
-        // Clean command blocks from visible response and append results
-        let cleanContent = responseContent.replace(/```command\n[\s\S]*?```/g, '').trim();
-        if (commandResults.length > 0) {
-          cleanContent += '\n\n---\n**Executed:**\n' + commandResults.map(r => `- ${r}`).join('\n');
+        // Capture thread_id for conversation continuity
+        if (data.thread_id) {
+          threadIdRef.current = data.thread_id;
         }
 
         setMessages(prev => [...prev, {
@@ -704,6 +667,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           role: 'assistant',
           content: cleanContent,
           timestamp: new Date(),
+          executedActions: data.executedActions || undefined,
         }]);
 
         // Auto-persist substantial AI responses as artifacts when project context exists
@@ -742,6 +706,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       }]);
     } finally {
       setIsThinking(false);
+      // Return focus to input after send completes
+      inputRef.current?.focus();
     }
   }, [input, isThinking, messages, contextProfile, chatMode, intentLens]);
 
@@ -879,7 +845,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               </div>
               <textarea ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)} placeholder="Message AnA..." rows={1} className="flex-1 resize-none bg-transparent border-none outline-none text-[#141413] placeholder:text-[#B0AEA5] text-sm leading-6 min-h-[24px] max-h-[120px]" />
               {hasMessages && (
-                <button onClick={() => { setMessages([]); setLastOrchestration(null); }} className="flex-shrink-0 p-1.5 text-[#B0AEA5] hover:text-[#6B6962] rounded-lg transition-colors" title="New thread">
+                <button onClick={() => { setMessages([]); threadIdRef.current = null; }} className="flex-shrink-0 p-1.5 text-[#B0AEA5] hover:text-[#6B6962] rounded-lg transition-colors" title="New thread">
                   <RotateCcw className="w-3.5 h-3.5" />
                 </button>
               )}
@@ -897,7 +863,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-white">
       {/* ── Conversation area — fills available space ── */}
-      <div className="flex-1 overflow-y-auto zen-scroll" style={{ scrollbarWidth: 'thin' }}>
+      <div className="flex-1 overflow-y-auto zen-scroll" role="log" aria-live="polite" aria-label="Conversation with AnA" style={{ scrollbarWidth: 'thin' }}>
         {!hasMessages && !isThinking ? (
           /* ── Empty state: greeting + suggested actions ── */
           <div className="flex flex-col items-center justify-center h-full px-6">
@@ -1255,7 +1221,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           {hasMessages && (
             <div className="flex justify-center mb-2">
               <button
-                onClick={() => { setMessages([]); setLastOrchestration(null); }}
+                onClick={() => { setMessages([]); threadIdRef.current = null; }}
                 className="flex items-center gap-1.5 px-3 py-1 text-xs text-[#B0AEA5] hover:text-[#6B6962] hover:bg-[#F5F4EF] rounded-full transition-colors"
               >
                 <RotateCcw className="w-3 h-3" />
