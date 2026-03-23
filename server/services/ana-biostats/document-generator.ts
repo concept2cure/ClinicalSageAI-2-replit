@@ -378,12 +378,53 @@ export class DocumentGenerator {
 
     content += `## 5. Significance Level and Multiplicity\n\n`;
     content += `Two-sided significance level: α = ${input.alpha}.\n\n`;
+    if (comp.multiplicityResult && comp.multiplicityResult.endpointCount > 1) {
+      content += `### Multiplicity Adjustment\n`;
+      content += `${comp.multiplicityResult.recommendation}\n\n`;
+      content += `| Endpoint | Adjusted Alpha |\n|----------|---------------|\n`;
+      comp.multiplicityResult.adjustedAlphas.forEach((a, i) => {
+        content += `| Endpoint ${i + 1} | ${a.toFixed(4)} |\n`;
+      });
+      content += `\nFamily-wise error rate controlled at α = ${input.alpha}.\n\n`;
+    }
 
-    content += `## 6. Missing Data Handling\n\n`;
-    content += `[To be specified based on estimand framework and expected missing data patterns.]\n\n`;
+    content += `## 6. Estimand Framework\n\n`;
+    if (input.estimandStrategy) {
+      content += `### Estimand Strategy: ${input.estimandStrategy}\n\n`;
+      content += `Per ICH E9(R1), the estimand is defined by:\n`;
+      content += `- **Population**: [Study-specific]\n`;
+      content += `- **Variable**: ${input.endpointType} endpoint\n`;
+      content += `- **Intercurrent event handling**: ${input.estimandStrategy}\n`;
+      content += `- **Summary measure**: [Study-specific]\n\n`;
+    } else {
+      content += `Estimand framework should be defined per ICH E9(R1) prior to study conduct.\n\n`;
+    }
 
-    content += `## 7. Sensitivity Analyses\n\n`;
-    content += `[Pre-specified sensitivity analyses addressing key assumptions.]\n\n`;
+    content += `## 7. Missing Data Handling\n\n`;
+    if (input.missingDataMethod) {
+      content += `### Primary Approach: ${input.missingDataMethod}\n\n`;
+      if (comp.missingDataImpact) {
+        content += `Expected missing data rate: ${(comp.missingDataImpact.expectedMissingRate * 100).toFixed(0)}%.\n`;
+        content += `Effective sample size after missing data: ${comp.missingDataImpact.effectiveSampleSize}.\n`;
+        content += `Estimated power after missing data: ${(comp.missingDataImpact.adjustedPower * 100).toFixed(1)}%.\n`;
+        content += `Bias risk: ${comp.missingDataImpact.biasRisk}.\n\n`;
+        content += `${comp.missingDataImpact.recommendation}\n\n`;
+      }
+    } else {
+      content += `Missing data handling method should be pre-specified in the SAP. Consider MMRM for longitudinal endpoints or multiple imputation for general missing data patterns.\n\n`;
+    }
+
+    content += `## 8. Sensitivity Analyses\n\n`;
+    content += `The following sensitivity analyses are recommended:\n`;
+    content += `- Tipping point analysis for missing data assumptions\n`;
+    content += `- Alternative population analysis (ITT vs. PP)\n`;
+    if (judgment.fragility.category !== 'robust') {
+      content += `- Sensitivity to effect size assumption (fragility index: ${judgment.fragility.fragilityIndex})\n`;
+    }
+    if (input.estimandStrategy) {
+      content += `- Alternative intercurrent event handling strategies\n`;
+    }
+    content += `\n`;
 
     if (input.interimAnalyses && input.interimAnalyses > 0) {
       content += `## 8. Interim Analyses\n\n`;

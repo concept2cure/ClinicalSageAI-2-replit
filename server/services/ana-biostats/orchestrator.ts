@@ -48,8 +48,8 @@ export class AnaBiostatsOrchestrator {
     }
     const input = validation.normalizedInput;
 
-    // Layer 2: Deterministic computation
-    const computation = computationEngine.compute(input);
+    // Layer 2: Deterministic computation (enhanced with multiplicity, crossover, missing data)
+    const computation = computationEngine.computeEnhanced(input);
 
     // Layer 3: Judgment
     const judgment = judgmentEngine.judge(input, computation);
@@ -205,7 +205,7 @@ export class AnaBiostatsOrchestrator {
     }
 
     const input = validation.normalizedInput;
-    const computation = computationEngine.compute(input);
+    const computation = computationEngine.computeEnhanced(input);
     const judgment = judgmentEngine.judge(input, computation);
     const domain = domainAdapter.adapt(input, computation, judgment);
     const regulatory = input.regulatoryBody

@@ -127,6 +127,19 @@ export class InputNormalizer {
       numberOfGroups: raw.numberOfGroups ?? 2,
       followUpDuration: raw.followUpDuration,
       interimAnalyses: raw.interimAnalyses,
+      // Enhancement fields
+      crossoverPeriods: raw.crossoverPeriods,
+      withinSubjectCorrelation: raw.withinSubjectCorrelation,
+      numberOfEndpoints: raw.numberOfEndpoints,
+      multiplicityMethod: raw.multiplicityMethod,
+      estimandStrategy: raw.estimandStrategy,
+      missingDataMethod: raw.missingDataMethod,
+      expectedMissingRate: raw.expectedMissingRate,
+      numberOfMeasurements: raw.numberOfMeasurements,
+      compoundSymmetryRho: raw.compoundSymmetryRho,
+      agreementTarget: raw.agreementTarget,
+      aucTarget: raw.aucTarget,
+      aucNull: raw.aucNull,
     };
 
     return {

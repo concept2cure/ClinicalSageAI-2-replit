@@ -82,6 +82,19 @@ export interface StatisticalInput {
   numberOfGroups?: number;
   followUpDuration?: number;
   interimAnalyses?: number;
+  // Enhancement fields
+  crossoverPeriods?: number;
+  withinSubjectCorrelation?: number;
+  numberOfEndpoints?: number;
+  multiplicityMethod?: 'bonferroni' | 'holm' | 'hochberg' | 'dunnett' | 'none';
+  estimandStrategy?: 'treatment_policy' | 'hypothetical' | 'composite' | 'principal_stratum' | 'while_on_treatment';
+  missingDataMethod?: 'complete_case' | 'LOCF' | 'MMRM' | 'multiple_imputation' | 'pattern_mixture';
+  expectedMissingRate?: number;
+  numberOfMeasurements?: number;
+  compoundSymmetryRho?: number;
+  agreementTarget?: number;
+  aucTarget?: number;
+  aucNull?: number;
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -128,6 +141,9 @@ export interface ComputationResult {
   assumptions: ComputationAssumption[];
   scenarios?: ScenarioResult[];
   diagnosticMetrics?: DiagnosticComputationResult;
+  multiplicityResult?: MultiplicityResult;
+  crossoverResult?: CrossoverResult;
+  missingDataImpact?: MissingDataImpact;
 }
 
 export interface ComputationAssumption {
@@ -151,10 +167,41 @@ export interface DiagnosticComputationResult {
   ppv?: number;
   npv?: number;
   auc?: number;
+  aucCI?: { lower: number; upper: number };
   agreementKappa?: number;
+  kappaSampleSize?: number;
   sampleSizeForSensitivity?: number;
   sampleSizeForSpecificity?: number;
   prevalenceAdjustedN?: number;
+}
+
+export interface MultiplicityResult {
+  method: string;
+  originalAlpha: number;
+  adjustedAlphas: number[];
+  endpointCount: number;
+  effectiveFamilyAlpha: number;
+  sampleSizeImpact: number;
+  recommendation: string;
+}
+
+export interface CrossoverResult {
+  periods: number;
+  withinSubjectN: number;
+  totalSubjects: number;
+  carryoverWarning: boolean;
+  parallelEquivalentN: number;
+  efficiencyGain: number;
+}
+
+export interface MissingDataImpact {
+  method: string;
+  expectedMissingRate: number;
+  effectiveSampleSize: number;
+  powerReduction: number;
+  adjustedPower: number;
+  biasRisk: 'low' | 'moderate' | 'high';
+  recommendation: string;
 }
 
 // ════════════════════════════════════════════════════════════════

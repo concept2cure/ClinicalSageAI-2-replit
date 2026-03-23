@@ -264,9 +264,10 @@ describe('Layer 2: Deterministic Computation', () => {
 // ═══════════════════════════════════════════════════════════════
 
 describe('Layer 3: Judgment Engine', () => {
-  it('judges a well-powered study as adequate', () => {
-    const comp = engine.compute({ ...pharmaInput, powerTarget: 0.90 });
-    const result = judgment.judge({ ...pharmaInput, powerTarget: 0.90 }, comp);
+  it('judges a well-powered study with estimand as adequate', () => {
+    const wellInput = { ...pharmaInput, powerTarget: 0.90, estimandStrategy: 'treatment_policy' as const, missingDataMethod: 'MMRM' as const };
+    const comp = engine.compute(wellInput);
+    const result = judgment.judge(wellInput, comp);
 
     expect(result.overallVerdict).toBe('adequate');
     expect(['low', 'moderate']).toContain(result.overallRisk);
@@ -767,5 +768,371 @@ describe('Deterministic Reproducibility', () => {
     expect(run1.sampleSize.total).toBe(run2.sampleSize.total);
     expect(run1.diagnosticMetrics!.ppv).toBe(run2.diagnosticMetrics!.ppv);
     expect(run1.diagnosticMetrics!.npv).toBe(run2.diagnosticMetrics!.npv);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
+// 11. ENHANCED: Multiplicity Computation Tests
+// ═══════════════════════════════════════════════════════════════
+
+describe('Enhanced: Multiplicity Computation', () => {
+  it('computes Bonferroni adjustment for 3 endpoints', () => {
+    const result = engine.computeMultiplicity({
+      ...pharmaInput,
+      numberOfEndpoints: 3,
+      multiplicityMethod: 'bonferroni',
+    });
+
+    expect(result.method).toBe('bonferroni');
+    expect(result.endpointCount).toBe(3);
+    expect(result.adjustedAlphas).toHaveLength(3);
+    expect(result.adjustedAlphas[0]).toBeCloseTo(0.05 / 3, 4);
+    expect(result.effectiveFamilyAlpha).toBeCloseTo(0.05 / 3, 4);
+    expect(result.sampleSizeImpact).toBeGreaterThan(0);
+  });
+
+  it('computes Holm step-down adjustment', () => {
+    const result = engine.computeMultiplicity({
+      ...pharmaInput,
+      numberOfEndpoints: 3,
+      multiplicityMethod: 'holm',
+    });
+
+    expect(result.method).toBe('holm');
+    expect(result.adjustedAlphas[0]).toBeCloseTo(0.05 / 3, 4);
+    expect(result.adjustedAlphas[1]).toBeCloseTo(0.05 / 2, 4);
+    expect(result.adjustedAlphas[2]).toBeCloseTo(0.05, 4);
+  });
+
+  it('returns no adjustment for single endpoint', () => {
+    const result = engine.computeMultiplicity({
+      ...pharmaInput,
+      numberOfEndpoints: 1,
+    });
+
+    expect(result.method).toBe('none');
+    expect(result.sampleSizeImpact).toBe(0);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
+// 12. ENHANCED: Crossover Computation Tests
+// ═══════════════════════════════════════════════════════════════
+
+describe('Enhanced: Crossover Computation', () => {
+  it('computes crossover sample size with efficiency gain', () => {
+    const result = engine.computeCrossover({
+      ...pharmaInput,
+      crossoverPeriods: 2,
+      withinSubjectCorrelation: 0.5,
+    });
+
+    expect(result.periods).toBe(2);
+    expect(result.withinSubjectN).toBeGreaterThan(0);
+    expect(result.totalSubjects).toBeGreaterThan(0);
+    expect(result.efficiencyGain).toBeGreaterThan(0);
+    expect(result.parallelEquivalentN).toBeGreaterThan(result.withinSubjectN);
+  });
+
+  it('higher correlation yields smaller crossover N', () => {
+    const low = engine.computeCrossover({ ...pharmaInput, crossoverPeriods: 2, withinSubjectCorrelation: 0.3 });
+    const high = engine.computeCrossover({ ...pharmaInput, crossoverPeriods: 2, withinSubjectCorrelation: 0.8 });
+
+    expect(high.withinSubjectN).toBeLessThan(low.withinSubjectN);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
+// 13. ENHANCED: Missing Data Impact Tests
+// ═══════════════════════════════════════════════════════════════
+
+describe('Enhanced: Missing Data Impact', () => {
+  it('computes missing data impact for complete case', () => {
+    const base = engine.compute(pharmaInput);
+    const impact = engine.computeMissingDataImpact(
+      { ...pharmaInput, expectedMissingRate: 0.20, missingDataMethod: 'complete_case' },
+      base
+    );
+
+    expect(impact.method).toBe('Complete case analysis');
+    expect(impact.expectedMissingRate).toBe(0.20);
+    expect(impact.effectiveSampleSize).toBeLessThan(base.sampleSize.total);
+    expect(impact.powerReduction).toBeGreaterThan(0);
+    expect(impact.adjustedPower).toBeLessThan(base.power);
+  });
+
+  it('MMRM preserves more power than complete case', () => {
+    const base = engine.compute(pharmaInput);
+    const cc = engine.computeMissingDataImpact(
+      { ...pharmaInput, expectedMissingRate: 0.20, missingDataMethod: 'complete_case' },
+      base
+    );
+    const mmrm = engine.computeMissingDataImpact(
+      { ...pharmaInput, expectedMissingRate: 0.20, missingDataMethod: 'MMRM' },
+      base
+    );
+
+    expect(mmrm.adjustedPower).toBeGreaterThanOrEqual(cc.adjustedPower);
+  });
+
+  it('higher missing rate increases bias risk', () => {
+    const base = engine.compute(pharmaInput);
+    const low = engine.computeMissingDataImpact(
+      { ...pharmaInput, expectedMissingRate: 0.05, missingDataMethod: 'complete_case' },
+      base
+    );
+    const high = engine.computeMissingDataImpact(
+      { ...pharmaInput, expectedMissingRate: 0.25, missingDataMethod: 'complete_case' },
+      base
+    );
+
+    expect(high.powerReduction).toBeGreaterThan(low.powerReduction);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
+// 14. ENHANCED: Agreement/Kappa Computation Tests
+// ═══════════════════════════════════════════════════════════════
+
+describe('Enhanced: Agreement/Kappa Computation', () => {
+  it('computes kappa sample size', () => {
+    const result = engine.computeAgreementKappa({
+      ...diagnosticInput,
+      studyType: 'agreement',
+      agreementTarget: 0.80,
+    });
+
+    expect(result.kappaSampleSize).toBeGreaterThan(0);
+    expect(result.kappa).toBe(0.80);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
+// 15. ENHANCED: AUC Computation Tests
+// ═══════════════════════════════════════════════════════════════
+
+describe('Enhanced: AUC Computation', () => {
+  it('computes AUC comparison sample size', () => {
+    const result = engine.computeAUCComparison({
+      ...diagnosticInput,
+      endpointType: 'auc_roc',
+      aucTarget: 0.85,
+      aucNull: 0.50,
+    });
+
+    expect(result.aucSampleSize).toBeGreaterThan(0);
+    expect(result.auc).toBe(0.85);
+    expect(result.aucCI.lower).toBeLessThan(0.85);
+    expect(result.aucCI.upper).toBeGreaterThan(0.85);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
+// 16. ENHANCED: New Judgment Dimensions Tests
+// ═══════════════════════════════════════════════════════════════
+
+describe('Enhanced: New Judgment Dimensions', () => {
+  it('flags missing multiplicity correction in Phase III', () => {
+    const multiInput: StatisticalInput = {
+      ...pharmaInput,
+      phase: 'III',
+      numberOfEndpoints: 3,
+      multiplicityMethod: undefined,
+    };
+    const comp = engine.computeEnhanced(multiInput);
+    const result = judgment.judge(multiInput, comp);
+
+    const multiDim = result.dimensions.find(d => d.name === 'Multiplicity Control');
+    expect(multiDim).toBeDefined();
+    expect(multiDim!.verdict).toBe('inadequate');
+    expect(multiDim!.flags.some(f => f.includes('regulatory rejection'))).toBe(true);
+  });
+
+  it('accepts single endpoint without multiplicity', () => {
+    const comp = engine.computeEnhanced(pharmaInput);
+    const result = judgment.judge(pharmaInput, comp);
+
+    const multiDim = result.dimensions.find(d => d.name === 'Multiplicity Control');
+    expect(multiDim).toBeDefined();
+    expect(multiDim!.verdict).toBe('adequate');
+  });
+
+  it('flags missing estimand in Phase III pharma', () => {
+    const noEstimand: StatisticalInput = {
+      ...pharmaInput,
+      phase: 'III',
+      estimandStrategy: undefined,
+    };
+    const comp = engine.computeEnhanced(noEstimand);
+    const result = judgment.judge(noEstimand, comp);
+
+    const estimandDim = result.dimensions.find(d => d.name === 'Estimand Clarity');
+    expect(estimandDim).toBeDefined();
+    expect(estimandDim!.verdict).toBe('inadequate');
+    expect(estimandDim!.flags.some(f => f.includes('ICH E9(R1)'))).toBe(true);
+  });
+
+  it('accepts estimand for device track without penalty', () => {
+    const comp = engine.computeEnhanced(deviceInput);
+    const result = judgment.judge(deviceInput, comp);
+
+    const estimandDim = result.dimensions.find(d => d.name === 'Estimand Clarity');
+    expect(estimandDim).toBeDefined();
+    expect(estimandDim!.score).toBeGreaterThanOrEqual(70);
+  });
+
+  it('flags high missing data rate', () => {
+    const highMissing: StatisticalInput = {
+      ...pharmaInput,
+      expectedMissingRate: 0.35,
+      missingDataMethod: undefined,
+    };
+    const comp = engine.computeEnhanced(highMissing);
+    const result = judgment.judge(highMissing, comp);
+
+    const missingDim = result.dimensions.find(d => d.name === 'Missing Data Risk');
+    expect(missingDim).toBeDefined();
+    expect(missingDim!.verdict).toBe('inadequate');
+  });
+
+  it('flags LOCF as not recommended', () => {
+    const locfInput: StatisticalInput = {
+      ...pharmaInput,
+      missingDataMethod: 'LOCF',
+      expectedMissingRate: 0.15,
+    };
+    const comp = engine.computeEnhanced(locfInput);
+    const result = judgment.judge(locfInput, comp);
+
+    const missingDim = result.dimensions.find(d => d.name === 'Missing Data Risk');
+    expect(missingDim!.flags.some(f => f.includes('LOCF') && f.includes('no longer recommended'))).toBe(true);
+  });
+
+  it('flags placebo in non-inferiority as contradictory', () => {
+    const badComparator: StatisticalInput = {
+      ...deviceInput,
+      comparatorType: 'placebo',
+      studyType: 'non_inferiority',
+    };
+    const comp = engine.computeEnhanced(badComparator);
+    const result = judgment.judge(badComparator, comp);
+
+    const compDim = result.dimensions.find(d => d.name === 'Comparator Appropriateness');
+    expect(compDim).toBeDefined();
+    expect(compDim!.verdict).toBe('inadequate');
+    expect(compDim!.flags.some(f => f.includes('contradictory'))).toBe(true);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
+// 17. ENHANCED: Enhanced Orchestrator with New Capabilities
+// ═══════════════════════════════════════════════════════════════
+
+describe('Enhanced: Orchestrator with New Capabilities', () => {
+  it('includes multiplicity result in enhanced workflow', async () => {
+    const result = await orchestrator.executeWorkflow({
+      workflowType: 'sample_size_rationale',
+      input: { ...pharmaInput, numberOfEndpoints: 3, multiplicityMethod: 'bonferroni' },
+      userId: 1,
+      organizationId: 1,
+    });
+
+    expect(result.computation.multiplicityResult).toBeDefined();
+    expect(result.computation.multiplicityResult!.endpointCount).toBe(3);
+  });
+
+  it('includes missing data impact when specified', async () => {
+    const result = await orchestrator.executeWorkflow({
+      workflowType: 'sample_size_rationale',
+      input: { ...pharmaInput, expectedMissingRate: 0.20, missingDataMethod: 'MMRM' },
+      userId: 1,
+      organizationId: 1,
+    });
+
+    expect(result.computation.missingDataImpact).toBeDefined();
+    expect(result.computation.missingDataImpact!.method).toBe('Mixed model for repeated measures');
+  });
+
+  it('includes 10 judgment dimensions in enhanced output', async () => {
+    const result = await orchestrator.executeWorkflow({
+      workflowType: 'statistical_risk_review',
+      input: pharmaInput,
+      userId: 1,
+      organizationId: 1,
+    });
+
+    expect(result.judgment.dimensions.length).toBe(10);
+    const dimNames = result.judgment.dimensions.map(d => d.name);
+    expect(dimNames).toContain('Multiplicity Control');
+    expect(dimNames).toContain('Estimand Clarity');
+    expect(dimNames).toContain('Missing Data Risk');
+    expect(dimNames).toContain('Comparator Appropriateness');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
+// 18. ENHANCED: SAP Document with Multiplicity and Missing Data
+// ═══════════════════════════════════════════════════════════════
+
+describe('Enhanced: SAP Document Content', () => {
+  it('SAP section includes multiplicity adjustment when specified', () => {
+    const multiInput: StatisticalInput = {
+      ...pharmaInput,
+      numberOfEndpoints: 3,
+      multiplicityMethod: 'bonferroni',
+    };
+    const comp = engine.computeEnhanced(multiInput);
+    const jdg = judgment.judge(multiInput, comp);
+    const domain = domainAdapter.adapt(multiInput, comp, jdg);
+
+    const doc = docGenerator.generate(
+      'sap_section_draft',
+      multiInput, comp, jdg, domain, undefined,
+      { projectId: 1, organizationId: 1, userId: 1 }
+    );
+
+    expect(doc.content).toContain('Multiplicity Adjustment');
+    expect(doc.content).toContain('bonferroni');
+  });
+
+  it('SAP section includes missing data handling when specified', () => {
+    const missingInput: StatisticalInput = {
+      ...pharmaInput,
+      missingDataMethod: 'MMRM',
+      expectedMissingRate: 0.15,
+    };
+    const comp = engine.computeEnhanced(missingInput);
+    const jdg = judgment.judge(missingInput, comp);
+    const domain = domainAdapter.adapt(missingInput, comp, jdg);
+
+    const doc = docGenerator.generate(
+      'sap_section_draft',
+      missingInput, comp, jdg, domain, undefined,
+      { projectId: 1, organizationId: 1, userId: 1 }
+    );
+
+    expect(doc.content).toContain('MMRM');
+    expect(doc.content).toContain('Missing Data Handling');
+    expect(doc.content).not.toContain('[To be specified');
+  });
+
+  it('SAP section includes estimand framework when specified', () => {
+    const estimandInput: StatisticalInput = {
+      ...pharmaInput,
+      estimandStrategy: 'treatment_policy',
+    };
+    const comp = engine.computeEnhanced(estimandInput);
+    const jdg = judgment.judge(estimandInput, comp);
+    const domain = domainAdapter.adapt(estimandInput, comp, jdg);
+
+    const doc = docGenerator.generate(
+      'sap_section_draft',
+      estimandInput, comp, jdg, domain, undefined,
+      { projectId: 1, organizationId: 1, userId: 1 }
+    );
+
+    expect(doc.content).toContain('Estimand Framework');
+    expect(doc.content).toContain('treatment_policy');
+    expect(doc.content).toContain('ICH E9(R1)');
   });
 });

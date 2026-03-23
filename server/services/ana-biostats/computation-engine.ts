@@ -13,6 +13,9 @@ import type {
   ComputationAssumption,
   ScenarioResult,
   DiagnosticComputationResult,
+  MultiplicityResult,
+  CrossoverResult,
+  MissingDataImpact,
 } from './types';
 
 export class ComputationEngine {
@@ -383,6 +386,315 @@ export class ComputationEngine {
       diagnosticMetrics,
       scenarios: this.generateDiagnosticScenarios(input),
     };
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // Crossover study computation
+  // ════════════════════════════════════════════════════════════════
+
+  computeCrossover(input: StatisticalInput): CrossoverResult {
+    const periods = input.crossoverPeriods ?? 2;
+    const rho = input.withinSubjectCorrelation ?? 0.5;
+    const sigma = input.variance ? Math.sqrt(input.variance) : input.effectSize;
+    const zAlpha = this.normQuantile(1 - input.alpha / 2);
+    const zBeta = this.normQuantile(input.powerTarget);
+
+    // Within-subject variance reduction factor
+    const varianceReduction = 1 - rho;
+    const withinSigma = sigma * Math.sqrt(varianceReduction);
+
+    // Crossover sample size (per sequence)
+    const withinSubjectN = Math.ceil(
+      (2 * withinSigma * withinSigma * (zAlpha + zBeta) ** 2) / (input.effectSize ** 2)
+    );
+
+    // Parallel equivalent for comparison
+    const parallelN = Math.ceil(
+      (2 * sigma * sigma * (zAlpha + zBeta) ** 2) / (input.effectSize ** 2)
+    );
+
+    const totalSubjects = withinSubjectN * periods;
+    const efficiencyGain = parallelN > 0 ? (1 - withinSubjectN / parallelN) * 100 : 0;
+
+    return {
+      periods,
+      withinSubjectN,
+      totalSubjects: Math.ceil(totalSubjects / (1 - input.attritionRate)),
+      carryoverWarning: periods === 2,
+      parallelEquivalentN: parallelN * 2,
+      efficiencyGain: Math.max(0, efficiencyGain),
+    };
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // Multiplicity adjustment computation
+  // ════════════════════════════════════════════════════════════════
+
+  computeMultiplicity(input: StatisticalInput): MultiplicityResult {
+    const endpoints = input.numberOfEndpoints ?? 1;
+    const method = input.multiplicityMethod ?? 'bonferroni';
+    const originalAlpha = input.alpha;
+
+    if (endpoints <= 1 || method === 'none') {
+      return {
+        method: 'none',
+        originalAlpha,
+        adjustedAlphas: [originalAlpha],
+        endpointCount: endpoints,
+        effectiveFamilyAlpha: originalAlpha,
+        sampleSizeImpact: 0,
+        recommendation: 'Single primary endpoint — no multiplicity adjustment needed.',
+      };
+    }
+
+    let adjustedAlphas: number[];
+    let effectiveAlpha: number;
+
+    switch (method) {
+      case 'bonferroni':
+        adjustedAlphas = Array(endpoints).fill(originalAlpha / endpoints);
+        effectiveAlpha = originalAlpha / endpoints;
+        break;
+
+      case 'holm': {
+        // Holm step-down: alpha/(m), alpha/(m-1), ..., alpha/1
+        adjustedAlphas = [];
+        for (let i = 0; i < endpoints; i++) {
+          adjustedAlphas.push(originalAlpha / (endpoints - i));
+        }
+        effectiveAlpha = originalAlpha / endpoints; // most conservative step
+        break;
+      }
+
+      case 'hochberg': {
+        // Hochberg step-up: alpha/m, alpha/(m-1), ..., alpha
+        adjustedAlphas = [];
+        for (let i = 0; i < endpoints; i++) {
+          adjustedAlphas.push(originalAlpha / (endpoints - i));
+        }
+        effectiveAlpha = originalAlpha / endpoints;
+        break;
+      }
+
+      case 'dunnett': {
+        // Dunnett's adjustment (approximation for many-to-one comparisons)
+        const dunnettFactor = 1 - Math.pow(1 - originalAlpha, 1 / endpoints);
+        adjustedAlphas = Array(endpoints).fill(dunnettFactor);
+        effectiveAlpha = dunnettFactor;
+        break;
+      }
+
+      default:
+        adjustedAlphas = Array(endpoints).fill(originalAlpha / endpoints);
+        effectiveAlpha = originalAlpha / endpoints;
+    }
+
+    // Sample size increase factor
+    const zOriginal = this.normQuantile(1 - originalAlpha / 2);
+    const zAdjusted = this.normQuantile(1 - effectiveAlpha / 2);
+    const sampleSizeImpact = Math.round(((zAdjusted / zOriginal) ** 2 - 1) * 100);
+
+    return {
+      method,
+      originalAlpha,
+      adjustedAlphas,
+      endpointCount: endpoints,
+      effectiveFamilyAlpha: effectiveAlpha,
+      sampleSizeImpact,
+      recommendation: `${method} adjustment for ${endpoints} endpoints reduces per-comparison alpha to ${effectiveAlpha.toFixed(4)}. Sample size increases approximately ${sampleSizeImpact}% to maintain power.`,
+    };
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // Missing data impact computation
+  // ════════════════════════════════════════════════════════════════
+
+  computeMissingDataImpact(input: StatisticalInput, baseResult: ComputationResult): MissingDataImpact {
+    const missingRate = input.expectedMissingRate ?? input.attritionRate;
+    const method = input.missingDataMethod ?? 'complete_case';
+
+    const effectiveN = Math.floor(baseResult.sampleSize.total * (1 - missingRate));
+
+    // Estimate power reduction from missing data
+    const basePower = baseResult.power;
+    let adjustedPower: number;
+    let biasRisk: 'low' | 'moderate' | 'high';
+
+    switch (method) {
+      case 'complete_case':
+        // Complete case: simple power reduction proportional to data loss
+        adjustedPower = this.estimatePowerAtN(input, effectiveN);
+        biasRisk = missingRate > 0.20 ? 'high' : missingRate > 0.10 ? 'moderate' : 'low';
+        break;
+
+      case 'LOCF':
+        // LOCF: preserves N but may bias towards/against treatment
+        adjustedPower = basePower * 0.95; // slight power reduction
+        biasRisk = 'moderate'; // LOCF always has some bias risk
+        break;
+
+      case 'MMRM':
+        // MMRM: efficient use of available data, moderate power preservation
+        adjustedPower = basePower * (1 - missingRate * 0.3); // less power loss than CC
+        biasRisk = missingRate > 0.30 ? 'moderate' : 'low';
+        break;
+
+      case 'multiple_imputation':
+        // MI: good power preservation, depends on MAR assumption
+        adjustedPower = basePower * (1 - missingRate * 0.25);
+        biasRisk = missingRate > 0.25 ? 'moderate' : 'low';
+        break;
+
+      case 'pattern_mixture':
+        // Pattern mixture: explicitly models MNAR, may reduce power more
+        adjustedPower = basePower * (1 - missingRate * 0.5);
+        biasRisk = 'low'; // explicitly addresses non-random missingness
+        break;
+
+      default:
+        adjustedPower = this.estimatePowerAtN(input, effectiveN);
+        biasRisk = missingRate > 0.15 ? 'moderate' : 'low';
+    }
+
+    adjustedPower = Math.max(0, Math.min(1, adjustedPower));
+    const powerReduction = basePower - adjustedPower;
+
+    const methodLabels: Record<string, string> = {
+      complete_case: 'Complete case analysis',
+      LOCF: 'Last observation carried forward',
+      MMRM: 'Mixed model for repeated measures',
+      multiple_imputation: 'Multiple imputation',
+      pattern_mixture: 'Pattern mixture model',
+    };
+
+    let recommendation: string;
+    if (biasRisk === 'high') {
+      recommendation = `Missing rate of ${(missingRate * 100).toFixed(0)}% is high. ${methodLabels[method] ?? method} may yield biased estimates. Consider MMRM or multiple imputation as primary analysis with sensitivity analysis.`;
+    } else if (powerReduction > 0.10) {
+      recommendation = `Power reduction of ${(powerReduction * 100).toFixed(1)}% due to missing data. Consider increasing sample size or using more efficient missing data methods.`;
+    } else {
+      recommendation = `Missing data impact is manageable with ${methodLabels[method] ?? method}. Include sensitivity analysis for MNAR scenarios.`;
+    }
+
+    return {
+      method: methodLabels[method] ?? method,
+      expectedMissingRate: missingRate,
+      effectiveSampleSize: effectiveN,
+      powerReduction,
+      adjustedPower,
+      biasRisk,
+      recommendation,
+    };
+  }
+
+  private estimatePowerAtN(input: StatisticalInput, n: number): number {
+    if (n <= 0) return 0;
+    const zAlpha = this.normQuantile(1 - input.alpha / 2);
+    const sigma = input.variance ? Math.sqrt(input.variance) : input.effectSize;
+    const nPerGroup = Math.floor(n / (input.numberOfGroups ?? 2));
+    if (nPerGroup <= 0) return 0;
+    const se = sigma * Math.sqrt(2 / nPerGroup);
+    const ncp = input.effectSize / se;
+    return this.normCdf(ncp - zAlpha) + this.normCdf(-ncp - zAlpha);
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // Diagnostic: Agreement (Cohen's Kappa) sample size
+  // ════════════════════════════════════════════════════════════════
+
+  computeAgreementKappa(input: StatisticalInput): { kappaSampleSize: number; kappa: number } {
+    const kappa0 = 0.40; // null kappa (moderate agreement)
+    const kappa1 = input.agreementTarget ?? 0.75; // target kappa
+    const zAlpha = this.normQuantile(1 - input.alpha / 2);
+    const zBeta = this.normQuantile(input.powerTarget);
+
+    // Sample size for testing kappa using asymptotic normal approximation
+    // Variance of kappa under H0 and H1
+    const varH0 = (1 - kappa0) ** 2 / (1 - kappa0 ** 2 + 0.01);
+    const varH1 = (1 - kappa1) ** 2 / (1 - kappa1 ** 2 + 0.01);
+
+    const n = Math.ceil(
+      ((zAlpha * Math.sqrt(varH0) + zBeta * Math.sqrt(varH1)) / (kappa1 - kappa0)) ** 2
+    );
+
+    return {
+      kappaSampleSize: Math.ceil(n / (1 - input.attritionRate)),
+      kappa: kappa1,
+    };
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // Diagnostic: AUC comparison sample size
+  // ════════════════════════════════════════════════════════════════
+
+  computeAUCComparison(input: StatisticalInput): { aucSampleSize: number; auc: number; aucCI: { lower: number; upper: number } } {
+    const auc = input.aucTarget ?? 0.85;
+    const aucNull = input.aucNull ?? 0.50;
+    const zAlpha = this.normQuantile(1 - input.alpha / 2);
+    const zBeta = this.normQuantile(input.powerTarget);
+
+    // Hanley-McNeil variance approximation
+    const q1 = auc / (2 - auc);
+    const q2 = 2 * auc ** 2 / (1 + auc);
+    const varAUC = (auc * (1 - auc) + (q1 - auc ** 2) + (q2 - auc ** 2)) / 100;
+
+    const n = Math.ceil(
+      ((zAlpha + zBeta) ** 2 * varAUC * 4) / ((auc - aucNull) ** 2)
+    );
+
+    // CI for AUC (large sample approximation)
+    const se = Math.sqrt(varAUC);
+    const aucCI = {
+      lower: Math.max(0, auc - zAlpha * se),
+      upper: Math.min(1, auc + zAlpha * se),
+    };
+
+    return {
+      aucSampleSize: Math.ceil(n / (1 - input.attritionRate)),
+      auc,
+      aucCI,
+    };
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // Enhanced main compute: attach multiplicity, crossover, missing data
+  // ════════════════════════════════════════════════════════════════
+
+  computeEnhanced(input: StatisticalInput): ComputationResult {
+    const base = this.compute(input);
+
+    // Add multiplicity result if multiple endpoints
+    if ((input.numberOfEndpoints ?? 1) > 1) {
+      base.multiplicityResult = this.computeMultiplicity(input);
+    }
+
+    // Add crossover result if crossover design
+    if (input.crossoverPeriods && input.crossoverPeriods >= 2) {
+      base.crossoverResult = this.computeCrossover(input);
+    }
+
+    // Add missing data impact
+    if (input.expectedMissingRate || input.missingDataMethod) {
+      base.missingDataImpact = this.computeMissingDataImpact(input, base);
+    }
+
+    // Add agreement kappa for diagnostic agreement studies
+    if (input.studyType === 'agreement' && input.clientTrack === 'diagnostics_ivd') {
+      const kappaResult = this.computeAgreementKappa(input);
+      if (!base.diagnosticMetrics) base.diagnosticMetrics = { sensitivity: 0, specificity: 0 };
+      base.diagnosticMetrics.agreementKappa = kappaResult.kappa;
+      base.diagnosticMetrics.kappaSampleSize = kappaResult.kappaSampleSize;
+    }
+
+    // Add AUC for diagnostic AUC studies
+    if (input.endpointType === 'auc_roc' && input.clientTrack === 'diagnostics_ivd') {
+      const aucResult = this.computeAUCComparison(input);
+      if (!base.diagnosticMetrics) base.diagnosticMetrics = { sensitivity: 0, specificity: 0 };
+      base.diagnosticMetrics.auc = aucResult.auc;
+      base.diagnosticMetrics.aucCI = aucResult.aucCI;
+    }
+
+    return base;
   }
 
   // ════════════════════════════════════════════════════════════════

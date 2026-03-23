@@ -59,6 +59,10 @@ export class JudgmentEngine {
       this.assessDesignAppropriateness(input, comp),
       this.assessAttritionRisk(input, comp),
       this.assessOverinterpretationRisk(input, comp),
+      this.assessMultiplicity(input, comp),
+      this.assessEstimandClarity(input, comp),
+      this.assessMissingDataRisk(input, comp),
+      this.assessComparatorAppropriateness(input, comp),
     ];
   }
 
@@ -290,6 +294,243 @@ export class JudgmentEngine {
       verdict,
       score,
       rationale: `Study type: ${input.studyType}. Design complexity and sample size considered.`,
+      flags,
+    };
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // NEW: Multiplicity Assessment
+  // ════════════════════════════════════════════════════════════════
+
+  private assessMultiplicity(input: StatisticalInput, comp: ComputationResult): JudgmentDimension {
+    const flags: string[] = [];
+    let score = 90;
+    const endpoints = input.numberOfEndpoints ?? 1;
+
+    if (endpoints <= 1) {
+      return {
+        name: 'Multiplicity Control',
+        verdict: 'adequate',
+        score: 95,
+        rationale: 'Single primary endpoint — no multiplicity concern.',
+        flags: [],
+      };
+    }
+
+    if (!input.multiplicityMethod || input.multiplicityMethod === 'none') {
+      if (input.phase === 'III') {
+        score = 25;
+        flags.push(`Phase III with ${endpoints} endpoints and no multiplicity correction — regulatory rejection risk`);
+      } else {
+        score = 50;
+        flags.push(`${endpoints} endpoints without multiplicity adjustment — inflated type I error`);
+      }
+    } else {
+      if (comp.multiplicityResult) {
+        const impact = comp.multiplicityResult.sampleSizeImpact;
+        if (impact > 50) {
+          score = 60;
+          flags.push(`${input.multiplicityMethod} correction increases required sample size by ~${impact}%`);
+        }
+        flags.push(`Using ${input.multiplicityMethod}: per-comparison alpha = ${comp.multiplicityResult.effectiveFamilyAlpha.toFixed(4)}`);
+      }
+    }
+
+    let verdict: JudgmentVerdict = 'adequate';
+    if (score < 50) verdict = 'inadequate';
+    else if (score < 70) verdict = 'marginal';
+
+    return {
+      name: 'Multiplicity Control',
+      verdict,
+      score,
+      rationale: `${endpoints} endpoint(s). ${input.multiplicityMethod ? `Method: ${input.multiplicityMethod}.` : 'No correction specified.'}`,
+      flags,
+    };
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // NEW: Estimand Clarity Assessment
+  // ════════════════════════════════════════════════════════════════
+
+  private assessEstimandClarity(input: StatisticalInput, comp: ComputationResult): JudgmentDimension {
+    const flags: string[] = [];
+    let score = 85;
+
+    // ICH E9(R1) requires estimand framework for pharma
+    if (input.clientTrack === 'biotech_pharma') {
+      if (!input.estimandStrategy) {
+        if (input.phase === 'III' || input.phase === 'II') {
+          score = 40;
+          flags.push('No estimand strategy specified — ICH E9(R1) requires explicit estimand framework for confirmatory trials');
+          flags.push('Specify: population, variable, intercurrent event handling, summary measure');
+        } else {
+          score = 70;
+          flags.push('Estimand strategy not specified — recommended per ICH E9(R1)');
+        }
+      } else {
+        flags.push(`Estimand strategy: ${input.estimandStrategy}`);
+        if (input.estimandStrategy === 'treatment_policy' && input.attritionRate > 0.20) {
+          score -= 10;
+          flags.push('Treatment policy estimand with high dropout may not reflect true treatment effect');
+        }
+      }
+    } else {
+      // Device and IVD — estimand framework less strictly required but becoming standard
+      if (!input.estimandStrategy) {
+        score = 80;
+        // No penalty for device/IVD without explicit estimand
+      }
+    }
+
+    let verdict: JudgmentVerdict = 'adequate';
+    if (score < 50) verdict = 'inadequate';
+    else if (score < 70) verdict = 'marginal';
+
+    return {
+      name: 'Estimand Clarity',
+      verdict,
+      score,
+      rationale: `${input.estimandStrategy ? `Estimand: ${input.estimandStrategy}.` : 'No estimand framework specified.'} ${input.clientTrack === 'biotech_pharma' ? 'ICH E9(R1) compliance expected.' : ''}`,
+      flags,
+    };
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // NEW: Missing Data Risk Assessment
+  // ════════════════════════════════════════════════════════════════
+
+  private assessMissingDataRisk(input: StatisticalInput, comp: ComputationResult): JudgmentDimension {
+    const flags: string[] = [];
+    let score = 85;
+    const missingRate = input.expectedMissingRate ?? input.attritionRate;
+
+    if (missingRate > 0.30) {
+      score = 30;
+      flags.push(`Expected missing data rate of ${(missingRate * 100).toFixed(0)}% is very high — power and bias seriously affected`);
+    } else if (missingRate > 0.20) {
+      score = 55;
+      flags.push(`Missing data rate of ${(missingRate * 100).toFixed(0)}% requires robust handling method`);
+    } else if (missingRate > 0.10) {
+      score = 75;
+      flags.push(`Missing data rate of ${(missingRate * 100).toFixed(0)}% is manageable but should be addressed in SAP`);
+    }
+
+    if (!input.missingDataMethod) {
+      if (input.phase === 'III') {
+        score -= 15;
+        flags.push('No missing data handling method specified for Phase III — pre-specify in SAP');
+      } else {
+        score -= 5;
+        flags.push('Missing data handling method not specified');
+      }
+    } else {
+      flags.push(`Method: ${input.missingDataMethod}`);
+      if (input.missingDataMethod === 'LOCF') {
+        score -= 10;
+        flags.push('LOCF is no longer recommended as primary analysis by FDA/EMA — consider MMRM or MI');
+      }
+      if (input.missingDataMethod === 'complete_case' && missingRate > 0.10) {
+        score -= 15;
+        flags.push('Complete case analysis with >10% missing data may introduce selection bias');
+      }
+    }
+
+    // Missing data impact from computation
+    if (comp.missingDataImpact) {
+      if (comp.missingDataImpact.powerReduction > 0.10) {
+        flags.push(`Power reduced by ${(comp.missingDataImpact.powerReduction * 100).toFixed(1)}% due to missing data`);
+        score -= 10;
+      }
+      if (comp.missingDataImpact.biasRisk === 'high') {
+        flags.push('High bias risk from missing data pattern');
+        score -= 15;
+      }
+    }
+
+    score = Math.max(0, score);
+    let verdict: JudgmentVerdict = 'adequate';
+    if (score < 50) verdict = 'inadequate';
+    else if (score < 70) verdict = 'marginal';
+
+    return {
+      name: 'Missing Data Risk',
+      verdict,
+      score,
+      rationale: `Expected missing rate: ${(missingRate * 100).toFixed(0)}%. ${input.missingDataMethod ? `Handling: ${input.missingDataMethod}.` : 'No method specified.'}`,
+      flags,
+    };
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // NEW: Comparator Appropriateness
+  // ════════════════════════════════════════════════════════════════
+
+  private assessComparatorAppropriateness(input: StatisticalInput, comp: ComputationResult): JudgmentDimension {
+    const flags: string[] = [];
+    let score = 85;
+    const comparator = input.comparatorType ?? 'placebo';
+
+    if (input.studyType === 'single_arm') {
+      if (input.clientTrack === 'biotech_pharma' && input.phase === 'III') {
+        score = 35;
+        flags.push('Single-arm Phase III — limited regulatory acceptance without strong justification');
+      } else if (input.clientTrack === 'medical_device') {
+        score = 70;
+        flags.push('Single-arm device study acceptable with justified performance goal');
+      }
+      return {
+        name: 'Comparator Appropriateness',
+        verdict: score < 50 ? 'inadequate' : score < 70 ? 'marginal' : 'adequate',
+        score,
+        rationale: 'Single-arm design — no active comparator.',
+        flags,
+      };
+    }
+
+    if (comparator === 'placebo') {
+      if (input.studyType === 'non_inferiority') {
+        score = 30;
+        flags.push('Placebo comparator in non-inferiority design is contradictory — NI requires active control');
+      }
+      flags.push('Placebo control — ethical justification required per Declaration of Helsinki');
+    }
+
+    if (comparator === 'historical') {
+      score -= 15;
+      flags.push('Historical control introduces potential bias from temporal changes in standard of care');
+      if (input.phase === 'III') {
+        score -= 15;
+        flags.push('Historical control rarely acceptable for Phase III confirmatory evidence');
+      }
+    }
+
+    if (comparator === 'active') {
+      if (input.studyType === 'non_inferiority' && !input.nonInferiorityMargin) {
+        score -= 20;
+        flags.push('Active comparator with NI design requires clinically justified margin');
+      } else {
+        flags.push('Active comparator — appropriate for NI/superiority design');
+      }
+    }
+
+    if (comparator === 'performance_goal') {
+      if (input.clientTrack !== 'medical_device') {
+        score -= 10;
+        flags.push('Performance goal comparator is primarily used in device studies');
+      }
+    }
+
+    score = Math.max(0, score);
+    let verdict: JudgmentVerdict = 'adequate';
+    if (score < 50) verdict = 'inadequate';
+    else if (score < 70) verdict = 'marginal';
+
+    return {
+      name: 'Comparator Appropriateness',
+      verdict,
+      score,
+      rationale: `Comparator: ${comparator}. Study type: ${input.studyType}.`,
       flags,
     };
   }

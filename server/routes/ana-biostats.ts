@@ -221,6 +221,78 @@ router.post('/judge', authenticateToken, async (req: Request, res: Response) => 
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// 7. ENHANCED COMPUTE (with multiplicity, crossover, missing data)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * POST /api/ana-biostats/compute-enhanced
+ *
+ * Enhanced computation including multiplicity, crossover, agreement/kappa,
+ * AUC comparison, and missing data impact analysis.
+ */
+router.post('/compute-enhanced', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const { computationEngine } = await import('../services/ana-biostats/computation-engine');
+    const { inputNormalizer } = await import('../services/ana-biostats/input-normalizer');
+
+    const validation = inputNormalizer.normalize(req.body);
+    if (!validation.valid) {
+      return res.status(400).json(validation);
+    }
+
+    const result = computationEngine.computeEnhanced(validation.normalizedInput);
+    return res.json({ validation, computation: result });
+  } catch (error: any) {
+    console.error('[AnA Biostats] Enhanced compute error:', error);
+    return res.status(500).json({ error: error.message || 'Enhanced computation failed' });
+  }
+});
+
+/**
+ * POST /api/ana-biostats/multiplicity
+ *
+ * Standalone multiplicity adjustment computation.
+ */
+router.post('/multiplicity', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const { computationEngine } = await import('../services/ana-biostats/computation-engine');
+    const { inputNormalizer } = await import('../services/ana-biostats/input-normalizer');
+
+    const validation = inputNormalizer.normalize(req.body);
+    const result = computationEngine.computeMultiplicity(validation.normalizedInput);
+    return res.json(result);
+  } catch (error: any) {
+    console.error('[AnA Biostats] Multiplicity error:', error);
+    return res.status(500).json({ error: error.message || 'Multiplicity computation failed' });
+  }
+});
+
+/**
+ * POST /api/ana-biostats/missing-data-impact
+ *
+ * Compute missing data impact on power and sample size.
+ */
+router.post('/missing-data-impact', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const { computationEngine } = await import('../services/ana-biostats/computation-engine');
+    const { inputNormalizer } = await import('../services/ana-biostats/input-normalizer');
+
+    const { input, computation } = req.body;
+    if (!input) {
+      return res.status(400).json({ error: 'Input is required' });
+    }
+
+    const validation = inputNormalizer.normalize(input);
+    const base = computation ?? computationEngine.compute(validation.normalizedInput);
+    const impact = computationEngine.computeMissingDataImpact(validation.normalizedInput, base);
+    return res.json(impact);
+  } catch (error: any) {
+    console.error('[AnA Biostats] Missing data impact error:', error);
+    return res.status(500).json({ error: error.message || 'Missing data impact computation failed' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // Helper
 // ═══════════════════════════════════════════════════════════════════════════════
 
