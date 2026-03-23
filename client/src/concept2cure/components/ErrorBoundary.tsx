@@ -193,7 +193,7 @@ Component Stack: ${errorInfo?.componentStack}
       // Default error UI (panel-safe — no min-h-screen so it works inside panels)
       return (
         <div className="flex-1 flex items-center justify-center bg-zinc-50 p-4 min-h-[200px]">
-          <div className="max-w-lg w-full border border-zinc-200 rounded-md bg-white shadow-sm">
+          <div className="max-w-lg w-full border border-zinc-200 rounded-xl bg-white shadow-sm">
             <div className="text-center px-6 pt-6 pb-3">
               <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
                 <AlertTriangle className="h-8 w-8 text-red-600" />
