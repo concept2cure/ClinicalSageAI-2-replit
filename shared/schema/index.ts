@@ -44,4 +44,4 @@ export * from './ctd-projects';
 export * from './unified_workflow';
 export * from './support-admin';
 export * from './orchestration';
-export * from './operating-system';
+export * from './resolution';
