@@ -266,6 +266,9 @@ const ProjectKnowledgePanel = lazy(() =>
 const IntelligenceHub = lazy(() =>
   import('./pages/IntelligenceHub').then(m => ({ default: m.IntelligenceHub }))
 );
+const RegulatoryPrecedentIntelligence = lazy(() =>
+  import('./pages/RegulatoryPrecedentIntelligence')
+);
 const ReviewReadiness = lazy(() =>
   import('./pages/ReviewReadiness').then(m => ({ default: m.ReviewReadiness }))
 );
@@ -1945,6 +1948,9 @@ export const ZenApp: React.FC = () => {
             case 'intelligence-hub':
               setLayoutMode('intelligence-hub');
               break;
+            case 'precedent-intelligence':
+              setLayoutMode('precedent-intelligence');
+              break;
             case 'review-readiness':
               setLayoutMode('review-readiness');
               break;
@@ -3304,10 +3310,25 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
-          {/* Precedent Intelligence — disabled (consolidated into Intelligence Hub) */}
+          {/* ── Regulatory Precedent Intelligence ── */}
+          {!embeddedModule && layoutMode === 'precedent-intelligence' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-precedent-intelligence">
+              <ErrorBoundary>
+                <Suspense
+                  fallback={
+                    <div className="flex-1 flex items-center justify-center bg-white">
+                      <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
+                    </div>
+                  }
+                >
+                  <RegulatoryPrecedentIntelligence onClose={() => setLayoutMode('projects')} />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
 
           {/* Redirect deprecated routes to unified workspace */}
-          {['workspace', 'medtech-dashboard', 'dossier', 'precedent-intelligence'].includes(
+          {['workspace', 'medtech-dashboard', 'dossier'].includes(
             layoutMode
           ) && <RedirectToWorkspace onRedirect={() => setLayoutMode('regulatory-workspace')} />}
 
