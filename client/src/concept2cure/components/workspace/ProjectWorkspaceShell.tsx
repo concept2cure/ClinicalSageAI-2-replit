@@ -65,8 +65,18 @@ import {
   Target,
   AppWindow,
   Activity,
+  Eye,
+  PenLine,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  DocumentModeProvider,
+  useDocumentMode,
+  resolveDocumentMode,
+  MODE_CAPABILITIES,
+  canEscalateToEdit,
+  type WorkflowStage,
+} from '../../contexts/DocumentModeContext';
 
 // Feature flag for governed drag-and-drop (Phase 3C groundwork)
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -173,13 +183,15 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   const [loading, setLoading] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState<string>('drafts');
   const [selectedDocId, setSelectedDocId] = useState<string | undefined>();
-  const [mode, setMode] = useState<'dashboard' | 'browse' | 'edit'>('dashboard');
+  const [mode, setMode] = useState<'dashboard' | 'browse' | 'view' | 'edit'>('dashboard');
   const [leftRailMode, setLeftRailMode] = useState<LeftRailMode>('files');
   const [selectedCtdSection, setSelectedCtdSection] = useState<string | undefined>();
 
   // New document creation
   const [showNewDoc, setShowNewDoc] = useState(false);
   const [showNewDocDialog, setShowNewDocDialog] = useState(false);
+  // Feedback message when cut/move is blocked by capability
+  const [cutBlockedMessage, setCutBlockedMessage] = useState<string | null>(null);
   const [newDocTitle, setNewDocTitle] = useState('');
   const [creatingNew, setCreatingNew] = useState(false);
 
@@ -580,17 +592,30 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     [artifacts, selectedDocId, pendingMove]
   );
 
-  // ── Cut (start pending move) ─────────────────────────────────────────────
+  // ── Cut (start pending move) — capability-gated ──────────────────────────
   const handleCutDocument = useCallback((art: TreeArtifact) => {
-    if (art.status === 'locked') return; // Cannot move locked docs
+    // Derive capabilities from canonical mode resolution
+    const artMode = resolveDocumentMode(workflowStage, art.status as any);
+    const artCaps = MODE_CAPABILITIES[artMode];
+    if (!artCaps.canMoveDocument) {
+      // Provide user feedback instead of silent return
+      setCutBlockedMessage(`"${art.title}" cannot be moved in the current mode.`);
+      setTimeout(() => setCutBlockedMessage(null), 4000);
+      return;
+    }
     setPendingMove({ artifact: art, fromSection: art.ctdSection || null });
-  }, []);
+  }, [workflowStage]);
 
   // ── Paste here (complete pending move via governed dialog) ───────────────
   const handlePasteHere = useCallback(
     (ctdSection: string) => {
       if (!pendingMove) return;
-      if (pendingMove.artifact.status === 'locked') {
+      // Re-check capabilities at paste time (status may have changed)
+      const artMode = resolveDocumentMode(workflowStage, pendingMove.artifact.status as any);
+      const artCaps = MODE_CAPABILITIES[artMode];
+      if (!artCaps.canMoveDocument) {
+        setCutBlockedMessage(`"${pendingMove.artifact.title}" can no longer be moved.`);
+        setTimeout(() => setCutBlockedMessage(null), 4000);
         setPendingMove(null);
         return;
       }
@@ -787,7 +812,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   // ── Handlers ─────────────────────────────────────────────────────────────
   const handleSelectDoc = useCallback((doc: TreeArtifact) => {
     setSelectedDocId(doc.id);
-    setMode('edit');
+    setMode('view');
     setShowGovernedPanel(true);
     setSectionReqs(null); // close reqs panel when opening governed panel
   }, []);
@@ -821,7 +846,17 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   const browseDocs = leftRailMode === 'dossier' ? sectionDocs : folderDocs;
 
   // Outline available only when doc is open
-  const outlineAvailable = mode === 'edit' && !!selectedDocId;
+  const outlineAvailable = (mode === 'edit' || mode === 'view') && !!selectedDocId;
+
+  // ── Derive workflow stage from shell mode + left rail ──────────────────
+  const workflowStage: WorkflowStage = (() => {
+    if (mode === 'dashboard') return 'project-home';
+    if (mode === 'edit') return 'section-workspace';
+    if (mode === 'view') return 'documents';
+    // browse mode — varies by left rail
+    if (leftRailMode === 'dossier') return 'dossier';
+    return 'documents';
+  })();
 
   // ── No project guard ────────────────────────────────────────────────────
   if (!projectId) {
@@ -852,6 +887,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   }
 
   return (
+    <DocumentModeProvider initialStage={workflowStage} key={workflowStage}>
     <div className="flex-1 flex flex-col min-h-0" data-testid="project-workspace-shell">
       {/* ── Compact breadcrumb bar ────────────────────────────────────────── */}
       <div className="flex items-center gap-3 px-4 h-11 border-b border-zinc-200 bg-white shrink-0">
@@ -950,6 +986,17 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         </div>
       )}
 
+      {/* ── Cut/move blocked feedback ───────────────────────────────────── */}
+      {cutBlockedMessage && (
+        <div className="flex items-center gap-2.5 px-4 h-9 border-b border-red-200 bg-red-50 shrink-0 animate-in fade-in duration-200">
+          <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
+          <span className="text-xs text-red-800 font-medium">{cutBlockedMessage}</span>
+          <button onClick={() => setCutBlockedMessage(null)} className="ml-auto">
+            <X className="w-3.5 h-3.5 text-red-400 hover:text-red-600" />
+          </button>
+        </div>
+      )}
+
       {/* ── Persistent context band (browse mode — selected doc reminder) */}
       {mode === 'browse' && activeArtifact && (
         <div className="flex items-center gap-2.5 px-4 h-9 border-b border-blue-100 bg-blue-50/40 shrink-0">
@@ -975,12 +1022,21 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             {activeArtifact.status || 'draft'}
           </span>
           <button
-            onClick={() => setMode('edit')}
+            onClick={() => setMode('view')}
             className="ml-auto text-xs text-blue-600 hover:text-blue-800 font-medium"
           >
             Open →
           </button>
         </div>
+      )}
+
+      {/* ── View-mode banner (shown when viewing, before editing) ────────── */}
+      {mode === 'view' && (
+        <ViewModeBanner onRequestEdit={() => {
+          const escalation = canEscalateToEdit(workflowStage, activeArtifact?.status);
+          if (escalation.allowed) setMode('edit');
+          else pushShellToast(escalation.reason || 'Cannot edit', 'info');
+        }} />
       )}
 
       {/* ── Doc-aware header (shown when editing) ─────────────────────────── */}
@@ -1559,6 +1615,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         </div>
       )}
     </div>
+    </DocumentModeProvider>
   );
 };
 
@@ -1749,6 +1806,22 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function ViewModeBanner({ onRequestEdit }: { onRequestEdit: () => void }) {
+  return (
+    <div className="flex items-center gap-2 px-4 h-9 border-b border-blue-100 bg-blue-50/40 shrink-0">
+      <Eye className="w-3.5 h-3.5 text-blue-500" />
+      <span className="text-xs text-blue-700 font-medium">View Mode — document is read-only</span>
+      <button
+        onClick={onRequestEdit}
+        className="ml-auto inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors"
+      >
+        <PenLine className="w-3 h-3" />
+        Edit
+      </button>
     </div>
   );
 }

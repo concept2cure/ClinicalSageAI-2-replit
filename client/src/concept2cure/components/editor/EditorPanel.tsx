@@ -74,6 +74,11 @@ import { ComplianceScannerPanel } from './ComplianceScannerPanel';
 import { AnAMemory } from '../intelligence/AnAMemory';
 import ArtifactProofPanel from './ArtifactProofPanel';
 import { getCurrentUser } from '../../utils/getCurrentUser';
+import {
+  useDocumentModeOptional,
+  type DocumentMode,
+  MODE_CAPABILITIES,
+} from '../../contexts/DocumentModeContext';
 
 // ── Auth helper (same pattern as useProjects) ────────────────────────────────
 function getAuthHeaders(): Record<string, string> {
@@ -157,6 +162,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   initialInspector,
   onNavigateToProject,
 }) => {
+  // ── Document mode context (stage-aware) ──────────────────────────────
+  const modeCtx = useDocumentModeOptional();
+  const modeCaps = modeCtx ? MODE_CAPABILITIES[modeCtx.mode] : null;
+
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
   const [activeArtifact, setActiveArtifact] = useState<Artifact | null>(null);
   const [loading, setLoading] = useState(false);
@@ -260,6 +269,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
   // ── Review mode state ───────────────────────────────────────────────
   const [isReviewMode, setIsReviewMode] = useState(false);
+  // Review mode is only available when mode capabilities allow it
+  const reviewModeAvailable = modeCaps?.showReviewToggle ?? true;
   const [trackedChanges, setTrackedChanges] = useState<Array<{
     id: string;
     type: 'addition' | 'deletion' | 'modification';
@@ -279,6 +290,15 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const [pendingCommentHighlight, setPendingCommentHighlight] = useState('');
   const pendingCommentClientIdRef = useRef<string>('');
   const [cancelCommentId, setCancelCommentId] = useState<string | null>(null);
+
+  // ── Sync artifact status into DocumentModeContext ───────────────────
+  React.useEffect(() => {
+    if (modeCtx && activeArtifact?.status) {
+      modeCtx.setArtifactStatus(activeArtifact.status);
+    } else if (modeCtx && !activeArtifact) {
+      modeCtx.setArtifactStatus(null);
+    }
+  }, [activeArtifact?.status, activeArtifact?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Review mode: snapshot content when entering review mode ─────────
   const handleToggleReviewMode = useCallback(() => {
@@ -659,10 +679,11 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   // ── Save to artifacts API ────────────────────────────────────────────────
   const handleSave = useCallback(
     async (content: string, _metadata: Record<string, unknown>) => {
+      if (modeCaps && !modeCaps.canSave) return;
       if (!projectId || !activeArtifact) return;
-      // Block saves on locked documents client-side
-      if (activeArtifact?.status === 'locked') {
-        setLockRejection('Document is locked — edits are not permitted. Unlock to continue.');
+      // Capability-gated save — canonical DocumentMode decides save availability
+      if (modeCaps && !modeCaps.canSave) {
+        setLockRejection('Editing is not available in the current mode. Switch to edit mode to save.');
         setTimeout(() => setLockRejection(null), 5000);
         return;
       }
@@ -745,7 +766,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   // ── Auto-save: debounced save 5s after last edit ──────────────────────
   const triggerAutoSave = useCallback(
     (html: string) => {
-      if (!activeArtifact || activeArtifact.status === 'locked') return;
+      if (!activeArtifact) return;
+      // Capability-gated auto-save — suppressed when mode disallows saving
+      if (modeCaps && !modeCaps.canSave) return;
       if (html === lastSavedContentRef.current) return;
 
       setIsDirty(true);
@@ -813,6 +836,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   // ── AI Edit ──────────────────────────────────────────────────────────────
   const handleAIEdit = useCallback(
     async (action: AIAction) => {
+      if (modeCaps && !modeCaps.showAIActions) return;
       if (!activeArtifact) return;
       setAiLoading(true);
       setAiMenuOpen(false);
@@ -1073,7 +1097,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     async (newStatus: string, reason?: string) => {
       if (!activeArtifact) return;
 
-      // Quality gate: run checks when advancing to review or approved
+      // Quality gate: run checks when advancing to review or approved.
+      // NOTE: Raw status read is intentional domain state inspection for workflow
+      // transition direction — this is NOT a behavioral gate, it determines
+      // whether quality checks should fire before the status mutation.
       const isAdvancing = (newStatus === 'review' || newStatus === 'approved') &&
         (activeArtifact.status === 'draft' || activeArtifact.status === 'review');
 
@@ -1710,11 +1737,29 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                   <PenTool className="w-3 h-3 text-zinc-400" />
                   Sign & Approve (Part 11)
                 </button>
-                {/* Status change — forward transitions only; regressions use lock overlay / GovernedDocumentPanel */}
-                {activeArtifact?.status !== 'locked' && (
+                {/* Edit escalation button — shown when mode capabilities indicate view mode */}
+                {modeCaps?.showEditButton && (
                   <button
                     role="menuitem"
                     onClick={() => {
+                      const result = modeCtx?.requestEdit();
+                      if (!result?.allowed && result?.reason) {
+                        pushToast(result.reason, 'info');
+                      }
+                    }}
+                    className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                  >
+                    <PenTool className="w-3 h-3 text-blue-500" />
+                    Edit
+                  </button>
+                )}
+                {/* Status change — gated by capability layer, not raw status */}
+                {modeCaps?.canToggleLock && (
+                  <button
+                    role="menuitem"
+                    onClick={() => {
+                      // NOTE: Raw status read here is intentional domain state inspection
+                      // to determine the correct next transition target.
                       const current = activeArtifact?.status || 'draft';
                       const next =
                         current === 'approved'
@@ -1729,6 +1774,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                     className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 disabled:opacity-60 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
                   >
                     <Lock className="w-3 h-3 text-zinc-400" />
+                    {/* Display label uses raw status — intentional display-only read */}
                     {activeArtifact?.status === 'approved'
                       ? 'Lock'
                       : activeArtifact?.status === 'review'
@@ -1792,7 +1838,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         <div className="flex flex-col items-center pr-3 mr-3 border-r border-zinc-200 py-1">
           <div className="flex items-center gap-0.5">
             <button data-testid="ribbon-comments" onClick={() => toggleInspector('comments')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap relative', activeInspector === 'comments' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><MessageSquare className="w-3.5 h-3.5" />Comments{comments.filter(c => !c.resolved).length > 0 && (<span className={cn('ml-1 inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full text-[10px] font-semibold', activeInspector === 'comments' ? 'bg-white text-blue-600' : 'bg-amber-500 text-white')}>{comments.filter(c => !c.resolved).length}</span>)}</button>
-            <button data-testid="ribbon-review" onClick={() => toggleInspector('review')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', isReviewMode ? 'bg-amber-500 text-white font-medium shadow-sm' : activeInspector === 'review' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Eye className="w-3.5 h-3.5" />Review{isReviewMode && <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}</button>
+            {reviewModeAvailable && <button data-testid="ribbon-review" onClick={() => toggleInspector('review')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', isReviewMode ? 'bg-amber-500 text-white font-medium shadow-sm' : activeInspector === 'review' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Eye className="w-3.5 h-3.5" />Review{isReviewMode && <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}</button>}
             <button data-testid="ribbon-reviewers" onClick={() => toggleInspector('reviewers')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'reviewers' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><Users className="w-3.5 h-3.5" />Reviewers</button>
             <button data-testid="ribbon-versions" onClick={() => toggleInspector('versions')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'versions' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><GitCompare className="w-3.5 h-3.5" />History</button>
             <button data-testid="ribbon-compare" onClick={() => toggleInspector('compare')} className={cn('px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap', activeInspector === 'compare' ? 'bg-blue-600 text-white font-medium shadow-sm' : 'text-zinc-600 hover:bg-white hover:shadow-sm')}><GitCompare className="w-3.5 h-3.5" />Compare</button>
@@ -2052,6 +2098,21 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               </React.Fragment>
             );
           })}
+          {/* Edit escalation button — visible in view mode */}
+          {modeCaps?.showEditButton && (
+            <button
+              onClick={() => {
+                const result = modeCtx?.requestEdit();
+                if (!result?.allowed && result?.reason) {
+                  pushToast(result.reason, 'info');
+                }
+              }}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors"
+            >
+              <PenTool className="w-3 h-3" />
+              Edit
+            </button>
+          )}
           {/* Claim status + last updated */}
           <div className="flex items-center gap-3 ml-auto text-xs text-zinc-400">
             {claimStatus === 'checking' && (
@@ -2085,7 +2146,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         <div
           className={cn('min-h-0 overflow-hidden relative', activeInspector ? 'flex-1' : 'w-full')}
         >
-          {activeArtifact?.status === 'locked' && (
+          {/* Locked overlay — gated by canonical mode, not raw status */}
+          {modeCaps && !modeCaps.editable && modeCtx?.mode === 'readonly' && activeArtifact?.status === 'locked' && (
             <div className="absolute inset-0 z-10 bg-red-50/40 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
               <div className="bg-white/90 border border-red-200 rounded-lg px-6 py-4 shadow text-center pointer-events-auto max-w-xs">
                 <Lock className="w-6 h-6 text-red-500 mx-auto mb-2" />
@@ -2128,8 +2190,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             cursors={collaboration.cursors}
             currentUserId={currentUser.id}
           />
-          {/* Guided empty state for new/blank documents */}
-          {activeArtifact && (!activeArtifact.content || activeArtifact.content.replace(/<[^>]*>/g, '').trim().length < 10) && activeArtifact.status !== 'locked' && (
+          {/* Guided empty state for new/blank documents — only in editable modes */}
+          {activeArtifact && (!activeArtifact.content || activeArtifact.content.replace(/<[^>]*>/g, '').trim().length < 10) && modeCaps?.editable !== false && (
             <div className="absolute inset-x-0 top-0 z-10 flex items-start justify-center pt-20 pointer-events-none">
               <div className="pointer-events-auto bg-white/95 backdrop-blur-sm border border-zinc-200 rounded-xl shadow-lg p-5 max-w-md w-full mx-4">
                 <div className="text-center mb-4">
@@ -2187,7 +2249,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             showCompliance={false}
             showTraceability={false}
             embedded
-            isReadOnly={activeArtifact?.status === 'locked'}
+            isReadOnly={modeCaps ? !modeCaps.editable : false}
+            documentMode={modeCtx?.mode}
             onSave={handleSave}
             onAIAction={(action, selectedText) => {
               if (action === 'link-source') {

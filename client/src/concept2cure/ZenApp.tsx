@@ -268,6 +268,20 @@ const ProjectKnowledgePanel = lazy(() =>
   }))
 );
 
+// ─── Unified workflow components ─────────────────────────────────────────────
+const ProjectHomeDashboard = lazy(() =>
+  import('./components/workflow/ProjectHomeDashboard').then(m => ({ default: m.ProjectHomeDashboard }))
+);
+const DossierMap = lazy(() =>
+  import('./components/workflow/DossierMap').then(m => ({ default: m.DossierMap }))
+);
+const SectionWorkspace = lazy(() =>
+  import('./components/workflow/SectionWorkspace').then(m => ({ default: m.SectionWorkspace }))
+);
+const SubmissionReadinessView = lazy(() =>
+  import('./components/workflow/SubmissionReadiness').then(m => ({ default: m.SubmissionReadiness }))
+);
+
 // ─── New intent-organized workspace lazy loads ──────────────────────────────
 const IntelligenceHub = lazy(() =>
   import('./pages/IntelligenceHub').then(m => ({ default: m.IntelligenceHub }))
@@ -426,6 +440,13 @@ type LayoutMode =
   | 'snowglobe'
   | 'snowglobe-chambers'
   | 'enablement-center'
+  // ── Unified submission workflow ──
+  | 'project-home'
+  | 'dossier-map'
+  | 'documents'
+  | 'review'
+  | 'submissions'
+  | 'section-workspace'
   // ── New intent-organized workspaces ──
   | 'author'
   | 'intelligence-hub'
@@ -963,6 +984,9 @@ export const ZenApp: React.FC = () => {
   const [layoutMode, setLayoutMode] = useState<LayoutMode>(
     urlProjectId ? 'regulatory-workspace' : 'projects'
   );
+
+  // Active section code — tracks which dossier section is open in SectionWorkspace
+  const [activeSectionCode, setActiveSectionCode] = useState<string | null>(null);
 
   // Guard: prevents URL-sync from reverting a navigation that's in-flight
   const navInProgressRef = useRef(false);
@@ -1827,40 +1851,59 @@ export const ZenApp: React.FC = () => {
         activeNavId={
           (
             {
-              'regulatory-workspace': 'ai-copilot',
-              workspace: 'ai-copilot',
-              'ind-workspace': 'author',
-              'ectd-coauthor': 'author',
-              cmc: 'cmc',
-              'clinical-trial': 'author',
-              author: 'author',
-              editor: 'author',
-              templates: 'author',
-              'intelligence-hub': 'intelligence-hub',
-              'review-readiness': 'review-readiness',
-              snowglobe: 'snowglobe',
-              'snowglobe-chambers': 'snowglobe',
+              // ── Unified workflow nav mapping ──
+              'project-home': 'projects',
+              'dossier-map': 'dossier',
+              documents: 'documents',
+              review: 'review',
+              submissions: 'submissions',
+              'section-workspace': 'dossier',
+              // ── Legacy mappings (still functional) ──
+              'regulatory-workspace': 'documents',
+              workspace: 'documents',
+              'ind-workspace': 'documents',
+              'ectd-coauthor': 'documents',
+              cmc: 'documents',
+              'clinical-trial': 'documents',
+              author: 'documents',
+              editor: 'documents',
+              templates: 'documents',
+              'document-builder': 'documents',
+              'intelligence-hub': 'documents',
+              'review-readiness': 'review',
+              snowglobe: 'projects',
+              'snowglobe-chambers': 'projects',
               'command-center': 'command-center',
               'mission-control': 'command-center',
-              'submission-workspace': 'command-center',
-              'document-vault': 'command-center',
+              'submission-workspace': 'submissions',
+              'document-vault': 'documents',
               'enablement-center': 'enablement-center',
-              'client-intelligence': 'client-intelligence',
+              'client-intelligence': 'command-center',
               'collaboration-hub': 'collaboration-hub',
               'user-inbox': 'user-inbox',
-              'client-branding': 'client-branding',
-              biostatistics: 'biostatistics',
-              'training-center': 'training-center',
-              'client-onboarding': 'client-onboarding',
+              'client-branding': 'command-center',
+              biostatistics: 'documents',
+              'training-center': 'enablement-center',
+              'client-onboarding': 'enablement-center',
               'knowledge-base': 'knowledge-base',
-              'project-knowledge': 'project-knowledge',
-              'legal-center': 'legal-center',
-              sherpa: 'ai-copilot',
-              audit: 'review-readiness',
+              'project-knowledge': 'knowledge-base',
+              'legal-center': 'review',
+              sherpa: 'documents',
+              audit: 'review',
               timeline: 'command-center',
               analytics: 'command-center',
               artifacts: 'artifacts',
-              'about-training': 'about-training',
+              'about-training': 'enablement-center',
+              'precedent-intelligence': 'documents',
+              'deep-research': 'documents',
+              'report-engine': 'documents',
+              'ana-dashboard': 'command-center',
+              'safety-narrative': 'documents',
+              'ana-platform-control': 'platform-admin',
+              'platform-admin': 'platform-admin',
+              'biologics-dashboard': 'documents',
+              'ctd-onboarding': 'projects',
+              integrations: 'platform-admin',
             } as Record<string, string>
           )[layoutMode] ?? undefined
         }
@@ -1961,6 +2004,25 @@ export const ZenApp: React.FC = () => {
               break;
             case 'enablement-center':
               setLayoutMode('enablement-center');
+              break;
+            // ── Unified submission workflow ──
+            case 'dossier':
+              setLayoutMode('dossier-map');
+              break;
+            case 'documents':
+              setLayoutMode('documents');
+              break;
+            case 'review':
+              setLayoutMode('review');
+              break;
+            case 'submissions':
+              setLayoutMode('submissions');
+              break;
+            case 'section-workspace':
+              setLayoutMode('section-workspace');
+              break;
+            case 'project-home':
+              setLayoutMode('project-home');
               break;
             // ── New intent-organized workspaces ──
             case 'author':
@@ -2893,7 +2955,7 @@ export const ZenApp: React.FC = () => {
                           ctdSection: ctd,
                         });
                         setLayoutMode('ectd-coauthor');
-                      }
+                      }}
                       onNavigateToCoAuthor={() => setLayoutMode('ectd-coauthor')}
                     />
                   </Suspense>
@@ -3522,6 +3584,146 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
+          {/* ── Unified Workflow: Project Home Dashboard ──────────────────── */}
+          {!embeddedModule && layoutMode === 'project-home' && activeProject && (
+            <Suspense fallback={<ModuleLoadingFallback />}>
+              <ProjectHomeDashboard
+                project={{
+                  id: activeProject.id,
+                  name: activeProject.name,
+                  type: activeProject.type || 'IND',
+                  description: activeProject.description,
+                  sponsor: activeProject.sponsor,
+                  product: activeProject.product,
+                  region: activeProject.region,
+                }}
+                onNavigate={(mode, sectionCode) => {
+                  // Map workflow names to layout modes
+                  const modeMap: Record<string, LayoutMode> = {
+                    dossier: 'dossier-map',
+                    documents: 'documents',
+                    review: 'review',
+                    submissions: 'submissions',
+                    'section-workspace': 'section-workspace',
+                  };
+                  const resolved = modeMap[mode] || (mode as LayoutMode);
+                  if (resolved === 'section-workspace' && sectionCode) {
+                    setActiveSectionCode(sectionCode);
+                  }
+                  setLayoutMode(resolved);
+                }}
+              />
+            </Suspense>
+          )}
+
+          {/* ── Unified Workflow: Dossier Map ────────────────────────────── */}
+          {!embeddedModule && layoutMode === 'dossier-map' && (
+            <Suspense fallback={<ModuleLoadingFallback />}>
+              <DossierMap
+                projectName={activeProject?.name}
+                projectType={activeProject?.type}
+                onSectionClick={(sectionCode) => {
+                  setActiveSectionCode(sectionCode);
+                  setLayoutMode('section-workspace');
+                }}
+                onBack={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
+              />
+            </Suspense>
+          )}
+
+          {/* ── Unified Workflow: Documents (consolidated Author + Document Builder) */}
+          {!embeddedModule && layoutMode === 'documents' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-documents">
+              <ErrorBoundary>
+                <Suspense fallback={<ModuleLoadingFallback />}>
+                  <FullDocumentBuilder />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── Unified Workflow: Review (governance & approvals) ─────────── */}
+          {!embeddedModule && layoutMode === 'review' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-review">
+              <ErrorBoundary>
+                <Suspense fallback={<ModuleLoadingFallback />}>
+                  <ReviewReadiness
+                    projectId={activeProjectId}
+                    onClose={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
+                  />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── Unified Workflow: Submissions (readiness & export) ────────── */}
+          {!embeddedModule && layoutMode === 'submissions' && (
+            <Suspense fallback={<ModuleLoadingFallback />}>
+              <SubmissionReadinessView
+                projectName={activeProject?.name}
+                projectType={activeProject?.type}
+                onSectionClick={(sectionCode) => {
+                  setActiveSectionCode(sectionCode);
+                  setLayoutMode('section-workspace');
+                }}
+                onBack={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
+                onExport={() => {}}
+              />
+            </Suspense>
+          )}
+
+          {/* ── Unified Workflow: Section Workspace ──────────────────────── */}
+          {!embeddedModule && layoutMode === 'section-workspace' && (
+            <Suspense fallback={<ModuleLoadingFallback />}>
+              <SectionWorkspace
+                section={(() => {
+                  // Resolve section metadata from active section code
+                  const code = activeSectionCode || '2.5';
+                  const SECTION_LOOKUP: Record<string, { title: string; module: string; status: 'not-started' | 'drafting' | 'in-review' | 'approved' | 'blocked' | 'locked' }> = {
+                    '1.1': { title: 'Forms', module: 'Module 1 — Administrative', status: 'approved' },
+                    '1.2': { title: 'Cover Letter', module: 'Module 1 — Administrative', status: 'approved' },
+                    '1.3.1': { title: 'Form FDA 1571', module: 'Module 1 — Administrative', status: 'approved' },
+                    '1.3.2': { title: 'Form FDA 1572', module: 'Module 1 — Administrative', status: 'drafting' },
+                    '1.3.3': { title: 'Financial Disclosure', module: 'Module 1 — Administrative', status: 'not-started' },
+                    '2.2': { title: 'Introduction', module: 'Module 2 — CTD Summaries', status: 'drafting' },
+                    '2.3': { title: 'Quality Overall Summary', module: 'Module 2 — CTD Summaries', status: 'not-started' },
+                    '2.4': { title: 'Nonclinical Overview', module: 'Module 2 — CTD Summaries', status: 'not-started' },
+                    '2.5': { title: 'Clinical Overview', module: 'Module 2 — CTD Summaries', status: 'drafting' },
+                    '2.6.1': { title: 'Pharmacology', module: 'Module 2 — CTD Summaries', status: 'not-started' },
+                    '2.6.2': { title: 'Pharmacokinetics', module: 'Module 2 — CTD Summaries', status: 'not-started' },
+                    '2.6.3': { title: 'Toxicology', module: 'Module 2 — CTD Summaries', status: 'not-started' },
+                    '2.7.1': { title: 'Biopharmaceutic Studies', module: 'Module 2 — CTD Summaries', status: 'not-started' },
+                    '2.7.2': { title: 'Clinical Pharmacology', module: 'Module 2 — CTD Summaries', status: 'not-started' },
+                    '2.7.3': { title: 'Clinical Efficacy', module: 'Module 2 — CTD Summaries', status: 'drafting' },
+                    '2.7.4': { title: 'Clinical Safety', module: 'Module 2 — CTD Summaries', status: 'not-started' },
+                    '2.7.5': { title: 'Literature References', module: 'Module 2 — CTD Summaries', status: 'not-started' },
+                    '2.7.6': { title: 'Synopses', module: 'Module 2 — CTD Summaries', status: 'not-started' },
+                    '3.2.S': { title: 'Drug Substance', module: 'Module 3 — Quality', status: 'in-review' },
+                    '3.2.P': { title: 'Drug Product', module: 'Module 3 — Quality', status: 'in-review' },
+                    '3.2.A': { title: 'Appendices', module: 'Module 3 — Quality', status: 'not-started' },
+                    '3.2.R': { title: 'Regional Information', module: 'Module 3 — Quality', status: 'not-started' },
+                    '4.2.1': { title: 'Pharmacology', module: 'Module 4 — Nonclinical', status: 'not-started' },
+                    '4.2.2': { title: 'Pharmacokinetics', module: 'Module 4 — Nonclinical', status: 'not-started' },
+                    '4.2.3': { title: 'Toxicology', module: 'Module 4 — Nonclinical', status: 'not-started' },
+                    '5.2': { title: 'Tabular Listing of Studies', module: 'Module 5 — Clinical', status: 'not-started' },
+                    '5.3': { title: 'Clinical Study Reports', module: 'Module 5 — Clinical', status: 'blocked' },
+                    '5.4': { title: 'Literature References', module: 'Module 5 — Clinical', status: 'not-started' },
+                  };
+                  const found = SECTION_LOOKUP[code];
+                  return {
+                    code,
+                    title: found?.title || `Section ${code}`,
+                    status: found?.status || 'not-started',
+                    module: found?.module || 'Unknown Module',
+                  };
+                })()}
+                projectName={activeProject?.name}
+                projectId={activeProjectId}
+                onBack={() => setLayoutMode('dossier-map')}
+              />
+            </Suspense>
+          )}
+
           {/* ── Projects Index ─────────────────────────────────────────────── */}
           {!embeddedModule && layoutMode === 'projects' && (
             <Suspense
@@ -3537,8 +3739,7 @@ export const ZenApp: React.FC = () => {
                 onProjectClick={projectId => {
                   navInProgressRef.current = true;
                   setActiveProjectId(projectId);
-                  setRiViewMode('editor');
-                  setLayoutMode('regulatory-workspace');
+                  setLayoutMode('project-home');
                   navigate(`/concept2cure/project/${projectId}`);
                 }}
                 onNewProject={() => setNewProjectOpen(true)}
@@ -3697,7 +3898,7 @@ export const ZenApp: React.FC = () => {
             workspace/regulatory-workspace: rendered inline above (mode="full")
             module pages: shown here as compact input bar at bottom
             projects/home: shown here as full chat (no module content above) */}
-        {layoutMode !== 'workspace' && layoutMode !== 'regulatory-workspace' && (
+        {layoutMode !== 'workspace' && layoutMode !== 'regulatory-workspace' && layoutMode !== 'section-workspace' && (
           <AnaPersistentPanel
             mode={layoutMode === 'projects' || layoutMode === 'deep-research' ? 'full' : 'compact'}
             defaultChatMode={layoutMode === 'deep-research' ? 'deep-research' : 'standard'}
@@ -3752,8 +3953,7 @@ export const ZenApp: React.FC = () => {
         onSelectProject={id => {
           setActiveProjectId(id);
           setProjectSwitcherOpen(false);
-          setRiViewMode('editor');
-          setLayoutMode('regulatory-workspace');
+          setLayoutMode('project-home');
           navigate(`/concept2cure/project/${id}`);
           // Clear conversation when switching projects
           setActiveConversationId(undefined);
