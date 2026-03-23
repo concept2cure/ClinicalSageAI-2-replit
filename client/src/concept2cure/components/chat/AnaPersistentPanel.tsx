@@ -74,6 +74,8 @@ interface AnaPersistentPanelProps {
     screenName?: string;
     activeProject?: string;
     projectId?: string;
+    /** Page-specific context for deeper awareness (active tab, filters, etc.) */
+    moduleContext?: Record<string, unknown>;
   };
   /** Suggested actions shown as quick-start chips when conversation is empty */
   suggestedActions?: SuggestedAction[];
@@ -120,6 +122,7 @@ const SCREEN_LABELS: Record<string, string> = {
   cmc: 'CMC Platform',
   'deep-research': 'Deep Research',
   'document-builder': 'Document Builder',
+  'precedent-intelligence': 'Precedent Intelligence',
   projects: 'Home',
 };
 
@@ -441,6 +444,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               projectId: contextProfile?.projectId,
               productType: contextProfile?.productType,
               userRole: contextProfile?.userRole,
+              ...(contextProfile?.moduleContext || {}),
             },
             conversationHistory: messages.slice(-10).map(m => ({
               role: m.role,

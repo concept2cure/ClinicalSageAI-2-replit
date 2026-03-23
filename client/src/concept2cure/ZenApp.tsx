@@ -949,6 +949,9 @@ export const ZenApp: React.FC = () => {
   // Guard: prevents URL-sync from reverting a navigation that's in-flight
   const navInProgressRef = useRef(false);
 
+  // Page-level context for AnA awareness (active tab, filters, etc.)
+  const [moduleContext, setModuleContext] = useState<Record<string, unknown>>({});
+
   // Account-level custom instructions for Knowledge Base
   const [customInstructions, setCustomInstructions] = useState('');
 
@@ -3321,7 +3324,7 @@ export const ZenApp: React.FC = () => {
                     </div>
                   }
                 >
-                  <RegulatoryPrecedentIntelligence onClose={() => setLayoutMode('projects')} />
+                  <RegulatoryPrecedentIntelligence onClose={() => setLayoutMode('projects')} onContextChange={setModuleContext} />
                 </Suspense>
               </ErrorBoundary>
             </div>
@@ -3617,6 +3620,7 @@ export const ZenApp: React.FC = () => {
               screenName: layoutMode,
               activeProject: activeProject?.name,
               projectId: activeProjectId,
+              moduleContext,
             }}
             greeting={
               layoutMode === 'deep-research'

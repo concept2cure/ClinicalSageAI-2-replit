@@ -44,6 +44,8 @@ interface Tab {
 
 interface Props {
   onClose?: () => void;
+  /** Emit page-level context changes so AnA has full awareness */
+  onContextChange?: (context: Record<string, unknown>) => void;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -447,8 +449,28 @@ function formatCategory(cat: string): string {
 // MAIN PAGE
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export default function RegulatoryPrecedentIntelligence({ onClose }: Props) {
+const TAB_CONTEXT: Record<TabKey, string> = {
+  crl: 'CRL (Complete Response Letter) trigger patterns with deficiency analysis, trajectory prediction, and resolution strategies',
+  rtf: 'RTF (Refuse to File) trigger patterns with prevention checklists and recovery playbooks by FDA center',
+  ema: 'EMA CHMP question patterns by procedure phase (Day 80/120/150/180), clock-stop prediction, and major objection risk',
+  advisory: 'FDA Advisory Committee risk modeling (ODAC, CRDAC, EMDAC) with voting patterns, panelist sensitivity, and preparation plans',
+  'cross-jurisdictional': 'Cross-jurisdictional intelligence: ICH harmonization, Project Orbis, Access Consortium, divergence mapping, filing sequence optimization',
+  calibration: 'Confidence calibration with Brier scoring, recency decay, backtesting accuracy, and overconfidence bias tracking',
+};
+
+export default function RegulatoryPrecedentIntelligence({ onClose, onContextChange }: Props) {
   const [activeTab, setActiveTab] = useState<TabKey>('crl');
+
+  // Emit context to AnA whenever the active tab changes
+  React.useEffect(() => {
+    onContextChange?.({
+      module: 'regulatory-precedent-intelligence',
+      activeTab,
+      activeTabLabel: tabs.find(t => t.key === activeTab)?.label ?? activeTab,
+      tabDescription: TAB_CONTEXT[activeTab],
+      availableModules: 'CRL Patterns, RTF Prevention, EMA Questions, Advisory Committee, Cross-Jurisdictional, Calibration',
+    });
+  }, [activeTab, onContextChange]);
 
   const renderPanel = useCallback(() => {
     switch (activeTab) {
