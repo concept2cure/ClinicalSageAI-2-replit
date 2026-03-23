@@ -1989,9 +1989,6 @@ export const ZenApp: React.FC = () => {
             case 'training-center':
               setLayoutMode('training-center');
               break;
-            case 'snowglobe':
-              setLayoutMode('snowglobe');
-              break;
             case 'client-onboarding':
               setLayoutMode('client-onboarding');
               break;

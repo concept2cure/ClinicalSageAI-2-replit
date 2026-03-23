@@ -15,11 +15,7 @@ import { z } from 'zod';
 import rateLimit from 'express-rate-limit';
 import { db } from '../db';
 import { eq, and } from 'drizzle-orm';
-import {
-  users,
-  organizations,
-  organizationUsers,
-} from '../../shared/schema';
+import { users, organizations, organizationUsers } from '../../shared/schema';
 import { sendPasswordResetEmail, sendLoginOtpEmail } from '../services/emailService';
 import * as mfaService from '../services/mfaService';
 import * as emailOtpService from '../services/emailOtpService';
@@ -49,8 +45,11 @@ const loginLimiter = rateLimit({
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { success: false, error: { code: 'RATE_LIMIT', message: 'Too many login attempts. Please try again later.' } },
-  keyGenerator: (req) => req.ip || req.headers['x-forwarded-for'] as string || 'unknown',
+  message: {
+    success: false,
+    error: { code: 'RATE_LIMIT', message: 'Too many login attempts. Please try again later.' },
+  },
+  keyGenerator: req => req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown',
 });
 
 /** Signup: 5 per hour per IP */
@@ -59,8 +58,11 @@ const signupLimiter = rateLimit({
   max: 5,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { success: false, error: { code: 'RATE_LIMIT', message: 'Too many signup attempts. Please try again later.' } },
-  keyGenerator: (req) => req.ip || req.headers['x-forwarded-for'] as string || 'unknown',
+  message: {
+    success: false,
+    error: { code: 'RATE_LIMIT', message: 'Too many signup attempts. Please try again later.' },
+  },
+  keyGenerator: req => req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown',
 });
 
 /** Password reset: 5 per hour per IP */
@@ -69,8 +71,14 @@ const passwordResetLimiter = rateLimit({
   max: 5,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { success: false, error: { code: 'RATE_LIMIT', message: 'Too many password reset requests. Please try again later.' } },
-  keyGenerator: (req) => req.ip || req.headers['x-forwarded-for'] as string || 'unknown',
+  message: {
+    success: false,
+    error: {
+      code: 'RATE_LIMIT',
+      message: 'Too many password reset requests. Please try again later.',
+    },
+  },
+  keyGenerator: req => req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown',
 });
 
 /** MFA verify: 10 per 15 minutes per IP */
@@ -79,8 +87,11 @@ const mfaLimiter = rateLimit({
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { success: false, error: { code: 'RATE_LIMIT', message: 'Too many MFA attempts. Please try again later.' } },
-  keyGenerator: (req) => req.ip || req.headers['x-forwarded-for'] as string || 'unknown',
+  message: {
+    success: false,
+    error: { code: 'RATE_LIMIT', message: 'Too many MFA attempts. Please try again later.' },
+  },
+  keyGenerator: req => req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown',
 });
 
 // Development auth bypass fully removed — all authentication is enforced.
@@ -364,7 +375,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       userData.email,
       organizationId.toString(),
       organization?.uuid || null,
-      jwtRole,
+      jwtRole
     );
 
     if (hasTotpSetup) {
@@ -400,12 +411,137 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       process.env.REFRESH_TOKEN_SECRET || config.jwt.secret,
       { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
     );
-
   } catch (error: any) {
     console.error('[auth] Login error:', error);
     res.status(500).json({
       success: false,
       error: { code: 'AUTH_010', message: 'Login failed' },
+    });
+  }
+});
+
+/**
+ * POST /api/auth/dev-login
+ * Development-only demo login that bypasses MFA.
+ * Only works when NODE_ENV !== 'production'.
+ * Accepts { email } for any existing user.
+ */
+router.post('/dev-login', loginLimiter, async (req: Request, res: Response) => {
+  if (process.env.NODE_ENV === 'production') {
+    return res
+      .status(404)
+      .json({ success: false, error: { code: 'NOT_FOUND', message: 'Not found' } });
+  }
+
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'AUTH_001', message: 'Email is required' },
+      });
+    }
+
+    if (!requireDb(res)) return;
+    const normalizedEmail = email.trim().toLowerCase();
+    const [userData] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, normalizedEmail))
+      .limit(1);
+
+    if (!userData) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_001', message: 'User not found. Please sign up first.' },
+      });
+    }
+
+    // Look up organization membership
+    const [membership] = await db
+      .select({
+        organizationId: organizationUsers.organizationId,
+        role: organizationUsers.role,
+      })
+      .from(organizationUsers)
+      .where(eq(organizationUsers.userId, userData.id))
+      .limit(1);
+
+    const organizationId = userData.defaultOrganizationId || membership?.organizationId || null;
+    const jwtRole = membership?.role || 'user';
+
+    if (!organizationId) {
+      return res.status(403).json({
+        success: false,
+        error: { code: 'AUTH_011', message: 'No organization assigned' },
+      });
+    }
+
+    const [organization] = await db
+      .select({ id: organizations.id, name: organizations.name, uuid: organizations.uuid })
+      .from(organizations)
+      .where(eq(organizations.id, organizationId))
+      .limit(1);
+
+    // Update last login timestamp
+    await db.update(users).set({ lastLogin: new Date() }).where(eq(users.id, userData.id));
+
+    const nameParts = (userData.name || '').trim().split(/\s+/);
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
+    const displayName = (userData.name || '').trim() || userData.email;
+    const roles =
+      jwtRole === 'admin'
+        ? ['admin', 'user']
+        : [jwtRole, 'user'].filter((v, i, a) => a.indexOf(v) === i);
+
+    const accessToken = jwt.sign(
+      {
+        userId: userData.id.toString(),
+        email: userData.email,
+        organizationId: organizationId.toString(),
+        organizationUuid: organization?.uuid || null,
+        role: jwtRole,
+      },
+      config.jwt.secret,
+      { expiresIn: JWT_EXPIRES_IN }
+    );
+
+    const refreshToken = jwt.sign(
+      { userId: userData.id.toString(), email: userData.email, type: 'refresh' },
+      process.env.REFRESH_TOKEN_SECRET || config.jwt.secret,
+      { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
+    );
+
+    console.log(`[auth] Dev login successful for ${userData.email}`);
+
+    res.json({
+      success: true,
+      accessToken,
+      refreshToken,
+      expiresIn: 86400,
+      mfaRequired: false,
+      user: {
+        id: userData.id.toString(),
+        email: userData.email,
+        firstName,
+        lastName,
+        displayName,
+        roles,
+        permissions: [],
+        organizationId: organizationId.toString(),
+        organizationName: organization?.name || 'Organization',
+        organizationUuid: organization?.uuid || null,
+        mfaEnabled: false,
+        mfaMethods: [],
+        mustChangePassword: false,
+      },
+    });
+  } catch (error: any) {
+    console.error('[auth] Dev login error:', error);
+    res.status(500).json({
+      success: false,
+      error: { code: 'AUTH_010', message: 'Dev login failed' },
     });
   }
 });
@@ -432,7 +568,11 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
     if (!policyResult.valid) {
       return res.status(400).json({
         success: false,
-        error: { code: 'AUTH_001', message: policyResult.errors[0], details: { errors: policyResult.errors } },
+        error: {
+          code: 'AUTH_001',
+          message: policyResult.errors[0],
+          details: { errors: policyResult.errors },
+        },
       });
     }
 
@@ -442,7 +582,10 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
       // SECURITY: Return generic message to prevent email enumeration
       return res.status(409).json({
         success: false,
-        error: { code: 'AUTH_002', message: 'Unable to create account. Please try a different email or contact support.' },
+        error: {
+          code: 'AUTH_002',
+          message: 'Unable to create account. Please try a different email or contact support.',
+        },
       });
     }
 
@@ -553,12 +696,15 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
 const tokenBlacklist = new Set<string>();
 
 // Clean up expired tokens every hour
-setInterval(() => {
-  // Simple TTL: clear the set every 24 hours to prevent memory growth
-  if (tokenBlacklist.size > 10000) {
-    tokenBlacklist.clear();
-  }
-}, 60 * 60 * 1000);
+setInterval(
+  () => {
+    // Simple TTL: clear the set every 24 hours to prevent memory growth
+    if (tokenBlacklist.size > 10000) {
+      tokenBlacklist.clear();
+    }
+  },
+  60 * 60 * 1000
+);
 
 /** Check if a token has been blacklisted (logout) */
 export function isTokenBlacklisted(token: string): boolean {
@@ -616,7 +762,10 @@ router.post('/refresh', async (req: Request, res: Response) => {
       });
     }
 
-    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET || config.jwt.secret) as {
+    const decoded = jwt.verify(
+      refreshToken,
+      process.env.REFRESH_TOKEN_SECRET || config.jwt.secret
+    ) as {
       userId: string;
       email: string;
       type: string;
@@ -829,7 +978,10 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
     if (!challenge) {
       return res.status(401).json({
         success: false,
-        error: { code: 'MFA_002', message: 'Invalid or expired MFA challenge. Please log in again.' },
+        error: {
+          code: 'MFA_002',
+          message: 'Invalid or expired MFA challenge. Please log in again.',
+        },
       });
     }
 
@@ -860,11 +1012,7 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
 
     await db.update(users).set({ lastLogin: new Date() }).where(eq(users.id, userId));
 
-    const [userData] = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
+    const [userData] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
 
     if (!userData) {
       return res.status(401).json({
@@ -1076,7 +1224,10 @@ router.post('/mfa/enable', async (req: Request, res: Response) => {
     if (!result.success) {
       return res.status(401).json({
         success: false,
-        error: { code: 'AUTH_004', message: 'Invalid verification code. Ensure your authenticator app is synced.' },
+        error: {
+          code: 'AUTH_004',
+          message: 'Invalid verification code. Ensure your authenticator app is synced.',
+        },
       });
     }
 
@@ -1252,7 +1403,11 @@ async function handleResetPassword(req: Request, res: Response) {
     if (!resetPolicyResult.valid) {
       return res.status(400).json({
         success: false,
-        error: { code: 'AUTH_001', message: resetPolicyResult.errors[0], details: { errors: resetPolicyResult.errors } },
+        error: {
+          code: 'AUTH_001',
+          message: resetPolicyResult.errors[0],
+          details: { errors: resetPolicyResult.errors },
+        },
       });
     }
 
@@ -1370,7 +1525,11 @@ router.post('/password/change', async (req: Request, res: Response) => {
     if (!changePolicyResult.valid) {
       return res.status(400).json({
         success: false,
-        error: { code: 'AUTH_001', message: changePolicyResult.errors[0], details: { errors: changePolicyResult.errors } },
+        error: {
+          code: 'AUTH_001',
+          message: changePolicyResult.errors[0],
+          details: { errors: changePolicyResult.errors },
+        },
       });
     }
 
@@ -1409,7 +1568,10 @@ router.post('/password/change', async (req: Request, res: Response) => {
     if (currentPassword === newPassword) {
       return res.status(400).json({
         success: false,
-        error: { code: 'AUTH_001', message: 'New password must be different from current password' },
+        error: {
+          code: 'AUTH_001',
+          message: 'New password must be different from current password',
+        },
       });
     }
 
@@ -1418,7 +1580,10 @@ router.post('/password/change', async (req: Request, res: Response) => {
     if (!historyOk) {
       return res.status(400).json({
         success: false,
-        error: { code: 'AUTH_001', message: 'This password was used recently. Please choose a different password.' },
+        error: {
+          code: 'AUTH_001',
+          message: 'This password was used recently. Please choose a different password.',
+        },
       });
     }
 
@@ -1426,7 +1591,7 @@ router.post('/password/change', async (req: Request, res: Response) => {
     const newHash = await bcrypt.hash(newPassword, 12);
 
     // Maintain password history (last 5)
-    const history = (userData.passwordHistory as string[] || []).slice(0, 4);
+    const history = ((userData.passwordHistory as string[]) || []).slice(0, 4);
     history.unshift(userData.passwordHash);
 
     await db

@@ -499,75 +499,82 @@ export const ZenLogin: React.FC = () => {
   // Demo / Quick access login (dev-only)
   // ─────────────────────────────────────────────────────────────────────────────
 
-  const demoPersonas = import.meta.env.DEV
-    ? [
-        {
-          email: 'jm.smith@concept2cure.pro',
-          name: 'JM Smith',
-          role: 'Admin',
-          title: 'Founder',
-          icon: '👤',
-        },
-        {
-          email: 'sarah.chen@concept2cure.pro',
-          name: 'Sarah Chen',
-          role: 'Editor',
-          title: 'Regulatory Affairs Director',
-          icon: '📋',
-        },
-        {
-          email: 'mike.torres@concept2cure.pro',
-          name: 'Mike Torres',
-          role: 'Member',
-          title: 'Clinical Data Analyst',
-          icon: '📊',
-        },
-        {
-          email: 'demo@concept2cure.pro',
-          name: 'Demo User',
-          role: 'Member',
-          title: 'Demo Account',
-          icon: '⚡',
-        },
-      ]
-    : [];
+  const demoPersonas = [
+    {
+      email: 'jm.smith@concept2cure.pro',
+      name: 'JM Smith',
+      role: 'Admin',
+      title: 'Founder',
+      icon: '👤',
+    },
+    {
+      email: 'sarah.chen@concept2cure.pro',
+      name: 'Sarah Chen',
+      role: 'Editor',
+      title: 'Regulatory Affairs Director',
+      icon: '📋',
+    },
+    {
+      email: 'mike.torres@concept2cure.pro',
+      name: 'Mike Torres',
+      role: 'Member',
+      title: 'Clinical Data Analyst',
+      icon: '📊',
+    },
+    {
+      email: 'demo@concept2cure.pro',
+      name: 'Demo User',
+      role: 'Member',
+      title: 'Demo Account',
+      icon: '⚡',
+    },
+  ];
 
   const [showPersonas, setShowPersonas] = useState(false);
 
   const handleDemoLogin = useCallback(
     async (demoEmail = 'jm.smith@concept2cure.pro') => {
-      if (!import.meta.env.DEV) return;
       setIsLoading(true);
       setError(null);
       try {
-        const result = await login({
-          email: demoEmail,
-          password: 'demo123',
-          rememberDevice: true,
+        // Use the dev-login endpoint which bypasses MFA
+        const resp = await fetch('/api/auth/dev-login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: demoEmail }),
         });
-        if (!result.success) {
+        const data = await resp.json();
+
+        if (!resp.ok || !data.success) {
           setError({
-            message: result.error?.message || 'Demo login failed. Please contact support.',
+            message: data?.error?.message || 'Demo login failed. Please contact support.',
           });
           return;
         }
-        setStep('success');
-        setTimeout(() => {
-          setLocation(
-            computeRedirect(
-              undefined,
-              undefined,
-              () => authService.getUser && authService.getUser()
-            )
+
+        // Persist tokens and user via authService
+        if (data.accessToken && data.user) {
+          authService.setToken(
+            data.accessToken,
+            data.user,
+            data.refreshToken,
+            data.expiresIn || 86400
           );
-        }, 800);
+          setStep('success');
+          setTimeout(() => {
+            setLocation(computeRedirect(undefined, data.user, () => data.user));
+          }, 800);
+          return;
+        }
+
+        setError({ message: 'Demo login returned incomplete response.' });
       } catch (err) {
         setError({ message: 'Demo login failed. Please try again.' });
       } finally {
         setIsLoading(false);
       }
     },
-    [login, setLocation]
+    [setLocation]
   );
 
   const handleSsoLogin = useCallback(
@@ -711,37 +718,82 @@ export const ZenLogin: React.FC = () => {
         </div>
       </div>
 
-      {/* Quick Demo Access — only visible in development */}
+      {/* Quick Demo Access — visible in development or when VITE_SHOW_DEMO_LOGIN is set */}
       {(import.meta.env.DEV || import.meta.env.VITE_SHOW_DEMO_LOGIN === 'true') && (
-        <button
-          onClick={handleDemoLogin}
-          disabled={isLoading}
-          className={`
-            w-full py-3 px-4
-            flex items-center justify-center gap-2
-            text-sm font-semibold
-            text-emerald-700 bg-emerald-50 border-2 border-emerald-200
-            hover:bg-emerald-100 hover:border-emerald-300
-            rounded-xl transition-all duration-150
-            disabled:opacity-60 disabled:cursor-not-allowed
-          `}
-        >
-          {isLoading ? (
-            <SpinnerIcon />
-          ) : (
-            <>
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 10V3L4 14h7v7l9-11h-7z"
-                />
-              </svg>
-              Demo Access (Dev Only)
-            </>
+        <div className="space-y-2">
+          <button
+            onClick={() => setShowPersonas(!showPersonas)}
+            disabled={isLoading}
+            className={`
+              w-full py-3 px-4
+              flex items-center justify-center gap-2
+              text-sm font-semibold
+              text-emerald-700 bg-emerald-50 border-2 border-emerald-200
+              hover:bg-emerald-100 hover:border-emerald-300
+              rounded-xl transition-all duration-150
+              disabled:opacity-60 disabled:cursor-not-allowed
+            `}
+          >
+            {isLoading ? (
+              <SpinnerIcon />
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 10V3L4 14h7v7l9-11h-7z"
+                  />
+                </svg>
+                Demo Access
+                <svg
+                  className={`w-4 h-4 transition-transform ${showPersonas ? 'rotate-180' : ''}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </>
+            )}
+          </button>
+
+          {/* Persona dropdown */}
+          {showPersonas && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden rounded-xl border-2 border-emerald-200 bg-white divide-y divide-emerald-100"
+            >
+              {demoPersonas.map(persona => (
+                <button
+                  key={persona.email}
+                  onClick={() => handleDemoLogin(persona.email)}
+                  disabled={isLoading}
+                  className="w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-emerald-50 transition-colors disabled:opacity-60"
+                >
+                  <span className="text-xl">{persona.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-zinc-900 truncate">{persona.name}</p>
+                    <p className="text-xs text-zinc-500 truncate">
+                      {persona.title} · {persona.role}
+                    </p>
+                  </div>
+                  <span className="text-xs font-mono text-zinc-400 hidden sm:block">
+                    {persona.email}
+                  </span>
+                </button>
+              ))}
+            </motion.div>
           )}
-        </button>
+        </div>
       )}
 
       {/* SSO Buttons */}
