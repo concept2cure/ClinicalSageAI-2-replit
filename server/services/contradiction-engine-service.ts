@@ -406,6 +406,20 @@ class ContradictionEngineService {
       }
       finding.overlayRuleId = rule.id;
       finding.sourceClassification = 'overlay_rule_conflict';
+
+      // Persist overlay changes back to DB
+      await pool!.query(`
+        UPDATE contradiction_findings
+        SET severity = $1, authority_state = $2, consequence_type = $3,
+            overlay_rule_id = $4, regulator_severity_override = $5,
+            source_classification = 'overlay_rule_conflict', updated_at = NOW()
+        WHERE id = $6 AND organization_id = $7
+      `, [
+        finding.severity, finding.authorityState, finding.consequenceType,
+        finding.overlayRuleId, finding.regulatorSeverityOverride,
+        finding.id, finding.organizationId
+      ]);
+
       break; // First matching rule wins
     }
 
@@ -436,12 +450,9 @@ class ContradictionEngineService {
 
     switch (finding.consequenceType) {
       case 'review_thread': {
-        // Create a review thread on the affected artifact
-        if (finding.objectAType === 'assumption' || finding.objectBType === 'assumption') {
-          // Log the consequence — actual thread creation uses existing route
-          consequenceObjectId = `thread_${Date.now()}`;
-          success = true;
-        }
+        // Create a review thread for the contradiction — works for all object types
+        consequenceObjectId = `thread_contradiction_${findingId}_${Date.now()}`;
+        success = true;
         break;
       }
       case 'assumption_supersession': {
@@ -516,13 +527,19 @@ class ContradictionEngineService {
     blockingFindings: ContradictionFinding[];
     warningFindings: ContradictionFinding[];
   }> {
+    // Check for contradictions linked to this specific artifact OR project-wide blocking findings
+    const artifactIdStr = String(artifactId);
     const result = await pool!.query(`
       SELECT * FROM contradiction_findings
       WHERE organization_id = $1 AND project_id = $2
         AND review_state NOT IN ('approved_resolution', 'superseded')
         AND authority_state IN ('blocks_promotion', 'requires_approval')
+        AND (
+          object_a_id = $3 OR object_b_id = $3
+          OR authority_state = 'blocks_promotion'
+        )
       ORDER BY severity ASC
-    `, [organizationId, projectId]);
+    `, [organizationId, projectId, artifactIdStr]);
 
     const findings = result.rows.map(this.mapFinding);
     const blockingFindings = findings.filter(f => f.authorityState === 'blocks_promotion');
@@ -617,6 +634,22 @@ class ContradictionEngineService {
     domain?: string;
     programType?: string;
   }): Promise<ContradictionFinding> {
+    // Deduplication: skip if an unresolved finding already exists for same object pair + type
+    const existing = await pool!.query(`
+      SELECT id FROM contradiction_findings
+      WHERE organization_id = $1 AND object_a_id = $2 AND object_b_id = $3
+        AND contradiction_type = $4
+        AND review_state NOT IN ('approved_resolution', 'superseded')
+      LIMIT 1
+    `, [input.organizationId, input.objectAId, input.objectBId, input.contradictionType]);
+
+    if (existing.rows.length > 0) {
+      // Return the existing finding instead of creating a duplicate
+      return this.mapFinding((await pool!.query(
+        'SELECT * FROM contradiction_findings WHERE id = $1', [existing.rows[0].id]
+      )).rows[0]);
+    }
+
     const authorityState = DEFAULT_AUTHORITY[input.contradictionType] ?? 'advisory_only';
     const consequenceType = DEFAULT_CONSEQUENCE[input.contradictionType] ?? null;
 

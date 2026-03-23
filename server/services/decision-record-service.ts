@@ -147,6 +147,7 @@ class DecisionRecordService {
     actionState: ActionState;
     performedBy: string;
     reason?: string;
+    escalatedTo?: string;
     executedArtifactId?: number;
     executedArtifactVersion?: number;
     executedWorkflowRunId?: string;
@@ -165,7 +166,7 @@ class DecisionRecordService {
       sets.push(`rejection_reason = $${idx++}`); params.push(input.reason ?? null);
     }
     if (input.actionState === 'escalated') {
-      sets.push(`escalated_to = $${idx++}`); params.push(input.reason ?? null);
+      sets.push(`escalated_to = $${idx++}`); params.push(input.escalatedTo ?? input.performedBy);
       sets.push(`escalation_reason = $${idx++}`); params.push(input.reason ?? null);
     }
     if (input.executedArtifactId) {

@@ -102,7 +102,8 @@ class ReactiveDependencyService {
     `, [input.organizationId, input.sourceType, input.sourceId, input.targetType, input.targetId]);
 
     if (existing.rows.length > 0) {
-      return this.getById(existing.rows[0].id, input.organizationId);
+      const found = await this.getById(existing.rows[0].id, input.organizationId);
+      if (found) return found;
     }
 
     const result = await pool!.query(`
@@ -120,11 +121,12 @@ class ReactiveDependencyService {
     return this.mapDep(result.rows[0]);
   }
 
-  async getById(id: string, organizationId: number): Promise<GoverningDependency> {
+  async getById(id: string, organizationId: number): Promise<GoverningDependency | null> {
     const result = await pool!.query(
       'SELECT * FROM governed_dependencies WHERE id = $1 AND organization_id = $2',
       [id, organizationId]
     );
+    if (result.rows.length === 0) return null;
     return this.mapDep(result.rows[0]);
   }
 

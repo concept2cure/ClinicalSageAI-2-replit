@@ -232,7 +232,20 @@ class AssumptionRegistryService {
       RETURNING *
     `, [status, reviewedBy ?? null, id, organizationId]);
 
-    return result.rows.length ? this.map(result.rows[0]) : null;
+    const record = result.rows.length ? this.map(result.rows[0]) : null;
+
+    // Propagate on material status changes
+    if (record && (status === 'challenged' || status === 'withdrawn')) {
+      const triggerMap: Record<string, 'assumption_challenged' | 'assumption_withdrawn'> = {
+        challenged: 'assumption_challenged',
+        withdrawn: 'assumption_withdrawn',
+      };
+      this.propagateChange(record, triggerMap[status], `Assumption ${status}`).catch(err => {
+        log.warn('Status change propagation failed (non-blocking)', { error: err instanceof Error ? err.message : String(err) });
+      });
+    }
+
+    return record;
   }
 
   async getByProject(organizationId: number, projectId: number): Promise<{
