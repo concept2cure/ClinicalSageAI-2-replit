@@ -186,7 +186,43 @@ class DecisionRecordService {
       RETURNING *
     `, params);
 
-    return result.rows.length ? this.map(result.rows[0]) : null;
+    const record = result.rows.length ? this.map(result.rows[0]) : null;
+
+    // Reactive propagation: mark downstream objects when decision changes materially
+    if (record) {
+      const triggerMap: Record<string, string> = {
+        approved: 'decision_approved',
+        rejected: 'decision_rejected',
+        executed: 'decision_executed',
+        escalated: 'decision_escalated',
+        superseded: 'decision_superseded',
+      };
+      const triggerType = triggerMap[input.actionState];
+      if (triggerType) {
+        this.propagateDecisionChange(record, triggerType as any, input.reason).catch(err => {
+          log.warn('Decision propagation failed (non-blocking)', { error: err instanceof Error ? err.message : String(err) });
+        });
+      }
+    }
+
+    return record;
+  }
+
+  private async propagateDecisionChange(decision: DecisionRecord, triggerType: string, reason?: string): Promise<void> {
+    try {
+      const { reactiveDependencyService } = await import('./reactive-dependency-service');
+      await reactiveDependencyService.propagateChange({
+        organizationId: decision.organizationId,
+        projectId: decision.projectId,
+        triggerType: triggerType as any,
+        sourceType: 'decision',
+        sourceId: decision.id,
+        sourceLabel: decision.title,
+        reason: reason ?? `Decision transitioned to ${decision.actionState}`,
+      });
+    } catch {
+      // Silently skip if tables don't exist yet
+    }
   }
 
   private map(row: Record<string, unknown>): DecisionRecord {

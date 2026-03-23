@@ -35,7 +35,7 @@ import {
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-type TabKey = 'crl' | 'rtf' | 'ema' | 'advisory' | 'cross-jurisdictional' | 'calibration' | 'assumptions' | 'decisions' | 'contradictions';
+type TabKey = 'crl' | 'rtf' | 'ema' | 'advisory' | 'cross-jurisdictional' | 'calibration' | 'assumptions' | 'decisions' | 'contradictions' | 'impact';
 
 interface Tab {
   key: TabKey;
@@ -64,6 +64,7 @@ const tabs: Tab[] = [
   { key: 'assumptions', label: 'Assumptions' },
   { key: 'decisions', label: 'Decisions' },
   { key: 'contradictions', label: 'Contradictions' },
+  { key: 'impact', label: 'Impact & Staleness' },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -631,6 +632,115 @@ function ContradictionsPanel() {
   );
 }
 
+// ─── Impact & Staleness Panel ────────────────────────────────────────────────
+
+function ImpactPanel() {
+  const { data, isLoading } = useQuery({
+    queryKey: ['governed-intel', 'impact-summary', 1],
+    queryFn: async () => {
+      const res = await fetch(`${GOV_API}/impact-summary/1`);
+      if (!res.ok) return null;
+      return res.json();
+    },
+  });
+
+  const { data: staleData } = useQuery({
+    queryKey: ['governed-intel', 'stale-deps', 1],
+    queryFn: async () => {
+      const res = await fetch(`${GOV_API}/dependencies/stale/1`);
+      if (!res.ok) return { stale: [], count: 0 };
+      return res.json();
+    },
+  });
+
+  if (isLoading) return <LoadingCards count={4} />;
+
+  if (!data || data.totalDependencies === 0) {
+    return (
+      <EnterpriseCard>
+        <EmptyState
+          icon={Activity}
+          title="No Reactive Dependencies"
+          description="When assumptions, decisions, or contradictions are linked to downstream artifacts, staleness and impact tracking will appear here. The system reacts automatically when upstream objects change."
+        />
+      </EnterpriseCard>
+    );
+  }
+
+  const staleDeps = staleData?.stale ?? [];
+
+  const impactVariant: Record<string, 'default' | 'info' | 'success' | 'warning' | 'danger'> = {
+    stale: 'danger', requires_review: 'warning', requires_reapproval: 'danger',
+    impacted: 'warning', blocked_by_contradiction: 'danger', unaffected: 'success',
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <MetricCard label="Total Dependencies" value={String(data.totalDependencies)} icon={Layers} iconClassName="bg-blue-100 text-blue-600" />
+        <MetricCard
+          label="Stale"
+          value={String(data.staleDependencies)}
+          icon={Clock}
+          iconClassName={data.staleDependencies > 0 ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'}
+        />
+      </div>
+
+      {/* Impact state breakdown */}
+      {Object.keys(data.byImpactState).length > 0 && (
+        <EnterpriseCard>
+          <CardHeader icon={AlertTriangle} iconClassName="bg-amber-100 text-amber-600" title="Impact States" subtitle="Governed objects requiring attention" />
+          <div className="flex flex-wrap gap-2 mt-3">
+            {Object.entries(data.byImpactState).map(([state, count]: [string, number]) => (
+              <StatusPill key={state} label={`${formatCategory(state)}: ${count}`} variant={impactVariant[state] ?? 'default'} dot />
+            ))}
+          </div>
+        </EnterpriseCard>
+      )}
+
+      {/* Stale dependencies list */}
+      {staleDeps.length > 0 && (
+        <EnterpriseCard noPadding>
+          <CardSection border={false}>
+            <CardHeader icon={Clock} iconClassName="bg-red-100 text-red-600" title="Stale Dependencies" subtitle="Upstream changes have invalidated these objects" />
+          </CardSection>
+          {staleDeps.slice(0, 10).map((dep: Record<string, unknown>) => (
+            <CardSection key={dep.id as string}>
+              <ListItem
+                icon={AlertTriangle}
+                iconClassName="bg-amber-100 text-amber-600"
+                title={`${formatCategory(dep.targetType as string)}: ${dep.targetLabel ?? dep.targetId}`}
+                subtitle={`Stale because: ${dep.staleReason ?? 'upstream changed'} · Source: ${formatCategory(dep.sourceType as string)}`}
+                meta={
+                  <StatusPill label={formatCategory(dep.targetImpactState as string)} variant={impactVariant[dep.targetImpactState as string] ?? 'warning'} dot />
+                }
+                chevron
+              />
+            </CardSection>
+          ))}
+        </EnterpriseCard>
+      )}
+
+      {/* Recent propagation events */}
+      {data.recentPropagations?.length > 0 && (
+        <EnterpriseCard noPadding>
+          <CardSection border={false}>
+            <CardHeader icon={Activity} iconClassName="bg-purple-100 text-purple-600" title="Recent Propagation Events" subtitle="System reactivity audit trail" />
+          </CardSection>
+          {data.recentPropagations.slice(0, 8).map((p: Record<string, unknown>, i: number) => (
+            <CardSection key={i}>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-zinc-700">{formatCategory(p.triggerType as string)}</span>
+                <StatusPill label={formatCategory(p.actionTaken as string)} variant="info" />
+              </div>
+            </CardSection>
+          ))}
+        </EnterpriseCard>
+      )}
+    </div>
+  );
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -663,6 +773,7 @@ const TAB_CONTEXT: Record<TabKey, string> = {
   assumptions: 'Assumption Registry: structured, project-bound assumptions with source attribution, confidence, regulator compatibility, and supersession tracking',
   decisions: 'Decision Records: recommendation → approval → execution lifecycle with confidence, evidence basis, and artifact linkage',
   contradictions: 'Contradiction Detection: structured-first cross-artifact comparison with source classification, approval authority, overlay rules, and consequence paths',
+  impact: 'Impact & Staleness: reactive dependency tracking showing stale/impacted governed objects, propagation history, and downstream impact scope',
 };
 
 export default function RegulatoryPrecedentIntelligence({ onClose, onContextChange }: Props) {
@@ -690,6 +801,7 @@ export default function RegulatoryPrecedentIntelligence({ onClose, onContextChan
       case 'assumptions': return <AssumptionsPanel />;
       case 'decisions': return <DecisionsPanel />;
       case 'contradictions': return <ContradictionsPanel />;
+      case 'impact': return <ImpactPanel />;
       default: return null;
     }
   }, [activeTab]);

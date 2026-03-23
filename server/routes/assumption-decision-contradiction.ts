@@ -40,6 +40,7 @@ import { createScopedLogger } from '../utils/logger';
 import { assumptionRegistryService } from '../services/assumption-registry-service';
 import { decisionRecordService } from '../services/decision-record-service';
 import { contradictionEngineService } from '../services/contradiction-engine-service';
+import { reactiveDependencyService } from '../services/reactive-dependency-service';
 
 const router = Router();
 const log = createScopedLogger('governed-intelligence-routes');
@@ -198,6 +199,46 @@ router.post('/contradictions/check-promotion', async (req: Request, res: Respons
     );
     res.json(result);
   } catch (error) { handleError(res, error, 'check promotion'); }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// REACTIVE DEPENDENCIES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.post('/dependencies', async (req: Request, res: Response) => {
+  try {
+    const result = await reactiveDependencyService.registerDependency({ organizationId: getOrgId(req), ...req.body });
+    res.status(201).json(result);
+  } catch (error) { handleError(res, error, 'register dependency'); }
+});
+
+router.get('/dependencies/downstream/:sourceType/:sourceId', async (req: Request, res: Response) => {
+  try {
+    const results = await reactiveDependencyService.getDownstream(getOrgId(req), req.params.sourceType, req.params.sourceId);
+    res.json({ dependencies: results, count: results.length });
+  } catch (error) { handleError(res, error, 'get downstream dependencies'); }
+});
+
+router.get('/dependencies/stale/:projectId', async (req: Request, res: Response) => {
+  try {
+    const results = await reactiveDependencyService.getStale(getOrgId(req), Number(req.params.projectId));
+    res.json({ stale: results, count: results.length });
+  } catch (error) { handleError(res, error, 'get stale dependencies'); }
+});
+
+router.post('/dependencies/:id/resolve', async (req: Request, res: Response) => {
+  try {
+    const result = await reactiveDependencyService.resolveStale(req.params.id, getOrgId(req), getUserId(req));
+    if (!result) return res.status(404).json({ error: 'Dependency not found' });
+    res.json(result);
+  } catch (error) { handleError(res, error, 'resolve stale dependency'); }
+});
+
+router.get('/impact-summary/:projectId', async (req: Request, res: Response) => {
+  try {
+    const result = await reactiveDependencyService.getProjectImpactSummary(getOrgId(req), Number(req.params.projectId));
+    res.json(result);
+  } catch (error) { handleError(res, error, 'get impact summary'); }
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════

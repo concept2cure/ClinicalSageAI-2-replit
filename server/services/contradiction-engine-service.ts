@@ -650,6 +650,38 @@ class ContradictionEngineService {
       finding = await this.applyOverlays(finding, input.domain, input.programType);
     }
 
+    // Reactive: auto-trigger consequence if confidence and authority allow
+    if (finding.consequenceType) {
+      try {
+        const { reactiveDependencyService } = await import('./reactive-dependency-service');
+
+        // Auto-trigger consequence path
+        await reactiveDependencyService.autoTriggerConsequence({
+          organizationId: finding.organizationId,
+          projectId: input.projectId ?? 0,
+          findingId: finding.id,
+          confidenceLevel: finding.confidenceLevel,
+          authorityState: finding.authorityState,
+          consequenceType: finding.consequenceType,
+        });
+
+        // Propagate impact to linked objects
+        if (input.projectId) {
+          await reactiveDependencyService.propagateChange({
+            organizationId: finding.organizationId,
+            projectId: input.projectId,
+            triggerType: 'contradiction_created',
+            sourceType: 'contradiction',
+            sourceId: finding.id,
+            sourceLabel: finding.title,
+            reason: `Contradiction detected: ${finding.contradictionType} (${finding.severity})`,
+          });
+        }
+      } catch {
+        // Reactive service may not have tables yet
+      }
+    }
+
     return finding;
   }
 

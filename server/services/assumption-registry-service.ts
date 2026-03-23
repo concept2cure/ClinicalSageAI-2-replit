@@ -191,7 +191,37 @@ class AssumptionRegistryService {
       RETURNING *
     `, [input.replacementId, input.reason, id, input.organizationId]);
 
-    return result.rows.length ? this.map(result.rows[0]) : null;
+    const record = result.rows.length ? this.map(result.rows[0]) : null;
+
+    // Reactive propagation: mark downstream objects stale
+    if (record) {
+      this.propagateChange(record, 'assumption_superseded', input.reason).catch(err => {
+        log.warn('Reactive propagation failed (non-blocking)', { error: err instanceof Error ? err.message : String(err) });
+      });
+    }
+
+    return record;
+  }
+
+  /**
+   * Propagate assumption change to downstream dependencies.
+   * Marks linked artifacts/decisions as stale.
+   */
+  private async propagateChange(assumption: AssumptionRecord, triggerType: 'assumption_superseded' | 'assumption_updated' | 'assumption_challenged' | 'assumption_withdrawn', reason: string): Promise<void> {
+    try {
+      const { reactiveDependencyService } = await import('./reactive-dependency-service');
+      await reactiveDependencyService.propagateChange({
+        organizationId: assumption.organizationId,
+        projectId: assumption.projectId,
+        triggerType,
+        sourceType: 'assumption',
+        sourceId: assumption.id,
+        sourceLabel: assumption.title,
+        reason,
+      });
+    } catch {
+      // Reactive service may not have tables yet — silently skip
+    }
   }
 
   async updateStatus(id: string, organizationId: number, status: AssumptionStatus, reviewedBy?: string): Promise<AssumptionRecord | null> {
