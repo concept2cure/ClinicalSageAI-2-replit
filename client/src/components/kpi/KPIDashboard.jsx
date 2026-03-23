@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import api from '../../services/api';
 import WidgetBuilder from './WidgetBuilder';
 import WidgetChart from './WidgetChart';
+import { toast } from '@/hooks/use-toast';
 
 export default function KPIDashboard({ org }) {
   const [widgets, setWidgets] = useState([]);
@@ -72,7 +73,7 @@ export default function KPIDashboard({ org }) {
       }
     } catch (error) {
       console.error('Failed to save widget:', error);
-      alert('Failed to save widget: ' + (error.message || 'Unknown error'));
+      toast({ title: 'Failed to save widget: ' + (error.message || 'Unknown error') });
     }
   };
 
@@ -85,7 +86,7 @@ export default function KPIDashboard({ org }) {
       setWidgets(widgets.filter(w => w.id !== widgetId));
     } catch (error) {
       console.error('Failed to delete widget:', error);
-      alert('Failed to delete widget: ' + (error.message || 'Unknown error'));
+      toast({ title: 'Failed to delete widget: ' + (error.message || 'Unknown error') });
     }
   };
 

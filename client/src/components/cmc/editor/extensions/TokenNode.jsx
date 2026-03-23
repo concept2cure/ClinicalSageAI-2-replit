@@ -12,6 +12,7 @@ import BatchAnalysesTable from '../tokens/BatchAnalysesTable.jsx';
 import P8Table from '../tokens/P8Table.jsx';
 import ControlStrategyBlock from '../tokens/ControlStrategyBlock.jsx';
 import PPQSummary from '../tokens/PPQSummary.jsx';
+import { toast } from '@/hooks/use-toast';
 
 /**
  * Enhanced Token extension with Smart Token Renderers
@@ -145,7 +146,7 @@ const TokenComponent = props => {
 
   async function refresh() {
     if (frozen) {
-      alert('This token is frozen. Unfreeze (remove freeze or re-draft) to refresh.');
+      toast({ title: 'This token is frozen. Unfreeze (remove freeze or re-draft) to refresh.' });
       return;
     }
     try {
@@ -155,11 +156,11 @@ const TokenComponent = props => {
         body: JSON.stringify({ cite_id: citeId }),
       });
       const x = await r.json();
-      if (!r.ok) return alert(x?.error || 'Refresh failed.');
+      if (!r.ok) { toast({ title: x?.error || 'Refresh failed.' }); return; };
       setCurSha(x.sha256 || curSha);
       await fetchCitation();
     } catch {
-      alert('Refresh failed.');
+      toast({ title: 'Refresh failed.' });
     }
   }
 
@@ -170,9 +171,9 @@ const TokenComponent = props => {
   async function copyJson() {
     try {
       await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
-      alert('Snapshot JSON copied.');
+      toast({ title: 'Snapshot JSON copied.' });
     } catch {
-      alert('Copy failed.');
+      toast({ title: 'Copy failed.' });
     }
   }
 
@@ -262,7 +263,7 @@ const TokenComponent = props => {
         {Array.isArray(sourceRefs) && sourceRefs.length > 0 && (
           <button
             className="px-2 py-0.5 border rounded hover:bg-white"
-            onClick={() => alert(JSON.stringify(sourceRefs, null, 2))}
+            onClick={() => toast({ title: JSON.stringify(sourceRefs, null, 2) })}
             title="Source refs"
           >
             🔗

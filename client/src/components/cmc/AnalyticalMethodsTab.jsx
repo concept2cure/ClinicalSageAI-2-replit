@@ -41,6 +41,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { diffWords, renderUnifiedFiltered, computeSafety } from '@/lib/diff';
 import { Switch } from '@/components/ui/switch';
+import { toast } from '@/hooks/use-toast';
 
 const AnalyticalMethodsTab = ({ openModal, onViewMethod }) => {
   // Remove unused navigate import since we're using prop-based routing
@@ -691,7 +692,7 @@ const AnalyticalMethodsTab = ({ openModal, onViewMethod }) => {
       });
     } catch (error) {
       console.error('Error starting gap resolution:', error);
-      alert('Failed to start gap resolution workflow');
+      toast({ title: 'Failed to start gap resolution workflow' });
     }
   };
 

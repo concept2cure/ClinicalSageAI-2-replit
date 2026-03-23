@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { toast } from '@/hooks/use-toast';
 
 export default function AutoReleasePanel({ batchId }: { batchId: string }) {
   const [rules, setRules] = useState<any[]>([]);
@@ -22,7 +23,7 @@ export default function AutoReleasePanel({ batchId }: { batchId: string }) {
       method: 'POST',
     });
     const d = await r.json();
-    if (!r.ok) return alert(d.error || 'Enable failed');
+    if (!r.ok) { toast({ title: 'Error', description: d.error || 'Enable failed', variant: 'destructive' }); return; }
     setStatus({ ...status, enabled: true });
   }
 
@@ -31,8 +32,8 @@ export default function AutoReleasePanel({ batchId }: { batchId: string }) {
       method: 'POST',
     });
     const d = await r.json();
-    if (!r.ok) return alert(d.error || 'Trigger failed');
-    alert(`Auto-release ${d.executed ? 'executed' : 'skipped'}: ${d.decision || 'N/A'}`);
+    if (!r.ok) { toast({ title: 'Error', description: d.error || 'Trigger failed', variant: 'destructive' }); return; }
+    toast({ title: `Auto-release ${d.executed ? 'Executed' : 'Skipped'}`, description: d.decision || 'N/A' });
   }
 
   return (

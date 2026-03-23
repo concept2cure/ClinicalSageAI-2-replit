@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { FileText, Download, Book } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 export default function SubmissionBuilderTab({ processId }) {
   const [building, setBuilding] = useState(false);
@@ -25,11 +26,11 @@ export default function SubmissionBuilderTab({ processId }) {
         URL.revokeObjectURL(url);
       } else {
         const error = await response.json().catch(() => ({ error: 'Failed to build submission' }));
-        alert(error.error || 'Failed to build submission');
+        toast({ title: error.error || 'Failed to build submission' });
       }
     } catch (error) {
       console.error('Error building submission:', error);
-      alert('Failed to build submission');
+      toast({ title: 'Failed to build submission' });
     } finally {
       setBuilding(false);
     }

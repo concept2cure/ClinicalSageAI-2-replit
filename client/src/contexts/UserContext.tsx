@@ -295,7 +295,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
           setProjects(projectsData.projects || projectsData || []);
         }
       } catch (err) {
-        console.warn('Failed to fetch projects:', err);
         // Use mock projects for development
         setProjects([
           { id: '1', name: 'CardioFlow 510(k)', type: '510k', status: 'active', role: 'lead' },
@@ -311,7 +310,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
         if (savedProject) setCurrentProject(savedProject);
       }
     } catch (error) {
-      console.error('Failed to refresh profile:', error);
     } finally {
       setIsLoading(false);
     }
@@ -336,7 +334,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
           body: JSON.stringify(prefs),
         });
       } catch (error) {
-        console.error('Failed to update preferences:', error);
       }
     },
     [profile]
@@ -345,11 +342,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
   // Handle project change
   const handleSetCurrentProject = useCallback((project: UserProject | null) => {
     setCurrentProject(project);
-    if (project) {
-      localStorage.setItem('currentProjectId', project.id);
-    } else {
-      localStorage.removeItem('currentProjectId');
-    }
+    try {
+      if (project) {
+        localStorage.setItem('currentProjectId', project.id);
+      } else {
+        localStorage.removeItem('currentProjectId');
+      }
+    } catch { /* private browsing */ }
   }, []);
 
   // Initial load

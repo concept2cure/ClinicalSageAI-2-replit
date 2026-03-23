@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { toast } from '@/hooks/use-toast';
 
 export default function DigestPanel() {
   const [result, setResult] = useState<any>(null);
@@ -8,7 +9,7 @@ export default function DigestPanel() {
   async function trigger() {
     const r = await fetch(`/api/quality/digest/daily`, { method: 'GET' });
     const d = await r.json();
-    if (!r.ok) return alert(d.error || 'Digest failed');
+    if (!r.ok) { toast({ title: 'Error', description: d.error || 'Digest generation failed', variant: 'destructive' }); return; }
     setResult(d);
   }
 

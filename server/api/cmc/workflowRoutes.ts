@@ -5,6 +5,9 @@
 
 import express from 'express';
 import { z } from 'zod';
+import { db } from '../../db';
+import { projectWorkflows, workflowTasks } from '../../../shared/cmc-schema';
+import { eq, desc, and } from 'drizzle-orm';
 
 const router = express.Router();
 
@@ -356,9 +359,7 @@ const AI_COPILOT_COMMANDS: Record<string, AICommandConfig> = {
   },
 };
 
-// In-memory storage for workflows (replace with database in production)
-let workflows = new Map();
-let workflowCounter = 1;
+// Command results kept in-memory (transient AI output cache)
 let commandResults = new Map();
 let commandCounter = 1;
 
@@ -368,48 +369,32 @@ let commandCounter = 1;
  */
 router.get('/', async (req, res) => {
   try {
-    const allWorkflows = Array.from(workflows.values());
+    const rows = await db
+      .select()
+      .from(projectWorkflows)
+      .orderBy(desc(projectWorkflows.createdAt))
+      .limit(100);
 
-    // Add some sample workflows if none exist
-    if (allWorkflows.length === 0) {
-      const sampleWorkflow1 = {
-        ...WORKFLOW_TEMPLATES['ind-cmc'],
-        id: `ind-cmc-${Date.now()}`,
-        startDate: '2025-01-15',
-        currentProgress: 67,
-        nextMilestone: 'Container Closure System Review',
-        assignedTeam: ['John Smith', 'Sarah Chen', 'Mike Johnson'],
-        drugContext: 'Pembrolizumab',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+    // Enrich with tasks
+    const enriched = await Promise.all(
+      rows.map(async (wf) => {
+        const tasks = await db
+          .select()
+          .from(workflowTasks)
+          .where(eq(workflowTasks.workflowId, wf.id));
+        const completed = tasks.filter(t => t.status === 'completed').length;
+        return {
+          ...wf,
+          tasks,
+          currentProgress: tasks.length > 0 ? Math.round((completed / tasks.length) * 100) : 0,
+        };
+      })
+    );
 
-      const sampleWorkflow2 = {
-        ...WORKFLOW_TEMPLATES['stability-supplement'],
-        id: `stability-supplement-${Date.now()}`,
-        startDate: '2025-01-20',
-        currentProgress: 40,
-        nextMilestone: 'Statistical Analysis',
-        assignedTeam: ['Lisa Wong', 'David Park'],
-        drugContext: 'Monoclonal Antibody X',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      workflows.set(sampleWorkflow1.id, sampleWorkflow1);
-      workflows.set(sampleWorkflow2.id, sampleWorkflow2);
-    }
-
-    res.json({
-      success: true,
-      data: Array.from(workflows.values()),
-    });
+    res.json({ success: true, data: enriched });
   } catch (error) {
     console.error('Error fetching workflows:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Operation failed',
-    });
+    res.status(500).json({ success: false, error: 'Operation failed' });
   }
 });
 
@@ -423,39 +408,55 @@ router.post('/', async (req, res) => {
     const { template, drugName, structuredInputs, name, description, priority, assignedTeam } =
       validatedData;
 
-    if (!WORKFLOW_TEMPLATES[template]) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid workflow template',
-      });
+    const templateData = WORKFLOW_TEMPLATES[template];
+
+    // Insert workflow into database
+    const [newWorkflow] = await db
+      .insert(projectWorkflows)
+      .values({
+        projectId: req.body.projectId || null,
+        workflowName: name || templateData?.name || template,
+        workflowData: {
+          templateId: template,
+          drugContext: drugName,
+          structuredData: structuredInputs || {},
+          assignedTeam: assignedTeam.length > 0 ? assignedTeam : [],
+          regulations: templateData?.regulations || [],
+          deliverables: templateData?.deliverables || [],
+        },
+        status: 'active',
+        progress: 0,
+        startDate: new Date(),
+        assignedTo: assignedTeam[0] || null,
+      })
+      .returning();
+
+    // Create tasks from template
+    if (templateData?.tasks) {
+      for (const task of templateData.tasks) {
+        await db.insert(workflowTasks).values({
+          workflowId: newWorkflow.id,
+          taskName: task.name,
+          description: task.requirements?.join('; ') || '',
+          taskType: 'document',
+          priority: priority,
+          status: 'pending',
+          assignedTo: task.owner,
+          estimatedHours: parseInt(task.duration) || null,
+        });
+      }
     }
 
-    const templateData = WORKFLOW_TEMPLATES[template];
-    const workflowId = `${template}-${Date.now()}`;
-
-    const newWorkflow = {
-      ...templateData,
-      id: workflowId,
-      name: name || templateData.name,
-      description: description || templateData.description,
-      priority: priority,
-      startDate: new Date().toISOString().split('T')[0],
-      currentProgress: 0,
-      nextMilestone: templateData.tasks[0]?.name || 'Getting Started',
-      assignedTeam: assignedTeam.length > 0 ? assignedTeam : ['Current User'],
-      drugContext: drugName,
-      structuredData: structuredInputs || {},
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      status: 'active',
-    };
-
-    workflows.set(workflowId, newWorkflow);
+    // Fetch back with tasks
+    const tasks = await db
+      .select()
+      .from(workflowTasks)
+      .where(eq(workflowTasks.workflowId, newWorkflow.id));
 
     res.json({
       success: true,
-      data: newWorkflow,
-      message: `${templateData.name} workflow created successfully`,
+      data: { ...newWorkflow, tasks },
+      message: `${newWorkflow.workflowName} workflow created successfully`,
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -467,10 +468,7 @@ router.post('/', async (req, res) => {
     }
 
     console.error('Error creating workflow:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Operation failed',
-    });
+    res.status(500).json({ success: false, error: 'Operation failed' });
   }
 });
 
@@ -481,25 +479,33 @@ router.post('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const workflow = workflows.get(id);
+    const [workflow] = await db
+      .select()
+      .from(projectWorkflows)
+      .where(eq(projectWorkflows.id, id));
 
     if (!workflow) {
-      return res.status(404).json({
-        success: false,
-        error: 'Workflow not found',
-      });
+      return res.status(404).json({ success: false, error: 'Workflow not found' });
     }
+
+    const tasks = await db
+      .select()
+      .from(workflowTasks)
+      .where(eq(workflowTasks.workflowId, id));
+
+    const completed = tasks.filter(t => t.status === 'completed').length;
 
     res.json({
       success: true,
-      data: workflow,
+      data: {
+        ...workflow,
+        tasks,
+        currentProgress: tasks.length > 0 ? Math.round((completed / tasks.length) * 100) : 0,
+      },
     });
   } catch (error) {
     console.error('Error fetching workflow:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Operation failed',
-    });
+    res.status(500).json({ success: false, error: 'Operation failed' });
   }
 });
 
@@ -512,63 +518,56 @@ router.put('/:id/tasks/:taskId', async (req, res) => {
     const { id, taskId } = req.params;
     const validatedData = TaskUpdateSchema.parse({ taskId: parseInt(taskId), ...req.body });
 
-    const workflow = workflows.get(id);
-    if (!workflow) {
-      return res.status(404).json({
-        success: false,
-        error: 'Workflow not found',
-      });
-    }
-
-    const taskIndex = workflow.tasks.findIndex(task => task.id === validatedData.taskId);
-    if (taskIndex === -1) {
-      return res.status(404).json({
-        success: false,
-        error: 'Task not found',
-      });
-    }
-
-    // Update task
-    workflow.tasks[taskIndex] = {
-      ...workflow.tasks[taskIndex],
+    // Update the task in database
+    const updateData: Record<string, any> = {
       status: validatedData.status,
-      notes: validatedData.notes || workflow.tasks[taskIndex].notes,
-      owner: validatedData.owner || workflow.tasks[taskIndex].owner,
-      updatedAt: new Date().toISOString(),
+      updatedAt: new Date(),
     };
+    if (validatedData.notes) updateData.description = validatedData.notes;
+    if (validatedData.owner) updateData.assignedTo = validatedData.owner;
+    if (validatedData.status === 'completed') updateData.completedDate = new Date();
+
+    const [updatedTask] = await db
+      .update(workflowTasks)
+      .set(updateData)
+      .where(eq(workflowTasks.id, taskId))
+      .returning();
+
+    if (!updatedTask) {
+      return res.status(404).json({ success: false, error: 'Task not found' });
+    }
 
     // Recalculate workflow progress
-    const completedTasks = workflow.tasks.filter(
-      (task: WorkflowTask) => task.status === 'completed'
-    ).length;
-    workflow.currentProgress = Math.round((completedTasks / workflow.tasks.length) * 100);
-    workflow.updatedAt = new Date().toISOString();
+    const allTasks = await db
+      .select()
+      .from(workflowTasks)
+      .where(eq(workflowTasks.workflowId, id));
 
-    // Update next milestone
-    const nextPendingTask = workflow.tasks.find((task: WorkflowTask) => task.status === 'pending');
-    workflow.nextMilestone = nextPendingTask ? nextPendingTask.name : 'All tasks completed';
+    const completed = allTasks.filter(t => t.status === 'completed').length;
+    const progress = allTasks.length > 0 ? Math.round((completed / allTasks.length) * 100) : 0;
 
-    workflows.set(id, workflow);
+    await db
+      .update(projectWorkflows)
+      .set({ progress, updatedAt: new Date() })
+      .where(eq(projectWorkflows.id, id));
+
+    // Fetch updated workflow
+    const [workflow] = await db
+      .select()
+      .from(projectWorkflows)
+      .where(eq(projectWorkflows.id, id));
 
     res.json({
       success: true,
-      data: workflow,
+      data: { ...workflow, tasks: allTasks, currentProgress: progress },
       message: 'Task updated successfully',
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid input data',
-        details: error.errors,
-      });
+      return res.status(400).json({ success: false, error: 'Invalid input data', details: error.errors });
     }
-
     console.error('Error updating task:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Operation failed',
-    });
+    res.status(500).json({ success: false, error: 'Operation failed' });
   }
 });
 

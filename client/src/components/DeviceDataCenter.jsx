@@ -51,6 +51,7 @@ import {
 import CategoryMultiSelect from './CategoryMultiSelect';
 import MetadataDynamicForm, { validateMetadata } from './MetadataDynamicForm';
 import StandardsPicker from './StandardsPicker';
+import { toast } from '@/hooks/use-toast';
 
 // Icon mapping for categories
 const CATEGORY_ICONS = {
@@ -300,7 +301,7 @@ export default function DeviceDataCenter() {
       return true;
     } catch (error) {
       console.error('Error saving complete tag data:', error);
-      alert('Failed to save changes. Please try again.');
+      toast({ title: 'Failed to save changes. Please try again.' });
       return false;
     }
   };
@@ -1229,7 +1230,7 @@ export default function DeviceDataCenter() {
                   onClick={async () => {
                     // Validate at least one category is selected
                     if (selectedCategories.length === 0) {
-                      alert('Please select at least one category before saving.');
+                      toast({ title: 'Please select at least one category before saving.' });
                       setActiveTab('tags');
                       return;
                     }
@@ -1240,7 +1241,7 @@ export default function DeviceDataCenter() {
                       const errors = validateMetadata(Object.values(template), metadataFields);
                       if (Object.keys(errors).length > 0) {
                         const errorList = Object.entries(errors).map(([k, v]) => `• ${k}: ${v}`).join('\n');
-                        alert(`Please fix these required fields:\n\n${errorList}`);
+                        toast({ title: `Please fix these required fields:\n\n${errorList}` });
                         setActiveTab('metadata');
                         return;
                       }

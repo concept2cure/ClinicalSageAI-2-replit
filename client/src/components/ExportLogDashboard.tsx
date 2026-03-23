@@ -33,7 +33,6 @@ export default function ExportLogDashboard() {
         setLogs(data.reverse());
         setFilteredLogs(data.reverse());
       } catch (error) {
-        console.error('Error fetching export logs:', error);
         toast({
           title: 'Error',
           description: 'Failed to load export logs. Please try again later.',

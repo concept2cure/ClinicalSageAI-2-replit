@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
+import { toast } from '@/hooks/use-toast';
   Table,
   TableBody,
   TableCell,
@@ -48,7 +49,7 @@ export default function CSRAlignmentPanel() {
 
   const runAlignment = async () => {
     if (selectedReports.length < 2) {
-      alert('Please select at least 2 reports to compare');
+      toast({ title: 'Please select at least 2 reports to compare' });
       return;
     }
 

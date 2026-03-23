@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTenant, Tenant } from '../../contexts/TenantContext';
+import { toast } from '@/hooks/use-toast';
 import { Button } from '../ui/button';
 import {
   DropdownMenu,
@@ -70,8 +71,7 @@ export function TenantSelector() {
       // Reload the page to refresh data for the new tenant
       window.location.reload();
     } catch (error) {
-      console.error('Error creating tenant:', error);
-      alert('Failed to create tenant. Please try again.');
+      toast({ title: 'Error', description: 'Failed to create tenant. Please try again.', variant: 'destructive' });
     } finally {
       setIsSubmitting(false);
     }

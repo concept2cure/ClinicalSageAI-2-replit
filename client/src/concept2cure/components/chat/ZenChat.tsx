@@ -1113,7 +1113,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
   // Handle action card intent — call server action + invalidate workspace-summary cache
   const handleRunIntent = useCallback(
     async (intent: string, label = intent) => {
-      const runId = `run_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      const runId = `run_${crypto.randomUUID().slice(0, 12)}`;
       onActionRun?.({ id: runId, intent, label, status: 'running', ts: Date.now() });
       try {
         const orgId =

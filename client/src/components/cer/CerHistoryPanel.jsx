@@ -33,6 +33,7 @@ import {
   Clock,
 } from 'lucide-react';
 import axios from 'axios';
+import { toast } from '@/hooks/use-toast';
 
 export default function CerHistoryPanel() {
   const [loading, setLoading] = useState(false);
@@ -194,7 +195,7 @@ export default function CerHistoryPanel() {
 
   const compareSelectedVersions = async () => {
     if (compareVersions.length !== 2) {
-      alert('Please select exactly 2 versions to compare');
+      toast({ title: 'Please select exactly 2 versions to compare' });
       return;
     }
 

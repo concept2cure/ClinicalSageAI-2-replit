@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { toast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Shield,
@@ -39,7 +40,6 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
       setTimelineData(timeline);
       setHistory(hist);
     } catch (error) {
-      console.error('Failed to load dashboard data:', error);
     } finally {
       setLoading(false);
     }
@@ -59,7 +59,6 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
       setGatekeeperData(result);
       loadData(); // Refresh all data
     } catch (error) {
-      console.error('Gatekeeper run failed:', error);
     } finally {
       setLoading(false);
     }
@@ -76,7 +75,6 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
       });
       loadData(); // Refresh data after fixes
     } catch (error) {
-      console.error('Auto-fix failed:', error);
     } finally {
       setLoading(false);
     }
@@ -90,9 +88,8 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
 
       // Copy to clipboard
       navigator.clipboard.writeText(digest.message);
-      alert('Slack digest copied to clipboard!');
+      toast({ title: 'Copied', description: 'Slack digest copied to clipboard' });
     } catch (error) {
-      console.error('Failed to generate digest:', error);
     }
   };
 
@@ -107,7 +104,6 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
       a.click();
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Failed to download calendar:', error);
     }
   };
 

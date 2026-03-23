@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import {
+import { toast } from '@/hooks/use-toast';
   FileText,
   Brain,
   FileUp,
@@ -745,7 +746,7 @@ const EmbeddedCodingAgent = () => {
                 }, 100);
               } catch (error) {
                 console.error('PDF download failed:', error);
-                alert('Failed to download PDF. Please try again.');
+                toast({ title: 'Failed to download PDF. Please try again.' });
               }
             }}
           >

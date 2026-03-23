@@ -43,7 +43,6 @@ export default function SampleChainPanel({ sampleId, sampleCode }: SampleChainPa
       const data = await response.json();
       setChain(data || []);
     } catch (error) {
-      console.error('Error loading chain:', error);
     } finally {
       setLoading(false);
     }

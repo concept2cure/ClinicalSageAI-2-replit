@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import FdaFaersDataPanel from './FdaFaersDataPanel';
 import { FaersRiskBadge } from './FaersRiskBadge';
+import { toast } from '@/hooks/use-toast';
 
 export default function InputDataPanel({ jobId }) {
   const [activeTab, setActiveTab] = useState('basic-info');
@@ -88,7 +89,7 @@ export default function InputDataPanel({ jobId }) {
 
   const handleUpload = async () => {
     if (selectedFiles.length === 0) {
-      alert('Please select at least one file to upload');
+      toast({ title: 'Please select at least one file to upload' });
       return;
     }
 
@@ -120,14 +121,14 @@ export default function InputDataPanel({ jobId }) {
       setSelectedFiles([]);
       document.getElementById('file-upload').value = '';
 
-      alert('Files uploaded successfully');
+      toast({ title: 'Files uploaded successfully' });
     }, 3000);
   };
 
   const saveFormData = () => {
     // In a real app, we would save the data to the server
     console.log('Saving form data:', formData);
-    alert('Device information saved successfully');
+    toast({ title: 'Device information saved successfully' });
   };
 
   /**

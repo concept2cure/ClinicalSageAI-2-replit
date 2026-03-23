@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
+import { toast } from '@/hooks/use-toast';
   Upload,
   Folder,
   FileText,
@@ -86,7 +87,7 @@ const PythonAnalyticsUploadSection = ({ onAnalysisComplete }) => {
       await fetchOneDriveFiles();
     } catch (error) {
       console.error('❌ Microsoft Graph authentication error:', error);
-      alert('Microsoft Graph authentication failed. Please check your credentials and try again.');
+      toast({ title: 'Microsoft Graph authentication failed. Please check your credentials and try again.' });
     } finally {
       setIsOneDriveLoading(false);
     }
@@ -109,9 +110,9 @@ const PythonAnalyticsUploadSection = ({ onAnalysisComplete }) => {
       }
     } catch (error) {
       console.error('❌ Token fetch error:', error);
-      alert(
+      toast({ title: 
         'Failed to authenticate with Microsoft Graph. Please ensure you have proper credentials configured.'
-      );
+       });
     }
   };
 
@@ -161,7 +162,7 @@ const PythonAnalyticsUploadSection = ({ onAnalysisComplete }) => {
       setOneDriveFiles(documentFiles);
     } catch (error) {
       console.error('❌ OneDrive files fetch error:', error);
-      alert('Failed to fetch OneDrive files. Please check your connection and permissions.');
+      toast({ title: 'Failed to fetch OneDrive files. Please check your connection and permissions.' });
     } finally {
       setIsOneDriveLoading(false);
     }
@@ -184,7 +185,7 @@ const PythonAnalyticsUploadSection = ({ onAnalysisComplete }) => {
       setVaultFiles(data.data.files);
     } catch (error) {
       console.error('❌ Vault files fetch error:', error);
-      alert('Failed to fetch vault files. Please check your connection.');
+      toast({ title: 'Failed to fetch vault files. Please check your connection.' });
     } finally {
       setIsVaultLoading(false);
     }
@@ -211,7 +212,7 @@ const PythonAnalyticsUploadSection = ({ onAnalysisComplete }) => {
   // Process selected files for analytics
   const processFilesForAnalytics = async () => {
     if (selectedFiles.length === 0) {
-      alert('Please select at least one file for analysis.');
+      toast({ title: 'Please select at least one file for analysis.' });
       return;
     }
 
@@ -274,7 +275,7 @@ const PythonAnalyticsUploadSection = ({ onAnalysisComplete }) => {
       }
     } catch (error) {
       console.error('❌ Analytics processing error:', error);
-      alert('Analytics processing failed. Please try again.');
+      toast({ title: 'Analytics processing failed. Please try again.' });
     } finally {
       setIsProcessing(false);
     }

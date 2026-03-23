@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
+import { toast } from '@/hooks/use-toast';
   Loader2,
   FolderTree,
   Download,
@@ -293,7 +294,7 @@ const BlueprintPage = () => {
   // Generate blueprint package
   const handleGenerateBlueprint = async () => {
     if (!companyName || !productName || !applicationNumber) {
-      alert('Please fill in required fields (Company Name, Product Name, and Application Number)');
+      toast({ title: 'Please fill in required fields (Company Name, Product Name, and Application Number)' });
       return;
     }
 
@@ -351,7 +352,7 @@ const BlueprintPage = () => {
   // Validate eCTD package
   const handleValidate = async () => {
     if (!generatedBlueprint) {
-      alert('Please generate a blueprint first');
+      toast({ title: 'Please generate a blueprint first' });
       return;
     }
 
@@ -384,7 +385,7 @@ const BlueprintPage = () => {
   // Submit to FDA ESG
   const handleSubmitToFDA = async () => {
     if (!generatedBlueprint) {
-      alert('Please generate a blueprint first');
+      toast({ title: 'Please generate a blueprint first' });
       return;
     }
 
@@ -431,7 +432,7 @@ const BlueprintPage = () => {
   // Submit to EMA CESP
   const handleSubmitToEMA = async () => {
     if (!generatedBlueprint) {
-      alert('Please generate a blueprint first');
+      toast({ title: 'Please generate a blueprint first' });
       return;
     }
 

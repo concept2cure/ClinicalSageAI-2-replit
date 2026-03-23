@@ -146,11 +146,9 @@ export const FullDocumentBuilder: React.FC = () => {
         setStep('review');
       } else {
         const err = await response.json().catch(() => ({ error: 'Generation failed' }));
-        alert(err.error || 'Document generation failed');
         setStep('study_info');
       }
     } catch (err) {
-      alert('Network error — please try again');
       setStep('study_info');
     } finally {
       setIsGenerating(false);

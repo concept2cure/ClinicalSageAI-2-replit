@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from '@/hooks/use-toast';
 
 export default function CSRIngest() {
   const [files, setFiles] = useState([]);
@@ -24,11 +25,11 @@ export default function CSRIngest() {
     try {
       // In a real implementation, this would make an API call
       await new Promise(resolve => setTimeout(resolve, 2000));
-      alert(`${files.length} CSR(s) successfully uploaded and being processed`);
+      toast({ title: `${files.length} CSR(s) successfully uploaded and being processed` });
       setFiles([]);
     } catch (error) {
       console.error('Upload failed:', error);
-      alert('Upload failed. Please try again.');
+      toast({ title: 'Upload failed. Please try again.' });
     } finally {
       setUploading(false);
     }

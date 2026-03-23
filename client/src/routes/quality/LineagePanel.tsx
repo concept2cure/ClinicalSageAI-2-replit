@@ -9,7 +9,6 @@ export default function LineagePanel({ batchId }: { batchId: string }) {
       const data = await r.json();
       setRows(Array.isArray(data) ? data : []);
     } catch (e) {
-      console.error('Failed to load lineage:', e);
       setRows([]);
     }
   }
