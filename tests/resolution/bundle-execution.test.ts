@@ -541,6 +541,53 @@ describe('Bundle Execution — Failure Behavior', () => {
     expect(receipt.executedSteps.length).toBe(0);
     expect(receipt.preparedSteps[0].confidence).toBe('uncertain');
   });
+
+  it('unknown reapproval state uses uncertain confidence', async () => {
+    // 'regulation' is not a recognized object type in getObjectState,
+    // so it returns 'unknown', triggering the uncertain confidence path
+    mockItems.push({
+      id: 'item-unknown-reapproval',
+      bundleId: 'bundle-exec-001',
+      objectType: 'regulation',
+      objectId: 'reg-unknown',
+      objectTitle: 'Unknown Object',
+      actionType: 'reapprove',
+      actionDescription: 'Reapprove unknown type',
+      status: 'pending',
+      sortOrder: 0,
+      createdAt: new Date(),
+    });
+
+    const receipt = await executeBundle(1, 1, 'bundle-exec-001');
+
+    expect(receipt.preparedSteps.length).toBe(1);
+    expect(receipt.preparedSteps[0].confidence).toBe('uncertain');
+    expect(receipt.preparedSteps[0].preparedAction).toContain('could not be determined');
+  });
+
+  it('provisional confidence rewrites are prepared, not executed', async () => {
+    mockItems.push({
+      id: 'item-provisional',
+      bundleId: 'bundle-exec-001',
+      objectType: 'artifact',
+      objectId: 'art-provisional',
+      objectTitle: 'Provisional Artifact',
+      actionType: 'rewrite',
+      actionDescription: 'Rewrite with provisional confidence',
+      status: 'pending',
+      preparedContent: 'Some provisional content',
+      preparedContentConfidence: 'provisional',
+      sortOrder: 0,
+      createdAt: new Date(),
+    });
+
+    const receipt = await executeBundle(1, 1, 'bundle-exec-001');
+
+    expect(receipt.preparedSteps.length).toBe(1);
+    expect(receipt.executedSteps.length).toBe(0);
+    expect(receipt.preparedSteps[0].confidence).toBe('provisional');
+    expect(receipt.preparedSteps[0].preparedAction).toContain('provisional');
+  });
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════

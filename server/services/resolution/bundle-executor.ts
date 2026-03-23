@@ -19,11 +19,10 @@
 
 import { db } from '../../db';
 import { eq, and, sql } from 'drizzle-orm';
+import { createHash } from 'crypto';
 import {
   resolutionBundles,
   resolutionBundleItems,
-  resolutionPlans,
-  supersessionRecords,
   type ResolutionBundle,
   type ResolutionBundleItem,
 } from '../../../shared/schema/resolution';
@@ -259,12 +258,13 @@ export async function executeBundle(
             'in_resolution',
             `Bundle ${bundleId} partially executed. ${executedSteps.length} executed, ${preparedSteps.length} prepared, ${blockedSteps.length} blocked.`
           );
-        } catch {
-          // Plan may already be in in_resolution — that's fine
+        } catch (innerErr: unknown) {
+          // Plan may already be in in_resolution — log but don't fail execution
+          console.warn(`[bundle-executor] Plan ${bundle.planId} state transition to in_resolution skipped:`, innerErr instanceof Error ? innerErr.message : innerErr);
         }
       }
-    } catch {
-      // Plan state transition is best-effort during execution
+    } catch (outerErr: unknown) {
+      console.error(`[bundle-executor] Plan ${bundle.planId} state transition failed:`, outerErr instanceof Error ? outerErr.message : outerErr);
     }
   }
 
@@ -365,9 +365,15 @@ async function executeSupersede(
     };
   }
 
+  if (priorState === 'superseded') {
+    return {
+      outcome: 'blocked',
+      reason: `Cannot supersede ${item.objectType} ${item.objectId} — object is already superseded.`,
+    };
+  }
+
   // Record the supersession
   try {
-    const supersessionId = `superseded-${item.objectId}-${Date.now()}`;
     const record = await recordSupersession(organizationId, userId, {
       projectId: bundle.projectId,
       supersededObjectType: item.objectType,
@@ -441,6 +447,7 @@ async function executeRewrite(
     // Strong or moderate confidence — stage the rewrite
     const staged = await stageRewrite(
       organizationId,
+      userId,
       item.objectType,
       item.objectId,
       item.preparedContent,
@@ -493,6 +500,7 @@ async function executeHarmonize(
   if (item.preparedContent && item.preparedContentConfidence === 'strong') {
     const staged = await stageRewrite(
       organizationId,
+      userId,
       item.objectType,
       item.objectId,
       item.preparedContent,
@@ -550,6 +558,15 @@ async function prepareReapproval(
       outcome: 'prepared',
       preparedAction: `Reapproval required for ${item.objectType} "${item.objectTitle || item.objectId}" (currently ${currentState}). Approval must be re-obtained after resolution changes are applied.`,
       confidence: 'strong',
+    };
+  }
+
+  if (currentState === 'unknown') {
+    // Cannot determine authority state — require reapproval to be safe
+    return {
+      outcome: 'prepared',
+      preparedAction: `Authority state of ${item.objectType} "${item.objectTitle || item.objectId}" could not be determined — reapproval recommended as a precaution.`,
+      confidence: 'uncertain',
     };
   }
 
@@ -616,8 +633,8 @@ async function getObjectState(
       if (result.rows?.[0]) return 'superseded';
       return 'active';
     }
-  } catch {
-    // Tables may not exist in test/dev environments
+  } catch (err: unknown) {
+    console.warn(`[bundle-executor] getObjectState failed for ${objectType}:${objectId}:`, err instanceof Error ? err.message : err);
   }
 
   return 'unknown';
@@ -639,43 +656,59 @@ async function markObjectSuperseded(
     }
     // For assumptions/decisions, supersession is recorded in supersession_records
     // (no separate status column to update)
-  } catch {
-    // Best-effort — supersession record is the source of truth
+  } catch (err: unknown) {
+    console.warn(`[bundle-executor] markObjectSuperseded best-effort failed for ${objectType}:${objectId}:`, err instanceof Error ? err.message : err);
   }
 }
 
 async function stageRewrite(
   organizationId: number,
+  userId: number,
   objectType: string,
   objectId: string,
   content: string,
   bundleId: string,
   planId?: string
 ): Promise<boolean> {
-  try {
-    if (objectType === 'artifact') {
-      // Create a new version with the rewritten content
-      await db.execute(sql`
-        INSERT INTO concept2cure_artifact_versions (
-          artifact_id, version, content, content_hash, change_description, created_at
-        )
-        SELECT
-          a.artifact_id,
-          COALESCE((SELECT MAX(v.version) FROM concept2cure_artifact_versions v WHERE v.artifact_id = a.artifact_id), 0) + 1,
-          ${content},
-          encode(sha256(${content}::bytea), 'hex'),
-          ${'Resolution rewrite via bundle ' + bundleId + (planId ? ' (plan ' + planId + ')' : '')},
-          now()
-        FROM concept2cure_artifacts a
-        WHERE a.artifact_id::text = ${objectId}
-          AND a.organization_id = ${organizationId}
-      `);
-      return true;
-    }
-  } catch {
-    // Staging failed — caller will handle
+  if (objectType !== 'artifact') {
+    // Only artifacts support versioned staging currently
+    return false;
   }
-  return false;
+
+  try {
+    const contentHash = createHash('sha256').update(content).digest('hex');
+    const changeDescription = `Resolution rewrite via bundle ${bundleId}${planId ? ` (plan ${planId})` : ''}`;
+
+    // Use INSERT...SELECT with subquery for version to avoid read-then-write race.
+    // If a concurrent insert creates a duplicate version, the UNIQUE(artifact_id, version)
+    // constraint will reject it and we return false.
+    await db.execute(sql`
+      INSERT INTO concept2cure_artifact_versions (
+        artifact_id, organization_id, version, content, content_hash,
+        change_description, created_by_id, created_at
+      )
+      SELECT
+        a.id,
+        ${organizationId},
+        COALESCE((SELECT MAX(v.version) FROM concept2cure_artifact_versions v WHERE v.artifact_id = a.id), 0) + 1,
+        ${content},
+        ${contentHash},
+        ${changeDescription},
+        ${userId},
+        now()
+      FROM concept2cure_artifacts a
+      WHERE a.id::text = ${objectId}
+        AND a.organization_id = ${organizationId}
+    `);
+    return true;
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    // Unique constraint violation = race condition — surface it, don't swallow
+    if (msg.includes('unique') || msg.includes('duplicate')) {
+      console.error(`[bundle-executor] Version conflict staging rewrite for ${objectType}:${objectId}: ${msg}`);
+    }
+    return false;
+  }
 }
 
 async function flagObjectForReview(
@@ -701,7 +734,7 @@ async function flagObjectForReview(
     }
     // For all object types, the review flag is implicitly set by the bundle item
     // being in 'in_progress' status with a review action type
-  } catch {
-    // Best-effort
+  } catch (err: unknown) {
+    console.warn(`[bundle-executor] flagObjectForReview best-effort failed for ${objectType}:${objectId}:`, err instanceof Error ? err.message : err);
   }
 }

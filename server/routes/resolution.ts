@@ -15,6 +15,7 @@
  * PUT  /api/resolution/bundles/:bundleId/items/:itemId — Update item status
  * POST /api/resolution/bundles/from-plan      — Create bundle from plan
  * POST /api/resolution/bundles/:id/explain    — Get AnA summary of bundle
+ * POST /api/resolution/bundles/:id/execute    — Execute bundle and return receipt
  *
  * POST /api/resolution/supersessions          — Record a supersession
  * GET  /api/resolution/supersessions/:projectId — List project supersessions
@@ -256,10 +257,15 @@ router.post('/bundles/:id/execute', async (req: Request, res: Response) => {
   try {
     const orgId = getOrganizationId(req);
     const userId = getUserId(req);
-    const receipt = await executeBundle(orgId, userId, req.params.id);
+    const bundleId = req.params.id;
+    if (!bundleId || bundleId.trim().length === 0) {
+      return res.status(400).json({ success: false, error: 'Bundle ID is required' });
+    }
+    const receipt = await executeBundle(orgId, userId, bundleId);
     res.json({ success: true, receipt });
   } catch (error: any) {
-    res.status(400).json({ success: false, error: error.message });
+    const status = error.message?.includes('not found') ? 404 : 400;
+    res.status(status).json({ success: false, error: error.message });
   }
 });
 
