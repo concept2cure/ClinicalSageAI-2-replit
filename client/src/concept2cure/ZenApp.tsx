@@ -985,6 +985,9 @@ export const ZenApp: React.FC = () => {
     urlProjectId ? 'regulatory-workspace' : 'projects'
   );
 
+  // Active section code — tracks which dossier section is open in SectionWorkspace
+  const [activeSectionCode, setActiveSectionCode] = useState<string | null>(null);
+
   // Guard: prevents URL-sync from reverting a navigation that's in-flight
   const navInProgressRef = useRef(false);
 
@@ -3595,11 +3598,19 @@ export const ZenApp: React.FC = () => {
                   region: activeProject.region,
                 }}
                 onNavigate={(mode, sectionCode) => {
-                  if (mode === 'section-workspace' && sectionCode) {
-                    setLayoutMode('section-workspace');
-                  } else {
-                    setLayoutMode(mode as LayoutMode);
+                  // Map workflow names to layout modes
+                  const modeMap: Record<string, LayoutMode> = {
+                    dossier: 'dossier-map',
+                    documents: 'documents',
+                    review: 'review',
+                    submissions: 'submissions',
+                    'section-workspace': 'section-workspace',
+                  };
+                  const resolved = modeMap[mode] || (mode as LayoutMode);
+                  if (resolved === 'section-workspace' && sectionCode) {
+                    setActiveSectionCode(sectionCode);
                   }
+                  setLayoutMode(resolved);
                 }}
               />
             </Suspense>
@@ -3612,6 +3623,7 @@ export const ZenApp: React.FC = () => {
                 projectName={activeProject?.name}
                 projectType={activeProject?.type}
                 onSectionClick={(sectionCode) => {
+                  setActiveSectionCode(sectionCode);
                   setLayoutMode('section-workspace');
                 }}
                 onBack={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
@@ -3651,6 +3663,7 @@ export const ZenApp: React.FC = () => {
                 projectName={activeProject?.name}
                 projectType={activeProject?.type}
                 onSectionClick={(sectionCode) => {
+                  setActiveSectionCode(sectionCode);
                   setLayoutMode('section-workspace');
                 }}
                 onBack={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
@@ -3663,16 +3676,47 @@ export const ZenApp: React.FC = () => {
           {!embeddedModule && layoutMode === 'section-workspace' && (
             <Suspense fallback={<ModuleLoadingFallback />}>
               <SectionWorkspace
-                section={{
-                  code: '2.5',
-                  title: 'Clinical Overview',
-                  status: 'drafting',
-                  module: 'Module 2 — CTD Summaries',
-                  assignee: 'Dr. Sarah Chen',
-                  lastEditedAt: '2026-03-22',
-                  wordCount: 2450,
-                  version: 3,
-                }}
+                section={(() => {
+                  // Resolve section metadata from active section code
+                  const code = activeSectionCode || '2.5';
+                  const SECTION_LOOKUP: Record<string, { title: string; module: string; status: 'not-started' | 'drafting' | 'in-review' | 'approved' | 'blocked' | 'locked' }> = {
+                    '1.1': { title: 'Forms', module: 'Module 1 — Administrative', status: 'approved' },
+                    '1.2': { title: 'Cover Letter', module: 'Module 1 — Administrative', status: 'approved' },
+                    '1.3.1': { title: 'Form FDA 1571', module: 'Module 1 — Administrative', status: 'approved' },
+                    '1.3.2': { title: 'Form FDA 1572', module: 'Module 1 — Administrative', status: 'drafting' },
+                    '1.3.3': { title: 'Financial Disclosure', module: 'Module 1 — Administrative', status: 'not-started' },
+                    '2.2': { title: 'Introduction', module: 'Module 2 — CTD Summaries', status: 'drafting' },
+                    '2.3': { title: 'Quality Overall Summary', module: 'Module 2 — CTD Summaries', status: 'not-started' },
+                    '2.4': { title: 'Nonclinical Overview', module: 'Module 2 — CTD Summaries', status: 'not-started' },
+                    '2.5': { title: 'Clinical Overview', module: 'Module 2 — CTD Summaries', status: 'drafting' },
+                    '2.6.1': { title: 'Pharmacology', module: 'Module 2 — CTD Summaries', status: 'not-started' },
+                    '2.6.2': { title: 'Pharmacokinetics', module: 'Module 2 — CTD Summaries', status: 'not-started' },
+                    '2.6.3': { title: 'Toxicology', module: 'Module 2 — CTD Summaries', status: 'not-started' },
+                    '2.7.1': { title: 'Biopharmaceutic Studies', module: 'Module 2 — CTD Summaries', status: 'not-started' },
+                    '2.7.2': { title: 'Clinical Pharmacology', module: 'Module 2 — CTD Summaries', status: 'not-started' },
+                    '2.7.3': { title: 'Clinical Efficacy', module: 'Module 2 — CTD Summaries', status: 'drafting' },
+                    '2.7.4': { title: 'Clinical Safety', module: 'Module 2 — CTD Summaries', status: 'not-started' },
+                    '2.7.5': { title: 'Literature References', module: 'Module 2 — CTD Summaries', status: 'not-started' },
+                    '2.7.6': { title: 'Synopses', module: 'Module 2 — CTD Summaries', status: 'not-started' },
+                    '3.2.S': { title: 'Drug Substance', module: 'Module 3 — Quality', status: 'in-review' },
+                    '3.2.P': { title: 'Drug Product', module: 'Module 3 — Quality', status: 'in-review' },
+                    '3.2.A': { title: 'Appendices', module: 'Module 3 — Quality', status: 'not-started' },
+                    '3.2.R': { title: 'Regional Information', module: 'Module 3 — Quality', status: 'not-started' },
+                    '4.2.1': { title: 'Pharmacology', module: 'Module 4 — Nonclinical', status: 'not-started' },
+                    '4.2.2': { title: 'Pharmacokinetics', module: 'Module 4 — Nonclinical', status: 'not-started' },
+                    '4.2.3': { title: 'Toxicology', module: 'Module 4 — Nonclinical', status: 'not-started' },
+                    '5.2': { title: 'Tabular Listing of Studies', module: 'Module 5 — Clinical', status: 'not-started' },
+                    '5.3': { title: 'Clinical Study Reports', module: 'Module 5 — Clinical', status: 'blocked' },
+                    '5.4': { title: 'Literature References', module: 'Module 5 — Clinical', status: 'not-started' },
+                  };
+                  const found = SECTION_LOOKUP[code];
+                  return {
+                    code,
+                    title: found?.title || `Section ${code}`,
+                    status: found?.status || 'not-started',
+                    module: found?.module || 'Unknown Module',
+                  };
+                })()}
                 projectName={activeProject?.name}
                 projectId={activeProjectId}
                 onBack={() => setLayoutMode('dossier-map')}
@@ -3854,7 +3898,7 @@ export const ZenApp: React.FC = () => {
             workspace/regulatory-workspace: rendered inline above (mode="full")
             module pages: shown here as compact input bar at bottom
             projects/home: shown here as full chat (no module content above) */}
-        {layoutMode !== 'workspace' && layoutMode !== 'regulatory-workspace' && (
+        {layoutMode !== 'workspace' && layoutMode !== 'regulatory-workspace' && layoutMode !== 'section-workspace' && (
           <AnaPersistentPanel
             mode={layoutMode === 'projects' || layoutMode === 'deep-research' ? 'full' : 'compact'}
             defaultChatMode={layoutMode === 'deep-research' ? 'deep-research' : 'standard'}
