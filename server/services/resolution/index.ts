@@ -65,6 +65,11 @@ export {
   isActive,
 } from './resolution-state-machine';
 
+// Bundle Executor
+export {
+  executeBundle,
+} from './bundle-executor';
+
 // AnA Resolution Support
 export {
   explainResolutionPlan,

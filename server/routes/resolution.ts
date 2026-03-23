@@ -32,6 +32,7 @@
  */
 
 import { Router, Request, Response } from 'express';
+import type { BundleExecutionReceipt } from '../../shared/types/resolution';
 import {
   createResolutionPlan,
   getResolutionPlan,
@@ -59,6 +60,7 @@ import {
   prepareHarmonizationActions,
   explainResolutionPlan,
   summarizeResolutionBundle,
+  executeBundle,
 } from '../services/resolution';
 
 const router = Router();
@@ -241,6 +243,21 @@ router.post('/bundles/:id/explain', async (req: Request, res: Response) => {
     if (!result) return res.status(404).json({ success: false, error: 'Bundle not found' });
     const summary = summarizeResolutionBundle(result.bundle, result.items);
     res.json({ success: true, summary });
+  } catch (error: any) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// BUNDLE EXECUTION
+// ---------------------------------------------------------------------------
+
+router.post('/bundles/:id/execute', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrganizationId(req);
+    const userId = getUserId(req);
+    const receipt = await executeBundle(orgId, userId, req.params.id);
+    res.json({ success: true, receipt });
   } catch (error: any) {
     res.status(400).json({ success: false, error: error.message });
   }

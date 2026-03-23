@@ -154,7 +154,7 @@ async function determineObjectReapproval(
     };
   }
 
-  // Default: review required
+  // Default: unknown impact — never claim certainty when we don't have it
   return {
     objectType: obj.objectType,
     objectId: obj.objectId,
@@ -162,9 +162,9 @@ async function determineObjectReapproval(
     requiresReview: true,
     requiresReapproval: false,
     requiresEscalation: false,
-    reason: `Review recommended for ${obj.objectType}`,
+    reason: `Impact on ${obj.objectType} could not be fully determined — review required to assess severity`,
     currentAuthorityState: authorityState,
-    impactSeverity: 'minor',
+    impactSeverity: 'unknown',
   };
 }
 

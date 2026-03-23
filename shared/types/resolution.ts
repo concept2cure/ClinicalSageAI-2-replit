@@ -174,7 +174,7 @@ export interface ReapprovalDetermination {
   requiresEscalation: boolean;
   reason: string;
   currentAuthorityState?: string;
-  impactSeverity: 'critical' | 'major' | 'minor';
+  impactSeverity: 'critical' | 'major' | 'minor' | 'unknown';
 }
 
 export interface RewriteTarget {
@@ -198,6 +198,66 @@ export interface HarmonizationAction {
   confidence: ResolutionConfidence;
   sourceObjectType: string;
   sourceObjectId: string;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// BUNDLE EXECUTION RECEIPT
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export interface ExecutedStep {
+  stepType: string;
+  targetId: string;
+  targetType: string;
+  targetTitle?: string;
+  result: 'success';
+  priorState: string;
+  newState: string;
+  bundleId: string;
+  resolutionPlanId?: string;
+  timestamp: string;
+}
+
+export interface PreparedStep {
+  stepType: string;
+  targetId: string;
+  targetType: string;
+  targetTitle?: string;
+  result: 'prepared';
+  preparedAction: string;
+  confidence: ResolutionConfidence;
+}
+
+export interface BlockedStep {
+  stepType: string;
+  targetId: string;
+  targetType: string;
+  targetTitle?: string;
+  reason: string;
+}
+
+export interface BundleExecutionReceipt {
+  bundleId: string;
+  planId?: string;
+
+  executedSteps: ExecutedStep[];
+  preparedSteps: PreparedStep[];
+  blockedSteps: BlockedStep[];
+
+  supersededObjects: string[];
+  updatedArtifacts: string[];
+  requiresReview: string[];
+  requiresReapproval: string[];
+
+  contradictionState: string;
+
+  summary: {
+    totalItems: number;
+    executed: number;
+    prepared: number;
+    blocked: number;
+  };
+
+  timestamp: string;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
