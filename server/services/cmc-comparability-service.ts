@@ -11,7 +11,7 @@
 
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
-import { createHash } from 'crypto';
+import { randomUUID } from 'crypto';
 import { ai } from '../lib/unified-ai-client';
 
 // ============================================================
@@ -38,6 +38,11 @@ interface ChangeAssessmentRequest {
   affectedProcessSteps?: string[];
   knownCQAs?: string[];
   additionalContext?: string;
+  gmpStatus?: 'compliant' | 'warning' | 'critical_observation' | 'unknown';
+  ppqStatus?: 'complete' | 'in_progress' | 'not_started' | 'not_applicable';
+  stabilityDataMonths?: number;
+  commercialBatchCount?: number;
+  hasContinuedProcessVerification?: boolean;
 }
 
 interface ChangeAssessmentResult {
@@ -50,6 +55,7 @@ interface ChangeAssessmentResult {
   comparabilityTestingRequired: boolean;
   clinicalBridgingRequired: boolean;
   nonclinicalBridgingRequired: boolean;
+  deterministicSignals: string[];
   recommendedActions: string[];
   narrative: string;
   confidence: number;
@@ -294,19 +300,11 @@ const SECTION_IMPACT_MAP: Record<string, ImpactedSection[]> = {
 // ============================================================
 
 class CMCComparabilityService {
-  private openai: OpenAI | null = null;
-
-  private getOpenAI(): OpenAI {
-    if (!this.openai) {
-    }
-    return this.openai;
-  }
-
   /**
    * Assess a manufacturing change for regulatory impact.
    */
   async assessChange(request: ChangeAssessmentRequest): Promise<ChangeAssessmentResult> {
-    const assessmentId = crypto.randomUUID();
+    const assessmentId = randomUUID();
 
     // Step 1: Get impacted sections from the map
     const impactedSections = this.getImpactedSections(request.changeType, request.materialType);
@@ -316,6 +314,8 @@ class CMCComparabilityService {
 
     // Step 3: Determine risk level
     const riskLevel = this.computeRiskLevel(aiAssessment, request);
+    const deterministicSignals = this.computeDeterministicSignals(request);
+    const deterministicActions = this.getDeterministicActions(request, riskLevel);
 
     // Step 4: Generate narrative
     const narrative = await this.generateNarrative(
@@ -337,9 +337,10 @@ class CMCComparabilityService {
         riskLevel === 'critical' ||
         (request.productType !== 'small_molecule' && riskLevel === 'high'),
       nonclinicalBridgingRequired: riskLevel === 'critical' || riskLevel === 'high',
-      recommendedActions: aiAssessment.recommendedActions,
+      deterministicSignals,
+      recommendedActions: this.mergeActions(aiAssessment.recommendedActions, deterministicActions),
       narrative,
-      confidence: aiAssessment.confidence,
+      confidence: this.adjustConfidence(aiAssessment.confidence, request),
     };
 
     // Step 5: Persist to database
@@ -394,7 +395,6 @@ class CMCComparabilityService {
       // Table may not exist yet
     }
 
-    const openai = this.getOpenAI();
     const aiResult = await ai.chat({
       model: 'gpt-4o',
       response_format: { type: 'json_object' },
@@ -419,7 +419,11 @@ class CMCComparabilityService {
       };
     }
 
-    return JSON.parse(content);
+    return this.parseJsonObject<ComparabilityProtocol>(content, {
+      analyticalTests: [],
+      stabilityRequirements: { conditions: [], timepoints: [], testsPerTimepoint: [] },
+      reportingPlan: '',
+    });
   }
 
   /**
@@ -450,7 +454,10 @@ class CMCComparabilityService {
       const tStat = pooledSE > 0 ? Math.abs(difference) / pooledSE : 0;
       const statisticalSignificance = tStat > 1.96;
 
-      const withinAcceptanceCriteria = Math.abs(differencePercent) < 10; // simplified
+      const withinAcceptanceCriteria = this.evaluateAcceptanceCriteria(
+        differencePercent,
+        d.acceptanceCriteria
+      );
 
       return {
         testName: d.testName,
@@ -520,8 +527,6 @@ class CMCComparabilityService {
     recommendedActions: string[];
     confidence: number;
   }> {
-    const openai = this.getOpenAI();
-
     const aiResult = await ai.chat({
       model: 'gpt-4o',
       response_format: { type: 'json_object' },
@@ -578,13 +583,24 @@ Additional Context: ${request.additionalContext || 'None'}`,
       };
     }
 
-    return JSON.parse(content);
+    return this.parseJsonObject(content, {
+      classification: { fdaClassification: 'prior_approval_supplement', emaClassification: 'type_ii', justification: 'Unable to assess — defaulting to most conservative classification' },
+      impactedCQAs: [],
+      impactedParameters: [],
+      recommendedActions: ['Manual assessment required'],
+      confidence: 0,
+    });
   }
 
   private computeRiskLevel(
     aiAssessment: any,
     request: ChangeAssessmentRequest
   ): 'low' | 'moderate' | 'high' | 'critical' {
+    const deterministicScore = this.getDeterministicRiskScore(request);
+    if (deterministicScore >= 9) return 'critical';
+    if (deterministicScore >= 6) return 'high';
+    if (deterministicScore >= 3) return 'moderate';
+
     const fdaClass = aiAssessment.classification?.fdaClassification;
     const highImpactCQAs = (aiAssessment.impactedCQAs || []).filter(
       (c: any) => c.impactLevel === 'high'
@@ -602,8 +618,6 @@ Additional Context: ${request.additionalContext || 'None'}`,
     impactedSections: ImpactedSection[],
     riskLevel: string
   ): Promise<string> {
-    const openai = this.getOpenAI();
-
     const aiResult = await ai.chat({
       model: 'gpt-4o',
       messages: [
@@ -628,6 +642,138 @@ Post-change: ${request.postChangeDescription}`,
     });
 
     return aiResult.content || 'Narrative generation failed.';
+  }
+
+  private evaluateAcceptanceCriteria(differencePercent: number, criteria: string): boolean {
+    const fallbackLimit = 10;
+    const parsedLimit = Number((criteria || '').match(/(-?\d+(\.\d+)?)\s*%/)?.[1]);
+    const limit = Number.isFinite(parsedLimit) ? Math.abs(parsedLimit) : fallbackLimit;
+    return Math.abs(differencePercent) <= limit;
+  }
+
+  private parseJsonObject<T>(content: string, fallback: T): T {
+    try {
+      return JSON.parse(content) as T;
+    } catch {
+      return fallback;
+    }
+  }
+
+  private getDeterministicRiskScore(request: ChangeAssessmentRequest): number {
+    let score = 0;
+
+    const changeScoreMap: Record<ChangeAssessmentRequest['changeType'], number> = {
+      site_transfer: 3,
+      scale_up: 2,
+      process_change: 3,
+      raw_material_change: 2,
+      equipment_change: 2,
+      method_change: 1,
+      specification_change: 2,
+      container_closure_change: 2,
+    };
+    score += changeScoreMap[request.changeType] ?? 0;
+
+    if (request.productType !== 'small_molecule') {
+      score += 2;
+    }
+    if (request.materialType === 'intermediate') {
+      score += 1;
+    }
+    if ((request.knownCQAs?.length ?? 0) === 0) {
+      score += 2;
+    }
+    if ((request.stabilityDataMonths ?? 0) < 6) {
+      score += 2;
+    }
+    if ((request.commercialBatchCount ?? 0) < 3) {
+      score += 1;
+    }
+    if (request.ppqStatus === 'not_started') {
+      score += 2;
+    } else if (request.ppqStatus === 'in_progress') {
+      score += 1;
+    }
+    if (request.gmpStatus === 'critical_observation') {
+      score += 3;
+    } else if (request.gmpStatus === 'warning') {
+      score += 2;
+    } else if (request.gmpStatus === 'unknown') {
+      score += 1;
+    }
+    if (request.hasContinuedProcessVerification === false) {
+      score += 1;
+    }
+
+    return score;
+  }
+
+  private computeDeterministicSignals(request: ChangeAssessmentRequest): string[] {
+    const signals: string[] = [];
+    if ((request.knownCQAs?.length ?? 0) === 0) {
+      signals.push('No CQAs were provided for the impacted process.');
+    }
+    if ((request.stabilityDataMonths ?? 0) < 6) {
+      signals.push('Less than 6 months of stability data available for changed state.');
+    }
+    if ((request.commercialBatchCount ?? 0) < 3) {
+      signals.push('Fewer than 3 conformance/commercial-scale batches available.');
+    }
+    if (request.ppqStatus === 'not_started' || request.ppqStatus === 'in_progress') {
+      signals.push(`PPQ status is ${request.ppqStatus.replace('_', ' ')}.`);
+    }
+    if (request.gmpStatus && request.gmpStatus !== 'compliant') {
+      signals.push(`GMP status flagged as ${request.gmpStatus.replace('_', ' ')}.`);
+    }
+    if (request.hasContinuedProcessVerification === false) {
+      signals.push('Continued process verification controls are not enabled.');
+    }
+    return signals;
+  }
+
+  private getDeterministicActions(
+    request: ChangeAssessmentRequest,
+    riskLevel: ChangeAssessmentResult['riskLevel']
+  ): string[] {
+    const actions = [
+      'Produce a change-control impact matrix mapping change elements to CTD 3.2 subsections.',
+      'Link each impacted CQA to method, acceptance criteria, and pre/post trend comparison.',
+    ];
+
+    if ((request.stabilityDataMonths ?? 0) < 6) {
+      actions.push('Commit to an updated stability protocol with at least 6-month post-change data before claiming full comparability.');
+    }
+    if ((request.commercialBatchCount ?? 0) < 3) {
+      actions.push('Generate data from at least 3 representative post-change batches for comparability justification.');
+    }
+    if (request.ppqStatus === 'not_started' || request.ppqStatus === 'in_progress') {
+      actions.push('Complete PPQ/validation package and include acceptance rationale for all critical process parameters.');
+    }
+    if (request.gmpStatus === 'critical_observation' || request.gmpStatus === 'warning') {
+      actions.push('Attach CAPA and site readiness evidence to support regulatory risk mitigation.');
+    }
+    if (riskLevel === 'high' || riskLevel === 'critical') {
+      actions.push('Prepare a regulator-facing comparability summary with explicit residual-risk and lifecycle management commitments.');
+    }
+
+    return actions;
+  }
+
+  private mergeActions(aiActions: string[], deterministicActions: string[]): string[] {
+    const merged = [...(aiActions || []), ...deterministicActions].map((action) => action.trim()).filter(Boolean);
+    return Array.from(new Set(merged));
+  }
+
+  private adjustConfidence(baseConfidence: number, request: ChangeAssessmentRequest): number {
+    let adjusted = baseConfidence;
+    if (!Number.isFinite(adjusted)) adjusted = 0;
+
+    if ((request.knownCQAs?.length ?? 0) === 0) adjusted -= 0.2;
+    if ((request.stabilityDataMonths ?? 0) < 6) adjusted -= 0.1;
+    if (request.gmpStatus === 'critical_observation') adjusted -= 0.15;
+    if (request.ppqStatus === 'not_started') adjusted -= 0.1;
+
+    return Math.max(0, Math.min(1, Math.round(adjusted * 100) / 100));
   }
 
   private async persistAssessment(
