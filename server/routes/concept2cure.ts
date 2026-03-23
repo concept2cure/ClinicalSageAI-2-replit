@@ -4254,6 +4254,26 @@ router.put(
         }
       }
 
+      // ── Contradiction governance gate ───────────────────────────────
+      // Hard block promotion if unresolved contradictions with blocks_promotion authority
+      if (status === 'approved' || status === 'locked') {
+        try {
+          const { contradictionEngineService } = await import('../services/contradiction-engine-service');
+          const { blocked, blockingFindings, warningFindings } = await contradictionEngineService.checkPromotionBlocked(
+            organizationId, Number(req.params.projectId), artifact.id
+          );
+          if (blocked) {
+            return sendError(res, 409, `Promotion blocked by ${blockingFindings.length} unresolved contradiction finding(s). Resolve contradictions before promoting.`, {
+              blockingFindings: blockingFindings.map(f => ({ id: f.id, title: f.title, severity: f.severity, contradictionType: f.contradictionType, authorityState: f.authorityState })),
+              warningFindings: warningFindings.map(f => ({ id: f.id, title: f.title, severity: f.severity })),
+            });
+          }
+        } catch (contradictionError) {
+          // Log but don't block on contradiction check failure (table may not exist yet)
+          console.warn('Contradiction check skipped:', contradictionError instanceof Error ? contradictionError.message : contradictionError);
+        }
+      }
+
       // ── P12: Review quorum gate ─────────────────────────────────────
       // Block review → approved if reviewers are assigned but not all approved.
       // Withdrawn assignments are excluded from the quorum check.

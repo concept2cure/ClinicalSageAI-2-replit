@@ -110,7 +110,31 @@ class AssumptionRegistryService {
       input.linkedSectionCode ?? null, input.createdBy
     ]);
 
-    return this.map(result.rows[0]);
+    const record = this.map(result.rows[0]);
+
+    // Auto-detect assumption drift after creation
+    // Runs async — does not block the create response
+    this.triggerDriftDetection(input.organizationId, input.projectId).catch(err => {
+      log.warn('Assumption drift detection failed (non-blocking)', { error: err instanceof Error ? err.message : String(err) });
+    });
+
+    return record;
+  }
+
+  /**
+   * Trigger assumption drift detection for a project.
+   * Called automatically after assumption creation/update.
+   */
+  private async triggerDriftDetection(organizationId: number, projectId: number): Promise<void> {
+    try {
+      const { contradictionEngineService } = await import('./contradiction-engine-service');
+      const findings = await contradictionEngineService.detectAssumptionDrift(organizationId, projectId);
+      if (findings.length > 0) {
+        log.info('Assumption drift detected', { projectId, count: findings.length });
+      }
+    } catch {
+      // Contradiction engine may not have tables yet — silently skip
+    }
   }
 
   async search(input: {

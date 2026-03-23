@@ -85,6 +85,24 @@ const promoteArtifactHandler: AIActionHandler = {
       );
     }
 
+    // 2b. Check contradiction governance — hard block if unresolved blocking findings
+    try {
+      const { contradictionEngineService } = await import('../../contradiction-engine-service');
+      const { blocked, blockingFindings } = await contradictionEngineService.checkPromotionBlocked(
+        ctx.user.organizationId, request.projectId!, artifact.id
+      );
+      if (blocked) {
+        throw new AIActionHandlerError(
+          'PROMOTION_BLOCKED',
+          `Artifact promotion blocked by ${blockingFindings.length} unresolved contradiction(s). Resolve before promoting.`,
+          409
+        );
+      }
+    } catch (e) {
+      if (e instanceof AIActionHandlerError) throw e;
+      // Contradiction check failure shouldn't block (table may not exist yet)
+    }
+
     // 3. Prepare promotion data
     const documentType = (payload.documentType as string) || mapArtifactTypeToDocType(artifact.type);
     const title = (payload.title as string) || artifact.title;

@@ -216,7 +216,32 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
         modePrefix = `The user is currently on the "${clientContext.screen}" screen.`;
         if (clientContext.project) modePrefix += ` Active project: ${clientContext.project}.`;
         if (clientContext.userRole) modePrefix += ` User role: ${clientContext.userRole}.`;
+        // Inject module context (active tab, description) for deeper awareness
+        if (clientContext.moduleContext) {
+          const mc = clientContext.moduleContext;
+          if (mc.activeTab) modePrefix += ` Active tab: ${mc.activeTabLabel || mc.activeTab}.`;
+          if (mc.tabDescription) modePrefix += ` Context: ${mc.tabDescription}.`;
+        }
         modePrefix += '\nAdapt your responses to be relevant to their current workflow context.\n\n';
+      }
+
+      // Governed intelligence context: inject live contradiction/assumption data when on precedent-intelligence
+      if (clientContext?.screen === 'precedent-intelligence' && numericProjectId) {
+        try {
+          const { contradictionEngineService } = await import('../services/contradiction-engine-service');
+          const findings = await contradictionEngineService.searchFindings({
+            organizationId, projectId: numericProjectId, reviewState: 'unresolved', limit: 5,
+          });
+          if (findings.length > 0) {
+            modePrefix += `\n[LIVE GOVERNED INTELLIGENCE — ${findings.length} unresolved contradiction(s) in this project]\n`;
+            for (const f of findings) {
+              modePrefix += `- ${f.severity.toUpperCase()}: ${f.title} (${f.contradictionType}, authority: ${f.authorityState}, source: ${f.sourceClassification})\n`;
+            }
+            modePrefix += `\nWhen asked about contradictions, provide this real data. Do not summarize vaguely.\n\n`;
+          }
+        } catch {
+          // Table may not exist — silently skip
+        }
       }
     }
 
