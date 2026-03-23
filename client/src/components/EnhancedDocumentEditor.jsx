@@ -6,8 +6,8 @@ import { Switch } from '@/components/ui/switch';
 import useSectionSync from '@/hooks/useSectionSync';
 // Professional rich text editor (standalone implementation)
 const Editor = null; // Using professional fallback editor
-import {
 import { toast } from '@/hooks/use-toast';
+import {
   ArrowLeft,
   Save,
   Download,
@@ -239,7 +239,7 @@ All procedures must follow validated protocols.
   } = useSectionSync({
     projectId: projectId || document?.projectId,
     leafId: leafId || document?.leafId,
-    onSectionUpdate: (update) => {
+    onSectionUpdate: update => {
       console.log('Section update received:', update);
       // Auto-apply updates if no local changes
       if (content === lastSavedContent) {
@@ -249,12 +249,12 @@ All procedures must follow validated protocols.
         setPendingReview(prev => [...prev, update]);
       }
     },
-    onConflict: (conflict) => {
+    onConflict: conflict => {
       console.log('Section conflict detected:', conflict);
       setActiveConflict(conflict);
       setShowConflictModal(true);
     },
-    enabled: true
+    enabled: true,
   });
 
   const [pendingReview, setPendingReview] = useState([]);
@@ -269,13 +269,13 @@ All procedures must follow validated protocols.
   const isRestoringVersion = useRef(false);
 
   // Handle section updates
-  const handleApplySectionUpdate = (update) => {
+  const handleApplySectionUpdate = update => {
     if (update.patch && update.patch.content) {
       // Apply the patch to the content
       const updatedContent = applyPatchToContent(content, update.patch);
       setContent(updatedContent);
       userWorkingContentRef.current = updatedContent;
-      
+
       // Record as a change
       const change = {
         id: Date.now(),
@@ -584,9 +584,9 @@ All procedures must follow validated protocols.
       const leafId = params.get('leafId');
       const sessionId = params.get('sessionId');
       const templateId = params.get('templateId');
-      
+
       console.log('Loading document with params:', { leafId, sessionId, templateId });
-      
+
       if (leafId) {
         try {
           // Load leaf content
@@ -595,24 +595,24 @@ All procedures must follow validated protocols.
             const leafData = await leafResponse.json();
             console.log('Leaf data loaded:', leafData);
             setContent(leafData.content || '');
-            
+
             // Load right rail data
             const [factsRes, impactsRes, hintsRes] = await Promise.all([
               fetch(`/api/leaves/${leafId}/facts`),
               fetch(`/api/leaves/${leafId}/impacts`),
-              fetch(`/api/leaves/${leafId}/validator-hints`)
+              fetch(`/api/leaves/${leafId}/validator-hints`),
             ]);
-            
+
             if (factsRes.ok) {
               const facts = await factsRes.json();
               console.log('Facts loaded:', facts);
             }
-            
+
             if (impactsRes.ok) {
               const impacts = await impactsRes.json();
               console.log('Impacts loaded:', impacts);
             }
-            
+
             if (hintsRes.ok) {
               const hints = await hintsRes.json();
               console.log('Validator hints loaded:', hints);
@@ -624,34 +624,35 @@ All procedures must follow validated protocols.
                   category: hint.category,
                   text: hint.hint,
                   source: hint.reference,
-                  severity: hint.severity
-                }))
+                  severity: hint.severity,
+                })),
               ]);
             }
           }
-          
+
           // Connect to SSE for real-time patches
           console.log('Connecting to SSE for real-time patches...');
           eventSource = new EventSource(`/api/leaves/${leafId}/patches/stream`);
-          
-          eventSource.onmessage = (event) => {
+
+          eventSource.onmessage = event => {
             const data = JSON.parse(event.data);
             console.log('SSE message received:', data);
-            
+
             if (data.type === 'patch') {
               // Handle incoming patch
               console.log('New patch received:', data.patch);
-              
+
               // Show notification
               const notification = document.createElement('div');
-              notification.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #647746; color: white; padding: 12px 20px; border-radius: 6px; z-index: 9999; animation: slideIn 0.3s ease-out;';
+              notification.style.cssText =
+                'position: fixed; top: 20px; right: 20px; background: #647746; color: white; padding: 12px 20px; border-radius: 6px; z-index: 9999; animation: slideIn 0.3s ease-out;';
               notification.textContent = `Real-time update: ${data.patch.type}`;
               document.body.appendChild(notification);
-              
+
               setTimeout(() => {
                 notification.remove();
               }, 5000);
-              
+
               // Update content if patch contains new content
               if (data.patch.blocks && data.patch.blocks.length > 0) {
                 const newBlock = data.patch.blocks[0];
@@ -663,8 +664,8 @@ All procedures must follow validated protocols.
               console.log('SSE ping received for leafId:', data.leafId);
             }
           };
-          
-          eventSource.onerror = (error) => {
+
+          eventSource.onerror = error => {
             console.error('SSE error:', error);
           };
         } catch (error) {
@@ -672,9 +673,9 @@ All procedures must follow validated protocols.
         }
       }
     };
-    
+
     loadDocument();
-    
+
     // Cleanup on unmount
     return () => {
       if (eventSource) {
@@ -826,12 +827,12 @@ Generated at ${new Date().toLocaleString()}`;
       'searchreplace | visualblocks code preview fullscreen help | wordcount',
     ].join(' | '),
     content_style: `
-      body { 
-        font-family: 'Times New Roman', Times, serif; 
-        font-size: 12pt; 
-        line-height: 1.6; 
-        max-width: 8.5in; 
-        margin: 0 auto; 
+      body {
+        font-family: 'Times New Roman', Times, serif;
+        font-size: 12pt;
+        line-height: 1.6;
+        max-width: 8.5in;
+        margin: 0 auto;
         padding: 1in;
         background: white;
       }
@@ -1007,7 +1008,7 @@ Generated at ${new Date().toLocaleString()}`;
 
         // Create proper Word-compatible RTF document
         const rtfDocument = `{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0 Times New Roman;}}
-\\f0\\fs24 
+\\f0\\fs24
 ${currentContent
   .replace(/\n/g, '\\par ')
   .replace(/\*\*(.*?)\*\*/g, '{\\b $1}')
@@ -1077,11 +1078,14 @@ ${currentContent
           window.document.body.removeChild(a);
           window.URL.revokeObjectURL(a.href);
 
-          toast({ title: 
-            'Downloaded as HTML file (Word format not supported). You can open this in Word or any browser.'
-           });
+          toast({
+            title:
+              'Downloaded as HTML file (Word format not supported). You can open this in Word or any browser.',
+          });
         } catch (fallbackError) {
-          toast({ title: 'Download failed. Please manually select and copy the text from the editor.' });
+          toast({
+            title: 'Download failed. Please manually select and copy the text from the editor.',
+          });
         }
       }
     }, 0);
@@ -1521,12 +1525,12 @@ This version has been successfully restored to the editor.`;
           ref={textAreaRef}
           className="w-full h-96 p-4 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
           value={content}
-          onChange={(e) => handleContentChange(e.target.value)}
+          onChange={e => handleContentChange(e.target.value)}
           placeholder="Begin writing your regulatory document here..."
           style={{
             fontFamily: 'Inter, system-ui, monospace',
             fontSize: '14px',
-            lineHeight: '1.5'
+            lineHeight: '1.5',
           }}
         />
         <div className="mt-4 flex justify-between items-center">
@@ -1535,7 +1539,7 @@ This version has been successfully restored to the editor.`;
           </div>
           <div className="space-x-2">
             <button
-              onClick={() => onSave ? onSave({ ...document, content: content }) : handleSave()}
+              onClick={() => (onSave ? onSave({ ...document, content: content }) : handleSave())}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
             >
               Save
@@ -1553,7 +1557,7 @@ This version has been successfully restored to the editor.`;
   );
 
   // Package Error Display
-  const PackageErrorDisplay = () => (
+  const PackageErrorDisplay = () =>
     packageErrors.length > 0 && (
       <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
         <div className="flex">
@@ -1572,8 +1576,7 @@ This version has been successfully restored to the editor.`;
           </div>
         </div>
       </div>
-    )
-  );
+    );
 
   // Show loading state until initialization is complete
   if (!editorInitialized) {
@@ -1627,7 +1630,7 @@ This version has been successfully restored to the editor.`;
                   type="text"
                   data-testid="input-document-title"
                   value={document?.title || 'Untitled Document'}
-                  onChange={(e) => {
+                  onChange={e => {
                     if (onChange) {
                       onChange({ ...document, title: e.target.value });
                     }

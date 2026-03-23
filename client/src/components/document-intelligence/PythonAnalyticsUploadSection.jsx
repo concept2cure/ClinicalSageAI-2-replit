@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
 import { toast } from '@/hooks/use-toast';
+import {
   Upload,
   Folder,
   FileText,
@@ -87,7 +87,10 @@ const PythonAnalyticsUploadSection = ({ onAnalysisComplete }) => {
       await fetchOneDriveFiles();
     } catch (error) {
       console.error('❌ Microsoft Graph authentication error:', error);
-      toast({ title: 'Microsoft Graph authentication failed. Please check your credentials and try again.' });
+      toast({
+        title:
+          'Microsoft Graph authentication failed. Please check your credentials and try again.',
+      });
     } finally {
       setIsOneDriveLoading(false);
     }
@@ -110,9 +113,10 @@ const PythonAnalyticsUploadSection = ({ onAnalysisComplete }) => {
       }
     } catch (error) {
       console.error('❌ Token fetch error:', error);
-      toast({ title: 
-        'Failed to authenticate with Microsoft Graph. Please ensure you have proper credentials configured.'
-       });
+      toast({
+        title:
+          'Failed to authenticate with Microsoft Graph. Please ensure you have proper credentials configured.',
+      });
     }
   };
 
@@ -162,7 +166,9 @@ const PythonAnalyticsUploadSection = ({ onAnalysisComplete }) => {
       setOneDriveFiles(documentFiles);
     } catch (error) {
       console.error('❌ OneDrive files fetch error:', error);
-      toast({ title: 'Failed to fetch OneDrive files. Please check your connection and permissions.' });
+      toast({
+        title: 'Failed to fetch OneDrive files. Please check your connection and permissions.',
+      });
     } finally {
       setIsOneDriveLoading(false);
     }

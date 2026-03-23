@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
 import { toast } from '@/hooks/use-toast';
+import {
   Loader2,
   FolderTree,
   Download,
@@ -294,7 +294,10 @@ const BlueprintPage = () => {
   // Generate blueprint package
   const handleGenerateBlueprint = async () => {
     if (!companyName || !productName || !applicationNumber) {
-      toast({ title: 'Please fill in required fields (Company Name, Product Name, and Application Number)' });
+      toast({
+        title:
+          'Please fill in required fields (Company Name, Product Name, and Application Number)',
+      });
       return;
     }
 

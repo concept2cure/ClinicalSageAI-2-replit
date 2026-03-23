@@ -163,22 +163,6 @@ const TaskManagementSystem = ({ processId }) => {
     'Deviation Reports',
   ];
 
-  // Document types for filtering (static reference data)
-  const documentTypes = [
-    'All Documents',
-    'API Specifications',
-    'Method Validation',
-    'Process Validation',
-    'Stability Reports',
-    'Analytical Methods',
-    'Manufacturing Process',
-    'Formulation Development',
-    'Risk Assessments',
-    'Change Controls',
-    'Deviation Reports',
-  ];
-
-
   // Load tasks and team members from API on mount
   useEffect(() => {
     let alive = true;
@@ -205,12 +189,14 @@ const TaskManagementSystem = ({ processId }) => {
         if (usersRes.status === 'fulfilled' && usersRes.value.ok) {
           const data = await usersRes.value.json();
           const users = Array.isArray(data) ? data : data.data || data.users || [];
-          setTeamMembers(users.map(u => ({
-            id: u.id || u.user_id,
-            name: u.name || u.full_name || `${u.first_name || ''} ${u.last_name || ''}`.trim(),
-            role: u.role || u.title || 'Team Member',
-            avatar: u.avatar || '',
-          })));
+          setTeamMembers(
+            users.map(u => ({
+              id: u.id || u.user_id,
+              name: u.name || u.full_name || `${u.first_name || ''} ${u.last_name || ''}`.trim(),
+              role: u.role || u.title || 'Team Member',
+              avatar: u.avatar || '',
+            }))
+          );
         }
       } catch (error) {
         console.error('Failed to load task data:', error);
@@ -221,7 +207,9 @@ const TaskManagementSystem = ({ processId }) => {
       loadProcessStage();
       generateAISuggestions();
     }
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [processId]);
 
   // AI-powered functions

@@ -266,8 +266,8 @@ const ProjectKnowledgePanel = lazy(() =>
 const IntelligenceHub = lazy(() =>
   import('./pages/IntelligenceHub').then(m => ({ default: m.IntelligenceHub }))
 );
-const RegulatoryPrecedentIntelligence = lazy(() =>
-  import('./pages/RegulatoryPrecedentIntelligence')
+const RegulatoryPrecedentIntelligence = lazy(
+  () => import('./pages/RegulatoryPrecedentIntelligence')
 );
 const ReviewReadiness = lazy(() =>
   import('./pages/ReviewReadiness').then(m => ({ default: m.ReviewReadiness }))
@@ -295,9 +295,7 @@ const BiostatPlatformDashboard = lazy(
 );
 
 // AnA Biostats Panel — structured input, computation, judgment, governed documents
-const AnaBiostatsPanel = lazy(
-  () => import('@/concept2cure/components/biostats/AnaBiostatsPanel')
-);
+const AnaBiostatsPanel = lazy(() => import('@/concept2cure/components/biostats/AnaBiostatsPanel'));
 
 // Training Center — client onboarding, courses, certifications
 const TrainingManagementPage = lazy(
@@ -2272,7 +2270,9 @@ export const ZenApp: React.FC = () => {
             >
               {/* Experimental banner */}
               <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 border-b border-amber-200 text-amber-800 text-xs font-medium">
-                <span className="px-1.5 py-0.5 bg-amber-200 text-amber-900 rounded text-[10px] font-bold uppercase">Experimental</span>
+                <span className="px-1.5 py-0.5 bg-amber-200 text-amber-900 rounded text-[10px] font-bold uppercase">
+                  Experimental
+                </span>
                 Mission Control uses in-memory storage. Data is not persisted across restarts.
               </div>
               <ErrorBoundary>
@@ -2291,7 +2291,9 @@ export const ZenApp: React.FC = () => {
             >
               {/* Experimental banner */}
               <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 border-b border-amber-200 text-amber-800 text-xs font-medium">
-                <span className="px-1.5 py-0.5 bg-amber-200 text-amber-900 rounded text-[10px] font-bold uppercase">Experimental</span>
+                <span className="px-1.5 py-0.5 bg-amber-200 text-amber-900 rounded text-[10px] font-bold uppercase">
+                  Experimental
+                </span>
                 SnowGlobe uses demo program data. Results are illustrative, not production data.
               </div>
               <Suspense fallback={<ModuleLoadingFallback />}>
@@ -2888,7 +2890,7 @@ export const ZenApp: React.FC = () => {
                           ctdSection: ctd,
                         });
                         setLayoutMode('ectd-coauthor');
-                      }
+                      }}
                       onNavigateToCoAuthor={() => setLayoutMode('ectd-coauthor')}
                     />
                   </Suspense>
@@ -3429,8 +3431,17 @@ export const ZenApp: React.FC = () => {
 
           {/* Precedent Intelligence Dashboard (standalone) */}
           {layoutMode === 'precedent-intelligence' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-precedent-intelligence">
-              <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-zinc-300" /></div>}>
+            <div
+              className="flex-1 flex flex-col min-h-0"
+              data-testid="workspace-precedent-intelligence"
+            >
+              <Suspense
+                fallback={
+                  <div className="flex-1 flex items-center justify-center">
+                    <Loader2 className="w-5 h-5 animate-spin text-zinc-300" />
+                  </div>
+                }
+              >
                 <PrecedentIntelligenceDashboard
                   onNavigateToEditor={() => setLayoutMode('regulatory-workspace')}
                 />
@@ -3439,9 +3450,9 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* Redirect deprecated routes to unified workspace */}
-          {['workspace', 'medtech-dashboard', 'dossier'].includes(
-            layoutMode
-          ) && <RedirectToWorkspace onRedirect={() => setLayoutMode('regulatory-workspace')} />}
+          {['workspace', 'medtech-dashboard', 'dossier'].includes(layoutMode) && (
+            <RedirectToWorkspace onRedirect={() => setLayoutMode('regulatory-workspace')} />
+          )}
 
           {/* ── Project Workspace (3-pane: tree | content | inspector) ───── */}
           {!embeddedModule &&

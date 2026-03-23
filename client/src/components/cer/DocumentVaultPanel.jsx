@@ -21,8 +21,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
 import { toast } from '@/hooks/use-toast';
+import {
   FolderOpen,
   Search,
   UploadCloud,
@@ -42,11 +42,11 @@ import { toast } from '@/hooks/use-toast';
   CheckCircle2,
 } from 'lucide-react';
 
-export default function DocumentVaultPanel({ 
-  jobId, 
-  projectId, 
-  attachedDocuments = [], 
-  onAttachDocument 
+export default function DocumentVaultPanel({
+  jobId,
+  projectId,
+  attachedDocuments = [],
+  onAttachDocument,
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentTab, setCurrentTab] = useState('all-documents');
@@ -377,8 +377,16 @@ export default function DocumentVaultPanel({
                             variant={attachedDocuments.includes(doc.id) ? 'default' : 'ghost'}
                             size="icon"
                             onClick={() => onAttachDocument(doc.id)}
-                            className={attachedDocuments.includes(doc.id) ? 'bg-green-600 hover:bg-green-700' : ''}
-                            title={attachedDocuments.includes(doc.id) ? 'Attached to Submission' : 'Attach to Submission'}
+                            className={
+                              attachedDocuments.includes(doc.id)
+                                ? 'bg-green-600 hover:bg-green-700'
+                                : ''
+                            }
+                            title={
+                              attachedDocuments.includes(doc.id)
+                                ? 'Attached to Submission'
+                                : 'Attach to Submission'
+                            }
                             data-testid={`button-attach-${doc.id}`}
                           >
                             {attachedDocuments.includes(doc.id) ? (
@@ -445,7 +453,11 @@ export default function DocumentVaultPanel({
                             e.stopPropagation();
                             onAttachDocument(doc.id);
                           }}
-                          title={attachedDocuments.includes(doc.id) ? 'Attached to Submission' : 'Attach to Submission'}
+                          title={
+                            attachedDocuments.includes(doc.id)
+                              ? 'Attached to Submission'
+                              : 'Attach to Submission'
+                          }
                           data-testid={`button-attach-grid-${doc.id}`}
                         >
                           {attachedDocuments.includes(doc.id) ? (
