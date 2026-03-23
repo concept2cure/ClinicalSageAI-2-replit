@@ -12,5 +12,8 @@ export { regulatoryCustomizer, RegulatoryCustomizer } from './regulatory-customi
 export { documentGenerator, DocumentGenerator } from './document-generator';
 export { workflowIntegrator, WorkflowIntegrator } from './workflow-integrator';
 export { anaBiostatsOrchestrator, AnaBiostatsOrchestrator } from './orchestrator';
+export { smeRouter, SMERouter } from './sme-router';
+export { SME_AGENTS, ALL_SME_AGENTS } from './sme-agents';
 
 export * from './types';
+export type { SMEAgentId, SMEAgentProfile, SMERoutingResult, SMEEnhancement } from './sme-agents';

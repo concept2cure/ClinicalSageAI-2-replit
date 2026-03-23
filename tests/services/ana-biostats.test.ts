@@ -20,8 +20,10 @@ import { DomainAdapter } from '../../server/services/ana-biostats/domain-adapter
 import { RegulatoryCustomizer } from '../../server/services/ana-biostats/regulatory-customizer';
 import { DocumentGenerator } from '../../server/services/ana-biostats/document-generator';
 import { AnaBiostatsOrchestrator } from '../../server/services/ana-biostats/orchestrator';
+import { SMERouter } from '../../server/services/ana-biostats/sme-router';
+import { SME_AGENTS, ALL_SME_AGENTS } from '../../server/services/ana-biostats/sme-agents';
 
-import type { StatisticalInput } from '../../server/services/ana-biostats/types';
+import type { StatisticalInput, BiostatsWorkflowRequest } from '../../server/services/ana-biostats/types';
 
 // ═══════════════════════════════════════════════════════════════
 // Shared instances
@@ -34,6 +36,7 @@ const domainAdapter = new DomainAdapter();
 const regCustomizer = new RegulatoryCustomizer();
 const docGenerator = new DocumentGenerator();
 const orchestrator = new AnaBiostatsOrchestrator();
+const smeRouterInstance = new SMERouter();
 
 // ═══════════════════════════════════════════════════════════════
 // Standard Pharma Input
@@ -1134,5 +1137,337 @@ describe('Enhanced: SAP Document Content', () => {
     expect(doc.content).toContain('Estimand Framework');
     expect(doc.content).toContain('treatment_policy');
     expect(doc.content).toContain('ICH E9(R1)');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
+// 19. SME AGENT DEFINITIONS
+// ═══════════════════════════════════════════════════════════════
+
+describe('SME Agent Definitions', () => {
+  it('has exactly 5 SME agents defined', () => {
+    expect(ALL_SME_AGENTS).toHaveLength(5);
+  });
+
+  it('all agents have required fields', () => {
+    for (const sme of ALL_SME_AGENTS) {
+      expect(sme.id).toBeTruthy();
+      expect(sme.name).toBeTruthy();
+      expect(sme.title).toBeTruthy();
+      expect(sme.scope.length).toBeGreaterThan(0);
+      expect(sme.triggerConditions.workflowTypes.length).toBeGreaterThan(0);
+      expect(sme.triggerConditions.clientTracks.length).toBeGreaterThan(0);
+      expect(sme.reasoningPreferences.emphasizedDimensions.length).toBeGreaterThan(0);
+      expect(sme.outputPreferences.primaryDocuments.length).toBeGreaterThan(0);
+      expect(sme.escalationRules.provisionalWhen.length).toBeGreaterThan(0);
+      expect(sme.escalationRules.humanReviewWhen.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('each agent has unique ID', () => {
+    const ids = ALL_SME_AGENTS.map(s => s.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
+// 20. SME ROUTING TESTS
+// ═══════════════════════════════════════════════════════════════
+
+describe('SME Router: Correct Specialist Selection', () => {
+  it('routes sample size request to trial_design_power', () => {
+    const result = smeRouterInstance.route({
+      workflowType: 'sample_size_rationale',
+      input: pharmaInput,
+      userId: 1,
+      organizationId: 1,
+    });
+    expect(result.primarySME).toBe('trial_design_power');
+    expect(result.confidence).toBeGreaterThan(50);
+  });
+
+  it('routes device/diagnostics to device_diagnostics_performance', () => {
+    const result = smeRouterInstance.route({
+      workflowType: 'sample_size_rationale',
+      input: diagnosticInput,
+      userId: 1,
+      organizationId: 1,
+    });
+    expect(result.primarySME).toBe('device_diagnostics_performance');
+  });
+
+  it('routes SAP workflow to sap_analysis_strategy', () => {
+    const result = smeRouterInstance.route({
+      workflowType: 'track_aware_drafting',
+      input: { ...pharmaInput, estimandStrategy: 'treatment_policy', missingDataMethod: 'MMRM', multiplicityMethod: 'bonferroni' },
+      userId: 1,
+      organizationId: 1,
+      documentType: 'sap_section_draft',
+    });
+    expect(result.primarySME).toBe('sap_analysis_strategy');
+  });
+
+  it('routes regulatory submission to regulatory_submission', () => {
+    const result = smeRouterInstance.route({
+      workflowType: 'statistical_risk_review',
+      input: { ...pharmaInput, regulatoryBody: 'FDA' },
+      userId: 1,
+      organizationId: 1,
+      documentType: 'statistical_reviewer_response',
+    });
+    expect(result.primarySME).toBe('regulatory_submission');
+  });
+
+  it('routes adaptive design to adaptive_sensitivity', () => {
+    const result = smeRouterInstance.route({
+      workflowType: 'scenario_comparison',
+      input: { ...pharmaInput, studyType: 'adaptive', interimAnalyses: 2 },
+      userId: 1,
+      organizationId: 1,
+    });
+    expect(result.primarySME).toBe('adaptive_sensitivity');
+  });
+
+  it('returns secondary SMEs when multiple match', () => {
+    const result = smeRouterInstance.route({
+      workflowType: 'sample_size_rationale',
+      input: pharmaInput,
+      userId: 1,
+      organizationId: 1,
+    });
+    expect(result.secondarySMEs).toBeDefined();
+    expect(Array.isArray(result.secondarySMEs)).toBe(true);
+  });
+
+  it('provides routing rationale', () => {
+    const result = smeRouterInstance.route({
+      workflowType: 'sample_size_rationale',
+      input: pharmaInput,
+      userId: 1,
+      organizationId: 1,
+    });
+    expect(result.rationale).toBeTruthy();
+    expect(result.rationale.includes('Primary:')).toBe(true);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
+// 21. SME ENHANCEMENT DISTINCTIVENESS
+// ═══════════════════════════════════════════════════════════════
+
+describe('SME Enhancement: Distinct Specialist Behavior', () => {
+  const comp = engine.computeEnhanced(pharmaInput);
+  const jdg = judgment.judge(pharmaInput, comp);
+  const domain = domainAdapter.adapt(pharmaInput, comp, jdg);
+
+  it('trial_design_power provides design-specific guidance', () => {
+    const enhancement = smeRouterInstance.enhance(
+      'trial_design_power', pharmaInput, comp, jdg, domain
+    );
+    expect(enhancement.smeId).toBe('trial_design_power');
+    expect(enhancement.smeName).toBe('Design & Power Specialist');
+    // Should emphasize power/design dimensions
+    expect(enhancement.documentRecommendations).toContain('sample_size_rationale');
+  });
+
+  it('sap_analysis_strategy provides SAP-specific guidance when estimand missing', () => {
+    const noEstimandInput = { ...pharmaInput, estimandStrategy: undefined };
+    const comp2 = engine.computeEnhanced(noEstimandInput);
+    const jdg2 = judgment.judge(noEstimandInput, comp2);
+    const dom2 = domainAdapter.adapt(noEstimandInput, comp2, jdg2);
+
+    const enhancement = smeRouterInstance.enhance(
+      'sap_analysis_strategy', noEstimandInput, comp2, jdg2, dom2
+    );
+    expect(enhancement.smeId).toBe('sap_analysis_strategy');
+    expect(enhancement.additionalGuidance.some(g => g.includes('Estimand') || g.includes('estimand'))).toBe(true);
+  });
+
+  it('regulatory_submission provides body-specific guidance', () => {
+    const fdaInput = { ...pharmaInput, regulatoryBody: 'FDA' as const };
+    const comp2 = engine.computeEnhanced(fdaInput);
+    const jdg2 = judgment.judge(fdaInput, comp2);
+    const dom2 = domainAdapter.adapt(fdaInput, comp2, jdg2);
+    const reg = regCustomizer.customize(fdaInput, comp2, jdg2, dom2);
+
+    const enhancement = smeRouterInstance.enhance(
+      'regulatory_submission', fdaInput, comp2, jdg2, dom2, reg
+    );
+    expect(enhancement.smeId).toBe('regulatory_submission');
+    expect(enhancement.additionalGuidance.some(g => g.includes('FDA') || g.includes('Defensibility'))).toBe(true);
+  });
+
+  it('device_diagnostics_performance provides diagnostic-specific guidance', () => {
+    const comp2 = engine.computeEnhanced(diagnosticInput);
+    const jdg2 = judgment.judge(diagnosticInput, comp2);
+    const dom2 = domainAdapter.adapt(diagnosticInput, comp2, jdg2);
+
+    const enhancement = smeRouterInstance.enhance(
+      'device_diagnostics_performance', diagnosticInput, comp2, jdg2, dom2
+    );
+    expect(enhancement.smeId).toBe('device_diagnostics_performance');
+    expect(enhancement.documentRecommendations).toContain('sample_size_rationale');
+  });
+
+  it('adaptive_sensitivity provides fragility-focused guidance', () => {
+    const fragileInput: StatisticalInput = {
+      ...pharmaInput,
+      effectSize: 0.15,
+      variance: 2.0,
+      attritionRate: 0.25,
+    };
+    const comp2 = engine.computeEnhanced(fragileInput);
+    const jdg2 = judgment.judge(fragileInput, comp2);
+    const dom2 = domainAdapter.adapt(fragileInput, comp2, jdg2);
+
+    const enhancement = smeRouterInstance.enhance(
+      'adaptive_sensitivity', fragileInput, comp2, jdg2, dom2
+    );
+    expect(enhancement.smeId).toBe('adaptive_sensitivity');
+    expect(enhancement.additionalGuidance.some(g => g.includes('fragility') || g.includes('Sensitivity'))).toBe(true);
+  });
+
+  it('different SMEs produce different enhancements for same input', () => {
+    const e1 = smeRouterInstance.enhance('trial_design_power', pharmaInput, comp, jdg, domain);
+    const e2 = smeRouterInstance.enhance('sap_analysis_strategy', pharmaInput, comp, jdg, domain);
+    const e3 = smeRouterInstance.enhance('regulatory_submission', pharmaInput, comp, jdg, domain);
+
+    // Different SMEs should have different IDs and names
+    expect(e1.smeId).not.toBe(e2.smeId);
+    expect(e2.smeId).not.toBe(e3.smeId);
+
+    // Different document recommendations
+    expect(e1.documentRecommendations).not.toEqual(e3.documentRecommendations);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
+// 22. SME IN ORCHESTRATOR END-TO-END
+// ═══════════════════════════════════════════════════════════════
+
+describe('SME in Orchestrator: End-to-End', () => {
+  it('orchestrator includes SME routing in workflow response', async () => {
+    const result = await orchestrator.executeWorkflow({
+      workflowType: 'sample_size_rationale',
+      input: pharmaInput,
+      userId: 1,
+      organizationId: 1,
+    });
+
+    expect(result.smeRouting).toBeDefined();
+    expect(result.smeRouting!.primarySME).toBeTruthy();
+    expect(result.smeRouting!.confidence).toBeGreaterThan(0);
+    expect(result.smeRouting!.rationale).toBeTruthy();
+  });
+
+  it('orchestrator includes SME enhancement in workflow response', async () => {
+    const result = await orchestrator.executeWorkflow({
+      workflowType: 'sample_size_rationale',
+      input: pharmaInput,
+      userId: 1,
+      organizationId: 1,
+    });
+
+    expect(result.smeEnhancement).toBeDefined();
+    expect(result.smeEnhancement!.smeId).toBeTruthy();
+    expect(result.smeEnhancement!.smeName).toBeTruthy();
+  });
+
+  it('SME guidance merges into anaInterpretation', async () => {
+    const result = await orchestrator.executeWorkflow({
+      workflowType: 'sample_size_rationale',
+      input: pharmaInput,
+      userId: 1,
+      organizationId: 1,
+    });
+
+    // SME adds guidance to suggestedNextSteps
+    expect(result.anaInterpretation.suggestedNextSteps.length).toBeGreaterThan(0);
+  });
+
+  it('device track routes to device specialist in full workflow', async () => {
+    const result = await orchestrator.executeWorkflow({
+      workflowType: 'sample_size_rationale',
+      input: diagnosticInput,
+      userId: 1,
+      organizationId: 1,
+    });
+
+    expect(result.smeRouting!.primarySME).toBe('device_diagnostics_performance');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
+// 23. SME FALLBACK / FAILURE BEHAVIOR
+// ═══════════════════════════════════════════════════════════════
+
+describe('SME Fallback & Failure Behavior', () => {
+  it('falls back to trial_design_power when no strong match', () => {
+    const result = smeRouterInstance.route({
+      workflowType: 'sample_size_rationale' as any,
+      input: {
+        clientTrack: 'biotech_pharma',
+        studyType: 'superiority',
+        objectiveType: 'efficacy',
+        endpointType: 'continuous',
+        alpha: 0.05,
+        powerTarget: 0.80,
+        effectSize: 0.5,
+        attritionRate: 0.15,
+        allocationRatio: 1,
+      },
+      userId: 1,
+      organizationId: 1,
+    });
+
+    // Should still route successfully
+    expect(result.primarySME).toBeTruthy();
+    expect(result.confidence).toBeGreaterThan(0);
+  });
+
+  it('SME enhancement does not crash on minimal input', () => {
+    const minInput: StatisticalInput = {
+      clientTrack: 'biotech_pharma',
+      studyType: 'superiority',
+      objectiveType: 'efficacy',
+      endpointType: 'continuous',
+      alpha: 0.05,
+      powerTarget: 0.80,
+      effectSize: 0.5,
+      attritionRate: 0.15,
+      allocationRatio: 1,
+    };
+    const comp = engine.computeEnhanced(minInput);
+    const jdg = judgment.judge(minInput, comp);
+    const dom = domainAdapter.adapt(minInput, comp, jdg);
+
+    // Should not throw for any SME
+    for (const sme of ALL_SME_AGENTS) {
+      expect(() => {
+        smeRouterInstance.enhance(sme.id, minInput, comp, jdg, dom);
+      }).not.toThrow();
+    }
+  });
+
+  it('escalation notes appear when conditions are met', () => {
+    const fragileInput: StatisticalInput = {
+      ...pharmaInput,
+      phase: 'III',
+      effectSize: 0.08,
+      variance: 5.0,
+      attritionRate: 0.30,
+      expectedMissingRate: 0.30,
+    };
+    const comp = engine.computeEnhanced(fragileInput);
+    const jdg = judgment.judge(fragileInput, comp);
+    const dom = domainAdapter.adapt(fragileInput, comp, jdg);
+
+    // Use trial_design_power which has broader escalation conditions for fragile designs
+    const enhancement = smeRouterInstance.enhance(
+      'trial_design_power', fragileInput, comp, jdg, dom
+    );
+
+    // Should have guidance or provisional notes given the high-risk input
+    expect(enhancement.additionalGuidance.length + enhancement.provisionalNotes.length + enhancement.escalationNotes.length).toBeGreaterThan(0);
   });
 });

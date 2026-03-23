@@ -396,6 +396,23 @@ export interface BiostatsWorkflowResponse {
   workflowActions: WorkflowActionResult[];
   anaInterpretation: AnaInterpretation;
   escalation?: EscalationInfo;
+  /** SME routing result — which specialist(s) handled this request */
+  smeRouting?: {
+    primarySME: string;
+    secondarySMEs: string[];
+    confidence: number;
+    rationale: string;
+  };
+  /** SME-specific enhancements to the output */
+  smeEnhancement?: {
+    smeId: string;
+    smeName: string;
+    additionalGuidance: string[];
+    emphasizedFlags: string[];
+    documentRecommendations: string[];
+    provisionalNotes: string[];
+    escalationNotes: string[];
+  };
 }
 
 export interface AnaInterpretation {

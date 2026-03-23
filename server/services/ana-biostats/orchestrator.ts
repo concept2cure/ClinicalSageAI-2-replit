@@ -16,6 +16,8 @@ import { domainAdapter } from './domain-adapter';
 import { regulatoryCustomizer } from './regulatory-customizer';
 import { documentGenerator } from './document-generator';
 import { workflowIntegrator } from './workflow-integrator';
+import { smeRouter } from './sme-router';
+import type { SMERoutingResult, SMEEnhancement } from './sme-agents';
 
 import type {
   StatisticalInput,
@@ -101,6 +103,25 @@ export class AnaBiostatsOrchestrator {
     // Layer 9: Escalation assessment
     const escalation = this.assessEscalation(judgment);
 
+    // Layer 10: SME specialist routing and enhancement
+    const smeRoutingResult = smeRouter.route(request);
+    const smeEnhancementResult = smeRouter.enhance(
+      smeRoutingResult.primarySME,
+      input, computation, judgment, domain, regulatory
+    );
+
+    // Merge SME guidance into AnA interpretation
+    if (smeEnhancementResult.additionalGuidance.length > 0) {
+      anaInterpretation.suggestedNextSteps.unshift(
+        ...smeEnhancementResult.additionalGuidance.slice(0, 3)
+      );
+    }
+    if (smeEnhancementResult.provisionalNotes.length > 0) {
+      anaInterpretation.limitations.push(
+        ...smeEnhancementResult.provisionalNotes
+      );
+    }
+
     return {
       workflowId,
       input,
@@ -113,6 +134,16 @@ export class AnaBiostatsOrchestrator {
       workflowActions,
       anaInterpretation,
       escalation,
+      smeRouting: smeRoutingResult,
+      smeEnhancement: {
+        smeId: smeEnhancementResult.smeId,
+        smeName: smeEnhancementResult.smeName,
+        additionalGuidance: smeEnhancementResult.additionalGuidance,
+        emphasizedFlags: smeEnhancementResult.emphasizedFlags,
+        documentRecommendations: smeEnhancementResult.documentRecommendations,
+        provisionalNotes: smeEnhancementResult.provisionalNotes,
+        escalationNotes: smeEnhancementResult.escalationNotes,
+      },
     };
   }
 

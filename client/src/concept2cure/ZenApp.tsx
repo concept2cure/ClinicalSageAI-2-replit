@@ -291,6 +291,11 @@ const BiostatPlatformDashboard = lazy(
   () => import('@/components/biostat/BiostatPlatformDashboard')
 );
 
+// AnA Biostats Panel — structured input, computation, judgment, governed documents
+const AnaBiostatsPanel = lazy(
+  () => import('@/concept2cure/components/biostats/AnaBiostatsPanel')
+);
+
 // Training Center — client onboarding, courses, certifications
 const TrainingManagementPage = lazy(
   () => import('@/portal-v2/components/admin/TrainingManagement')
@@ -348,6 +353,7 @@ const PANEL_COMPONENTS: Record<string, React.LazyExoticComponent<React.Component
   ectd: ECTDNavigatorPanel,
   intelligence: RegulatoryIntelligenceFullPanel,
   'doc-editor': EditorPanel,
+  'ana-biostats': AnaBiostatsPanel,
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -364,6 +370,7 @@ type ToolPanel =
   | 'intelligence'
   | 'vault'
   | 'doc-editor'
+  | 'ana-biostats'
   | null;
 
 type LayoutMode =
@@ -501,6 +508,11 @@ const TOOL_PANELS: Record<
     title: 'Document Editor',
     icon: PenLine,
     component: 'EditorPanel',
+  },
+  'ana-biostats': {
+    title: 'AnA Biostats',
+    icon: FlaskConical,
+    component: 'AnaBiostatsPanel',
   },
 };
 

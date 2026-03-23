@@ -293,6 +293,67 @@ router.post('/missing-data-impact', authenticateToken, async (req: Request, res:
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// 8. SME SPECIALIST ROUTING
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * POST /api/ana-biostats/sme-route
+ *
+ * Route a request to the most appropriate biostatistics SME specialist.
+ * Returns routing result with primary/secondary SME and confidence.
+ */
+router.post('/sme-route', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const { smeRouter } = await import('../services/ana-biostats/sme-router');
+    const { inputNormalizer } = await import('../services/ana-biostats/input-normalizer');
+
+    const { workflowType, input, documentType } = req.body;
+    const orgId = resolveOrganizationId(req);
+    const userId = resolveUserId(req);
+
+    const validation = inputNormalizer.normalize(input ?? {});
+
+    const routing = smeRouter.route({
+      workflowType: workflowType ?? 'sample_size_rationale',
+      input: validation.normalizedInput,
+      userId,
+      organizationId: orgId,
+      documentType,
+    });
+
+    return res.json(routing);
+  } catch (error: any) {
+    console.error('[AnA Biostats] SME routing error:', error);
+    return res.status(500).json({ error: error.message || 'SME routing failed' });
+  }
+});
+
+/**
+ * GET /api/ana-biostats/sme-agents
+ *
+ * List all available SME specialist agents.
+ */
+router.get('/sme-agents', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const { ALL_SME_AGENTS } = await import('../services/ana-biostats/sme-agents');
+
+    const agents = ALL_SME_AGENTS.map(sme => ({
+      id: sme.id,
+      name: sme.name,
+      title: sme.title,
+      scope: sme.scope,
+      primaryDocuments: sme.outputPreferences.primaryDocuments,
+      clientTracks: sme.triggerConditions.clientTracks,
+    }));
+
+    return res.json({ agents });
+  } catch (error: any) {
+    console.error('[AnA Biostats] SME agents list error:', error);
+    return res.status(500).json({ error: error.message || 'Failed to list SME agents' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // Helper
 // ═══════════════════════════════════════════════════════════════════════════════
 
