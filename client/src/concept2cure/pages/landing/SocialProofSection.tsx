@@ -1,0 +1,106 @@
+/**
+ * Landing Page — Social Proof Section
+ *
+ * Honest framing: "Built for" personas with realistic value props.
+ * No fake testimonials with made-up names.
+ */
+import React from 'react';
+import { motion } from 'framer-motion';
+import { Section, fadeUp, CheckIcon } from './shared';
+
+const AUDIENCES = [
+  {
+    persona: 'Biotech Startups',
+    tagline: 'Move faster with a lean team',
+    points: [
+      'AI agents handle research, drafting, and QC',
+      'Full IND/510(k) workflow out of the box',
+      'No enterprise contract required — start free',
+    ],
+    accent: 'blue',
+  },
+  {
+    persona: 'Mid-Size Pharma',
+    tagline: 'Manage multi-program portfolios',
+    points: [
+      'Real-time submission dashboards across programs',
+      'Multi-agency coverage (FDA, EMA, PMDA, NMPA)',
+      'Team collaboration with RBAC and audit trails',
+    ],
+    accent: 'violet',
+  },
+  {
+    persona: 'CROs & Consultancies',
+    tagline: 'Serve more clients, higher quality',
+    points: [
+      'Multi-tenant workspaces for client isolation',
+      'AI-accelerated document turnaround',
+      'Enterprise SSO and compliance reporting',
+    ],
+    accent: 'indigo',
+  },
+];
+
+const accentStyles: Record<string, { badge: string; border: string; bg: string }> = {
+  blue: {
+    badge: 'bg-blue-100 text-blue-700',
+    border: 'border-blue-100 hover:border-blue-300',
+    bg: 'from-blue-50/30 to-white',
+  },
+  violet: {
+    badge: 'bg-violet-100 text-violet-700',
+    border: 'border-violet-100 hover:border-violet-300',
+    bg: 'from-violet-50/30 to-white',
+  },
+  indigo: {
+    badge: 'bg-indigo-100 text-indigo-700',
+    border: 'border-indigo-100 hover:border-indigo-300',
+    bg: 'from-indigo-50/30 to-white',
+  },
+};
+
+export function SocialProofSection() {
+  return (
+    <Section className="py-24 px-6">
+      <div className="max-w-6xl mx-auto">
+        <motion.div variants={fadeUp} className="text-center mb-14">
+          <h2 className="text-3xl sm:text-4xl font-bold text-zinc-900 mb-4">
+            Built for every stage of regulatory maturity
+          </h2>
+          <p className="text-lg text-zinc-600 max-w-2xl mx-auto">
+            Whether you're filing your first IND or managing a global submission portfolio,
+            Concept2Cure adapts to your workflow.
+          </p>
+        </motion.div>
+
+        <div className="grid md:grid-cols-3 gap-6">
+          {AUDIENCES.map(a => {
+            const styles = accentStyles[a.accent];
+            return (
+              <motion.div
+                key={a.persona}
+                variants={fadeUp}
+                className={`p-7 rounded-2xl border-2 ${styles.border} bg-gradient-to-b ${styles.bg} transition-all duration-200 hover:shadow-lg`}
+              >
+                <span
+                  className={`inline-block px-3 py-1 rounded-full text-xs font-semibold mb-4 ${styles.badge}`}
+                >
+                  {a.persona}
+                </span>
+                <h3 className="text-lg font-bold text-zinc-900 mb-4">{a.tagline}</h3>
+                <ul className="space-y-3">
+                  {a.points.map(point => (
+                    <li key={point} className="flex items-start gap-2.5 text-sm text-zinc-700">
+                      <CheckIcon className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      <span>{point}</span>
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+    </Section>
+  );
+}

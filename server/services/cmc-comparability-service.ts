@@ -22,7 +22,15 @@ interface ChangeAssessmentRequest {
   organizationId: number;
   projectId: string;
   changeName: string;
-  changeType: 'site_transfer' | 'scale_up' | 'process_change' | 'raw_material_change' | 'equipment_change' | 'method_change' | 'specification_change' | 'container_closure_change';
+  changeType:
+    | 'site_transfer'
+    | 'scale_up'
+    | 'process_change'
+    | 'raw_material_change'
+    | 'equipment_change'
+    | 'method_change'
+    | 'specification_change'
+    | 'container_closure_change';
   materialType: 'drug_substance' | 'drug_product' | 'intermediate';
   productType: 'small_molecule' | 'biologic' | 'biosimilar' | 'cell_therapy' | 'gene_therapy';
   preChangeDescription: string;
@@ -108,46 +116,176 @@ interface ComparabilityConclusion {
 
 const SECTION_IMPACT_MAP: Record<string, ImpactedSection[]> = {
   site_transfer: [
-    { sectionCode: '3.2.S.2.1', sectionTitle: 'Manufacturer(s)', impactLevel: 'update_required', updateDescription: 'Update manufacturer information and site address' },
-    { sectionCode: '3.2.S.2.2', sectionTitle: 'Description of Manufacturing Process and Process Controls', impactLevel: 'review_recommended', updateDescription: 'Review process description for site-specific details' },
-    { sectionCode: '3.2.S.2.4', sectionTitle: 'Controls of Critical Steps and Intermediates', impactLevel: 'review_recommended', updateDescription: 'Verify critical step controls are equivalent at new site' },
-    { sectionCode: '3.2.S.4.4', sectionTitle: 'Batch Analyses', impactLevel: 'update_required', updateDescription: 'Include batch data from new site' },
-    { sectionCode: '3.2.S.7', sectionTitle: 'Stability', impactLevel: 'update_required', updateDescription: 'Initiate stability studies on material from new site' },
-    { sectionCode: '3.2.P.3.1', sectionTitle: 'Manufacturer(s) (Drug Product)', impactLevel: 'review_recommended', updateDescription: 'Update if drug product manufacturing is also transferred' },
+    {
+      sectionCode: '3.2.S.2.1',
+      sectionTitle: 'Manufacturer(s)',
+      impactLevel: 'update_required',
+      updateDescription: 'Update manufacturer information and site address',
+    },
+    {
+      sectionCode: '3.2.S.2.2',
+      sectionTitle: 'Description of Manufacturing Process and Process Controls',
+      impactLevel: 'review_recommended',
+      updateDescription: 'Review process description for site-specific details',
+    },
+    {
+      sectionCode: '3.2.S.2.4',
+      sectionTitle: 'Controls of Critical Steps and Intermediates',
+      impactLevel: 'review_recommended',
+      updateDescription: 'Verify critical step controls are equivalent at new site',
+    },
+    {
+      sectionCode: '3.2.S.4.4',
+      sectionTitle: 'Batch Analyses',
+      impactLevel: 'update_required',
+      updateDescription: 'Include batch data from new site',
+    },
+    {
+      sectionCode: '3.2.S.7',
+      sectionTitle: 'Stability',
+      impactLevel: 'update_required',
+      updateDescription: 'Initiate stability studies on material from new site',
+    },
+    {
+      sectionCode: '3.2.P.3.1',
+      sectionTitle: 'Manufacturer(s) (Drug Product)',
+      impactLevel: 'review_recommended',
+      updateDescription: 'Update if drug product manufacturing is also transferred',
+    },
   ],
   scale_up: [
-    { sectionCode: '3.2.S.2.2', sectionTitle: 'Description of Manufacturing Process', impactLevel: 'update_required', updateDescription: 'Update batch size and scale-dependent parameters' },
-    { sectionCode: '3.2.S.2.3', sectionTitle: 'Control of Materials', impactLevel: 'review_recommended', updateDescription: 'Review material quantities and handling at new scale' },
-    { sectionCode: '3.2.S.2.5', sectionTitle: 'Process Validation and/or Evaluation', impactLevel: 'update_required', updateDescription: 'Include validation data at commercial scale' },
-    { sectionCode: '3.2.S.4.4', sectionTitle: 'Batch Analyses', impactLevel: 'update_required', updateDescription: 'Include batch results at new scale' },
+    {
+      sectionCode: '3.2.S.2.2',
+      sectionTitle: 'Description of Manufacturing Process',
+      impactLevel: 'update_required',
+      updateDescription: 'Update batch size and scale-dependent parameters',
+    },
+    {
+      sectionCode: '3.2.S.2.3',
+      sectionTitle: 'Control of Materials',
+      impactLevel: 'review_recommended',
+      updateDescription: 'Review material quantities and handling at new scale',
+    },
+    {
+      sectionCode: '3.2.S.2.5',
+      sectionTitle: 'Process Validation and/or Evaluation',
+      impactLevel: 'update_required',
+      updateDescription: 'Include validation data at commercial scale',
+    },
+    {
+      sectionCode: '3.2.S.4.4',
+      sectionTitle: 'Batch Analyses',
+      impactLevel: 'update_required',
+      updateDescription: 'Include batch results at new scale',
+    },
   ],
   process_change: [
-    { sectionCode: '3.2.S.2.2', sectionTitle: 'Description of Manufacturing Process', impactLevel: 'update_required', updateDescription: 'Update process description to reflect change' },
-    { sectionCode: '3.2.S.2.4', sectionTitle: 'Controls of Critical Steps', impactLevel: 'update_required', updateDescription: 'Update critical step controls if affected' },
-    { sectionCode: '3.2.S.2.5', sectionTitle: 'Process Validation', impactLevel: 'update_required', updateDescription: 'Revalidate affected process steps' },
-    { sectionCode: '3.2.S.4.1', sectionTitle: 'Specifications', impactLevel: 'review_recommended', updateDescription: 'Review if specifications need updating' },
-    { sectionCode: '3.2.S.4.4', sectionTitle: 'Batch Analyses', impactLevel: 'update_required', updateDescription: 'Include batch data from modified process' },
-    { sectionCode: '3.2.S.7', sectionTitle: 'Stability', impactLevel: 'update_required', updateDescription: 'Stability data on material from modified process' },
+    {
+      sectionCode: '3.2.S.2.2',
+      sectionTitle: 'Description of Manufacturing Process',
+      impactLevel: 'update_required',
+      updateDescription: 'Update process description to reflect change',
+    },
+    {
+      sectionCode: '3.2.S.2.4',
+      sectionTitle: 'Controls of Critical Steps',
+      impactLevel: 'update_required',
+      updateDescription: 'Update critical step controls if affected',
+    },
+    {
+      sectionCode: '3.2.S.2.5',
+      sectionTitle: 'Process Validation',
+      impactLevel: 'update_required',
+      updateDescription: 'Revalidate affected process steps',
+    },
+    {
+      sectionCode: '3.2.S.4.1',
+      sectionTitle: 'Specifications',
+      impactLevel: 'review_recommended',
+      updateDescription: 'Review if specifications need updating',
+    },
+    {
+      sectionCode: '3.2.S.4.4',
+      sectionTitle: 'Batch Analyses',
+      impactLevel: 'update_required',
+      updateDescription: 'Include batch data from modified process',
+    },
+    {
+      sectionCode: '3.2.S.7',
+      sectionTitle: 'Stability',
+      impactLevel: 'update_required',
+      updateDescription: 'Stability data on material from modified process',
+    },
   ],
   raw_material_change: [
-    { sectionCode: '3.2.S.2.3', sectionTitle: 'Control of Materials', impactLevel: 'update_required', updateDescription: 'Update material specifications and supplier info' },
-    { sectionCode: '3.2.S.4.4', sectionTitle: 'Batch Analyses', impactLevel: 'update_required', updateDescription: 'Include batch data using new material' },
+    {
+      sectionCode: '3.2.S.2.3',
+      sectionTitle: 'Control of Materials',
+      impactLevel: 'update_required',
+      updateDescription: 'Update material specifications and supplier info',
+    },
+    {
+      sectionCode: '3.2.S.4.4',
+      sectionTitle: 'Batch Analyses',
+      impactLevel: 'update_required',
+      updateDescription: 'Include batch data using new material',
+    },
   ],
   equipment_change: [
-    { sectionCode: '3.2.S.2.2', sectionTitle: 'Description of Manufacturing Process', impactLevel: 'review_recommended', updateDescription: 'Update equipment references if specified' },
-    { sectionCode: '3.2.S.2.5', sectionTitle: 'Process Validation', impactLevel: 'update_required', updateDescription: 'Equipment qualification and process revalidation' },
+    {
+      sectionCode: '3.2.S.2.2',
+      sectionTitle: 'Description of Manufacturing Process',
+      impactLevel: 'review_recommended',
+      updateDescription: 'Update equipment references if specified',
+    },
+    {
+      sectionCode: '3.2.S.2.5',
+      sectionTitle: 'Process Validation',
+      impactLevel: 'update_required',
+      updateDescription: 'Equipment qualification and process revalidation',
+    },
   ],
   method_change: [
-    { sectionCode: '3.2.S.4.2', sectionTitle: 'Analytical Procedures', impactLevel: 'update_required', updateDescription: 'Update method description' },
-    { sectionCode: '3.2.S.4.3', sectionTitle: 'Validation of Analytical Procedures', impactLevel: 'update_required', updateDescription: 'Include method validation data' },
+    {
+      sectionCode: '3.2.S.4.2',
+      sectionTitle: 'Analytical Procedures',
+      impactLevel: 'update_required',
+      updateDescription: 'Update method description',
+    },
+    {
+      sectionCode: '3.2.S.4.3',
+      sectionTitle: 'Validation of Analytical Procedures',
+      impactLevel: 'update_required',
+      updateDescription: 'Include method validation data',
+    },
   ],
   specification_change: [
-    { sectionCode: '3.2.S.4.1', sectionTitle: 'Specifications', impactLevel: 'update_required', updateDescription: 'Update specification table' },
-    { sectionCode: '3.2.S.4.5', sectionTitle: 'Justification of Specification', impactLevel: 'update_required', updateDescription: 'Update justification for changed limits' },
+    {
+      sectionCode: '3.2.S.4.1',
+      sectionTitle: 'Specifications',
+      impactLevel: 'update_required',
+      updateDescription: 'Update specification table',
+    },
+    {
+      sectionCode: '3.2.S.4.5',
+      sectionTitle: 'Justification of Specification',
+      impactLevel: 'update_required',
+      updateDescription: 'Update justification for changed limits',
+    },
   ],
   container_closure_change: [
-    { sectionCode: '3.2.P.7', sectionTitle: 'Container Closure System', impactLevel: 'update_required', updateDescription: 'Update container closure description' },
-    { sectionCode: '3.2.P.8', sectionTitle: 'Stability', impactLevel: 'update_required', updateDescription: 'Stability data in new container closure' },
+    {
+      sectionCode: '3.2.P.7',
+      sectionTitle: 'Container Closure System',
+      impactLevel: 'update_required',
+      updateDescription: 'Update container closure description',
+    },
+    {
+      sectionCode: '3.2.P.8',
+      sectionTitle: 'Stability',
+      impactLevel: 'update_required',
+      updateDescription: 'Stability data in new container closure',
+    },
   ],
 };
 
@@ -180,7 +318,12 @@ class CMCComparabilityService {
     const riskLevel = this.computeRiskLevel(aiAssessment, request);
 
     // Step 4: Generate narrative
-    const narrative = await this.generateNarrative(request, aiAssessment, impactedSections, riskLevel);
+    const narrative = await this.generateNarrative(
+      request,
+      aiAssessment,
+      impactedSections,
+      riskLevel
+    );
 
     const result: ChangeAssessmentResult = {
       assessmentId,
@@ -190,7 +333,9 @@ class CMCComparabilityService {
       impactedProcessParameters: aiAssessment.impactedParameters,
       impactedSections,
       comparabilityTestingRequired: riskLevel !== 'low',
-      clinicalBridgingRequired: riskLevel === 'critical' || (request.productType !== 'small_molecule' && riskLevel === 'high'),
+      clinicalBridgingRequired:
+        riskLevel === 'critical' ||
+        (request.productType !== 'small_molecule' && riskLevel === 'high'),
       nonclinicalBridgingRequired: riskLevel === 'critical' || riskLevel === 'high',
       recommendedActions: aiAssessment.recommendedActions,
       narrative,
@@ -211,7 +356,7 @@ class CMCComparabilityService {
 
     // Adjust section codes for drug product (P) vs drug substance (S)
     if (materialType === 'drug_product') {
-      return sections.map((s) => ({
+      return sections.map(s => ({
         ...s,
         sectionCode: s.sectionCode.replace('3.2.S', '3.2.P'),
         sectionTitle: s.sectionTitle.replace('Drug Substance', 'Drug Product'),
@@ -262,11 +407,16 @@ class CMCComparabilityService {
           role: 'user' as const,
           content: `Generate comparability protocol for this change:\n${JSON.stringify(assessmentData || { note: 'Assessment not found, generate generic protocol for manufacturing change' })}`,
         },
-      ];
+      ],
+    });
 
     const content = aiResult.content;
     if (!content) {
-      return { analyticalTests: [], stabilityRequirements: { conditions: [], timepoints: [], testsPerTimepoint: [] }, reportingPlan: '' };
+      return {
+        analyticalTests: [],
+        stabilityRequirements: { conditions: [], timepoints: [], testsPerTimepoint: [] },
+        reportingPlan: '',
+      };
     }
 
     return JSON.parse(content);
@@ -279,7 +429,7 @@ class CMCComparabilityService {
     assessmentId: string,
     data: ComparabilityData[]
   ): Promise<ComparabilityConclusion> {
-    const testResults = data.map((d) => {
+    const testResults = data.map(d => {
       const preSum = d.preChangeResults.reduce((a, b) => a + b, 0);
       const postSum = d.postChangeResults.reduce((a, b) => a + b, 0);
       const preMean = preSum / d.preChangeResults.length;
@@ -288,9 +438,15 @@ class CMCComparabilityService {
       const differencePercent = preMean !== 0 ? (difference / preMean) * 100 : 0;
 
       // Simple t-test approximation
-      const preVar = d.preChangeResults.reduce((sum, x) => sum + (x - preMean) ** 2, 0) / (d.preChangeResults.length - 1);
-      const postVar = d.postChangeResults.reduce((sum, x) => sum + (x - postMean) ** 2, 0) / (d.postChangeResults.length - 1);
-      const pooledSE = Math.sqrt(preVar / d.preChangeResults.length + postVar / d.postChangeResults.length);
+      const preVar =
+        d.preChangeResults.reduce((sum, x) => sum + (x - preMean) ** 2, 0) /
+        (d.preChangeResults.length - 1);
+      const postVar =
+        d.postChangeResults.reduce((sum, x) => sum + (x - postMean) ** 2, 0) /
+        (d.postChangeResults.length - 1);
+      const pooledSE = Math.sqrt(
+        preVar / d.preChangeResults.length + postVar / d.postChangeResults.length
+      );
       const tStat = pooledSE > 0 ? Math.abs(difference) / pooledSE : 0;
       const statisticalSignificance = tStat > 1.96;
 
@@ -312,8 +468,10 @@ class CMCComparabilityService {
       };
     });
 
-    const allComparable = testResults.every((t) => t.withinAcceptanceCriteria);
-    const anyNotComparable = testResults.some((t) => !t.withinAcceptanceCriteria && t.statisticalSignificance);
+    const allComparable = testResults.every(t => t.withinAcceptanceCriteria);
+    const anyNotComparable = testResults.some(
+      t => !t.withinAcceptanceCriteria && t.statisticalSignificance
+    );
 
     const overallConclusion: 'comparable' | 'not_comparable' | 'inconclusive' = allComparable
       ? 'comparable'
@@ -322,15 +480,24 @@ class CMCComparabilityService {
         : 'inconclusive';
 
     const residualRisks = testResults
-      .filter((t) => !t.withinAcceptanceCriteria)
-      .map((t) => `${t.testName}: ${t.differencePercent}% difference observed`);
+      .filter(t => !t.withinAcceptanceCriteria)
+      .map(t => `${t.testName}: ${t.differencePercent}% difference observed`);
 
-    const followUpRecommendations = overallConclusion === 'comparable'
-      ? ['Continue routine stability monitoring', 'Include comparability summary in next annual report']
-      : ['Investigate root cause of differences', 'Consider additional testing', 'Evaluate impact on product quality'];
+    const followUpRecommendations =
+      overallConclusion === 'comparable'
+        ? [
+            'Continue routine stability monitoring',
+            'Include comparability summary in next annual report',
+          ]
+        : [
+            'Investigate root cause of differences',
+            'Consider additional testing',
+            'Evaluate impact on product quality',
+          ];
 
-    const narrative = `Comparability assessment evaluated ${testResults.length} analytical tests. ` +
-      `${testResults.filter((t) => t.withinAcceptanceCriteria).length} of ${testResults.length} tests met acceptance criteria. ` +
+    const narrative =
+      `Comparability assessment evaluated ${testResults.length} analytical tests. ` +
+      `${testResults.filter(t => t.withinAcceptanceCriteria).length} of ${testResults.length} tests met acceptance criteria. ` +
       `Overall conclusion: ${overallConclusion.replace('_', ' ')}.`;
 
     return {
@@ -393,12 +560,17 @@ Affected Steps: ${request.affectedProcessSteps?.join(', ') || 'Not specified'}
 Known CQAs: ${request.knownCQAs?.join(', ') || 'Not specified'}
 Additional Context: ${request.additionalContext || 'None'}`,
         },
-      ];
+      ],
+    });
 
     const content = aiResult.content;
     if (!content) {
       return {
-        classification: { fdaClassification: 'prior_approval_supplement', emaClassification: 'type_ii', justification: 'Unable to assess — defaulting to most conservative classification' },
+        classification: {
+          fdaClassification: 'prior_approval_supplement',
+          emaClassification: 'type_ii',
+          justification: 'Unable to assess — defaulting to most conservative classification',
+        },
         impactedCQAs: [],
         impactedParameters: [],
         recommendedActions: ['Manual assessment required'],
@@ -448,11 +620,12 @@ Risk Level: ${riskLevel}
 FDA Classification: ${aiAssessment.classification?.fdaClassification}
 EMA Classification: ${aiAssessment.classification?.emaClassification}
 Impacted CQAs: ${JSON.stringify(aiAssessment.impactedCQAs)}
-Impacted Sections: ${impactedSections.map((s) => s.sectionCode).join(', ')}
+Impacted Sections: ${impactedSections.map(s => s.sectionCode).join(', ')}
 Pre-change: ${request.preChangeDescription}
 Post-change: ${request.postChangeDescription}`,
         },
-      ];
+      ],
+    });
 
     return aiResult.content || 'Narrative generation failed.';
   }

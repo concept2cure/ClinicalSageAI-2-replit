@@ -29,6 +29,9 @@ function cleanDatabaseUrl(url: string | undefined): string | undefined {
   // Remove any leading/trailing whitespace
   cleaned = cleaned.trim();
 
+  // Remove channel_binding param (not supported by node-pg and causes auth failures)
+  cleaned = cleaned.replace(/[&?]channel_binding=[^&]*/g, '');
+
   return cleaned;
 }
 

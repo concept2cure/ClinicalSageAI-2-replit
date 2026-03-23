@@ -134,16 +134,21 @@ export async function responsesJson<T>(args: {
 
   try {
     // Inject client/project intelligence so orchestrator reads SKILL/.MD context
-    const intelligencePrefix = await getIntelligencePrefix(args.organizationId, args.projectId).catch(() => '');
+    const intelligencePrefix = await getIntelligencePrefix(
+      args.organizationId,
+      args.projectId
+    ).catch(() => '');
     const enrichedSystem = intelligencePrefix + system;
 
     // Use chat.completions with response_format for structured outputs
-    const aiResult = await ai.chat({
-      model: 'gpt-4o',
-      messages: [
-        { role: 'system', content: enrichedSystem },
-        { role: 'user', content: user },
-      ],
+    const aiResult = await ai.chat(
+      {
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: enrichedSystem },
+          { role: 'user', content: user },
+        ],
+      },
       {
         maxTokens: 4000,
         temperature: 0.3, // Lower temperature for more consistent outputs

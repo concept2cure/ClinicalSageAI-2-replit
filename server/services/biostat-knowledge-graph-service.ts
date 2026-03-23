@@ -274,20 +274,18 @@ export class BiostatKnowledgeGraphService {
    */
   async queryGraph(query: string, organizationId: number): Promise<GraphQueryResult> {
     // Step 1: Use AI to extract search terms and intent
-    const extractionResponse = await ai.chat({
-      model: 'gpt-4o',
-      messages: [
-        {
-          role: 'system' as const,
-          content: `You are a biostatistics knowledge graph query parser. Extract search parameters from the user query.
+    const extractionMessages = [
+      {
+        role: 'system' as const,
+        content: `You are a biostatistics knowledge graph query parser. Extract search parameters from the user query.
 Return JSON with these fields:
 - nodeTypes: array of node types to search (indication, endpoint, statistical_method, study_design, regulatory_decision, drug_class, estimand_strategy, missing_data_method, multiplicity_method)
 - searchTerms: array of key terms to look for in node names
 - edgeTypes: array of edge types relevant to the query
 - intent: one of "find_methods", "find_endpoints", "find_relationships", "find_trends", "general"`,
-        },
-        { role: 'user' as const, content: query },
-      ];
+      },
+      { role: 'user' as const, content: query },
+    ];
 
     let parsed: {
       nodeTypes: NodeType[];
@@ -296,7 +294,10 @@ Return JSON with these fields:
       intent: string;
     };
     try {
-      const extractionRaw = await ai.complete(extractionMessages, { jsonMode: true, temperature: 0.1 });
+      const extractionRaw = await ai.complete(extractionMessages, {
+        jsonMode: true,
+        temperature: 0.1,
+      });
       parsed = JSON.parse(extractionRaw || '{}');
     } catch {
       parsed = { nodeTypes: [], searchTerms: [], edgeTypes: [], intent: 'general' };
@@ -379,30 +380,31 @@ Return JSON with these fields:
     const uniqueEdges = Array.from(uniqueEdgeMap.values());
 
     // Step 4: Use AI to synthesize an answer
-    const synthesisResponse = await ai.chat({
-      model: 'gpt-4o',
-      messages: [
-        {
-          role: 'system' as const,
-          content:
-            'You are a biostatistics expert. Synthesize an answer based on the knowledge graph data provided. Be concise and precise.',
-        },
-        {
-          role: 'user' as const,
-          content: `Question: ${query}\n\nKnowledge Graph Nodes:\n${JSON.stringify(
-            uniqueNodes.map(n => ({ type: n.nodeType, name: n.name, props: n.properties })),
-            null,
-            2
-          )}\n\nEdges:\n${JSON.stringify(
-            uniqueEdges.map(e => ({ type: e.edgeType, evidence: e.evidence, weight: e.weight })),
-            null,
-            2
-          )}`,
-        },
-      ];
+    const synthesisMessages = [
+      {
+        role: 'system' as const,
+        content:
+          'You are a biostatistics expert. Synthesize an answer based on the knowledge graph data provided. Be concise and precise.',
+      },
+      {
+        role: 'user' as const,
+        content: `Question: ${query}\n\nKnowledge Graph Nodes:\n${JSON.stringify(
+          uniqueNodes.map(n => ({ type: n.nodeType, name: n.name, props: n.properties })),
+          null,
+          2
+        )}\n\nEdges:\n${JSON.stringify(
+          uniqueEdges.map(e => ({ type: e.edgeType, evidence: e.evidence, weight: e.weight })),
+          null,
+          2
+        )}`,
+      },
+    ];
 
-    const answer = await ai.complete(synthesisMessages, { temperature: 0.3 }) || 'No answer could be generated.';
-    const confidence = uniqueNodes.length > 0 ? Math.min(0.95, 0.5 + uniqueNodes.length * 0.05) : 0.1;
+    const answer =
+      (await ai.complete(synthesisMessages, { temperature: 0.3 })) ||
+      'No answer could be generated.';
+    const confidence =
+      uniqueNodes.length > 0 ? Math.min(0.95, 0.5 + uniqueNodes.length * 0.05) : 0.1;
 
     return {
       answer,
@@ -509,10 +511,7 @@ Return JSON with these fields:
       .where(and(...conditions));
 
     // Build endpoint x method matrix
-    const matrixMap = new Map<
-      string,
-      { total: number; accepted: number; agencies: Set<string> }
-    >();
+    const matrixMap = new Map<string, { total: number; accepted: number; agencies: Set<string> }>();
 
     for (const outcome of outcomes) {
       const endpoint = outcome.endpoint || 'unspecified';
@@ -546,10 +545,7 @@ Return JSON with these fields:
   /**
    * Temporal trends for a statistical concept (method, endpoint, etc.).
    */
-  async getMethodTrend(
-    concept: string,
-    organizationId: number
-  ): Promise<MethodTrendEntry[]> {
+  async getMethodTrend(concept: string, organizationId: number): Promise<MethodTrendEntry[]> {
     const outcomes = await db
       .select()
       .from(methodRegulatoryOutcomes)
@@ -613,7 +609,10 @@ Return JSON with these fields:
     if (existing.length > 0) {
       const node = existing[0];
       // Merge properties and increment source count
-      const mergedProperties = { ...(node.properties as Record<string, any> || {}), ...properties };
+      const mergedProperties = {
+        ...((node.properties as Record<string, any>) || {}),
+        ...properties,
+      };
       const [updated] = await db
         .update(biostatKnowledgeNodes)
         .set({
@@ -672,7 +671,7 @@ Return JSON with these fields:
       // Update weight (strengthen existing edge) and merge evidence
       const edge = existing[0];
       const mergedEvidence = {
-        ...(edge.evidence as Record<string, any> || {}),
+        ...((edge.evidence as Record<string, any>) || {}),
         ...evidence,
         reinforcements: ((edge.evidence as any)?.reinforcements || 0) + 1,
       };

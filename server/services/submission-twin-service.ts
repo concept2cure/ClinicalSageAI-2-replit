@@ -45,22 +45,34 @@ const openai = getOpenAIClient();
 // ── Enum validators ──
 
 const VALID_DRIFT_TYPES = new Set([
-  'summary_detail_mismatch', 'claim_escalation_without_evidence', 'endpoint_framing_drift',
-  'cmc_maturity_overstatement', 'narrative_statistical_mismatch', 'document_contradiction',
+  'summary_detail_mismatch',
+  'claim_escalation_without_evidence',
+  'endpoint_framing_drift',
+  'cmc_maturity_overstatement',
+  'narrative_statistical_mismatch',
+  'document_contradiction',
   'stale_downstream_summary',
 ]);
 
-const VALID_SEVERITIES = new Set([
-  'critical', 'high', 'medium', 'low', 'informational',
-]);
+const VALID_SEVERITIES = new Set(['critical', 'high', 'medium', 'low', 'informational']);
 
 const VALID_REVIEWER_LENSES = new Set([
-  'skeptical_reviewer', 'evidence_sufficiency_skeptic', 'cmc_heavy_reviewer',
-  'clinical_risk_reviewer', 'compliance_inspection', 'claims_challenger', 'biostatistics_skeptic',
+  'skeptical_reviewer',
+  'evidence_sufficiency_skeptic',
+  'cmc_heavy_reviewer',
+  'clinical_risk_reviewer',
+  'compliance_inspection',
+  'claims_challenger',
+  'biostatistics_skeptic',
 ]);
 
 const VALID_SUPPORT_STRENGTHS = new Set([
-  'direct', 'indirect', 'weak', 'stale', 'contradictory', 'unsupported',
+  'direct',
+  'indirect',
+  'weak',
+  'stale',
+  'contradictory',
+  'unsupported',
 ]);
 
 function validateDriftType(val: string): string {
@@ -151,7 +163,6 @@ interface FullAssessmentResult {
 // ── Service ──
 
 class SubmissionTwinService {
-
   // ═══════════════════════════════════════════════════════
   // 1. CLAIM-TO-EVIDENCE INTEGRITY MAP
   // ═══════════════════════════════════════════════════════
@@ -159,10 +170,7 @@ class SubmissionTwinService {
   /**
    * Extract claims from all artifacts in a submission package.
    */
-  async extractClaims(
-    packageId: number,
-    organizationId: number
-  ): Promise<SubmissionTwinClaim[]> {
+  async extractClaims(packageId: number, organizationId: number): Promise<SubmissionTwinClaim[]> {
     // Get all artifacts in this package
     const artifactMappings = await db
       .select({
@@ -170,10 +178,7 @@ class SubmissionTwinService {
         sectionId: c2cArtifactSectionMap.sectionDbId,
       })
       .from(c2cArtifactSectionMap)
-      .innerJoin(
-        c2cPackageSections,
-        eq(c2cArtifactSectionMap.sectionDbId, c2cPackageSections.id)
-      )
+      .innerJoin(c2cPackageSections, eq(c2cArtifactSectionMap.sectionDbId, c2cPackageSections.id))
       .where(eq(c2cPackageSections.packageDbId, packageId));
 
     if (artifactMappings.length === 0) {
@@ -210,9 +215,10 @@ class SubmissionTwinService {
 
       if (!latestVersion?.content) continue;
 
-      const content = typeof latestVersion.content === 'string'
-        ? latestVersion.content
-        : JSON.stringify(latestVersion.content);
+      const content =
+        typeof latestVersion.content === 'string'
+          ? latestVersion.content
+          : JSON.stringify(latestVersion.content);
 
       if (content.length < 50) continue;
 
@@ -274,14 +280,24 @@ class SubmissionTwinService {
       );
 
     if (claims.length === 0) {
-      return { totalClaims: 0, supportedClaims: 0, weakClaims: 0, unsupportedClaims: 0, contradictedClaims: 0, evidenceLinks: [] };
+      return {
+        totalClaims: 0,
+        supportedClaims: 0,
+        weakClaims: 0,
+        unsupportedClaims: 0,
+        contradictedClaims: 0,
+        evidenceLinks: [],
+      };
     }
 
     // Get all artifact content in this package for cross-reference
     const artifactContent = await this.getPackageArtifactContent(packageId, organizationId);
 
     const links: SubmissionTwinEvidenceLink[] = [];
-    let supported = 0, weak = 0, unsupported = 0, contradicted = 0;
+    let supported = 0,
+      weak = 0,
+      unsupported = 0,
+      contradicted = 0;
 
     // Batch claims for AI assessment
     const batchSize = 10;
@@ -341,10 +357,7 @@ class SubmissionTwinService {
   /**
    * Get claims with their evidence support summary for a package.
    */
-  async getClaimEvidenceMap(
-    packageId: number,
-    organizationId: number
-  ) {
+  async getClaimEvidenceMap(packageId: number, organizationId: number) {
     const claims = await db
       .select()
       .from(submissionTwinClaims)
@@ -369,9 +382,12 @@ class SubmissionTwinService {
             )
           );
 
-        const bestSupport = evidence.length > 0
-          ? evidence.reduce((best, e) => (e.relevanceScore ?? 0) > (best.relevanceScore ?? 0) ? e : best)
-          : null;
+        const bestSupport =
+          evidence.length > 0
+            ? evidence.reduce((best, e) =>
+                (e.relevanceScore ?? 0) > (best.relevanceScore ?? 0) ? e : best
+              )
+            : null;
 
         return {
           ...claim,
@@ -411,11 +427,11 @@ class SubmissionTwinService {
 
       for (const drift of drifts) {
         // Find source/target artifact IDs
-        const sourceArtifact = artifactContent.find(a =>
-          drift.sourceExcerpt && a.content.includes(drift.sourceExcerpt.substring(0, 50))
+        const sourceArtifact = artifactContent.find(
+          a => drift.sourceExcerpt && a.content.includes(drift.sourceExcerpt.substring(0, 50))
         );
-        const targetArtifact = artifactContent.find(a =>
-          drift.targetExcerpt && a.content.includes(drift.targetExcerpt.substring(0, 50))
+        const targetArtifact = artifactContent.find(
+          a => drift.targetExcerpt && a.content.includes(drift.targetExcerpt.substring(0, 50))
         );
 
         const [alert] = await db
@@ -467,11 +483,7 @@ class SubmissionTwinService {
   /**
    * Resolve a drift alert.
    */
-  async resolveDriftAlert(
-    alertId: number,
-    organizationId: number,
-    resolvedBy: number
-  ) {
+  async resolveDriftAlert(alertId: number, organizationId: number, resolvedBy: number) {
     const [updated] = await db
       .update(submissionTwinDriftAlerts)
       .set({
@@ -612,11 +624,7 @@ class SubmissionTwinService {
   /**
    * Get challenges for a specific assessment or package.
    */
-  async getChallenges(
-    packageId: number,
-    organizationId: number,
-    assessmentId?: number
-  ) {
+  async getChallenges(packageId: number, organizationId: number, assessmentId?: number) {
     const conditions = [
       eq(submissionTwinChallenges.packageId, packageId),
       eq(submissionTwinChallenges.organizationId, organizationId),
@@ -718,10 +726,7 @@ class SubmissionTwinService {
   /**
    * Get unresolved change impacts for a package.
    */
-  async getChangeImpacts(
-    packageId: number,
-    organizationId: number
-  ) {
+  async getChangeImpacts(packageId: number, organizationId: number) {
     return db
       .select()
       .from(submissionTwinChangeImpacts)
@@ -738,10 +743,7 @@ class SubmissionTwinService {
   /**
    * Resolve a change impact.
    */
-  async resolveChangeImpact(
-    impactId: number,
-    organizationId: number
-  ) {
+  async resolveChangeImpact(impactId: number, organizationId: number) {
     const [updated] = await db
       .update(submissionTwinChangeImpacts)
       .set({ resolved: true, resolvedAt: new Date() })
@@ -770,26 +772,37 @@ class SubmissionTwinService {
     // Gather all signals
     const [driftAlerts, claims, blockers, readiness] = await Promise.all([
       this.getDriftAlerts(packageId, organizationId),
-      db.select().from(submissionTwinClaims).where(
-        and(
-          eq(submissionTwinClaims.packageId, packageId),
-          eq(submissionTwinClaims.organizationId, organizationId),
-          eq(submissionTwinClaims.isActive, true)
+      db
+        .select()
+        .from(submissionTwinClaims)
+        .where(
+          and(
+            eq(submissionTwinClaims.packageId, packageId),
+            eq(submissionTwinClaims.organizationId, organizationId),
+            eq(submissionTwinClaims.isActive, true)
+          )
+        ),
+      db
+        .select()
+        .from(c2cBlockers)
+        .where(
+          and(
+            eq(c2cBlockers.packageDbId, packageId),
+            eq(c2cBlockers.organizationId, organizationId),
+            eq(c2cBlockers.status, 'open')
+          )
+        ),
+      db
+        .select()
+        .from(c2cReadinessSnapshots)
+        .where(
+          and(
+            eq(c2cReadinessSnapshots.packageDbId, packageId),
+            eq(c2cReadinessSnapshots.organizationId, organizationId)
+          )
         )
-      ),
-      db.select().from(c2cBlockers).where(
-        and(
-          eq(c2cBlockers.packageDbId, packageId),
-          eq(c2cBlockers.organizationId, organizationId),
-          eq(c2cBlockers.status, 'open')
-        )
-      ),
-      db.select().from(c2cReadinessSnapshots).where(
-        and(
-          eq(c2cReadinessSnapshots.packageDbId, packageId),
-          eq(c2cReadinessSnapshots.organizationId, organizationId)
-        )
-      ).orderBy(desc(c2cReadinessSnapshots.computedAt)).limit(1),
+        .orderBy(desc(c2cReadinessSnapshots.computedAt))
+        .limit(1),
     ]);
 
     // Get latest challenges
@@ -809,7 +822,10 @@ class SubmissionTwinService {
     const unsupportedClaims = await db
       .select({ id: submissionTwinClaims.id, claimText: submissionTwinClaims.claimText })
       .from(submissionTwinClaims)
-      .leftJoin(submissionTwinEvidenceLinks, eq(submissionTwinEvidenceLinks.claimId, submissionTwinClaims.id))
+      .leftJoin(
+        submissionTwinEvidenceLinks,
+        eq(submissionTwinEvidenceLinks.claimId, submissionTwinClaims.id)
+      )
       .where(
         and(
           eq(submissionTwinClaims.packageId, packageId),
@@ -931,8 +947,8 @@ class SubmissionTwinService {
       const sectionClaims = claims.filter(c => c.sectionId === section.id);
       const sectionEvidence = evidenceCounts.filter(e => e.sectionId === section.id);
       const sectionBlockers = openBlockers.filter(b => b.sectionDbId === section.id);
-      const sectionDrifts = driftAlerts.filter(d =>
-        d.sourceArtifactId != null || d.targetArtifactId != null
+      const sectionDrifts = driftAlerts.filter(
+        d => d.sourceArtifactId != null || d.targetArtifactId != null
       );
 
       const issues: string[] = [];
@@ -955,7 +971,10 @@ class SubmissionTwinService {
       }
 
       if (issues.length > 0) {
-        const score = Math.max(0, 100 - (unsupported * 15) - (sectionBlockers.length * 20) - (driftCount * 10));
+        const score = Math.max(
+          0,
+          100 - unsupported * 15 - sectionBlockers.length * 20 - driftCount * 10
+        );
         weakZones.push({
           section: section.sectionLabel ?? section.sectionKey,
           sectionId: section.id,
@@ -972,8 +991,14 @@ class SubmissionTwinService {
     const driftPenalty = Math.min(20, driftAlerts.length * 4);
     const blockerPenalty = Math.min(20, openBlockers.length * 5);
 
-    const readinessScore = Math.max(0, Math.min(100, baseReadiness - claimPenalty - driftPenalty - blockerPenalty));
-    const fragilityScore = Math.min(100, claimPenalty + driftPenalty + blockerPenalty + (weakZones.length * 3));
+    const readinessScore = Math.max(
+      0,
+      Math.min(100, baseReadiness - claimPenalty - driftPenalty - blockerPenalty)
+    );
+    const fragilityScore = Math.min(
+      100,
+      claimPenalty + driftPenalty + blockerPenalty + weakZones.length * 3
+    );
 
     return {
       readinessScore: Math.round(readinessScore * 10) / 10,
@@ -1017,18 +1042,16 @@ class SubmissionTwinService {
       const driftAlerts = await this.detectDrift(packageId, organizationId);
 
       // 4. Simulate challenges
-      const challenges = await this.simulateChallenges(
-        packageId,
-        organizationId,
-        assessment.id
-      );
+      const challenges = await this.simulateChallenges(packageId, organizationId, assessment.id);
 
       // 5. Predict next best artifact
       const nextBestArtifact = await this.predictNextBestArtifact(packageId, organizationId);
 
       // 6. Compute readiness/fragility
-      const { readinessScore, fragilityScore, weakZones } =
-        await this.computeReadinessAndFragility(packageId, organizationId);
+      const { readinessScore, fragilityScore, weakZones } = await this.computeReadinessAndFragility(
+        packageId,
+        organizationId
+      );
 
       // Generate executive summary
       const executiveSummary = await this.aiGenerateExecutiveSummary(
@@ -1111,10 +1134,7 @@ class SubmissionTwinService {
   /**
    * Get a single assessment with full detail.
    */
-  async getAssessmentDetail(
-    assessmentId: number,
-    organizationId: number
-  ) {
+  async getAssessmentDetail(assessmentId: number, organizationId: number) {
     const [assessment] = await db
       .select()
       .from(submissionTwinAssessments)
@@ -1129,26 +1149,35 @@ class SubmissionTwinService {
     if (!assessment) return null;
 
     const [challenges, driftAlerts, changeImpacts] = await Promise.all([
-      db.select().from(submissionTwinChallenges).where(
-        and(
-          eq(submissionTwinChallenges.assessmentId, assessmentId),
-          eq(submissionTwinChallenges.organizationId, organizationId)
-        )
-      ),
-      db.select().from(submissionTwinDriftAlerts).where(
-        and(
-          eq(submissionTwinDriftAlerts.packageId, assessment.packageId),
-          eq(submissionTwinDriftAlerts.organizationId, organizationId),
-          eq(submissionTwinDriftAlerts.resolved, false)
-        )
-      ),
-      db.select().from(submissionTwinChangeImpacts).where(
-        and(
-          eq(submissionTwinChangeImpacts.packageId, assessment.packageId),
-          eq(submissionTwinChangeImpacts.organizationId, organizationId),
-          eq(submissionTwinChangeImpacts.resolved, false)
-        )
-      ),
+      db
+        .select()
+        .from(submissionTwinChallenges)
+        .where(
+          and(
+            eq(submissionTwinChallenges.assessmentId, assessmentId),
+            eq(submissionTwinChallenges.organizationId, organizationId)
+          )
+        ),
+      db
+        .select()
+        .from(submissionTwinDriftAlerts)
+        .where(
+          and(
+            eq(submissionTwinDriftAlerts.packageId, assessment.packageId),
+            eq(submissionTwinDriftAlerts.organizationId, organizationId),
+            eq(submissionTwinDriftAlerts.resolved, false)
+          )
+        ),
+      db
+        .select()
+        .from(submissionTwinChangeImpacts)
+        .where(
+          and(
+            eq(submissionTwinChangeImpacts.packageId, assessment.packageId),
+            eq(submissionTwinChangeImpacts.organizationId, organizationId),
+            eq(submissionTwinChangeImpacts.resolved, false)
+          )
+        ),
     ]);
 
     return { assessment, challenges, driftAlerts, changeImpacts };
@@ -1197,9 +1226,8 @@ class SubmissionTwinService {
         .limit(1);
 
       if (version?.content) {
-        const content = typeof version.content === 'string'
-          ? version.content
-          : JSON.stringify(version.content);
+        const content =
+          typeof version.content === 'string' ? version.content : JSON.stringify(version.content);
 
         results.push({
           artifactId: mapping.artifactId,
@@ -1213,15 +1241,17 @@ class SubmissionTwinService {
   }
 
   private async aiExtractClaims(content: string): Promise<ClaimExtractionResult> {
-    const aiResult = await ai.chat({
-      model: 'gpt-4o',
-      messages: [
-        {
-          role: 'system',
-          content: `You are a regulatory submission analyst. Extract all claims, assertions, rationales, and summary statements from the document content. For each claim, categorize it as one of: efficacy, safety, cmc_quality, regulatory_precedent, statistical, labeling. Assign a confidence score (0-1) based on how explicitly the claim is stated. Return JSON: {"claims": [{"claimText": "...", "claimType": "...", "sectionPath": "...", "confidence": 0.9}]}`,
-        },
-        { role: 'user', content: content.substring(0, 6000) },
-      ],
+    const aiResult = await ai.chat(
+      {
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'system',
+            content: `You are a regulatory submission analyst. Extract all claims, assertions, rationales, and summary statements from the document content. For each claim, categorize it as one of: efficacy, safety, cmc_quality, regulatory_precedent, statistical, labeling. Assign a confidence score (0-1) based on how explicitly the claim is stated. Return JSON: {"claims": [{"claimText": "...", "claimType": "...", "sectionPath": "...", "confidence": 0.9}]}`,
+          },
+          { role: 'user', content: content.substring(0, 6000) },
+        ],
+      },
       { jsonMode: true, temperature: 0.2 }
     );
 
@@ -1245,18 +1275,20 @@ class SubmissionTwinService {
       excerpt: a.content.substring(0, 1500),
     }));
 
-    const aiResult = await ai.chat({
-      model: 'gpt-4o',
-      messages: [
-        {
-          role: 'system',
-          content: `You are a regulatory evidence analyst. For each claim, assess whether the provided document context supports it. Rate support as: direct (strong explicit support), indirect (related but not explicit), weak (tangential), stale (may be outdated), contradictory (evidence contradicts), unsupported (no evidence found). Provide relevanceScore (0-1). Flag if evidence is statistical in nature. Return JSON: {"assessments": [{"claimId": N, "claimText": "...", "supportStrength": "...", "relevanceScore": 0.8, "evidenceText": "relevant excerpt", "isStatistical": false}]}`,
-        },
-        {
-          role: 'user',
-          content: JSON.stringify({ claims: claimSummary, context: contextSummary }),
-        },
-      ],
+    const aiResult = await ai.chat(
+      {
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'system',
+            content: `You are a regulatory evidence analyst. For each claim, assess whether the provided document context supports it. Rate support as: direct (strong explicit support), indirect (related but not explicit), weak (tangential), stale (may be outdated), contradictory (evidence contradicts), unsupported (no evidence found). Provide relevanceScore (0-1). Flag if evidence is statistical in nature. Return JSON: {"assessments": [{"claimId": N, "claimText": "...", "supportStrength": "...", "relevanceScore": 0.8, "evidenceText": "relevant excerpt", "isStatistical": false}]}`,
+          },
+          {
+            role: 'user',
+            content: JSON.stringify({ claims: claimSummary, context: contextSummary }),
+          },
+        ],
+      },
       { jsonMode: true, temperature: 0.2 }
     );
 
@@ -1267,21 +1299,25 @@ class SubmissionTwinService {
   private async aiDetectDrift(
     artifacts: Array<{ artifactId: number; content: string; sectionKey?: string }>
   ): Promise<DriftDetection[]> {
-    const aiResult = await ai.chat({
-      model: 'gpt-4o',
-      messages: [
-        {
-          role: 'system',
-          content: `You are a regulatory submission consistency analyst. Compare the provided documents and detect narrative drift: summary/detail mismatches, claim escalation without evidence, endpoint framing inconsistencies, CMC maturity overstatement, narrative-vs-statistical mismatches, document contradictions, stale summaries. Return JSON: {"drifts": [{"driftType": "summary_detail_mismatch|claim_escalation_without_evidence|endpoint_framing_drift|cmc_maturity_overstatement|narrative_statistical_mismatch|document_contradiction|stale_downstream_summary", "severity": "critical|high|medium|low|informational", "description": "...", "sourceExcerpt": "...", "targetExcerpt": "...", "suggestedFix": "..."}]}`,
-        },
-        {
-          role: 'user',
-          content: JSON.stringify(artifacts.map(a => ({
-            section: a.sectionKey,
-            content: a.content.substring(0, 2000),
-          }))),
-        },
-      ],
+    const aiResult = await ai.chat(
+      {
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'system',
+            content: `You are a regulatory submission consistency analyst. Compare the provided documents and detect narrative drift: summary/detail mismatches, claim escalation without evidence, endpoint framing inconsistencies, CMC maturity overstatement, narrative-vs-statistical mismatches, document contradictions, stale summaries. Return JSON: {"drifts": [{"driftType": "summary_detail_mismatch|claim_escalation_without_evidence|endpoint_framing_drift|cmc_maturity_overstatement|narrative_statistical_mismatch|document_contradiction|stale_downstream_summary", "severity": "critical|high|medium|low|informational", "description": "...", "sourceExcerpt": "...", "targetExcerpt": "...", "suggestedFix": "..."}]}`,
+          },
+          {
+            role: 'user',
+            content: JSON.stringify(
+              artifacts.map(a => ({
+                section: a.sectionKey,
+                content: a.content.substring(0, 2000),
+              }))
+            ),
+          },
+        ],
+      },
       { jsonMode: true, temperature: 0.3 }
     );
 
@@ -1297,28 +1333,42 @@ class SubmissionTwinService {
     readiness: any
   ): Promise<ChallengeResult[]> {
     const lensDescriptions: Record<string, string> = {
-      skeptical_reviewer: 'You are a skeptical FDA/EMA reviewer who questions every claim and looks for gaps.',
-      evidence_sufficiency_skeptic: 'You focus on whether evidence is sufficient. You look for thin support, missing studies, or over-reliance on indirect evidence.',
-      cmc_heavy_reviewer: 'You focus on CMC (Chemistry, Manufacturing, Controls) quality, stability, process validation, and manufacturing readiness.',
-      clinical_risk_reviewer: 'You focus on clinical risk: safety signals, adverse events, risk-benefit balance, and REMS considerations.',
-      compliance_inspection: 'You think like a GCP/GMP inspector. You look for documentation gaps, audit trail issues, and regulatory compliance gaps.',
-      claims_challenger: 'You systematically challenge each claim looking for overstatements, unsupported conclusions, and logical gaps.',
-      biostatistics_skeptic: 'You question statistical methodology: endpoints, power, sample size, multiplicity handling, missing data approaches, and whether statistical conclusions support clinical claims.',
+      skeptical_reviewer:
+        'You are a skeptical FDA/EMA reviewer who questions every claim and looks for gaps.',
+      evidence_sufficiency_skeptic:
+        'You focus on whether evidence is sufficient. You look for thin support, missing studies, or over-reliance on indirect evidence.',
+      cmc_heavy_reviewer:
+        'You focus on CMC (Chemistry, Manufacturing, Controls) quality, stability, process validation, and manufacturing readiness.',
+      clinical_risk_reviewer:
+        'You focus on clinical risk: safety signals, adverse events, risk-benefit balance, and REMS considerations.',
+      compliance_inspection:
+        'You think like a GCP/GMP inspector. You look for documentation gaps, audit trail issues, and regulatory compliance gaps.',
+      claims_challenger:
+        'You systematically challenge each claim looking for overstatements, unsupported conclusions, and logical gaps.',
+      biostatistics_skeptic:
+        'You question statistical methodology: endpoints, power, sample size, multiplicity handling, missing data approaches, and whether statistical conclusions support clinical claims.',
     };
 
-    const claimSummary = claims.slice(0, 20).map(c => `[${c.claimType}] ${c.claimText}`).join('\n');
-    const blockerSummary = blockers.slice(0, 10).map(b => `[${b.severity}] ${b.title}`).join('\n');
+    const claimSummary = claims
+      .slice(0, 20)
+      .map(c => `[${c.claimType}] ${c.claimText}`)
+      .join('\n');
+    const blockerSummary = blockers
+      .slice(0, 10)
+      .map(b => `[${b.severity}] ${b.title}`)
+      .join('\n');
 
-    const aiResult = await ai.chat({
-      model: 'gpt-4o',
-      messages: [
-        {
-          role: 'system',
-          content: `${lensDescriptions[lens] ?? 'You are a regulatory reviewer.'} Generate 3-7 specific, actionable reviewer challenges that this submission would likely face. For each, suggest a response strategy and recommend a governed artifact to create. Return JSON: {"challenges": [{"challengeText": "...", "targetSection": "...", "severity": "critical|high|medium|low|informational", "deficiencyLikelihood": 0.7, "suggestedResponse": "...", "suggestedArtifact": "Reviewer Concern Brief|Evidence Memo|Support Gap Memo|Statistical Justification Brief|CMC Fragility Memo|Protocol Rationale Brief|Comparator Summary"}]}`,
-        },
-        {
-          role: 'user',
-          content: `Submission package: ${pkg.title ?? 'Untitled'} (${pkg.packageFamily ?? 'unknown'})
+    const aiResult = await ai.chat(
+      {
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'system',
+            content: `${lensDescriptions[lens] ?? 'You are a regulatory reviewer.'} Generate 3-7 specific, actionable reviewer challenges that this submission would likely face. For each, suggest a response strategy and recommend a governed artifact to create. Return JSON: {"challenges": [{"challengeText": "...", "targetSection": "...", "severity": "critical|high|medium|low|informational", "deficiencyLikelihood": 0.7, "suggestedResponse": "...", "suggestedArtifact": "Reviewer Concern Brief|Evidence Memo|Support Gap Memo|Statistical Justification Brief|CMC Fragility Memo|Protocol Rationale Brief|Comparator Summary"}]}`,
+          },
+          {
+            role: 'user',
+            content: `Submission package: ${pkg.title ?? 'Untitled'} (${pkg.packageFamily ?? 'unknown'})
 Readiness: ${readiness?.readinessPercent ?? 'unknown'}%
 Open blockers: ${blockers.length}
 
@@ -1327,8 +1377,9 @@ ${claimSummary || 'No claims extracted yet.'}
 
 Open blockers:
 ${blockerSummary || 'None.'}`,
-        },
-      ],
+          },
+        ],
+      },
       { jsonMode: true, temperature: 0.4 }
     );
 
@@ -1342,29 +1393,37 @@ ${blockerSummary || 'None.'}`,
     affectedClaims: SubmissionTwinClaim[],
     affectedEvidence: SubmissionTwinEvidenceLink[],
     siblings: Array<{ artifactId: number; content: string; sectionKey?: string }>
-  ): Promise<Array<{
-    description: string;
-    severity: string;
-    remediation?: string;
-    impactedClaimId?: number;
-  }>> {
-    const aiResult = await ai.chat({
-      model: 'gpt-4o',
-      messages: [
-        {
-          role: 'system',
-          content: `You are a change impact analyst for regulatory submissions. Given a change to an artifact, identify all downstream impacts on other documents, claims, and evidence. Return JSON: {"impacts": [{"description": "...", "severity": "critical|high|medium|low|informational", "remediation": "...", "impactedClaimId": null}]}`,
-        },
-        {
-          role: 'user',
-          content: JSON.stringify({
-            change: { description: changeDescription, type: changeType },
-            affectedClaims: affectedClaims.slice(0, 10).map(c => ({ id: c.id, text: c.claimText })),
-            affectedEvidence: affectedEvidence.slice(0, 10).map(e => ({ id: e.id, strength: e.supportStrength })),
-            relatedSections: siblings.slice(0, 10).map(s => s.sectionKey),
-          }),
-        },
-      ],
+  ): Promise<
+    Array<{
+      description: string;
+      severity: string;
+      remediation?: string;
+      impactedClaimId?: number;
+    }>
+  > {
+    const aiResult = await ai.chat(
+      {
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'system',
+            content: `You are a change impact analyst for regulatory submissions. Given a change to an artifact, identify all downstream impacts on other documents, claims, and evidence. Return JSON: {"impacts": [{"description": "...", "severity": "critical|high|medium|low|informational", "remediation": "...", "impactedClaimId": null}]}`,
+          },
+          {
+            role: 'user',
+            content: JSON.stringify({
+              change: { description: changeDescription, type: changeType },
+              affectedClaims: affectedClaims
+                .slice(0, 10)
+                .map(c => ({ id: c.id, text: c.claimText })),
+              affectedEvidence: affectedEvidence
+                .slice(0, 10)
+                .map(e => ({ id: e.id, strength: e.supportStrength })),
+              relatedSections: siblings.slice(0, 10).map(s => s.sectionKey),
+            }),
+          },
+        ],
+      },
       { jsonMode: true, temperature: 0.3 }
     );
 
@@ -1385,27 +1444,29 @@ ${blockerSummary || 'None.'}`,
     challenges: SubmissionTwinChallenge[],
     readiness: any
   ): Promise<NextBestArtifactPrediction> {
-    const aiResult = await ai.chat({
-      model: 'gpt-4o',
-      messages: [
-        {
-          role: 'system',
-          content: `You are a regulatory strategist. Based on the submission state, predict the single highest-value governed artifact to create next. Options: Evidence Memo, Comparator Summary, Protocol Rationale Brief, Submission Risk Memo, Reviewer Concern Brief, Support Gap Memo, CMC Fragility Memo, Statistical Justification Brief, Endpoint Defense Note, Executive Readiness Snapshot, Harmonization Packet, Audit Readiness Packet. Return JSON: {"artifactType": "...", "rationale": "...", "priority": "critical|high|medium", "targetSection": "..."}`,
-        },
-        {
-          role: 'user',
-          content: JSON.stringify({
-            totalClaims: claims.length,
-            unsupportedClaims: unsupportedClaims.length,
-            driftAlerts: driftAlerts.length,
-            criticalDrifts: driftAlerts.filter(d => d.severity === 'critical').length,
-            openBlockers: blockers.length,
-            criticalBlockers: blockers.filter((b: any) => b.severity === 'critical').length,
-            topChallenges: challenges.slice(0, 5).map(c => c.challengeText),
-            readinessPercent: readiness?.readinessPercent ?? null,
-          }),
-        },
-      ],
+    const aiResult = await ai.chat(
+      {
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'system',
+            content: `You are a regulatory strategist. Based on the submission state, predict the single highest-value governed artifact to create next. Options: Evidence Memo, Comparator Summary, Protocol Rationale Brief, Submission Risk Memo, Reviewer Concern Brief, Support Gap Memo, CMC Fragility Memo, Statistical Justification Brief, Endpoint Defense Note, Executive Readiness Snapshot, Harmonization Packet, Audit Readiness Packet. Return JSON: {"artifactType": "...", "rationale": "...", "priority": "critical|high|medium", "targetSection": "..."}`,
+          },
+          {
+            role: 'user',
+            content: JSON.stringify({
+              totalClaims: claims.length,
+              unsupportedClaims: unsupportedClaims.length,
+              driftAlerts: driftAlerts.length,
+              criticalDrifts: driftAlerts.filter(d => d.severity === 'critical').length,
+              openBlockers: blockers.length,
+              criticalBlockers: blockers.filter((b: any) => b.severity === 'critical').length,
+              topChallenges: challenges.slice(0, 5).map(c => c.challengeText),
+              readinessPercent: readiness?.readinessPercent ?? null,
+            }),
+          },
+        ],
+      },
       { jsonMode: true, temperature: 0.3 }
     );
 
@@ -1420,7 +1481,13 @@ ${blockerSummary || 'None.'}`,
 
   private async aiGenerateExecutiveSummary(
     claimCount: number,
-    evidenceResult: { totalClaims: number; supportedClaims: number; weakClaims: number; unsupportedClaims: number; contradictedClaims: number },
+    evidenceResult: {
+      totalClaims: number;
+      supportedClaims: number;
+      weakClaims: number;
+      unsupportedClaims: number;
+      contradictedClaims: number;
+    },
     driftCount: number,
     challengeCount: number,
     readinessScore: number,
@@ -1429,16 +1496,18 @@ ${blockerSummary || 'None.'}`,
     nextBestArtifact: NextBestArtifactPrediction
   ): Promise<string> {
     try {
-      const aiResult = await ai.chat({
-        model: 'gpt-4o',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a regulatory strategist writing a concise (3-5 sentence) executive summary of a submission twin assessment. Be direct and actionable.',
-          },
-          {
-            role: 'user',
-            content: `Assessment results:
+      const aiResult = await ai.chat(
+        {
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You are a regulatory strategist writing a concise (3-5 sentence) executive summary of a submission twin assessment. Be direct and actionable.',
+            },
+            {
+              role: 'user',
+              content: `Assessment results:
 - ${claimCount} claims extracted, ${evidenceResult.supportedClaims} supported, ${evidenceResult.unsupportedClaims} unsupported, ${evidenceResult.contradictedClaims} contradicted
 - ${driftCount} narrative drift alerts
 - ${challengeCount} simulated reviewer challenges
@@ -1447,8 +1516,9 @@ ${blockerSummary || 'None.'}`,
 - Recommended next artifact: ${nextBestArtifact.artifactType}
 
 Write a concise executive summary.`,
-          },
-        ],
+            },
+          ],
+        },
         { temperature: 0.3, maxTokens: 300 }
       );
 

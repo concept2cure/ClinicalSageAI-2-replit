@@ -19,7 +19,6 @@ import { eq, and, ilike, sql } from 'drizzle-orm';
 export interface MedDRACodingResult {
   verbatimTerm: string;
   codingMethod: 'exact_match' | 'fuzzy_match' | 'ai_assisted';
-import { ai } from '../lib/unified-ai-client';
   confidence: number; // 0-1
   hierarchy: {
     socCode: string;
@@ -157,15 +156,11 @@ Return valid JSON array:
 // ---------------------------------------------------------------------------
 
 class MedDRACodingService {
-
   // -------------------------------------------------------------------------
   // 1. codeAdverseEvent
   // -------------------------------------------------------------------------
 
-  async codeAdverseEvent(
-    term: string,
-    organizationId: number
-  ): Promise<MedDRACodingResult> {
+  async codeAdverseEvent(term: string, organizationId: number): Promise<MedDRACodingResult> {
     const normalizedTerm = term.trim();
 
     if (!normalizedTerm) {
@@ -224,7 +219,7 @@ class MedDRACodingService {
     }
 
     // Map results back to original order
-    return events.map((ev) => {
+    return events.map(ev => {
       const key = ev.verbatimTerm.trim().toLowerCase();
       const result = uniqueResults.get(key);
       if (!result) {
@@ -290,7 +285,7 @@ class MedDRACodingService {
     }
 
     // Code all events
-    const inputs: AdverseEventInput[] = eventTerms.map((t) => ({ verbatimTerm: t }));
+    const inputs: AdverseEventInput[] = eventTerms.map(t => ({ verbatimTerm: t }));
     const codedEvents = await this.batchCodeEvents(inputs, organizationId);
 
     // Aggregate by SOC
@@ -328,7 +323,7 @@ class MedDRACodingService {
 
     // Build distribution sorted by count descending
     const distribution: SOCDistribution[] = Array.from(socMap.values())
-      .map((entry) => {
+      .map(entry => {
         // Sort PTs by count descending and take top 5
         const topPTs = Array.from(entry.ptCounts.entries())
           .map(([ptName, count]) => ({ ptName, count }))
@@ -352,11 +347,7 @@ class MedDRACodingService {
   // 5. validateCoding
   // -------------------------------------------------------------------------
 
-  async validateCoding(
-    ptCode: string,
-    socCode: string,
-    _organizationId: number
-  ): Promise<boolean> {
+  async validateCoding(ptCode: string, socCode: string, _organizationId: number): Promise<boolean> {
     if (!ptCode || !socCode) {
       return false;
     }
@@ -420,8 +411,8 @@ class MedDRACodingService {
       // Build alternative PTs from remaining rows (distinct PTs only)
       const alternativePTs = rows
         .slice(1)
-        .filter((r) => r.pt_code !== primaryRow.pt_code)
-        .map((r) => ({
+        .filter(r => r.pt_code !== primaryRow.pt_code)
+        .map(r => ({
           ptCode: r.pt_code,
           ptName: r.pt_name,
           confidence: 0.95,
@@ -469,7 +460,7 @@ class MedDRACodingService {
       const words = term
         .toLowerCase()
         .split(/\s+/)
-        .filter((w) => w.length > 2); // skip very short words like "of", "in"
+        .filter(w => w.length > 2); // skip very short words like "of", "in"
 
       if (words.length === 0) {
         return null;
@@ -477,7 +468,7 @@ class MedDRACodingService {
 
       // Build parameterized ILIKE conditions for each word
       // Uses Drizzle sql template literals for injection safety
-      const patterns = words.map((w) => {
+      const patterns = words.map(w => {
         const escaped = w.replace(/[%_]/g, '\\$&');
         return `%${escaped}%`;
       });
@@ -510,8 +501,8 @@ class MedDRACodingService {
 
       const alternativePTs = rows
         .slice(1)
-        .filter((r) => r.pt_code !== primaryRow.pt_code)
-        .map((r) => ({
+        .filter(r => r.pt_code !== primaryRow.pt_code)
+        .map(r => ({
           ptCode: r.pt_code,
           ptName: r.pt_name,
           confidence: 0.75,

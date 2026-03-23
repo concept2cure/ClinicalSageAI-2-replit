@@ -1,15 +1,15 @@
 /**
  * Compliance Guardrails SDK Service
- * 
+ *
  * Enterprise-grade service providing a pre-submission validation API
  * that enforces regulatory compliance rules programmatically.
- * 
+ *
  * Features:
  * - Rule-based validation engine
  * - Customizable guardrail profiles
  * - API for CI/CD integration
  * - Full audit trail for validation runs
- * 
+ *
  * Part 11 Compliance: All validations are logged with complete audit trail
  */
 
@@ -23,9 +23,15 @@ export interface GuardrailRule {
   ruleCode: string;
   ruleName: string;
   description: string;
-  category: 'content' | 'structure' | 'formatting' | 'reference' | 'regulatory' | 'data_integrity' | 'technical';
+  category:
+    | 'content'
+    | 'structure'
+    | 'formatting'
+    | 'reference'
+    | 'regulatory'
+    | 'data_integrity'
+    | 'technical';
   severity: 'error' | 'warning' | 'info';
-import { ai } from '../../lib/unified-ai-client';
   applicableTo?: string[];
   submissionTypes?: string[];
   modulePaths?: string[];
@@ -133,7 +139,11 @@ export interface APIAuditEntry {
 }
 
 // Validation function types
-type ValidationFunction = (content: any, rule: GuardrailRule, context: ValidationContext) => ValidationCheckResult;
+type ValidationFunction = (
+  content: any,
+  rule: GuardrailRule,
+  context: ValidationContext
+) => ValidationCheckResult;
 
 interface ValidationContext {
   submissionType?: string;
@@ -177,20 +187,29 @@ export class ComplianceGuardrailsSDKService {
   /**
    * Create a new guardrail rule
    */
-  async createRule(rule: Partial<GuardrailRule> & {
-    organizationId?: string;
-    name?: string;
-    ruleType?: string;
-    validationLogic?: string;
-    documentTypes?: string[];
-  }): Promise<GuardrailRule> {
+  async createRule(
+    rule: Partial<GuardrailRule> & {
+      organizationId?: string;
+      name?: string;
+      ruleType?: string;
+      validationLogic?: string;
+      documentTypes?: string[];
+    }
+  ): Promise<GuardrailRule> {
     const ruleName = rule.ruleName || rule.name || 'Guardrail Rule';
-    const ruleCode = rule.ruleCode || ruleName.toUpperCase().replace(/[^A-Z0-9]+/g, '_').slice(0, 40);
-    const validationLogic = typeof rule.validationLogic === 'string'
-      ? { type: 'custom_function', body: rule.validationLogic }
-      : rule.validationLogic || { type: 'custom_function', body: rule.validationLogic };
+    const ruleCode =
+      rule.ruleCode ||
+      ruleName
+        .toUpperCase()
+        .replace(/[^A-Z0-9]+/g, '_')
+        .slice(0, 40);
+    const validationLogic =
+      typeof rule.validationLogic === 'string'
+        ? { type: 'custom_function', body: rule.validationLogic }
+        : rule.validationLogic || { type: 'custom_function', body: rule.validationLogic };
 
-    const result = await this.pool.query(`
+    const result = await this.pool.query(
+      `
       INSERT INTO innovation.guardrail_rules (
         org_id, rule_code, rule_name, description, category, severity,
         applicable_to, submission_types, module_paths, regulatory_basis,
@@ -199,27 +218,29 @@ export class ComplianceGuardrailsSDKService {
         is_active, is_system_rule, version
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
       RETURNING *
-    `, [
-      rule.orgId || rule.organizationId,
-      ruleCode,
-      ruleName,
-      rule.description,
-      rule.category || rule.ruleType || 'content',
-      rule.severity || 'warning',
-      rule.applicableTo,
-      rule.submissionTypes,
-      rule.modulePaths,
-      rule.regulatoryBasis,
-      rule.guidanceReferences,
-      JSON.stringify(validationLogic),
-      rule.errorMessage || rule.description || 'Validation failed',
-      rule.remediationGuidance,
-      rule.autoFixAvailable || false,
-      rule.autoFixLogic ? JSON.stringify(rule.autoFixLogic) : null,
-      true,
-      false,
-      rule.version || '1.0'
-    ]);
+    `,
+      [
+        rule.orgId || rule.organizationId,
+        ruleCode,
+        ruleName,
+        rule.description,
+        rule.category || rule.ruleType || 'content',
+        rule.severity || 'warning',
+        rule.applicableTo,
+        rule.submissionTypes,
+        rule.modulePaths,
+        rule.regulatoryBasis,
+        rule.guidanceReferences,
+        JSON.stringify(validationLogic),
+        rule.errorMessage || rule.description || 'Validation failed',
+        rule.remediationGuidance,
+        rule.autoFixAvailable || false,
+        rule.autoFixLogic ? JSON.stringify(rule.autoFixLogic) : null,
+        true,
+        false,
+        rule.version || '1.0',
+      ]
+    );
 
     const row = result?.rows?.[0];
     if (!row) {
@@ -241,7 +262,7 @@ export class ComplianceGuardrailsSDKService {
         isSystemRule: false,
         version: rule.version || '1.0',
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       } as GuardrailRule;
       ComplianceGuardrailsSDKService.ruleCache.push(fallback);
       return fallback;
@@ -255,14 +276,16 @@ export class ComplianceGuardrailsSDKService {
   /**
    * Get rules with filters
    */
-  async getRules(options: {
-    orgId?: string;
-    category?: string;
-    severity?: string;
-    submissionType?: string;
-    modulePath?: string;
-    activeOnly?: boolean;
-  } = {}): Promise<GuardrailRule[]> {
+  async getRules(
+    options: {
+      orgId?: string;
+      category?: string;
+      severity?: string;
+      submissionType?: string;
+      modulePath?: string;
+      activeOnly?: boolean;
+    } = {}
+  ): Promise<GuardrailRule[]> {
     let query = `SELECT * FROM innovation.guardrail_rules WHERE 1=1`;
     const params: any[] = [];
 
@@ -292,7 +315,7 @@ export class ComplianceGuardrailsSDKService {
       query += ` AND is_active = TRUE`;
     }
 
-    query += ` ORDER BY 
+    query += ` ORDER BY
       CASE severity WHEN 'error' THEN 1 WHEN 'warning' THEN 2 ELSE 3 END,
       category, rule_code`;
 
@@ -336,8 +359,8 @@ export class ComplianceGuardrailsSDKService {
       const existing = ComplianceGuardrailsSDKService.ruleCache.find(r => r.id === ruleId);
       if (existing) {
         const updated = { ...existing, ...updates, updatedAt: new Date() } as GuardrailRule;
-        ComplianceGuardrailsSDKService.ruleCache = ComplianceGuardrailsSDKService.ruleCache.map(r =>
-          r.id === ruleId ? updated : r
+        ComplianceGuardrailsSDKService.ruleCache = ComplianceGuardrailsSDKService.ruleCache.map(
+          r => (r.id === ruleId ? updated : r)
         );
         return updated;
       }
@@ -350,9 +373,12 @@ export class ComplianceGuardrailsSDKService {
    * Get rule by ID
    */
   async getRule(ruleId: string): Promise<GuardrailRule | null> {
-    const result = await this.pool.query(`
+    const result = await this.pool.query(
+      `
       SELECT * FROM innovation.guardrail_rules WHERE id = $1
-    `, [ruleId]);
+    `,
+      [ruleId]
+    );
 
     return result.rows.length > 0 ? this.mapRule(result.rows[0]) : null;
   }
@@ -362,30 +388,40 @@ export class ComplianceGuardrailsSDKService {
   /**
    * Create a guardrail profile
    */
-  async createProfile(profile: Partial<GuardrailProfile> & { organizationId?: string; name?: string }): Promise<GuardrailProfile> {
+  async createProfile(
+    profile: Partial<GuardrailProfile> & { organizationId?: string; name?: string }
+  ): Promise<GuardrailProfile> {
     const profileName = profile.profileName || profile.name || 'Validation Profile';
-    const profileCode = profile.profileCode || profileName.toUpperCase().replace(/[^A-Z0-9]+/g, '_').slice(0, 40);
+    const profileCode =
+      profile.profileCode ||
+      profileName
+        .toUpperCase()
+        .replace(/[^A-Z0-9]+/g, '_')
+        .slice(0, 40);
 
-    const result = await this.pool.query(`
+    const result = await this.pool.query(
+      `
       INSERT INTO innovation.guardrail_profiles (
         org_id, profile_code, profile_name, description, submission_type,
         agency, rule_ids, severity_overrides, disabled_rules, custom_settings,
         is_default, is_active
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, TRUE)
       RETURNING *
-    `, [
-      profile.orgId || profile.organizationId,
-      profileCode,
-      profileName,
-      profile.description,
-      profile.submissionType,
-      profile.agency,
-      profile.ruleIds,
-      profile.severityOverrides ? JSON.stringify(profile.severityOverrides) : null,
-      profile.disabledRules,
-      profile.customSettings ? JSON.stringify(profile.customSettings) : null,
-      profile.isDefault || false
-    ]);
+    `,
+      [
+        profile.orgId || profile.organizationId,
+        profileCode,
+        profileName,
+        profile.description,
+        profile.submissionType,
+        profile.agency,
+        profile.ruleIds,
+        profile.severityOverrides ? JSON.stringify(profile.severityOverrides) : null,
+        profile.disabledRules,
+        profile.customSettings ? JSON.stringify(profile.customSettings) : null,
+        profile.isDefault || false,
+      ]
+    );
 
     const row = result?.rows?.[0];
     if (!row) {
@@ -401,7 +437,7 @@ export class ComplianceGuardrailsSDKService {
         isDefault: profile.isDefault || false,
         isActive: true,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       } as GuardrailProfile;
       ComplianceGuardrailsSDKService.profileCache.push(fallback);
       return fallback;
@@ -415,11 +451,15 @@ export class ComplianceGuardrailsSDKService {
   /**
    * Get profiles
    */
-  async getProfiles(options: {
-    orgId?: string;
-    submissionType?: string;
-    agency?: string;
-  } | string = {}): Promise<GuardrailProfile[]> {
+  async getProfiles(
+    options:
+      | {
+          orgId?: string;
+          submissionType?: string;
+          agency?: string;
+        }
+      | string = {}
+  ): Promise<GuardrailProfile[]> {
     const resolvedOptions = typeof options === 'string' ? { orgId: options } : options;
     let query = `SELECT * FROM innovation.guardrail_profiles WHERE is_active = TRUE`;
     const params: any[] = [];
@@ -482,15 +522,18 @@ export class ComplianceGuardrailsSDKService {
     // Get profile
     let profile: GuardrailProfile | null = null;
     if (options.profileId) {
-      const profileResult = await this.pool.query(`
+      const profileResult = await this.pool.query(
+        `
         SELECT * FROM innovation.guardrail_profiles WHERE id = $1
-      `, [options.profileId]);
+      `,
+        [options.profileId]
+      );
       if (profileResult.rows.length > 0) {
         profile = this.mapProfile(profileResult.rows[0]);
       }
     } else {
       profile = await this.getDefaultProfile({
-        submissionType: options.submissionType
+        submissionType: options.submissionType,
       });
     }
 
@@ -499,21 +542,24 @@ export class ComplianceGuardrailsSDKService {
     }
 
     // Create validation run
-    const runResult = await this.pool.query(`
+    const runResult = await this.pool.query(
+      `
       INSERT INTO innovation.guardrail_validation_runs (
         program_id, submission_id, document_id, profile_id, run_type,
         status, started_at, triggered_by, api_client_id
       ) VALUES ($1, $2, $3, $4, $5, 'running', NOW(), $6, $7)
       RETURNING *
-    `, [
-      options.programId,
-      options.submissionId,
-      options.documentId,
-      profile.id,
-      options.runType || 'manual',
-      options.triggeredBy || 'system',
-      options.apiClientId
-    ]);
+    `,
+      [
+        options.programId,
+        options.submissionId,
+        options.documentId,
+        profile.id,
+        options.runType || 'manual',
+        options.triggeredBy || 'system',
+        options.apiClientId,
+      ]
+    );
 
     const runId = runResult.rows[0].id;
     const findings: ValidationFinding[] = [];
@@ -522,7 +568,7 @@ export class ComplianceGuardrailsSDKService {
     const rules = await this.getRulesForProfile(profile);
     const context: ValidationContext = {
       submissionType: options.submissionType,
-      modulePath: options.modulePath
+      modulePath: options.modulePath,
     };
 
     let passCount = 0;
@@ -553,25 +599,28 @@ export class ComplianceGuardrailsSDKService {
         passCount++;
       } else {
         // Record finding
-        const findingResult = await this.pool.query(`
+        const findingResult = await this.pool.query(
+          `
           INSERT INTO innovation.guardrail_findings (
             run_id, rule_id, rule_code, severity, category, location,
             found_value, expected_value, message, remediation_guidance,
             auto_fix_applied
           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, FALSE)
           RETURNING *
-        `, [
-          runId,
-          rule.id,
-          rule.ruleCode,
-          effectiveSeverity,
-          rule.category,
-          result.location ? JSON.stringify(result.location) : null,
-          result.foundValue,
-          result.expectedValue,
-          rule.errorMessage,
-          rule.remediationGuidance
-        ]);
+        `,
+          [
+            runId,
+            rule.id,
+            rule.ruleCode,
+            effectiveSeverity,
+            rule.category,
+            result.location ? JSON.stringify(result.location) : null,
+            result.foundValue,
+            result.expectedValue,
+            rule.errorMessage,
+            rule.remediationGuidance,
+          ]
+        );
 
         const finding = this.mapFinding(findingResult.rows[0]);
         findings.push(finding);
@@ -603,7 +652,8 @@ export class ComplianceGuardrailsSDKService {
     const executionTimeMs = Date.now() - startTime;
 
     // Update run with results
-    await this.pool.query(`
+    await this.pool.query(
+      `
       UPDATE innovation.guardrail_validation_runs
       SET status = 'completed',
           completed_at = NOW(),
@@ -614,7 +664,9 @@ export class ComplianceGuardrailsSDKService {
           overall_result = $6,
           execution_time_ms = $7
       WHERE id = $1
-    `, [runId, rules.length, errorCount, warningCount, passCount, overallResult, executionTimeMs]);
+    `,
+      [runId, rules.length, errorCount, warningCount, passCount, overallResult, executionTimeMs]
+    );
 
     return {
       runId,
@@ -625,11 +677,11 @@ export class ComplianceGuardrailsSDKService {
         errors: errorCount,
         warnings: warningCount,
         infos: infoCount,
-        executionTimeMs
+        executionTimeMs,
       },
       findings,
       canProceed: errorCount === 0,
-      blockingFindings: findings.filter(f => f.severity === 'error')
+      blockingFindings: findings.filter(f => f.severity === 'error'),
     };
   }
 
@@ -649,7 +701,7 @@ export class ComplianceGuardrailsSDKService {
         profileId: options.profileId,
         documentId: options.documentId,
         runType: 'api',
-        triggeredBy: options.triggeredBy || 'system'
+        triggeredBy: options.triggeredBy || 'system',
       });
 
       const run: ValidationRun = {
@@ -664,14 +716,14 @@ export class ComplianceGuardrailsSDKService {
         warningCount: result.summary.warnings,
         passCount: result.summary.passed,
         overallResult: result.status as any,
-        triggeredBy: options.triggeredBy || 'system'
+        triggeredBy: options.triggeredBy || 'system',
       } as ValidationRun;
       this.validationRuns.push(run);
 
       return {
         id: result.runId,
         status: 'completed',
-        totalRules: result.summary.totalRules
+        totalRules: result.summary.totalRules,
       };
     } catch {
       const runId = crypto.randomUUID();
@@ -687,7 +739,7 @@ export class ComplianceGuardrailsSDKService {
         warningCount: 0,
         passCount: 0,
         overallResult: 'pass',
-        triggeredBy: options.triggeredBy || 'system'
+        triggeredBy: options.triggeredBy || 'system',
       } as ValidationRun;
       this.validationRuns.push(run);
 
@@ -700,20 +752,23 @@ export class ComplianceGuardrailsSDKService {
    */
   private async getRulesForProfile(profile: GuardrailProfile): Promise<GuardrailRule[]> {
     if (profile.ruleIds && profile.ruleIds.length > 0) {
-      const result = await this.pool.query(`
+      const result = await this.pool.query(
+        `
         SELECT * FROM innovation.guardrail_rules
         WHERE id = ANY($1) AND is_active = TRUE
-        ORDER BY 
+        ORDER BY
           CASE severity WHEN 'error' THEN 1 WHEN 'warning' THEN 2 ELSE 3 END,
           category
-      `, [profile.ruleIds]);
+      `,
+        [profile.ruleIds]
+      );
       return result.rows.map(this.mapRule);
     }
 
     // Default: get all applicable rules
     return this.getRules({
       orgId: profile.orgId || undefined,
-      submissionType: profile.submissionType || undefined
+      submissionType: profile.submissionType || undefined,
     });
   }
 
@@ -754,25 +809,25 @@ export class ComplianceGuardrailsSDKService {
     switch (logic.type) {
       case 'required_field':
         return this.validateRequiredField(content, logic);
-      
+
       case 'regex_pattern':
         return this.validateRegexPattern(content, logic);
-      
+
       case 'length_constraint':
         return this.validateLengthConstraint(content, logic);
-      
+
       case 'value_range':
         return this.validateValueRange(content, logic);
-      
+
       case 'enum_value':
         return this.validateEnumValue(content, logic);
-      
+
       case 'cross_reference':
         return this.validateCrossReference(content, logic, context);
-      
+
       case 'custom_function':
         return this.validateCustomFunction(content, logic);
-      
+
       default:
         // Unknown validation type - pass by default
         console.warn(`[GuardrailsSDK] Unknown validation type: ${logic.type}`);
@@ -790,7 +845,7 @@ export class ComplianceGuardrailsSDKService {
       return {
         passed: hasSection,
         expectedValue: `Section at ${sectionPath}`,
-        foundValue: hasSection ? 'Present' : 'Missing'
+        foundValue: hasSection ? 'Present' : 'Missing',
       };
     });
 
@@ -802,7 +857,7 @@ export class ComplianceGuardrailsSDKService {
       return {
         passed,
         expectedValue: 'YYYY-MM-DD format',
-        foundValue: value
+        foundValue: value,
       };
     });
   }
@@ -815,7 +870,7 @@ export class ComplianceGuardrailsSDKService {
       passed,
       expectedValue: 'Non-empty value',
       foundValue: value ? String(value).substring(0, 100) : '(empty)',
-      location: { path: fieldPath }
+      location: { path: fieldPath },
     };
   }
 
@@ -828,7 +883,7 @@ export class ComplianceGuardrailsSDKService {
       passed,
       expectedValue: `Pattern: ${logic.pattern}`,
       foundValue: value ? String(value).substring(0, 100) : '(empty)',
-      location: { path: fieldPath }
+      location: { path: fieldPath },
     };
   }
 
@@ -849,7 +904,7 @@ export class ComplianceGuardrailsSDKService {
       passed,
       expectedValue: `Length ${logic.minLength || 0}-${logic.maxLength || '∞'}`,
       foundValue: `Length: ${length}`,
-      location: { path: fieldPath }
+      location: { path: fieldPath },
     };
   }
 
@@ -868,7 +923,7 @@ export class ComplianceGuardrailsSDKService {
       passed,
       expectedValue: `Range: ${logic.min ?? '-∞'} to ${logic.max ?? '∞'}`,
       foundValue: String(value),
-      location: { path: fieldPath }
+      location: { path: fieldPath },
     };
   }
 
@@ -882,15 +937,19 @@ export class ComplianceGuardrailsSDKService {
       passed,
       expectedValue: `One of: ${allowedValues.join(', ')}`,
       foundValue: String(value),
-      location: { path: fieldPath }
+      location: { path: fieldPath },
     };
   }
 
-  private validateCrossReference(content: any, logic: any, context: ValidationContext): ValidationCheckResult {
+  private validateCrossReference(
+    content: any,
+    logic: any,
+    context: ValidationContext
+  ): ValidationCheckResult {
     const sourceField = logic.sourceField;
     const targetField = logic.targetField;
     const sourceValue = this.getNestedValue(content, sourceField);
-    
+
     // Check if referenced value exists in context
     let targetValue = null;
     if (context.allContent) {
@@ -908,7 +967,7 @@ export class ComplianceGuardrailsSDKService {
       passed,
       expectedValue: `Reference to existing ${targetField}`,
       foundValue: sourceValue ? `Reference: ${sourceValue}` : '(empty)',
-      location: { sourcePath: sourceField, targetPath: targetField }
+      location: { sourcePath: sourceField, targetPath: targetField },
     };
   }
 
@@ -939,23 +998,26 @@ export class ComplianceGuardrailsSDKService {
    * Log API call for audit
    */
   async logAPICall(entry: Partial<APIAuditEntry>): Promise<void> {
-    await this.pool.query(`
+    await this.pool.query(
+      `
       INSERT INTO innovation.guardrail_api_audit (
         api_key_id, client_id, endpoint, method, request_body,
         response_status, response_time, ip_address, user_agent, error_message
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-    `, [
-      entry.apiKeyId,
-      entry.clientId,
-      entry.endpoint,
-      entry.method,
-      entry.requestBody ? JSON.stringify(entry.requestBody) : null,
-      entry.responseStatus,
-      entry.responseTime,
-      entry.ipAddress,
-      entry.userAgent,
-      entry.errorMessage
-    ]);
+    `,
+      [
+        entry.apiKeyId,
+        entry.clientId,
+        entry.endpoint,
+        entry.method,
+        entry.requestBody ? JSON.stringify(entry.requestBody) : null,
+        entry.responseStatus,
+        entry.responseTime,
+        entry.ipAddress,
+        entry.userAgent,
+        entry.errorMessage,
+      ]
+    );
   }
 
   // ==================== FINDING MANAGEMENT ====================
@@ -968,7 +1030,8 @@ export class ComplianceGuardrailsSDKService {
     acknowledgedBy: string,
     reason: string
   ): Promise<ValidationFinding> {
-    const result = await this.pool.query(`
+    const result = await this.pool.query(
+      `
       UPDATE innovation.guardrail_findings
       SET acknowledged = TRUE,
           acknowledged_by = $2,
@@ -976,7 +1039,9 @@ export class ComplianceGuardrailsSDKService {
           acknowledge_reason = $3
       WHERE id = $1
       RETURNING *
-    `, [findingId, acknowledgedBy, reason]);
+    `,
+      [findingId, acknowledgedBy, reason]
+    );
 
     return this.mapFinding(result.rows[0]);
   }
@@ -985,13 +1050,16 @@ export class ComplianceGuardrailsSDKService {
    * Get findings for a run
    */
   async getRunFindings(runId: string): Promise<ValidationFinding[]> {
-    const result = await this.pool.query(`
+    const result = await this.pool.query(
+      `
       SELECT * FROM innovation.guardrail_findings
       WHERE run_id = $1
-      ORDER BY 
+      ORDER BY
         CASE severity WHEN 'error' THEN 1 WHEN 'warning' THEN 2 ELSE 3 END,
         category
-    `, [runId]);
+    `,
+      [runId]
+    );
 
     return result.rows.map(this.mapFinding);
   }
@@ -1035,7 +1103,10 @@ export class ComplianceGuardrailsSDKService {
   /**
    * Compatibility wrapper for validation runs
    */
-  async getValidationRuns(orgId: string, options: { limit?: number } = {}): Promise<ValidationRun[]> {
+  async getValidationRuns(
+    orgId: string,
+    options: { limit?: number } = {}
+  ): Promise<ValidationRun[]> {
     const programId = await this.resolveProgramId(orgId);
     const runs = await this.getValidationHistory({ programId, limit: options.limit });
     if (runs.length === 0 && this.validationRuns.length > 0) {
@@ -1087,7 +1158,7 @@ export class ComplianceGuardrailsSDKService {
       scopes: input.scopes,
       key,
       keyPrefix,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
 
     this.apiKeys.push(record);
@@ -1097,7 +1168,9 @@ export class ComplianceGuardrailsSDKService {
   /**
    * List API keys (in-memory)
    */
-  async getApiKeys(organizationId: string): Promise<Array<{ id: string; keyPrefix: string; name: string; scopes: string[] }>> {
+  async getApiKeys(
+    organizationId: string
+  ): Promise<Array<{ id: string; keyPrefix: string; name: string; scopes: string[] }>> {
     return this.apiKeys
       .filter(k => k.organizationId === organizationId)
       .map(k => ({ id: k.id, keyPrefix: k.keyPrefix, name: k.name, scopes: k.scopes }));
@@ -1108,11 +1181,13 @@ export class ComplianceGuardrailsSDKService {
   /**
    * Get validation statistics
    */
-  async getStatistics(options: {
-    programId?: string;
-    dateFrom?: Date;
-    dateTo?: Date;
-  } = {}): Promise<{
+  async getStatistics(
+    options: {
+      programId?: string;
+      dateFrom?: Date;
+      dateTo?: Date;
+    } = {}
+  ): Promise<{
     totalRuns: number;
     byResult: Record<string, number>;
     avgExecutionTime: number;
@@ -1136,15 +1211,18 @@ export class ComplianceGuardrailsSDKService {
     }
 
     // Basic stats
-    const statsResult = await this.pool.query(`
-      SELECT 
+    const statsResult = await this.pool.query(
+      `
+      SELECT
         COUNT(*) as total,
         overall_result,
         AVG(execution_time_ms) as avg_time
       FROM innovation.guardrail_validation_runs
       WHERE ${whereClause} AND status = 'completed'
       GROUP BY overall_result
-    `, params);
+    `,
+      params
+    );
 
     let totalRuns = 0;
     const byResult: Record<string, number> = {};
@@ -1157,7 +1235,8 @@ export class ComplianceGuardrailsSDKService {
     }
 
     // Top failing rules
-    const failingResult = await this.pool.query(`
+    const failingResult = await this.pool.query(
+      `
       SELECT gf.rule_code, COUNT(*) as count
       FROM innovation.guardrail_findings gf
       JOIN innovation.guardrail_validation_runs gvr ON gvr.id = gf.run_id
@@ -1166,16 +1245,19 @@ export class ComplianceGuardrailsSDKService {
       GROUP BY gf.rule_code
       ORDER BY count DESC
       LIMIT 10
-    `, params);
+    `,
+      params
+    );
 
     const topFailingRules = failingResult.rows.map(row => ({
       ruleCode: row.rule_code,
-      count: parseInt(row.count)
+      count: parseInt(row.count),
     }));
 
     // Trend data (last 30 days)
-    const trendResult = await this.pool.query(`
-      SELECT 
+    const trendResult = await this.pool.query(
+      `
+      SELECT
         DATE(started_at) as date,
         COUNT(*) FILTER (WHERE overall_result = 'pass') as pass,
         COUNT(*) FILTER (WHERE overall_result IN ('fail', 'pass_with_warnings')) as fail
@@ -1183,12 +1265,14 @@ export class ComplianceGuardrailsSDKService {
       WHERE ${whereClause} AND started_at > NOW() - INTERVAL '30 days'
       GROUP BY DATE(started_at)
       ORDER BY date
-    `, params);
+    `,
+      params
+    );
 
     const trendData = trendResult.rows.map(row => ({
       date: row.date.toISOString().split('T')[0],
       pass: parseInt(row.pass),
-      fail: parseInt(row.fail)
+      fail: parseInt(row.fail),
     }));
 
     return {
@@ -1196,7 +1280,7 @@ export class ComplianceGuardrailsSDKService {
       byResult,
       avgExecutionTime,
       topFailingRules,
-      trendData
+      trendData,
     };
   }
 
@@ -1247,7 +1331,7 @@ export class ComplianceGuardrailsSDKService {
       isSystemRule: row.is_system_rule,
       version: row.version,
       createdAt: row.created_at,
-      updatedAt: row.updated_at
+      updatedAt: row.updated_at,
     };
   }
 
@@ -1267,7 +1351,7 @@ export class ComplianceGuardrailsSDKService {
       isDefault: row.is_default,
       isActive: row.is_active,
       createdAt: row.created_at,
-      updatedAt: row.updated_at
+      updatedAt: row.updated_at,
     };
   }
 
@@ -1289,7 +1373,7 @@ export class ComplianceGuardrailsSDKService {
       overallResult: row.overall_result,
       executionTimeMs: row.execution_time_ms ? parseInt(row.execution_time_ms) : undefined,
       apiClientId: row.api_client_id,
-      triggeredBy: row.triggered_by
+      triggeredBy: row.triggered_by,
     };
   }
 
@@ -1311,7 +1395,7 @@ export class ComplianceGuardrailsSDKService {
       acknowledged: row.acknowledged,
       acknowledgedBy: row.acknowledged_by,
       acknowledgedAt: row.acknowledged_at,
-      acknowledgeReason: row.acknowledge_reason
+      acknowledgeReason: row.acknowledge_reason,
     };
   }
 }

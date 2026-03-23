@@ -302,8 +302,6 @@ export const ZenSignup: React.FC = () => {
       console.error('Signup error:', error);
       const message = error instanceof Error ? error.message : 'Signup failed. Please try again.';
       setErrors(prev => ({ ...prev, general: message }));
-      const message = error instanceof Error ? error.message : 'Something went wrong. Please try again.';
-      setErrors({ submit: message });
     } finally {
       setIsLoading(false);
     }
@@ -528,9 +526,27 @@ export const ZenSignup: React.FC = () => {
   // ─────────────────────────────────────────────────────────────────────────────
 
   const DTC_PLANS = [
-    { id: 'free', name: 'Researcher', price: 'Free', desc: '5 deep research queries/mo, 2 projects', badge: '' },
-    { id: 'standard', name: 'Startup Biotech', price: '$499/mo', desc: '50 research queries, CSR builder, eCTD authoring', badge: 'Popular' },
-    { id: 'professional', name: 'Growth', price: '$1,499/mo', desc: '200 queries, full CTD builder, all connectors', badge: '' },
+    {
+      id: 'free',
+      name: 'Researcher',
+      price: 'Free',
+      desc: '5 deep research queries/mo, 2 projects',
+      badge: '',
+    },
+    {
+      id: 'standard',
+      name: 'Startup Biotech',
+      price: '$499/mo',
+      desc: '50 research queries, CSR builder, eCTD authoring',
+      badge: 'Popular',
+    },
+    {
+      id: 'professional',
+      name: 'Growth',
+      price: '$1,499/mo',
+      desc: '200 queries, full CTD builder, all connectors',
+      badge: '',
+    },
   ];
 
   const renderPlanStep = () => (
@@ -557,9 +573,11 @@ export const ZenSignup: React.FC = () => {
             onClick={() => updateField('selectedPlan', plan.id)}
             className={`
               w-full p-4 rounded-xl border text-left transition-all relative
-              ${formData.selectedPlan === plan.id
-                ? 'border-blue-500 bg-blue-50/50 shadow-sm'
-                : 'border-zinc-200 hover:border-zinc-300'}
+              ${
+                formData.selectedPlan === plan.id
+                  ? 'border-blue-500 bg-blue-50/50 shadow-sm'
+                  : 'border-zinc-200 hover:border-zinc-300'
+              }
             `}
           >
             {plan.badge && (
@@ -574,7 +592,9 @@ export const ZenSignup: React.FC = () => {
               </div>
               <div className="text-right">
                 <div className="font-semibold text-zinc-900">{plan.price}</div>
-                {plan.id !== 'free' && <div className="text-xs text-green-600">14-day free trial</div>}
+                {plan.id !== 'free' && (
+                  <div className="text-xs text-green-600">14-day free trial</div>
+                )}
               </div>
             </div>
           </button>
@@ -636,7 +656,8 @@ export const ZenSignup: React.FC = () => {
       <div className="p-3 bg-zinc-50 rounded-xl border border-zinc-200">
         <h4 className="font-medium text-zinc-900 mb-1 text-sm">Legal Agreements</h4>
         <p className="text-xs text-zinc-500">
-          Please read and accept each agreement below. Scroll to the bottom of each document to enable acceptance.
+          Please read and accept each agreement below. Scroll to the bottom of each document to
+          enable acceptance.
         </p>
       </div>
 
@@ -646,13 +667,19 @@ export const ZenSignup: React.FC = () => {
         </div>
       )}
       {/* ── Terms of Service — Scroll to Accept ── */}
-      <div className={`rounded-xl border ${errors.acceptedTerms ? 'border-red-300 bg-red-50/30' : 'border-zinc-200'}`}>
+      <div
+        className={`rounded-xl border ${errors.acceptedTerms ? 'border-red-300 bg-red-50/30' : 'border-zinc-200'}`}
+      >
         <div className="px-4 py-2 border-b border-zinc-100 flex items-center justify-between">
           <span className="text-xs font-semibold text-zinc-700">Terms of Service</span>
           {scrolledTerms ? (
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">Read</span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">
+              Read
+            </span>
           ) : (
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">Scroll to read</span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">
+              Scroll to read
+            </span>
           )}
         </div>
         <div
@@ -660,16 +687,44 @@ export const ZenSignup: React.FC = () => {
           onScroll={e => handleLegalScroll(e, 'terms')}
         >
           <p className="font-semibold text-zinc-800 mb-2">Concept2Cure, Inc. — Terms of Service</p>
-          <p className="mb-2">By accessing or using the Concept2Cure platform, you agree to be bound by these Terms. If you are using the Platform on behalf of an organization, you represent that you have authority to bind that organization.</p>
-          <p className="mb-2">The Platform provides AI-powered regulatory intelligence including document authoring, compliance analysis, submission management, and related services. AI-generated content must be reviewed by qualified professionals before regulatory submission.</p>
-          <p className="mb-2">You retain ownership of all content you submit. You grant Concept2Cure a limited license to process your content solely to provide Platform services. Concept2Cure does not guarantee the accuracy or regulatory acceptability of AI-generated content.</p>
-          <p className="mb-2">Subscriptions require a 3-month minimum commitment. Fees are non-refundable except as required by law. Usage exceeding included AI token allocations will incur overage charges at published rates.</p>
-          <p className="mb-2">The Platform supports 21 CFR Part 11 compliance for electronic records and signatures, HIPAA protections for health data, and GDPR requirements for personal data. Audit logs are maintained for a minimum of 7 years.</p>
-          <p className="mb-2">Concept2Cure shall not be liable for indirect, incidental, special, or consequential damages arising from use of the Platform, including damages from regulatory submissions or compliance decisions.</p>
-          <p className="text-zinc-400 mt-4">Full terms available at concept2cure.com/concept2cure/legal/terms</p>
+          <p className="mb-2">
+            By accessing or using the Concept2Cure platform, you agree to be bound by these Terms.
+            If you are using the Platform on behalf of an organization, you represent that you have
+            authority to bind that organization.
+          </p>
+          <p className="mb-2">
+            The Platform provides AI-powered regulatory intelligence including document authoring,
+            compliance analysis, submission management, and related services. AI-generated content
+            must be reviewed by qualified professionals before regulatory submission.
+          </p>
+          <p className="mb-2">
+            You retain ownership of all content you submit. You grant Concept2Cure a limited license
+            to process your content solely to provide Platform services. Concept2Cure does not
+            guarantee the accuracy or regulatory acceptability of AI-generated content.
+          </p>
+          <p className="mb-2">
+            Subscriptions require a 3-month minimum commitment. Fees are non-refundable except as
+            required by law. Usage exceeding included AI token allocations will incur overage
+            charges at published rates.
+          </p>
+          <p className="mb-2">
+            The Platform supports 21 CFR Part 11 compliance for electronic records and signatures,
+            HIPAA protections for health data, and GDPR requirements for personal data. Audit logs
+            are maintained for a minimum of 7 years.
+          </p>
+          <p className="mb-2">
+            Concept2Cure shall not be liable for indirect, incidental, special, or consequential
+            damages arising from use of the Platform, including damages from regulatory submissions
+            or compliance decisions.
+          </p>
+          <p className="text-zinc-400 mt-4">
+            Full terms available at concept2cure.com/concept2cure/legal/terms
+          </p>
         </div>
         <div className="px-4 py-2 border-t border-zinc-100">
-          <label className={`flex items-center gap-2 cursor-pointer ${!scrolledTerms ? 'opacity-50 pointer-events-none' : ''}`}>
+          <label
+            className={`flex items-center gap-2 cursor-pointer ${!scrolledTerms ? 'opacity-50 pointer-events-none' : ''}`}
+          >
             <input
               type="checkbox"
               checked={formData.acceptedTerms}
@@ -683,31 +738,69 @@ export const ZenSignup: React.FC = () => {
       </div>
 
       {/* ── Privacy & Data Rights — Scroll to Accept ── */}
-      <div className={`rounded-xl border ${errors.acceptedPrivacy ? 'border-red-300 bg-red-50/30' : 'border-zinc-200'}`}>
+      <div
+        className={`rounded-xl border ${errors.acceptedPrivacy ? 'border-red-300 bg-red-50/30' : 'border-zinc-200'}`}
+      >
         <div className="px-4 py-2 border-b border-zinc-100 flex items-center justify-between">
           <span className="text-xs font-semibold text-zinc-700">Privacy Policy & Data Rights</span>
           {scrolledPrivacy ? (
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">Read</span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">
+              Read
+            </span>
           ) : (
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">Scroll to read</span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">
+              Scroll to read
+            </span>
           )}
         </div>
         <div
           className="h-40 overflow-y-auto px-4 py-3 text-[11px] text-zinc-600 leading-relaxed"
           onScroll={e => handleLegalScroll(e, 'privacy')}
         >
-          <p className="font-semibold text-zinc-800 mb-2">Concept2Cure, Inc. — Privacy Policy & Data Rights</p>
-          <p className="mb-2">We collect account information (name, email, role), platform usage data, regulatory content you create, and technical data (IP, browser). We use this data to provide services, maintain security, and comply with regulatory requirements.</p>
-          <p className="mb-2"><strong>AI Data Usage:</strong> Your content is processed by AI to provide Platform services. By default, your content is NOT used for AI model improvement. You may opt in to allow anonymized, de-identified patterns from your usage to improve our AI models.</p>
-          <p className="mb-2"><strong>When AI Learning is enabled (opt-in):</strong> Content may be used in aggregated, de-identified form. No data is ever attributed to or traceable to your organization. No specific documents are cited or reproduced. Learning is limited to general regulatory patterns.</p>
-          <p className="mb-2"><strong>When AI Learning is disabled (default):</strong> Content is used exclusively for your Platform services. No content is retained for model improvement.</p>
-          <p className="mb-2">We never sell your data. We share data only with service providers (under DPAs), your organization admins, and regulatory authorities when required by law. Data is encrypted at rest (AES-256) and in transit (TLS 1.3).</p>
-          <p className="mb-2">Third-party AI processing uses Anthropic's Claude API under terms that prevent Anthropic from using your content for their model training.</p>
-          <p className="mb-2">You have the right to access, rectify, delete, port, and restrict processing of your data. Audit logs are retained for 7 years per 21 CFR Part 11.</p>
-          <p className="text-zinc-400 mt-4">Full policy at concept2cure.com/concept2cure/legal/privacy</p>
+          <p className="font-semibold text-zinc-800 mb-2">
+            Concept2Cure, Inc. — Privacy Policy & Data Rights
+          </p>
+          <p className="mb-2">
+            We collect account information (name, email, role), platform usage data, regulatory
+            content you create, and technical data (IP, browser). We use this data to provide
+            services, maintain security, and comply with regulatory requirements.
+          </p>
+          <p className="mb-2">
+            <strong>AI Data Usage:</strong> Your content is processed by AI to provide Platform
+            services. By default, your content is NOT used for AI model improvement. You may opt in
+            to allow anonymized, de-identified patterns from your usage to improve our AI models.
+          </p>
+          <p className="mb-2">
+            <strong>When AI Learning is enabled (opt-in):</strong> Content may be used in
+            aggregated, de-identified form. No data is ever attributed to or traceable to your
+            organization. No specific documents are cited or reproduced. Learning is limited to
+            general regulatory patterns.
+          </p>
+          <p className="mb-2">
+            <strong>When AI Learning is disabled (default):</strong> Content is used exclusively for
+            your Platform services. No content is retained for model improvement.
+          </p>
+          <p className="mb-2">
+            We never sell your data. We share data only with service providers (under DPAs), your
+            organization admins, and regulatory authorities when required by law. Data is encrypted
+            at rest (AES-256) and in transit (TLS 1.3).
+          </p>
+          <p className="mb-2">
+            Third-party AI processing uses Anthropic's Claude API under terms that prevent Anthropic
+            from using your content for their model training.
+          </p>
+          <p className="mb-2">
+            You have the right to access, rectify, delete, port, and restrict processing of your
+            data. Audit logs are retained for 7 years per 21 CFR Part 11.
+          </p>
+          <p className="text-zinc-400 mt-4">
+            Full policy at concept2cure.com/concept2cure/legal/privacy
+          </p>
         </div>
         <div className="px-4 py-2 border-t border-zinc-100 space-y-2">
-          <label className={`flex items-center gap-2 cursor-pointer ${!scrolledPrivacy ? 'opacity-50 pointer-events-none' : ''}`}>
+          <label
+            className={`flex items-center gap-2 cursor-pointer ${!scrolledPrivacy ? 'opacity-50 pointer-events-none' : ''}`}
+          >
             <input
               type="checkbox"
               checked={formData.acceptedPrivacy}
@@ -715,19 +808,25 @@ export const ZenSignup: React.FC = () => {
               disabled={!scrolledPrivacy}
               className="w-4 h-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
             />
-            <span className="text-xs text-zinc-700">I accept the Privacy Policy and consent to data processing</span>
+            <span className="text-xs text-zinc-700">
+              I accept the Privacy Policy and consent to data processing
+            </span>
           </label>
           {/* AI Learning opt-in toggle */}
           <div className="flex items-center justify-between p-2 bg-zinc-50 rounded-lg">
             <div>
               <p className="text-xs font-medium text-zinc-700">AI Model Improvement</p>
-              <p className="text-[10px] text-zinc-500">Allow anonymized data to improve AI (you can change this anytime in Settings)</p>
+              <p className="text-[10px] text-zinc-500">
+                Allow anonymized data to improve AI (you can change this anytime in Settings)
+              </p>
             </div>
             <button
               onClick={() => setAiLearningOptIn(!aiLearningOptIn)}
               className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${aiLearningOptIn ? 'bg-blue-600' : 'bg-zinc-300'}`}
             >
-              <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${aiLearningOptIn ? 'translate-x-5' : ''}`} />
+              <span
+                className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${aiLearningOptIn ? 'translate-x-5' : ''}`}
+              />
             </button>
           </div>
         </div>
@@ -744,20 +843,28 @@ export const ZenSignup: React.FC = () => {
           className="w-4 h-4 mt-0.5 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
         />
         <span className="text-xs text-zinc-700">
-          I acknowledge that my use will comply with applicable regulatory requirements (FDA 21 CFR Part 11,
-          HIPAA, GDPR, ICH GCP) and my organization's policies. I understand AI-generated content requires
-          qualified human review before regulatory submission.
+          I acknowledge that my use will comply with applicable regulatory requirements (FDA 21 CFR
+          Part 11, HIPAA, GDPR, ICH GCP) and my organization's policies. I understand AI-generated
+          content requires qualified human review before regulatory submission.
         </span>
       </label>
 
       {errors.submit && (
-        <div role="alert" className="mt-2 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
+        <div
+          role="alert"
+          className="mt-2 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700"
+        >
           {errors.submit}
         </div>
       )}
       <button
         onClick={handleSubmit}
-        disabled={isLoading || !formData.acceptedTerms || !formData.acceptedPrivacy || !formData.acceptedCompliance}
+        disabled={
+          isLoading ||
+          !formData.acceptedTerms ||
+          !formData.acceptedPrivacy ||
+          !formData.acceptedCompliance
+        }
         className={`
           w-full py-3 px-4 mt-2
           flex items-center justify-center gap-2
@@ -769,7 +876,13 @@ export const ZenSignup: React.FC = () => {
           focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 outline-none
         `}
       >
-        {isLoading ? <SpinnerIcon /> : formData.selectedPlan === 'free' ? 'Create Account' : 'Create Account & Start Trial'}
+        {isLoading ? (
+          <SpinnerIcon />
+        ) : formData.selectedPlan === 'free' ? (
+          'Create Account'
+        ) : (
+          'Create Account & Start Trial'
+        )}
         {isLoading ? <SpinnerIcon /> : 'Create Account'}
       </button>
 
@@ -813,8 +926,8 @@ export const ZenSignup: React.FC = () => {
 
       <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
         <p className="text-sm text-blue-800">
-          <strong>You're all set.</strong> Start with Deep Research to populate your workspace,
-          or jump straight into document authoring.
+          <strong>You're all set.</strong> Start with Deep Research to populate your workspace, or
+          jump straight into document authoring.
         </p>
       </div>
 

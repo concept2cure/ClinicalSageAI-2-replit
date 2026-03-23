@@ -221,12 +221,13 @@ export class StatisticalContinuumService {
     };
 
     try {
-      const aiResponse = await ai.chat({
-        model: 'gpt-4o',
-        messages: [
-          {
-            role: 'system',
-            content: `You are a senior biostatistician creating ADaM dataset specifications for a clinical trial.
+      const aiResponse = await ai.chat(
+        {
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'system',
+              content: `You are a senior biostatistician creating ADaM dataset specifications for a clinical trial.
 Generate specifications for ADSL (Subject Level), ADAE (Adverse Events), and ADTTE (Time to Event) datasets.
 For each dataset, provide:
 1. datasetName (e.g., "ADSL")
@@ -237,10 +238,10 @@ For each dataset, provide:
 6. population: analysis population
 
 Return a JSON object with key "datasets" containing an array of 3 dataset specs.`,
-          },
-          {
-            role: 'user',
-            content: `Generate ADaM dataset specifications for this trial:
+            },
+            {
+              role: 'user',
+              content: `Generate ADaM dataset specifications for this trial:
 Indication: ${protocol?.indication || 'Not specified'}
 Phase: ${protocol?.phase || 'Not specified'}
 Primary Endpoint: ${protocol?.primaryEndpoint || 'Not specified'}
@@ -250,14 +251,18 @@ Duration: ${protocol?.durationWeeks || 24} weeks
 
 SAP Summary:
 ${sapContent.substring(0, 3000)}`,
-          },
-        ],
+            },
+          ],
+        },
         { jsonMode: true, temperature: 0.2 }
       );
 
       datasetsPayload = JSON.parse(aiContent || '{"datasets":[]}');
     } catch (aiError) {
-      console.error('[StatisticalContinuum] AI analysis spec generation failed, using fallback:', aiError);
+      console.error(
+        '[StatisticalContinuum] AI analysis spec generation failed, using fallback:',
+        aiError
+      );
       datasetsPayload = { datasets: [] };
     }
 
@@ -304,10 +309,7 @@ ${sapContent.substring(0, 3000)}`,
   /**
    * Generates Table/Listing/Figure shells based on analysis specs and SAP.
    */
-  async generateTLFShells(
-    threadId: number,
-    organizationId: number
-  ): Promise<TLFShellGenResult> {
+  async generateTLFShells(threadId: number, organizationId: number): Promise<TLFShellGenResult> {
     // Retrieve thread
     const [thread] = await db
       .select()
@@ -329,12 +331,13 @@ ${sapContent.substring(0, 3000)}`,
     const analysisSpecSnapshot = thread.analysisSpecSnapshot as { specifications?: any[] } | null;
 
     // Use AI to generate TLF shells
-    const aiResponse = await ai.chat({
-      model: 'gpt-4o',
-      messages: [
-        {
-          role: 'system',
-          content: `You are a senior biostatistician generating TLF (Table, Listing, Figure) shells for a clinical trial CSR.
+    const aiResponse = await ai.chat(
+      {
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'system',
+            content: `You are a senior biostatistician generating TLF (Table, Listing, Figure) shells for a clinical trial CSR.
 Generate a comprehensive set of TLF shells including:
 - Demographics table
 - Disposition table
@@ -356,10 +359,10 @@ For each TLF, provide:
 8. programmingSpec: brief programming specification
 
 Return JSON with key "tlfs" containing an array of TLF shell objects.`,
-        },
-        {
-          role: 'user',
-          content: `Generate TLF shells for this trial:
+          },
+          {
+            role: 'user',
+            content: `Generate TLF shells for this trial:
 Indication: ${protocol?.indication || 'Not specified'}
 Phase: ${protocol?.phase || 'Not specified'}
 Primary Endpoint: ${protocol?.primaryEndpoint || 'Not specified'}
@@ -369,8 +372,9 @@ Sample Size: ${protocol?.sampleSize || 'Not specified'}
 Analysis Specifications: ${JSON.stringify(analysisSpecSnapshot?.specifications || [], null, 2).substring(0, 2000)}
 
 SAP Summary: ${(sapSnapshot?.content || '').substring(0, 2000)}`,
-        },
-      ],
+          },
+        ],
+      },
       { jsonMode: true, temperature: 0.2 }
     );
 
@@ -479,10 +483,7 @@ SAP Summary: ${(sapSnapshot?.content || '').substring(0, 2000)}`,
   /**
    * Generates statistical sections for CSR based on results + SAP.
    */
-  async generateCSRSections(
-    threadId: number,
-    organizationId: number
-  ): Promise<CSRSectionResult> {
+  async generateCSRSections(threadId: number, organizationId: number): Promise<CSRSectionResult> {
     // Retrieve thread with all snapshots
     const [thread] = await db
       .select()
@@ -508,12 +509,13 @@ SAP Summary: ${(sapSnapshot?.content || '').substring(0, 2000)}`,
     }
 
     // Use AI to generate CSR statistical sections
-    const aiResponse = await ai.chat({
-      model: 'gpt-4o',
-      messages: [
-        {
-          role: 'system',
-          content: `You are a senior biostatistician writing the statistical sections of an ICH E3 compliant Clinical Study Report.
+    const aiResponse = await ai.chat(
+      {
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'system',
+            content: `You are a senior biostatistician writing the statistical sections of an ICH E3 compliant Clinical Study Report.
 Generate the following sections:
 1. "11.1_statistical_methods" - Description of statistical methods used
 2. "11.2_analysis_populations" - Definition of analysis populations
@@ -525,15 +527,16 @@ Generate the following sections:
 
 Use ICH E3 guideline structure. Include actual numbers from the results data.
 Return JSON with key "sections" as an object mapping section IDs to content strings.`,
-        },
-        {
-          role: 'user',
-          content: `Generate CSR statistical sections for:
+          },
+          {
+            role: 'user',
+            content: `Generate CSR statistical sections for:
 Protocol: ${JSON.stringify(protocol || {}, null, 2).substring(0, 1500)}
 SAP: ${(sapSnapshot?.content || '').substring(0, 2000)}
 Results: ${JSON.stringify(resultsSnapshot, null, 2).substring(0, 2000)}`,
-        },
-      ],
+          },
+        ],
+      },
       { jsonMode: true, temperature: 0.2 }
     );
 
@@ -569,10 +572,7 @@ Results: ${JSON.stringify(resultsSnapshot, null, 2).substring(0, 2000)}`,
   /**
    * Retrieve a full thread with all snapshots, analysis specs, and TLF shells.
    */
-  async getThread(
-    threadId: number,
-    organizationId: number
-  ): Promise<ThreadWithSnapshots> {
+  async getThread(threadId: number, organizationId: number): Promise<ThreadWithSnapshots> {
     const [thread] = await db
       .select()
       .from(statisticalThreads)
@@ -604,12 +604,7 @@ Results: ${JSON.stringify(resultsSnapshot, null, 2).substring(0, 2000)}`,
     const shells = await db
       .select()
       .from(tlfShells)
-      .where(
-        and(
-          eq(tlfShells.threadId, threadId),
-          eq(tlfShells.organizationId, organizationId)
-        )
-      )
+      .where(and(eq(tlfShells.threadId, threadId), eq(tlfShells.organizationId, organizationId)))
       .orderBy(desc(tlfShells.createdAt));
 
     return {

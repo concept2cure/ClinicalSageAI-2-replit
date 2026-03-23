@@ -47,17 +47,29 @@ const enterpriseAuthLimiter = rateLimit({
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { success: false, error: { code: 'RATE_LIMIT', message: 'Too many authentication attempts. Please try again later.' } },
-  keyGenerator: (req) => req.ip || req.headers['x-forwarded-for'] as string || 'unknown',
+  message: {
+    success: false,
+    error: {
+      code: 'RATE_LIMIT',
+      message: 'Too many authentication attempts. Please try again later.',
+    },
+  },
+  keyGenerator: req => req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown',
 });
 
 /** Helper: extract and verify JWT from Authorization header */
-function extractJwtUser(req: Request): { userId: string; email: string; organizationId?: string } | null {
+function extractJwtUser(
+  req: Request
+): { userId: string; email: string; organizationId?: string } | null {
   const authHeader = req.headers.authorization;
   const token = authHeader?.replace('Bearer ', '');
   if (!token) return null;
   try {
-    return jwt.verify(token, config.jwt.secret) as { userId: string; email: string; organizationId?: string };
+    return jwt.verify(token, config.jwt.secret) as {
+      userId: string;
+      email: string;
+      organizationId?: string;
+    };
   } catch {
     return null;
   }
@@ -127,7 +139,6 @@ router.post('/check-email', enterpriseAuthLimiter, async (req: Request, res: Res
 
     // SECURITY: Always return the same shape regardless of user existence
     // to prevent user enumeration attacks
-    const user = userResult.length ? userResult[0] : null;
     if (!userResult.length) {
       // SECURITY: Return same shape whether user exists or not to prevent enumeration
       return res.json({
@@ -141,10 +152,6 @@ router.post('/check-email', enterpriseAuthLimiter, async (req: Request, res: Res
 
     // SECURITY: Do not expose 'exists' flag — prevents email enumeration
     res.json({
-      exists: true, // Always true — actual validation happens at password step
-      authFlow: 'password',
-      mfaRequired: true, // All users have email-based 2FA
-      passwordSet: true, // Always true — prevents account probing
       authFlow: 'password',
       mfaRequired: user.mfaEnabled === true,
       email: normalizedEmail,
@@ -243,8 +250,6 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
         organizationId: user.defaultOrganizationId.toString(),
         role: 'pending_mfa',
         mfaPending: true,
-        organizationId: user.defaultOrganizationId.toString(),
-        role: (user.role || user.tier || 'user'),
       },
       config.jwt.secret,
       { expiresIn: '5m' }
@@ -278,7 +283,7 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
         firstName: user.name?.split(' ')[0] || 'User',
         lastName: user.name?.split(' ').slice(1).join(' ') || '',
         displayName: user.name || user.email,
-        role: (user.role || user.tier || 'user'),
+        role: user.role || user.tier || 'user',
         organizationId: user.defaultOrganizationId.toString(),
         organizationName: 'Concept2Cure',
       },
@@ -356,7 +361,11 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
       mfaOrgId ? lookupOrgRole(userId, mfaOrgId) : Promise.resolve('user'),
       db.select().from(users).where(eq(users.id, userId)).limit(1),
       mfaOrgId
-        ? db.select({ name: organizations.name }).from(organizations).where(eq(organizations.id, mfaOrgId)).limit(1)
+        ? db
+            .select({ name: organizations.name })
+            .from(organizations)
+            .where(eq(organizations.id, mfaOrgId))
+            .limit(1)
         : Promise.resolve([]),
     ]);
     const user = mfaUserData;
@@ -368,7 +377,6 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
         email: decoded.email,
         organizationId: decoded.organizationId,
         role: mfaActualRole,
-        role: (user.role || user.tier || 'user'),
       },
       config.jwt.secret,
       { expiresIn: '24h' }
@@ -385,7 +393,6 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
         lastName: user?.name?.split(' ').slice(1).join(' ') || '',
         displayName: user?.name || decoded.email,
         role: mfaActualRole,
-        role: (user.role || user.tier || 'user'),
         organizationId: decoded.organizationId,
         organizationName: mfaVerifyOrgName,
       },
@@ -409,21 +416,6 @@ router.post('/mfa/setup', async (req: Request, res: Response) => {
     const decoded = extractJwtUser(req);
     if (!decoded) {
       return res.status(401).json({ error: 'Authentication required' });
- * Generate MFA secret and QR code for initial setup
- * SECURITY: Requires valid JWT — userId derived from token, not body
- */
-router.post('/mfa/setup', async (req: Request, res: Response) => {
-  try {
-    // SECURITY: Derive userId and email from authenticated JWT, not from request body
-    const authUser = (req as any).user;
-    if (!authUser?.id && !authUser?.userId) {
-      return res.status(401).json({ error: 'Authentication required for MFA setup' });
-    }
-    const userId = authUser.id || authUser.userId;
-    const email = authUser.email || req.body.email;
-
-    if (!userId || !email) {
-      return res.status(400).json({ error: 'Authentication context incomplete' });
     }
 
     const result = await generateMFASecret(parseInt(decoded.userId), decoded.email);
@@ -450,16 +442,6 @@ router.post('/mfa/enable', async (req: Request, res: Response) => {
     const decoded = extractJwtUser(req);
     if (!decoded) {
       return res.status(401).json({ error: 'Authentication required' });
-    // SECURITY: Derive userId from authenticated JWT
-    const authUser = (req as any).user;
-    if (!authUser?.id && !authUser?.userId) {
-      return res.status(401).json({ error: 'Authentication required' });
-    }
-    const userId = authUser.id || authUser.userId;
-    const { code } = req.body;
-
-    if (!code) {
-      return res.status(400).json({ error: 'Verification code is required' });
     }
 
     const { code } = req.body;
@@ -498,16 +480,6 @@ router.post('/mfa/disable', async (req: Request, res: Response) => {
     const { password } = req.body;
     if (!password) {
       return res.status(400).json({ error: 'Password is required to disable MFA' });
-    // SECURITY: Derive userId from authenticated JWT
-    const authUser = (req as any).user;
-    if (!authUser?.id && !authUser?.userId) {
-      return res.status(401).json({ error: 'Authentication required' });
-    }
-    const userId = authUser.id || authUser.userId;
-    const { password } = req.body;
-
-    if (!password) {
-      return res.status(400).json({ error: 'userId and password are required' });
     }
 
     // Re-authenticate before disabling MFA
@@ -553,7 +525,7 @@ router.post('/electronic-signature', authMiddleware, async (req: Request, res: R
       signatureMeaning: req.body.signatureMeaning,
       password: req.body.password,
       mfaCode: req.body.mfaCode,
-      ipAddress: req.ip || req.headers['x-forwarded-for'] as string,
+      ipAddress: req.ip || (req.headers['x-forwarded-for'] as string),
       deviceInfo: {
         userAgent: req.headers['user-agent'],
         timestamp: new Date().toISOString(),
@@ -579,15 +551,19 @@ router.post('/electronic-signature', authMiddleware, async (req: Request, res: R
  * GET /electronic-signature/:id/verify
  * Verify the integrity of an electronic signature
  */
-router.get('/electronic-signature/:id/verify', authMiddleware, async (req: Request, res: Response) => {
-  try {
-    const result = await verifySignatureIntegrity(parseInt(req.params.id));
-    res.json(result);
-  } catch (error) {
-    console.error('[Enterprise Auth] signature verification error:', error);
-    res.status(500).json({ error: 'Failed to verify signature' });
+router.get(
+  '/electronic-signature/:id/verify',
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    try {
+      const result = await verifySignatureIntegrity(parseInt(req.params.id));
+      res.json(result);
+    } catch (error) {
+      console.error('[Enterprise Auth] signature verification error:', error);
+      res.status(500).json({ error: 'Failed to verify signature' });
+    }
   }
-});
+);
 
 /**
  * POST /select-organization
@@ -642,7 +618,7 @@ router.post('/select-organization', async (req: Request, res: Response) => {
     if (!membership.length) {
       console.warn(
         `[SECURITY] select-organization: user ${userId} attempted to switch to ` +
-        `org ${organizationId} without membership`
+          `org ${organizationId} without membership`
       );
       return res.status(403).json({
         error: 'ORG_ACCESS_DENIED',
@@ -664,7 +640,6 @@ router.post('/select-organization', async (req: Request, res: Response) => {
     // Issue new JWT scoped to the selected organization with actual role
     const token = jwt.sign(
       { userId, email, organizationId: String(organizationId), role: selectOrgRole },
-      { userId, email, organizationId: String(organizationId), role: decoded?.role || 'user' },
       config.jwt.secret,
       { expiresIn: '24h' }
     );

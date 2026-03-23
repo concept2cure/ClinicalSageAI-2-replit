@@ -128,29 +128,37 @@ const PLATFORM_CAPABILITIES = [
       {
         icon: Brain,
         name: 'AnA RI Copilot',
-        description: 'Your AI regulatory intelligence co-author. Drafts documents, identifies compliance gaps, and guides every step of your submission — from IND to NDA to 510(k).',
-        depth: 'Deep integration with FDA guidance, ICH guidelines, and 50,000+ regulatory precedents.',
+        description:
+          'Your AI regulatory intelligence co-author. Drafts documents, identifies compliance gaps, and guides every step of your submission — from IND to NDA to 510(k).',
+        depth:
+          'Deep integration with FDA guidance, ICH guidelines, and 50,000+ regulatory precedents.',
         color: 'violet',
       },
       {
         icon: PenLine,
         name: 'eCTD Co-Author',
-        description: 'Real-time collaborative document authoring for eCTD 4.0 compliant submissions. Multi-user editing with version control and section-by-section navigation.',
-        depth: 'Understands eCTD Module 1–5 structure, auto-validates cross-references, and enforces CTD formatting rules.',
+        description:
+          'Real-time collaborative document authoring for eCTD 4.0 compliant submissions. Multi-user editing with version control and section-by-section navigation.',
+        depth:
+          'Understands eCTD Module 1–5 structure, auto-validates cross-references, and enforces CTD formatting rules.',
         color: 'blue',
       },
       {
         icon: Beaker,
         name: 'CMC Platform',
-        description: 'Chemistry, Manufacturing, and Controls documentation across the full product lifecycle. 102 API endpoints covering every CMC domain.',
-        depth: 'Pre-loaded with ICH Q1–Q14 guidance, FDA CMC review expectations, and manufacturing specification templates.',
+        description:
+          'Chemistry, Manufacturing, and Controls documentation across the full product lifecycle. 102 API endpoints covering every CMC domain.',
+        depth:
+          'Pre-loaded with ICH Q1–Q14 guidance, FDA CMC review expectations, and manufacturing specification templates.',
         color: 'emerald',
       },
       {
         icon: FlaskConical,
         name: 'Clinical Trial Hub',
-        description: 'Clinical trial protocol design, enrollment management, and evidence integration with ClinicalTrials.gov real-time data.',
-        depth: 'AI-powered protocol optimization using 200,000+ historical trial designs and outcome data.',
+        description:
+          'Clinical trial protocol design, enrollment management, and evidence integration with ClinicalTrials.gov real-time data.',
+        depth:
+          'AI-powered protocol optimization using 200,000+ historical trial designs and outcome data.',
         color: 'teal',
       },
     ],
@@ -161,22 +169,28 @@ const PLATFORM_CAPABILITIES = [
       {
         icon: Globe,
         name: 'AnA Predictions',
-        description: 'Cross-platform prediction and intelligence engine. Model regulatory scenarios, compare pathways, and forecast submission outcomes.',
-        depth: 'Predictive models trained on 15 years of FDA review patterns, approval timelines, and Complete Response Letter triggers.',
+        description:
+          'Cross-platform prediction and intelligence engine. Model regulatory scenarios, compare pathways, and forecast submission outcomes.',
+        depth:
+          'Predictive models trained on 15 years of FDA review patterns, approval timelines, and Complete Response Letter triggers.',
         color: 'indigo',
       },
       {
         icon: Search,
         name: 'Evidence Search',
-        description: 'Advanced evidence discovery with regulatory relevance ranking. Find and link clinical evidence, literature, and regulatory precedents.',
-        depth: 'Semantic search across PubMed, FDA databases, EU registries, and your organization\'s private document corpus.',
+        description:
+          'Advanced evidence discovery with regulatory relevance ranking. Find and link clinical evidence, literature, and regulatory precedents.',
+        depth:
+          "Semantic search across PubMed, FDA databases, EU registries, and your organization's private document corpus.",
         color: 'blue',
       },
       {
         icon: Activity,
         name: 'Regulatory Intelligence Feed',
-        description: 'Real-time monitoring of regulatory updates, guidance changes, and competitive intelligence across FDA, EMA, PMDA, and Health Canada.',
-        depth: 'Continuous scanning of 12 regulatory agencies with AI-powered impact assessment for your active programs.',
+        description:
+          'Real-time monitoring of regulatory updates, guidance changes, and competitive intelligence across FDA, EMA, PMDA, and Health Canada.',
+        depth:
+          'Continuous scanning of 12 regulatory agencies with AI-powered impact assessment for your active programs.',
         color: 'amber',
       },
     ],
@@ -187,22 +201,28 @@ const PLATFORM_CAPABILITIES = [
       {
         icon: Target,
         name: 'Mission Control',
-        description: 'Portfolio command center for all regulatory programs. Monitor health, track AI-powered findings, and manage automation rules.',
-        depth: '19 integrated sub-modules including Risk Cockpit, Decision Log, Route Planner, and automated Sentinel scanning.',
+        description:
+          'Portfolio command center for all regulatory programs. Monitor health, track AI-powered findings, and manage automation rules.',
+        depth:
+          '19 integrated sub-modules including Risk Cockpit, Decision Log, Route Planner, and automated Sentinel scanning.',
         color: 'violet',
       },
       {
         icon: ShieldCheck,
         name: 'Submission Ops',
-        description: 'End-to-end submission operations — from dossier assembly to agency response tracking and milestone management.',
-        depth: 'Built-in compliance with 21 CFR Part 11, EU Annex 11, and ISO 14971 with full audit trail.',
+        description:
+          'End-to-end submission operations — from dossier assembly to agency response tracking and milestone management.',
+        depth:
+          'Built-in compliance with 21 CFR Part 11, EU Annex 11, and ISO 14971 with full audit trail.',
         color: 'emerald',
       },
       {
         icon: Archive,
         name: 'Document Vault',
-        description: 'Centralized document repository with regulatory-grade DMS capabilities. Version control, access management, and audit trails.',
-        depth: 'Hash-chain integrity verification, role-based access control, and automated retention policy enforcement.',
+        description:
+          'Centralized document repository with regulatory-grade DMS capabilities. Version control, access management, and audit trails.',
+        depth:
+          'Hash-chain integrity verification, role-based access control, and automated retention policy enforcement.',
         color: 'zinc',
       },
     ],
@@ -215,7 +235,8 @@ const INTELLIGENCE_PILLARS = [
     title: 'Regulatory Knowledge Graph',
     stat: '50,000+',
     statLabel: 'Regulatory Precedents',
-    description: 'A living, interconnected graph of FDA guidance documents, approval precedents, Complete Response Letters, advisory committee minutes, and enforcement actions — continuously updated and cross-referenced.',
+    description:
+      'A living, interconnected graph of FDA guidance documents, approval precedents, Complete Response Letters, advisory committee minutes, and enforcement actions — continuously updated and cross-referenced.',
     details: [
       'FDA guidance documents mapped to eCTD sections',
       'Historical approval and rejection pattern analysis',
@@ -228,7 +249,8 @@ const INTELLIGENCE_PILLARS = [
     title: 'Dual Embedding Architecture',
     stat: '2 Layers',
     statLabel: 'Semantic + Regulatory',
-    description: 'Every document, section, and claim is embedded in two vector spaces simultaneously — general semantic meaning and domain-specific regulatory context — enabling search that understands both language and compliance intent.',
+    description:
+      'Every document, section, and claim is embedded in two vector spaces simultaneously — general semantic meaning and domain-specific regulatory context — enabling search that understands both language and compliance intent.',
     details: [
       'Semantic embeddings for natural language understanding',
       'Regulatory embeddings trained on FDA/EMA corpus',
@@ -241,7 +263,8 @@ const INTELLIGENCE_PILLARS = [
     title: 'Cortex Prime AI Engine',
     stat: 'Multi-Agent',
     statLabel: 'Orchestration',
-    description: 'A cognitive AI engine that coordinates specialized agents — each expert in a regulatory domain — orchestrated through LangGraph workflows with human-in-the-loop checkpoints for critical decisions.',
+    description:
+      'A cognitive AI engine that coordinates specialized agents — each expert in a regulatory domain — orchestrated through LangGraph workflows with human-in-the-loop checkpoints for critical decisions.',
     details: [
       'Specialized agents for CMC, clinical, nonclinical, and regulatory strategy',
       'Knowledge Atoms: atomic facts with provenance chains',
@@ -254,7 +277,8 @@ const INTELLIGENCE_PILLARS = [
     title: 'AI Sentinel Monitoring',
     stat: 'Continuous',
     statLabel: 'Automated Scanning',
-    description: 'Always-on AI monitoring that scans your regulatory portfolio for compliance gaps, inconsistencies, stale dependencies, and emerging risks — surfacing findings before they become audit findings.',
+    description:
+      'Always-on AI monitoring that scans your regulatory portfolio for compliance gaps, inconsistencies, stale dependencies, and emerging risks — surfacing findings before they become audit findings.',
     details: [
       'Real-time cross-reference integrity checks',
       'Stale content detection when upstream data changes',
@@ -268,113 +292,188 @@ const TRAINING_MODULES: TrainingModule[] = [
   {
     id: 'getting-started',
     title: 'Getting Started with AnA',
-    description: 'Learn the fundamentals — how to create projects, navigate the workspace, and have your first conversation with AnA.',
+    description:
+      'Learn the fundamentals — how to create projects, navigate the workspace, and have your first conversation with AnA.',
     duration: '15 min',
     level: 'beginner',
     category: 'Foundations',
     icon: Sparkles,
-    lessons: ['Creating your first project', 'Navigating the workspace', 'Your first AnA conversation', 'Understanding AI responses', 'Saving and organizing work'],
+    lessons: [
+      'Creating your first project',
+      'Navigating the workspace',
+      'Your first AnA conversation',
+      'Understanding AI responses',
+      'Saving and organizing work',
+    ],
     certification: 'AnA Fundamentals',
   },
   {
     id: 'ri-copilot',
     title: 'AnA RI Copilot Mastery',
-    description: 'Master AI-assisted regulatory drafting — generate documents, review compliance, and use gap analysis to strengthen submissions.',
+    description:
+      'Master AI-assisted regulatory drafting — generate documents, review compliance, and use gap analysis to strengthen submissions.',
     duration: '30 min',
     level: 'intermediate',
     category: 'AI & Intelligence',
     icon: Brain,
-    lessons: ['Prompt engineering for regulatory docs', 'Draft generation workflows', 'Gap analysis interpretation', 'Iterative refinement with AnA', 'Cross-referencing and consistency checks', 'Custom instructions for your org'],
+    lessons: [
+      'Prompt engineering for regulatory docs',
+      'Draft generation workflows',
+      'Gap analysis interpretation',
+      'Iterative refinement with AnA',
+      'Cross-referencing and consistency checks',
+      'Custom instructions for your org',
+    ],
     certification: 'RI Copilot Specialist',
   },
   {
     id: 'ectd-coauthor',
     title: 'eCTD Co-Author Workshop',
-    description: 'Collaborative authoring for eCTD submissions — module navigation, real-time editing, version control, and cross-reference management.',
+    description:
+      'Collaborative authoring for eCTD submissions — module navigation, real-time editing, version control, and cross-reference management.',
     duration: '25 min',
     level: 'intermediate',
     category: 'Document Authoring',
     icon: PenLine,
-    lessons: ['eCTD module structure overview', 'Real-time collaborative editing', 'Version control and change tracking', 'Cross-reference management', 'Publishing and export'],
+    lessons: [
+      'eCTD module structure overview',
+      'Real-time collaborative editing',
+      'Version control and change tracking',
+      'Cross-reference management',
+      'Publishing and export',
+    ],
   },
   {
     id: 'snow-globe',
     title: 'AnA Predictions: Predictive Intelligence',
-    description: 'Use the prediction engine to model regulatory scenarios, compare pathways, and forecast submission timelines and outcomes.',
+    description:
+      'Use the prediction engine to model regulatory scenarios, compare pathways, and forecast submission timelines and outcomes.',
     duration: '20 min',
     level: 'advanced',
     category: 'AI & Intelligence',
     icon: Globe,
-    lessons: ['Understanding prediction models', 'Scenario creation and comparison', 'Pathway optimization', 'Timeline forecasting', 'Interpreting confidence scores'],
+    lessons: [
+      'Understanding prediction models',
+      'Scenario creation and comparison',
+      'Pathway optimization',
+      'Timeline forecasting',
+      'Interpreting confidence scores',
+    ],
     certification: 'Predictive Intelligence Analyst',
   },
   {
     id: 'mission-control',
     title: 'Mission Control Operations',
-    description: 'Set up programs, configure Sentinel scanning, manage risks, and track artifacts through the complete regulatory lifecycle.',
+    description:
+      'Set up programs, configure Sentinel scanning, manage risks, and track artifacts through the complete regulatory lifecycle.',
     duration: '35 min',
     level: 'intermediate',
     category: 'Governance',
     icon: Target,
-    lessons: ['Program creation and setup', 'Sentinel scan configuration', 'Risk management workflows', 'Artifact lifecycle tracking', 'Automation rules engine', 'Portfolio-level oversight', 'Team coordination'],
+    lessons: [
+      'Program creation and setup',
+      'Sentinel scan configuration',
+      'Risk management workflows',
+      'Artifact lifecycle tracking',
+      'Automation rules engine',
+      'Portfolio-level oversight',
+      'Team coordination',
+    ],
     certification: 'Mission Control Operator',
   },
   {
     id: 'cmc-platform',
     title: 'CMC Platform Deep Dive',
-    description: 'Chemistry, Manufacturing, and Controls — from drug substance to drug product, manufacturing process, and quality specifications.',
+    description:
+      'Chemistry, Manufacturing, and Controls — from drug substance to drug product, manufacturing process, and quality specifications.',
     duration: '40 min',
     level: 'advanced',
     category: 'Specialized Modules',
     icon: Beaker,
-    lessons: ['Drug substance documentation', 'Drug product specifications', 'Manufacturing process records', 'Stability data management', 'Quality control testing', 'Specification justification'],
+    lessons: [
+      'Drug substance documentation',
+      'Drug product specifications',
+      'Manufacturing process records',
+      'Stability data management',
+      'Quality control testing',
+      'Specification justification',
+    ],
   },
   {
     id: 'clinical-trial',
     title: 'Clinical Trial Hub',
-    description: 'Design protocols, search ClinicalTrials.gov, manage enrollment, and integrate clinical evidence into your regulatory strategy.',
+    description:
+      'Design protocols, search ClinicalTrials.gov, manage enrollment, and integrate clinical evidence into your regulatory strategy.',
     duration: '25 min',
     level: 'intermediate',
     category: 'Specialized Modules',
     icon: FlaskConical,
-    lessons: ['Protocol design with AI assistance', 'ClinicalTrials.gov integration', 'Enrollment tracking', 'Evidence collection and linking', 'Endpoint analysis'],
+    lessons: [
+      'Protocol design with AI assistance',
+      'ClinicalTrials.gov integration',
+      'Enrollment tracking',
+      'Evidence collection and linking',
+      'Endpoint analysis',
+    ],
   },
   {
     id: 'evidence-search',
     title: 'Evidence Search & Linking',
-    description: 'Advanced techniques for finding, evaluating, and linking clinical evidence to support regulatory claims and submissions.',
+    description:
+      'Advanced techniques for finding, evaluating, and linking clinical evidence to support regulatory claims and submissions.',
     duration: '20 min',
     level: 'beginner',
     category: 'Foundations',
     icon: Search,
-    lessons: ['Semantic search techniques', 'Evaluating evidence quality', 'Linking evidence to claims', 'Building evidence chains'],
+    lessons: [
+      'Semantic search techniques',
+      'Evaluating evidence quality',
+      'Linking evidence to claims',
+      'Building evidence chains',
+    ],
     certification: 'Evidence Specialist',
   },
   {
     id: 'submission-ops',
     title: 'Submission Operations',
-    description: 'End-to-end submission management — dossier assembly, agency communications, milestone tracking, and compliance validation.',
+    description:
+      'End-to-end submission management — dossier assembly, agency communications, milestone tracking, and compliance validation.',
     duration: '30 min',
     level: 'advanced',
     category: 'Governance',
     icon: ShieldCheck,
-    lessons: ['Dossier assembly workflow', 'Agency communication tracking', 'Milestone management', 'Pre-submission preparation', 'Post-submission monitoring', 'Compliance validation'],
+    lessons: [
+      'Dossier assembly workflow',
+      'Agency communication tracking',
+      'Milestone management',
+      'Pre-submission preparation',
+      'Post-submission monitoring',
+      'Compliance validation',
+    ],
   },
   {
     id: 'compliance-audit',
     title: '21 CFR Part 11 Compliance',
-    description: 'Understand how the platform enforces electronic records compliance — audit trails, e-signatures, and data integrity controls.',
+    description:
+      'Understand how the platform enforces electronic records compliance — audit trails, e-signatures, and data integrity controls.',
     duration: '20 min',
     level: 'intermediate',
     category: 'Compliance',
     icon: Lock,
-    lessons: ['Electronic records requirements', 'Audit trail interpretation', 'E-signature workflows', 'Data integrity controls', 'Inspection readiness'],
+    lessons: [
+      'Electronic records requirements',
+      'Audit trail interpretation',
+      'E-signature workflows',
+      'Data integrity controls',
+      'Inspection readiness',
+    ],
     certification: 'Compliance Champion',
   },
   {
     id: 'nano-banana-visual-ai',
     title: 'AnA Visual',
-    description: 'Generate publication-ready infographics, regulatory diagrams, and slide decks using Google Gemini image generation — directly from any module.',
+    description:
+      'Generate publication-ready infographics, regulatory diagrams, and slide decks using Google Gemini image generation — directly from any module.',
     duration: '15 min',
     level: 'beginner',
     category: 'AI & Intelligence',
@@ -439,7 +538,8 @@ const WHATS_NEW: WhatsNewItem[] = [
     date: '2026-03-15',
     version: '4.2.0',
     title: 'Dr. Sage FDA Reviewer AI Agent',
-    description: 'Introducing Dr. Sage — a simulated FDA reviewer persona that can review your submissions, train your team, simulate pre-submission meetings, and collaborate with AnA to fix compliance gaps.',
+    description:
+      'Introducing Dr. Sage — a simulated FDA reviewer persona that can review your submissions, train your team, simulate pre-submission meetings, and collaborate with AnA to fix compliance gaps.',
     type: 'feature',
     icon: Stethoscope,
   },
@@ -447,7 +547,8 @@ const WHATS_NEW: WhatsNewItem[] = [
     date: '2026-03-12',
     version: '4.1.5',
     title: 'AnA Predictions',
-    description: 'New cross-platform prediction engine that models regulatory scenarios, compares pathways, and forecasts submission outcomes based on 15 years of FDA review data.',
+    description:
+      'New cross-platform prediction engine that models regulatory scenarios, compares pathways, and forecasts submission outcomes based on 15 years of FDA review data.',
     type: 'feature',
     icon: Globe,
   },
@@ -455,7 +556,8 @@ const WHATS_NEW: WhatsNewItem[] = [
     date: '2026-03-08',
     version: '4.1.4',
     title: 'Claude Opus 4.6 Integration',
-    description: 'Upgraded to Claude Opus 4.6 with extended thinking, streaming responses, tool use, and vision capabilities for document analysis.',
+    description:
+      'Upgraded to Claude Opus 4.6 with extended thinking, streaming responses, tool use, and vision capabilities for document analysis.',
     type: 'intelligence',
     icon: Brain,
   },
@@ -463,7 +565,8 @@ const WHATS_NEW: WhatsNewItem[] = [
     date: '2026-03-05',
     version: '4.1.3',
     title: 'Enhanced Sentinel Scanning',
-    description: 'AI Sentinel now detects 40% more compliance gaps with improved cross-reference integrity checks and stale dependency alerts.',
+    description:
+      'AI Sentinel now detects 40% more compliance gaps with improved cross-reference integrity checks and stale dependency alerts.',
     type: 'improvement',
     icon: Eye,
   },
@@ -471,7 +574,8 @@ const WHATS_NEW: WhatsNewItem[] = [
     date: '2026-02-28',
     version: '4.1.2',
     title: 'Mission Control Redesign',
-    description: 'Portfolio command center redesigned with Claude.AI-style welcome experience, 3-column explainer, and getting-started onboarding for new users.',
+    description:
+      'Portfolio command center redesigned with Claude.AI-style welcome experience, 3-column explainer, and getting-started onboarding for new users.',
     type: 'improvement',
     icon: Target,
   },
@@ -479,7 +583,8 @@ const WHATS_NEW: WhatsNewItem[] = [
     date: '2026-02-20',
     version: '4.1.1',
     title: 'CMC Platform Expansion',
-    description: 'Added ICH Q12 lifecycle management, post-approval change tracking, and manufacturing deviation workflows to the CMC module.',
+    description:
+      'Added ICH Q12 lifecycle management, post-approval change tracking, and manufacturing deviation workflows to the CMC module.',
     type: 'feature',
     icon: Beaker,
   },
@@ -487,7 +592,8 @@ const WHATS_NEW: WhatsNewItem[] = [
     date: '2026-02-15',
     version: '4.1.0',
     title: 'EU MDR/IVDR Compliance Update',
-    description: 'Updated CER templates and compliance checks for the latest MDCG guidance documents and harmonized standards.',
+    description:
+      'Updated CER templates and compliance checks for the latest MDCG guidance documents and harmonized standards.',
     type: 'compliance',
     icon: Shield,
   },
@@ -495,21 +601,58 @@ const WHATS_NEW: WhatsNewItem[] = [
     date: '2026-02-10',
     version: '4.0.9',
     title: 'ClinicalTrials.gov API v2 Integration',
-    description: 'Direct integration with the new ClinicalTrials.gov API v2 for real-time trial search, investigator discovery, and endpoint analysis.',
+    description:
+      'Direct integration with the new ClinicalTrials.gov API v2 for real-time trial search, investigator discovery, and endpoint analysis.',
     type: 'feature',
     icon: FlaskConical,
   },
 ];
 
 const COMPANY_TIMELINE = [
-  { year: '2023', title: 'Founded', description: 'Concept2Cure.RI founded with a mission to transform regulatory submissions through AI' },
-  { year: '2024 Q1', title: 'First Platform Release', description: '510(k) and CER modules launched with AI-powered document generation' },
-  { year: '2024 Q3', title: 'eCTD Co-Author', description: 'Collaborative authoring platform for eCTD 4.0 submissions' },
-  { year: '2024 Q4', title: 'Mission Control', description: 'Portfolio governance with AI Sentinel monitoring and automation rules' },
-  { year: '2025 Q1', title: 'CMC Platform', description: '102-endpoint CMC documentation engine covering the full product lifecycle' },
-  { year: '2025 Q2', title: 'Claude Integration', description: 'Deep integration with Anthropic Claude for extended thinking and multi-agent orchestration' },
-  { year: '2025 Q4', title: 'AnA Predictions', description: 'Predictive intelligence engine for regulatory scenario modeling and outcome forecasting' },
-  { year: '2026 Q1', title: 'Dr. Sage', description: 'FDA reviewer AI agent — the industry\'s first simulated reviewer for submission training and review' },
+  {
+    year: '2023',
+    title: 'Founded',
+    description:
+      'Concept2Cure.RI founded with a mission to transform regulatory submissions through AI',
+  },
+  {
+    year: '2024 Q1',
+    title: 'First Platform Release',
+    description: '510(k) and CER modules launched with AI-powered document generation',
+  },
+  {
+    year: '2024 Q3',
+    title: 'eCTD Co-Author',
+    description: 'Collaborative authoring platform for eCTD 4.0 submissions',
+  },
+  {
+    year: '2024 Q4',
+    title: 'Mission Control',
+    description: 'Portfolio governance with AI Sentinel monitoring and automation rules',
+  },
+  {
+    year: '2025 Q1',
+    title: 'CMC Platform',
+    description: '102-endpoint CMC documentation engine covering the full product lifecycle',
+  },
+  {
+    year: '2025 Q2',
+    title: 'Claude Integration',
+    description:
+      'Deep integration with Anthropic Claude for extended thinking and multi-agent orchestration',
+  },
+  {
+    year: '2025 Q4',
+    title: 'AnA Predictions',
+    description:
+      'Predictive intelligence engine for regulatory scenario modeling and outcome forecasting',
+  },
+  {
+    year: '2026 Q1',
+    title: 'Dr. Sage',
+    description:
+      "FDA reviewer AI agent — the industry's first simulated reviewer for submission training and review",
+  },
 ];
 
 const LEVEL_CONFIG = {
@@ -522,7 +665,17 @@ const LEVEL_CONFIG = {
 // SUB-COMPONENTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function TabButton({ active, label, icon: Icon, onClick }: { active: boolean; label: string; icon: typeof Brain; onClick: () => void }) {
+function TabButton({
+  active,
+  label,
+  icon: Icon,
+  onClick,
+}: {
+  active: boolean;
+  label: string;
+  icon: typeof Brain;
+  onClick: () => void;
+}) {
   return (
     <button
       onClick={onClick}
@@ -549,14 +702,10 @@ function AboutTab() {
         <div className="w-16 h-16 rounded-lg bg-blue-600 flex items-center justify-center mx-auto mb-6 shadow-sm">
           <Sparkles className="w-8 h-8 text-white" />
         </div>
-        <h2 className="text-3xl font-bold text-zinc-900 mb-3">
-          Concept2Cure.RI
-        <h2 className="text-2xl font-semibold text-zinc-900 mb-3">
-          ClinicalSageAI
-        </h2>
+        <h2 className="text-2xl font-semibold text-zinc-900 mb-3">ClinicalSageAI</h2>
         <p className="text-lg text-zinc-500 leading-relaxed">
-          The cognitive regulatory ecosystem that transforms how life sciences companies
-          navigate the path from concept to cure.
+          The cognitive regulatory ecosystem that transforms how life sciences companies navigate
+          the path from concept to cure.
         </p>
       </div>
 
@@ -567,15 +716,16 @@ function AboutTab() {
           Our Mission
         </h3>
         <p className="text-sm text-zinc-600 leading-relaxed mb-4">
-          Regulatory submissions are the critical path between breakthrough science and patients who need it.
-          Yet the process is still manual, fragmented, and error-prone — costing companies months of delays
-          and millions in rework. We're building the AI-native platform that changes this.
+          Regulatory submissions are the critical path between breakthrough science and patients who
+          need it. Yet the process is still manual, fragmented, and error-prone — costing companies
+          months of delays and millions in rework. We're building the AI-native platform that
+          changes this.
         </p>
         <p className="text-sm text-zinc-600 leading-relaxed">
           Concept2Cure.RI combines deep regulatory domain expertise with state-of-the-art AI to give
           every team — from two-person biotechs to global pharma — access to the intelligence,
-          automation, and collaboration tools they need to get life-saving therapies to market faster,
-          with higher quality and lower risk.
+          automation, and collaboration tools they need to get life-saving therapies to market
+          faster, with higher quality and lower risk.
         </p>
       </div>
 
@@ -589,7 +739,10 @@ function AboutTab() {
         ].map(stat => {
           const Icon = stat.icon;
           return (
-            <div key={stat.label} className="bg-white rounded-xl border border-zinc-200 p-5 text-center">
+            <div
+              key={stat.label}
+              className="bg-white rounded-xl border border-zinc-200 p-5 text-center"
+            >
               <Icon className="w-5 h-5 text-violet-500 mx-auto mb-2" />
               <p className="text-2xl font-semibold text-zinc-900">{stat.value}</p>
               <p className="text-xs text-zinc-500 mt-1">{stat.label}</p>
@@ -612,7 +765,10 @@ function AboutTab() {
           ].map(item => {
             const Icon = item.icon;
             return (
-              <div key={item.label} className="flex items-center gap-3 p-4 bg-white rounded-xl border border-zinc-200">
+              <div
+                key={item.label}
+                className="flex items-center gap-3 p-4 bg-white rounded-xl border border-zinc-200"
+              >
                 <div className="w-10 h-10 rounded-lg bg-zinc-50 flex items-center justify-center flex-shrink-0">
                   <Icon className="w-5 h-5 text-zinc-600" />
                 </div>
@@ -633,12 +789,15 @@ function AboutTab() {
             <Brain className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-zinc-900 mb-2">Meet AnA — Your AI Regulatory Partner</h3>
+            <h3 className="text-lg font-semibold text-zinc-900 mb-2">
+              Meet AnA — Your AI Regulatory Partner
+            </h3>
             <p className="text-sm text-zinc-600 leading-relaxed mb-3">
               AnA is the intelligence behind Concept2Cure.RI. Trained on decades of regulatory data,
-              AnA understands the nuances of FDA, EMA, PMDA, and Health Canada requirements. She doesn't
-              just answer questions — she drafts documents, identifies risks before they become findings,
-              and continuously learns from every interaction to provide more relevant, more accurate guidance.
+              AnA understands the nuances of FDA, EMA, PMDA, and Health Canada requirements. She
+              doesn't just answer questions — she drafts documents, identifies risks before they
+              become findings, and continuously learns from every interaction to provide more
+              relevant, more accurate guidance.
             </p>
             <p className="text-sm text-zinc-600 leading-relaxed">
               Whether you're a first-time IND sponsor or managing a global submission portfolio, AnA
@@ -656,16 +815,19 @@ function AboutTab() {
             <Stethoscope className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-zinc-900 mb-2">Meet Dr. Sage — Your FDA Reviewer AI</h3>
+            <h3 className="text-lg font-semibold text-zinc-900 mb-2">
+              Meet Dr. Sage — Your FDA Reviewer AI
+            </h3>
             <p className="text-sm text-zinc-600 leading-relaxed mb-3">
-              Dr. Sage is a simulated FDA reviewer with 20+ years of experience across CDER, CDRH, and CBER.
-              He reviews your work from the reviewer's perspective, trains your team on what reviewers
-              actually look for, and collaborates with AnA to fix issues before they become findings.
+              Dr. Sage is a simulated FDA reviewer with 20+ years of experience across CDER, CDRH,
+              and CBER. He reviews your work from the reviewer's perspective, trains your team on
+              what reviewers actually look for, and collaborates with AnA to fix issues before they
+              become findings.
             </p>
             <p className="text-sm text-zinc-600 leading-relaxed">
               Together, AnA and Dr. Sage form a unique dual-AI system: AnA writes and researches,
-              Dr. Sage reviews and advises. This is the first platform that gives you both the author
-              and the reviewer perspective in one place.
+              Dr. Sage reviews and advises. This is the first platform that gives you both the
+              author and the reviewer perspective in one place.
             </p>
           </div>
         </div>
@@ -679,16 +841,20 @@ function AboutTab() {
           <div className="space-y-4">
             {COMPANY_TIMELINE.map((item, idx) => (
               <div key={idx} className="flex items-start gap-4 relative">
-                <div className={cn(
-                  'w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 z-10 border-2 border-white',
-                  idx === COMPANY_TIMELINE.length - 1
-                    ? 'bg-blue-600'
-                    : 'bg-white border border-zinc-200'
-                )}>
-                  <span className={cn(
-                    'text-xs font-semibold',
-                    idx === COMPANY_TIMELINE.length - 1 ? 'text-white' : 'text-zinc-600'
-                  )}>
+                <div
+                  className={cn(
+                    'w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 z-10 border-2 border-white',
+                    idx === COMPANY_TIMELINE.length - 1
+                      ? 'bg-blue-600'
+                      : 'bg-white border border-zinc-200'
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'text-xs font-semibold',
+                      idx === COMPANY_TIMELINE.length - 1 ? 'text-white' : 'text-zinc-600'
+                    )}
+                  >
                     {item.year.replace('20', "'").replace(' ', '')}
                   </span>
                 </div>
@@ -727,14 +893,24 @@ function PlatformTab() {
             {group.items.map(item => {
               const Icon = item.icon;
               return (
-                <div key={item.name} className="bg-white rounded-xl border border-zinc-200 p-5 hover:shadow-sm transition-shadow">
+                <div
+                  key={item.name}
+                  className="bg-white rounded-xl border border-zinc-200 p-5 hover:shadow-sm transition-shadow"
+                >
                   <div className="flex items-start gap-3 mb-3">
-                    <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0', `bg-${item.color}-50`)}>
+                    <div
+                      className={cn(
+                        'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0',
+                        `bg-${item.color}-50`
+                      )}
+                    >
                       <Icon className={cn('w-5 h-5', `text-${item.color}-600`)} />
                     </div>
                     <div>
                       <h4 className="text-sm font-semibold text-zinc-900">{item.name}</h4>
-                      <p className="text-xs text-zinc-500 mt-1 leading-relaxed">{item.description}</p>
+                      <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
+                        {item.description}
+                      </p>
                     </div>
                   </div>
                   <div className="pl-[52px]">
@@ -773,7 +949,13 @@ function PlatformTab() {
           ))}
         </div>
         <div className="mt-5 grid grid-cols-2 md:grid-cols-5 gap-3 text-center">
-          {['Immutable Audit Trail', 'E-Signatures (SHA-256)', 'Role-Based Access', 'Row-Level Security', 'Hash Chain Integrity'].map(f => (
+          {[
+            'Immutable Audit Trail',
+            'E-Signatures (SHA-256)',
+            'Role-Based Access',
+            'Row-Level Security',
+            'Hash Chain Integrity',
+          ].map(f => (
             <div key={f} className="flex items-center gap-1.5 text-xs text-zinc-400">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
               {f}
@@ -793,8 +975,8 @@ function IntelligenceTab() {
       <div className="text-center max-w-2xl mx-auto mb-2">
         <h2 className="text-2xl font-semibold text-zinc-900 mb-2">Proprietary Intelligence</h2>
         <p className="text-sm text-zinc-500">
-          Our AI isn't a wrapper on a chatbot. It's a purpose-built cognitive engine
-          trained on regulatory domain knowledge that no general-purpose AI possesses.
+          Our AI isn't a wrapper on a chatbot. It's a purpose-built cognitive engine trained on
+          regulatory domain knowledge that no general-purpose AI possesses.
         </p>
       </div>
 
@@ -851,8 +1033,8 @@ function IntelligenceTab() {
             </div>
             <h4 className="text-sm font-semibold text-zinc-900 mb-1">Conversation Intelligence</h4>
             <p className="text-xs text-zinc-600 leading-relaxed">
-              AnA remembers your preferences, writing style, and organizational context across sessions.
-              The more you work together, the more precisely she anticipates your needs.
+              AnA remembers your preferences, writing style, and organizational context across
+              sessions. The more you work together, the more precisely she anticipates your needs.
             </p>
           </div>
           <div className="bg-white/80 rounded-xl p-5">
@@ -861,8 +1043,8 @@ function IntelligenceTab() {
             </div>
             <h4 className="text-sm font-semibold text-zinc-900 mb-1">Regulatory Feed Updates</h4>
             <p className="text-xs text-zinc-600 leading-relaxed">
-              The knowledge graph is continuously enriched with new FDA guidance, EMA decisions,
-              and regulatory precedents — so your intelligence is never stale.
+              The knowledge graph is continuously enriched with new FDA guidance, EMA decisions, and
+              regulatory precedents — so your intelligence is never stale.
             </p>
           </div>
           <div className="bg-white/80 rounded-xl p-5">
@@ -880,7 +1062,9 @@ function IntelligenceTab() {
 
       {/* Intelligence Differentiator */}
       <div className="bg-white rounded-xl border border-zinc-200 p-8 max-w-3xl mx-auto">
-        <h3 className="text-lg font-semibold text-zinc-900 mb-4 text-center">Why Our Intelligence Is Different</h3>
+        <h3 className="text-lg font-semibold text-zinc-900 mb-4 text-center">
+          Why Our Intelligence Is Different
+        </h3>
         <div className="space-y-3">
           {[
             {
@@ -922,7 +1106,8 @@ const LEARNING_PATHS = [
   {
     id: 'regulatory-writer',
     title: 'Regulatory Writer',
-    description: 'For team members who draft regulatory documents, summaries, and clinical overviews.',
+    description:
+      'For team members who draft regulatory documents, summaries, and clinical overviews.',
     modules: ['getting-started', 'ri-copilot', 'ectd-coauthor', 'evidence-search'],
     icon: PenLine,
     color: 'blue',
@@ -931,7 +1116,8 @@ const LEARNING_PATHS = [
   {
     id: 'regulatory-strategist',
     title: 'Regulatory Strategist',
-    description: 'For leaders who plan pathways, manage programs, and make strategic regulatory decisions.',
+    description:
+      'For leaders who plan pathways, manage programs, and make strategic regulatory decisions.',
     modules: ['getting-started', 'snow-globe', 'mission-control', 'submission-ops'],
     icon: Compass,
     color: 'violet',
@@ -949,7 +1135,8 @@ const LEARNING_PATHS = [
   {
     id: 'clinical-ops',
     title: 'Clinical Operations',
-    description: 'For clinical teams managing trial design, evidence collection, and clinical documentation.',
+    description:
+      'For clinical teams managing trial design, evidence collection, and clinical documentation.',
     modules: ['getting-started', 'clinical-trial', 'evidence-search', 'ri-copilot'],
     icon: FlaskConical,
     color: 'teal',
@@ -958,7 +1145,8 @@ const LEARNING_PATHS = [
   {
     id: 'executive',
     title: 'Executive Overview',
-    description: 'For C-suite and VP-level leaders who need portfolio visibility and strategic intelligence.',
+    description:
+      'For C-suite and VP-level leaders who need portfolio visibility and strategic intelligence.',
     modules: ['getting-started', 'mission-control', 'snow-globe'],
     icon: BarChart3,
     color: 'amber',
@@ -974,9 +1162,10 @@ function TrainingTab() {
   const [view, setView] = useState<'modules' | 'paths' | 'certifications'>('paths');
 
   const categories = ['all', ...Array.from(new Set(TRAINING_MODULES.map(m => m.category)))];
-  const filtered = selectedCategory === 'all'
-    ? TRAINING_MODULES
-    : TRAINING_MODULES.filter(m => m.category === selectedCategory);
+  const filtered =
+    selectedCategory === 'all'
+      ? TRAINING_MODULES
+      : TRAINING_MODULES.filter(m => m.category === selectedCategory);
 
   const totalProgress = Math.round((completedModules.size / TRAINING_MODULES.length) * 100);
 
@@ -990,8 +1179,8 @@ function TrainingTab() {
       <div className="text-center max-w-2xl mx-auto mb-2">
         <h2 className="text-2xl font-semibold text-zinc-900 mb-2">Training Center</h2>
         <p className="text-sm text-zinc-500">
-          Master every tool on the platform to accelerate your regulatory submissions.
-          Choose a learning path for your role, or explore individual modules at your own pace.
+          Master every tool on the platform to accelerate your regulatory submissions. Choose a
+          learning path for your role, or explore individual modules at your own pace.
         </p>
       </div>
 
@@ -1000,13 +1189,17 @@ function TrainingTab() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-sm font-semibold text-zinc-900">Your Progress</h3>
-            <p className="text-xs text-zinc-500 mt-0.5">{completedModules.size} of {TRAINING_MODULES.length} modules completed</p>
+            <p className="text-xs text-zinc-500 mt-0.5">
+              {completedModules.size} of {TRAINING_MODULES.length} modules completed
+            </p>
           </div>
           <div className="flex items-center gap-4">
             {earnedCerts.length > 0 && (
               <div className="flex items-center gap-1.5">
                 <Trophy className="w-4 h-4 text-amber-500" />
-                <span className="text-xs font-medium text-zinc-700">{earnedCerts.length} certification{earnedCerts.length !== 1 ? 's' : ''}</span>
+                <span className="text-xs font-medium text-zinc-700">
+                  {earnedCerts.length} certification{earnedCerts.length !== 1 ? 's' : ''}
+                </span>
               </div>
             )}
             <span className="text-lg font-semibold text-zinc-900">{totalProgress}%</span>
@@ -1035,13 +1228,37 @@ function TrainingTab() {
 
       {/* View Switcher */}
       <div className="flex items-center gap-1 bg-zinc-100 rounded-lg p-1 w-fit mx-auto">
-        <button onClick={() => setView('paths')} className={cn('px-3 py-1.5 rounded-md text-xs font-medium transition-colors duration-150', view === 'paths' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700')}>
+        <button
+          onClick={() => setView('paths')}
+          className={cn(
+            'px-3 py-1.5 rounded-md text-xs font-medium transition-colors duration-150',
+            view === 'paths'
+              ? 'bg-white text-zinc-900 shadow-sm'
+              : 'text-zinc-500 hover:text-zinc-700'
+          )}
+        >
           Learning Paths
         </button>
-        <button onClick={() => setView('modules')} className={cn('px-3 py-1.5 rounded-md text-xs font-medium transition-colors duration-150', view === 'modules' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700')}>
+        <button
+          onClick={() => setView('modules')}
+          className={cn(
+            'px-3 py-1.5 rounded-md text-xs font-medium transition-colors duration-150',
+            view === 'modules'
+              ? 'bg-white text-zinc-900 shadow-sm'
+              : 'text-zinc-500 hover:text-zinc-700'
+          )}
+        >
           All Modules
         </button>
-        <button onClick={() => setView('certifications')} className={cn('px-3 py-1.5 rounded-md text-xs font-medium transition-colors duration-150', view === 'certifications' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700')}>
+        <button
+          onClick={() => setView('certifications')}
+          className={cn(
+            'px-3 py-1.5 rounded-md text-xs font-medium transition-colors duration-150',
+            view === 'certifications'
+              ? 'bg-white text-zinc-900 shadow-sm'
+              : 'text-zinc-500 hover:text-zinc-700'
+          )}
+        >
           Certifications
         </button>
       </div>
@@ -1050,8 +1267,8 @@ function TrainingTab() {
       {view === 'paths' && (
         <div className="space-y-4">
           <p className="text-sm text-zinc-500 text-center">
-            Select the learning path that matches your role. Each path guides you through the exact modules
-            you need to achieve your objectives.
+            Select the learning path that matches your role. Each path guides you through the exact
+            modules you need to achieve your objectives.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {LEARNING_PATHS.map(path => {
@@ -1066,11 +1283,18 @@ function TrainingTab() {
                   onClick={() => setActivePath(isActive ? null : path.id)}
                   className={cn(
                     'bg-white rounded-xl border p-5 cursor-pointer transition-all duration-150',
-                    isActive ? 'border-violet-300 shadow-md ring-1 ring-violet-100' : 'border-zinc-200 hover:shadow-sm hover:border-zinc-300'
+                    isActive
+                      ? 'border-violet-300 shadow-md ring-1 ring-violet-100'
+                      : 'border-zinc-200 hover:shadow-sm hover:border-zinc-300'
                   )}
                 >
                   <div className="flex items-start gap-3 mb-3">
-                    <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0', `bg-${path.color}-50`)}>
+                    <div
+                      className={cn(
+                        'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0',
+                        `bg-${path.color}-50`
+                      )}
+                    >
                       <Icon className={cn('w-5 h-5', `text-${path.color}-600`)} />
                     </div>
                     <div className="flex-1">
@@ -1083,7 +1307,13 @@ function TrainingTab() {
 
                   {/* Mini progress */}
                   <div className="w-full h-1.5 bg-zinc-100 rounded-full overflow-hidden mb-3">
-                    <div className={cn('h-full rounded-full transition-all duration-150', `bg-${path.color}-500`)} style={{ width: `${pathProgress}%` }} />
+                    <div
+                      className={cn(
+                        'h-full rounded-full transition-all duration-150',
+                        `bg-${path.color}-500`
+                      )}
+                      style={{ width: `${pathProgress}%` }}
+                    />
                   </div>
 
                   {/* Outcome */}
@@ -1095,23 +1325,36 @@ function TrainingTab() {
                   {/* Expanded module list */}
                   {isActive && (
                     <div className="mt-4 pt-3 border-t border-zinc-200 space-y-2">
-                      <p className="text-xs font-medium text-zinc-700 mb-2">Modules in this path:</p>
+                      <p className="text-xs font-medium text-zinc-700 mb-2">
+                        Modules in this path:
+                      </p>
                       {pathModules.map((mod, idx) => {
                         const ModIcon = mod.icon;
                         const done = completedModules.has(mod.id);
                         return (
                           <div key={mod.id} className="flex items-center gap-2.5">
-                            <div className={cn(
-                              'w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0',
-                              done ? 'bg-emerald-500' : 'bg-zinc-200'
-                            )}>
+                            <div
+                              className={cn(
+                                'w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0',
+                                done ? 'bg-emerald-500' : 'bg-zinc-200'
+                              )}
+                            >
                               {done ? (
                                 <CheckCircle2 className="w-3 h-3 text-white" />
                               ) : (
-                                <span className="text-xs font-semibold text-zinc-500">{idx + 1}</span>
+                                <span className="text-xs font-semibold text-zinc-500">
+                                  {idx + 1}
+                                </span>
                               )}
                             </div>
-                            <span className={cn('text-xs', done ? 'text-zinc-400 line-through' : 'text-zinc-700')}>{mod.title}</span>
+                            <span
+                              className={cn(
+                                'text-xs',
+                                done ? 'text-zinc-400 line-through' : 'text-zinc-700'
+                              )}
+                            >
+                              {mod.title}
+                            </span>
                             <span className="text-xs text-zinc-400 ml-auto">{mod.duration}</span>
                           </div>
                         );
@@ -1126,7 +1369,11 @@ function TrainingTab() {
                         className="w-full mt-2 flex items-center justify-center gap-1.5 px-3 py-2 bg-zinc-900 text-white rounded-lg text-xs font-medium hover:bg-zinc-800 transition-colors duration-150"
                       >
                         <Play className="w-3.5 h-3.5" />
-                        {pathComplete === 0 ? 'Start Path' : pathComplete < path.modules.length ? 'Continue' : 'Review'}
+                        {pathComplete === 0
+                          ? 'Start Path'
+                          : pathComplete < path.modules.length
+                            ? 'Continue'
+                            : 'Review'}
                       </button>
                     </div>
                   )}
@@ -1148,7 +1395,9 @@ function TrainingTab() {
                 onClick={() => setSelectedCategory(cat)}
                 className={cn(
                   'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors duration-150',
-                  selectedCategory === cat ? 'bg-zinc-900 text-white' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                  selectedCategory === cat
+                    ? 'bg-zinc-900 text-white'
+                    : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
                 )}
               >
                 {cat === 'all' ? 'All Modules' : cat}
@@ -1165,20 +1414,25 @@ function TrainingTab() {
               const isComplete = completedModules.has(mod.id);
 
               return (
-                <div key={mod.id} className={cn(
-                  'bg-white rounded-xl border transition-all duration-150',
-                  isComplete ? 'border-emerald-200 bg-emerald-50/30' : 'border-zinc-200',
-                  isExpanded && 'shadow-md'
-                )}>
+                <div
+                  key={mod.id}
+                  className={cn(
+                    'bg-white rounded-xl border transition-all duration-150',
+                    isComplete ? 'border-emerald-200 bg-emerald-50/30' : 'border-zinc-200',
+                    isExpanded && 'shadow-md'
+                  )}
+                >
                   {/* Header */}
                   <div
                     className="flex items-center gap-3 p-5 cursor-pointer"
                     onClick={() => setExpandedModule(isExpanded ? null : mod.id)}
                   >
-                    <div className={cn(
-                      'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0',
-                      isComplete ? 'bg-emerald-100' : 'bg-violet-50'
-                    )}>
+                    <div
+                      className={cn(
+                        'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0',
+                        isComplete ? 'bg-emerald-100' : 'bg-violet-50'
+                      )}
+                    >
                       {isComplete ? (
                         <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                       ) : (
@@ -1191,14 +1445,25 @@ function TrainingTab() {
                     </div>
                     <div className="flex items-center gap-3 flex-shrink-0">
                       <div className="flex items-center gap-2">
-                        <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', `bg-${levelCfg.color}-50 text-${levelCfg.color}-700`)}>
+                        <span
+                          className={cn(
+                            'px-2 py-0.5 rounded-full text-xs font-medium',
+                            `bg-${levelCfg.color}-50 text-${levelCfg.color}-700`
+                          )}
+                        >
                           {levelCfg.label}
                         </span>
                         <span className="flex items-center gap-1 text-xs text-zinc-400">
-                          <Clock className="w-3 h-3" />{mod.duration}
+                          <Clock className="w-3 h-3" />
+                          {mod.duration}
                         </span>
                       </div>
-                      <ChevronDown className={cn('w-4 h-4 text-zinc-400 transition-transform duration-150', isExpanded && 'rotate-180')} />
+                      <ChevronDown
+                        className={cn(
+                          'w-4 h-4 text-zinc-400 transition-transform duration-150',
+                          isExpanded && 'rotate-180'
+                        )}
+                      />
                     </div>
                   </div>
 
@@ -1208,12 +1473,19 @@ function TrainingTab() {
                       <div className="grid grid-cols-12 gap-5">
                         {/* Lessons */}
                         <div className="col-span-8">
-                          <h5 className="text-xs font-semibold text-zinc-700 mb-3">What You'll Learn</h5>
+                          <h5 className="text-xs font-semibold text-zinc-700 mb-3">
+                            What You'll Learn
+                          </h5>
                           <div className="space-y-2">
                             {mod.lessons.map((lesson, idx) => (
-                              <div key={idx} className="flex items-center gap-3 p-2.5 rounded-lg bg-zinc-50 hover:bg-zinc-100 transition-colors duration-150">
+                              <div
+                                key={idx}
+                                className="flex items-center gap-3 p-2.5 rounded-lg bg-zinc-50 hover:bg-zinc-100 transition-colors duration-150"
+                              >
                                 <div className="w-6 h-6 rounded-full bg-white border border-zinc-200 flex items-center justify-center flex-shrink-0">
-                                  <span className="text-xs font-semibold text-zinc-500">{idx + 1}</span>
+                                  <span className="text-xs font-semibold text-zinc-500">
+                                    {idx + 1}
+                                  </span>
                                 </div>
                                 <span className="text-xs text-zinc-700">{lesson}</span>
                               </div>
@@ -1227,7 +1499,9 @@ function TrainingTab() {
                             <div className="p-3 rounded-lg bg-amber-50 border border-amber-100">
                               <div className="flex items-center gap-1.5 mb-1">
                                 <Award className="w-3.5 h-3.5 text-amber-600" />
-                                <span className="text-xs font-semibold text-amber-800">Earns Certification</span>
+                                <span className="text-xs font-semibold text-amber-800">
+                                  Earns Certification
+                                </span>
                               </div>
                               <p className="text-xs text-amber-700">{mod.certification}</p>
                             </div>
@@ -1290,7 +1564,8 @@ function TrainingTab() {
       {view === 'certifications' && (
         <div className="space-y-6">
           <p className="text-sm text-zinc-500 text-center">
-            Earn certifications by completing related training modules. Demonstrate your expertise to your team and organization.
+            Earn certifications by completing related training modules. Demonstrate your expertise
+            to your team and organization.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {CERTIFICATIONS.map(cert => {
@@ -1298,18 +1573,27 @@ function TrainingTab() {
               const earned = cert.requiredModules.every(m => completedModules.has(m));
               const progress = cert.requiredModules.filter(m => completedModules.has(m)).length;
               return (
-                <div key={cert.id} className={cn(
-                  'rounded-xl border p-5 transition-all duration-150',
-                  earned
-                    ? 'bg-gradient-to-br from-amber-50 to-yellow-50 border-amber-200 shadow-sm'
-                    : 'bg-white border-zinc-200'
-                )}>
+                <div
+                  key={cert.id}
+                  className={cn(
+                    'rounded-xl border p-5 transition-all duration-150',
+                    earned
+                      ? 'bg-gradient-to-br from-amber-50 to-yellow-50 border-amber-200 shadow-sm'
+                      : 'bg-white border-zinc-200'
+                  )}
+                >
                   <div className="flex items-center gap-3 mb-3">
-                    <div className={cn(
-                      'w-12 h-12 rounded-lg flex items-center justify-center',
-                      earned ? 'bg-gradient-to-br from-amber-400 to-yellow-500' : `bg-${cert.color}-50`
-                    )}>
-                      <Icon className={cn('w-6 h-6', earned ? 'text-white' : `text-${cert.color}-500`)} />
+                    <div
+                      className={cn(
+                        'w-12 h-12 rounded-lg flex items-center justify-center',
+                        earned
+                          ? 'bg-gradient-to-br from-amber-400 to-yellow-500'
+                          : `bg-${cert.color}-50`
+                      )}
+                    >
+                      <Icon
+                        className={cn('w-6 h-6', earned ? 'text-white' : `text-${cert.color}-500`)}
+                      />
                     </div>
                     <div>
                       <h4 className="text-sm font-semibold text-zinc-900">{cert.name}</h4>
@@ -1326,10 +1610,18 @@ function TrainingTab() {
                   <div className="mb-3">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs text-zinc-500">Progress</span>
-                      <span className="text-xs font-medium text-zinc-700">{progress}/{cert.requiredModules.length}</span>
+                      <span className="text-xs font-medium text-zinc-700">
+                        {progress}/{cert.requiredModules.length}
+                      </span>
                     </div>
                     <div className="w-full h-1.5 bg-zinc-100 rounded-full overflow-hidden">
-                      <div className={cn('h-full rounded-full transition-all duration-150', earned ? 'bg-amber-500' : `bg-${cert.color}-500`)} style={{ width: `${(progress / cert.requiredModules.length) * 100}%` }} />
+                      <div
+                        className={cn(
+                          'h-full rounded-full transition-all duration-150',
+                          earned ? 'bg-amber-500' : `bg-${cert.color}-500`
+                        )}
+                        style={{ width: `${(progress / cert.requiredModules.length) * 100}%` }}
+                      />
                     </div>
                   </div>
 
@@ -1345,7 +1637,9 @@ function TrainingTab() {
                           ) : (
                             <CircleDot className="w-3 h-3 text-zinc-400 flex-shrink-0" />
                           )}
-                          <span className={done ? 'text-zinc-400' : 'text-zinc-700'}>{mod.title}</span>
+                          <span className={done ? 'text-zinc-400' : 'text-zinc-700'}>
+                            {mod.title}
+                          </span>
                         </div>
                       ) : null;
                     })}
@@ -1364,8 +1658,8 @@ function TrainingTab() {
           Need Help? Ask AnA or Dr. Sage
         </h3>
         <p className="text-sm text-zinc-500 mb-5">
-          Have a question about a specific tool or workflow? AnA can answer platform questions,
-          and Dr. Sage can advise from a reviewer's perspective.
+          Have a question about a specific tool or workflow? AnA can answer platform questions, and
+          Dr. Sage can advise from a reviewer's perspective.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           {[
@@ -1378,7 +1672,10 @@ function TrainingTab() {
             'How do I set up automation rules in Mission Control?',
             'What does a reviewer look for in Module 2 summaries?',
           ].map(q => (
-            <div key={q} className="flex items-center gap-2 p-3 rounded-lg bg-zinc-50 hover:bg-zinc-100 transition-colors cursor-pointer group">
+            <div
+              key={q}
+              className="flex items-center gap-2 p-3 rounded-lg bg-zinc-50 hover:bg-zinc-100 transition-colors cursor-pointer group"
+            >
               <ArrowRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-violet-500 flex-shrink-0" />
               <span className="text-xs text-zinc-700">{q}</span>
             </div>
@@ -1413,20 +1710,56 @@ const SAGE_INTRO_MESSAGES: SageMessage[] = [
   {
     id: 'intro-2',
     role: 'system',
-    content: 'Dr. Sage can interact with AnA, review your documents, identify submission risks, and provide FDA reviewer-perspective training.',
+    content:
+      'Dr. Sage can interact with AnA, review your documents, identify submission risks, and provide FDA reviewer-perspective training.',
     timestamp: new Date(),
   },
 ];
 
 const SAGE_QUICK_ACTIONS = [
   { id: 'platform-tour', label: 'Give me a platform tour', icon: Compass, category: 'training' },
-  { id: 'review-submission', label: 'Review my submission like an FDA reviewer', icon: Eye, category: 'review' },
-  { id: 'identify-risks', label: 'What would a reviewer flag in my dossier?', icon: AlertTriangle, category: 'review' },
-  { id: 'train-team', label: 'Create a training plan for my team', icon: GraduationCap, category: 'training' },
-  { id: 'fix-with-ana', label: 'Work with AnA to fix compliance gaps', icon: Wrench, category: 'fix' },
-  { id: 'mock-review', label: 'Simulate a pre-submission meeting', icon: Users, category: 'consult-ana' },
-  { id: 'audit-prep', label: 'Help prepare for an FDA inspection', icon: ShieldCheck, category: 'audit' },
-  { id: 'explain-module', label: 'Explain a platform module to me', icon: BookOpen, category: 'training' },
+  {
+    id: 'review-submission',
+    label: 'Review my submission like an FDA reviewer',
+    icon: Eye,
+    category: 'review',
+  },
+  {
+    id: 'identify-risks',
+    label: 'What would a reviewer flag in my dossier?',
+    icon: AlertTriangle,
+    category: 'review',
+  },
+  {
+    id: 'train-team',
+    label: 'Create a training plan for my team',
+    icon: GraduationCap,
+    category: 'training',
+  },
+  {
+    id: 'fix-with-ana',
+    label: 'Work with AnA to fix compliance gaps',
+    icon: Wrench,
+    category: 'fix',
+  },
+  {
+    id: 'mock-review',
+    label: 'Simulate a pre-submission meeting',
+    icon: Users,
+    category: 'consult-ana',
+  },
+  {
+    id: 'audit-prep',
+    label: 'Help prepare for an FDA inspection',
+    icon: ShieldCheck,
+    category: 'audit',
+  },
+  {
+    id: 'explain-module',
+    label: 'Explain a platform module to me',
+    icon: BookOpen,
+    category: 'training',
+  },
 ];
 
 const SAGE_RESPONSES: Record<string, string> = {
@@ -1487,11 +1820,16 @@ function DrSageTab() {
       }
 
       // Mark current step as running
-      setActiveWorkflow(prev => prev?.map((s, i) => i === currentStep ? { ...s, status: 'running' } : s) || null);
+      setActiveWorkflow(
+        prev => prev?.map((s, i) => (i === currentStep ? { ...s, status: 'running' } : s)) || null
+      );
 
       // Complete after delay
       setTimeout(() => {
-        setActiveWorkflow(prev => prev?.map((s, i) => i === currentStep ? { ...s, status: 'complete' } : s) || null);
+        setActiveWorkflow(
+          prev =>
+            prev?.map((s, i) => (i === currentStep ? { ...s, status: 'complete' } : s)) || null
+        );
         currentStep++;
         setTimeout(advanceStep, 400);
       }, steps[currentStep].duration || 1200);
@@ -1500,106 +1838,228 @@ function DrSageTab() {
     advanceStep();
   }, []);
 
-  const handleSend = useCallback((text: string) => {
-    if (!text.trim() || isThinking) return;
+  const handleSend = useCallback(
+    (text: string) => {
+      if (!text.trim() || isThinking) return;
 
-    const userMsg: SageMessage = {
-      id: `user-${Date.now()}`,
-      role: 'user',
-      content: text,
-      timestamp: new Date(),
-    };
-    setMessages(prev => [...prev, userMsg]);
-    setInput('');
-    setIsThinking(true);
-
-    const lower = text.toLowerCase();
-
-    // Detect if this should trigger a multi-step workflow
-    if (lower.includes('review') && (lower.includes('submission') || lower.includes('dossier') || lower.includes('document'))) {
-      runWorkflow([
-        { id: 's1', label: 'Analyzing eCTD structure', description: 'Checking module organization and completeness', agent: 'sage', status: 'pending', duration: 1500 },
-        { id: 's2', label: 'Requesting gap analysis from AnA', description: 'AnA scanning all artifacts for compliance gaps', agent: 'ana', status: 'pending', duration: 2000 },
-        { id: 's3', label: 'Cross-referencing Module 2 vs source data', description: 'Verifying summary consistency with study reports', agent: 'both', status: 'pending', duration: 1800 },
-        { id: 's4', label: 'Generating reviewer assessment', description: 'Compiling findings from reviewer perspective', agent: 'sage', status: 'pending', duration: 1200 },
-      ], SAGE_RESPONSES['review-submission']);
-      return;
-    }
-
-    if (lower.includes('fix') || (lower.includes('compliance') && lower.includes('gap'))) {
-      runWorkflow([
-        { id: 's1', label: 'AnA running comprehensive gap scan', description: 'Identifying all compliance gaps across artifacts', agent: 'ana', status: 'pending', duration: 2000 },
-        { id: 's2', label: 'Dr. Sage triaging by reviewer impact', description: 'Prioritizing findings by CRL trigger probability', agent: 'sage', status: 'pending', duration: 1500 },
-        { id: 's3', label: 'AnA drafting corrective content', description: 'Generating remediation text for critical gaps', agent: 'ana', status: 'pending', duration: 2200 },
-        { id: 's4', label: 'Dr. Sage reviewing corrections', description: 'Verifying fixes meet FDA review expectations', agent: 'sage', status: 'pending', duration: 1500 },
-        { id: 's5', label: 'Generating remediation report', description: 'Compiling before/after comparison with confidence scores', agent: 'both', status: 'pending', duration: 1000 },
-      ], SAGE_RESPONSES['fix-with-ana']);
-      return;
-    }
-
-    if (lower.includes('audit') || lower.includes('inspection')) {
-      runWorkflow([
-        { id: 's1', label: 'Checking document system compliance', description: 'Verifying 21 CFR Part 11 controls', agent: 'sage', status: 'pending', duration: 1500 },
-        { id: 's2', label: 'AnA verifying audit trail integrity', description: 'Scanning for gaps in electronic records', agent: 'ana', status: 'pending', duration: 1800 },
-        { id: 's3', label: 'Assessing data integrity controls', description: 'ALCOA+ compliance verification', agent: 'sage', status: 'pending', duration: 1200 },
-        { id: 's4', label: 'Generating inspection readiness score', description: 'Compiling checklist and recommendations', agent: 'both', status: 'pending', duration: 1000 },
-      ], SAGE_RESPONSES['audit-prep']);
-      return;
-    }
-
-    // Default response for free-text
-    setTimeout(() => {
-      const context = lower.includes('510') ? 'For 510(k) submissions specifically, ' :
-        lower.includes('ind') ? 'For IND applications, ' :
-        lower.includes('nda') ? 'For NDA submissions, ' :
-        lower.includes('cer') ? 'For Clinical Evaluation Reports under EU MDR, ' :
-        lower.includes('cmc') ? 'From a CMC review perspective, ' :
-        lower.includes('clinical') ? 'On the clinical side, ' : '';
-
-      const sageMsg: SageMessage = {
-        id: `sage-${Date.now()}`,
-        role: 'sage',
-        content: `${context}Based on my experience reviewing thousands of submissions at FDA, here's my perspective:\n\n${lower.includes('review') ? 'From a reviewer standpoint, the key things we look for are completeness, consistency, and scientific rigor. Every claim needs supporting evidence, and every cross-reference needs to actually match.\n\n' : ''}${lower.includes('train') ? 'Training is critical — I\'ve seen too many submissions fail because teams didn\'t understand the regulatory expectations. I recommend starting with the Learning Paths in the Training tab — pick the one that matches your role.\n\n' : ''}${lower.includes('fix') || lower.includes('issue') ? 'Let me work with AnA to identify the root cause. Often what looks like a documentation issue is actually a data gap that needs to be addressed upstream.\n\n' : ''}${lower.includes('help') || lower.includes('how') ? 'I can walk you through any platform feature from both a user perspective and a reviewer perspective. The key is understanding not just *how* the tool works, but *why* it matters for your submission.\n\n' : ''}I can provide more specific guidance if you tell me about your product type and target indication. Or try one of the quick actions on the right to start a specific workflow.\n\nRemember — I give you the reviewer's perspective. AnA handles the writing, I handle the "would this pass review?" question.`,
-        agentAction: lower.includes('ana') ? {
-          type: 'consult-ana',
-          label: 'Consulted with AnA',
-          status: 'complete',
-        } : undefined,
+      const userMsg: SageMessage = {
+        id: `user-${Date.now()}`,
+        role: 'user',
+        content: text,
         timestamp: new Date(),
       };
-      setMessages(prev => [...prev, sageMsg]);
-      setIsThinking(false);
-    }, 1500);
-  }, [isThinking, runWorkflow]);
+      setMessages(prev => [...prev, userMsg]);
+      setInput('');
+      setIsThinking(true);
 
-  const handleQuickAction = useCallback((actionId: string) => {
-    const action = SAGE_QUICK_ACTIONS.find(a => a.id === actionId);
-    if (!action || isThinking) return;
+      const lower = text.toLowerCase();
 
-    const userMsg: SageMessage = {
-      id: `user-${Date.now()}`,
-      role: 'user',
-      content: action.label,
-      timestamp: new Date(),
-    };
-    setMessages(prev => [...prev, userMsg]);
-    setIsThinking(true);
+      // Detect if this should trigger a multi-step workflow
+      if (
+        lower.includes('review') &&
+        (lower.includes('submission') || lower.includes('dossier') || lower.includes('document'))
+      ) {
+        runWorkflow(
+          [
+            {
+              id: 's1',
+              label: 'Analyzing eCTD structure',
+              description: 'Checking module organization and completeness',
+              agent: 'sage',
+              status: 'pending',
+              duration: 1500,
+            },
+            {
+              id: 's2',
+              label: 'Requesting gap analysis from AnA',
+              description: 'AnA scanning all artifacts for compliance gaps',
+              agent: 'ana',
+              status: 'pending',
+              duration: 2000,
+            },
+            {
+              id: 's3',
+              label: 'Cross-referencing Module 2 vs source data',
+              description: 'Verifying summary consistency with study reports',
+              agent: 'both',
+              status: 'pending',
+              duration: 1800,
+            },
+            {
+              id: 's4',
+              label: 'Generating reviewer assessment',
+              description: 'Compiling findings from reviewer perspective',
+              agent: 'sage',
+              status: 'pending',
+              duration: 1200,
+            },
+          ],
+          SAGE_RESPONSES['review-submission']
+        );
+        return;
+      }
 
-    setTimeout(() => {
-      const response = SAGE_RESPONSES[actionId] || 'Let me look into that for you...';
-      const sageMsg: SageMessage = {
-        id: `sage-${Date.now()}`,
-        role: 'sage',
-        content: response,
-        agentAction: ['fix-with-ana', 'review-submission', 'mock-review'].includes(actionId)
-          ? { type: 'consult-ana' as const, label: 'Working with AnA...', status: 'complete' as const }
-          : undefined,
+      if (lower.includes('fix') || (lower.includes('compliance') && lower.includes('gap'))) {
+        runWorkflow(
+          [
+            {
+              id: 's1',
+              label: 'AnA running comprehensive gap scan',
+              description: 'Identifying all compliance gaps across artifacts',
+              agent: 'ana',
+              status: 'pending',
+              duration: 2000,
+            },
+            {
+              id: 's2',
+              label: 'Dr. Sage triaging by reviewer impact',
+              description: 'Prioritizing findings by CRL trigger probability',
+              agent: 'sage',
+              status: 'pending',
+              duration: 1500,
+            },
+            {
+              id: 's3',
+              label: 'AnA drafting corrective content',
+              description: 'Generating remediation text for critical gaps',
+              agent: 'ana',
+              status: 'pending',
+              duration: 2200,
+            },
+            {
+              id: 's4',
+              label: 'Dr. Sage reviewing corrections',
+              description: 'Verifying fixes meet FDA review expectations',
+              agent: 'sage',
+              status: 'pending',
+              duration: 1500,
+            },
+            {
+              id: 's5',
+              label: 'Generating remediation report',
+              description: 'Compiling before/after comparison with confidence scores',
+              agent: 'both',
+              status: 'pending',
+              duration: 1000,
+            },
+          ],
+          SAGE_RESPONSES['fix-with-ana']
+        );
+        return;
+      }
+
+      if (lower.includes('audit') || lower.includes('inspection')) {
+        runWorkflow(
+          [
+            {
+              id: 's1',
+              label: 'Checking document system compliance',
+              description: 'Verifying 21 CFR Part 11 controls',
+              agent: 'sage',
+              status: 'pending',
+              duration: 1500,
+            },
+            {
+              id: 's2',
+              label: 'AnA verifying audit trail integrity',
+              description: 'Scanning for gaps in electronic records',
+              agent: 'ana',
+              status: 'pending',
+              duration: 1800,
+            },
+            {
+              id: 's3',
+              label: 'Assessing data integrity controls',
+              description: 'ALCOA+ compliance verification',
+              agent: 'sage',
+              status: 'pending',
+              duration: 1200,
+            },
+            {
+              id: 's4',
+              label: 'Generating inspection readiness score',
+              description: 'Compiling checklist and recommendations',
+              agent: 'both',
+              status: 'pending',
+              duration: 1000,
+            },
+          ],
+          SAGE_RESPONSES['audit-prep']
+        );
+        return;
+      }
+
+      // Default response for free-text
+      setTimeout(() => {
+        const context = lower.includes('510')
+          ? 'For 510(k) submissions specifically, '
+          : lower.includes('ind')
+            ? 'For IND applications, '
+            : lower.includes('nda')
+              ? 'For NDA submissions, '
+              : lower.includes('cer')
+                ? 'For Clinical Evaluation Reports under EU MDR, '
+                : lower.includes('cmc')
+                  ? 'From a CMC review perspective, '
+                  : lower.includes('clinical')
+                    ? 'On the clinical side, '
+                    : '';
+
+        const sageMsg: SageMessage = {
+          id: `sage-${Date.now()}`,
+          role: 'sage',
+          content: `${context}Based on my experience reviewing thousands of submissions at FDA, here's my perspective:\n\n${lower.includes('review') ? 'From a reviewer standpoint, the key things we look for are completeness, consistency, and scientific rigor. Every claim needs supporting evidence, and every cross-reference needs to actually match.\n\n' : ''}${lower.includes('train') ? "Training is critical — I've seen too many submissions fail because teams didn't understand the regulatory expectations. I recommend starting with the Learning Paths in the Training tab — pick the one that matches your role.\n\n" : ''}${lower.includes('fix') || lower.includes('issue') ? 'Let me work with AnA to identify the root cause. Often what looks like a documentation issue is actually a data gap that needs to be addressed upstream.\n\n' : ''}${lower.includes('help') || lower.includes('how') ? 'I can walk you through any platform feature from both a user perspective and a reviewer perspective. The key is understanding not just *how* the tool works, but *why* it matters for your submission.\n\n' : ''}I can provide more specific guidance if you tell me about your product type and target indication. Or try one of the quick actions on the right to start a specific workflow.\n\nRemember — I give you the reviewer's perspective. AnA handles the writing, I handle the "would this pass review?" question.`,
+          agentAction: lower.includes('ana')
+            ? {
+                type: 'consult-ana',
+                label: 'Consulted with AnA',
+                status: 'complete',
+              }
+            : undefined,
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, sageMsg]);
+        setIsThinking(false);
+      }, 1500);
+    },
+    [isThinking, runWorkflow]
+  );
+
+  const handleQuickAction = useCallback(
+    (actionId: string) => {
+      const action = SAGE_QUICK_ACTIONS.find(a => a.id === actionId);
+      if (!action || isThinking) return;
+
+      const userMsg: SageMessage = {
+        id: `user-${Date.now()}`,
+        role: 'user',
+        content: action.label,
         timestamp: new Date(),
       };
-      setMessages(prev => [...prev, sageMsg]);
-      setIsThinking(false);
-    }, 2000);
-  }, [isThinking]);
+      setMessages(prev => [...prev, userMsg]);
+      setIsThinking(true);
+
+      setTimeout(() => {
+        const response = SAGE_RESPONSES[actionId] || 'Let me look into that for you...';
+        const sageMsg: SageMessage = {
+          id: `sage-${Date.now()}`,
+          role: 'sage',
+          content: response,
+          agentAction: ['fix-with-ana', 'review-submission', 'mock-review'].includes(actionId)
+            ? {
+                type: 'consult-ana' as const,
+                label: 'Working with AnA...',
+                status: 'complete' as const,
+              }
+            : undefined,
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, sageMsg]);
+        setIsThinking(false);
+      }, 2000);
+    },
+    [isThinking]
+  );
 
   return (
     <div className="space-y-6">
@@ -1621,10 +2081,10 @@ function DrSageTab() {
               </span>
             </div>
             <p className="text-sm text-blue-100 leading-relaxed mb-3">
-              Simulated FDA reviewer with 20+ years of experience across CDER, CDRH, and CBER.
-              I serve as your platform advisor, training host, and internal regulatory counsel.
-              I can review your work from a reviewer's perspective, train your team, and collaborate
-              with AnA to resolve issues.
+              Simulated FDA reviewer with 20+ years of experience across CDER, CDRH, and CBER. I
+              serve as your platform advisor, training host, and internal regulatory counsel. I can
+              review your work from a reviewer's perspective, train your team, and collaborate with
+              AnA to resolve issues.
             </p>
             <div className="flex flex-wrap gap-2">
               {[
@@ -1636,7 +2096,10 @@ function DrSageTab() {
               ].map(badge => {
                 const Icon = badge.icon;
                 return (
-                  <span key={badge.label} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 text-xs text-blue-100">
+                  <span
+                    key={badge.label}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 text-xs text-blue-100"
+                  >
                     <Icon className="w-3 h-3" />
                     {badge.label}
                   </span>
@@ -1650,7 +2113,10 @@ function DrSageTab() {
       {/* Chat + Quick Actions Layout */}
       <div className="grid grid-cols-12 gap-5">
         {/* Chat Window */}
-        <div className="col-span-8 bg-white rounded-xl border border-zinc-200 flex flex-col" style={{ height: '520px' }}>
+        <div
+          className="col-span-8 bg-white rounded-xl border border-zinc-200 flex flex-col"
+          style={{ height: '520px' }}
+        >
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {messages.map(msg => (
@@ -1665,31 +2131,44 @@ function DrSageTab() {
                     <Bot className="w-4 h-4 text-zinc-500" />
                   </div>
                 )}
-                <div className={cn(
-                  'max-w-[80%] rounded-xl px-4 py-3',
-                  msg.role === 'sage' && 'bg-zinc-50 border border-zinc-200',
-                  msg.role === 'user' && 'bg-zinc-900 text-white',
-                  msg.role === 'system' && 'bg-blue-50 border border-blue-100 text-blue-800',
-                )}>
-                  <div className={cn(
-                    'text-sm leading-relaxed whitespace-pre-wrap',
-                    msg.role === 'system' && 'text-xs',
-                  )}>
+                <div
+                  className={cn(
+                    'max-w-[80%] rounded-xl px-4 py-3',
+                    msg.role === 'sage' && 'bg-zinc-50 border border-zinc-200',
+                    msg.role === 'user' && 'bg-zinc-900 text-white',
+                    msg.role === 'system' && 'bg-blue-50 border border-blue-100 text-blue-800'
+                  )}
+                >
+                  <div
+                    className={cn(
+                      'text-sm leading-relaxed whitespace-pre-wrap',
+                      msg.role === 'system' && 'text-xs'
+                    )}
+                  >
                     {/* Simple markdown-like bold rendering */}
                     {msg.content.split(/(\*\*.*?\*\*)/).map((part, i) => {
                       if (part.startsWith('**') && part.endsWith('**')) {
-                        return <strong key={i} className="font-semibold">{part.slice(2, -2)}</strong>;
+                        return (
+                          <strong key={i} className="font-semibold">
+                            {part.slice(2, -2)}
+                          </strong>
+                        );
                       }
                       return <span key={i}>{part}</span>;
                     })}
                   </div>
                   {msg.agentAction && (
                     <div className="mt-2 pt-2 border-t border-zinc-200 flex items-center gap-2">
-                      <div className={cn(
-                        'w-2 h-2 rounded-full',
-                        msg.agentAction.status === 'running' ? 'bg-amber-400 animate-pulse' :
-                        msg.agentAction.status === 'complete' ? 'bg-emerald-500' : 'bg-zinc-300'
-                      )} />
+                      <div
+                        className={cn(
+                          'w-2 h-2 rounded-full',
+                          msg.agentAction.status === 'running'
+                            ? 'bg-amber-400 animate-pulse'
+                            : msg.agentAction.status === 'complete'
+                              ? 'bg-emerald-500'
+                              : 'bg-zinc-300'
+                        )}
+                      />
                       <span className="text-xs text-zinc-500">{msg.agentAction.label}</span>
                       {msg.agentAction.status === 'complete' && (
                         <CheckCircle2 className="w-3 h-3 text-emerald-500" />
@@ -1708,15 +2187,23 @@ function DrSageTab() {
                 <div className="bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-4 max-w-[80%]">
                   <div className="flex items-center gap-2 mb-3">
                     <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
-                    <span className="text-xs font-semibold text-zinc-700">Agentic Workflow Running...</span>
+                    <span className="text-xs font-semibold text-zinc-700">
+                      Agentic Workflow Running...
+                    </span>
                   </div>
                   <div className="space-y-2">
                     {activeWorkflow.map((step, idx) => (
-                      <div key={step.id} className={cn(
-                        'flex items-start gap-2.5 p-2 rounded-lg transition-colors duration-150',
-                        step.status === 'running' ? 'bg-blue-50' :
-                        step.status === 'complete' ? 'bg-emerald-50/50' : 'bg-transparent'
-                      )}>
+                      <div
+                        key={step.id}
+                        className={cn(
+                          'flex items-start gap-2.5 p-2 rounded-lg transition-colors duration-150',
+                          step.status === 'running'
+                            ? 'bg-blue-50'
+                            : step.status === 'complete'
+                              ? 'bg-emerald-50/50'
+                              : 'bg-transparent'
+                        )}
+                      >
                         <div className="mt-0.5 flex-shrink-0">
                           {step.status === 'complete' ? (
                             <CheckCircle2 className="w-4 h-4 text-emerald-500" />
@@ -1728,16 +2215,33 @@ function DrSageTab() {
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <span className={cn('text-xs font-medium', step.status === 'complete' ? 'text-emerald-700' : step.status === 'running' ? 'text-blue-700' : 'text-zinc-400')}>
+                            <span
+                              className={cn(
+                                'text-xs font-medium',
+                                step.status === 'complete'
+                                  ? 'text-emerald-700'
+                                  : step.status === 'running'
+                                    ? 'text-blue-700'
+                                    : 'text-zinc-400'
+                              )}
+                            >
                               {step.label}
                             </span>
-                            <span className={cn(
-                              'px-1.5 py-0.5 rounded text-xs font-medium',
-                              step.agent === 'sage' ? 'bg-blue-100 text-blue-600' :
-                              step.agent === 'ana' ? 'bg-violet-100 text-violet-600' :
-                              'bg-zinc-100 text-zinc-600'
-                            )}>
-                              {step.agent === 'sage' ? 'Dr. Sage' : step.agent === 'ana' ? 'AnA' : 'Both'}
+                            <span
+                              className={cn(
+                                'px-1.5 py-0.5 rounded text-xs font-medium',
+                                step.agent === 'sage'
+                                  ? 'bg-blue-100 text-blue-600'
+                                  : step.agent === 'ana'
+                                    ? 'bg-violet-100 text-violet-600'
+                                    : 'bg-zinc-100 text-zinc-600'
+                              )}
+                            >
+                              {step.agent === 'sage'
+                                ? 'Dr. Sage'
+                                : step.agent === 'ana'
+                                  ? 'AnA'
+                                  : 'Both'}
                             </span>
                           </div>
                           {step.status === 'running' && (
@@ -1850,9 +2354,9 @@ function DrSageTab() {
               <span className="text-xs font-semibold text-zinc-900">AnA + Dr. Sage</span>
             </div>
             <p className="text-xs text-zinc-500 leading-relaxed">
-              Dr. Sage and AnA work together. AnA drafts and researches — Dr. Sage reviews
-              from the FDA perspective. When they collaborate, you get documents that are both
-              well-written and reviewer-ready.
+              Dr. Sage and AnA work together. AnA drafts and researches — Dr. Sage reviews from the
+              FDA perspective. When they collaborate, you get documents that are both well-written
+              and reviewer-ready.
             </p>
           </div>
         </div>
@@ -1876,36 +2380,49 @@ function WhatsNewTab() {
       <div className="text-center max-w-2xl mx-auto mb-2">
         <h2 className="text-2xl font-semibold text-zinc-900 mb-2">What's New</h2>
         <p className="text-sm text-zinc-500">
-          The latest features, intelligence updates, and improvements to help you
-          get more from the platform.
+          The latest features, intelligence updates, and improvements to help you get more from the
+          platform.
         </p>
       </div>
 
       {/* Latest highlight */}
-      {WHATS_NEW.length > 0 && (() => {
-        const latest = WHATS_NEW[0];
-        const LatestIcon = latest.icon;
-        const typeCfg = TYPE_CONFIG[latest.type];
-        return (
-          <div className="bg-gradient-to-br from-violet-50 via-blue-50 to-cyan-50 rounded-xl border border-violet-100 p-8">
-            <div className="flex items-start gap-4">
-              <div className="w-14 h-14 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0 /50">
-                <LatestIcon className="w-7 h-7 text-white" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', `bg-${typeCfg.color}-100 text-${typeCfg.color}-700`)}>
-                    {typeCfg.label}
-                  </span>
-                  <span className="text-xs text-zinc-400">v{latest.version} — {new Date(latest.date).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+      {WHATS_NEW.length > 0 &&
+        (() => {
+          const latest = WHATS_NEW[0];
+          const LatestIcon = latest.icon;
+          const typeCfg = TYPE_CONFIG[latest.type];
+          return (
+            <div className="bg-gradient-to-br from-violet-50 via-blue-50 to-cyan-50 rounded-xl border border-violet-100 p-8">
+              <div className="flex items-start gap-4">
+                <div className="w-14 h-14 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0 /50">
+                  <LatestIcon className="w-7 h-7 text-white" />
                 </div>
-                <h3 className="text-lg font-semibold text-zinc-900 mb-2">{latest.title}</h3>
-                <p className="text-sm text-zinc-600 leading-relaxed">{latest.description}</p>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span
+                      className={cn(
+                        'px-2 py-0.5 rounded-full text-xs font-medium',
+                        `bg-${typeCfg.color}-100 text-${typeCfg.color}-700`
+                      )}
+                    >
+                      {typeCfg.label}
+                    </span>
+                    <span className="text-xs text-zinc-400">
+                      v{latest.version} —{' '}
+                      {new Date(latest.date).toLocaleDateString(undefined, {
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-zinc-900 mb-2">{latest.title}</h3>
+                  <p className="text-sm text-zinc-600 leading-relaxed">{latest.description}</p>
+                </div>
               </div>
             </div>
-          </div>
-        );
-      })()}
+          );
+        })()}
 
       {/* Timeline */}
       <div className="relative">
@@ -1921,12 +2438,20 @@ function WhatsNewTab() {
                 </div>
                 <div className="bg-white rounded-xl border border-zinc-200 p-4 flex-1 hover:shadow-sm transition-shadow">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', `bg-${typeCfg.color}-50 text-${typeCfg.color}-700`)}>
+                    <span
+                      className={cn(
+                        'px-2 py-0.5 rounded-full text-xs font-medium',
+                        `bg-${typeCfg.color}-50 text-${typeCfg.color}-700`
+                      )}
+                    >
                       {typeCfg.label}
                     </span>
                     <span className="text-xs text-zinc-400">v{item.version}</span>
                     <span className="text-xs text-zinc-400 ml-auto">
-                      {new Date(item.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                      {new Date(item.date).toLocaleDateString(undefined, {
+                        month: 'short',
+                        day: 'numeric',
+                      })}
                     </span>
                   </div>
                   <h4 className="text-sm font-semibold text-zinc-900 mb-1">{item.title}</h4>
@@ -1946,13 +2471,28 @@ function WhatsNewTab() {
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
-            { title: 'Real-Time Co-Review', desc: 'Dr. Sage and AnA reviewing documents simultaneously with live annotation overlay', icon: Eye },
-            { title: 'Global Regulatory Map', desc: 'Visual intelligence map across 20+ regulatory agencies with pathway comparison', icon: Globe },
-            { title: 'Automated Pre-Sub Package', desc: 'One-click generation of complete pre-submission meeting packages with briefing documents', icon: FileText },
+            {
+              title: 'Real-Time Co-Review',
+              desc: 'Dr. Sage and AnA reviewing documents simultaneously with live annotation overlay',
+              icon: Eye,
+            },
+            {
+              title: 'Global Regulatory Map',
+              desc: 'Visual intelligence map across 20+ regulatory agencies with pathway comparison',
+              icon: Globe,
+            },
+            {
+              title: 'Automated Pre-Sub Package',
+              desc: 'One-click generation of complete pre-submission meeting packages with briefing documents',
+              icon: FileText,
+            },
           ].map(item => {
             const RoadmapIcon = item.icon;
             return (
-              <div key={item.title} className="p-4 rounded-xl bg-white/10 hover:bg-white/15 transition-colors duration-150">
+              <div
+                key={item.title}
+                className="p-4 rounded-xl bg-white/10 hover:bg-white/15 transition-colors duration-150"
+              >
                 <RoadmapIcon className="w-5 h-5 text-violet-300 mb-2" />
                 <h4 className="text-sm font-semibold text-white mb-1">{item.title}</h4>
                 <p className="text-xs text-zinc-400 leading-relaxed">{item.desc}</p>
@@ -1977,12 +2517,42 @@ export const AboutTrainingCenter: React.FC = () => {
       <div className="max-w-5xl mx-auto px-6 py-8">
         {/* Tab Navigation */}
         <div className="flex items-center gap-1 mb-8 p-1 bg-zinc-100 rounded-xl w-fit mx-auto">
-          <TabButton active={activeTab === 'about'} label="Who We Are" icon={Sparkles} onClick={() => setActiveTab('about')} />
-          <TabButton active={activeTab === 'platform'} label="Platform" icon={LayoutGrid} onClick={() => setActiveTab('platform')} />
-          <TabButton active={activeTab === 'intelligence'} label="Intelligence" icon={Brain} onClick={() => setActiveTab('intelligence')} />
-          <TabButton active={activeTab === 'training'} label="Training" icon={GraduationCap} onClick={() => setActiveTab('training')} />
-          <TabButton active={activeTab === 'dr-sage'} label="Dr. Sage" icon={Stethoscope} onClick={() => setActiveTab('dr-sage')} />
-          <TabButton active={activeTab === 'whats-new'} label="What's New" icon={Megaphone} onClick={() => setActiveTab('whats-new')} />
+          <TabButton
+            active={activeTab === 'about'}
+            label="Who We Are"
+            icon={Sparkles}
+            onClick={() => setActiveTab('about')}
+          />
+          <TabButton
+            active={activeTab === 'platform'}
+            label="Platform"
+            icon={LayoutGrid}
+            onClick={() => setActiveTab('platform')}
+          />
+          <TabButton
+            active={activeTab === 'intelligence'}
+            label="Intelligence"
+            icon={Brain}
+            onClick={() => setActiveTab('intelligence')}
+          />
+          <TabButton
+            active={activeTab === 'training'}
+            label="Training"
+            icon={GraduationCap}
+            onClick={() => setActiveTab('training')}
+          />
+          <TabButton
+            active={activeTab === 'dr-sage'}
+            label="Dr. Sage"
+            icon={Stethoscope}
+            onClick={() => setActiveTab('dr-sage')}
+          />
+          <TabButton
+            active={activeTab === 'whats-new'}
+            label="What's New"
+            icon={Megaphone}
+            onClick={() => setActiveTab('whats-new')}
+          />
         </div>
 
         {/* Tab Content */}

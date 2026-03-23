@@ -115,7 +115,7 @@ function buildResetEmailHtml(resetUrl: string): string {
 export async function sendPasswordResetEmail(
   email: string,
   resetToken: string,
-  resetUrl: string,
+  resetUrl: string
 ): Promise<void> {
   const transporter = getTransporter();
 
@@ -148,15 +148,50 @@ function buildOtpEmailHtml(code: string): string {
   return `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
-<body style="margin:0;padding:0;background-color:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+<body style="margin:0;padding:0;background-color:#f4f4f7;font-family:-apple-system,BlinkMacSystemFont,'Poppins',Roboto,Helvetica,Arial,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f7;padding:40px 0;">
     <tr><td align="center">
       <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
-        <!-- Header -->
         <tr>
-          <td style="background-color:#1a1a2e;padding:32px 40px;text-align:center;">
-            <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:600;">Concept2Cure</h1>
-            <p style="margin:4px 0 0;color:#a0a0c0;font-size:13px;">TrialSage Platform</p>
+          <td style="background-color:#292524;padding:32px 40px;text-align:center;">
+            <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:600;font-family:'Poppins',Arial,sans-serif;">Concept2Cure</h1>
+            <p style="margin:4px 0 0;color:#b0aea5;font-size:13px;font-family:'Poppins',Arial,sans-serif;">AI-Powered Regulatory Intelligence</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:40px;">
+            <h2 style="margin:0 0 16px;color:#292524;font-size:20px;font-weight:600;">Your verification code</h2>
+            <p style="margin:0 0 24px;color:#4a4a68;font-size:15px;line-height:1.6;">
+              Enter this code to complete your sign-in. It expires in <strong>10 minutes</strong>.
+            </p>
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr><td align="center" style="padding:8px 0 32px;">
+                <div style="display:inline-block;background-color:#f0f0ff;border:2px solid #4f46e5;border-radius:12px;padding:20px 40px;">
+                  <span style="font-size:36px;font-weight:700;letter-spacing:8px;color:#292524;font-family:'Courier New',monospace;">${code}</span>
+                </div>
+              </td></tr>
+            </table>
+            <hr style="border:none;border-top:1px solid #e8e6dc;margin:24px 0;" />
+            <p style="margin:0;color:#8a8880;font-size:12px;line-height:1.5;">
+              If you didn't try to sign in, someone may have entered your email by mistake. You can safely ignore this email.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background-color:#faf9f5;padding:24px 40px;text-align:center;">
+            <p style="margin:0;color:#8a8880;font-size:11px;font-family:'Poppins',Arial,sans-serif;">
+              &copy; ${new Date().getFullYear()} Concept2Cure, Inc. &middot; FDA 21 CFR Part 11 Compliant
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+}
+
+// ---------------------------------------------------------------------------
 // Welcome Email (sent on signup)
 // ---------------------------------------------------------------------------
 
@@ -168,7 +203,6 @@ function buildWelcomeEmailHtml(name: string, loginUrl: string): string {
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f7;padding:40px 0;">
     <tr><td align="center">
       <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
-        <!-- Header with logo -->
         <tr>
           <td style="background-color:#292524;padding:32px 40px;text-align:center;">
             ${process.env.LOGO_URL ? `<img src="${process.env.LOGO_URL}" alt="Concept2Cure" style="height:48px;width:auto;margin-bottom:12px;border-radius:8px;" />` : ''}
@@ -176,23 +210,8 @@ function buildWelcomeEmailHtml(name: string, loginUrl: string): string {
             <p style="margin:4px 0 0;color:#b0aea5;font-size:13px;font-family:'Poppins',Arial,sans-serif;">AI-Powered Regulatory Intelligence</p>
           </td>
         </tr>
-        <!-- Body -->
         <tr>
           <td style="padding:40px;">
-            <h2 style="margin:0 0 16px;color:#1a1a2e;font-size:20px;font-weight:600;">Your verification code</h2>
-            <p style="margin:0 0 24px;color:#4a4a68;font-size:15px;line-height:1.6;">
-              Enter this code to complete your sign-in. It expires in <strong>10 minutes</strong>.
-            </p>
-            <table width="100%" cellpadding="0" cellspacing="0">
-              <tr><td align="center" style="padding:8px 0 32px;">
-                <div style="display:inline-block;background-color:#f0f0ff;border:2px solid #4f46e5;border-radius:12px;padding:20px 40px;">
-                  <span style="font-size:36px;font-weight:700;letter-spacing:8px;color:#1a1a2e;font-family:'Courier New',monospace;">${code}</span>
-                </div>
-              </td></tr>
-            </table>
-            <hr style="border:none;border-top:1px solid #e8e8ee;margin:24px 0;" />
-            <p style="margin:0;color:#9999aa;font-size:12px;line-height:1.5;">
-              If you didn't try to sign in, someone may have entered your email by mistake. You can safely ignore this email. This event is logged per FDA 21 CFR Part 11.10(e).
             <h2 style="margin:0 0 16px;color:#292524;font-size:20px;font-weight:600;">Hi ${name},</h2>
             <p style="margin:0 0 24px;color:#4a4a68;font-size:15px;line-height:1.6;">
               Your Concept2Cure account has been created. You're now ready to transform your regulatory workflow with AI-powered intelligence.
@@ -213,15 +232,11 @@ function buildWelcomeEmailHtml(name: string, loginUrl: string): string {
             </table>
             <hr style="border:none;border-top:1px solid #e8e6dc;margin:24px 0;" />
             <p style="margin:0;color:#8a8880;font-size:12px;line-height:1.5;">
-              Your subscription includes a 3-month minimum commitment. View your plan details and usage in the billing dashboard. For questions, contact support@concept2cure.com.
+              For questions, contact support@concept2cure.com.
             </p>
           </td>
         </tr>
-        <!-- Footer -->
         <tr>
-          <td style="background-color:#f9f9fb;padding:24px 40px;text-align:center;">
-            <p style="margin:0;color:#9999aa;font-size:11px;">
-              &copy; ${new Date().getFullYear()} Concept2Cure Inc. &middot; FDA 21 CFR Part 11 Compliant
           <td style="background-color:#faf9f5;padding:24px 40px;text-align:center;">
             <p style="margin:0 0 8px;color:#8a8880;font-size:11px;font-family:'Poppins',Arial,sans-serif;">
               &copy; ${new Date().getFullYear()} Concept2Cure, Inc. &middot; FDA 21 CFR Part 11 Compliant
@@ -242,14 +257,8 @@ function buildWelcomeEmailHtml(name: string, loginUrl: string): string {
 
 /**
  * Send a login verification code (email OTP) to the user.
- *
- * When SMTP is not configured the code is printed to the console so
- * developers can still complete the flow locally.
  */
-export async function sendLoginOtpEmail(
-  email: string,
-  code: string,
-): Promise<void> {
+export async function sendLoginOtpEmail(email: string, code: string): Promise<void> {
   const transporter = getTransporter();
 
   if (!transporter) {
@@ -258,18 +267,6 @@ export async function sendLoginOtpEmail(
     console.log(`  To:   ${email}`);
     console.log(`  Code: ${code}`);
     console.log('──────────────────────────────────────────────');
- * Send a welcome email on new account creation.
- */
-export async function sendWelcomeEmail(
-  email: string,
-  firstName: string,
-): Promise<void> {
-  const transporter = getTransporter();
-  const loginUrl = `${process.env.APP_URL || 'https://concept2cure.com'}/concept2cure/login`;
-  const name = firstName || email.split('@')[0];
-
-  if (!transporter) {
-    console.log(`[Email Service] SMTP not configured — welcome email for ${email} not sent`);
     return;
   }
 
@@ -282,6 +279,24 @@ export async function sendWelcomeEmail(
   });
 
   console.log(`[Email Service] Login OTP email sent to ${email}`);
+}
+
+/**
+ * Send a welcome email on new account creation.
+ */
+export async function sendWelcomeEmail(email: string, firstName: string): Promise<void> {
+  const transporter = getTransporter();
+  const loginUrl = `${process.env.APP_URL || 'https://concept2cure.com'}/concept2cure/login`;
+  const name = firstName || email.split('@')[0];
+
+  if (!transporter) {
+    console.log(`[Email Service] SMTP not configured — welcome email for ${email} not sent`);
+    return;
+  }
+
+  await transporter.sendMail({
+    from: `"Concept2Cure" <${FROM_ADDRESS}>`,
+    to: email,
     subject: 'Welcome to Concept2Cure — Your Account is Ready',
     text: `Hi ${name},\n\nWelcome to Concept2Cure! Your account has been created.\n\nSign in: ${loginUrl}\n\n— The Concept2Cure Team`,
     html: buildWelcomeEmailHtml(name, loginUrl),
@@ -300,7 +315,7 @@ export async function sendWelcomeEmail(
 export async function sendInvitationEmail(
   email: string,
   inviterName: string,
-  orgName: string,
+  orgName: string
 ): Promise<void> {
   const transporter = getTransporter();
   const signupUrl = `${process.env.APP_URL || 'https://concept2cure.com'}/concept2cure/signup?invite=${encodeURIComponent(email)}`;

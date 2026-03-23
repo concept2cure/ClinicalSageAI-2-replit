@@ -25,10 +25,7 @@ import { fileURLToPath } from 'url';
 import { initializeProofDatabasePersistence } from '../services/proof/database-setup';
 
 // Enterprise Security & Performance Middleware
-import {
-  applySecurityMiddleware,
-  auditLog,
-} from './middleware/enterprise-security.js';
+import { applySecurityMiddleware, auditLog } from './middleware/enterprise-security.js';
 import {
   applyPerformanceMiddleware,
   cleanup as cleanupPerformance,
@@ -85,7 +82,9 @@ import { fda510kStageProgress, fda510kProjects, projects, draftingTasks } from '
 })();
 
 // Debug mode configuration — disabled in production
-const DEBUG = process.env.NODE_ENV !== 'production' && (process.env.DEBUG || process.env.NODE_ENV === 'development');
+const DEBUG =
+  process.env.NODE_ENV !== 'production' &&
+  (process.env.DEBUG || process.env.NODE_ENV === 'development');
 const debugLog = (message: string, data?: any) => {
   if (DEBUG) {
     console.log(`[DEBUG ${new Date().toISOString()}] ${message}`, data || '');
@@ -145,7 +144,9 @@ const startPythonBackend = () => {
 // Graceful shutdown
 // Module-level reference for graceful shutdown
 let _httpServer: any = null;
-export function setHttpServer(server: any) { _httpServer = server; }
+export function setHttpServer(server: any) {
+  _httpServer = server;
+}
 
 async function gracefulShutdown(signal: string) {
   console.log(`🔄 Graceful shutdown initiated (${signal})...`);
@@ -153,13 +154,16 @@ async function gracefulShutdown(signal: string) {
   // 1. Stop accepting new connections and drain in-flight requests
   if (_httpServer) {
     console.log('🔄 Draining HTTP connections...');
-    await new Promise<void>((resolve) => {
+    await new Promise<void>(resolve => {
       _httpServer.close(() => {
         console.log('✅ HTTP server closed — all connections drained');
         resolve();
       });
       // Force close after 10 seconds if connections don't drain
-      setTimeout(() => { console.log('⚠️ Force closing after 10s timeout'); resolve(); }, 10000);
+      setTimeout(() => {
+        console.log('⚠️ Force closing after 10s timeout');
+        resolve();
+      }, 10000);
     });
   }
 
@@ -179,7 +183,8 @@ async function gracefulShutdown(signal: string) {
 
   // 4. Drain AI action queue and close Redis
   try {
-    const { drainActionQueue, closeAllSSEConnections, closeRedis } = await import('./services/ai-actions/index');
+    const { drainActionQueue, closeAllSSEConnections, closeRedis } =
+      await import('./services/ai-actions/index');
     closeAllSSEConnections();
     await drainActionQueue(10_000);
     await closeRedis();
@@ -217,7 +222,7 @@ process.on('unhandledRejection', (reason, promise) => {
   }
 });
 
-process.on('uncaughtException', (error) => {
+process.on('uncaughtException', error => {
   console.error('UNCAUGHT EXCEPTION:', error);
   process.exit(1);
 });
@@ -528,9 +533,10 @@ app.get('/api/projects', async (req, res) => {
     // SECURITY: Always derive organization from authenticated JWT context
     const client_workspace_id =
       req.query.client_workspace_id || req.headers['x-client-workspace-id'];
-    const organization_id = (req as any).tenantContext?.organizationId
-      || (req as any).organizationId
-      || (req as any).user?.organizationId;
+    const organization_id =
+      (req as any).tenantContext?.organizationId ||
+      (req as any).organizationId ||
+      (req as any).user?.organizationId;
 
     if (!organization_id) {
       return res.status(403).json({ error: 'Organization context required' });
@@ -879,7 +885,9 @@ try {
   app.use('/api/cmc/batch-records', cmcBatchRecordRoutes);
   app.use('/api/cmc/dashboard-legacy', cmcDashboardRoutes);
   app.use('/api/cmc/dashboard', cmcDashboardPrisma);
-  console.log('✅ CMC Module API routes mounted (aggregator + projects + blueprint + specifications + stability + batch-records + dashboard)');
+  console.log(
+    '✅ CMC Module API routes mounted (aggregator + projects + blueprint + specifications + stability + batch-records + dashboard)'
+  );
 } catch (error) {
   console.error('❌ Failed to mount CMC Module routes:', error);
 }
@@ -1267,7 +1275,9 @@ try {
   const clinOpsModule = await import('./routes/clinical-operations-routes');
   const createClinicalOperationsRoutes = clinOpsModule.default;
   app.use('/api/clinical-operations', createClinicalOperationsRoutes(pool));
-  console.log('✅ Clinical Operations API routes mounted (studies, sites, enrollment, monitoring, deviations)');
+  console.log(
+    '✅ Clinical Operations API routes mounted (studies, sites, enrollment, monitoring, deviations)'
+  );
 } catch (error) {
   console.error('❌ Failed to mount Clinical Operations routes:', error);
 }
@@ -1404,7 +1414,9 @@ try {
   const statDefModule = await import('./routes/statistical-defensibility.js');
   const statDefRouter = statDefModule.default;
   app.use('/api/statistical-defensibility', statDefRouter);
-  console.log('✅ Statistical Defensibility routes mounted (assess, consistency, endpoint-quality, sample-size, multiplicity, reviewer-risks)');
+  console.log(
+    '✅ Statistical Defensibility routes mounted (assess, consistency, endpoint-quality, sample-size, multiplicity, reviewer-risks)'
+  );
 } catch (error) {
   console.error('❌ Failed to mount Statistical Defensibility routes:', error);
 }
@@ -1417,6 +1429,7 @@ try {
   console.log('✅ Conversation Health Monitoring route mounted');
 } catch (error) {
   console.error('❌ Failed to mount Conversation Health routes:', error);
+}
 // Mount Billing Dashboard routes (usage tracking, budgets, alerts, invoices)
 try {
   const billingDashModule = await import('./routes/billing-dashboard.js');
@@ -1549,7 +1562,9 @@ try {
   const haqModule = await import('./routes/haq-manager');
   const haqRoutes = haqModule.default;
   app.use('/api/haq-manager', haqRoutes);
-  console.log('✅ HAQ Response Manager routes mounted (question tracking, AI drafting, review workflow)');
+  console.log(
+    '✅ HAQ Response Manager routes mounted (question tracking, AI drafting, review workflow)'
+  );
 } catch (error) {
   console.error('❌ Failed to mount HAQ Manager routes:', error);
 }
@@ -1559,7 +1574,9 @@ try {
   const indAutodraftModule = await import('./routes/ind-autodraft');
   const indAutodraftRoutes = indAutodraftModule.default;
   app.use('/api/ind-autodraft', indAutodraftRoutes);
-  console.log('✅ IND AutoDraft Engine routes mounted (16 IND sections, sentence-level traceability)');
+  console.log(
+    '✅ IND AutoDraft Engine routes mounted (16 IND sections, sentence-level traceability)'
+  );
 } catch (error) {
   console.error('❌ Failed to mount IND AutoDraft routes:', error);
 }
@@ -1879,7 +1896,9 @@ try {
   const publicApiModule = await import('./routes/public-api.js');
   const publicApiRoutes = publicApiModule.default;
   app.use('/api/v1', publicApiRoutes);
-  console.log('✅ Public API v1 routes mounted (CSR, Regulatory, Endpoints, Precedent, Trial Design)');
+  console.log(
+    '✅ Public API v1 routes mounted (CSR, Regulatory, Endpoints, Precedent, Trial Design)'
+  );
 } catch (error) {
   console.error('❌ Failed to mount Public API routes:', error);
 }
@@ -2042,11 +2061,13 @@ app.get('/api/csr-intelligence/analytics', async (req: Request, res: Response) =
     debugLog('CSR intelligence analytics endpoint called', { type });
 
     // Query real counts from csr_reports table
-    const totalResult = await pool.query('SELECT COUNT(*)::int AS total FROM csr_reports WHERE deleted_at IS NULL');
+    const totalResult = await pool.query(
+      'SELECT COUNT(*)::int AS total FROM csr_reports WHERE deleted_at IS NULL'
+    );
     const totalCSRs = totalResult.rows[0]?.total ?? 0;
 
     const todayResult = await pool.query(
-      "SELECT COUNT(*)::int AS cnt FROM csr_reports WHERE deleted_at IS NULL AND upload_date >= CURRENT_DATE"
+      'SELECT COUNT(*)::int AS cnt FROM csr_reports WHERE deleted_at IS NULL AND upload_date >= CURRENT_DATE'
     );
     const processedToday = todayResult.rows[0]?.cnt ?? 0;
 
@@ -2115,7 +2136,9 @@ app.get('/api/csr-intelligence/stats', async (req: Request, res: Response) => {
   try {
     debugLog('CSR intelligence stats endpoint called');
 
-    const totalResult = await pool.query('SELECT COUNT(*)::int AS total FROM csr_reports WHERE deleted_at IS NULL');
+    const totalResult = await pool.query(
+      'SELECT COUNT(*)::int AS total FROM csr_reports WHERE deleted_at IS NULL'
+    );
     const csrCount = totalResult.rows[0]?.total ?? 0;
 
     const taCountResult = await pool.query(
@@ -2284,7 +2307,9 @@ app.get('/api/csr-real-data/all', async (req: Request, res: Response) => {
 
     const limitNum = Math.min(Math.max(parseInt(limit as string, 10) || 10, 1), 100);
 
-    const countResult = await pool.query('SELECT COUNT(*)::int AS total FROM csr_reports WHERE deleted_at IS NULL');
+    const countResult = await pool.query(
+      'SELECT COUNT(*)::int AS total FROM csr_reports WHERE deleted_at IS NULL'
+    );
     const total = countResult.rows[0]?.total ?? 0;
 
     const dataResult = await pool.query(
@@ -2319,7 +2344,9 @@ app.get('/api/csr-real-data/stats', async (req: Request, res: Response) => {
   try {
     debugLog('CSR real data stats endpoint called');
 
-    const totalResult = await pool.query('SELECT COUNT(*)::int AS total FROM csr_reports WHERE deleted_at IS NULL');
+    const totalResult = await pool.query(
+      'SELECT COUNT(*)::int AS total FROM csr_reports WHERE deleted_at IS NULL'
+    );
     const totalReports = totalResult.rows[0]?.total ?? 0;
 
     const processedResult = await pool.query(
@@ -2952,7 +2979,8 @@ app.get('/api/audit/export/signed', async (req: Request, res: Response) => {
         manifest: signedExport.manifest,
         signature: signedExport.signature,
         verification: {
-          instruction: 'To verify: compute HMAC-SHA256 of the canonical manifest JSON using the server signing key, then compare to the signature field. Also verify SHA-256(data) === manifest.dataHash.',
+          instruction:
+            'To verify: compute HMAC-SHA256 of the canonical manifest JSON using the server signing key, then compare to the signature field. Also verify SHA-256(data) === manifest.dataHash.',
           algorithm: 'HMAC-SHA256',
           hashAlgorithm: 'SHA-256',
         },
@@ -3387,10 +3415,18 @@ try {
 
   // Initialize HA infrastructure (Redis, queue, SSE broadcaster)
   const redisOk = await aiActions.initializeRedis();
-  console.log(redisOk ? '✅ AI Actions Redis connected' : '⚠️  AI Actions Redis unavailable (in-memory fallback)');
+  console.log(
+    redisOk
+      ? '✅ AI Actions Redis connected'
+      : '⚠️  AI Actions Redis unavailable (in-memory fallback)'
+  );
 
   const queueOk = await aiActions.initializeActionQueue();
-  console.log(queueOk ? '✅ AI Actions async queue initialized' : '⚠️  AI Actions queue unavailable (sync fallback)');
+  console.log(
+    queueOk
+      ? '✅ AI Actions async queue initialized'
+      : '⚠️  AI Actions queue unavailable (sync fallback)'
+  );
 
   aiActions.initializeSSEBroadcaster();
 
@@ -3476,17 +3512,20 @@ app.post('/api/510k-workflow/:projectId', async (req, res) => {
         stage,
         section,
         action: 'SAVE',
-        userId: parseInt(req.headers['x-user-id'] as string || ''),
+        userId: parseInt((req.headers['x-user-id'] as string) || ''),
         organizationId: parseInt(organizationId),
         data,
         metadata: {
           ipAddress: req.ip,
           userAgent: req.headers['user-agent'],
-          sessionId: req.headers['x-session-id'] as string
-        }
+          sessionId: req.headers['x-session-id'] as string,
+        },
       });
     } catch (auditErr) {
-      console.warn('[510k-workflow] Audit trail write failed (migration pending?):', (auditErr as Error).message);
+      console.warn(
+        '[510k-workflow] Audit trail write failed (migration pending?):',
+        (auditErr as Error).message
+      );
       // Non-blocking: workflow continues even if audit fails during migration window
     }
 
@@ -3618,18 +3657,21 @@ app.post('/api/510k-workflow/:projectId', async (req, res) => {
       await FDA510kComplianceTracker.createDocumentVersion({
         documentId: `510K_${projectId}`,
         projectId,
-        userId: parseInt(req.headers['x-user-id'] as string || ''),
+        userId: parseInt((req.headers['x-user-id'] as string) || ''),
         organizationId: parseInt(organizationId),
         content: data,
         changeDescription: `Updated ${stage} - ${section || 'default'}`,
         metadata: {
           stage,
           section,
-          completedSteps: req.body.completedSteps || []
-        }
+          completedSteps: req.body.completedSteps || [],
+        },
       });
     } catch (versionErr) {
-      console.warn('[510k-workflow] Document version tracking failed (migration pending?):', (versionErr as Error).message);
+      console.warn(
+        '[510k-workflow] Document version tracking failed (migration pending?):',
+        (versionErr as Error).message
+      );
     }
 
     // Trigger automatic document generation via DocumentOrchestrationService
@@ -3638,7 +3680,7 @@ app.post('/api/510k-workflow/:projectId', async (req, res) => {
       const orchestrationService = new DocumentOrchestrationService();
       const orchestrationResult = await orchestrationService.orchestrateDocumentGeneration(
         projectId,
-        (req.headers['x-user-id'] as string),
+        req.headers['x-user-id'] as string,
         organizationId
       );
       autoPopulated = true;
@@ -5878,12 +5920,21 @@ app.post('/api/v1/drafting/start_task', async (req: Request, res: Response) => {
       });
     } catch (dbError) {
       // Fallback: if table doesn't exist yet (pre-migration), use in-memory
-      console.warn('[drafting] DB insert failed, using in-memory fallback:', (dbError as Error).message);
+      console.warn(
+        '[drafting] DB insert failed, using in-memory fallback:',
+        (dbError as Error).message
+      );
       (global as any).draftingTasks = (global as any).draftingTasks || {};
       (global as any).draftingTasks[taskId] = {
-        id: taskId, project_id, ectd_section, document_title, template,
-        status: 'COMPLETED', draft_content: generatedContent,
-        created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+        id: taskId,
+        project_id,
+        ectd_section,
+        document_title,
+        template,
+        status: 'COMPLETED',
+        draft_content: generatedContent,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       };
     }
 

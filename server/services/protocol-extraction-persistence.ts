@@ -143,14 +143,14 @@ class ProtocolExtractionPersistenceService {
       let stdout = '';
       let stderr = '';
 
-      proc.stdout.on('data', (data) => {
+      proc.stdout.on('data', data => {
         stdout += data.toString();
       });
-      proc.stderr.on('data', (data) => {
+      proc.stderr.on('data', data => {
         stderr += data.toString();
       });
 
-      proc.on('close', (code) => {
+      proc.on('close', code => {
         if (code !== 0) {
           console.error(`Protocol extraction failed: ${stderr}`);
           resolve({
@@ -181,7 +181,7 @@ class ProtocolExtractionPersistenceService {
         }
       });
 
-      proc.on('error', (err) => {
+      proc.on('error', err => {
         console.error(`Failed to spawn Python extractor: ${err.message}`);
         resolve({ fields: {}, text: '', usedAI: false });
       });
@@ -221,17 +221,18 @@ class ProtocolExtractionPersistenceService {
     try {
       const truncatedText = text.slice(0, 30000);
 
-      const aiResult = await ai.chat({
-        model: 'gpt-4o',
-        response_format: { type: 'json_object' },
-        messages: [
-          {
-            role: 'system',
-            content: `You are a clinical trial protocol extraction specialist. Extract structured data from clinical trial protocols. Return ONLY valid JSON. For fields you cannot determine, use null for strings/objects and [] for arrays. Never fabricate data — only extract what is explicitly stated in the text.`,
-          },
-          {
-            role: 'user',
-            content: `Extract the following fields from this clinical trial protocol. Return JSON matching this schema exactly:
+      const aiResult = await ai.chat(
+        {
+          model: 'gpt-4o',
+          response_format: { type: 'json_object' },
+          messages: [
+            {
+              role: 'system',
+              content: `You are a clinical trial protocol extraction specialist. Extract structured data from clinical trial protocols. Return ONLY valid JSON. For fields you cannot determine, use null for strings/objects and [] for arrays. Never fabricate data — only extract what is explicitly stated in the text.`,
+            },
+            {
+              role: 'user',
+              content: `Extract the following fields from this clinical trial protocol. Return JSON matching this schema exactly:
 
 {
   "title": "full study title or null",
@@ -256,8 +257,9 @@ class ProtocolExtractionPersistenceService {
 
 Protocol text:
 ${truncatedText}`,
-          },
-        ],
+            },
+          ],
+        },
         { jsonMode: true, temperature: 0.1, maxTokens: 4000 }
       );
 
@@ -346,7 +348,10 @@ ${truncatedText}`,
   /**
    * Retrieve a previously extracted protocol by document ID
    */
-  async getExtraction(documentId: string, organizationId: number): Promise<ProtocolExtractionResult | null> {
+  async getExtraction(
+    documentId: string,
+    organizationId: number
+  ): Promise<ProtocolExtractionResult | null> {
     try {
       const results = await db.execute(sql`
         SELECT * FROM protocol_extractions

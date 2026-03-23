@@ -361,12 +361,13 @@ class RealTimeValidationService extends EventEmitter {
     documentType: string
   ): Promise<{ issues: ValidationIssue[]; suggestions: Suggestion[] }> {
     try {
-      const completion = await this.ai.chat({
-        model: 'gpt-4o',
-        messages: [
-          {
-            role: 'system',
-            content: `You are a regulatory document validation expert. Analyze the following ${documentType} content for:
+      const completion = await this.ai.chat(
+        {
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'system',
+              content: `You are a regulatory document validation expert. Analyze the following ${documentType} content for:
             1. Regulatory compliance issues
             2. Missing required information
             3. Clarity and consistency problems
@@ -375,14 +376,17 @@ class RealTimeValidationService extends EventEmitter {
             Return a JSON object with:
             - issues: array of {type, message, severity, category}
             - suggestions: array of {type, text, replacement, confidence, reasoning}`,
-          },
-          {
-            role: 'user',
-            content: content.substring(0, 3000),
-          },
-        ], { jsonMode: true, temperature: 0.3, maxTokens: 1000, callerModule: 'realTimeValidation/analyzeContentWithAI' });
+            },
+            {
+              role: 'user',
+              content: content.substring(0, 3000),
+            },
+          ],
+        },
+        { jsonMode: true, temperature: 0.3, maxTokens: 1000 }
+      );
 
-      const result = JSON.parse(aiResult.content || '{}');
+      const result = JSON.parse(completion.content || '{}');
 
       // Map AI results to our format
       const issues: ValidationIssue[] = (result.issues || []).map((issue: any) => ({

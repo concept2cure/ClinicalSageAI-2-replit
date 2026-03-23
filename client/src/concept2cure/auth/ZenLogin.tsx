@@ -38,7 +38,14 @@ import { C2CLogo } from '@/concept2cure/components/brand/C2CLogo';
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-type AuthStep = 'email' | 'password' | 'mfa' | 'mfa-recovery' | 'success' | 'forgot-password' | 'reset-sent';
+type AuthStep =
+  | 'email'
+  | 'password'
+  | 'mfa'
+  | 'mfa-recovery'
+  | 'success'
+  | 'forgot-password'
+  | 'reset-sent';
 
 interface AuthError {
   field?: 'email' | 'password' | 'mfa';
@@ -50,9 +57,7 @@ interface AuthError {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // Logo rendered from original uploaded brand asset with gradient soft blend
-const BrandLogo = () => (
-  <C2CLogo variant="login" />
-);
+const BrandLogo = () => <C2CLogo variant="login" />;
 
 const MicrosoftIcon = () => (
   <svg viewBox="0 0 21 21" className="w-5 h-5">
@@ -252,7 +257,6 @@ export const ZenLogin: React.FC = () => {
   const [password, setPassword] = useState('');
   const [mfaCode, setMfaCode] = useState('');
   const [recoveryCode, setRecoveryCode] = useState('');
-  const [mfaMethod, setMfaMethod] = useState<MfaMethod['type']>('email');
   const [mfaMethod, setMfaMethod] = useState<MfaMethod['type']>('totp');
   const [useRecoveryCode, setUseRecoveryCode] = useState(false);
   const [availableMfaMethods, setAvailableMfaMethods] = useState<MfaMethod[]>([]);
@@ -377,7 +381,7 @@ export const ZenLogin: React.FC = () => {
 
     try {
       const result = await verifyMfa({
-        method: useRecoveryCode ? 'recovery' as any : mfaMethod,
+        method: useRecoveryCode ? ('recovery' as any) : mfaMethod,
         code: mfaCode.trim(),
       });
 
@@ -413,7 +417,9 @@ export const ZenLogin: React.FC = () => {
         setResendCountdown(60);
         setError(null);
       } else {
-        setError({ message: result.error?.message || 'Failed to resend code. Please try logging in again.' });
+        setError({
+          message: result.error?.message || 'Failed to resend code. Please try logging in again.',
+        });
       }
     } catch {
       setError({ message: 'Failed to resend code.' });
@@ -493,43 +499,76 @@ export const ZenLogin: React.FC = () => {
   // Demo / Quick access login (dev-only)
   // ─────────────────────────────────────────────────────────────────────────────
 
-  const demoPersonas = import.meta.env.DEV ? [
-    { email: 'jm.smith@concept2cure.pro', name: 'JM Smith', role: 'Admin', title: 'Founder', icon: '👤' },
-    { email: 'sarah.chen@concept2cure.pro', name: 'Sarah Chen', role: 'Editor', title: 'Regulatory Affairs Director', icon: '📋' },
-    { email: 'mike.torres@concept2cure.pro', name: 'Mike Torres', role: 'Member', title: 'Clinical Data Analyst', icon: '📊' },
-    { email: 'demo@concept2cure.pro', name: 'Demo User', role: 'Member', title: 'Demo Account', icon: '⚡' },
-  ] : [];
+  const demoPersonas = import.meta.env.DEV
+    ? [
+        {
+          email: 'jm.smith@concept2cure.pro',
+          name: 'JM Smith',
+          role: 'Admin',
+          title: 'Founder',
+          icon: '👤',
+        },
+        {
+          email: 'sarah.chen@concept2cure.pro',
+          name: 'Sarah Chen',
+          role: 'Editor',
+          title: 'Regulatory Affairs Director',
+          icon: '📋',
+        },
+        {
+          email: 'mike.torres@concept2cure.pro',
+          name: 'Mike Torres',
+          role: 'Member',
+          title: 'Clinical Data Analyst',
+          icon: '📊',
+        },
+        {
+          email: 'demo@concept2cure.pro',
+          name: 'Demo User',
+          role: 'Member',
+          title: 'Demo Account',
+          icon: '⚡',
+        },
+      ]
+    : [];
 
   const [showPersonas, setShowPersonas] = useState(false);
 
-  const handleDemoLogin = useCallback(async (demoEmail = 'jm.smith@concept2cure.pro') => {
-    if (!import.meta.env.DEV) return;
-    setIsLoading(true);
-    setError(null);
-    try {
-      const result = await login({
-        email: demoEmail,
-        password: 'demo123',
-        rememberDevice: true,
-      });
-      if (!result.success) {
-        setError({
-          message: result.error?.message || 'Demo login failed. Please contact support.',
+  const handleDemoLogin = useCallback(
+    async (demoEmail = 'jm.smith@concept2cure.pro') => {
+      if (!import.meta.env.DEV) return;
+      setIsLoading(true);
+      setError(null);
+      try {
+        const result = await login({
+          email: demoEmail,
+          password: 'demo123',
+          rememberDevice: true,
         });
-        return;
+        if (!result.success) {
+          setError({
+            message: result.error?.message || 'Demo login failed. Please contact support.',
+          });
+          return;
+        }
+        setStep('success');
+        setTimeout(() => {
+          setLocation(
+            computeRedirect(
+              undefined,
+              undefined,
+              () => authService.getUser && authService.getUser()
+            )
+          );
+        }, 800);
+      } catch (err) {
+        setError({ message: 'Demo login failed. Please try again.' });
+      } finally {
+        setIsLoading(false);
       }
-      setStep('success');
-      setTimeout(() => {
-        setLocation(
-          computeRedirect(undefined, undefined, () => authService.getUser && authService.getUser())
-        );
-      }, 800);
-    } catch (err) {
-      setError({ message: 'Demo login failed. Please try again.' });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [login, setLocation]);
+    },
+    [login, setLocation]
+  );
 
   const handleSsoLogin = useCallback(
     async (provider: 'microsoft' | 'google') => {
@@ -668,9 +707,7 @@ export const ZenLogin: React.FC = () => {
           <div className="w-full border-t border-zinc-200" />
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="px-4 bg-white text-zinc-400 text-sm">
-            or continue with
-          </span>
+          <span className="px-4 bg-white text-zinc-400 text-sm">or continue with</span>
         </div>
       </div>
 
@@ -909,12 +946,14 @@ export const ZenLogin: React.FC = () => {
 
       {useRecoveryCode ? (
         <div className="space-y-2">
-          <label htmlFor="recovery-code" className="block text-sm font-medium text-zinc-700">Recovery code</label>
+          <label htmlFor="recovery-code" className="block text-sm font-medium text-zinc-700">
+            Recovery code
+          </label>
           <input
             id="recovery-code"
             type="text"
             value={mfaCode}
-            onChange={(e) => setMfaCode(e.target.value)}
+            onChange={e => setMfaCode(e.target.value)}
             placeholder="xxxx-xxxx-xxxx"
             autoComplete="off"
             autoFocus
@@ -926,9 +965,7 @@ export const ZenLogin: React.FC = () => {
               ${error?.field === 'mfa' ? 'border-red-300' : 'border-zinc-200'}
             `}
           />
-          {error?.field === 'mfa' && (
-            <p className="text-sm text-red-600">{error.message}</p>
-          )}
+          {error?.field === 'mfa' && <p className="text-sm text-red-600">{error.message}</p>}
         </div>
       ) : (
         <>
@@ -968,7 +1005,11 @@ export const ZenLogin: React.FC = () => {
 
       <button
         onClick={handleMfaVerify}
-        disabled={isLoading || (!useRecoveryCode && mfaCode.length !== 6) || (useRecoveryCode && mfaCode.trim().length === 0)}
+        disabled={
+          isLoading ||
+          (!useRecoveryCode && mfaCode.length !== 6) ||
+          (useRecoveryCode && mfaCode.trim().length === 0)
+        }
         className={`
           w-full py-3 px-4
           flex items-center justify-center gap-2
@@ -1004,7 +1045,10 @@ export const ZenLogin: React.FC = () => {
         <p className="text-center text-sm text-zinc-500">
           Having trouble?{' '}
           <button
-            onClick={() => { setError(null); setStep('mfa-recovery'); }}
+            onClick={() => {
+              setError(null);
+              setStep('mfa-recovery');
+            }}
             className="text-blue-600 hover:text-blue-700 font-medium"
           >
             Use a recovery code
@@ -1024,7 +1068,11 @@ export const ZenLogin: React.FC = () => {
       className="space-y-6"
     >
       <button
-        onClick={() => { setError(null); setRecoveryCode(''); setStep('mfa'); }}
+        onClick={() => {
+          setError(null);
+          setRecoveryCode('');
+          setStep('mfa');
+        }}
         className="flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-800"
       >
         <ArrowLeftIcon />
@@ -1049,21 +1097,24 @@ export const ZenLogin: React.FC = () => {
           id="recovery-code"
           type="text"
           value={recoveryCode}
-          onChange={e => { setRecoveryCode(e.target.value); setError(null); }}
+          onChange={e => {
+            setRecoveryCode(e.target.value);
+            setError(null);
+          }}
           placeholder="e.g. ABCD-1234-EFGH"
           autoFocus
           className={`
             w-full px-4 py-3 rounded-xl border text-base font-mono tracking-wide
             transition-all duration-200
-            ${error?.field === 'mfa'
-              ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-              : 'border-zinc-200 focus:ring-blue-500 focus:border-blue-500'}
+            ${
+              error?.field === 'mfa'
+                ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                : 'border-zinc-200 focus:ring-blue-500 focus:border-blue-500'
+            }
             focus:outline-none focus:ring-2
           `}
         />
-        {error?.field === 'mfa' && (
-          <p className="text-sm text-red-600">{error.message}</p>
-        )}
+        {error?.field === 'mfa' && <p className="text-sm text-red-600">{error.message}</p>}
       </div>
 
       <button
@@ -1087,7 +1138,11 @@ export const ZenLogin: React.FC = () => {
         {useRecoveryCode ? (
           <button
             type="button"
-            onClick={() => { setUseRecoveryCode(false); setMfaCode(''); setError(null); }}
+            onClick={() => {
+              setUseRecoveryCode(false);
+              setMfaCode('');
+              setError(null);
+            }}
             className="text-blue-600 hover:text-blue-700 font-medium focus-visible:ring-2 focus-visible:ring-blue-500 rounded outline-none"
           >
             Use authenticator app instead
@@ -1097,7 +1152,11 @@ export const ZenLogin: React.FC = () => {
             Having trouble?{' '}
             <button
               type="button"
-              onClick={() => { setUseRecoveryCode(true); setMfaCode(''); setError(null); }}
+              onClick={() => {
+                setUseRecoveryCode(true);
+                setMfaCode('');
+                setError(null);
+              }}
               className="text-blue-600 hover:text-blue-700 font-medium focus-visible:ring-2 focus-visible:ring-blue-500 rounded outline-none"
             >
               Use a recovery code

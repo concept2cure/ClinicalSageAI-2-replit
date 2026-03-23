@@ -27,7 +27,10 @@ import {
   detectActiveModule,
 } from './module-intelligence.js';
 import { assembleInstructionEnginePrompt } from './lumen-instruction-engine.js';
-import { buildClientIntelligenceContext, buildProjectIntelligenceContext } from './client-intelligence-memory.js';
+import {
+  buildClientIntelligenceContext,
+  buildProjectIntelligenceContext,
+} from './client-intelligence-memory.js';
 import { resolveAccountContext, formatResolvedContextForPrompt } from './account-canon.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -428,48 +431,60 @@ export async function buildLumenContext(params: {
   const projectId = params.projectId ? parseInt(String(params.projectId), 10) : null;
 
   // Load all context in parallel for speed — including full user intelligence, client intelligence, & account canon
-  const [project, documents, conversation, userInfo, orgName, userIntelligence, clientIntelligence, projectIntelligence, accountCanonResolved] = await Promise.all(
-    [
-      projectId && organizationId
-        ? loadProjectContext(projectId, organizationId)
-        : Promise.resolve(null),
-      projectId && organizationId
-        ? loadDocumentContext(projectId, organizationId)
-        : Promise.resolve(null),
-      projectId && organizationId
-        ? loadConversationContext(projectId, organizationId)
-        : Promise.resolve(null),
-      loadUserContext(userId || null, organizationId || undefined),
-      loadOrganizationName(organizationId || null),
-      userId && organizationId
-        ? loadUserIntelligence({
-            userId,
-            organizationId,
-            activeProjectId: projectId || undefined,
-          })
-        : Promise.resolve(null),
-      // Client Intelligence Memory — deep knowledge of the client organization
-      organizationId
-        ? buildClientIntelligenceContext(organizationId).catch(() => null)
-        : Promise.resolve(null),
-      // Project Intelligence Memory — deep knowledge specific to the active project
-      projectId
-        ? buildProjectIntelligenceContext(projectId).catch(() => null)
-        : Promise.resolve(null),
-      // Account Canon — selectively resolved governed memory (canon items, terms, bundles)
-      organizationId
-        ? resolveAccountContext({
-            organizationId,
-            submissionType: params.submissionType || undefined,
-            projectId: projectId || undefined,
-          }).then(resolved =>
-            resolved.canonItems.length > 0 || resolved.terms.length > 0 || resolved.bundles.length > 0
+  const [
+    project,
+    documents,
+    conversation,
+    userInfo,
+    orgName,
+    userIntelligence,
+    clientIntelligence,
+    projectIntelligence,
+    accountCanonResolved,
+  ] = await Promise.all([
+    projectId && organizationId
+      ? loadProjectContext(projectId, organizationId)
+      : Promise.resolve(null),
+    projectId && organizationId
+      ? loadDocumentContext(projectId, organizationId)
+      : Promise.resolve(null),
+    projectId && organizationId
+      ? loadConversationContext(projectId, organizationId)
+      : Promise.resolve(null),
+    loadUserContext(userId || null, organizationId || undefined),
+    loadOrganizationName(organizationId || null),
+    userId && organizationId
+      ? loadUserIntelligence({
+          userId,
+          organizationId,
+          activeProjectId: projectId || undefined,
+        })
+      : Promise.resolve(null),
+    // Client Intelligence Memory — deep knowledge of the client organization
+    organizationId
+      ? buildClientIntelligenceContext(organizationId).catch(() => null)
+      : Promise.resolve(null),
+    // Project Intelligence Memory — deep knowledge specific to the active project
+    projectId
+      ? buildProjectIntelligenceContext(projectId).catch(() => null)
+      : Promise.resolve(null),
+    // Account Canon — selectively resolved governed memory (canon items, terms, bundles)
+    organizationId
+      ? resolveAccountContext({
+          organizationId,
+          submissionType: params.submissionType || undefined,
+          projectId: projectId || undefined,
+        })
+          .then(resolved =>
+            resolved.canonItems.length > 0 ||
+            resolved.terms.length > 0 ||
+            resolved.bundles.length > 0
               ? formatResolvedContextForPrompt(resolved)
               : null
-          ).catch(() => null)
-        : Promise.resolve(null),
-    ]
-  );
+          )
+          .catch(() => null)
+      : Promise.resolve(null),
+  ]);
 
   // Touch the work session so we track what the user is currently doing
   if (userId && organizationId) {
@@ -501,7 +516,10 @@ export async function buildLumenContext(params: {
  * Assemble the full system prompt with context injected.
  * Returns the base prompt if no project context is available.
  */
-export function assembleSystemPrompt(context: LumenContext, customSystemPrompt?: string): string {
+export async function assembleSystemPrompt(
+  context: LumenContext,
+  customSystemPrompt?: string
+): Promise<string> {
   // If caller provided a full custom system prompt, respect it
   if (customSystemPrompt) return customSystemPrompt;
 
@@ -744,16 +762,29 @@ ${moduleIntel.workflowStages.map((s, i) => `${i + 1}. **${s.name}** (${s.estimat
 - **Overall Readiness**: ${readiness.overallScore}% (${readiness.status.replace(/_/g, ' ')})
 - **Completeness**: ${readiness.scores.completeness}% | **Quality**: ${readiness.scores.quality}% | **Compliance**: ${readiness.scores.compliance}%
 - **Routing**: ${readiness.scores.routing}% | **Consistency**: ${readiness.scores.consistency}%
-- **Blockers**: ${readiness.blockers.length}${readiness.blockers.length > 0 ? ` — ${readiness.blockers.slice(0, 3).map(b => b.message).join('; ')}` : ''}
+- **Blockers**: ${readiness.blockers.length}${
+        readiness.blockers.length > 0
+          ? ` — ${readiness.blockers
+              .slice(0, 3)
+              .map(b => b.message)
+              .join('; ')}`
+          : ''
+      }
 
 ### Top Recommendations
-${recSet.recommendations.slice(0, 5).map((r, i) => `${i + 1}. [${r.severity.toUpperCase()}] ${r.reason} → ${r.suggestedAction}`).join('\n')}
+${recSet.recommendations
+  .slice(0, 5)
+  .map((r, i) => `${i + 1}. [${r.severity.toUpperCase()}] ${r.reason} → ${r.suggestedAction}`)
+  .join('\n')}
 
 When the user asks about readiness, blockers, gaps, or what to do next, reference this data.
 You can suggest running orchestration workflows: submission_readiness_review, draft_validate_route, project_blocker_scan.`);
     } catch (err) {
       // Non-blocking — readiness intelligence is best-effort
-      console.warn('[Lumen] Phase 3 readiness intelligence unavailable:', err instanceof Error ? err.message : err);
+      console.warn(
+        '[Lumen] Phase 3 readiness intelligence unavailable:',
+        err instanceof Error ? err.message : err
+      );
     }
   }
 
@@ -877,7 +908,7 @@ export async function buildContextAwarePrompt(params: {
   sectionCode?: string;
 }): Promise<{ systemPrompt: string; context: LumenContext }> {
   const context = await buildLumenContext(params);
-  let systemPrompt = assembleSystemPrompt(context, params.customSystemPrompt);
+  let systemPrompt = await assembleSystemPrompt(context, params.customSystemPrompt);
 
   // Append deep section-specific guidance if drafting a particular CTD section
   if (params.sectionCode && !params.customSystemPrompt) {

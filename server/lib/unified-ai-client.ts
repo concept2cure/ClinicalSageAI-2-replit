@@ -73,10 +73,7 @@ export interface AICompletionOptions {
   callerModule?: string;
 }
 
-type MessageInput =
-  | GatewayMessage[]
-  | { role: string; content: string }[]
-  | string; // Simple string = single user message
+type MessageInput = GatewayMessage[] | { role: string; content: string }[] | string; // Simple string = single user message
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Unified AI Client
@@ -87,7 +84,10 @@ class UnifiedAIClient {
    * Complete a prompt and return just the text content.
    * Simplest API — drop-in replacement for `openai.chat.completions.create()`.
    */
-  async complete(messages: MessageInput | Record<string, any>, options?: AICompletionOptions): Promise<string> {
+  async complete(
+    messages: MessageInput | Record<string, any>,
+    options?: AICompletionOptions
+  ): Promise<string> {
     const response = await this.chat(messages, options);
     return response.content;
   }
@@ -99,18 +99,35 @@ class UnifiedAIClient {
    * 1. ai.chat(messages, options)           — preferred
    * 2. ai.chat({ messages, model, ... })    — OpenAI-compatible (legacy migration)
    */
-  async chat(messages: MessageInput | Record<string, any>, options?: AICompletionOptions): Promise<ClaudeEnhancedResponse> {
+  async chat(
+    messages: MessageInput | Record<string, any>,
+    options?: AICompletionOptions
+  ): Promise<ClaudeEnhancedResponse> {
     // Handle OpenAI-compatible single-object argument: ai.chat({ model, messages, temperature, ... })
-    if (messages && !Array.isArray(messages) && typeof messages === 'object' && 'messages' in messages) {
+    if (
+      messages &&
+      !Array.isArray(messages) &&
+      typeof messages === 'object' &&
+      'messages' in messages
+    ) {
       const obj = messages as Record<string, any>;
       const extractedMessages = obj.messages as MessageInput;
       const extractedOptions: AICompletionOptions = {
         ...options,
+        model: obj.model ?? options?.model,
         temperature: obj.temperature ?? options?.temperature,
         maxTokens: obj.max_tokens ?? obj.maxTokens ?? options?.maxTokens,
-        jsonMode: obj.response_format?.type === 'json_object' || options?.jsonMode,
-        callerModule: options?.callerModule,
-        taskType: options?.taskType,
+        jsonMode: obj.response_format?.type === 'json_object' || obj.jsonMode || options?.jsonMode,
+        jsonSchema: obj.jsonSchema ?? options?.jsonSchema,
+        tools: obj.tools ?? options?.tools,
+        onStream: obj.onStream ?? options?.onStream,
+        provider: obj.provider ?? options?.provider,
+        callerModule: obj.callerModule ?? options?.callerModule,
+        taskType: obj.taskType ?? options?.taskType,
+        cache: obj.cache ?? options?.cache,
+        organizationId: obj.organizationId ?? options?.organizationId,
+        userId: obj.userId ?? options?.userId,
+        projectId: obj.projectId ?? options?.projectId,
       };
       return this.chat(extractedMessages, extractedOptions);
     }

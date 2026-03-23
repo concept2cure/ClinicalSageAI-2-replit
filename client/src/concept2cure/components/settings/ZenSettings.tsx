@@ -105,7 +105,6 @@ const ToggleSwitch: React.FC<ToggleSwitchProps> = ({ enabled, onChange, label })
     onClick={() => onChange(!enabled)}
     className={cn(
       'relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:ring-offset-2',
-      'relative w-11 h-6 rounded-full transition-colors duration-150',
       enabled ? 'bg-blue-600' : 'bg-zinc-300'
     )}
   >
@@ -145,7 +144,7 @@ const ProfileSection: React.FC = () => {
 
   useEffect(() => {
     fetch('/api/users/me', { credentials: 'include' })
-      .then(r => r.ok ? r.json() : null)
+      .then(r => (r.ok ? r.json() : null))
       .then(data => {
         if (data) {
           setName(data.displayName || data.name || '');
@@ -171,7 +170,12 @@ const ProfileSection: React.FC = () => {
       if (res.ok) {
         setSaveStatus('saved');
         // Also sync to localStorage for ZenApp profile context
-        const profile = { role: title, objectives: [], criteria: [], updatedAt: new Date().toISOString() };
+        const profile = {
+          role: title,
+          objectives: [],
+          criteria: [],
+          updatedAt: new Date().toISOString(),
+        };
         localStorage.setItem('concept2cure_user_profile', JSON.stringify(profile));
         setTimeout(() => setSaveStatus('idle'), 2000);
       } else {
@@ -181,28 +185,16 @@ const ProfileSection: React.FC = () => {
       setSaveStatus('error');
     }
     setSaving(false);
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle');
-
-  const handleSave = () => {
-    const normalizeList = (value: string) =>
-      value
-        .split(/\n|,/)
-        .map(item => item.trim())
-        .filter(Boolean);
-
-    const profile = {
-      role,
-      objectives: normalizeList(objectives),
-      criteria: normalizeList(criteria),
-      updatedAt: new Date().toISOString(),
-    };
-
-    localStorage.setItem('concept2cure_user_profile', JSON.stringify(profile));
-    setSaveStatus('saved');
-    setTimeout(() => setSaveStatus('idle'), 2000);
   };
 
-  const initials = name.split(/\s+/).map(p => p[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || '??';
+  const initials =
+    name
+      .split(/\s+/)
+      .map(p => p[0])
+      .filter(Boolean)
+      .slice(0, 2)
+      .join('')
+      .toUpperCase() || '??';
 
   return (
     <div>
@@ -216,10 +208,12 @@ const ProfileSection: React.FC = () => {
         <div className="relative">
           <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center text-white text-2xl font-semibold">
             {initials}
-          <div className="w-14 h-14 rounded-lg bg-blue-600 flex items-center justify-center text-white text-base font-semibold">
-            JD
           </div>
-          <button aria-label="Change profile picture" title="Change profile picture" className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-white border border-zinc-200 shadow-sm flex items-center justify-center hover:bg-zinc-50 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none">
+          <button
+            aria-label="Change profile picture"
+            title="Change profile picture"
+            className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-white border border-zinc-200 shadow-sm flex items-center justify-center hover:bg-zinc-50 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
+          >
             <Camera className="w-4 h-4 text-zinc-600" />
           </button>
         </div>
@@ -270,19 +264,6 @@ const ProfileSection: React.FC = () => {
             onChange={e => setDepartment(e.target.value)}
             placeholder="e.g., Regulatory, Clinical, CMC"
             className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-            value={role}
-            onChange={e => setRole(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all duration-150"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-zinc-700 mb-1.5">Objectives</label>
-          <textarea
-            value={objectives}
-            onChange={e => setObjectives(e.target.value)}
-            rows={3}
-            className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all duration-150"
-            placeholder="Comma or new-line separated"
           />
         </div>
         <div>
@@ -293,8 +274,6 @@ const ProfileSection: React.FC = () => {
             rows={3}
             className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
             placeholder="A short bio visible to your team"
-            className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 text-zinc-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all duration-150"
-            placeholder="What must be true for success"
           />
         </div>
       </div>
@@ -314,16 +293,6 @@ const ProfileSection: React.FC = () => {
           <span className="text-sm text-red-600 font-medium">Failed to save</span>
         )}
       </div>
-      <button
-        onClick={handleSave}
-        className={`mt-6 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-150 ${
-          saveStatus === 'saved'
-            ? 'bg-emerald-600 text-white'
-            : 'bg-blue-600 text-white hover:bg-blue-700'
-        }`}
-      >
-        {saveStatus === 'saved' ? 'Saved' : 'Save Changes'}
-      </button>
     </div>
   );
 };
@@ -345,7 +314,12 @@ const OrganizationSection: React.FC = () => {
         nextBilling: parsed.nextBillingDate || 'See billing dashboard',
       };
     } catch {
-      return { name: 'Your Organization', plan: 'Standard', members: '—', nextBilling: 'See billing dashboard' };
+      return {
+        name: 'Your Organization',
+        plan: 'Standard',
+        members: '—',
+        nextBilling: 'See billing dashboard',
+      };
     }
   });
 
@@ -370,21 +344,30 @@ const OrganizationSection: React.FC = () => {
         </div>
 
         <SettingRow label="Team Members" description={`${orgData.members} active members`}>
-          <a href="/concept2cure/billing" className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
+          <a
+            href="/concept2cure/billing"
+            className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+          >
             Manage
             <ChevronRight className="w-4 h-4" />
           </a>
         </SettingRow>
 
         <SettingRow label="Billing" description={`Next billing: ${orgData.nextBilling}`}>
-          <a href="/concept2cure/billing" className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
+          <a
+            href="/concept2cure/billing"
+            className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+          >
             View
             <ChevronRight className="w-4 h-4" />
           </a>
         </SettingRow>
 
         <SettingRow label="Usage" description="View token usage in billing dashboard">
-          <a href="/concept2cure/billing" className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
+          <a
+            href="/concept2cure/billing"
+            className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+          >
             Dashboard
             <ChevronRight className="w-4 h-4" />
           </a>
@@ -416,8 +399,10 @@ const NotificationsSection: React.FC = () => {
 
   useEffect(() => {
     fetch('/api/users/me/notifications', { credentials: 'include' })
-      .then(r => r.ok ? r.json() : null)
-      .then(data => { if (data) setPrefs(p => ({ ...p, ...data })); })
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => {
+        if (data) setPrefs(p => ({ ...p, ...data }));
+      })
       .catch(() => {});
   }, []);
 
@@ -432,7 +417,9 @@ const NotificationsSection: React.FC = () => {
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify(prefs),
-    }).then(() => setDirty(false)).catch(() => {});
+    })
+      .then(() => setDirty(false))
+      .catch(() => {});
   };
 
   return (
@@ -448,7 +435,10 @@ const NotificationsSection: React.FC = () => {
           <ToggleSwitch enabled={prefs.emailApprovals} onChange={() => toggle('emailApprovals')} />
         </SettingRow>
         <SettingRow label="Compliance Alerts" description="Regulatory deadlines and changes">
-          <ToggleSwitch enabled={prefs.emailCompliance} onChange={() => toggle('emailCompliance')} />
+          <ToggleSwitch
+            enabled={prefs.emailCompliance}
+            onChange={() => toggle('emailCompliance')}
+          />
         </SettingRow>
         <SettingRow label="System Updates" description="Platform maintenance and new features">
           <ToggleSwitch enabled={prefs.emailSystem} onChange={() => toggle('emailSystem')} />
@@ -605,7 +595,12 @@ interface IntegrationConfig {
   connected: boolean;
   icon: string;
   authType: 'oauth' | 'api_key' | 'saml' | 'passthrough';
-  configFields: { key: string; label: string; placeholder: string; type: 'text' | 'password' | 'url' }[];
+  configFields: {
+    key: string;
+    label: string;
+    placeholder: string;
+    type: 'text' | 'password' | 'url';
+  }[];
 }
 
 const ENTERPRISE_INTEGRATIONS: IntegrationConfig[] = [
@@ -619,9 +614,24 @@ const ENTERPRISE_INTEGRATIONS: IntegrationConfig[] = [
     icon: 'M',
     authType: 'oauth',
     configFields: [
-      { key: 'clientId', label: 'Client ID', placeholder: 'Enter Medidata Client ID', type: 'text' },
-      { key: 'clientSecret', label: 'Client Secret', placeholder: 'Enter Client Secret', type: 'password' },
-      { key: 'environment', label: 'Environment URL', placeholder: 'https://your-org.mdsol.com', type: 'url' },
+      {
+        key: 'clientId',
+        label: 'Client ID',
+        placeholder: 'Enter Medidata Client ID',
+        type: 'text',
+      },
+      {
+        key: 'clientSecret',
+        label: 'Client Secret',
+        placeholder: 'Enter Client Secret',
+        type: 'password',
+      },
+      {
+        key: 'environment',
+        label: 'Environment URL',
+        placeholder: 'https://your-org.mdsol.com',
+        type: 'url',
+      },
     ],
   },
   {
@@ -633,9 +643,19 @@ const ENTERPRISE_INTEGRATIONS: IntegrationConfig[] = [
     icon: 'V',
     authType: 'oauth',
     configFields: [
-      { key: 'vaultUrl', label: 'Vault URL', placeholder: 'https://your-vault.veevavault.com', type: 'url' },
+      {
+        key: 'vaultUrl',
+        label: 'Vault URL',
+        placeholder: 'https://your-vault.veevavault.com',
+        type: 'url',
+      },
       { key: 'username', label: 'API Username', placeholder: 'api-user@domain.com', type: 'text' },
-      { key: 'password', label: 'API Password', placeholder: 'Enter Vault password', type: 'password' },
+      {
+        key: 'password',
+        label: 'API Password',
+        placeholder: 'Enter Vault password',
+        type: 'password',
+      },
     ],
   },
   {
@@ -647,9 +667,24 @@ const ENTERPRISE_INTEGRATIONS: IntegrationConfig[] = [
     icon: 'V',
     authType: 'oauth',
     configFields: [
-      { key: 'instanceUrl', label: 'Instance URL', placeholder: 'https://your-org.veevacrm.com', type: 'url' },
-      { key: 'clientId', label: 'Connected App Client ID', placeholder: 'Enter Client ID', type: 'text' },
-      { key: 'clientSecret', label: 'Client Secret', placeholder: 'Enter Client Secret', type: 'password' },
+      {
+        key: 'instanceUrl',
+        label: 'Instance URL',
+        placeholder: 'https://your-org.veevacrm.com',
+        type: 'url',
+      },
+      {
+        key: 'clientId',
+        label: 'Connected App Client ID',
+        placeholder: 'Enter Client ID',
+        type: 'text',
+      },
+      {
+        key: 'clientSecret',
+        label: 'Client Secret',
+        placeholder: 'Enter Client Secret',
+        type: 'password',
+      },
     ],
   },
   // Content & Document
@@ -664,7 +699,12 @@ const ENTERPRISE_INTEGRATIONS: IntegrationConfig[] = [
     configFields: [
       { key: 'apiKey', label: 'API Key', placeholder: 'Enter Adobe API Key', type: 'password' },
       { key: 'orgId', label: 'Organization ID', placeholder: 'Enter Org ID', type: 'text' },
-      { key: 'technicalAccountId', label: 'Technical Account ID', placeholder: 'Enter Account ID', type: 'text' },
+      {
+        key: 'technicalAccountId',
+        label: 'Technical Account ID',
+        placeholder: 'Enter Account ID',
+        type: 'text',
+      },
     ],
   },
   {
@@ -676,9 +716,19 @@ const ENTERPRISE_INTEGRATIONS: IntegrationConfig[] = [
     icon: 'D',
     authType: 'oauth',
     configFields: [
-      { key: 'integrationKey', label: 'Integration Key', placeholder: 'Enter Integration Key', type: 'text' },
+      {
+        key: 'integrationKey',
+        label: 'Integration Key',
+        placeholder: 'Enter Integration Key',
+        type: 'text',
+      },
       { key: 'secretKey', label: 'Secret Key', placeholder: 'Enter Secret Key', type: 'password' },
-      { key: 'accountId', label: 'Account ID', placeholder: 'Enter DocuSign Account ID', type: 'text' },
+      {
+        key: 'accountId',
+        label: 'Account ID',
+        placeholder: 'Enter DocuSign Account ID',
+        type: 'text',
+      },
     ],
   },
   // Cloud Storage
@@ -691,9 +741,24 @@ const ENTERPRISE_INTEGRATIONS: IntegrationConfig[] = [
     icon: 'G',
     authType: 'oauth',
     configFields: [
-      { key: 'clientId', label: 'OAuth Client ID', placeholder: 'Enter Google OAuth Client ID', type: 'text' },
-      { key: 'clientSecret', label: 'OAuth Client Secret', placeholder: 'Enter Client Secret', type: 'password' },
-      { key: 'redirectUri', label: 'Redirect URI', placeholder: 'https://your-app.com/auth/google/callback', type: 'url' },
+      {
+        key: 'clientId',
+        label: 'OAuth Client ID',
+        placeholder: 'Enter Google OAuth Client ID',
+        type: 'text',
+      },
+      {
+        key: 'clientSecret',
+        label: 'OAuth Client Secret',
+        placeholder: 'Enter Client Secret',
+        type: 'password',
+      },
+      {
+        key: 'redirectUri',
+        label: 'Redirect URI',
+        placeholder: 'https://your-app.com/auth/google/callback',
+        type: 'url',
+      },
     ],
   },
   {
@@ -705,9 +770,24 @@ const ENTERPRISE_INTEGRATIONS: IntegrationConfig[] = [
     icon: 'O',
     authType: 'oauth',
     configFields: [
-      { key: 'tenantId', label: 'Azure Tenant ID', placeholder: 'Enter Azure AD Tenant ID', type: 'text' },
-      { key: 'clientId', label: 'Application Client ID', placeholder: 'Enter App Client ID', type: 'text' },
-      { key: 'clientSecret', label: 'Client Secret', placeholder: 'Enter Client Secret', type: 'password' },
+      {
+        key: 'tenantId',
+        label: 'Azure Tenant ID',
+        placeholder: 'Enter Azure AD Tenant ID',
+        type: 'text',
+      },
+      {
+        key: 'clientId',
+        label: 'Application Client ID',
+        placeholder: 'Enter App Client ID',
+        type: 'text',
+      },
+      {
+        key: 'clientSecret',
+        label: 'Client Secret',
+        placeholder: 'Enter Client Secret',
+        type: 'password',
+      },
     ],
   },
   {
@@ -719,10 +799,30 @@ const ENTERPRISE_INTEGRATIONS: IntegrationConfig[] = [
     icon: 'S',
     authType: 'oauth',
     configFields: [
-      { key: 'tenantId', label: 'Azure Tenant ID', placeholder: 'Enter Azure AD Tenant ID', type: 'text' },
-      { key: 'clientId', label: 'Application Client ID', placeholder: 'Enter App Client ID', type: 'text' },
-      { key: 'clientSecret', label: 'Client Secret', placeholder: 'Enter Client Secret', type: 'password' },
-      { key: 'siteUrl', label: 'SharePoint Site URL', placeholder: 'https://your-org.sharepoint.com/sites/docs', type: 'url' },
+      {
+        key: 'tenantId',
+        label: 'Azure Tenant ID',
+        placeholder: 'Enter Azure AD Tenant ID',
+        type: 'text',
+      },
+      {
+        key: 'clientId',
+        label: 'Application Client ID',
+        placeholder: 'Enter App Client ID',
+        type: 'text',
+      },
+      {
+        key: 'clientSecret',
+        label: 'Client Secret',
+        placeholder: 'Enter Client Secret',
+        type: 'password',
+      },
+      {
+        key: 'siteUrl',
+        label: 'SharePoint Site URL',
+        placeholder: 'https://your-org.sharepoint.com/sites/docs',
+        type: 'url',
+      },
     ],
   },
   // Collaboration
@@ -735,7 +835,12 @@ const ENTERPRISE_INTEGRATIONS: IntegrationConfig[] = [
     icon: 'S',
     authType: 'oauth',
     configFields: [
-      { key: 'webhookUrl', label: 'Webhook URL', placeholder: 'https://hooks.slack.com/services/...', type: 'url' },
+      {
+        key: 'webhookUrl',
+        label: 'Webhook URL',
+        placeholder: 'https://hooks.slack.com/services/...',
+        type: 'url',
+      },
       { key: 'botToken', label: 'Bot Token', placeholder: 'xoxb-your-bot-token', type: 'password' },
     ],
   },
@@ -748,9 +853,19 @@ const ENTERPRISE_INTEGRATIONS: IntegrationConfig[] = [
     icon: 'J',
     authType: 'api_key',
     configFields: [
-      { key: 'siteUrl', label: 'Jira Site URL', placeholder: 'https://your-org.atlassian.net', type: 'url' },
+      {
+        key: 'siteUrl',
+        label: 'Jira Site URL',
+        placeholder: 'https://your-org.atlassian.net',
+        type: 'url',
+      },
       { key: 'email', label: 'Jira Email', placeholder: 'user@company.com', type: 'text' },
-      { key: 'apiToken', label: 'API Token', placeholder: 'Enter Jira API Token', type: 'password' },
+      {
+        key: 'apiToken',
+        label: 'API Token',
+        placeholder: 'Enter Jira API Token',
+        type: 'password',
+      },
     ],
   },
 ];
@@ -874,10 +989,6 @@ const IntegrationsSection: React.FC = () => {
                 filterCategory === cat
                   ? 'bg-blue-600 text-white'
                   : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
-                'px-3 py-1.5 text-xs font-medium rounded-lg transition-colors duration-150',
-                integration.connected
-                  ? 'text-zinc-600 bg-zinc-100 hover:bg-zinc-200'
-                  : 'text-white bg-blue-600 hover:bg-blue-700'
               )}
             >
               {CATEGORY_ICONS[cat]} {CATEGORY_LABELS[cat]} ({count})
@@ -899,9 +1010,7 @@ const IntegrationsSection: React.FC = () => {
               key={integration.id}
               className={cn(
                 'rounded-xl border transition-all duration-200',
-                isConnected
-                  ? 'border-green-200 bg-green-50/50'
-                  : 'border-zinc-200 bg-white',
+                isConnected ? 'border-green-200 bg-green-50/50' : 'border-zinc-200 bg-white',
                 isConfiguring && 'ring-2 ring-blue-200'
               )}
             >
@@ -911,9 +1020,7 @@ const IntegrationsSection: React.FC = () => {
                   <div
                     className={cn(
                       'w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold',
-                      isConnected
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-zinc-100 text-zinc-600'
+                      isConnected ? 'bg-green-100 text-green-700' : 'bg-zinc-100 text-zinc-600'
                     )}
                   >
                     {integration.icon}
@@ -1000,7 +1107,9 @@ const IntegrationsSection: React.FC = () => {
                       Save & Connect
                     </button>
                     {testResult === 'success' && (
-                      <span className="text-xs text-green-600 font-medium">Connection successful</span>
+                      <span className="text-xs text-green-600 font-medium">
+                        Connection successful
+                      </span>
                     )}
                     {testResult === 'error' && (
                       <span className="text-xs text-red-600 font-medium">
@@ -1012,7 +1121,7 @@ const IntegrationsSection: React.FC = () => {
                   {/* Auth type info */}
                   <p className="text-[11px] text-zinc-400 mt-3">
                     {integration.authType === 'oauth' &&
-                      'Uses OAuth 2.0 for secure authentication. You can also use your organization\'s SSO provider for pass-through sign-on.'}
+                      "Uses OAuth 2.0 for secure authentication. You can also use your organization's SSO provider for pass-through sign-on."}
                     {integration.authType === 'api_key' &&
                       'Uses API key authentication. Store your keys securely — they are encrypted at rest.'}
                     {integration.authType === 'saml' &&
@@ -1036,8 +1145,20 @@ const IntegrationsSection: React.FC = () => {
 
 const HelpSection: React.FC = () => {
   const resources = [
-    { id: 'docs', label: 'Documentation', icon: FileText, href: '/concept2cure/legal/terms', desc: 'Platform guides and regulatory resources' },
-    { id: 'support', label: 'Contact Support', icon: Mail, href: 'mailto:support@concept2cure.com', desc: 'Email our team at support@concept2cure.com' },
+    {
+      id: 'docs',
+      label: 'Documentation',
+      icon: FileText,
+      href: '/concept2cure/legal/terms',
+      desc: 'Platform guides and regulatory resources',
+    },
+    {
+      id: 'support',
+      label: 'Contact Support',
+      icon: Mail,
+      href: 'mailto:support@concept2cure.com',
+      desc: 'Email our team at support@concept2cure.com',
+    },
     { id: 'shortcuts', label: 'Keyboard Shortcuts', icon: Key, href: null, desc: null },
   ];
 
@@ -1054,11 +1175,11 @@ const HelpSection: React.FC = () => {
         {resources.map(({ id, label, icon: Icon, href, desc }) => (
           <a
             key={id}
-            href={id === 'shortcuts' ? undefined : (href || '#')}
+            href={id === 'shortcuts' ? undefined : href || '#'}
             onClick={id === 'shortcuts' ? () => setShowShortcuts(!showShortcuts) : undefined}
             target={href?.startsWith('http') || href?.startsWith('mailto') ? '_blank' : undefined}
             rel={href?.startsWith('http') ? 'noopener noreferrer' : undefined}
-            className="flex items-center justify-between p-4 bg-white rounded-xl border border-zinc-200 hover:bg-zinc-50 transition-colors cursor-pointer block"
+            className="flex items-center justify-between p-4 bg-white rounded-xl border border-zinc-200 hover:bg-zinc-50 transition-colors cursor-pointer"
           >
             <div className="flex items-center gap-3">
               <Icon className="w-5 h-5 text-zinc-500" />
@@ -1087,29 +1208,46 @@ const HelpSection: React.FC = () => {
             ].map(s => (
               <div key={s.keys} className="flex items-center justify-between">
                 <span className="text-xs text-zinc-600">{s.desc}</span>
-                <kbd className="text-[11px] px-1.5 py-0.5 rounded bg-white border border-zinc-200 text-zinc-500 font-mono">{s.keys}</kbd>
+                <kbd className="text-[11px] px-1.5 py-0.5 rounded bg-white border border-zinc-200 text-zinc-500 font-mono">
+                  {s.keys}
+                </kbd>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      <div className="text-center py-6 border-t border-zinc-100">
-        <p className="text-xs text-zinc-400 mb-2">Concept2Cure v3.0.0 • © 2026 Concept2Cure, Inc.</p>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-400 font-medium">
-              Coming soon
-            </span>
-          </div>
-        ))}
-      </div>
-
       <div className="text-center py-6 border-t border-zinc-200">
         <p className="text-xs text-zinc-400 mb-2">Concept2Cure v3.0.0 • © 2026 Concept2Cure</p>
         <div className="flex justify-center gap-4 text-xs">
-          <a href="/concept2cure/legal/terms" className="text-zinc-400 hover:text-zinc-600 transition-colors" target="_blank">Terms</a>
-          <a href="/concept2cure/legal/privacy" className="text-zinc-400 hover:text-zinc-600 transition-colors" target="_blank">Privacy</a>
-          <a href="/concept2cure/legal/sla" className="text-zinc-400 hover:text-zinc-600 transition-colors" target="_blank">SLA</a>
-          <a href="/concept2cure/legal/baa" className="text-zinc-400 hover:text-zinc-600 transition-colors" target="_blank">BAA</a>
+          <a
+            href="/concept2cure/legal/terms"
+            className="text-zinc-400 hover:text-zinc-600 transition-colors"
+            target="_blank"
+          >
+            Terms
+          </a>
+          <a
+            href="/concept2cure/legal/privacy"
+            className="text-zinc-400 hover:text-zinc-600 transition-colors"
+            target="_blank"
+          >
+            Privacy
+          </a>
+          <a
+            href="/concept2cure/legal/sla"
+            className="text-zinc-400 hover:text-zinc-600 transition-colors"
+            target="_blank"
+          >
+            SLA
+          </a>
+          <a
+            href="/concept2cure/legal/baa"
+            className="text-zinc-400 hover:text-zinc-600 transition-colors"
+            target="_blank"
+          >
+            BAA
+          </a>
         </div>
       </div>
     </div>
@@ -1140,81 +1278,82 @@ export const ZenSettings: React.FC<ZenSettingsProps> = ({ isOpen, onClose }) => 
 
   return (
     <AnimatePresence>
-    {isOpen && (
-    <>
-      {/* Backdrop */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.15 }}
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
-        onClick={onClose}
-      />
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+            onClick={onClose}
+          />
 
-      {/* Modal */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
-        className="fixed inset-4 sm:inset-auto sm:top-[5%] sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-4xl sm:h-[90vh] bg-white rounded-xl shadow-lg overflow-hidden z-50 flex">
-        {/* Sidebar */}
-        <div className="w-56 bg-zinc-50 border-r border-zinc-200 flex flex-col">
-          {/* Header */}
-          <div className="p-4 border-b border-zinc-200">
-            <h1 className="text-lg font-semibold text-zinc-900">Settings</h1>
-          </div>
+          {/* Modal */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.18, ease: [0.2, 0, 0, 1] }}
+            className="fixed inset-4 sm:inset-auto sm:top-[5%] sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-4xl sm:h-[90vh] bg-white rounded-xl shadow-lg overflow-hidden z-50 flex"
+          >
+            {/* Sidebar */}
+            <div className="w-56 bg-zinc-50 border-r border-zinc-200 flex flex-col">
+              {/* Header */}
+              <div className="p-4 border-b border-zinc-200">
+                <h1 className="text-lg font-semibold text-zinc-900">Settings</h1>
+              </div>
 
-          {/* Navigation */}
-          <nav className="flex-1 p-2 space-y-0.5">
-            {SETTINGS_NAV.map(({ id, label, icon: Icon }) => (
-              <button
-                key={id}
-                onClick={() => setActiveSection(id)}
-                className={cn(
-                  'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150',
-                  activeSection === id
-                    ? 'bg-white text-zinc-900 shadow-sm'
-                    : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'
-                )}
-              >
-                <Icon className="w-4 h-4" />
-                {label}
-              </button>
-            ))}
-          </nav>
+              {/* Navigation */}
+              <nav className="flex-1 p-2 space-y-0.5">
+                {SETTINGS_NAV.map(({ id, label, icon: Icon }) => (
+                  <button
+                    key={id}
+                    onClick={() => setActiveSection(id)}
+                    className={cn(
+                      'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150',
+                      activeSection === id
+                        ? 'bg-white text-zinc-900 shadow-sm'
+                        : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'
+                    )}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {label}
+                  </button>
+                ))}
+              </nav>
 
-          {/* Sign out */}
-          <div className="p-2 border-t border-zinc-200">
-            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors duration-150">
-              <LogOut className="w-4 h-4" />
-              Sign Out
-            </button>
-          </div>
-        </div>
+              {/* Sign out */}
+              <div className="p-2 border-t border-zinc-200">
+                <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors duration-150">
+                  <LogOut className="w-4 h-4" />
+                  Sign Out
+                </button>
+              </div>
+            </div>
 
-        {/* Content */}
-        <div className="flex-1 flex flex-col">
-          {/* Content header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200">
-            <div />
-            <button
-              onClick={onClose}
-              className="p-2 rounded-lg text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 transition-colors duration-150"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
+            {/* Content */}
+            <div className="flex-1 flex flex-col">
+              {/* Content header */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200">
+                <div />
+                <button
+                  onClick={onClose}
+                  className="p-2 rounded-lg text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 transition-colors duration-150"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
 
-          {/* Content body */}
-          <div className="flex-1 overflow-y-auto p-6 zen-scroll">
-            <ActiveComponent />
-          </div>
-        </div>
-      </motion.div>
-    </>
-    )}
+              {/* Content body */}
+              <div className="flex-1 overflow-y-auto p-6 zen-scroll">
+                <ActiveComponent />
+              </div>
+            </div>
+          </motion.div>
+        </>
+      )}
     </AnimatePresence>
   );
 };

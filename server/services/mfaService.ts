@@ -12,6 +12,7 @@
  */
 
 import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
 import { db } from '../db';
 import { eq } from 'drizzle-orm';
 import { users } from '../../shared/schema';
@@ -115,7 +116,6 @@ function getEncryptionKey(): Buffer {
   if (!jwtSecret) {
     throw new Error('MFA_ENCRYPTION_KEY or JWT_SECRET must be set for MFA functionality');
   }
-  const jwtSecret = process.env.JWT_SECRET || process.env.SESSION_SECRET || (() => { const c = require('crypto'); return c.randomBytes(32).toString('hex'); })();
   console.warn('[mfa] MFA_ENCRYPTION_KEY not set — deriving from JWT_SECRET. Set MFA_ENCRYPTION_KEY for production.');
   return crypto.createHash('sha256').update(jwtSecret).digest();
 }
@@ -412,8 +412,7 @@ export function createMfaChallengeToken(
   organizationUuid: string | null,
   role: string,
 ): string {
-  const jwt = require('jsonwebtoken');
-  const { config } = require('../config/environment');
+  const jwtSecret = process.env.JWT_SECRET || process.env.SESSION_SECRET || 'dev-secret';
 
   return jwt.sign(
     {
@@ -424,7 +423,7 @@ export function createMfaChallengeToken(
       role,
       type: 'mfa_challenge',
     },
-    config.jwt.secret,
+    jwtSecret,
     { expiresIn: '5m' } // 5-minute window to complete MFA
   );
 }
@@ -440,10 +439,9 @@ export function verifyMfaChallengeToken(token: string): {
   role: string;
 } | null {
   try {
-    const jwt = require('jsonwebtoken');
-    const { config } = require('../config/environment');
+    const jwtSecret = process.env.JWT_SECRET || process.env.SESSION_SECRET || 'dev-secret';
 
-    const decoded = jwt.verify(token, config.jwt.secret) as {
+    const decoded = jwt.verify(token, jwtSecret) as {
       userId: string;
       email: string;
       organizationId: string;

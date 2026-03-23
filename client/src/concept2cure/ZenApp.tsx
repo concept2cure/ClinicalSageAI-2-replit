@@ -244,17 +244,11 @@ const IntelligentReportGenerator = lazy(
   () => import('./components/reports/IntelligentReportGenerator')
 );
 
-const AnaDashboardPage = lazy(() =>
-  import('./pages/AnaDashboard')
-);
+const AnaDashboardPage = lazy(() => import('./pages/AnaDashboard'));
 
-const SafetyNarrativePage = lazy(() =>
-  import('./pages/SafetyNarrative')
-);
+const SafetyNarrativePage = lazy(() => import('./pages/SafetyNarrative'));
 
-const AnaPlatformControlPage = lazy(() =>
-  import('./pages/AnaPlatformControl')
-);
+const AnaPlatformControlPage = lazy(() => import('./pages/AnaPlatformControl'));
 
 const ProjectKnowledgePanel = lazy(() =>
   import('./components/workspace/ProjectKnowledgePanel').then(m => ({
@@ -295,9 +289,7 @@ const BiostatPlatformDashboard = lazy(
 const TrainingManagementPage = lazy(
   () => import('@/portal-v2/components/admin/TrainingManagement')
 );
-const IntegrationsPage = lazy(() =>
-  import('./pages/IntegrationsPage')
-);
+const IntegrationsPage = lazy(() => import('./pages/IntegrationsPage'));
 
 // Agent Hub and Review Pulse removed — shell-only modules not demo-ready
 
@@ -432,10 +424,10 @@ type LayoutMode =
   | 'report-engine'
   | 'about-training'
   | 'user-inbox'
-  | 'client-branding';
+  | 'client-branding'
   | 'ana-dashboard'
   | 'safety-narrative'
-  | 'ana-platform-control';
+  | 'ana-platform-control'
   | 'integrations';
 
 const INDUSTRY_MODES: IndustryMode[] = [
@@ -841,8 +833,11 @@ export const ZenApp: React.FC = () => {
   const urlModuleSegment = (routeParams as Record<string, string> | null)?.['rest*'] ?? null; // e.g. '510k', 'pma'
   const embedModulesEnabled = isFeatureEnabled('EMBED_MODULES_IN_SHELL');
   const embeddedModule =
-    embedModulesEnabled && urlModuleSegment === '510k' ? '510k' :
-    embedModulesEnabled && urlModuleSegment === 'pma' ? 'pma' : null;
+    embedModulesEnabled && urlModuleSegment === '510k'
+      ? '510k'
+      : embedModulesEnabled && urlModuleSegment === 'pma'
+        ? 'pma'
+        : null;
 
   // ─────────────────────────────────────────────────────────────────────────────
   // DATA HOOKS (Connected to Cortex + Data Layer)
@@ -2138,9 +2133,7 @@ export const ZenApp: React.FC = () => {
               )}
 
               {moduleAssistantOpen && (
-                <div
-                  className="flex-shrink-0 w-[380px] flex flex-col border-l border-zinc-200 bg-white"
-                >
+                <div className="flex-shrink-0 w-[380px] flex flex-col border-l border-zinc-200 bg-white">
                   <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100 bg-zinc-50">
                     <span className="text-sm font-medium text-zinc-700">AI Assistant</span>
                     <button
@@ -2481,7 +2474,9 @@ export const ZenApp: React.FC = () => {
                 <>
                   {/* Module 3 traceability bar */}
                   <div className="flex items-center gap-3 px-4 py-2.5 border-b border-zinc-100 bg-zinc-50 flex-shrink-0">
-                    <span className="text-xs font-medium text-zinc-600 mr-3">CTD Module 3 — Quality</span>
+                    <span className="text-xs font-medium text-zinc-600 mr-3">
+                      CTD Module 3 — Quality
+                    </span>
                     <button
                       onClick={() => {
                         setPendingEditorContent({
@@ -2887,7 +2882,10 @@ export const ZenApp: React.FC = () => {
 
           {/* ── CTD Onboarding — client CTD ingestion wizard ── */}
           {!embeddedModule && layoutMode === 'ctd-onboarding' && (
-            <div className="flex-1 flex flex-col min-h-0 p-6" data-testid="workspace-ctd-onboarding">
+            <div
+              className="flex-1 flex flex-col min-h-0 p-6"
+              data-testid="workspace-ctd-onboarding"
+            >
               <ErrorBoundary>
                 <Suspense
                   fallback={
@@ -2978,7 +2976,10 @@ export const ZenApp: React.FC = () => {
 
           {/* ── Client Branding — logo, letterhead, templates ── */}
           {!embeddedModule && layoutMode === 'client-branding' && (
-            <div className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-[#FAFAF9]" data-testid="workspace-client-branding">
+            <div
+              className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-[#FAFAF9]"
+              data-testid="workspace-client-branding"
+            >
               <div className="p-6">
                 <ErrorBoundary>
                   <Suspense
@@ -3086,7 +3087,6 @@ export const ZenApp: React.FC = () => {
               </ErrorBoundary>
             </div>
           )}
-
 
           {/* ── Client Onboarding — setup wizard, configuration ── */}
           {!embeddedModule && layoutMode === 'client-onboarding' && (
@@ -3280,7 +3280,13 @@ export const ZenApp: React.FC = () => {
           {/* ── Ana Dashboard — regulatory intelligence, gap analysis, change impact ── */}
           {!embeddedModule && layoutMode === 'ana-dashboard' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-ana-dashboard">
-              <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-zinc-300" /></div>}>
+              <Suspense
+                fallback={
+                  <div className="flex-1 flex items-center justify-center">
+                    <Loader2 className="w-5 h-5 animate-spin text-zinc-300" />
+                  </div>
+                }
+              >
                 <AnaDashboardPage projectId={activeProjectId} />
               </Suspense>
             </div>
@@ -3289,7 +3295,13 @@ export const ZenApp: React.FC = () => {
           {/* ── Safety Narrative — ICH E3 §12 compliant narrative generation ── */}
           {!embeddedModule && layoutMode === 'safety-narrative' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-safety-narrative">
-              <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-zinc-300" /></div>}>
+              <Suspense
+                fallback={
+                  <div className="flex-1 flex items-center justify-center">
+                    <Loader2 className="w-5 h-5 animate-spin text-zinc-300" />
+                  </div>
+                }
+              >
                 <SafetyNarrativePage projectId={activeProjectId} />
               </Suspense>
             </div>
@@ -3297,8 +3309,17 @@ export const ZenApp: React.FC = () => {
 
           {/* ── Ana Platform Control — agentic settings, modules, onboarding ── */}
           {!embeddedModule && layoutMode === 'ana-platform-control' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-ana-platform-control">
-              <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-zinc-300" /></div>}>
+            <div
+              className="flex-1 flex flex-col min-h-0"
+              data-testid="workspace-ana-platform-control"
+            >
+              <Suspense
+                fallback={
+                  <div className="flex-1 flex items-center justify-center">
+                    <Loader2 className="w-5 h-5 animate-spin text-zinc-300" />
+                  </div>
+                }
+              >
                 <AnaPlatformControlPage />
               </Suspense>
             </div>

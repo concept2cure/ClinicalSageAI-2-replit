@@ -218,9 +218,7 @@ function FeedCard({
     >
       <div className="flex">
         {/* Impact color stripe */}
-        <div
-          className={`w-1 shrink-0 rounded-l-xl ${IMPACT_STRIPE_COLORS[item.impactLevel]}`}
-        />
+        <div className={`w-1 shrink-0 rounded-l-xl ${IMPACT_STRIPE_COLORS[item.impactLevel]}`} />
 
         <div className="flex-1 p-5 space-y-3">
           {/* Top row — badges & time */}
@@ -250,14 +248,12 @@ function FeedCard({
           </h3>
 
           {/* Summary */}
-          <p className="text-sm text-zinc-500 leading-relaxed line-clamp-3">
-            {item.summary}
-          </p>
+          <p className="text-sm text-zinc-500 leading-relaxed line-clamp-3">{item.summary}</p>
 
           {/* Tags */}
           {item.tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
-              {item.tags.map((tag) => (
+              {item.tags.map(tag => (
                 <span
                   key={tag}
                   className="text-xs font-medium px-2 py-0.5 rounded-full bg-zinc-50 text-zinc-500 border border-zinc-200"
@@ -272,7 +268,7 @@ function FeedCard({
           <div className="flex items-center justify-between pt-1">
             <button
               type="button"
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 // Navigate to change impact analysis (stub)
                 console.log('[RegulatoryIntelligenceFeed] Analyze impact:', item.id);
@@ -286,7 +282,7 @@ function FeedCard({
             <div className="flex items-center gap-2">
               {item.url && (
                 <span
-                  onClick={(e) => {
+                  onClick={e => {
                     e.stopPropagation();
                     window.open(item.url, '_blank');
                   }}
@@ -296,7 +292,7 @@ function FeedCard({
                 </span>
               )}
               <span
-                onClick={(e) => {
+                onClick={e => {
                   e.stopPropagation();
                   onBookmark(item.id);
                 }}
@@ -374,11 +370,11 @@ function SelectDropdown({
     <div className="relative">
       <select
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={e => onChange(e.target.value)}
         className="appearance-none text-sm bg-white border border-zinc-200 rounded-lg px-3 py-2 pr-8 text-zinc-700 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/20 focus:border-blue-400 transition-colors cursor-pointer"
       >
         <option value="">{label}</option>
-        {options.map((opt) => (
+        {options.map(opt => (
           <option key={opt.value} value={opt.value}>
             {opt.label}
           </option>
@@ -431,7 +427,7 @@ function generateFallbackData(): FeedResponse {
       id: '3',
       title: 'PMDA Approves First Gene Therapy for Spinal Muscular Atrophy in Japan',
       summary:
-        'Japan\'s Pharmaceuticals and Medical Devices Agency granted approval for a one-time gene replacement therapy for pediatric patients with spinal muscular atrophy, marking the first gene therapy approved under Japan\'s expedited pathway for regenerative medicine products.',
+        "Japan's Pharmaceuticals and Medical Devices Agency granted approval for a one-time gene replacement therapy for pediatric patients with spinal muscular atrophy, marking the first gene therapy approved under Japan's expedited pathway for regenerative medicine products.",
       agency: 'PMDA',
       impactLevel: 'medium',
       date: new Date(now - 24 * hour).toISOString(),
@@ -457,7 +453,7 @@ function generateFallbackData(): FeedResponse {
       id: '5',
       title: 'NMPA Updates Requirements for Biosimilar Product Registration',
       summary:
-        'China\'s National Medical Products Administration has published revised technical requirements for biosimilar product registration, harmonizing more closely with ICH guidelines and introducing streamlined pathways for products already approved by stringent regulatory authorities.',
+        "China's National Medical Products Administration has published revised technical requirements for biosimilar product registration, harmonizing more closely with ICH guidelines and introducing streamlined pathways for products already approved by stringent regulatory authorities.",
       agency: 'NMPA',
       impactLevel: 'high',
       date: new Date(now - 8 * hour).toISOString(),
@@ -496,7 +492,7 @@ function generateFallbackData(): FeedResponse {
       id: '8',
       title: 'TGA Implements New Electronic Submission Gateway for Clinical Trial Applications',
       summary:
-        'Australia\'s Therapeutic Goods Administration has launched a new fully electronic submission portal for clinical trial notifications and applications, replacing the legacy paper-based system and enabling faster processing and real-time application tracking.',
+        "Australia's Therapeutic Goods Administration has launched a new fully electronic submission portal for clinical trial notifications and applications, replacing the legacy paper-based system and enabling faster processing and real-time application tracking.",
       agency: 'TGA',
       impactLevel: 'low',
       date: new Date(now - 72 * hour).toISOString(),
@@ -592,7 +588,10 @@ interface RegulatoryIntelligenceFeedProps {
   submissionType?: string;
 }
 
-const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({ projectId, submissionType }) => {
+const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({
+  projectId,
+  submissionType,
+}) => {
   // ------ State ------
   const [feedData, setFeedData] = useState<FeedResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -624,9 +623,7 @@ const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({
       setFeedData(data);
     } catch {
       // Fallback to realistic demo data when the API is unavailable
-      console.warn(
-        '[RegulatoryIntelligenceFeed] API unavailable — using fallback data',
-      );
+      console.warn('[RegulatoryIntelligenceFeed] API unavailable — using fallback data');
       setFeedData(generateFallbackData());
     } finally {
       setLoading(false);
@@ -639,12 +636,12 @@ const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({
 
   // ------ Bookmark toggle (local state) ------
   const handleBookmark = useCallback((id: string) => {
-    setFeedData((prev) => {
+    setFeedData(prev => {
       if (!prev) return prev;
       return {
         ...prev,
-        items: prev.items.map((item) =>
-          item.id === id ? { ...item, bookmarked: !item.bookmarked } : item,
+        items: prev.items.map(item =>
+          item.id === id ? { ...item, bookmarked: !item.bookmarked } : item
         ),
       };
     });
@@ -661,23 +658,19 @@ const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({
     const q = searchQuery.toLowerCase().trim();
     if (!q) return feedData.items;
     return feedData.items.filter(
-      (item) =>
+      item =>
         item.title.toLowerCase().includes(q) ||
         item.summary.toLowerCase().includes(q) ||
-        item.tags.some((t) => t.toLowerCase().includes(q)),
+        item.tags.some(t => t.toLowerCase().includes(q))
     );
   }, [feedData, searchQuery]);
 
-  const watchlistItems = useMemo(
-    () => feedData?.items.filter((i) => i.bookmarked) ?? [],
-    [feedData],
-  );
+  const watchlistItems = useMemo(() => feedData?.items.filter(i => i.bookmarked) ?? [], [feedData]);
 
   // ------ Render ------
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#FAFAF9' }}>
       {/* ===================== HEADER ===================== */}
-      <header className="sticky top-0 z-30 border-b border-zinc-100 bg-[#faf9f5]/80 backdrop-blur-md">
       <header className="sticky top-0 z-30 border-b border-zinc-200 bg-[#FAFAF9]/80 backdrop-blur-md">
         <div className="max-w-[1440px] mx-auto px-6 py-4">
           {/* Title row */}
@@ -713,7 +706,7 @@ const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({
               <input
                 type="text"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Search guidance, alerts, approvals..."
                 className="w-full text-sm bg-white border border-zinc-200 rounded-lg pl-9 pr-3 py-2 text-zinc-900 placeholder:text-zinc-400 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none/20 focus:border-blue-400 transition-colors duration-150"
               />
@@ -722,14 +715,14 @@ const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({
             <SelectDropdown
               label="Agency"
               value={agencyFilter}
-              options={AGENCIES.map((a) => ({ value: a, label: a }))}
+              options={AGENCIES.map(a => ({ value: a, label: a }))}
               onChange={setAgencyFilter}
             />
 
             <SelectDropdown
               label="Impact Level"
               value={impactFilter}
-              options={IMPACT_LEVELS.map((l) => ({
+              options={IMPACT_LEVELS.map(l => ({
                 value: l.value,
                 label: l.label,
               }))}
@@ -739,7 +732,7 @@ const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({
             <SelectDropdown
               label="Therapeutic Area"
               value={therapeuticAreaFilter}
-              options={THERAPEUTIC_AREAS.map((t) => ({ value: t, label: t }))}
+              options={THERAPEUTIC_AREAS.map(t => ({ value: t, label: t }))}
               onChange={setTherapeuticAreaFilter}
             />
           </div>
@@ -816,7 +809,7 @@ const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({
                 </p>
               </div>
             ) : (
-              filteredItems.map((item) => (
+              filteredItems.map(item => (
                 <FeedCard
                   key={item.id}
                   item={item}
@@ -853,9 +846,7 @@ const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({
                   Bookmark items to add them to your watchlist.
                 </p>
               ) : (
-                watchlistItems.map((item) => (
-                  <WatchlistItem key={item.id} item={item} />
-                ))
+                watchlistItems.map(item => <WatchlistItem key={item.id} item={item} />)
               )}
             </div>
 
@@ -863,9 +854,7 @@ const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({
             <div className="bg-white rounded-xl border border-zinc-200 p-4">
               <div className="flex items-center gap-2 mb-3">
                 <Clock size={14} className="text-blue-600" />
-                <h2 className="text-sm font-semibold text-zinc-900">
-                  Upcoming PDUFA Dates
-                </h2>
+                <h2 className="text-sm font-semibold text-zinc-900">Upcoming PDUFA Dates</h2>
               </div>
 
               {loading ? (
@@ -884,13 +873,9 @@ const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({
                   ))}
                 </div>
               ) : feedData?.pdufa_dates.length === 0 ? (
-                <p className="text-xs text-zinc-400 py-2">
-                  No upcoming PDUFA dates tracked.
-                </p>
+                <p className="text-xs text-zinc-400 py-2">No upcoming PDUFA dates tracked.</p>
               ) : (
-                feedData?.pdufa_dates.map((pdufa) => (
-                  <PDUFAItem key={pdufa.id} pdufa={pdufa} />
-                ))
+                feedData?.pdufa_dates.map(pdufa => <PDUFAItem key={pdufa.id} pdufa={pdufa} />)
               )}
             </div>
 
@@ -900,19 +885,15 @@ const RegulatoryIntelligenceFeed: React.FC<RegulatoryIntelligenceFeedProps> = ({
                 <div className="w-6 h-6 rounded-lg bg-violet-100 flex items-center justify-center">
                   <TrendingUp size={13} className="text-violet-600" />
                 </div>
-                <h2 className="text-sm font-semibold text-violet-900">
-                  AI Regulatory Insights
-                </h2>
+                <h2 className="text-sm font-semibold text-violet-900">AI Regulatory Insights</h2>
               </div>
               <p className="text-xs text-violet-700/70 leading-relaxed mb-3">
-                Get AI-powered analysis of how recent regulatory changes may
-                impact your development programs.
+                Get AI-powered analysis of how recent regulatory changes may impact your development
+                programs.
               </p>
               <button
                 type="button"
-                onClick={() =>
-                  console.log('[RegulatoryIntelligenceFeed] AI Insights CTA clicked')
-                }
+                onClick={() => console.log('[RegulatoryIntelligenceFeed] AI Insights CTA clicked')}
                 className="w-full text-xs font-semibold text-white bg-violet-600 hover:bg-violet-700 rounded-lg px-3 py-2 transition-colors duration-150"
               >
                 Generate Insights Report

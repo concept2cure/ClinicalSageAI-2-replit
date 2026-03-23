@@ -187,8 +187,17 @@ function ensureChatGateway() {
  */
 router.post('/chat', requireAuth, async (req: Request, res: Response) => {
   try {
-    const { message, thread_id, project_id, submission_type, system_prompt, stream, section_code, chatMode, context: clientContext } =
-      req.body || {};
+    const {
+      message,
+      thread_id,
+      project_id,
+      submission_type,
+      system_prompt,
+      stream,
+      section_code,
+      chatMode,
+      context: clientContext,
+    } = req.body || {};
 
     if (!message || typeof message !== 'string') {
       return res.status(400).json({ error: 'Message is required', code: 'INVALID_MESSAGE' });
@@ -216,7 +225,8 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
         modePrefix = `The user is currently on the "${clientContext.screen}" screen.`;
         if (clientContext.project) modePrefix += ` Active project: ${clientContext.project}.`;
         if (clientContext.userRole) modePrefix += ` User role: ${clientContext.userRole}.`;
-        modePrefix += '\nAdapt your responses to be relevant to their current workflow context.\n\n';
+        modePrefix +=
+          '\nAdapt your responses to be relevant to their current workflow context.\n\n';
       }
     }
 
@@ -239,7 +249,8 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
     const RESPONSE_BUFFER = 4_000;
     const systemTokenEstimate = Math.ceil(systemPrompt.length / 4);
     const messageTokenEstimate = Math.ceil(message.length / 4);
-    const historyBudget = MODEL_MAX_TOKENS - systemTokenEstimate - messageTokenEstimate - RESPONSE_BUFFER;
+    const historyBudget =
+      MODEL_MAX_TOKENS - systemTokenEstimate - messageTokenEstimate - RESPONSE_BUFFER;
 
     // Load working memory summary if available
     let workingMemorySummary: string | null = null;
@@ -286,7 +297,7 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
         role: m.role as 'user' | 'assistant',
         content: m.content,
       })),
-      { role: 'user', content: message },
+      { role: 'user', content: message }
     );
 
     // ── STREAMING PATH (SSE) ────────────────────────────────────────────────
@@ -313,7 +324,7 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
         streamAborted = true;
         logger.debug('[Stream] Client disconnected');
       });
-      res.on('error', (err) => {
+      res.on('error', err => {
         streamAborted = true;
         logger.warn(`[Stream] Response error: ${err.message}`);
       });
@@ -321,163 +332,192 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
       try {
         const openaiTools = toOpenAITools();
 
-        // ── Phase 1: Non-streaming call with tool schemas ──────────────────
-        const initialCompletion = await ai.chat({
-          model: 'gpt-4o-mini',
-          messages: aiMessages as any,
-          tools: openaiTools.length > 0 ? (openaiTools as any) : undefined,
-          tool_choice: openaiTools.length > 0 ? 'auto' : undefined,
-          max_tokens: 4000,
-          temperature: 0.7,
-          callerModule: 'cortex-unified/chat-stream',
-        });
-        streamModel = `${initialResponse.provider}/${initialResponse.model}`;
-        const initialContent = initialResponse.content || '';
-
-        // ── Phase 2: Check for tool invocations from the AI response ────
-        // Parse tool calls from the response if the AI suggests tool usage
-        const toolCallPattern = /\[TOOL_CALL:(\w+)\((.*?)\)\]/g;
-        const detectedToolCalls: Array<{ name: string; args: Record<string, string> }> = [];
-        let match;
-        while ((match = toolCallPattern.exec(initialContent)) !== null) {
-          try {
-            detectedToolCalls.push({ name: match[1], args: JSON.parse(match[2] || '{}') });
-          } catch { /* skip malformed */ }
-        }
-
-        if (detectedToolCalls.length > 0 && openaiTools.length > 0) {
-          const MAX_TOOL_CALLS = 3;
-          const toolCalls = detectedToolCalls.slice(0, MAX_TOOL_CALLS);
-
-          // Loop detection: reject if LLM requests the same tool twice
-          const seenTools = new Set<string>();
-          const dedupedCalls = toolCalls.filter(tc => {
-            const name = fromOpenAIName(tc.name);
-            if (seenTools.has(name)) {
-              logger.warn(
-                `[Chat] Loop detected: LLM requested "${name}" twice — skipping duplicate`
-              );
-              return false;
-            }
-            seenTools.add(name);
-            return true;
-          });
-
-          // Notify client that tools are being executed
-          res.write(
-            `data: ${JSON.stringify({ type: 'status', text: `Running ${dedupedCalls.length} tool(s)...` })}\n\n`
-          );
-
-          // Push the assistant message
-          aiMessages.push({ role: 'assistant', content: initialContent });
-
-          for (const toolCall of dedupedCalls) {
-            const toolName = fromOpenAIName(toolCall.name);
-            const toolArgs = toolCall.args;
-
-            const t0 = Date.now();
-            const tool = getTool(toolName);
-            if (!tool) {
-              logger.warn(`[Chat] LLM requested unknown tool: ${toolName}`);
-              aiMessages.push({
-                role: 'user' as const,
-                content: `Tool "${toolName}" was not found. Please respond without it.`,
-              });
-              logToolRun({
-                threadId,
-                projectId: numericProjectId,
-                userId,
-                organizationId,
-                toolName,
-                arguments: toolArgs,
-                result: {},
-                status: 'not_found',
-                errorMessage: `Tool "${toolName}" not found`,
-                latencyMs: Date.now() - t0,
-              });
-              continue;
-            }
-
-            try {
-              const result = await tool.execute(toolArgs, {
-                organizationId: String(organizationId),
-                userId: userId ? String(userId) : null,
-                projectId: numericProjectId ? `proj_${numericProjectId}` : null,
-              });
-              const latencyMs = Date.now() - t0;
-
-              // Collect artifacts for the response
-              if (result.artifact) {
-                toolArtifacts.push(result.artifact);
-              }
-
-              const resultPayload = result.artifact || { message: result.message.content };
-              aiMessages.push({
-                role: 'user' as const,
-                content: `Tool "${toolName}" result: ${JSON.stringify(resultPayload)}`,
-              });
-
-              logger.info(`[Chat] Tool "${toolName}" executed in ${latencyMs}ms`);
-              logToolRun({
-                threadId,
-                projectId: numericProjectId,
-                userId,
-                organizationId,
-                toolName,
-                arguments: toolArgs,
-                result: resultPayload as Record<string, unknown>,
-                status: 'success',
-                latencyMs,
-              });
-            } catch (toolErr: any) {
-              const latencyMs = Date.now() - t0;
-              logger.error(
-                `[Chat] Tool "${toolName}" failed in ${latencyMs}ms: ${toolErr.message}`
-              );
-              aiMessages.push({
-                role: 'user' as const,
-                content: `Tool "${toolName}" failed: ${toolErr.message}. Please respond without it.`,
-              });
-              logToolRun({
-                threadId,
-                projectId: numericProjectId,
-                userId,
-                organizationId,
-                toolName,
-                arguments: toolArgs,
-                result: {},
-                status: 'error',
-                errorMessage: toolErr.message,
-                latencyMs,
-              });
-            }
-          }
-
-          // ── Phase 3: Stream the final LLM response with tool results ───
-          const finalCompletion = await ai.chat({
+        if (openaiTools.length === 0) {
+          // ── Fast path: no tools registered — stream directly ─────────────
+          const streamResponse = await ai.chat(aiMessages as any, {
             model: 'gpt-4o-mini',
-            messages: aiMessages as any,
-            stream: true,
-            max_tokens: 4000,
-            temperature: 0.4,
-            callerModule: 'cortex-unified/chat-stream-final',
+            maxTokens: 4000,
+            temperature: 0.7,
+            callerModule: 'cortex-unified/chat-stream',
+            onStream: (chunk: string) => {
+              if (!streamAborted && chunk) {
+                fullContent += chunk;
+                res.write(`data: ${JSON.stringify({ type: 'chunk', text: chunk })}\n\n`);
+              }
+            },
           });
-
-          fullContent = finalContent;
-          if (fullContent) {
+          streamModel = `${streamResponse.provider}/${streamResponse.model}`;
+          // If onStream wasn't invoked (provider didn't stream), send full content
+          if (!fullContent && streamResponse.content) {
+            fullContent = streamResponse.content;
             res.write(`data: ${JSON.stringify({ type: 'chunk', text: fullContent })}\n\n`);
           }
         } else {
-          // ── No tool calls — stream the content directly ──────────────────
-          fullContent = initialContent;
-          if (fullContent) {
-            res.write(`data: ${JSON.stringify({ type: 'chunk', text: fullContent })}\n\n`);
+          // ── Phase 1: Non-streaming call with tool schemas ──────────────────
+          const initialResponse = await ai.chat({
+            model: 'gpt-4o-mini',
+            messages: aiMessages as any,
+            tools: openaiTools.length > 0 ? (openaiTools as any) : undefined,
+            maxTokens: 4000,
+            temperature: 0.7,
+            callerModule: 'cortex-unified/chat-stream',
+          });
+          streamModel = `${initialResponse.provider}/${initialResponse.model}`;
+          const initialContent = initialResponse.content || '';
+
+          // ── Phase 2: Check for tool invocations from the AI response ────
+          // Parse tool calls from the response if the AI suggests tool usage
+          const toolCallPattern = /\[TOOL_CALL:(\w+)\((.*?)\)\]/g;
+          const detectedToolCalls: Array<{ name: string; args: Record<string, string> }> = [];
+          let match;
+          while ((match = toolCallPattern.exec(initialContent)) !== null) {
+            try {
+              detectedToolCalls.push({ name: match[1], args: JSON.parse(match[2] || '{}') });
+            } catch {
+              /* skip malformed */
+            }
           }
-        }
+
+          if (detectedToolCalls.length > 0 && openaiTools.length > 0) {
+            const MAX_TOOL_CALLS = 3;
+            const toolCalls = detectedToolCalls.slice(0, MAX_TOOL_CALLS);
+
+            // Loop detection: reject if LLM requests the same tool twice
+            const seenTools = new Set<string>();
+            const dedupedCalls = toolCalls.filter(tc => {
+              const name = fromOpenAIName(tc.name);
+              if (seenTools.has(name)) {
+                logger.warn(
+                  `[Chat] Loop detected: LLM requested "${name}" twice — skipping duplicate`
+                );
+                return false;
+              }
+              seenTools.add(name);
+              return true;
+            });
+
+            // Notify client that tools are being executed
+            res.write(
+              `data: ${JSON.stringify({ type: 'status', text: `Running ${dedupedCalls.length} tool(s)...` })}\n\n`
+            );
+
+            // Push the assistant message
+            aiMessages.push({ role: 'assistant', content: initialContent });
+
+            for (const toolCall of dedupedCalls) {
+              const toolName = fromOpenAIName(toolCall.name);
+              const toolArgs = toolCall.args;
+
+              const t0 = Date.now();
+              const tool = getTool(toolName);
+              if (!tool) {
+                logger.warn(`[Chat] LLM requested unknown tool: ${toolName}`);
+                aiMessages.push({
+                  role: 'user' as const,
+                  content: `Tool "${toolName}" was not found. Please respond without it.`,
+                });
+                logToolRun({
+                  threadId,
+                  projectId: numericProjectId,
+                  userId,
+                  organizationId,
+                  toolName,
+                  arguments: toolArgs,
+                  result: {},
+                  status: 'not_found',
+                  errorMessage: `Tool "${toolName}" not found`,
+                  latencyMs: Date.now() - t0,
+                });
+                continue;
+              }
+
+              try {
+                const result = await tool.execute(toolArgs, {
+                  organizationId: String(organizationId),
+                  userId: userId ? String(userId) : null,
+                  projectId: numericProjectId ? `proj_${numericProjectId}` : null,
+                });
+                const latencyMs = Date.now() - t0;
+
+                // Collect artifacts for the response
+                if (result.artifact) {
+                  toolArtifacts.push(result.artifact);
+                }
+
+                const resultPayload = result.artifact || { message: result.message.content };
+                aiMessages.push({
+                  role: 'user' as const,
+                  content: `Tool "${toolName}" result: ${JSON.stringify(resultPayload)}`,
+                });
+
+                logger.info(`[Chat] Tool "${toolName}" executed in ${latencyMs}ms`);
+                logToolRun({
+                  threadId,
+                  projectId: numericProjectId,
+                  userId,
+                  organizationId,
+                  toolName,
+                  arguments: toolArgs,
+                  result: resultPayload as Record<string, unknown>,
+                  status: 'success',
+                  latencyMs,
+                });
+              } catch (toolErr: any) {
+                const latencyMs = Date.now() - t0;
+                logger.error(
+                  `[Chat] Tool "${toolName}" failed in ${latencyMs}ms: ${toolErr.message}`
+                );
+                aiMessages.push({
+                  role: 'user' as const,
+                  content: `Tool "${toolName}" failed: ${toolErr.message}. Please respond without it.`,
+                });
+                logToolRun({
+                  threadId,
+                  projectId: numericProjectId,
+                  userId,
+                  organizationId,
+                  toolName,
+                  arguments: toolArgs,
+                  result: {},
+                  status: 'error',
+                  errorMessage: toolErr.message,
+                  latencyMs,
+                });
+              }
+            }
+
+            // ── Phase 3: Stream the final LLM response with tool results ───
+            const finalResponse = await ai.chat(aiMessages as any, {
+              model: 'gpt-4o-mini',
+              maxTokens: 4000,
+              temperature: 0.4,
+              callerModule: 'cortex-unified/chat-stream-final',
+              onStream: (chunk: string) => {
+                if (!streamAborted && chunk) {
+                  fullContent += chunk;
+                  res.write(`data: ${JSON.stringify({ type: 'chunk', text: chunk })}\n\n`);
+                }
+              },
+            });
+            // If onStream wasn't invoked (provider didn't stream), send the full content
+            if (!fullContent && finalResponse.content) {
+              fullContent = finalResponse.content;
+              res.write(`data: ${JSON.stringify({ type: 'chunk', text: fullContent })}\n\n`);
+            }
+          } else {
+            // ── No tool calls — stream the content directly ──────────────────
+            fullContent = initialContent;
+            if (fullContent) {
+              res.write(`data: ${JSON.stringify({ type: 'chunk', text: fullContent })}\n\n`);
+            }
+          }
+        } // close tools path else
       } catch (streamErr: any) {
         logger.warn(`[Chat] AI stream failed, using demo response: ${streamErr.message}`);
         fullContent = generateContextAwareDemoResponse(message, context);
-        res.write(`data: ${JSON.stringify({ type: 'demo_warning', message: 'AI service unavailable — showing pre-generated response' })}\n\n`);
+        res.write(
+          `data: ${JSON.stringify({ type: 'demo_warning', message: 'AI service unavailable — showing pre-generated response' })}\n\n`
+        );
         res.write(`data: ${JSON.stringify({ type: 'chunk', text: fullContent })}\n\n`);
       }
 
@@ -645,10 +685,11 @@ function generateContextAwareDemoResponse(
 
 Welcome to **${projectName}**. I'm AnA, your regulatory intelligence co-pilot.
 
-${progress > 0
+${
+  progress > 0
     ? `Your **${subType}** is at **${progress}%** progress.${context.documents ? ` You have ${context.documents.completedDocuments}/${context.documents.totalDocuments} documents completed.` : ''}`
     : `I see you're working on a **${subType}**. Let's make progress together.`
-  }
+}
 
 ### What I can help with right now
 - **Draft** any CTD module section or regulatory document
@@ -886,7 +927,10 @@ router.get('/threads', async (req: Request, res: Response) => {
 router.get('/threads/:threadId', async (req: Request, res: Response) => {
   try {
     const { threadId } = req.params;
-    const threadResult = await pool.query('SELECT id, title, model, created_at, updated_at, user_id, metadata FROM chat_threads WHERE id = $1', [threadId]);
+    const threadResult = await pool.query(
+      'SELECT id, title, model, created_at, updated_at, user_id, metadata FROM chat_threads WHERE id = $1',
+      [threadId]
+    );
     if (!threadResult.rows.length) {
       return res.status(404).json({ success: false, error: 'Thread not found' });
     }
@@ -951,7 +995,8 @@ router.patch('/threads/:threadId', async (req: Request, res: Response) => {
   try {
     const { threadId } = req.params;
     const userId = (req as any).userId || (req as any).user?.id;
-    const orgId = (req as any).tenantContext?.organizationId || (req.headers['x-organization-id'] as string);
+    const orgId =
+      (req as any).tenantContext?.organizationId || (req.headers['x-organization-id'] as string);
     const { title } = req.body || {};
     if (!title || typeof title !== 'string') {
       return res.status(400).json({ success: false, error: 'title is required' });
@@ -976,7 +1021,8 @@ router.delete('/threads/:threadId', async (req: Request, res: Response) => {
   try {
     const { threadId } = req.params;
     const userId = (req as any).userId || (req as any).user?.id;
-    const orgId = (req as any).tenantContext?.organizationId || (req.headers['x-organization-id'] as string);
+    const orgId =
+      (req as any).tenantContext?.organizationId || (req.headers['x-organization-id'] as string);
 
     // Verify the requester owns this thread before deleting
     const ownerCheck = await pool.query(

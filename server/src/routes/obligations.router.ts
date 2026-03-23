@@ -59,15 +59,19 @@ ${text}
 Respond with JSON: {"obligations": [{"title": "...", "severity": "...", "dueDate": null, "recurrence": {...}, "context": "..."}]}
 `;
 
-    const aiResult = await ai.chat({
-      model: 'gpt-4o', // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a regulatory affairs expert specializing in obligation extraction.',
-        },
-        { role: 'user', content: prompt },
-      ], { jsonMode: true, temperature: 0.3, callerModule: 'obligations/extractObligationsFromText' });
+    const aiResult = await ai.chat(
+      {
+        model: 'gpt-4o', // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a regulatory affairs expert specializing in obligation extraction.',
+          },
+          { role: 'user', content: prompt },
+        ],
+      },
+      { jsonMode: true, temperature: 0.3, callerModule: 'obligations/extractObligationsFromText' }
+    );
 
     const result = JSON.parse(aiResult.content || '{}');
     return result.obligations || [];
@@ -116,7 +120,7 @@ router.get('/:subId/obligations', async (req, res) => {
     const { status, region, severity, owner, dueState, priority } = req.query;
 
     let query = `
-      SELECT o.*, 
+      SELECT o.*,
         CASE
           WHEN o.status IN ('COMPLETED','DEFERRED','CANCELLED') THEN 'NA'
           WHEN o.due_date IS NULL THEN 'NO_DATE'
@@ -384,7 +388,7 @@ router.put('/:subId/obligations/:oblId', async (req, res) => {
 
     const result = await pool.query(
       `
-      UPDATE reg_obligations 
+      UPDATE reg_obligations
       SET ${setClause.join(', ')}
       WHERE obl_id = $${paramIndex}
       RETURNING *
@@ -429,7 +433,7 @@ router.post('/:subId/obligations/:oblId/assign', async (req, res) => {
 
     const result = await pool.query(
       `
-      UPDATE reg_obligations 
+      UPDATE reg_obligations
       SET owner_user_id = $1, updated_at = CURRENT_TIMESTAMP
       WHERE obl_id = $2
       RETURNING *
@@ -474,7 +478,7 @@ router.post('/:subId/obligations/:oblId/snooze', async (req, res) => {
 
     const result = await pool.query(
       `
-      UPDATE reg_obligations 
+      UPDATE reg_obligations
       SET due_date = $1, updated_at = CURRENT_TIMESTAMP
       WHERE obl_id = $2
       RETURNING *
@@ -519,7 +523,7 @@ router.post('/:subId/obligations/:oblId/complete', async (req, res) => {
 
     const result = await pool.query(
       `
-      UPDATE reg_obligations 
+      UPDATE reg_obligations
       SET status = 'COMPLETED', closed_at = CURRENT_TIMESTAMP, note = COALESCE($1, note), updated_at = CURRENT_TIMESTAMP
       WHERE obl_id = $2
       RETURNING *
@@ -608,8 +612,8 @@ router.get('/:subId/obligations/:oblId/events', async (req, res) => {
 
     const result = await pool.query(
       `
-      SELECT * FROM reg_obligation_events 
-      WHERE obl_id = $1 
+      SELECT * FROM reg_obligation_events
+      WHERE obl_id = $1
       ORDER BY created_at DESC
     `,
       [oblId]
@@ -632,7 +636,7 @@ router.get('/:subId/obligations/:oblId/events', async (req, res) => {
 router.get('/dashboard/stats', async (req, res) => {
   try {
     const stats = await pool.query(`
-      SELECT 
+      SELECT
         COUNT(*) as total,
         COUNT(*) FILTER (WHERE status = 'OPEN') as open,
         COUNT(*) FILTER (WHERE status = 'COMPLETED') as completed,
@@ -646,7 +650,7 @@ router.get('/dashboard/stats', async (req, res) => {
 
     const regionStats = await pool.query(`
       SELECT region, COUNT(*) as count
-      FROM reg_obligations 
+      FROM reg_obligations
       WHERE region IS NOT NULL
       GROUP BY region
       ORDER BY count DESC
@@ -654,7 +658,7 @@ router.get('/dashboard/stats', async (req, res) => {
 
     const sourceStats = await pool.query(`
       SELECT source, COUNT(*) as count
-      FROM reg_obligations 
+      FROM reg_obligations
       GROUP BY source
       ORDER BY count DESC
     `);

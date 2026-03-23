@@ -57,13 +57,13 @@ const config = {
     const isDev = process.env.NODE_ENV !== 'production';
     const m = isDev ? 10 : 1; // 10x multiplier in development only
     return {
-      global: { windowMs: 60_000, max: 1000 * m },    // 1000/min prod, 10000/min dev
-      api: { windowMs: 60_000, max: 200 * m },         // 200/min prod, 2000/min dev
-      ai: { windowMs: 60_000, max: 20 * m },           // 20/min prod, 200/min dev
+      global: { windowMs: 60_000, max: 1000 * m }, // 1000/min prod, 10000/min dev
+      api: { windowMs: 60_000, max: 200 * m }, // 200/min prod, 2000/min dev
+      ai: { windowMs: 60_000, max: 20 * m }, // 20/min prod, 200/min dev
       auth: { windowMs: 15 * 60_000, max: isDev ? 100 : 5 }, // 5/15min prod, 100/15min dev
-      write: { windowMs: 60_000, max: 100 * m },       // 100/min prod, 1000/min dev
-      upload: { windowMs: 60_000, max: 20 * m },       // 20/min prod, 200/min dev
-      export: { windowMs: 60_000, max: 10 * m },       // 10/min prod, 100/min dev
+      write: { windowMs: 60_000, max: 100 * m }, // 100/min prod, 1000/min dev
+      upload: { windowMs: 60_000, max: 20 * m }, // 20/min prod, 200/min dev
+      export: { windowMs: 60_000, max: 10 * m }, // 10/min prod, 100/min dev
     };
   })(),
 
@@ -234,18 +234,16 @@ export const rateLimiters = {
 function sanitizeString(value: string): string {
   if (typeof value !== 'string') return value;
 
-  return (
-    value
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#x27;')
-      .replace(/\//g, '&#x2F;')
-      .replace(/`/g, '&#96;')
-      // NOTE: SQL keyword stripping removed — Drizzle ORM uses parameterized queries,
-      // making regex-based SQL keyword removal unnecessary and harmful to legitimate content.
-  );
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .replace(/\//g, '&#x2F;')
+    .replace(/`/g, '&#96;');
+  // NOTE: SQL keyword stripping removed — Drizzle ORM uses parameterized queries,
+  // making regex-based SQL keyword removal unnecessary and harmful to legitimate content.
 }
 
 // Deep sanitize object
@@ -324,8 +322,8 @@ export function validateTenantContext(req: Request, res: Response, next: NextFun
     if (headerOrgId && String(headerOrgId) !== String(user.organizationId)) {
       console.warn(
         `[SECURITY] Tenant impersonation attempt blocked: ` +
-        `JWT org=${user.organizationId}, Header org=${headerOrgId}, ` +
-        `userId=${user.id || user.userId || 'unknown'}, path=${req.path}`
+          `JWT org=${user.organizationId}, Header org=${headerOrgId}, ` +
+          `userId=${user.id || user.userId || 'unknown'}, path=${req.path}`
       );
       return res.status(403).json({
         error: 'Organization mismatch',
@@ -436,7 +434,7 @@ export function auditLog(req: Request, res: Response, next: NextFunction) {
 // API KEY VALIDATION
 // ============================================================================
 
-export function validateApiKey(req: Request, res: Response, next: NextFunction) {
+export async function validateApiKey(req: Request, res: Response, next: NextFunction) {
   const apiKey = req.headers['x-api-key'] as string;
 
   if (!apiKey) {
@@ -543,12 +541,16 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
     if (req.headers.authorization?.startsWith('Bearer ')) {
       return next();
     }
-    console.warn(`[SECURITY] CSRF: state-changing request without Origin/Referer/Bearer on ${req.path}`);
+    console.warn(
+      `[SECURITY] CSRF: state-changing request without Origin/Referer/Bearer on ${req.path}`
+    );
     return res.status(403).json({ error: 'Forbidden', code: 'CSRF_VALIDATION_FAILED' });
   }
 
   if (!config.allowedOrigins.includes(source)) {
-    console.warn(`[SECURITY] CSRF: origin mismatch — ${source} not in allowedOrigins for ${req.path}`);
+    console.warn(
+      `[SECURITY] CSRF: origin mismatch — ${source} not in allowedOrigins for ${req.path}`
+    );
     return res.status(403).json({ error: 'Forbidden', code: 'CSRF_ORIGIN_MISMATCH' });
   }
 
