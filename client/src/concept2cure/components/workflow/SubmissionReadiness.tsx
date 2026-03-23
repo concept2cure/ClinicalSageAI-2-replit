@@ -21,6 +21,7 @@ import {
   PenLine,
   CircleDot,
   ArrowLeft,
+  ArrowRight,
   Download,
   Send,
   RefreshCcw,
@@ -29,6 +30,11 @@ import {
   Package,
   FileCheck,
 } from 'lucide-react';
+import {
+  useDocumentModeOptional,
+  type ModeCapabilities,
+  MODE_CAPABILITIES,
+} from '../../contexts/DocumentModeContext';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -111,6 +117,9 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
   onBack,
   onExport,
 }) => {
+  const modeCtx = useDocumentModeOptional();
+  const caps: ModeCapabilities = MODE_CAPABILITIES[modeCtx?.mode ?? 'readonly'];
+
   const [activeCategory, setActiveCategory] = useState<'all' | 'ready' | 'blocked' | 're-review' | 'missing-approval'>('all');
 
   // Categorize sections
@@ -179,10 +188,25 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
                 <Package className="w-4 h-4" />
                 Export eCTD Package
               </button>
+              {!caps.editable && (
+                <div className="flex items-center gap-1.5 text-xs text-blue-600">
+                  <ArrowRight className="w-3 h-3" />
+                  <span>Return to Section Workspace to edit documents</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {modeCtx?.mode === 'readonly' && (
+        <div className="mx-6 mt-4 flex items-center gap-2 px-4 py-2.5 rounded-lg bg-violet-50 border border-violet-100">
+          <Lock className="w-4 h-4 text-violet-500 flex-shrink-0" />
+          <span className="text-xs text-violet-700">
+            Submission view is read-only. Documents cannot be edited during submission review.
+          </span>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto zen-scroll">
         <div className="max-w-5xl mx-auto px-6 py-6">
@@ -324,6 +348,9 @@ export const SubmissionReadiness: React.FC<SubmissionReadinessProps> = ({
                         {cfg.label}
                       </span>
 
+                      {modeCtx?.mode === 'readonly' && (
+                        <Lock className="w-3 h-3 text-violet-400 flex-shrink-0" />
+                      )}
                       <ChevronRight className="w-3 h-3 text-zinc-300 flex-shrink-0" />
                     </button>
                   );

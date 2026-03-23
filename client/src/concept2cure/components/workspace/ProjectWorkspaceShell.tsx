@@ -65,11 +65,14 @@ import {
   Target,
   AppWindow,
   Activity,
+  Eye,
+  PenLine,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   DocumentModeProvider,
   useDocumentMode,
+  canEscalateToEdit,
   type WorkflowStage,
 } from '../../contexts/DocumentModeContext';
 
@@ -178,7 +181,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   const [loading, setLoading] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState<string>('drafts');
   const [selectedDocId, setSelectedDocId] = useState<string | undefined>();
-  const [mode, setMode] = useState<'dashboard' | 'browse' | 'edit'>('dashboard');
+  const [mode, setMode] = useState<'dashboard' | 'browse' | 'view' | 'edit'>('dashboard');
   const [leftRailMode, setLeftRailMode] = useState<LeftRailMode>('files');
   const [selectedCtdSection, setSelectedCtdSection] = useState<string | undefined>();
 
@@ -792,7 +795,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   // ── Handlers ─────────────────────────────────────────────────────────────
   const handleSelectDoc = useCallback((doc: TreeArtifact) => {
     setSelectedDocId(doc.id);
-    setMode('edit');
+    setMode('view');
     setShowGovernedPanel(true);
     setSectionReqs(null); // close reqs panel when opening governed panel
   }, []);
@@ -826,12 +829,13 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   const browseDocs = leftRailMode === 'dossier' ? sectionDocs : folderDocs;
 
   // Outline available only when doc is open
-  const outlineAvailable = mode === 'edit' && !!selectedDocId;
+  const outlineAvailable = (mode === 'edit' || mode === 'view') && !!selectedDocId;
 
   // ── Derive workflow stage from shell mode + left rail ──────────────────
   const workflowStage: WorkflowStage = (() => {
     if (mode === 'dashboard') return 'project-home';
     if (mode === 'edit') return 'section-workspace';
+    if (mode === 'view') return 'documents';
     // browse mode — varies by left rail
     if (leftRailMode === 'dossier') return 'dossier';
     return 'documents';
@@ -990,12 +994,21 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
             {activeArtifact.status || 'draft'}
           </span>
           <button
-            onClick={() => setMode('edit')}
+            onClick={() => setMode('view')}
             className="ml-auto text-xs text-blue-600 hover:text-blue-800 font-medium"
           >
             Open →
           </button>
         </div>
+      )}
+
+      {/* ── View-mode banner (shown when viewing, before editing) ────────── */}
+      {mode === 'view' && (
+        <ViewModeBanner onRequestEdit={() => {
+          const escalation = canEscalateToEdit(workflowStage, activeArtifact?.status);
+          if (escalation.allowed) setMode('edit');
+          else pushShellToast(escalation.reason || 'Cannot edit', 'info');
+        }} />
       )}
 
       {/* ── Doc-aware header (shown when editing) ─────────────────────────── */}
@@ -1765,6 +1778,22 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function ViewModeBanner({ onRequestEdit }: { onRequestEdit: () => void }) {
+  return (
+    <div className="flex items-center gap-2 px-4 h-9 border-b border-blue-100 bg-blue-50/40 shrink-0">
+      <Eye className="w-3.5 h-3.5 text-blue-500" />
+      <span className="text-xs text-blue-700 font-medium">View Mode — document is read-only</span>
+      <button
+        onClick={onRequestEdit}
+        className="ml-auto inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors"
+      >
+        <PenLine className="w-3 h-3" />
+        Edit
+      </button>
     </div>
   );
 }

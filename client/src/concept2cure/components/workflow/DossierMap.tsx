@@ -22,7 +22,10 @@ import {
   Lock,
   FileText,
   ArrowLeft,
+  Eye,
+  X,
 } from 'lucide-react';
+import { useDocumentModeOptional } from '../../contexts/DocumentModeContext';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -139,11 +142,14 @@ const SectionRow: React.FC<{
   section: DossierSection;
   depth: number;
   onSectionClick: (code: string) => void;
-}> = ({ section, depth, onSectionClick }) => {
+  onPreview?: (section: DossierSection) => void;
+  selectedCode?: string;
+}> = ({ section, depth, onSectionClick, onPreview, selectedCode }) => {
   const [expanded, setExpanded] = useState(depth < 1);
   const hasChildren = section.children && section.children.length > 0;
   const cfg = STATUS_CONFIG[section.status];
   const StatusIcon = cfg.icon;
+  const isSelected = !hasChildren && selectedCode === section.code;
 
   return (
     <>
@@ -151,6 +157,8 @@ const SectionRow: React.FC<{
         onClick={() => {
           if (hasChildren) {
             setExpanded(!expanded);
+          } else if (onPreview) {
+            onPreview(section);
           } else {
             onSectionClick(section.code);
           }
@@ -158,6 +166,7 @@ const SectionRow: React.FC<{
         className={cn(
           'w-full flex items-center gap-2 py-2.5 px-4 text-left hover:bg-zinc-50 transition-colors border-b border-zinc-50',
           depth === 0 && 'bg-zinc-50/50 font-medium',
+          isSelected && 'bg-blue-50/70 border-l-2 border-l-blue-500',
         )}
         style={{ paddingLeft: `${16 + depth * 20}px` }}
       >
@@ -204,6 +213,8 @@ const SectionRow: React.FC<{
           section={child}
           depth={depth + 1}
           onSectionClick={onSectionClick}
+          onPreview={onPreview}
+          selectedCode={selectedCode}
         />
       ))}
     </>
@@ -277,6 +288,11 @@ export const DossierMap: React.FC<DossierMapProps> = ({
   onBack,
 }) => {
   const [activeFilter, setActiveFilter] = useState<SectionStatus | 'all'>('all');
+  const [selectedSection, setSelectedSection] = useState<DossierSection | null>(null);
+  const modeCtx = useDocumentModeOptional();
+
+  // Determine if we should show preview (dossier stage context available)
+  const showPreviewOnClick = !!modeCtx || true; // Always enable preview pane in dossier map
 
   // Filter logic: show sections matching filter (or all)
   const filterSections = (secs: DossierSection[]): DossierSection[] => {
@@ -296,61 +312,180 @@ export const DossierMap: React.FC<DossierMapProps> = ({
 
   const displayed = filterSections(sections);
 
+  const handlePreview = (section: DossierSection) => {
+    setSelectedSection(section);
+  };
+
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-zinc-50/30">
-      {/* Header */}
-      <div className="flex-shrink-0 bg-white border-b border-zinc-200 px-6 py-4">
-        <div className="max-w-5xl mx-auto">
-          {onBack && (
-            <button
-              onClick={onBack}
-              className="flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-700 transition-colors mb-2"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              Back to project
-            </button>
-          )}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-semibold text-zinc-900">Dossier Map</h1>
-              {projectName && (
-                <p className="text-sm text-zinc-500 mt-0.5">
-                  {projectName} {projectType ? `· ${projectType}` : ''} · eCTD Structure
-                </p>
-              )}
+    <div className="flex-1 flex min-h-0 bg-zinc-50/30">
+      {/* Main content area */}
+      <div className="flex-1 flex flex-col min-h-0">
+        {/* Header */}
+        <div className="flex-shrink-0 bg-white border-b border-zinc-200 px-6 py-4">
+          <div className="max-w-5xl mx-auto">
+            {onBack && (
+              <button
+                onClick={onBack}
+                className="flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-700 transition-colors mb-2"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                Back to project
+              </button>
+            )}
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-xl font-semibold text-zinc-900">Dossier Map</h1>
+                {projectName && (
+                  <p className="text-sm text-zinc-500 mt-0.5">
+                    {projectName} {projectType ? `· ${projectType}` : ''} · eCTD Structure
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <StatusFilterBar
+                sections={sections}
+                activeFilter={activeFilter}
+                onFilter={setActiveFilter}
+              />
             </div>
           </div>
+        </div>
 
-          <div className="mt-4">
-            <StatusFilterBar
-              sections={sections}
-              activeFilter={activeFilter}
-              onFilter={setActiveFilter}
-            />
+        {/* Section tree */}
+        <div className="flex-1 overflow-y-auto zen-scroll">
+          <div className="max-w-5xl mx-auto py-2">
+            <div className="border border-zinc-200 rounded-xl overflow-hidden bg-white mx-6 my-4">
+              {displayed.length > 0 ? (
+                displayed.map(section => (
+                  <SectionRow
+                    key={section.code}
+                    section={section}
+                    depth={0}
+                    onSectionClick={onSectionClick}
+                    onPreview={showPreviewOnClick ? handlePreview : undefined}
+                    selectedCode={selectedSection?.code}
+                  />
+                ))
+              ) : (
+                <div className="p-8 text-center text-sm text-zinc-400">
+                  No sections match the selected filter
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Section tree */}
-      <div className="flex-1 overflow-y-auto zen-scroll">
-        <div className="max-w-5xl mx-auto py-2">
-          <div className="border border-zinc-200 rounded-xl overflow-hidden bg-white mx-6 my-4">
-            {displayed.length > 0 ? (
-              displayed.map(section => (
-                <SectionRow
-                  key={section.code}
-                  section={section}
-                  depth={0}
-                  onSectionClick={onSectionClick}
-                />
-              ))
-            ) : (
-              <div className="p-8 text-center text-sm text-zinc-400">
-                No sections match the selected filter
-              </div>
-            )}
+      {/* Preview pane */}
+      {selectedSection && (
+        <SectionPreviewPane
+          section={selectedSection}
+          onClose={() => setSelectedSection(null)}
+          onOpenInWorkspace={() => {
+            onSectionClick(selectedSection.code);
+          }}
+        />
+      )}
+    </div>
+  );
+};
+
+// ─── Section preview pane ──────────────────────────────────────────────────
+
+const SectionPreviewPane: React.FC<{
+  section: DossierSection;
+  onClose: () => void;
+  onOpenInWorkspace: () => void;
+}> = ({ section, onClose, onOpenInWorkspace }) => {
+  const cfg = STATUS_CONFIG[section.status];
+  const StatusIcon = cfg.icon;
+
+  return (
+    <div className="w-96 flex-shrink-0 border-l border-zinc-200 bg-white flex flex-col min-h-0">
+      {/* Preview header */}
+      <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200">
+        <div className="flex items-center gap-2 min-w-0">
+          <Eye className="w-4 h-4 text-zinc-400 flex-shrink-0" />
+          <span className="text-sm font-medium text-zinc-900 truncate">Section Preview</span>
+        </div>
+        <button
+          onClick={onClose}
+          className="p-1 rounded-md hover:bg-zinc-100 transition-colors text-zinc-400 hover:text-zinc-600"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Preview content */}
+      <div className="flex-1 overflow-y-auto zen-scroll px-5 py-4 space-y-4">
+        {/* Section code & title */}
+        <div>
+          <span className="text-xs font-mono text-zinc-400">{section.code}</span>
+          <h3 className="text-base font-semibold text-zinc-900 mt-0.5">{section.title}</h3>
+        </div>
+
+        {/* Status badge */}
+        <div>
+          <span className="text-xs font-medium text-zinc-500 uppercase tracking-wide">Status</span>
+          <div className="mt-1.5">
+            <span className={cn('inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium', cfg.bg, cfg.color)}>
+              <StatusIcon className="w-3 h-3" />
+              {cfg.label}
+            </span>
           </div>
         </div>
+
+        {/* Blocker info */}
+        {section.blockerCount && section.blockerCount > 0 && (
+          <div>
+            <span className="text-xs font-medium text-zinc-500 uppercase tracking-wide">Blockers</span>
+            <p className="mt-1 text-sm text-red-600 font-medium">
+              {section.blockerCount} blocker{section.blockerCount > 1 ? 's' : ''} identified
+            </p>
+          </div>
+        )}
+
+        {/* Assignee */}
+        {section.assignee && (
+          <div>
+            <span className="text-xs font-medium text-zinc-500 uppercase tracking-wide">Assignee</span>
+            <p className="mt-1 text-sm text-zinc-700">{section.assignee}</p>
+          </div>
+        )}
+
+        {/* Last updated */}
+        {section.updatedAt && (
+          <div>
+            <span className="text-xs font-medium text-zinc-500 uppercase tracking-wide">Last Updated</span>
+            <p className="mt-1 text-sm text-zinc-700">{section.updatedAt}</p>
+          </div>
+        )}
+
+        {/* Content preview placeholder */}
+        <div>
+          <span className="text-xs font-medium text-zinc-500 uppercase tracking-wide">Content Preview</span>
+          <div className="mt-1.5 rounded-lg border border-zinc-200 bg-zinc-50 p-4 min-h-[120px]">
+            <p className="text-xs text-zinc-400 italic">
+              Section {section.code} content will appear here when available.
+            </p>
+            <p className="text-xs text-zinc-400 mt-2">
+              Open in workspace to view, edit, or generate content for this section.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer action */}
+      <div className="flex-shrink-0 px-5 py-4 border-t border-zinc-200">
+        <button
+          onClick={onOpenInWorkspace}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-zinc-900 text-white text-sm font-medium rounded-lg hover:bg-zinc-800 transition-colors"
+        >
+          <FileText className="w-4 h-4" />
+          Open in Section Workspace
+        </button>
       </div>
     </div>
   );

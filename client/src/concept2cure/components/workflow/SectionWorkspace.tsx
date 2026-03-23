@@ -34,7 +34,14 @@ import {
   Send,
   ExternalLink,
   AlertCircle,
+  Eye,
 } from 'lucide-react';
+import {
+  useDocumentModeOptional,
+  type DocumentMode,
+  type ModeCapabilities,
+  MODE_CAPABILITIES,
+} from '../../contexts/DocumentModeContext';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -166,6 +173,9 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
   const [activeTab, setActiveTab] = useState<WorkspaceTab>('draft');
   const [anaOpen, setAnaOpen] = useState(true);
   const [editorContent, setEditorContent] = useState(content);
+  const modeCtx = useDocumentModeOptional();
+  const mode: DocumentMode = modeCtx?.mode ?? 'edit';
+  const caps: ModeCapabilities = MODE_CAPABILITIES[mode];
   const cfg = STATUS_CONFIG[section.status];
   const StatusIcon = cfg.icon;
 
@@ -205,9 +215,15 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
                 <StatusIcon className="w-3 h-3" />
                 {cfg.label}
               </span>
+              {mode !== 'edit' && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-zinc-100 text-zinc-500">
+                  <Eye className="w-2.5 h-2.5" />
+                  {mode === 'readonly' ? 'Read Only' : mode === 'view' ? 'View Mode' : 'Preview'}
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-2">
-              {section.status === 'drafting' && onSubmitForReview && (
+              {caps.canSave && section.status === 'drafting' && onSubmitForReview && (
                 <button
                   onClick={onSubmitForReview}
                   disabled={criticalIssues.length > 0}
@@ -223,7 +239,7 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
                   Submit for Review
                 </button>
               )}
-              {section.status === 'in-review' && onApprove && (
+              {caps.canSave && section.status === 'in-review' && onApprove && (
                 <button
                   onClick={onApprove}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-700 transition-colors"
@@ -290,17 +306,24 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
           {/* Draft tab */}
           {activeTab === 'draft' && (
             <div className="max-w-3xl mx-auto px-8 py-6">
-              <div
-                className="prose prose-sm prose-zinc max-w-none min-h-[400px] focus:outline-none"
-                contentEditable
-                suppressContentEditableWarning
-                onBlur={e => {
-                  const text = e.currentTarget.innerText;
-                  setEditorContent(text);
-                  onSave?.(text);
-                }}
-                dangerouslySetInnerHTML={{ __html: editorContent.replace(/\n/g, '<br/>') }}
-              />
+              {caps.editable ? (
+                <div
+                  className="prose prose-sm prose-zinc max-w-none min-h-[400px] focus:outline-none"
+                  contentEditable
+                  suppressContentEditableWarning
+                  onBlur={e => {
+                    const text = e.currentTarget.innerText;
+                    setEditorContent(text);
+                    onSave?.(text);
+                  }}
+                  dangerouslySetInnerHTML={{ __html: editorContent.replace(/\n/g, '<br/>') }}
+                />
+              ) : (
+                <div
+                  className="prose prose-sm prose-zinc max-w-none min-h-[400px]"
+                  dangerouslySetInnerHTML={{ __html: editorContent.replace(/\n/g, '<br/>') }}
+                />
+              )}
             </div>
           )}
 
@@ -429,40 +452,52 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
             {/* Contextual suggestions */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               <div className="text-xs text-zinc-400 uppercase tracking-wider font-semibold mb-2">
-                Suggested Actions
+                {mode === 'edit' ? 'Suggested Actions' : 'Section Info'}
               </div>
 
-              <button className="w-full text-left p-3 rounded-lg border border-zinc-200 bg-white hover:border-blue-300 hover:shadow-sm transition-all">
-                <div className="flex items-center gap-2 mb-1">
-                  <PenLine className="w-3.5 h-3.5 text-blue-500" />
-                  <span className="text-xs font-medium text-zinc-800">Draft missing content</span>
-                </div>
-                <p className="text-[11px] text-zinc-500 pl-5.5">Generate initial draft for empty subsections based on similar approved IND submissions.</p>
-              </button>
+              {mode === 'edit' && (
+                <>
+                  <button className="w-full text-left p-3 rounded-lg border border-zinc-200 bg-white hover:border-blue-300 hover:shadow-sm transition-all">
+                    <div className="flex items-center gap-2 mb-1">
+                      <PenLine className="w-3.5 h-3.5 text-blue-500" />
+                      <span className="text-xs font-medium text-zinc-800">Draft missing content</span>
+                    </div>
+                    <p className="text-[11px] text-zinc-500 pl-5.5">Generate initial draft for empty subsections based on similar approved IND submissions.</p>
+                  </button>
 
-              <button className="w-full text-left p-3 rounded-lg border border-zinc-200 bg-white hover:border-blue-300 hover:shadow-sm transition-all">
-                <div className="flex items-center gap-2 mb-1">
-                  <BookOpen className="w-3.5 h-3.5 text-violet-500" />
-                  <span className="text-xs font-medium text-zinc-800">Find supporting evidence</span>
-                </div>
-                <p className="text-[11px] text-zinc-500 pl-5.5">Search PubMed and ClinicalTrials.gov for evidence supporting claims in this section.</p>
-              </button>
+                  <button className="w-full text-left p-3 rounded-lg border border-zinc-200 bg-white hover:border-blue-300 hover:shadow-sm transition-all">
+                    <div className="flex items-center gap-2 mb-1">
+                      <BookOpen className="w-3.5 h-3.5 text-violet-500" />
+                      <span className="text-xs font-medium text-zinc-800">Find supporting evidence</span>
+                    </div>
+                    <p className="text-[11px] text-zinc-500 pl-5.5">Search PubMed and ClinicalTrials.gov for evidence supporting claims in this section.</p>
+                  </button>
 
-              <button className="w-full text-left p-3 rounded-lg border border-zinc-200 bg-white hover:border-blue-300 hover:shadow-sm transition-all">
-                <div className="flex items-center gap-2 mb-1">
-                  <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
-                  <span className="text-xs font-medium text-zinc-800">Check contradictions</span>
-                </div>
-                <p className="text-[11px] text-zinc-500 pl-5.5">Scan for inconsistencies between this section and other dossier sections.</p>
-              </button>
+                  <button className="w-full text-left p-3 rounded-lg border border-zinc-200 bg-white hover:border-blue-300 hover:shadow-sm transition-all">
+                    <div className="flex items-center gap-2 mb-1">
+                      <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                      <span className="text-xs font-medium text-zinc-800">Check contradictions</span>
+                    </div>
+                    <p className="text-[11px] text-zinc-500 pl-5.5">Scan for inconsistencies between this section and other dossier sections.</p>
+                  </button>
 
-              <button className="w-full text-left p-3 rounded-lg border border-zinc-200 bg-white hover:border-blue-300 hover:shadow-sm transition-all">
-                <div className="flex items-center gap-2 mb-1">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                  <span className="text-xs font-medium text-zinc-800">Readiness check</span>
+                  <button className="w-full text-left p-3 rounded-lg border border-zinc-200 bg-white hover:border-blue-300 hover:shadow-sm transition-all">
+                    <div className="flex items-center gap-2 mb-1">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                      <span className="text-xs font-medium text-zinc-800">Readiness check</span>
+                    </div>
+                    <p className="text-[11px] text-zinc-500 pl-5.5">Evaluate this section against ICH M4 guidelines and FDA requirements.</p>
+                  </button>
+                </>
+              )}
+
+              {mode !== 'edit' && (
+                <div className="p-3 rounded-lg border border-zinc-200 bg-white">
+                  <p className="text-xs text-zinc-500">
+                    AnA is available in read-only explain mode. Ask questions about this section below.
+                  </p>
                 </div>
-                <p className="text-[11px] text-zinc-500 pl-5.5">Evaluate this section against ICH M4 guidelines and FDA requirements.</p>
-              </button>
+              )}
             </div>
 
             {/* Chat input */}

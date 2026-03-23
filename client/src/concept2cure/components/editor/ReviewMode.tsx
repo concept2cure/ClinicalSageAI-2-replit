@@ -15,6 +15,10 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { LIFECYCLE } from '../ui/enterprise';
+import {
+  useDocumentModeOptional,
+  MODE_CAPABILITIES,
+} from '../../contexts/DocumentModeContext';
 
 interface TrackedChange {
   id: string;
@@ -88,6 +92,10 @@ export function ReviewModePanel({
   onCompleteReview,
   onClose,
 }: ReviewModePanelProps) {
+  const modeCtx = useDocumentModeOptional();
+  const caps = modeCtx ? MODE_CAPABILITIES[modeCtx.mode] : null;
+  const isEditable = caps?.editable ?? true;
+
   const [reviewComment, setReviewComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -141,6 +149,12 @@ export function ReviewModePanel({
 
   return (
     <div className="flex h-full flex-col border-l bg-white">
+      {!isEditable && (
+        <div className="px-4 py-2 bg-amber-50 border-b border-amber-100 text-xs text-amber-700">
+          Review actions are disabled in {modeCtx?.mode || 'current'} mode.
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between border-b px-4 py-3">
         <h2 className="text-sm font-semibold text-slate-800">Review Mode</h2>
@@ -158,11 +172,13 @@ export function ReviewModePanel({
       <div className="border-b px-4 py-3">
         <button
           onClick={onToggleReviewMode}
+          disabled={!isEditable}
           className={cn(
             'flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors duration-150',
             isReviewMode
               ? 'bg-blue-600 text-white hover:bg-blue-700'
               : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
+            !isEditable && 'opacity-50 cursor-not-allowed',
           )}
         >
           {isReviewMode ? (
@@ -204,14 +220,22 @@ export function ReviewModePanel({
         <div className="flex gap-2 border-b px-4 py-2.5">
           <button
             onClick={onAcceptAll}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-md bg-green-50 px-3 py-1.5 text-xs font-medium text-green-700 hover:bg-green-100"
+            disabled={!isEditable}
+            className={cn(
+              "flex flex-1 items-center justify-center gap-1.5 rounded-md bg-green-50 px-3 py-1.5 text-xs font-medium text-green-700 hover:bg-green-100",
+              !isEditable && 'opacity-50 cursor-not-allowed',
+            )}
           >
             <CheckCircle className="h-3.5 w-3.5" />
             Accept All ({pendingChanges.length})
           </button>
           <button
             onClick={onRejectAll}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-md bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100"
+            disabled={!isEditable}
+            className={cn(
+              "flex flex-1 items-center justify-center gap-1.5 rounded-md bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-100",
+              !isEditable && 'opacity-50 cursor-not-allowed',
+            )}
           >
             <XCircle className="h-3.5 w-3.5" />
             Reject All ({pendingChanges.length})
@@ -307,14 +331,22 @@ export function ReviewModePanel({
                     <div className="flex gap-1.5">
                       <button
                         onClick={() => onAcceptChange(change.id)}
-                        className="flex flex-1 items-center justify-center gap-1 rounded bg-green-600 px-2 py-1 text-[10px] font-medium text-white hover:bg-green-700"
+                        disabled={!isEditable}
+                        className={cn(
+                          "flex flex-1 items-center justify-center gap-1 rounded bg-green-600 px-2 py-1 text-[10px] font-medium text-white hover:bg-green-700",
+                          !isEditable && 'opacity-50 cursor-not-allowed',
+                        )}
                       >
                         <Check className="h-3 w-3" />
                         Accept
                       </button>
                       <button
                         onClick={() => onRejectChange(change.id)}
-                        className="flex flex-1 items-center justify-center gap-1 rounded bg-red-600 px-2 py-1 text-[10px] font-medium text-white hover:bg-red-700"
+                        disabled={!isEditable}
+                        className={cn(
+                          "flex flex-1 items-center justify-center gap-1 rounded bg-red-600 px-2 py-1 text-[10px] font-medium text-white hover:bg-red-700",
+                          !isEditable && 'opacity-50 cursor-not-allowed',
+                        )}
                       >
                         <X className="h-3 w-3" />
                         Reject
@@ -373,7 +405,7 @@ export function ReviewModePanel({
           <div className="flex gap-2">
             <button
               onClick={() => handleCompleteReview('approved')}
-              disabled={isSubmitting}
+              disabled={isSubmitting || !isEditable}
               className="flex flex-1 items-center justify-center gap-1.5 rounded-md bg-green-600 px-3 py-2 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
             >
               {isSubmitting ? (
@@ -385,7 +417,7 @@ export function ReviewModePanel({
             </button>
             <button
               onClick={() => handleCompleteReview('changes-requested')}
-              disabled={isSubmitting}
+              disabled={isSubmitting || !isEditable}
               className="flex flex-1 items-center justify-center gap-1.5 rounded-md bg-amber-500 px-3 py-2 text-xs font-medium text-white hover:bg-amber-600 disabled:opacity-50"
             >
               {isSubmitting ? (
