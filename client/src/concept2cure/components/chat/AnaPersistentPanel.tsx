@@ -29,6 +29,16 @@ import {
   MessageSquare,
   Image as ImageIcon,
   Download,
+  Search,
+  PenTool,
+  AlertTriangle,
+  Target,
+  GitCompare,
+  Shield,
+  FileSearch,
+  HelpCircle,
+  FileEdit,
+  FolderPlus,
 } from 'lucide-react';
 
 marked.setOptions({ breaks: true, gfm: true });
@@ -130,6 +140,60 @@ interface SuggestedAction {
   description?: string;
 }
 
+// ─── AnA RI Types ─────────────────────────────────────────────────────────────
+
+type IntentLens = 'auto' | 'audit' | 'improve' | 'risk' | 'strategy' | 'compare';
+
+interface IntentLensOption {
+  id: IntentLens;
+  label: string;
+  description: string;
+  icon: React.ReactNode;
+}
+
+const INTENT_LENSES: IntentLensOption[] = [
+  { id: 'auto', label: 'Auto', description: 'AnA detects intent automatically', icon: <Sparkles className="w-3.5 h-3.5" /> },
+  { id: 'audit', label: 'Audit', description: 'Review like a regulator', icon: <Search className="w-3.5 h-3.5" /> },
+  { id: 'improve', label: 'Improve', description: 'Strengthen writing and structure', icon: <PenTool className="w-3.5 h-3.5" /> },
+  { id: 'risk', label: 'Risk', description: 'Predict deficiencies and rejections', icon: <AlertTriangle className="w-3.5 h-3.5" /> },
+  { id: 'strategy', label: 'Strategy', description: 'Regulatory pathway analysis', icon: <Target className="w-3.5 h-3.5" /> },
+  { id: 'compare', label: 'Compare', description: 'Side-by-side analysis', icon: <GitCompare className="w-3.5 h-3.5" /> },
+];
+
+interface AnaRIOrchestration {
+  detectedIntent: { lens: IntentLens; confidence: number; signals: string[] };
+  detectedSubmissionType: string | null;
+  appliedRole: string;
+  suggestedActions: string[];
+}
+
+type DocumentActionType =
+  | 'risk_memo'
+  | 'deficiency_preemption_memo'
+  | 'evidence_memo'
+  | 'strategy_note'
+  | 'reviewer_question_brief'
+  | 'rewritten_section'
+  | 'revised_artifact'
+  | 'attach_to_dossier';
+
+interface DocumentActionConfig {
+  type: DocumentActionType;
+  label: string;
+  icon: React.ReactNode;
+}
+
+const DOCUMENT_ACTION_CONFIGS: DocumentActionConfig[] = [
+  { type: 'revised_artifact', label: 'Revise Document', icon: <FileEdit className="w-3.5 h-3.5" /> },
+  { type: 'risk_memo', label: 'Create Risk Memo', icon: <AlertTriangle className="w-3.5 h-3.5" /> },
+  { type: 'deficiency_preemption_memo', label: 'Deficiency Preemption', icon: <Shield className="w-3.5 h-3.5" /> },
+  { type: 'rewritten_section', label: 'Rewrite Section', icon: <PenTool className="w-3.5 h-3.5" /> },
+  { type: 'strategy_note', label: 'Strategy Note', icon: <Target className="w-3.5 h-3.5" /> },
+  { type: 'evidence_memo', label: 'Evidence Memo', icon: <FileSearch className="w-3.5 h-3.5" /> },
+  { type: 'reviewer_question_brief', label: 'Reviewer Brief', icon: <HelpCircle className="w-3.5 h-3.5" /> },
+  { type: 'attach_to_dossier', label: 'Attach to Dossier', icon: <FolderPlus className="w-3.5 h-3.5" /> },
+];
+
 interface AnaPersistentPanelProps {
   contextProfile?: {
     productType?: string;
@@ -210,6 +274,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   const [showModeDropdown, setShowModeDropdown] = useState(false);
   const modeDropdownRef = useRef<HTMLDivElement>(null);
   const [showActions, setShowActions] = useState<string | null>(null);
+  // AnA RI state
+  const [intentLens, setIntentLens] = useState<IntentLens>('auto');
+  const [lastOrchestration, setLastOrchestration] = useState<AnaRIOrchestration | null>(null);
+  const [showLensDropdown, setShowLensDropdown] = useState(false);
+  const lensDropdownRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const initialMessageSentRef = useRef(false);
@@ -230,27 +299,39 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     }
   }, [showModeDropdown]);
 
+  // Close lens dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (lensDropdownRef.current && !lensDropdownRef.current.contains(e.target as Node)) {
+        setShowLensDropdown(false);
+      }
+    };
+    if (showLensDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showLensDropdown]);
+
   // AnA personality — rotating thinking messages
   const [thinkingMsg, setThinkingMsg] = useState('');
   useEffect(() => {
     if (!isThinking) return;
     const STANDARD_THINKING = [
-      'Pulling up the relevant guidance...',
-      'Cross-referencing precedents — I want to get this right...',
-      'Checking the latest FDA thinking on this...',
-      'Working through the CTD modules...',
-      'Mapping your submission strategy...',
-      'Running this against the compliance framework...',
-      'Connecting the dots across your dossier...',
-      'Almost there — making sure every citation lands...',
-      'Thinking through the regulatory implications...',
-      'Reviewing ICH guidelines for the right approach...',
-      'Checking what reviewers typically flag here...',
-      'Building something solid for you...',
-      'Pulling from 30 years of review experience...',
-      'This is a good question — let me think carefully...',
-      'Finding the precedent that matters most here...',
-      'Working on it — this one deserves a thorough answer...',
+      'Analyzing regulatory requirements...',
+      'Cross-referencing guidance documents...',
+      'Evaluating submission readiness...',
+      'Reviewing CTD module structure...',
+      'Assessing regulatory pathway options...',
+      'Running compliance analysis...',
+      'Checking ICH guideline alignment...',
+      'Reviewing 21 CFR Part 11 requirements...',
+      'Analyzing evidence strength...',
+      'Evaluating deficiency risk profile...',
+      'Assessing endpoint defensibility...',
+      'Reviewing regulatory precedent...',
+      'Checking predicate devices and precedents...',
+      'Cross-referencing FDA guidance database...',
+      'Analyzing submission strategy...',
     ];
     const DEEP_RESEARCH_THINKING = [
       'Searching ClinicalTrials.gov for matching studies...',
@@ -279,9 +360,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     const hour = new Date().getHours();
     const timeGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
     if (contextProfile?.activeProject) {
-      return `${timeGreeting}. I've been reviewing ${contextProfile.activeProject} — ready when you are. What should we move forward on?`;
+      return `${timeGreeting}. Ready to work on ${contextProfile.activeProject}. How can I help?`;
     }
-    return `${timeGreeting}. I'm AnA, your regulatory co-pilot. I can draft documents, review strategy, run gap analyses, or help you think through your next submission move. What are we working on?`;
+    return `${timeGreeting}. I'm AnA — regulatory intelligence for FDA, EMA, and ICH submissions. What are you working on?`;
   }, [greeting, contextProfile?.activeProject]);
 
   // Auto-scroll when new messages
@@ -492,39 +573,136 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           pptx: data.pptx,
         }]);
       } else {
-        // Standard mode → Cortex unified chat
-        const response = await fetch('/api/cortex/chat', {
+        // Standard mode → AnA RI orchestrated chat (falls back to Cortex)
+        const anaRiPayload = {
+          message: text,
+          intent_lens: intentLens !== 'auto' ? intentLens : undefined,
+          user_role: contextProfile?.userRole || undefined,
+          project_context: contextProfile?.activeProject ? {
+            productName: contextProfile.activeProject,
+            submissionType: contextProfile.productType,
+          } : undefined,
+          submission_type: contextProfile?.productType || undefined,
+          context: {
+            screen: contextProfile?.screenName,
+            project: contextProfile?.activeProject,
+            projectId: contextProfile?.projectId,
+            productType: contextProfile?.productType,
+            userRole: contextProfile?.userRole,
+            screenName: contextProfile?.screenName,
+          },
+          conversation_history: messages.slice(-10).map(m => ({
+            role: m.role,
+            content: m.content,
+          })),
+        };
+
+        // Try AnA RI first, fallback to Cortex
+        let response = await fetch('/api/ana-ri/chat', {
           method: 'POST',
-          headers: getAuthHeaders(),
-          body: JSON.stringify({
-            message: text,
-            chatMode,
-            project_id: contextProfile?.projectId || undefined,
-            submission_type: contextProfile?.productType || undefined,
-            context: {
-              screen: contextProfile?.screenName,
-              project: contextProfile?.activeProject,
-              projectId: contextProfile?.projectId,
-              productType: contextProfile?.productType,
-              userRole: contextProfile?.userRole,
-            },
-            conversationHistory: messages.slice(-10).map(m => ({
-              role: m.role,
-              content: m.content,
-            })),
-          }),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(anaRiPayload),
         });
+
         if (!response.ok) {
-          throw new Error(`Request failed (${response.status})`);
+          // Fallback to Cortex unified chat
+          response = await fetch('/api/cortex/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              message: text,
+              chatMode,
+              project_id: contextProfile?.projectId || undefined,
+              submission_type: contextProfile?.productType || undefined,
+              context: {
+                screen: contextProfile?.screenName,
+                project: contextProfile?.activeProject,
+                projectId: contextProfile?.projectId,
+                productType: contextProfile?.productType,
+                userRole: contextProfile?.userRole,
+              },
+              conversationHistory: messages.slice(-10).map(m => ({
+                role: m.role,
+                content: m.content,
+              })),
+            }),
+          });
+          if (!response.ok) {
+            throw new Error(`Request failed (${response.status})`);
+          }
         }
         data = await response.json();
 
-        const assistantContent = data.response || data.answer || 'I\'m here to help with your regulatory work. What would you like to work on?';
+        // Capture orchestration metadata from AnA RI
+        if (data.orchestration) {
+          setLastOrchestration(data.orchestration);
+        }
+
+        const responseContent = data.response || data.answer || 'I\'m here to help with your regulatory work. What would you like to work on?';
+
+        // Parse and execute any embedded commands from AnA
+        const commandBlocks = responseContent.match(/```command\s*\n([\s\S]*?)```/g);
+        const commandResults: string[] = [];
+        let chainBroken = false;
+        if (commandBlocks) {
+          for (const block of commandBlocks) {
+            if (chainBroken) {
+              commandResults.push(`**${block.slice(0, 40)}...** skipped (previous command failed)`);
+              continue;
+            }
+            try {
+              const jsonStr = block.replace(/^```command\s*\n?/, '').replace(/```$/, '').trim();
+              const cmd = JSON.parse(jsonStr);
+              if (cmd.command) {
+                const execRes = await fetch('/api/ana-ri/execute', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(cmd),
+                });
+                const result = await execRes.json();
+                if (execRes.ok && result.success) {
+                  commandResults.push(`**${result.action}**: ${result.message}`);
+                  // Handle file downloads (export_artifact returns base64)
+                  if (result.data?.base64 && result.data?.fileName) {
+                    try {
+                      const mimeType = result.data.format === 'docx'
+                        ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                        : 'application/octet-stream';
+                      const byteChars = atob(result.data.base64);
+                      const byteArray = new Uint8Array(byteChars.length);
+                      for (let i = 0; i < byteChars.length; i++) byteArray[i] = byteChars.charCodeAt(i);
+                      const blob = new Blob([byteArray], { type: mimeType });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = result.data.fileName;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    } catch { /* download fallback handled by message */ }
+                  }
+                } else {
+                  commandResults.push(`**${result.action || cmd.command}** failed: ${result.message || result.error || 'Unknown error'}`);
+                  chainBroken = true;
+                }
+              }
+            } catch (parseErr) {
+              commandResults.push(`**Command parse error**: Could not execute command block`);
+              console.error('[AnA RI] Command parse error:', parseErr);
+              chainBroken = true;
+            }
+          }
+        }
+
+        // Clean command blocks from visible response and append results
+        let cleanContent = responseContent.replace(/```command\n[\s\S]*?```/g, '').trim();
+        if (commandResults.length > 0) {
+          cleanContent += '\n\n---\n**Executed:**\n' + commandResults.map(r => `- ${r}`).join('\n');
+        }
 
         setMessages(prev => [...prev, {
           id: `a-${Date.now()}`,
           role: 'assistant',
-          content: assistantContent,
+          content: cleanContent,
           timestamp: new Date(),
         }]);
 
@@ -565,7 +743,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     } finally {
       setIsThinking(false);
     }
-  }, [input, isThinking, messages, contextProfile, chatMode]);
+  }, [input, isThinking, messages, contextProfile, chatMode, intentLens]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -701,7 +879,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               </div>
               <textarea ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={handleKeyDown} onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)} placeholder="Message AnA..." rows={1} className="flex-1 resize-none bg-transparent border-none outline-none text-[#141413] placeholder:text-[#B0AEA5] text-sm leading-6 min-h-[24px] max-h-[120px]" />
               {hasMessages && (
-                <button onClick={() => setMessages([])} className="flex-shrink-0 p-1.5 text-[#B0AEA5] hover:text-[#6B6962] rounded-lg transition-colors" title="New thread">
+                <button onClick={() => { setMessages([]); setLastOrchestration(null); }} className="flex-shrink-0 p-1.5 text-[#B0AEA5] hover:text-[#6B6962] rounded-lg transition-colors" title="New thread">
                   <RotateCcw className="w-3.5 h-3.5" />
                 </button>
               )}
@@ -955,6 +1133,89 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           )}
                         </div>
                       )}
+                      {/* AnA RI Document Action Row — shown on the last assistant message */}
+                      {!isUser && msg.id === messages.filter(m => m.role === 'assistant').at(-1)?.id && lastOrchestration && (
+                        <div className="mt-3 pt-3 border-t border-[#F5F4EF]">
+                          <p className="text-[10px] font-medium text-[#B0AEA5] uppercase tracking-wide mb-2">Document Actions</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {DOCUMENT_ACTION_CONFIGS
+                              .filter(a => !lastOrchestration.suggestedActions.length || lastOrchestration.suggestedActions.includes(a.type) || ['revised_artifact', 'attach_to_dossier'].includes(a.type))
+                              .slice(0, 5)
+                              .map(action => (
+                                <button
+                                  key={action.type}
+                                  disabled={isThinking}
+                                  onClick={async () => {
+                                    if (isThinking) return;
+                                    if (!contextProfile?.projectId) {
+                                      setMessages(prev => [...prev, {
+                                        id: `a-${Date.now()}`,
+                                        role: 'assistant',
+                                        content: `**Cannot create artifact** — No project selected. Please open a project first, then try again.`,
+                                        timestamp: new Date(),
+                                      }]);
+                                      return;
+                                    }
+                                    setIsThinking(true);
+                                    try {
+                                      const res = await fetch('/api/ana-ri/generate', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                          action_type: action.type,
+                                          conversation_context: messages.slice(-20).map(m => ({
+                                            role: m.role,
+                                            content: m.content,
+                                          })),
+                                          project_id: contextProfile.projectId,
+                                          user_role: contextProfile?.userRole || undefined,
+                                          intent_lens: intentLens !== 'auto' ? intentLens : undefined,
+                                        }),
+                                      });
+                                      if (res.ok) {
+                                        const data = await res.json();
+                                        let statusLine = '';
+                                        if (data.artifactId) {
+                                          statusLine = `\n\n---\n**${action.label} created** | Artifact #${data.artifactId} | Quality: ${data.qualityGrade || 'draft'} | ${data.isNew ? 'New' : 'Updated'}`;
+                                        } else if (data.persisted === false) {
+                                          statusLine = '\n\n---\n**Warning:** Content generated but could not be saved to project. Please copy this content.';
+                                        }
+                                        setMessages(prev => [...prev, {
+                                          id: `a-${Date.now()}`,
+                                          role: 'assistant',
+                                          content: data.content + statusLine,
+                                          timestamp: new Date(),
+                                        }]);
+                                        setIsThinking(false);
+                                      } else {
+                                        // Fallback: send as chat prompt (handleSend manages isThinking)
+                                        handleSend(`Please generate a ${action.label.toLowerCase()} based on our conversation above.`);
+                                      }
+                                    } catch {
+                                      // Fallback: send as chat prompt (handleSend manages isThinking)
+                                      handleSend(`Please generate a ${action.label.toLowerCase()} based on our conversation above.`);
+                                    }
+                                  }}
+                                  className={cn(
+                                    "inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-colors",
+                                    isThinking
+                                      ? "border-[#E8E6DC] text-[#D8D5CA] cursor-not-allowed"
+                                      : "border-[#E8E6DC] text-[#6B6962] hover:bg-[#FAF9F5] hover:border-[#D8D5CA] hover:text-[#4D4B45]"
+                                  )}
+                                >
+                                  {action.icon}
+                                  {action.label}
+                                </button>
+                              ))}
+                          </div>
+                          {lastOrchestration.detectedSubmissionType && (
+                            <p className="text-[10px] text-[#B0AEA5] mt-2">
+                              Detected: {lastOrchestration.detectedSubmissionType.toUpperCase()} submission
+                              {lastOrchestration.detectedIntent.lens !== 'auto' && ` | ${lastOrchestration.detectedIntent.lens} lens`}
+                            </p>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -994,7 +1255,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           {hasMessages && (
             <div className="flex justify-center mb-2">
               <button
-                onClick={() => setMessages([])}
+                onClick={() => { setMessages([]); setLastOrchestration(null); }}
                 className="flex items-center gap-1.5 px-3 py-1 text-xs text-[#B0AEA5] hover:text-[#6B6962] hover:bg-[#F5F4EF] rounded-full transition-colors"
               >
                 <RotateCcw className="w-3 h-3" />
@@ -1040,7 +1301,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 <div className="absolute bottom-full left-0 mb-1.5 w-56 bg-white rounded-xl border border-[#E8E6DC] shadow-lg py-1 z-50">
                   <button
                     type="button"
-                    onClick={() => { setChatMode('standard'); setShowModeDropdown(false); }}
+                    onClick={() => { setChatMode('standard'); setIntentLens('auto'); setShowModeDropdown(false); }}
                     className={cn(
                       'w-full flex items-start gap-3 px-3 py-2.5 text-left hover:bg-[#FAF9F5] transition-colors',
                       chatMode === 'standard' && 'bg-[#FAF9F5]'
@@ -1088,6 +1349,57 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               )}
             </div>
 
+            {/* AnA RI Intent Lens selector — only in standard mode */}
+            {chatMode === 'standard' && (
+              <div className="relative flex-shrink-0 self-center" ref={lensDropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setShowLensDropdown(prev => !prev)}
+                  className={cn(
+                    'flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors',
+                    intentLens !== 'auto'
+                      ? 'bg-[#FBF0EB] text-[#D97757] hover:bg-[#F5E1D6]'
+                      : 'text-[#B0AEA5] hover:bg-[#F5F4EF] hover:text-[#6B6962]'
+                  )}
+                  title="Intent lens"
+                >
+                  {INTENT_LENSES.find(l => l.id === intentLens)?.icon}
+                  <span className="hidden sm:inline">
+                    {INTENT_LENSES.find(l => l.id === intentLens)?.label}
+                  </span>
+                  <ChevronDown className="w-3 h-3 opacity-50" />
+                </button>
+
+                {showLensDropdown && (
+                  <div className="absolute bottom-full left-0 mb-1.5 w-52 bg-white rounded-xl border border-[#E8E6DC] shadow-lg py-1 z-50">
+                    {INTENT_LENSES.map(lens => (
+                      <button
+                        key={lens.id}
+                        type="button"
+                        onClick={() => { setIntentLens(lens.id); setShowLensDropdown(false); }}
+                        className={cn(
+                          'w-full flex items-start gap-3 px-3 py-2 text-left hover:bg-[#FAF9F5] transition-colors',
+                          intentLens === lens.id && 'bg-[#FAF9F5]'
+                        )}
+                      >
+                        <span className={cn(
+                          'mt-0.5 flex-shrink-0',
+                          intentLens === lens.id ? 'text-[#D97757]' : 'text-[#8A8880]'
+                        )}>
+                          {lens.icon}
+                        </span>
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium text-[#141413]">{lens.label}</div>
+                          <div className="text-[10px] text-[#B0AEA5] leading-tight">{lens.description}</div>
+                        </div>
+                        {intentLens === lens.id && <Check className="w-4 h-4 text-[#D97757] ml-auto mt-0.5 flex-shrink-0" />}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Input */}
             <textarea
               ref={inputRef}
@@ -1096,7 +1408,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               onKeyDown={handleKeyDown}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
-              placeholder={chatMode === 'deep-research' ? 'Ask a deep research question...' : chatMode === 'nano-banana' ? 'Describe an image, infographic, or presentation...' : 'Message AnA...'}
+              placeholder={chatMode === 'deep-research' ? 'Ask a deep research question...' : chatMode === 'nano-banana' ? 'Describe an image, infographic, or presentation...' : intentLens !== 'auto' ? `Message AnA (${intentLens} lens)...` : 'Message AnA...'}
               rows={1}
               className="flex-1 resize-none bg-transparent border-none outline-none text-[#141413] placeholder:text-[#B0AEA5] text-sm leading-6 min-h-[24px] max-h-[120px]"
             />

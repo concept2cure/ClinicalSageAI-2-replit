@@ -37,10 +37,12 @@ function ensureGateway() {
   return gateway;
 }
 
-import { ANA_SYSTEM_PROMPT } from '../services/ana-personality';
+// System prompt for regulatory AI assistant — powered by AnA RI orchestrator
+import { buildAnaRISystemPrompt } from '../services/ana-ri/persona.js';
+import { orchestrate } from '../services/ana-ri/orchestrator.js';
 
-// System prompt for regulatory AI assistant — uses canonical AnA personality
-const REGULATORY_SYSTEM_PROMPT = ANA_SYSTEM_PROMPT;
+// Default system prompt (used when orchestrator is not invoked for simple messages)
+const REGULATORY_SYSTEM_PROMPT = buildAnaRISystemPrompt({ userRole: 'general', intentLens: 'auto' });
 
 // ── Provenance helpers ─────────────────────────────────────────────────────
 

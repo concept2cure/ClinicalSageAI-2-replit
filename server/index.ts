@@ -3345,6 +3345,15 @@ try {
   console.error('❌ Failed to mount AnA Features routes:', error);
 }
 
+// Mount AnA RI routes (regulatory intelligence copilot)
+try {
+  const anaRiModule = await import('./routes/ana-ri');
+  app.use('/api/ana-ri', anaRiModule.default);
+  console.log('✅ AnA RI routes mounted (/api/ana-ri)');
+} catch (error) {
+  console.error('❌ Failed to mount AnA RI routes:', error);
+}
+
 // Mount Ana Platform Control routes (agentic settings, modules, onboarding)
 try {
   const anaPlatformModule = await import('./routes/ana-platform-control');
