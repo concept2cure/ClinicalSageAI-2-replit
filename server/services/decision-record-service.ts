@@ -15,7 +15,6 @@ import { eq, and, desc, sql } from 'drizzle-orm';
 import {
   decisionRecords,
   assumptionRecords,
-  contradictionLinks,
   type DecisionRecord,
 } from '../../shared/schema/operating-system';
 
@@ -108,7 +107,7 @@ export class DecisionRecordService {
     if (!input.organizationId || !input.projectId) {
       throw new Error('organizationId and projectId are required');
     }
-    if (!input.contextType || !input.recommendationSummary) {
+    if (!input.contextType || !input.recommendationSummary?.trim()) {
       throw new Error('contextType and recommendationSummary are required');
     }
 
@@ -230,6 +229,37 @@ export class DecisionRecordService {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
+  // UPDATE
+  // ─────────────────────────────────────────────────────────────────────────
+
+  async updateDecision(
+    id: string,
+    organizationId: number,
+    input: UpdateDecisionInput
+  ): Promise<DecisionRecord> {
+    const database = this.getDb();
+    const existing = await this.getDecision(id, organizationId);
+    if (!existing) throw new Error(`Decision ${id} not found`);
+    if (existing.actionState === 'superseded') {
+      throw new Error('Cannot update a superseded decision');
+    }
+
+    const [updated] = await database
+      .update(decisionRecords)
+      .set({
+        ...input,
+        updatedAt: new Date(),
+      })
+      .where(and(
+        eq(decisionRecords.id, id),
+        eq(decisionRecords.organizationId, organizationId)
+      ))
+      .returning();
+
+    return updated;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
   // LIFECYCLE
   // ─────────────────────────────────────────────────────────────────────────
 
@@ -260,6 +290,16 @@ export class DecisionRecordService {
       throw new Error('Decision was rejected and cannot be executed');
     }
 
+    // Advance governance boundary to at least governed_draft, but don't demote
+    const boundaryOrder: Record<string, number> = {
+      advisory: 0, governed_draft: 1, approved: 2, locked: 3, submission_ready: 4,
+    };
+    const currentLevel = boundaryOrder[existing.governanceBoundary ?? 'advisory'] ?? 0;
+    const targetLevel = boundaryOrder['governed_draft'];
+    const newBoundary = currentLevel >= targetLevel
+      ? existing.governanceBoundary
+      : 'governed_draft' as const;
+
     const [updated] = await database
       .update(decisionRecords)
       .set({
@@ -267,7 +307,7 @@ export class DecisionRecordService {
         actionDescription: actionDescription ?? existing.actionDescription,
         executedArtifactId,
         executedArtifactVersionId,
-        governanceBoundary: 'governed_draft',
+        governanceBoundary: newBoundary,
         updatedById: executorId,
         updatedAt: new Date(),
       })
@@ -320,6 +360,12 @@ export class DecisionRecordService {
     const database = this.getDb();
     const existing = await this.getDecision(id, organizationId);
     if (!existing) throw new Error(`Decision ${id} not found`);
+    if (existing.actionState === 'rejected') {
+      throw new Error('Decision is already rejected');
+    }
+    if (existing.actionState === 'superseded') {
+      throw new Error('Cannot reject a superseded decision');
+    }
 
     const [updated] = await database
       .update(decisionRecords)

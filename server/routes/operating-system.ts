@@ -65,9 +65,9 @@ router.get('/assumptions', async (req: Request, res: Response) => {
     const orgId = getOrgId(req);
     const service = AssumptionRegistryService.getInstance();
 
-    const projectId = parseInt(req.query.projectId as string);
-    if (!projectId) {
-      return res.status(400).json({ success: false, error: 'projectId is required' });
+    const projectId = parseInt(req.query.projectId as string, 10);
+    if (isNaN(projectId)) {
+      return res.status(400).json({ success: false, error: 'projectId is required and must be a number' });
     }
 
     const records = await service.queryAssumptions({
@@ -291,9 +291,9 @@ router.get('/decisions', async (req: Request, res: Response) => {
     const orgId = getOrgId(req);
     const service = DecisionRecordService.getInstance();
 
-    const projectId = parseInt(req.query.projectId as string);
-    if (!projectId) {
-      return res.status(400).json({ success: false, error: 'projectId is required' });
+    const projectId = parseInt(req.query.projectId as string, 10);
+    if (isNaN(projectId)) {
+      return res.status(400).json({ success: false, error: 'projectId is required and must be a number' });
     }
 
     const records = await service.queryDecisions({
@@ -332,6 +332,55 @@ router.get('/decisions/:id', async (req: Request, res: Response) => {
     res.json({ success: true, data: record });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * PATCH /api/operating-system/decisions/:id
+ * Update a decision record.
+ */
+router.patch('/decisions/:id', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
+    const service = DecisionRecordService.getInstance();
+
+    const record = await service.updateDecision(req.params.id, orgId, {
+      ...req.body,
+      updatedById: userId,
+    });
+
+    res.json({ success: true, data: record });
+  } catch (error: any) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/operating-system/decisions/:id/supersede
+ * Supersede a decision with a new one.
+ */
+router.post('/decisions/:id/supersede', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
+    const service = DecisionRecordService.getInstance();
+
+    const { replacement, reason } = req.body;
+    if (!replacement || !reason) {
+      return res.status(400).json({ success: false, error: 'replacement and reason are required' });
+    }
+
+    const result = await service.supersedeDecision(
+      req.params.id,
+      orgId,
+      { ...replacement, organizationId: orgId, createdById: userId },
+      reason
+    );
+
+    res.json({ success: true, data: result });
+  } catch (error: any) {
+    res.status(400).json({ success: false, error: error.message });
   }
 });
 
@@ -520,9 +569,9 @@ router.get('/governance/transitions', async (req: Request, res: Response) => {
     const orgId = getOrgId(req);
     const service = GovernanceBoundaryService.getInstance();
 
-    const projectId = parseInt(req.query.projectId as string);
-    if (!projectId) {
-      return res.status(400).json({ success: false, error: 'projectId is required' });
+    const projectId = parseInt(req.query.projectId as string, 10);
+    if (isNaN(projectId)) {
+      return res.status(400).json({ success: false, error: 'projectId is required and must be a number' });
     }
 
     const artifactId = req.query.artifactId ? parseInt(req.query.artifactId as string) : undefined;
@@ -593,9 +642,9 @@ router.get('/contradiction-links', async (req: Request, res: Response) => {
     const orgId = getOrgId(req);
     const service = AssumptionRegistryService.getInstance();
 
-    const projectId = parseInt(req.query.projectId as string);
-    if (!projectId) {
-      return res.status(400).json({ success: false, error: 'projectId is required' });
+    const projectId = parseInt(req.query.projectId as string, 10);
+    if (isNaN(projectId)) {
+      return res.status(400).json({ success: false, error: 'projectId is required and must be a number' });
     }
 
     const links = await service.getContradictionLinks(projectId, orgId);

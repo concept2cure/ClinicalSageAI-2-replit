@@ -16,19 +16,15 @@ import {
   integer,
   pgTable,
   pgEnum,
-  serial,
   text,
   timestamp,
   boolean,
   uuid,
   json,
-  varchar,
   real,
   index,
-  decimal,
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';
-import { z } from 'zod';
 import { organizations, users, projects, concept2cureArtifacts, concept2cureArtifactVersions } from '../schema';
 
 // ═══════════════════════════════════════════════════════════════════════════════

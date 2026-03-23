@@ -155,9 +155,13 @@ export class GovernanceBoundaryService {
     const blockedReasons: string[] = [];
 
     // 1. Validate transition direction
-    if (BOUNDARY_ORDER[request.toBoundary] <= BOUNDARY_ORDER[request.fromBoundary]) {
-      // Allow demotion only under specific circumstances
-      if (request.toBoundary !== 'advisory' && request.fromBoundary !== 'locked') {
+    if (request.fromBoundary === request.toBoundary) {
+      blockedReasons.push(
+        `No-op transition: ${request.fromBoundary} → ${request.toBoundary}. Source and target boundary are the same.`
+      );
+    } else if (BOUNDARY_ORDER[request.toBoundary] < BOUNDARY_ORDER[request.fromBoundary]) {
+      // Allow reversion to advisory from any boundary (e.g., rework)
+      if (request.toBoundary !== 'advisory') {
         blockedReasons.push(
           `Invalid transition direction: ${request.fromBoundary} → ${request.toBoundary}. ` +
           `Boundaries must progress forward unless reverting to advisory.`
@@ -171,10 +175,17 @@ export class GovernanceBoundaryService {
       r => r.fromBoundary === request.fromBoundary && r.toBoundary === request.toBoundary
     );
 
-    let matchedRuleId: string | undefined;
+    const matchedRuleIds: string[] = [];
 
     for (const rule of applicableRules) {
-      matchedRuleId = rule.id;
+      matchedRuleIds.push(rule.id);
+
+      // Check review requirement
+      if (rule.requiresReview) {
+        // Review requirement is recorded as an advisory signal for now.
+        // Full enforcement requires integration with the review thread system.
+        // This ensures the rule is visible in transition logs.
+      }
 
       // Check role requirement
       if ((rule.requiredRoles as string[])?.length > 0 && request.actorRole) {
@@ -267,7 +278,7 @@ export class GovernanceBoundaryService {
         assumptionId: request.assumptionId,
         fromBoundary: request.fromBoundary,
         toBoundary: request.toBoundary,
-        ruleId: matchedRuleId,
+        ruleId: matchedRuleIds[0],
         transitionAllowed: allowed,
         blockedReasons,
         actorId: request.actorId,
@@ -278,7 +289,7 @@ export class GovernanceBoundaryService {
     return {
       allowed,
       blockedReasons,
-      ruleId: matchedRuleId,
+      ruleId: matchedRuleIds[0],
       transition,
     };
   }

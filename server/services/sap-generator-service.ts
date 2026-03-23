@@ -39,6 +39,8 @@ export interface GeneratedSapData {
   protocol_id?: string;
   sapContent: string;
   sapPath?: string;
+  assumptions?: unknown[];
+  decision?: unknown;
 }
 
 export class SapGeneratorService {

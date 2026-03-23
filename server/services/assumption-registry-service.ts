@@ -12,7 +12,7 @@
  */
 
 import { db } from '../db';
-import { eq, and, desc, inArray, sql } from 'drizzle-orm';
+import { eq, and, desc, sql } from 'drizzle-orm';
 import {
   assumptionRecords,
   assumptionHistory,
@@ -112,7 +112,7 @@ export class AssumptionRegistryService {
     if (!input.organizationId || !input.projectId) {
       throw new Error('organizationId and projectId are required');
     }
-    if (!input.category || !input.name) {
+    if (!input.category || !input.name?.trim()) {
       throw new Error('category and name are required');
     }
 
@@ -255,10 +255,13 @@ export class AssumptionRegistryService {
       throw new Error('Cannot modify an approved assumption — supersede it instead');
     }
 
+    // Separate non-DB fields from the update payload
+    const { changeReason, ...dbFields } = input;
+
     const [updated] = await database
       .update(assumptionRecords)
       .set({
-        ...input,
+        ...dbFields,
         version: existing.version + 1,
         updatedAt: new Date(),
       })
@@ -268,7 +271,7 @@ export class AssumptionRegistryService {
       ))
       .returning();
 
-    await this.recordHistory(updated, 'updated', input.updatedById, input.changeReason);
+    await this.recordHistory(updated, 'updated', input.updatedById, changeReason);
 
     return updated;
   }
@@ -349,6 +352,12 @@ export class AssumptionRegistryService {
     const database = this.getDb();
     const existing = await this.getAssumption(id, organizationId);
     if (!existing) throw new Error(`Assumption ${id} not found`);
+    if (existing.status === 'superseded') {
+      throw new Error('Cannot reject a superseded assumption');
+    }
+    if (existing.status === 'rejected') {
+      throw new Error('Assumption is already rejected');
+    }
 
     const [updated] = await database
       .update(assumptionRecords)

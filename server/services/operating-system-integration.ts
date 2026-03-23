@@ -34,6 +34,7 @@ export interface SapAssumptionContext {
   effectSize?: number;
   alpha?: number;
   power?: number;
+  domainTrack?: 'biotech' | 'device' | 'diagnostics' | 'combination' | 'biosimilar';
   regulatorBody?: string;
   jurisdiction?: string;
   sourceArtifactId?: number;
@@ -50,6 +51,7 @@ export interface DefensibilityDecisionContext {
   reviewerRiskLevel: string;
   recommendations: string[];
   relatedArtifactId?: number;
+  domainTrack?: 'biotech' | 'device' | 'diagnostics' | 'combination' | 'biosimilar';
   regulatorBody?: string;
   jurisdiction?: string;
   createdById?: number;
@@ -64,6 +66,7 @@ export interface DocumentGenerationDecisionContext {
   generatedArtifactVersionId?: number;
   usedAssumptionIds: string[];
   confidence: 'strong' | 'moderate' | 'provisional' | 'uncertain';
+  domainTrack?: 'biotech' | 'device' | 'diagnostics' | 'combination' | 'biosimilar';
   regulatorBody?: string;
   jurisdiction?: string;
   createdById?: number;
@@ -118,7 +121,7 @@ export class OperatingSystemIntegration {
       sourceType: 'ana_generated',
       sourceArtifactId: ctx.sourceArtifactId,
       sourceDescription: 'SAP generation flow',
-      domainTrack: 'biotech',
+      domainTrack: ctx.domainTrack ?? 'biotech',
       regulatorBody: ctx.regulatorBody,
       jurisdiction: ctx.jurisdiction,
       confidence: 'provisional',
@@ -141,7 +144,7 @@ export class OperatingSystemIntegration {
       sourceType: ctx.dropoutRate === 0.15 ? 'ana_generated' : 'manual',
       sourceArtifactId: ctx.sourceArtifactId,
       sourceDescription: 'SAP generation flow',
-      domainTrack: 'biotech',
+      domainTrack: ctx.domainTrack ?? 'biotech',
       regulatorBody: ctx.regulatorBody,
       jurisdiction: ctx.jurisdiction,
       confidence: ctx.dropoutRate === 0.15 ? 'uncertain' : 'provisional',
@@ -162,7 +165,7 @@ export class OperatingSystemIntegration {
         sourceType: 'ana_generated',
         sourceArtifactId: ctx.sourceArtifactId,
         sourceDescription: 'SAP generation flow',
-        domainTrack: 'biotech',
+        domainTrack: ctx.domainTrack ?? 'biotech',
         regulatorBody: ctx.regulatorBody,
         jurisdiction: ctx.jurisdiction,
         confidence: 'provisional',
@@ -183,7 +186,7 @@ export class OperatingSystemIntegration {
       sourceType: 'manual',
       sourceArtifactId: ctx.sourceArtifactId,
       sourceDescription: 'SAP generation flow',
-      domainTrack: 'biotech',
+      domainTrack: ctx.domainTrack ?? 'biotech',
       regulatorBody: ctx.regulatorBody,
       jurisdiction: ctx.jurisdiction,
       confidence: 'provisional',
@@ -207,7 +210,7 @@ export class OperatingSystemIntegration {
       approvalState: 'pending_review',
       relatedAssumptionIds: assumptionIds,
       relatedArtifactId: ctx.sourceArtifactId,
-      domainTrack: 'biotech',
+      domainTrack: ctx.domainTrack ?? 'biotech',
       regulatorBody: ctx.regulatorBody,
       jurisdiction: ctx.jurisdiction,
       governanceBoundary: 'advisory',
@@ -230,7 +233,7 @@ export class OperatingSystemIntegration {
             sourceLabel: assumption.name,
             targetLabel: `SAP artifact #${ctx.sourceArtifactId}`,
             fieldPath: assumption.category,
-            domainTrack: 'biotech',
+            domainTrack: ctx.domainTrack ?? 'biotech',
             regulatorBody: ctx.regulatorBody,
           }
         );
@@ -281,7 +284,7 @@ export class OperatingSystemIntegration {
       actionState,
       approvalState,
       relatedArtifactId: ctx.relatedArtifactId,
-      domainTrack: 'biotech',
+      domainTrack: ctx.domainTrack ?? 'biotech',
       regulatorBody: ctx.regulatorBody,
       jurisdiction: ctx.jurisdiction,
       governanceBoundary: 'advisory',
@@ -321,7 +324,7 @@ export class OperatingSystemIntegration {
       executedArtifactVersionId: ctx.generatedArtifactVersionId,
       relatedAssumptionIds: ctx.usedAssumptionIds,
       linkedAssumptionIds: ctx.usedAssumptionIds,
-      domainTrack: 'biotech',
+      domainTrack: ctx.domainTrack ?? 'biotech',
       regulatorBody: ctx.regulatorBody,
       jurisdiction: ctx.jurisdiction,
       governanceBoundary: 'advisory',
