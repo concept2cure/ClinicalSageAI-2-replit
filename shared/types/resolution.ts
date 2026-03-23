@@ -287,6 +287,70 @@ export interface AnaResolutionBundleSummary {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// ANA ORCHESTRATOR TYPES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Orchestration decision — what AnA decided to do (or not do).
+ */
+export type OrchestratorDecision = 'execute' | 'prepare' | 'block';
+
+/**
+ * Input trigger for the AnA orchestrator.
+ */
+export interface OrchestratorTrigger {
+  projectId: number;
+  triggerType: ResolutionTriggerType;
+  triggerId: string;
+  triggerDescription: string;
+  affectedObjects?: AffectedObject[];
+  /** Override auto-detection of severity/confidence */
+  forceConfidence?: ResolutionConfidence;
+}
+
+/**
+ * Result returned by AnaResolutionOrchestrator.run().
+ * Contains the full lifecycle: detection → decision → plan → execution → proof.
+ */
+export interface OrchestratorResult {
+  /** What the orchestrator decided */
+  decision: OrchestratorDecision;
+
+  /** Why it made this decision */
+  decisionRationale: string;
+
+  /** The resolution plan created (always present) */
+  plan: {
+    id: string;
+    state: string;
+    triggerType: string;
+    recommendedPath: string;
+    confidence: string;
+    affectedObjectCount: number;
+    requiresReview: boolean;
+    requiresReapproval: boolean;
+    requiresEscalation: boolean;
+  };
+
+  /** The resolution bundle (present if decision is 'execute' or 'prepare') */
+  bundle?: {
+    id: string;
+    state: string;
+    itemCount: number;
+    confidence: string;
+  };
+
+  /** The execution receipt (present only if decision is 'execute') */
+  receipt?: BundleExecutionReceipt;
+
+  /** Structured explanation for the user */
+  explanation: AnaResolutionExplanation;
+
+  /** Timestamp of orchestration */
+  timestamp: string;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // STATE MACHINE VALID TRANSITIONS
 // ═══════════════════════════════════════════════════════════════════════════════
 

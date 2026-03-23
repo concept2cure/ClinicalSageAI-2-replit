@@ -114,27 +114,44 @@ export function createMockDb(state: ResolutionTestState) {
   }
 
   // ─────────────────────────────────────────────────────────
-  // UPDATE — mutates state, routes by data shape
+  // UPDATE — mutates state, routes by table + data shape
   // ─────────────────────────────────────────────────────────
-  function createUpdateChain() {
+  const PLAN_STATES = new Set([
+    'unresolved', 'proposed_resolution', 'in_resolution',
+    'resolved_pending_review', 'resolved_approved', 'superseded', 'cancelled',
+  ]);
+  const BUNDLE_STATES = new Set([
+    'draft', 'proposed', 'in_progress', 'pending_review',
+    'approved', 'applied', 'rejected', 'cancelled',
+  ]);
+
+  function createUpdateChain(tableName: string) {
     let updateData: any = null;
 
     const chain: any = {
       set(data: any) {
         updateData = data;
 
-        // Bundle state
-        if (data.state && state.bundles[0]) {
-          state.bundles[0].state = data.state;
-        }
-        // Plan state
-        if (data.state && state.plans[0]) {
-          const planStates = ['unresolved', 'proposed_resolution', 'in_resolution',
-            'resolved_pending_review', 'resolved_approved', 'superseded', 'cancelled'];
-          if (planStates.includes(data.state)) {
+        if (data.state) {
+          // Route state update to correct entity based on table name
+          if (tableName === 'resolution_plans' && state.plans[0] && PLAN_STATES.has(data.state)) {
             state.plans[0].state = data.state;
+          } else if (tableName === 'resolution_bundles' && state.bundles[0] && BUNDLE_STATES.has(data.state)) {
+            state.bundles[0].state = data.state;
+          } else if (tableName === 'resolution_bundle_items') {
+            // Item status updates — find and update specific item
+            // (handled below in where chain if needed)
+          } else {
+            // Fallback: try both (backwards compatible with existing tests)
+            if (state.bundles[0] && BUNDLE_STATES.has(data.state)) {
+              state.bundles[0].state = data.state;
+            }
+            if (state.plans[0] && PLAN_STATES.has(data.state)) {
+              state.plans[0].state = data.state;
+            }
           }
         }
+
         // Receipt memo
         if (data.resolutionMemo && state.bundles[0]) {
           state.bundles[0].resolutionMemo = data.resolutionMemo;
@@ -205,7 +222,10 @@ export function createMockDb(state: ResolutionTestState) {
     db: {
       select: () => createSelectChain(),
       insert: () => createInsertChain(),
-      update: () => createUpdateChain(),
+      update: (table: any) => {
+        const tName = table?.name || table?.[Symbol.for('drizzle:Name')] || '';
+        return createUpdateChain(tName);
+      },
       execute: mockExecute,
     },
     drivers: {

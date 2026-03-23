@@ -28,6 +28,8 @@
  * POST /api/resolution/promotion-block/check  — Check promotion blocking
  *
  * POST /api/resolution/cluster                — Cluster affected objects
+ *
+ * POST /api/resolution/orchestrate            — AnA full orchestration (detect → decide → plan → execute → prove)
  * POST /api/resolution/rewrite-targets        — Identify rewrite targets
  * POST /api/resolution/harmonization-actions  — Prepare harmonization actions
  */
@@ -62,6 +64,7 @@ import {
   explainResolutionPlan,
   summarizeResolutionBundle,
   executeBundle,
+  orchestrateResolution,
 } from '../services/resolution';
 
 const router = Router();
@@ -408,6 +411,38 @@ router.post('/harmonization-actions', async (req: Request, res: Response) => {
       orgId, projectId, affectedObjects, triggerObjectType, triggerObjectId, triggerDescription
     );
     res.json({ success: true, actions });
+  } catch (error: any) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// ANA RESOLUTION ORCHESTRATOR
+// ---------------------------------------------------------------------------
+
+router.post('/orchestrate', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrganizationId(req);
+    const userId = getUserId(req);
+    const { projectId, triggerType, triggerId, triggerDescription, affectedObjects, forceConfidence } = req.body;
+
+    if (!projectId || !triggerType || !triggerId || !triggerDescription) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: projectId, triggerType, triggerId, triggerDescription',
+      });
+    }
+
+    const result = await orchestrateResolution(orgId, userId, {
+      projectId,
+      triggerType,
+      triggerId,
+      triggerDescription,
+      affectedObjects,
+      forceConfidence,
+    });
+
+    res.json({ success: true, result });
   } catch (error: any) {
     res.status(400).json({ success: false, error: error.message });
   }

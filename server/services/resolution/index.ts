@@ -76,3 +76,8 @@ export {
   summarizeResolutionBundle,
   buildAnaResolutionContext,
 } from './ana-resolution-support';
+
+// AnA Resolution Orchestrator
+export {
+  orchestrateResolution,
+} from './ana-resolution-orchestrator';
