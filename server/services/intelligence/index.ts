@@ -1,7 +1,8 @@
 /**
  * Intelligence Layer — Barrel Export
  *
- * Single entry point for all intelligence services.
+ * Single entry point for all intelligence services,
+ * including the Regulatory Intelligence Model (RIM).
  *
  * @module server/services/intelligence
  */
@@ -70,3 +71,101 @@ export {
   type CrossModuleReport,
   type CrossModuleContext,
 } from './cross-module-intelligence.js';
+
+// ── RIM: Regulatory Intelligence Model ──
+
+export {
+  generateJudgmentReport,
+  evaluateEvidenceSufficiency,
+  evaluateDefensibility,
+  evaluateReviewerSensitivity,
+  evaluateClaimRisk,
+  evaluateCrossSectionConsistency,
+  evaluateSubmissionRisk,
+  JUDGMENT_FRAMEWORK_VERSION,
+  type JudgmentModel,
+  type JudgmentScore,
+  type JudgmentVerdict,
+  type JudgmentFactor,
+  type JudgmentFinding,
+  type JudgmentContext,
+  type JudgmentReport,
+  type JudgmentInput,
+} from './judgment-framework.js';
+
+export {
+  patternRegistry,
+  persistPatternRegistry,
+  loadPatternRegistry,
+  PATTERN_REGISTRY_VERSION,
+  type PatternCategory,
+  type RegulatoryAgency,
+  type SubmissionType,
+  type CTDModule,
+  type RegulatoryPattern,
+  type PatternMatch,
+  type PatternSearchCriteria,
+} from './pattern-registry.js';
+
+export {
+  captureJudgmentSignals,
+  capturePatternSignals,
+  captureSignal,
+  querySignals,
+  getSignalSummary,
+  getSectionHistory,
+  getRecurringPatterns,
+  persistSignals,
+  type SignalType,
+  type SignalProvenance,
+  type IntelligenceSignal,
+  type SignalSummary,
+  type SignalQuery,
+  type PersistenceResult,
+  type TrendConfidence,
+} from './signal-capture.js';
+
+export {
+  runRIMAssessment,
+  quickPatternScan,
+  getProjectSignals,
+  RIM_VERSION,
+  type RIMContext,
+  type RIMAssessment,
+  type RIMRun,
+  type RIMRunStatus,
+} from './rim.js';
+
+export {
+  enrichChangeImpact,
+  type RIMChangeInsight,
+  type RIMChangeEnrichment,
+} from './rim-change-impact.js';
+
+export {
+  interceptChatResponse,
+  interceptComplianceScan,
+  interceptArtifactChange,
+  interceptFeedback,
+  type ChatInterceptInput,
+  type ComplianceScanInterceptInput,
+  type ArtifactChangeInterceptInput,
+  type FeedbackInterceptInput,
+} from './rim-interceptors.js';
+
+export {
+  analyzeCrossArtifactIntelligence,
+  type CrossArtifactIssue,
+  type CrossArtifactReport,
+} from './rim-cross-artifact.js';
+
+export {
+  buildProvenance,
+  integratePatternScan,
+  integrateJudgmentReport,
+  integrateSignal,
+  persistPatterns,
+  type RIMRunType,
+  type RIMIntegrationResult,
+  type RIMIntegrationContext,
+} from './rim-integration.js';

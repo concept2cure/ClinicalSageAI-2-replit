@@ -21,6 +21,7 @@ import { getEmbeddingService } from '../services/enhancedEmbeddingService.js';
 import { getIntelligencePrefix } from '../services/lumen-context-builder.js';
 import { processResponseActions } from '../services/ana-guidance-executor.js';
 import { createHash } from 'crypto';
+import { interceptChatResponse } from '../services/intelligence/rim-interceptors.js';
 
 const router = Router();
 
@@ -636,6 +637,21 @@ const sendMessageHandler = async (req: Request, res: Response) => {
     const supportedClaims = claims.filter(c => c.status === 'SUPPORTED').length;
     const citationCoverage = sources.length > 0 ? citedRefs.size / sources.length : 0;
     const supportedClaimRate = claims.length > 0 ? supportedClaims / claims.length : 0;
+
+    // ── RIM: Intercept for regulatory pattern capture (non-blocking) ──
+    if (numericOrgId) {
+      interceptChatResponse({
+        organizationId: numericOrgId,
+        projectId: parseInt(projectId || '0', 10),
+        userId: (req as any).user?.id,
+        sectionCode: (req as any).body?.section_code,
+        assistantMessage,
+        claimCount: claims.length,
+        supportedClaimRate,
+        model,
+        provider,
+      });
+    }
 
     // ── RESPONSE (backward compat + provenance chain) ──────────────────
     res.json({
