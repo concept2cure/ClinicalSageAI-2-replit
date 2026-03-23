@@ -1830,6 +1830,16 @@ try {
   console.error('❌ Failed to mount Biostatistics Platform routes:', error);
 }
 
+// Mount AnA Biostats Operating Function routes
+try {
+  const anaBiostatsModule = await import('./routes/ana-biostats');
+  const anaBiostatsRoutes = anaBiostatsModule.default;
+  app.use('/api/ana-biostats', anaBiostatsRoutes);
+  console.log('✅ AnA Biostats Operating Function routes mounted successfully');
+} catch (error) {
+  console.error('❌ Failed to mount AnA Biostats routes:', error);
+}
+
 // Mount Content Atoms API routes
 try {
   const atomsModule = await import('./routes/atoms.js');
