@@ -96,7 +96,7 @@ module.exports = {
     'client/src/components/_deprecated/',
   ],
   overrides: [
-    // UI State Governance — enforce canonical state primitives in concept2cure/
+    // UI State & Layout Governance — enforce canonical primitives in concept2cure/
     {
       files: ['client/src/concept2cure/**/*.tsx'],
       rules: {
@@ -105,6 +105,14 @@ module.exports = {
             {
               name: '@/components/ui/states',
               message: 'Deprecated. Use @/components/ui/statesV2 instead.',
+            },
+            {
+              name: '@/components/common/LoadingOverlay',
+              message: 'Deprecated. Use LoadingState from @/components/ui/statesV2 instead.',
+            },
+            {
+              name: '@/components/common/ThinkingDots',
+              message: 'Deprecated. Use Spinner from @/components/ui/spinner instead.',
             },
           ],
           patterns: [

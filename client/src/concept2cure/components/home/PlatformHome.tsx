@@ -7,6 +7,8 @@
 
 import React, { useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { WorkspaceCanvas } from '@/components/ui/workspace-primitives';
+import { EmptyState } from '@/components/ui/statesV2';
 import {
   Plus,
   Sparkles,
@@ -221,8 +223,8 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
   const firstName = userName?.split(' ')[0];
 
   return (
-    <div className="flex-1 overflow-y-auto zen-scroll bg-zinc-50/30">
-      <div className="max-w-5xl mx-auto px-6 py-10">
+    <WorkspaceCanvas maxWidth="5xl" className="zen-scroll bg-zinc-50/30" testId="platform-home">
+      <div className="py-4">
         {/* ── Greeting ─────────────────────────────────────────── */}
         <div className="mb-10">
           <h1 className="text-3xl font-semibold text-zinc-900 tracking-tight">
@@ -348,17 +350,12 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
               </table>
             </div>
           ) : (
-            <div className="border border-dashed border-zinc-300 bg-white px-6 py-8 text-center rounded-xl">
-              <FolderOpen className="w-5 h-5 text-zinc-400 mx-auto mb-2" />
-              <p className="text-sm text-zinc-600 mb-3">No projects yet</p>
-              <button
-                onClick={onNewProject}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                Create first project
-              </button>
-            </div>
+            <EmptyState
+              icon={<FolderOpen className="w-5 h-5 text-zinc-400" />}
+              title="No projects yet"
+              primaryAction={{ label: 'Create first project', onClick: onNewProject }}
+              testId="platform-home-empty-projects"
+            />
           )}
         </div>
 
@@ -439,7 +436,7 @@ const PlatformHome: React.FC<PlatformHomeProps> = ({
           </div>
         )}
       </div>
-    </div>
+    </WorkspaceCanvas>
   );
 };
 

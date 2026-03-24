@@ -10,18 +10,22 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import {
-  ArrowLeft,
   FileText,
   AlertTriangle,
   BookOpen,
   History,
-  Loader2,
-  CheckCircle2,
   XCircle,
-  Clock,
-  Lock,
-  ChevronRight,
 } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
+import { EmptyState } from '@/components/ui/statesV2';
+import {
+  WorkspaceHeaderRich,
+  WorkspaceTabBar,
+  WorkspaceStatusBadge,
+  SecondaryInfoItem,
+  WORKFLOW_STATUS_CONFIG,
+  type WorkspaceTab,
+} from '@/components/ui/workspace-primitives';
 import type {
   AuthoringContextPack,
   ReadinessSnapshot,
@@ -88,17 +92,6 @@ interface SectionWorkspaceProps {
 }
 
 type TabId = 'editor' | 'issues' | 'evidence' | 'versions';
-
-// ─── Status badge helpers ────────────────────────────────────────────────────
-
-const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-  'not-started': { label: 'Not Started', color: 'bg-zinc-100 text-zinc-600', icon: <Clock className="w-3 h-3" /> },
-  drafting: { label: 'Drafting', color: 'bg-blue-100 text-blue-700', icon: <FileText className="w-3 h-3" /> },
-  'in-review': { label: 'In Review', color: 'bg-amber-100 text-amber-700', icon: <AlertTriangle className="w-3 h-3" /> },
-  approved: { label: 'Approved', color: 'bg-emerald-100 text-emerald-700', icon: <CheckCircle2 className="w-3 h-3" /> },
-  blocked: { label: 'Blocked', color: 'bg-red-100 text-red-700', icon: <XCircle className="w-3 h-3" /> },
-  locked: { label: 'Locked', color: 'bg-purple-100 text-purple-700', icon: <Lock className="w-3 h-3" /> },
-};
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -199,13 +192,11 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
     }
   }, [editorContent, onSave]);
 
-  const statusConfig = STATUS_CONFIG[section.status] || STATUS_CONFIG['not-started'];
-
-  // Readiness bar
+  const statusConfig = WORKFLOW_STATUS_CONFIG[section.status] || WORKFLOW_STATUS_CONFIG['not-started'];
   const readinessScore = readiness?.score;
   const isBlocked = readiness?.blocked || issues.some(i => i.severity === 'critical');
 
-  const tabs: { id: TabId; label: string; icon: React.ReactNode; count?: number }[] = [
+  const tabs: WorkspaceTab[] = [
     { id: 'editor', label: 'Editor', icon: <FileText className="w-3.5 h-3.5" /> },
     { id: 'issues', label: 'Issues', icon: <AlertTriangle className="w-3.5 h-3.5" />, count: issues.length },
     { id: 'evidence', label: 'Evidence', icon: <BookOpen className="w-3.5 h-3.5" />, count: evidence.length },
@@ -214,60 +205,44 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
 
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-white">
-      {/* ── Section Header ────────────────────────────────────────────── */}
-      <div className="border-b border-zinc-100 bg-white px-6 py-3">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onBack}
-            className="p-1.5 hover:bg-zinc-100 rounded-lg transition-colors text-zinc-400 hover:text-zinc-700"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-mono text-zinc-400">{section.code}</span>
-              <ChevronRight className="w-3 h-3 text-zinc-300" />
-              <h2 className="text-sm font-semibold text-zinc-900 truncate">{section.title}</h2>
-              <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium', statusConfig.color)}>
-                {statusConfig.icon}
-                {statusConfig.label}
-              </span>
-            </div>
-            <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-[11px] text-zinc-400">{section.module}</span>
-              {projectName && (
-                <>
-                  <span className="text-zinc-300">·</span>
-                  <span className="text-[11px] text-zinc-400">{projectName}</span>
-                </>
-              )}
-              {readinessScore != null && (
-                <>
-                  <span className="text-zinc-300">·</span>
-                  <span className={cn('text-[11px] font-medium', readinessScore >= 70 ? 'text-emerald-600' : readinessScore >= 40 ? 'text-amber-600' : 'text-red-600')}>
-                    Readiness: {readinessScore}%
-                  </span>
-                </>
-              )}
-              {isBlocked && (
-                <>
-                  <span className="text-zinc-300">·</span>
-                  <span className="text-[11px] font-medium text-red-600">Promotion Blocked</span>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Action buttons */}
-          <div className="flex items-center gap-2">
+      {/* ── Section Header (canonical) ──────────────────────────────────── */}
+      <WorkspaceHeaderRich
+        title={section.title}
+        breadcrumb={section.code}
+        onBack={onBack}
+        status={statusConfig}
+        secondaryInfo={
+          <>
+            <span className="text-[11px] text-zinc-400">{section.module}</span>
+            {projectName && (
+              <SecondaryInfoItem>{projectName}</SecondaryInfoItem>
+            )}
+            {readinessScore != null && (
+              <SecondaryInfoItem
+                className={cn(
+                  'font-medium',
+                  readinessScore >= 70 ? 'text-emerald-600' : readinessScore >= 40 ? 'text-amber-600' : 'text-red-600'
+                )}
+              >
+                Readiness: {readinessScore}%
+              </SecondaryInfoItem>
+            )}
+            {isBlocked && (
+              <SecondaryInfoItem className="font-medium text-red-600">
+                Promotion Blocked
+              </SecondaryInfoItem>
+            )}
+          </>
+        }
+        actions={
+          <>
             {onSave && section.status !== 'locked' && section.status !== 'approved' && (
               <button
                 onClick={handleSave}
                 disabled={isSaving}
                 className="px-3 py-1.5 text-xs font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-50 transition-colors"
               >
-                {isSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Save'}
+                {isSaving ? <Spinner size="sm" /> : 'Save'}
               </button>
             )}
             {onSubmitForReview && section.status === 'drafting' && !isBlocked && (
@@ -278,40 +253,20 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
                 Submit for Review
               </button>
             )}
-          </div>
-        </div>
-      </div>
+          </>
+        }
+        testId="section-workspace-header"
+      />
 
-      {/* ── Tab bar ───────────────────────────────────────────────────── */}
-      <div className="border-b border-zinc-100 bg-zinc-50/50 px-6">
-        <div className="flex gap-1">
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                'flex items-center gap-1.5 px-3 py-2 text-xs font-medium border-b-2 transition-colors -mb-px',
-                activeTab === tab.id
-                  ? 'border-zinc-900 text-zinc-900'
-                  : 'border-transparent text-zinc-400 hover:text-zinc-600'
-              )}
-            >
-              {tab.icon}
-              {tab.label}
-              {tab.count != null && tab.count > 0 && (
-                <span className={cn(
-                  'ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium',
-                  activeTab === tab.id ? 'bg-zinc-200 text-zinc-700' : 'bg-zinc-100 text-zinc-500'
-                )}>
-                  {tab.count}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* ── Tab bar (canonical) ─────────────────────────────────────────── */}
+      <WorkspaceTabBar
+        tabs={tabs}
+        activeTab={activeTab}
+        onTabChange={(id) => setActiveTab(id as TabId)}
+        testId="section-workspace-tabs"
+      />
 
-      {/* ── Tab content ───────────────────────────────────────────────── */}
+      {/* ── Tab content ─────────────────────────────────────────────────── */}
       <div className="flex-1 overflow-auto min-h-0">
         {activeTab === 'editor' && (
           <div className="p-6">
@@ -329,14 +284,16 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
           <div className="p-6 space-y-3">
             {isLoadingIssues && (
               <div className="flex items-center gap-2 text-xs text-zinc-400 py-4">
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <Spinner size="sm" />
                 Loading issues from contradiction engine...
               </div>
             )}
             {!isLoadingIssues && issues.length === 0 && (
-              <div className="text-center py-8 text-zinc-400 text-sm">
-                No issues detected for this section.
-              </div>
+              <EmptyState
+                title="No issues detected"
+                description="No issues detected for this section."
+                testId="section-issues-empty"
+              />
             )}
             {issues.map(issue => (
               <div
@@ -365,7 +322,6 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
                 <p className="text-xs text-zinc-700">{issue.description}</p>
               </div>
             ))}
-            {/* Readiness blockers section */}
             {readiness?.blockers && readiness.blockers.length > 0 && (
               <div className="mt-4 pt-4 border-t border-zinc-200">
                 <h4 className="text-xs font-semibold text-zinc-600 mb-2">Readiness Blockers</h4>
@@ -386,9 +342,11 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
         {activeTab === 'evidence' && (
           <div className="p-6 space-y-3">
             {evidence.length === 0 && (
-              <div className="text-center py-8 text-zinc-400 text-sm">
-                No evidence linked to this section yet.
-              </div>
+              <EmptyState
+                title="No evidence linked"
+                description="No evidence linked to this section yet."
+                testId="section-evidence-empty"
+              />
             )}
             {evidence.map(ev => (
               <div key={ev.id} className="border border-zinc-200 rounded-lg p-3 hover:border-zinc-300 transition-colors">
@@ -406,9 +364,11 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
         {activeTab === 'versions' && (
           <div className="p-6 space-y-3">
             {versions.length === 0 && (
-              <div className="text-center py-8 text-zinc-400 text-sm">
-                No version history available.
-              </div>
+              <EmptyState
+                title="No version history"
+                description="No version history available."
+                testId="section-versions-empty"
+              />
             )}
             {versions.map(v => (
               <div key={v.version} className="border border-zinc-200 rounded-lg p-3 hover:border-zinc-300 transition-colors">

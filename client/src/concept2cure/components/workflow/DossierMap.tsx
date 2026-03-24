@@ -1,5 +1,13 @@
 import React from 'react';
-import { ChevronLeft, FileText, CheckCircle, AlertTriangle, Clock, Lock } from 'lucide-react';
+import { FolderOpen } from 'lucide-react';
+import {
+  WorkspaceHeader,
+  WorkspaceCanvas,
+  SectionPanel,
+  WorkspaceStatusBadge,
+  STATUS_ICON_MAP,
+  WORKFLOW_STATUS_CONFIG,
+} from '@/components/ui/workspace-primitives';
 
 interface DossierMapProps {
   projectName?: string;
@@ -7,15 +15,6 @@ interface DossierMapProps {
   onSectionClick: (sectionCode: string) => void;
   onBack: () => void;
 }
-
-const STATUS_ICON: Record<string, { icon: React.ElementType; color: string }> = {
-  approved: { icon: CheckCircle, color: 'text-emerald-500' },
-  'in-review': { icon: Clock, color: 'text-amber-500' },
-  drafting: { icon: FileText, color: 'text-blue-500' },
-  'not-started': { icon: Clock, color: 'text-zinc-300' },
-  blocked: { icon: AlertTriangle, color: 'text-red-500' },
-  locked: { icon: Lock, color: 'text-zinc-400' },
-};
 
 interface DossierSection {
   code: string;
@@ -85,59 +84,52 @@ export const DossierMap: React.FC<DossierMapProps> = ({
 }) => {
   return (
     <div className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-zinc-50/50">
-      {/* Header */}
-      <div className="flex items-center gap-3 px-4 h-11 border-b border-zinc-200 bg-white shrink-0">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-900 transition-colors"
-        >
-          <ChevronLeft className="w-4 h-4" />
-          <span>Back</span>
-        </button>
-        <span className="text-zinc-300">/</span>
-        <span className="text-sm font-semibold text-zinc-900">Dossier Map</span>
-        {projectType && (
-          <span className="text-xs px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-600 font-medium ml-2">
-            {projectType}
-          </span>
-        )}
-        {projectName && <span className="text-xs text-zinc-500 ml-1">{projectName}</span>}
-      </div>
+      <WorkspaceHeader
+        title="Dossier Map"
+        titleIcon={<FolderOpen className="w-3.5 h-3.5 text-blue-500" />}
+        onBack={onBack}
+        typeBadge={projectType}
+        subtitle={projectName}
+        testId="dossier-map-header"
+      />
 
-      {/* CTD Tree */}
-      <div className="max-w-3xl mx-auto w-full px-6 py-6 space-y-4">
-        {CTD_STRUCTURE.map(mod => (
-          <div
-            key={mod.code}
-            className="rounded-xl border border-zinc-200 bg-white overflow-hidden"
-          >
-            <div className="flex items-center gap-3 px-4 py-3 bg-zinc-50 border-b border-zinc-100">
-              <span className="text-xs font-bold text-zinc-400 w-6">{mod.code}</span>
-              <span className="text-sm font-semibold text-zinc-900">{mod.title}</span>
-            </div>
-            <div className="divide-y divide-zinc-100">
-              {mod.children?.map(sec => {
-                const statusInfo = STATUS_ICON[sec.status] || STATUS_ICON['not-started'];
-                const Icon = statusInfo.icon;
-                return (
-                  <button
-                    key={sec.code}
-                    onClick={() => onSectionClick(sec.code)}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-50 transition-colors text-left"
-                  >
-                    <Icon className={`w-3.5 h-3.5 ${statusInfo.color}`} />
-                    <span className="text-xs font-mono text-zinc-400 w-10">{sec.code}</span>
-                    <span className="text-sm text-zinc-800">{sec.title}</span>
-                    <span className="text-xs text-zinc-400 ml-auto capitalize">
-                      {sec.status.replace('-', ' ')}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
+      <WorkspaceCanvas>
+        {CTD_STRUCTURE.map(mod => {
+          const modStatus = STATUS_ICON_MAP[mod.status] || STATUS_ICON_MAP['not-started'];
+          return (
+            <SectionPanel
+              key={mod.code}
+              title={`${mod.code} — ${mod.title}`}
+              titleIcon={<span className="text-xs font-bold text-zinc-400">{mod.code}</span>}
+              headerRight={
+                <WorkspaceStatusBadge status={mod.status} />
+              }
+            >
+              <div className="divide-y divide-zinc-100 -mx-5 -mb-5">
+                {mod.children?.map(sec => {
+                  const statusInfo = STATUS_ICON_MAP[sec.status] || STATUS_ICON_MAP['not-started'];
+                  const Icon = statusInfo.icon;
+                  return (
+                    <button
+                      key={sec.code}
+                      onClick={() => onSectionClick(sec.code)}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-zinc-50 transition-colors text-left"
+                    >
+                      <Icon className={`w-3.5 h-3.5 ${statusInfo.color}`} />
+                      <span className="text-xs font-mono text-zinc-400 w-10">{sec.code}</span>
+                      <span className="text-sm text-zinc-800">{sec.title}</span>
+                      <WorkspaceStatusBadge
+                        status={sec.status}
+                        className="ml-auto"
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+            </SectionPanel>
+          );
+        })}
+      </WorkspaceCanvas>
     </div>
   );
 };
