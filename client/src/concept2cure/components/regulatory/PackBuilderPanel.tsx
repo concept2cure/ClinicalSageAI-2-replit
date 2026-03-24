@@ -45,7 +45,6 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
-  Loader2,
   AlertTriangle,
   Shield,
   Hash,
@@ -56,6 +55,8 @@ import {
   Copy,
   ShieldCheck,
 } from 'lucide-react';
+import { LoadingState, InlineLoading } from '@/components/ui/statesV2';
+import { Spinner } from '@/components/ui/spinner';
 import {
   fetchPackReadiness,
   buildPack,
@@ -90,7 +91,7 @@ function JobStatusBadge({ status }: { status: string }) {
     case 'RUNNING':
       return (
         <Badge className="bg-blue-100 text-blue-800">
-          <Loader2 className="mr-1 h-3 w-3 animate-spin" /> Running
+          <InlineLoading label="Running" /> Running
         </Badge>
       );
     default:
@@ -113,7 +114,7 @@ function PackStatusBadge({ status }: { status: string }) {
     case 'BUILDING':
       return (
         <Badge className="bg-blue-100 text-blue-800">
-          <Loader2 className="mr-1 h-3 w-3 animate-spin" /> Building
+          <InlineLoading label="Building" /> Building
         </Badge>
       );
     case 'FAILED':
@@ -304,7 +305,7 @@ export default function PackBuilderPanel({ projectId }: PackBuilderPanelProps) {
         jobStatus.status !== 'FAILED' && (
           <div className="border border-blue-200 rounded-md">
             <div className="flex items-center gap-3 px-4 py-3">
-              <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+              <Spinner size="sm" className="text-blue-600" />
               <div className="flex-1">
                 <p className="text-sm font-medium">Pack build in progress…</p>
                 <p className="text-xs text-muted-foreground">Job ID: {activeJobId}</p>
@@ -380,9 +381,7 @@ export default function PackBuilderPanel({ projectId }: PackBuilderPanelProps) {
         </div>
         <div className="px-4 py-3">
           {packsLoading ? (
-            <div className="flex items-center justify-center p-8">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            </div>
+            <LoadingState size="sm" message="Loading packs..." />
           ) : packs.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Package className="mx-auto h-10 w-10 mb-2 opacity-50" />
@@ -527,7 +526,7 @@ export default function PackBuilderPanel({ projectId }: PackBuilderPanelProps) {
               </p>
               {readinessLoading ? (
                 <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Checking readiness…
+                  <Spinner size="sm" /> Checking readiness…
                 </div>
               ) : readiness ? (
                 <div className="space-y-2">
@@ -582,7 +581,7 @@ export default function PackBuilderPanel({ projectId }: PackBuilderPanelProps) {
               onClick={() => buildMutation.mutate()}
             >
               {buildMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                <Spinner size="sm" className="mr-1" />
               ) : (
                 <FileJson className="h-4 w-4 mr-1" />
               )}
@@ -616,9 +615,7 @@ export default function PackBuilderPanel({ projectId }: PackBuilderPanelProps) {
           </DialogHeader>
 
           {detailLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            </div>
+            <LoadingState size="sm" message="Loading pack details..." />
           ) : packDetail ? (
             <div className="space-y-5">
               {/* ── Status + Warnings ────────────────────────────────────── */}

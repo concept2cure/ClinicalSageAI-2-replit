@@ -78,7 +78,6 @@ import {
   Folder,
   ShieldCheck,
   WifiOff,
-  Loader2,
   FileText,
   Plus,
   ArrowLeft,
@@ -117,11 +116,12 @@ import {
   FileStack,
   Users,
 } from 'lucide-react';
+import { LoadingState } from '@/components/ui/statesV2';
 
-// Minimal loading fallback — no spinner, just a white screen to avoid flash
+// Canonical loading fallback for Suspense boundaries
 const ModuleLoadingFallback = () => (
   <div className="flex-1 flex items-center justify-center bg-white">
-    <div className="w-6 h-6 rounded-full border-2 border-zinc-200 border-t-zinc-400 animate-spin" />
+    <LoadingState size="sm" message="" />
   </div>
 );
 
@@ -565,7 +565,7 @@ const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
           <Suspense
             fallback={
               <div className="flex items-center justify-center h-full">
-                <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
+                <LoadingState size="sm" message="" />
               </div>
             }
           >
@@ -2081,7 +2081,7 @@ export const ZenApp: React.FC = () => {
                 <Suspense
                   fallback={
                     <div className="flex-1 flex items-center justify-center bg-white">
-                      <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
+                      <LoadingState size="sm" message="" />
                     </div>
                   }
                 >
@@ -2115,7 +2115,7 @@ export const ZenApp: React.FC = () => {
                 <Suspense
                   fallback={
                     <div className="flex-1 flex items-center justify-center bg-white">
-                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                      <LoadingState size="sm" message="" />
                     </div>
                   }
                 >
@@ -2133,7 +2133,7 @@ export const ZenApp: React.FC = () => {
               <Suspense
                 fallback={
                   <div className="flex-1 flex items-center justify-center">
-                    <Loader2 className="w-5 h-5 animate-spin text-zinc-300" />
+                    <LoadingState size="sm" message="" />
                   </div>
                 }
               >
@@ -2148,7 +2148,7 @@ export const ZenApp: React.FC = () => {
               <Suspense
                 fallback={
                   <div className="flex-1 flex items-center justify-center">
-                    <Loader2 className="w-5 h-5 animate-spin text-zinc-300" />
+                    <LoadingState size="sm" message="" />
                   </div>
                 }
               >
@@ -2166,7 +2166,7 @@ export const ZenApp: React.FC = () => {
               <Suspense
                 fallback={
                   <div className="flex-1 flex items-center justify-center">
-                    <Loader2 className="w-5 h-5 animate-spin text-zinc-300" />
+                    <LoadingState size="sm" message="" />
                   </div>
                 }
               >
@@ -2230,7 +2230,7 @@ export const ZenApp: React.FC = () => {
                   <Suspense
                     fallback={
                       <div className="flex-1 flex items-center justify-center">
-                        <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                        <LoadingState size="sm" message="" />
                       </div>
                     }
                   >
@@ -2554,7 +2554,7 @@ export const ZenApp: React.FC = () => {
             <Suspense
               fallback={
                 <div className="flex-1 flex items-center justify-center">
-                  <Loader2 className="w-5 h-5 animate-spin text-zinc-300" />
+                  <LoadingState size="sm" message="" />
                 </div>
               }
             >
@@ -2700,7 +2700,7 @@ export const ZenApp: React.FC = () => {
                 <Suspense
                   fallback={
                     <div className="flex-1 flex items-center justify-center">
-                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+                      <LoadingState size="sm" message="" />
                     </div>
                   }
                 >

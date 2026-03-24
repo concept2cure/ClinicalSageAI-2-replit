@@ -162,6 +162,56 @@ If you think something needs rebuilding, **ask the user first**.
 - Use the AI gateway (`server/services/ai-gateway/`) instead of direct OpenAI/Anthropic calls
 - Conventional commits: `feat:`, `fix:`, `refactor:`, `chore:`
 
+## UI State Standards (NON-NEGOTIABLE)
+
+> Full reference: `docs/standards/ui-state-standards.md`
+> Skill file: `.claude/skills/ui-standards.md`
+
+These rules apply to **every React component that fetches data, mutates data, or renders forms**.
+
+### Mandatory Components
+
+| Scenario | Use This | Import From |
+|----------|----------|-------------|
+| Data display with loading/error/empty | `DataStateWrapper<T>` | `@/components/ui/statesV2` |
+| Content-shaped loading | `SkeletonTable` / `SkeletonCard` / `SkeletonText` | `@/components/ui/statesV2` |
+| Page-level loading | `LoadingState` | `@/components/ui/statesV2` |
+| Error with retry | `ErrorState` | `@/components/ui/statesV2` |
+| Button loading indicator | `InlineLoading` or `Spinner` | `@/components/ui/statesV2` or `spinner` |
+| Toast feedback | `useToast` → `toast()` | `@/hooks/use-toast` |
+| Form state | `useForm` + `FormField` | `react-hook-form` + `@/components/ui/form` |
+| API calls | `apiRequest()` | `@/lib/queryClient` |
+| Query keys | `queryKeys.domain.method()` | `@/concept2cure/hooks/queryKeys` |
+| Route code splitting | `React.lazy()` + `Suspense` + `ErrorBoundary` | React + `@/components/ui/error-boundary` |
+
+### Hard Rules
+
+1. **Every async component** must handle all 5 states: loading, error, empty, success, background refresh
+2. **`DataStateWrapper<T>`** is the default — use it unless you have a specific reason not to
+3. **Mutations** use `.isPending` (not `.isLoading`), disable buttons, toast on both success AND error
+4. **Query keys** MUST be registered in `queryKeys.ts` — no ad-hoc string arrays
+5. **API calls** MUST use `apiRequest()` — no raw `fetch()`, no per-file `getAuthHeaders()`, no `axios`
+6. **Forms** MUST use `react-hook-form` + `<FormField>` — no `useState` per field
+7. **Backend routes** MUST use `sendSuccess()` / `sendError()` envelope from `concept2cure.ts`
+8. **Accessibility**: All state UI requires ARIA roles, live regions, `data-testid` — `statesV2.tsx` components provide these automatically
+9. **Dashboard sections** each get their own `DataStateWrapper` — they load/fail independently
+10. **No silent failures** — every error must produce user-visible feedback (toast or ErrorState)
+
+### Forbidden in New Code
+
+| Forbidden | Use Instead |
+|-----------|-------------|
+| `{isLoading && <div>Loading...</div>}` | `<DataStateWrapper>` or `<LoadingState>` |
+| `mutation.isLoading` | `mutation.isPending` (TanStack v5) |
+| `useState` per form field | `useForm()` from react-hook-form |
+| Ad-hoc query keys `['tasks', id]` | `queryKeys.domain.method(id)` |
+| Raw `fetch()` with manual headers | `apiRequest()` from `queryClient.ts` |
+| `axios` in new code | `apiRequest()` (native fetch) |
+| Per-file `getAuthHeaders()` | `apiRequest()` handles auth automatically |
+| `res.json({ error: '...' })` | `sendError(res, status, message)` |
+| `alert()` / `console.log` for errors | `toast()` or `<ErrorState>` |
+| Custom spinner HTML | `<Spinner>`, `<InlineLoading>`, or `<LoadingState>` |
+
 ## Schema Changes
 
 1. Create a new migration file in `migrations/` (numbered sequentially, currently at 0010+)
