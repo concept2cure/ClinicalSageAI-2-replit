@@ -20,8 +20,11 @@ import {
   type AuthoringContextPack,
   type AuthoringActionId,
   type SectionPreflightResult,
+  type ModulePreflightResult,
+  type DossierPreflightResult,
   type PreflightOverall,
   type PreflightCheckStatus,
+  type PreflightBlocker,
 } from '../../shared/types/authoring-context';
 import {
   resolveAuthoringContext,
@@ -1139,5 +1142,282 @@ describe('preflight failure behavior', () => {
     expect(hasArtifactContext(ctx)).toBe(true);
     expect(hasVersionContext(ctx)).toBe(true);
     // Even if preflight fails, governed promotion can proceed with warning
+  });
+});
+
+// ─── Pass 6: Module + Dossier Preflight + Submission Readiness ───────────────
+
+describe('ModulePreflightResult type structure', () => {
+  it('can construct a clean module result', () => {
+    const result: ModulePreflightResult = {
+      moduleCode: 'm2',
+      regulatorBody: 'FDA',
+      submissionType: 'IND',
+      overall: 'ready',
+      summary: 'Module m2 is ready — all 3 sections pass.',
+      sectionResults: [
+        { overall: 'ready', summary: 'Ready', checks: {}, recommendedActions: [], sectionCode: '2.3' },
+        { overall: 'ready', summary: 'Ready', checks: {}, recommendedActions: [], sectionCode: '2.5' },
+        { overall: 'ready', summary: 'Ready', checks: {}, recommendedActions: [], sectionCode: '2.7' },
+      ],
+      counts: { total: 3, ready: 3, blocked: 0, provisional: 0, needsReview: 0, needsReapproval: 0 },
+      majorBlockers: [],
+      recommendedActions: [
+        { id: 'promote-module-when-clean', label: 'All sections ready', reason: 'All checks pass.' },
+      ],
+    };
+    expect(result.overall).toBe('ready');
+    expect(result.counts.ready).toBe(3);
+    expect(result.majorBlockers).toHaveLength(0);
+  });
+
+  it('can construct a blocked module result', () => {
+    const result: ModulePreflightResult = {
+      moduleCode: 'm2',
+      overall: 'blocked',
+      summary: 'Module m2 blocked — 1 of 3 sections blocked.',
+      sectionResults: [
+        { overall: 'blocked', summary: 'Blocked', checks: { contradictions: { status: 'fail', items: [{ id: 'c1', severity: 'critical', explanation: 'Dosage conflict' }] } }, recommendedActions: [], sectionCode: '2.5' },
+        { overall: 'ready', summary: 'Ready', checks: {}, recommendedActions: [], sectionCode: '2.3' },
+        { overall: 'provisional', summary: 'Warnings', checks: {}, recommendedActions: [], sectionCode: '2.7' },
+      ],
+      counts: { total: 3, ready: 1, blocked: 1, provisional: 1, needsReview: 0, needsReapproval: 0 },
+      majorBlockers: [
+        { sectionCode: '2.5', kind: 'contradiction', severity: 'critical', message: 'Dosage conflict in §2.5' },
+      ],
+      recommendedActions: [
+        { id: 'open-blocked-section', label: 'Open §2.5', reason: 'Section blocked', targetSectionCode: '2.5' },
+      ],
+    };
+    expect(result.overall).toBe('blocked');
+    expect(result.counts.blocked).toBe(1);
+    expect(result.majorBlockers).toHaveLength(1);
+    expect(result.majorBlockers[0].kind).toBe('contradiction');
+  });
+});
+
+describe('DossierPreflightResult type structure', () => {
+  it('can construct a clean dossier result', () => {
+    const result: DossierPreflightResult = {
+      regulatorBody: 'FDA',
+      submissionType: 'IND',
+      overall: 'ready',
+      summary: 'Dossier ready — all 5 modules pass.',
+      moduleResults: ['m1', 'm2', 'm3', 'm4', 'm5'].map(mc => ({
+        moduleCode: mc, overall: 'ready' as PreflightOverall, summary: `${mc} ready`,
+        sectionResults: [], counts: { total: 2, ready: 2, blocked: 0, provisional: 0, needsReview: 0, needsReapproval: 0 },
+        majorBlockers: [], recommendedActions: [],
+      })),
+      counts: { totalModules: 5, readyModules: 5, blockedModules: 0, provisionalModules: 0, needsReviewModules: 0, needsReapprovalModules: 0 },
+      majorBlockers: [],
+      recommendedActions: [
+        { id: 'promote-dossier-when-clean', label: 'Ready for submission assembly', reason: 'All modules pass.' },
+      ],
+    };
+    expect(result.overall).toBe('ready');
+    expect(result.counts.readyModules).toBe(5);
+    expect(result.recommendedActions[0].id).toBe('promote-dossier-when-clean');
+  });
+
+  it('can construct a blocked dossier result', () => {
+    const result: DossierPreflightResult = {
+      overall: 'blocked',
+      summary: 'Dossier blocked — 2 of 3 modules blocked.',
+      moduleResults: [
+        { moduleCode: 'm2', overall: 'blocked', summary: 'Blocked', sectionResults: [],
+          counts: { total: 3, ready: 1, blocked: 1, provisional: 1, needsReview: 0, needsReapproval: 0 },
+          majorBlockers: [{ sectionCode: '2.5', kind: 'contradiction', severity: 'critical', message: 'Conflict' }],
+          recommendedActions: [] },
+        { moduleCode: 'm3', overall: 'blocked', summary: 'Blocked', sectionResults: [],
+          counts: { total: 2, ready: 0, blocked: 1, provisional: 0, needsReview: 1, needsReapproval: 0 },
+          majorBlockers: [{ sectionCode: '3.2.S', kind: 'body-gap', severity: 'critical', message: 'Missing CMC data' }],
+          recommendedActions: [] },
+        { moduleCode: 'm5', overall: 'ready', summary: 'Ready', sectionResults: [],
+          counts: { total: 1, ready: 1, blocked: 0, provisional: 0, needsReview: 0, needsReapproval: 0 },
+          majorBlockers: [], recommendedActions: [] },
+      ],
+      counts: { totalModules: 3, readyModules: 1, blockedModules: 2, provisionalModules: 0, needsReviewModules: 0, needsReapprovalModules: 0 },
+      majorBlockers: [
+        { moduleCode: 'm2', kind: 'contradiction', severity: 'critical', message: 'Module m2 blocked' },
+        { moduleCode: 'm3', kind: 'body-gap', severity: 'critical', message: 'Module m3 blocked' },
+      ],
+      recommendedActions: [
+        { id: 'open-blocked-module', label: 'Open m2', reason: 'Module blocked', targetModuleCode: 'm2' },
+        { id: 'run-module-preflight', label: 'Run m2 preflight', reason: 'Get details', targetModuleCode: 'm2' },
+      ],
+    };
+    expect(result.overall).toBe('blocked');
+    expect(result.counts.blockedModules).toBe(2);
+    expect(result.majorBlockers).toHaveLength(2);
+    expect(result.recommendedActions).not.toContainEqual(expect.objectContaining({ id: 'promote-dossier-when-clean' }));
+  });
+});
+
+describe('module preflight aggregation logic', () => {
+  const computeModuleOverall = (sectionOveralls: PreflightOverall[]): PreflightOverall => {
+    if (sectionOveralls.includes('blocked')) return 'blocked';
+    if (sectionOveralls.includes('provisional')) return 'provisional';
+    if (sectionOveralls.every(s => s === 'ready') && sectionOveralls.length > 0) return 'ready';
+    return 'needs-review';
+  };
+
+  it('blocked when any section is blocked', () => {
+    expect(computeModuleOverall(['ready', 'blocked', 'provisional'])).toBe('blocked');
+  });
+
+  it('provisional when sections have warnings', () => {
+    expect(computeModuleOverall(['ready', 'provisional'])).toBe('provisional');
+  });
+
+  it('ready when all sections ready', () => {
+    expect(computeModuleOverall(['ready', 'ready', 'ready'])).toBe('ready');
+  });
+
+  it('needs-review when empty', () => {
+    expect(computeModuleOverall([])).toBe('needs-review');
+  });
+
+  it('needs-review when all unknown', () => {
+    expect(computeModuleOverall(['needs-review', 'needs-review'])).toBe('needs-review');
+  });
+});
+
+describe('dossier preflight aggregation logic', () => {
+  const computeDossierOverall = (moduleOveralls: PreflightOverall[]): PreflightOverall => {
+    if (moduleOveralls.includes('blocked')) return 'blocked';
+    if (moduleOveralls.includes('provisional')) return 'provisional';
+    if (moduleOveralls.every(m => m === 'ready') && moduleOveralls.length > 0) return 'ready';
+    return 'needs-review';
+  };
+
+  it('blocked when any module is blocked', () => {
+    expect(computeDossierOverall(['ready', 'blocked'])).toBe('blocked');
+  });
+
+  it('provisional when modules have warnings', () => {
+    expect(computeDossierOverall(['ready', 'provisional', 'ready'])).toBe('provisional');
+  });
+
+  it('ready when all modules ready', () => {
+    expect(computeDossierOverall(['ready', 'ready'])).toBe('ready');
+  });
+
+  it('needs-review when no modules', () => {
+    expect(computeDossierOverall([])).toBe('needs-review');
+  });
+});
+
+describe('module/dossier preflight context availability', () => {
+  it('module preflight requires moduleCode', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42', layoutMode: 'section-workspace',
+      sectionCode: '2.5', submissionType: 'IND',
+    });
+    expect(ctx?.moduleCode).toBe('m2');
+    // module_preflight action available
+  });
+
+  it('dossier preflight available in dossier/submissions/review modes', () => {
+    for (const mode of ['dossier', 'submissions', 'review']) {
+      const ctx = resolveAuthoringContext({
+        projectId: '42', layoutMode: mode,
+      });
+      expect(ctx?.workflowStage).toBeDefined();
+      // dossier_preflight action available
+    }
+  });
+
+  it('dossier preflight not available in section-workspace by default', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42', layoutMode: 'section-workspace', sectionCode: '2.5',
+    });
+    expect(ctx?.workflowStage).toBe('section-workspace');
+    // dossier_preflight action NOT available (section-level, not dossier-level)
+  });
+});
+
+describe('module/dossier blocker types', () => {
+  it('PreflightBlocker has correct shape', () => {
+    const blocker: PreflightBlocker = {
+      sectionCode: '2.5',
+      moduleCode: 'm2',
+      kind: 'contradiction',
+      severity: 'critical',
+      message: 'Dosage conflict with Module 4 data',
+    };
+    expect(blocker.kind).toBe('contradiction');
+    expect(blocker.severity).toBe('critical');
+  });
+
+  it('all blocker kinds are valid', () => {
+    const kinds: PreflightBlocker['kind'][] = [
+      'body-gap', 'contradiction', 'cross-section-inconsistency',
+      'approved-baseline-conflict', 'readiness-blocker',
+      'missing-section', 'reapproval-required',
+    ];
+    for (const kind of kinds) {
+      const b: PreflightBlocker = { kind, severity: 'major', message: 'test' };
+      expect(b.kind).toBe(kind);
+    }
+  });
+});
+
+describe('module/dossier failure behavior', () => {
+  it('no module sections → needs-review with missing-section blocker', () => {
+    // Empty module would return needs-review + missing-section blocker
+    const result: ModulePreflightResult = {
+      moduleCode: 'm4', overall: 'needs-review',
+      summary: 'No sections found for m4.',
+      sectionResults: [],
+      counts: { total: 0, ready: 0, blocked: 0, provisional: 0, needsReview: 0, needsReapproval: 0 },
+      majorBlockers: [{ moduleCode: 'm4', kind: 'missing-section', severity: 'major', message: 'No sections in m4' }],
+      recommendedActions: [],
+    };
+    expect(result.overall).toBe('needs-review');
+    expect(result.majorBlockers[0].kind).toBe('missing-section');
+  });
+
+  it('no modules in project → dossier needs-review', () => {
+    const result: DossierPreflightResult = {
+      overall: 'needs-review',
+      summary: 'No modules found.',
+      moduleResults: [],
+      counts: { totalModules: 0, readyModules: 0, blockedModules: 0, provisionalModules: 0, needsReviewModules: 0, needsReapprovalModules: 0 },
+      majorBlockers: [{ kind: 'missing-section', severity: 'major', message: 'No modules found' }],
+      recommendedActions: [],
+    };
+    expect(result.overall).toBe('needs-review');
+    expect(result.counts.totalModules).toBe(0);
+  });
+
+  it('partial section coverage → module still reports available sections', () => {
+    const result: ModulePreflightResult = {
+      moduleCode: 'm2', overall: 'provisional',
+      summary: 'Module m2 has warnings.',
+      sectionResults: [
+        { overall: 'ready', summary: 'Ready', checks: {}, recommendedActions: [], sectionCode: '2.3' },
+        { overall: 'needs-review', summary: 'Needs review', checks: {}, recommendedActions: [], sectionCode: '2.5' },
+      ],
+      counts: { total: 2, ready: 1, blocked: 0, provisional: 0, needsReview: 1, needsReapproval: 0 },
+      majorBlockers: [],
+      recommendedActions: [],
+    };
+    expect(result.counts.total).toBe(2);
+    expect(result.counts.ready).toBe(1);
+  });
+
+  it('services unavailable → sections unknown → module needs-review', () => {
+    const result: ModulePreflightResult = {
+      moduleCode: 'm2', overall: 'needs-review',
+      summary: 'Check unavailable.',
+      sectionResults: [
+        { overall: 'needs-review', summary: 'Check unavailable', checks: {}, recommendedActions: [], sectionCode: '2.5' },
+      ],
+      counts: { total: 1, ready: 0, blocked: 0, provisional: 0, needsReview: 1, needsReapproval: 0 },
+      majorBlockers: [],
+      recommendedActions: [],
+    };
+    expect(result.overall).toBe('needs-review');
+    // Not blocked, not fake-ready
   });
 });

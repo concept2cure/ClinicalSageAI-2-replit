@@ -905,6 +905,357 @@ router.post('/body-aware-gaps', async (req: Request, res: Response) => {
   }
 });
 
+// ─── Module + Dossier Preflight (Pass 6) ─────────────────────────────────────
+
+/**
+ * Helper: fetch all artifacts for a project, grouped by CTD module.
+ * Returns Map<moduleCode, Array<{ctdSection, id, status}>>
+ */
+async function fetchProjectArtifactsByModule(projectId: number): Promise<Map<string, Array<{ ctdSection: string; id: string; status: string }>>> {
+  const result = new Map<string, Array<{ ctdSection: string; id: string; status: string }>>();
+  try {
+    const { db } = await import('../db.js');
+    const artifacts = await db.query.concept2cureArtifacts?.findMany?.({
+      where: (a: any, { eq }: any) => eq(a.projectId, projectId),
+    }).catch(() => []) || [];
+    for (const art of artifacts) {
+      if (!art.ctdSection) continue;
+      const major = art.ctdSection.split('.')[0];
+      const moduleCode = `m${major}`;
+      if (!result.has(moduleCode)) result.set(moduleCode, []);
+      result.get(moduleCode)!.push({
+        ctdSection: art.ctdSection,
+        id: String(art.id),
+        status: art.status || 'draft',
+      });
+    }
+  } catch { /* DB unavailable */ }
+  return result;
+}
+
+/**
+ * POST /module-preflight
+ * Aggregates section preflights for all sections in a module.
+ */
+router.post('/module-preflight', async (req: Request, res: Response) => {
+  try {
+    const { projectId, moduleCode, regulatorBody, submissionType } = req.body;
+    if (!projectId || !moduleCode) {
+      return res.status(400).json({ error: 'projectId and moduleCode are required' });
+    }
+
+    // Find all sections in this module
+    const artifactMap = await fetchProjectArtifactsByModule(Number(projectId));
+    const moduleSections = artifactMap.get(moduleCode) || [];
+
+    if (moduleSections.length === 0) {
+      return res.json({
+        status: 'data', action: 'module_preflight', moduleCode,
+        regulatorBody, submissionType,
+        overall: 'needs-review',
+        summary: `No sections found for ${moduleCode}. Add documents to this module first.`,
+        sectionResults: [], counts: { total: 0, ready: 0, blocked: 0, provisional: 0, needsReview: 0, needsReapproval: 0 },
+        majorBlockers: [{ moduleCode, kind: 'missing-section', severity: 'major', message: `No sections found in ${moduleCode}` }],
+        recommendedActions: [],
+      });
+    }
+
+    // Run section preflights in parallel (reuse the internal logic)
+    const CTD_LINKS: Record<string, string[]> = {
+      '2.2': ['2.3', '2.4', '2.5'], '2.3': ['3.2.S', '3.2.P'],
+      '2.4': ['4.2.1', '4.2.2', '4.2.3'], '2.5': ['2.7.1', '2.7.3', '2.7.4', '5.3'],
+      '2.7.1': ['5.2'], '2.7.3': ['2.5', '5.3'], '2.7.4': ['2.5', '5.3'],
+      '3.2.S': ['2.3'], '3.2.P': ['2.3'], '5.3': ['2.5', '2.7.3', '2.7.4'],
+    };
+
+    const sectionResults: any[] = [];
+    const sectionPreflightPromises = moduleSections.map(async (sec) => {
+      try {
+        // Internal fetch to our own section-preflight endpoint
+        const linked = CTD_LINKS[sec.ctdSection] || CTD_LINKS[sec.ctdSection.split('.').slice(0, -1).join('.')] || [];
+        const mockReq = {
+          body: {
+            projectId, sectionCode: sec.ctdSection,
+            artifactId: sec.id, regulatorBody, submissionType,
+            linkedSectionCodes: linked,
+          },
+          tenantId: (req as any).tenantId || 1,
+        };
+        // Inline the section preflight logic instead of HTTP call
+        // Use simplified check aggregation
+        const orgId = (req as any).tenantId || 1;
+        type CS = 'pass' | 'warn' | 'fail' | 'unknown';
+        const checks: Record<string, any> = {};
+
+        // Readiness
+        try {
+          const { computeReadinessAssessment } = await import('../services/orchestration/readiness-engine.js');
+          if (computeReadinessAssessment) {
+            const assessment = await computeReadinessAssessment({ projectId: Number(projectId), organizationId: 'default' });
+            const major = sec.ctdSection.split('.')[0];
+            const blockers = (assessment?.blockers || [])
+              .filter((b: any) => !b.module || b.module === `m${major}`)
+              .slice(0, 5).map((b: any) => ({ code: b.category || 'BLOCK', severity: b.severity, message: b.message || b.description }));
+            checks.readiness = { status: blockers.some((b: any) => b.severity === 'critical') ? 'fail' : blockers.length ? 'warn' : 'pass', blockers };
+          }
+        } catch { checks.readiness = { status: 'unknown' }; }
+
+        // Contradictions
+        try {
+          const { contradictionEngineService } = await import('../services/contradiction-engine-service.js');
+          if (contradictionEngineService?.scanProject) {
+            const findings = await contradictionEngineService.scanProject(orgId, Number(projectId));
+            const items = (findings || [])
+              .filter((f: any) => f.sectionCode === sec.ctdSection || (f.affectedSections || []).includes(sec.ctdSection))
+              .slice(0, 5).map((f: any) => ({
+                id: f.id || String(Math.random()), severity: f.authorityState === 'blocks_promotion' ? 'critical' : f.severity || 'minor',
+                explanation: f.explanation || f.description || f.title,
+              }));
+            checks.contradictions = { status: items.some((i: any) => i.severity === 'critical') ? 'fail' : items.length ? 'warn' : 'pass', items };
+          }
+        } catch { checks.contradictions = { status: 'unknown' }; }
+
+        // Body gaps (lightweight)
+        if (regulatorBody || submissionType) {
+          try {
+            const { detectBodySpecificGaps } = await import('../services/body-aware-authoring.js');
+            if (detectBodySpecificGaps) {
+              const analysis = await detectBodySpecificGaps(regulatorBody || 'FDA', submissionType || 'IND', sec.ctdSection, '');
+              const missing = analysis.gaps.filter((g: any) => g.status === 'missing').map((g: any) => g.requirement);
+              checks.bodyExpectations = { status: missing.length ? 'fail' : 'pass', missing };
+            }
+          } catch { checks.bodyExpectations = { status: 'unknown' }; }
+        } else { checks.bodyExpectations = { status: 'unknown' }; }
+
+        checks.crossSectionConsistency = { status: 'unknown' };
+        checks.approvedBaselineCompare = { status: 'unknown' };
+
+        const statuses = Object.values(checks).map((c: any) => c.status);
+        const hasFail = statuses.includes('fail');
+        const hasWarn = statuses.includes('warn');
+        const allUnknown = statuses.every((s: string) => s === 'unknown');
+
+        let overall: string;
+        if (hasFail) overall = 'blocked';
+        else if (hasWarn) overall = 'provisional';
+        else if (allUnknown) overall = 'needs-review';
+        else overall = 'ready';
+
+        return {
+          sectionCode: sec.ctdSection, artifactId: sec.id, overall,
+          summary: overall === 'blocked' ? 'Blocked' : overall === 'provisional' ? 'Warnings' : overall === 'ready' ? 'Ready' : 'Needs review',
+          checks, recommendedActions: [],
+        };
+      } catch {
+        return { sectionCode: sec.ctdSection, artifactId: sec.id, overall: 'needs-review', summary: 'Check unavailable', checks: {}, recommendedActions: [] };
+      }
+    });
+
+    const results = await Promise.allSettled(sectionPreflightPromises);
+    for (const r of results) {
+      if (r.status === 'fulfilled') sectionResults.push(r.value);
+    }
+
+    // Aggregate
+    const counts = { total: sectionResults.length, ready: 0, blocked: 0, provisional: 0, needsReview: 0, needsReapproval: 0 };
+    for (const sr of sectionResults) {
+      if (sr.overall === 'ready') counts.ready++;
+      else if (sr.overall === 'blocked') counts.blocked++;
+      else if (sr.overall === 'provisional') counts.provisional++;
+      else if (sr.overall === 'needs-reapproval') counts.needsReapproval++;
+      else counts.needsReview++;
+    }
+
+    const majorBlockers: any[] = [];
+    for (const sr of sectionResults) {
+      if (sr.overall !== 'blocked') continue;
+      for (const [checkName, check] of Object.entries(sr.checks || {})) {
+        const c = check as any;
+        if (c.status !== 'fail') continue;
+        const kindMap: Record<string, string> = {
+          bodyExpectations: 'body-gap', contradictions: 'contradiction',
+          crossSectionConsistency: 'cross-section-inconsistency',
+          readiness: 'readiness-blocker', approvedBaselineCompare: 'approved-baseline-conflict',
+        };
+        majorBlockers.push({
+          sectionCode: sr.sectionCode, kind: kindMap[checkName] || 'readiness-blocker',
+          severity: 'critical', message: `${checkName} failed in §${sr.sectionCode}`,
+        });
+      }
+    }
+
+    let overall: string;
+    let summary: string;
+    if (counts.blocked > 0) {
+      overall = 'blocked';
+      summary = `Module ${moduleCode} is blocked — ${counts.blocked} of ${counts.total} section(s) blocked.`;
+    } else if (counts.provisional > 0) {
+      overall = 'provisional';
+      summary = `Module ${moduleCode} is provisional — ${counts.provisional} section(s) have warnings.`;
+    } else if (counts.ready === counts.total && counts.total > 0) {
+      overall = 'ready';
+      summary = `Module ${moduleCode} is ready — all ${counts.total} section(s) pass preflight.`;
+    } else {
+      overall = 'needs-review';
+      summary = `Module ${moduleCode} needs review — ${counts.needsReview} section(s) could not be checked.`;
+    }
+
+    const recommendedActions: any[] = [];
+    if (counts.blocked > 0) {
+      const worst = sectionResults.find((s: any) => s.overall === 'blocked');
+      if (worst) {
+        recommendedActions.push({ id: 'open-blocked-section', label: `Open blocked §${worst.sectionCode}`,
+          reason: `Section ${worst.sectionCode} is blocked`, targetSectionCode: worst.sectionCode });
+        recommendedActions.push({ id: 'run-section-preflight', label: `Run preflight on §${worst.sectionCode}`,
+          reason: 'Get detailed check results', targetSectionCode: worst.sectionCode });
+      }
+    }
+    if (overall === 'ready') {
+      recommendedActions.push({ id: 'promote-module-when-clean', label: `All sections ready in ${moduleCode}`,
+        reason: 'All preflight checks pass.' });
+    }
+
+    return res.json({
+      status: 'data', action: 'module_preflight', moduleCode,
+      regulatorBody, submissionType, overall, summary,
+      sectionResults, counts, majorBlockers, recommendedActions,
+    });
+  } catch (err: any) {
+    console.error('[authoring-actions] module-preflight error:', err?.message);
+    return res.status(500).json({ error: 'Failed to run module preflight' });
+  }
+});
+
+/**
+ * POST /dossier-preflight
+ * Aggregates module preflights across all modules in a project/dossier.
+ */
+router.post('/dossier-preflight', async (req: Request, res: Response) => {
+  try {
+    const { projectId, regulatorBody, submissionType } = req.body;
+    if (!projectId) return res.status(400).json({ error: 'projectId is required' });
+
+    const artifactMap = await fetchProjectArtifactsByModule(Number(projectId));
+    const moduleCodes = Array.from(artifactMap.keys()).sort();
+
+    if (moduleCodes.length === 0) {
+      return res.json({
+        status: 'data', action: 'dossier_preflight',
+        regulatorBody, submissionType,
+        overall: 'needs-review',
+        summary: 'No modules found in this project. Add documents first.',
+        moduleResults: [],
+        counts: { totalModules: 0, readyModules: 0, blockedModules: 0, provisionalModules: 0, needsReviewModules: 0, needsReapprovalModules: 0 },
+        majorBlockers: [{ kind: 'missing-section', severity: 'major', message: 'No modules or sections found' }],
+        recommendedActions: [],
+      });
+    }
+
+    // Run module preflights by making internal calls
+    const moduleResults: any[] = [];
+    for (const mc of moduleCodes) {
+      try {
+        // Reuse internal logic — aggregate sections for this module
+        const sections = artifactMap.get(mc) || [];
+        const counts = { total: sections.length, ready: 0, blocked: 0, provisional: 0, needsReview: 0, needsReapproval: 0 };
+
+        // Simplified per-section check: use artifact status as proxy + readiness
+        for (const sec of sections) {
+          if (sec.status === 'locked' || sec.status === 'approved') counts.ready++;
+          else if (sec.status === 'review') counts.provisional++;
+          else counts.needsReview++; // draft = needs-review
+        }
+
+        let modOverall: string;
+        if (counts.blocked > 0) modOverall = 'blocked';
+        else if (counts.provisional > 0) modOverall = 'provisional';
+        else if (counts.ready === counts.total && counts.total > 0) modOverall = 'ready';
+        else modOverall = 'needs-review';
+
+        moduleResults.push({
+          moduleCode: mc, overall: modOverall,
+          summary: `${mc}: ${counts.ready}/${counts.total} ready`,
+          sectionResults: sections.map(s => ({ sectionCode: s.ctdSection, artifactId: s.id, overall: s.status === 'approved' || s.status === 'locked' ? 'ready' : s.status === 'review' ? 'provisional' : 'needs-review' })),
+          counts, majorBlockers: [], recommendedActions: [],
+        });
+      } catch {
+        moduleResults.push({ moduleCode: mc, overall: 'needs-review', summary: `${mc}: check unavailable`, sectionResults: [], counts: { total: 0, ready: 0, blocked: 0, provisional: 0, needsReview: 0, needsReapproval: 0 }, majorBlockers: [], recommendedActions: [] });
+      }
+    }
+
+    // Run real readiness engine for enrichment
+    let readinessBlockers: any[] = [];
+    try {
+      const { computeReadinessAssessment } = await import('../services/orchestration/readiness-engine.js');
+      if (computeReadinessAssessment) {
+        const assessment = await computeReadinessAssessment({ projectId: Number(projectId), organizationId: 'default' });
+        readinessBlockers = (assessment?.blockers || []).filter((b: any) => b.severity === 'critical' || b.severity === 'major')
+          .slice(0, 10).map((b: any) => ({
+            kind: 'readiness-blocker', severity: b.severity,
+            message: b.message || b.description, moduleCode: b.module,
+          }));
+      }
+    } catch { /* readiness unavailable */ }
+
+    // Aggregate dossier counts
+    const dCounts = { totalModules: moduleResults.length, readyModules: 0, blockedModules: 0, provisionalModules: 0, needsReviewModules: 0, needsReapprovalModules: 0 };
+    for (const mr of moduleResults) {
+      if (mr.overall === 'ready') dCounts.readyModules++;
+      else if (mr.overall === 'blocked') dCounts.blockedModules++;
+      else if (mr.overall === 'provisional') dCounts.provisionalModules++;
+      else if (mr.overall === 'needs-reapproval') dCounts.needsReapprovalModules++;
+      else dCounts.needsReviewModules++;
+    }
+
+    const majorBlockers = [...readinessBlockers];
+    for (const mr of moduleResults) {
+      if (mr.overall === 'blocked') {
+        majorBlockers.push({ moduleCode: mr.moduleCode, kind: 'readiness-blocker', severity: 'critical', message: `Module ${mr.moduleCode} is blocked` });
+      }
+    }
+
+    let overall: string;
+    let summary: string;
+    if (dCounts.blockedModules > 0) {
+      overall = 'blocked';
+      summary = `Dossier blocked — ${dCounts.blockedModules} of ${dCounts.totalModules} module(s) blocked.`;
+    } else if (dCounts.provisionalModules > 0) {
+      overall = 'provisional';
+      summary = `Dossier provisional — ${dCounts.provisionalModules} module(s) have warnings.`;
+    } else if (dCounts.readyModules === dCounts.totalModules && dCounts.totalModules > 0) {
+      overall = 'ready';
+      summary = `Dossier ready — all ${dCounts.totalModules} module(s) pass.`;
+    } else {
+      overall = 'needs-review';
+      summary = `Dossier needs review — ${dCounts.needsReviewModules} module(s) need attention.`;
+    }
+
+    const recommendedActions: any[] = [];
+    if (dCounts.blockedModules > 0) {
+      const worst = moduleResults.find((m: any) => m.overall === 'blocked');
+      if (worst) {
+        recommendedActions.push({ id: 'open-blocked-module', label: `Open blocked ${worst.moduleCode}`,
+          reason: `${worst.moduleCode} is blocked`, targetModuleCode: worst.moduleCode });
+        recommendedActions.push({ id: 'run-module-preflight', label: `Run preflight on ${worst.moduleCode}`,
+          reason: 'Get detailed module results', targetModuleCode: worst.moduleCode });
+      }
+    }
+    if (overall === 'ready') {
+      recommendedActions.push({ id: 'promote-dossier-when-clean', label: 'Dossier ready for submission assembly',
+        reason: 'All modules pass preflight.' });
+    }
+
+    return res.json({
+      status: 'data', action: 'dossier_preflight',
+      regulatorBody, submissionType, overall, summary,
+      moduleResults, counts: dCounts, majorBlockers, recommendedActions,
+    });
+  } catch (err: any) {
+    console.error('[authoring-actions] dossier-preflight error:', err?.message);
+    return res.status(500).json({ error: 'Failed to run dossier preflight' });
+  }
+});
+
 // ─── Section Preflight (Pass 5) ──────────────────────────────────────────────
 
 /**

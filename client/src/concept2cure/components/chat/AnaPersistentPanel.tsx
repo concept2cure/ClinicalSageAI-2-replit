@@ -556,6 +556,26 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       });
     }
 
+    // Action: Module preflight — available when module context exists
+    if (authoringContext.moduleCode) {
+      actions.push({
+        id: 'module-preflight',
+        label: `Run ${authoringContext.moduleCode.toUpperCase()} preflight`,
+        intent: 'module_preflight',
+        description: 'Check all sections in this module before promotion',
+      });
+    }
+
+    // Action: Dossier preflight — available at project level
+    if (authoringContext.workflowStage === 'dossier' || authoringContext.workflowStage === 'submissions' || authoringContext.workflowStage === 'review') {
+      actions.push({
+        id: 'dossier-preflight',
+        label: 'Run dossier preflight',
+        intent: 'dossier_preflight',
+        description: 'Check all modules and sections for submission readiness',
+      });
+    }
+
     if (
       hasArtifactContext(authoringContext) &&
       authoringContext.artifactStatus === 'drafting' &&
@@ -1382,6 +1402,87 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         } catch {
           handleSend('Run preflight on this section.');
         }
+      })();
+      return;
+    }
+
+    // ── MODULE PREFLIGHT (Pass 6) ──────────────────────────────────────────
+    if (action.intent === 'module_preflight') {
+      (async () => {
+        const projectId = contextProfile?.projectId;
+        const moduleCode = authoringContext?.moduleCode || (authoringContext?.sectionCode ? `m${authoringContext.sectionCode.split('.')[0]}` : '');
+        if (!projectId || !moduleCode) {
+          setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+            content: '**Cannot run module preflight.** No module context. Open a section or navigate to a module.' }]);
+          return;
+        }
+        try {
+          const res = await fetch('/api/authoring-actions/module-preflight', {
+            method: 'POST', headers: getAuthHeaders(),
+            body: JSON.stringify({ projectId, moduleCode, regulatorBody: authoringContext?.regulatorBody, submissionType: authoringContext?.submissionType }),
+          });
+          const data = await res.json();
+          if (data.status === 'data') {
+            const overallIcon = data.overall === 'ready' ? '✅' : data.overall === 'blocked' ? '🚫' : '⚠️';
+            const sectionTable = data.sectionResults?.length
+              ? '\n\n| Section | Status |\n|---|---|\n' + data.sectionResults.map((s: any) =>
+                `| §${s.sectionCode} | ${s.overall === 'ready' ? '✅' : s.overall === 'blocked' ? '❌' : '⚠️'} ${s.overall} |`).join('\n')
+              : '';
+            const blockerLines = data.majorBlockers?.length
+              ? '\n\n**Blockers:**\n' + data.majorBlockers.slice(0, 5).map((b: any) =>
+                `- **[${b.severity}]** §${b.sectionCode || '—'}: ${b.message}`).join('\n')
+              : '';
+            const actionLines = data.recommendedActions?.length
+              ? '\n\n**Next:**\n' + data.recommendedActions.map((a: any) => `- ${a.label} — ${a.reason}`).join('\n')
+              : '';
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Module Preflight — ${moduleCode.toUpperCase()}** ${overallIcon}\n\n**Overall:** ${data.overall.toUpperCase()} — ${data.summary}\n\n**Sections:** ${data.counts.ready}/${data.counts.total} ready, ${data.counts.blocked} blocked, ${data.counts.provisional} provisional${sectionTable}${blockerLines}${actionLines}` }]);
+            onRefreshIntelligence?.();
+          } else {
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Module preflight:** ${data.message || data.error || 'Unable to run.'}` }]);
+          }
+        } catch { handleSend(`Run preflight on module ${moduleCode}.`); }
+      })();
+      return;
+    }
+
+    // ── DOSSIER PREFLIGHT (Pass 6) ──────────────────────────────────────────
+    if (action.intent === 'dossier_preflight') {
+      (async () => {
+        const projectId = contextProfile?.projectId;
+        if (!projectId) {
+          setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+            content: '**Cannot run dossier preflight.** No project is active.' }]);
+          return;
+        }
+        try {
+          const res = await fetch('/api/authoring-actions/dossier-preflight', {
+            method: 'POST', headers: getAuthHeaders(),
+            body: JSON.stringify({ projectId, regulatorBody: authoringContext?.regulatorBody, submissionType: authoringContext?.submissionType }),
+          });
+          const data = await res.json();
+          if (data.status === 'data') {
+            const overallIcon = data.overall === 'ready' ? '✅' : data.overall === 'blocked' ? '🚫' : '⚠️';
+            const moduleTable = data.moduleResults?.length
+              ? '\n\n| Module | Status | Sections |\n|---|---|---|\n' + data.moduleResults.map((m: any) =>
+                `| ${m.moduleCode.toUpperCase()} | ${m.overall === 'ready' ? '✅' : m.overall === 'blocked' ? '❌' : '⚠️'} ${m.overall} | ${m.counts?.ready || 0}/${m.counts?.total || 0} ready |`).join('\n')
+              : '';
+            const blockerLines = data.majorBlockers?.length
+              ? '\n\n**Top blockers:**\n' + data.majorBlockers.slice(0, 5).map((b: any) =>
+                `- **[${b.severity}]** ${b.moduleCode || ''} ${b.sectionCode ? `§${b.sectionCode}` : ''}: ${b.message}`).join('\n')
+              : '';
+            const actionLines = data.recommendedActions?.length
+              ? '\n\n**Next:**\n' + data.recommendedActions.map((a: any) => `- ${a.label} — ${a.reason}`).join('\n')
+              : '';
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Dossier Preflight** ${overallIcon}\n\n**Overall:** ${data.overall.toUpperCase()} — ${data.summary}\n\n**Modules:** ${data.counts.readyModules}/${data.counts.totalModules} ready, ${data.counts.blockedModules} blocked${moduleTable}${blockerLines}${actionLines}` }]);
+            onRefreshIntelligence?.();
+          } else {
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Dossier preflight:** ${data.message || data.error || 'Unable to run.'}` }]);
+          }
+        } catch { handleSend('Run dossier preflight for this submission.'); }
       })();
       return;
     }
