@@ -539,6 +539,121 @@ export class DecisionLifecycleService {
         : 'No pending decisions',
     };
   }
+  // ── Pass 8: Contradiction↔Decision bidirectional linkage ──────
+
+  /**
+   * Find all decisions linked to a specific contradiction.
+   */
+  getDecisionsForContradiction(contradictionId: string): FormalDecisionRecord[] {
+    const results: FormalDecisionRecord[] = [];
+    for (const decision of decisionStore.values()) {
+      if (decision.linkedContradictionIds?.includes(contradictionId)) {
+        results.push(decision);
+      }
+    }
+    return results.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+
+  /**
+   * Find all contradictions linked to a specific decision.
+   */
+  getContradictionIdsForDecision(decisionId: string): string[] {
+    const decision = decisionStore.get(decisionId);
+    return decision?.linkedContradictionIds || [];
+  }
+
+  /**
+   * Build contradiction-enriched decision context for AnA explanation grounding.
+   * Includes contradiction details alongside decision records.
+   */
+  getContradictionDecisionContext(
+    projectId: string,
+    opts?: { sectionCode?: string; moduleCode?: string; limit?: number }
+  ): Array<{
+    decision: FormalDecisionRecord;
+    receipt?: DecisionReceipt;
+    contradictionIds: string[];
+    isContradictionDecision: boolean;
+  }> {
+    const decisions = this.getProjectDecisions(projectId, {
+      sectionCode: opts?.sectionCode,
+      moduleCode: opts?.moduleCode,
+      limit: opts?.limit ?? 15,
+    });
+
+    return decisions.map(decision => ({
+      decision,
+      receipt: this.getReceiptForDecision(decision.id),
+      contradictionIds: decision.linkedContradictionIds || [],
+      isContradictionDecision: decision.kind === 'contradiction-resolution-decision',
+    }));
+  }
+
+  /**
+   * Compute contradiction-aware preflight verdict enrichment.
+   * Integrates contradiction findings into the decision-aware status.
+   */
+  async computeContradictionAwareStatus(
+    projectId: string,
+    scope: { moduleCode?: string; dossierId?: string; regulatorBody?: string; submissionType?: string }
+  ): Promise<{
+    hasUnresolvedContradictions: boolean;
+    hasProvisionalDecisions: boolean;
+    needsReapproval: boolean;
+    needsEscalation: boolean;
+    pendingConfirmations: number;
+    pendingApprovals: number;
+    blockedDecisions: FormalDecisionRecord[];
+    contradictionCount: number;
+    contradictionBlockingCount: number;
+    overlayActiveCount: number;
+    summary: string;
+  }> {
+    // Base decision-aware status
+    const baseStatus = this.computeDecisionAwareStatus(projectId, scope);
+
+    // Enrich with contradiction context
+    let contradictionCount = 0;
+    let contradictionBlockingCount = 0;
+    let overlayActiveCount = 0;
+
+    try {
+      const { contradictionEngineService } = await import('./contradiction-engine-service.js');
+      const contradictionContext = await contradictionEngineService.buildPreflightContradictionContext(
+        1, // Default org — real multi-tenant uses req context
+        Number(projectId),
+        {
+          moduleCode: scope.moduleCode,
+          regulatorBody: scope.regulatorBody,
+          submissionType: scope.submissionType,
+        }
+      );
+      contradictionCount = contradictionContext.unresolvedCount;
+      contradictionBlockingCount = contradictionContext.blockingCount;
+      overlayActiveCount = contradictionContext.overlayActiveCount;
+    } catch {
+      // Contradiction engine unavailable
+    }
+
+    const parts: string[] = [];
+    if (baseStatus.summary !== 'No pending decisions') {
+      parts.push(baseStatus.summary);
+    }
+    if (contradictionCount > 0) {
+      parts.push(`${contradictionCount} contradiction(s) (${contradictionBlockingCount} blocking)`);
+    }
+    if (overlayActiveCount > 0) {
+      parts.push(`${overlayActiveCount} regulator overlay(s) active`);
+    }
+
+    return {
+      ...baseStatus,
+      contradictionCount,
+      contradictionBlockingCount,
+      overlayActiveCount,
+      summary: parts.length > 0 ? parts.join('; ') : 'No pending decisions or contradictions',
+    };
+  }
 }
 
 export const decisionLifecycleService = new DecisionLifecycleService();

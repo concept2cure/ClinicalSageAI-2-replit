@@ -1308,6 +1308,18 @@ router.post('/module-preflight', async (req: Request, res: Response) => {
       );
     } catch { /* non-blocking */ }
 
+    // ── Pass 8: Contradiction context enrichment ─────────────────
+    let contradictionContext: any = null;
+    try {
+      const { contradictionEngineService } = await import(
+        '../services/contradiction-engine-service.js'
+      );
+      contradictionContext = await contradictionEngineService.buildPreflightContradictionContext(
+        (req as any).tenantId || 1, Number(projectId),
+        { moduleCode, regulatorBody, submissionType }
+      );
+    } catch { /* non-blocking */ }
+
     return res.json({
       status: 'data', action: 'module_preflight', moduleCode,
       regulatorBody, submissionType, overall, summary,
@@ -1316,6 +1328,7 @@ router.post('/module-preflight', async (req: Request, res: Response) => {
       decisionStatus: decisionRecord?.status || null,
       authority: decisionRecord?.authority || null,
       decisionAwareStatus: decisionAwareStatus || null,
+      contradictionContext: contradictionContext || null,
     });
   } catch (err: any) {
     console.error('[authoring-actions] module-preflight error:', err?.message);
@@ -1475,6 +1488,18 @@ router.post('/dossier-preflight', async (req: Request, res: Response) => {
       );
     } catch { /* non-blocking */ }
 
+    // ── Pass 8: Contradiction context enrichment ─────────────────
+    let contradictionContext: any = null;
+    try {
+      const { contradictionEngineService } = await import(
+        '../services/contradiction-engine-service.js'
+      );
+      contradictionContext = await contradictionEngineService.buildPreflightContradictionContext(
+        (req as any).tenantId || 1, Number(projectId),
+        { regulatorBody, submissionType }
+      );
+    } catch { /* non-blocking */ }
+
     return res.json({
       status: 'data', action: 'dossier_preflight',
       regulatorBody, submissionType, overall, summary,
@@ -1483,6 +1508,7 @@ router.post('/dossier-preflight', async (req: Request, res: Response) => {
       decisionStatus: decisionRecord?.status || null,
       authority: decisionRecord?.authority || null,
       decisionAwareStatus: decisionAwareStatus || null,
+      contradictionContext: contradictionContext || null,
     });
   } catch (err: any) {
     console.error('[authoring-actions] dossier-preflight error:', err?.message);
@@ -1715,6 +1741,18 @@ router.post('/section-preflight', async (req: Request, res: Response) => {
       // Decision recording is non-blocking
     }
 
+    // ── Pass 8: Contradiction context enrichment ─────────────────
+    let contradictionContext: any = null;
+    try {
+      const { contradictionEngineService } = await import(
+        '../services/contradiction-engine-service.js'
+      );
+      contradictionContext = await contradictionEngineService.buildPreflightContradictionContext(
+        orgId, Number(projectId),
+        { sectionCode, regulatorBody, submissionType }
+      );
+    } catch { /* non-blocking */ }
+
     return res.json({
       status: 'data', action: 'section_preflight',
       sectionCode, artifactId, artifactVersionId, regulatorBody, submissionType,
@@ -1722,6 +1760,7 @@ router.post('/section-preflight', async (req: Request, res: Response) => {
       decisionId: decisionRecord?.id || null,
       decisionStatus: decisionRecord?.status || null,
       authority: decisionRecord?.authority || null,
+      contradictionContext: contradictionContext || null,
     });
   } catch (err: any) {
     console.error('[authoring-actions] section-preflight error:', err?.message);
@@ -2013,6 +2052,262 @@ router.get('/authority-map', async (_req: Request, res: Response) => {
   } catch (err: any) {
     console.error('[authoring-actions] authority-map error:', err?.message);
     return res.status(500).json({ error: 'Failed to fetch authority map' });
+  }
+});
+
+// ─── Pass 8: Cross-Artifact Contradiction + Overlay Context ──────────────────
+
+/**
+ * POST /contradiction-scan
+ * Full cross-artifact contradiction scan with overlay application.
+ * Returns structured findings with severity, authority, consequence paths,
+ * and regulator/body overlay context.
+ */
+router.post('/contradiction-scan', async (req: Request, res: Response) => {
+  try {
+    const { projectId, regulatorBody, submissionType } = req.body;
+    if (!projectId) return res.status(400).json({ error: 'projectId is required' });
+
+    const orgId = (req as any).tenantId || 1;
+
+    // Run full scan (Pass 8 extended)
+    const { contradictionEngineService } = await import(
+      '../services/contradiction-engine-service.js'
+    );
+    const scanResult = await contradictionEngineService.scanProjectFull(
+      orgId, Number(projectId),
+      { regulatorBody, submissionType }
+    );
+
+    // Apply overlay rules
+    let overlayCount = 0;
+    let overlayConsequences: any[] = [];
+    if (regulatorBody) {
+      try {
+        const { regulatorOverlayEngine } = await import(
+          '../services/regulator-overlay-engine.js'
+        );
+        const overlayResult = await regulatorOverlayEngine.applyOverlaysToFindings(
+          scanResult.findings
+        );
+        overlayCount = overlayResult.overlayCount;
+        overlayConsequences = overlayResult.overlayConsequences;
+      } catch { /* overlay engine unavailable */ }
+    }
+
+    // Build consequence paths for each finding
+    let consequencePathsByFinding: Record<string, any[]> = {};
+    try {
+      const { contradictionConsequenceService } = await import(
+        '../services/contradiction-consequence-service.js'
+      );
+      for (const finding of scanResult.findings.slice(0, 20)) {
+        const paths = await contradictionConsequenceService.getAvailableConsequencePaths(finding);
+        if (paths.length > 0) {
+          consequencePathsByFinding[finding.id] = paths.map(p => ({
+            id: p.id,
+            actionType: p.actionType,
+            label: p.label,
+            description: p.description,
+            authorityLevel: p.authorityLevel,
+            requiresConfirmation: p.requiresConfirmation,
+            requiresApproval: p.requiresApproval,
+            requiresEscalation: p.requiresEscalation,
+            autoRecommended: p.autoRecommended,
+          }));
+        }
+      }
+    } catch { /* consequence service unavailable */ }
+
+    // Link to decisions
+    let linkedDecisionIds: string[] = [];
+    try {
+      const { decisionLifecycleService } = await import(
+        '../services/decision-lifecycle-service.js'
+      );
+      const context = decisionLifecycleService.getContradictionDecisionContext(
+        String(projectId), { limit: 20 }
+      );
+      linkedDecisionIds = context
+        .filter(c => c.isContradictionDecision)
+        .map(c => c.decision.id);
+    } catch { /* non-blocking */ }
+
+    return res.json({
+      status: 'data',
+      action: 'contradiction_scan',
+      projectId,
+      regulatorBody: regulatorBody || null,
+      submissionType: submissionType || null,
+      summary: scanResult.summary,
+      detectionMethods: scanResult.detectionMethods,
+      findings: scanResult.findings.map(f => ({
+        id: f.id,
+        contradictionType: f.contradictionType,
+        severity: f.severity,
+        confidenceLevel: f.confidenceLevel,
+        confidenceScore: f.confidenceScore,
+        title: f.title,
+        description: f.description,
+        objectAType: f.objectAType,
+        objectAId: f.objectAId,
+        objectALabel: f.objectALabel,
+        objectBType: f.objectBType,
+        objectBId: f.objectBId,
+        objectBLabel: f.objectBLabel,
+        authorityState: f.authorityState,
+        reviewState: f.reviewState,
+        consequenceType: f.consequenceType,
+        consequenceExecuted: f.consequenceExecuted,
+        sourceClassification: f.sourceClassification,
+        deterministicRule: f.deterministicRule,
+        llmRole: f.llmRole,
+        regulatorBody: f.regulatorBody,
+        overlayRuleId: f.overlayRuleId,
+        regulatorSeverityOverride: f.regulatorSeverityOverride,
+        truthHierarchyLevel: f.truthHierarchyLevel,
+        consequencePaths: consequencePathsByFinding[f.id] || [],
+      })),
+      overlay: {
+        overlayCount,
+        consequences: overlayConsequences,
+      },
+      linkedDecisionIds,
+    });
+  } catch (err: any) {
+    console.error('[authoring-actions] contradiction-scan error:', err?.message);
+    return res.status(500).json({ error: 'Failed to run contradiction scan' });
+  }
+});
+
+/**
+ * POST /contradiction-consequence
+ * Execute a consequence path for a contradiction finding.
+ */
+router.post('/contradiction-consequence', async (req: Request, res: Response) => {
+  try {
+    const { findingId, consequenceType } = req.body;
+    if (!findingId || !consequenceType) {
+      return res.status(400).json({ error: 'findingId and consequenceType are required' });
+    }
+
+    const orgId = (req as any).tenantId || 1;
+    const userId = (req as any).userId || 'system';
+    const userRole = (req as any).userRole || undefined;
+
+    // Fetch the finding
+    const { contradictionEngineService } = await import(
+      '../services/contradiction-engine-service.js'
+    );
+    const finding = await contradictionEngineService.getFinding(findingId, orgId);
+    if (!finding) {
+      return res.status(404).json({ error: 'Finding not found' });
+    }
+
+    // Execute consequence
+    const { contradictionConsequenceService } = await import(
+      '../services/contradiction-consequence-service.js'
+    );
+    const result = await contradictionConsequenceService.executeConsequence(
+      finding, consequenceType, userId,
+      { projectId: finding.projectId ?? undefined, organizationId: orgId, actorRole: userRole }
+    );
+
+    return res.json({
+      status: result.success ? 'executed' : 'failed',
+      action: 'contradiction_consequence',
+      findingId,
+      consequenceType,
+      consequenceObjectId: result.consequenceObjectId,
+      consequenceObjectType: result.consequenceObjectType,
+      decisionId: result.decision?.id || null,
+      receiptId: result.receipt?.id || null,
+      error: result.error || null,
+    });
+  } catch (err: any) {
+    console.error('[authoring-actions] contradiction-consequence error:', err?.message);
+    return res.status(500).json({ error: 'Failed to execute contradiction consequence' });
+  }
+});
+
+/**
+ * GET /contradiction-context/:projectId
+ * Contradiction-enriched context for AnA and UI surfaces.
+ * Includes contradiction findings, overlay state, decision links.
+ */
+router.get('/contradiction-context/:projectId', async (req: Request, res: Response) => {
+  try {
+    const { projectId } = req.params;
+    const { sectionCode, moduleCode, regulatorBody, submissionType } = req.query;
+    const orgId = (req as any).tenantId || 1;
+
+    // Build enriched contradiction context
+    const { contradictionEngineService } = await import(
+      '../services/contradiction-engine-service.js'
+    );
+    const context = await contradictionEngineService.buildPreflightContradictionContext(
+      orgId, Number(projectId),
+      {
+        sectionCode: sectionCode as string || undefined,
+        moduleCode: moduleCode as string || undefined,
+        regulatorBody: regulatorBody as string || undefined,
+        submissionType: submissionType as string || undefined,
+      }
+    );
+
+    // Also get contradiction-aware decision status
+    let contradictionAwareStatus: any = null;
+    try {
+      const { decisionLifecycleService } = await import(
+        '../services/decision-lifecycle-service.js'
+      );
+      contradictionAwareStatus = await decisionLifecycleService.computeContradictionAwareStatus(
+        projectId,
+        {
+          moduleCode: moduleCode as string || undefined,
+          regulatorBody: regulatorBody as string || undefined,
+          submissionType: submissionType as string || undefined,
+        }
+      );
+    } catch { /* non-blocking */ }
+
+    return res.json({
+      status: 'data',
+      action: 'contradiction_context',
+      projectId,
+      context,
+      contradictionAwareStatus,
+    });
+  } catch (err: any) {
+    console.error('[authoring-actions] contradiction-context error:', err?.message);
+    return res.status(500).json({ error: 'Failed to fetch contradiction context' });
+  }
+});
+
+/**
+ * POST /seed-overlay-rules
+ * Seed the default regulator overlay rules for an organization.
+ * Idempotent — safe to call multiple times.
+ */
+router.post('/seed-overlay-rules', async (req: Request, res: Response) => {
+  try {
+    const orgId = (req as any).tenantId || 1;
+
+    const { regulatorOverlayEngine } = await import(
+      '../services/regulator-overlay-engine.js'
+    );
+    const result = await regulatorOverlayEngine.ensureSeedRules(orgId);
+
+    return res.json({
+      status: 'data',
+      action: 'seed_overlay_rules',
+      seeded: result.seeded,
+      skipped: result.skipped,
+      totalAvailable: regulatorOverlayEngine.getSeedRules().length,
+    });
+  } catch (err: any) {
+    console.error('[authoring-actions] seed-overlay-rules error:', err?.message);
+    return res.status(500).json({ error: 'Failed to seed overlay rules' });
   }
 });
 
