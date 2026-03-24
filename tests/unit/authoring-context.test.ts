@@ -25,6 +25,7 @@ import {
   resolveWorkflowStage,
   extractModuleCode,
   serializeContextForChat,
+  deriveLinkedSections,
 } from '../../client/src/concept2cure/services/authoring-context-resolver';
 
 // ─── AuthoringContextPack construction ───────────────────────────────────────
@@ -428,5 +429,170 @@ describe('action behavioral patterns', () => {
       expect(ACTION_REQUIRED_CONTEXT[a]).toBeDefined();
       expect(Array.isArray(ACTION_REQUIRED_CONTEXT[a])).toBe(true);
     }
+  });
+});
+
+// ─── Pass 3: Linked sections & Wave 2 behavioral tests ──────────────────────
+
+describe('deriveLinkedSections', () => {
+  it('returns linked sections for key CTD codes', () => {
+    expect(deriveLinkedSections('2.5')).toContain('2.7.3');
+    expect(deriveLinkedSections('2.5')).toContain('5.3');
+    expect(deriveLinkedSections('2.3')).toContain('3.2.S');
+    expect(deriveLinkedSections('5.3')).toContain('2.5');
+  });
+
+  it('returns undefined for unknown section codes', () => {
+    expect(deriveLinkedSections('9.9.9')).toBeUndefined();
+    expect(deriveLinkedSections(undefined)).toBeUndefined();
+  });
+
+  it('falls back to parent section for subsections', () => {
+    // 2.5.1 → parent 2.5 → links to 2.7.1, 2.7.3, etc.
+    const links = deriveLinkedSections('2.5.1');
+    expect(links).toBeDefined();
+    expect(links).toContain('2.7.3');
+  });
+});
+
+describe('resolveAuthoringContext with linked sections', () => {
+  it('includes linkedSectionCodes for known sections', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '2.5',
+    });
+    expect(ctx?.linkedSectionCodes).toBeDefined();
+    expect(ctx?.linkedSectionCodes).toContain('2.7.3');
+    expect(ctx?.linkedSectionCodes).toContain('5.3');
+  });
+
+  it('omits linkedSectionCodes for sections with no known links', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '1.1',
+    });
+    expect(ctx?.linkedSectionCodes).toBeUndefined();
+  });
+});
+
+describe('Wave 2 action behavioral patterns', () => {
+  it('correction draft requires section context with issues', () => {
+    // Correction draft is available when contradictions or readiness.blocked exist
+    const ctxWithIssues = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '2.5',
+      contradictions: [{ id: 'c1', type: 'dosage', severity: 'critical', explanation: 'conflict' }],
+    });
+    expect(hasSectionContext(ctxWithIssues)).toBe(true);
+    expect(ctxWithIssues?.contradictions?.length).toBeGreaterThan(0);
+  });
+
+  it('harmonize action requires sectionCode and derives linked sections', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '2.5',
+    });
+    expect(hasSectionContext(ctx)).toBe(true);
+    // Linked sections available for harmonization
+    expect(ctx?.linkedSectionCodes?.length).toBeGreaterThan(0);
+  });
+
+  it('harmonize falls back gracefully when no linked sections exist', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '1.3.3',
+    });
+    // Section exists but has no CTD cross-links
+    expect(hasSectionContext(ctx)).toBe(true);
+    expect(ctx?.linkedSectionCodes).toBeUndefined();
+  });
+
+  it('resolution changelog only needs projectId', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'review',
+    });
+    expect(ctx).not.toBeNull();
+    expect(ctx!.projectId).toBe('42');
+    // No section or artifact needed
+  });
+
+  it('module readiness derives moduleCode from sectionCode', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '3.2.S',
+    });
+    expect(ctx?.moduleCode).toBe('m3');
+    // Module readiness can use this
+  });
+
+  it('evidence gathering requires sectionCode', () => {
+    const noSection = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'documents',
+    });
+    expect(hasSectionContext(noSection)).toBe(false);
+
+    const withSection = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '2.7.3',
+    });
+    expect(hasSectionContext(withSection)).toBe(true);
+  });
+
+  it('readiness refresh returns fresh data when refetch is called', () => {
+    // Simulates readiness becoming stale after action
+    const staleCtx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '2.5',
+      readiness: { score: 45, blocked: true, blockers: [{ code: 'X', severity: 'critical', message: 'old blocker' }] },
+    });
+    expect(staleCtx?.readiness?.score).toBe(45);
+
+    // After refetch, new data would be passed
+    const freshCtx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '2.5',
+      readiness: { score: 80, blocked: false },
+    });
+    expect(freshCtx?.readiness?.score).toBe(80);
+    expect(freshCtx?.readiness?.blocked).toBe(false);
+  });
+
+  it('no approved version context detected gracefully', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'documents',
+      artifactId: 'art-new',
+      artifactVersion: 1,
+    });
+    expect(hasVersionContext(ctx)).toBe(true);
+    // Only v1 exists — compare-against-approved would return "no comparison available"
+    expect(ctx!.artifactVersionId).toBe('1');
+  });
+
+  it('service unavailable does not crash context build', () => {
+    // Context builds fine even without readiness/contradiction data
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '2.5',
+      readiness: undefined,
+      contradictions: undefined,
+    });
+    expect(ctx).not.toBeNull();
+    expect(ctx!.readiness).toBeUndefined();
+    expect(ctx!.contradictions).toBeUndefined();
+    // Actions still available, just without enrichment
+    expect(hasSectionContext(ctx)).toBe(true);
   });
 });

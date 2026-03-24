@@ -291,95 +291,365 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
   }
 });
 
-// ─── Wave 2 Hooks (wired, not fully implemented) ────────────────────────────
+// ─── Wave 2 Actions (real service calls) ─────────────────────────────────────
 
-// Hook: Governed correction draft
+// ACTION 6: Governed correction draft — uses rewrite-coordinator
 router.post('/correction-draft', async (req: Request, res: Response) => {
-  const { projectId, artifactId, sectionCode } = req.body;
-  // Wired to rewrite-coordinator — full UX ships next
-  return res.json({
-    status: 'hook_ready',
-    action: 'correction_draft',
-    message: 'Correction draft hook is wired. Use rewrite-coordinator for governed corrections.',
-    context: { projectId, artifactId, sectionCode },
-  });
-});
-
-// Hook: Harmonize language with linked sections
-router.post('/harmonize-sections', async (req: Request, res: Response) => {
-  const { projectId, sectionCodes } = req.body;
-  // Wired to harmonize-engine — full UX ships next
-  return res.json({
-    status: 'hook_ready',
-    action: 'harmonize_sections',
-    message: 'Harmonization hook is wired. Use harmonize-engine for cross-section consistency.',
-    context: { projectId, sectionCodes },
-  });
-});
-
-// Hook: Surface contradictions affecting this section
-router.post('/section-contradictions', async (req: Request, res: Response) => {
-  const { projectId, sectionCode } = req.body;
-  return res.json({
-    status: 'hook_ready',
-    action: 'section_contradictions',
-    message: 'Contradiction surfacing hook is wired. Uses contradiction-engine-service.',
-    context: { projectId, sectionCode },
-  });
-});
-
-// Hook: Explain what changed after last resolution
-router.post('/resolution-changelog', async (req: Request, res: Response) => {
-  const { projectId, bundleId } = req.body;
-  // Wired to ana-resolution-support — full UX ships next
-  return res.json({
-    status: 'hook_ready',
-    action: 'resolution_changelog',
-    message: 'Resolution changelog hook is wired. Uses ana-resolution-support.',
-    context: { projectId, bundleId },
-  });
-});
-
-// Hook: Show readiness status for a module
-router.get('/module-readiness/:projectId/:moduleCode', async (req: Request, res: Response) => {
-  const { projectId, moduleCode } = req.params;
-  return res.json({
-    status: 'hook_ready',
-    action: 'module_readiness',
-    message: 'Module readiness hook is wired. Uses readiness-engine.',
-    context: { projectId, moduleCode },
-  });
-});
-
-// Hook: Gather evidence relevant to current section
-router.get('/section-evidence/:projectId/:sectionCode', async (req: Request, res: Response) => {
-  const { projectId, sectionCode } = req.params;
   try {
-    // Try to fetch evidence from the evidence management service
-    const { EvidenceManagementService } = await import(
-      '../services/EvidenceManagementService.js'
-    );
-    if (EvidenceManagementService) {
-      const svc = new EvidenceManagementService();
-      const evidence = await svc.getEvidenceForSection?.(Number(projectId), sectionCode);
-      if (evidence && Array.isArray(evidence)) {
+    const { projectId, artifactId, sectionCode, triggerDescription } = req.body;
+    if (!projectId) return res.status(400).json({ error: 'projectId is required' });
+
+    const orgId = (req as any).tenantId || 1;
+    const targets: any[] = [];
+
+    try {
+      const { identifyRewriteTargets } = await import(
+        '../services/resolution/rewrite-coordinator.js'
+      );
+      if (identifyRewriteTargets) {
+        const affectedObjects = [{
+          objectType: 'artifact',
+          objectId: String(artifactId || ''),
+          objectTitle: sectionCode ? `Section ${sectionCode}` : 'Current document',
+          sectionCode: sectionCode || undefined,
+          impactState: 'direct' as const,
+        }];
+        const result = await identifyRewriteTargets(
+          orgId, Number(projectId), affectedObjects,
+          'rewrite', triggerDescription || 'Correction requested via AnA'
+        );
+        targets.push(...(result || []));
+      }
+    } catch {
+      // rewrite-coordinator unavailable
+    }
+
+    if (targets.length > 0) {
+      return res.json({
+        status: 'data',
+        action: 'correction_draft',
+        targets: targets.map((t: any) => ({
+          objectId: t.objectId,
+          objectTitle: t.objectTitle,
+          sectionCode: t.sectionCode,
+          revisionRationale: t.revisionRationale,
+          confidence: t.confidence,
+          requiresReview: t.requiresReview,
+          hasContent: !!t.currentContent,
+        })),
+        message: `${targets.length} rewrite target(s) identified. Review rationale before applying corrections.`,
+      });
+    }
+
+    return res.json({
+      status: 'no_targets',
+      action: 'correction_draft',
+      message: artifactId
+        ? 'No rewrite targets identified for this artifact. The document may already be consistent.'
+        : 'No artifact specified. Open a document to prepare a correction draft.',
+    });
+  } catch (err: any) {
+    console.error('[authoring-actions] correction-draft error:', err?.message);
+    return res.status(500).json({ error: 'Failed to prepare correction draft' });
+  }
+});
+
+// ACTION 7: Harmonize with linked sections — uses harmonize-engine
+router.post('/harmonize-sections', async (req: Request, res: Response) => {
+  try {
+    const { projectId, sectionCodes, submissionType, productName } = req.body;
+    if (!projectId) return res.status(400).json({ error: 'projectId is required' });
+    if (!sectionCodes || !Array.isArray(sectionCodes) || sectionCodes.length === 0) {
+      return res.json({
+        status: 'no_sections',
+        action: 'harmonize_sections',
+        message: 'No linked sections provided. Select sections to harmonize or ensure the current section has linked section codes.',
+      });
+    }
+
+    // Fetch content for each section from artifacts
+    const sections: Record<string, string> = {};
+    try {
+      const { db } = await import('../db.js');
+      for (const code of sectionCodes) {
+        const artifact = await db.query.concept2cureArtifacts?.findFirst?.({
+          where: (a: any, { and, eq }: any) =>
+            and(eq(a.projectId, Number(projectId)), eq(a.ctdSection, code)),
+          orderBy: (a: any, { desc }: any) => [desc(a.updatedAt)],
+        }).catch(() => null);
+        if (artifact?.content) {
+          sections[code] = typeof artifact.content === 'string'
+            ? artifact.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+            : '';
+        }
+      }
+    } catch { /* DB unavailable */ }
+
+    if (Object.keys(sections).length < 2) {
+      return res.json({
+        status: 'insufficient_content',
+        action: 'harmonize_sections',
+        message: `Only ${Object.keys(sections).length} section(s) have content. Need at least 2 sections with content to harmonize.`,
+        sectionsFound: Object.keys(sections),
+      });
+    }
+
+    // Run harmonize engine
+    try {
+      const { HarmonizeEngine } = await import('../services/harmonize-engine.js');
+      const engine = new HarmonizeEngine();
+      const result = await engine.check({
+        sections,
+        submissionType: submissionType || 'IND',
+        productName: productName || undefined,
+      });
+
+      return res.json({
+        status: 'data',
+        action: 'harmonize_sections',
+        consistencyScore: result.consistencyScore,
+        totalIssues: result.totalIssues,
+        criticalCount: result.criticalCount,
+        errorCount: result.errorCount,
+        warningCount: result.warningCount,
+        issues: result.issues.slice(0, 20).map((i: any) => ({
+          id: i.id,
+          type: i.type,
+          severity: i.severity,
+          sectionA: i.sectionA,
+          sectionB: i.sectionB,
+          description: i.description,
+          recommendation: i.recommendation,
+          autoFixable: i.autoFixable,
+        })),
+        checkedDimensions: result.checkedDimensions,
+        sectionsCompared: Object.keys(sections),
+      });
+    } catch {
+      return res.json({
+        status: 'service_unavailable',
+        action: 'harmonize_sections',
+        message: 'Harmonize engine is not available. Sections were found but consistency check could not run.',
+        sectionsFound: Object.keys(sections),
+      });
+    }
+  } catch (err: any) {
+    console.error('[authoring-actions] harmonize-sections error:', err?.message);
+    return res.status(500).json({ error: 'Failed to harmonize sections' });
+  }
+});
+
+// ACTION 8: Resolution changelog — uses ana-resolution-support + resolution-planner
+router.post('/resolution-changelog', async (req: Request, res: Response) => {
+  try {
+    const { projectId, bundleId } = req.body;
+    if (!projectId) return res.status(400).json({ error: 'projectId is required' });
+
+    const orgId = (req as any).tenantId || 1;
+    const explanations: any[] = [];
+
+    try {
+      const { getProjectResolutionPlans } = await import(
+        '../services/resolution/resolution-planner.js'
+      );
+      const { explainResolutionPlan } = await import(
+        '../services/resolution/ana-resolution-support.js'
+      );
+
+      if (getProjectResolutionPlans && explainResolutionPlan) {
+        const plans = await getProjectResolutionPlans(orgId, Number(projectId));
+        // Get most recent resolved plans (up to 5)
+        const recentPlans = plans
+          .filter((p: any) => p.state !== 'cancelled' && p.state !== 'unresolved')
+          .slice(0, 5);
+
+        for (const plan of recentPlans) {
+          const explanation = explainResolutionPlan(plan);
+          explanations.push({
+            planId: explanation.planId,
+            summary: explanation.summary,
+            triggerExplanation: explanation.triggerExplanation,
+            affectedObjectsSummary: explanation.affectedObjectsSummary,
+            recommendedPath: explanation.recommendedPathExplanation,
+            reviewRequirements: explanation.reviewRequirements,
+            confidence: explanation.confidenceExplanation,
+            nextSteps: explanation.nextSteps,
+          });
+        }
+      }
+    } catch {
+      // Resolution services unavailable
+    }
+
+    if (explanations.length > 0) {
+      return res.json({
+        status: 'data',
+        action: 'resolution_changelog',
+        resolutionCount: explanations.length,
+        resolutions: explanations,
+        message: `${explanations.length} resolution(s) found for this project.`,
+      });
+    }
+
+    return res.json({
+      status: 'no_resolutions',
+      action: 'resolution_changelog',
+      message: 'No resolution history found for this project. Resolutions are created when contradictions or assumption changes are detected and addressed.',
+    });
+  } catch (err: any) {
+    console.error('[authoring-actions] resolution-changelog error:', err?.message);
+    return res.status(500).json({ error: 'Failed to fetch resolution changelog' });
+  }
+});
+
+// ACTION 9: Module readiness — uses readiness-engine with module breakdown
+router.get('/module-readiness/:projectId/:moduleCode', async (req: Request, res: Response) => {
+  try {
+    const { projectId, moduleCode } = req.params;
+    if (!projectId) return res.status(400).json({ error: 'projectId is required' });
+
+    try {
+      const { computeReadinessAssessment } = await import(
+        '../services/orchestration/readiness-engine.js'
+      );
+      if (computeReadinessAssessment) {
+        const assessment = await computeReadinessAssessment({
+          projectId: Number(projectId),
+          organizationId: 'default',
+        });
+
+        // Find specific module in breakdown
+        const moduleBreakdown = assessment?.moduleBreakdown || [];
+        const targetModule = moduleCode
+          ? moduleBreakdown.find((m: any) =>
+              m.module === moduleCode || m.module === `Module ${moduleCode.replace('m', '')}`)
+          : null;
+
+        // Filter blockers relevant to this module
+        const moduleBlockers = (assessment?.blockers || []).filter(
+          (b: any) => !moduleCode || b.module === moduleCode || !b.module
+        );
+
         return res.json({
           status: 'data',
-          action: 'section_evidence',
-          evidence: evidence.slice(0, 20),
-          context: { projectId, sectionCode },
+          action: 'module_readiness',
+          overallScore: assessment?.overallScore ?? null,
+          overallStatus: assessment?.status ?? 'unknown',
+          module: targetModule ? {
+            code: moduleCode,
+            label: targetModule.label || `Module ${moduleCode}`,
+            score: targetModule.score,
+            status: targetModule.status,
+            documentCount: targetModule.documentCount,
+            expectedDocumentCount: targetModule.expectedDocumentCount,
+            validatedCount: targetModule.validatedCount,
+            blockerCount: targetModule.blockerCount,
+          } : null,
+          blockers: moduleBlockers.slice(0, 10).map((b: any) => ({
+            severity: b.severity,
+            category: b.category,
+            message: b.message || b.description,
+            suggestedResolution: b.suggestedResolution,
+          })),
+          moduleBreakdown: moduleBreakdown.map((m: any) => ({
+            module: m.module,
+            label: m.label,
+            score: m.score,
+            status: m.status,
+            documentCount: m.documentCount,
+          })),
         });
       }
+    } catch {
+      // Readiness engine unavailable
     }
-  } catch {
-    // Service unavailable — return hook_ready
+
+    return res.json({
+      status: 'service_unavailable',
+      action: 'module_readiness',
+      message: 'Readiness engine is not available. Module readiness data could not be computed.',
+      context: { projectId, moduleCode },
+    });
+  } catch (err: any) {
+    console.error('[authoring-actions] module-readiness error:', err?.message);
+    return res.status(500).json({ error: 'Failed to compute module readiness' });
   }
-  return res.json({
-    status: 'hook_ready',
-    action: 'section_evidence',
-    message: 'Evidence gathering hook is wired. Uses EvidenceManagementService.',
-    context: { projectId, sectionCode },
-  });
+});
+
+// ACTION 10: Section evidence — uses EvidenceManagementService + gap analysis
+router.get('/section-evidence/:projectId/:sectionCode', async (req: Request, res: Response) => {
+  try {
+    const { projectId, sectionCode } = req.params;
+    if (!projectId) return res.status(400).json({ error: 'projectId is required' });
+
+    let evidence: any[] = [];
+    let gapAnalysis: any = null;
+
+    // Try EvidenceManagementService
+    try {
+      const { EvidenceManagementService } = await import(
+        '../services/EvidenceManagementService.js'
+      );
+      if (EvidenceManagementService) {
+        const svc = new EvidenceManagementService();
+
+        // Try section-specific evidence
+        if (svc.getStageEvidence) {
+          // Map section code to stage number (approximate)
+          const stageMap: Record<string, number> = { '1': 0, '2': 1, '3': 2, '4': 3, '5': 4 };
+          const major = sectionCode?.split('.')[0] || '2';
+          const stage = stageMap[major] ?? 1;
+          const stageEvidence = await svc.getStageEvidence(String(projectId), stage);
+          if (stageEvidence && Array.isArray(stageEvidence)) {
+            evidence = stageEvidence.slice(0, 20).map((e: any) => ({
+              id: e.id,
+              title: e.title || e.name || e.filename,
+              type: e.test_type || e.type || 'document',
+              fdaRequirement: e.fda_requirement,
+              fdaSection: e.fda_section,
+              status: e.review_status || e.regulatory_status || 'pending',
+            }));
+          }
+        }
+
+        // Also try gap analysis
+        if (svc.performGapAnalysis) {
+          gapAnalysis = await svc.performGapAnalysis(String(projectId), 1);
+        }
+      }
+    } catch {
+      // Service unavailable
+    }
+
+    if (evidence.length > 0) {
+      return res.json({
+        status: 'data',
+        action: 'section_evidence',
+        evidenceCount: evidence.length,
+        evidence,
+        gapAnalysis: gapAnalysis ? {
+          completeness: gapAnalysis.completeness,
+          gaps: (gapAnalysis.gaps || []).slice(0, 5),
+          criticalGaps: gapAnalysis.critical_gaps || [],
+        } : null,
+        context: { projectId, sectionCode },
+      });
+    }
+
+    return res.json({
+      status: 'no_evidence',
+      action: 'section_evidence',
+      message: `No evidence found for section ${sectionCode}. Upload relevant studies, test reports, or regulatory documents to build the evidence package.`,
+      gapAnalysis: gapAnalysis ? {
+        completeness: gapAnalysis.completeness,
+        gaps: (gapAnalysis.gaps || []).slice(0, 5),
+      } : null,
+      context: { projectId, sectionCode },
+    });
+  } catch (err: any) {
+    console.error('[authoring-actions] section-evidence error:', err?.message);
+    return res.status(500).json({ error: 'Failed to gather section evidence' });
+  }
 });
 
 // ─── Section-level readiness + contradiction data feed ───────────────────────

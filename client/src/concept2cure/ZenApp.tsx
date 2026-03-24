@@ -2643,6 +2643,7 @@ export const ZenApp: React.FC = () => {
                   onNavigateToSection={handleNavigateToSection}
                   onOpenArtifact={handleOpenArtifact}
                   onRequestPromotion={handleRequestPromotion}
+                  onRefreshIntelligence={authoringIntelligence.refetch}
                   initialMessage={
                     pendingDraftSection
                       ? `Draft CTD section ${pendingDraftSection.code}: ${pendingDraftSection.title}. Generate a compliant first draft following ICH M4 guidelines and 21 CFR 312.23(a) requirements.`
@@ -2754,6 +2755,7 @@ export const ZenApp: React.FC = () => {
             onNavigateToSection={handleNavigateToSection}
             onOpenArtifact={handleOpenArtifact}
             onRequestPromotion={handleRequestPromotion}
+            onRefreshIntelligence={authoringIntelligence.refetch}
           />
         )}
       </div>

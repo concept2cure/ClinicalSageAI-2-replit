@@ -421,6 +421,10 @@ interface AnaPersistentPanelProps {
   onOpenArtifact?: (artifactId: string) => void;
   /** Request governed promotion of current artifact (P5) */
   onRequestPromotion?: (artifactId: string) => Promise<{ promoted: boolean; message: string }>;
+  /** Open the version compare inspector panel (P4) */
+  onOpenCompareInspector?: () => void;
+  /** Refresh authoring intelligence (readiness/contradictions) after actions */
+  onRefreshIntelligence?: () => void;
   /**
    * "full" = fills all available space, shows greeting + suggested actions (Claude.ai style)
    * "compact" = just the input bar at bottom, conversation expands as overlay
@@ -464,6 +468,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   onNavigateToSection,
   onOpenArtifact,
   onRequestPromotion,
+  onOpenCompareInspector,
+  onRefreshIntelligence,
   mode = 'full',
   defaultChatMode = 'standard',
 }) => {
@@ -553,15 +559,67 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       });
     }
 
+    // Wave 2 actions — available in deeper authoring contexts
+
+    // Action 6: Correction draft — available when section has issues
+    if (hasSectionContext(authoringContext) && (authoringContext.contradictions?.length || authoringContext.readiness?.blocked)) {
+      actions.push({
+        id: 'correction-draft',
+        label: 'Prepare correction draft',
+        intent: 'correction_draft',
+        description: 'Fix issues based on contradictions or readiness blockers',
+      });
+    }
+
+    // Action 7: Harmonize — available when section context exists
+    if (hasSectionContext(authoringContext)) {
+      actions.push({
+        id: 'harmonize-sections',
+        label: 'Harmonize with related sections',
+        intent: 'harmonize_sections',
+        description: 'Check consistency across linked CTD sections',
+      });
+    }
+
+    // Action 8: Resolution changelog
+    if (authoringContext.workflowStage === 'section-workspace' || authoringContext.workflowStage === 'review') {
+      actions.push({
+        id: 'resolution-changelog',
+        label: 'What changed after resolution?',
+        intent: 'resolution_changelog',
+        description: 'Explain recent resolution changes and their impact',
+      });
+    }
+
+    // Action 9: Module readiness
+    if (authoringContext.moduleCode || hasSectionContext(authoringContext)) {
+      actions.push({
+        id: 'module-readiness',
+        label: `Module readiness`,
+        intent: 'module_readiness',
+        description: 'Check submission readiness for this module',
+      });
+    }
+
+    // Action 10: Gather evidence
+    if (hasSectionContext(authoringContext)) {
+      actions.push({
+        id: 'section-evidence',
+        label: 'Gather evidence for this section',
+        intent: 'section_evidence',
+        description: 'Find linked evidence, studies, and regulatory support',
+      });
+    }
+
     return actions;
   }, [authoringContext]);
 
   // Merge parent-provided actions with authoring-aware actions
   const effectiveSuggestedActions = useMemo(() => {
     const parent = suggestedActions || [];
-    // Authoring actions come first when in section/document context
     if (authoringSuggestedActions.length > 0) {
-      return [...authoringSuggestedActions.slice(0, 3), ...parent.slice(0, 2)];
+      // Show up to 4 authoring actions + 1 parent action
+      return [...authoringSuggestedActions.slice(0, 4), ...parent.slice(0, 1)];
     }
     return parent;
   }, [suggestedActions, authoringSuggestedActions]);
@@ -1209,9 +1267,13 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             setMessages(prev => [...prev, {
               id: `a-${Date.now()}`,
               role: 'assistant',
-              content: `**Version Comparison**\n\n| | Current (v${cur.version}) | Approved (v${appr.version}) |\n|---|---|---|\n| Status | ${cur.status} | ${appr.status} |\n| Words | ${data.diffSummary.currentWords} | ${data.diffSummary.approvedWords} |\n| Updated | ${new Date(cur.updatedAt).toLocaleDateString()} | ${new Date(appr.updatedAt).toLocaleDateString()} |\n\n**Net change:** ${wordDelta > 0 ? '+' : ''}${wordDelta} words.\n\nTo view a detailed inline diff, open the document inspector and select the Compare tab.`,
+              content: `**Version Comparison**\n\n| | Current (v${cur.version}) | Approved (v${appr.version}) |\n|---|---|---|\n| Status | ${cur.status} | ${appr.status} |\n| Words | ${data.diffSummary.currentWords} | ${data.diffSummary.approvedWords} |\n| Updated | ${new Date(cur.updatedAt).toLocaleDateString()} | ${new Date(appr.updatedAt).toLocaleDateString()} |\n\n**Net change:** ${wordDelta > 0 ? '+' : ''}${wordDelta} words.${onOpenCompareInspector ? '' : '\n\nTo view a detailed inline diff, open the document inspector and select the Compare tab.'}`,
               timestamp: new Date(),
             }]);
+            // Auto-open the version compare inspector if available
+            if (onOpenCompareInspector) {
+              onOpenCompareInspector();
+            }
           }
         } catch {
           handleSend('Compare the current document against the last approved version.');
@@ -1266,6 +1328,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 : `**Promotion not completed.** ${result.message}`,
               timestamp: new Date(),
             }]);
+            // Refresh readiness after promotion attempt
+            onRefreshIntelligence?.();
           } catch (err) {
             setMessages(prev => [...prev, {
               id: `a-${Date.now()}`,
@@ -1289,6 +1353,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 content: '**Promoted to review.** The document has been moved to the governance review pipeline.',
                 timestamp: new Date(),
               }]);
+              onRefreshIntelligence?.();
             } else {
               const err = await res.json().catch(() => ({ error: 'Unknown error' }));
               setMessages(prev => [...prev, {
@@ -1306,11 +1371,154 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       return;
     }
 
-    // Other authoring intents — fall through to chat
-    const fallbackIntents: Record<string, string> = {};
-    const fallbackMessage = action.intent ? fallbackIntents[action.intent] : undefined;
-    if (fallbackMessage) {
-      handleSend(fallbackMessage);
+    // ── Wave 2 Authoring Actions — real operational behavior ──────────
+
+    // ACTION 6: Correction draft
+    if (action.intent === 'correction_draft') {
+      (async () => {
+        const projectId = contextProfile?.projectId;
+        if (!projectId) { handleSend('Prepare a governed correction for the current section.'); return; }
+        try {
+          const res = await fetch('/api/authoring-actions/correction-draft', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+              projectId, artifactId: authoringContext?.artifactId,
+              sectionCode: authoringContext?.sectionCode,
+              triggerDescription: 'Correction requested via AnA — addressing readiness/contradiction issues',
+            }),
+          });
+          const data = await res.json();
+          if (data.status === 'data' && data.targets?.length) {
+            const targetLines = data.targets.map((t: any, i: number) =>
+              `${i + 1}. **${t.objectTitle}** (§${t.sectionCode || '—'})\n   Rationale: ${t.revisionRationale}\n   Confidence: ${t.confidence} | Review required: ${t.requiresReview ? 'Yes' : 'No'}`
+            ).join('\n\n');
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Correction targets identified** — ${data.targets.length} item(s):\n\n${targetLines}\n\n${data.message}` }]);
+          } else {
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Correction draft:** ${data.message}` }]);
+          }
+        } catch { handleSend('Prepare a governed correction draft for the current section.'); }
+      })();
+      return;
+    }
+
+    // ACTION 7: Harmonize sections
+    if (action.intent === 'harmonize_sections') {
+      (async () => {
+        const projectId = contextProfile?.projectId;
+        const currentCode = authoringContext?.sectionCode;
+        if (!projectId || !currentCode) { handleSend('Harmonize this section with related CTD sections.'); return; }
+        // Derive linked sections from same module
+        const major = currentCode.split('.')[0];
+        const linked = authoringContext?.linkedSectionCodes || [];
+        const sectionCodes = linked.length > 0 ? [currentCode, ...linked] : [currentCode, `${major}.2`, `${major}.3`, `${major}.5`].filter((v, i, a) => a.indexOf(v) === i);
+        try {
+          const res = await fetch('/api/authoring-actions/harmonize-sections', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ projectId, sectionCodes, submissionType: authoringContext?.submissionType }),
+          });
+          const data = await res.json();
+          if (data.status === 'data') {
+            const issueLines = data.issues?.slice(0, 5).map((i: any) =>
+              `- **[${i.severity}]** ${i.description} (§${i.sectionA} ↔ §${i.sectionB})${i.recommendation ? `\n  Fix: ${i.recommendation}` : ''}`
+            ).join('\n') || 'None';
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Harmonization Check** — Score: ${data.consistencyScore}/100\n\nSections compared: ${data.sectionsCompared?.join(', ')}\nDimensions checked: ${data.checkedDimensions?.join(', ')}\n\n**Issues (${data.totalIssues}):**\n${issueLines}` }]);
+          } else {
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Harmonization:** ${data.message}` }]);
+          }
+        } catch { handleSend('Check consistency across linked sections.'); }
+      })();
+      return;
+    }
+
+    // ACTION 8: Resolution changelog
+    if (action.intent === 'resolution_changelog') {
+      (async () => {
+        const projectId = contextProfile?.projectId;
+        if (!projectId) { handleSend('What changed after the last resolution?'); return; }
+        try {
+          const res = await fetch('/api/authoring-actions/resolution-changelog', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ projectId }),
+          });
+          const data = await res.json();
+          if (data.status === 'data' && data.resolutions?.length) {
+            const lines = data.resolutions.map((r: any, i: number) =>
+              `### Resolution ${i + 1}\n**${r.summary}**\n- Trigger: ${r.triggerExplanation}\n- Path: ${r.recommendedPath}\n- Confidence: ${r.confidence}\n- Affected: ${r.affectedObjectsSummary}\n- Review: ${JSON.stringify(r.reviewRequirements)}\n- Next: ${r.nextSteps?.join(', ') || 'None'}`
+            ).join('\n\n');
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Resolution History** — ${data.resolutionCount} resolution(s)\n\n${lines}` }]);
+          } else {
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Resolution changelog:** ${data.message}` }]);
+          }
+        } catch { handleSend('What changed after the last resolution?'); }
+      })();
+      return;
+    }
+
+    // ACTION 9: Module readiness
+    if (action.intent === 'module_readiness') {
+      (async () => {
+        const projectId = contextProfile?.projectId;
+        const moduleCode = authoringContext?.moduleCode || (authoringContext?.sectionCode ? `m${authoringContext.sectionCode.split('.')[0]}` : 'm2');
+        if (!projectId) { handleSend('Show readiness for this module.'); return; }
+        try {
+          const res = await fetch(`/api/authoring-actions/module-readiness/${projectId}/${moduleCode}`, {
+            headers: getAuthHeaders(),
+          });
+          const data = await res.json();
+          if (data.status === 'data') {
+            const mod = data.module;
+            const blockerLines = data.blockers?.slice(0, 5).map((b: any) =>
+              `- **[${b.severity}]** ${b.message}${b.suggestedResolution ? ` → ${b.suggestedResolution}` : ''}`
+            ).join('\n') || 'None';
+            const moduleTable = data.moduleBreakdown?.map((m: any) =>
+              `| ${m.module} | ${m.label} | ${m.score ?? '—'} | ${m.status} | ${m.documentCount} |`
+            ).join('\n') || '';
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Module Readiness** — Overall: ${data.overallScore ?? '—'}/100 (${data.overallStatus})\n\n${mod ? `**${mod.label}** (${mod.code}): Score ${mod.score ?? '—'}/100, Status: ${mod.status}\nDocs: ${mod.documentCount}/${mod.expectedDocumentCount}, Validated: ${mod.validatedCount}, Blockers: ${mod.blockerCount}` : `Module ${moduleCode} not found in breakdown.`}\n\n**Blockers:**\n${blockerLines}\n\n| Module | Label | Score | Status | Docs |\n|---|---|---|---|---|\n${moduleTable}` }]);
+          } else {
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Module readiness:** ${data.message}` }]);
+          }
+        } catch { handleSend(`Show readiness for module ${moduleCode}.`); }
+      })();
+      return;
+    }
+
+    // ACTION 10: Section evidence
+    if (action.intent === 'section_evidence') {
+      (async () => {
+        const projectId = contextProfile?.projectId;
+        const sectionCode = authoringContext?.sectionCode;
+        if (!projectId || !sectionCode) { handleSend('Gather evidence for this section.'); return; }
+        try {
+          const res = await fetch(`/api/authoring-actions/section-evidence/${projectId}/${sectionCode}`, {
+            headers: getAuthHeaders(),
+          });
+          const data = await res.json();
+          if (data.status === 'data' && data.evidence?.length) {
+            const evidenceLines = data.evidence.slice(0, 10).map((e: any, i: number) =>
+              `${i + 1}. **${e.title}** — Type: ${e.type}, Status: ${e.status}${e.fdaRequirement ? `, FDA: ${e.fdaRequirement}` : ''}`
+            ).join('\n');
+            const gapInfo = data.gapAnalysis
+              ? `\n\n**Evidence completeness:** ${data.gapAnalysis.completeness ?? '—'}%${data.gapAnalysis.criticalGaps?.length ? `\nCritical gaps: ${data.gapAnalysis.criticalGaps.join(', ')}` : ''}`
+              : '';
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Evidence for §${sectionCode}** — ${data.evidenceCount} item(s) found:\n\n${evidenceLines}${gapInfo}` }]);
+          } else {
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Evidence for §${sectionCode}:** ${data.message}${data.gapAnalysis?.gaps?.length ? `\n\nGaps identified: ${data.gapAnalysis.gaps.join(', ')}` : ''}` }]);
+          }
+        } catch { handleSend(`Gather evidence for section ${sectionCode}.`); }
+      })();
       return;
     }
 
@@ -1830,9 +2038,26 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                             authoringContext?.sectionCode && (
                               <button
                                 onClick={() => {
-                                  // Extract code block content if present, otherwise use full response
+                                  // Extract draft content: try code block, then content after "---", then strip markdown metadata
+                                  let insertContent = msg.content;
                                   const codeBlockMatch = msg.content.match(/```(?:\w+)?\n([\s\S]*?)```/);
-                                  const insertContent = codeBlockMatch ? codeBlockMatch[1].trim() : msg.content;
+                                  if (codeBlockMatch && codeBlockMatch[1].trim().length > 50) {
+                                    insertContent = codeBlockMatch[1].trim();
+                                  } else {
+                                    // Strip markdown headers that look like meta commentary (not section content)
+                                    insertContent = insertContent
+                                      .replace(/^\*\*[A-Z][^*]+\*\*\s*[-—]\s*/gm, '') // "**Draft Ready** —" prefix
+                                      .replace(/^#{1,3}\s+(?:Draft|Note|Summary|Action)\b[^\n]*/gm, '') // Meta headers
+                                      .trim();
+                                  }
+                                  // Wrap in HTML paragraphs for TipTap consumption
+                                  if (!insertContent.startsWith('<')) {
+                                    insertContent = insertContent
+                                      .split('\n\n')
+                                      .filter(p => p.trim())
+                                      .map(p => `<p>${p.trim()}</p>`)
+                                      .join('\n');
+                                  }
                                   const title = authoringContext.sectionTitle
                                     ? `${authoringContext.sectionCode} — ${authoringContext.sectionTitle}`
                                     : `Section ${authoringContext.sectionCode} Draft`;

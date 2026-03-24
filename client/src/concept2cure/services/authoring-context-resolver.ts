@@ -92,6 +92,9 @@ export function resolveAuthoringContext(
   const sectionCode = input.sectionCode || input.artifactCtdSection || undefined;
   const moduleCode = extractModuleCode(sectionCode);
 
+  // Derive linked section codes from CTD module hierarchy
+  const linkedSectionCodes = deriveLinkedSections(sectionCode);
+
   return {
     projectId: input.projectId,
     workflowStage,
@@ -102,10 +105,45 @@ export function resolveAuthoringContext(
     sectionCode: sectionCode || undefined,
     sectionTitle: input.sectionTitle,
     submissionType: input.submissionType,
+    linkedSectionCodes,
     readiness: input.readiness,
     contradictions: input.contradictions,
     recentResolutionBundleId: input.recentResolutionBundleId,
   };
+}
+
+/**
+ * Derive related section codes from CTD hierarchy for harmonization.
+ * E.g., section 2.5 links to 2.7.3 (efficacy), 5.3 (CSRs).
+ */
+export function deriveLinkedSections(sectionCode: string | undefined): string[] | undefined {
+  if (!sectionCode) return undefined;
+
+  // CTD cross-reference map: key sections that should be consistent
+  const CTD_LINKS: Record<string, string[]> = {
+    '2.2': ['2.3', '2.4', '2.5'],
+    '2.3': ['3.2.S', '3.2.P'],
+    '2.4': ['4.2.1', '4.2.2', '4.2.3'],
+    '2.5': ['2.7.1', '2.7.3', '2.7.4', '5.3'],
+    '2.6.1': ['4.2.1'],
+    '2.6.2': ['4.2.2'],
+    '2.6.3': ['4.2.3'],
+    '2.7.1': ['5.2'],
+    '2.7.3': ['2.5', '5.3'],
+    '2.7.4': ['2.5', '5.3'],
+    '3.2.S': ['2.3'],
+    '3.2.P': ['2.3'],
+    '5.3': ['2.5', '2.7.3', '2.7.4'],
+  };
+
+  // Direct match
+  if (CTD_LINKS[sectionCode]) return CTD_LINKS[sectionCode];
+
+  // Try parent section (e.g., 2.7.3.1 → 2.7.3)
+  const parent = sectionCode.split('.').slice(0, -1).join('.');
+  if (parent && CTD_LINKS[parent]) return CTD_LINKS[parent];
+
+  return undefined;
 }
 
 /**
