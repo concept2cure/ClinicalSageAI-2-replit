@@ -72,6 +72,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       document_context,
       submission_type,
       conversation_history,
+      authoring_context,
     } = req.body;
 
     if (!message || typeof message !== 'string') {
@@ -109,6 +110,39 @@ router.post('/chat', async (req: Request, res: Response) => {
         department: req.body.context?.department,
       });
 
+    // ── Build authoring context block for system prompt enrichment ──
+    let authoringContextBlock = '';
+    if (authoring_context && typeof authoring_context === 'object') {
+      const ac = authoring_context;
+      const parts: string[] = ['<authoring_context>'];
+      if (ac.workflowStage) parts.push(`  <workflow_stage>${ac.workflowStage}</workflow_stage>`);
+      if (ac.sectionCode) parts.push(`  <section_code>${ac.sectionCode}</section_code>`);
+      if (ac.sectionTitle) parts.push(`  <section_title>${ac.sectionTitle}</section_title>`);
+      if (ac.moduleCode) parts.push(`  <module_code>${ac.moduleCode}</module_code>`);
+      if (ac.artifactId) parts.push(`  <artifact_id>${ac.artifactId}</artifact_id>`);
+      if (ac.artifactVersionId) parts.push(`  <artifact_version_id>${ac.artifactVersionId}</artifact_version_id>`);
+      if (ac.artifactStatus) parts.push(`  <artifact_status>${ac.artifactStatus}</artifact_status>`);
+      if (ac.submissionType) parts.push(`  <submission_type>${ac.submissionType}</submission_type>`);
+      if (ac.readiness) {
+        parts.push(`  <readiness score="${ac.readiness.score ?? 'unknown'}" blocked="${ac.readiness.blocked ?? false}">`);
+        if (ac.readiness.blockers?.length) {
+          for (const b of ac.readiness.blockers) {
+            parts.push(`    <blocker severity="${b.severity}" code="${b.code}">${b.message}</blocker>`);
+          }
+        }
+        parts.push('  </readiness>');
+      }
+      if (ac.contradictions?.length) {
+        parts.push('  <contradictions>');
+        for (const c of ac.contradictions) {
+          parts.push(`    <contradiction id="${c.id}" type="${c.type}" severity="${c.severity}">${c.explanation}</contradiction>`);
+        }
+        parts.push('  </contradictions>');
+      }
+      parts.push('</authoring_context>');
+      authoringContextBlock = parts.join('\n');
+    }
+
     // Orchestrate — build the complete system prompt
     const orchestratorInput: OrchestratorInput = {
       message,
@@ -121,6 +155,11 @@ router.post('/chat', async (req: Request, res: Response) => {
     };
 
     const orchestration = orchestrate(orchestratorInput);
+
+    // Inject authoring context into system prompt if available
+    if (authoringContextBlock) {
+      orchestration.systemPrompt += `\n\n## Current Authoring Context\n\nYou have access to the user's current authoring context. Use this to provide section-specific, artifact-aware responses. When the user asks about "this section", "this document", "what's blocking", or similar, reference this context:\n\n${authoringContextBlock}`;
+    }
 
     // Build message history for the AI gateway
     const messages: GatewayMessage[] = [{ role: 'system', content: orchestration.systemPrompt }];

@@ -337,6 +337,11 @@ const DOCUMENT_ACTION_CONFIGS: DocumentActionConfig[] = [
   },
 ];
 
+// ─── Authoring context import ────────────────────────────────────────────────
+import type { AuthoringContextPack } from '../../../../../shared/types/authoring-context';
+import { hasSectionContext, hasArtifactContext, hasVersionContext } from '../../../../../shared/types/authoring-context';
+import { serializeContextForChat } from '../../services/authoring-context-resolver';
+
 interface AnaPersistentPanelProps {
   contextProfile?: {
     productType?: string;
@@ -347,6 +352,8 @@ interface AnaPersistentPanelProps {
     /** Page-specific context for deeper awareness (active tab, filters, etc.) */
     moduleContext?: Record<string, unknown>;
   };
+  /** Canonical authoring context — section/artifact/workflow awareness for AnA */
+  authoringContext?: AuthoringContextPack | null;
   /** Suggested actions shown as quick-start chips when conversation is empty */
   suggestedActions?: SuggestedAction[];
   /** Greeting text shown when no messages */
@@ -396,6 +403,7 @@ const SCREEN_LABELS: Record<string, string> = {
 
 const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   contextProfile,
+  authoringContext,
   suggestedActions,
   greeting,
   initialMessage,
@@ -431,6 +439,77 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
   const screenName = contextProfile?.screenName || 'default';
   const screenLabel = SCREEN_LABELS[screenName] || '';
+
+  // ── Authoring-aware suggested actions (Wave 1) ─────────────────────────────
+  const authoringSuggestedActions = useMemo<SuggestedAction[]>(() => {
+    if (!authoringContext) return [];
+    const actions: SuggestedAction[] = [];
+    const stage = authoringContext.workflowStage;
+
+    // Action 1: Resume last section — always available when in project context
+    actions.push({
+      id: 'resume-last-section',
+      label: 'Resume last section',
+      intent: 'resume_last_section',
+      description: 'Open the most recently edited section',
+    });
+
+    // Action 2: Draft this section — available when section context exists
+    if (hasSectionContext(authoringContext)) {
+      actions.push({
+        id: 'draft-section',
+        label: `Draft ${authoringContext.sectionCode}: ${authoringContext.sectionTitle || 'this section'}`,
+        intent: 'draft_section_from_context',
+        description: 'Generate a compliant first draft for this section',
+      });
+    }
+
+    // Action 3: Explain blockers — available when in section-workspace or review
+    if (stage === 'section-workspace' || stage === 'review') {
+      actions.push({
+        id: 'explain-blockers',
+        label: 'What blocks promotion?',
+        intent: 'explain_promotion_blockers',
+        description: 'Show readiness issues and contradictions blocking this section',
+      });
+    }
+
+    // Action 4: Compare against approved — available when artifact exists
+    if (hasArtifactContext(authoringContext)) {
+      actions.push({
+        id: 'compare-approved',
+        label: 'Compare to last approved',
+        intent: 'compare_against_approved',
+        description: 'Show changes since the last approved version',
+      });
+    }
+
+    // Action 5: Promote to review — available when drafting and not blocked
+    if (
+      hasArtifactContext(authoringContext) &&
+      authoringContext.artifactStatus === 'drafting' &&
+      !authoringContext.readiness?.blocked
+    ) {
+      actions.push({
+        id: 'promote-to-review',
+        label: 'Promote to review',
+        intent: 'promote_to_review',
+        description: 'Move this section to review if readiness checks pass',
+      });
+    }
+
+    return actions;
+  }, [authoringContext]);
+
+  // Merge parent-provided actions with authoring-aware actions
+  const effectiveSuggestedActions = useMemo(() => {
+    const parent = suggestedActions || [];
+    // Authoring actions come first when in section/document context
+    if (authoringSuggestedActions.length > 0) {
+      return [...authoringSuggestedActions.slice(0, 3), ...parent.slice(0, 2)];
+    }
+    return parent;
+  }, [suggestedActions, authoringSuggestedActions]);
 
   // Close mode dropdown on outside click
   useEffect(() => {
@@ -790,6 +869,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           };
 
           // Try AnA RI first, fallback to Cortex
+          // Build authoring context payload for section/artifact-aware chat
+          const authoringPayload = authoringContext ? serializeContextForChat(authoringContext) : {};
+
           let response = await fetch('/api/ana-ri/chat', {
             method: 'POST',
             headers: getAuthHeaders(),
@@ -799,6 +881,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               thread_id: threadIdRef.current || undefined,
               project_id: contextProfile?.projectId || undefined,
               submission_type: contextProfile?.productType || undefined,
+              // Canonical authoring context (section, artifact, workflow stage)
+              authoring_context: authoringPayload,
               context: {
                 screen: contextProfile?.screenName,
                 project: contextProfile?.activeProject,
@@ -806,6 +890,16 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 productType: contextProfile?.productType,
                 userRole: contextProfile?.userRole,
                 ...(contextProfile?.moduleContext || {}),
+                // Also spread key authoring fields into legacy context for backward compat
+                ...(authoringContext ? {
+                  sectionCode: authoringContext.sectionCode,
+                  artifactId: authoringContext.artifactId,
+                  artifactVersionId: authoringContext.artifactVersionId,
+                  workflowStage: authoringContext.workflowStage,
+                  sectionTitle: authoringContext.sectionTitle,
+                  moduleCode: authoringContext.moduleCode,
+                  artifactStatus: authoringContext.artifactStatus,
+                } : {}),
               },
               conversationHistory: messages.slice(-10).map(m => ({
                 role: m.role,
@@ -932,8 +1026,30 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       });
     }
 
+    // ── Wave 1 Authoring Actions — route to context-aware chat intents ──
+    const authoringIntents: Record<string, string> = {
+      resume_last_section: 'Open my most recently edited section. Show me where I left off and what needs attention.',
+      draft_section_from_context: authoringContext?.sectionCode
+        ? `Draft CTD section ${authoringContext.sectionCode}${authoringContext.sectionTitle ? `: ${authoringContext.sectionTitle}` : ''}. Generate a compliant first draft following ICH M4 guidelines and regulatory requirements for ${authoringContext.submissionType || 'this submission'}.`
+        : 'Draft the current section from context.',
+      explain_promotion_blockers: authoringContext?.sectionCode
+        ? `What is blocking section ${authoringContext.sectionCode} from promotion to review? Check readiness status, contradictions, and compliance issues.`
+        : 'What is blocking this document from promotion to review? Explain all readiness blockers and contradictions.',
+      compare_against_approved: authoringContext?.artifactId
+        ? `Compare the current version of this document (artifact ${authoringContext.artifactId}) against the last approved version. Show what changed and assess regulatory impact.`
+        : 'Compare the current document against the last approved version.',
+      promote_to_review: authoringContext?.artifactId
+        ? `Check if artifact ${authoringContext.artifactId} is ready for promotion to review. Run readiness checks and contradiction scans. If clean, proceed with governed promotion.`
+        : 'Check if this document is ready for promotion to review.',
+    };
+
+    const authoringMessage = action.intent ? authoringIntents[action.intent] : undefined;
+    if (authoringMessage) {
+      handleSend(authoringMessage);
+      return;
+    }
+
     // Route AI-actionable intents through the unified action system
-    // Phase 1: Map known intents to AI actions; fall through to chat for unknown
     const aiActionMap: Record<
       string,
       { actionType: AIActionType; targetType: 'artifact' | 'document' }
@@ -968,7 +1084,6 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           }
         })
         .catch(err => {
-          // Notify caller of failure so UI can reflect the error
           if (onActionRun) {
             onActionRun({
               id: action.id,
@@ -1148,12 +1263,34 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 </p>
                 <h2 className="text-xl font-semibold text-[#141413]">{defaultGreeting}</h2>
                 {screenLabel && <p className="text-sm text-[#B0AEA5] mt-1">{screenLabel}</p>}
+                {/* Authoring context indicator strip */}
+                {authoringContext && (authoringContext.sectionCode || authoringContext.artifactId) && (
+                  <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#F5F4EF] rounded-full text-[10px] text-[#6D6B63] border border-[#E8E6DC]">
+                    <FileSearch className="w-3 h-3" />
+                    <span className="font-medium">{authoringContext.workflowStage}</span>
+                    {authoringContext.sectionCode && (
+                      <>
+                        <span className="text-[#B0AEA5]">·</span>
+                        <span>§{authoringContext.sectionCode}</span>
+                      </>
+                    )}
+                    {authoringContext.sectionTitle && (
+                      <span className="text-[#B0AEA5] truncate max-w-[120px]">{authoringContext.sectionTitle}</span>
+                    )}
+                    {authoringContext.artifactStatus && (
+                      <>
+                        <span className="text-[#B0AEA5]">·</span>
+                        <span className="capitalize">{authoringContext.artifactStatus}</span>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Suggested actions */}
-              {suggestedActions && suggestedActions.length > 0 && (
+              {effectiveSuggestedActions && effectiveSuggestedActions.length > 0 && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-lg mx-auto">
-                  {suggestedActions.slice(0, 4).map(action => (
+                  {effectiveSuggestedActions.slice(0, 5).map(action => (
                     <button
                       key={action.id}
                       onClick={() => handleSuggestedAction(action)}

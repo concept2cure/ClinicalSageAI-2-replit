@@ -3878,6 +3878,15 @@ try {
   console.error('❌ Failed to mount AnA RI routes:', error);
 }
 
+// Mount Authoring Actions routes (Wave 1 + Wave 2 AnA-first authoring actions)
+try {
+  const authoringActionsModule = await import('./routes/authoring-actions');
+  app.use('/api/authoring-actions', authoringActionsModule.default);
+  console.log('✅ Authoring Actions routes mounted (/api/authoring-actions)');
+} catch (error) {
+  console.error('❌ Failed to mount Authoring Actions routes:', error);
+}
+
 // Mount Ana Platform Control routes (agentic settings, modules, onboarding)
 try {
   const anaPlatformModule = await import('./routes/ana-platform-control');
