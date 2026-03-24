@@ -618,3 +618,128 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
     <div className="flex-1 overflow-y-auto p-3">{children}</div>
   </div>
 );
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 13. INSPECTOR RIBBON — Grouped toggle bar for editor inspector panels
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export interface InspectorRibbonItem {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  /** Override active color (default: bg-blue-600 text-white) */
+  activeColor?: string;
+  /** Badge count (e.g., unresolved comments) */
+  badge?: number;
+  /** Show pulse indicator when active */
+  pulse?: boolean;
+  testId?: string;
+}
+
+export interface InspectorRibbonGroup {
+  label: string;
+  items: InspectorRibbonItem[];
+}
+
+interface InspectorRibbonProps {
+  groups: InspectorRibbonGroup[];
+  activeInspector: string | null;
+  onToggle: (id: string) => void;
+  className?: string;
+  testId?: string;
+}
+
+export const InspectorRibbon: React.FC<InspectorRibbonProps> = ({
+  groups,
+  activeInspector,
+  onToggle,
+  className,
+  testId = 'inspector-ribbon',
+}) => (
+  <div
+    className={cn('flex items-stretch px-3 border-b border-zinc-100 bg-zinc-50/40 shrink-0 overflow-x-auto', className)}
+    data-testid={testId}
+    role="toolbar"
+    aria-label="Inspector panel toggles"
+  >
+    {groups.map((group, gi) => (
+      <div
+        key={group.label}
+        className={cn(
+          'flex flex-col items-center py-1',
+          gi < groups.length - 1 && 'pr-3 mr-3 border-r border-zinc-200'
+        )}
+      >
+        <div className="flex items-center gap-0.5">
+          {group.items.map(item => {
+            const isActive = activeInspector === item.id;
+            return (
+              <button
+                key={item.id}
+                data-testid={item.testId || `ribbon-${item.id}`}
+                onClick={() => onToggle(item.id)}
+                className={cn(
+                  'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap',
+                  isActive
+                    ? (item.activeColor || 'bg-blue-600 text-white font-medium shadow-sm')
+                    : 'text-zinc-600 hover:bg-white hover:shadow-sm'
+                )}
+              >
+                {item.icon}
+                {item.label}
+                {item.badge != null && item.badge > 0 && (
+                  <span
+                    className={cn(
+                      'ml-1 inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full text-[10px] font-semibold',
+                      isActive ? 'bg-white text-blue-600' : 'bg-amber-500 text-white'
+                    )}
+                  >
+                    {item.badge}
+                  </span>
+                )}
+                {item.pulse && isActive && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+        <span className="text-[9px] font-medium uppercase tracking-widest text-zinc-400 mt-0.5">
+          {group.label}
+        </span>
+      </div>
+    ))}
+  </div>
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 14. INSPECTOR DRAWER — Standard wrapper for inspector panel content (w-80)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface InspectorDrawerProps {
+  /** Whether this drawer is visible */
+  visible: boolean;
+  /** Width override (default: w-80) */
+  width?: string;
+  children: React.ReactNode;
+  className?: string;
+  testId?: string;
+}
+
+export const InspectorDrawer: React.FC<InspectorDrawerProps> = ({
+  visible,
+  width = 'w-80',
+  children,
+  className,
+  testId,
+}) => {
+  if (!visible) return null;
+  return (
+    <div
+      className={cn(width, 'shrink-0 border-l border-zinc-200 h-full transition-all duration-150', className)}
+      data-testid={testId}
+    >
+      {children}
+    </div>
+  );
+};

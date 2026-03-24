@@ -17,6 +17,7 @@ import {
   Inbox,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { WorkspaceHeader } from '@/components/ui/workspace-primitives';
 import { InlineAIButton } from '../ui/InlineAIButton';
 
 function getAuthHeaders(): Record<string, string> {
@@ -110,29 +111,32 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100">
-        <div className="flex items-center gap-1.5">
-          <Inbox className="w-3.5 h-3.5 text-blue-600" />
-          <span className="text-[11px] font-semibold text-zinc-800">My Review Queue</span>
-          {totalItems > 0 && (
-            <span className="text-[9px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-medium">
-              {totalItems}
-            </span>
-          )}
-          {unreadNotifications > 0 && (
-            <span className="text-[9px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full font-medium">
-              {unreadNotifications} new
-            </span>
-          )}
-        </div>
-        <button
-          onClick={fetchQueue}
-          disabled={loading}
-          className="p-1 text-zinc-400 hover:text-zinc-600 rounded hover:bg-zinc-100"
-        >
-          <RefreshCw className={cn('w-3 h-3', loading && 'animate-spin')} />
-        </button>
-      </div>
+      <WorkspaceHeader
+        title="Review Queue"
+        titleIcon={<Inbox className="w-3.5 h-3.5 text-blue-600" />}
+        actions={
+          <div className="flex items-center gap-1.5">
+            {totalItems > 0 && (
+              <span className="text-[9px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-medium">
+                {totalItems}
+              </span>
+            )}
+            {unreadNotifications > 0 && (
+              <span className="text-[9px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full font-medium">
+                {unreadNotifications} new
+              </span>
+            )}
+            <button
+              onClick={fetchQueue}
+              disabled={loading}
+              className="p-1 text-zinc-400 hover:text-zinc-600 rounded hover:bg-zinc-100"
+            >
+              <RefreshCw className={cn('w-3 h-3', loading && 'animate-spin')} />
+            </button>
+          </div>
+        }
+        testId="review-queue-header"
+      />
 
       <div className="flex-1 overflow-y-auto p-2">
         {loading ? (

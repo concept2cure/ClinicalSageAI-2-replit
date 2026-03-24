@@ -12,6 +12,8 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
+import { PageTitleHeader, WorkspaceStatusBadge } from '@/components/ui/workspace-primitives';
+import type { StatusBadgeConfig } from '@/components/ui/workspace-primitives';
 import {
   AlertTriangle,
   CheckCircle2,
@@ -119,26 +121,19 @@ const StatCard: React.FC<{
   </div>
 );
 
-// ── Readiness badge ──────────────────────────────────────────────────────────
-const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
-  const config: Record<string, { bg: string; text: string; label: string }> = {
-    blocked: { bg: 'bg-red-50 border-red-200', text: 'text-red-700', label: 'Blocked' },
-    in_review: { bg: 'bg-amber-50 border-amber-200', text: 'text-amber-700', label: 'In Review' },
-    clear: { bg: 'bg-green-50 border-green-200', text: 'text-green-700', label: 'Clear' },
-  };
-  const c = config[status] || config.clear;
-  return (
-    <span
-      className={cn(
-        'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border',
-        c.bg,
-        c.text
-      )}
-    >
-      {c.label}
-    </span>
-  );
+// ── Readiness badge (maps review statuses to WorkspaceStatusBadge) ───────────
+const REVIEW_STATUS_CONFIG: Record<string, StatusBadgeConfig> = {
+  blocked: { key: 'blocked', label: 'Blocked', color: 'bg-red-100 text-red-700' },
+  in_review: { key: 'in_review', label: 'In Review', color: 'bg-amber-100 text-amber-700' },
+  clear: { key: 'clear', label: 'Clear', color: 'bg-green-100 text-green-700' },
 };
+
+const ReviewStatusBadge: React.FC<{ status: string }> = ({ status }) => (
+  <WorkspaceStatusBadge
+    status={status}
+    config={REVIEW_STATUS_CONFIG[status] || REVIEW_STATUS_CONFIG.clear}
+  />
+);
 
 // ── Component ────────────────────────────────────────────────────────────────
 
@@ -203,24 +198,19 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
   return (
     <div className={cn('space-y-6 pb-8', className)}>
       {/* ── Header ─────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-base font-semibold text-zinc-900 flex items-center gap-2">
-            <Target className="w-4 h-4 text-blue-600" />
-            Review Pulse
-          </h2>
-          <p className="text-xs text-zinc-500 mt-0.5">
-            Project review orchestration — signals from document workspace
-          </p>
-        </div>
-        <button
-          onClick={fetchPulse}
-          className="p-1.5 rounded hover:bg-zinc-100 text-zinc-400 hover:text-zinc-600 transition"
-          title="Refresh"
-        >
-          <RefreshCw className="w-4 h-4" />
-        </button>
-      </div>
+      <PageTitleHeader
+        title="Review Pulse"
+        description="Project review orchestration — signals from document workspace"
+        actions={
+          <button
+            onClick={fetchPulse}
+            className="p-1.5 rounded hover:bg-zinc-100 text-zinc-400 hover:text-zinc-600 transition"
+            title="Refresh"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
+        }
+      />
 
       {/* ── Summary strip ──────────────────────────────────────────────── */}
       <div className="flex flex-wrap gap-3">
@@ -365,7 +355,7 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
                       )}
                     </td>
                     <td className="px-3 py-2 text-center">
-                      <StatusBadge status={a.reviewStatus} />
+                      <ReviewStatusBadge status={a.reviewStatus} />
                     </td>
                   </tr>
                 ))}

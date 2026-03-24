@@ -76,6 +76,11 @@ import { AnAMemory } from '../intelligence/AnAMemory';
 import ArtifactProofPanel from './ArtifactProofPanel';
 import { getCurrentUser } from '../../utils/getCurrentUser';
 import { useDocumentModeOptional, type DocumentMode } from '../../contexts/DocumentModeContext';
+import {
+  InspectorRibbon,
+  InspectorDrawer,
+  type InspectorRibbonGroup,
+} from '@/components/ui/workspace-primitives';
 
 // ── Auth helper (same pattern as useProjects) ────────────────────────────────
 function getAuthHeaders(): Record<string, string> {
@@ -1880,280 +1885,50 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         </div>
       </div>
 
-      {/* ── Ribbon toolbar — categorized inspector panels with group labels ── */}
-      <div className="flex items-stretch px-3 border-b border-zinc-100 bg-zinc-50/40 shrink-0 overflow-x-auto">
-        {/* AI & Intelligence */}
-        <div className="flex flex-col items-center pr-3 mr-3 border-r border-zinc-200 py-1">
-          <div className="flex items-center gap-0.5">
-            <button
-              data-testid="ribbon-intelligence"
-              onClick={() => toggleInspector('intelligence')}
-              className={cn(
-                'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap',
-                activeInspector === 'intelligence'
-                  ? 'bg-blue-600 text-white font-medium shadow-sm'
-                  : 'text-zinc-600 hover:bg-white hover:shadow-sm'
-              )}
-            >
-              <Brain className="w-3.5 h-3.5" />
-              Intelligence
-            </button>
-            <button
-              data-testid="ribbon-batch-ai"
-              onClick={() => toggleInspector('batch-ai')}
-              className={cn(
-                'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap',
-                activeInspector === 'batch-ai'
-                  ? 'bg-blue-600 text-white font-medium shadow-sm'
-                  : 'text-zinc-600 hover:bg-white hover:shadow-sm'
-              )}
-            >
-              <Layers className="w-3.5 h-3.5" />
-              Batch AI
-            </button>
-            <button
-              data-testid="ribbon-health"
-              onClick={() => toggleInspector('health')}
-              className={cn(
-                'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap',
-                activeInspector === 'health'
-                  ? 'bg-blue-600 text-white font-medium shadow-sm'
-                  : 'text-zinc-600 hover:bg-white hover:shadow-sm'
-              )}
-            >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              Health
-            </button>
-            <button
-              data-testid="ribbon-compliance"
-              onClick={() => toggleInspector('compliance-scanner')}
-              className={cn(
-                'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap',
-                activeInspector === 'compliance-scanner'
-                  ? 'bg-blue-600 text-white font-medium shadow-sm'
-                  : 'text-zinc-600 hover:bg-white hover:shadow-sm'
-              )}
-            >
-              <AlertTriangle className="w-3.5 h-3.5" />
-              Compliance
-            </button>
-            <button
-              data-testid="ribbon-memory"
-              onClick={() => toggleInspector('ana-memory')}
-              className={cn(
-                'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap',
-                activeInspector === 'ana-memory'
-                  ? 'bg-blue-600 text-white font-medium shadow-sm'
-                  : 'text-zinc-600 hover:bg-white hover:shadow-sm'
-              )}
-            >
-              <Brain className="w-3.5 h-3.5" />
-              Memory
-            </button>
-          </div>
-          <span className="text-[9px] font-medium uppercase tracking-widest text-zinc-400 mt-0.5">
-            AI
-          </span>
-        </div>
-
-        {/* Review & Collaboration */}
-        <div className="flex flex-col items-center pr-3 mr-3 border-r border-zinc-200 py-1">
-          <div className="flex items-center gap-0.5">
-            <button
-              data-testid="ribbon-comments"
-              onClick={() => toggleInspector('comments')}
-              className={cn(
-                'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap relative',
-                activeInspector === 'comments'
-                  ? 'bg-blue-600 text-white font-medium shadow-sm'
-                  : 'text-zinc-600 hover:bg-white hover:shadow-sm'
-              )}
-            >
-              <MessageSquare className="w-3.5 h-3.5" />
-              Comments
-              {comments.filter(c => !c.resolved).length > 0 && (
-                <span
-                  className={cn(
-                    'ml-1 inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full text-[10px] font-semibold',
-                    activeInspector === 'comments'
-                      ? 'bg-white text-blue-600'
-                      : 'bg-amber-500 text-white'
-                  )}
-                >
-                  {comments.filter(c => !c.resolved).length}
-                </span>
-              )}
-            </button>
-            <button
-              data-testid="ribbon-review"
-              onClick={() => toggleInspector('review')}
-              className={cn(
-                'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap',
-                isReviewMode
-                  ? 'bg-amber-500 text-white font-medium shadow-sm'
-                  : activeInspector === 'review'
-                    ? 'bg-blue-600 text-white font-medium shadow-sm'
-                    : 'text-zinc-600 hover:bg-white hover:shadow-sm'
-              )}
-            >
-              <Eye className="w-3.5 h-3.5" />
-              Review
-              {isReviewMode && <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}
-            </button>
-            <button
-              data-testid="ribbon-reviewers"
-              onClick={() => toggleInspector('reviewers')}
-              className={cn(
-                'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap',
-                activeInspector === 'reviewers'
-                  ? 'bg-blue-600 text-white font-medium shadow-sm'
-                  : 'text-zinc-600 hover:bg-white hover:shadow-sm'
-              )}
-            >
-              <Users className="w-3.5 h-3.5" />
-              Reviewers
-            </button>
-            <button
-              data-testid="ribbon-versions"
-              onClick={() => toggleInspector('versions')}
-              className={cn(
-                'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap',
-                activeInspector === 'versions'
-                  ? 'bg-blue-600 text-white font-medium shadow-sm'
-                  : 'text-zinc-600 hover:bg-white hover:shadow-sm'
-              )}
-            >
-              <GitCompare className="w-3.5 h-3.5" />
-              History
-            </button>
-            <button
-              data-testid="ribbon-compare"
-              onClick={() => toggleInspector('compare')}
-              className={cn(
-                'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap',
-                activeInspector === 'compare'
-                  ? 'bg-blue-600 text-white font-medium shadow-sm'
-                  : 'text-zinc-600 hover:bg-white hover:shadow-sm'
-              )}
-            >
-              <GitCompare className="w-3.5 h-3.5" />
-              Compare
-            </button>
-          </div>
-          <span className="text-[9px] font-medium uppercase tracking-widest text-zinc-400 mt-0.5">
-            Review
-          </span>
-        </div>
-
-        {/* Compliance & References */}
-        <div className="flex flex-col items-center pr-3 mr-3 border-r border-zinc-200 py-1">
-          <div className="flex items-center gap-0.5">
-            <button
-              data-testid="ribbon-crossref"
-              onClick={() => toggleInspector('crossref')}
-              className={cn(
-                'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap',
-                activeInspector === 'crossref'
-                  ? 'bg-blue-600 text-white font-medium shadow-sm'
-                  : 'text-zinc-600 hover:bg-white hover:shadow-sm'
-              )}
-            >
-              <Link2 className="w-3.5 h-3.5" />
-              Cross-Refs
-            </button>
-            <button
-              data-testid="ribbon-inconsistency"
-              onClick={() => toggleInspector('inconsistency')}
-              className={cn(
-                'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap',
-                activeInspector === 'inconsistency'
-                  ? 'bg-blue-600 text-white font-medium shadow-sm'
-                  : 'text-zinc-600 hover:bg-white hover:shadow-sm'
-              )}
-            >
-              <Zap className="w-3.5 h-3.5" />
-              Issues
-            </button>
-            <button
-              data-testid="ribbon-dataroom"
-              onClick={() => toggleInspector('dataroom')}
-              className={cn(
-                'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap',
-                activeInspector === 'dataroom'
-                  ? 'bg-blue-600 text-white font-medium shadow-sm'
-                  : 'text-zinc-600 hover:bg-white hover:shadow-sm'
-              )}
-            >
-              <Database className="w-3.5 h-3.5" />
-              Data Room
-            </button>
-          </div>
-          <span className="text-[9px] font-medium uppercase tracking-widest text-zinc-400 mt-0.5">
-            Compliance
-          </span>
-        </div>
-
-        {/* Audit & Provenance */}
-        <div className="flex flex-col items-center py-1">
-          <div className="flex items-center gap-0.5">
-            <button
-              data-testid="ribbon-provenance"
-              onClick={() => toggleInspector('provenance')}
-              className={cn(
-                'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap',
-                activeInspector === 'provenance'
-                  ? 'bg-blue-600 text-white font-medium shadow-sm'
-                  : 'text-zinc-600 hover:bg-white hover:shadow-sm'
-              )}
-            >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              Provenance
-            </button>
-            <button
-              data-testid="ribbon-audit"
-              onClick={() => toggleInspector('audit')}
-              className={cn(
-                'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap',
-                activeInspector === 'audit'
-                  ? 'bg-blue-600 text-white font-medium shadow-sm'
-                  : 'text-zinc-600 hover:bg-white hover:shadow-sm'
-              )}
-            >
-              <ClipboardList className="w-3.5 h-3.5" />
-              Audit Trail
-            </button>
-            <button
-              data-testid="ribbon-submission"
-              onClick={() => toggleInspector('submission-readiness')}
-              className={cn(
-                'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap',
-                activeInspector === 'submission-readiness'
-                  ? 'bg-blue-600 text-white font-medium shadow-sm'
-                  : 'text-zinc-600 hover:bg-white hover:shadow-sm'
-              )}
-            >
-              <Shield className="w-3.5 h-3.5" />
-              Submission
-            </button>
-            <button
-              data-testid="ribbon-proof"
-              onClick={() => toggleInspector('proof')}
-              className={cn(
-                'px-2 py-1 text-xs rounded-md transition-all flex items-center gap-1.5 whitespace-nowrap',
-                activeInspector === 'proof'
-                  ? 'bg-emerald-600 text-white font-medium shadow-sm'
-                  : 'text-zinc-600 hover:bg-white hover:shadow-sm'
-              )}
-            >
-              <Shield className="w-3.5 h-3.5" />
-              Proof
-            </button>
-          </div>
-          <span className="text-[9px] font-medium uppercase tracking-widest text-zinc-400 mt-0.5">
-            Audit
-          </span>
-        </div>
-      </div>
+      {/* ── Ribbon toolbar — canonical InspectorRibbon ── */}
+      <InspectorRibbon
+        groups={[
+          {
+            label: 'AI',
+            items: [
+              { id: 'intelligence', label: 'Intelligence', icon: <Brain className="w-3.5 h-3.5" /> },
+              { id: 'batch-ai', label: 'Batch AI', icon: <Layers className="w-3.5 h-3.5" /> },
+              { id: 'health', label: 'Health', icon: <ShieldCheck className="w-3.5 h-3.5" /> },
+              { id: 'compliance-scanner', label: 'Compliance', icon: <AlertTriangle className="w-3.5 h-3.5" /> },
+              { id: 'ana-memory', label: 'Memory', icon: <Brain className="w-3.5 h-3.5" /> },
+            ],
+          },
+          {
+            label: 'Review',
+            items: [
+              { id: 'comments', label: 'Comments', icon: <MessageSquare className="w-3.5 h-3.5" />, badge: comments.filter(c => !c.resolved).length || undefined },
+              { id: 'review', label: 'Review', icon: <Eye className="w-3.5 h-3.5" />, activeColor: isReviewMode ? 'bg-amber-500 text-white font-medium shadow-sm' : undefined, pulse: isReviewMode },
+              { id: 'reviewers', label: 'Reviewers', icon: <Users className="w-3.5 h-3.5" /> },
+              { id: 'versions', label: 'History', icon: <GitCompare className="w-3.5 h-3.5" /> },
+              { id: 'compare', label: 'Compare', icon: <GitCompare className="w-3.5 h-3.5" /> },
+            ],
+          },
+          {
+            label: 'Compliance',
+            items: [
+              { id: 'crossref', label: 'Cross-Refs', icon: <Link2 className="w-3.5 h-3.5" /> },
+              { id: 'inconsistency', label: 'Issues', icon: <Zap className="w-3.5 h-3.5" /> },
+              { id: 'dataroom', label: 'Data Room', icon: <Database className="w-3.5 h-3.5" /> },
+            ],
+          },
+          {
+            label: 'Audit',
+            items: [
+              { id: 'provenance', label: 'Provenance', icon: <ShieldCheck className="w-3.5 h-3.5" /> },
+              { id: 'audit', label: 'Audit Trail', icon: <ClipboardList className="w-3.5 h-3.5" /> },
+              { id: 'submission-readiness', label: 'Submission', icon: <Shield className="w-3.5 h-3.5" /> },
+              { id: 'proof', label: 'Proof', icon: <Shield className="w-3.5 h-3.5" />, activeColor: 'bg-emerald-600 text-white font-medium shadow-sm' },
+            ],
+          },
+        ] satisfies InspectorRibbonGroup[]}
+        activeInspector={activeInspector}
+        onToggle={toggleInspector}
+      />
 
       {/* ── AI Suggestion Diff Panel ──────────────────────────────────────── */}
       {aiResult && (
@@ -2558,9 +2333,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
           />
         </div>
 
-        {/* Single inspector drawer — only one at a time */}
-        {activeInspector === 'intelligence' && (
-          <div className="w-80 shrink-0 border-l border-zinc-200">
+        {/* Single inspector drawer — only one at a time (canonical InspectorDrawer) */}
+        <InspectorDrawer visible={activeInspector === 'intelligence'}>
             <RegulatoryIntelligencePanel
               submissionType={submissionType}
               indication={activeArtifact?.title}
@@ -2597,21 +2371,17 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 }
               }}
             />
-          </div>
-        )}
-        {activeInspector === 'provenance' && projectId && activeArtifact && (
-          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-150">
+        </InspectorDrawer>
+        <InspectorDrawer visible={activeInspector === 'provenance' && !!projectId && !!activeArtifact}>
             <DocumentProvenancePanel
-              projectId={projectId}
-              artifactId={activeArtifact.id}
+              projectId={projectId!}
+              artifactId={activeArtifact?.id}
               onClose={() => setActiveInspector(null)}
               onOpenCompare={openCompare}
               onOpenAudit={openAudit}
             />
-          </div>
-        )}
-        {activeInspector === 'compare' && projectId && activeArtifact && (
-          <div className="w-80 max-w-[35vw] shrink-0 border-l border-zinc-200 h-full transition-all duration-150">
+        </InspectorDrawer>
+        <InspectorDrawer visible={activeInspector === 'compare' && !!projectId && !!activeArtifact} width="w-80 max-w-[35vw]">
             <DocumentVersionCompare
               projectId={projectId}
               artifactId={activeArtifact.id}
@@ -2620,31 +2390,24 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               onOpenProvenance={openProvenance}
               onRollbackComplete={loadArtifacts}
             />
-          </div>
-        )}
-        {activeInspector === 'audit' && projectId && activeArtifact && (
-          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-150">
+        </InspectorDrawer>
+        <InspectorDrawer visible={activeInspector === 'audit' && !!projectId && !!activeArtifact}>
             <DocumentAuditReport
-              projectId={projectId}
-              artifactId={activeArtifact.id}
+              projectId={projectId!}
+              artifactId={activeArtifact?.id}
               onClose={() => setActiveInspector(null)}
               onOpenProvenance={openProvenance}
               onOpenCompare={openCompare}
               onExportAsArtifact={handleExportAudit}
               exportingAudit={exportingAudit}
             />
-          </div>
-        )}
-        {activeInspector === 'proof' && projectId && activeArtifact && (
-          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-150">
-            <ArtifactProofPanel projectId={projectId} artifact={activeArtifact} />
-          </div>
-        )}
-        {/* Sprint 2A: Data Room Panel */}
-        {activeInspector === 'dataroom' && projectId && (
-          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-150">
+        </InspectorDrawer>
+        <InspectorDrawer visible={activeInspector === 'proof' && !!projectId && !!activeArtifact}>
+            <ArtifactProofPanel projectId={projectId!} artifact={activeArtifact!} />
+        </InspectorDrawer>
+        <InspectorDrawer visible={activeInspector === 'dataroom' && !!projectId}>
             <DataRoomPanel
-              projectId={projectId}
+              projectId={projectId!}
               onSourceSelect={source => {
                 pushToast(`Viewing source: ${source.title}`, 'info');
               }}
@@ -2652,11 +2415,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 pushToast('Upload source files from the Project sidebar', 'info');
               }}
             />
-          </div>
-        )}
-        {/* Sprint 2C: Inconsistency Intelligence Panel */}
-        {activeInspector === 'inconsistency' && projectId && activeArtifact && (
-          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-150">
+        </InspectorDrawer>
+        <InspectorDrawer visible={activeInspector === 'inconsistency' && !!projectId && !!activeArtifact}>
             <InconsistencyPanel
               projectId={projectId}
               activeArtifactId={activeArtifact.id}
@@ -2670,11 +2430,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 }
               }}
             />
-          </div>
-        )}
-        {/* Document Health Panel */}
-        {activeInspector === 'health' && activeArtifact && (
-          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-150">
+        </InspectorDrawer>
+        <InspectorDrawer visible={activeInspector === 'health' && !!activeArtifact}>
             <DocumentHealth
               content={activeArtifact.content || ''}
               documentType={activeArtifact.type}
@@ -2701,11 +2458,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
                 );
               }}
             />
-          </div>
-        )}
-        {/* Version History Timeline */}
-        {activeInspector === 'versions' && activeArtifact && (
-          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-150">
+        </InspectorDrawer>
+        <InspectorDrawer visible={activeInspector === 'versions' && !!activeArtifact}>
             <VersionTimeline
               versions={(activeArtifact.versions || []).map((v, i) => ({
                 id: `v-${v.version || i}`,
@@ -2721,11 +2475,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               }}
               onClose={() => setActiveInspector(null)}
             />
-          </div>
-        )}
-        {/* Batch AI Operations Panel */}
-        {activeInspector === 'batch-ai' && activeArtifact && (
-          <div className="w-96 shrink-0 border-l border-zinc-200 h-full transition-all duration-150">
+        </InspectorDrawer>
+        <InspectorDrawer visible={activeInspector === 'batch-ai' && !!activeArtifact} width="w-96">
             <BatchAIPanel
               content={activeArtifact.content || ''}
               submissionType={submissionType}
@@ -2735,11 +2486,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               }}
               onClose={() => setActiveInspector(null)}
             />
-          </div>
-        )}
-        {/* Cross-Reference Manager */}
-        {activeInspector === 'crossref' && activeArtifact && (
-          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-150">
+        </InspectorDrawer>
+        <InspectorDrawer visible={activeInspector === 'crossref' && !!activeArtifact}>
             <CrossReferencePanel
               content={activeArtifact.content || ''}
               projectId={projectId}
@@ -2761,11 +2509,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               }}
               onClose={() => setActiveInspector(null)}
             />
-          </div>
-        )}
-        {/* Threaded Comments Panel */}
-        {activeInspector === 'comments' && activeArtifact && (
-          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-150">
+        </InspectorDrawer>
+        <InspectorDrawer visible={activeInspector === 'comments' && !!activeArtifact}>
             <CommentThreadPanel
               comments={comments}
               currentUserId={getCurrentUser().id}
@@ -2826,11 +2571,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               }}
               onClose={() => setActiveInspector(null)}
             />
-          </div>
-        )}
-        {/* Reviewer Assignment Panel */}
-        {activeInspector === 'reviewers' && activeArtifact && (
-          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-150 overflow-y-auto">
+        </InspectorDrawer>
+        <InspectorDrawer visible={activeInspector === 'reviewers' && !!activeArtifact} className="overflow-y-auto">
             <ReviewerAssignment
               documentId={activeArtifact.id}
               documentTitle={activeArtifact.title}
@@ -2843,11 +2585,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               }}
               onClose={() => setActiveInspector(null)}
             />
-          </div>
-        )}
-        {/* Review Mode Panel */}
-        {activeInspector === 'review' && activeArtifact && (
-          <div className="w-80 shrink-0 border-l border-zinc-200 h-full transition-all duration-150">
+        </InspectorDrawer>
+        <InspectorDrawer visible={activeInspector === 'review' && !!activeArtifact}>
             <ReviewModePanel
               isReviewMode={isReviewMode}
               onToggleReviewMode={handleToggleReviewMode}
@@ -2884,11 +2623,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               }}
               onClose={() => setActiveInspector(null)}
             />
-          </div>
-        )}
-        {/* Submission Readiness Validator Panel */}
-        {activeInspector === 'submission-readiness' && projectId && (
-          <div className="w-96 shrink-0 border-l border-zinc-200 h-full transition-all duration-150">
+        </InspectorDrawer>
+        <InspectorDrawer visible={activeInspector === 'submission-readiness' && !!projectId} width="w-96">
             <SubmissionReadinessValidator
               projectId={projectId}
               submissionType={submissionType}
@@ -2909,11 +2645,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               }}
               onClose={() => setActiveInspector(null)}
             />
-          </div>
-        )}
-        {/* Compliance Scanner Panel */}
-        {activeInspector === 'compliance-scanner' && (
-          <div className="w-96 shrink-0 border-l border-zinc-200 h-full transition-all duration-150">
+        </InspectorDrawer>
+        <InspectorDrawer visible={activeInspector === 'compliance-scanner'} width="w-96">
             <ComplianceScannerPanel
               issues={[]}
               isScanning={false}
@@ -2923,18 +2656,14 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               onRescan={() => {}}
               onClose={() => setActiveInspector(null)}
             />
-          </div>
-        )}
-        {/* AnA Memory Panel */}
-        {activeInspector === 'ana-memory' && projectId && (
-          <div className="w-96 shrink-0 border-l border-zinc-200 h-full transition-all duration-150">
+        </InspectorDrawer>
+        <InspectorDrawer visible={activeInspector === 'ana-memory' && !!projectId} width="w-96">
             <AnAMemory
-              projectId={projectId}
+              projectId={projectId!}
               projectName={projectName}
               onClose={() => setActiveInspector(null)}
             />
-          </div>
-        )}
+        </InspectorDrawer>
       </div>
 
       {/* ── Export Dialog ── */}

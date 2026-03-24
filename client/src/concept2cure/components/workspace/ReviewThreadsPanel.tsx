@@ -23,6 +23,7 @@ import {
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { WorkspaceTabBar, type WorkspaceTab } from '@/components/ui/workspace-primitives';
 import { getThreadTaskTailoring } from '../../config/industry-tailoring';
 
 // ── Auth ─────────────────────────────────────────────────────────────────────
@@ -387,30 +388,15 @@ export function ReviewThreadsPanel({
   return (
     <div className="flex flex-col h-full">
       {/* Sub-tab bar */}
-      <div className="flex border-b border-zinc-200 px-2">
-        {(['threads', 'tasks'] as const).map(tab => (
-          <button
-            key={tab}
-            onClick={() => setSubTab(tab)}
-            className={cn(
-              'flex-1 py-1.5 text-xs font-medium capitalize transition-colors flex items-center justify-center gap-1',
-              subTab === tab
-                ? 'text-blue-600 border-b-2 border-blue-600'
-                : 'text-zinc-400 hover:text-zinc-600'
-            )}
-          >
-            {tab === 'threads' ? (
-              <MessageSquare className="w-3 h-3" />
-            ) : (
-              <ListTodo className="w-3 h-3" />
-            )}
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            <span className="text-xs text-zinc-400 ml-0.5">
-              ({tab === 'threads' ? openThreads.length : openTasks.length})
-            </span>
-          </button>
-        ))}
-      </div>
+      <WorkspaceTabBar
+        tabs={[
+          { id: 'threads', label: 'Threads', icon: <MessageSquare className="w-3 h-3" />, count: openThreads.length },
+          { id: 'tasks', label: 'Tasks', icon: <ListTodo className="w-3 h-3" />, count: openTasks.length },
+        ] satisfies WorkspaceTab[]}
+        activeTab={subTab}
+        onTabChange={(tabId) => setSubTab(tabId as 'threads' | 'tasks')}
+        testId="review-threads-tab-bar"
+      />
 
       <div className="flex-1 overflow-y-auto">
         {subTab === 'threads' ? (
