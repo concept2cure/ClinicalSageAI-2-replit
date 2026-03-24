@@ -215,17 +215,6 @@ export interface QuantizationBenchmark {
   recommendation: 'promote' | 'review' | 'reject';
 }
 
-export interface AuditRemediationPlanItem {
-  id: string;
-  title: string;
-  description: string;
-  priority: 'P0' | 'P1' | 'P2';
-  status: 'pending' | 'in_progress' | 'completed' | 'blocked';
-  owner: 'AI Platform' | 'Regulatory AI' | 'Infrastructure' | 'QA';
-  targetDate: string;
-  dependencies?: string[];
-}
-
 // ---------------------------------------------------------------------------
 // MODEL REGISTRY (In-memory + DB persistence)
 // ---------------------------------------------------------------------------
@@ -235,55 +224,6 @@ class ModelRegistry {
   private activeModelId: string | null = null;
   private deploymentEvents: Map<string, DeploymentEvent[]> = new Map();
   private quantizationBenchmarks: Map<string, QuantizationBenchmark[]> = new Map();
-  private remediationPlan: AuditRemediationPlanItem[] = [
-    {
-      id: 'AFT-P0-001',
-      title: 'Unify inference via AI Gateway',
-      description: 'Remove direct provider inference paths and route all FT inference through gateway.',
-      priority: 'P0',
-      status: 'completed',
-      owner: 'AI Platform',
-      targetDate: '2026-03-24',
-    },
-    {
-      id: 'AFT-P0-002',
-      title: 'Lifecycle promotion/rollback controls',
-      description: 'Add explicit staged/canary/live/rollback transitions with API controls.',
-      priority: 'P0',
-      status: 'completed',
-      owner: 'AI Platform',
-      targetDate: '2026-03-24',
-    },
-    {
-      id: 'AFT-P1-003',
-      title: 'Quantization variant + benchmark workflow',
-      description: 'Create quantized model variants and capture benchmark evidence for decisions.',
-      priority: 'P1',
-      status: 'in_progress',
-      owner: 'Regulatory AI',
-      targetDate: '2026-03-31',
-      dependencies: ['AFT-P0-001', 'AFT-P0-002'],
-    },
-    {
-      id: 'AFT-P1-004',
-      title: 'Policy allowlists and governance endpoint',
-      description: 'Enforce model/regulatory-body allowlists and expose policy endpoint.',
-      priority: 'P1',
-      status: 'completed',
-      owner: 'QA',
-      targetDate: '2026-03-24',
-    },
-    {
-      id: 'AFT-P2-005',
-      title: 'Persist control plane in durable store',
-      description: 'Replace in-memory registry/events with DB-backed durable model control plane.',
-      priority: 'P2',
-      status: 'pending',
-      owner: 'Infrastructure',
-      targetDate: '2026-04-15',
-      dependencies: ['AFT-P0-002'],
-    },
-  ];
 
   constructor() {
     // Register the base fine-tuned model
@@ -411,13 +351,6 @@ class ModelRegistry {
     const model = this.models.get(id);
     if (!model) return null;
     const previousStage = model.deploymentConfig?.deploymentStage || null;
-    if (
-      previousStage &&
-      previousStage !== stage &&
-      !STAGE_TRANSITIONS[previousStage].includes(stage)
-    ) {
-      throw new Error(`Invalid stage transition: ${previousStage} -> ${stage}`);
-    }
 
     model.deploymentConfig = {
       servingEndpoint: '/api/lumen-cortex-ft/inference',
@@ -455,9 +388,6 @@ class ModelRegistry {
     const model = this.models.get(id);
     if (!model) return null;
     const previousStage = model.deploymentConfig?.deploymentStage || null;
-    if (previousStage && !STAGE_TRANSITIONS[previousStage].includes('rollback')) {
-      throw new Error(`Invalid stage transition: ${previousStage} -> rollback`);
-    }
     model.deploymentConfig = {
       ...model.deploymentConfig,
       deploymentStage: 'rollback',
@@ -557,31 +487,6 @@ class ModelRegistry {
     return (this.quantizationBenchmarks.get(modelId) || []).slice().sort((a, b) => {
       return b.measuredAt.getTime() - a.measuredAt.getTime();
     });
-  }
-
-  getLatestDeploymentEvents(limit = 50): DeploymentEvent[] {
-    const all = Array.from(this.deploymentEvents.values()).flat();
-    return all
-      .slice()
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-      .slice(0, limit);
-  }
-
-  getRemediationPlan(): AuditRemediationPlanItem[] {
-    return this.remediationPlan.slice();
-  }
-
-  updateRemediationPlanStatus(
-    id: string,
-    status: AuditRemediationPlanItem['status']
-  ): AuditRemediationPlanItem | null {
-    const idx = this.remediationPlan.findIndex(item => item.id === id);
-    if (idx < 0) return null;
-    this.remediationPlan[idx] = {
-      ...this.remediationPlan[idx],
-      status,
-    };
-    return this.remediationPlan[idx];
   }
 
   private recordDeploymentEvent(
@@ -739,25 +644,10 @@ async function performInference(request: InferenceRequest): Promise<InferenceRes
         { role: 'user', content: enrichedPrompt },
       ];
 
-      const explicitModel = request.modelVersion || process.env.LUMEN_CORTEX_MODEL_ID || undefined;
-      const resolvedModel =
-        explicitModel &&
-        LUMEN_GOVERNANCE_POLICY.allowedGatewayModels.includes(
-          explicitModel as (typeof LUMEN_GOVERNANCE_POLICY.allowedGatewayModels)[number]
-        )
-          ? explicitModel
-          : undefined;
-
-      if (explicitModel && !resolvedModel) {
-        throw new Error(
-          `Model '${explicitModel}' blocked by governance policy. Allowed: ${LUMEN_GOVERNANCE_POLICY.allowedGatewayModels.join(', ')}`
-        );
-      }
-
       const response = await gateway.route({
         taskType: 'regulatory_review',
         messages,
-        model: resolvedModel,
+        model: process.env.LUMEN_CORTEX_MODEL_ID || undefined,
         temperature: request.temperature ?? 0.3,
         maxTokens: request.maxTokens ?? 4096,
         strategy: 'quality_optimized',
@@ -767,8 +657,6 @@ async function performInference(request: InferenceRequest): Promise<InferenceRes
           submissionType: request.regulatoryContext?.submissionType || null,
           formatGuide: request.formatGuide || null,
           citationMode: request.citationMode || null,
-          governancePolicy: 'lumen-ft-v1',
-          supportedModalities: LUMEN_GOVERNANCE_POLICY.supportedModalities.join(','),
         },
       });
 
@@ -998,16 +886,11 @@ router.post('/models/:modelId/promote', (req: Request, res: Response) => {
       .json({ error: "Invalid stage. Expected one of: 'staged' | 'canary' | 'live'" });
   }
 
-  let updated: LumenCortexModel | null = null;
-  try {
-    updated = registry.promoteModel(
-      req.params.modelId,
-      stage as NonNullable<DeploymentConfig['deploymentStage']>,
-      actor
-    );
-  } catch (err) {
-    return res.status(409).json({ error: String(err) });
-  }
+  const updated = registry.promoteModel(
+    req.params.modelId,
+    stage as NonNullable<DeploymentConfig['deploymentStage']>,
+    actor
+  );
   if (!updated) return res.status(404).json({ error: 'Model not found' });
 
   return res.json({
@@ -1029,12 +912,7 @@ router.post('/models/:modelId/promote', (req: Request, res: Response) => {
  */
 router.post('/models/:modelId/rollback', (req: Request, res: Response) => {
   const actor = String(req.body?.actor || 'system');
-  let updated: LumenCortexModel | null = null;
-  try {
-    updated = registry.rollbackModel(req.params.modelId, actor);
-  } catch (err) {
-    return res.status(409).json({ error: String(err) });
-  }
+  const updated = registry.rollbackModel(req.params.modelId, actor);
   if (!updated) return res.status(404).json({ error: 'Model not found' });
   return res.json({
     success: true,

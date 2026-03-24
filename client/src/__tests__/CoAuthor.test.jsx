@@ -1,8 +1,8 @@
 import React from 'react';
 import { act, render, screen, waitFor } from '@testing-library/react';
-import CoAuthor from '../pages/CoAuthor';
+import CoAuthor from '../pages/coauthor/CoAuthor';
 import { FileContextProvider, FileContext } from '../contexts/FileContext';
-import { AuthProvider } from '../portal-v2/services/authService';
+import { AuthProvider } from '../hooks/useAuth';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 jest.mock('jspdf', () => ({
@@ -56,7 +56,7 @@ jest.mock('../utils/apiClient', () => ({
 }));
 
 jest.mock('@/lib/queryClient', () => ({
-  apiRequest: jest.fn(async (url) => {
+  apiRequest: jest.fn(async url => {
     if (url.includes('/versions')) {
       return { versions: [] };
     }

@@ -10,6 +10,7 @@ import re
 import os
 from typing import Dict, List, Any, Optional, Tuple
 import json
+import argparse
 
 # Check if OpenAI API key is available
 try:
@@ -682,3 +683,129 @@ class ComplianceValidator:
                 break
         
         return metadata
+
+
+def _build_validation_summary(result: Dict[str, Any]) -> Dict[str, Any]:
+    """Build a compact severity-first summary for CLI and API consumers."""
+    issues = result.get("issues", [])
+    severity_counts = {"high": 0, "medium": 0, "low": 0}
+    issue_type_counts: Dict[str, int] = {}
+
+    for issue in issues:
+        severity = str(issue.get("severity", "low")).lower()
+        if severity not in severity_counts:
+            severity_counts[severity] = 0
+        severity_counts[severity] += 1
+
+        issue_type = str(issue.get("issue_type", "unknown")).lower()
+        issue_type_counts[issue_type] = issue_type_counts.get(issue_type, 0) + 1
+
+    return {
+        "compliance_score": result.get("compliance_score", 0),
+        "total_issues": len(issues),
+        "severity_counts": severity_counts,
+        "issue_type_counts": issue_type_counts,
+        "missing_sections": result.get("missing_sections", []),
+        "critical_issue_count": len(result.get("critical_issues", [])),
+    }
+
+
+def _render_markdown_report(metadata: Dict[str, Any], summary: Dict[str, Any], result: Dict[str, Any]) -> str:
+    """Render a human-friendly markdown report for governance reviews."""
+    lines = [
+        "# Protocol Compliance Validation Report",
+        "",
+        "## Protocol Metadata",
+        f"- **Title:** {metadata.get('title') or 'Unknown'}",
+        f"- **Phase:** {metadata.get('phase') or 'Unknown'}",
+        f"- **Indication:** {metadata.get('indication') or 'Unknown'}",
+        "",
+        "## Summary",
+        f"- **Compliance score:** {summary['compliance_score']}",
+        f"- **Total issues:** {summary['total_issues']}",
+        f"- **Critical issues:** {summary['critical_issue_count']}",
+        f"- **High / Medium / Low:** {summary['severity_counts'].get('high', 0)} / {summary['severity_counts'].get('medium', 0)} / {summary['severity_counts'].get('low', 0)}",
+        "",
+        "## Missing Sections",
+    ]
+
+    missing_sections = summary.get("missing_sections", [])
+    if missing_sections:
+        lines.extend([f"- `{section}`" for section in missing_sections])
+    else:
+        lines.append("- None")
+
+    lines.extend(["", "## Issues"])
+    issues = result.get("issues", [])
+    if not issues:
+        lines.append("- No issues detected.")
+    else:
+        for idx, issue in enumerate(issues, 1):
+            lines.extend([
+                f"### {idx}. {issue.get('description', 'Issue')}",
+                f"- **Type:** {issue.get('issue_type', 'unknown')}",
+                f"- **Severity:** {issue.get('severity', 'unknown')}",
+                f"- **Location:** {issue.get('location') or 'N/A'}",
+                f"- **Guideline:** {issue.get('guideline') or 'N/A'}",
+                f"- **Suggestion:** {issue.get('suggestion') or 'N/A'}",
+                "",
+            ])
+
+    return "\n".join(lines).strip() + "\n"
+
+
+def _load_protocol_text(input_path: str) -> str:
+    """Load protocol text from a plain-text input file."""
+    with open(input_path, "r", encoding="utf-8") as handle:
+        return handle.read()
+
+
+def main() -> None:
+    """CLI entry point for validating protocol compliance from local files."""
+    parser = argparse.ArgumentParser(description="Validate protocol text for compliance issues")
+    parser.add_argument("--input", required=True, help="Path to protocol text file")
+    parser.add_argument("--phase", default="general", help="Trial phase (phase1/phase2/phase3/general)")
+    parser.add_argument("--indication", help="Therapeutic indication")
+    parser.add_argument("--out", help="Optional output file path")
+    parser.add_argument(
+        "--format",
+        choices=["json", "markdown", "summary"],
+        default="summary",
+        help="Output format",
+    )
+
+    args = parser.parse_args()
+    protocol_text = _load_protocol_text(args.input)
+
+    validator = ComplianceValidator()
+    metadata = validator.extract_protocol_metadata(protocol_text)
+    phase = args.phase or metadata.get("phase") or "general"
+    indication = args.indication or metadata.get("indication")
+    validation_result = validator.validate_protocol(protocol_text, phase=phase, indication=indication)
+    summary = _build_validation_summary(validation_result)
+
+    payload = {
+        "metadata": metadata,
+        "phase_used": phase,
+        "indication_used": indication,
+        "summary": summary,
+        "result": validation_result,
+    }
+
+    if args.format == "json":
+        rendered = json.dumps(payload, indent=2)
+    elif args.format == "markdown":
+        rendered = _render_markdown_report(metadata, summary, validation_result)
+    else:
+        rendered = json.dumps(summary, indent=2)
+
+    if args.out:
+        with open(args.out, "w", encoding="utf-8") as handle:
+            handle.write(rendered)
+        print(f"Saved validation output to {args.out}")
+    else:
+        print(rendered)
+
+
+if __name__ == "__main__":
+    main()
