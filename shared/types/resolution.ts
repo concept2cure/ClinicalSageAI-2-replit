@@ -239,6 +239,21 @@ export interface BundleExecutionReceipt {
   bundleId: string;
   planId?: string;
 
+  /** Contradiction IDs this bundle addresses (Pass 9) */
+  contradictionIds?: string[];
+
+  /** Overlay/body context that shaped the plan (Pass 9) */
+  overlayContext?: {
+    regulatorBody?: string;
+    appliedRuleIds?: string[];
+  };
+
+  /** User confirmation decision if applicable (Pass 9) */
+  userConfirmation?: 'confirmed' | 'rejected' | 'auto';
+
+  /** Actor who triggered execution (Pass 9) */
+  executedBy?: number;
+
   executedSteps: ExecutedStep[];
   preparedSteps: PreparedStep[];
   blockedSteps: BlockedStep[];
@@ -249,6 +264,15 @@ export interface BundleExecutionReceipt {
   requiresReapproval: string[];
 
   contradictionState: string;
+
+  /** Post-execution actions run by contradiction-specific handlers (Pass 9) */
+  postExecution?: {
+    reviewThreadsCreated: number;
+    memosAttached: number;
+    reapprovalFlagsSet: number;
+    escalationsRecorded: number;
+    errors: string[];
+  };
 
   summary: {
     totalItems: number;
