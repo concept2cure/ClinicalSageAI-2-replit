@@ -361,7 +361,7 @@ export type ModuleId =
   | 'vault'
   | 'cer_generator'
   | '510k_builder'
-  | 'ectd_coauthor'
+  | 'ectd_coauthor' // [BATCH 5] remapped to document_control route; ID retained for role presets
   | 'regulatory_intel'
   | 'cmc_platform'
   | 'clinical_trial'

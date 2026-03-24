@@ -6,7 +6,7 @@
  */
 
 import React, { Suspense, lazy, useState, useCallback } from 'react';
-import { Route, Switch, useLocation } from 'wouter';
+import { Route, Switch, useLocation, Redirect } from 'wouter';
 import { PortalProvider } from './core/portalContext';
 import { PortalFrame } from './layouts/PortalFrame';
 import { MobileNav } from './layouts/MobileNav';
@@ -25,6 +25,7 @@ const ComplianceDashboard = lazy(() => import('./components/compliance/Complianc
 const CERV2Page = lazy(() => import('../pages/CERV2Page'));
 const AnalyticsDashboard = lazy(() => import('../modules/AnalyticsDashboard'));
 const CmcWizard = lazy(() => import('../modules/CmcWizard'));
+// [BATCH 5] FulleCTDCoAuthor lazy import retained for redirect routes only
 const FulleCTDCoAuthor = lazy(() => import('../pages/FulleCTDCoAuthor'));
 
 // Loading fallback component
@@ -285,14 +286,12 @@ export const ClientPortalV2: React.FC = () => {
               <AnalyticsDashboard />
             </Route>
 
-            {/* IND Automation → redirect to eCTD Co-Author */}
+            {/* [BATCH 5] eCTD CoAuthor routes → redirect to documents */}
             <Route path="/client-portal/ind-wizard">
-              <FulleCTDCoAuthor />
+              <Redirect to="/client-portal/documents" />
             </Route>
-
-            {/* eCTD Co-Author */}
             <Route path="/client-portal/ectd-coauthor">
-              <FulleCTDCoAuthor />
+              <Redirect to="/client-portal/documents" />
             </Route>
 
             {/* CER Generator — Medical Device & Diagnostic Module */}
@@ -311,9 +310,9 @@ export const ClientPortalV2: React.FC = () => {
               <CERV2Page initialDocumentType="510k" initialActiveTab="predicates" />
             </Route>
 
-            {/* Protocol Designer → eCTD CoAuthor */}
+            {/* [BATCH 5] Protocol Designer → redirect to documents */}
             <Route path="/client-portal/protocol-designer">
-              <FulleCTDCoAuthor />
+              <Redirect to="/client-portal/documents" />
             </Route>
 
             {/* Safety Database */}
@@ -336,14 +335,12 @@ export const ClientPortalV2: React.FC = () => {
               />
             </Route>
 
-            {/* Medical Writing → eCTD CoAuthor */}
+            {/* [BATCH 5] Medical Writing & Dossier → redirect to documents */}
             <Route path="/client-portal/medical-writing">
-              <FulleCTDCoAuthor />
+              <Redirect to="/client-portal/documents" />
             </Route>
-
-            {/* Dossier Builder → eCTD CoAuthor */}
             <Route path="/client-portal/dossier">
-              <FulleCTDCoAuthor />
+              <Redirect to="/client-portal/documents" />
             </Route>
 
             {/* Submission Tracker */}

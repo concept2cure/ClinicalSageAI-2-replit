@@ -34,9 +34,9 @@ const CERV2Page = lazy(() => import('@/pages/csr/CERV2Page'));
 // Lazy-load PMA Workspace for standalone mode
 const PMAWorkspacePage = lazy(() => import('../components/pma/PMAWorkspace'));
 
-// NOTE: ECTDSubmissionDashboard, PharmacovigilanceDashboard, ClinicalOperationsDashboard,
-// DocumentArtifactsHub, HAQManagerDashboard, INDAutoDraftDashboard are now rendered inside
-// ZenApp shell (lazy-loaded there) so they get persistent AI access.
+// [BATCH 5] Removed standalone routes for deleted worlds (pharmacovigilance, haq-manager,
+// ind-autodraft, clinical-operations, ectd-agent). The /concept2cure/* catch-all routes
+// all authenticated paths to ZenApp, which handles internal navigation via layout modes.
 
 // [BATCH 1 DELETED] LandingPage — replaced with auth redirect
 
@@ -475,74 +475,12 @@ export const ZenRouter: React.FC = () => {
             )}
           </Route>
 
-          {/* Shell-embedded dashboard routes — rendered inside ZenApp for persistent AI access */}
-          <Route path="/concept2cure/ectd-agent">
-            {() => (
-              <PageTransition>
-                <ProtectedRoute>
-                  <ZenApp />
-                </ProtectedRoute>
-              </PageTransition>
-            )}
-          </Route>
-          <Route path="/concept2cure/pharmacovigilance">
-            {() => (
-              <PageTransition>
-                <ProtectedRoute>
-                  <ZenApp />
-                </ProtectedRoute>
-              </PageTransition>
-            )}
-          </Route>
-          <Route path="/concept2cure/documents">
-            {() => (
-              <PageTransition>
-                <ProtectedRoute>
-                  <ZenApp />
-                </ProtectedRoute>
-              </PageTransition>
-            )}
-          </Route>
-          <Route path="/concept2cure/haq-manager">
-            {() => (
-              <PageTransition>
-                <ProtectedRoute>
-                  <ZenApp />
-                </ProtectedRoute>
-              </PageTransition>
-            )}
-          </Route>
-          <Route path="/concept2cure/ind-autodraft">
-            {() => (
-              <PageTransition>
-                <ProtectedRoute>
-                  <ZenApp />
-                </ProtectedRoute>
-              </PageTransition>
-            )}
-          </Route>
-          <Route path="/concept2cure/clinical-operations">
-            {() => (
-              <PageTransition>
-                <ProtectedRoute>
-                  <ZenApp />
-                </ProtectedRoute>
-              </PageTransition>
-            )}
-          </Route>
-
-          {/* Catch-all for /concept2cure/* routes */}
+          {/* [BATCH 5] Catch-all for /concept2cure/* — all authenticated paths
+              route to ZenApp which handles internal navigation via layout modes.
+              Legacy named routes (ectd-agent, pharmacovigilance, haq-manager,
+              ind-autodraft, clinical-operations, readiness, documents) removed;
+              they were all identical <ZenApp /> wrappers already covered by this. */}
           <Route path="/concept2cure/*">
-            {() => (
-              <PageTransition>
-                <ProtectedRoute>
-                  <ZenApp />
-                </ProtectedRoute>
-              </PageTransition>
-            )}
-          </Route>
-          {/* Phase 3: Readiness Intelligence Dashboard */}
-          <Route path="/concept2cure/readiness">
             {() => (
               <PageTransition>
                 <ProtectedRoute>

@@ -81,12 +81,13 @@ export const MODULE_REGISTRY: Record<ModuleId, ModuleConfig> = {
     requiredRoles: ['admin', 'regulatory_lead', 'quality_assurance'],
     badge: 'FDA',
   },
+  // [BATCH 5] ectd_coauthor remapped → document_control (canonical document workflow)
   ectd_coauthor: {
     id: 'ectd_coauthor',
-    label: 'eCTD Co-Author',
-    description: 'Electronic Common Technical Document assembly',
-    icon: 'FileCode',
-    route: '/portal/ectd-coauthor',
+    label: 'Documents',
+    description: 'Regulatory document authoring and eCTD assembly',
+    icon: 'FileText',
+    route: '/portal/documents',
     category: 'submissions',
     requiredRoles: ['admin', 'regulatory_lead', 'medical_writer'],
   },

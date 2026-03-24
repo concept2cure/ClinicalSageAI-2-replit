@@ -26,7 +26,7 @@ const moduleToRoute: Record<string, string> = {
   document_control: '/client-portal/documents',
   analytics: '/client-portal/analytics',
   cer_generator: '/client-portal/cer-generator',
-  ectd_coauthor: '/client-portal/ectd-coauthor',
+  ectd_coauthor: '/client-portal/documents', // [BATCH 5] remapped from ectd-coauthor
   '510k_builder': '/client-portal/510k-builder',
   lumen_cortex: '/client-portal/lumen-cortex',
   ai_assistant: '/client-portal/ai-assistant',
