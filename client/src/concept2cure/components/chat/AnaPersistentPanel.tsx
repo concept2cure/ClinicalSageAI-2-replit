@@ -12,6 +12,7 @@
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { useAIAction } from '../../hooks/useAIAction';
@@ -214,16 +215,6 @@ interface AnaMessage {
   pptx?: { base64: string; filename: string; mimeType: string };
   /** Whether this message has been saved as an artifact */
   savedAsArtifact?: boolean;
-}
-
-// ─── Auth helper ──────────────────────────────────────────────────────────────
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token');
-  return token
-    ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
-    : { 'Content-Type': 'application/json' };
 }
 
 interface SuggestedAction {
@@ -814,16 +805,12 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       if (chatMode === 'deep-research') {
         try {
           // Launch job
-          const launchRes = await fetch('/api/deep-research/jobs', {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({
+          const launchRes = await apiRequest('POST', '/api/deep-research/jobs', {
               query: { indication: text, keywords: text.split(/\s+/).filter(w => w.length > 3) },
               connectorIds: ['clinical_trials_gov', 'pubmed', 'fda_drugs', 'ema_epar'],
               depth: 'standard',
               projectId: contextProfile?.projectId || null,
-            }),
-          });
+            });
 
           if (!launchRes.ok) {
             const err = await launchRes
@@ -886,7 +873,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 eventSource.close();
 
                 // Fetch final results
-                fetch(`/api/deep-research/jobs/${jobId}`)
+                apiRequest('GET', `/api/deep-research/jobs/${jobId}`)
                   .then(r => r.json())
                   .then(finalJob => {
                     const synthesis =
@@ -926,7 +913,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           eventSource.onerror = () => {
             eventSource.close();
             // SSE disconnected — poll for final state
-            fetch(`/api/deep-research/jobs/${jobId}`)
+            apiRequest('GET', `/api/deep-research/jobs/${jobId}`)
               .then(r => r.json())
               .then(finalJob => {
                 if (finalJob.status === 'complete') {
@@ -980,17 +967,13 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
         if (chatMode === 'nano-banana') {
           // Route to Nano Banana (Gemini image gen) endpoint
-          const response = await fetch('/api/nano-banana/chat', {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({
+          const response = await apiRequest('POST', '/api/nano-banana/chat', {
               message: text,
               conversationHistory: messages.slice(-10).map(m => ({
                 role: m.role,
                 content: m.content,
               })),
-            }),
-          });
+            });
           data = await response.json();
 
           // Handle PPTX auto-download
@@ -1048,10 +1031,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           // Build authoring context payload for section/artifact-aware chat
           const authoringPayload = authoringContext ? serializeContextForChat(authoringContext) : {};
 
-          let response = await fetch('/api/ana-ri/chat', {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({
+          let response = await apiRequest('POST', '/api/ana-ri/chat', {
               message: text,
               chatMode,
               thread_id: threadIdRef.current || undefined,
@@ -1081,15 +1061,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 role: m.role,
                 content: m.content,
               })),
-            }),
-          });
+            });
 
           if (!response.ok) {
             // Fallback to Cortex unified chat
-            response = await fetch('/api/cortex/chat', {
-              method: 'POST',
-              headers: getAuthHeaders(),
-              body: JSON.stringify({
+            response = await apiRequest('POST', '/api/cortex/chat', {
                 message: text,
                 chatMode,
                 project_id: contextProfile?.projectId || undefined,
@@ -1105,8 +1081,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   role: m.role,
                   content: m.content,
                 })),
-              }),
-            });
+              });
             if (!response.ok) {
               throw new Error(`Request failed (${response.status})`);
             }
@@ -1147,16 +1122,12 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               const blockContent = match[2].trim();
               if (blockContent.length < 200) continue;
               try {
-                await fetch(`/api/concept2cure/projects/${numericProjectId}/artifacts`, {
-                  method: 'POST',
-                  headers: getAuthHeaders(),
-                  body: JSON.stringify({
+                await apiRequest('POST', `/api/concept2cure/projects/${numericProjectId}/artifacts`, {
                     title: `AI Draft — ${new Date().toISOString().split('T')[0]}`,
                     content: blockContent,
                     type: 'document_section',
                     category: 'document',
-                  }),
-                });
+                  });
               } catch {
                 // Non-blocking
               }
@@ -1218,9 +1189,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             handleSend('I need a project context to find your last section. Please open a project first.');
             return;
           }
-          const res = await fetch(`/api/authoring-actions/resume-last-section/${projectId}`, {
-            headers: getAuthHeaders(),
-          });
+          const res = await apiRequest('GET', `/api/authoring-actions/resume-last-section/${projectId}`);
           const data = await res.json();
           if (data.found && data.ctdSection && onNavigateToSection) {
             // Real navigation to the section
@@ -1271,9 +1240,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           const params = new URLSearchParams();
           if (authoringContext?.artifactId) params.set('artifactId', authoringContext.artifactId);
           if (authoringContext?.sectionCode) params.set('sectionCode', authoringContext.sectionCode);
-          const res = await fetch(`/api/authoring-actions/promotion-blockers/${projectId}?${params}`, {
-            headers: getAuthHeaders(),
-          });
+          const res = await apiRequest('GET', `/api/authoring-actions/promotion-blockers/${projectId}?${params}`);
           const data = await res.json();
           if (data.blockerCount === 0) {
             setMessages(prev => [...prev, {
@@ -1312,9 +1279,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           return;
         }
         try {
-          const res = await fetch(`/api/authoring-actions/compare-versions/${projectId}/${artifactId}`, {
-            headers: getAuthHeaders(),
-          });
+          const res = await apiRequest('GET', `/api/authoring-actions/compare-versions/${projectId}/${artifactId}`);
           const data = await res.json();
           if (!data.available) {
             setMessages(prev => [...prev, {
@@ -1362,18 +1327,14 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           return;
         }
         try {
-          const res = await fetch('/api/authoring-actions/section-preflight', {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({
+          const res = await apiRequest('POST', '/api/authoring-actions/section-preflight', {
               projectId, sectionCode,
               artifactId: authoringContext?.artifactId,
               artifactVersionId: authoringContext?.artifactVersionId,
               regulatorBody: authoringContext?.regulatorBody,
               submissionType: authoringContext?.submissionType,
               linkedSectionCodes: authoringContext?.linkedSectionCodes,
-            }),
-          });
+            });
           const data = await res.json();
           if (data.status === 'data') {
             const statusIcon = (s: string) =>
@@ -1425,10 +1386,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           return;
         }
         try {
-          const res = await fetch('/api/authoring-actions/module-preflight', {
-            method: 'POST', headers: getAuthHeaders(),
-            body: JSON.stringify({ projectId, moduleCode, regulatorBody: authoringContext?.regulatorBody, submissionType: authoringContext?.submissionType }),
-          });
+          const res = await apiRequest('POST', '/api/authoring-actions/module-preflight', { projectId, moduleCode, regulatorBody: authoringContext?.regulatorBody, submissionType: authoringContext?.submissionType });
           const data = await res.json();
           if (data.status === 'data') {
             const overallIcon = data.overall === 'ready' ? '✅' : data.overall === 'blocked' ? '🚫' : '⚠️';
@@ -1473,10 +1431,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           return;
         }
         try {
-          const res = await fetch('/api/authoring-actions/dossier-preflight', {
-            method: 'POST', headers: getAuthHeaders(),
-            body: JSON.stringify({ projectId, regulatorBody: authoringContext?.regulatorBody, submissionType: authoringContext?.submissionType }),
-          });
+          const res = await apiRequest('POST', '/api/authoring-actions/dossier-preflight', { projectId, regulatorBody: authoringContext?.regulatorBody, submissionType: authoringContext?.submissionType });
           const data = await res.json();
           if (data.status === 'data') {
             const overallIcon = data.overall === 'ready' ? '✅' : data.overall === 'blocked' ? '🚫' : '⚠️';
@@ -1526,17 +1481,13 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         // Step 1: Run preflight
         let preflightPassed = false;
         try {
-          const pfRes = await fetch('/api/authoring-actions/section-preflight', {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({
+          const pfRes = await apiRequest('POST', '/api/authoring-actions/section-preflight', {
               projectId, sectionCode: sectionCode || '',
               artifactId, artifactVersionId: authoringContext?.artifactVersionId,
               regulatorBody: authoringContext?.regulatorBody,
               submissionType: authoringContext?.submissionType,
               linkedSectionCodes: authoringContext?.linkedSectionCodes,
-            }),
-          });
+            });
           const pfData = await pfRes.json();
           if (pfData.status === 'data') {
             if (pfData.overall === 'blocked') {
@@ -1585,10 +1536,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 ? `✅ **Promoted to review.** ${result.message} The document is now in the governance review pipeline.${pendingNote}${decisionNote}`
                 : `**Promotion not completed.** ${result.message}${result.decisionId ? `\n**Decision:** \`${result.decisionId.slice(0, 16)}…\` — blocked` : ''}` }]);
           } else {
-            const res = await fetch(`/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/status`, {
-              method: 'PUT', headers: getAuthHeaders(),
-              body: JSON.stringify({ status: 'review' }),
-            });
+            const res = await apiRequest('PUT', `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/status`, { status: 'review' });
             if (res.ok) {
               setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
                 content: '✅ **Promoted to review.** The document has been moved to the governance review pipeline.' }]);
@@ -1619,10 +1567,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         const projectId = contextProfile?.projectId;
         if (!projectId) { handleSend('Prepare a governed correction for the current section.'); return; }
         try {
-          const res = await fetch('/api/authoring-actions/correction-draft', {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({
+          const res = await apiRequest('POST', '/api/authoring-actions/correction-draft', {
               projectId, artifactId: authoringContext?.artifactId,
               sectionCode: authoringContext?.sectionCode,
               triggerDescription: 'Correction requested via AnA — addressing readiness/contradiction issues',
@@ -1656,11 +1601,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         const linked = authoringContext?.linkedSectionCodes || [];
         const sectionCodes = linked.length > 0 ? [currentCode, ...linked] : [currentCode, `${major}.2`, `${major}.3`, `${major}.5`].filter((v, i, a) => a.indexOf(v) === i);
         try {
-          const res = await fetch('/api/authoring-actions/harmonize-sections', {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({ projectId, sectionCodes, submissionType: authoringContext?.submissionType }),
-          });
+          const res = await apiRequest('POST', '/api/authoring-actions/harmonize-sections', { projectId, sectionCodes, submissionType: authoringContext?.submissionType });
           const data = await res.json();
           if (data.status === 'data') {
             const issueLines = data.issues?.slice(0, 5).map((i: any) =>
@@ -1684,11 +1625,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         const projectId = contextProfile?.projectId;
         if (!projectId) { handleSend('What changed after the last resolution?'); return; }
         try {
-          const res = await fetch('/api/authoring-actions/resolution-changelog', {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({ projectId }),
-          });
+          const res = await apiRequest('POST', '/api/authoring-actions/resolution-changelog', { projectId });
           const data = await res.json();
           if (data.status === 'data' && data.resolutions?.length) {
             const lines = data.resolutions.map((r: any, i: number) =>
@@ -1712,9 +1649,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         const moduleCode = authoringContext?.moduleCode || (authoringContext?.sectionCode ? `m${authoringContext.sectionCode.split('.')[0]}` : 'm2');
         if (!projectId) { handleSend('Show readiness for this module.'); return; }
         try {
-          const res = await fetch(`/api/authoring-actions/module-readiness/${projectId}/${moduleCode}`, {
-            headers: getAuthHeaders(),
-          });
+          const res = await apiRequest('GET', `/api/authoring-actions/module-readiness/${projectId}/${moduleCode}`);
           const data = await res.json();
           if (data.status === 'data') {
             const mod = data.module;
@@ -1742,9 +1677,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         const sectionCode = authoringContext?.sectionCode;
         if (!projectId || !sectionCode) { handleSend('Gather evidence for this section.'); return; }
         try {
-          const res = await fetch(`/api/authoring-actions/section-evidence/${projectId}/${sectionCode}`, {
-            headers: getAuthHeaders(),
-          });
+          const res = await apiRequest('GET', `/api/authoring-actions/section-evidence/${projectId}/${sectionCode}`);
           const data = await res.json();
           if (data.status === 'data' && data.evidence?.length) {
             const evidenceLines = data.evidence.slice(0, 10).map((e: any, i: number) =>
@@ -1775,9 +1708,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         const subType = authoringContext?.submissionType || 'IND';
         if (!sectionCode) { handleSend(`What does ${body} expect in this section?`); return; }
         try {
-          const res = await fetch(`/api/authoring-actions/section-expectations/${encodeURIComponent(body)}/${encodeURIComponent(subType)}/${encodeURIComponent(sectionCode)}`, {
-            headers: getAuthHeaders(),
-          });
+          const res = await apiRequest('GET', `/api/authoring-actions/section-expectations/${encodeURIComponent(body)}/${encodeURIComponent(subType)}/${encodeURIComponent(sectionCode)}`);
           const data = await res.json();
           if (data.status === 'data') {
             const exp = data.expectations;
@@ -1802,16 +1733,12 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         const sectionCode = authoringContext?.sectionCode;
         if (!projectId || !sectionCode) { handleSend('Check this section against linked sections.'); return; }
         try {
-          const res = await fetch('/api/authoring-actions/cross-section-consistency', {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({
+          const res = await apiRequest('POST', '/api/authoring-actions/cross-section-consistency', {
               projectId,
               sectionCode,
               linkedSectionCodes: authoringContext?.linkedSectionCodes,
               submissionType: authoringContext?.submissionType,
-            }),
-          });
+            });
           const data = await res.json();
           if (data.status === 'data') {
             const harmIssues = data.harmonizeResult?.issues?.slice(0, 5).map((i: any) =>
@@ -1840,16 +1767,12 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         const subType = authoringContext?.submissionType || 'IND';
         if (!sectionCode) { handleSend(`What is missing for ${body} in this section?`); return; }
         try {
-          const res = await fetch('/api/authoring-actions/body-aware-gaps', {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({
+          const res = await apiRequest('POST', '/api/authoring-actions/body-aware-gaps', {
               regulatorBody: body,
               submissionType: subType,
               sectionCode,
               currentContent: '', // Empty triggers "all missing" detection
-            }),
-          });
+            });
           const data = await res.json();
           if (data.status === 'data') {
             const gapLines = data.gaps?.slice(0, 10).map((g: any) =>
@@ -2310,11 +2233,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           </button>
                           <button
                             onClick={() => {
-                              fetch('/api/concept2cure/feedback', {
-                                method: 'POST',
-                                headers: getAuthHeaders(),
-                                body: JSON.stringify({ messageId: msg.id, positive: true }),
-                              }).catch(() => {});
+                              apiRequest('POST', '/api/concept2cure/feedback', { messageId: msg.id, positive: true }).catch(() => {});
                             }}
                             className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors"
                             title="Good"
@@ -2323,11 +2242,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                           </button>
                           <button
                             onClick={() => {
-                              fetch('/api/concept2cure/feedback', {
-                                method: 'POST',
-                                headers: getAuthHeaders(),
-                                body: JSON.stringify({ messageId: msg.id, positive: false }),
-                              }).catch(() => {});
+                              apiRequest('POST', '/api/concept2cure/feedback', { messageId: msg.id, positive: false }).catch(() => {});
                             }}
                             className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded transition-colors"
                             title="Bad"
@@ -2345,17 +2260,14 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                     ''
                                   );
                                   try {
-                                    const saveRes = await fetch(
+                                    const saveRes = await apiRequest(
+                                      'POST',
                                       `/api/concept2cure/projects/${numProjId}/artifacts`,
                                       {
-                                        method: 'POST',
-                                        headers: getAuthHeaders(),
-                                        body: JSON.stringify({
                                           title: `AnA Response — ${new Date().toISOString().split('T')[0]}`,
                                           content: msg.content,
                                           type: 'document_section',
                                           category: 'document',
-                                        }),
                                       }
                                     );
                                     if (saveRes.ok) {
@@ -2466,10 +2378,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                       }
                                       setIsThinking(true);
                                       try {
-                                        const res = await fetch('/api/ana-ri/generate', {
-                                          method: 'POST',
-                                          headers: getAuthHeaders(),
-                                          body: JSON.stringify({
+                                        const res = await apiRequest('POST', '/api/ana-ri/generate', {
                                             action_type: action.type,
                                             conversation_context: messages.slice(-20).map(m => ({
                                               role: m.role,
@@ -2479,7 +2388,6 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                             user_role: contextProfile?.userRole || undefined,
                                             intent_lens:
                                               intentLens !== 'auto' ? intentLens : undefined,
-                                          }),
                                         });
                                         if (res.ok) {
                                           const data = await res.json();

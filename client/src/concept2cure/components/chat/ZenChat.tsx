@@ -23,6 +23,7 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { useLocation } from 'wouter';
 import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import {
@@ -1120,16 +1121,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
           typeof window !== 'undefined'
             ? localStorage.getItem('currentOrganizationId') || '1'
             : '1';
-        const token =
-          typeof window !== 'undefined' ? localStorage.getItem('accessToken') || '' : '';
-        const res = await fetch('/api/chat/actions/run', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ intent, params: { orgId } }),
-        });
+        const res = await apiRequest('POST', '/api/chat/actions/run', { intent, params: { orgId } });
         if (res.ok) {
           // Re-fetch workspace summary so counts/recent sections update immediately
           queryClient.invalidateQueries({ queryKey: ['workspace-summary'] });
@@ -1217,12 +1209,7 @@ export const ZenChat: React.FC<ZenChatProps> = ({
                 onCopy={() => handleCopy(message.content)}
                 onRegenerate={message.role === 'assistant' ? handleRegenerate : undefined}
                 onFeedback={(positive: boolean) => {
-                  const fbToken = sessionStorage.getItem('trialsage_access_token') || localStorage.getItem('trialsage_access_token');
-                  fetch('/api/concept2cure/feedback', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', ...(fbToken ? { Authorization: `Bearer ${fbToken}` } : {}) },
-                    body: JSON.stringify({ messageId: message.id, positive }),
-                  }).catch(() => {});
+                  apiRequest('POST', '/api/concept2cure/feedback', { messageId: message.id, positive }).catch(() => {});
                 }}
                 onNavigate={handleNavigate}
                 onSaveArtifact={handleSaveArtifact}
