@@ -136,6 +136,23 @@ export interface InferenceRequest {
   formatGuide?: 'ctd' | 'ectd' | 'ind' | 'nda' | 'bla' | 'anda' | 'free';
 }
 
+const LUMEN_GOVERNANCE_POLICY = {
+  allowedGatewayModels: ['claude-opus-4', 'claude-sonnet-4', 'claude-haiku-4'] as const,
+  allowedRegulatoryBodies: ['FDA', 'EMA', 'PMDA', 'NMPA', 'Health_Canada', 'TGA'] as const,
+  supportedModalities: ['text'] as const,
+  allowedTaskType: 'regulatory_review' as const,
+};
+
+const STAGE_TRANSITIONS: Record<
+  NonNullable<DeploymentConfig['deploymentStage']>,
+  Array<NonNullable<DeploymentConfig['deploymentStage']>>
+> = {
+  staged: ['canary', 'live', 'rollback'],
+  canary: ['live', 'rollback'],
+  live: ['canary', 'rollback'],
+  rollback: ['staged'],
+};
+
 export interface RegulatoryContext {
   regulatoryBody: 'FDA' | 'EMA' | 'PMDA' | 'NMPA' | 'Health_Canada' | 'TGA';
   submissionType: 'IND' | 'NDA' | 'BLA' | 'ANDA' | '510k' | 'PMA' | 'MAA';
@@ -584,6 +601,9 @@ async function performInference(request: InferenceRequest): Promise<InferenceRes
   if (!model) throw new Error('No active AnA RI model');
 
   const regulatoryBody = request.regulatoryContext?.regulatoryBody || 'FDA';
+  if (!LUMEN_GOVERNANCE_POLICY.allowedRegulatoryBodies.includes(regulatoryBody)) {
+    throw new Error(`Regulatory body '${regulatoryBody}' is not permitted by governance policy`);
+  }
   const systemPrompt =
     request.systemPrompt ||
     REGULATORY_SYSTEM_PROMPTS[regulatoryBody] ||
@@ -1097,12 +1117,111 @@ router.get('/health', (_req: Request, res: Response) => {
       multiRegulatory: ['FDA', 'EMA', 'PMDA', 'NMPA', 'Health_Canada', 'TGA'],
       submissionTypes: ['IND', 'NDA', 'BLA', 'ANDA', '510k', 'PMA', 'MAA'],
       formatGuides: ['ctd', 'ectd', 'ind', 'nda', 'bla', 'anda'],
+      modalities: [...LUMEN_GOVERNANCE_POLICY.supportedModalities],
     },
     trainingCorpus: {
       version: 'v2026.02',
       totalDocuments: 2847,
       totalTokens: '279.7M',
       domains: ['FDA', 'EMA', 'ICH', 'USP'],
+    },
+  });
+});
+
+/**
+ * GET /governance/policy
+ * Reveal current serving policy guardrails for auditability
+ */
+router.get('/governance/policy', (_req: Request, res: Response) => {
+  res.json({
+    success: true,
+    data: {
+      policyVersion: 'lumen-ft-v1',
+      allowedGatewayModels: [...LUMEN_GOVERNANCE_POLICY.allowedGatewayModels],
+      allowedRegulatoryBodies: [...LUMEN_GOVERNANCE_POLICY.allowedRegulatoryBodies],
+      supportedModalities: [...LUMEN_GOVERNANCE_POLICY.supportedModalities],
+      allowedTaskType: LUMEN_GOVERNANCE_POLICY.allowedTaskType,
+    },
+  });
+});
+
+/**
+ * GET /roadmap
+ * Fetch audit remediation plan status for AnA FT buildout
+ */
+router.get('/roadmap', (_req: Request, res: Response) => {
+  const items = registry.getRemediationPlan();
+  const summary = {
+    total: items.length,
+    completed: items.filter(i => i.status === 'completed').length,
+    inProgress: items.filter(i => i.status === 'in_progress').length,
+    pending: items.filter(i => i.status === 'pending').length,
+    blocked: items.filter(i => i.status === 'blocked').length,
+  };
+  res.json({ success: true, data: { summary, items } });
+});
+
+/**
+ * POST /roadmap/:itemId/status
+ * Update audit remediation plan status
+ */
+router.post('/roadmap/:itemId/status', (req: Request, res: Response) => {
+  const status = req.body?.status as AuditRemediationPlanItem['status'] | undefined;
+  const allowed: AuditRemediationPlanItem['status'][] = [
+    'pending',
+    'in_progress',
+    'completed',
+    'blocked',
+  ];
+  if (!status || !allowed.includes(status)) {
+    return res.status(400).json({ error: "Invalid status. Expected one of pending|in_progress|completed|blocked" });
+  }
+  const item = registry.updateRemediationPlanStatus(req.params.itemId, status);
+  if (!item) return res.status(404).json({ error: 'Roadmap item not found' });
+  return res.json({ success: true, data: item });
+});
+
+/**
+ * GET /audit/report
+ * Aggregated control-plane report for governance and remediation audits
+ */
+router.get('/audit/report', (_req: Request, res: Response) => {
+  const models = registry.getAllModels();
+  const planItems = registry.getRemediationPlan();
+  const latestEvents = registry.getLatestDeploymentEvents(100);
+
+  const benchmarkSummary = models.map(model => ({
+    modelId: model.id,
+    quantization: model.trainingConfig.quantization || 'none',
+    benchmarkCount: registry.getQuantizationBenchmarks(model.id).length,
+  }));
+
+  return res.json({
+    success: true,
+    generatedAt: new Date().toISOString(),
+    data: {
+      governancePolicy: {
+        version: 'lumen-ft-v1',
+        allowedGatewayModels: [...LUMEN_GOVERNANCE_POLICY.allowedGatewayModels],
+        allowedRegulatoryBodies: [...LUMEN_GOVERNANCE_POLICY.allowedRegulatoryBodies],
+        supportedModalities: [...LUMEN_GOVERNANCE_POLICY.supportedModalities],
+      },
+      lifecycle: {
+        stageTransitions: STAGE_TRANSITIONS,
+        activeModelId: registry.getActiveModel()?.id || null,
+        latestEvents,
+      },
+      remediationRoadmap: {
+        summary: {
+          total: planItems.length,
+          completed: planItems.filter(i => i.status === 'completed').length,
+          inProgress: planItems.filter(i => i.status === 'in_progress').length,
+          pending: planItems.filter(i => i.status === 'pending').length,
+          blocked: planItems.filter(i => i.status === 'blocked').length,
+        },
+        items: planItems,
+      },
+      benchmarkSummary,
     },
   });
 });
