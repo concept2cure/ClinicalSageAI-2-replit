@@ -395,3 +395,12 @@ The project has gone through systematic consolidation:
 8. **Cross-Cutting Audit** — Systematic audit of all major systems (current phase)
 
 **Current state**: Enterprise GA hardening. Systems are audited, governed, and production-ready.
+
+---
+
+## Report & Output Preferences
+
+When producing audit reports, analysis summaries, or any long-form deliverable:
+- **Write the report to a file** (e.g., `docs/reports/<descriptive-name>.md`) so the user can copy the entire thing at once.
+- Always tell the user the file path so they can open/copy it.
+- Still provide a brief summary in chat, but the full report goes to a file.
