@@ -401,10 +401,28 @@ const sendMessageHandler = async (req: Request, res: Response) => {
         .filter((m: any) => m.role === 'user' || m.role === 'assistant')
         .map((m: any) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
 
+      // Pre-fetch decision context for AnA explanation grounding (non-blocking)
+      let decisionContext: any[] = [];
+      if (project_id) {
+        try {
+          const { decisionLifecycleService } = await import(
+            '../services/decision-lifecycle-service.js'
+          );
+          decisionContext = decisionLifecycleService.getDecisionContext(
+            String(project_id),
+            { limit: 5 }
+          );
+        } catch { /* non-blocking */ }
+      }
+
       // Run the orchestrator for intent detection, deficiency context, and continuity
       const orchestratorResult = orchestrate({
         message,
         conversationHistory,
+        authoringContext: project_id ? {
+          projectId: String(project_id),
+          _decisionContext: decisionContext,
+        } : undefined,
       });
 
       console.log(

@@ -546,6 +546,36 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     }
 
     // Action 5: Promote to review — available when drafting and not blocked
+    // Action: Section preflight — always available in section workspace
+    if (hasSectionContext(authoringContext)) {
+      actions.push({
+        id: 'section-preflight',
+        label: 'Run section preflight',
+        intent: 'section_preflight',
+        description: 'Check body, consistency, contradictions, and readiness before promotion',
+      });
+    }
+
+    // Action: Module preflight — available when module context exists
+    if (authoringContext.moduleCode) {
+      actions.push({
+        id: 'module-preflight',
+        label: `Run ${authoringContext.moduleCode.toUpperCase()} preflight`,
+        intent: 'module_preflight',
+        description: 'Check all sections in this module before promotion',
+      });
+    }
+
+    // Action: Dossier preflight — available at project level
+    if (authoringContext.workflowStage === 'dossier' || authoringContext.workflowStage === 'submissions' || authoringContext.workflowStage === 'review') {
+      actions.push({
+        id: 'dossier-preflight',
+        label: 'Run dossier preflight',
+        intent: 'dossier_preflight',
+        description: 'Check all modules and sections for submission readiness',
+      });
+    }
+
     if (
       hasArtifactContext(authoringContext) &&
       authoringContext.artifactStatus === 'drafting' &&
@@ -555,7 +585,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         id: 'promote-to-review',
         label: 'Promote to review',
         intent: 'promote_to_review',
-        description: 'Move this section to review if readiness checks pass',
+        description: 'Run preflight then promote if all checks pass',
       });
     }
 
@@ -611,6 +641,38 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       });
     }
 
+    // ── Wave 3: Body-aware + cross-section consistency actions ──
+
+    // Action 11: Body-aware expectations
+    if (hasSectionContext(authoringContext) && (authoringContext.regulatorBody || authoringContext.submissionType)) {
+      actions.push({
+        id: 'body-expectations',
+        label: `What does ${authoringContext.regulatorBody || 'this body'} expect here?`,
+        intent: 'body_expectations',
+        description: 'Show body-specific section requirements and common gaps',
+      });
+    }
+
+    // Action 12: Cross-section consistency
+    if (hasSectionContext(authoringContext) && authoringContext.linkedSectionCodes?.length) {
+      actions.push({
+        id: 'cross-section-consistency',
+        label: 'Check cross-section consistency',
+        intent: 'cross_section_consistency',
+        description: 'Detect inconsistencies with linked CTD sections',
+      });
+    }
+
+    // Action 13: Body-aware gap detection
+    if (hasSectionContext(authoringContext) && (authoringContext.regulatorBody || authoringContext.submissionType)) {
+      actions.push({
+        id: 'body-aware-gaps',
+        label: 'What is missing for this body?',
+        intent: 'body_aware_gaps',
+        description: 'Detect body-specific content gaps in this section',
+      });
+    }
+
     return actions;
   }, [authoringContext]);
 
@@ -618,8 +680,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   const effectiveSuggestedActions = useMemo(() => {
     const parent = suggestedActions || [];
     if (authoringSuggestedActions.length > 0) {
-      // Show up to 4 authoring actions + 1 parent action
-      return [...authoringSuggestedActions.slice(0, 4), ...parent.slice(0, 1)];
+      // Show up to 5 authoring actions, rotate based on context richness
+      const limit = authoringSuggestedActions.length > 5 ? 5 : authoringSuggestedActions.length;
+      return [...authoringSuggestedActions.slice(0, limit), ...parent.slice(0, 1)];
     }
     return parent;
   }, [suggestedActions, authoringSuggestedActions]);
@@ -1264,16 +1327,22 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             const cur = data.currentVersion;
             const appr = data.approvedVersion;
             const wordDelta = data.diffSummary.currentWords - data.diffSummary.approvedWords;
+            const changeMagnitude = Math.abs(wordDelta) / Math.max(data.diffSummary.approvedWords, 1);
+            const conflictRisk = changeMagnitude > 0.3 ? 'high' : changeMagnitude > 0.1 ? 'moderate' : 'low';
+            const pivotHint = conflictRisk !== 'low'
+              ? `\n\n**Conflict risk:** ${conflictRisk} — significant changes from approved baseline.${authoringContext?.linkedSectionCodes?.length ? ' Use **Check cross-section consistency** or **Prepare correction draft** to address.' : ' Consider preparing a correction draft to align.'}`
+              : '\n\n**Conflict risk:** low — changes are minor relative to approved baseline.';
             setMessages(prev => [...prev, {
               id: `a-${Date.now()}`,
               role: 'assistant',
-              content: `**Version Comparison**\n\n| | Current (v${cur.version}) | Approved (v${appr.version}) |\n|---|---|---|\n| Status | ${cur.status} | ${appr.status} |\n| Words | ${data.diffSummary.currentWords} | ${data.diffSummary.approvedWords} |\n| Updated | ${new Date(cur.updatedAt).toLocaleDateString()} | ${new Date(appr.updatedAt).toLocaleDateString()} |\n\n**Net change:** ${wordDelta > 0 ? '+' : ''}${wordDelta} words.${onOpenCompareInspector ? '' : '\n\nTo view a detailed inline diff, open the document inspector and select the Compare tab.'}`,
+              content: `**Version Comparison**\n\n| | Current (v${cur.version}) | Approved (v${appr.version}) |\n|---|---|---|\n| Status | ${cur.status} | ${appr.status} |\n| Words | ${data.diffSummary.currentWords} | ${data.diffSummary.approvedWords} |\n| Updated | ${new Date(cur.updatedAt).toLocaleDateString()} | ${new Date(appr.updatedAt).toLocaleDateString()} |\n\n**Net change:** ${wordDelta > 0 ? '+' : ''}${wordDelta} words.${pivotHint}${onOpenCompareInspector ? '' : '\n\nTo view a detailed inline diff, open the document inspector and select the Compare tab.'}`,
               timestamp: new Date(),
             }]);
             // Auto-open the version compare inspector if available
             if (onOpenCompareInspector) {
               onOpenCompareInspector();
             }
+            onRefreshIntelligence?.();
           }
         } catch {
           handleSend('Compare the current document against the last approved version.');
@@ -1282,90 +1351,261 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       return;
     }
 
-    // P5: Promote to review — governed transition with confirmation
+    // ── SECTION PREFLIGHT (Pass 5) ─────────────────────────────────────────
+    if (action.intent === 'section_preflight') {
+      (async () => {
+        const projectId = contextProfile?.projectId;
+        const sectionCode = authoringContext?.sectionCode;
+        if (!projectId || !sectionCode) {
+          setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+            content: '**Cannot run preflight.** No section is active. Open a section first.' }]);
+          return;
+        }
+        try {
+          const res = await fetch('/api/authoring-actions/section-preflight', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+              projectId, sectionCode,
+              artifactId: authoringContext?.artifactId,
+              artifactVersionId: authoringContext?.artifactVersionId,
+              regulatorBody: authoringContext?.regulatorBody,
+              submissionType: authoringContext?.submissionType,
+              linkedSectionCodes: authoringContext?.linkedSectionCodes,
+            }),
+          });
+          const data = await res.json();
+          if (data.status === 'data') {
+            const statusIcon = (s: string) =>
+              s === 'pass' ? '✅' : s === 'warn' ? '⚠️' : s === 'fail' ? '❌' : '—';
+            const checkLines = [
+              `| Body expectations | ${statusIcon(data.checks.bodyExpectations?.status)} ${data.checks.bodyExpectations?.status || 'unknown'} | ${data.checks.bodyExpectations?.missing?.length ? `${data.checks.bodyExpectations.missing.length} missing` : '—'} |`,
+              `| Contradictions | ${statusIcon(data.checks.contradictions?.status)} ${data.checks.contradictions?.status || 'unknown'} | ${data.checks.contradictions?.items?.length ? `${data.checks.contradictions.items.length} found` : '—'} |`,
+              `| Cross-section consistency | ${statusIcon(data.checks.crossSectionConsistency?.status)} ${data.checks.crossSectionConsistency?.status || 'unknown'} | ${data.checks.crossSectionConsistency?.items?.length ? `${data.checks.crossSectionConsistency.items.length} issues` : '—'} |`,
+              `| Approved baseline | ${statusIcon(data.checks.approvedBaselineCompare?.status)} ${data.checks.approvedBaselineCompare?.status || 'unknown'} | ${data.checks.approvedBaselineCompare?.conflictRisk || '—'} |`,
+              `| Readiness | ${statusIcon(data.checks.readiness?.status)} ${data.checks.readiness?.status || 'unknown'} | ${data.checks.readiness?.blockers?.length ? `${data.checks.readiness.blockers.length} blockers` : data.checks.readiness?.score != null ? `Score: ${data.checks.readiness.score}` : '—'} |`,
+            ].join('\n');
+
+            const overallIcon = data.overall === 'ready' ? '✅' : data.overall === 'blocked' ? '🚫' : '⚠️';
+            const actionLines = data.recommendedActions?.length
+              ? '\n\n**Recommended actions:**\n' + data.recommendedActions.map((a: any) =>
+                `- **${a.label}** — ${a.reason}`).join('\n')
+              : '';
+
+            // Decision architecture context
+            const decisionLine = data.decisionId
+              ? `\n\n**Decision:** \`${data.decisionId.slice(0, 16)}…\` — Status: **${data.decisionStatus || 'recorded'}** — Authority: **${data.authority?.level || 'unknown'}**`
+              : '';
+            const authorityNote = data.authority?.requiresHumanConfirmation
+              ? '\n> This result needs your confirmation before any action is taken.'
+              : '';
+
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Section Preflight — §${sectionCode}** ${overallIcon}\n\n**Overall:** ${data.overall.toUpperCase()} — ${data.summary}\n\n| Check | Status | Detail |\n|---|---|---|\n${checkLines}${actionLines}${decisionLine}${authorityNote}` }]);
+            onRefreshIntelligence?.();
+          } else {
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Preflight:** ${data.message || data.error || 'Unable to run preflight.'}` }]);
+          }
+        } catch {
+          handleSend('Run preflight on this section.');
+        }
+      })();
+      return;
+    }
+
+    // ── MODULE PREFLIGHT (Pass 6) ──────────────────────────────────────────
+    if (action.intent === 'module_preflight') {
+      (async () => {
+        const projectId = contextProfile?.projectId;
+        const moduleCode = authoringContext?.moduleCode || (authoringContext?.sectionCode ? `m${authoringContext.sectionCode.split('.')[0]}` : '');
+        if (!projectId || !moduleCode) {
+          setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+            content: '**Cannot run module preflight.** No module context. Open a section or navigate to a module.' }]);
+          return;
+        }
+        try {
+          const res = await fetch('/api/authoring-actions/module-preflight', {
+            method: 'POST', headers: getAuthHeaders(),
+            body: JSON.stringify({ projectId, moduleCode, regulatorBody: authoringContext?.regulatorBody, submissionType: authoringContext?.submissionType }),
+          });
+          const data = await res.json();
+          if (data.status === 'data') {
+            const overallIcon = data.overall === 'ready' ? '✅' : data.overall === 'blocked' ? '🚫' : '⚠️';
+            const sectionTable = data.sectionResults?.length
+              ? '\n\n| Section | Status |\n|---|---|\n' + data.sectionResults.map((s: any) =>
+                `| §${s.sectionCode} | ${s.overall === 'ready' ? '✅' : s.overall === 'blocked' ? '❌' : '⚠️'} ${s.overall} |`).join('\n')
+              : '';
+            const blockerLines = data.majorBlockers?.length
+              ? '\n\n**Blockers:**\n' + data.majorBlockers.slice(0, 5).map((b: any) =>
+                `- **[${b.severity}]** §${b.sectionCode || '—'}: ${b.message}`).join('\n')
+              : '';
+            const actionLines = data.recommendedActions?.length
+              ? '\n\n**Next:**\n' + data.recommendedActions.map((a: any) => `- ${a.label} — ${a.reason}`).join('\n')
+              : '';
+            // Decision-aware status enrichment
+            const dasLine = data.decisionAwareStatus
+              ? `\n\n**Decision status:** ${data.decisionAwareStatus.summary || 'No pending decisions'}`
+              : '';
+            const decisionLine = data.decisionId
+              ? `\n**Decision:** \`${data.decisionId.slice(0, 16)}…\` — **${data.decisionStatus || 'recorded'}**`
+              : '';
+
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Module Preflight — ${moduleCode.toUpperCase()}** ${overallIcon}\n\n**Overall:** ${data.overall.toUpperCase()} — ${data.summary}\n\n**Sections:** ${data.counts.ready}/${data.counts.total} ready, ${data.counts.blocked} blocked, ${data.counts.provisional} provisional${sectionTable}${blockerLines}${actionLines}${dasLine}${decisionLine}` }]);
+            onRefreshIntelligence?.();
+          } else {
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Module preflight:** ${data.message || data.error || 'Unable to run.'}` }]);
+          }
+        } catch { handleSend(`Run preflight on module ${moduleCode}.`); }
+      })();
+      return;
+    }
+
+    // ── DOSSIER PREFLIGHT (Pass 6) ──────────────────────────────────────────
+    if (action.intent === 'dossier_preflight') {
+      (async () => {
+        const projectId = contextProfile?.projectId;
+        if (!projectId) {
+          setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+            content: '**Cannot run dossier preflight.** No project is active.' }]);
+          return;
+        }
+        try {
+          const res = await fetch('/api/authoring-actions/dossier-preflight', {
+            method: 'POST', headers: getAuthHeaders(),
+            body: JSON.stringify({ projectId, regulatorBody: authoringContext?.regulatorBody, submissionType: authoringContext?.submissionType }),
+          });
+          const data = await res.json();
+          if (data.status === 'data') {
+            const overallIcon = data.overall === 'ready' ? '✅' : data.overall === 'blocked' ? '🚫' : '⚠️';
+            const moduleTable = data.moduleResults?.length
+              ? '\n\n| Module | Status | Sections |\n|---|---|---|\n' + data.moduleResults.map((m: any) =>
+                `| ${m.moduleCode.toUpperCase()} | ${m.overall === 'ready' ? '✅' : m.overall === 'blocked' ? '❌' : '⚠️'} ${m.overall} | ${m.counts?.ready || 0}/${m.counts?.total || 0} ready |`).join('\n')
+              : '';
+            const blockerLines = data.majorBlockers?.length
+              ? '\n\n**Top blockers:**\n' + data.majorBlockers.slice(0, 5).map((b: any) =>
+                `- **[${b.severity}]** ${b.moduleCode || ''} ${b.sectionCode ? `§${b.sectionCode}` : ''}: ${b.message}`).join('\n')
+              : '';
+            const actionLines = data.recommendedActions?.length
+              ? '\n\n**Next:**\n' + data.recommendedActions.map((a: any) => `- ${a.label} — ${a.reason}`).join('\n')
+              : '';
+            // Decision-aware enrichment
+            const dasLine = data.decisionAwareStatus
+              ? `\n\n**Decision status:** ${data.decisionAwareStatus.summary || 'No pending decisions'}`
+              : '';
+            const decisionLine = data.decisionId
+              ? `\n**Decision:** \`${data.decisionId.slice(0, 16)}…\` — **${data.decisionStatus || 'recorded'}**`
+              : '';
+
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Dossier Preflight** ${overallIcon}\n\n**Overall:** ${data.overall.toUpperCase()} — ${data.summary}\n\n**Modules:** ${data.counts.readyModules}/${data.counts.totalModules} ready, ${data.counts.blockedModules} blocked${moduleTable}${blockerLines}${actionLines}${dasLine}${decisionLine}` }]);
+            onRefreshIntelligence?.();
+          } else {
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Dossier preflight:** ${data.message || data.error || 'Unable to run.'}` }]);
+          }
+        } catch { handleSend('Run dossier preflight for this submission.'); }
+      })();
+      return;
+    }
+
+    // P5: Promote to review — preflight-gated governed transition
     if (action.intent === 'promote_to_review') {
       (async () => {
         const projectId = contextProfile?.projectId;
         const artifactId = authoringContext?.artifactId;
+        const sectionCode = authoringContext?.sectionCode;
         if (!projectId || !artifactId) {
-          setMessages(prev => [...prev, {
-            id: `a-${Date.now()}`,
-            role: 'assistant',
-            content: '**Cannot promote.** No artifact is currently open. Open a document first.',
-            timestamp: new Date(),
-          }]);
+          setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+            content: '**Cannot promote.** No artifact is currently open. Open a document first.' }]);
           return;
         }
-        // Step 1: Check blockers
+
+        // Step 1: Run preflight
+        let preflightPassed = false;
         try {
-          const blockerRes = await fetch(`/api/authoring-actions/promotion-blockers/${projectId}?artifactId=${artifactId}`, {
+          const pfRes = await fetch('/api/authoring-actions/section-preflight', {
+            method: 'POST',
             headers: getAuthHeaders(),
+            body: JSON.stringify({
+              projectId, sectionCode: sectionCode || '',
+              artifactId, artifactVersionId: authoringContext?.artifactVersionId,
+              regulatorBody: authoringContext?.regulatorBody,
+              submissionType: authoringContext?.submissionType,
+              linkedSectionCodes: authoringContext?.linkedSectionCodes,
+            }),
           });
-          const blockerData = await blockerRes.json();
-          if (blockerData.blocked) {
-            const lines = blockerData.blockers.map((b: any) => `- **[${b.severity}]** ${b.message}`).join('\n');
-            setMessages(prev => [...prev, {
-              id: `a-${Date.now()}`,
-              role: 'assistant',
-              content: `**Promotion blocked.** ${blockerData.blockerCount} critical issue(s) must be resolved first:\n\n${lines}`,
-              timestamp: new Date(),
-            }]);
-            return;
+          const pfData = await pfRes.json();
+          if (pfData.status === 'data') {
+            if (pfData.overall === 'blocked') {
+              const failChecks = Object.entries(pfData.checks)
+                .filter(([, v]: any) => v.status === 'fail')
+                .map(([k, v]: any) => {
+                  if (k === 'contradictions' && v.items?.length) return `**Contradictions:** ${v.items.length} found`;
+                  if (k === 'bodyExpectations' && v.missing?.length) return `**Body gaps:** ${v.missing.length} missing`;
+                  if (k === 'crossSectionConsistency' && v.items?.length) return `**Consistency:** ${v.items.length} issues`;
+                  if (k === 'readiness' && v.blockers?.length) return `**Readiness:** ${v.blockers.length} blockers`;
+                  return `**${k}:** failed`;
+                });
+              const actionLines = pfData.recommendedActions?.length
+                ? '\n\n**Fix first:**\n' + pfData.recommendedActions.map((a: any) => `- ${a.label} — ${a.reason}`).join('\n')
+                : '';
+              setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+                content: `🚫 **Promotion blocked by preflight.**\n\n${pfData.summary}\n\nFailed checks:\n${failChecks.map(c => `- ${c}`).join('\n')}${actionLines}` }]);
+              onRefreshIntelligence?.();
+              return;
+            } else if (pfData.overall === 'provisional') {
+              // Warn but allow promotion with acknowledgment
+              setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+                content: `⚠️ **Preflight has warnings.** ${pfData.summary}\n\nProceeding with promotion despite warnings.` }]);
+            }
+            preflightPassed = true;
           }
         } catch {
-          // Non-blocking — proceed with promotion attempt
+          // Preflight unavailable — proceed with legacy blocker check
+          preflightPassed = true;
         }
 
+        if (!preflightPassed) return;
+
         // Step 2: Attempt governed promotion
-        if (onRequestPromotion) {
-          try {
+        const doPromote = async () => {
+          if (onRequestPromotion) {
             const result = await onRequestPromotion(artifactId);
-            setMessages(prev => [...prev, {
-              id: `a-${Date.now()}`,
-              role: 'assistant',
+            const pendingNote = result.pendingApprovals?.length
+              ? `\n\n**Pending approvals:** ${result.pendingApprovals.map((a: any) => `${a.requiredRole} (${a.reason})`).join(', ')}`
+              : '';
+            const decisionNote = result.decisionId
+              ? `\n**Decision:** \`${result.decisionId.slice(0, 16)}…\` — Authority: **${result.authority?.level || 'confirmed'}**`
+              : '';
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
               content: result.promoted
-                ? `**Promoted to review.** ${result.message} The document is now in the governance review pipeline.`
-                : `**Promotion not completed.** ${result.message}`,
-              timestamp: new Date(),
-            }]);
-            // Refresh readiness after promotion attempt
-            onRefreshIntelligence?.();
-          } catch (err) {
-            setMessages(prev => [...prev, {
-              id: `a-${Date.now()}`,
-              role: 'assistant',
-              content: `**Promotion failed.** ${err instanceof Error ? err.message : 'Unknown error'}`,
-              timestamp: new Date(),
-            }]);
-          }
-        } else {
-          // Fallback: call the status API directly
-          try {
+                ? `✅ **Promoted to review.** ${result.message} The document is now in the governance review pipeline.${pendingNote}${decisionNote}`
+                : `**Promotion not completed.** ${result.message}${result.decisionId ? `\n**Decision:** \`${result.decisionId.slice(0, 16)}…\` — blocked` : ''}` }]);
+          } else {
             const res = await fetch(`/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/status`, {
-              method: 'PUT',
-              headers: getAuthHeaders(),
+              method: 'PUT', headers: getAuthHeaders(),
               body: JSON.stringify({ status: 'review' }),
             });
             if (res.ok) {
-              setMessages(prev => [...prev, {
-                id: `a-${Date.now()}`,
-                role: 'assistant',
-                content: '**Promoted to review.** The document has been moved to the governance review pipeline.',
-                timestamp: new Date(),
-              }]);
-              onRefreshIntelligence?.();
+              setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+                content: '✅ **Promoted to review.** The document has been moved to the governance review pipeline.' }]);
             } else {
               const err = await res.json().catch(() => ({ error: 'Unknown error' }));
-              setMessages(prev => [...prev, {
-                id: `a-${Date.now()}`,
-                role: 'assistant',
-                content: `**Promotion failed.** ${err.error || err.message || `HTTP ${res.status}`}`,
-                timestamp: new Date(),
-              }]);
+              setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+                content: `**Promotion failed.** ${err.error || err.message || `HTTP ${res.status}`}` }]);
             }
-          } catch {
-            handleSend('Promote this document to review.');
           }
+          onRefreshIntelligence?.();
+        };
+
+        try {
+          await doPromote();
+        } catch (err) {
+          setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+            content: `**Promotion failed.** ${err instanceof Error ? err.message : 'Unknown error'}` }]);
         }
       })();
       return;
@@ -1394,7 +1634,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               `${i + 1}. **${t.objectTitle}** (§${t.sectionCode || '—'})\n   Rationale: ${t.revisionRationale}\n   Confidence: ${t.confidence} | Review required: ${t.requiresReview ? 'Yes' : 'No'}`
             ).join('\n\n');
             setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
-              content: `**Correction targets identified** — ${data.targets.length} item(s):\n\n${targetLines}\n\n${data.message}` }]);
+              content: `**Correction targets identified** — ${data.targets.length} item(s):\n\n${targetLines}\n\n${data.message}\n\n⚠️ Corrections require review before apply. Readiness will be re-evaluated after changes.` }]);
+            onRefreshIntelligence?.();
           } else {
             setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
               content: `**Correction draft:** ${data.message}` }]);
@@ -1426,7 +1667,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               `- **[${i.severity}]** ${i.description} (§${i.sectionA} ↔ §${i.sectionB})${i.recommendation ? `\n  Fix: ${i.recommendation}` : ''}`
             ).join('\n') || 'None';
             setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
-              content: `**Harmonization Check** — Score: ${data.consistencyScore}/100\n\nSections compared: ${data.sectionsCompared?.join(', ')}\nDimensions checked: ${data.checkedDimensions?.join(', ')}\n\n**Issues (${data.totalIssues}):**\n${issueLines}` }]);
+              content: `**Harmonization Check** — Score: ${data.consistencyScore}/100\n\nSections compared: ${data.sectionsCompared?.join(', ')}\nDimensions checked: ${data.checkedDimensions?.join(', ')}\n\n**Issues (${data.totalIssues}):**\n${issueLines}${data.totalIssues > 0 ? '\n\n💡 Use **Prepare correction draft** to address critical issues.' : ''}` }]);
+            onRefreshIntelligence?.();
           } else {
             setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
               content: `**Harmonization:** ${data.message}` }]);
@@ -1518,6 +1760,108 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               content: `**Evidence for §${sectionCode}:** ${data.message}${data.gapAnalysis?.gaps?.length ? `\n\nGaps identified: ${data.gapAnalysis.gaps.join(', ')}` : ''}` }]);
           }
         } catch { handleSend(`Gather evidence for section ${sectionCode}.`); }
+      })();
+      return;
+    }
+
+    // ── Wave 3: Body-aware + cross-section consistency handlers ──────
+
+    // ACTION 11: Body-aware expectations
+    if (action.intent === 'body_expectations') {
+      (async () => {
+        const projectId = contextProfile?.projectId;
+        const sectionCode = authoringContext?.sectionCode;
+        const body = authoringContext?.regulatorBody || 'FDA';
+        const subType = authoringContext?.submissionType || 'IND';
+        if (!sectionCode) { handleSend(`What does ${body} expect in this section?`); return; }
+        try {
+          const res = await fetch(`/api/authoring-actions/section-expectations/${encodeURIComponent(body)}/${encodeURIComponent(subType)}/${encodeURIComponent(sectionCode)}`, {
+            headers: getAuthHeaders(),
+          });
+          const data = await res.json();
+          if (data.status === 'data') {
+            const exp = data.expectations;
+            const reqLines = exp.requirements?.length ? exp.requirements.map((r: string) => `- ${r}`).join('\n') : '- None identified';
+            const defLines = exp.commonDeficiencies?.slice(0, 5).map((d: string) => `- ${d}`).join('\n') || '- None';
+            const bodyNotes = exp.bodySpecificNotes?.slice(0, 3).map((n: string) => `- ${n}`).join('\n') || '- None';
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**${body} Expectations for §${sectionCode}** (${subType})\n\n**Required level:** ${exp.requiredLevel}\n\n**Requirements:**\n${reqLines}\n\n**Common deficiencies (${body}):**\n${defLines}\n\n**Body-specific notes:**\n${bodyNotes}` }]);
+          } else {
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Section expectations:** ${data.message}` }]);
+          }
+        } catch { handleSend(`What does ${body} expect in section ${sectionCode}?`); }
+      })();
+      return;
+    }
+
+    // ACTION 12: Cross-section consistency
+    if (action.intent === 'cross_section_consistency') {
+      (async () => {
+        const projectId = contextProfile?.projectId;
+        const sectionCode = authoringContext?.sectionCode;
+        if (!projectId || !sectionCode) { handleSend('Check this section against linked sections.'); return; }
+        try {
+          const res = await fetch('/api/authoring-actions/cross-section-consistency', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+              projectId,
+              sectionCode,
+              linkedSectionCodes: authoringContext?.linkedSectionCodes,
+              submissionType: authoringContext?.submissionType,
+            }),
+          });
+          const data = await res.json();
+          if (data.status === 'data') {
+            const harmIssues = data.harmonizeResult?.issues?.slice(0, 5).map((i: any) =>
+              `- **[${i.severity}]** ${i.description} (§${i.sectionA} ↔ §${i.sectionB})${i.recommendation ? `\n  → ${i.recommendation}` : ''}`
+            ).join('\n') || '- None found';
+            const contraLines = data.contradictions?.slice(0, 3).map((c: any) =>
+              `- **[${c.severity}]** ${c.explanation}`
+            ).join('\n') || '- None';
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Cross-Section Consistency for §${sectionCode}**\n\nLinked: ${data.linkedSections?.join(', ') || 'none'}\nConsistency: ${data.harmonizeResult?.consistencyScore ?? '—'}/100\n\n**Harmonization issues (${data.harmonizeResult?.totalIssues ?? 0}):**\n${harmIssues}\n\n**Contradictions (${data.contradictionCount ?? 0}):**\n${contraLines}${data.harmonizeResult?.totalIssues > 0 ? '\n\n💡 Use **Prepare correction draft** or **Harmonize** to address these.' : ''}` }]);
+            onRefreshIntelligence?.();
+          } else {
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Cross-section consistency:** ${data.message}` }]);
+          }
+        } catch { handleSend('Check this section against linked sections for consistency.'); }
+      })();
+      return;
+    }
+
+    // ACTION 13: Body-aware gap detection
+    if (action.intent === 'body_aware_gaps') {
+      (async () => {
+        const sectionCode = authoringContext?.sectionCode;
+        const body = authoringContext?.regulatorBody || 'FDA';
+        const subType = authoringContext?.submissionType || 'IND';
+        if (!sectionCode) { handleSend(`What is missing for ${body} in this section?`); return; }
+        try {
+          const res = await fetch('/api/authoring-actions/body-aware-gaps', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+              regulatorBody: body,
+              submissionType: subType,
+              sectionCode,
+              currentContent: '', // Empty triggers "all missing" detection
+            }),
+          });
+          const data = await res.json();
+          if (data.status === 'data') {
+            const gapLines = data.gaps?.slice(0, 10).map((g: any) =>
+              `- **[${g.status.toUpperCase()}]** ${g.requirement}${g.bodyNote ? ` — ${g.bodyNote}` : ''}`
+            ).join('\n') || '- None detected';
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**${body} Gap Analysis for §${sectionCode}** (${subType})\n\n**Completeness:** ${data.overallCompleteness ?? '—'}%\n\n**Gaps:**\n${gapLines}${data.overallCompleteness != null && data.overallCompleteness < 50 ? '\n\n⚠️ Section is significantly incomplete for this regulatory body.' : ''}` }]);
+          } else {
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Body-aware gaps:** ${data.message}` }]);
+          }
+        } catch { handleSend(`What is missing for ${body} in section ${sectionCode}?`); }
       })();
       return;
     }

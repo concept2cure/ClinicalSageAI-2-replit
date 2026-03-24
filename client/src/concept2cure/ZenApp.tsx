@@ -891,6 +891,7 @@ export const ZenApp: React.FC = () => {
       projectId: activeProjectId,
       layoutMode: layoutMode,
       submissionType: activeProject?.type,
+      regulatorBody: activeProject?.region || activeProject?.regulatoryRegion,
       sectionCode: activeSectionCode,
       sectionTitle: activeSectionTitle,
       artifactId: activeArtifactId,
@@ -900,9 +901,10 @@ export const ZenApp: React.FC = () => {
       contradictions: sectionContradictions,
     });
   }, [
-    activeProjectId, layoutMode, activeProject?.type, activeSectionCode,
-    activeSectionTitle, activeArtifactId, activeArtifactVersion,
-    activeArtifactStatus, sectionReadiness, sectionContradictions,
+    activeProjectId, layoutMode, activeProject?.type, activeProject?.region,
+    activeProject?.regulatoryRegion, activeSectionCode, activeSectionTitle,
+    activeArtifactId, activeArtifactVersion, activeArtifactStatus,
+    sectionReadiness, sectionContradictions,
   ]);
 
   // Handler for child surfaces to update authoring context fields

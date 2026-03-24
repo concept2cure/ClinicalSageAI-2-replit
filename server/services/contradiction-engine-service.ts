@@ -783,4 +783,516 @@ class ContradictionEngineService {
   }
 }
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PASS 8: CROSS-ARTIFACT CONTRADICTION DETECTION
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Detect approved-vs-working inconsistency: approved artifact content diverges
+   * materially from current working draft for the same section.
+   */
+  async detectApprovedVsWorkingDrift(organizationId: number, projectId: number): Promise<ContradictionFinding[]> {
+    log.info('Detecting approved-vs-working drift', { projectId });
+    const findings: ContradictionFinding[] = [];
+
+    try {
+      const { db } = await import('../db.js');
+      // Fetch all artifacts for project
+      const artifacts = await db.query.concept2cureArtifacts?.findMany?.({
+        where: (a: any, { eq }: any) => eq(a.projectId, projectId),
+        orderBy: (a: any, { desc }: any) => [desc(a.updatedAt)],
+      }).catch(() => []) || [];
+
+      // Group by ctdSection
+      const bySectionCode = new Map<string, any[]>();
+      for (const art of artifacts) {
+        if (!art.ctdSection) continue;
+        if (!bySectionCode.has(art.ctdSection)) bySectionCode.set(art.ctdSection, []);
+        bySectionCode.get(art.ctdSection)!.push(art);
+      }
+
+      for (const [sectionCode, sectionArts] of bySectionCode) {
+        const approved = sectionArts.find((a: any) => a.status === 'approved' || a.status === 'locked');
+        const working = sectionArts.find((a: any) => a.status === 'draft' || a.status === 'review');
+        if (!approved || !working) continue;
+        if (approved.id === working.id) continue;
+
+        // Compare content length and key terms
+        const approvedContent = typeof approved.content === 'string' ? approved.content : '';
+        const workingContent = typeof working.content === 'string' ? working.content : '';
+        if (!approvedContent || !workingContent) continue;
+
+        const approvedWords = approvedContent.replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean);
+        const workingWords = workingContent.replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean);
+        const lengthDelta = Math.abs(approvedWords.length - workingWords.length);
+        const lengthRatio = lengthDelta / Math.max(approvedWords.length, 1);
+
+        // Only flag if material difference (>15% word count change)
+        if (lengthRatio < 0.15) continue;
+
+        const finding = await this.createFinding({
+          organizationId,
+          projectId,
+          sourceClassification: 'structured_record_conflict',
+          objectAType: 'artifact', objectAId: String(approved.id),
+          objectALabel: `${approved.title || sectionCode} (approved v${approved.version || '?'})`,
+          objectBType: 'artifact', objectBId: String(working.id),
+          objectBLabel: `${working.title || sectionCode} (working v${working.version || '?'})`,
+          contradictionType: 'superseded_information',
+          severity: lengthRatio > 0.5 ? 'high' : 'medium',
+          truthHierarchyLevel: 3,
+          confidenceScore: Math.min(0.95, 0.6 + lengthRatio),
+          confidenceLevel: lengthRatio > 0.3 ? 'high' : 'moderate',
+          title: `Approved vs working drift: section ${sectionCode}`,
+          description: `Approved artifact "${approved.title}" (${approvedWords.length} words) and working draft "${working.title}" (${workingWords.length} words) differ by ${Math.round(lengthRatio * 100)}% in word count. The approved version may need reapproval if the working draft replaces it.`,
+          deterministicRule: 'RULE: Approved artifact + working draft for same section → content divergence > 15% = drift',
+          llmRole: 'none',
+        });
+        findings.push(finding);
+      }
+    } catch (err) {
+      log.warn('Approved-vs-working drift detection failed', {
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+
+    return findings;
+  }
+
+  /**
+   * Detect status conflicts: artifact status doesn't match governance state.
+   * E.g., artifact marked 'review' but has unresolved blocking contradictions,
+   * or artifact marked 'approved' but underlying assumptions are superseded.
+   */
+  async detectStatusConflict(organizationId: number, projectId: number): Promise<ContradictionFinding[]> {
+    log.info('Detecting status conflicts', { projectId });
+    const findings: ContradictionFinding[] = [];
+
+    try {
+      const { db } = await import('../db.js');
+      const artifacts = await db.query.concept2cureArtifacts?.findMany?.({
+        where: (a: any, { eq }: any) => eq(a.projectId, projectId),
+      }).catch(() => []) || [];
+
+      // Check for artifacts in review/approved status with superseded assumptions
+      const supersededAssumptions = await assumptionRegistryService.search({
+        organizationId, projectId, status: 'superseded', limit: 200,
+      });
+
+      if (supersededAssumptions.length > 0) {
+        for (const art of artifacts) {
+          if (art.status !== 'review' && art.status !== 'approved' && art.status !== 'locked') continue;
+
+          // Check if any superseded assumption was linked to this artifact
+          const linkedSuperseded = supersededAssumptions.filter(
+            (a: AssumptionRecord) => a.linkedArtifactId === art.id
+          );
+
+          if (linkedSuperseded.length > 0) {
+            const finding = await this.createFinding({
+              organizationId,
+              projectId,
+              sourceClassification: 'structured_record_conflict',
+              objectAType: 'artifact', objectAId: String(art.id),
+              objectALabel: `${art.title || 'Artifact'} (status: ${art.status})`,
+              objectBType: 'assumption', objectBId: linkedSuperseded[0].id,
+              objectBLabel: `${linkedSuperseded[0].title} (superseded)`,
+              contradictionType: 'status_conflict',
+              severity: art.status === 'approved' ? 'high' : 'medium',
+              truthHierarchyLevel: 2,
+              confidenceScore: 0.9,
+              confidenceLevel: 'high',
+              title: `Status conflict: ${art.status} artifact has superseded assumptions`,
+              description: `Artifact "${art.title}" is in "${art.status}" status but depends on ${linkedSuperseded.length} superseded assumption(s). The artifact may need reapproval or revision.`,
+              deterministicRule: 'RULE: Artifact in review/approved/locked status + linked assumption superseded → status conflict',
+              llmRole: 'none',
+            });
+            findings.push(finding);
+          }
+        }
+      }
+
+      // Check for artifacts in 'approved' status with unexecuted decisions
+      const decisions = await decisionRecordService.search({
+        organizationId, projectId, actionState: 'approved', limit: 200,
+      });
+
+      for (const d of decisions) {
+        if (!d.executedArtifactId) continue;
+        const linkedArt = artifacts.find((a: any) => a.id === d.executedArtifactId);
+        if (linkedArt && linkedArt.status === 'draft') {
+          const finding = await this.createFinding({
+            organizationId,
+            projectId,
+            sourceClassification: 'structured_record_conflict',
+            objectAType: 'decision', objectAId: d.id, objectALabel: d.title,
+            objectBType: 'artifact', objectBId: String(linkedArt.id),
+            objectBLabel: `${linkedArt.title || 'Artifact'} (draft)`,
+            contradictionType: 'status_conflict',
+            severity: 'medium',
+            truthHierarchyLevel: 2,
+            confidenceScore: 0.85,
+            confidenceLevel: 'high',
+            title: `Status conflict: decision executed on draft artifact`,
+            description: `Decision "${d.title}" was executed and linked to artifact "${linkedArt.title}" but the artifact is still in draft status. It should have been promoted.`,
+            deterministicRule: 'RULE: Executed decision + linked artifact still in draft → status conflict',
+            llmRole: 'none',
+          });
+          findings.push(finding);
+        }
+      }
+    } catch (err) {
+      log.warn('Status conflict detection failed', {
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+
+    return findings;
+  }
+
+  /**
+   * Detect cross-artifact content conflicts using HarmonizeEngine.
+   * Converts HarmonizeIssue results into ContradictionFinding objects
+   * so they participate in the full contradiction lifecycle.
+   */
+  async detectCrossArtifactContentConflict(organizationId: number, projectId: number): Promise<ContradictionFinding[]> {
+    log.info('Detecting cross-artifact content conflicts', { projectId });
+    const findings: ContradictionFinding[] = [];
+
+    try {
+      const { db } = await import('../db.js');
+      const { HarmonizeEngine } = await import('./harmonize-engine.js');
+      const engine = new HarmonizeEngine();
+
+      // Fetch artifacts with content for this project
+      const artifacts = await db.query.concept2cureArtifacts?.findMany?.({
+        where: (a: any, { eq }: any) => eq(a.projectId, projectId),
+      }).catch(() => []) || [];
+
+      // Build section content map for harmonize check
+      const sections: Record<string, string> = {};
+      const sectionArtifactMap: Record<string, any> = {};
+      for (const art of artifacts) {
+        if (!art.ctdSection || !art.content) continue;
+        const content = typeof art.content === 'string'
+          ? art.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+          : '';
+        if (content.length < 50) continue; // Skip trivial content
+        sections[art.ctdSection] = content;
+        sectionArtifactMap[art.ctdSection] = art;
+      }
+
+      if (Object.keys(sections).length < 2) return findings;
+
+      const result = await engine.check({ sections, submissionType: 'IND' });
+
+      // Convert critical and error harmonize issues to contradiction findings
+      const significantIssues = result.issues.filter(
+        i => i.severity === 'critical' || i.severity === 'error'
+      );
+
+      const HARMONIZE_TO_CONTRADICTION: Record<string, ContradictionType> = {
+        terminology: 'parameter_mismatch',
+        numeric: 'parameter_mismatch',
+        summary_body: 'summary_body_tension',
+        reference: 'factual_contradiction',
+        cross_section: 'factual_contradiction',
+      };
+
+      for (const issue of significantIssues.slice(0, 10)) {
+        const artA = sectionArtifactMap[issue.sectionA];
+        const artB = issue.sectionB ? sectionArtifactMap[issue.sectionB] : null;
+        if (!artA) continue;
+
+        const contradictionType = HARMONIZE_TO_CONTRADICTION[issue.type] || 'factual_contradiction';
+
+        const finding = await this.createFinding({
+          organizationId,
+          projectId,
+          sourceClassification: 'deterministic_rule_conflict',
+          objectAType: 'artifact', objectAId: String(artA.id),
+          objectALabel: `${artA.title || issue.sectionA} (${issue.sectionA})`,
+          objectBType: artB ? 'artifact' : 'section_expectation',
+          objectBId: artB ? String(artB.id) : issue.sectionB || 'none',
+          objectBLabel: artB ? `${artB.title || issue.sectionB} (${issue.sectionB})` : issue.sectionB || null,
+          contradictionType,
+          severity: issue.severity === 'critical' ? 'critical' : 'high',
+          truthHierarchyLevel: 5,
+          confidenceScore: issue.severity === 'critical' ? 0.9 : 0.75,
+          confidenceLevel: issue.severity === 'critical' ? 'high' : 'moderate',
+          title: `Cross-section ${issue.type}: ${issue.sectionA}${issue.sectionB ? ` ↔ ${issue.sectionB}` : ''}`,
+          description: issue.description,
+          deterministicRule: `RULE: HarmonizeEngine ${issue.type} check between sections`,
+          llmRole: 'none',
+        });
+        findings.push(finding);
+      }
+    } catch (err) {
+      log.warn('Cross-artifact content conflict detection failed', {
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+
+    return findings;
+  }
+
+  /**
+   * Detect body-specific expectation conflicts.
+   * When body-aware gap analysis finds 'missing' requirements for a given
+   * regulator/submissionType, and the section has content (not empty),
+   * this represents a body-specific expectation conflict.
+   */
+  async detectBodySpecificExpectationConflict(
+    organizationId: number,
+    projectId: number,
+    regulatorBody: string,
+    submissionType: string
+  ): Promise<ContradictionFinding[]> {
+    log.info('Detecting body-specific expectation conflicts', { projectId, regulatorBody, submissionType });
+    const findings: ContradictionFinding[] = [];
+
+    try {
+      const { db } = await import('../db.js');
+      const { detectBodySpecificGaps } = await import('./body-aware-authoring.js');
+
+      const artifacts = await db.query.concept2cureArtifacts?.findMany?.({
+        where: (a: any, { eq }: any) => eq(a.projectId, projectId),
+      }).catch(() => []) || [];
+
+      for (const art of artifacts) {
+        if (!art.ctdSection || !art.content) continue;
+        const content = typeof art.content === 'string'
+          ? art.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+          : '';
+        if (content.length < 100) continue;
+
+        try {
+          const gapAnalysis = await detectBodySpecificGaps(
+            regulatorBody, submissionType, art.ctdSection, content
+          );
+
+          const missingGaps = gapAnalysis.gaps.filter((g: any) => g.status === 'missing');
+          if (missingGaps.length === 0) continue;
+
+          // Only create finding for sections with multiple missing requirements
+          if (missingGaps.length >= 2) {
+            const finding = await this.createFinding({
+              organizationId,
+              projectId,
+              sourceClassification: 'deterministic_rule_conflict',
+              objectAType: 'artifact', objectAId: String(art.id),
+              objectALabel: `${art.title || art.ctdSection} (${art.ctdSection})`,
+              objectBType: 'body_expectation',
+              objectBId: `${regulatorBody}:${submissionType}:${art.ctdSection}`,
+              objectBLabel: `${regulatorBody} ${submissionType} requirements for ${art.ctdSection}`,
+              contradictionType: 'regulatory_discrepancy',
+              severity: missingGaps.length >= 4 ? 'high' : 'medium',
+              truthHierarchyLevel: 6,
+              confidenceScore: 0.8,
+              confidenceLevel: 'moderate',
+              title: `Body-specific gaps: ${art.ctdSection} missing ${missingGaps.length} ${regulatorBody} requirements`,
+              description: `Section ${art.ctdSection} has content but is missing ${missingGaps.length} requirements expected by ${regulatorBody} for ${submissionType}: ${missingGaps.slice(0, 3).map((g: any) => g.requirement).join('; ')}${missingGaps.length > 3 ? ` and ${missingGaps.length - 3} more` : ''}.`,
+              deterministicRule: `RULE: Body-aware gap analysis for ${regulatorBody}/${submissionType} → missing requirements in populated section`,
+              llmRole: 'none',
+              regulatorBody,
+            });
+            findings.push(finding);
+          }
+        } catch {
+          // Gap analysis failed for this section — skip
+        }
+      }
+    } catch (err) {
+      log.warn('Body-specific expectation conflict detection failed', {
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+
+    return findings;
+  }
+
+  /**
+   * Extended full project scan including Pass 8 detectors.
+   */
+  async scanProjectFull(
+    organizationId: number,
+    projectId: number,
+    opts?: { regulatorBody?: string; submissionType?: string }
+  ): Promise<{
+    findings: ContradictionFinding[];
+    summary: { total: number; bySeverity: Record<string, number>; byType: Record<string, number> };
+    detectionMethods: string[];
+  }> {
+    log.info('Running FULL contradiction scan (Pass 8)', { projectId, opts });
+
+    const detectionMethods: string[] = [];
+    const allPromises: Promise<ContradictionFinding[]>[] = [
+      // Pass 7 detectors
+      this.detectAssumptionDrift(organizationId, projectId)
+        .then(r => { detectionMethods.push('assumption_drift'); return r; }),
+      this.detectDecisionActionInconsistency(organizationId, projectId)
+        .then(r => { detectionMethods.push('decision_action_inconsistency'); return r; }),
+      this.detectCrossJurisdictionalDivergence(organizationId, projectId)
+        .then(r => { detectionMethods.push('cross_jurisdictional_divergence'); return r; }),
+      // Pass 8 detectors
+      this.detectApprovedVsWorkingDrift(organizationId, projectId)
+        .then(r => { detectionMethods.push('approved_vs_working_drift'); return r; }),
+      this.detectStatusConflict(organizationId, projectId)
+        .then(r => { detectionMethods.push('status_conflict'); return r; }),
+      this.detectCrossArtifactContentConflict(organizationId, projectId)
+        .then(r => { detectionMethods.push('cross_artifact_content'); return r; }),
+    ];
+
+    // Body-specific detection if regulator/body context provided
+    if (opts?.regulatorBody && opts?.submissionType) {
+      allPromises.push(
+        this.detectBodySpecificExpectationConflict(
+          organizationId, projectId, opts.regulatorBody, opts.submissionType
+        ).then(r => { detectionMethods.push('body_specific_expectation'); return r; })
+      );
+    }
+
+    const results = await Promise.allSettled(allPromises);
+    const allFindings: ContradictionFinding[] = [];
+    for (const result of results) {
+      if (result.status === 'fulfilled') {
+        allFindings.push(...result.value);
+      }
+    }
+
+    const bySeverity: Record<string, number> = {};
+    const byType: Record<string, number> = {};
+    for (const f of allFindings) {
+      bySeverity[f.severity] = (bySeverity[f.severity] ?? 0) + 1;
+      byType[f.contradictionType] = (byType[f.contradictionType] ?? 0) + 1;
+    }
+
+    return {
+      findings: allFindings,
+      summary: { total: allFindings.length, bySeverity, byType },
+      detectionMethods,
+    };
+  }
+
+  /**
+   * Build contradiction context for preflight enrichment.
+   * Returns a ContradictionPreflightContext scoped to the given module/section.
+   */
+  async buildPreflightContradictionContext(
+    organizationId: number,
+    projectId: number,
+    scope: { sectionCode?: string; moduleCode?: string; regulatorBody?: string; submissionType?: string }
+  ): Promise<{
+    unresolvedCount: number;
+    blockingCount: number;
+    overlayActiveCount: number;
+    byType: Record<string, number>;
+    bySeverity: Record<string, number>;
+    blockingFindings: Array<{
+      id: string; contradictionType: string; severity: string; title: string;
+      description: string; authorityState: string; consequenceType: string | null;
+      objectAType: string; objectAId: string; objectALabel: string | null;
+      objectBType: string; objectBId: string; objectBLabel: string | null;
+      overlayApplied: boolean; overlayRuleCode?: string; regulatorBody?: string;
+      recommendedAction: string | null; linkedDecisionId?: string;
+    }>;
+    warningFindings: Array<{
+      id: string; contradictionType: string; severity: string; title: string;
+      description: string; authorityState: string; recommendedAction: string | null;
+    }>;
+    overlayEscalatedToBlocking: boolean;
+    linkedDecisionIds: string[];
+  }> {
+    const scanResult = await this.scanProjectFull(organizationId, projectId, {
+      regulatorBody: scope.regulatorBody,
+      submissionType: scope.submissionType,
+    });
+
+    // Filter to unresolved findings only
+    const unresolved = scanResult.findings.filter(
+      f => f.reviewState !== 'approved_resolution' && f.reviewState !== 'superseded'
+    );
+
+    const blocking = unresolved.filter(
+      f => f.authorityState === 'blocks_promotion' || f.authorityState === 'requires_escalation'
+    );
+    const warnings = unresolved.filter(
+      f => f.authorityState !== 'blocks_promotion' && f.authorityState !== 'requires_escalation'
+        && f.authorityState !== 'advisory_only'
+    );
+    const overlayActive = unresolved.filter(f => !!f.overlayRuleId);
+    const overlayEscalated = unresolved.some(
+      f => f.overlayRuleId && (f.authorityState === 'blocks_promotion' || f.authorityState === 'requires_escalation')
+        && f.regulatorSeverityOverride !== null
+    );
+
+    const byType: Record<string, number> = {};
+    const bySeverity: Record<string, number> = {};
+    for (const f of unresolved) {
+      byType[f.contradictionType] = (byType[f.contradictionType] ?? 0) + 1;
+      bySeverity[f.severity] = (bySeverity[f.severity] ?? 0) + 1;
+    }
+
+    // Collect linked decision IDs
+    const linkedDecisionIds: string[] = [];
+    try {
+      const { decisionLifecycleService } = await import('./decision-lifecycle-service.js');
+      const decisions = decisionLifecycleService.getProjectDecisions(String(projectId), {
+        kind: 'contradiction-resolution-decision',
+        limit: 20,
+      });
+      linkedDecisionIds.push(...decisions.map(d => d.id));
+    } catch { /* non-blocking */ }
+
+    return {
+      unresolvedCount: unresolved.length,
+      blockingCount: blocking.length,
+      overlayActiveCount: overlayActive.length,
+      byType,
+      bySeverity,
+      blockingFindings: blocking.map(f => ({
+        id: f.id,
+        contradictionType: f.contradictionType,
+        severity: f.severity,
+        title: f.title,
+        description: f.description,
+        authorityState: f.authorityState,
+        consequenceType: f.consequenceType,
+        objectAType: f.objectAType,
+        objectAId: f.objectAId,
+        objectALabel: f.objectALabel,
+        objectBType: f.objectBType,
+        objectBId: f.objectBId,
+        objectBLabel: f.objectBLabel,
+        overlayApplied: !!f.overlayRuleId,
+        overlayRuleCode: f.overlayRuleId || undefined,
+        regulatorBody: f.regulatorBody || undefined,
+        recommendedAction: f.consequenceType ? DEFAULT_CONSEQUENCE[f.contradictionType] || null : null,
+        linkedDecisionId: linkedDecisionIds.find(dId =>
+          decisionStore_findByContradiction(dId, f.id)
+        ),
+      })),
+      warningFindings: warnings.slice(0, 10).map(f => ({
+        id: f.id,
+        contradictionType: f.contradictionType,
+        severity: f.severity,
+        title: f.title,
+        description: f.description,
+        authorityState: f.authorityState,
+        recommendedAction: DEFAULT_CONSEQUENCE[f.contradictionType] || null,
+      })),
+      overlayEscalatedToBlocking: overlayEscalated,
+      linkedDecisionIds,
+    };
+  }
+}
+
+/** Helper: check if a decision is linked to a contradiction (best-effort) */
+function decisionStore_findByContradiction(decisionId: string, contradictionId: string): boolean {
+  try {
+    // This is a lightweight check — the decision lifecycle service has the real linkage
+    return false; // Will be wired properly in decision-lifecycle integration
+  } catch { return false; }
+}
+
 export const contradictionEngineService = new ContradictionEngineService();

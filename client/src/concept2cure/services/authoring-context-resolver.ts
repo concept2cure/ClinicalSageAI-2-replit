@@ -13,6 +13,7 @@ import type {
   WorkflowStage,
   ReadinessSnapshot,
   ContradictionEntry,
+  DecisionEntry,
 } from '../../../../shared/types/authoring-context';
 
 // ─── Layout → WorkflowStage mapping ─────────────────────────────────────────
@@ -59,6 +60,8 @@ export interface ContextResolverInput {
   layoutMode: string;
   /** Submission/product type (IND, NDA, 510K, etc.) */
   submissionType?: string;
+  /** Regulatory body (FDA, EMA, PMDA, etc.) */
+  regulatorBody?: string;
   /** Active section code (e.g., "2.5") from activeSectionCode state */
   sectionCode?: string | null;
   /** Active section title */
@@ -77,6 +80,8 @@ export interface ContextResolverInput {
   contradictions?: ContradictionEntry[];
   /** Recent resolution bundle ID */
   recentResolutionBundleId?: string;
+  /** Decision context from decision lifecycle */
+  decisions?: DecisionEntry[];
 }
 
 /**
@@ -105,9 +110,11 @@ export function resolveAuthoringContext(
     sectionCode: sectionCode || undefined,
     sectionTitle: input.sectionTitle,
     submissionType: input.submissionType,
+    regulatorBody: input.regulatorBody || inferRegulatorBody(input.submissionType),
     linkedSectionCodes,
     readiness: input.readiness,
     contradictions: input.contradictions,
+    decisions: input.decisions,
     recentResolutionBundleId: input.recentResolutionBundleId,
   };
 }
@@ -147,6 +154,22 @@ export function deriveLinkedSections(sectionCode: string | undefined): string[] 
 }
 
 /**
+ * Infer regulator body from submission type when not explicitly set.
+ * IND/NDA/BLA/510K/PMA → FDA, MAA → EMA, JNDA → PMDA.
+ */
+export function inferRegulatorBody(submissionType: string | undefined): string | undefined {
+  if (!submissionType) return undefined;
+  const upper = submissionType.toUpperCase();
+  const FDA_TYPES = ['IND', 'NDA', 'BLA', 'ANDA', '510K', 'PMA', 'DE_NOVO'];
+  const EMA_TYPES = ['MAA', 'CER'];
+  const PMDA_TYPES = ['JNDA'];
+  if (FDA_TYPES.includes(upper)) return 'FDA';
+  if (EMA_TYPES.includes(upper)) return 'EMA';
+  if (PMDA_TYPES.includes(upper)) return 'PMDA';
+  return undefined;
+}
+
+/**
  * Serialize context pack for transmission to backend chat endpoints.
  * Strips undefined fields for clean payloads.
  */
@@ -158,4 +181,37 @@ export function serializeContextForChat(ctx: AuthoringContextPack): Record<strin
     }
   }
   return result;
+}
+
+/**
+ * Fetch recent decision context for a project/section from the decision API.
+ * Non-blocking — returns empty array on failure.
+ */
+export async function fetchDecisionContext(
+  projectId: string,
+  opts?: { sectionCode?: string; moduleCode?: string; authToken?: string }
+): Promise<DecisionEntry[]> {
+  try {
+    const params = new URLSearchParams();
+    if (opts?.sectionCode) params.set('sectionCode', opts.sectionCode);
+    if (opts?.moduleCode) params.set('moduleCode', opts.moduleCode);
+    params.set('limit', '5');
+
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (opts?.authToken) headers['Authorization'] = `Bearer ${opts.authToken}`;
+
+    const res = await fetch(
+      `/api/authoring-actions/decision-context/${projectId}?${params.toString()}`,
+      { headers }
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.items || []).map((item: any) => ({
+      id: item.decision.id,
+      status: item.decision.status,
+      summary: item.decision.summary,
+    }));
+  } catch {
+    return [];
+  }
 }

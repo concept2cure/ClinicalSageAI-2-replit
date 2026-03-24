@@ -201,3 +201,166 @@ export function validateActionContext(
     return value === undefined || value === null || value === '';
   });
 }
+
+// ─── Section Preflight (Pass 5) ──────────────────────────────────────────────
+
+export type PreflightCheckStatus = 'pass' | 'warn' | 'fail' | 'unknown';
+export type PreflightOverall = 'ready' | 'blocked' | 'provisional' | 'needs-review' | 'needs-reapproval';
+export type PreflightActionId =
+  | 'prepare-correction-draft'
+  | 'harmonize-linked-sections'
+  | 'gather-body-evidence'
+  | 'compare-approved'
+  | 'explain-blockers'
+  | 'promote-to-review';
+
+export interface PreflightCheck {
+  status: PreflightCheckStatus;
+}
+
+export interface BodyExpectationsCheck extends PreflightCheck {
+  missing?: string[];
+  weak?: string[];
+  requiredLevel?: string;
+}
+
+export interface ContradictionsCheck extends PreflightCheck {
+  items?: Array<{ id: string; severity: string; explanation: string }>;
+}
+
+export interface CrossSectionCheck extends PreflightCheck {
+  consistencyScore?: number;
+  items?: Array<{ type: string; severity: string; explanation: string; linkedSections?: string[] }>;
+}
+
+export interface ApprovedBaselineCheck extends PreflightCheck {
+  conflictRisk?: 'low' | 'moderate' | 'high';
+  summary?: string;
+}
+
+export interface ReadinessCheck extends PreflightCheck {
+  score?: number;
+  blockers?: Array<{ code: string; severity: string; message: string }>;
+}
+
+export interface SectionPreflightResult {
+  sectionCode?: string;
+  artifactId?: string;
+  artifactVersionId?: string;
+  workflowStage?: string;
+  regulatorBody?: string;
+  submissionType?: string;
+
+  overall: PreflightOverall;
+  summary: string;
+
+  checks: {
+    bodyExpectations?: BodyExpectationsCheck;
+    contradictions?: ContradictionsCheck;
+    crossSectionConsistency?: CrossSectionCheck;
+    approvedBaselineCompare?: ApprovedBaselineCheck;
+    readiness?: ReadinessCheck;
+  };
+
+  recommendedActions: Array<{
+    id: PreflightActionId;
+    label: string;
+    reason: string;
+  }>;
+}
+
+// ─── Module + Dossier Preflight (Pass 6) ─────────────────────────────────────
+
+export type ModulePreflightActionId =
+  | 'open-blocked-section'
+  | 'prepare-correction-draft'
+  | 'harmonize-linked-sections'
+  | 'gather-body-evidence'
+  | 'compare-approved'
+  | 'run-section-preflight'
+  | 'promote-module-when-clean';
+
+export type PreflightBlockerKind =
+  | 'body-gap'
+  | 'contradiction'
+  | 'cross-section-inconsistency'
+  | 'approved-baseline-conflict'
+  | 'readiness-blocker'
+  | 'missing-section'
+  | 'reapproval-required';
+
+export interface PreflightBlocker {
+  sectionCode?: string;
+  moduleCode?: string;
+  kind: PreflightBlockerKind;
+  severity: 'critical' | 'major' | 'minor' | 'info';
+  message: string;
+}
+
+export interface ModulePreflightResult {
+  moduleCode: string;
+  regulatorBody?: string;
+  submissionType?: string;
+
+  overall: PreflightOverall;
+  summary: string;
+
+  sectionResults: SectionPreflightResult[];
+
+  counts: {
+    total: number;
+    ready: number;
+    blocked: number;
+    provisional: number;
+    needsReview: number;
+    needsReapproval: number;
+  };
+
+  majorBlockers: PreflightBlocker[];
+
+  recommendedActions: Array<{
+    id: ModulePreflightActionId;
+    label: string;
+    reason: string;
+    targetSectionCode?: string;
+  }>;
+}
+
+export type DossierPreflightActionId =
+  | 'open-blocked-module'
+  | 'open-blocked-section'
+  | 'run-module-preflight'
+  | 'run-section-preflight'
+  | 'prepare-correction-draft'
+  | 'gather-body-evidence'
+  | 'promote-dossier-when-clean';
+
+export interface DossierPreflightResult {
+  dossierId?: string;
+  regulatorBody?: string;
+  submissionType?: string;
+
+  overall: PreflightOverall;
+  summary: string;
+
+  moduleResults: ModulePreflightResult[];
+
+  counts: {
+    totalModules: number;
+    readyModules: number;
+    blockedModules: number;
+    provisionalModules: number;
+    needsReviewModules: number;
+    needsReapprovalModules: number;
+  };
+
+  majorBlockers: PreflightBlocker[];
+
+  recommendedActions: Array<{
+    id: DossierPreflightActionId;
+    label: string;
+    reason: string;
+    targetModuleCode?: string;
+    targetSectionCode?: string;
+  }>;
+}
