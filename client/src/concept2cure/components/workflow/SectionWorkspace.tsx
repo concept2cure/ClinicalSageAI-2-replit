@@ -125,7 +125,6 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
 
   // Build issues from real contradiction data when available, fallback to props
   const issues: SectionIssue[] = useMemo(() => {
-    // If we have real contradiction data, map to SectionIssue format
     if (contradictions && contradictions.length > 0) {
       return contradictions.map(c => ({
         id: c.id,
@@ -135,9 +134,7 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
         source: 'contradiction-engine',
       }));
     }
-    // If we fetched real issues from API
     if (fetchedIssues) return fetchedIssues;
-    // Fallback to prop issues (may be empty)
     return propIssues || [];
   }, [contradictions, fetchedIssues, propIssues]);
 
@@ -430,3 +427,5 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
     </div>
   );
 };
+
+export default SectionWorkspace;

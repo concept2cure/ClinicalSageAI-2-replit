@@ -259,6 +259,8 @@ router.post('/chat', async (req: Request, res: Response) => {
         detectedIntent: orchestration.detectedIntent,
         detectedSubmissionType: orchestration.detectedSubmissionType,
         appliedRole: orchestration.appliedRole,
+        activeWorkstream: orchestration.activeWorkstream,
+        workstreamHandoff: orchestration.workstreamHandoff,
         suggestedActions: orchestration.suggestedActions,
         meta: orchestration.orchestrationMeta,
       },

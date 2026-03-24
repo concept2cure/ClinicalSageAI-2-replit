@@ -287,7 +287,50 @@ interface AnaRIOrchestration {
   detectedIntent: { lens: IntentLens; confidence: number; signals: string[] };
   detectedSubmissionType: string | null;
   appliedRole: string;
+  activeWorkstream?: {
+    stream: string;
+    phase: string;
+    objective: string;
+    currentFocus?: string;
+    blockers?: string[];
+    nextStep?: string;
+    collaborationMode?: 'drive' | 'coauthor' | 'advise';
+  };
+  workstreamHandoff?: {
+    from: string;
+    to: string;
+    carryForward: string[];
+    openLoops: string[];
+    transitionReason: string;
+  } | null;
   suggestedActions: string[];
+  meta?: {
+    workstreamContextInjected?: boolean;
+    workstreamHandoffInjected?: boolean;
+  };
+}
+
+function normalizeOrchestrationPayload(payload: any): AnaRIOrchestration | null {
+  if (payload?.orchestration) {
+    return payload.orchestration as AnaRIOrchestration;
+  }
+
+  if (payload?.intelligence) {
+    return {
+      detectedIntent: {
+        lens: payload.intelligence.intent || 'auto',
+        confidence: payload.intelligence.intentConfidence || 0,
+        signals: [],
+      },
+      detectedSubmissionType: payload.intelligence.submissionType || null,
+      appliedRole: payload.intelligence.role || 'general',
+      activeWorkstream: payload.intelligence.activeWorkstream,
+      workstreamHandoff: payload.intelligence.workstreamHandoff || null,
+      suggestedActions: payload.intelligence.suggestedActions || [],
+    };
+  }
+
+  return null;
 }
 
 type DocumentActionType =
@@ -936,6 +979,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             }
           }
           data = await response.json();
+
+          const normalizedOrchestration = normalizeOrchestrationPayload(data);
+          if (normalizedOrchestration) {
+            setLastOrchestration(normalizedOrchestration);
+          }
 
           // Capture thread_id for conversation continuity
           if (data.thread_id) {
@@ -1667,6 +1715,63 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                 {lastOrchestration.detectedIntent.lens !== 'auto' &&
                                   ` | ${lastOrchestration.detectedIntent.lens} lens`}
                               </p>
+                            )}
+                            {lastOrchestration.activeWorkstream && (
+                              <div className="mt-2 rounded-lg border border-[#E8E6DC] bg-[#FAF9F5] px-3 py-2">
+                                <p className="text-[10px] font-medium text-[#8A877D] uppercase tracking-wide">
+                                  Active Workstream
+                                </p>
+                                <p className="mt-1 text-[12px] text-[#4D4B45]">
+                                  <span className="font-medium">
+                                    {lastOrchestration.activeWorkstream.stream.replace(/_/g, ' ')}
+                                  </span>
+                                  {' · '}
+                                  {lastOrchestration.activeWorkstream.phase}
+                                  {lastOrchestration.activeWorkstream.collaborationMode && (
+                                    <>
+                                      {' · '}
+                                      {lastOrchestration.activeWorkstream.collaborationMode}
+                                    </>
+                                  )}
+                                </p>
+                                {lastOrchestration.activeWorkstream.currentFocus && (
+                                  <p className="mt-1 text-[11px] text-[#6B6962]">
+                                    Focus: {lastOrchestration.activeWorkstream.currentFocus}
+                                  </p>
+                                )}
+                                {lastOrchestration.activeWorkstream.nextStep && (
+                                  <p className="mt-1 text-[11px] text-[#6B6962]">
+                                    Next: {lastOrchestration.activeWorkstream.nextStep}
+                                  </p>
+                                )}
+                                {lastOrchestration.activeWorkstream.blockers &&
+                                  lastOrchestration.activeWorkstream.blockers.length > 0 && (
+                                    <p className="mt-1 text-[11px] text-[#8A877D]">
+                                      Blockers:{' '}
+                                      {lastOrchestration.activeWorkstream.blockers.join(' | ')}
+                                    </p>
+                                  )}
+                              </div>
+                            )}
+                            {lastOrchestration.workstreamHandoff && (
+                              <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+                                <p className="text-[10px] font-medium text-amber-700 uppercase tracking-wide">
+                                  Workstream Handoff
+                                </p>
+                                <p className="mt-1 text-[11px] text-amber-900">
+                                  {lastOrchestration.workstreamHandoff.from.replace(/_/g, ' ')} to{' '}
+                                  {lastOrchestration.workstreamHandoff.to.replace(/_/g, ' ')}
+                                </p>
+                                <p className="mt-1 text-[11px] text-amber-800">
+                                  {lastOrchestration.workstreamHandoff.transitionReason}
+                                </p>
+                                {lastOrchestration.workstreamHandoff.openLoops.length > 0 && (
+                                  <p className="mt-1 text-[11px] text-amber-800">
+                                    Open loops:{' '}
+                                    {lastOrchestration.workstreamHandoff.openLoops.join(' | ')}
+                                  </p>
+                                )}
+                              </div>
                             )}
                           </div>
                         )}

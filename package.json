@@ -35,7 +35,7 @@
     "typecheck": "NODE_OPTIONS=\"--max-old-space-size=6144\" tsc --noEmit",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern scripts --ignore-pattern server/middleware/_archived --ignore-pattern client/src --ignore-pattern client/src/components/_deprecated --ignore-pattern client/src/pages/clean_temp.jsx --ignore-pattern client/src/pages/full_backup.jsx --ignore-pattern tests/integration/api/vault.test.js --ignore-pattern server/events/eventBus.js --ignore-pattern server/routes/fda510k-routes.ts --ignore-pattern server/routes/vault-dms.js --ignore-pattern server/services/pdfGenerator.js",
     "lint:fix": "eslint . --fix --ignore-pattern dist --ignore-pattern scripts --ignore-pattern server/middleware/_archived --ignore-pattern client/src --ignore-pattern client/src/components/_deprecated --ignore-pattern client/src/pages/clean_temp.jsx --ignore-pattern client/src/pages/full_backup.jsx --ignore-pattern tests/integration/api/vault.test.js --ignore-pattern server/events/eventBus.js --ignore-pattern server/routes/fda510k-routes.ts --ignore-pattern server/routes/vault-dms.js --ignore-pattern server/services/pdfGenerator.js",
-    "test": "jest --config scripts/jest.config.js && vitest run --config vitest.config.ts",
+    "test": "jest --config scripts/jest.config.js && NODE_OPTIONS=\"--max-old-space-size=4096\" vitest run --config vitest.config.ts",
     "ci:ban-new-pool": "bash scripts/ci/ban-new-pool.sh",
     "db:push": "drizzle-kit push",
     "db:seed": "node scripts/seed-ga-demo.mjs",
@@ -204,7 +204,6 @@
     "react-heatmap-grid": "^0.9.1",
     "react-highlight-words": "^0.20.0",
     "react-hook-form": "^7.53.1",
-    "react-icons": "^5.4.0",
     "react-resizable-panels": "^2.1.4",
     "react-toastify": "11.0.5",
     "react-window": "^1.8.10",
@@ -279,7 +278,6 @@
     "tar": "7.5.7"
   },
   "optionalDependencies": {
-    "@tensorflow/tfjs-node": "^4.22.0",
     "bufferutil": "^4.0.8",
     "pino": "^8.18.0"
   }

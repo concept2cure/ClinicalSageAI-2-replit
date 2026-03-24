@@ -701,6 +701,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
     // ── RESPONSE (backward compat + provenance chain) ──────────────────
     res.json({
       answer: assistantMessage,
+      response: assistantMessage,
       thread_id: threadId,
       usage,
       model,
@@ -719,6 +720,15 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       snapshotHashSha256,
       generationRunId,
       claims,
+      orchestration: {
+        detectedIntent: orchestratorResult.detectedIntent,
+        detectedSubmissionType: orchestratorResult.detectedSubmissionType,
+        appliedRole: orchestratorResult.appliedRole,
+        activeWorkstream: orchestratorResult.activeWorkstream,
+        workstreamHandoff: orchestratorResult.workstreamHandoff,
+        suggestedActions: orchestratorResult.suggestedActions,
+        meta: orchestratorResult.orchestrationMeta,
+      },
       // AnA 1.0 RI — Executed guidance actions
       executedActions: executedActions.length > 0 ? executedActions : undefined,
     });

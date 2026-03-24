@@ -220,9 +220,7 @@ const IntelligentReportGenerator = lazy(
 
 // [BATCH 1 DELETED] AnaDashboard
 
-const SafetyNarrativePage = lazy(() =>
-  import('./pages/SafetyNarrative')
-);
+const SafetyNarrativePage = lazy(() => import('./pages/SafetyNarrative'));
 
 // [BATCH 3] AnaPlatformControlPage — demoted, redirect to projects
 
@@ -234,7 +232,9 @@ const ProjectKnowledgePanel = lazy(() =>
 
 // ─── Unified workflow components ─────────────────────────────────────────────
 const ProjectHomeDashboard = lazy(() =>
-  import('./components/workflow/ProjectHomeDashboard').then(m => ({ default: m.ProjectHomeDashboard }))
+  import('./components/workflow/ProjectHomeDashboard').then(m => ({
+    default: m.ProjectHomeDashboard,
+  }))
 );
 const DossierMap = lazy(() =>
   import('./components/workflow/DossierMap').then(m => ({ default: m.DossierMap }))
@@ -243,13 +243,15 @@ const SectionWorkspace = lazy(() =>
   import('./components/workflow/SectionWorkspace').then(m => ({ default: m.SectionWorkspace }))
 );
 const SubmissionReadinessView = lazy(() =>
-  import('./components/workflow/SubmissionReadiness').then(m => ({ default: m.SubmissionReadiness }))
+  import('./components/workflow/SubmissionReadiness').then(m => ({
+    default: m.SubmissionReadiness,
+  }))
 );
 
 // ─── New intent-organized workspace lazy loads ──────────────────────────────
 // [BATCH 1 DELETED] IntelligenceHub
-const RegulatoryPrecedentIntelligence = lazy(() =>
-  import('./pages/RegulatoryPrecedentIntelligence')
+const RegulatoryPrecedentIntelligence = lazy(
+  () => import('./pages/RegulatoryPrecedentIntelligence')
 );
 const ReviewReadiness = lazy(() =>
   import('./pages/ReviewReadiness').then(m => ({ default: m.ReviewReadiness }))
@@ -270,9 +272,7 @@ const BiostatPlatformDashboard = lazy(
 );
 
 // AnA Biostats Panel — structured input, computation, judgment, governed documents
-const AnaBiostatsPanel = lazy(
-  () => import('@/concept2cure/components/biostats/AnaBiostatsPanel')
-);
+const AnaBiostatsPanel = lazy(() => import('@/concept2cure/components/biostats/AnaBiostatsPanel'));
 
 // [BATCH 3] TrainingManagementPage — demoted, redirect to projects
 // [BATCH 1 DELETED] IntegrationsPage
@@ -356,29 +356,69 @@ type LayoutMode =
   | 'report-engine'
   | 'safety-narrative'
   // ── Compatibility redirects (redirect on mount, no renderer) ──
-  | 'workspace'        // → regulatory-workspace
-  | 'assistant'        // → regulatory-workspace
-  | 'ctd'              // → regulatory-workspace
+  | 'workspace' // → regulatory-workspace
+  | 'assistant' // → regulatory-workspace
+  | 'ctd' // → regulatory-workspace
   | 'medtech-dashboard' // → regulatory-workspace
-  | 'dossier'          // → regulatory-workspace
+  | 'dossier' // → regulatory-workspace
   // ── Demoted modes (redirect to projects or documents via DEMOTED_REDIRECTS) ──
-  | 'mission-control' | 'snowglobe' | 'snowglobe-chambers' | 'rules'
-  | 'ectd-coauthor' | 'cmc' | 'document-vault' | 'clinical-trial' | 'templates'
-  | 'sherpa' | 'analytics' | 'timeline' | 'audit'
-  | 'enablement-center' | 'platform-admin' | 'biologics-dashboard'
-  | 'ctd-onboarding' | 'client-intelligence' | 'collaboration-hub'
-  | 'user-inbox' | 'client-branding' | 'training-center' | 'client-onboarding'
-  | 'knowledge-base' | 'project-knowledge' | 'artifacts' | 'document-builder'
+  | 'mission-control'
+  | 'snowglobe'
+  | 'snowglobe-chambers'
+  | 'rules'
+  | 'ectd-coauthor'
+  | 'cmc'
+  | 'document-vault'
+  | 'clinical-trial'
+  | 'templates'
+  | 'sherpa'
+  | 'analytics'
+  | 'timeline'
+  | 'audit'
+  | 'enablement-center'
+  | 'platform-admin'
+  | 'biologics-dashboard'
+  | 'ctd-onboarding'
+  | 'client-intelligence'
+  | 'collaboration-hub'
+  | 'user-inbox'
+  | 'client-branding'
+  | 'training-center'
+  | 'client-onboarding'
+  | 'knowledge-base'
+  | 'project-knowledge'
+  | 'artifacts'
+  | 'document-builder'
   | 'ana-platform-control'
   // ── Legacy batch-1 modes (kept for type safety only) ──
-  | 'ind-workspace' | 'submission-workspace' | 'author' | 'intelligence-hub'
-  | 'command-center' | 'legal-center' | 'about-training' | 'ana-dashboard' | 'integrations'
+  | 'ind-workspace'
+  | 'submission-workspace'
+  | 'author'
+  | 'intelligence-hub'
+  | 'command-center'
+  | 'legal-center'
+  | 'about-training'
+  | 'ana-dashboard'
+  | 'integrations'
   // ── Unused MissionControl sub-modes (no renderer, no redirect needed) ──
-  | 'intelligence-feed' | 'gap-analysis' | 'change-impact' | 'ana-memory'
-  | 'artifact-graph' | 'review-center' | 'dossier-view' | 'risk-cockpit'
-  | 'route-planner' | 'evidence-manager' | 'decision-log' | 'authority-tracker'
-  | 'provenance-trail' | 'notifications' | 'program-wizard' | 'task-board'
-  | 'team-workspace' | 'program-analytics';
+  | 'intelligence-feed'
+  | 'gap-analysis'
+  | 'change-impact'
+  | 'ana-memory'
+  | 'artifact-graph'
+  | 'review-center'
+  | 'dossier-view'
+  | 'risk-cockpit'
+  | 'route-planner'
+  | 'evidence-manager'
+  | 'decision-log'
+  | 'authority-tracker'
+  | 'provenance-trail'
+  | 'notifications'
+  | 'program-wizard'
+  | 'task-board'
+  | 'team-workspace'
+  | 'program-analytics';
 
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
@@ -425,7 +465,11 @@ const TOOL_PANELS: Record<
 > = {
   ectd: { title: 'eCTD Navigator', icon: Folder, component: 'ECTDNavigator' },
   protocol: { title: 'Protocol Designer', icon: ClipboardList, component: 'StudyProtocolDesigner' },
-  intelligence: { title: 'Regulatory Intelligence', icon: Globe, component: 'RegulatoryIntelligence' },
+  intelligence: {
+    title: 'Regulatory Intelligence',
+    icon: Globe,
+    component: 'RegulatoryIntelligence',
+  },
   vault: { title: 'Document Vault', icon: FileText, component: 'VaultBrowser' },
   'doc-editor': { title: 'Document Editor', icon: PenLine, component: 'EditorPanel' },
   'ana-biostats': { title: 'AnA Biostats', icon: FlaskConical, component: 'AnaBiostatsPanel' },
@@ -433,7 +477,11 @@ const TOOL_PANELS: Record<
   sop: { title: 'SOP Management', icon: BookOpen, component: 'SOPManagement' },
   capa: { title: 'CAPA Management', icon: AlertTriangle, component: 'CAPAManagement' },
   pms: { title: 'Post-Market Surveillance', icon: BarChart2, component: 'PostMarketSurveillance' },
-  inspection: { title: 'Inspection Readiness', icon: CheckSquare, component: 'InspectionReadiness' },
+  inspection: {
+    title: 'Inspection Readiness',
+    icon: CheckSquare,
+    component: 'InspectionReadiness',
+  },
 };
 
 // Helper to get project color by type
@@ -571,8 +619,11 @@ export const ZenApp: React.FC = () => {
   const urlModuleSegment = (routeParams as Record<string, string> | null)?.['rest*'] ?? null; // e.g. '510k', 'pma'
   const embedModulesEnabled = isFeatureEnabled('EMBED_MODULES_IN_SHELL');
   const embeddedModule =
-    embedModulesEnabled && urlModuleSegment === '510k' ? '510k' :
-    embedModulesEnabled && urlModuleSegment === 'pma' ? 'pma' : null;
+    embedModulesEnabled && urlModuleSegment === '510k'
+      ? '510k'
+      : embedModulesEnabled && urlModuleSegment === 'pma'
+        ? 'pma'
+        : null;
 
   // ─────────────────────────────────────────────────────────────────────────────
   // DATA HOOKS (Connected to Cortex + Data Layer)
@@ -758,22 +809,22 @@ export const ZenApp: React.FC = () => {
     const DEMOTED_REDIRECTS: Partial<Record<LayoutMode, LayoutMode>> = {
       // MissionControl + SnowGlobe worlds
       'mission-control': 'projects',
-      'snowglobe': 'projects',
+      snowglobe: 'projects',
       'snowglobe-chambers': 'projects',
-      'rules': 'projects',
+      rules: 'projects',
       // Standalone authoring / specialist modules → documents
       'ectd-coauthor': 'documents',
-      'cmc': 'documents',
+      cmc: 'documents',
       'document-vault': 'documents',
       'clinical-trial': 'documents',
-      'templates': 'documents',
+      templates: 'documents',
       'document-builder': 'documents',
-      'artifacts': 'documents',
+      artifacts: 'documents',
       // Demoted SaaS-catalog destinations → projects
-      'sherpa': 'projects',
-      'analytics': 'projects',
-      'timeline': 'projects',
-      'audit': 'projects',
+      sherpa: 'projects',
+      analytics: 'projects',
+      timeline: 'projects',
+      audit: 'projects',
       'enablement-center': 'projects',
       'platform-admin': 'projects',
       'biologics-dashboard': 'projects',
@@ -1703,9 +1754,6 @@ export const ZenApp: React.FC = () => {
             case 'agents':
               setLayoutMode('regulatory-workspace');
               break;
-            case 'tools':
-              setActiveToolPanel('intelligence');
-              break;
             case 'evidence-search':
               setCommandPaletteOpen(true);
               break;
@@ -1782,16 +1830,45 @@ export const ZenApp: React.FC = () => {
               // If it's a known LayoutMode string, set it (useEffect will redirect).
               // Otherwise ignore.
               const knownModes: string[] = [
-                'mission-control', 'snowglobe', 'snowglobe-chambers', 'rules',
-                'ectd-coauthor', 'cmc', 'document-vault', 'clinical-trial', 'templates',
-                'sherpa', 'analytics', 'timeline', 'audit',
-                'enablement-center', 'platform-admin', 'biologics-dashboard',
-                'ctd-onboarding', 'client-intelligence', 'collaboration-hub',
-                'user-inbox', 'client-branding', 'training-center', 'client-onboarding',
-                'knowledge-base', 'project-knowledge', 'artifacts', 'document-builder',
-                'ana-platform-control', 'author', 'ind-workspace', 'submission-workspace',
-                'intelligence-hub', 'command-center', 'legal-center', 'about-training',
-                'ana-dashboard', 'integrations', 'agents', 'tasks',
+                'mission-control',
+                'snowglobe',
+                'snowglobe-chambers',
+                'rules',
+                'ectd-coauthor',
+                'cmc',
+                'document-vault',
+                'clinical-trial',
+                'templates',
+                'sherpa',
+                'analytics',
+                'timeline',
+                'audit',
+                'enablement-center',
+                'platform-admin',
+                'biologics-dashboard',
+                'ctd-onboarding',
+                'client-intelligence',
+                'collaboration-hub',
+                'user-inbox',
+                'client-branding',
+                'training-center',
+                'client-onboarding',
+                'knowledge-base',
+                'project-knowledge',
+                'artifacts',
+                'document-builder',
+                'ana-platform-control',
+                'author',
+                'ind-workspace',
+                'submission-workspace',
+                'intelligence-hub',
+                'command-center',
+                'legal-center',
+                'about-training',
+                'ana-dashboard',
+                'integrations',
+                'agents',
+                'tasks',
               ];
               if (knownModes.includes(id)) {
                 setLayoutMode(id as LayoutMode);
@@ -1918,9 +1995,7 @@ export const ZenApp: React.FC = () => {
               )}
 
               {moduleAssistantOpen && (
-                <div
-                  className="flex-shrink-0 w-[380px] flex flex-col border-l border-zinc-200 bg-white"
-                >
+                <div className="flex-shrink-0 w-[380px] flex flex-col border-l border-zinc-200 bg-white">
                   <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100 bg-zinc-50">
                     <span className="text-sm font-medium text-zinc-700">AI Assistant</span>
                     <button
@@ -1954,14 +2029,6 @@ export const ZenApp: React.FC = () => {
           {/* [BATCH 3] Removed: timeline, audit, mission-control, snowglobe, snowglobe-chambers */}
           {/* [BATCH 1] Removed: about-training, ind-workspace, medtech-dashboard */}
 
-
-
-
-
-
-
-
-
           {/* ── Review & Readiness — quality, compliance, stress-testing ── */}
           {!embeddedModule && layoutMode === 'review-readiness' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-review-readiness">
@@ -1978,13 +2045,6 @@ export const ZenApp: React.FC = () => {
               </ErrorBoundary>
             </div>
           )}
-
-
-
-
-
-
-
 
           {/* ── Biostatistics Platform — power, endpoints, design ── */}
           {!embeddedModule && layoutMode === 'biostatistics' && (
@@ -2020,12 +2080,7 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
-
-
-
-
           {/* ── Legal Center — IP, contracts, regulatory law ── */}
-
 
           {/* ── Intelligent Report Engine — immutable records, atom provenance, quasi-indemnification ── */}
           {!embeddedModule && layoutMode === 'report-engine' && (
@@ -2045,17 +2100,31 @@ export const ZenApp: React.FC = () => {
           {/* ── Safety Narrative — ICH E3 §12 compliant narrative generation ── */}
           {!embeddedModule && layoutMode === 'safety-narrative' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-safety-narrative">
-              <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-zinc-300" /></div>}>
+              <Suspense
+                fallback={
+                  <div className="flex-1 flex items-center justify-center">
+                    <Loader2 className="w-5 h-5 animate-spin text-zinc-300" />
+                  </div>
+                }
+              >
                 <SafetyNarrativePage projectId={activeProjectId} />
               </Suspense>
             </div>
           )}
 
-
           {/* Precedent Intelligence Dashboard (standalone) */}
           {layoutMode === 'precedent-intelligence' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-precedent-intelligence">
-              <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-zinc-300" /></div>}>
+            <div
+              className="flex-1 flex flex-col min-h-0"
+              data-testid="workspace-precedent-intelligence"
+            >
+              <Suspense
+                fallback={
+                  <div className="flex-1 flex items-center justify-center">
+                    <Loader2 className="w-5 h-5 animate-spin text-zinc-300" />
+                  </div>
+                }
+              >
                 <PrecedentIntelligenceDashboard
                   onNavigateToEditor={() => setLayoutMode('regulatory-workspace')}
                 />
@@ -2064,9 +2133,9 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* Redirect deprecated routes to unified workspace */}
-          {['workspace', 'medtech-dashboard', 'dossier'].includes(
-            layoutMode
-          ) && <RedirectToWorkspace onRedirect={() => setLayoutMode('regulatory-workspace')} />}
+          {['workspace', 'medtech-dashboard', 'dossier'].includes(layoutMode) && (
+            <RedirectToWorkspace onRedirect={() => setLayoutMode('regulatory-workspace')} />
+          )}
 
           {/* ── Project Workspace (3-pane: tree | content | inspector) ───── */}
           {!embeddedModule &&
@@ -2205,7 +2274,7 @@ export const ZenApp: React.FC = () => {
               <DossierMap
                 projectName={activeProject?.name}
                 projectType={activeProject?.type}
-                onSectionClick={(sectionCode) => {
+                onSectionClick={sectionCode => {
                   setActiveSectionCode(sectionCode);
                   setLayoutMode('section-workspace');
                 }}
@@ -2245,7 +2314,7 @@ export const ZenApp: React.FC = () => {
               <SubmissionReadinessView
                 projectName={activeProject?.name}
                 projectType={activeProject?.type}
-                onSectionClick={(sectionCode) => {
+                onSectionClick={sectionCode => {
                   setActiveSectionCode(sectionCode);
                   setLayoutMode('section-workspace');
                 }}
@@ -2262,35 +2331,160 @@ export const ZenApp: React.FC = () => {
                 section={(() => {
                   // Resolve section metadata from active section code
                   const code = activeSectionCode || '2.5';
-                  const SECTION_LOOKUP: Record<string, { title: string; module: string; status: 'not-started' | 'drafting' | 'in-review' | 'approved' | 'blocked' | 'locked' }> = {
-                    '1.1': { title: 'Forms', module: 'Module 1 — Administrative', status: 'approved' },
-                    '1.2': { title: 'Cover Letter', module: 'Module 1 — Administrative', status: 'approved' },
-                    '1.3.1': { title: 'Form FDA 1571', module: 'Module 1 — Administrative', status: 'approved' },
-                    '1.3.2': { title: 'Form FDA 1572', module: 'Module 1 — Administrative', status: 'drafting' },
-                    '1.3.3': { title: 'Financial Disclosure', module: 'Module 1 — Administrative', status: 'not-started' },
-                    '2.2': { title: 'Introduction', module: 'Module 2 — CTD Summaries', status: 'drafting' },
-                    '2.3': { title: 'Quality Overall Summary', module: 'Module 2 — CTD Summaries', status: 'not-started' },
-                    '2.4': { title: 'Nonclinical Overview', module: 'Module 2 — CTD Summaries', status: 'not-started' },
-                    '2.5': { title: 'Clinical Overview', module: 'Module 2 — CTD Summaries', status: 'drafting' },
-                    '2.6.1': { title: 'Pharmacology', module: 'Module 2 — CTD Summaries', status: 'not-started' },
-                    '2.6.2': { title: 'Pharmacokinetics', module: 'Module 2 — CTD Summaries', status: 'not-started' },
-                    '2.6.3': { title: 'Toxicology', module: 'Module 2 — CTD Summaries', status: 'not-started' },
-                    '2.7.1': { title: 'Biopharmaceutic Studies', module: 'Module 2 — CTD Summaries', status: 'not-started' },
-                    '2.7.2': { title: 'Clinical Pharmacology', module: 'Module 2 — CTD Summaries', status: 'not-started' },
-                    '2.7.3': { title: 'Clinical Efficacy', module: 'Module 2 — CTD Summaries', status: 'drafting' },
-                    '2.7.4': { title: 'Clinical Safety', module: 'Module 2 — CTD Summaries', status: 'not-started' },
-                    '2.7.5': { title: 'Literature References', module: 'Module 2 — CTD Summaries', status: 'not-started' },
-                    '2.7.6': { title: 'Synopses', module: 'Module 2 — CTD Summaries', status: 'not-started' },
-                    '3.2.S': { title: 'Drug Substance', module: 'Module 3 — Quality', status: 'in-review' },
-                    '3.2.P': { title: 'Drug Product', module: 'Module 3 — Quality', status: 'in-review' },
-                    '3.2.A': { title: 'Appendices', module: 'Module 3 — Quality', status: 'not-started' },
-                    '3.2.R': { title: 'Regional Information', module: 'Module 3 — Quality', status: 'not-started' },
-                    '4.2.1': { title: 'Pharmacology', module: 'Module 4 — Nonclinical', status: 'not-started' },
-                    '4.2.2': { title: 'Pharmacokinetics', module: 'Module 4 — Nonclinical', status: 'not-started' },
-                    '4.2.3': { title: 'Toxicology', module: 'Module 4 — Nonclinical', status: 'not-started' },
-                    '5.2': { title: 'Tabular Listing of Studies', module: 'Module 5 — Clinical', status: 'not-started' },
-                    '5.3': { title: 'Clinical Study Reports', module: 'Module 5 — Clinical', status: 'blocked' },
-                    '5.4': { title: 'Literature References', module: 'Module 5 — Clinical', status: 'not-started' },
+                  const SECTION_LOOKUP: Record<
+                    string,
+                    {
+                      title: string;
+                      module: string;
+                      status:
+                        | 'not-started'
+                        | 'drafting'
+                        | 'in-review'
+                        | 'approved'
+                        | 'blocked'
+                        | 'locked';
+                    }
+                  > = {
+                    '1.1': {
+                      title: 'Forms',
+                      module: 'Module 1 — Administrative',
+                      status: 'approved',
+                    },
+                    '1.2': {
+                      title: 'Cover Letter',
+                      module: 'Module 1 — Administrative',
+                      status: 'approved',
+                    },
+                    '1.3.1': {
+                      title: 'Form FDA 1571',
+                      module: 'Module 1 — Administrative',
+                      status: 'approved',
+                    },
+                    '1.3.2': {
+                      title: 'Form FDA 1572',
+                      module: 'Module 1 — Administrative',
+                      status: 'drafting',
+                    },
+                    '1.3.3': {
+                      title: 'Financial Disclosure',
+                      module: 'Module 1 — Administrative',
+                      status: 'not-started',
+                    },
+                    '2.2': {
+                      title: 'Introduction',
+                      module: 'Module 2 — CTD Summaries',
+                      status: 'drafting',
+                    },
+                    '2.3': {
+                      title: 'Quality Overall Summary',
+                      module: 'Module 2 — CTD Summaries',
+                      status: 'not-started',
+                    },
+                    '2.4': {
+                      title: 'Nonclinical Overview',
+                      module: 'Module 2 — CTD Summaries',
+                      status: 'not-started',
+                    },
+                    '2.5': {
+                      title: 'Clinical Overview',
+                      module: 'Module 2 — CTD Summaries',
+                      status: 'drafting',
+                    },
+                    '2.6.1': {
+                      title: 'Pharmacology',
+                      module: 'Module 2 — CTD Summaries',
+                      status: 'not-started',
+                    },
+                    '2.6.2': {
+                      title: 'Pharmacokinetics',
+                      module: 'Module 2 — CTD Summaries',
+                      status: 'not-started',
+                    },
+                    '2.6.3': {
+                      title: 'Toxicology',
+                      module: 'Module 2 — CTD Summaries',
+                      status: 'not-started',
+                    },
+                    '2.7.1': {
+                      title: 'Biopharmaceutic Studies',
+                      module: 'Module 2 — CTD Summaries',
+                      status: 'not-started',
+                    },
+                    '2.7.2': {
+                      title: 'Clinical Pharmacology',
+                      module: 'Module 2 — CTD Summaries',
+                      status: 'not-started',
+                    },
+                    '2.7.3': {
+                      title: 'Clinical Efficacy',
+                      module: 'Module 2 — CTD Summaries',
+                      status: 'drafting',
+                    },
+                    '2.7.4': {
+                      title: 'Clinical Safety',
+                      module: 'Module 2 — CTD Summaries',
+                      status: 'not-started',
+                    },
+                    '2.7.5': {
+                      title: 'Literature References',
+                      module: 'Module 2 — CTD Summaries',
+                      status: 'not-started',
+                    },
+                    '2.7.6': {
+                      title: 'Synopses',
+                      module: 'Module 2 — CTD Summaries',
+                      status: 'not-started',
+                    },
+                    '3.2.S': {
+                      title: 'Drug Substance',
+                      module: 'Module 3 — Quality',
+                      status: 'in-review',
+                    },
+                    '3.2.P': {
+                      title: 'Drug Product',
+                      module: 'Module 3 — Quality',
+                      status: 'in-review',
+                    },
+                    '3.2.A': {
+                      title: 'Appendices',
+                      module: 'Module 3 — Quality',
+                      status: 'not-started',
+                    },
+                    '3.2.R': {
+                      title: 'Regional Information',
+                      module: 'Module 3 — Quality',
+                      status: 'not-started',
+                    },
+                    '4.2.1': {
+                      title: 'Pharmacology',
+                      module: 'Module 4 — Nonclinical',
+                      status: 'not-started',
+                    },
+                    '4.2.2': {
+                      title: 'Pharmacokinetics',
+                      module: 'Module 4 — Nonclinical',
+                      status: 'not-started',
+                    },
+                    '4.2.3': {
+                      title: 'Toxicology',
+                      module: 'Module 4 — Nonclinical',
+                      status: 'not-started',
+                    },
+                    '5.2': {
+                      title: 'Tabular Listing of Studies',
+                      module: 'Module 5 — Clinical',
+                      status: 'not-started',
+                    },
+                    '5.3': {
+                      title: 'Clinical Study Reports',
+                      module: 'Module 5 — Clinical',
+                      status: 'blocked',
+                    },
+                    '5.4': {
+                      title: 'Literature References',
+                      module: 'Module 5 — Clinical',
+                      status: 'not-started',
+                    },
                   };
                   const found = SECTION_LOOKUP[code];
                   return {
