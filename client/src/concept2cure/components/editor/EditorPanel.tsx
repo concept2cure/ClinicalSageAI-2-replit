@@ -20,6 +20,7 @@ import {
   ChevronDown,
   Check,
   AlertCircle,
+  Shield,
   ShieldCheck,
   AlertTriangle,
   CheckCircle,

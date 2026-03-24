@@ -49,7 +49,7 @@ const loginLimiter = rateLimit({
     success: false,
     error: { code: 'RATE_LIMIT', message: 'Too many login attempts. Please try again later.' },
   },
-  keyGenerator: req => req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown',
+  validate: { xForwardedForHeader: false },
 });
 
 /** Signup: 5 per hour per IP */
@@ -62,7 +62,7 @@ const signupLimiter = rateLimit({
     success: false,
     error: { code: 'RATE_LIMIT', message: 'Too many signup attempts. Please try again later.' },
   },
-  keyGenerator: req => req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown',
+  validate: { xForwardedForHeader: false },
 });
 
 /** Password reset: 5 per hour per IP */
@@ -78,7 +78,7 @@ const passwordResetLimiter = rateLimit({
       message: 'Too many password reset requests. Please try again later.',
     },
   },
-  keyGenerator: req => req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown',
+  validate: { xForwardedForHeader: false },
 });
 
 /** MFA verify: 10 per 15 minutes per IP */
@@ -91,7 +91,7 @@ const mfaLimiter = rateLimit({
     success: false,
     error: { code: 'RATE_LIMIT', message: 'Too many MFA attempts. Please try again later.' },
   },
-  keyGenerator: req => req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown',
+  validate: { xForwardedForHeader: false },
 });
 
 // Development auth bypass fully removed — all authentication is enforced.

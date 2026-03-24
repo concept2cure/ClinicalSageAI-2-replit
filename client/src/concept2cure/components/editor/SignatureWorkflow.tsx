@@ -90,11 +90,7 @@ export interface SignatureListProps {
 
 type SignerRole = 'Author' | 'Reviewer' | 'Approver' | 'QA';
 type SignerStatus = 'pending' | 'signed' | 'rejected';
-type SignatureMeaning =
-  | 'authorship'
-  | 'review'
-  | 'approval'
-  | 'acknowledgment';
+type SignatureMeaning = 'authorship' | 'review' | 'approval' | 'acknowledgment';
 
 interface SignatureRecord {
   id: string;
@@ -177,9 +173,19 @@ const STATUS_CONFIG: Record<
   SignerStatus,
   { label: string; color: string; bg: string; icon: React.ElementType }
 > = {
-  pending:  { label: 'Pending',   color: LIFECYCLE.not_started.text,  bg: LIFECYCLE.not_started.bg,  icon: Clock },
-  signed:   { label: 'Signed',    color: LIFECYCLE.approved.text,     bg: LIFECYCLE.approved.bg,     icon: CheckCircle2 },
-  rejected: { label: 'Rejected',  color: 'text-red-700',             bg: 'bg-red-50',               icon: XCircle },
+  pending: {
+    label: 'Pending',
+    color: LIFECYCLE.not_started.text,
+    bg: LIFECYCLE.not_started.bg,
+    icon: Clock,
+  },
+  signed: {
+    label: 'Signed',
+    color: LIFECYCLE.approved.text,
+    bg: LIFECYCLE.approved.bg,
+    icon: CheckCircle2,
+  },
+  rejected: { label: 'Rejected', color: 'text-red-700', bg: 'bg-red-50', icon: XCircle },
 };
 
 const ROLE_MEANING_MAP: Record<SignerRole, string> = {
@@ -198,7 +204,7 @@ async function computeSHA256(content: string): Promise<string> {
   const data = encoder.encode(content);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 // =============================================================================
@@ -238,7 +244,9 @@ export function SignatureWorkflow({
   const [signatures, setSignatures] = useState<SignatureRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSignModal, setShowSignModal] = useState(false);
-  const [showCertificate, setShowCertificate] = useState<SignatureRecord | null>(null);
+  const [showCertificate, setShowCertificate] = useState<
+    (SignatureRecord & Partial<ExistingSignature>) | null
+  >(null);
   const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null);
   const [verifying, setVerifying] = useState(false);
   const [documentHash, setDocumentHash] = useState<string>('');
@@ -257,10 +265,10 @@ export function SignatureWorkflow({
   const requiredSigners: RequiredSigner[] = useMemo(() => {
     const roles: SignerRole[] = ['Author', 'Reviewer', 'Approver', 'QA'];
 
-    return roles.map((role) => {
+    return roles.map(role => {
       const expectedMeaning = ROLE_MEANING_MAP[role];
       const match = signatures.find(
-        (s) => s.meaning === expectedMeaning && s.meaning !== 'rejection'
+        s => s.meaning === expectedMeaning && s.meaning !== 'rejection'
       );
 
       if (match) {
@@ -288,7 +296,7 @@ export function SignatureWorkflow({
   }, [signatures]);
 
   const overallStatus = useMemo(() => {
-    const signedCount = requiredSigners.filter((s) => s.status === 'signed').length;
+    const signedCount = requiredSigners.filter(s => s.status === 'signed').length;
     if (signedCount === 0) return 'unsigned';
     if (signedCount === requiredSigners.length) return 'fully_signed';
     return 'pending_signatures';
@@ -355,7 +363,7 @@ export function SignatureWorkflow({
           documentContent: hash,
           signerId: currentUser.id,
           signerName: currentUser.name,
-          signerTitle: MEANING_OPTIONS.find((m) => m.value === selectedMeaning)?.label || '',
+          signerTitle: MEANING_OPTIONS.find(m => m.value === selectedMeaning)?.label || '',
           signerOrganization: '',
           meaning: selectedMeaning,
           password,
@@ -430,7 +438,8 @@ export function SignatureWorkflow({
           setVerificationResult({
             verified: json.verified ?? true,
             message: json.verified ? 'All signatures verified' : 'Verification failed',
-            details: json.details || json.message || `Document hash: ${currentHash.substring(0, 16)}...`,
+            details:
+              json.details || json.message || `Document hash: ${currentHash.substring(0, 16)}...`,
           });
           return;
         }
@@ -440,7 +449,7 @@ export function SignatureWorkflow({
 
       // Client-side fallback: validate that all signature hashes are well-formed
       const allValid = signatures.every(
-        (sig) => sig.signature_hash && sig.signature_hash.length === 64
+        sig => sig.signature_hash && sig.signature_hash.length === 64
       );
 
       setVerificationResult({
@@ -592,7 +601,7 @@ export function SignatureWorkflow({
           {signer.status === 'signed' && signer.signatureHash && (
             <button
               onClick={() => {
-                const match = signatures.find((s) => s.id === signer.signatureId);
+                const match = signatures.find(s => s.id === signer.signatureId);
                 if (match) setShowCertificate(match);
               }}
               className="text-[11px] text-blue-600 hover:text-blue-800 transition-colors underline underline-offset-2"
@@ -674,10 +683,10 @@ export function SignatureWorkflow({
               <div className="relative">
                 <select
                   value={selectedMeaning}
-                  onChange={(e) => setSelectedMeaning(e.target.value as SignatureMeaning)}
+                  onChange={e => setSelectedMeaning(e.target.value as SignatureMeaning)}
                   className="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg bg-white appearance-none focus-visible:ring-2 outline-none focus:ring-blue-200 focus:border-blue-400 cursor-pointer"
                 >
-                  {MEANING_OPTIONS.map((opt) => (
+                  {MEANING_OPTIONS.map(opt => (
                     <option key={opt.value} value={opt.value}>
                       {opt.label}
                     </option>
@@ -696,7 +705,7 @@ export function SignatureWorkflow({
               <input
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={e => setPassword(e.target.value)}
                 placeholder="Re-enter your password to authenticate"
                 className="w-full px-3 py-2 text-sm border border-zinc-300 rounded-lg bg-white focus-visible:ring-2 outline-none focus:ring-blue-200 focus:border-blue-400"
               />
@@ -710,7 +719,7 @@ export function SignatureWorkflow({
               <input
                 type="checkbox"
                 checked={legalAck}
-                onChange={(e) => setLegalAck(e.target.checked)}
+                onChange={e => setLegalAck(e.target.checked)}
                 className="mt-0.5 w-4 h-4 rounded border-amber-300 text-amber-600 focus:ring-amber-200 focus:ring-offset-0 cursor-pointer"
               />
               <span className="text-xs text-amber-800 leading-relaxed group-hover:text-amber-900 transition-colors duration-150">
@@ -774,8 +783,7 @@ export function SignatureWorkflow({
     if (!showCertificate) return null;
 
     const sig = showCertificate;
-    const meaningLabel =
-      MEANING_OPTIONS.find((m) => m.value === sig.meaning)?.label || sig.meaning;
+    const meaningLabel = MEANING_OPTIONS.find(m => m.value === sig.meaning)?.label || sig.meaning;
 
     return (
       <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm">
@@ -800,11 +808,7 @@ export function SignatureWorkflow({
               label="Document Version"
               value={String(sig.document_version || sig.documentVersion)}
             />
-            <CertRow
-              label="Timestamp (ISO 8601)"
-              value={formatTimestampISO(sig.timestamp)}
-              mono
-            />
+            <CertRow label="Timestamp (ISO 8601)" value={formatTimestampISO(sig.timestamp)} mono />
             <CertRow
               label="Signature Hash (SHA-256)"
               value={sig.signature_hash || sig.signatureHash}
@@ -953,13 +957,11 @@ export function SignatureWorkflow({
                 <div className="space-y-2.5">
                   {[...signatures]
                     .sort(
-                      (a, b) =>
-                        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+                      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
                     )
                     .map((sig, idx) => {
                       const label =
-                        MEANING_OPTIONS.find((m) => m.value === sig.meaning)?.label ||
-                        sig.meaning;
+                        MEANING_OPTIONS.find(m => m.value === sig.meaning)?.label || sig.meaning;
 
                       return (
                         <div key={sig.id} className="relative flex items-start gap-3">
@@ -1091,32 +1093,25 @@ export function SignatureList({ documentId, signatures, loading }: SignatureList
 
   return (
     <div className="space-y-2">
-      {signatures.map((sig) => (
+      {signatures.map(sig => (
         <div
           key={sig.id}
           className={cn(
             'p-3 rounded-lg border text-xs',
-            sig.revoked
-              ? 'bg-red-50 border-red-200'
-              : 'bg-emerald-50 border-emerald-200'
+            sig.revoked ? 'bg-red-50 border-red-200' : 'bg-emerald-50 border-emerald-200'
           )}
         >
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-1.5">
               <ShieldCheck
-                className={cn(
-                  'w-3.5 h-3.5',
-                  sig.revoked ? 'text-red-500' : 'text-emerald-600'
-                )}
+                className={cn('w-3.5 h-3.5', sig.revoked ? 'text-red-500' : 'text-emerald-600')}
               />
               <span className="font-medium text-zinc-700">{sig.signerName}</span>
             </div>
             <span
               className={cn(
                 'px-1.5 py-0.5 rounded text-[10px] font-medium',
-                sig.revoked
-                  ? 'bg-red-100 text-red-700'
-                  : 'bg-emerald-100 text-emerald-700'
+                sig.revoked ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'
               )}
             >
               {sig.revoked ? 'REVOKED' : 'VALID'}
@@ -1129,8 +1124,7 @@ export function SignatureList({ documentId, signatures, loading }: SignatureList
             </div>
             <div className="flex items-center gap-1">
               <FileText className="w-3 h-3" />
-              Meaning:{' '}
-              <span className="capitalize font-medium">{sig.meaning}</span>
+              Meaning: <span className="capitalize font-medium">{sig.meaning}</span>
             </div>
             <div className="flex items-center gap-1">
               <Clock className="w-3 h-3" />

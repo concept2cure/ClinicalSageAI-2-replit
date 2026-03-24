@@ -685,8 +685,8 @@ export const ZenApp: React.FC = () => {
       region: p.region,
       lastUpdated: p.updatedAt,
       conversationCount: p.conversations?.length ?? 0,
-      starred: p.starred ?? false,
-      archived: p.archived ?? false,
+      starred: (p.metadata as any)?.starred ?? false,
+      archived: p.status === 'archived',
     }));
   }, [rawProjects]);
 
@@ -789,7 +789,7 @@ export const ZenApp: React.FC = () => {
     updateTask,
     generateMilestones,
     isGenerating: isGeneratingMilestones,
-  } = useProjectTasks(sherpaDetailProjectId || activeProjectId);
+  } = useProjectTasks(sherpaDetailProjectId || activeProjectId || '');
 
   // Run log — lightweight action execution transparency
   // NOTE: declared after activeProjectId to avoid TDZ in deps arrays
@@ -1430,7 +1430,7 @@ export const ZenApp: React.FC = () => {
       if (project) {
         await updateProjectMutation({
           ...project,
-          archived: true,
+          status: 'archived' as const,
         });
       }
     },
@@ -1451,9 +1451,10 @@ export const ZenApp: React.FC = () => {
     async (id: string) => {
       const project = rawProjects.find(p => p.id === id);
       if (project) {
+        const currentStarred = (project.metadata as any)?.starred ?? false;
         await updateProjectMutation({
           ...project,
-          starred: !project.starred,
+          metadata: { ...((project.metadata as any) || {}), starred: !currentStarred } as any,
         });
       }
     },
@@ -1992,7 +1993,7 @@ export const ZenApp: React.FC = () => {
                       projectName={activeProject?.name}
                       submissionType={activeProject?.type || '510K'}
                       threadId={activeThreadId}
-                      greeting="How can I help with your 510(k) submission?"
+                      greeting={{ text: 'How can I help with your 510(k) submission?' }}
                       onNavigate={() => {}}
                       onNewProject={() => {}}
                       onThreadChange={handleThreadChange}
@@ -2058,7 +2059,7 @@ export const ZenApp: React.FC = () => {
                       projectName={activeProject?.name}
                       submissionType="PMA"
                       threadId={activeThreadId}
-                      greeting="How can I help with your PMA submission?"
+                      greeting={{ text: 'How can I help with your PMA submission?' }}
                       onNavigate={() => {}}
                       onNewProject={() => {}}
                       onThreadChange={handleThreadChange}
@@ -2154,7 +2155,7 @@ export const ZenApp: React.FC = () => {
                   </div>
                 }
               >
-                <SafetyNarrativePage projectId={activeProjectId} />
+                <SafetyNarrativePage projectId={activeProjectId ? Number(activeProjectId) : null} />
               </Suspense>
             </div>
           )}

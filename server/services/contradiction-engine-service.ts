@@ -40,19 +40,42 @@ export type SourceClassification =
   | 'hybrid_conflict';
 
 export type ContradictionType =
-  | 'assumption_drift' | 'summary_body_tension'
-  | 'recommendation_action_inconsistency' | 'parameter_mismatch'
-  | 'factual_contradiction' | 'temporal_inconsistency'
-  | 'regulatory_discrepancy' | 'dosage_conflict'
-  | 'outcome_divergence' | 'procedural_conflict'
-  | 'superseded_information' | 'cross_jurisdictional_divergence'
-  | 'protocol_sap_inconsistency' | 'decision_action_inconsistency'
+  | 'assumption_drift'
+  | 'summary_body_tension'
+  | 'recommendation_action_inconsistency'
+  | 'parameter_mismatch'
+  | 'factual_contradiction'
+  | 'temporal_inconsistency'
+  | 'regulatory_discrepancy'
+  | 'dosage_conflict'
+  | 'outcome_divergence'
+  | 'procedural_conflict'
+  | 'superseded_information'
+  | 'cross_jurisdictional_divergence'
+  | 'protocol_sap_inconsistency'
+  | 'decision_action_inconsistency'
   | 'status_conflict';
 
 export type Severity = 'critical' | 'high' | 'medium' | 'low';
-export type AuthorityState = 'advisory_only' | 'requires_review' | 'requires_approval' | 'blocks_promotion' | 'requires_escalation';
-export type ReviewState = 'unresolved' | 'under_review' | 'reviewed' | 'approved_resolution' | 'superseded';
-export type ConsequenceType = 'contradiction_memo' | 'review_thread' | 'harmonization_rewrite' | 'assumption_supersession' | 'escalation' | 'dossier_review_attachment';
+export type AuthorityState =
+  | 'advisory_only'
+  | 'requires_review'
+  | 'requires_approval'
+  | 'blocks_promotion'
+  | 'requires_escalation';
+export type ReviewState =
+  | 'unresolved'
+  | 'under_review'
+  | 'reviewed'
+  | 'approved_resolution'
+  | 'superseded';
+export type ConsequenceType =
+  | 'contradiction_memo'
+  | 'review_thread'
+  | 'harmonization_rewrite'
+  | 'assumption_supersession'
+  | 'escalation'
+  | 'dossier_review_attachment';
 export type LLMRole = 'none' | 'explanation_only' | 'refinement' | 'primary_detection';
 export type TruthLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
@@ -149,7 +172,6 @@ const DEFAULT_CONSEQUENCE: Record<string, ConsequenceType> = {
 // ─── Service ─────────────────────────────────────────────────────────────────
 
 class ContradictionEngineService {
-
   // ═══════════════════════════════════════════════════════════════════════════
   // PART 4: CROSS-ARTIFACT CONTRADICTION DETECTION
   // ═══════════════════════════════════════════════════════════════════════════
@@ -157,11 +179,17 @@ class ContradictionEngineService {
   /**
    * Detect assumption drift: same assumption category, different values across records
    */
-  async detectAssumptionDrift(organizationId: number, projectId: number): Promise<ContradictionFinding[]> {
+  async detectAssumptionDrift(
+    organizationId: number,
+    projectId: number
+  ): Promise<ContradictionFinding[]> {
     log.info('Detecting assumption drift', { projectId });
 
     const assumptions = await assumptionRegistryService.search({
-      organizationId, projectId, status: 'active', limit: 200,
+      organizationId,
+      projectId,
+      status: 'active',
+      limit: 200,
     });
 
     const findings: ContradictionFinding[] = [];
@@ -178,7 +206,8 @@ class ContradictionEngineService {
 
       for (let i = 0; i < group.length; i++) {
         for (let j = i + 1; j < group.length; j++) {
-          const a = group[i], b = group[j];
+          const a = group[i],
+            b = group[j];
           if (a.assumedValue === b.assumedValue) continue;
 
           // Structured comparison — no LLM needed
@@ -186,10 +215,17 @@ class ContradictionEngineService {
             organizationId,
             projectId,
             sourceClassification: 'structured_record_conflict',
-            objectAType: 'assumption', objectAId: a.id, objectALabel: a.title,
-            objectBType: 'assumption', objectBId: b.id, objectBLabel: b.title,
+            objectAType: 'assumption',
+            objectAId: a.id,
+            objectALabel: a.title,
+            objectBType: 'assumption',
+            objectBId: b.id,
+            objectBLabel: b.title,
             contradictionType: 'assumption_drift',
-            severity: a.confidenceLevel === 'definitive' || b.confidenceLevel === 'definitive' ? 'high' : 'medium',
+            severity:
+              a.confidenceLevel === 'definitive' || b.confidenceLevel === 'definitive'
+                ? 'high'
+                : 'medium',
             truthHierarchyLevel: 1,
             confidenceScore: 0.9,
             confidenceLevel: 'high',
@@ -209,11 +245,17 @@ class ContradictionEngineService {
   /**
    * Detect decision/action inconsistency: approved decisions without executed artifacts
    */
-  async detectDecisionActionInconsistency(organizationId: number, projectId: number): Promise<ContradictionFinding[]> {
+  async detectDecisionActionInconsistency(
+    organizationId: number,
+    projectId: number
+  ): Promise<ContradictionFinding[]> {
     log.info('Detecting decision/action inconsistency', { projectId });
 
     const decisions = await decisionRecordService.search({
-      organizationId, projectId, actionState: 'approved', limit: 200,
+      organizationId,
+      projectId,
+      actionState: 'approved',
+      limit: 200,
     });
 
     const findings: ContradictionFinding[] = [];
@@ -230,8 +272,12 @@ class ContradictionEngineService {
             organizationId,
             projectId,
             sourceClassification: 'structured_record_conflict',
-            objectAType: 'decision', objectAId: d.id, objectALabel: d.title,
-            objectBType: 'execution_gap', objectBId: 'none', objectBLabel: 'No executed artifact',
+            objectAType: 'decision',
+            objectAId: d.id,
+            objectALabel: d.title,
+            objectBType: 'execution_gap',
+            objectBId: 'none',
+            objectBLabel: 'No executed artifact',
             contradictionType: 'decision_action_inconsistency',
             severity: daysSinceApproval > 90 ? 'high' : 'medium',
             truthHierarchyLevel: 2,
@@ -239,7 +285,8 @@ class ContradictionEngineService {
             confidenceLevel: 'high',
             title: `Decision approved but not executed: ${d.title}`,
             description: `Decision "${d.title}" was approved ${Math.round(daysSinceApproval)} days ago but has no linked executed artifact or workflow run.`,
-            deterministicRule: 'RULE: Approved decision > 30 days without execution → flag inconsistency',
+            deterministicRule:
+              'RULE: Approved decision > 30 days without execution → flag inconsistency',
             llmRole: 'none',
           });
           findings.push(finding);
@@ -253,11 +300,17 @@ class ContradictionEngineService {
   /**
    * Detect cross-jurisdictional divergence from assumptions with different regulator applicability
    */
-  async detectCrossJurisdictionalDivergence(organizationId: number, projectId: number): Promise<ContradictionFinding[]> {
+  async detectCrossJurisdictionalDivergence(
+    organizationId: number,
+    projectId: number
+  ): Promise<ContradictionFinding[]> {
     log.info('Detecting cross-jurisdictional divergence', { projectId });
 
     const assumptions = await assumptionRegistryService.search({
-      organizationId, projectId, status: 'active', limit: 200,
+      organizationId,
+      projectId,
+      status: 'active',
+      limit: 200,
     });
 
     const findings: ContradictionFinding[] = [];
@@ -275,7 +328,8 @@ class ContradictionEngineService {
 
       for (let i = 0; i < group.length; i++) {
         for (let j = i + 1; j < group.length; j++) {
-          const a = group[i], b = group[j];
+          const a = group[i],
+            b = group[j];
           const overlap = a.applicableRegulators.filter(r => b.applicableRegulators.includes(r));
           if (overlap.length > 0) continue; // Same regulators, not a divergence
 
@@ -284,8 +338,12 @@ class ContradictionEngineService {
               organizationId,
               projectId,
               sourceClassification: 'structured_record_conflict',
-              objectAType: 'assumption', objectAId: a.id, objectALabel: `${a.title} (${a.applicableRegulators.join(',')})`,
-              objectBType: 'assumption', objectBId: b.id, objectBLabel: `${b.title} (${b.applicableRegulators.join(',')})`,
+              objectAType: 'assumption',
+              objectAId: a.id,
+              objectALabel: `${a.title} (${a.applicableRegulators.join(',')})`,
+              objectBType: 'assumption',
+              objectBId: b.id,
+              objectBLabel: `${b.title} (${b.applicableRegulators.join(',')})`,
               contradictionType: 'cross_jurisdictional_divergence',
               severity: 'medium',
               truthHierarchyLevel: 1,
@@ -293,7 +351,8 @@ class ContradictionEngineService {
               confidenceLevel: 'high',
               title: `Cross-jurisdictional divergence: ${a.category}`,
               description: `Assumption "${a.title}" for ${a.applicableRegulators.join('/')} uses "${a.assumedValue}" but "${b.title}" for ${b.applicableRegulators.join('/')} uses "${b.assumedValue}".`,
-              deterministicRule: 'RULE: Same category, different regulators, different values → divergence',
+              deterministicRule:
+                'RULE: Same category, different regulators, different values → divergence',
               llmRole: 'none',
               regulatorBody: [...a.applicableRegulators, ...b.applicableRegulators].join(' vs '),
             });
@@ -309,7 +368,10 @@ class ContradictionEngineService {
   /**
    * Run full project contradiction scan (all detection types)
    */
-  async scanProject(organizationId: number, projectId: number): Promise<{
+  async scanProject(
+    organizationId: number,
+    projectId: number
+  ): Promise<{
     findings: ContradictionFinding[];
     summary: { total: number; bySeverity: Record<string, number>; byType: Record<string, number> };
   }> {
@@ -337,8 +399,16 @@ class ContradictionEngineService {
   // PART 5: OVERLAY RULES
   // ═══════════════════════════════════════════════════════════════════════════
 
-  async getOverlayRules(organizationId: number, contradictionType: string, regulatorBody?: string): Promise<OverlayRule[]> {
-    const conditions: string[] = ['organization_id = $1', 'contradiction_type = $2', 'active = true'];
+  async getOverlayRules(
+    organizationId: number,
+    contradictionType: string,
+    regulatorBody?: string
+  ): Promise<OverlayRule[]> {
+    const conditions: string[] = [
+      'organization_id = $1',
+      'contradiction_type = $2',
+      'active = true',
+    ];
     const params: (string | number)[] = [organizationId, contradictionType];
     let idx = 3;
 
@@ -347,11 +417,14 @@ class ContradictionEngineService {
       params.push(regulatorBody);
     }
 
-    const result = await pool!.query(`
+    const result = await pool!.query(
+      `
       SELECT * FROM contradiction_overlay_rules
       WHERE ${conditions.join(' AND ')}
       ORDER BY priority ASC
-    `, params);
+    `,
+      params
+    );
 
     return result.rows.map(this.mapOverlayRule);
   }
@@ -359,7 +432,8 @@ class ContradictionEngineService {
   async createOverlayRule(rule: Omit<OverlayRule, 'id'>): Promise<OverlayRule> {
     log.info('Creating overlay rule', { code: rule.ruleCode, body: rule.regulatorBody });
 
-    const result = await pool!.query(`
+    const result = await pool!.query(
+      `
       INSERT INTO contradiction_overlay_rules (
         organization_id, rule_code, rule_name, regulator_body, jurisdiction,
         contradiction_type, applicable_domains, applicable_program_types,
@@ -367,14 +441,26 @@ class ContradictionEngineService {
         description, regulatory_reference, rationale, priority, active
       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
       RETURNING *
-    `, [
-      rule.organizationId, rule.ruleCode, rule.ruleName, rule.regulatorBody,
-      rule.jurisdiction ?? null, rule.contradictionType, rule.applicableDomains,
-      rule.applicableProgramTypes, rule.severityOverride ?? null,
-      rule.authorityOverride ?? null, rule.consequenceOverride ?? null,
-      rule.description, rule.regulatoryReference ?? null, rule.rationale ?? null,
-      rule.priority, rule.active
-    ]);
+    `,
+      [
+        rule.organizationId,
+        rule.ruleCode,
+        rule.ruleName,
+        rule.regulatorBody,
+        rule.jurisdiction ?? null,
+        rule.contradictionType,
+        rule.applicableDomains,
+        rule.applicableProgramTypes,
+        rule.severityOverride ?? null,
+        rule.authorityOverride ?? null,
+        rule.consequenceOverride ?? null,
+        rule.description,
+        rule.regulatoryReference ?? null,
+        rule.rationale ?? null,
+        rule.priority,
+        rule.active,
+      ]
+    );
 
     return this.mapOverlayRule(result.rows[0]);
   }
@@ -382,16 +468,28 @@ class ContradictionEngineService {
   /**
    * Apply overlay rules to a finding — modifies severity, authority, consequence per jurisdiction
    */
-  private async applyOverlays(finding: ContradictionFinding, domain?: string, programType?: string): Promise<ContradictionFinding> {
+  private async applyOverlays(
+    finding: ContradictionFinding,
+    domain?: string,
+    programType?: string
+  ): Promise<ContradictionFinding> {
     if (!finding.regulatorBody) return finding;
 
     const rules = await this.getOverlayRules(
-      finding.organizationId, finding.contradictionType, finding.regulatorBody
+      finding.organizationId,
+      finding.contradictionType,
+      finding.regulatorBody
     );
 
     for (const rule of rules) {
-      if (domain && rule.applicableDomains.length && !rule.applicableDomains.includes(domain)) continue;
-      if (programType && rule.applicableProgramTypes.length && !rule.applicableProgramTypes.includes(programType)) continue;
+      if (domain && rule.applicableDomains.length && !rule.applicableDomains.includes(domain))
+        continue;
+      if (
+        programType &&
+        rule.applicableProgramTypes.length &&
+        !rule.applicableProgramTypes.includes(programType)
+      )
+        continue;
 
       // Apply overrides (first matching rule wins due to priority ordering)
       if (rule.severityOverride) {
@@ -408,17 +506,24 @@ class ContradictionEngineService {
       finding.sourceClassification = 'overlay_rule_conflict';
 
       // Persist overlay changes back to DB
-      await pool!.query(`
+      await pool!.query(
+        `
         UPDATE contradiction_findings
         SET severity = $1, authority_state = $2, consequence_type = $3,
             overlay_rule_id = $4, regulator_severity_override = $5,
             source_classification = 'overlay_rule_conflict', updated_at = NOW()
         WHERE id = $6 AND organization_id = $7
-      `, [
-        finding.severity, finding.authorityState, finding.consequenceType,
-        finding.overlayRuleId, finding.regulatorSeverityOverride,
-        finding.id, finding.organizationId
-      ]);
+      `,
+        [
+          finding.severity,
+          finding.authorityState,
+          finding.consequenceType,
+          finding.overlayRuleId,
+          finding.regulatorSeverityOverride,
+          finding.id,
+          finding.organizationId,
+        ]
+      );
 
       break; // First matching rule wins
     }
@@ -434,7 +539,11 @@ class ContradictionEngineService {
    * Execute the consequence path for a finding.
    * Creates real governed objects (review threads, memos, etc.)
    */
-  async executeConsequence(findingId: string, organizationId: number, executedBy: string): Promise<{
+  async executeConsequence(
+    findingId: string,
+    organizationId: number,
+    executedBy: string
+  ): Promise<{
     consequenceType: ConsequenceType;
     consequenceObjectId: string | null;
     success: boolean;
@@ -461,7 +570,8 @@ class ContradictionEngineService {
           const older = finding.objectAId;
           const newer = finding.objectBId;
           await assumptionRegistryService.supersede(older, {
-            organizationId, replacementId: newer,
+            organizationId,
+            replacementId: newer,
             reason: `Superseded by contradiction detection: ${finding.title}`,
             performedBy: executedBy,
           });
@@ -491,25 +601,35 @@ class ContradictionEngineService {
     }
 
     // Log the consequence execution
-    await pool!.query(`
+    await pool!.query(
+      `
       INSERT INTO contradiction_consequence_log (
         organization_id, finding_id, consequence_type,
         consequence_object_id, consequence_object_type,
         executed_by, execution_status
       ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-    `, [
-      organizationId, findingId, finding.consequenceType,
-      consequenceObjectId, finding.consequenceType,
-      executedBy, success ? 'executed' : 'failed'
-    ]);
+    `,
+      [
+        organizationId,
+        findingId,
+        finding.consequenceType,
+        consequenceObjectId,
+        finding.consequenceType,
+        executedBy,
+        success ? 'executed' : 'failed',
+      ]
+    );
 
     // Update the finding
     if (success) {
-      await pool!.query(`
+      await pool!.query(
+        `
         UPDATE contradiction_findings
         SET consequence_object_id = $1, consequence_executed = true, updated_at = NOW()
         WHERE id = $2 AND organization_id = $3
-      `, [consequenceObjectId, findingId, organizationId]);
+      `,
+        [consequenceObjectId, findingId, organizationId]
+      );
     }
 
     return { consequenceType: finding.consequenceType, consequenceObjectId, success };
@@ -522,14 +642,19 @@ class ContradictionEngineService {
   /**
    * Check if an artifact can be promoted given unresolved contradiction findings
    */
-  async checkPromotionBlocked(organizationId: number, projectId: number, artifactId: number): Promise<{
+  async checkPromotionBlocked(
+    organizationId: number,
+    projectId: number,
+    artifactId: number
+  ): Promise<{
     blocked: boolean;
     blockingFindings: ContradictionFinding[];
     warningFindings: ContradictionFinding[];
   }> {
     // Check for contradictions linked to this specific artifact OR project-wide blocking findings
     const artifactIdStr = String(artifactId);
-    const result = await pool!.query(`
+    const result = await pool!.query(
+      `
       SELECT * FROM contradiction_findings
       WHERE organization_id = $1 AND project_id = $2
         AND review_state NOT IN ('approved_resolution', 'superseded')
@@ -539,7 +664,9 @@ class ContradictionEngineService {
           OR authority_state = 'blocks_promotion'
         )
       ORDER BY severity ASC
-    `, [organizationId, projectId, artifactIdStr]);
+    `,
+      [organizationId, projectId, artifactIdStr]
+    );
 
     const findings = result.rows.map(this.mapFinding);
     const blockingFindings = findings.filter(f => f.authorityState === 'blocks_promotion');
@@ -555,15 +682,24 @@ class ContradictionEngineService {
   /**
    * Transition a finding's review state (§2 distinguishable states)
    */
-  async transitionReviewState(findingId: string, organizationId: number, newState: ReviewState, reviewedBy: string, notes?: string): Promise<ContradictionFinding | null> {
-    const result = await pool!.query(`
+  async transitionReviewState(
+    findingId: string,
+    organizationId: number,
+    newState: ReviewState,
+    reviewedBy: string,
+    notes?: string
+  ): Promise<ContradictionFinding | null> {
+    const result = await pool!.query(
+      `
       UPDATE contradiction_findings
       SET review_state = $1, resolved_by = $2, resolution_notes = $3,
           resolved_at = CASE WHEN $1 IN ('approved_resolution', 'superseded') THEN NOW() ELSE resolved_at END,
           updated_at = NOW()
       WHERE id = $4 AND organization_id = $5
       RETURNING *
-    `, [newState, reviewedBy, notes ?? null, findingId, organizationId]);
+    `,
+      [newState, reviewedBy, notes ?? null, findingId, organizationId]
+    );
 
     return result.rows.length ? this.mapFinding(result.rows[0]) : null;
   }
@@ -574,7 +710,8 @@ class ContradictionEngineService {
 
   async getFinding(id: string, organizationId: number): Promise<ContradictionFinding | null> {
     const result = await pool!.query(
-      'SELECT * FROM contradiction_findings WHERE id = $1 AND organization_id = $2', [id, organizationId]
+      'SELECT * FROM contradiction_findings WHERE id = $1 AND organization_id = $2',
+      [id, organizationId]
     );
     return result.rows.length ? this.mapFinding(result.rows[0]) : null;
   }
@@ -592,20 +729,38 @@ class ContradictionEngineService {
     const params: (string | number)[] = [input.organizationId];
     let idx = 2;
 
-    if (input.projectId) { conditions.push(`project_id = $${idx++}`); params.push(input.projectId); }
-    if (input.contradictionType) { conditions.push(`contradiction_type = $${idx++}`); params.push(input.contradictionType); }
-    if (input.severity) { conditions.push(`severity = $${idx++}`); params.push(input.severity); }
-    if (input.reviewState) { conditions.push(`review_state = $${idx++}`); params.push(input.reviewState); }
-    if (input.authorityState) { conditions.push(`authority_state = $${idx++}`); params.push(input.authorityState); }
+    if (input.projectId) {
+      conditions.push(`project_id = $${idx++}`);
+      params.push(input.projectId);
+    }
+    if (input.contradictionType) {
+      conditions.push(`contradiction_type = $${idx++}`);
+      params.push(input.contradictionType);
+    }
+    if (input.severity) {
+      conditions.push(`severity = $${idx++}`);
+      params.push(input.severity);
+    }
+    if (input.reviewState) {
+      conditions.push(`review_state = $${idx++}`);
+      params.push(input.reviewState);
+    }
+    if (input.authorityState) {
+      conditions.push(`authority_state = $${idx++}`);
+      params.push(input.authorityState);
+    }
 
     const limit = input.limit ?? 50;
     params.push(limit);
 
-    const result = await pool!.query(`
+    const result = await pool!.query(
+      `
       SELECT * FROM contradiction_findings WHERE ${conditions.join(' AND ')}
       ORDER BY CASE severity WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END, created_at DESC
       LIMIT $${idx}
-    `, params);
+    `,
+      params
+    );
 
     return result.rows.map(this.mapFinding);
   }
@@ -618,8 +773,12 @@ class ContradictionEngineService {
     organizationId: number;
     projectId?: number;
     sourceClassification: SourceClassification;
-    objectAType: string; objectAId: string; objectALabel?: string;
-    objectBType: string; objectBId: string; objectBLabel?: string;
+    objectAType: string;
+    objectAId: string;
+    objectALabel?: string;
+    objectBType: string;
+    objectBId: string;
+    objectBLabel?: string;
     contradictionType: ContradictionType;
     severity: Severity;
     truthHierarchyLevel: TruthLevel;
@@ -635,25 +794,33 @@ class ContradictionEngineService {
     programType?: string;
   }): Promise<ContradictionFinding> {
     // Deduplication: skip if an unresolved finding already exists for same object pair + type
-    const existing = await pool!.query(`
+    const existing = await pool!.query(
+      `
       SELECT id FROM contradiction_findings
       WHERE organization_id = $1 AND object_a_id = $2 AND object_b_id = $3
         AND contradiction_type = $4
         AND review_state NOT IN ('approved_resolution', 'superseded')
       LIMIT 1
-    `, [input.organizationId, input.objectAId, input.objectBId, input.contradictionType]);
+    `,
+      [input.organizationId, input.objectAId, input.objectBId, input.contradictionType]
+    );
 
     if (existing.rows.length > 0) {
       // Return the existing finding instead of creating a duplicate
-      return this.mapFinding((await pool!.query(
-        'SELECT * FROM contradiction_findings WHERE id = $1', [existing.rows[0].id]
-      )).rows[0]);
+      return this.mapFinding(
+        (
+          await pool!.query('SELECT * FROM contradiction_findings WHERE id = $1', [
+            existing.rows[0].id,
+          ])
+        ).rows[0]
+      );
     }
 
     const authorityState = DEFAULT_AUTHORITY[input.contradictionType] ?? 'advisory_only';
     const consequenceType = DEFAULT_CONSEQUENCE[input.contradictionType] ?? null;
 
-    const result = await pool!.query(`
+    const result = await pool!.query(
+      `
       INSERT INTO contradiction_findings (
         organization_id, project_id, source_classification,
         object_a_type, object_a_id, object_a_label,
@@ -665,16 +832,32 @@ class ContradictionEngineService {
         regulator_body, authority_state, consequence_type
       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)
       RETURNING *
-    `, [
-      input.organizationId, input.projectId ?? null, input.sourceClassification,
-      input.objectAType, input.objectAId, input.objectALabel ?? null,
-      input.objectBType, input.objectBId, input.objectBLabel ?? null,
-      input.contradictionType, input.severity, input.truthHierarchyLevel,
-      input.confidenceScore, input.confidenceLevel,
-      input.title, input.description, input.deterministicRule ?? null,
-      input.llmRole, input.llmExplanation ?? null,
-      input.regulatorBody ?? null, authorityState, consequenceType
-    ]);
+    `,
+      [
+        input.organizationId,
+        input.projectId ?? null,
+        input.sourceClassification,
+        input.objectAType,
+        input.objectAId,
+        input.objectALabel ?? null,
+        input.objectBType,
+        input.objectBId,
+        input.objectBLabel ?? null,
+        input.contradictionType,
+        input.severity,
+        input.truthHierarchyLevel,
+        input.confidenceScore,
+        input.confidenceLevel,
+        input.title,
+        input.description,
+        input.deterministicRule ?? null,
+        input.llmRole,
+        input.llmExplanation ?? null,
+        input.regulatorBody ?? null,
+        authorityState,
+        consequenceType,
+      ]
+    );
 
     let finding = this.mapFinding(result.rows[0]);
 
@@ -781,7 +964,6 @@ class ContradictionEngineService {
       active: (row.active as boolean) ?? true,
     };
   }
-}
 
   // ═══════════════════════════════════════════════════════════════════════════
   // PASS 8: CROSS-ARTIFACT CONTRADICTION DETECTION
@@ -791,17 +973,23 @@ class ContradictionEngineService {
    * Detect approved-vs-working inconsistency: approved artifact content diverges
    * materially from current working draft for the same section.
    */
-  async detectApprovedVsWorkingDrift(organizationId: number, projectId: number): Promise<ContradictionFinding[]> {
+  async detectApprovedVsWorkingDrift(
+    organizationId: number,
+    projectId: number
+  ): Promise<ContradictionFinding[]> {
     log.info('Detecting approved-vs-working drift', { projectId });
     const findings: ContradictionFinding[] = [];
 
     try {
       const { db } = await import('../db.js');
       // Fetch all artifacts for project
-      const artifacts = await db.query.concept2cureArtifacts?.findMany?.({
-        where: (a: any, { eq }: any) => eq(a.projectId, projectId),
-        orderBy: (a: any, { desc }: any) => [desc(a.updatedAt)],
-      }).catch(() => []) || [];
+      const artifacts =
+        (await db.query.concept2cureArtifacts
+          ?.findMany?.({
+            where: (a: any, { eq }: any) => eq(a.projectId, projectId),
+            orderBy: (a: any, { desc }: any) => [desc(a.updatedAt)],
+          })
+          .catch(() => [])) || [];
 
       // Group by ctdSection
       const bySectionCode = new Map<string, any[]>();
@@ -812,7 +1000,9 @@ class ContradictionEngineService {
       }
 
       for (const [sectionCode, sectionArts] of bySectionCode) {
-        const approved = sectionArts.find((a: any) => a.status === 'approved' || a.status === 'locked');
+        const approved = sectionArts.find(
+          (a: any) => a.status === 'approved' || a.status === 'locked'
+        );
         const working = sectionArts.find((a: any) => a.status === 'draft' || a.status === 'review');
         if (!approved || !working) continue;
         if (approved.id === working.id) continue;
@@ -822,8 +1012,14 @@ class ContradictionEngineService {
         const workingContent = typeof working.content === 'string' ? working.content : '';
         if (!approvedContent || !workingContent) continue;
 
-        const approvedWords = approvedContent.replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean);
-        const workingWords = workingContent.replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean);
+        const approvedWords = approvedContent
+          .replace(/<[^>]+>/g, ' ')
+          .split(/\s+/)
+          .filter(Boolean);
+        const workingWords = workingContent
+          .replace(/<[^>]+>/g, ' ')
+          .split(/\s+/)
+          .filter(Boolean);
         const lengthDelta = Math.abs(approvedWords.length - workingWords.length);
         const lengthRatio = lengthDelta / Math.max(approvedWords.length, 1);
 
@@ -834,9 +1030,11 @@ class ContradictionEngineService {
           organizationId,
           projectId,
           sourceClassification: 'structured_record_conflict',
-          objectAType: 'artifact', objectAId: String(approved.id),
+          objectAType: 'artifact',
+          objectAId: String(approved.id),
           objectALabel: `${approved.title || sectionCode} (approved v${approved.version || '?'})`,
-          objectBType: 'artifact', objectBId: String(working.id),
+          objectBType: 'artifact',
+          objectBId: String(working.id),
           objectBLabel: `${working.title || sectionCode} (working v${working.version || '?'})`,
           contradictionType: 'superseded_information',
           severity: lengthRatio > 0.5 ? 'high' : 'medium',
@@ -845,7 +1043,8 @@ class ContradictionEngineService {
           confidenceLevel: lengthRatio > 0.3 ? 'high' : 'moderate',
           title: `Approved vs working drift: section ${sectionCode}`,
           description: `Approved artifact "${approved.title}" (${approvedWords.length} words) and working draft "${working.title}" (${workingWords.length} words) differ by ${Math.round(lengthRatio * 100)}% in word count. The approved version may need reapproval if the working draft replaces it.`,
-          deterministicRule: 'RULE: Approved artifact + working draft for same section → content divergence > 15% = drift',
+          deterministicRule:
+            'RULE: Approved artifact + working draft for same section → content divergence > 15% = drift',
           llmRole: 'none',
         });
         findings.push(finding);
@@ -864,24 +1063,34 @@ class ContradictionEngineService {
    * E.g., artifact marked 'review' but has unresolved blocking contradictions,
    * or artifact marked 'approved' but underlying assumptions are superseded.
    */
-  async detectStatusConflict(organizationId: number, projectId: number): Promise<ContradictionFinding[]> {
+  async detectStatusConflict(
+    organizationId: number,
+    projectId: number
+  ): Promise<ContradictionFinding[]> {
     log.info('Detecting status conflicts', { projectId });
     const findings: ContradictionFinding[] = [];
 
     try {
       const { db } = await import('../db.js');
-      const artifacts = await db.query.concept2cureArtifacts?.findMany?.({
-        where: (a: any, { eq }: any) => eq(a.projectId, projectId),
-      }).catch(() => []) || [];
+      const artifacts =
+        (await db.query.concept2cureArtifacts
+          ?.findMany?.({
+            where: (a: any, { eq }: any) => eq(a.projectId, projectId),
+          })
+          .catch(() => [])) || [];
 
       // Check for artifacts in review/approved status with superseded assumptions
       const supersededAssumptions = await assumptionRegistryService.search({
-        organizationId, projectId, status: 'superseded', limit: 200,
+        organizationId,
+        projectId,
+        status: 'superseded',
+        limit: 200,
       });
 
       if (supersededAssumptions.length > 0) {
         for (const art of artifacts) {
-          if (art.status !== 'review' && art.status !== 'approved' && art.status !== 'locked') continue;
+          if (art.status !== 'review' && art.status !== 'approved' && art.status !== 'locked')
+            continue;
 
           // Check if any superseded assumption was linked to this artifact
           const linkedSuperseded = supersededAssumptions.filter(
@@ -893,9 +1102,11 @@ class ContradictionEngineService {
               organizationId,
               projectId,
               sourceClassification: 'structured_record_conflict',
-              objectAType: 'artifact', objectAId: String(art.id),
+              objectAType: 'artifact',
+              objectAId: String(art.id),
               objectALabel: `${art.title || 'Artifact'} (status: ${art.status})`,
-              objectBType: 'assumption', objectBId: linkedSuperseded[0].id,
+              objectBType: 'assumption',
+              objectBId: linkedSuperseded[0].id,
               objectBLabel: `${linkedSuperseded[0].title} (superseded)`,
               contradictionType: 'status_conflict',
               severity: art.status === 'approved' ? 'high' : 'medium',
@@ -904,7 +1115,8 @@ class ContradictionEngineService {
               confidenceLevel: 'high',
               title: `Status conflict: ${art.status} artifact has superseded assumptions`,
               description: `Artifact "${art.title}" is in "${art.status}" status but depends on ${linkedSuperseded.length} superseded assumption(s). The artifact may need reapproval or revision.`,
-              deterministicRule: 'RULE: Artifact in review/approved/locked status + linked assumption superseded → status conflict',
+              deterministicRule:
+                'RULE: Artifact in review/approved/locked status + linked assumption superseded → status conflict',
               llmRole: 'none',
             });
             findings.push(finding);
@@ -914,7 +1126,10 @@ class ContradictionEngineService {
 
       // Check for artifacts in 'approved' status with unexecuted decisions
       const decisions = await decisionRecordService.search({
-        organizationId, projectId, actionState: 'approved', limit: 200,
+        organizationId,
+        projectId,
+        actionState: 'approved',
+        limit: 200,
       });
 
       for (const d of decisions) {
@@ -925,8 +1140,11 @@ class ContradictionEngineService {
             organizationId,
             projectId,
             sourceClassification: 'structured_record_conflict',
-            objectAType: 'decision', objectAId: d.id, objectALabel: d.title,
-            objectBType: 'artifact', objectBId: String(linkedArt.id),
+            objectAType: 'decision',
+            objectAId: d.id,
+            objectALabel: d.title,
+            objectBType: 'artifact',
+            objectBId: String(linkedArt.id),
             objectBLabel: `${linkedArt.title || 'Artifact'} (draft)`,
             contradictionType: 'status_conflict',
             severity: 'medium',
@@ -935,7 +1153,8 @@ class ContradictionEngineService {
             confidenceLevel: 'high',
             title: `Status conflict: decision executed on draft artifact`,
             description: `Decision "${d.title}" was executed and linked to artifact "${linkedArt.title}" but the artifact is still in draft status. It should have been promoted.`,
-            deterministicRule: 'RULE: Executed decision + linked artifact still in draft → status conflict',
+            deterministicRule:
+              'RULE: Executed decision + linked artifact still in draft → status conflict',
             llmRole: 'none',
           });
           findings.push(finding);
@@ -955,7 +1174,10 @@ class ContradictionEngineService {
    * Converts HarmonizeIssue results into ContradictionFinding objects
    * so they participate in the full contradiction lifecycle.
    */
-  async detectCrossArtifactContentConflict(organizationId: number, projectId: number): Promise<ContradictionFinding[]> {
+  async detectCrossArtifactContentConflict(
+    organizationId: number,
+    projectId: number
+  ): Promise<ContradictionFinding[]> {
     log.info('Detecting cross-artifact content conflicts', { projectId });
     const findings: ContradictionFinding[] = [];
 
@@ -965,18 +1187,25 @@ class ContradictionEngineService {
       const engine = new HarmonizeEngine();
 
       // Fetch artifacts with content for this project
-      const artifacts = await db.query.concept2cureArtifacts?.findMany?.({
-        where: (a: any, { eq }: any) => eq(a.projectId, projectId),
-      }).catch(() => []) || [];
+      const artifacts =
+        (await db.query.concept2cureArtifacts
+          ?.findMany?.({
+            where: (a: any, { eq }: any) => eq(a.projectId, projectId),
+          })
+          .catch(() => [])) || [];
 
       // Build section content map for harmonize check
       const sections: Record<string, string> = {};
       const sectionArtifactMap: Record<string, any> = {};
       for (const art of artifacts) {
         if (!art.ctdSection || !art.content) continue;
-        const content = typeof art.content === 'string'
-          ? art.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
-          : '';
+        const content =
+          typeof art.content === 'string'
+            ? art.content
+                .replace(/<[^>]+>/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim()
+            : '';
         if (content.length < 50) continue; // Skip trivial content
         sections[art.ctdSection] = content;
         sectionArtifactMap[art.ctdSection] = art;
@@ -1010,11 +1239,14 @@ class ContradictionEngineService {
           organizationId,
           projectId,
           sourceClassification: 'deterministic_rule_conflict',
-          objectAType: 'artifact', objectAId: String(artA.id),
+          objectAType: 'artifact',
+          objectAId: String(artA.id),
           objectALabel: `${artA.title || issue.sectionA} (${issue.sectionA})`,
           objectBType: artB ? 'artifact' : 'section_expectation',
           objectBId: artB ? String(artB.id) : issue.sectionB || 'none',
-          objectBLabel: artB ? `${artB.title || issue.sectionB} (${issue.sectionB})` : issue.sectionB || null,
+          objectBLabel: artB
+            ? `${artB.title || issue.sectionB} (${issue.sectionB})`
+            : issue.sectionB || null,
           contradictionType,
           severity: issue.severity === 'critical' ? 'critical' : 'high',
           truthHierarchyLevel: 5,
@@ -1048,27 +1280,41 @@ class ContradictionEngineService {
     regulatorBody: string,
     submissionType: string
   ): Promise<ContradictionFinding[]> {
-    log.info('Detecting body-specific expectation conflicts', { projectId, regulatorBody, submissionType });
+    log.info('Detecting body-specific expectation conflicts', {
+      projectId,
+      regulatorBody,
+      submissionType,
+    });
     const findings: ContradictionFinding[] = [];
 
     try {
       const { db } = await import('../db.js');
       const { detectBodySpecificGaps } = await import('./body-aware-authoring.js');
 
-      const artifacts = await db.query.concept2cureArtifacts?.findMany?.({
-        where: (a: any, { eq }: any) => eq(a.projectId, projectId),
-      }).catch(() => []) || [];
+      const artifacts =
+        (await db.query.concept2cureArtifacts
+          ?.findMany?.({
+            where: (a: any, { eq }: any) => eq(a.projectId, projectId),
+          })
+          .catch(() => [])) || [];
 
       for (const art of artifacts) {
         if (!art.ctdSection || !art.content) continue;
-        const content = typeof art.content === 'string'
-          ? art.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
-          : '';
+        const content =
+          typeof art.content === 'string'
+            ? art.content
+                .replace(/<[^>]+>/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim()
+            : '';
         if (content.length < 100) continue;
 
         try {
           const gapAnalysis = await detectBodySpecificGaps(
-            regulatorBody, submissionType, art.ctdSection, content
+            regulatorBody,
+            submissionType,
+            art.ctdSection,
+            content
           );
 
           const missingGaps = gapAnalysis.gaps.filter((g: any) => g.status === 'missing');
@@ -1080,7 +1326,8 @@ class ContradictionEngineService {
               organizationId,
               projectId,
               sourceClassification: 'deterministic_rule_conflict',
-              objectAType: 'artifact', objectAId: String(art.id),
+              objectAType: 'artifact',
+              objectAId: String(art.id),
               objectALabel: `${art.title || art.ctdSection} (${art.ctdSection})`,
               objectBType: 'body_expectation',
               objectBId: `${regulatorBody}:${submissionType}:${art.ctdSection}`,
@@ -1091,7 +1338,12 @@ class ContradictionEngineService {
               confidenceScore: 0.8,
               confidenceLevel: 'moderate',
               title: `Body-specific gaps: ${art.ctdSection} missing ${missingGaps.length} ${regulatorBody} requirements`,
-              description: `Section ${art.ctdSection} has content but is missing ${missingGaps.length} requirements expected by ${regulatorBody} for ${submissionType}: ${missingGaps.slice(0, 3).map((g: any) => g.requirement).join('; ')}${missingGaps.length > 3 ? ` and ${missingGaps.length - 3} more` : ''}.`,
+              description: `Section ${art.ctdSection} has content but is missing ${missingGaps.length} requirements expected by ${regulatorBody} for ${submissionType}: ${missingGaps
+                .slice(0, 3)
+                .map((g: any) => g.requirement)
+                .join(
+                  '; '
+                )}${missingGaps.length > 3 ? ` and ${missingGaps.length - 3} more` : ''}.`,
               deterministicRule: `RULE: Body-aware gap analysis for ${regulatorBody}/${submissionType} → missing requirements in populated section`,
               llmRole: 'none',
               regulatorBody,
@@ -1128,27 +1380,45 @@ class ContradictionEngineService {
     const detectionMethods: string[] = [];
     const allPromises: Promise<ContradictionFinding[]>[] = [
       // Pass 7 detectors
-      this.detectAssumptionDrift(organizationId, projectId)
-        .then(r => { detectionMethods.push('assumption_drift'); return r; }),
-      this.detectDecisionActionInconsistency(organizationId, projectId)
-        .then(r => { detectionMethods.push('decision_action_inconsistency'); return r; }),
-      this.detectCrossJurisdictionalDivergence(organizationId, projectId)
-        .then(r => { detectionMethods.push('cross_jurisdictional_divergence'); return r; }),
+      this.detectAssumptionDrift(organizationId, projectId).then(r => {
+        detectionMethods.push('assumption_drift');
+        return r;
+      }),
+      this.detectDecisionActionInconsistency(organizationId, projectId).then(r => {
+        detectionMethods.push('decision_action_inconsistency');
+        return r;
+      }),
+      this.detectCrossJurisdictionalDivergence(organizationId, projectId).then(r => {
+        detectionMethods.push('cross_jurisdictional_divergence');
+        return r;
+      }),
       // Pass 8 detectors
-      this.detectApprovedVsWorkingDrift(organizationId, projectId)
-        .then(r => { detectionMethods.push('approved_vs_working_drift'); return r; }),
-      this.detectStatusConflict(organizationId, projectId)
-        .then(r => { detectionMethods.push('status_conflict'); return r; }),
-      this.detectCrossArtifactContentConflict(organizationId, projectId)
-        .then(r => { detectionMethods.push('cross_artifact_content'); return r; }),
+      this.detectApprovedVsWorkingDrift(organizationId, projectId).then(r => {
+        detectionMethods.push('approved_vs_working_drift');
+        return r;
+      }),
+      this.detectStatusConflict(organizationId, projectId).then(r => {
+        detectionMethods.push('status_conflict');
+        return r;
+      }),
+      this.detectCrossArtifactContentConflict(organizationId, projectId).then(r => {
+        detectionMethods.push('cross_artifact_content');
+        return r;
+      }),
     ];
 
     // Body-specific detection if regulator/body context provided
     if (opts?.regulatorBody && opts?.submissionType) {
       allPromises.push(
         this.detectBodySpecificExpectationConflict(
-          organizationId, projectId, opts.regulatorBody, opts.submissionType
-        ).then(r => { detectionMethods.push('body_specific_expectation'); return r; })
+          organizationId,
+          projectId,
+          opts.regulatorBody,
+          opts.submissionType
+        ).then(r => {
+          detectionMethods.push('body_specific_expectation');
+          return r;
+        })
       );
     }
 
@@ -1181,7 +1451,12 @@ class ContradictionEngineService {
   async buildPreflightContradictionContext(
     organizationId: number,
     projectId: number,
-    scope: { sectionCode?: string; moduleCode?: string; regulatorBody?: string; submissionType?: string }
+    scope: {
+      sectionCode?: string;
+      moduleCode?: string;
+      regulatorBody?: string;
+      submissionType?: string;
+    }
   ): Promise<{
     unresolvedCount: number;
     blockingCount: number;
@@ -1189,16 +1464,33 @@ class ContradictionEngineService {
     byType: Record<string, number>;
     bySeverity: Record<string, number>;
     blockingFindings: Array<{
-      id: string; contradictionType: string; severity: string; title: string;
-      description: string; authorityState: string; consequenceType: string | null;
-      objectAType: string; objectAId: string; objectALabel: string | null;
-      objectBType: string; objectBId: string; objectBLabel: string | null;
-      overlayApplied: boolean; overlayRuleCode?: string; regulatorBody?: string;
-      recommendedAction: string | null; linkedDecisionId?: string;
+      id: string;
+      contradictionType: string;
+      severity: string;
+      title: string;
+      description: string;
+      authorityState: string;
+      consequenceType: string | null;
+      objectAType: string;
+      objectAId: string;
+      objectALabel: string | null;
+      objectBType: string;
+      objectBId: string;
+      objectBLabel: string | null;
+      overlayApplied: boolean;
+      overlayRuleCode?: string;
+      regulatorBody?: string;
+      recommendedAction: string | null;
+      linkedDecisionId?: string;
     }>;
     warningFindings: Array<{
-      id: string; contradictionType: string; severity: string; title: string;
-      description: string; authorityState: string; recommendedAction: string | null;
+      id: string;
+      contradictionType: string;
+      severity: string;
+      title: string;
+      description: string;
+      authorityState: string;
+      recommendedAction: string | null;
     }>;
     overlayEscalatedToBlocking: boolean;
     linkedDecisionIds: string[];
@@ -1217,13 +1509,17 @@ class ContradictionEngineService {
       f => f.authorityState === 'blocks_promotion' || f.authorityState === 'requires_escalation'
     );
     const warnings = unresolved.filter(
-      f => f.authorityState !== 'blocks_promotion' && f.authorityState !== 'requires_escalation'
-        && f.authorityState !== 'advisory_only'
+      f =>
+        f.authorityState !== 'blocks_promotion' &&
+        f.authorityState !== 'requires_escalation' &&
+        f.authorityState !== 'advisory_only'
     );
     const overlayActive = unresolved.filter(f => !!f.overlayRuleId);
     const overlayEscalated = unresolved.some(
-      f => f.overlayRuleId && (f.authorityState === 'blocks_promotion' || f.authorityState === 'requires_escalation')
-        && f.regulatorSeverityOverride !== null
+      f =>
+        f.overlayRuleId &&
+        (f.authorityState === 'blocks_promotion' || f.authorityState === 'requires_escalation') &&
+        f.regulatorSeverityOverride !== null
     );
 
     const byType: Record<string, number> = {};
@@ -1242,7 +1538,9 @@ class ContradictionEngineService {
         limit: 20,
       });
       linkedDecisionIds.push(...decisions.map(d => d.id));
-    } catch { /* non-blocking */ }
+    } catch {
+      /* non-blocking */
+    }
 
     return {
       unresolvedCount: unresolved.length,
@@ -1267,7 +1565,9 @@ class ContradictionEngineService {
         overlayApplied: !!f.overlayRuleId,
         overlayRuleCode: f.overlayRuleId || undefined,
         regulatorBody: f.regulatorBody || undefined,
-        recommendedAction: f.consequenceType ? DEFAULT_CONSEQUENCE[f.contradictionType] || null : null,
+        recommendedAction: f.consequenceType
+          ? DEFAULT_CONSEQUENCE[f.contradictionType] || null
+          : null,
         linkedDecisionId: linkedDecisionIds.find(dId =>
           decisionStore_findByContradiction(dId, f.id)
         ),
@@ -1292,7 +1592,9 @@ function decisionStore_findByContradiction(decisionId: string, contradictionId: 
   try {
     // This is a lightweight check — the decision lifecycle service has the real linkage
     return false; // Will be wired properly in decision-lifecycle integration
-  } catch { return false; }
+  } catch {
+    return false;
+  }
 }
 
 export const contradictionEngineService = new ContradictionEngineService();
