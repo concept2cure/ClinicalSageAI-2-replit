@@ -43,6 +43,7 @@ import { ProjectFilesCompact } from './components/workspace/ProjectFilesCompact'
 // [BATCH 3] CustomInstructions — knowledge-base renderer removed
 import { useProjectKnowledge } from './hooks/useProjectKnowledge';
 import { useProjectTasks } from './hooks/useProjectTasks';
+import { useAuthoringIntelligence } from './hooks/useAuthoringIntelligence';
 import { useProjects } from './hooks/useProjects';
 import { useCortexThreads, useCortexHealth } from './hooks/useCortex';
 import { usePlatformContext } from './hooks/useLicense';
@@ -143,6 +144,14 @@ import DrSageGlobalLayer from './components/dr-sage/DrSagePanel';
 
 // AnA Persistent Panel — always-available AI conversation on every page
 import AnaPersistentPanel from './components/chat/AnaPersistentPanel';
+
+// Canonical authoring context resolver
+import {
+  resolveAuthoringContext,
+  resolveWorkflowStage,
+  type ContextResolverInput,
+} from './services/authoring-context-resolver';
+import type { AuthoringContextPack, ReadinessSnapshot, ContradictionEntry } from '../../../shared/types/authoring-context';
 
 // First-run onboarding experience
 const FirstRunExperience = lazy(() => import('./components/enablement/FirstRunExperience'));
@@ -724,6 +733,15 @@ export const ZenApp: React.FC = () => {
   // Page-level context for AnA awareness (active tab, filters, etc.)
   const [moduleContext, setModuleContext] = useState<Record<string, unknown>>({});
 
+  // ── Authoring context state (feeds AnA with section/artifact/workflow awareness) ──
+  const [activeArtifactId, setActiveArtifactId] = useState<string | undefined>();
+  const [activeArtifactVersion, setActiveArtifactVersion] = useState<string | undefined>();
+  const [activeArtifactStatus, setActiveArtifactStatus] = useState<string | undefined>();
+  const [activeSectionTitle, setActiveSectionTitle] = useState<string | undefined>();
+  const [activeModuleCode, setActiveModuleCode] = useState<string | undefined>();
+  const [sectionReadiness, setSectionReadiness] = useState<ReadinessSnapshot | undefined>();
+  const [sectionContradictions, setSectionContradictions] = useState<ContradictionEntry[] | undefined>();
+
   // Account-level custom instructions for Knowledge Base
   const [customInstructions, setCustomInstructions] = useState('');
 
@@ -866,6 +884,83 @@ export const ZenApp: React.FC = () => {
 
   // Derive active project early so downstream hooks / memos can reference it
   const activeProject = projects.find(p => p.id === activeProjectId);
+
+  // ── Canonical AuthoringContextPack — derived from all available state ──────
+  const authoringContext = useMemo<AuthoringContextPack | null>(() => {
+    return resolveAuthoringContext({
+      projectId: activeProjectId,
+      layoutMode: layoutMode,
+      submissionType: activeProject?.type,
+      sectionCode: activeSectionCode,
+      sectionTitle: activeSectionTitle,
+      artifactId: activeArtifactId,
+      artifactVersion: activeArtifactVersion,
+      artifactStatus: activeArtifactStatus,
+      readiness: sectionReadiness,
+      contradictions: sectionContradictions,
+    });
+  }, [
+    activeProjectId, layoutMode, activeProject?.type, activeSectionCode,
+    activeSectionTitle, activeArtifactId, activeArtifactVersion,
+    activeArtifactStatus, sectionReadiness, sectionContradictions,
+  ]);
+
+  // Handler for child surfaces to update authoring context fields
+  const handleAuthoringContextChange = useCallback((partial: Partial<AuthoringContextPack>) => {
+    if (partial.sectionCode !== undefined) setActiveSectionCode(partial.sectionCode || null);
+    if (partial.sectionTitle !== undefined) setActiveSectionTitle(partial.sectionTitle);
+    if (partial.moduleCode !== undefined) setActiveModuleCode(partial.moduleCode);
+    if (partial.artifactId !== undefined) setActiveArtifactId(partial.artifactId);
+    if (partial.artifactVersionId !== undefined) setActiveArtifactVersion(partial.artifactVersionId);
+    if (partial.artifactStatus !== undefined) setActiveArtifactStatus(partial.artifactStatus);
+    if (partial.readiness !== undefined) setSectionReadiness(partial.readiness);
+    if (partial.contradictions !== undefined) setSectionContradictions(partial.contradictions);
+  }, []);
+
+  // ── P1: Draft insertion → pendingEditorContent → EditorPanel auto-creates artifact ──
+  const handleDraftInsert = useCallback((content: string, title: string, ctdSection?: string) => {
+    setPendingEditorContent({ title, content, ctdSection });
+    // Switch to documents mode where EditorPanel will consume the pending content
+    if (layoutMode !== 'documents' && layoutMode !== 'workspace' && layoutMode !== 'regulatory-workspace') {
+      setLayoutMode('documents');
+    }
+  }, [layoutMode]);
+
+  // ── P2: Navigate to section — real navigation ──
+  const handleNavigateToSection = useCallback((sectionCode: string) => {
+    setActiveSectionCode(sectionCode);
+    setLayoutMode('section-workspace');
+  }, []);
+
+  // ── P2: Open artifact — real navigation ──
+  const handleOpenArtifact = useCallback((artifactId: string) => {
+    setOpenArtifactId(artifactId);
+    setLayoutMode('documents');
+  }, []);
+
+  // ── P5: Governed promotion — calls real status API ──
+  const handleRequestPromotion = useCallback(async (artifactId: string): Promise<{ promoted: boolean; message: string }> => {
+    if (!activeProjectId) {
+      return { promoted: false, message: 'No active project.' };
+    }
+    const token = sessionStorage.getItem('trialsage_access_token') || localStorage.getItem('trialsage_access_token');
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res = await fetch(
+      `/api/concept2cure/projects/${activeProjectId}/artifacts/${artifactId}/status`,
+      {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({ status: 'review' }),
+      }
+    );
+    if (res.ok) {
+      return { promoted: true, message: 'Artifact promoted to review. Governance workflow initiated.' };
+    }
+    const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+    return { promoted: false, message: err.error || err.message || 'Promotion failed.' };
+  }, [activeProjectId]);
 
   // Workspace suggested actions — context-aware quick-start chips for AnA
   const workspaceSuggestedActions = useMemo(() => {
@@ -1012,6 +1107,17 @@ export const ZenApp: React.FC = () => {
 
   // Instructions + knowledge for Instructions tab (lifted so it doesn't remount per tab)
   const workspaceKnowledge = useProjectKnowledge(activeProjectId ?? null);
+
+  // ── Authoring intelligence — real readiness/contradiction data for active section ──
+  const authoringIntelligence = useAuthoringIntelligence(
+    activeProjectId,
+    layoutMode === 'section-workspace' ? activeSectionCode : null
+  );
+  // Feed real intelligence data into authoring context when available
+  useEffect(() => {
+    if (authoringIntelligence.readiness) setSectionReadiness(authoringIntelligence.readiness);
+    if (authoringIntelligence.contradictions) setSectionContradictions(authoringIntelligence.contradictions);
+  }, [authoringIntelligence.readiness, authoringIntelligence.contradictions]);
 
   // Threads for current project
   const { data: threads = [] } = useCortexThreads(activeProjectId);
@@ -2160,6 +2266,18 @@ export const ZenApp: React.FC = () => {
                 onInitialContentConsumed={() => setPendingEditorContent(null)}
                 openArtifactId={openArtifactId}
                 onOpenArtifactConsumed={() => setOpenArtifactId(undefined)}
+                onActiveDocumentChange={(doc) => {
+                  if (doc) {
+                    setActiveArtifactId(doc.id);
+                    setActiveArtifactVersion(doc.version != null ? String(doc.version) : undefined);
+                    setActiveArtifactStatus(doc.status);
+                    if (doc.ctdSection) setActiveSectionCode(doc.ctdSection);
+                  } else {
+                    setActiveArtifactId(undefined);
+                    setActiveArtifactVersion(undefined);
+                    setActiveArtifactStatus(undefined);
+                  }
+                }}
               />
             ))}
 
@@ -2423,6 +2541,9 @@ export const ZenApp: React.FC = () => {
                 })()}
                 projectName={activeProject?.name}
                 projectId={activeProjectId}
+                readiness={sectionReadiness}
+                contradictions={sectionContradictions}
+                onContextChange={handleAuthoringContextChange}
                 onBack={() => setLayoutMode('dossier-map')}
               />
             </Suspense>
@@ -2503,6 +2624,7 @@ export const ZenApp: React.FC = () => {
                 {/* Center: AnA (the ONE chat — Claude.ai style) */}
                 <AnaPersistentPanel
                   mode="full"
+                  authoringContext={authoringContext}
                   contextProfile={{
                     productType: activeProject?.type,
                     userRole: userRole,
@@ -2516,6 +2638,12 @@ export const ZenApp: React.FC = () => {
                   }
                   suggestedActions={workspaceSuggestedActions}
                   onActionRun={handleActionRun}
+                  onNavigate={(path) => setLayoutMode(path as LayoutMode)}
+                  onDraftInsert={handleDraftInsert}
+                  onNavigateToSection={handleNavigateToSection}
+                  onOpenArtifact={handleOpenArtifact}
+                  onRequestPromotion={handleRequestPromotion}
+                  onRefreshIntelligence={authoringIntelligence.refetch}
                   initialMessage={
                     pendingDraftSection
                       ? `Draft CTD section ${pendingDraftSection.code}: ${pendingDraftSection.title}. Generate a compliant first draft following ICH M4 guidelines and 21 CFR 312.23(a) requirements.`
@@ -2602,31 +2730,34 @@ export const ZenApp: React.FC = () => {
             workspace/regulatory-workspace: rendered inline above (mode="full")
             module pages: shown here as compact input bar at bottom
             projects/home: shown here as full chat (no module content above) */}
-        {layoutMode !== 'workspace' &&
-          layoutMode !== 'regulatory-workspace' &&
-          layoutMode !== 'section-workspace' && (
-            <AnaPersistentPanel
-              mode={
-                layoutMode === 'projects' || layoutMode === 'deep-research' ? 'full' : 'compact'
-              }
-              defaultChatMode={layoutMode === 'deep-research' ? 'deep-research' : 'standard'}
-              contextProfile={{
-                productType: activeProject?.type,
-                userRole: userRole,
-                screenName: layoutMode,
-                activeProject: activeProject?.name,
-                projectId: activeProjectId,
-                moduleContext,
-              }}
-              greeting={
-                layoutMode === 'deep-research'
-                  ? "What would you like to research? I'll search across ClinicalTrials.gov, PubMed, FDA, EMA, and more."
-                  : platformGreeting?.text
-              }
-              suggestedActions={layoutMode === 'projects' ? workspaceSuggestedActions : undefined}
-              onActionRun={handleActionRun}
-            />
-          )}
+        {layoutMode !== 'workspace' && layoutMode !== 'regulatory-workspace' && layoutMode !== 'section-workspace' && (
+          <AnaPersistentPanel
+            mode={layoutMode === 'projects' || layoutMode === 'deep-research' ? 'full' : 'compact'}
+            defaultChatMode={layoutMode === 'deep-research' ? 'deep-research' : 'standard'}
+            authoringContext={authoringContext}
+            contextProfile={{
+              productType: activeProject?.type,
+              userRole: userRole,
+              screenName: layoutMode,
+              activeProject: activeProject?.name,
+              projectId: activeProjectId,
+              moduleContext,
+            }}
+            greeting={
+              layoutMode === 'deep-research'
+                ? "What would you like to research? I'll search across ClinicalTrials.gov, PubMed, FDA, EMA, and more."
+                : platformGreeting?.text
+            }
+            suggestedActions={layoutMode === 'projects' ? workspaceSuggestedActions : undefined}
+            onActionRun={handleActionRun}
+            onNavigate={(path) => setLayoutMode(path as LayoutMode)}
+            onDraftInsert={handleDraftInsert}
+            onNavigateToSection={handleNavigateToSection}
+            onOpenArtifact={handleOpenArtifact}
+            onRequestPromotion={handleRequestPromotion}
+            onRefreshIntelligence={authoringIntelligence.refetch}
+          />
+        )}
       </div>
 
       {/* Dr. Sage — Persistent global help/guide/copilot layer */}

@@ -81,3 +81,15 @@ export {
 export {
   orchestrateResolution,
 } from './ana-resolution-orchestrator';
+
+// Contradiction Bundle Planner (Pass 9)
+export {
+  buildContradictionBundlePlan,
+  classifyPlanActions,
+} from './contradiction-bundle-planner';
+
+// Contradiction Resolution Orchestrator (Pass 9)
+export {
+  orchestrateContradictionResolution,
+  buildContradictionExplanation,
+} from './contradiction-resolution-orchestrator';

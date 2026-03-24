@@ -1,8 +1,6 @@
 import { AsyncLocalStorage } from 'async_hooks';
 import { randomUUID } from 'crypto';
 import type { NextFunction, Request, Response } from 'express';
-import { recordKernelDecision } from '../control-plane/decision-log';
-import { persistKernelDecision } from '../control-plane/persistent-decision-sink';
 import { anaMicrokernel, type KernelEvaluation } from '../control-plane/kernel';
 
 interface RequestContext {
@@ -51,45 +49,18 @@ function toHeaderMap(req: Request): Record<string, string | string[] | undefined
   );
 }
 
-function logResponse(
-  req: Request,
-  res: Response,
-  kernel: KernelEvaluation,
-  requestId: string,
-  startTimeMs: number
-) {
+function logResponse(req: Request, res: Response, kernel: KernelEvaluation, requestId: string, startTimeMs: number) {
   const durationMs = Date.now() - startTimeMs;
-  const tenantId = (req.headers['x-tenant-id'] as string | undefined) || undefined;
-  const actorId = extractActor(req);
-
   const payload = {
     requestId,
     method: req.method,
     path: req.originalUrl || req.url,
     statusCode: res.statusCode,
     durationMs,
-    kernelMode: kernel.mode,
     kernelDecision: kernel.finalDecision,
-    kernelEnforcedDecision: kernel.enforcedDecision,
     kernelScore: kernel.score,
-    kernelPolicyBundleId: kernel.policyBundleId,
-    kernelPolicyBundleVersion: kernel.policyBundleVersion,
     flags: kernel.flags,
   };
-
-  const decisionEntry = {
-    timestamp: new Date().toISOString(),
-    method: req.method,
-    path: req.originalUrl || req.url,
-    statusCode: res.statusCode,
-    requestId,
-    tenantId,
-    actorId,
-    kernel,
-  };
-
-  recordKernelDecision(decisionEntry);
-  void persistKernelDecision(decisionEntry);
 
   if (res.statusCode >= 500) {
     logger.error(payload, 'request_failed');
@@ -114,11 +85,6 @@ export const httpLogger = (req: Request, res: Response, next: NextFunction) => {
   });
 
   (req as any).anaKernelDecision = kernel;
-  res.setHeader('x-ana-kernel-decision', kernel.finalDecision);
-
-  if (kernel.controls.requiresHumanReview) {
-    res.setHeader('x-ana-review-required', 'true');
-  }
 
   if (kernel.finalDecision === 'deny') {
     logger.warn(
@@ -128,8 +94,6 @@ export const httpLogger = (req: Request, res: Response, next: NextFunction) => {
         method: req.method,
         flags: kernel.flags,
         trace: kernel.trace,
-        mode: kernel.mode,
-        enforcedDecision: kernel.enforcedDecision,
       },
       'kernel_policy_denied'
     );
@@ -140,11 +104,7 @@ export const httpLogger = (req: Request, res: Response, next: NextFunction) => {
         message: 'Request denied by cross-cutting control plane policy.',
         requestId,
         policy: {
-          mode: kernel.mode,
           decision: kernel.finalDecision,
-          enforcedDecision: kernel.enforcedDecision,
-          policyBundleId: kernel.policyBundleId,
-          policyBundleVersion: kernel.policyBundleVersion,
           flags: kernel.flags,
           score: kernel.score,
           trace: kernel.trace,
@@ -215,10 +175,7 @@ export function errorHandler(err: any, req: Request, res: Response, next: NextFu
       timestamp: new Date().toISOString(),
       requestId: res.getHeader('x-request-id'),
       kernelDecision: kernel?.finalDecision,
-      kernelEnforcedDecision: kernel?.enforcedDecision,
       kernelFlags: kernel?.flags || [],
-      policyBundleId: kernel?.policyBundleId,
-      policyBundleVersion: kernel?.policyBundleVersion,
     },
   });
 }

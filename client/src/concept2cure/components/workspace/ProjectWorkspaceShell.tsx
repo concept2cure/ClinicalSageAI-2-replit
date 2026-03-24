@@ -149,9 +149,9 @@ interface ProjectWorkspaceShellProps {
   /** Open a specific existing artifact directly (no creation) */
   openArtifactId?: string;
   onOpenArtifactConsumed?: () => void;
-  /** Callback when the active document changes — used for chat context awareness */
+  /** Callback when the active document changes — used for chat/authoring context awareness */
   onActiveDocumentChange?: (
-    doc: { title: string; ctdSection?: string; excerpt: string } | null
+    doc: { id?: string; title: string; ctdSection?: string; excerpt: string; version?: number; status?: string } | null
   ) => void;
   /** Navigate to a different layout mode (e.g., submission-builder, template-library) */
   onNavigate?: (mode: string) => void;
@@ -735,9 +735,12 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         .replace(/\s+/g, ' ')
         .trim();
       onActiveDocumentChange({
+        id: String(activeArtifact.id),
         title: activeArtifact.title,
         ctdSection: activeArtifact.ctdSection,
         excerpt: plainText.slice(0, 300),
+        version: activeArtifact.version,
+        status: activeArtifact.status,
       });
     } else {
       onActiveDocumentChange(null);
