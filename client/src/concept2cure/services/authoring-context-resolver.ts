@@ -59,6 +59,8 @@ export interface ContextResolverInput {
   layoutMode: string;
   /** Submission/product type (IND, NDA, 510K, etc.) */
   submissionType?: string;
+  /** Regulatory body (FDA, EMA, PMDA, etc.) */
+  regulatorBody?: string;
   /** Active section code (e.g., "2.5") from activeSectionCode state */
   sectionCode?: string | null;
   /** Active section title */
@@ -105,6 +107,7 @@ export function resolveAuthoringContext(
     sectionCode: sectionCode || undefined,
     sectionTitle: input.sectionTitle,
     submissionType: input.submissionType,
+    regulatorBody: input.regulatorBody || inferRegulatorBody(input.submissionType),
     linkedSectionCodes,
     readiness: input.readiness,
     contradictions: input.contradictions,
@@ -143,6 +146,22 @@ export function deriveLinkedSections(sectionCode: string | undefined): string[] 
   const parent = sectionCode.split('.').slice(0, -1).join('.');
   if (parent && CTD_LINKS[parent]) return CTD_LINKS[parent];
 
+  return undefined;
+}
+
+/**
+ * Infer regulator body from submission type when not explicitly set.
+ * IND/NDA/BLA/510K/PMA → FDA, MAA → EMA, JNDA → PMDA.
+ */
+export function inferRegulatorBody(submissionType: string | undefined): string | undefined {
+  if (!submissionType) return undefined;
+  const upper = submissionType.toUpperCase();
+  const FDA_TYPES = ['IND', 'NDA', 'BLA', 'ANDA', '510K', 'PMA', 'DE_NOVO'];
+  const EMA_TYPES = ['MAA', 'CER'];
+  const PMDA_TYPES = ['JNDA'];
+  if (FDA_TYPES.includes(upper)) return 'FDA';
+  if (EMA_TYPES.includes(upper)) return 'EMA';
+  if (PMDA_TYPES.includes(upper)) return 'PMDA';
   return undefined;
 }
 

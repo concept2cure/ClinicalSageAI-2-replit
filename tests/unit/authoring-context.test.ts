@@ -26,6 +26,7 @@ import {
   extractModuleCode,
   serializeContextForChat,
   deriveLinkedSections,
+  inferRegulatorBody,
 } from '../../client/src/concept2cure/services/authoring-context-resolver';
 
 // ─── AuthoringContextPack construction ───────────────────────────────────────
@@ -594,5 +595,238 @@ describe('Wave 2 action behavioral patterns', () => {
     expect(ctx!.contradictions).toBeUndefined();
     // Actions still available, just without enrichment
     expect(hasSectionContext(ctx)).toBe(true);
+  });
+});
+
+// ─── Pass 4: Body-aware + cross-section consistency tests ────────────────────
+
+describe('inferRegulatorBody', () => {
+  it('infers FDA from FDA submission types', () => {
+    expect(inferRegulatorBody('IND')).toBe('FDA');
+    expect(inferRegulatorBody('NDA')).toBe('FDA');
+    expect(inferRegulatorBody('BLA')).toBe('FDA');
+    expect(inferRegulatorBody('510K')).toBe('FDA');
+    expect(inferRegulatorBody('PMA')).toBe('FDA');
+    expect(inferRegulatorBody('ANDA')).toBe('FDA');
+  });
+
+  it('infers EMA from EMA submission types', () => {
+    expect(inferRegulatorBody('MAA')).toBe('EMA');
+    expect(inferRegulatorBody('CER')).toBe('EMA');
+  });
+
+  it('infers PMDA from PMDA submission types', () => {
+    expect(inferRegulatorBody('JNDA')).toBe('PMDA');
+  });
+
+  it('returns undefined for unknown or missing types', () => {
+    expect(inferRegulatorBody(undefined)).toBeUndefined();
+    expect(inferRegulatorBody('UNKNOWN')).toBeUndefined();
+    expect(inferRegulatorBody('')).toBeUndefined();
+  });
+});
+
+describe('resolveAuthoringContext with regulatorBody', () => {
+  it('uses explicit regulatorBody when provided', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      submissionType: 'IND',
+      regulatorBody: 'EMA', // Explicit override
+    });
+    expect(ctx?.regulatorBody).toBe('EMA');
+  });
+
+  it('infers regulatorBody from submissionType when not explicit', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      submissionType: 'IND',
+    });
+    expect(ctx?.regulatorBody).toBe('FDA');
+  });
+
+  it('infers EMA for MAA submission', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      submissionType: 'MAA',
+    });
+    expect(ctx?.regulatorBody).toBe('EMA');
+  });
+
+  it('leaves regulatorBody undefined when no submission type', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+    });
+    expect(ctx?.regulatorBody).toBeUndefined();
+  });
+});
+
+describe('body-aware action behavioral patterns', () => {
+  it('body expectations require sectionCode + regulatorBody', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '2.5',
+      submissionType: 'IND',
+    });
+    expect(hasSectionContext(ctx)).toBe(true);
+    expect(ctx?.regulatorBody).toBe('FDA');
+    // Action 11 needs both
+  });
+
+  it('body expectations degrade without regulatorBody', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '2.5',
+    });
+    expect(hasSectionContext(ctx)).toBe(true);
+    expect(ctx?.regulatorBody).toBeUndefined();
+    // Action 11 would not appear (no body context)
+  });
+
+  it('cross-section consistency requires sectionCode + linkedSectionCodes', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '2.5',
+    });
+    expect(hasSectionContext(ctx)).toBe(true);
+    expect(ctx?.linkedSectionCodes?.length).toBeGreaterThan(0);
+    // Action 12 needs both
+  });
+
+  it('cross-section consistency not available without linked sections', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '1.1',
+    });
+    expect(hasSectionContext(ctx)).toBe(true);
+    expect(ctx?.linkedSectionCodes).toBeUndefined();
+    // Action 12 would not appear
+  });
+
+  it('body-aware gap detection requires sectionCode + submissionType', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '3.2.S',
+      submissionType: 'NDA',
+    });
+    expect(hasSectionContext(ctx)).toBe(true);
+    expect(ctx?.regulatorBody).toBe('FDA');
+    // Action 13 available
+  });
+});
+
+describe('compare → correction pivot context', () => {
+  it('version context enables compare action', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '2.5',
+      artifactId: 'art-1',
+      artifactVersion: 3,
+    });
+    expect(hasVersionContext(ctx)).toBe(true);
+    expect(hasArtifactContext(ctx)).toBe(true);
+  });
+
+  it('linked sections available for correction pivot after compare', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '2.5',
+      artifactId: 'art-1',
+      artifactVersion: 3,
+    });
+    // After compare shows conflict, user can pivot to correction/harmonization
+    expect(ctx?.linkedSectionCodes).toContain('2.7.3');
+    expect(ctx?.linkedSectionCodes).toContain('5.3');
+  });
+});
+
+describe('readiness consequence patterns', () => {
+  it('readiness + contradictions both available in section context', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '2.5',
+      submissionType: 'IND',
+      readiness: { score: 72, blocked: false },
+      contradictions: [{ id: 'c1', type: 'claim', severity: 'major', explanation: 'Efficacy claim inconsistent with CSR data' }],
+    });
+    expect(ctx?.readiness?.score).toBe(72);
+    expect(ctx?.contradictions?.length).toBe(1);
+    expect(ctx?.regulatorBody).toBe('FDA');
+  });
+
+  it('readiness becomes blocked after critical contradiction', () => {
+    const blocked = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '2.5',
+      readiness: { score: 30, blocked: true, blockers: [{ code: 'CRIT-1', severity: 'critical', message: 'Unresolved dosage contradiction' }] },
+    });
+    expect(blocked?.readiness?.blocked).toBe(true);
+    // Correction draft action should appear (readiness.blocked = true)
+  });
+
+  it('fresh readiness replaces stale after refresh', () => {
+    const stale = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '2.5',
+      readiness: { score: 30, blocked: true },
+    });
+    expect(stale?.readiness?.blocked).toBe(true);
+
+    const fresh = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '2.5',
+      readiness: { score: 85, blocked: false },
+    });
+    expect(fresh?.readiness?.blocked).toBe(false);
+    expect(fresh?.readiness?.score).toBe(85);
+  });
+});
+
+describe('failure behavior — body and linked context missing', () => {
+  it('no body context does not crash', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '2.5',
+    });
+    expect(ctx).not.toBeNull();
+    expect(ctx?.regulatorBody).toBeUndefined();
+  });
+
+  it('no linked sections does not crash', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '9.9',
+    });
+    expect(ctx).not.toBeNull();
+    expect(ctx?.linkedSectionCodes).toBeUndefined();
+  });
+
+  it('both body and linked missing still builds valid context', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '9.9',
+    });
+    expect(ctx).not.toBeNull();
+    expect(ctx?.projectId).toBe('42');
+    expect(ctx?.workflowStage).toBe('section-workspace');
+    expect(ctx?.sectionCode).toBe('9.9');
+    // No body, no linked — but context still usable
   });
 });

@@ -652,6 +652,259 @@ router.get('/section-evidence/:projectId/:sectionCode', async (req: Request, res
   }
 });
 
+// ─── CTD cross-section link map ──────────────────────────────────────────────
+
+const CTD_LINKS: Record<string, string[]> = {
+  '2.2': ['2.3', '2.4', '2.5'],
+  '2.3': ['3.2.S', '3.2.P'],
+  '2.4': ['4.2.1', '4.2.2', '4.2.3'],
+  '2.5': ['2.7.1', '2.7.3', '2.7.4', '5.3'],
+  '2.7.1': ['5.2'],
+  '2.7.3': ['2.5', '5.3'],
+  '2.7.4': ['2.5', '5.3'],
+  '3.2.S': ['2.3'],
+  '3.2.P': ['2.3'],
+  '5.3': ['2.5', '2.7.3', '2.7.4'],
+};
+
+function deriveLinkedSections(sectionCode: string): string[] {
+  // Direct match
+  if (CTD_LINKS[sectionCode]) return CTD_LINKS[sectionCode];
+  // Try prefix match (e.g. '3.2.S.1' → '3.2.S')
+  for (const key of Object.keys(CTD_LINKS)) {
+    if (sectionCode.startsWith(key)) return CTD_LINKS[key];
+  }
+  return [];
+}
+
+// ACTION 11: Cross-section consistency check — combines harmonize + contradiction + linked sections
+router.post('/cross-section-consistency', async (req: Request, res: Response) => {
+  try {
+    const { projectId, sectionCode, linkedSectionCodes, submissionType } = req.body;
+    if (!projectId || !sectionCode) {
+      return res.status(400).json({ error: 'projectId and sectionCode are required' });
+    }
+
+    // 1. If linkedSectionCodes not provided, derive from CTD hierarchy
+    const linked: string[] = Array.isArray(linkedSectionCodes) && linkedSectionCodes.length > 0
+      ? linkedSectionCodes
+      : deriveLinkedSections(sectionCode);
+
+    const allCodes = [sectionCode, ...linked];
+
+    // 2. Fetch content for current + linked sections from artifacts
+    const sections: Record<string, string> = {};
+    try {
+      const { db } = await import('../db.js');
+      for (const code of allCodes) {
+        const artifact = await db.query.concept2cureArtifacts?.findFirst?.({
+          where: (a: any, { and, eq }: any) =>
+            and(eq(a.projectId, Number(projectId)), eq(a.ctdSection, code)),
+          orderBy: (a: any, { desc }: any) => [desc(a.updatedAt)],
+        }).catch(() => null);
+        if (artifact?.content) {
+          sections[code] = typeof artifact.content === 'string'
+            ? artifact.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+            : '';
+        }
+      }
+    } catch {
+      // DB unavailable — continue with what we have
+    }
+
+    // 3. Run harmonize-engine check
+    let harmonizeResult: any = null;
+    if (Object.keys(sections).length >= 2) {
+      try {
+        const { HarmonizeEngine } = await import('../services/harmonize-engine.js');
+        const engine = new HarmonizeEngine();
+        harmonizeResult = await engine.check({
+          sections,
+          submissionType: submissionType || 'IND',
+        });
+      } catch {
+        // Harmonize engine unavailable
+      }
+    }
+
+    // 4. Fetch contradictions for the section
+    let contradictions: any[] = [];
+    try {
+      const { contradictionEngineService } = await import(
+        '../services/contradiction-engine-service.js'
+      );
+      if (contradictionEngineService?.scanProject) {
+        const findings = await contradictionEngineService.scanProject(
+          'default',
+          Number(projectId)
+        );
+        contradictions = (findings || [])
+          .filter(
+            (f: any) =>
+              f.sectionCode === sectionCode ||
+              f.affectedSections?.includes(sectionCode) ||
+              allCodes.includes(f.sectionCode)
+          )
+          .map((f: any) => ({
+            id: f.id || `c-${Math.random().toString(36).slice(2)}`,
+            type: f.contradictionType || f.type || 'finding',
+            severity:
+              f.authorityState === 'blocks_promotion'
+                ? 'critical'
+                : f.severity === 'major'
+                  ? 'major'
+                  : 'minor',
+            explanation: f.explanation || f.description || 'Finding detected',
+            relatedSections: f.affectedSections || [],
+          }));
+      }
+    } catch {
+      // Contradiction engine unavailable
+    }
+
+    // 5. Return combined consistency report
+    return res.json({
+      status: 'data',
+      action: 'cross_section_consistency',
+      sectionCode,
+      linkedSections: linked,
+      sectionsWithContent: Object.keys(sections),
+      harmonize: harmonizeResult
+        ? {
+            consistencyScore: harmonizeResult.consistencyScore,
+            totalIssues: harmonizeResult.totalIssues,
+            criticalCount: harmonizeResult.criticalCount,
+            errorCount: harmonizeResult.errorCount,
+            warningCount: harmonizeResult.warningCount,
+            issues: (harmonizeResult.issues || []).slice(0, 20).map((i: any) => ({
+              id: i.id,
+              type: i.type,
+              severity: i.severity,
+              sectionA: i.sectionA,
+              sectionB: i.sectionB,
+              description: i.description,
+              recommendation: i.recommendation,
+              autoFixable: i.autoFixable,
+            })),
+            checkedDimensions: harmonizeResult.checkedDimensions,
+          }
+        : null,
+      contradictions,
+      summary: {
+        harmonizeAvailable: !!harmonizeResult,
+        harmonizeIssues: harmonizeResult?.totalIssues ?? 0,
+        contradictionCount: contradictions.length,
+        criticalIssues:
+          (harmonizeResult?.criticalCount ?? 0) +
+          contradictions.filter((c: any) => c.severity === 'critical').length,
+      },
+    });
+  } catch (err: any) {
+    console.error('[authoring-actions] cross-section-consistency error:', err?.message);
+    return res.status(500).json({ error: 'Failed to run cross-section consistency check' });
+  }
+});
+
+// Body-aware section expectations endpoint
+router.get('/section-expectations/:regulatorBody/:submissionType/:sectionCode', async (req: Request, res: Response) => {
+  try {
+    const { regulatorBody, submissionType, sectionCode } = req.params;
+    if (!regulatorBody || !submissionType || !sectionCode) {
+      return res.status(400).json({ error: 'regulatorBody, submissionType, and sectionCode are required' });
+    }
+
+    try {
+      const bodyAwareModule = await import('../services/body-aware-authoring.js');
+      const service = bodyAwareModule.bodyAwareAuthoringService
+        || bodyAwareModule.BodyAwareAuthoringService
+        || bodyAwareModule.default;
+
+      if (service) {
+        const svc = typeof service === 'function' ? new service() : service;
+        const expectations = svc.getSectionExpectations
+          ? await svc.getSectionExpectations(regulatorBody, submissionType, sectionCode)
+          : svc.getExpectations
+            ? await svc.getExpectations(regulatorBody, submissionType, sectionCode)
+            : null;
+
+        if (expectations) {
+          return res.json({
+            status: 'data',
+            action: 'section_expectations',
+            regulatorBody,
+            submissionType,
+            sectionCode,
+            expectations,
+          });
+        }
+      }
+    } catch {
+      // Body-aware authoring service unavailable
+    }
+
+    return res.json({
+      status: 'service_unavailable',
+      action: 'section_expectations',
+      message: `Body-aware authoring service is not available. Section expectations for ${regulatorBody}/${submissionType}/${sectionCode} could not be retrieved.`,
+      context: { regulatorBody, submissionType, sectionCode },
+    });
+  } catch (err: any) {
+    console.error('[authoring-actions] section-expectations error:', err?.message);
+    return res.status(500).json({ error: 'Failed to fetch section expectations' });
+  }
+});
+
+// Body-aware gap detection
+router.post('/body-aware-gaps', async (req: Request, res: Response) => {
+  try {
+    const { regulatorBody, submissionType, sectionCode, currentContent } = req.body;
+    if (!regulatorBody || !submissionType || !sectionCode) {
+      return res.status(400).json({ error: 'regulatorBody, submissionType, and sectionCode are required' });
+    }
+
+    try {
+      const bodyAwareModule = await import('../services/body-aware-authoring.js');
+      const service = bodyAwareModule.bodyAwareAuthoringService
+        || bodyAwareModule.BodyAwareAuthoringService
+        || bodyAwareModule.default;
+
+      if (service) {
+        const svc = typeof service === 'function' ? new service() : service;
+        if (svc.detectBodySpecificGaps) {
+          const gaps = await svc.detectBodySpecificGaps(
+            regulatorBody,
+            submissionType,
+            sectionCode,
+            currentContent || ''
+          );
+
+          return res.json({
+            status: 'data',
+            action: 'body_aware_gaps',
+            regulatorBody,
+            submissionType,
+            sectionCode,
+            gaps: Array.isArray(gaps) ? gaps : gaps?.gaps || [],
+            gapCount: Array.isArray(gaps) ? gaps.length : gaps?.gaps?.length || 0,
+          });
+        }
+      }
+    } catch {
+      // Body-aware authoring service unavailable
+    }
+
+    return res.json({
+      status: 'service_unavailable',
+      action: 'body_aware_gaps',
+      message: `Body-aware gap detection is not available. Gaps for ${regulatorBody}/${submissionType}/${sectionCode} could not be analyzed.`,
+      context: { regulatorBody, submissionType, sectionCode },
+    });
+  } catch (err: any) {
+    console.error('[authoring-actions] body-aware-gaps error:', err?.message);
+    return res.status(500).json({ error: 'Failed to detect body-aware gaps' });
+  }
+});
+
 // ─── Section-level readiness + contradiction data feed ───────────────────────
 
 router.get('/section-context/:projectId/:sectionCode', async (req: Request, res: Response) => {

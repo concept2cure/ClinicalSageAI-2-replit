@@ -611,6 +611,38 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       });
     }
 
+    // ── Wave 3: Body-aware + cross-section consistency actions ──
+
+    // Action 11: Body-aware expectations
+    if (hasSectionContext(authoringContext) && (authoringContext.regulatorBody || authoringContext.submissionType)) {
+      actions.push({
+        id: 'body-expectations',
+        label: `What does ${authoringContext.regulatorBody || 'this body'} expect here?`,
+        intent: 'body_expectations',
+        description: 'Show body-specific section requirements and common gaps',
+      });
+    }
+
+    // Action 12: Cross-section consistency
+    if (hasSectionContext(authoringContext) && authoringContext.linkedSectionCodes?.length) {
+      actions.push({
+        id: 'cross-section-consistency',
+        label: 'Check cross-section consistency',
+        intent: 'cross_section_consistency',
+        description: 'Detect inconsistencies with linked CTD sections',
+      });
+    }
+
+    // Action 13: Body-aware gap detection
+    if (hasSectionContext(authoringContext) && (authoringContext.regulatorBody || authoringContext.submissionType)) {
+      actions.push({
+        id: 'body-aware-gaps',
+        label: 'What is missing for this body?',
+        intent: 'body_aware_gaps',
+        description: 'Detect body-specific content gaps in this section',
+      });
+    }
+
     return actions;
   }, [authoringContext]);
 
@@ -618,8 +650,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   const effectiveSuggestedActions = useMemo(() => {
     const parent = suggestedActions || [];
     if (authoringSuggestedActions.length > 0) {
-      // Show up to 4 authoring actions + 1 parent action
-      return [...authoringSuggestedActions.slice(0, 4), ...parent.slice(0, 1)];
+      // Show up to 5 authoring actions, rotate based on context richness
+      const limit = authoringSuggestedActions.length > 5 ? 5 : authoringSuggestedActions.length;
+      return [...authoringSuggestedActions.slice(0, limit), ...parent.slice(0, 1)];
     }
     return parent;
   }, [suggestedActions, authoringSuggestedActions]);
@@ -1264,16 +1297,22 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             const cur = data.currentVersion;
             const appr = data.approvedVersion;
             const wordDelta = data.diffSummary.currentWords - data.diffSummary.approvedWords;
+            const changeMagnitude = Math.abs(wordDelta) / Math.max(data.diffSummary.approvedWords, 1);
+            const conflictRisk = changeMagnitude > 0.3 ? 'high' : changeMagnitude > 0.1 ? 'moderate' : 'low';
+            const pivotHint = conflictRisk !== 'low'
+              ? `\n\n**Conflict risk:** ${conflictRisk} — significant changes from approved baseline.${authoringContext?.linkedSectionCodes?.length ? ' Use **Check cross-section consistency** or **Prepare correction draft** to address.' : ' Consider preparing a correction draft to align.'}`
+              : '\n\n**Conflict risk:** low — changes are minor relative to approved baseline.';
             setMessages(prev => [...prev, {
               id: `a-${Date.now()}`,
               role: 'assistant',
-              content: `**Version Comparison**\n\n| | Current (v${cur.version}) | Approved (v${appr.version}) |\n|---|---|---|\n| Status | ${cur.status} | ${appr.status} |\n| Words | ${data.diffSummary.currentWords} | ${data.diffSummary.approvedWords} |\n| Updated | ${new Date(cur.updatedAt).toLocaleDateString()} | ${new Date(appr.updatedAt).toLocaleDateString()} |\n\n**Net change:** ${wordDelta > 0 ? '+' : ''}${wordDelta} words.${onOpenCompareInspector ? '' : '\n\nTo view a detailed inline diff, open the document inspector and select the Compare tab.'}`,
+              content: `**Version Comparison**\n\n| | Current (v${cur.version}) | Approved (v${appr.version}) |\n|---|---|---|\n| Status | ${cur.status} | ${appr.status} |\n| Words | ${data.diffSummary.currentWords} | ${data.diffSummary.approvedWords} |\n| Updated | ${new Date(cur.updatedAt).toLocaleDateString()} | ${new Date(appr.updatedAt).toLocaleDateString()} |\n\n**Net change:** ${wordDelta > 0 ? '+' : ''}${wordDelta} words.${pivotHint}${onOpenCompareInspector ? '' : '\n\nTo view a detailed inline diff, open the document inspector and select the Compare tab.'}`,
               timestamp: new Date(),
             }]);
             // Auto-open the version compare inspector if available
             if (onOpenCompareInspector) {
               onOpenCompareInspector();
             }
+            onRefreshIntelligence?.();
           }
         } catch {
           handleSend('Compare the current document against the last approved version.');
@@ -1394,7 +1433,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               `${i + 1}. **${t.objectTitle}** (§${t.sectionCode || '—'})\n   Rationale: ${t.revisionRationale}\n   Confidence: ${t.confidence} | Review required: ${t.requiresReview ? 'Yes' : 'No'}`
             ).join('\n\n');
             setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
-              content: `**Correction targets identified** — ${data.targets.length} item(s):\n\n${targetLines}\n\n${data.message}` }]);
+              content: `**Correction targets identified** — ${data.targets.length} item(s):\n\n${targetLines}\n\n${data.message}\n\n⚠️ Corrections require review before apply. Readiness will be re-evaluated after changes.` }]);
+            onRefreshIntelligence?.();
           } else {
             setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
               content: `**Correction draft:** ${data.message}` }]);
@@ -1426,7 +1466,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               `- **[${i.severity}]** ${i.description} (§${i.sectionA} ↔ §${i.sectionB})${i.recommendation ? `\n  Fix: ${i.recommendation}` : ''}`
             ).join('\n') || 'None';
             setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
-              content: `**Harmonization Check** — Score: ${data.consistencyScore}/100\n\nSections compared: ${data.sectionsCompared?.join(', ')}\nDimensions checked: ${data.checkedDimensions?.join(', ')}\n\n**Issues (${data.totalIssues}):**\n${issueLines}` }]);
+              content: `**Harmonization Check** — Score: ${data.consistencyScore}/100\n\nSections compared: ${data.sectionsCompared?.join(', ')}\nDimensions checked: ${data.checkedDimensions?.join(', ')}\n\n**Issues (${data.totalIssues}):**\n${issueLines}${data.totalIssues > 0 ? '\n\n💡 Use **Prepare correction draft** to address critical issues.' : ''}` }]);
+            onRefreshIntelligence?.();
           } else {
             setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
               content: `**Harmonization:** ${data.message}` }]);
@@ -1518,6 +1559,108 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               content: `**Evidence for §${sectionCode}:** ${data.message}${data.gapAnalysis?.gaps?.length ? `\n\nGaps identified: ${data.gapAnalysis.gaps.join(', ')}` : ''}` }]);
           }
         } catch { handleSend(`Gather evidence for section ${sectionCode}.`); }
+      })();
+      return;
+    }
+
+    // ── Wave 3: Body-aware + cross-section consistency handlers ──────
+
+    // ACTION 11: Body-aware expectations
+    if (action.intent === 'body_expectations') {
+      (async () => {
+        const projectId = contextProfile?.projectId;
+        const sectionCode = authoringContext?.sectionCode;
+        const body = authoringContext?.regulatorBody || 'FDA';
+        const subType = authoringContext?.submissionType || 'IND';
+        if (!sectionCode) { handleSend(`What does ${body} expect in this section?`); return; }
+        try {
+          const res = await fetch(`/api/authoring-actions/section-expectations/${encodeURIComponent(body)}/${encodeURIComponent(subType)}/${encodeURIComponent(sectionCode)}`, {
+            headers: getAuthHeaders(),
+          });
+          const data = await res.json();
+          if (data.status === 'data') {
+            const exp = data.expectations;
+            const reqLines = exp.requirements?.length ? exp.requirements.map((r: string) => `- ${r}`).join('\n') : '- None identified';
+            const defLines = exp.commonDeficiencies?.slice(0, 5).map((d: string) => `- ${d}`).join('\n') || '- None';
+            const bodyNotes = exp.bodySpecificNotes?.slice(0, 3).map((n: string) => `- ${n}`).join('\n') || '- None';
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**${body} Expectations for §${sectionCode}** (${subType})\n\n**Required level:** ${exp.requiredLevel}\n\n**Requirements:**\n${reqLines}\n\n**Common deficiencies (${body}):**\n${defLines}\n\n**Body-specific notes:**\n${bodyNotes}` }]);
+          } else {
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Section expectations:** ${data.message}` }]);
+          }
+        } catch { handleSend(`What does ${body} expect in section ${sectionCode}?`); }
+      })();
+      return;
+    }
+
+    // ACTION 12: Cross-section consistency
+    if (action.intent === 'cross_section_consistency') {
+      (async () => {
+        const projectId = contextProfile?.projectId;
+        const sectionCode = authoringContext?.sectionCode;
+        if (!projectId || !sectionCode) { handleSend('Check this section against linked sections.'); return; }
+        try {
+          const res = await fetch('/api/authoring-actions/cross-section-consistency', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+              projectId,
+              sectionCode,
+              linkedSectionCodes: authoringContext?.linkedSectionCodes,
+              submissionType: authoringContext?.submissionType,
+            }),
+          });
+          const data = await res.json();
+          if (data.status === 'data') {
+            const harmIssues = data.harmonizeResult?.issues?.slice(0, 5).map((i: any) =>
+              `- **[${i.severity}]** ${i.description} (§${i.sectionA} ↔ §${i.sectionB})${i.recommendation ? `\n  → ${i.recommendation}` : ''}`
+            ).join('\n') || '- None found';
+            const contraLines = data.contradictions?.slice(0, 3).map((c: any) =>
+              `- **[${c.severity}]** ${c.explanation}`
+            ).join('\n') || '- None';
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Cross-Section Consistency for §${sectionCode}**\n\nLinked: ${data.linkedSections?.join(', ') || 'none'}\nConsistency: ${data.harmonizeResult?.consistencyScore ?? '—'}/100\n\n**Harmonization issues (${data.harmonizeResult?.totalIssues ?? 0}):**\n${harmIssues}\n\n**Contradictions (${data.contradictionCount ?? 0}):**\n${contraLines}${data.harmonizeResult?.totalIssues > 0 ? '\n\n💡 Use **Prepare correction draft** or **Harmonize** to address these.' : ''}` }]);
+            onRefreshIntelligence?.();
+          } else {
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Cross-section consistency:** ${data.message}` }]);
+          }
+        } catch { handleSend('Check this section against linked sections for consistency.'); }
+      })();
+      return;
+    }
+
+    // ACTION 13: Body-aware gap detection
+    if (action.intent === 'body_aware_gaps') {
+      (async () => {
+        const sectionCode = authoringContext?.sectionCode;
+        const body = authoringContext?.regulatorBody || 'FDA';
+        const subType = authoringContext?.submissionType || 'IND';
+        if (!sectionCode) { handleSend(`What is missing for ${body} in this section?`); return; }
+        try {
+          const res = await fetch('/api/authoring-actions/body-aware-gaps', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+              regulatorBody: body,
+              submissionType: subType,
+              sectionCode,
+              currentContent: '', // Empty triggers "all missing" detection
+            }),
+          });
+          const data = await res.json();
+          if (data.status === 'data') {
+            const gapLines = data.gaps?.slice(0, 10).map((g: any) =>
+              `- **[${g.status.toUpperCase()}]** ${g.requirement}${g.bodyNote ? ` — ${g.bodyNote}` : ''}`
+            ).join('\n') || '- None detected';
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**${body} Gap Analysis for §${sectionCode}** (${subType})\n\n**Completeness:** ${data.overallCompleteness ?? '—'}%\n\n**Gaps:**\n${gapLines}${data.overallCompleteness != null && data.overallCompleteness < 50 ? '\n\n⚠️ Section is significantly incomplete for this regulatory body.' : ''}` }]);
+          } else {
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Body-aware gaps:** ${data.message}` }]);
+          }
+        } catch { handleSend(`What is missing for ${body} in section ${sectionCode}?`); }
       })();
       return;
     }
