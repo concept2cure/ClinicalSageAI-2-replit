@@ -6,12 +6,35 @@ based on EUDAMED requirements.
 """
 
 import os
+import json
+import argparse
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
-from datetime import datetime
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
-def write_eu_regional_xml(sequence_id: str, documents: List[Any], meta: Dict[str, str] = None):
+def _normalize_eu_document(doc: Any) -> Dict[str, str]:
+    if isinstance(doc, dict):
+        return {
+            "doc_id": str(doc.get("doc_id")),
+            "module": str(doc.get("module")),
+            "title": str(doc.get("title") or f"Document {doc.get('doc_id')}"),
+            "file_path": str(doc.get("file_path")),
+        }
+    doc_id = str(getattr(doc, "doc_id"))
+    return {
+        "doc_id": doc_id,
+        "module": str(getattr(doc, "module")),
+        "title": str(getattr(getattr(doc, "document", None), "title", f"Document {doc_id}")),
+        "file_path": str(getattr(doc, "file_path")),
+    }
+
+
+def write_eu_regional_xml(
+    sequence_id: str,
+    documents: List[Any],
+    meta: Optional[Dict[str, str]] = None,
+    output_dir: Optional[str] = None,
+) -> str:
     """
     Generate EU regional XML for a CER sequence
     
@@ -30,7 +53,7 @@ def write_eu_regional_xml(sequence_id: str, documents: List[Any], meta: Dict[str
     }
     
     # Create output directory if it doesn't exist
-    output_dir = f"./output/cer/{sequence_id}"
+    output_dir = output_dir or f"./output/cer/{sequence_id}"
     os.makedirs(output_dir, exist_ok=True)
     
     # Create root element
@@ -59,12 +82,13 @@ def write_eu_regional_xml(sequence_id: str, documents: List[Any], meta: Dict[str
     inventory = ET.SubElement(root, "document-inventory")
     
     # Add documents
-    for doc in documents:
+    for raw_doc in documents:
+        doc = _normalize_eu_document(raw_doc)
         document = ET.SubElement(inventory, "document")
-        ET.SubElement(document, "doc-id").text = str(doc.doc_id)
-        ET.SubElement(document, "doc-module").text = doc.module
-        ET.SubElement(document, "doc-title").text = getattr(doc.document, "title", f"Document {doc.doc_id}")
-        ET.SubElement(document, "doc-path").text = doc.file_path
+        ET.SubElement(document, "doc-id").text = doc["doc_id"]
+        ET.SubElement(document, "doc-module").text = doc["module"]
+        ET.SubElement(document, "doc-title").text = doc["title"]
+        ET.SubElement(document, "doc-path").text = doc["file_path"]
     
     # Format the XML with proper indentation
     xml_str = minidom.parseString(ET.tostring(root)).toprettyxml(indent="  ")
@@ -75,3 +99,34 @@ def write_eu_regional_xml(sequence_id: str, documents: List[Any], meta: Dict[str
         f.write(xml_str)
     
     return output_path
+
+
+def _load_json(path: str) -> Any:
+    with open(path, "r", encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Generate EU regional XML from document metadata")
+    parser.add_argument("--sequence-id", required=True, help="Sequence identifier")
+    parser.add_argument("--documents-json", required=True, help="JSON array of documents")
+    parser.add_argument("--meta-json", help="Optional metadata JSON")
+    parser.add_argument("--output-dir", help="Optional output directory")
+    args = parser.parse_args()
+
+    documents = _load_json(args.documents_json)
+    if not isinstance(documents, list):
+        raise ValueError("--documents-json must be a JSON array")
+
+    meta = _load_json(args.meta_json) if args.meta_json else None
+    output_path = write_eu_regional_xml(
+        sequence_id=args.sequence_id,
+        documents=documents,
+        meta=meta,
+        output_dir=args.output_dir,
+    )
+    print(output_path)
+
+
+if __name__ == "__main__":
+    main()
