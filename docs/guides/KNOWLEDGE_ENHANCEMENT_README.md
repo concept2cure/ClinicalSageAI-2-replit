@@ -73,6 +73,21 @@ node knowledge_scheduler.js run knowledgeEnhancement
 node knowledge_scheduler.js run journalMonitor
 node knowledge_scheduler.js run canadaImport
 node knowledge_scheduler.js run bulkCanadaImport
+
+# Real CSR ingestion workflow test (local fixture mode)
+node scripts/import/download_and_harvest_canada_csrs.js --use-local-fixtures
+
+# Real CSR URL download attempt (uses manifest)
+node scripts/import/download_and_harvest_canada_csrs.js --require-download --strict-pdf-only
+
+# Generate client-facing value KPIs from harvested CSR corpus
+node scripts/import/generate_csr_value_metrics.js
+
+# Generate human-readable client brief from KPI snapshot
+node scripts/import/generate_csr_client_brief.js
+
+# Validate batch import logic without database writes
+node scripts/test/test_import_batch_dry_run.js
 ```
 
 ## Configuration
@@ -136,7 +151,31 @@ All acquired knowledge is stored in structured directories:
 - `/data/trial_registries`: Data from clinical trial registries
 - `/data/processed_knowledge`: Ready-to-integrate knowledge
 - `/data/processed_csrs`: Processed clinical study reports
+- `/data/knowledge_structure/ana_csr_intelligence_atoms.jsonl`: Harvested intelligence atoms consumed by AnA
 
 ## "Our Value is Our Knowledge"
 
 This system ensures TrialSage's AI consistently has access to the latest clinical research knowledge without requiring manual intervention, maintaining our unique value proposition by continuously expanding our knowledge base.
+
+
+## Operating System Maturity
+
+For a detailed assessment of continuous-learning OS maturity (including missing layers and definition-of-done), see `docs/guides/CSR_CONTINUOUS_LEARNING_OPERATING_SYSTEM.md`.
+
+
+## Real CSR Download Manifest
+
+Real-download targets are configured in `data/sources/canada_csr_manifest.json`. Update `downloadUrl` (or `directPdfUrl`) entries with direct PDF links from Health Canada CI portal exports. Use `--strict-pdf-only` to reject landing-page URLs.
+
+
+## Client Value Expansion Layer
+
+Use `scripts/import/generate_csr_value_metrics.js` to generate `data/knowledge_structure/client_value_metrics.json`, which provides:
+- freshness score (how current the CSR intelligence is),
+- atomization coverage (how much of ingested data is harvest-ready),
+- coverage diversity (indications/sponsors/countries),
+- diagnostics score (orphan atoms, missing evidence, duplicate IDs),
+- human-value signals with direct client-impact actions,
+- a single value-readiness score to guide client-facing rollout.
+
+Then use `scripts/import/generate_csr_client_brief.js` to publish a concise markdown brief (`data/knowledge_structure/client_value_brief.md`) for commercial, customer success, and advisory teams.

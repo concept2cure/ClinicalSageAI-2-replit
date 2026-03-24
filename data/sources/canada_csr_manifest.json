@@ -1,0 +1,22 @@
+[
+  {
+    "id": "HC-ESKETAMINE-2001",
+    "nctId": "NCT02133001",
+    "title": "Esketamine MDD Imminent Suicide Risk",
+    "sponsor": "Janssen",
+    "country": "Canada",
+    "source": "Health Canada Clinical Information Portal",
+    "landingPageUrl": "https://clinical-information.canada.ca/search/ci-rc",
+    "downloadUrl": "https://clinical-information.canada.ca/search/ci-rc"
+  },
+  {
+    "id": "HC-COVID-CLPV-001",
+    "nctId": "NCT04636697",
+    "title": "Recombinant Coronavirus-Like Particle COVID-19 Vaccine",
+    "sponsor": "Medicago",
+    "country": "Canada",
+    "source": "Health Canada Clinical Information Portal",
+    "landingPageUrl": "https://clinical-information.canada.ca/search/ci-rc",
+    "downloadUrl": "https://clinical-information.canada.ca/search/ci-rc"
+  }
+]

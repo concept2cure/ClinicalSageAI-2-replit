@@ -9,6 +9,12 @@ const execPromise = util.promisify(exec);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const logger = {
+  info: (...args) => console.log('[KNOWLEDGE-SCHEDULER]', ...args),
+  warn: (...args) => console.warn('[KNOWLEDGE-SCHEDULER]', ...args),
+  error: (...args) => console.error('[KNOWLEDGE-SCHEDULER]', ...args),
+};
+
 /**
  * Knowledge Enhancement Scheduler for TrialSage
  *
@@ -29,7 +35,7 @@ const SCHEDULER_CONFIG = {
     // Import Canada CSRs in batches of 50 every Monday at 3:00 AM
     canadaImport: {
       cronSchedule: '0 3 * * 1',
-      script: 'import_batch_of_50.js',
+      script: path.join(process.cwd(), 'scripts/import/import_batch_of_50.js'),
       enabled: true,
       label: 'Health Canada CSR Import',
       logFile: 'canada_import_log.json',
@@ -37,7 +43,7 @@ const SCHEDULER_CONFIG = {
     // Run knowledge enhancement daily at 2:00 AM
     knowledgeEnhancement: {
       cronSchedule: '0 2 * * *',
-      script: 'auto_knowledge_enhancement.js',
+      script: path.join(process.cwd(), 'scripts/automation/auto_knowledge_enhancement.js'),
       enabled: true,
       label: 'Academic Knowledge Enhancement',
       logFile: 'knowledge_enhancement_log.json',
@@ -45,7 +51,7 @@ const SCHEDULER_CONFIG = {
     // Monitor journal RSS feeds twice daily (8:00 AM and 8:00 PM)
     journalMonitor: {
       cronSchedule: '0 8,20 * * *',
-      script: 'journal_rss_monitor.js',
+      script: path.join(process.cwd(), 'scripts/automation/journal_rss_monitor.js'),
       enabled: true,
       label: 'Journal RSS Monitoring',
       logFile: 'journal_monitor_log.json',
@@ -53,10 +59,17 @@ const SCHEDULER_CONFIG = {
     // Run full 500 imports monthly on the 1st at 1:00 AM
     bulkCanadaImport: {
       cronSchedule: '0 1 1 * *',
-      script: 'import_500_more_canada_trials.js',
+      script: path.join(process.cwd(), 'scripts/import/import_500_more_canada_trials.js'),
       enabled: true,
       label: 'Bulk Canada CSR Import (500)',
       logFile: 'bulk_canada_import_log.json',
+    },
+    canadaRealCsrDownload: {
+      cronSchedule: '30 2 * * 2',
+      script: path.join(process.cwd(), 'scripts/import/download_and_harvest_canada_csrs.js'),
+      enabled: false,
+      label: 'Canada Real CSR Download + Harvest',
+      logFile: 'canada_real_csr_download_log.json',
     },
   },
 };
@@ -108,7 +121,7 @@ async function executeTask(task) {
   try {
     // Execute the script
     console.time(`${task.label} execution`);
-    const { stdout, stderr } = await execPromise(`node ${task.script}`);
+    const { stdout, stderr } = await execPromise(`node "${task.script}"`);
     console.timeEnd(`${task.label} execution`);
 
     // Log results
@@ -279,13 +292,9 @@ function startScheduler() {
 async function installDependencies() {
   try {
     try {
-      require.resolve('node-cron');
-      logger.info('node-cron is already installed');
+      logger.info('node-cron dependency check skipped (managed by package.json)');
       return true;
     } catch (e) {
-      logger.info('Installing required dependencies...');
-      await execPromise('npm install node-cron');
-      logger.info('Dependencies installed successfully');
       return true;
     }
   } catch (error) {
@@ -333,7 +342,7 @@ To run a task immediately, run:
   node knowledge_scheduler.js run <taskKey>
 
 Available task keys: canadaImport, knowledgeEnhancement, 
-journalMonitor, bulkCanadaImport
+journalMonitor, bulkCanadaImport, canadaRealCsrDownload
 =========================================================
 `);
   }
