@@ -48,17 +48,6 @@ import {
   recordKernelPolicyOutcome,
 } from '../services/kernel-adaptive-policy.js';
 import { buildGoalPlan, replanGoalPlan } from '../services/kernel-goal-planner.js';
-import {
-  createGoalPlanRun,
-  getGoalPlanRun,
-  advanceGoalPlanStep,
-  executeNextGoalPlanStep,
-} from '../services/kernel-plan-runtime.js';
-import {
-  recordProtocolEvent,
-  listProtocolEvents,
-  validateProtocolEvent,
-} from '../services/kernel-agent-protocol.js';
 
 const router = Router();
 
@@ -90,6 +79,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       document_context,
       submission_type,
       conversation_history,
+      authoring_context,
     } = req.body;
 
     if (!message || typeof message !== 'string') {
@@ -127,6 +117,39 @@ router.post('/chat', async (req: Request, res: Response) => {
         department: req.body.context?.department,
       });
 
+    // ── Build authoring context block for system prompt enrichment ──
+    let authoringContextBlock = '';
+    if (authoring_context && typeof authoring_context === 'object') {
+      const ac = authoring_context;
+      const parts: string[] = ['<authoring_context>'];
+      if (ac.workflowStage) parts.push(`  <workflow_stage>${ac.workflowStage}</workflow_stage>`);
+      if (ac.sectionCode) parts.push(`  <section_code>${ac.sectionCode}</section_code>`);
+      if (ac.sectionTitle) parts.push(`  <section_title>${ac.sectionTitle}</section_title>`);
+      if (ac.moduleCode) parts.push(`  <module_code>${ac.moduleCode}</module_code>`);
+      if (ac.artifactId) parts.push(`  <artifact_id>${ac.artifactId}</artifact_id>`);
+      if (ac.artifactVersionId) parts.push(`  <artifact_version_id>${ac.artifactVersionId}</artifact_version_id>`);
+      if (ac.artifactStatus) parts.push(`  <artifact_status>${ac.artifactStatus}</artifact_status>`);
+      if (ac.submissionType) parts.push(`  <submission_type>${ac.submissionType}</submission_type>`);
+      if (ac.readiness) {
+        parts.push(`  <readiness score="${ac.readiness.score ?? 'unknown'}" blocked="${ac.readiness.blocked ?? false}">`);
+        if (ac.readiness.blockers?.length) {
+          for (const b of ac.readiness.blockers) {
+            parts.push(`    <blocker severity="${b.severity}" code="${b.code}">${b.message}</blocker>`);
+          }
+        }
+        parts.push('  </readiness>');
+      }
+      if (ac.contradictions?.length) {
+        parts.push('  <contradictions>');
+        for (const c of ac.contradictions) {
+          parts.push(`    <contradiction id="${c.id}" type="${c.type}" severity="${c.severity}">${c.explanation}</contradiction>`);
+        }
+        parts.push('  </contradictions>');
+      }
+      parts.push('</authoring_context>');
+      authoringContextBlock = parts.join('\n');
+    }
+
     // Orchestrate — build the complete system prompt
     const orchestratorInput: OrchestratorInput = {
       message,
@@ -153,6 +176,11 @@ router.post('/chat', async (req: Request, res: Response) => {
       riskTier: routingPlan.riskTier,
       submissionType: orchestration.detectedSubmissionType,
     });
+
+    // Inject authoring context into system prompt if available
+    if (authoringContextBlock) {
+      orchestration.systemPrompt += `\n\n## Current Authoring Context\n\nYou have access to the user's current authoring context. Use this to provide section-specific, artifact-aware responses. When the user asks about "this section", "this document", "what's blocking", or similar, reference this context:\n\n${authoringContextBlock}`;
+    }
 
     // Build message history for the AI gateway
     const messages: GatewayMessage[] = [{ role: 'system', content: orchestration.systemPrompt }];
@@ -313,6 +341,8 @@ router.post('/chat', async (req: Request, res: Response) => {
         detectedIntent: orchestration.detectedIntent,
         detectedSubmissionType: orchestration.detectedSubmissionType,
         appliedRole: orchestration.appliedRole,
+        activeWorkstream: orchestration.activeWorkstream,
+        workstreamHandoff: orchestration.workstreamHandoff,
         suggestedActions: orchestration.suggestedActions,
         meta: orchestration.orchestrationMeta,
         goalPlan,
@@ -361,7 +391,7 @@ router.post('/chat', async (req: Request, res: Response) => {
 // ─────────────────────────────────────────────────────────────────────────────
 router.post('/plan', async (req: Request, res: Response) => {
   try {
-    const { message, intent_lens, submission_type, persist, thread_id } = req.body || {};
+    const { message, intent_lens, submission_type } = req.body || {};
     if (!message || typeof message !== 'string') {
       return res.status(400).json({ error: 'Message is required', code: 'INVALID_MESSAGE' });
     }
@@ -386,26 +416,9 @@ router.post('/plan', async (req: Request, res: Response) => {
       submissionType: orchestration.detectedSubmissionType,
     });
 
-    let planRunId: string | null = null;
-    if (persist) {
-      const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
-      const persisted = await createGoalPlanRun({
-        organizationId: orgId ? Number(orgId) : null,
-        threadId: thread_id || null,
-        route: '/api/ana-ri/plan',
-        goalPlan,
-        metadata: {
-          intentLens: orchestration.detectedIntent.lens,
-          submissionType: orchestration.detectedSubmissionType,
-        },
-      });
-      planRunId = persisted.id;
-    }
-
     return res.json({
       routingPlan,
       goalPlan,
-      planRunId,
       orchestration: {
         detectedIntent: orchestration.detectedIntent,
         detectedSubmissionType: orchestration.detectedSubmissionType,
@@ -418,104 +431,6 @@ router.post('/plan', async (req: Request, res: Response) => {
       message: error?.message,
     });
   }
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// GET /api/ana-ri/plan/:planRunId — Fetch persisted goal plan run
-// ─────────────────────────────────────────────────────────────────────────────
-router.get('/plan/:planRunId', async (req: Request, res: Response) => {
-  const planRun = await getGoalPlanRun(req.params.planRunId);
-  if (!planRun) {
-    return res.status(404).json({ error: 'Plan run not found', code: 'PLAN_NOT_FOUND' });
-  }
-  return res.json(planRun);
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// POST /api/ana-ri/plan/:planRunId/advance — Advance step status
-// ─────────────────────────────────────────────────────────────────────────────
-router.post('/plan/:planRunId/advance', async (req: Request, res: Response) => {
-  const { stepId, nextStatus } = req.body || {};
-  if (!stepId || !nextStatus) {
-    return res
-      .status(400)
-      .json({ error: 'stepId and nextStatus are required', code: 'INVALID_INPUT' });
-  }
-  const allowedStatuses = ['pending', 'in_progress', 'completed', 'blocked', 'replanned'] as const;
-  if (!allowedStatuses.includes(nextStatus)) {
-    return res.status(400).json({ error: 'Invalid nextStatus', code: 'INVALID_STATUS' });
-  }
-
-  const result = await advanceGoalPlanStep({
-    planRunId: req.params.planRunId,
-    stepId,
-    nextStatus,
-  });
-  if (!result.ok) {
-    return res.status(400).json({ error: result.message, code: 'PLAN_ADVANCE_FAILED' });
-  }
-  return res.json({ ok: true });
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// POST /api/ana-ri/plan/:planRunId/execute-next — Execute next runnable step
-// ─────────────────────────────────────────────────────────────────────────────
-router.post('/plan/:planRunId/execute-next', async (req: Request, res: Response) => {
-  const result = await executeNextGoalPlanStep(req.params.planRunId);
-  if (!result.ok) {
-    return res.status(400).json({ error: result.message, code: 'PLAN_EXECUTION_FAILED' });
-  }
-  const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
-  await recordProtocolEvent({
-    planRunId: req.params.planRunId,
-    organizationId: orgId ? Number(orgId) : null,
-    actorType: 'system',
-    actorId: 'kernel-runtime',
-    messageType: 'decision',
-    payload: {
-      decision: 'execute_next_step',
-      rationale: 'Automatically executed next dependency-satisfied step',
-      stepId: result.executedStepId,
-    },
-  });
-  return res.json(result);
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// POST /api/ana-ri/plan/:planRunId/protocol — Append protocol event
-// ─────────────────────────────────────────────────────────────────────────────
-router.post('/plan/:planRunId/protocol', async (req: Request, res: Response) => {
-  const { actorType, actorId, messageType, payload, metadata } = req.body || {};
-  const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
-  const event = {
-    planRunId: req.params.planRunId,
-    organizationId: orgId ? Number(orgId) : null,
-    actorType,
-    actorId,
-    messageType,
-    payload,
-    metadata,
-  };
-  const validation = validateProtocolEvent(event as any);
-  if (!validation.ok) {
-    return res.status(400).json({ error: validation.message, code: 'INVALID_PROTOCOL_EVENT' });
-  }
-
-  const recorded = await recordProtocolEvent(event as any);
-  if (!recorded.ok) {
-    return res
-      .status(500)
-      .json({ error: 'Failed to record protocol event', code: 'PROTOCOL_WRITE_FAILED' });
-  }
-  return res.json({ ok: true });
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// GET /api/ana-ri/plan/:planRunId/protocol — List protocol events
-// ─────────────────────────────────────────────────────────────────────────────
-router.get('/plan/:planRunId/protocol', async (req: Request, res: Response) => {
-  const events = await listProtocolEvents(req.params.planRunId);
-  return res.json({ events });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

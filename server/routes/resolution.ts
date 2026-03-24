@@ -448,4 +448,119 @@ router.post('/orchestrate', async (req: Request, res: Response) => {
   }
 });
 
+// ---------------------------------------------------------------------------
+// CONTRADICTION-AWARE RESOLUTION ORCHESTRATION (Pass 9)
+// ---------------------------------------------------------------------------
+
+router.post('/orchestrate/contradiction', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrganizationId(req);
+    const userId = getUserId(req);
+    const { projectId, contradictionIds, regulatorBody, submissionType, workflowStage, autoExecute } = req.body;
+
+    if (!projectId || !contradictionIds || !Array.isArray(contradictionIds) || contradictionIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: projectId, contradictionIds (non-empty array)',
+      });
+    }
+
+    const { orchestrateContradictionResolution } = await import('../services/resolution');
+    const result = await orchestrateContradictionResolution(orgId, userId, {
+      projectId,
+      contradictionIds,
+      regulatorBody,
+      submissionType,
+      workflowStage,
+      autoExecute,
+    });
+
+    res.json({ success: true, result });
+  } catch (error: any) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+router.post('/orchestrate/contradiction/explain', async (req: Request, res: Response) => {
+  try {
+    const { result } = req.body;
+    if (!result) {
+      return res.status(400).json({ success: false, error: 'Missing result object' });
+    }
+    const { buildContradictionExplanation } = await import('../services/resolution');
+    const explanation = buildContradictionExplanation(result);
+    res.json({ success: true, explanation });
+  } catch (error: any) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+// Contradiction bundle plan preview (plan without execution)
+router.post('/orchestrate/contradiction/plan', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrganizationId(req);
+    const { projectId, contradictionIds, regulatorBody, submissionType, workflowStage } = req.body;
+
+    if (!projectId || !contradictionIds || !Array.isArray(contradictionIds) || contradictionIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: projectId, contradictionIds (non-empty array)',
+      });
+    }
+
+    const { contradictionEngineService } = await import('../services/contradiction-engine-service');
+    const { buildContradictionBundlePlan, classifyPlanActions } = await import('../services/resolution');
+
+    const findings = [];
+    for (const id of contradictionIds) {
+      const finding = await contradictionEngineService.getFinding(id, orgId);
+      if (finding) findings.push(finding);
+    }
+
+    if (findings.length === 0) {
+      return res.status(404).json({ success: false, error: 'No valid contradiction findings found' });
+    }
+
+    // Fetch overlay rules
+    const overlayRules = [];
+    const bodies = new Set(findings.map(f => f.regulatorBody).filter(Boolean) as string[]);
+    if (regulatorBody) bodies.add(regulatorBody);
+
+    for (const body of bodies) {
+      for (const finding of findings) {
+        try {
+          const rules = await contradictionEngineService.getOverlayRules(orgId, finding.contradictionType, body);
+          overlayRules.push(...rules);
+        } catch { /* overlay table may not exist */ }
+      }
+    }
+
+    const plan = buildContradictionBundlePlan({
+      organizationId: orgId,
+      projectId,
+      findings,
+      overlayRules,
+      regulatorBody,
+      submissionType,
+      workflowStage,
+    });
+
+    const classification = classifyPlanActions(plan);
+
+    res.json({
+      success: true,
+      plan,
+      classification: {
+        autoPreparable: classification.autoPreparable.length,
+        requiresConfirmation: classification.requiresConfirmation.length,
+        requiresApproval: classification.requiresApproval.length,
+        requiresEscalation: classification.requiresEscalation.length,
+        cannotExecute: classification.cannotExecute.length,
+      },
+    });
+  } catch (error: any) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
 export default router;

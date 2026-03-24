@@ -1,0 +1,72 @@
+version: 1
+updated: 2026-03-24
+controls:
+  - id: AIOS-01
+    name: End-to-end lineage traceability
+    owner: Platform BE
+    required_metrics:
+      - lineage_completeness_pct
+    threshold:
+      lineage_completeness_pct: 99
+  - id: AIOS-02
+    name: Policy-aware retrieval enforcement
+    owner: Security Eng
+    required_metrics:
+      - policy_coverage_pct
+    threshold:
+      policy_coverage_pct: 100
+  - id: AIOS-03
+    name: Runtime/model/prompt version pinning
+    owner: Runtime Team
+    required_metrics:
+      - version_drift_events
+    threshold:
+      version_drift_events: 0
+  - id: AIOS-04
+    name: Immutable audit stream integrity
+    owner: SRE + Compliance
+    required_metrics:
+      - integrity_check_failures
+    threshold:
+      integrity_check_failures: 0
+  - id: AIOS-05
+    name: Tenant and PHI boundary enforcement
+    owner: Platform Security
+    required_metrics:
+      - tenant_boundary_violations
+    threshold:
+      tenant_boundary_violations: 0
+  - id: AIOS-06
+    name: Change governance with approvals
+    owner: Eng Manager
+    required_metrics:
+      - unapproved_changes
+    threshold:
+      unapproved_changes: 0
+  - id: AIOS-07
+    name: Incident governance and SLO operations
+    owner: SRE
+    required_metrics:
+      - sev1_incidents
+      - reliability_improvement_pct
+      - latency_regression_pct
+    threshold:
+      sev1_incidents: 0
+      reliability_improvement_pct: 20
+      latency_regression_pct: 10
+exit_gates:
+  - metric: lineage_completeness_pct
+    operator: ">="
+    value: 99
+  - metric: policy_coverage_pct
+    operator: ">="
+    value: 100
+  - metric: reliability_improvement_pct
+    operator: ">="
+    value: 20
+  - metric: latency_regression_pct
+    operator: "<="
+    value: 10
+  - metric: sev1_incidents
+    operator: "=="
+    value: 0

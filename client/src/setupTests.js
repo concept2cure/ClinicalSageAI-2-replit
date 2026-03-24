@@ -1,5 +1,6 @@
 // Test setup file for Jest
 import '@testing-library/jest-dom';
+import { randomUUID as nodeRandomUUID } from 'crypto';
 
 // Mock window.fetch globally
 global.fetch = jest.fn(() =>
@@ -58,3 +59,17 @@ global.IntersectionObserver = class IntersectionObserver {
     return null;
   }
 };
+
+if (!globalThis.crypto) {
+  Object.defineProperty(globalThis, 'crypto', {
+    value: {},
+    configurable: true,
+  });
+}
+
+if (!globalThis.crypto.randomUUID) {
+  Object.defineProperty(globalThis.crypto, 'randomUUID', {
+    value: nodeRandomUUID,
+    configurable: true,
+  });
+}

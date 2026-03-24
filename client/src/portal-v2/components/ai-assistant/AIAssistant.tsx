@@ -145,6 +145,9 @@ const Message: React.FC<MessageProps> = ({ message, onCopy, onFeedback, onRegene
           <span>{formatTimestamp(message.timestamp)}</span>
           {isAssistant && (
             <>
+              <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200">
+                AI-generated
+              </span>
               <button
                 onClick={() => onCopy(message.content)}
                 className="p-1 hover:bg-gray-100 rounded"
@@ -466,6 +469,12 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
         </div>
       </CardHeader>
 
+      <div className="mx-4 mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+        <strong>Regulatory safety notice:</strong> Responses are AI-generated and may be incomplete
+        or incorrect. Human review and approval are required before use in regulated submissions,
+        safety decisions, or external communications.
+      </div>
+
       {/* Messages */}
       <ScrollArea ref={scrollRef} className="flex-1 p-4">
         <div className="space-y-4">
@@ -523,7 +532,8 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
           </Button>
         </div>
         <p className="text-xs text-muted-foreground mt-2 text-center">
-          AI responses are for guidance only. Always verify critical regulatory information.
+          AI responses are for guidance only. Validate against source documents and applicable
+          regulations before acting.
         </p>
       </div>
     </Card>
