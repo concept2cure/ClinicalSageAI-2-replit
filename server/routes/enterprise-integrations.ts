@@ -27,8 +27,6 @@ import { authMiddleware } from '../auth';
 import { tenantContextMiddleware, requireOrganizationContext } from '../middleware/tenantContext';
 import { createRedisRateLimiter } from '../middleware/redisRateLimiter';
 import { logAuditEvent } from '../services/audit/auditLoggerV2';
-import { integrationIdempotencyStore } from '../services/integrations/idempotencyStore';
-import { upsertCredentialRef, getCredentialRefs } from '../services/integrations/credentialVault';
 
 const logger = createScopedLogger('enterprise-integrations');
 const router = Router();
@@ -90,36 +88,10 @@ interface ExecutionReceipt {
   idempotentReplay?: boolean;
 }
 
-interface IntegrationProbeResult {
-  integrationId: string;
-  tenantId: string;
-  status: 'healthy' | 'degraded' | 'unhealthy';
-  latencyMs: number;
-  checks: Array<{
-    name: string;
-    passed: boolean;
-    detail: string;
-  }>;
-  timestamp: string;
-}
-
-interface SyncJob {
-  jobId: string;
-  tenantId: string;
-  integrationId: string;
-  status: 'queued' | 'running' | 'completed' | 'failed';
-  createdAt: string;
-  startedAt?: string;
-  completedAt?: string;
-  result?: Record<string, unknown>;
-  error?: string;
-}
-
 // Fallback in-memory stores used only when DB unavailable
 const integrationStore: Map<string, Map<string, IntegrationConfig>> = new Map();
 const syncRunStore: Map<string, SyncRun[]> = new Map();
-const lastProbeStore = new Map<string, IntegrationProbeResult>();
-const syncJobStore = new Map<string, SyncJob>();
+const idempotencyStore: Map<string, IdempotencyCacheEntry> = new Map();
 const IDEMPOTENCY_TTL_MS = 5 * 60 * 1000;
 
 function getTenantIntegrations(tenantId: string): Map<string, IntegrationConfig> {
@@ -181,14 +153,6 @@ const MetricsQuerySchema = z.object({
   hours: z.coerce.number().int().min(1).max(24 * 30).default(24),
 });
 
-const CredentialSchema = z.object({
-  credentialRef: z.string().optional(),
-  secrets: z.record(z.string(), z.string()).refine(
-    (v) => Object.keys(v).length > 0,
-    'At least one secret key/value must be provided'
-  ),
-});
-
 function getTenantId(req: Request): string {
   const fromTenantContext = (req as any).tenantContext?.organizationId;
   const fromReqTenantId = (req as any).tenantId;
@@ -208,34 +172,37 @@ function getIdempotencyStoreKey(req: Request, tenantId: string, key: string): st
   return `${tenantId}:${req.method}:${req.path}:${key}`;
 }
 
-async function readIdempotencyResponse(
-  req: Request,
-  tenantId: string
-): Promise<IdempotencyCacheEntry | null> {
+function readIdempotencyResponse(req: Request, tenantId: string): IdempotencyCacheEntry | null {
   const key = getIdempotencyHeader(req);
   if (!key) return null;
 
   const storeKey = getIdempotencyStoreKey(req, tenantId, key);
-  const cached = await integrationIdempotencyStore.get(storeKey);
+  const cached = idempotencyStore.get(storeKey);
   if (!cached) return null;
+
+  if (cached.expiresAt <= Date.now()) {
+    idempotencyStore.delete(storeKey);
+    return null;
+  }
+
   return cached;
 }
 
-async function writeIdempotencyResponse(
+function writeIdempotencyResponse(
   req: Request,
   tenantId: string,
   status: number,
   body: Record<string, unknown>
-): Promise<void> {
+): void {
   const key = getIdempotencyHeader(req);
   if (!key) return;
 
   const storeKey = getIdempotencyStoreKey(req, tenantId, key);
-  await integrationIdempotencyStore.set(storeKey, {
+  idempotencyStore.set(storeKey, {
     status,
     body,
     expiresAt: Date.now() + IDEMPOTENCY_TTL_MS,
-  }, IDEMPOTENCY_TTL_MS);
+  });
 }
 
 function buildExecutionReceipt(
@@ -316,20 +283,6 @@ async function ensureIntegrationTables(): Promise<boolean> {
         status TEXT NOT NULL,
         details JSONB,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      )
-    `);
-
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS enterprise_integration_sync_jobs (
-        job_id TEXT PRIMARY KEY,
-        tenant_id TEXT NOT NULL,
-        integration_id TEXT NOT NULL,
-        status TEXT NOT NULL,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        started_at TIMESTAMPTZ,
-        completed_at TIMESTAMPTZ,
-        result JSONB,
-        error TEXT
       )
     `);
 
@@ -580,189 +533,6 @@ function getSupportedIntegrations(): string[] {
   return Object.keys(providerCatalog);
 }
 
-function getProbeStoreKey(tenantId: string, integrationId: string): string {
-  return `${tenantId}:${integrationId}`;
-}
-
-async function persistSyncJob(job: SyncJob): Promise<void> {
-  const hasDb = await ensureIntegrationTables();
-  if (!hasDb || !pool) {
-    syncJobStore.set(job.jobId, job);
-    return;
-  }
-
-  await pool.query(
-    `INSERT INTO enterprise_integration_sync_jobs (
-      job_id, tenant_id, integration_id, status, created_at, started_at, completed_at, result, error
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9)
-    ON CONFLICT (job_id)
-    DO UPDATE SET
-      status = EXCLUDED.status,
-      started_at = EXCLUDED.started_at,
-      completed_at = EXCLUDED.completed_at,
-      result = EXCLUDED.result,
-      error = EXCLUDED.error`,
-    [
-      job.jobId,
-      job.tenantId,
-      job.integrationId,
-      job.status,
-      job.createdAt,
-      job.startedAt || null,
-      job.completedAt || null,
-      job.result ? JSON.stringify(job.result) : null,
-      job.error || null,
-    ]
-  );
-}
-
-async function createSyncJob(tenantId: string, integrationId: string): Promise<SyncJob> {
-  const job: SyncJob = {
-    jobId: `syncjob_${integrationId}_${randomUUID()}`,
-    tenantId,
-    integrationId,
-    status: 'queued',
-    createdAt: new Date().toISOString(),
-  };
-  await persistSyncJob(job);
-  return job;
-}
-
-async function getSyncJob(jobId: string): Promise<SyncJob | null> {
-  const hasDb = await ensureIntegrationTables();
-  if (!hasDb || !pool) {
-    return syncJobStore.get(jobId) || null;
-  }
-
-  const { rows } = await pool.query(
-    `SELECT job_id, tenant_id, integration_id, status, created_at, started_at, completed_at, result, error
-     FROM enterprise_integration_sync_jobs
-     WHERE job_id = $1
-     LIMIT 1`,
-    [jobId]
-  );
-
-  if (!rows[0]) return null;
-  const row = rows[0];
-  return {
-    jobId: row.job_id,
-    tenantId: row.tenant_id,
-    integrationId: row.integration_id,
-    status: row.status,
-    createdAt: new Date(row.created_at).toISOString(),
-    startedAt: row.started_at ? new Date(row.started_at).toISOString() : undefined,
-    completedAt: row.completed_at ? new Date(row.completed_at).toISOString() : undefined,
-    result: row.result || undefined,
-    error: row.error || undefined,
-  };
-}
-
-async function processSyncJob(jobId: string): Promise<void> {
-  const job = await getSyncJob(jobId);
-  if (!job) return;
-
-  job.status = 'running';
-  job.startedAt = new Date().toISOString();
-  await persistSyncJob(job);
-
-  try {
-    await new Promise(resolve => setTimeout(resolve, 25));
-
-    const integration = await getIntegration(job.tenantId, job.integrationId);
-    if (!integration) {
-      job.status = 'failed';
-      job.error = 'Integration not found';
-      job.completedAt = new Date().toISOString();
-      await persistSyncJob(job);
-      return;
-    }
-
-    const syncStarted = new Date().toISOString();
-    integration.lastSync = syncStarted;
-    integration.status = 'connected';
-    await upsertIntegration(job.tenantId, integration);
-
-    await logSyncRun({
-      tenantId: job.tenantId,
-      integrationId: job.integrationId,
-      status: 'success',
-      details: { mode: 'async_job', durationMs: 25, entitiesSynced: 42 },
-      createdAt: syncStarted,
-    });
-
-    job.status = 'completed';
-    job.completedAt = new Date().toISOString();
-    job.result = {
-      integrationId: job.integrationId,
-      syncStarted,
-      entitiesSynced: 42,
-    };
-    await persistSyncJob(job);
-  } catch (error: any) {
-    job.status = 'failed';
-    job.completedAt = new Date().toISOString();
-    job.error = error?.message || 'Unknown error';
-    await persistSyncJob(job);
-  }
-}
-
-async function executeIntegrationProbe(
-  tenantId: string,
-  integrationId: string,
-  integration: IntegrationConfig
-): Promise<IntegrationProbeResult> {
-  const start = Date.now();
-  const requiredFields = providerRequiredFields[integrationId] || [];
-  const refs = await getCredentialRefs(tenantId, integrationId);
-  const config = integration.config || {};
-
-  const missingRequired = requiredFields.filter((field) => !config[field] || !String(config[field]).trim());
-  const hasCredentialRefs = refs.length > 0;
-  const hasAnyAuthMaterial =
-    Object.keys(config).length > 0 || hasCredentialRefs;
-
-  const checks = [
-    {
-      name: 'configured',
-      passed: hasAnyAuthMaterial,
-      detail: hasAnyAuthMaterial
-        ? 'Integration has configuration or credential references'
-        : 'No configuration or credential references found',
-    },
-    {
-      name: 'required_fields',
-      passed: missingRequired.length === 0 || hasCredentialRefs,
-      detail:
-        missingRequired.length === 0
-          ? 'All provider-required fields present in config'
-          : hasCredentialRefs
-            ? `Missing in config (${missingRequired.join(', ')}), but credential refs are available`
-            : `Missing required fields: ${missingRequired.join(', ')}`,
-    },
-    {
-      name: 'connection_state',
-      passed: integration.status === 'connected',
-      detail: `Integration status is "${integration.status}"`,
-    },
-  ] as const;
-
-  const failed = checks.filter((check) => !check.passed).length;
-  const status: IntegrationProbeResult['status'] =
-    failed === 0 ? 'healthy' : failed === 1 ? 'degraded' : 'unhealthy';
-
-  const result: IntegrationProbeResult = {
-    integrationId,
-    tenantId,
-    status,
-    latencyMs: Date.now() - start,
-    checks: checks.map((check) => ({ ...check })),
-    timestamp: new Date().toISOString(),
-  };
-
-  lastProbeStore.set(getProbeStoreKey(tenantId, integrationId), result);
-  return result;
-}
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // LIST ALL INTEGRATIONS
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -854,80 +624,6 @@ router.get('/metrics/summary', async (req: Request, res: Response) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// CREDENTIAL REFERENCES (NO PLAINTEXT RETURNS)
-// ═══════════════════════════════════════════════════════════════════════════════
-
-router.post('/:integrationId/credentials', async (req: Request, res: Response) => {
-  try {
-    const tenantId = getTenantId(req);
-    const { integrationId } = req.params;
-    const parsed = CredentialSchema.safeParse(req.body || {});
-
-    if (!parsed.success) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid credential payload',
-        details: parsed.error.flatten(),
-      });
-    }
-
-    const result = await upsertCredentialRef(
-      tenantId,
-      integrationId,
-      parsed.data.secrets,
-      parsed.data.credentialRef
-    );
-
-    await emitIntegrationAudit(req, tenantId, 'upsert_integration_credential_ref', integrationId, true, {
-      credentialRef: result.credentialRef,
-      storedKeys: result.storedKeys,
-    });
-
-    return res.json({
-      success: true,
-      data: {
-        credentialRef: result.credentialRef,
-        keyVersion: result.keyVersion,
-        storedKeys: result.storedKeys,
-      },
-      message: 'Credential reference stored successfully (encrypted at rest)',
-    });
-  } catch (error: any) {
-    logger.error('Failed to store integration credentials', {
-      error: error?.message,
-      integrationId: req.params.integrationId,
-    });
-    return res.status(500).json({ success: false, error: 'Failed to store integration credentials' });
-  }
-});
-
-router.get('/:integrationId/credentials', async (req: Request, res: Response) => {
-  try {
-    const tenantId = getTenantId(req);
-    const { integrationId } = req.params;
-    const refs = await getCredentialRefs(tenantId, integrationId);
-
-    return res.json({
-      success: true,
-      data: {
-        integrationId,
-        tenantId,
-        credentials: refs,
-      },
-      meta: {
-        count: refs.length,
-      },
-    });
-  } catch (error: any) {
-    logger.error('Failed to list integration credential refs', {
-      error: error?.message,
-      integrationId: req.params.integrationId,
-    });
-    return res.status(500).json({ success: false, error: 'Failed to list integration credential refs' });
-  }
-});
-
-// ═══════════════════════════════════════════════════════════════════════════════
 // GET SINGLE INTEGRATION
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -990,107 +686,119 @@ router.get('/:integrationId/health', async (req: Request, res: Response) => {
 // PROVIDER PROBES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-router.post('/:integrationId/probe', async (req: Request, res: Response) => {
+router.post('/:integrationId/connect', async (req: Request, res: Response) => {
   try {
     const tenantId = getTenantId(req);
-    const { integrationId } = req.params;
-    const integration = await getIntegration(tenantId, integrationId);
-
-    if (!integration) {
-      return res.status(404).json({ success: false, error: 'Integration not found' });
+    const idempotent = readIdempotencyResponse(req, tenantId);
+    if (idempotent) {
+      return res.status(idempotent.status).json({
+        ...idempotent.body,
+        receipt: buildExecutionReceipt('connect_integration', tenantId, req.params.integrationId, true),
+      });
     }
 
-    const probe = await executeIntegrationProbe(tenantId, integrationId, integration);
-    await emitIntegrationAudit(req, tenantId, 'run_integration_probe', integrationId, true, {
-      probeStatus: probe.status,
-      checks: probe.checks.map((check) => ({ name: check.name, passed: check.passed })),
-    });
+    const { integrationId } = req.params;
+    const parsed = ConnectSchema.safeParse(req.body || {});
 
-    return res.json({
+    if (!parsed.success) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid request body',
+        details: parsed.error.flatten(),
+      });
+    }
+
+    const { name, authType, config, metadata } = parsed.data;
+    const missingFields = validateProviderConfig(integrationId, config);
+    if (missingFields.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: `Missing required configuration fields for ${integrationId}`,
+        missingFields,
+      });
+    }
+
+    const integration: IntegrationConfig = {
+      id: integrationId,
+      tenantId,
+      name: name || integrationId,
+      status: 'connected',
+      authType: authType || 'api_key',
+      lastSync: new Date().toISOString(),
+      config,
+      metadata: {
+        ...(metadata || {}),
+        connectedAt: new Date().toISOString(),
+        connectedBy: (req as any).user?.email || 'unknown',
+      },
+    };
+
+    const persisted = await upsertIntegration(tenantId, integration);
+    const responseBody = {
       success: true,
-      data: probe,
+      data: { ...persisted, config: maskSecrets(persisted.config) },
+      message: `${persisted.name} connected successfully`,
+      receipt: buildExecutionReceipt('connect_integration', tenantId, integrationId),
+    };
+
+    writeIdempotencyResponse(req, tenantId, 200, responseBody);
+    await emitIntegrationAudit(req, tenantId, 'connect_integration', integrationId, true, {
+      authType: persisted.authType,
     });
+    res.json(responseBody);
   } catch (error: any) {
-    logger.error('Failed to run integration probe', {
+    logger.error('Failed to connect integration', {
       error: error?.message,
       integrationId: req.params.integrationId,
     });
-    return res.status(500).json({ success: false, error: 'Failed to run integration probe' });
+    res.status(500).json({ success: false, error: 'Failed to connect integration' });
   }
-});
-
-router.get('/:integrationId/probe/last', async (req: Request, res: Response) => {
-  const tenantId = getTenantId(req);
-  const { integrationId } = req.params;
-  const last = lastProbeStore.get(getProbeStoreKey(tenantId, integrationId));
-
-  if (!last) {
-    return res.status(404).json({
-      success: false,
-      error: 'No probe result found for integration',
-    });
-  }
-
-  return res.json({
-    success: true,
-    data: last,
-  });
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ASYNC SYNC JOBS (queue skeleton)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-router.post('/:integrationId/sync/async', async (req: Request, res: Response) => {
+router.post('/:integrationId/disconnect', async (req: Request, res: Response) => {
   try {
     const tenantId = getTenantId(req);
-    const { integrationId } = req.params;
-    const integration = await getIntegration(tenantId, integrationId);
-
-    if (!integration) {
-      return res.status(404).json({ success: false, error: 'Integration not found or not connected' });
+    const idempotent = readIdempotencyResponse(req, tenantId);
+    if (idempotent) {
+      return res.status(idempotent.status).json({
+        ...idempotent.body,
+        receipt: buildExecutionReceipt('disconnect_integration', tenantId, req.params.integrationId, true),
+      });
     }
 
-    const job = await createSyncJob(tenantId, integrationId);
-    setTimeout(() => {
-      processSyncJob(job.jobId).catch(() => {});
-    }, 0);
+    const { integrationId } = req.params;
 
-    await emitIntegrationAudit(req, tenantId, 'enqueue_sync_job', integrationId, true, {
-      jobId: job.jobId,
-    });
+    const integration = await getIntegration(tenantId, integrationId);
+    if (!integration) {
+      return res.status(404).json({ success: false, error: 'Integration not found' });
+    }
 
-    return res.status(202).json({
+    const deleted = await deleteIntegration(tenantId, integrationId);
+
+    if (!deleted) {
+      return res.status(500).json({ success: false, error: 'Failed to disconnect integration' });
+    }
+
+    const responseBody = {
       success: true,
-      data: {
-        jobId: job.jobId,
-        status: job.status,
-        integrationId,
-        acceptedAt: job.createdAt,
-      },
-      message: 'Async sync job queued',
-    });
+      message: `${integration.name} disconnected successfully`,
+      receipt: buildExecutionReceipt('disconnect_integration', tenantId, integrationId),
+    };
+
+    writeIdempotencyResponse(req, tenantId, 200, responseBody);
+    await emitIntegrationAudit(req, tenantId, 'disconnect_integration', integrationId, true);
+    res.json(responseBody);
   } catch (error: any) {
-    logger.error('Failed to enqueue async sync job', {
+    logger.error('Failed to disconnect integration', {
       error: error?.message,
       integrationId: req.params.integrationId,
     });
-    return res.status(500).json({ success: false, error: 'Failed to enqueue async sync job' });
+    res.status(500).json({ success: false, error: 'Failed to disconnect integration' });
   }
-});
-
-router.get('/sync/jobs/:jobId', async (req: Request, res: Response) => {
-  const { jobId } = req.params;
-  const job = await getSyncJob(jobId);
-
-  if (!job) {
-    return res.status(404).json({ success: false, error: 'Sync job not found' });
-  }
-
-  return res.json({
-    success: true,
-    data: job,
-  });
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1274,7 +982,7 @@ router.post('/:integrationId/test', async (req: Request, res: Response) => {
 router.post('/:integrationId/sync', async (req: Request, res: Response) => {
   try {
     const tenantId = getTenantId(req);
-    const idempotent = await readIdempotencyResponse(req, tenantId);
+    const idempotent = readIdempotencyResponse(req, tenantId);
     if (idempotent) {
       return res.status(idempotent.status).json({
         ...idempotent.body,
@@ -1325,7 +1033,7 @@ router.post('/:integrationId/sync', async (req: Request, res: Response) => {
       receipt: buildExecutionReceipt('sync_integration', tenantId, integrationId),
     };
 
-    await writeIdempotencyResponse(req, tenantId, 200, responseBody);
+    writeIdempotencyResponse(req, tenantId, 200, responseBody);
     await emitIntegrationAudit(req, tenantId, 'sync_integration', integrationId, true, {
       syncStarted,
     });

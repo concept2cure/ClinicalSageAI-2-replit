@@ -13,6 +13,7 @@ The TrialSage CER system is a comprehensive solution for generating Clinical Eva
 
 - Kubernetes 1.19+
 - Helm 3.2+
+- KEDA 2.x installed in-cluster (only required when `worker.keda.enabled=true`)
 - PV provisioner support in the underlying infrastructure (if persistence is enabled)
 - PostgreSQL database (can be deployed as a dependency)
 - Redis (can be deployed as a dependency)
@@ -82,6 +83,10 @@ helm install cer trialsage/trialsage-cer -f values.yaml
 | `worker.autoscaling.minReplicas` | Minimum worker replicas          | `1`                    |
 | `worker.autoscaling.maxReplicas` | Maximum worker replicas          | `10`                   |
 | `worker.env`                     | Environment variables for worker | See values.yaml        |
+| `worker.keda.enabled`            | Enable KEDA queue autoscaling    | `false`                |
+| `worker.keda.redisListName`      | Redis list used for scaling      | `bull:cer:wait`        |
+| `worker.keda.queueLength`        | Queue length target              | `50`                   |
+| `worker.keda.activationQueueLength` | Activation threshold         | `10`                   |
 
 ### Storage Configuration
 
@@ -169,6 +174,15 @@ worker:
     minReplicas: 3
     maxReplicas: 20
 
+  # Optional: switch from HPA(CPU/memory) to queue-based autoscaling
+  keda:
+    enabled: true
+    minReplicaCount: 3
+    maxReplicaCount: 30
+    redisListName: "bull:cer:wait"
+    queueLength: "75"
+    activationQueueLength: "15"
+
 storage:
   persistentVolume:
     size: 50Gi
@@ -184,6 +198,26 @@ postgresql:
 
 redis:
   enabled: true
+```
+
+### Queue-Driven Worker Autoscaling (KEDA)
+
+When enabled, KEDA manages worker replica scaling from Redis queue pressure and the chart suppresses
+the worker HPA to avoid dual-controller conflicts.
+
+```yaml
+worker:
+  autoscaling:
+    enabled: true # kept for compatibility; HPA won't render while keda.enabled=true
+  keda:
+    enabled: true
+    minReplicaCount: 1
+    maxReplicaCount: 20
+    pollingInterval: 15
+    cooldownPeriod: 60
+    redisListName: "bull:cer:wait"
+    queueLength: "50"
+    activationQueueLength: "10"
 ```
 
 ### Development/Testing

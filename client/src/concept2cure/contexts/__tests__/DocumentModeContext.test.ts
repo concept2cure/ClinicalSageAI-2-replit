@@ -1,4 +1,3 @@
-import { describe, it, expect } from 'vitest';
 import {
   resolveDocumentMode,
   canEscalateToEdit,
@@ -160,7 +159,7 @@ describe('canEscalateToEdit', () => {
     const result = canEscalateToEdit('submissions');
     expect(result.allowed).toBe(false);
     expect(result.reason).toBe(
-      'Documents are locked during submission. Return to Section Workspace to edit.',
+      'Documents are locked during submission. Return to Section Workspace to edit.'
     );
   });
 
@@ -206,7 +205,7 @@ describe('canEscalateToEdit', () => {
       const result = canEscalateToEdit(stage, 'locked');
       expect(result.allowed).toBe(false);
       expect(result.reason).toBe(
-        'This document is locked. Request unlock from an authorized reviewer.',
+        'This document is locked. Request unlock from an authorized reviewer.'
       );
     }
   });
@@ -239,9 +238,7 @@ describe('canEscalateToEdit', () => {
     // and is not 'locked' or 'approved' triggers the review-specific gate
     const result = canEscalateToEdit('review', 'some-other-status');
     expect(result.allowed).toBe(false);
-    expect(result.reason).toBe(
-      'Document must be in review or draft status to edit during review.',
-    );
+    expect(result.reason).toBe('Document must be in review or draft status to edit during review.');
   });
 });
 

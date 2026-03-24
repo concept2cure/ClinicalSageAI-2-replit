@@ -24,9 +24,18 @@ export interface StructureValidationResult {
 }
 
 const REQUIRED_SECTIONS = [
-  { pattern: /##?\s*(?:Overall\s+Assessment|Executive\s+Summary|Assessment)/i, label: 'Overall Assessment' },
-  { pattern: /##?\s*(?:Reviewer\s+Concern|Risk\s+Signal|Critical\s+Risk|Major\s+Risk)/i, label: 'Reviewer Concerns / Risks' },
-  { pattern: /##?\s*(?:Recommend|Next\s+Step|Action|Document\s+Action)/i, label: 'Recommended Actions' },
+  {
+    pattern: /##?\s*(?:Overall\s+Assessment|Executive\s+Summary|Assessment)/i,
+    label: 'Overall Assessment',
+  },
+  {
+    pattern: /##?\s*(?:Reviewer\s+Concern|Risk\s+Signal|Critical\s+Risk|Major\s+Risk)/i,
+    label: 'Reviewer Concerns / Risks',
+  },
+  {
+    pattern: /##?\s*(?:Recommend|Next\s+Step|Action|Document\s+Action)/i,
+    label: 'Recommended Actions',
+  },
 ];
 
 const EVIDENCE_SECTIONS = [
@@ -118,7 +127,8 @@ export function checkEvidenceDiscipline(response: string): EvidenceDisciplineRes
   const totalLabels = knownMatches.length + inferredMatches.length + missingMatches.length;
 
   // Check for substantive responses that should have labels but don't
-  const isSubstantive = response.length > 500 &&
+  const isSubstantive =
+    response.length > 250 &&
     /##|###|\*\*/.test(response) &&
     /risk|deficien|evidence|claim|endpoint|safety|strategy/i.test(response);
 
@@ -208,7 +218,12 @@ export function validateArtifactQuality(
   }
 
   // Gate 4: Evidence labels present (for analytical artifacts)
-  const analyticalTypes = ['risk_memo', 'deficiency_preemption_memo', 'evidence_memo', 'reviewer_question_brief'];
+  const analyticalTypes = [
+    'risk_memo',
+    'deficiency_preemption_memo',
+    'evidence_memo',
+    'reviewer_question_brief',
+  ];
   if (analyticalTypes.includes(actionType)) {
     const evidenceResult = checkEvidenceDiscipline(content);
     if (evidenceResult.totalLabels >= 3) {
@@ -243,11 +258,18 @@ export function validateArtifactQuality(
   // Gate 6: Semantic depth — check substance, not just structure
   if (depthTypes.includes(actionType)) {
     // Check for root cause analysis (not just restating the problem)
-    const hasRootCause = /because|due to|caused by|mechanism|underlying|root cause|driven by/i.test(content);
+    const hasRootCause =
+      /because|due to|caused by|mechanism|underlying|root cause|driven by|only\s+\d+.*\b(?:vs|versus)\b.*\brequired\b|inadequate\s+\w+|insufficient\s+\w+/i.test(
+        content
+      );
     // Check for specific evidence references (not vague)
-    const hasSpecificEvidence = /\b(?:study|trial|data|finding|result|ICH|CFR|ISO|FDA|EMA)\s+\S+/i.test(content);
+    const hasSpecificEvidence =
+      /\b(?:study|trial|data|finding|result|ICH|CFR|ISO|FDA|EMA)\s+\S+/i.test(content);
     // Check for actionable mitigations (not platitudes)
-    const hasActionable = /\b(?:conduct|gather|provide|revise|modify|submit|generate|perform|complete|draft)\b/i.test(content);
+    const hasActionable =
+      /\b(?:conduct|gather|provide|revise|modify|submit|generate|perform|complete|draft)\b/i.test(
+        content
+      );
 
     if (hasRootCause && hasSpecificEvidence && hasActionable) {
       score += 2;
@@ -275,7 +297,7 @@ export function validateArtifactQuality(
   return {
     pass: grade !== 'rejected',
     score,
-    maxScore: effectiveMaxScore,
+    maxScore,
     grade,
     issues,
   };
@@ -322,10 +344,15 @@ export function logGeneration(event: GenerationEvent): void {
   }
 
   // Console warning for non-artifact generation
-  if (!event.artifactCreated && event.action !== 'chat' && event.action !== 'autocomplete' && event.action !== 'compliance-scan') {
+  if (
+    !event.artifactCreated &&
+    event.action !== 'chat' &&
+    event.action !== 'autocomplete' &&
+    event.action !== 'compliance-scan'
+  ) {
     console.warn(
       `[AnA GUARD] Generation without artifact: route=${event.route} action=${event.action} ` +
-      `orchestrated=${event.anaRiOrchestrated} project=${event.projectId || 'none'}`
+        `orchestrated=${event.anaRiOrchestrated} project=${event.projectId || 'none'}`
     );
   }
 
@@ -333,7 +360,7 @@ export function logGeneration(event: GenerationEvent): void {
   if (event.artifactCreated && !event.anaRiOrchestrated) {
     console.warn(
       `[AnA GUARD] Artifact created outside AnA RI: route=${event.route} action=${event.action} ` +
-      `artifactId=${event.artifactId || 'unknown'}`
+        `artifactId=${event.artifactId || 'unknown'}`
     );
   }
 }
@@ -471,11 +498,13 @@ export function buildArtifactContract(params: {
   conversationLength: number;
 }): GovernedArtifactContract {
   // Extract section headers from content
-  const sectionHeaders = (params.content.match(/^##?\s+(.+)$/gm) || [])
-    .map(h => h.replace(/^##?\s+/, '').trim());
+  const sectionHeaders = (params.content.match(/^##?\s+(.+)$/gm) || []).map(h =>
+    h.replace(/^##?\s+/, '').trim()
+  );
 
   // Count evidence labels
-  const evidenceLabels = (params.content.match(/\[(KNOWN|INFERRED|MISSING)[^\]]*\]/gi) || []).length;
+  const evidenceLabels = (params.content.match(/\[(KNOWN|INFERRED|MISSING)[^\]]*\]/gi) || [])
+    .length;
 
   // Run quality gate
   const quality = validateArtifactQuality(params.content, params.documentType);

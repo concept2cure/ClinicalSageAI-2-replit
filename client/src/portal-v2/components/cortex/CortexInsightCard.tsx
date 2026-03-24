@@ -170,6 +170,13 @@ export function CortexInsightCard({
           </div>
         )}
 
+        {(type === 'prediction' || type === 'recommendation') && (
+          <div className="mt-3 rounded border border-amber-200 bg-amber-50 px-2.5 py-2 text-xs text-amber-900">
+            AI-generated insight. Use with expert review; do not treat as a deterministic regulatory
+            or clinical decision.
+          </div>
+        )}
+
         {/* Sources */}
         {sources && sources.length > 0 && (
           <div className="mt-3">

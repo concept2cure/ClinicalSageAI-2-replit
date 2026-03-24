@@ -17,6 +17,7 @@ to provide a comprehensive dataset for clinical evaluation reports.
 import os
 import json
 import logging
+import argparse
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
@@ -826,12 +827,24 @@ async def fetch_integrated_data(
         date_range=date_range
     )
 
+def _print_summary(result: Dict[str, Any], top_events: int = 5) -> None:
+    """Print a concise human-readable summary of integration results."""
+    summary = result.get("integrated_data", {}).get("summary", {})
+    print("\nIntegrated data summary:")
+    print(f"Total events: {summary.get('total_events', 0)}")
+    print(f"Serious events: {summary.get('serious_events', 0)}")
+    print(f"Total reports: {summary.get('total_reports', 0)}")
+    print(f"Sources: {', '.join(summary.get('sources_represented', []))}")
+
+    print("\nTop adverse events:")
+    for event in summary.get("top_events", [])[:top_events]:
+        print(f"  {event['name']}: {event['count']} reports")
+
+
 async def main():
     """
     Command line interface for testing
     """
-    import argparse
-    
     parser = argparse.ArgumentParser(description="Fetch integrated regulatory data")
     parser.add_argument("--id", help="Product ID (NDC or device code)")
     parser.add_argument("--name", help="Product name")
@@ -839,12 +852,25 @@ async def main():
     parser.add_argument("--days", type=int, default=DEFAULT_DATE_RANGE, help="Date range in days")
     parser.add_argument("--no-cache", action="store_true", help="Disable caching")
     parser.add_argument("--out", help="Output file for results (JSON)")
+    parser.add_argument("--top-events", type=int, default=5, help="How many top events to print in summary mode")
+    parser.add_argument(
+        "--format",
+        choices=["summary", "json"],
+        default="summary",
+        help="Terminal output format",
+    )
     
     args = parser.parse_args()
     
     if not args.id and not args.name:
         parser.print_help()
         return
+
+    if args.days <= 0:
+        parser.error("--days must be a positive integer")
+
+    if args.top_events <= 0:
+        parser.error("--top-events must be a positive integer")
     
     result = await fetch_integrated_data(
         product_id=args.id or "",
@@ -854,17 +880,10 @@ async def main():
         use_cache=not args.no_cache
     )
     
-    # Print summary
-    print(f"\nIntegrated data summary:")
-    print(f"Total events: {result['integrated_data']['summary'].get('total_events', 0)}")
-    print(f"Serious events: {result['integrated_data']['summary'].get('serious_events', 0)}")
-    print(f"Total reports: {result['integrated_data']['summary'].get('total_reports', 0)}")
-    print(f"Sources: {', '.join(result['integrated_data']['summary'].get('sources_represented', []))}")
-    
-    # Top events
-    print("\nTop adverse events:")
-    for event in result['integrated_data']['summary'].get('top_events', [])[:5]:
-        print(f"  {event['name']}: {event['count']} reports")
+    if args.format == "json":
+        print(json.dumps(result, indent=2))
+    else:
+        _print_summary(result, top_events=args.top_events)
     
     # Save to file if requested
     if args.out:

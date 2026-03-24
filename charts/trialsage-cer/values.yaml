@@ -132,6 +132,18 @@ worker:
     targetCPUUtilizationPercentage: 70
     targetMemoryUtilizationPercentage: 70
 
+  # Queue-driven autoscaling via KEDA (optional).
+  # Uses REDIS_URL from worker env and scales on Redis list length.
+  keda:
+    enabled: false
+    minReplicaCount: 1
+    maxReplicaCount: 20
+    pollingInterval: 15
+    cooldownPeriod: 60
+    redisListName: "bull:cer:wait"
+    queueLength: "50"
+    activationQueueLength: "10"
+
   nodeSelector: {}
   tolerations: []
   affinity: {}

@@ -704,3 +704,93 @@ Phase 6.5 is **COMPLETE**. System now ready for:
 - E2E workflow validation
 
 ---
+
+---
+
+## 🤖 AI OS Execution Track (Concept2Cure OS)
+
+### Objective
+
+Execute a 6-week pilot to validate a unified AI OS control/governance plane with pluggable storage/indexing/scheduling/execution adapters.
+
+### Pilot Scope
+
+- One clinical RAG workflow
+- One agentic workflow with tool actions
+- One batch analytics workflow
+
+### Milestones
+
+| Week | Deliverable | Owner | Exit Criteria |
+| --- | --- | --- | --- |
+| 1 | ADR + canonical contracts + SLOs | Platform Architect | ADR approved and contracts versioned |
+| 2 | Lineage + immutable audit stream | Platform BE | End-to-end lineage visible in logs |
+| 3 | Unified retrieval + policy filters | Knowledge Platform | Policy-aware retrieval in pilot paths |
+| 4 | QoS scheduler + standardized execution envelope | Runtime Team | QoS tiers active and retries/idempotency enforced |
+| 5 | Safety/reliability release gates + dashboards | QA/SRE | Gate checks automated and visible |
+| 6 | Production-like pilot + go/no-go decision | PM + Eng Leadership | KPI deltas and decision recorded |
+
+### Pilot KPIs
+
+- Reliability: workflow success rate, P95 latency
+- Quality: grounded response acceptance rate
+- Safety: policy violation rate
+- Economics: cost per successful workflow
+
+### Current Status
+
+- Status: `planned`
+- Start target: `2026-04-01`
+- Pilot decision date target: `2026-05-15`
+
+### AI OS Audit Backlog (Execution)
+
+| Item | Description | Owner | Due Date | Status |
+| --- | --- | --- | --- | --- |
+| A1 | Adopt AIOS control IDs (`AIOS-01`..`AIOS-07`) in implementation tickets | Platform PM | 2026-03-29 | planned |
+| A2 | Add lineage completeness KPI to weekly release report | Platform BE | 2026-04-03 | planned |
+| A3 | Add policy decision logs with stable `policy_rule_id` | Security Eng | 2026-04-07 | planned |
+| A4 | Generate first automated AIOS Evidence Pack in staging | SRE + Compliance | 2026-04-14 | planned |
+| A5 | Run first incident tabletop for AI OS failure modes | SRE | 2026-04-18 | planned |
+| A6 | Pilot go/no-go audit review with leadership | PM + Compliance | 2026-05-15 | planned |
+
+Reference: `CONCEPT2CURE_AI_OS_AUDIT_PLAN.md`.
+
+### AI OS Immediate Build-Out Tasks (Next 10 Business Days)
+
+- [ ] Publish ADR-001 and link in release checklist.
+- [ ] Adopt `CONCEPT2CURE_AI_OS_CONTROL_IMPLEMENTATION_MAP.md` as sprint board source.
+- [ ] Generate first draft `CONCEPT2CURE_AI_OS_EVIDENCE_PACK_TEMPLATE.md` for staging release.
+- [ ] Configure weekly control review meeting (Platform + Compliance + Security + SRE).
+- [ ] Define exception register workflow for temporary control deviations.
+
+Operational references:
+
+- `CONCEPT2CURE_AI_OS_AUDIT_PLAN.md`
+- `CONCEPT2CURE_AI_OS_CONTROL_IMPLEMENTATION_MAP.md`
+- `CONCEPT2CURE_AI_OS_EVIDENCE_PACK_TEMPLATE.md`
+
+### AI OS Automation Enablement
+
+- [ ] Wire `scripts/generate_aios_evidence_pack.py` into release pipeline.
+- [ ] Store per-release metrics payloads in `docs/aios/*.json` (or artifact storage equivalent).
+- [ ] Publish generated evidence packs for compliance sign-off.
+
+Quickstart command:
+
+```bash
+python3 scripts/generate_aios_evidence_pack.py \
+  --metrics docs/aios/sample_evidence_metrics.json \
+  --output docs/aios/AIOS_EVIDENCE_PACK_SAMPLE.md
+```
+
+Validation command:
+
+```bash
+python3 scripts/validate_aios_audit_assets.py
+```
+
+Automation hardening update:
+
+- Added `make aios-evidence`, `make aios-validate`, and `make aios-test` targets.
+- Added Python unit test coverage for AI OS audit tooling (`tests/test_aios_audit_tooling.py`).
