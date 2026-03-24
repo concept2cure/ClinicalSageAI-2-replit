@@ -10,6 +10,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useLocation } from 'wouter';
 import { securityLogger } from '../../utils/logger';
 import {
   Shield,
@@ -66,6 +67,7 @@ type SettingsSection =
   | 'training';
 
 export function SecuritySettings() {
+  const [, setLocation] = useLocation();
   const { complianceConfig, organization, can } = useSecurityContext();
   const [activeSection, setActiveSection] = useState<SettingsSection>('overview');
   const [editMode, setEditMode] = useState(false);
@@ -174,6 +176,16 @@ export function SecuritySettings() {
 
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto p-6">
+        <div className="mb-4 rounded-lg border border-indigo-200 bg-indigo-50 p-3 text-sm text-indigo-900">
+          Need user-level controls? Use the{' '}
+          <button
+            onClick={() => setLocation('/client-portal/profile')}
+            className="font-semibold underline underline-offset-2"
+          >
+            Profile & Security page
+          </button>{' '}
+          to manage MFA enrollment, password rotation, and active session revocation.
+        </div>
         {activeSection === 'overview' && <ComplianceOverview health={health} />}
         {activeSection === 'authentication' && (
           <AuthenticationSettings

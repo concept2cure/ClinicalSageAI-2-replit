@@ -18,6 +18,7 @@ const AIAssistant = lazy(() => import('./components/ai-assistant/AIAssistant'));
 const WorkflowDashboard = lazy(() => import('./components/workflows/WorkflowDashboard'));
 const AuditTrailViewer = lazy(() => import('./components/audit/AuditTrailViewer'));
 const SecuritySettings = lazy(() => import('./components/settings/SecuritySettings'));
+const UserSecurityProfile = lazy(() => import('./components/settings/UserSecurityProfile'));
 const ActivityMonitor = lazy(() => import('./components/monitoring/ActivityMonitor'));
 const ComplianceDashboard = lazy(() => import('./components/compliance/ComplianceDashboard'));
 
@@ -378,11 +379,7 @@ export const ClientPortalV2: React.FC = () => {
 
             {/* Profile */}
             <Route path="/client-portal/profile">
-              <ModulePage
-                title="User Profile"
-                description="Account settings, preferences and role management"
-                icon="👤"
-              />
+              <UserSecurityProfile />
             </Route>
 
             {/* Search */}
