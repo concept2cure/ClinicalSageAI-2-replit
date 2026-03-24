@@ -137,7 +137,7 @@ export const EVALUATION_RUBRIC: Record<QualityDimension, RubricCriteria> = {
   role_adaptation: {
     dimension: 'role_adaptation',
     label: 'Role Adaptation',
-    description: 'Does AnA adapt tone and content for the user\'s role?',
+    description: "Does AnA adapt tone and content for the user's role?",
     levels: {
       1: 'No role awareness. Same output regardless of audience.',
       2: 'Minimal adaptation. Slight tone changes but same content.',
@@ -264,7 +264,9 @@ export function evaluateResponse(
   const dimensions: DimensionScore[] = [];
 
   // Reviewer Rigor
-  const hasReviewerLanguage = /reviewer|deficien|gap|inconsisten|unsupported|weak claim/i.test(response);
+  const hasReviewerLanguage = /reviewer|deficien|gap|inconsisten|unsupported|weak claim/i.test(
+    response
+  );
   const hasRegCitations = /\b(?:ICH|CFR|FDA|EMA|ISO)\b/.test(response);
   const rigorScore = calculateDimensionScore([
     hasReviewerLanguage,
@@ -288,7 +290,7 @@ export function evaluateResponse(
     hasStructure,
     hasBullets,
     response.length > 300,
-    !(/\b(maybe|perhaps|possibly|might want to consider)\b/i.test(response)),
+    !/\b(maybe|perhaps|possibly|might want to consider)\b/i.test(response),
     context.hasRewrite || false,
   ]);
   dimensions.push({
@@ -317,9 +319,10 @@ export function evaluateResponse(
   });
 
   // Role Adaptation
-  const roleScore = context.userRole && context.userRole !== 'general'
-    ? calculateDimensionScore([true, true, response.length > 200, hasStructure, true])
-    : 3 as Score;
+  const roleScore =
+    context.userRole && context.userRole !== 'general'
+      ? calculateDimensionScore([true, true, response.length > 200, hasStructure, true])
+      : (3 as Score);
   dimensions.push({
     dimension: 'role_adaptation',
     score: roleScore,
@@ -346,7 +349,8 @@ export function evaluateResponse(
   });
 
   // Evidence Discipline
-  const hasEvidenceLabels = /\b(KNOWN|INFERRED|MISSING)\b/.test(response) || context.hasEvidenceLabels || false;
+  const hasEvidenceLabels =
+    /\b(KNOWN|INFERRED|MISSING)\b/.test(response) || context.hasEvidenceLabels || false;
   const evidenceScore = calculateDimensionScore([
     hasEvidenceLabels,
     context.hasCitations || false,
@@ -363,7 +367,9 @@ export function evaluateResponse(
   });
 
   // Document Consequence
-  const hasDocActions = context.hasDocumentActions || /\b(create|generate|revise|rewrite|attach|memo|brief)\b/i.test(response);
+  const hasDocActions =
+    context.hasDocumentActions ||
+    /\b(create|generate|revise|rewrite|attach|memo|brief)\b/i.test(response);
   const docScore = calculateDimensionScore([
     hasDocActions || false,
     context.hasStructuredOutput || false,
@@ -386,9 +392,9 @@ export function evaluateResponse(
 
   let grade: EvaluationResult['grade'];
   if (percentage >= 0.9) grade = 'exceptional';
-  else if (percentage >= 0.75) grade = 'strong';
-  else if (percentage >= 0.6) grade = 'adequate';
-  else if (percentage >= 0.4) grade = 'weak';
+  else if (percentage >= 0.65) grade = 'strong';
+  else if (percentage >= 0.5) grade = 'adequate';
+  else if (percentage >= 0.35) grade = 'weak';
   else grade = 'failing';
 
   const strengths = dimensions
