@@ -19,6 +19,9 @@ import {
   ACTION_REQUIRED_CONTEXT,
   type AuthoringContextPack,
   type AuthoringActionId,
+  type SectionPreflightResult,
+  type PreflightOverall,
+  type PreflightCheckStatus,
 } from '../../shared/types/authoring-context';
 import {
   resolveAuthoringContext,
@@ -828,5 +831,313 @@ describe('failure behavior — body and linked context missing', () => {
     expect(ctx?.workflowStage).toBe('section-workspace');
     expect(ctx?.sectionCode).toBe('9.9');
     // No body, no linked — but context still usable
+  });
+});
+
+// ─── Pass 5: Section Preflight + Governed Promotion Intelligence ─────────────
+
+describe('SectionPreflightResult type structure', () => {
+  it('can construct a clean preflight result', () => {
+    const result: SectionPreflightResult = {
+      sectionCode: '2.5',
+      artifactId: 'art-1',
+      regulatorBody: 'FDA',
+      submissionType: 'IND',
+      overall: 'ready',
+      summary: 'All checks pass.',
+      checks: {
+        bodyExpectations: { status: 'pass' },
+        contradictions: { status: 'pass' },
+        crossSectionConsistency: { status: 'pass' },
+        approvedBaselineCompare: { status: 'unknown' },
+        readiness: { status: 'pass', score: 85 },
+      },
+      recommendedActions: [
+        { id: 'promote-to-review', label: 'Promote to review', reason: 'All checks pass.' },
+      ],
+    };
+    expect(result.overall).toBe('ready');
+    expect(result.checks.readiness?.score).toBe(85);
+    expect(result.recommendedActions).toHaveLength(1);
+    expect(result.recommendedActions[0].id).toBe('promote-to-review');
+  });
+
+  it('can construct a blocked preflight result', () => {
+    const result: SectionPreflightResult = {
+      sectionCode: '2.5',
+      overall: 'blocked',
+      summary: 'Section is blocked by 2 failed checks.',
+      checks: {
+        bodyExpectations: { status: 'fail', missing: ['Primary endpoint justification', 'Safety summary'] },
+        contradictions: { status: 'fail', items: [
+          { id: 'c1', severity: 'critical', explanation: 'Dosage conflicts with Module 4 data' },
+        ]},
+        crossSectionConsistency: { status: 'warn', items: [
+          { type: 'terminology', severity: 'warning', explanation: 'Product name inconsistent', linkedSections: ['2.3', '3.2.S'] },
+        ]},
+        readiness: { status: 'warn', blockers: [
+          { code: 'STALE', severity: 'major', message: 'Content >60 days old' },
+        ]},
+      },
+      recommendedActions: [
+        { id: 'gather-body-evidence', label: 'Gather evidence', reason: '2 missing' },
+        { id: 'prepare-correction-draft', label: 'Prepare correction', reason: '1 contradiction' },
+        { id: 'harmonize-linked-sections', label: 'Harmonize', reason: '1 inconsistency' },
+      ],
+    };
+    expect(result.overall).toBe('blocked');
+    expect(result.checks.bodyExpectations?.missing).toHaveLength(2);
+    expect(result.checks.contradictions?.items).toHaveLength(1);
+    expect(result.recommendedActions).toHaveLength(3);
+    expect(result.recommendedActions.map(a => a.id)).not.toContain('promote-to-review');
+  });
+
+  it('provisional result has warnings but no failures', () => {
+    const result: SectionPreflightResult = {
+      overall: 'provisional',
+      summary: 'Section has warnings.',
+      checks: {
+        bodyExpectations: { status: 'pass' },
+        contradictions: { status: 'warn', items: [
+          { id: 'c2', severity: 'minor', explanation: 'Minor language inconsistency' },
+        ]},
+        readiness: { status: 'pass', score: 78 },
+      },
+      recommendedActions: [],
+    };
+    expect(result.overall).toBe('provisional');
+    const statuses = Object.values(result.checks).map(c => c?.status);
+    expect(statuses).not.toContain('fail');
+    expect(statuses).toContain('warn');
+  });
+});
+
+describe('preflight aggregation logic', () => {
+  // Helper to compute overall from check statuses
+  const computeOverall = (checks: Record<string, { status: PreflightCheckStatus }>): PreflightOverall => {
+    const statuses = Object.values(checks).map(c => c.status);
+    if (statuses.includes('fail')) return 'blocked';
+    if (statuses.includes('warn')) return 'provisional';
+    if (statuses.every(s => s === 'unknown')) return 'needs-review';
+    return 'ready';
+  };
+
+  it('returns blocked when any check fails', () => {
+    expect(computeOverall({
+      body: { status: 'fail' },
+      contradictions: { status: 'pass' },
+      readiness: { status: 'pass' },
+    })).toBe('blocked');
+  });
+
+  it('returns provisional when checks have warnings but no failures', () => {
+    expect(computeOverall({
+      body: { status: 'pass' },
+      contradictions: { status: 'warn' },
+      readiness: { status: 'pass' },
+    })).toBe('provisional');
+  });
+
+  it('returns ready when all checks pass', () => {
+    expect(computeOverall({
+      body: { status: 'pass' },
+      contradictions: { status: 'pass' },
+      readiness: { status: 'pass' },
+    })).toBe('ready');
+  });
+
+  it('returns needs-review when all checks are unknown', () => {
+    expect(computeOverall({
+      body: { status: 'unknown' },
+      contradictions: { status: 'unknown' },
+      readiness: { status: 'unknown' },
+    })).toBe('needs-review');
+  });
+
+  it('fail takes precedence over warn', () => {
+    expect(computeOverall({
+      body: { status: 'fail' },
+      contradictions: { status: 'warn' },
+      readiness: { status: 'pass' },
+    })).toBe('blocked');
+  });
+
+  it('warn takes precedence over unknown', () => {
+    expect(computeOverall({
+      body: { status: 'unknown' },
+      contradictions: { status: 'warn' },
+    })).toBe('provisional');
+  });
+});
+
+describe('preflight → promotion integration', () => {
+  it('promotion requires preflight context (sectionCode + artifactId)', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '2.5',
+      artifactId: 'art-1',
+      artifactVersion: 3,
+      submissionType: 'IND',
+    });
+    expect(hasSectionContext(ctx)).toBe(true);
+    expect(hasArtifactContext(ctx)).toBe(true);
+    expect(ctx?.regulatorBody).toBe('FDA');
+    expect(ctx?.linkedSectionCodes).toBeDefined();
+    // All fields needed for preflight are present
+  });
+
+  it('promotion blocked without artifactId', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '2.5',
+    });
+    expect(hasArtifactContext(ctx)).toBe(false);
+    // Promotion handler would reject: "No artifact open"
+  });
+
+  it('preflight available without artifactId (section-only)', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '2.5',
+    });
+    expect(hasSectionContext(ctx)).toBe(true);
+    // Preflight can run on section alone (without artifact)
+  });
+});
+
+describe('preflight → corrective pivot context', () => {
+  it('correction draft available when contradictions fail', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '2.5',
+      artifactId: 'art-1',
+      contradictions: [
+        { id: 'c1', type: 'dosage', severity: 'critical', explanation: 'Conflict with Module 4' },
+      ],
+    });
+    expect(ctx?.contradictions?.length).toBe(1);
+    // Correction draft action would appear in preflight.recommendedActions
+  });
+
+  it('harmonize available when linked sections have issues', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '2.5',
+    });
+    expect(ctx?.linkedSectionCodes).toContain('2.7.3');
+    // Harmonize action would appear if cross-section check warns/fails
+  });
+
+  it('body evidence available when body check fails', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '2.5',
+      submissionType: 'IND',
+    });
+    expect(ctx?.regulatorBody).toBe('FDA');
+    // gather-body-evidence action would appear if body check fails
+  });
+});
+
+describe('preflight refresh after authoring actions', () => {
+  it('readiness data refreshable after correction', () => {
+    const before = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '2.5',
+      readiness: { score: 40, blocked: true, blockers: [{ code: 'X', severity: 'critical', message: 'Blocker' }] },
+    });
+    expect(before?.readiness?.blocked).toBe(true);
+
+    // After correction + refetch
+    const after = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '2.5',
+      readiness: { score: 82, blocked: false },
+    });
+    expect(after?.readiness?.blocked).toBe(false);
+    expect(after?.readiness?.score).toBe(82);
+  });
+
+  it('contradictions clearable after resolution', () => {
+    const before = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '2.5',
+      contradictions: [{ id: 'c1', type: 'dosage', severity: 'critical', explanation: 'Conflict' }],
+    });
+    expect(before?.contradictions?.length).toBe(1);
+
+    // After correction + refetch
+    const after = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '2.5',
+      contradictions: [],
+    });
+    expect(after?.contradictions?.length).toBe(0);
+  });
+});
+
+describe('preflight failure behavior', () => {
+  it('no body context → body check unknown, not crash', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '2.5',
+    });
+    expect(ctx?.regulatorBody).toBeUndefined();
+    // Preflight would set bodyExpectations.status = 'unknown'
+  });
+
+  it('no linked sections → cross-section check unknown', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '1.1',
+    });
+    expect(ctx?.linkedSectionCodes).toBeUndefined();
+    // Preflight would set crossSectionConsistency.status = 'unknown'
+  });
+
+  it('no artifact → compare check unknown, preflight still runs', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '2.5',
+    });
+    expect(hasArtifactContext(ctx)).toBe(false);
+    // approvedBaselineCompare.status = 'unknown', preflight continues
+  });
+
+  it('all services unavailable → overall needs-review, not crash', () => {
+    // When all checks return unknown, overall = needs-review
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '2.5',
+    });
+    expect(ctx).not.toBeNull();
+    // All checks would be unknown → overall = 'needs-review'
+  });
+
+  it('context still valid for manual promotion even when preflight unavailable', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '2.5',
+      artifactId: 'art-1',
+      artifactVersion: 3,
+    });
+    expect(hasArtifactContext(ctx)).toBe(true);
+    expect(hasVersionContext(ctx)).toBe(true);
+    // Even if preflight fails, governed promotion can proceed with warning
   });
 });

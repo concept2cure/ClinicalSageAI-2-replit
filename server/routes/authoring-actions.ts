@@ -905,6 +905,201 @@ router.post('/body-aware-gaps', async (req: Request, res: Response) => {
   }
 });
 
+// ─── Section Preflight (Pass 5) ──────────────────────────────────────────────
+
+/**
+ * POST /section-preflight
+ * Aggregates all existing checks into a canonical SectionPreflightResult.
+ * Calls: readiness-engine, contradiction-engine, body-aware-authoring,
+ *        harmonize-engine — all in parallel.
+ * Returns structured preflight with overall verdict + recommended actions.
+ */
+router.post('/section-preflight', async (req: Request, res: Response) => {
+  try {
+    const {
+      projectId, sectionCode, artifactId, artifactVersionId,
+      regulatorBody, submissionType, linkedSectionCodes,
+    } = req.body;
+    if (!projectId || !sectionCode) {
+      return res.status(400).json({ error: 'projectId and sectionCode are required' });
+    }
+
+    const orgId = (req as any).tenantId || 1;
+    type CheckStatus = 'pass' | 'warn' | 'fail' | 'unknown';
+    const checks: Record<string, any> = {};
+
+    // ── Run all checks in parallel ──────────────────────────────────
+    const [readinessResult, contradictionResult, bodyResult, consistencyResult] =
+      await Promise.allSettled([
+        // 1. Readiness
+        (async () => {
+          try {
+            const { computeReadinessAssessment } = await import(
+              '../services/orchestration/readiness-engine.js'
+            );
+            if (!computeReadinessAssessment) return null;
+            const assessment = await computeReadinessAssessment({
+              projectId: Number(projectId), organizationId: 'default',
+            });
+            const major = sectionCode.split('.')[0];
+            const moduleItem = (assessment?.moduleBreakdown || []).find(
+              (m: any) => m.module === `Module ${major}` || m.module === `m${major}`
+            );
+            const blockers = (assessment?.blockers || [])
+              .filter((b: any) => !b.module || b.module === `m${major}`)
+              .slice(0, 10)
+              .map((b: any) => ({ code: b.category || 'BLOCK', severity: b.severity, message: b.message || b.description }));
+            const hasCritical = blockers.some((b: any) => b.severity === 'critical');
+            const status: CheckStatus = hasCritical ? 'fail' : blockers.length > 0 ? 'warn' : 'pass';
+            return { status, score: moduleItem?.score ?? assessment?.overallScore ?? null, blockers };
+          } catch { return null; }
+        })(),
+        // 2. Contradictions
+        (async () => {
+          try {
+            const { contradictionEngineService } = await import(
+              '../services/contradiction-engine-service.js'
+            );
+            if (!contradictionEngineService?.scanProject) return null;
+            const findings = await contradictionEngineService.scanProject(orgId, Number(projectId));
+            const relevant = (findings || [])
+              .filter((f: any) => f.sectionCode === sectionCode || (f.affectedSections || []).includes(sectionCode))
+              .slice(0, 10)
+              .map((f: any) => ({
+                id: f.id || f.findingId || String(Math.random()),
+                severity: f.authorityState === 'blocks_promotion' ? 'critical' : f.severity || 'minor',
+                explanation: f.explanation || f.description || f.title,
+              }));
+            const hasCritical = relevant.some((r: any) => r.severity === 'critical');
+            const status: CheckStatus = hasCritical ? 'fail' : relevant.length > 0 ? 'warn' : 'pass';
+            return { status, items: relevant };
+          } catch { return null; }
+        })(),
+        // 3. Body-aware gaps
+        (async () => {
+          if (!regulatorBody && !submissionType) return null;
+          try {
+            const { detectBodySpecificGaps } = await import(
+              '../services/body-aware-authoring.js'
+            );
+            if (!detectBodySpecificGaps) return null;
+            const analysis = await detectBodySpecificGaps(
+              regulatorBody || 'FDA', submissionType || 'IND', sectionCode, ''
+            );
+            const missing = analysis.gaps.filter((g: any) => g.status === 'missing').map((g: any) => g.requirement);
+            const weak = analysis.gaps.filter((g: any) => g.status === 'weak').map((g: any) => g.requirement);
+            const status: CheckStatus = missing.length > 0 ? 'fail' : weak.length > 0 ? 'warn' : 'pass';
+            return { status, missing, weak, requiredLevel: 'required' };
+          } catch { return null; }
+        })(),
+        // 4. Cross-section consistency
+        (async () => {
+          const CTD_LINKS: Record<string, string[]> = {
+            '2.2': ['2.3', '2.4', '2.5'], '2.3': ['3.2.S', '3.2.P'],
+            '2.4': ['4.2.1', '4.2.2', '4.2.3'], '2.5': ['2.7.1', '2.7.3', '2.7.4', '5.3'],
+            '2.7.1': ['5.2'], '2.7.3': ['2.5', '5.3'], '2.7.4': ['2.5', '5.3'],
+            '3.2.S': ['2.3'], '3.2.P': ['2.3'], '5.3': ['2.5', '2.7.3', '2.7.4'],
+          };
+          const linked = linkedSectionCodes || CTD_LINKS[sectionCode]
+            || CTD_LINKS[sectionCode.split('.').slice(0, -1).join('.')] || [];
+          if (linked.length === 0) return { status: 'unknown' as CheckStatus, items: [] };
+          try {
+            const { HarmonizeEngine } = await import('../services/harmonize-engine.js');
+            const { db } = await import('../db.js');
+            const sections: Record<string, string> = {};
+            for (const code of [sectionCode, ...linked]) {
+              const artifact = await db.query.concept2cureArtifacts?.findFirst?.({
+                where: (a: any, { and, eq }: any) =>
+                  and(eq(a.projectId, Number(projectId)), eq(a.ctdSection, code)),
+                orderBy: (a: any, { desc }: any) => [desc(a.updatedAt)],
+              }).catch(() => null);
+              if (artifact?.content) {
+                sections[code] = typeof artifact.content === 'string'
+                  ? artifact.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : '';
+              }
+            }
+            if (Object.keys(sections).length < 2) return { status: 'unknown' as CheckStatus, items: [] };
+            const engine = new HarmonizeEngine();
+            const result = await engine.check({ sections, submissionType: submissionType || 'IND' });
+            const items = result.issues.slice(0, 10).map((i: any) => ({
+              type: i.type, severity: i.severity, explanation: i.description,
+              linkedSections: [i.sectionA, i.sectionB].filter(Boolean),
+            }));
+            const hasCritical = items.some((i: any) => i.severity === 'critical' || i.severity === 'error');
+            const status: CheckStatus = hasCritical ? 'fail' : items.length > 0 ? 'warn' : 'pass';
+            return { status, consistencyScore: result.consistencyScore, items };
+          } catch { return { status: 'unknown' as CheckStatus, items: [] }; }
+        })(),
+      ]);
+
+    // ── Assemble checks ─────────────────────────────────────────────
+    checks.readiness = (readinessResult.status === 'fulfilled' && readinessResult.value)
+      ? readinessResult.value : { status: 'unknown' };
+    checks.contradictions = (contradictionResult.status === 'fulfilled' && contradictionResult.value)
+      ? contradictionResult.value : { status: 'unknown' };
+    checks.bodyExpectations = (bodyResult.status === 'fulfilled' && bodyResult.value)
+      ? bodyResult.value : { status: 'unknown' };
+    checks.crossSectionConsistency = (consistencyResult.status === 'fulfilled' && consistencyResult.value)
+      ? consistencyResult.value : { status: 'unknown' };
+    checks.approvedBaselineCompare = { status: 'unknown' };
+
+    // ── Compute overall verdict ─────────────────────────────────────
+    const statuses = Object.values(checks).map((c: any) => c.status);
+    const hasFail = statuses.includes('fail');
+    const hasWarn = statuses.includes('warn');
+    const allUnknown = statuses.every((s: string) => s === 'unknown');
+
+    let overall: string;
+    let summary: string;
+    if (hasFail) {
+      const failChecks = Object.entries(checks).filter(([, v]: any) => v.status === 'fail').map(([k]) => k);
+      overall = 'blocked';
+      summary = `Section is blocked by ${failChecks.length} failed check(s): ${failChecks.join(', ')}. Resolve before promotion.`;
+    } else if (hasWarn) {
+      overall = 'provisional';
+      summary = 'Section has warnings. Review before promotion.';
+    } else if (allUnknown) {
+      overall = 'needs-review';
+      summary = 'Preflight checks could not run — manual review recommended.';
+    } else {
+      overall = 'ready';
+      summary = 'All preflight checks pass. Section is ready for promotion.';
+    }
+
+    // ── Build recommended actions ───────────────────────────────────
+    const recommendedActions: Array<{ id: string; label: string; reason: string }> = [];
+    if (checks.bodyExpectations?.status === 'fail') {
+      recommendedActions.push({ id: 'gather-body-evidence', label: 'Gather body-required evidence',
+        reason: `${(checks.bodyExpectations.missing || []).length} body requirement(s) missing` });
+    }
+    if (checks.contradictions?.status === 'fail' || checks.contradictions?.status === 'warn') {
+      recommendedActions.push({ id: 'prepare-correction-draft', label: 'Prepare correction draft',
+        reason: `${(checks.contradictions.items || []).length} contradiction(s) detected` });
+    }
+    if (checks.crossSectionConsistency?.status === 'fail' || checks.crossSectionConsistency?.status === 'warn') {
+      recommendedActions.push({ id: 'harmonize-linked-sections', label: 'Harmonize with linked sections',
+        reason: `${(checks.crossSectionConsistency.items || []).length} inconsistency(s) across linked sections` });
+    }
+    if (checks.readiness?.status === 'fail') {
+      recommendedActions.push({ id: 'explain-blockers', label: 'Explain blockers',
+        reason: `${(checks.readiness.blockers || []).length} readiness blocker(s)` });
+    }
+    if (overall === 'ready') {
+      recommendedActions.push({ id: 'promote-to-review', label: 'Promote to review',
+        reason: 'All checks pass — ready for governed promotion.' });
+    }
+
+    return res.json({
+      status: 'data', action: 'section_preflight',
+      sectionCode, artifactId, artifactVersionId, regulatorBody, submissionType,
+      overall, summary, checks, recommendedActions,
+    });
+  } catch (err: any) {
+    console.error('[authoring-actions] section-preflight error:', err?.message);
+    return res.status(500).json({ error: 'Failed to run section preflight' });
+  }
+});
+
 // ─── Section-level readiness + contradiction data feed ───────────────────────
 
 router.get('/section-context/:projectId/:sectionCode', async (req: Request, res: Response) => {

@@ -546,6 +546,16 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     }
 
     // Action 5: Promote to review — available when drafting and not blocked
+    // Action: Section preflight — always available in section workspace
+    if (hasSectionContext(authoringContext)) {
+      actions.push({
+        id: 'section-preflight',
+        label: 'Run section preflight',
+        intent: 'section_preflight',
+        description: 'Check body, consistency, contradictions, and readiness before promotion',
+      });
+    }
+
     if (
       hasArtifactContext(authoringContext) &&
       authoringContext.artifactStatus === 'drafting' &&
@@ -555,7 +565,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         id: 'promote-to-review',
         label: 'Promote to review',
         intent: 'promote_to_review',
-        description: 'Move this section to review if readiness checks pass',
+        description: 'Run preflight then promote if all checks pass',
       });
     }
 
@@ -1321,90 +1331,150 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       return;
     }
 
-    // P5: Promote to review — governed transition with confirmation
+    // ── SECTION PREFLIGHT (Pass 5) ─────────────────────────────────────────
+    if (action.intent === 'section_preflight') {
+      (async () => {
+        const projectId = contextProfile?.projectId;
+        const sectionCode = authoringContext?.sectionCode;
+        if (!projectId || !sectionCode) {
+          setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+            content: '**Cannot run preflight.** No section is active. Open a section first.' }]);
+          return;
+        }
+        try {
+          const res = await fetch('/api/authoring-actions/section-preflight', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+              projectId, sectionCode,
+              artifactId: authoringContext?.artifactId,
+              artifactVersionId: authoringContext?.artifactVersionId,
+              regulatorBody: authoringContext?.regulatorBody,
+              submissionType: authoringContext?.submissionType,
+              linkedSectionCodes: authoringContext?.linkedSectionCodes,
+            }),
+          });
+          const data = await res.json();
+          if (data.status === 'data') {
+            const statusIcon = (s: string) =>
+              s === 'pass' ? '✅' : s === 'warn' ? '⚠️' : s === 'fail' ? '❌' : '—';
+            const checkLines = [
+              `| Body expectations | ${statusIcon(data.checks.bodyExpectations?.status)} ${data.checks.bodyExpectations?.status || 'unknown'} | ${data.checks.bodyExpectations?.missing?.length ? `${data.checks.bodyExpectations.missing.length} missing` : '—'} |`,
+              `| Contradictions | ${statusIcon(data.checks.contradictions?.status)} ${data.checks.contradictions?.status || 'unknown'} | ${data.checks.contradictions?.items?.length ? `${data.checks.contradictions.items.length} found` : '—'} |`,
+              `| Cross-section consistency | ${statusIcon(data.checks.crossSectionConsistency?.status)} ${data.checks.crossSectionConsistency?.status || 'unknown'} | ${data.checks.crossSectionConsistency?.items?.length ? `${data.checks.crossSectionConsistency.items.length} issues` : '—'} |`,
+              `| Approved baseline | ${statusIcon(data.checks.approvedBaselineCompare?.status)} ${data.checks.approvedBaselineCompare?.status || 'unknown'} | ${data.checks.approvedBaselineCompare?.conflictRisk || '—'} |`,
+              `| Readiness | ${statusIcon(data.checks.readiness?.status)} ${data.checks.readiness?.status || 'unknown'} | ${data.checks.readiness?.blockers?.length ? `${data.checks.readiness.blockers.length} blockers` : data.checks.readiness?.score != null ? `Score: ${data.checks.readiness.score}` : '—'} |`,
+            ].join('\n');
+
+            const overallIcon = data.overall === 'ready' ? '✅' : data.overall === 'blocked' ? '🚫' : '⚠️';
+            const actionLines = data.recommendedActions?.length
+              ? '\n\n**Recommended actions:**\n' + data.recommendedActions.map((a: any) =>
+                `- **${a.label}** — ${a.reason}`).join('\n')
+              : '';
+
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Section Preflight — §${sectionCode}** ${overallIcon}\n\n**Overall:** ${data.overall.toUpperCase()} — ${data.summary}\n\n| Check | Status | Detail |\n|---|---|---|\n${checkLines}${actionLines}` }]);
+            onRefreshIntelligence?.();
+          } else {
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Preflight:** ${data.message || data.error || 'Unable to run preflight.'}` }]);
+          }
+        } catch {
+          handleSend('Run preflight on this section.');
+        }
+      })();
+      return;
+    }
+
+    // P5: Promote to review — preflight-gated governed transition
     if (action.intent === 'promote_to_review') {
       (async () => {
         const projectId = contextProfile?.projectId;
         const artifactId = authoringContext?.artifactId;
+        const sectionCode = authoringContext?.sectionCode;
         if (!projectId || !artifactId) {
-          setMessages(prev => [...prev, {
-            id: `a-${Date.now()}`,
-            role: 'assistant',
-            content: '**Cannot promote.** No artifact is currently open. Open a document first.',
-            timestamp: new Date(),
-          }]);
+          setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+            content: '**Cannot promote.** No artifact is currently open. Open a document first.' }]);
           return;
         }
-        // Step 1: Check blockers
+
+        // Step 1: Run preflight
+        let preflightPassed = false;
         try {
-          const blockerRes = await fetch(`/api/authoring-actions/promotion-blockers/${projectId}?artifactId=${artifactId}`, {
+          const pfRes = await fetch('/api/authoring-actions/section-preflight', {
+            method: 'POST',
             headers: getAuthHeaders(),
+            body: JSON.stringify({
+              projectId, sectionCode: sectionCode || '',
+              artifactId, artifactVersionId: authoringContext?.artifactVersionId,
+              regulatorBody: authoringContext?.regulatorBody,
+              submissionType: authoringContext?.submissionType,
+              linkedSectionCodes: authoringContext?.linkedSectionCodes,
+            }),
           });
-          const blockerData = await blockerRes.json();
-          if (blockerData.blocked) {
-            const lines = blockerData.blockers.map((b: any) => `- **[${b.severity}]** ${b.message}`).join('\n');
-            setMessages(prev => [...prev, {
-              id: `a-${Date.now()}`,
-              role: 'assistant',
-              content: `**Promotion blocked.** ${blockerData.blockerCount} critical issue(s) must be resolved first:\n\n${lines}`,
-              timestamp: new Date(),
-            }]);
-            return;
+          const pfData = await pfRes.json();
+          if (pfData.status === 'data') {
+            if (pfData.overall === 'blocked') {
+              const failChecks = Object.entries(pfData.checks)
+                .filter(([, v]: any) => v.status === 'fail')
+                .map(([k, v]: any) => {
+                  if (k === 'contradictions' && v.items?.length) return `**Contradictions:** ${v.items.length} found`;
+                  if (k === 'bodyExpectations' && v.missing?.length) return `**Body gaps:** ${v.missing.length} missing`;
+                  if (k === 'crossSectionConsistency' && v.items?.length) return `**Consistency:** ${v.items.length} issues`;
+                  if (k === 'readiness' && v.blockers?.length) return `**Readiness:** ${v.blockers.length} blockers`;
+                  return `**${k}:** failed`;
+                });
+              const actionLines = pfData.recommendedActions?.length
+                ? '\n\n**Fix first:**\n' + pfData.recommendedActions.map((a: any) => `- ${a.label} — ${a.reason}`).join('\n')
+                : '';
+              setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+                content: `🚫 **Promotion blocked by preflight.**\n\n${pfData.summary}\n\nFailed checks:\n${failChecks.map(c => `- ${c}`).join('\n')}${actionLines}` }]);
+              onRefreshIntelligence?.();
+              return;
+            } else if (pfData.overall === 'provisional') {
+              // Warn but allow promotion with acknowledgment
+              setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+                content: `⚠️ **Preflight has warnings.** ${pfData.summary}\n\nProceeding with promotion despite warnings.` }]);
+            }
+            preflightPassed = true;
           }
         } catch {
-          // Non-blocking — proceed with promotion attempt
+          // Preflight unavailable — proceed with legacy blocker check
+          preflightPassed = true;
         }
 
+        if (!preflightPassed) return;
+
         // Step 2: Attempt governed promotion
-        if (onRequestPromotion) {
-          try {
+        const doPromote = async () => {
+          if (onRequestPromotion) {
             const result = await onRequestPromotion(artifactId);
-            setMessages(prev => [...prev, {
-              id: `a-${Date.now()}`,
-              role: 'assistant',
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
               content: result.promoted
-                ? `**Promoted to review.** ${result.message} The document is now in the governance review pipeline.`
-                : `**Promotion not completed.** ${result.message}`,
-              timestamp: new Date(),
-            }]);
-            // Refresh readiness after promotion attempt
-            onRefreshIntelligence?.();
-          } catch (err) {
-            setMessages(prev => [...prev, {
-              id: `a-${Date.now()}`,
-              role: 'assistant',
-              content: `**Promotion failed.** ${err instanceof Error ? err.message : 'Unknown error'}`,
-              timestamp: new Date(),
-            }]);
-          }
-        } else {
-          // Fallback: call the status API directly
-          try {
+                ? `✅ **Promoted to review.** ${result.message} The document is now in the governance review pipeline.`
+                : `**Promotion not completed.** ${result.message}` }]);
+          } else {
             const res = await fetch(`/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/status`, {
-              method: 'PUT',
-              headers: getAuthHeaders(),
+              method: 'PUT', headers: getAuthHeaders(),
               body: JSON.stringify({ status: 'review' }),
             });
             if (res.ok) {
-              setMessages(prev => [...prev, {
-                id: `a-${Date.now()}`,
-                role: 'assistant',
-                content: '**Promoted to review.** The document has been moved to the governance review pipeline.',
-                timestamp: new Date(),
-              }]);
-              onRefreshIntelligence?.();
+              setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+                content: '✅ **Promoted to review.** The document has been moved to the governance review pipeline.' }]);
             } else {
               const err = await res.json().catch(() => ({ error: 'Unknown error' }));
-              setMessages(prev => [...prev, {
-                id: `a-${Date.now()}`,
-                role: 'assistant',
-                content: `**Promotion failed.** ${err.error || err.message || `HTTP ${res.status}`}`,
-                timestamp: new Date(),
-              }]);
+              setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+                content: `**Promotion failed.** ${err.error || err.message || `HTTP ${res.status}`}` }]);
             }
-          } catch {
-            handleSend('Promote this document to review.');
           }
+          onRefreshIntelligence?.();
+        };
+
+        try {
+          await doPromote();
+        } catch (err) {
+          setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+            content: `**Promotion failed.** ${err instanceof Error ? err.message : 'Unknown error'}` }]);
         }
       })();
       return;
