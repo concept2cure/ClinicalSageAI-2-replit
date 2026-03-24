@@ -67,6 +67,8 @@ import {
   Activity,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
+import { SkeletonText, LoadingState } from '@/components/ui/statesV2';
 import {
   DocumentModeProvider,
   resolveDocumentMode,
@@ -83,14 +85,6 @@ const EditorPanel = lazy(() => import('../editor/EditorPanel').then(m => ({ defa
 
 import { NewDocumentDialog } from './NewDocumentDialog';
 import { canEscalateToEdit } from '../../contexts/DocumentModeContext';
-
-// ── Auth helper ──────────────────────────────────────────────────────────────
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
 
 // ── Left-rail mode type ──────────────────────────────────────────────────────
 type LeftRailMode = 'files' | 'dossier' | 'templates' | 'outline';
@@ -263,16 +257,12 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     if (!projectId) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/concept2cure/projects/${projectId}/artifacts`, {
-        headers: getAuthHeaders(),
-      });
+      const res = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/artifacts`);
       const payload = await res.json();
-      if (res.ok && payload.success !== false) {
-        const list = payload.data ?? payload;
-        setArtifacts(Array.isArray(list) ? list : []);
-      }
+      const list = payload.data ?? payload;
+      setArtifacts(Array.isArray(list) ? list : []);
     } catch {
-      // silent
+      pushShellToast('Failed to load artifacts', 'error');
     } finally {
       setLoading(false);
     }
@@ -286,15 +276,13 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   const loadDossierMetrics = useCallback(async () => {
     if (!projectId) return;
     try {
-      const res = await fetch(`/api/concept2cure/projects/${projectId}/dossier-metrics`, {
-        headers: getAuthHeaders(),
-      });
+      const res = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/dossier-metrics`);
       const payload = await res.json();
-      if (res.ok && payload.data) {
+      if (payload.data) {
         setDossierMetrics(payload.data);
       }
     } catch {
-      // silent
+      // Metrics are non-critical — degrade gracefully
     }
   }, [projectId]);
 
@@ -417,16 +405,12 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     if (!projectId || !newDocTitle.trim()) return;
     setCreatingNew(true);
     try {
-      const res = await fetch(`/api/concept2cure/projects/${projectId}/artifacts`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-        body: JSON.stringify({
+      const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts`, {
           title: newDocTitle.trim(),
           content: '<p>Begin editing your document here...</p>',
           type: 'regulatory_document',
           category: 'document',
-        }),
-      });
+        });
       if (res.ok) {
         const payload = await res.json();
         const created = payload.data ?? payload;
@@ -452,18 +436,14 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       if (!projectId) return;
       setCreatingNew(true);
       try {
-        const res = await fetch(`/api/concept2cure/projects/${projectId}/artifacts`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-          body: JSON.stringify({
+        const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts`, {
             title: label,
             content: `<h1>${label}</h1><p>Generated from template <code>${templateKey}</code> for CTD section ${ctdSection}.</p>`,
             type: 'regulatory_document',
             category: 'document',
             ctdSection,
             templateId: templateKey,
-          }),
-        });
+          });
         if (res.ok) {
           const payload = await res.json();
           const created = payload.data ?? payload;
@@ -490,17 +470,13 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       if (!projectId) return;
       setCreatingNew(true);
       try {
-        const res = await fetch(`/api/concept2cure/projects/${projectId}/artifacts`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-          body: JSON.stringify({
+        const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts`, {
             title,
             content: '<p>Begin editing your document here...</p>',
             type: 'regulatory_document',
             category: 'document',
             ...(ctdSection ? { ctdSection } : {}),
-          }),
-        });
+          });
         if (res.ok) {
           const payload = await res.json();
           const created = payload.data ?? payload;
@@ -526,18 +502,14 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       if (!projectId) return;
       setCreatingNew(true);
       try {
-        const res = await fetch(`/api/concept2cure/projects/${projectId}/artifacts`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-          body: JSON.stringify({
+        const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts`, {
             title,
             content: `<h1>${title}</h1><p>Generated from template <code>${templateId}</code>${ctdSection ? ` for CTD section ${ctdSection}` : ''}.</p>`,
             type: 'regulatory_document',
             category: 'document',
             ...(ctdSection ? { ctdSection } : {}),
             templateId,
-          }),
-        });
+          });
         if (res.ok) {
           const payload = await res.json();
           const created = payload.data ?? payload;
@@ -564,19 +536,13 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       if (!projectId) return;
       setPlacementLoading(true);
       try {
-        const res = await fetch(
-          `/api/concept2cure/projects/${projectId}/artifacts/${params.artifactId}/placement`,
-          {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-            body: JSON.stringify({
+        const res = await apiRequest('PUT',
+          `/api/concept2cure/projects/${projectId}/artifacts/${params.artifactId}/placement`, {
               operation: params.operation,
               fromSection: params.fromSection,
               toSection: params.toSection,
               reason: params.reason,
-            }),
-          }
-        );
+            });
         if (res.ok) {
           await loadArtifacts();
           setPlacementDialog({ open: false, artifact: null, operation: 'place' });
@@ -788,28 +754,22 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     async (title: string, ctdSection: string, templateKey?: string) => {
       if (!projectId) return;
       try {
-        const res = await fetch(`/api/concept2cure/projects/${projectId}/artifacts`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-          body: JSON.stringify({
+        const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts`, {
             title,
             content: `<h1>${title}</h1><p>Begin editing this document.</p>`,
             type: 'regulatory_document',
             category: 'document',
             ctdSection,
             templateId: templateKey,
-          }),
-        });
-        if (res.ok) {
-          const payload = await res.json();
-          const created = payload.data ?? payload;
-          await loadArtifacts();
-          setSelectedDocId(created.id);
-          setMode('edit');
-          closePhase4Panel();
-        }
+          });
+        const payload = await res.json();
+        const created = payload.data ?? payload;
+        await loadArtifacts();
+        setSelectedDocId(created.id);
+        setMode('edit');
+        closePhase4Panel();
       } catch {
-        /* silent */
+        pushShellToast('Failed to create draft', 'error');
       }
     },
     [projectId, loadArtifacts, closePhase4Panel]
@@ -822,26 +782,20 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       const art = activeArtifactRef.current;
       try {
         const scaffoldHtml = `<h2>${label}</h2><p>[Content for ${label} — fill this section per regulatory requirements.]</p>`;
-        const res = await fetch(
-          `/api/concept2cure/projects/${projectId}/artifacts/${art.id}/versions`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-            body: JSON.stringify({
+        const res = await apiRequest('POST',
+          `/api/concept2cure/projects/${projectId}/artifacts/${art.id}/versions`, {
               content: (activeDocContent || '') + '\n' + scaffoldHtml,
               changeDescription: `Added template subsection: ${label}`,
               changeType: 'template_subsection_insert',
-            }),
-          }
-        );
+            });
         if (res.ok) {
           await loadArtifacts();
         }
       } catch {
-        // silent
+        pushShellToast('Failed to add subsection', 'error');
       }
     },
-    [projectId, activeDocContent, loadArtifacts]
+    [projectId, activeDocContent, loadArtifacts, pushShellToast]
   );
 
   // ── Handlers ─────────────────────────────────────────────────────────────
@@ -1290,17 +1244,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
 
               {/* Tree content based on mode */}
               {loading && artifacts.length === 0 ? (
-                <div className="flex-1 flex flex-col gap-2.5 p-4">
-                  {[...Array(6)].map((_, i) => (
-                    <div key={i} className="flex items-center gap-2.5 animate-pulse">
-                      <div className="w-3.5 h-3.5 rounded bg-zinc-200" />
-                      <div
-                        className="h-3.5 rounded bg-zinc-100"
-                        style={{ width: `${60 + (i % 3) * 20}%` }}
-                      />
-                    </div>
-                  ))}
-                  <span className="text-xs text-zinc-400 mt-1">Loading files...</span>
+                <div className="flex-1 p-4" data-testid="workspace-files-loading">
+                  <SkeletonText lines={6} label="Loading files" testId="workspace-skeleton" />
                 </div>
               ) : leftRailMode === 'files' ? (
                 <ProjectFileTree
@@ -1404,7 +1349,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                   className="px-2.5 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-60 font-medium flex items-center gap-1"
                 >
                   {creatingNew ? (
-                    <Loader2 className="w-3 h-3 animate-spin" />
+                    <Loader2 className="w-3 h-3 animate-spin" aria-label="Creating document" />
                   ) : (
                     <Plus className="w-3 h-3" />
                   )}
@@ -1573,9 +1518,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               <div ref={editorContainerRef} className="flex-1 flex min-h-0 min-w-0">
                 <Suspense
                   fallback={
-                    <div className="flex-1 flex flex-col items-center justify-center gap-3">
-                      <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
-                      <span className="text-sm text-zinc-400">Loading editor...</span>
+                    <div className="flex-1 flex flex-col items-center justify-center gap-3" data-testid="editor-loading">
+                      <LoadingState message="Loading editor..." size="sm" testId="editor-suspense" />
                     </div>
                   }
                 >

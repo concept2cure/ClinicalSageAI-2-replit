@@ -81,14 +81,9 @@ import {
   InspectorDrawer,
   type InspectorRibbonGroup,
 } from '@/components/ui/workspace-primitives';
-
-// ── Auth helper (same pattern as useProjects) ────────────────────────────────
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import { LoadingState } from '@/components/ui/statesV2';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 interface Artifact {
@@ -538,9 +533,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     if (!projectId) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/concept2cure/projects/${projectId}/artifacts`, {
-        headers: getAuthHeaders(),
-      });
+      const res = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/artifacts`);
       const payload = await res.json();
       if (res.ok && payload.success !== false) {
         const list = payload.data ?? payload;
@@ -578,17 +571,14 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     }
     let cancelled = false;
     setTrustLoadFailed(false);
-    const headers = getAuthHeaders();
 
     const handleError = () => {
       if (!cancelled) setTrustLoadFailed(true);
     };
 
     // Fetch signatures
-    fetch(`/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/signatures`, {
-      headers,
-    })
-      .then(r => (r.ok ? r.json() : Promise.reject(new Error(`${r.status}`))))
+    apiRequest('GET', `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/signatures`)
+      .then(r => r.json())
       .then(d => {
         if (!cancelled) setSignatures(d.data ?? d ?? []);
       })
@@ -599,10 +589,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         }
       });
     // Fetch provenance count
-    fetch(`/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/provenance`, {
-      headers,
-    })
-      .then(r => (r.ok ? r.json() : Promise.reject(new Error(`${r.status}`))))
+    apiRequest('GET', `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/provenance`)
+      .then(r => r.json())
       .then(d => {
         if (!cancelled && d) {
           const prov = d.data ?? d;
@@ -617,11 +605,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         }
       });
     // Fetch integrity verification
-    fetch(
-      `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/verify-integrity`,
-      { headers }
-    )
-      .then(r => (r.ok ? r.json() : Promise.reject(new Error(`${r.status}`))))
+    apiRequest('GET', `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/verify-integrity`)
+      .then(r => r.json())
       .then(d => {
         if (!cancelled && d) setIntegrityVerified((d.data ?? d)?.verified ?? null);
       })
@@ -644,17 +629,13 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     initialContentConsumedRef.current = true;
     (async () => {
       try {
-        const res = await fetch(`/api/concept2cure/projects/${projectId}/artifacts`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-          body: JSON.stringify({
+        const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts`, {
             title: initialTitle,
             content: initialContent,
             type: 'regulatory_document',
             category: 'document',
             ctdSection: initialCtdSection || undefined,
-          }),
-        });
+          });
         if (res.ok) {
           const payload = await res.json();
           const created = payload.data ?? payload;
@@ -736,13 +717,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       setSaveStatus('idle');
       setLockRejection(null);
       try {
-        const res = await fetch(
+        const res = await apiRequest(
+          'PUT',
           `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}`,
-          {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-            body: JSON.stringify({ content, title: activeArtifact.title }),
-          }
+          { content, title: activeArtifact.title }
         );
         if (res.ok) {
           const payload = await res.json();
@@ -850,16 +828,12 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     if (!projectId || !newDocTitle.trim()) return;
     setCreatingNew(true);
     try {
-      const res = await fetch(`/api/concept2cure/projects/${projectId}/artifacts`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-        body: JSON.stringify({
+      const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts`, {
           title: newDocTitle.trim(),
           content: '<p>Begin editing your document here...</p>',
           type: 'regulatory_document',
           category: 'document',
-        }),
-      });
+        });
       if (res.ok) {
         const payload = await res.json();
         const created = payload.data ?? payload;
@@ -887,16 +861,12 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       setAiResult(null);
       pushToast(`Generating ${action.replace(/-/g, ' ')}…`, 'info');
       try {
-        const res = await fetch('/api/concept2cure/ai/edit-section', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-          body: JSON.stringify({
+        const res = await apiRequest('POST', '/api/concept2cure/ai/edit-section', {
             action,
             text: activeArtifact.content,
             sectionTitle: activeArtifact.title,
             submissionType: submissionType || undefined,
-          }),
-        });
+          });
         if (res.ok) {
           const payload = await res.json();
           const result = payload.data?.result ?? payload.result;
@@ -970,11 +940,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     if (!activeArtifact) return;
     pushToast('Exporting PDF…', 'info');
     try {
-      const res = await fetch('/api/concept2cure/artifacts/export-pdf', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-        body: JSON.stringify({ title: activeArtifact.title, content: activeArtifact.content }),
-      });
+      const res = await apiRequest('POST', '/api/concept2cure/artifacts/export-pdf', { title: activeArtifact.title, content: activeArtifact.content });
       if (!res.ok) throw new Error('Export failed');
       const blob = await res.blob();
       const filename = `${activeArtifact.title.replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf`;
@@ -990,11 +956,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     if (!activeArtifact) return;
     pushToast('Exporting PowerPoint…', 'info');
     try {
-      const res = await fetch('/api/concept2cure/artifacts/export-pptx', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-        body: JSON.stringify({ title: activeArtifact.title, content: activeArtifact.content }),
-      });
+      const res = await apiRequest('POST', '/api/concept2cure/artifacts/export-pptx', { title: activeArtifact.title, content: activeArtifact.content });
       if (!res.ok) throw new Error('Export failed');
       const blob = await res.blob();
       const filename = `${activeArtifact.title.replace(/[^a-zA-Z0-9_-]/g, '_')}.pptx`;
@@ -1053,30 +1015,24 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     setSignResult(null);
     pushToast('Signing document…', 'info');
     try {
-      const res = await fetch(
+      const res = await apiRequest(
+        'POST',
         `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/signatures`,
         {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-          body: JSON.stringify({
             signaturePurpose: 'Document review and approval',
             signatureMeaning: 'I have reviewed this document and approve its content',
             authenticationMethod: 'password',
             secondFactorVerified: false,
             version: activeArtifact.version,
-          }),
-        }
+          }
       );
       if (res.ok) {
         setSignResult({ success: true, message: 'Signature recorded successfully' });
         // Also update status to approved
-        await fetch(
+        await apiRequest(
+          'PUT',
           `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/status`,
-          {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-            body: JSON.stringify({ status: 'approved' }),
-          }
+          { status: 'approved' }
         );
         loadArtifacts();
       } else {
@@ -1111,13 +1067,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         const body: Record<string, unknown> = { status: newStatus };
         if (reason) body.reason = reason;
         if (attestation) body.attestation = attestation;
-        const res = await fetch(
+        const res = await apiRequest(
+          'PUT',
           `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/status`,
-          {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-            body: JSON.stringify(body),
-          }
+          body
         );
         if (res.ok) {
           const payload = await res.json();
@@ -1210,13 +1163,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const handleCtdSection = useCallback(async () => {
     if (!projectId || !activeArtifact || !ctdSectionInput.trim()) return;
     try {
-      const res = await fetch(
+      const res = await apiRequest(
+        'PUT',
         `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/ctd-section`,
-        {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-          body: JSON.stringify({ ctdSection: ctdSectionInput.trim() }),
-        }
+        { ctdSection: ctdSectionInput.trim() }
       );
       if (res.ok) {
         loadArtifacts();
@@ -1236,12 +1186,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     if (!projectId || !activeArtifact) return;
     setExportingAudit(true);
     try {
-      const res = await fetch(
-        `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/audit-report/export`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-        }
+      const res = await apiRequest(
+        'POST',
+        `/api/concept2cure/projects/${projectId}/artifacts/${activeArtifact.id}/audit-report/export`
       );
       if (res.ok) {
         loadArtifacts();
@@ -2344,17 +2291,13 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               onCreateDocument={async (content: string, title: string, ctdSection?: string) => {
                 if (!projectId) return;
                 try {
-                  const res = await fetch(`/api/concept2cure/projects/${projectId}/artifacts`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-                    body: JSON.stringify({
+                  const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts`, {
                       title,
                       content,
                       type: 'regulatory_document',
                       category: 'document',
                       ctdSection: ctdSection || undefined,
-                    }),
-                  });
+                    });
                   if (res.ok) {
                     const payload = await res.json();
                     const created = payload.data ?? payload;
