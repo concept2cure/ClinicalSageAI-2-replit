@@ -16,6 +16,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
 import {
   Shield,
@@ -105,7 +106,7 @@ const InlineApprovalPanel: React.FC<InlineApprovalPanelProps> = ({
   const { data: annotations = [] } = useQuery<InlineAnnotation[]>({
     queryKey: ['inline-annotations', documentId],
     queryFn: async () => {
-      const res = await fetch(`/api/inline-annotations/${documentId}`);
+      const res = await apiRequest('GET', `/api/inline-annotations/${documentId}`);
       if (!res.ok) return [];
       return res.json();
     },
@@ -123,11 +124,7 @@ const InlineApprovalPanel: React.FC<InlineApprovalPanelProps> = ({
   // Create annotation mutation
   const createAnnotation = useMutation({
     mutationFn: async (data: Record<string, unknown>) => {
-      const res = await fetch(`/api/inline-annotations/${documentId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+      const res = await apiRequest('POST', `/api/inline-annotations/${documentId}`, data);
       if (!res.ok) throw new Error('Failed to create annotation');
       return res.json();
     },
@@ -143,11 +140,9 @@ const InlineApprovalPanel: React.FC<InlineApprovalPanelProps> = ({
   // Reply to annotation
   const replyToAnnotation = useMutation({
     mutationFn: async ({ annotationId, reply }: { annotationId: number; reply: string }) => {
-      const res = await fetch(`/api/inline-annotations/${documentId}/${annotationId}/reply`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: reply }),
-      });
+      const res = await apiRequest('POST', `/api/inline-annotations/${documentId}/${annotationId}/reply`,
+        { content: reply }
+      );
       if (!res.ok) throw new Error('Failed to reply');
       return res.json();
     },
@@ -161,11 +156,9 @@ const InlineApprovalPanel: React.FC<InlineApprovalPanelProps> = ({
   // Resolve/decide annotation
   const decideAnnotation = useMutation({
     mutationFn: async ({ annotationId, decision, note }: { annotationId: number; decision: string; note?: string }) => {
-      const res = await fetch(`/api/inline-annotations/${documentId}/${annotationId}/decide`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ decision, note }),
-      });
+      const res = await apiRequest('POST', `/api/inline-annotations/${documentId}/${annotationId}/decide`,
+        { decision, note }
+      );
       if (!res.ok) throw new Error('Failed to decide');
       return res.json();
     },

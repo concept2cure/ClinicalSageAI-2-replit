@@ -14,6 +14,7 @@
  */
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { apiRequest } from '@/lib/queryClient';
 import { AlertTriangle, RefreshCw, Home, Bug } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -117,11 +118,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
    */
   private async logErrorToServer(logEntry: ErrorLogEntry): Promise<void> {
     try {
-      await fetch('/api/concept2cure/errors', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(logEntry),
-      });
+      await apiRequest('POST', '/api/concept2cure/errors', logEntry);
     } catch (e) {
       // If server logging fails, store locally
       console.warn('[ErrorBoundary] Failed to log error to server:', e);

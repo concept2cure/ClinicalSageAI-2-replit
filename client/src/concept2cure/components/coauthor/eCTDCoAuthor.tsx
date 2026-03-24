@@ -31,6 +31,7 @@
 import React, { useState, useCallback } from 'react';
 import DOMPurify from 'dompurify';
 import { cn } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
 import { LIFECYCLE } from '../ui/enterprise';
 import { useDocumentModeOptional } from '../../contexts/DocumentModeContext';
 import {
@@ -866,16 +867,6 @@ export const eCTDCoAuthor: React.FC<eCTDCoAuthorProps> = ({
 export const ECTDCoAuthor = eCTDCoAuthor;
 export default eCTDCoAuthor;
 
-// ── Auth helper ─────────────────────────────────────────────────────────────
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token');
-  return token
-    ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
-    : { 'Content-Type': 'application/json' };
-}
-
 // ── CTD Section draft templates (structured scaffolds per section) ───────────
 const CTD_SECTION_SCAFFOLDS: Record<string, string> = {
   '2.5': `<h2>2.5 Clinical Overview</h2>
@@ -1015,14 +1006,10 @@ export const ECTDCoAuthorStandalone: React.FC<{
 
       try {
         // Try the real API first
-        const res = await fetch('/api/knowledge-base/generate-ind-section', {
-          method: 'POST',
-          headers: getAuthHeaders(),
-          body: JSON.stringify({
+        const res = await apiRequest('POST', '/api/knowledge-base/generate-ind-section', {
             sectionCode: section.number,
             sectionTitle: section.title,
             context: `CTD section for ${docState.submissionType} submission. Module: ${section.module}`,
-          }),
         });
 
         let content: string;
@@ -1037,16 +1024,12 @@ export const ECTDCoAuthorStandalone: React.FC<{
         // Persist as a governed artifact via save-docx-as-artifact endpoint
         if (content && content.trim().length > 0) {
           try {
-            await fetch('/api/knowledge-base/save-docx-as-artifact', {
-              method: 'POST',
-              headers: getAuthHeaders(),
-              body: JSON.stringify({
+            await apiRequest('POST', '/api/knowledge-base/save-docx-as-artifact', {
                 projectId: docState.id?.replace(/^proj_/, '') || '0',
                 title: `${section.number} — ${section.title}`,
                 htmlContent: content,
                 ctdSection: section.number,
                 type: 'regulatory_document',
-              }),
             });
           } catch (artifactErr) {
             console.warn('[eCTD] Artifact persistence failed (non-blocking):', artifactErr);

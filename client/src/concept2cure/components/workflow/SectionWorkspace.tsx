@@ -8,6 +8,7 @@
  */
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { apiRequest } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
 import {
   FileText,
@@ -152,11 +153,7 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
     if (!projectId || fetchedIssues !== null) return;
     setIsLoadingIssues(true);
     try {
-      const token = sessionStorage.getItem('trialsage_access_token') || localStorage.getItem('trialsage_access_token');
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
-      const res = await fetch(`/api/concept2cure/projects/${projectId}/contradictions?sectionCode=${section.code}`, { headers });
+      const res = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/contradictions?sectionCode=${section.code}`);
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data.findings)) {
