@@ -23,16 +23,11 @@ import {
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import { LoadingState } from '@/components/ui/statesV2';
 import { WorkspaceTabBar, type WorkspaceTab } from '@/components/ui/workspace-primitives';
 import { getThreadTaskTailoring } from '../../config/industry-tailoring';
-
-// ── Auth ─────────────────────────────────────────────────────────────────────
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
 
 // ── Types ────────────────────────────────────────────────────────────────────
 interface ReviewThread {
@@ -115,6 +110,7 @@ export function ReviewThreadsPanel({
   industryMode,
 }: ReviewThreadsPanelProps) {
   const tailoring = getThreadTaskTailoring(industryMode);
+  const { toast } = useToast();
   const [subTab, setSubTab] = useState<'threads' | 'tasks'>('threads');
   const [threads, setThreads] = useState<ReviewThread[]>([]);
   const [tasks, setTasks] = useState<ReviewTask[]>([]);
@@ -148,34 +144,28 @@ export function ReviewThreadsPanel({
   // ── Fetch threads ──────────────────────────────────────────────
   const fetchThreads = useCallback(async () => {
     try {
-      const res = await fetch(
-        `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/review-threads`,
-        { headers: getAuthHeaders() }
-      );
+      const res = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/review-threads`);
       if (res.ok) {
         const payload = await res.json();
         setThreads(payload.data?.threads || []);
       }
     } catch {
-      // silent
+      toast({ title: 'Failed to load review threads', variant: 'destructive' });
     }
-  }, [projectId, artifactId]);
+  }, [projectId, artifactId, toast]);
 
   // ── Fetch tasks ────────────────────────────────────────────────
   const fetchTasks = useCallback(async () => {
     try {
-      const res = await fetch(
-        `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/review-tasks`,
-        { headers: getAuthHeaders() }
-      );
+      const res = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/review-tasks`);
       if (res.ok) {
         const payload = await res.json();
         setTasks(payload.data?.tasks || []);
       }
     } catch {
-      // silent
+      toast({ title: 'Failed to load review tasks', variant: 'destructive' });
     }
-  }, [projectId, artifactId]);
+  }, [projectId, artifactId, toast]);
 
   useEffect(() => {
     setLoading(true);
@@ -186,9 +176,7 @@ export function ReviewThreadsPanel({
   const fetchComments = useCallback(async (threadId: string) => {
     setLoadingComments(threadId);
     try {
-      const res = await fetch(`/api/concept2cure/review-threads/${threadId}/comments`, {
-        headers: getAuthHeaders(),
-      });
+      const res = await apiRequest('GET', `/api/concept2cure/review-threads/${threadId}/comments`);
       if (res.ok) {
         const payload = await res.json();
         setThreadComments(prev => ({
@@ -197,11 +185,11 @@ export function ReviewThreadsPanel({
         }));
       }
     } catch {
-      // silent
+      toast({ title: 'Failed to load comments', variant: 'destructive' });
     } finally {
       setLoadingComments(null);
     }
-  }, []);
+  }, [toast]);
 
   const toggleThread = (threadId: string) => {
     if (expandedThread === threadId) {
@@ -219,21 +207,14 @@ export function ReviewThreadsPanel({
     if (!newThreadTitle.trim()) return;
     setCreating(true);
     try {
-      const res = await fetch(
-        `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/review-threads`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-          body: JSON.stringify({
-            title: newThreadTitle.trim(),
-            initialComment: newThreadComment.trim() || undefined,
-            priority: newThreadPriority || undefined,
-            anchorType: newThreadAnchorType || undefined,
-            anchorLabel: newThreadAnchorLabel.trim() || undefined,
-            dueAt: newThreadDueAt || undefined,
-          }),
-        }
-      );
+      const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/review-threads`, {
+        title: newThreadTitle.trim(),
+        initialComment: newThreadComment.trim() || undefined,
+        priority: newThreadPriority || undefined,
+        anchorType: newThreadAnchorType || undefined,
+        anchorLabel: newThreadAnchorLabel.trim() || undefined,
+        dueAt: newThreadDueAt || undefined,
+      });
       if (res.ok) {
         setNewThreadTitle('');
         setNewThreadComment('');
@@ -242,10 +223,13 @@ export function ReviewThreadsPanel({
         setNewThreadAnchorLabel('');
         setNewThreadDueAt('');
         setShowNewThread(false);
+        toast({ title: 'Thread created' });
         await fetchThreads();
+      } else {
+        toast({ title: 'Failed to create thread', variant: 'destructive' });
       }
     } catch {
-      // silent
+      toast({ title: 'Failed to create thread', variant: 'destructive' });
     } finally {
       setCreating(false);
     }
@@ -256,28 +240,24 @@ export function ReviewThreadsPanel({
     if (!newTaskTitle.trim()) return;
     setCreatingTask(true);
     try {
-      const res = await fetch(
-        `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/review-tasks`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-          body: JSON.stringify({
-            title: newTaskTitle.trim(),
-            taskType: newTaskType,
-            threadId,
-            dueAt: newTaskDueAt || undefined,
-          }),
-        }
-      );
+      const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/review-tasks`, {
+        title: newTaskTitle.trim(),
+        taskType: newTaskType,
+        threadId,
+        dueAt: newTaskDueAt || undefined,
+      });
       if (res.ok) {
         setNewTaskTitle('');
         setNewTaskType('follow_up');
         setNewTaskDueAt('');
         setShowNewTask(null);
+        toast({ title: 'Task created' });
         await fetchTasks();
+      } else {
+        toast({ title: 'Failed to create task', variant: 'destructive' });
       }
     } catch {
-      // silent
+      toast({ title: 'Failed to create task', variant: 'destructive' });
     } finally {
       setCreatingTask(false);
     }
@@ -287,15 +267,12 @@ export function ReviewThreadsPanel({
   const handleRequestChanges = async (threadId: string, body: string) => {
     if (!body.trim()) return;
     try {
-      await fetch(`/api/concept2cure/review-threads/${threadId}/comments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-        body: JSON.stringify({ body: body.trim(), kind: 'request_changes' }),
-      });
+      await apiRequest('POST', `/api/concept2cure/review-threads/${threadId}/comments`, { body: body.trim(), kind: 'request_changes' });
+      toast({ title: 'Changes requested' });
       await fetchComments(threadId);
       await fetchThreads();
     } catch {
-      // silent
+      toast({ title: 'Failed to request changes', variant: 'destructive' });
     }
   };
 
@@ -304,19 +281,17 @@ export function ReviewThreadsPanel({
     if (!replyBody.trim()) return;
     setReplying(true);
     try {
-      const res = await fetch(`/api/concept2cure/review-threads/${threadId}/comments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-        body: JSON.stringify({ body: replyBody.trim() }),
-      });
+      const res = await apiRequest('POST', `/api/concept2cure/review-threads/${threadId}/comments`, { body: replyBody.trim() });
       if (res.ok) {
         setReplyBody('');
         setReplyTarget(null);
         await fetchComments(threadId);
         await fetchThreads(); // update comment count
+      } else {
+        toast({ title: 'Failed to post reply', variant: 'destructive' });
       }
     } catch {
-      // silent
+      toast({ title: 'Failed to post reply', variant: 'destructive' });
     } finally {
       setReplying(false);
     }
@@ -325,59 +300,47 @@ export function ReviewThreadsPanel({
   // ── Resolve/reopen thread ─────────────────────────────────────
   const handleResolveThread = async (threadId: string) => {
     try {
-      await fetch(`/api/concept2cure/review-threads/${threadId}/resolve`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-      });
+      await apiRequest('POST', `/api/concept2cure/review-threads/${threadId}/resolve`);
+      toast({ title: 'Thread resolved' });
       await fetchThreads();
     } catch {
-      // silent
+      toast({ title: 'Failed to resolve thread', variant: 'destructive' });
     }
   };
 
   const handleReopenThread = async (threadId: string) => {
     try {
-      await fetch(`/api/concept2cure/review-threads/${threadId}/reopen`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-      });
+      await apiRequest('POST', `/api/concept2cure/review-threads/${threadId}/reopen`);
+      toast({ title: 'Thread reopened' });
       await fetchThreads();
     } catch {
-      // silent
+      toast({ title: 'Failed to reopen thread', variant: 'destructive' });
     }
   };
 
   // ── Resolve/reopen task ────────────────────────────────────────
   const handleResolveTask = async (taskId: string) => {
     try {
-      await fetch(`/api/concept2cure/review-tasks/${taskId}/resolve`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-      });
+      await apiRequest('POST', `/api/concept2cure/review-tasks/${taskId}/resolve`);
+      toast({ title: 'Task resolved' });
       await fetchTasks();
     } catch {
-      // silent
+      toast({ title: 'Failed to resolve task', variant: 'destructive' });
     }
   };
 
   const handleReopenTask = async (taskId: string) => {
     try {
-      await fetch(`/api/concept2cure/review-tasks/${taskId}/reopen`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-      });
+      await apiRequest('POST', `/api/concept2cure/review-tasks/${taskId}/reopen`);
+      toast({ title: 'Task reopened' });
       await fetchTasks();
     } catch {
-      // silent
+      toast({ title: 'Failed to reopen task', variant: 'destructive' });
     }
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="w-4 h-4 animate-spin text-zinc-400" />
-      </div>
-    );
+    return <LoadingState message="Loading review data…" size="sm" />;
   }
 
   const openThreads = threads.filter(t => t.status === 'open');

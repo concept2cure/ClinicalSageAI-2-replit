@@ -12,6 +12,9 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import { LoadingState, ErrorState } from '@/components/ui/statesV2';
 import { PageTitleHeader, WorkspaceStatusBadge } from '@/components/ui/workspace-primitives';
 import type { StatusBadgeConfig } from '@/components/ui/workspace-primitives';
 import {
@@ -28,14 +31,6 @@ import {
   XCircle,
   RefreshCw,
 } from 'lucide-react';
-
-// ── Auth helper ──────────────────────────────────────────────────────────────
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -142,6 +137,7 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
   onNavigateToArtifact,
   className,
 }) => {
+  const { toast } = useToast();
   const [data, setData] = useState<PulseData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -150,9 +146,7 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/concept2cure/projects/${projectId}/review-pulse`, {
-        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-      });
+      const res = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/review-pulse`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       if (json.success) {
@@ -162,10 +156,11 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
       }
     } catch (err: any) {
       setError(err.message);
+      toast({ title: 'Failed to load review pulse', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
-  }, [projectId]);
+  }, [projectId, toast]);
 
   useEffect(() => {
     fetchPulse();
@@ -173,21 +168,20 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
 
   if (loading) {
     return (
-      <div className={cn('flex items-center justify-center py-16', className)}>
-        <Loader2 className="w-5 h-5 text-zinc-400 animate-spin" />
-        <span className="ml-2 text-sm text-zinc-500">Loading review pulse…</span>
+      <div className={className}>
+        <LoadingState message="Loading review pulse…" size="md" />
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <div className={cn('text-center py-16 text-sm text-zinc-500', className)}>
-        <XCircle className="w-5 h-5 mx-auto mb-2 text-zinc-400" />
-        {error || 'No data available'}
-        <button onClick={fetchPulse} className="block mx-auto mt-2 text-blue-600 underline text-xs">
-          Retry
-        </button>
+      <div className={className}>
+        <ErrorState
+          title="Review pulse unavailable"
+          message={error || 'No data available'}
+          retry={fetchPulse}
+        />
       </div>
     );
   }

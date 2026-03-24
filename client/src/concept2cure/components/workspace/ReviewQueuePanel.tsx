@@ -17,15 +17,11 @@ import {
   Inbox,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import { LoadingState } from '@/components/ui/statesV2';
 import { WorkspaceHeader } from '@/components/ui/workspace-primitives';
 import { InlineAIButton } from '../ui/InlineAIButton';
-
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
 
 interface QueueThread {
   threadId: string;
@@ -70,9 +66,11 @@ function formatTime(iso: string): string {
 }
 
 export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps) {
+  const { toast } = useToast();
   const [threads, setThreads] = useState<QueueThread[]>([]);
   const [tasks, setTasks] = useState<QueueTask[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [overdueTasks, setOverdueTasks] = useState(0);
   const [dueSoonTasks, setDueSoonTasks] = useState(0);
   const [changeRequests, setChangeRequests] = useState(0);
@@ -81,10 +79,9 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
 
   const fetchQueue = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
-      const res = await fetch('/api/concept2cure/reviews/my-queue', {
-        headers: getAuthHeaders(),
-      });
+      const res = await apiRequest('GET', '/api/concept2cure/reviews/my-queue');
       if (res.ok) {
         const payload = await res.json();
         setThreads(payload.data?.threads || []);
@@ -94,13 +91,16 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
         setChangeRequests(payload.data?.changeRequests ?? 0);
         setApprovalsNeeded(payload.data?.approvalsNeeded ?? 0);
         setUnreadNotifications(payload.data?.unreadNotifications ?? 0);
+      } else {
+        setError('Failed to load queue');
       }
     } catch {
-      // silent
+      setError('Failed to load queue');
+      toast({ title: 'Failed to load review queue', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     fetchQueue();
@@ -140,8 +140,12 @@ export function ReviewQueuePanel({ onNavigateToArtifact }: ReviewQueuePanelProps
 
       <div className="flex-1 overflow-y-auto p-2">
         {loading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-4 h-4 animate-spin text-zinc-300" />
+          <LoadingState message="Loading queue…" size="sm" />
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center py-8 text-zinc-400">
+            <AlertTriangle className="w-6 h-6 mb-1 text-red-400" />
+            <p className="text-[10px] text-red-500">{error}</p>
+            <button onClick={fetchQueue} className="text-[10px] text-blue-600 hover:underline mt-1">Retry</button>
           </div>
         ) : totalItems === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-zinc-400">
