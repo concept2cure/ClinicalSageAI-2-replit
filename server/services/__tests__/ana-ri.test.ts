@@ -17,11 +17,7 @@ import { describe, it, expect } from 'vitest';
 
 // ── Orchestrator Tests ───────────────────────────────────────────────────────
 
-import {
-  orchestrate,
-  detectIntent,
-  detectSubmissionType,
-} from '../ana-ri/orchestrator.js';
+import { orchestrate, detectIntent, detectSubmissionType } from '../ana-ri/orchestrator.js';
 
 describe('AnA RI Orchestrator', () => {
   describe('detectIntent', () => {
@@ -137,11 +133,64 @@ describe('AnA RI Orchestrator', () => {
         message: 'What about the safety signal?',
         conversationHistory: [
           { role: 'user', content: 'Review Section 2.7.4 of the Clinical Overview' },
-          { role: 'assistant', content: 'The safety signal for hepatotoxicity is an unresolved adverse event concern. The adverse event rate is higher than background.' },
+          {
+            role: 'assistant',
+            content:
+              'The safety signal for hepatotoxicity is an unresolved adverse event concern. The adverse event rate is higher than background.',
+          },
         ],
       });
       expect(result.systemPrompt).toContain('CONVERSATION CONTINUITY');
       expect(result.systemPrompt).toContain('Safety concerns');
+    });
+
+    it('detects an active workstream and injects it into the prompt', () => {
+      const result = orchestrate({
+        message:
+          'Rewrite Section 2.7.4 of the Clinical Overview to make the endpoint justification stronger',
+      });
+
+      expect(result.activeWorkstream.stream).toBe('document_authoring');
+      expect(result.activeWorkstream.phase).toBe('drafting');
+      expect(result.activeWorkstream.collaborationMode).toBe('coauthor');
+      expect(result.systemPrompt).toContain('ACTIVE WORKSTREAM');
+      expect(result.systemPrompt).toContain('Next Best Step');
+      expect(result.orchestrationMeta.workstreamContextInjected).toBe(true);
+    });
+
+    it('routes deficiency-heavy messages into the deficiency response workstream', () => {
+      const result = orchestrate({
+        message:
+          'Prepare responses for likely deficiency questions from the FDA information request',
+      });
+
+      expect(result.activeWorkstream.stream).toBe('deficiency_response');
+      expect(result.suggestedActions).toContain('deficiency_preemption_memo');
+      expect(result.suggestedActions).toContain('reviewer_question_brief');
+    });
+
+    it('detects a workstream handoff when the thread pivots from strategy into drafting', () => {
+      const result = orchestrate({
+        message: 'Now rewrite Section 2.7.4 so the endpoint rationale is submission-defensible',
+        conversationHistory: [
+          { role: 'user', content: 'We need to decide whether a pre-IND meeting is worth it.' },
+          {
+            role: 'assistant',
+            content:
+              'The regulatory pathway is still open and the meeting objective needs to be clarified.',
+          },
+          {
+            role: 'user',
+            content: 'Assume we pursue the meeting and move to the briefing package.',
+          },
+        ],
+      });
+
+      expect(result.workstreamHandoff).not.toBeNull();
+      expect(result.workstreamHandoff?.from).toBe('submission_strategy');
+      expect(result.workstreamHandoff?.to).toBe('document_authoring');
+      expect(result.systemPrompt).toContain('WORKSTREAM HANDOFF');
+      expect(result.orchestrationMeta.workstreamHandoffInjected).toBe(true);
     });
 
     it('continuity context does not inject conflicting submission type', () => {
@@ -163,7 +212,11 @@ describe('AnA RI Orchestrator', () => {
         message: 'Continue',
         conversationHistory: [
           { role: 'user', content: 'Tell me about endpoints' },
-          { role: 'assistant', content: 'The primary efficacy endpoint is well-validated and the sample size is adequate.' },
+          {
+            role: 'assistant',
+            content:
+              'The primary efficacy endpoint is well-validated and the sample size is adequate.',
+          },
         ],
       });
       // Positive mentions of "endpoint" and "sample size" should NOT trigger concern themes
@@ -190,8 +243,10 @@ import { evaluateResponse } from '../ana-ri/evaluation.js';
 
 describe('AnA RI Evaluation', () => {
   it('penalizes hedging language in writing quality', () => {
-    const hedgingResponse = 'You might perhaps want to maybe consider possibly improving this section.';
-    const directResponse = '**This section is deficient.** The primary endpoint lacks validation. Rewrite required.';
+    const hedgingResponse =
+      'You might perhaps want to maybe consider possibly improving this section.';
+    const directResponse =
+      '**This section is deficient.** The primary endpoint lacks validation. Rewrite required.';
 
     const hedgingEval = evaluateResponse(hedgingResponse, {});
     const directEval = evaluateResponse(directResponse, {});
@@ -204,12 +259,18 @@ describe('AnA RI Evaluation', () => {
 
   it('rewards evidence labels in evidence discipline', () => {
     const unlabeledResponse = 'The endpoint is adequate. The safety profile is acceptable.';
-    const labeledResponse = 'The endpoint validation is established **[KNOWN — per ICH E9]**. The long-term safety is uncertain **[MISSING — no 12-month data]**.';
+    const labeledResponse =
+      'The endpoint validation is established **[KNOWN — per ICH E9]**. The long-term safety is uncertain **[MISSING — no 12-month data]**.';
 
     const unlabeledEval = evaluateResponse(unlabeledResponse, {});
-    const labeledEval = evaluateResponse(labeledResponse, { hasEvidenceLabels: true, hasCitations: true });
+    const labeledEval = evaluateResponse(labeledResponse, {
+      hasEvidenceLabels: true,
+      hasCitations: true,
+    });
 
-    const unlabeledEvidence = unlabeledEval.dimensions.find(d => d.dimension === 'evidence_discipline');
+    const unlabeledEvidence = unlabeledEval.dimensions.find(
+      d => d.dimension === 'evidence_discipline'
+    );
     const labeledEvidence = labeledEval.dimensions.find(d => d.dimension === 'evidence_discipline');
 
     expect(labeledEvidence!.score).toBeGreaterThan(unlabeledEvidence!.score);
@@ -217,7 +278,8 @@ describe('AnA RI Evaluation', () => {
 
   it('detects document consequence in responses', () => {
     const noActionResponse = 'The section looks fine overall.';
-    const actionResponse = 'Create a **Risk Memo** addressing the safety signal. Generate a deficiency preemption memo for the endpoint concern.';
+    const actionResponse =
+      'Create a **Risk Memo** addressing the safety signal. Generate a deficiency preemption memo for the endpoint concern.';
 
     const noActionEval = evaluateResponse(noActionResponse, {});
     const actionEval = evaluateResponse(actionResponse, { hasDocumentActions: true });
@@ -420,6 +482,43 @@ describe('AnA RI Persona', () => {
     const autoPrompt = buildAnaRISystemPrompt({ intentLens: 'auto' });
     expect(autoPrompt).not.toContain('ACTIVE INTENT LENS');
   });
+
+  it('injects workstream context when provided', () => {
+    const prompt = buildAnaRISystemPrompt({
+      workstreamContext: {
+        stream: 'submission_strategy',
+        phase: 'decision',
+        objective:
+          'Decide whether to pursue a pre-IND meeting before finalizing the briefing package.',
+        currentFocus: 'Pre-IND meeting package',
+        blockers: ['Pathway or agency strategy is not settled'],
+        nextStep:
+          'Choose the meeting objective and lock the evidence package for the briefing book.',
+        collaborationMode: 'drive',
+      },
+    });
+
+    expect(prompt).toContain('ACTIVE WORKSTREAM');
+    expect(prompt).toContain('Stream: submission_strategy');
+    expect(prompt).toContain('Collaboration Mode: drive');
+  });
+
+  it('injects workstream handoff context when provided', () => {
+    const prompt = buildAnaRISystemPrompt({
+      workstreamHandoff: {
+        from: 'submission_strategy',
+        to: 'document_authoring',
+        carryForward: ['pre-IND', 'Section 2.7.4'],
+        openLoops: ['Pathway decision remains open for IND'],
+        transitionReason:
+          'The thread moved from strategy into drafting so analysis can become governed text.',
+      },
+    });
+
+    expect(prompt).toContain('WORKSTREAM HANDOFF');
+    expect(prompt).toContain('From: submission_strategy');
+    expect(prompt).toContain('To: document_authoring');
+  });
 });
 
 // ── Edge Case Tests ──────────────────────────────────────────────────────────
@@ -473,9 +572,7 @@ describe('AnA RI Edge Cases', () => {
     it('handles single-message history', () => {
       const result = orchestrate({
         message: 'Continue',
-        conversationHistory: [
-          { role: 'user', content: 'First message' },
-        ],
+        conversationHistory: [{ role: 'user', content: 'First message' }],
       });
       // buildContinuityContext requires >= 2 messages
       expect(result.systemPrompt).not.toContain('CONVERSATION CONTINUITY');
@@ -490,7 +587,8 @@ describe('AnA RI Edge Cases', () => {
 
     it('calculateDimensionScore boundary: exactly 3 signals = score 3', () => {
       // A response with exactly 3 positive signals in reviewer_rigor
-      const response = '## Assessment\nThe reviewer would challenge the gap in ICH E9. This creates a major risk.';
+      const response =
+        '## Assessment\nThe reviewer would challenge the gap in ICH E9. This creates a major risk.';
       const result = evaluateResponse(response, {});
       const rigor = result.dimensions.find(d => d.dimension === 'reviewer_rigor');
       expect(rigor).toBeDefined();
@@ -568,7 +666,8 @@ The submission has critical gaps.
     });
 
     it('detects evidence labels', () => {
-      const response = 'The data is adequate **[KNOWN]** but long-term safety is **[MISSING]** and efficacy is **[INFERRED]**.';
+      const response =
+        'The data is adequate **[KNOWN]** but long-term safety is **[MISSING]** and efficacy is **[INFERRED]**.';
       const result = validateResponseStructure(response);
       expect(result.present).toContain('Evidence: Known');
       expect(result.present).toContain('Evidence: Inferred');
@@ -649,7 +748,10 @@ Let me know if you'd like me to expand on any section.`;
     });
 
     it('flags missing structure', () => {
-      const content = 'This is a long enough response that has no markdown headers or structure at all. '.repeat(10);
+      const content =
+        'This is a long enough response that has no markdown headers or structure at all. '.repeat(
+          10
+        );
       const result = validateArtifactQuality(content, 'strategy_note');
       expect(result.issues.some(i => i.includes('structured sections'))).toBe(true);
     });
@@ -787,7 +889,8 @@ describe('AnA RI Diff Service Integration', () => {
     const { diffText } = await import('../versionDiffService.js');
 
     const oldText = 'The primary endpoint is clinically meaningful.\nSafety data are adequate.';
-    const newText = 'The primary endpoint is clinically meaningful.\nSafety data are insufficient for chronic dosing.';
+    const newText =
+      'The primary endpoint is clinically meaningful.\nSafety data are insufficient for chronic dosing.';
 
     const result = diffText(oldText, newText);
 

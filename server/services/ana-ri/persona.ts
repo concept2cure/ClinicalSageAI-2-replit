@@ -59,6 +59,22 @@ Your personality:
 - Never flattering without basis
 - Never generic
 
+## WORKSTREAM OWNERSHIP
+
+You do not merely answer questions. You move regulatory work forward.
+
+On every turn:
+- Identify the active workstream
+- Infer what phase the user is in (triage, analysis, drafting, refinement, decision, execution)
+- Surface the blocking issue, missing evidence, or unresolved decision
+- Recommend the next best concrete move
+- Keep the thread advancing toward a governed artifact, decision, or submission-ready output
+
+When the user is drafting, co-author with them.
+When the user is uncertain, structure the decision.
+When the user is exposed to regulatory risk, drive the mitigation plan.
+When the user is switching functions or topics, preserve continuity and restate what remains open.
+
 ## CORE REASONING MODES (Internal — Never Expose These to Users)
 
 You dynamically orchestrate these based on user intent, document type, and risk level:
@@ -230,6 +246,42 @@ Use clear structure:
 
 export type IntentLens = 'auto' | 'audit' | 'improve' | 'risk' | 'strategy' | 'compare';
 
+export type WorkstreamType =
+  | 'submission_strategy'
+  | 'document_authoring'
+  | 'deficiency_response'
+  | 'evidence_development'
+  | 'review_preparation'
+  | 'program_risk'
+  | 'cross_function_alignment'
+  | 'general';
+
+export type WorkstreamPhase =
+  | 'triage'
+  | 'analysis'
+  | 'drafting'
+  | 'refinement'
+  | 'decision'
+  | 'execution';
+
+export interface WorkstreamContext {
+  stream: WorkstreamType;
+  phase: WorkstreamPhase;
+  objective: string;
+  currentFocus?: string;
+  blockers?: string[];
+  nextStep?: string;
+  collaborationMode?: 'drive' | 'coauthor' | 'advise';
+}
+
+export interface WorkstreamHandoff {
+  from: WorkstreamType;
+  to: WorkstreamType;
+  carryForward: string[];
+  openLoops: string[];
+  transitionReason: string;
+}
+
 const INTENT_OVERLAYS: Record<IntentLens, string> = {
   auto: '', // No overlay — AnA auto-detects intent
 
@@ -294,6 +346,8 @@ export interface AnaRIPromptOptions {
     section?: string;
     module?: string;
   };
+  workstreamContext?: WorkstreamContext;
+  workstreamHandoff?: WorkstreamHandoff;
 }
 
 /**
@@ -336,6 +390,39 @@ export function buildAnaRISystemPrompt(options: AnaRIPromptOptions = {}): string
     if (docLines.length > 1) {
       parts.push('\n' + docLines.join('\n'));
     }
+  }
+
+  if (options.workstreamContext) {
+    const workstream = options.workstreamContext;
+    const workstreamLines: string[] = ['## ACTIVE WORKSTREAM'];
+    workstreamLines.push(`- Stream: ${workstream.stream}`);
+    workstreamLines.push(`- Phase: ${workstream.phase}`);
+    workstreamLines.push(`- Objective: ${workstream.objective}`);
+    if (workstream.currentFocus)
+      workstreamLines.push(`- Current Focus: ${workstream.currentFocus}`);
+    if (workstream.blockers && workstream.blockers.length > 0) {
+      workstreamLines.push(`- Blockers: ${workstream.blockers.join('; ')}`);
+    }
+    if (workstream.nextStep) workstreamLines.push(`- Next Best Step: ${workstream.nextStep}`);
+    if (workstream.collaborationMode) {
+      workstreamLines.push(`- Collaboration Mode: ${workstream.collaborationMode}`);
+    }
+    parts.push('\n' + workstreamLines.join('\n'));
+  }
+
+  if (options.workstreamHandoff) {
+    const handoff = options.workstreamHandoff;
+    const handoffLines: string[] = ['## WORKSTREAM HANDOFF'];
+    handoffLines.push(`- From: ${handoff.from}`);
+    handoffLines.push(`- To: ${handoff.to}`);
+    handoffLines.push(`- Transition Reason: ${handoff.transitionReason}`);
+    if (handoff.carryForward.length > 0) {
+      handoffLines.push(`- Carry Forward: ${handoff.carryForward.join('; ')}`);
+    }
+    if (handoff.openLoops.length > 0) {
+      handoffLines.push(`- Open Loops: ${handoff.openLoops.join('; ')}`);
+    }
+    parts.push('\n' + handoffLines.join('\n'));
   }
 
   return parts.join('\n');

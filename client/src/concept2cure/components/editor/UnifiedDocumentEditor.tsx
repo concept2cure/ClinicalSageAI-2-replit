@@ -1091,6 +1091,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
   initialContent = '',
   documentTitle = 'Untitled Document',
   documentType = 'General',
+  documentMode: documentModeProp,
   submissionType,
   isReadOnly = false,
   documentMode: documentModeProp,
