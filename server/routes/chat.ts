@@ -22,6 +22,7 @@ import { getIntelligencePrefix } from '../services/lumen-context-builder.js';
 import { processResponseActions } from '../services/ana-guidance-executor.js';
 import { createHash } from 'crypto';
 import { interceptChatResponse } from '../services/intelligence/rim-interceptors.js';
+import { buildMemoryContextForChat } from '../services/memory-context-assembler.js';
 
 const router = Router();
 
@@ -355,6 +356,9 @@ const sendMessageHandler = async (req: Request, res: Response) => {
     // If we have retrieved evidence, inject it into the system prompt so
     // the model can ground its answer and cite by [SRC-n] reference.
     let evidenceBlock = '';
+    let memoryAtomCount = 0;
+    let memoryBlockChars = 0;
+    let memoryDiagnostics: Record<string, unknown> | null = null;
     if (sources.length > 0) {
       evidenceBlock =
         '\n\n--- RETRIEVED EVIDENCE (cite as [SRC-n]) ---\n' +
@@ -405,7 +409,20 @@ const sendMessageHandler = async (req: Request, res: Response) => {
 
       // Use the orchestrator's enriched system prompt instead of the basic one
       const basePrompt = system_prompt || orchestratorResult.systemPrompt;
-      const systemPrompt = intelligencePrefix + basePrompt + evidenceBlock;
+
+      const { memoryBlock, atoms, diagnostics } = await buildMemoryContextForChat({
+        threadId,
+        organizationId: numericOrgId || undefined,
+        projectId: project_id || undefined,
+        query: message,
+        limitPerLayer: 4,
+        maxChars: 3500,
+      });
+      memoryAtomCount = atoms.length;
+      memoryBlockChars = memoryBlock.length;
+      memoryDiagnostics = diagnostics;
+
+      const systemPrompt = intelligencePrefix + basePrompt + memoryBlock + evidenceBlock;
 
       const gwMessages = [
         { role: 'system' as const, content: systemPrompt },
@@ -714,6 +731,9 @@ const sendMessageHandler = async (req: Request, res: Response) => {
         orgScoped: !!orgUuid,
         citationCoverage,
         supportedClaimRate,
+        memoryAtomCount,
+        memoryBlockChars,
+        memoryDiagnostics,
       },
       // Provenance chain
       retrievalRunId,
