@@ -123,6 +123,7 @@ import { testAssemblyRoutes } from './routes/test-assembly';
 
 // Import Phase 5: PM Settings & Configuration routes
 import pmSettingsRouter from './src/routes/pm-settings.router';
+import controlPlaneRouter from './src/routes/control-plane.router';
 import reportsManifestRoutes from './routes/reports/manifest-routes';
 import reportsGenerationRoutes from './routes/reports/generate-report';
 
@@ -936,6 +937,8 @@ try {
 
 // Mount Phase 5: PM Settings & Configuration routes
 try {
+  app.use('/api/control-plane', controlPlaneRouter);
+
   app.use('/api/pm-settings', pmSettingsRouter);
   console.log('✅ Phase 5: PM Settings & Configuration API routes mounted');
 } catch (error) {
