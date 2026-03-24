@@ -25,8 +25,6 @@ const ComplianceDashboard = lazy(() => import('./components/compliance/Complianc
 const CERV2Page = lazy(() => import('../pages/CERV2Page'));
 const AnalyticsDashboard = lazy(() => import('../modules/AnalyticsDashboard'));
 const CmcWizard = lazy(() => import('../modules/CmcWizard'));
-// [BATCH 5] FulleCTDCoAuthor lazy import retained for redirect routes only
-const FulleCTDCoAuthor = lazy(() => import('../pages/FulleCTDCoAuthor'));
 
 // Loading fallback component
 const ModuleLoading: React.FC = () => (
