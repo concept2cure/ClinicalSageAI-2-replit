@@ -94,7 +94,7 @@ const SEGMENT_CONFIGS: Record<IndustrySegment, SegmentConfig> = {
     defaultSubmissionType: 'IND',
     defaultTemplateId: 'ind-full',
     pathwayDefault: 'FDA',
-    defaultAuthorTab: 'ind-workspace',
+    defaultAuthorTab: 'documents',
   },
   biotech: {
     segment: 'biotech',
@@ -104,7 +104,7 @@ const SEGMENT_CONFIGS: Record<IndustrySegment, SegmentConfig> = {
     defaultSubmissionType: 'IND',
     defaultTemplateId: 'ind-full',
     pathwayDefault: 'FDA',
-    defaultAuthorTab: 'ind-workspace',
+    defaultAuthorTab: 'documents',
   },
   medtech: {
     segment: 'medtech',
@@ -114,7 +114,7 @@ const SEGMENT_CONFIGS: Record<IndustrySegment, SegmentConfig> = {
     defaultSubmissionType: '510K',
     defaultTemplateId: 'fda-510k',
     pathwayDefault: 'FDA',
-    defaultAuthorTab: 'ind-workspace', // routes to 510k dossier view
+    defaultAuthorTab: 'documents', // routes to 510k dossier view
   },
   diagnostics: {
     segment: 'diagnostics',
@@ -124,7 +124,7 @@ const SEGMENT_CONFIGS: Record<IndustrySegment, SegmentConfig> = {
     defaultSubmissionType: '510K',
     defaultTemplateId: 'fda-510k',
     pathwayDefault: 'FDA',
-    defaultAuthorTab: 'ind-workspace',
+    defaultAuthorTab: 'documents',
   },
   cro: {
     segment: 'cro',
@@ -134,7 +134,7 @@ const SEGMENT_CONFIGS: Record<IndustrySegment, SegmentConfig> = {
     defaultSubmissionType: 'IND',
     defaultTemplateId: 'ind-full',
     pathwayDefault: 'FDA',
-    defaultAuthorTab: 'ind-workspace',
+    defaultAuthorTab: 'documents',
   },
   academic: {
     segment: 'academic',
@@ -144,7 +144,7 @@ const SEGMENT_CONFIGS: Record<IndustrySegment, SegmentConfig> = {
     defaultSubmissionType: 'IND',
     defaultTemplateId: 'ind-full',
     pathwayDefault: 'FDA',
-    defaultAuthorTab: 'clinical-trial',
+    defaultAuthorTab: 'documents',
   },
   regulatory: {
     segment: 'regulatory',
@@ -154,7 +154,7 @@ const SEGMENT_CONFIGS: Record<IndustrySegment, SegmentConfig> = {
     defaultSubmissionType: 'IND',
     defaultTemplateId: 'ind-full',
     pathwayDefault: 'FDA',
-    defaultAuthorTab: 'ind-workspace',
+    defaultAuthorTab: 'documents',
   },
   medical_writing: {
     segment: 'medical_writing',
@@ -164,7 +164,7 @@ const SEGMENT_CONFIGS: Record<IndustrySegment, SegmentConfig> = {
     defaultSubmissionType: 'IND',
     defaultTemplateId: 'ind-full',
     pathwayDefault: 'FDA',
-    defaultAuthorTab: 'ectd-coauthor',
+    defaultAuthorTab: 'documents', // [BATCH 4] was 'ectd-coauthor', standalone mode removed
   },
 };
 

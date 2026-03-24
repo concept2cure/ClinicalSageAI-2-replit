@@ -59,8 +59,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       icon: <FileCheck size={20} />,
     },
     {
-      name: 'eCTD Co-Author',
-      path: '/client-portal/ectd-coauthor',
+      name: 'Documents',
+      path: '/client-portal/documents',
       icon: <Layers size={20} />,
     },
     {

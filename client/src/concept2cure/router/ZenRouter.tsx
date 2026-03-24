@@ -34,12 +34,11 @@ const CERV2Page = lazy(() => import('@/pages/csr/CERV2Page'));
 // Lazy-load PMA Workspace for standalone mode
 const PMAWorkspacePage = lazy(() => import('../components/pma/PMAWorkspace'));
 
-// NOTE: ECTDSubmissionDashboard, PharmacovigilanceDashboard, ClinicalOperationsDashboard,
-// DocumentArtifactsHub, HAQManagerDashboard, INDAutoDraftDashboard are now rendered inside
-// ZenApp shell (lazy-loaded there) so they get persistent AI access.
+// [BATCH 5] Removed standalone routes for deleted worlds (pharmacovigilance, haq-manager,
+// ind-autodraft, clinical-operations, ectd-agent). The /concept2cure/* catch-all routes
+// all authenticated paths to ZenApp, which handles internal navigation via layout modes.
 
-// DTC Landing Page — public, renders at / for unauthenticated users
-const LandingPage = lazy(() => import('../pages/LandingPage'));
+// [BATCH 1 DELETED] LandingPage — replaced with auth redirect
 
 // Interactive Demo — public, AnA-narrated platform walkthrough
 const InteractiveDemoPage = lazy(() => import('../pages/InteractiveDemoPage'));
@@ -47,8 +46,7 @@ const InteractiveDemoPage = lazy(() => import('../pages/InteractiveDemoPage'));
 // Error pages
 const ErrorPages = lazy(() => import('../pages/ErrorPages'));
 
-// Pricing page
-const PricingPage = lazy(() => import('../pages/PricingPage'));
+// [BATCH 1 DELETED] PricingPage — orphaned, removed
 
 // Legal pages
 const TermsOfService = lazy(() => import('../pages/legal/TermsOfService'));
@@ -64,7 +62,9 @@ const BillingDashboard = lazy(() => import('@/pages/billing/BillingDashboard'));
 const SalesLandingPage = lazy(() => import('@/pages/SalesLandingPage'));
 
 // Lazy-load PasswordReset for the reset-password-via-email flow
-const PasswordResetPage = lazy(() => import('@/portal-v2/components/auth/PasswordReset'));
+const PasswordResetPage = lazy(
+  () => import('@/portal-v2/components/auth/PasswordReset'),
+);
 
 /**
  * Bridge that extracts :projectId from URL and renders CERV2Page with it.
@@ -75,6 +75,8 @@ const Project510kBridge: React.FC = () => {
   return (
     <Suspense
       fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#FAF9F5]">
+          <p className="text-sm text-[#B0AEA5]">Loading workspace…</p>
         <div className="min-h-screen flex items-center justify-center bg-[#faf9f5]">
           <p className="text-sm text-zinc-400">Loading workspace…</p>
         </div>
@@ -108,6 +110,7 @@ const ProjectPMABridge: React.FC = () => {
 // LOADING SCREEN
 // ═══════════════════════════════════════════════════════════════════════════════
 const ZenLoadingScreen: React.FC<{ message?: string }> = ({ message = 'Loading...' }) => (
+  <div className="min-h-screen bg-[#FAF9F5] flex items-center justify-center">
   <div className="min-h-screen bg-[#faf9f5] flex items-center justify-center">
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -152,10 +155,25 @@ const ZenLoadingScreen: React.FC<{ message?: string }> = ({ message = 'Loading..
       </motion.div>
 
       <p className="text-sm text-[#8A8880]">{message}</p>
+        <div className="relative w-20 h-20 rounded-2xl overflow-hidden shadow-md">
+          <img
+            src="/src/assets/concept2cure-logo.jpg"
+            alt="Concept2Cure"
+            className="w-full h-full object-cover object-center"
+          />
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{ background: 'radial-gradient(circle at center, transparent 40%, #faf9f5 100%)' }}
+          />
+        </div>
+      </motion.div>
+
+      <p className="text-sm text-zinc-500" style={{ fontFamily: "'Poppins', Arial, sans-serif" }}>{message}</p>
 
       {/* Progress bar */}
       <div className="w-48 h-1 bg-[#E8E6DC] rounded-full overflow-hidden">
         <motion.div
+          className="h-full bg-[#D97757] rounded-full"
           className="h-full rounded-full"
           style={{ background: 'linear-gradient(135deg, #d97757, #c15f3c)' }}
           initial={{ x: '-100%' }}
@@ -251,29 +269,18 @@ const PageTransition: React.FC<PageTransitionProps> = ({ children }) => (
 // LANDING PAGE ROUTE (public → landing, authenticated → redirect to app)
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// [BATCH 1] Landing page deleted — redirect to login or app
 const LandingPageRoute: React.FC = () => {
   const { isAuthenticated, isLoading } = usePortalAuth();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      setLocation('/concept2cure');
+    if (!isLoading) {
+      setLocation(isAuthenticated ? '/concept2cure' : '/concept2cure/login');
     }
   }, [isAuthenticated, isLoading, setLocation]);
 
-  if (isLoading) {
-    return <ZenLoadingScreen message="Loading..." />;
-  }
-
-  if (isAuthenticated) {
-    return null; // Will redirect
-  }
-
-  return (
-    <Suspense fallback={<ZenLoadingScreen message="Loading..." />}>
-      <LandingPage />
-    </Suspense>
-  );
+  return <ZenLoadingScreen message="Loading..." />;
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -341,11 +348,7 @@ export const ZenRouter: React.FC = () => {
           <Route path="/concept2cure/password-reset">
             {() => (
               <PageTransition>
-                <Suspense
-                  fallback={
-                    <div className="flex items-center justify-center min-h-screen">Loading...</div>
-                  }
-                >
+                <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
                   <PasswordResetPage />
                 </Suspense>
               </PageTransition>
@@ -415,80 +418,29 @@ export const ZenRouter: React.FC = () => {
             )}
           </Route>
 
-          {/* Pricing Page — public */}
-          <Route path="/concept2cure/pricing">
-            {() => (
-              <PageTransition>
-                <Suspense fallback={<ZenLoadingScreen message="Loading pricing..." />}>
-                  <PricingPage />
-                </Suspense>
-              </PageTransition>
-            )}
-          </Route>
+          {/* [BATCH 1 DELETED] Pricing route removed */}
 
           {/* Legal Pages — public, no auth required */}
           <Route path="/concept2cure/legal/terms">
-            {() => (
-              <PageTransition>
-                <Suspense fallback={<ZenLoadingScreen message="Loading..." />}>
-                  <TermsOfService />
-                </Suspense>
-              </PageTransition>
-            )}
+            {() => (<PageTransition><Suspense fallback={<ZenLoadingScreen message="Loading..." />}><TermsOfService /></Suspense></PageTransition>)}
           </Route>
           <Route path="/concept2cure/legal/privacy">
-            {() => (
-              <PageTransition>
-                <Suspense fallback={<ZenLoadingScreen message="Loading..." />}>
-                  <PrivacyPolicy />
-                </Suspense>
-              </PageTransition>
-            )}
+            {() => (<PageTransition><Suspense fallback={<ZenLoadingScreen message="Loading..." />}><PrivacyPolicy /></Suspense></PageTransition>)}
           </Route>
           <Route path="/concept2cure/legal/dpa">
-            {() => (
-              <PageTransition>
-                <Suspense fallback={<ZenLoadingScreen message="Loading..." />}>
-                  <DataProcessingAgreement />
-                </Suspense>
-              </PageTransition>
-            )}
+            {() => (<PageTransition><Suspense fallback={<ZenLoadingScreen message="Loading..." />}><DataProcessingAgreement /></Suspense></PageTransition>)}
           </Route>
           <Route path="/concept2cure/legal/baa">
-            {() => (
-              <PageTransition>
-                <Suspense fallback={<ZenLoadingScreen message="Loading..." />}>
-                  <BusinessAssociateAgreement />
-                </Suspense>
-              </PageTransition>
-            )}
+            {() => (<PageTransition><Suspense fallback={<ZenLoadingScreen message="Loading..." />}><BusinessAssociateAgreement /></Suspense></PageTransition>)}
           </Route>
           <Route path="/concept2cure/legal/sla">
-            {() => (
-              <PageTransition>
-                <Suspense fallback={<ZenLoadingScreen message="Loading..." />}>
-                  <ServiceLevelAgreement />
-                </Suspense>
-              </PageTransition>
-            )}
+            {() => (<PageTransition><Suspense fallback={<ZenLoadingScreen message="Loading..." />}><ServiceLevelAgreement /></Suspense></PageTransition>)}
           </Route>
           <Route path="/concept2cure/legal/cookies">
-            {() => (
-              <PageTransition>
-                <Suspense fallback={<ZenLoadingScreen message="Loading..." />}>
-                  <CookiePolicy />
-                </Suspense>
-              </PageTransition>
-            )}
+            {() => (<PageTransition><Suspense fallback={<ZenLoadingScreen message="Loading..." />}><CookiePolicy /></Suspense></PageTransition>)}
           </Route>
           <Route path="/concept2cure/legal/aup">
-            {() => (
-              <PageTransition>
-                <Suspense fallback={<ZenLoadingScreen message="Loading..." />}>
-                  <AcceptableUsePolicy />
-                </Suspense>
-              </PageTransition>
-            )}
+            {() => (<PageTransition><Suspense fallback={<ZenLoadingScreen message="Loading..." />}><AcceptableUsePolicy /></Suspense></PageTransition>)}
           </Route>
 
           {/* Project-scoped hub — ZenApp reads :projectId from route */}
@@ -523,74 +475,12 @@ export const ZenRouter: React.FC = () => {
             )}
           </Route>
 
-          {/* Shell-embedded dashboard routes — rendered inside ZenApp for persistent AI access */}
-          <Route path="/concept2cure/ectd-agent">
-            {() => (
-              <PageTransition>
-                <ProtectedRoute>
-                  <ZenApp />
-                </ProtectedRoute>
-              </PageTransition>
-            )}
-          </Route>
-          <Route path="/concept2cure/pharmacovigilance">
-            {() => (
-              <PageTransition>
-                <ProtectedRoute>
-                  <ZenApp />
-                </ProtectedRoute>
-              </PageTransition>
-            )}
-          </Route>
-          <Route path="/concept2cure/documents">
-            {() => (
-              <PageTransition>
-                <ProtectedRoute>
-                  <ZenApp />
-                </ProtectedRoute>
-              </PageTransition>
-            )}
-          </Route>
-          <Route path="/concept2cure/haq-manager">
-            {() => (
-              <PageTransition>
-                <ProtectedRoute>
-                  <ZenApp />
-                </ProtectedRoute>
-              </PageTransition>
-            )}
-          </Route>
-          <Route path="/concept2cure/ind-autodraft">
-            {() => (
-              <PageTransition>
-                <ProtectedRoute>
-                  <ZenApp />
-                </ProtectedRoute>
-              </PageTransition>
-            )}
-          </Route>
-          <Route path="/concept2cure/clinical-operations">
-            {() => (
-              <PageTransition>
-                <ProtectedRoute>
-                  <ZenApp />
-                </ProtectedRoute>
-              </PageTransition>
-            )}
-          </Route>
-
-          {/* Catch-all for /concept2cure/* routes */}
+          {/* [BATCH 5] Catch-all for /concept2cure/* — all authenticated paths
+              route to ZenApp which handles internal navigation via layout modes.
+              Legacy named routes (ectd-agent, pharmacovigilance, haq-manager,
+              ind-autodraft, clinical-operations, readiness, documents) removed;
+              they were all identical <ZenApp /> wrappers already covered by this. */}
           <Route path="/concept2cure/*">
-            {() => (
-              <PageTransition>
-                <ProtectedRoute>
-                  <ZenApp />
-                </ProtectedRoute>
-              </PageTransition>
-            )}
-          </Route>
-          {/* Phase 3: Readiness Intelligence Dashboard */}
-          <Route path="/concept2cure/readiness">
             {() => (
               <PageTransition>
                 <ProtectedRoute>

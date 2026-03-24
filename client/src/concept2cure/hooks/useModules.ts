@@ -75,7 +75,7 @@ export interface EctdReadiness {
 
 export const MODULE_IDS = {
   CORE: 'core',
-  ECTD_COAUTHOR: 'ectd-coauthor',
+  ECTD_COAUTHOR: 'ectd-coauthor', // [BATCH 4] standalone mode removed, ID retained for backend feature gating
   IND_FILING: 'ind-filing',
   DOC_CANVAS: 'doc-canvas',
   ANALYTICS_HUB: 'analytics-hub',

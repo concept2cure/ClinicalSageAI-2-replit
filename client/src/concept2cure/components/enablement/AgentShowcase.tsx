@@ -12,7 +12,7 @@ type SystemGroup =
   | "cognitive-ecosystem"
   | "innovation"
   | "intelligence"
-  | "ana-snowglobe";
+  ; // [BATCH 5] ana-snowglobe removed
 
 type Category =
   | "orchestration"
@@ -540,87 +540,7 @@ const capabilities: AgentCapability[] = [
     apiEndpoint: "/api/intelligence/strategic",
     category: "prediction",
   },
-  // AnA SnowGlobe (5)
-  {
-    id: "foresight-prediction",
-    name: "AnA Predictions Engine",
-    system: "ana-snowglobe",
-    description: "Multi-modal clinical outcome prediction using ensemble machine learning models.",
-    whatItDoes: [
-      "Predicts trial success probability by phase and indication",
-      "Combines structured data, literature, and regulatory signals",
-      "Provides confidence intervals and scenario analysis",
-      "Updates predictions in real-time as new data arrives",
-    ],
-    powersWorkflows: ["Clinical Development", "Regulatory Strategy"],
-    status: "active",
-    apiEndpoint: "/api/foresight/prediction",
-    category: "prediction",
-  },
-  {
-    id: "monte-carlo",
-    name: "Monte Carlo Simulation",
-    system: "ana-snowglobe",
-    description: "Probabilistic timeline and risk modeling for submission planning.",
-    whatItDoes: [
-      "Runs 10,000+ simulations per scenario",
-      "Models timeline distributions with uncertainty ranges",
-      "Identifies highest-impact risk factors",
-      "Generates probability-weighted milestone forecasts",
-    ],
-    powersWorkflows: ["Program Planning", "Regulatory Strategy"],
-    status: "active",
-    apiEndpoint: "/api/foresight/monte-carlo",
-    category: "prediction",
-  },
-  {
-    id: "protocol-analyzer",
-    name: "Protocol Analyzer",
-    system: "ana-snowglobe",
-    description: "NLP-based protocol intelligence for design optimization and risk assessment.",
-    whatItDoes: [
-      "Parses protocol documents using specialized NLP models",
-      "Identifies design risks and optimization opportunities",
-      "Benchmarks against similar successful protocols",
-      "Suggests endpoint and population refinements",
-    ],
-    powersWorkflows: ["IND", "Protocol Amendments", "Clinical Development"],
-    status: "active",
-    apiEndpoint: "/api/foresight/protocol-analyzer",
-    category: "analysis",
-  },
-  {
-    id: "foresight-kg",
-    name: "AnA Predictions Knowledge Graph",
-    system: "ana-snowglobe",
-    description: "Predictive relationship mapping that identifies emerging trends and regulatory signals.",
-    whatItDoes: [
-      "Maps predictive relationships across clinical and regulatory data",
-      "Detects emerging therapeutic area trends",
-      "Identifies early signals of regulatory shifts",
-      "Powers proactive strategic recommendations",
-    ],
-    powersWorkflows: ["Regulatory Strategy", "Portfolio Management"],
-    status: "beta",
-    apiEndpoint: "/api/foresight/knowledge-graph",
-    category: "prediction",
-  },
-  {
-    id: "csr-integration",
-    name: "CSR Integration",
-    system: "ana-snowglobe",
-    description: "Clinical Study Report data integration for seamless prediction model training.",
-    whatItDoes: [
-      "Ingests and normalizes CSR data from multiple formats",
-      "Extracts key endpoints and outcomes automatically",
-      "Feeds structured CSR data into prediction models",
-      "Maintains versioned CSR data lake for historical analysis",
-    ],
-    powersWorkflows: ["NDA", "BLA", "Clinical Development"],
-    status: "active",
-    apiEndpoint: "/api/foresight/csr-integration",
-    category: "analysis",
-  },
+  // [BATCH 5] Removed 5 ana-snowglobe agent entries (dead world)
 ];
 
 // ---------------------------------------------------------------------------
@@ -633,7 +553,7 @@ const systemLabels: Record<string, string> = {
   "cognitive-ecosystem": "Cognitive",
   innovation: "Innovation",
   intelligence: "Intelligence",
-  "ana-snowglobe": "AnA Predictions",
+  // [BATCH 5] ana-snowglobe removed
 };
 
 const categoryLabels: Record<string, string> = {

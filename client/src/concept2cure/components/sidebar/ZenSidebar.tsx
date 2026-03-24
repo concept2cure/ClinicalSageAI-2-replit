@@ -1,12 +1,14 @@
 /**
- * @fileoverview Zen Sidebar — Claude.ai-style, intent-organized navigation
+ * @fileoverview Zen Sidebar — Unified IND/eCTD authoring workflow navigation
  * @module concept2cure/components/sidebar/ZenSidebar
  *
- * Navigation restructured around user intent:
- *   WORK     → Copilot, Author
- *   RESEARCH → Intelligence (Alerts, Evidence, Precedents, Pathways)
- *   ASSURE   → Review & Readiness
- *   MANAGE   → Command Center, Academy
+ * Navigation restructured around the submission workflow:
+ *   Projects → Dossier → Documents → Review → Submissions
+ *
+ * Specialist tools (Intelligence, Biostatistics, CMC, etc.) are demoted
+ * to contextual panels/drawers inside the main workflow, NOT primary nav.
+ *
+ * AnA RI Copilot is a persistent contextual assistant, NOT a separate destination.
  */
 
 import React, { useState } from 'react';
@@ -20,34 +22,11 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
-  Sparkles,
-  Brain,
-  PenLine,
-  Search,
-  ShieldCheck,
-  BarChart3,
-  GraduationCap,
-  Building2,
-  Users,
-  FlaskConical,
-  BookOpen,
-  Snowflake,
-  Bot,
-  Activity,
-  Upload,
-  FileStack,
-  Scale,
-  Rocket,
-  Beaker,
-  Layers,
   FileText,
-  ClipboardList,
-  Shield,
-  Globe,
-  Key,
-  Inbox,
-  Palette,
-  Link2,
+  LayoutGrid,
+  PenLine,
+  ShieldCheck,
+  Send,
 } from 'lucide-react';
 import logoSrc from '@/assets/concept2cure-logo.jpg';
 
@@ -298,63 +277,58 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
         <button
           onClick={onOpenProjects}
           aria-label="Projects"
-          className="w-9 h-9 rounded-xl text-zinc-500 flex items-center justify-center hover:bg-zinc-200 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors"
+          className={cn(
+            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
+            activeNavId === 'projects' ? 'bg-blue-100 text-blue-500' : 'text-zinc-500 hover:bg-zinc-200'
+          )}
         >
           <FolderOpen className="w-4 h-4" />
         </button>
 
-        {/* Core module icons */}
+        {/* Primary workflow icons */}
         <div className="w-8 border-t border-zinc-200 my-1" />
         <button
-          onClick={() => onNavigate?.('snowglobe')}
-          aria-label="SnowGlobe"
+          onClick={() => onNavigate?.('dossier')}
+          aria-label="Dossier"
           className={cn(
             'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
-            activeNavId === 'snowglobe' ? 'bg-blue-100 text-blue-500' : 'text-zinc-500 hover:bg-zinc-200'
+            activeNavId === 'dossier' ? 'bg-blue-100 text-blue-500' : 'text-zinc-500 hover:bg-zinc-200'
           )}
         >
-          <Snowflake className="w-4 h-4" />
+          <LayoutGrid className="w-4 h-4" />
         </button>
         <button
-          onClick={() => onNavigate?.('user-inbox')}
-          aria-label="My Inbox"
+          onClick={() => onNavigate?.('documents')}
+          aria-label="Documents"
           className={cn(
             'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
-            activeNavId === 'user-inbox' ? 'bg-amber-50 text-amber-600' : 'text-zinc-500 hover:bg-zinc-200'
+            activeNavId === 'documents' ? 'bg-blue-100 text-blue-500' : 'text-zinc-500 hover:bg-zinc-200'
           )}
         >
-          <Inbox className="w-4 h-4" />
+          <PenLine className="w-4 h-4" />
         </button>
         <button
-          onClick={() => onNavigate?.('collaboration-hub')}
-          aria-label="Collaboration"
+          onClick={() => onNavigate?.('review')}
+          aria-label="Review"
           className={cn(
             'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
-            activeNavId === 'collaboration-hub' ? 'bg-blue-100 text-blue-500' : 'text-zinc-500 hover:bg-zinc-200'
+            activeNavId === 'review' ? 'bg-emerald-50 text-emerald-600' : 'text-zinc-500 hover:bg-zinc-200'
           )}
         >
-          <Users className="w-4 h-4" />
+          <ShieldCheck className="w-4 h-4" />
         </button>
         <button
-          onClick={() => onNavigate?.('artifacts')}
-          aria-label="Artifacts"
+          onClick={() => onNavigate?.('submissions')}
+          aria-label="Submissions"
           className={cn(
             'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
-            activeNavId === 'artifacts' ? 'bg-blue-100 text-blue-500' : 'text-zinc-500 hover:bg-zinc-200'
+            activeNavId === 'submissions' ? 'bg-blue-100 text-blue-500' : 'text-zinc-500 hover:bg-zinc-200'
           )}
         >
-          <Layers className="w-4 h-4" />
+          <Send className="w-4 h-4" />
         </button>
-        <button
-          onClick={() => onNavigate?.('knowledge-base')}
-          aria-label="Knowledge Base"
-          className={cn(
-            'w-9 h-9 rounded-xl flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors',
-            activeNavId === 'knowledge-base' ? 'bg-emerald-50 text-emerald-600' : 'text-zinc-500 hover:bg-zinc-200'
-          )}
-        >
-          <Upload className="w-4 h-4" />
-        </button>
+
+        {/* [BATCH 2] user-inbox icon removed from collapsed rail */}
 
         <button
           onClick={onToggleCollapse}
@@ -426,263 +400,57 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
 
         <div className="mx-2 border-t border-zinc-100 flex-shrink-0" />
 
-        {/* ── Intent-organized navigation ──────────────────────────────── */}
+        {/* ── Unified workflow navigation ──────────────────────────────── */}
         <div
           className="flex-1 overflow-y-auto min-h-0 zen-scroll py-1"
           style={{ scrollbarWidth: 'thin' }}
         >
-          {/* ── WORK — what I'm building ─────────────────────────── */}
-          <WorkspaceGroup label="Work">
+          {/* ── SUBMISSION WORKFLOW — the primary user journey ──────── */}
+          <WorkspaceGroup label="Submission Workflow">
             <NavItem
-              icon={<Brain className="w-3.5 h-3.5" />}
-              label="AnA RI Copilot"
-              active={activeNavId === 'ai-copilot'}
+              icon={<FolderOpen className="w-3.5 h-3.5" />}
+              label="Projects"
+              subtitle="All submissions & programs"
+              active={activeNavId === 'projects'}
               accentColor="blue"
-              onClick={() => onNavigate?.('ai-copilot')}
+              onClick={() => onNavigate?.('projects')}
+            />
+            <NavItem
+              icon={<LayoutGrid className="w-3.5 h-3.5" />}
+              label="Dossier"
+              subtitle="eCTD structure & section map"
+              active={activeNavId === 'dossier'}
+              accentColor="blue"
+              onClick={() => onNavigate?.('dossier')}
             />
             <NavItem
               icon={<PenLine className="w-3.5 h-3.5" />}
-              label="Author"
-              subtitle="Dossier · eCTD · CMC"
-              active={activeNavId === 'author'}
-              onClick={() => onNavigate?.('author')}
+              label="Documents"
+              subtitle="Draft & author sections"
+              active={activeNavId === 'documents'}
+              onClick={() => onNavigate?.('documents')}
             />
-            <NavItem
-              icon={<PenLine className="w-3.5 h-3.5" />}
-              label="Document Builder"
-              subtitle="CSR · CTD · Multi-agency"
-              active={activeNavId === 'document-builder'}
-              accentColor="emerald"
-              onClick={() => onNavigate?.('document-builder')}
-            />
-            <NavItem
-              icon={<Users className="w-3.5 h-3.5" />}
-              label="Collaboration"
-              subtitle="Threads · Reviews · Decisions"
-              active={activeNavId === 'collaboration-hub'}
-              accentColor="blue"
-              onClick={() => onNavigate?.('collaboration-hub')}
-            />
-          </WorkspaceGroup>
-
-          {/* ── AI — agents & intelligence ──────────────────────── */}
-          <WorkspaceGroup label="AI Agents">
-            <NavItem
-              icon={<Snowflake className="w-3.5 h-3.5" />}
-              label="SnowGlobe"
-              subtitle="Experimental · Predictions"
-              active={activeNavId === 'snowglobe'}
-              accentColor="blue"
-              onClick={() => onNavigate?.('snowglobe')}
-            />
-          </WorkspaceGroup>
-
-          {/* ── RESEARCH — what I need to know ───────────────────── */}
-          <WorkspaceGroup label="Research">
-            <NavItem
-              icon={<Search className="w-3.5 h-3.5" />}
-              label="Deep Research"
-              subtitle="Multi-source · Connectors · AI"
-              active={activeNavId === 'deep-research'}
-              accentColor="violet"
-              onClick={() => onNavigate?.('deep-research')}
-            />
-            <NavItem
-              icon={<Search className="w-3.5 h-3.5" />}
-              label="Intelligence"
-              subtitle="Evidence · Precedents · Alerts"
-              active={activeNavId === 'intelligence-hub'}
-              onClick={() => onNavigate?.('intelligence-hub')}
-            />
-            <NavItem
-              icon={<Shield className="w-3.5 h-3.5" />}
-              label="Precedent Intelligence"
-              subtitle="CRL · RTF · EMA · AdComm"
-              active={activeNavId === 'precedent-intelligence'}
-              accentColor="blue"
-              onClick={() => onNavigate?.('precedent-intelligence')}
-            />
-            <NavItem
-              icon={<FlaskConical className="w-3.5 h-3.5" />}
-              label="Biostatistics"
-              subtitle="Power · Endpoints · Design"
-              active={activeNavId === 'biostatistics'}
-              accentColor="emerald"
-              onClick={() => onNavigate?.('biostatistics')}
-            />
-            <NavItem
-              icon={<Beaker className="w-3.5 h-3.5" />}
-              label="CMC Platform"
-              subtitle="Chemistry · Manufacturing"
-              active={activeNavId === 'cmc'}
-              accentColor="blue"
-              onClick={() => onNavigate?.('cmc')}
-            />
-            <NavItem
-              icon={<FlaskConical className="w-3.5 h-3.5" />}
-              label="Biologics Intelligence"
-              subtitle="BLA · Biosimilar · ATMP"
-              active={activeNavId === 'biologics-dashboard'}
-              accentColor="violet"
-              onClick={() => onNavigate?.('biologics-dashboard')}
-            />
-          </WorkspaceGroup>
-
-          {/* ── ASSURE — quality & compliance ─────────────────────── */}
-          <WorkspaceGroup label="Assure">
             <NavItem
               icon={<ShieldCheck className="w-3.5 h-3.5" />}
-              label="Review & Readiness"
-              subtitle="Quality · Compliance · Audit"
-              active={activeNavId === 'review-readiness'}
-              onClick={() => onNavigate?.('review-readiness')}
+              label="Review"
+              subtitle="Governance & approvals"
+              active={activeNavId === 'review'}
+              accentColor="emerald"
+              onClick={() => onNavigate?.('review')}
             />
             <NavItem
-              icon={<Scale className="w-3.5 h-3.5" />}
-              label="Legal Center"
-              subtitle="IP · Contracts · Regulatory law"
-              active={activeNavId === 'legal-center'}
-              onClick={() => onNavigate?.('legal-center')}
-            />
-            <NavItem
-              icon={<FileText className="w-3.5 h-3.5" />}
-              label="Report Engine"
-              subtitle="Immutable · Provenance · Indemnify"
-              active={activeNavId === 'report-engine'}
-              accentColor="indigo"
-              onClick={() => onNavigate?.('report-engine')}
-            />
-            <NavItem
-              icon={<Shield className="w-3.5 h-3.5" />}
-              label="Safety Narrative"
-              subtitle="ICH E3 · SAE · Benefit-Risk"
-              active={activeNavId === 'safety-narrative'}
-              accentColor="rose"
-              onClick={() => onNavigate?.('safety-narrative')}
+              icon={<Send className="w-3.5 h-3.5" />}
+              label="Submissions"
+              subtitle="Readiness & export"
+              active={activeNavId === 'submissions'}
+              accentColor="blue"
+              onClick={() => onNavigate?.('submissions')}
             />
           </WorkspaceGroup>
 
-          {/* ── MANAGE — operations & governance ──────────────────── */}
-          <WorkspaceGroup label="Manage">
-            <NavItem
-              icon={<Inbox className="w-3.5 h-3.5" />}
-              label="My Inbox"
-              subtitle="Worklist · Approvals · Alerts"
-              active={activeNavId === 'user-inbox'}
-              onClick={() => onNavigate?.('user-inbox')}
-            />
-            <NavItem
-              icon={<Activity className="w-3.5 h-3.5" />}
-              label="Ana Dashboard"
-              subtitle="Intelligence · Gaps · Impact"
-              active={activeNavId === 'ana-dashboard'}
-              accentColor="violet"
-              onClick={() => onNavigate?.('ana-dashboard')}
-            />
-            <NavItem
-              icon={<Settings className="w-3.5 h-3.5" />}
-              label="Platform Control"
-              subtitle="Settings · Modules · Onboarding"
-              active={activeNavId === 'ana-platform-control'}
-              accentColor="indigo"
-              onClick={() => onNavigate?.('ana-platform-control')}
-            />
-            <NavItem
-              icon={<Building2 className="w-3.5 h-3.5" />}
-              label="Client Intelligence"
-              subtitle="Persona · Memory · Context"
-              active={activeNavId === 'client-intelligence'}
-              accentColor="violet"
-              onClick={() => onNavigate?.('client-intelligence')}
-            />
-            <NavItem
-              icon={<BarChart3 className="w-3.5 h-3.5" />}
-              label="Command Center"
-              subtitle="Submissions · Workflows · Ops"
-              active={activeNavId === 'command-center'}
-              onClick={() => onNavigate?.('command-center')}
-            />
-            <NavItem
-              icon={<Layers className="w-3.5 h-3.5" />}
-              label="Artifacts"
-              subtitle="Outputs · Documents · Templates"
-              active={activeNavId === 'artifacts'}
-              accentColor="violet"
-              onClick={() => onNavigate?.('artifacts')}
-            />
-            <NavItem
-              icon={<Upload className="w-3.5 h-3.5" />}
-              label="Knowledge Base"
-              subtitle="Skills · .MD · Materials"
-              active={activeNavId === 'knowledge-base'}
-              accentColor="emerald"
-              onClick={() => onNavigate?.('knowledge-base')}
-            />
-            <NavItem
-              icon={<FileStack className="w-3.5 h-3.5" />}
-              label="Project Knowledge"
-              subtitle="Context · Uploads · Sources"
-              active={activeNavId === 'project-knowledge'}
-              onClick={() => onNavigate?.('project-knowledge')}
-            />
-            <NavItem
-              icon={<Palette className="w-3.5 h-3.5" />}
-              label="Branding & Templates"
-              subtitle="Logo · Letterhead · Templates"
-              active={activeNavId === 'client-branding'}
-              accentColor="violet"
-              onClick={() => onNavigate?.('client-branding')}
-            />
-            <NavItem
-              icon={<Key className="w-3.5 h-3.5" />}
-              label="Platform Admin"
-              subtitle="API Keys · Users · Billing"
-              active={activeNavId === 'platform-admin'}
-              accentColor="indigo"
-              onClick={() => onNavigate?.('platform-admin')}
-            />
-            <NavItem
-              icon={<Globe className="w-3.5 h-3.5" />}
-              label="CTD Onboarding"
-              subtitle="Ingest · Validate · Learn"
-              active={activeNavId === 'ctd-onboarding'}
-              accentColor="emerald"
-              onClick={() => onNavigate?.('ctd-onboarding')}
-            />
-          </WorkspaceGroup>
-
-          {/* ── LEARN — enablement & onboarding ────────────────────── */}
-          <WorkspaceGroup label="Learn">
-            <NavItem
-              icon={<GraduationCap className="w-3.5 h-3.5" />}
-              label="Academy"
-              subtitle="Dr. Sage · AnA guides"
-              active={activeNavId === 'enablement-center'}
-              onClick={() => onNavigate?.('enablement-center')}
-            />
-            <NavItem
-              icon={<BookOpen className="w-3.5 h-3.5" />}
-              label="Training Center"
-              subtitle="Courses · Certifications"
-              active={activeNavId === 'training-center'}
-              accentColor="violet"
-              onClick={() => onNavigate?.('training-center')}
-            />
-            <NavItem
-              icon={<Rocket className="w-3.5 h-3.5" />}
-              label="Client Onboarding"
-              subtitle="Setup · Configuration"
-              active={activeNavId === 'client-onboarding'}
-              onClick={() => onNavigate?.('client-onboarding')}
-            />
-            <NavItem
-              icon={<Link2 className="w-3.5 h-3.5" />}
-              label="Integrations"
-              subtitle="Connectors · APIs · Storage"
-              active={activeNavId === 'integrations'}
-              onClick={() => onNavigate?.('integrations')}
-            />
-          </WorkspaceGroup>
+          {/* [BATCH 2] Operate group (user-inbox, collaboration-hub, artifacts) removed.
+              Admin group (command-center, knowledge-base, enablement-center, platform-admin) removed.
+              These are now AnA actions, contextual drawers, or deleted destinations. */}
 
           <div className="mx-2 my-1.5 border-t border-zinc-100" />
 

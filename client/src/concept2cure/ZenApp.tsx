@@ -38,9 +38,9 @@ import {
   NewProjectModal,
   EditProjectModal,
 } from './components/projects/ProjectSwitcher';
-import { WorkflowTimeline } from './components/workflow';
+// [BATCH 3] WorkflowTimeline — renderer removed, import kept for type compatibility
 import { ProjectFilesCompact } from './components/workspace/ProjectFilesCompact';
-import { CustomInstructions } from './components/knowledge/CustomInstructions';
+// [BATCH 3] CustomInstructions — knowledge-base renderer removed
 import { useProjectKnowledge } from './hooks/useProjectKnowledge';
 import { useProjectTasks } from './hooks/useProjectTasks';
 import { useProjects } from './hooks/useProjects';
@@ -52,15 +52,15 @@ import { WorkspaceReadinessStrip } from './components/workspace/WorkspaceReadine
 import { ProjectWorkspaceShell } from './components/workspace/ProjectWorkspaceShell';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import type { IndustryMode } from './types/workspace';
-import ProductAuditQuestionnaire from '../components/ProductAuditQuestionnaire';
+// [BATCH 3] ProductAuditQuestionnaire — renderer removed
 import { isFeatureEnabled } from '@/flags/featureFlags';
 
 // Lazy-load CERV2Page for embedded module rendering inside the shell
 const EmbeddedCERV2Page = lazy(() => import('@/pages/csr/CERV2Page'));
 // Lazy-load PMA Workspace for embedded module rendering
 const EmbeddedPMAWorkspace = lazy(() => import('./components/pma/PMAWorkspace'));
-// DTC Landing Page (public, no auth)
-const LandingPage = lazy(() => import('./pages/LandingPage'));
+// [BATCH 1 DELETED] LandingPage, CommandCenterHub, IntelligenceHub, AnaDashboard,
+// AboutTrainingCenter, LegalCenter, IntegrationsPage, SubmissionOpsCommandCenter, INDWorkspace, PricingPage
 // Full Document Builder wizard (CSR + CTD across global agencies)
 const FullDocumentBuilder = lazy(() => import('./components/builder/FullDocumentBuilder'));
 import {
@@ -133,12 +133,10 @@ const RedirectToWorkspace: React.FC<{ onRedirect: () => void }> = ({ onRedirect 
 };
 
 // Lazy load the Convergent Canvas for the Sherpa System
-const ConvergentCanvas = lazy(() =>
-  import('./components/canvas/ConvergentCanvas').then(m => ({ default: m.ConvergentCanvas }))
-);
+// [BATCH 3] ConvergentCanvas (Sherpa mode) — renderer removed
 
 // Enablement Center — Dr. Sage + AnA 1.0 dual-AI enablement hub
-const EnablementCenter = lazy(() => import('./components/enablement/EnablementCenter'));
+// [BATCH 3] EnablementCenter — renderer removed
 
 // Dr. Sage Global Layer — persistent help/guide/copilot presence
 import DrSageGlobalLayer from './components/dr-sage/DrSagePanel';
@@ -149,49 +147,27 @@ import AnaPersistentPanel from './components/chat/AnaPersistentPanel';
 // First-run onboarding experience
 const FirstRunExperience = lazy(() => import('./components/enablement/FirstRunExperience'));
 
-// Snow Globe — Cross-platform prediction & intelligence
-const SnowGlobeHome = lazy(() => import('./pages/SnowGlobe/SnowGlobeHome'));
-const SnowGlobeChambers = lazy(() => import('./pages/SnowGlobe/SnowGlobeChambers'));
+// [BATCH 3] SnowGlobe — removed as user-reachable world
 
-// About & Training Center (with Dr. Sage FDA Reviewer AI)
-const AboutTrainingCenter = lazy(() =>
-  import('./pages/AboutTrainingCenter').then(m => ({ default: m.AboutTrainingCenter }))
-);
+// [BATCH 1 DELETED] AboutTrainingCenter
 
-// Lazy load Phase 7 Mission Control components
-const MissionControl = lazy(() =>
-  import('./pages/MissionControl').then(m => ({ default: m.MissionControl }))
-);
-const RulesManager = lazy(() =>
-  import('./pages/MissionControl/RulesManager').then(m => ({ default: m.RulesManager }))
-);
+// [BATCH 3] MissionControl + RulesManager — removed as user-reachable world
 
-// Lazy load IND Workspace (eCTD filing hub)
-const INDWorkspace = lazy(() =>
-  import('./pages/INDWorkspace').then(m => ({ default: m.INDWorkspace }))
-);
+// [BATCH 1 DELETED] INDWorkspace
 
 // IND Workspace Right Rail (section-specific CTD context)
 const INDRightRail = lazy(() =>
   import('./components/workspace/INDRightRail').then(m => ({ default: m.INDRightRail }))
 );
 
-// Lazy load Phase 15 Submission Operations Command Center
-const SubmissionOpsCommandCenter = lazy(() =>
-  import('./pages/SubmissionOpsCommandCenter').then(m => ({
-    default: m.SubmissionOpsCommandCenter,
-  }))
-);
+// [BATCH 1 DELETED] SubmissionOpsCommandCenter
 
 // ─── Regulatory module standalones ────────────────────────────────────────────
 // Document Editor panel (bridge to UnifiedDocumentEditor + live APIs)
 const EditorPanel = lazy(() =>
   import('./components/editor/EditorPanel').then(m => ({ default: m.default }))
 );
-// eCTD Co-Author (IND / NDA / BLA / 510k document authoring)
-const ECTDCoAuthorStandalone = lazy(() =>
-  import('./components/coauthor/eCTDCoAuthor').then(m => ({ default: m.ECTDCoAuthorStandalone }))
-);
+// [BATCH 3] ECTDCoAuthorStandalone — standalone mode removed, redirects to documents
 
 // RI Copilot Intelligence Home (evidence-first landing surface)
 const RICopilotHome = lazy(() =>
@@ -227,34 +203,19 @@ const RegulatoryIntelligenceFullPanel = lazy(() =>
   import('./components/regulatory/RegulatoryIntelligence').then(m => ({ default: m.default }))
 );
 
-// ─── Biotech module standalones (in-shell rendering) ─────────────────────────
-// Canonical CMC: ComprehensiveCMCPlatformClean (25k LOC, 102 API endpoints)
-// Replaces the thin CMCModule wrapper (735 LOC, 3 API calls) – regression fix
-const CMCModuleStandalone = lazy(() => import('@/components/cmc/ComprehensiveCMCPlatformClean'));
-const VaultPageStandalone = lazy(() =>
-  import('@/pages/vault/VaultPage').then(m => ({ default: m.default }))
-);
-const StudyArchitectModuleStandalone = lazy(() =>
-  import('@/components/studyArchitect/StudyArchitectModule').then(m => ({
-    default: m.default,
-  }))
-);
-
-const TemplateLibraryInline = lazy(() =>
-  import('./components/templates/TemplateLibraryInline').then(m => ({
-    default: m.TemplateLibraryInline,
-  }))
-);
+// [BATCH 3] CMC, Vault, StudyArchitect, Templates — standalone modes removed, redirect to documents
 
 const IntelligentReportGenerator = lazy(
   () => import('./components/reports/IntelligentReportGenerator')
 );
 
-const AnaDashboardPage = lazy(() => import('./pages/AnaDashboard'));
+// [BATCH 1 DELETED] AnaDashboard
 
-const SafetyNarrativePage = lazy(() => import('./pages/SafetyNarrative'));
+const SafetyNarrativePage = lazy(() =>
+  import('./pages/SafetyNarrative')
+);
 
-const AnaPlatformControlPage = lazy(() => import('./pages/AnaPlatformControl'));
+// [BATCH 3] AnaPlatformControlPage — demoted, redirect to projects
 
 const ProjectKnowledgePanel = lazy(() =>
   import('./components/workspace/ProjectKnowledgePanel').then(m => ({
@@ -262,32 +223,37 @@ const ProjectKnowledgePanel = lazy(() =>
   }))
 );
 
-// ─── New intent-organized workspace lazy loads ──────────────────────────────
-const IntelligenceHub = lazy(() =>
-  import('./pages/IntelligenceHub').then(m => ({ default: m.IntelligenceHub }))
+// ─── Unified workflow components ─────────────────────────────────────────────
+const ProjectHomeDashboard = lazy(() =>
+  import('./components/workflow/ProjectHomeDashboard').then(m => ({ default: m.ProjectHomeDashboard }))
 );
-const RegulatoryPrecedentIntelligence = lazy(
-  () => import('./pages/RegulatoryPrecedentIntelligence')
+const DossierMap = lazy(() =>
+  import('./components/workflow/DossierMap').then(m => ({ default: m.DossierMap }))
+);
+const SectionWorkspace = lazy(() =>
+  import('./components/workflow/SectionWorkspace').then(m => ({ default: m.SectionWorkspace }))
+);
+const SubmissionReadinessView = lazy(() =>
+  import('./components/workflow/SubmissionReadiness').then(m => ({ default: m.SubmissionReadiness }))
+);
+
+// ─── New intent-organized workspace lazy loads ──────────────────────────────
+// [BATCH 1 DELETED] IntelligenceHub
+const RegulatoryPrecedentIntelligence = lazy(() =>
+  import('./pages/RegulatoryPrecedentIntelligence')
 );
 const ReviewReadiness = lazy(() =>
   import('./pages/ReviewReadiness').then(m => ({ default: m.ReviewReadiness }))
 );
-const CommandCenterHub = lazy(() =>
-  import('./pages/CommandCenterHub').then(m => ({ default: m.CommandCenterHub }))
-);
+// [BATCH 1 DELETED] CommandCenterHub
 
-const ClientIntelligencePage = lazy(() => import('./pages/ClientIntelligencePage'));
+// [BATCH 3] ClientIntelligencePage — demoted, redirect to projects
 
-// Collaboration Hub — threaded collaboration workspace
-const CollaborationHubPage = lazy(() =>
-  import('./pages/MissionControl/CollaborationHub').then(m => ({ default: m.default }))
-);
+// [BATCH 3] CollaborationHubPage — demoted, redirect to projects
 
-// User Inbox — personal command center with worklist, approvals, alerts
-const UserInboxPage = lazy(() => import('./pages/UserInbox'));
+// [BATCH 3] UserInboxPage — demoted, redirect to projects
 
-// Client Branding — logo, letterhead, templates, brand settings
-const ClientBrandingSettings = lazy(() => import('./components/settings/ClientBrandingSettings'));
+// [BATCH 3] ClientBrandingSettings — demoted, redirect to projects
 
 // Biostatistics Platform — statistical analysis, power calculations, endpoints
 const BiostatPlatformDashboard = lazy(
@@ -295,20 +261,16 @@ const BiostatPlatformDashboard = lazy(
 );
 
 // AnA Biostats Panel — structured input, computation, judgment, governed documents
-const AnaBiostatsPanel = lazy(() => import('@/concept2cure/components/biostats/AnaBiostatsPanel'));
-
-// Training Center — client onboarding, courses, certifications
-const TrainingManagementPage = lazy(
-  () => import('@/portal-v2/components/admin/TrainingManagement')
+const AnaBiostatsPanel = lazy(
+  () => import('@/concept2cure/components/biostats/AnaBiostatsPanel')
 );
-const IntegrationsPage = lazy(() => import('./pages/IntegrationsPage'));
+
+// [BATCH 3] TrainingManagementPage — demoted, redirect to projects
+// [BATCH 1 DELETED] IntegrationsPage
 
 // Agent Hub and Review Pulse removed — shell-only modules not demo-ready
 
-// Client Onboarding — setup wizard, configuration
-const OnboardingWizardPage = lazy(
-  () => import('@/portal-v2/components/onboarding/OnboardingWizard')
-);
+// [BATCH 3] OnboardingWizardPage — demoted, redirect to projects
 
 // Knowledge Base — account-level skills, .MD upload, materials ingestion
 // Already imported: CustomInstructions from './components/knowledge/CustomInstructions'
@@ -316,25 +278,18 @@ const OnboardingWizardPage = lazy(
 // Project Knowledge — project-level context, uploads, sources
 // Already lazy-loaded: ProjectKnowledgePanel
 
-// Legal Center — IP, contracts, regulatory law
-const LegalCenterPage = lazy(() =>
-  import('./pages/LegalCenter').then(m => ({ default: m.default }))
-);
+// [BATCH 1 DELETED] LegalCenter
 
 // Platform Home — Claude.ai-style landing dashboard
 const PlatformHome = lazy(() => import('./components/home/PlatformHome'));
 
-// Artifacts Gallery — Claude.ai-style browsable artifact gallery
-const ArtifactsGalleryPage = lazy(() => import('./pages/ArtifactsGallery'));
+// [BATCH 3] ArtifactsGalleryPage — demoted, redirect to documents
 
-// Platform Admin — API keys, tenant management, billing, security (Regulatory Command Center)
-const PlatformAdminPage = lazy(() => import('./components/control-plane/CommandCenter'));
+// [BATCH 3] PlatformAdminPage — demoted, redirect to projects
 
-// Biologics Dashboard — biologic/biosimilar pathway intelligence, comparability, expedited programs
-const BiologicsDashboardPage = lazy(() => import('./components/biologics/BiologicsDashboard'));
+// [BATCH 3] BiologicsDashboardPage — demoted, redirect to projects
 
-// CTD Onboarding Wizard — client CTD ingestion pipeline (5-step wizard)
-const CTDOnboardingWizardPage = lazy(() => import('./components/onboarding/CTDProjectWizard'));
+// [BATCH 3] CTDOnboardingWizardPage — demoted, redirect to projects
 
 // Project Sidebar — Claude.ai-style right sidebar (Context, Instructions, Files)
 import { ProjectSidebar } from './components/workspace/ProjectSidebar';
@@ -373,76 +328,48 @@ type ToolPanel =
   | null;
 
 type LayoutMode =
+  // ── Core submission workflow (first-class) ──
   | 'projects'
-  | 'workspace'
-  | 'assistant'
-  | 'sherpa'
-  | 'editor'
-  | 'analytics'
-  | 'timeline'
-  | 'audit'
-  | 'ctd'
-  | 'mission-control'
-  | 'rules'
-  | 'ind-workspace'
-  | 'submission-workspace'
-  | 'intelligence-feed'
-  | 'gap-analysis'
-  | 'change-impact'
-  | 'ana-memory'
-  | 'artifact-graph'
-  | 'review-center'
-  | 'dossier-view'
-  | 'risk-cockpit'
-  | 'route-planner'
-  | 'evidence-manager'
-  | 'decision-log'
-  | 'authority-tracker'
-  | 'provenance-trail'
-  | 'notifications'
-  | 'collaboration-hub'
-  | 'program-wizard'
-  | 'task-board'
-  | 'team-workspace'
-  | 'program-analytics'
-  | 'medtech-dashboard'
-  | 'ectd-coauthor'
-  | 'cmc'
-  | 'dossier'
-  | 'precedent-intelligence'
+  | 'project-home'
+  | 'dossier-map'
+  | 'documents'
+  | 'review'
+  | 'submissions'
+  | 'section-workspace'
+  // ── Canonical workspace + editor ──
   | 'regulatory-workspace'
-  | 'document-vault'
-  | 'clinical-trial'
-  | 'snowglobe'
-  | 'snowglobe-chambers'
-  | 'enablement-center'
-  // ── New intent-organized workspaces ──
-  | 'author'
-  | 'intelligence-hub'
-  | 'review-readiness'
-  | 'command-center'
-  | 'client-intelligence'
-  | 'templates'
-  | 'biostatistics'
-  | 'training-center'
-  | 'client-onboarding'
-  | 'knowledge-base'
-  | 'project-knowledge'
-  | 'legal-center'
-  | 'artifacts'
-  | 'platform-admin'
-  | 'biologics-dashboard'
-  | 'ctd-onboarding'
-  | 'document-builder'
+  | 'editor'
   | 'deep-research'
+  // ── Surviving specialist tools ──
+  | 'precedent-intelligence'
+  | 'biostatistics'
+  | 'review-readiness'
   | 'report-engine'
-  | 'about-training'
-  | 'user-inbox'
-  | 'client-branding'
-  | 'ana-dashboard'
   | 'safety-narrative'
+  // ── Compatibility redirects (redirect on mount, no renderer) ──
+  | 'workspace'        // → regulatory-workspace
+  | 'assistant'        // → regulatory-workspace
+  | 'ctd'              // → regulatory-workspace
+  | 'medtech-dashboard' // → regulatory-workspace
+  | 'dossier'          // → regulatory-workspace
+  // ── Demoted modes (redirect to projects or documents via DEMOTED_REDIRECTS) ──
+  | 'mission-control' | 'snowglobe' | 'snowglobe-chambers' | 'rules'
+  | 'ectd-coauthor' | 'cmc' | 'document-vault' | 'clinical-trial' | 'templates'
+  | 'sherpa' | 'analytics' | 'timeline' | 'audit'
+  | 'enablement-center' | 'platform-admin' | 'biologics-dashboard'
+  | 'ctd-onboarding' | 'client-intelligence' | 'collaboration-hub'
+  | 'user-inbox' | 'client-branding' | 'training-center' | 'client-onboarding'
+  | 'knowledge-base' | 'project-knowledge' | 'artifacts' | 'document-builder'
   | 'ana-platform-control'
-  | 'integrations';
+  // ── Legacy batch-1 modes (kept for type safety only) ──
+  | 'ind-workspace' | 'submission-workspace' | 'author' | 'intelligence-hub'
+  | 'command-center' | 'legal-center' | 'about-training' | 'ana-dashboard' | 'integrations'
+  // ── Unused MissionControl sub-modes (no renderer, no redirect needed) ──
+  | 'intelligence-feed' | 'gap-analysis' | 'change-impact' | 'ana-memory'
+  | 'artifact-graph' | 'review-center' | 'dossier-view' | 'risk-cockpit'
+  | 'route-planner' | 'evidence-manager' | 'decision-log' | 'authority-tracker'
+  | 'provenance-trail' | 'notifications' | 'program-wizard' | 'task-board'
+  | 'team-workspace' | 'program-analytics';
 
 const INDUSTRY_MODES: IndustryMode[] = [
   'biotech',
@@ -475,44 +402,29 @@ interface UserProfile {
 // TOOL PANEL CONFIG
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// [BATCH 4] TOOL_PANELS — these contextual drawer panels are not user-visible
+// as a static catalog. They are only triggered programmatically (e.g. by AnA
+// or deep links). Retained for future AnA-driven contextual panel support.
+// No standalone "module picker" surfaces these to users.
 const TOOL_PANELS: Record<
   Exclude<ToolPanel, null>,
   {
     title: string;
     icon: React.ComponentType<{ className?: string }>;
-    component: string; // Component name to lazy load
+    component: string;
   }
 > = {
   ectd: { title: 'eCTD Navigator', icon: Folder, component: 'ECTDNavigator' },
   protocol: { title: 'Protocol Designer', icon: ClipboardList, component: 'StudyProtocolDesigner' },
+  intelligence: { title: 'Regulatory Intelligence', icon: Globe, component: 'RegulatoryIntelligence' },
+  vault: { title: 'Document Vault', icon: FileText, component: 'VaultBrowser' },
+  'doc-editor': { title: 'Document Editor', icon: PenLine, component: 'EditorPanel' },
+  'ana-biostats': { title: 'AnA Biostats', icon: FlaskConical, component: 'AnaBiostatsPanel' },
+  // Retained for compliance-sector clients but not actively surfaced:
   sop: { title: 'SOP Management', icon: BookOpen, component: 'SOPManagement' },
   capa: { title: 'CAPA Management', icon: AlertTriangle, component: 'CAPAManagement' },
   pms: { title: 'Post-Market Surveillance', icon: BarChart2, component: 'PostMarketSurveillance' },
-  inspection: {
-    title: 'Inspection Readiness',
-    icon: CheckSquare,
-    component: 'InspectionReadiness',
-  },
-  intelligence: {
-    title: 'Regulatory Intelligence',
-    icon: Globe,
-    component: 'RegulatoryIntelligence',
-  },
-  vault: {
-    title: 'Document Vault',
-    icon: FileText,
-    component: 'VaultBrowser',
-  },
-  'doc-editor': {
-    title: 'Document Editor',
-    icon: PenLine,
-    component: 'EditorPanel',
-  },
-  'ana-biostats': {
-    title: 'AnA Biostats',
-    icon: FlaskConical,
-    component: 'AnaBiostatsPanel',
-  },
+  inspection: { title: 'Inspection Readiness', icon: CheckSquare, component: 'InspectionReadiness' },
 };
 
 // Helper to get project color by type
@@ -627,209 +539,7 @@ const ToolPanelWrapper: React.FC<ToolPanelWrapperProps> = ({
 // ANALYTICS DASHBOARD — Real data from project/artifact APIs
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function AnalyticsDashboardInline({ projects, onBack }: { projects: any[]; onBack: () => void }) {
-  const { data: summaryRaw } = useQuery({
-    queryKey: ['/api/concept2cure/projects/all/artifacts-summary'],
-  });
-  const summary = (summaryRaw as any)?.data || { total: 0, draft: 0, review: 0, approved: 0 };
-
-  const { data: auditRaw } = useQuery({
-    queryKey: ['/api/concept2cure/audit-logs', { limit: 30 }],
-    queryFn: () => fetch('/api/concept2cure/audit-logs?limit=30').then(r => r.json()),
-  });
-  const auditLogs = (auditRaw as any)?.data?.logs || [];
-
-  const totalProjects = projects.length;
-  const activeProjects = projects.filter((p: any) => p.status === 'active').length;
-  const completedProjects = projects.filter((p: any) => p.status === 'completed').length;
-
-  // Derive activity by day from audit logs
-  const activityByDay = useMemo(() => {
-    const days = new Map<string, number>();
-    auditLogs.forEach((l: any) => {
-      if (l.timestamp) {
-        const day = new Date(l.timestamp).toLocaleDateString('en-US', { weekday: 'short' });
-        days.set(day, (days.get(day) || 0) + 1);
-      }
-    });
-    return Array.from(days.entries())
-      .slice(0, 7)
-      .map(([day, count]) => ({ day, count }));
-  }, [auditLogs]);
-
-  const metrics = [
-    { label: 'Total Projects', value: totalProjects, color: 'text-zinc-900' },
-    { label: 'Active', value: activeProjects, color: 'text-blue-600' },
-    { label: 'Completed', value: completedProjects, color: 'text-emerald-600' },
-    { label: 'Total Artifacts', value: summary.total, color: 'text-zinc-900' },
-    { label: 'In Draft', value: summary.draft, color: 'text-amber-600' },
-    { label: 'In Review', value: summary.review, color: 'text-blue-600' },
-    { label: 'Approved', value: summary.approved, color: 'text-emerald-600' },
-  ];
-
-  return (
-    <div className="flex-1 overflow-y-auto p-8 bg-white">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="text-xl font-semibold text-zinc-900">Portfolio Analytics</h2>
-            <p className="text-sm text-zinc-500 mt-0.5">
-              Real-time metrics from your projects and artifacts
-            </p>
-          </div>
-          <button
-            onClick={onBack}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-100 text-zinc-700 text-sm font-medium hover:bg-zinc-200 transition-colors"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            Back
-          </button>
-        </div>
-
-        {/* Metrics Grid */}
-        <div className="grid grid-cols-4 gap-4 mb-8">
-          {metrics.slice(0, 4).map(m => (
-            <div key={m.label} className="bg-zinc-50 rounded-xl p-4 border border-zinc-100">
-              <p className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">
-                {m.label}
-              </p>
-              <p className={cn('text-2xl font-semibold mt-1', m.color)}>{m.value}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-2 gap-6 mb-8">
-          {/* Artifact Status Breakdown */}
-          <div className="bg-zinc-50 rounded-xl p-5 border border-zinc-100">
-            <p className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider mb-4">
-              Artifact Pipeline
-            </p>
-            {summary.total === 0 ? (
-              <p className="text-xs text-zinc-400 text-center py-6">
-                No artifacts yet. Create projects and generate documents to see pipeline analytics.
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {[
-                  {
-                    label: 'Draft',
-                    value: summary.draft,
-                    pct: Math.round((summary.draft / Math.max(1, summary.total)) * 100),
-                    color: 'bg-amber-500',
-                  },
-                  {
-                    label: 'In Review',
-                    value: summary.review,
-                    pct: Math.round((summary.review / Math.max(1, summary.total)) * 100),
-                    color: 'bg-blue-500',
-                  },
-                  {
-                    label: 'Approved',
-                    value: summary.approved,
-                    pct: Math.round((summary.approved / Math.max(1, summary.total)) * 100),
-                    color: 'bg-emerald-500',
-                  },
-                ].map(item => (
-                  <div key={item.label}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-zinc-600">{item.label}</span>
-                      <span className="text-xs font-medium text-zinc-900">
-                        {item.value} ({item.pct}%)
-                      </span>
-                    </div>
-                    <div className="h-2 bg-zinc-200 rounded-full">
-                      <div
-                        className={cn('h-2 rounded-full transition-all', item.color)}
-                        style={{ width: `${item.pct}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Activity Chart */}
-          <div className="bg-zinc-50 rounded-xl p-5 border border-zinc-100">
-            <p className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider mb-4">
-              Recent Activity
-            </p>
-            {activityByDay.length === 0 ? (
-              <p className="text-xs text-zinc-400 text-center py-6">No recent activity recorded.</p>
-            ) : (
-              <div className="flex items-end gap-2 h-32">
-                {activityByDay.map(({ day, count }) => {
-                  const maxCount = Math.max(...activityByDay.map(d => d.count), 1);
-                  const height = Math.max(8, (count / maxCount) * 100);
-                  return (
-                    <div key={day} className="flex-1 flex flex-col items-center gap-1">
-                      <span className="text-[10px] text-zinc-500">{count}</span>
-                      <div
-                        className="w-full bg-zinc-900 rounded-t"
-                        style={{ height: `${height}%` }}
-                      />
-                      <span className="text-[10px] text-zinc-400">{day}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Project List */}
-        <div className="bg-zinc-50 rounded-xl p-5 border border-zinc-100">
-          <p className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider mb-4">
-            Project Summary
-          </p>
-          {projects.length === 0 ? (
-            <p className="text-xs text-zinc-400 text-center py-6">
-              No projects yet. Create your first project to see analytics.
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {projects.map((p: any) => (
-                <div
-                  key={p.id}
-                  className="flex items-center justify-between py-2 border-b border-zinc-100 last:border-0"
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={cn(
-                        'w-2 h-2 rounded-full',
-                        p.status === 'active'
-                          ? 'bg-emerald-500'
-                          : p.status === 'completed'
-                            ? 'bg-blue-500'
-                            : 'bg-zinc-400'
-                      )}
-                    />
-                    <span className="text-sm text-zinc-900">{p.name}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs text-zinc-400">{p.submissionType || 'IND'}</span>
-                    <span
-                      className={cn(
-                        'text-xs px-2 py-0.5 rounded-full',
-                        p.status === 'active'
-                          ? 'bg-emerald-50 text-emerald-700'
-                          : p.status === 'completed'
-                            ? 'bg-blue-50 text-blue-700'
-                            : 'bg-zinc-100 text-zinc-600'
-                      )}
-                    >
-                      {p.status || 'draft'}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
+// [BATCH 4] AnalyticsDashboardInline deleted — dead code (~200 lines)
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MAIN ZEN APP
@@ -852,11 +562,8 @@ export const ZenApp: React.FC = () => {
   const urlModuleSegment = (routeParams as Record<string, string> | null)?.['rest*'] ?? null; // e.g. '510k', 'pma'
   const embedModulesEnabled = isFeatureEnabled('EMBED_MODULES_IN_SHELL');
   const embeddedModule =
-    embedModulesEnabled && urlModuleSegment === '510k'
-      ? '510k'
-      : embedModulesEnabled && urlModuleSegment === 'pma'
-        ? 'pma'
-        : null;
+    embedModulesEnabled && urlModuleSegment === '510k' ? '510k' :
+    embedModulesEnabled && urlModuleSegment === 'pma' ? 'pma' : null;
 
   // ─────────────────────────────────────────────────────────────────────────────
   // DATA HOOKS (Connected to Cortex + Data Layer)
@@ -957,6 +664,9 @@ export const ZenApp: React.FC = () => {
     urlProjectId ? 'regulatory-workspace' : 'projects'
   );
 
+  // Active section code — tracks which dossier section is open in SectionWorkspace
+  const [activeSectionCode, setActiveSectionCode] = useState<string | null>(null);
+
   // Guard: prevents URL-sync from reverting a navigation that's in-flight
   const navInProgressRef = useRef(false);
 
@@ -1023,6 +733,48 @@ export const ZenApp: React.FC = () => {
       ts: number;
     }>
   >([]);
+
+  // [BATCH 3] Redirect demoted layout modes to surviving destinations.
+  // This catches deep links, stale bookmarks, and any navigation to removed worlds.
+  useEffect(() => {
+    const DEMOTED_REDIRECTS: Partial<Record<LayoutMode, LayoutMode>> = {
+      // MissionControl + SnowGlobe worlds
+      'mission-control': 'projects',
+      'snowglobe': 'projects',
+      'snowglobe-chambers': 'projects',
+      'rules': 'projects',
+      // Standalone authoring / specialist modules → documents
+      'ectd-coauthor': 'documents',
+      'cmc': 'documents',
+      'document-vault': 'documents',
+      'clinical-trial': 'documents',
+      'templates': 'documents',
+      'document-builder': 'documents',
+      'artifacts': 'documents',
+      // Demoted SaaS-catalog destinations → projects
+      'sherpa': 'projects',
+      'analytics': 'projects',
+      'timeline': 'projects',
+      'audit': 'projects',
+      'enablement-center': 'projects',
+      'platform-admin': 'projects',
+      'biologics-dashboard': 'projects',
+      'ctd-onboarding': 'projects',
+      'client-intelligence': 'projects',
+      'collaboration-hub': 'projects',
+      'user-inbox': 'projects',
+      'client-branding': 'projects',
+      'training-center': 'projects',
+      'client-onboarding': 'projects',
+      'knowledge-base': 'projects',
+      'project-knowledge': 'projects',
+      'ana-platform-control': 'projects',
+    };
+    const redirect = DEMOTED_REDIRECTS[layoutMode];
+    if (redirect) {
+      setLayoutMode(redirect);
+    }
+  }, [layoutMode]);
 
   // Load persisted run log from sessionStorage when the active project changes
   useEffect(() => {
@@ -1440,25 +1192,12 @@ export const ZenApp: React.FC = () => {
       }
 
       // Handle module navigation — every module accessible via command palette
+      // [BATCH 3] Only surviving first-class + specialist destinations remain
       const MODULE_ROUTES: Record<string, LayoutMode> = {
         'go-copilot': 'regulatory-workspace',
-        'go-author': 'author',
-        'go-collaboration': 'collaboration-hub',
-        'go-inbox': 'user-inbox',
-        'go-branding': 'client-branding',
-        'go-snowglobe': 'snowglobe',
-        'go-intelligence': 'intelligence-hub',
-        'go-biostatistics': 'biostatistics',
-        'go-review-readiness': 'review-readiness',
-        'go-legal': 'legal-center',
-        'go-client-intelligence': 'client-intelligence',
-        'go-command-center': 'command-center',
-        'go-knowledge-base': 'knowledge-base',
-        'go-project-knowledge': 'project-knowledge',
-        'go-academy': 'enablement-center',
-        'go-training': 'training-center',
-        'go-onboarding': 'client-onboarding',
         'go-home': 'projects',
+        'go-review-readiness': 'review-readiness',
+        'go-biostatistics': 'biostatistics',
         'go-report-engine': 'report-engine',
       };
 
@@ -1820,40 +1559,60 @@ export const ZenApp: React.FC = () => {
         activeNavId={
           (
             {
-              'regulatory-workspace': 'ai-copilot',
-              workspace: 'ai-copilot',
-              'ind-workspace': 'author',
-              'ectd-coauthor': 'author',
-              cmc: 'cmc',
-              'clinical-trial': 'author',
-              author: 'author',
-              editor: 'author',
-              templates: 'author',
-              'intelligence-hub': 'intelligence-hub',
-              'review-readiness': 'review-readiness',
-              snowglobe: 'snowglobe',
-              'snowglobe-chambers': 'snowglobe',
-              'command-center': 'command-center',
-              'mission-control': 'command-center',
-              'submission-workspace': 'command-center',
-              'document-vault': 'command-center',
-              'enablement-center': 'enablement-center',
-              'client-intelligence': 'client-intelligence',
-              'collaboration-hub': 'collaboration-hub',
-              'user-inbox': 'user-inbox',
-              'client-branding': 'client-branding',
-              biostatistics: 'biostatistics',
-              'training-center': 'training-center',
-              'client-onboarding': 'client-onboarding',
-              'knowledge-base': 'knowledge-base',
-              'project-knowledge': 'project-knowledge',
-              'legal-center': 'legal-center',
-              sherpa: 'ai-copilot',
-              audit: 'review-readiness',
-              timeline: 'command-center',
-              analytics: 'command-center',
-              artifacts: 'artifacts',
-              'about-training': 'about-training',
+              // ── Unified workflow nav mapping ──
+              'project-home': 'projects',
+              'dossier-map': 'dossier',
+              documents: 'documents',
+              review: 'review',
+              submissions: 'submissions',
+              'section-workspace': 'dossier',
+              // ── Legacy mappings (still functional) ──
+              'regulatory-workspace': 'documents',
+              workspace: 'documents',
+              'ind-workspace': 'documents',
+              'ectd-coauthor': 'documents',
+              cmc: 'documents',
+              'clinical-trial': 'documents',
+              author: 'documents',
+              editor: 'documents',
+              templates: 'documents',
+              'document-builder': 'documents',
+              'intelligence-hub': 'documents',
+              'review-readiness': 'review',
+              snowglobe: 'projects',
+              'snowglobe-chambers': 'projects',
+              // [BATCH 2] Remap deleted nav IDs to surviving ones
+              'command-center': 'projects',
+              'mission-control': 'projects',
+              'submission-workspace': 'submissions',
+              'document-vault': 'documents',
+              'enablement-center': 'projects',
+              'client-intelligence': 'projects',
+              'collaboration-hub': 'review',
+              'user-inbox': 'projects',
+              'client-branding': 'projects',
+              biostatistics: 'documents',
+              'training-center': 'enablement-center',
+              'client-onboarding': 'enablement-center',
+              'knowledge-base': 'projects',
+              'project-knowledge': 'projects',
+              'legal-center': 'review',
+              sherpa: 'documents',
+              audit: 'review',
+              timeline: 'projects',
+              analytics: 'projects',
+              artifacts: 'documents',
+              'about-training': 'projects',
+              'precedent-intelligence': 'documents',
+              'deep-research': 'documents',
+              'report-engine': 'documents',
+              'ana-dashboard': 'projects',
+              'safety-narrative': 'documents',
+              'ana-platform-control': 'projects',
+              'platform-admin': 'projects',
+              'biologics-dashboard': 'documents',
+              'ctd-onboarding': 'projects',
+              integrations: 'projects',
             } as Record<string, string>
           )[layoutMode] ?? undefined
         }
@@ -1883,16 +1642,13 @@ export const ZenApp: React.FC = () => {
             case 'agents':
               setLayoutMode('regulatory-workspace');
               break;
-            case 'tasks':
-              setLayoutMode('timeline');
+            case 'tools':
+              setActiveToolPanel('intelligence');
               break;
-            case 'templates':
-              setActiveToolPanel('protocol');
+            case 'evidence-search':
+              setCommandPaletteOpen(true);
               break;
-            case 'analytics':
-              setLayoutMode('analytics');
-              break;
-            // ── Product routes ──────────────────────────────────
+            // ── Product routes (external modules) ──
             case 'ai-copilot':
               setRiViewMode('intelligence');
               setLayoutMode('regulatory-workspace');
@@ -1903,7 +1659,6 @@ export const ZenApp: React.FC = () => {
               } else if (activeProjectId) {
                 navigate(`/concept2cure/project/${activeProjectId}/510k`);
               } else {
-                // No project selected — go to projects list
                 setLayoutMode('projects');
               }
               break;
@@ -1919,122 +1674,69 @@ export const ZenApp: React.FC = () => {
             case 'cer-generator':
               window.location.href = '/cerv2?mode=cer';
               break;
-            case 'document-vault':
-              setLayoutMode('document-vault');
-              break;
-            case 'evidence-search':
-              setCommandPaletteOpen(true);
-              break;
-            case 'ectd-coauthor':
-              setLayoutMode('ectd-coauthor');
-              break;
-            case 'ind-workspace':
-              setLayoutMode('ind-workspace');
-              break;
-            case 'cmc':
-              setLayoutMode('cmc');
-              break;
-            case 'clinical-trial':
-              setLayoutMode('clinical-trial');
-              break;
+            // ── Core submission workflow ──
             case 'regulatory-workspace':
               setLayoutMode('regulatory-workspace');
               break;
-            case 'mission-control':
-              setLayoutMode('mission-control');
+            case 'dossier':
+              setLayoutMode('dossier-map');
               break;
-            case 'snowglobe':
-              setLayoutMode('snowglobe');
+            case 'documents':
+              setLayoutMode('documents');
               break;
-            case 'about-training':
-              setLayoutMode('about-training');
+            case 'review':
+              setLayoutMode('review');
               break;
-            case 'submission-workspace':
-              setLayoutMode('submission-workspace');
+            case 'submissions':
+              setLayoutMode('submissions');
               break;
-            case 'enablement-center':
-              setLayoutMode('enablement-center');
+            case 'section-workspace':
+              setLayoutMode('section-workspace');
               break;
-            // ── New intent-organized workspaces ──
-            case 'author':
-              setLayoutMode('author');
+            case 'project-home':
+              setLayoutMode('project-home');
               break;
-            case 'intelligence-hub':
-              setLayoutMode('intelligence-hub');
-              break;
+            // ── Surviving specialist tools ──
             case 'precedent-intelligence':
               setLayoutMode('precedent-intelligence');
               break;
             case 'review-readiness':
               setLayoutMode('review-readiness');
               break;
-            case 'command-center':
-              setLayoutMode('command-center');
-              break;
-            case 'client-intelligence':
-              setLayoutMode('client-intelligence');
-              break;
-            case 'collaboration-hub':
-              setLayoutMode('collaboration-hub');
-              break;
-            case 'user-inbox':
-              setLayoutMode('user-inbox');
-              break;
-            case 'client-branding':
-              setLayoutMode('client-branding');
-              break;
             case 'biostatistics':
               setLayoutMode('biostatistics');
-              break;
-            case 'training-center':
-              setLayoutMode('training-center');
-              break;
-            case 'client-onboarding':
-              setLayoutMode('client-onboarding');
-              break;
-            case 'knowledge-base':
-              setLayoutMode('knowledge-base');
-              break;
-            case 'project-knowledge':
-              setLayoutMode('project-knowledge');
-              break;
-            case 'legal-center':
-              setLayoutMode('legal-center');
-              break;
-            case 'artifacts':
-              setLayoutMode('artifacts');
-              break;
-            case 'platform-admin':
-              setLayoutMode('platform-admin');
-              break;
-            case 'biologics-dashboard':
-              setLayoutMode('biologics-dashboard');
-              break;
-            case 'ctd-onboarding':
-              setLayoutMode('ctd-onboarding');
-              break;
-            case 'deep-research':
-              setLayoutMode('deep-research');
-              break;
-            case 'document-builder':
-              setLayoutMode('document-builder');
               break;
             case 'report-engine':
               setLayoutMode('report-engine');
               break;
-            case 'ana-dashboard':
-              setLayoutMode('ana-dashboard');
-              break;
             case 'safety-narrative':
               setLayoutMode('safety-narrative');
               break;
-            case 'ana-platform-control':
-              setLayoutMode('ana-platform-control');
-            case 'integrations':
-              setLayoutMode('integrations');
+            case 'deep-research':
+              setLayoutMode('deep-research');
               break;
-            default:
+            // [BATCH 3] All demoted/deleted modes — set the layout mode and let
+            // the DEMOTED_REDIRECTS useEffect handle the redirect.
+            default: {
+              // If it's a known LayoutMode string, set it (useEffect will redirect).
+              // Otherwise ignore.
+              const knownModes: string[] = [
+                'mission-control', 'snowglobe', 'snowglobe-chambers', 'rules',
+                'ectd-coauthor', 'cmc', 'document-vault', 'clinical-trial', 'templates',
+                'sherpa', 'analytics', 'timeline', 'audit',
+                'enablement-center', 'platform-admin', 'biologics-dashboard',
+                'ctd-onboarding', 'client-intelligence', 'collaboration-hub',
+                'user-inbox', 'client-branding', 'training-center', 'client-onboarding',
+                'knowledge-base', 'project-knowledge', 'artifacts', 'document-builder',
+                'ana-platform-control', 'author', 'ind-workspace', 'submission-workspace',
+                'intelligence-hub', 'command-center', 'legal-center', 'about-training',
+                'ana-dashboard', 'integrations', 'agents', 'tasks',
+              ];
+              if (knownModes.includes(id)) {
+                setLayoutMode(id as LayoutMode);
+              }
               break;
+            }
           }
         }}
         userName={userName}
@@ -2155,7 +1857,9 @@ export const ZenApp: React.FC = () => {
               )}
 
               {moduleAssistantOpen && (
-                <div className="flex-shrink-0 w-[380px] flex flex-col border-l border-zinc-200 bg-white">
+                <div
+                  className="flex-shrink-0 w-[380px] flex flex-col border-l border-zinc-200 bg-white"
+                >
                   <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-100 bg-zinc-50">
                     <span className="text-sm font-medium text-zinc-700">AI Assistant</span>
                     <button
@@ -2182,736 +1886,20 @@ export const ZenApp: React.FC = () => {
             </>
           )}
 
-          {/* Sherpa Mode - Convergent Canvas */}
-          {!embeddedModule && layoutMode === 'sherpa' && (
-            <div
-              className="flex-1 flex flex-col min-h-0 overflow-y-auto"
-              data-testid="workspace-sherpa"
-            >
-              <ErrorBoundary>
-                <Suspense fallback={<ModuleLoadingFallback />}>
-                  <ConvergentCanvas
-                    userId={activeProjectId || 'anonymous'}
-                    userName={userName}
-                    userRole={userRole}
-                    industry={industryMode}
-                  />
-                </Suspense>
-              </ErrorBoundary>
-            </div>
-          )}
+          {/* [BATCH 3] Removed renderers: sherpa, analytics, timeline, audit,
+              mission-control, snowglobe, snowglobe-chambers.
+              These modes now redirect via DEMOTED_REDIRECTS useEffect. */}
 
-          {!embeddedModule && layoutMode === 'analytics' && (
-            <AnalyticsDashboardInline
-              projects={projects || []}
-              onBack={() => setLayoutMode('regulatory-workspace')}
-            />
-          )}
+          {/* [BATCH 3] Removed: timeline, audit, mission-control, snowglobe, snowglobe-chambers */}
+          {/* [BATCH 1] Removed: about-training, ind-workspace, medtech-dashboard */}
 
-          {!embeddedModule && layoutMode === 'timeline' && (
-            <div className="flex-1 p-8 bg-white overflow-y-auto">
-              <div className="max-w-3xl mx-auto">
-                <WorkflowTimeline
-                  steps={timelineSteps}
-                  currentStepId={(() => {
-                    // Derive current step from project artifacts
-                    const arts = projectArtifacts || [];
-                    if (arts.length === 0) return 'step-upload';
-                    const hasApproved = arts.some(
-                      (a: any) => a.status === 'approved' || a.status === 'locked'
-                    );
-                    const hasReview = arts.some((a: any) => a.status === 'review');
-                    if (hasApproved) return 'step-export';
-                    if (hasReview) return 'step-review';
-                    return 'step-authoring';
-                  })()}
-                  progressPercent={(() => {
-                    const arts = projectArtifacts || [];
-                    if (arts.length === 0) return 10;
-                    const approved = arts.filter(
-                      (a: any) => a.status === 'approved' || a.status === 'locked'
-                    ).length;
-                    return Math.min(
-                      95,
-                      Math.round((approved / Math.max(1, arts.length)) * 100) + 10
-                    );
-                  })()}
-                  assetState={(() => {
-                    const arts = projectArtifacts || [];
-                    const hasApproved = arts.some(
-                      (a: any) => a.status === 'approved' || a.status === 'locked'
-                    );
-                    const hasReview = arts.some((a: any) => a.status === 'review');
-                    if (hasApproved) return 'APPROVED';
-                    if (hasReview) return 'REVIEW';
-                    return 'DRAFT';
-                  })()}
-                  workflowRunId={workflowRunId}
-                  showPhases
-                />
-              </div>
-            </div>
-          )}
 
-          {!embeddedModule && layoutMode === 'audit' && (
-            <div className="flex-1 overflow-y-auto bg-zinc-50" data-testid="workspace-audit">
-              <ProductAuditQuestionnaire />
-            </div>
-          )}
 
-          {/* Phase 7: Mission Control Dashboard */}
-          {!embeddedModule && layoutMode === 'mission-control' && (
-            <div
-              className="flex-1 flex flex-col min-h-0 overflow-y-auto"
-              data-testid="workspace-mission-control"
-            >
-              {/* Experimental banner */}
-              <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 border-b border-amber-200 text-amber-800 text-xs font-medium">
-                <span className="px-1.5 py-0.5 bg-amber-200 text-amber-900 rounded text-[10px] font-bold uppercase">
-                  Experimental
-                </span>
-                Mission Control uses in-memory storage. Data is not persisted across restarts.
-              </div>
-              <ErrorBoundary>
-                <Suspense fallback={<ModuleLoadingFallback />}>
-                  <MissionControl />
-                </Suspense>
-              </ErrorBoundary>
-            </div>
-          )}
 
-          {/* Snow Globe — Prediction & Intelligence Engine */}
-          {!embeddedModule && layoutMode === 'snowglobe' && (
-            <div
-              className="flex-1 flex flex-col min-h-0 overflow-y-auto"
-              data-testid="workspace-snowglobe"
-            >
-              {/* Experimental banner */}
-              <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 border-b border-amber-200 text-amber-800 text-xs font-medium">
-                <span className="px-1.5 py-0.5 bg-amber-200 text-amber-900 rounded text-[10px] font-bold uppercase">
-                  Experimental
-                </span>
-                SnowGlobe uses demo program data. Results are illustrative, not production data.
-              </div>
-              <Suspense fallback={<ModuleLoadingFallback />}>
-                <SnowGlobeHome programId={activeProjectId ? Number(activeProjectId) : null} />
-              </Suspense>
-            </div>
-          )}
 
-          {/* Snow Globe — Chamber Detail View */}
-          {!embeddedModule && layoutMode === 'snowglobe-chambers' && (
-            <div
-              className="flex-1 flex flex-col min-h-0 overflow-y-auto"
-              data-testid="workspace-snowglobe-chambers"
-            >
-              <Suspense fallback={<ModuleLoadingFallback />}>
-                <SnowGlobeChambers programId={activeProjectId ? Number(activeProjectId) : null} />
-              </Suspense>
-            </div>
-          )}
 
-          {/* About & Training Center (Dr. Sage FDA Reviewer AI) */}
-          {!embeddedModule && layoutMode === 'about-training' && (
-            <div
-              className="flex-1 flex flex-col min-h-0 overflow-y-auto"
-              data-testid="workspace-about-training"
-            >
-              <Suspense
-                fallback={
-                  <div className="flex-1 flex items-center justify-center bg-white">
-                    <Loader2 className="w-10 h-10 animate-spin text-blue-600 mx-auto" />
-                  </div>
-                }
-              >
-                <AboutTrainingCenter />
-              </Suspense>
-            </div>
-          )}
 
-          {/* ── IND Workspace (eCTD filing hub — dossier construction) ──────────── */}
-          {!embeddedModule && layoutMode === 'ind-workspace' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-ind">
-              <div className="flex items-center gap-3 px-4 h-12 border-b border-zinc-100 bg-white flex-shrink-0">
-                <button
-                  onClick={() => setLayoutMode('regulatory-workspace')}
-                  className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  <span>Chat</span>
-                </button>
-                <div className="w-px h-4 bg-zinc-200" />
-                <ShieldCheck className="w-4 h-4 text-violet-500" />
-                <span className="text-sm font-medium text-zinc-900">
-                  {submissionWorkspaceLabel} — Dossier Construction
-                </span>
-                <span className="text-xs text-zinc-400 ml-1 hidden sm:inline">
-                  CTD sections · Status tracking · eCTD compile
-                </span>
-              </div>
-              {/* No-project guard */}
-              {!activeProjectId ? (
-                <div className="flex-1 flex items-center justify-center bg-zinc-50/50 p-8">
-                  <div className="max-w-md text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-violet-50 flex items-center justify-center">
-                      <ShieldCheck className="w-8 h-8 text-violet-600" />
-                    </div>
-                    <h2 className="text-xl font-semibold text-zinc-900 mb-2">IND Workspace</h2>
-                    <p className="text-sm text-zinc-500 mb-6">
-                      Select a project to open its dossier and begin drafting CTD sections.
-                    </p>
-                    <button
-                      onClick={() => setProjectSwitcherOpen(true)}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-violet-600 text-white text-sm font-medium hover:bg-violet-700 transition-colors shadow-sm"
-                    >
-                      <FolderOpen className="w-4 h-4" />
-                      Select Project
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex-1 flex min-h-0">
-                  {/* Main area: IND section tree */}
-                  <div className="flex-1 overflow-auto">
-                    <ErrorBoundary>
-                      <Suspense fallback={<ModuleLoadingFallback />}>
-                        <INDWorkspace
-                          projectId={activeProjectId}
-                          projectName={activeProject?.name || 'Untitled Project'}
-                          submissionType={activeProject?.type || 'IND'}
-                          onOpenSection={sectionCode => {
-                            const ctd = sectionCode.replace(/^m/, '');
-                            // Navigate to editor — EditorPanel will load existing artifacts for this section
-                            setPendingEditorContent({
-                              content: `<h1>${sectionCode.toUpperCase()} — Draft</h1><p>Loading section content…</p>`,
-                              title: `${sectionCode.toUpperCase()} — ${activeProject?.name || 'IND Application'}`,
-                              ctdSection: ctd,
-                            });
-                            setRiViewMode('editor');
-                            setLayoutMode('regulatory-workspace');
-                          }}
-                          onDraftWithAI={async (sectionCode, sectionTitle) => {
-                            const ctd = sectionCode.replace(/^m/, '');
-                            const token =
-                              sessionStorage.getItem('trialsage_access_token') ||
-                              localStorage.getItem('trialsage_access_token');
-                            const authHeaders: Record<string, string> = {
-                              'Content-Type': 'application/json',
-                              ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                            };
-                            // Call real AI generation endpoint
-                            let content = '';
-                            try {
-                              const res = await fetch('/api/knowledge-base/generate-ind-section', {
-                                method: 'POST',
-                                headers: authHeaders,
-                                body: JSON.stringify({
-                                  sectionCode: ctd,
-                                  sectionTitle,
-                                  context: `CTD section for ${activeProject?.type || 'IND'} submission. Project: ${activeProject?.name || 'Untitled'}`,
-                                }),
-                              });
-                              if (res.ok) {
-                                const data = await res.json();
-                                content = data.content || data.data?.content || '';
-                              }
-                            } catch (err) {
-                              console.warn('[ZenApp] AI draft generation failed:', err);
-                            }
-                            // Fallback: minimal scaffold (NOT fake completeness)
-                            if (!content || content.trim().length === 0) {
-                              content = `<h1>${sectionTitle}</h1>\n<p><em>AI generation unavailable. Please draft this section manually or retry.</em></p>`;
-                            }
-                            setPendingEditorContent({
-                              content,
-                              title: `${sectionTitle} — ${activeProject?.name || 'IND Application'}`,
-                              ctdSection: ctd,
-                            });
-                            setRiViewMode('editor');
-                            setLayoutMode('regulatory-workspace');
-                          }}
-                          onNavigateToCoAuthor={() => setLayoutMode('ectd-coauthor')}
-                        />
-                      </Suspense>
-                    </ErrorBoundary>
-                  </div>
-                  {/* Right rail: Section context tabs */}
-                  <INDRightRail
-                    projectName={activeProject?.name}
-                    submissionType={activeProject?.type}
-                    indication={activeProject?.description}
-                  />
-                </div>
-              )}
-            </div>
-          )}
 
-          {/* Medical Device Dashboard — disabled (consolidated into RI Copilot workspace) */}
-
-          {/* ── eCTD Co-Author (IND / NDA / BLA / 510k authoring) ─────────── */}
-          {!embeddedModule && layoutMode === 'ectd-coauthor' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-ectd-coauthor">
-              <WorkspaceHeader
-                title="eCTD Co-Author"
-                subtitle="IND · NDA · BLA · 510(k) · CTD section-by-section drafting"
-                onBack={() => setLayoutMode('regulatory-workspace')}
-              />
-              {!activeProjectId ? (
-                <div className="flex-1 flex items-center justify-center bg-zinc-50/50 p-8">
-                  <div className="max-w-md text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-blue-50 flex items-center justify-center">
-                      <FolderOpen className="w-8 h-8 text-blue-600" />
-                    </div>
-                    <h2 className="text-xl font-semibold text-zinc-900 mb-2">eCTD Co-Author</h2>
-                    <p className="text-sm text-zinc-500 mb-6">
-                      Select a project to begin authoring CTD sections.
-                    </p>
-                    <button
-                      onClick={() => setProjectSwitcherOpen(true)}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
-                    >
-                      <FolderOpen className="w-4 h-4" />
-                      Select Project
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex-1 flex flex-col min-h-0">
-                  <ErrorBoundary>
-                    <Suspense fallback={<ModuleLoadingFallback />}>
-                      <ECTDCoAuthorStandalone
-                        onOpenInEditor={section => {
-                          console.log(
-                            `[eCTD] Opening section ${section.number} "${section.title}" in Document Editor`
-                          );
-                          // Build populated content from the section
-                          const sectionContent =
-                            section.content && section.content.trim()
-                              ? section.content
-                              : `<h1>${section.number} ${section.title}</h1>
-<p>This section covers the regulatory requirements for <strong>${section.title}</strong> as part of the CTD submission.</p>
-<h2>Scope</h2>
-<p>[Section content to be drafted. Use the RI Edit tools above to generate regulatory-compliant language.]</p>
-<h2>References</h2>
-<p>[Cross-references and source citations will be added here.]</p>`;
-                          setPendingEditorContent({
-                            title: `${section.number} ${section.title}`,
-                            content: sectionContent,
-                            ctdSection: section.number,
-                          });
-                          setRiViewMode('editor');
-                          setLayoutMode('regulatory-workspace');
-                        }}
-                      />
-                    </Suspense>
-                  </ErrorBoundary>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ── CMC Platform (in-shell) ────────────────────────────────────── */}
-          {!embeddedModule && layoutMode === 'cmc' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-cmc">
-              <WorkspaceHeader
-                title="CMC Platform"
-                subtitle="Chemistry, Manufacturing & Controls · Drug Substance · Drug Product · Analytical Methods"
-                onBack={() => setLayoutMode('regulatory-workspace')}
-              />
-              {!activeProjectId ? (
-                <div className="flex-1 flex items-center justify-center bg-zinc-50/50 p-8">
-                  <div className="max-w-md text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-teal-50 flex items-center justify-center">
-                      <FolderOpen className="w-8 h-8 text-teal-600" />
-                    </div>
-                    <h2 className="text-xl font-semibold text-zinc-900 mb-2">CMC Platform</h2>
-                    <p className="text-sm text-zinc-500 mb-6">
-                      Select a project to access Chemistry, Manufacturing & Controls modules.
-                    </p>
-                    <button
-                      onClick={() => setProjectSwitcherOpen(true)}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-teal-600 text-white text-sm font-medium hover:bg-teal-700 transition-colors shadow-sm"
-                    >
-                      <FolderOpen className="w-4 h-4" />
-                      Select Project
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  {/* Module 3 traceability bar */}
-                  <div className="flex items-center gap-3 px-4 py-2.5 border-b border-zinc-100 bg-zinc-50 flex-shrink-0">
-                    <span className="text-xs font-medium text-zinc-600 mr-3">
-                      CTD Module 3 — Quality
-                    </span>
-                    <button
-                      onClick={() => {
-                        setPendingEditorContent({
-                          content: `<h1>Module 3.2.S — Drug Substance</h1>
-<p>CTD Section 3.2.S for ${activeProject?.name || 'Drug Product'}.</p>
-<h2>3.2.S.1 General Information</h2><p></p>
-<h2>3.2.S.2 Manufacture</h2><p></p>
-<h2>3.2.S.3 Characterisation</h2><p></p>
-<h2>3.2.S.4 Control of Drug Substance</h2><p></p>
-<h2>3.2.S.5 Reference Standards</h2><p></p>
-<h2>3.2.S.6 Container Closure System</h2><p></p>
-<h2>3.2.S.7 Stability</h2><p></p>`,
-                          title: `Module 3.2.S — ${activeProject?.name || 'Drug Substance'}`,
-                          ctdSection: '3.2.S',
-                        });
-                        setRiViewMode('editor');
-                        setLayoutMode('regulatory-workspace');
-                      }}
-                      className="text-xs px-3 py-1.5 rounded-md bg-white border border-zinc-200 text-zinc-700 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-colors font-medium shadow-sm"
-                    >
-                      Draft 3.2.S (Drug Substance)
-                    </button>
-                    <button
-                      onClick={() => {
-                        setPendingEditorContent({
-                          content: `<h1>Module 3.2.P — Drug Product</h1>
-<p>CTD Section 3.2.P for ${activeProject?.name || 'Drug Product'}.</p>
-<h2>3.2.P.1 Description and Composition</h2><p></p>
-<h2>3.2.P.2 Pharmaceutical Development</h2><p></p>
-<h2>3.2.P.3 Manufacture</h2><p></p>
-<h2>3.2.P.4 Control of Excipients</h2><p></p>
-<h2>3.2.P.5 Control of Drug Product</h2><p></p>
-<h2>3.2.P.6 Reference Standards</h2><p></p>
-<h2>3.2.P.7 Container Closure System</h2><p></p>
-<h2>3.2.P.8 Stability</h2><p></p>`,
-                          title: `Module 3.2.P — ${activeProject?.name || 'Drug Product'}`,
-                          ctdSection: '3.2.P',
-                        });
-                        setRiViewMode('editor');
-                        setLayoutMode('regulatory-workspace');
-                      }}
-                      className="text-xs px-3 py-1.5 rounded-md bg-white border border-zinc-200 text-zinc-700 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-colors font-medium shadow-sm"
-                    >
-                      Draft 3.2.P (Drug Product)
-                    </button>
-                    <button
-                      onClick={() => {
-                        setPendingEditorContent({
-                          content: `<h1>Module 3.2.A — Appendices</h1>
-<p>CTD Appendices for ${activeProject?.name || 'Drug Product'}.</p>
-<h2>3.2.A.1 Facilities and Equipment</h2><p></p>
-<h2>3.2.A.2 Adventitious Agents Safety Evaluation</h2><p></p>
-<h2>3.2.A.3 Novel Excipients</h2><p></p>`,
-                          title: `Module 3.2.A — ${activeProject?.name || 'Appendices'}`,
-                          ctdSection: '3.2.A',
-                        });
-                        setRiViewMode('editor');
-                        setLayoutMode('regulatory-workspace');
-                      }}
-                      className="text-xs px-3 py-1.5 rounded-md bg-white border border-zinc-200 text-zinc-700 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-colors font-medium shadow-sm"
-                    >
-                      Draft 3.2.A (Appendices)
-                    </button>
-                  </div>
-                  <div className="flex-1 overflow-auto">
-                    <ErrorBoundary>
-                      <Suspense fallback={<ModuleLoadingFallback />}>
-                        <CMCModuleStandalone
-                          onDocumentCreated={({ artifactId }: { artifactId: string }) => {
-                            setOpenArtifactId(artifactId);
-                            setRiViewMode('editor');
-                            setLayoutMode('regulatory-workspace');
-                          }}
-                        />
-                      </Suspense>
-                    </ErrorBoundary>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
-          {/* ── Document Vault (in-shell) ──────────────────────────────────── */}
-          {!embeddedModule && layoutMode === 'document-vault' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-document-vault">
-              <WorkspaceHeader
-                title="Document Vault"
-                subtitle="Field-ready document control · Compliance · Audit trails"
-                onBack={() => setLayoutMode('regulatory-workspace')}
-              />
-              <div className="flex-1 overflow-auto">
-                <ErrorBoundary>
-                  <Suspense fallback={<ModuleLoadingFallback />}>
-                    <VaultPageStandalone />
-                  </Suspense>
-                </ErrorBoundary>
-              </div>
-            </div>
-          )}
-
-          {/* ── Clinical Trial Hub (in-shell) ──────────────────────────────── */}
-          {!embeddedModule && layoutMode === 'clinical-trial' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-clinical-trial">
-              <WorkspaceHeader
-                title="Clinical Trial Hub"
-                subtitle="Study design · Protocol optimization · CSR intelligence · Trial management"
-                onBack={() => setLayoutMode('regulatory-workspace')}
-              />
-              <div className="flex-1 overflow-auto">
-                <ErrorBoundary>
-                  <Suspense fallback={<ModuleLoadingFallback />}>
-                    <StudyArchitectModuleStandalone />
-                  </Suspense>
-                </ErrorBoundary>
-              </div>
-            </div>
-          )}
-
-          {/* ── Templates Library — browse and use regulatory templates ── */}
-          {!embeddedModule && layoutMode === 'templates' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-templates">
-              <WorkspaceHeader
-                title="Template Library"
-                subtitle="Browse, search, and use regulatory document templates for your submission type"
-                onBack={() => setLayoutMode('author')}
-              />
-              <div className="flex-1 overflow-auto p-6">
-                <ErrorBoundary>
-                  <Suspense
-                    fallback={
-                      <div className="flex-1 flex items-center justify-center bg-white h-full">
-                        <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
-                      </div>
-                    }
-                  >
-                    <TemplateLibraryInline
-                      projectId={activeProjectId}
-                      onUseTemplate={ctdSection => {
-                        if (ctdSection) {
-                          setPendingEditorContent({
-                            content: `<h1>${ctdSection.toUpperCase()} — Draft</h1><p>Template content for ${activeProject?.name || 'Application'}.</p>`,
-                            title: `${ctdSection.toUpperCase()} — ${activeProject?.name || 'Application'}`,
-                            ctdSection: ctdSection.replace(/^m/, ''),
-                          });
-                        }
-                        setLayoutMode('ectd-coauthor');
-                      }}
-                    />
-                  </Suspense>
-                </ErrorBoundary>
-              </div>
-            </div>
-          )}
-
-          {/* Dossier Navigator — disabled (consolidated into IND Workspace) */}
-
-          {/* ── Submission Operations Workspace (split-pane: list | inspector) ── */}
-          {!embeddedModule && layoutMode === 'submission-workspace' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-submission-ops">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
-                <button
-                  onClick={() => setLayoutMode('regulatory-workspace')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Workspace</span>
-                </button>
-                <span className="text-zinc-200">·</span>
-                <ShieldCheck className="w-3.5 h-3.5 text-violet-500" />
-                <span className="text-xs font-medium text-zinc-800">
-                  {submissionWorkspaceLabel} — Submission Ops
-                </span>
-              </div>
-              {!activeProjectId ? (
-                <div className="flex-1 flex items-center justify-center bg-zinc-50/50 p-8">
-                  <div className="max-w-md text-center">
-                    <ShieldCheck className="w-10 h-10 mx-auto mb-3 text-violet-400" />
-                    <h2 className="text-lg font-semibold text-zinc-900 mb-2">
-                      Submission Operations
-                    </h2>
-                    <p className="text-sm text-zinc-500 mb-4">
-                      Select a project to view its submission readiness and blockers.
-                    </p>
-                    <button
-                      onClick={() => setProjectSwitcherOpen(true)}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-600 text-white text-sm font-medium hover:bg-violet-700 transition-colors"
-                    >
-                      Select Project
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <ErrorBoundary>
-                  <Suspense
-                    fallback={
-                      <div className="flex-1 flex items-center justify-center">
-                        <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
-                      </div>
-                    }
-                  >
-                    <SubmissionOpsCommandCenter
-                      projectId={activeProjectId}
-                      projectName={activeProject?.name}
-                      onNavigateToArtifact={artifactId => {
-                        setLayoutMode('regulatory-workspace');
-                      }}
-                    />
-                  </Suspense>
-                </ErrorBoundary>
-              )}
-            </div>
-          )}
-
-          {/* ── Enablement Center — Dr. Sage + AnA 1.0 dual-AI hub ── */}
-          {!embeddedModule && layoutMode === 'enablement-center' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-enablement-center">
-              <ErrorBoundary>
-                <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <div className="text-center">
-                        <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-3" />
-                        <p className="text-sm text-zinc-500">Loading Enablement Center...</p>
-                      </div>
-                    </div>
-                  }
-                >
-                  <EnablementCenter
-                    onClose={() => setLayoutMode('regulatory-workspace')}
-                    contextProfile={{
-                      productType: activeProject?.type,
-                      userRole: userRole,
-                      clientType: industryMode,
-                    }}
-                  />
-                </Suspense>
-              </ErrorBoundary>
-            </div>
-          )}
-
-          {/* ── Author Workspace — unified submission authoring ── */}
-          {!embeddedModule && layoutMode === 'author' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-author">
-              {/* Author workspace routes to IND/eCTD/CMC/Clinical based on context */}
-              <div className="flex items-center gap-3 px-4 h-12 border-b border-zinc-100 bg-white flex-shrink-0">
-                <button
-                  onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  <span>Home</span>
-                </button>
-                <div className="w-px h-4 bg-zinc-200" />
-                <PenLine className="w-4 h-4 text-zinc-500" />
-                <span className="text-sm font-medium text-zinc-900">Author</span>
-                {activeProject && (
-                  <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
-                    {activeProject.name}
-                  </span>
-                )}
-                <div className="ml-auto flex items-center gap-1">
-                  <div className="flex items-center rounded-md border border-zinc-200 overflow-hidden">
-                    {[
-                      { key: 'ind-workspace', label: 'Dossier' },
-                      { key: 'ectd-coauthor', label: 'Co-Author' },
-                      { key: 'cmc', label: 'CMC' },
-                      { key: 'clinical-trial', label: 'Clinical' },
-                      { key: 'templates', label: 'Templates' },
-                    ].map(tab => (
-                      <button
-                        key={tab.key}
-                        onClick={() => setLayoutMode(tab.key as LayoutMode)}
-                        className={cn(
-                          'px-2.5 py-1 text-[11px] font-medium transition-colors',
-                          layoutMode === tab.key
-                            ? 'bg-zinc-100 text-zinc-900'
-                            : 'text-zinc-500 hover:bg-zinc-50'
-                        )}
-                      >
-                        {tab.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              {/* Default: show IND workspace */}
-              <div className="flex-1 flex min-h-0 overflow-auto">
-                <ErrorBoundary>
-                  <Suspense
-                    fallback={
-                      <div className="flex-1 flex items-center justify-center bg-white">
-                        <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
-                      </div>
-                    }
-                  >
-                    <INDWorkspace
-                      projectId={activeProjectId}
-                      projectName={activeProject?.name || 'Untitled Project'}
-                      submissionType={activeProject?.type || 'IND'}
-                      onOpenSection={sectionCode => {
-                        setPendingEditorContent({
-                          content: `<h1>${sectionCode.toUpperCase()} — Draft</h1><p>Loading section content…</p>`,
-                          title: `${sectionCode.toUpperCase()} — ${activeProject?.name || 'Application'}`,
-                          ctdSection: sectionCode.replace(/^m/, ''),
-                        });
-                        setLayoutMode('ectd-coauthor');
-                      }}
-                      onDraftWithAI={async (sectionCode, sectionTitle) => {
-                        const ctd = sectionCode.replace(/^m/, '');
-                        const token =
-                          sessionStorage.getItem('trialsage_access_token') ||
-                          localStorage.getItem('trialsage_access_token');
-                        const authHeaders: Record<string, string> = {
-                          'Content-Type': 'application/json',
-                          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                        };
-                        let content = '';
-                        try {
-                          const res = await fetch('/api/knowledge-base/generate-ind-section', {
-                            method: 'POST',
-                            headers: authHeaders,
-                            body: JSON.stringify({
-                              sectionCode: ctd,
-                              sectionTitle: sectionTitle || sectionCode,
-                              context: `CTD section for ${activeProject?.type || 'IND'} submission.`,
-                            }),
-                          });
-                          if (res.ok) {
-                            const data = await res.json();
-                            content = data.content || data.data?.content || '';
-                          }
-                        } catch (err) {
-                          console.warn('[ZenApp] AI draft generation failed:', err);
-                        }
-                        if (!content || content.trim().length === 0) {
-                          content = `<h1>${sectionTitle || sectionCode}</h1>\n<p><em>AI generation unavailable. Please draft this section manually or retry.</em></p>`;
-                        }
-                        setPendingEditorContent({
-                          content,
-                          title: `${sectionTitle || sectionCode} — ${activeProject?.name || 'Application'}`,
-                          ctdSection: ctd,
-                        });
-                        setLayoutMode('ectd-coauthor');
-                      }}
-                      onNavigateToCoAuthor={() => setLayoutMode('ectd-coauthor')}
-                    />
-                  </Suspense>
-                </ErrorBoundary>
-              </div>
-            </div>
-          )}
-
-          {/* ── Intelligence Hub — research, evidence, predictions ── */}
-          {!embeddedModule && layoutMode === 'intelligence-hub' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-intelligence-hub">
-              <ErrorBoundary>
-                <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
-                    </div>
-                  }
-                >
-                  <IntelligenceHub onClose={() => setLayoutMode('projects')} />
-                </Suspense>
-              </ErrorBoundary>
-            </div>
-          )}
 
           {/* ── Review & Readiness — quality, compliance, stress-testing ── */}
           {!embeddedModule && layoutMode === 'review-readiness' && (
@@ -2930,172 +1918,12 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
-          {/* ── Command Center — operations, submissions, governance ── */}
-          {!embeddedModule && layoutMode === 'command-center' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-command-center">
-              <ErrorBoundary>
-                <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
-                    </div>
-                  }
-                >
-                  <CommandCenterHub onClose={() => setLayoutMode('projects')} />
-                </Suspense>
-              </ErrorBoundary>
-            </div>
-          )}
 
-          {/* ── Platform Admin — API keys, users, billing, modules (Regulatory Command Center) ── */}
-          {!embeddedModule && layoutMode === 'platform-admin' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-platform-admin">
-              <ErrorBoundary>
-                <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
-                    </div>
-                  }
-                >
-                  <PlatformAdminPage />
-                </Suspense>
-              </ErrorBoundary>
-            </div>
-          )}
 
-          {/* ── Biologics Dashboard — biologic/biosimilar pathway intelligence ── */}
-          {!embeddedModule && layoutMode === 'biologics-dashboard' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-biologics">
-              <ErrorBoundary>
-                <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
-                    </div>
-                  }
-                >
-                  <BiologicsDashboardPage />
-                </Suspense>
-              </ErrorBoundary>
-            </div>
-          )}
 
-          {/* ── CTD Onboarding — client CTD ingestion wizard ── */}
-          {!embeddedModule && layoutMode === 'ctd-onboarding' && (
-            <div
-              className="flex-1 flex flex-col min-h-0 p-6"
-              data-testid="workspace-ctd-onboarding"
-            >
-              <ErrorBoundary>
-                <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
-                    </div>
-                  }
-                >
-                  <CTDOnboardingWizardPage onComplete={() => setLayoutMode('projects')} />
-                </Suspense>
-              </ErrorBoundary>
-            </div>
-          )}
 
-          {/* ── Client Intelligence — company persona, document ingestion, memory ── */}
-          {!embeddedModule && layoutMode === 'client-intelligence' && (
-            <div
-              className="flex-1 flex flex-col min-h-0"
-              data-testid="workspace-client-intelligence"
-            >
-              <ErrorBoundary>
-                <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
-                    </div>
-                  }
-                >
-                  <ClientIntelligencePage />
-                </Suspense>
-              </ErrorBoundary>
-            </div>
-          )}
 
-          {/* ── Collaboration Hub — threaded collaboration, reviews, decisions ── */}
-          {!embeddedModule && layoutMode === 'collaboration-hub' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-collaboration-hub">
-              {/* Workspace header — breadcrumb pattern */}
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
-                <button
-                  onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Home</span>
-                </button>
-                <span className="text-zinc-200">&middot;</span>
-                <MessageSquare className="w-3.5 h-3.5 text-blue-500" />
-                <span className="text-xs font-medium text-zinc-800">Collaboration</span>
-                {activeProject && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
-                    {activeProject.name}
-                  </span>
-                )}
-              </div>
-              <ErrorBoundary>
-                <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
-                    </div>
-                  }
-                >
-                  <CollaborationHubPage
-                    programId={activeProjectId ? Number(activeProjectId) : null}
-                  />
-                </Suspense>
-              </ErrorBoundary>
-            </div>
-          )}
 
-          {/* ── User Inbox — personal command center with worklist, approvals, alerts ── */}
-          {!embeddedModule && layoutMode === 'user-inbox' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-user-inbox">
-              <ErrorBoundary>
-                <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
-                    </div>
-                  }
-                >
-                  <UserInboxPage />
-                </Suspense>
-              </ErrorBoundary>
-            </div>
-          )}
-
-          {/* ── Client Branding — logo, letterhead, templates ── */}
-          {!embeddedModule && layoutMode === 'client-branding' && (
-            <div
-              className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-[#FAFAF9]"
-              data-testid="workspace-client-branding"
-            >
-              <div className="p-6">
-                <ErrorBoundary>
-                  <Suspense
-                    fallback={
-                      <div className="flex-1 flex items-center justify-center">
-                        <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
-                      </div>
-                    }
-                  >
-                    <ClientBrandingSettings />
-                  </Suspense>
-                </ErrorBoundary>
-              </div>
-            </div>
-          )}
 
           {/* ── Biostatistics Platform — power, endpoints, design ── */}
           {!embeddedModule && layoutMode === 'biostatistics' && (
@@ -3131,237 +1959,12 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
-          {/* ── Training Center — onboarding, courses, guides ── */}
-          {!embeddedModule && layoutMode === 'training-center' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-training-center">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
-                <button
-                  onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Home</span>
-                </button>
-                <span className="text-zinc-200">&middot;</span>
-                <BookOpen className="w-3.5 h-3.5 text-violet-500" />
-                <span className="text-xs font-medium text-zinc-800">Training Center</span>
-              </div>
-              <ErrorBoundary>
-                <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
-                    </div>
-                  }
-                >
-                  <TrainingManagementPage />
-                </Suspense>
-              </ErrorBoundary>
-            </div>
-          )}
 
-          {/* Enterprise Integrations — connectors & API management */}
-          {!embeddedModule && layoutMode === 'integrations' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-integrations">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
-                <button
-                  onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Home</span>
-                </button>
-                <span className="text-zinc-200">&middot;</span>
-                <Link2 className="w-3.5 h-3.5 text-blue-500" />
-                <span className="text-xs font-medium text-zinc-800">Integrations</span>
-              </div>
-              <ErrorBoundary>
-                <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
-                    </div>
-                  }
-                >
-                  <IntegrationsPage />
-                </Suspense>
-              </ErrorBoundary>
-            </div>
-          )}
 
-          {/* ── Client Onboarding — setup wizard, configuration ── */}
-          {!embeddedModule && layoutMode === 'client-onboarding' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-client-onboarding">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
-                <button
-                  onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Home</span>
-                </button>
-                <span className="text-zinc-200">&middot;</span>
-                <Rocket className="w-3.5 h-3.5 text-blue-500" />
-                <span className="text-xs font-medium text-zinc-800">Client Onboarding</span>
-              </div>
-              <ErrorBoundary>
-                <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
-                    </div>
-                  }
-                >
-                  <OnboardingWizardPage />
-                </Suspense>
-              </ErrorBoundary>
-            </div>
-          )}
 
-          {/* ── Knowledge Base — account-level skills, .MD upload, materials ── */}
-          {!embeddedModule && layoutMode === 'knowledge-base' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-knowledge-base">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
-                <button
-                  onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Home</span>
-                </button>
-                <span className="text-zinc-200">&middot;</span>
-                <Upload className="w-3.5 h-3.5 text-emerald-500" />
-                <span className="text-xs font-medium text-zinc-800">Knowledge Base</span>
-              </div>
-              <div className="flex-1 overflow-y-auto p-6">
-                <div className="max-w-3xl mx-auto">
-                  <div className="mb-6">
-                    <h2 className="text-lg font-semibold text-zinc-900 mb-1">
-                      Account Knowledge Base
-                    </h2>
-                    <p className="text-sm text-zinc-500 leading-relaxed">
-                      Upload materials, skills files, and .MD documents for AnA to learn from. This
-                      knowledge applies across all projects in your organization.
-                    </p>
-                  </div>
-                  <CustomInstructions
-                    value={customInstructions}
-                    onChange={async val => {
-                      setCustomInstructions(val);
-                      try {
-                        await fetch('/api/project-knowledge/instructions', {
-                          method: 'PUT',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ instructions: val }),
-                        });
-                      } catch {
-                        /* silently fail */
-                      }
-                    }}
-                    projectType={activeProject?.type}
-                    defaultOpen
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ── Project Knowledge — project-level context, uploads, sources ── */}
-          {!embeddedModule && layoutMode === 'project-knowledge' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-project-knowledge">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
-                <button
-                  onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Home</span>
-                </button>
-                <span className="text-zinc-200">&middot;</span>
-                <FileStack className="w-3.5 h-3.5 text-blue-500" />
-                <span className="text-xs font-medium text-zinc-800">Project Knowledge</span>
-                {activeProject && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-medium">
-                    {activeProject.name}
-                  </span>
-                )}
-              </div>
-              <ErrorBoundary>
-                <Suspense
-                  fallback={
-                    <div className="flex-1 flex items-center justify-center bg-white">
-                      <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
-                    </div>
-                  }
-                >
-                  <ProjectKnowledgePanel projectId={activeProjectId || null} />
-                </Suspense>
-              </ErrorBoundary>
-            </div>
-          )}
 
           {/* ── Legal Center — IP, contracts, regulatory law ── */}
-          {/* Artifacts Gallery — browsable outputs and templates */}
-          {!embeddedModule && layoutMode === 'artifacts' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-artifacts">
-              <Suspense fallback={<ModuleLoadingFallback />}>
-                <ArtifactsGalleryPage />
-              </Suspense>
-            </div>
-          )}
 
-          {!embeddedModule && layoutMode === 'legal-center' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-legal-center">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
-                <button
-                  onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Home</span>
-                </button>
-                <span className="text-zinc-200">&middot;</span>
-                <Scale className="w-3.5 h-3.5 text-blue-500" />
-                <span className="text-xs font-medium text-zinc-800">Legal Center</span>
-              </div>
-              <Suspense
-                fallback={
-                  <div className="flex-1 flex items-center justify-center">
-                    <Loader2 className="w-5 h-5 animate-spin text-zinc-300" />
-                  </div>
-                }
-              >
-                <LegalCenterPage onClose={() => setLayoutMode('projects')} />
-              </Suspense>
-            </div>
-          )}
-
-          {/* ── Document Builder — CSR + CTD wizard across global agencies ── */}
-          {!embeddedModule && layoutMode === 'document-builder' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-document-builder">
-              <div className="flex items-center gap-2 px-3 h-9 border-b border-zinc-100 bg-white flex-shrink-0">
-                <button
-                  onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                  <span>Home</span>
-                </button>
-                <span className="text-zinc-200">&middot;</span>
-                <BookOpen className="w-3.5 h-3.5 text-violet-500" />
-                <span className="text-xs font-medium text-zinc-800">Document Builder</span>
-              </div>
-              <Suspense
-                fallback={
-                  <div className="flex-1 flex items-center justify-center">
-                    <Loader2 className="w-5 h-5 animate-spin text-zinc-300" />
-                  </div>
-                }
-              >
-                <FullDocumentBuilder />
-              </Suspense>
-            </div>
-          )}
 
           {/* ── Intelligent Report Engine — immutable records, atom provenance, quasi-indemnification ── */}
           {!embeddedModule && layoutMode === 'report-engine' && (
@@ -3378,67 +1981,20 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
-          {/* ── Ana Dashboard — regulatory intelligence, gap analysis, change impact ── */}
-          {!embeddedModule && layoutMode === 'ana-dashboard' && (
-            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-ana-dashboard">
-              <Suspense
-                fallback={
-                  <div className="flex-1 flex items-center justify-center">
-                    <Loader2 className="w-5 h-5 animate-spin text-zinc-300" />
-                  </div>
-                }
-              >
-                <AnaDashboardPage projectId={activeProjectId} />
-              </Suspense>
-            </div>
-          )}
-
           {/* ── Safety Narrative — ICH E3 §12 compliant narrative generation ── */}
           {!embeddedModule && layoutMode === 'safety-narrative' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-safety-narrative">
-              <Suspense
-                fallback={
-                  <div className="flex-1 flex items-center justify-center">
-                    <Loader2 className="w-5 h-5 animate-spin text-zinc-300" />
-                  </div>
-                }
-              >
+              <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-zinc-300" /></div>}>
                 <SafetyNarrativePage projectId={activeProjectId} />
               </Suspense>
             </div>
           )}
 
-          {/* ── Ana Platform Control — agentic settings, modules, onboarding ── */}
-          {!embeddedModule && layoutMode === 'ana-platform-control' && (
-            <div
-              className="flex-1 flex flex-col min-h-0"
-              data-testid="workspace-ana-platform-control"
-            >
-              <Suspense
-                fallback={
-                  <div className="flex-1 flex items-center justify-center">
-                    <Loader2 className="w-5 h-5 animate-spin text-zinc-300" />
-                  </div>
-                }
-              >
-                <AnaPlatformControlPage />
-              </Suspense>
-            </div>
-          )}
 
           {/* Precedent Intelligence Dashboard (standalone) */}
           {layoutMode === 'precedent-intelligence' && (
-            <div
-              className="flex-1 flex flex-col min-h-0"
-              data-testid="workspace-precedent-intelligence"
-            >
-              <Suspense
-                fallback={
-                  <div className="flex-1 flex items-center justify-center">
-                    <Loader2 className="w-5 h-5 animate-spin text-zinc-300" />
-                  </div>
-                }
-              >
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-precedent-intelligence">
+              <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-zinc-300" /></div>}>
                 <PrecedentIntelligenceDashboard
                   onNavigateToEditor={() => setLayoutMode('regulatory-workspace')}
                 />
@@ -3447,9 +2003,9 @@ export const ZenApp: React.FC = () => {
           )}
 
           {/* Redirect deprecated routes to unified workspace */}
-          {['workspace', 'medtech-dashboard', 'dossier'].includes(layoutMode) && (
-            <RedirectToWorkspace onRedirect={() => setLayoutMode('regulatory-workspace')} />
-          )}
+          {['workspace', 'medtech-dashboard', 'dossier'].includes(
+            layoutMode
+          ) && <RedirectToWorkspace onRedirect={() => setLayoutMode('regulatory-workspace')} />}
 
           {/* ── Project Workspace (3-pane: tree | content | inspector) ───── */}
           {!embeddedModule &&
@@ -3537,18 +2093,145 @@ export const ZenApp: React.FC = () => {
                 onOpenArtifactConsumed={() => setOpenArtifactId(undefined)}
               />
             ))}
-          {/* Rules Engine Manager */}
-          {!embeddedModule && layoutMode === 'rules' && (
-            <div
-              className="flex-1 flex flex-col min-h-0 overflow-y-auto"
-              data-testid="workspace-rules"
-            >
+
+          {/* ── Unified Workflow: Project Home Dashboard ──────────────────── */}
+          {!embeddedModule && layoutMode === 'project-home' && activeProject && (
+            <Suspense fallback={<ModuleLoadingFallback />}>
+              <ProjectHomeDashboard
+                project={{
+                  id: activeProject.id,
+                  name: activeProject.name,
+                  type: activeProject.type || 'IND',
+                  description: activeProject.description,
+                  sponsor: activeProject.sponsor,
+                  product: activeProject.product,
+                  region: activeProject.region,
+                }}
+                onNavigate={(mode, sectionCode) => {
+                  // Map workflow names to layout modes
+                  const modeMap: Record<string, LayoutMode> = {
+                    dossier: 'dossier-map',
+                    documents: 'documents',
+                    review: 'review',
+                    submissions: 'submissions',
+                    'section-workspace': 'section-workspace',
+                  };
+                  const resolved = modeMap[mode] || (mode as LayoutMode);
+                  if (resolved === 'section-workspace' && sectionCode) {
+                    setActiveSectionCode(sectionCode);
+                  }
+                  setLayoutMode(resolved);
+                }}
+              />
+            </Suspense>
+          )}
+
+          {/* ── Unified Workflow: Dossier Map ────────────────────────────── */}
+          {!embeddedModule && layoutMode === 'dossier-map' && (
+            <Suspense fallback={<ModuleLoadingFallback />}>
+              <DossierMap
+                projectName={activeProject?.name}
+                projectType={activeProject?.type}
+                onSectionClick={(sectionCode) => {
+                  setActiveSectionCode(sectionCode);
+                  setLayoutMode('section-workspace');
+                }}
+                onBack={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
+              />
+            </Suspense>
+          )}
+
+          {/* ── Unified Workflow: Documents (consolidated Author + Document Builder) */}
+          {!embeddedModule && layoutMode === 'documents' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-documents">
               <ErrorBoundary>
                 <Suspense fallback={<ModuleLoadingFallback />}>
-                  <RulesManager onBack={() => setLayoutMode('mission-control')} />
+                  <FullDocumentBuilder />
                 </Suspense>
               </ErrorBoundary>
             </div>
+          )}
+
+          {/* ── Unified Workflow: Review (governance & approvals) ─────────── */}
+          {!embeddedModule && layoutMode === 'review' && (
+            <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-review">
+              <ErrorBoundary>
+                <Suspense fallback={<ModuleLoadingFallback />}>
+                  <ReviewReadiness
+                    projectId={activeProjectId}
+                    onClose={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
+                  />
+                </Suspense>
+              </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── Unified Workflow: Submissions (readiness & export) ────────── */}
+          {!embeddedModule && layoutMode === 'submissions' && (
+            <Suspense fallback={<ModuleLoadingFallback />}>
+              <SubmissionReadinessView
+                projectName={activeProject?.name}
+                projectType={activeProject?.type}
+                onSectionClick={(sectionCode) => {
+                  setActiveSectionCode(sectionCode);
+                  setLayoutMode('section-workspace');
+                }}
+                onBack={() => setLayoutMode(activeProjectId ? 'project-home' : 'projects')}
+                onExport={() => {}}
+              />
+            </Suspense>
+          )}
+
+          {/* ── Unified Workflow: Section Workspace ──────────────────────── */}
+          {!embeddedModule && layoutMode === 'section-workspace' && (
+            <Suspense fallback={<ModuleLoadingFallback />}>
+              <SectionWorkspace
+                section={(() => {
+                  // Resolve section metadata from active section code
+                  const code = activeSectionCode || '2.5';
+                  const SECTION_LOOKUP: Record<string, { title: string; module: string; status: 'not-started' | 'drafting' | 'in-review' | 'approved' | 'blocked' | 'locked' }> = {
+                    '1.1': { title: 'Forms', module: 'Module 1 — Administrative', status: 'approved' },
+                    '1.2': { title: 'Cover Letter', module: 'Module 1 — Administrative', status: 'approved' },
+                    '1.3.1': { title: 'Form FDA 1571', module: 'Module 1 — Administrative', status: 'approved' },
+                    '1.3.2': { title: 'Form FDA 1572', module: 'Module 1 — Administrative', status: 'drafting' },
+                    '1.3.3': { title: 'Financial Disclosure', module: 'Module 1 — Administrative', status: 'not-started' },
+                    '2.2': { title: 'Introduction', module: 'Module 2 — CTD Summaries', status: 'drafting' },
+                    '2.3': { title: 'Quality Overall Summary', module: 'Module 2 — CTD Summaries', status: 'not-started' },
+                    '2.4': { title: 'Nonclinical Overview', module: 'Module 2 — CTD Summaries', status: 'not-started' },
+                    '2.5': { title: 'Clinical Overview', module: 'Module 2 — CTD Summaries', status: 'drafting' },
+                    '2.6.1': { title: 'Pharmacology', module: 'Module 2 — CTD Summaries', status: 'not-started' },
+                    '2.6.2': { title: 'Pharmacokinetics', module: 'Module 2 — CTD Summaries', status: 'not-started' },
+                    '2.6.3': { title: 'Toxicology', module: 'Module 2 — CTD Summaries', status: 'not-started' },
+                    '2.7.1': { title: 'Biopharmaceutic Studies', module: 'Module 2 — CTD Summaries', status: 'not-started' },
+                    '2.7.2': { title: 'Clinical Pharmacology', module: 'Module 2 — CTD Summaries', status: 'not-started' },
+                    '2.7.3': { title: 'Clinical Efficacy', module: 'Module 2 — CTD Summaries', status: 'drafting' },
+                    '2.7.4': { title: 'Clinical Safety', module: 'Module 2 — CTD Summaries', status: 'not-started' },
+                    '2.7.5': { title: 'Literature References', module: 'Module 2 — CTD Summaries', status: 'not-started' },
+                    '2.7.6': { title: 'Synopses', module: 'Module 2 — CTD Summaries', status: 'not-started' },
+                    '3.2.S': { title: 'Drug Substance', module: 'Module 3 — Quality', status: 'in-review' },
+                    '3.2.P': { title: 'Drug Product', module: 'Module 3 — Quality', status: 'in-review' },
+                    '3.2.A': { title: 'Appendices', module: 'Module 3 — Quality', status: 'not-started' },
+                    '3.2.R': { title: 'Regional Information', module: 'Module 3 — Quality', status: 'not-started' },
+                    '4.2.1': { title: 'Pharmacology', module: 'Module 4 — Nonclinical', status: 'not-started' },
+                    '4.2.2': { title: 'Pharmacokinetics', module: 'Module 4 — Nonclinical', status: 'not-started' },
+                    '4.2.3': { title: 'Toxicology', module: 'Module 4 — Nonclinical', status: 'not-started' },
+                    '5.2': { title: 'Tabular Listing of Studies', module: 'Module 5 — Clinical', status: 'not-started' },
+                    '5.3': { title: 'Clinical Study Reports', module: 'Module 5 — Clinical', status: 'blocked' },
+                    '5.4': { title: 'Literature References', module: 'Module 5 — Clinical', status: 'not-started' },
+                  };
+                  const found = SECTION_LOOKUP[code];
+                  return {
+                    code,
+                    title: found?.title || `Section ${code}`,
+                    status: found?.status || 'not-started',
+                    module: found?.module || 'Unknown Module',
+                  };
+                })()}
+                projectName={activeProject?.name}
+                projectId={activeProjectId}
+                onBack={() => setLayoutMode('dossier-map')}
+              />
+            </Suspense>
           )}
 
           {/* ── Projects Index ─────────────────────────────────────────────── */}
@@ -3566,8 +2249,7 @@ export const ZenApp: React.FC = () => {
                 onProjectClick={projectId => {
                   navInProgressRef.current = true;
                   setActiveProjectId(projectId);
-                  setRiViewMode('editor');
-                  setLayoutMode('regulatory-workspace');
+                  setLayoutMode('project-home');
                   navigate(`/concept2cure/project/${projectId}`);
                 }}
                 onNewProject={() => setNewProjectOpen(true)}
@@ -3726,7 +2408,7 @@ export const ZenApp: React.FC = () => {
             workspace/regulatory-workspace: rendered inline above (mode="full")
             module pages: shown here as compact input bar at bottom
             projects/home: shown here as full chat (no module content above) */}
-        {layoutMode !== 'workspace' && layoutMode !== 'regulatory-workspace' && (
+        {layoutMode !== 'workspace' && layoutMode !== 'regulatory-workspace' && layoutMode !== 'section-workspace' && (
           <AnaPersistentPanel
             mode={layoutMode === 'projects' || layoutMode === 'deep-research' ? 'full' : 'compact'}
             defaultChatMode={layoutMode === 'deep-research' ? 'deep-research' : 'standard'}
@@ -3781,8 +2463,7 @@ export const ZenApp: React.FC = () => {
         onSelectProject={id => {
           setActiveProjectId(id);
           setProjectSwitcherOpen(false);
-          setRiViewMode('editor');
-          setLayoutMode('regulatory-workspace');
+          setLayoutMode('project-home');
           navigate(`/concept2cure/project/${id}`);
           // Clear conversation when switching projects
           setActiveConversationId(undefined);

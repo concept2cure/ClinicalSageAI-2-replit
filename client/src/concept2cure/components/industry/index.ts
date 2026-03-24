@@ -105,7 +105,8 @@ export {
 } from '../medtech/MedicalDeviceDashboard';
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// CO-AUTHOR COMPONENTS - "THE HEAVY LIFTER"
+// CO-AUTHOR COMPONENTS — [BATCH 5] standalone mode removed; export retained
+// for type compatibility only. Portal routes redirect to Documents.
 // ═══════════════════════════════════════════════════════════════════════════════
 export {
   eCTDCoAuthor,
@@ -191,16 +192,17 @@ export const INDUSTRY_DASHBOARD_MAP = {
 
 /**
  * Maps user role to specialized workspace components
+ * [BATCH 5] eCTDCoAuthor replaced with ClinicalDocAuthoringWorkspace (canonical authoring)
  */
 export const ROLE_WORKSPACE_MAP = {
   regulatory_affairs: ['FDAMeetingWorkspace', 'MedicalDeviceDashboard', 'PharmaPortfolioDashboard'],
   ra_lead: ['FDAMeetingWorkspace', 'MedicalDeviceDashboard', 'PharmaPortfolioDashboard'],
   ra_specialist: ['FDAMeetingWorkspace', 'MedicalDeviceDashboard'],
-  medical_writer: ['eCTDCoAuthor', 'ClinicalDocAuthoringWorkspace'],
+  medical_writer: ['ClinicalDocAuthoringWorkspace'],
   clinical_ops: ['BiotechProgramDashboard'],
   medical_affairs: ['ClinicalDocAuthoringWorkspace'],
-  quality_assurance: ['CMCWizard', 'ClinicalDocAuthoringWorkspace'],
-  cmc_lead: ['CMCWizard', 'ClinicalDocAuthoringWorkspace'],
+  quality_assurance: ['ClinicalDocAuthoringWorkspace'],
+  cmc_lead: ['ClinicalDocAuthoringWorkspace'],
   project_manager: ['CROClientPortal', 'BiotechProgramDashboard'],
   executive: ['PharmaPortfolioDashboard', 'BiotechProgramDashboard'],
   consultant: ['CROClientPortal'],
@@ -208,11 +210,11 @@ export const ROLE_WORKSPACE_MAP = {
 
 /**
  * THE SHERPA TEAM - Maps components to their Sherpa roles
+ * [BATCH 5] eCTDCoAuthor → ClinicalDocAuthoringWorkspace
  */
 export const SHERPA_ROLES = {
   ConvergentCanvas: 'The Expedition Leader (AnA RI)',
-  eCTDCoAuthor: 'The Heavy Lifter (Document Porter)',
-  CMCWizard: 'The Gear Master (Equipment Check)',
+  ClinicalDocAuthoringWorkspace: 'The Heavy Lifter (Document Porter)',
   MedicalDeviceDashboard: 'The Pathfinder (CERV2 Scout)',
   ContextRibbon: 'The Compass & Altimeter',
   MorningBriefing: 'The Morning Weather Report',

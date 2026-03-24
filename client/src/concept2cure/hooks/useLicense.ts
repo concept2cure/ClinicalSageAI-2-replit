@@ -285,18 +285,23 @@ export function useUpdateWorkQueueStatus() {
  * Layout mode → module ID mapping.
  * Maps each UI layout mode to the module that must be enabled to access it.
  */
+// [BATCH 4] Simplified — most standalone modes removed. Core workflow is always available.
 const LAYOUT_MODULE_MAP: Record<string, string> = {
-  assistant: 'core', // Always available — core chat
-  sherpa: 'strategic-advisor',
+  assistant: 'core',
   editor: 'doc-canvas',
-  analytics: 'analytics-hub',
-  timeline: 'core', // Always available — workflow view
-  audit: 'compliance-monitor',
-  ctd: 'ectd-coauthor',
-  'mission-control': 'core', // Always available — project management
-  rules: 'compliance-monitor',
-  'ind-workspace': 'ind-filing',
-  'submission-workspace': 'ectd-coauthor',
+  projects: 'core',
+  'project-home': 'core',
+  'dossier-map': 'core',
+  documents: 'core',
+  review: 'core',
+  submissions: 'core',
+  'section-workspace': 'core',
+  'regulatory-workspace': 'core',
+  biostatistics: 'core',
+  'review-readiness': 'core',
+  'report-engine': 'core',
+  'safety-narrative': 'core',
+  'precedent-intelligence': 'core',
 };
 
 /**

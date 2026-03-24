@@ -102,7 +102,7 @@ const moduleRouteMap: Record<string, string> = {
   vault: '/client-portal/vault',
   cer_generator: '/client-portal/cer-generator',
   '510k_builder': '/client-portal/510k-builder',
-  ectd_coauthor: '/client-portal/ectd-coauthor',
+  ectd_coauthor: '/client-portal/documents', // [BATCH 5] remapped from ectd-coauthor
   regulatory_intel: '/client-portal/regulatory-intel',
   cmc_platform: '/client-portal/cmc-wizard',
   clinical_trial: '/client-portal/study-architect',

@@ -77,7 +77,7 @@ const navigationItems = [
 ];
 
 const solutionItems = [
-  { name: 'eCTD Co-Author', href: '/client-portal/ectd-coauthor', icon: Beaker },
+  { name: 'Documents', href: '/client-portal/documents', icon: Beaker },
   { name: 'CSR Intelligence', href: '/csr-intelligence', icon: Brain },
   { name: 'Validation Hub', href: '/validation-hub-enhanced', icon: CheckCircle },
   { name: 'CMC Insights', href: '/cmc', icon: Layers },

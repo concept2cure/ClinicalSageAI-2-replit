@@ -1,5 +1,5 @@
 /**
- * Client Dashboard
+ * Client Dashboard (v1 portal only — not used by portal-v2)
  *
  * This component provides a dashboard overview for biotech clients
  * in the multi-tenant environment, showing key metrics and project information.

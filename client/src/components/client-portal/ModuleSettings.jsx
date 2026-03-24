@@ -21,17 +21,10 @@ const ModuleSettings = () => {
   // Default module configuration
   const defaultModules = [
     {
-      id: 'ectd-coauthor',
-      name: 'eCTD Co-Author™',
+      id: 'documents',
+      name: 'Document Authoring',
       icon: <FileText className="h-5 w-5" />,
-      description: 'IND & eCTD submission automation with AI co-authoring',
-      enabled: true,
-    },
-    {
-      id: 'coauthor',
-      name: 'eCTD Co-Author™',
-      icon: <FileText className="h-5 w-5" />,
-      description: 'AI-assisted co-authoring of CTD submission sections',
+      description: 'Regulatory document authoring and eCTD assembly',
       enabled: true,
     },
     {
