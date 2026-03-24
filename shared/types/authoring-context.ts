@@ -137,3 +137,67 @@ export function hasVersionContext(
     ctx.artifactVersionId.length > 0
   );
 }
+
+// ─── Authoring Action Types ──────────────────────────────────────────────────
+
+/** Wave 1 action identifiers */
+export type AuthoringActionId =
+  | 'resume_last_section'
+  | 'draft_section_from_context'
+  | 'explain_promotion_blockers'
+  | 'compare_against_approved'
+  | 'promote_to_review';
+
+/** Wave 2 action identifiers */
+export type AuthoringActionWave2Id =
+  | 'correction_draft'
+  | 'harmonize_sections'
+  | 'section_contradictions'
+  | 'resolution_changelog'
+  | 'module_readiness';
+
+/** Strongly typed action request */
+export interface AuthoringActionRequest {
+  actionId: AuthoringActionId | AuthoringActionWave2Id;
+  context: AuthoringContextPack;
+  /** Additional parameters specific to the action */
+  params?: Record<string, unknown>;
+}
+
+/** Strongly typed action result */
+export interface AuthoringActionResult {
+  success: boolean;
+  actionId: string;
+  message: string;
+  /** Structured data from the action */
+  data?: Record<string, unknown>;
+  /** Navigation target if the action requires a view change */
+  navigateTo?: { layoutMode: string; sectionCode?: string; artifactId?: string };
+  /** Content to insert into editor if the action produces draft content */
+  draftContent?: { content: string; title: string; ctdSection?: string };
+}
+
+/** Minimum context required for each Wave 1 action */
+export const ACTION_REQUIRED_CONTEXT: Record<AuthoringActionId, (keyof AuthoringContextPack)[]> = {
+  resume_last_section: ['projectId'],
+  draft_section_from_context: ['projectId', 'sectionCode'],
+  explain_promotion_blockers: ['projectId'],
+  compare_against_approved: ['projectId', 'artifactId'],
+  promote_to_review: ['projectId', 'artifactId'],
+};
+
+/**
+ * Check if context has the minimum fields required for a given action.
+ * Returns missing field names, or empty array if all present.
+ */
+export function validateActionContext(
+  actionId: AuthoringActionId,
+  ctx: AuthoringContextPack | null | undefined
+): string[] {
+  if (!ctx) return ['projectId', 'workflowStage'];
+  const required = ACTION_REQUIRED_CONTEXT[actionId] || [];
+  return required.filter(field => {
+    const value = ctx[field];
+    return value === undefined || value === null || value === '';
+  });
+}

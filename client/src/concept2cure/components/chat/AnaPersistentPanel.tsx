@@ -413,6 +413,14 @@ interface AnaPersistentPanelProps {
   }) => void;
   /** Navigate to a layout mode or path */
   onNavigate?: (path: string) => void;
+  /** Insert draft content into the governed editor (P1) */
+  onDraftInsert?: (content: string, title: string, ctdSection?: string) => void;
+  /** Navigate to a specific section (P2) */
+  onNavigateToSection?: (sectionCode: string) => void;
+  /** Open a specific artifact in the editor (P2) */
+  onOpenArtifact?: (artifactId: string) => void;
+  /** Request governed promotion of current artifact (P5) */
+  onRequestPromotion?: (artifactId: string) => Promise<{ promoted: boolean; message: string }>;
   /**
    * "full" = fills all available space, shows greeting + suggested actions (Claude.ai style)
    * "compact" = just the input bar at bottom, conversation expands as overlay
@@ -452,6 +460,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   initialMessage,
   onActionRun,
   onNavigate,
+  onDraftInsert,
+  onNavigateToSection,
+  onOpenArtifact,
+  onRequestPromotion,
   mode = 'full',
   defaultChatMode = 'standard',
 }) => {
@@ -1074,26 +1086,231 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       });
     }
 
-    // ── Wave 1 Authoring Actions — route to context-aware chat intents ──
-    const authoringIntents: Record<string, string> = {
-      resume_last_section: 'Open my most recently edited section. Show me where I left off and what needs attention.',
-      draft_section_from_context: authoringContext?.sectionCode
-        ? `Draft CTD section ${authoringContext.sectionCode}${authoringContext.sectionTitle ? `: ${authoringContext.sectionTitle}` : ''}. Generate a compliant first draft following ICH M4 guidelines and regulatory requirements for ${authoringContext.submissionType || 'this submission'}.`
-        : 'Draft the current section from context.',
-      explain_promotion_blockers: authoringContext?.sectionCode
-        ? `What is blocking section ${authoringContext.sectionCode} from promotion to review? Check readiness status, contradictions, and compliance issues.`
-        : 'What is blocking this document from promotion to review? Explain all readiness blockers and contradictions.',
-      compare_against_approved: authoringContext?.artifactId
-        ? `Compare the current version of this document (artifact ${authoringContext.artifactId}) against the last approved version. Show what changed and assess regulatory impact.`
-        : 'Compare the current document against the last approved version.',
-      promote_to_review: authoringContext?.artifactId
-        ? `Check if artifact ${authoringContext.artifactId} is ready for promotion to review. Run readiness checks and contradiction scans. If clean, proceed with governed promotion.`
-        : 'Check if this document is ready for promotion to review.',
-    };
+    // ── Wave 1 Authoring Actions — real operational behavior ──────────
 
-    const authoringMessage = action.intent ? authoringIntents[action.intent] : undefined;
-    if (authoringMessage) {
-      handleSend(authoringMessage);
+    // P2: Resume last section — real navigation
+    if (action.intent === 'resume_last_section') {
+      (async () => {
+        try {
+          const projectId = contextProfile?.projectId;
+          if (!projectId) {
+            handleSend('I need a project context to find your last section. Please open a project first.');
+            return;
+          }
+          const res = await fetch(`/api/authoring-actions/resume-last-section/${projectId}`, {
+            headers: getAuthHeaders(),
+          });
+          const data = await res.json();
+          if (data.found && data.ctdSection && onNavigateToSection) {
+            // Real navigation to the section
+            onNavigateToSection(data.ctdSection);
+            setMessages(prev => [...prev, {
+              id: `a-${Date.now()}`,
+              role: 'assistant',
+              content: `Opening **${data.title || 'your last section'}** (§${data.ctdSection}). Status: ${data.status || 'draft'}.`,
+              timestamp: new Date(),
+            }]);
+          } else if (data.found && data.artifactId && onOpenArtifact) {
+            // Open artifact directly if no CTD section
+            onOpenArtifact(data.artifactId);
+            setMessages(prev => [...prev, {
+              id: `a-${Date.now()}`,
+              role: 'assistant',
+              content: `Opening **${data.title || 'your last document'}**. Status: ${data.status || 'draft'}.`,
+              timestamp: new Date(),
+            }]);
+          } else {
+            handleSend('Open my most recently edited section. Show me where I left off.');
+          }
+        } catch {
+          handleSend('Resume my last section — show me where I left off.');
+        }
+      })();
+      return;
+    }
+
+    // P1: Draft section from context — send chat, then intercept response for editor insertion
+    if (action.intent === 'draft_section_from_context') {
+      const draftMessage = authoringContext?.sectionCode
+        ? `Draft CTD section ${authoringContext.sectionCode}${authoringContext.sectionTitle ? `: ${authoringContext.sectionTitle}` : ''}. Generate a compliant first draft following ICH M4 guidelines and regulatory requirements for ${authoringContext.submissionType || 'this submission'}. Return the draft content in a code block so it can be inserted into the editor.`
+        : 'Draft the current section from context.';
+      handleSend(draftMessage);
+      return;
+    }
+
+    // P3: Explain promotion blockers — fetch real blocker data first, then chat
+    if (action.intent === 'explain_promotion_blockers') {
+      (async () => {
+        const projectId = contextProfile?.projectId;
+        if (!projectId) {
+          handleSend('What is blocking this document from promotion to review?');
+          return;
+        }
+        try {
+          const params = new URLSearchParams();
+          if (authoringContext?.artifactId) params.set('artifactId', authoringContext.artifactId);
+          if (authoringContext?.sectionCode) params.set('sectionCode', authoringContext.sectionCode);
+          const res = await fetch(`/api/authoring-actions/promotion-blockers/${projectId}?${params}`, {
+            headers: getAuthHeaders(),
+          });
+          const data = await res.json();
+          if (data.blockerCount === 0) {
+            setMessages(prev => [...prev, {
+              id: `a-${Date.now()}`,
+              role: 'assistant',
+              content: `**No blockers detected.** ${authoringContext?.sectionCode ? `Section §${authoringContext.sectionCode}` : 'This document'} appears ready for promotion to review.\n\nYou can proceed with "Promote to review" when ready.`,
+              timestamp: new Date(),
+            }]);
+          } else {
+            const blockerLines = data.blockers.map((b: any, i: number) =>
+              `${i + 1}. **[${b.severity.toUpperCase()}]** ${b.message} _(via ${b.source})_`
+            ).join('\n');
+            setMessages(prev => [...prev, {
+              id: `a-${Date.now()}`,
+              role: 'assistant',
+              content: `**Promotion ${data.blocked ? 'BLOCKED' : 'has warnings'}** — ${data.blockerCount} issue(s) found:\n\n${blockerLines}\n\n${data.blocked ? 'Resolve critical blockers before promotion.' : 'These are advisory — promotion is not hard-blocked.'}`,
+              timestamp: new Date(),
+            }]);
+          }
+        } catch {
+          handleSend(authoringContext?.sectionCode
+            ? `What is blocking section ${authoringContext.sectionCode} from promotion to review?`
+            : 'What is blocking this document from promotion to review?');
+        }
+      })();
+      return;
+    }
+
+    // P4: Compare against approved version — fetch real version data
+    if (action.intent === 'compare_against_approved') {
+      (async () => {
+        const projectId = contextProfile?.projectId;
+        const artifactId = authoringContext?.artifactId;
+        if (!projectId || !artifactId) {
+          handleSend('Compare the current document against the last approved version.');
+          return;
+        }
+        try {
+          const res = await fetch(`/api/authoring-actions/compare-versions/${projectId}/${artifactId}`, {
+            headers: getAuthHeaders(),
+          });
+          const data = await res.json();
+          if (!data.available) {
+            setMessages(prev => [...prev, {
+              id: `a-${Date.now()}`,
+              role: 'assistant',
+              content: `**No comparison available.** ${data.message}`,
+              timestamp: new Date(),
+            }]);
+          } else {
+            const cur = data.currentVersion;
+            const appr = data.approvedVersion;
+            const wordDelta = data.diffSummary.currentWords - data.diffSummary.approvedWords;
+            setMessages(prev => [...prev, {
+              id: `a-${Date.now()}`,
+              role: 'assistant',
+              content: `**Version Comparison**\n\n| | Current (v${cur.version}) | Approved (v${appr.version}) |\n|---|---|---|\n| Status | ${cur.status} | ${appr.status} |\n| Words | ${data.diffSummary.currentWords} | ${data.diffSummary.approvedWords} |\n| Updated | ${new Date(cur.updatedAt).toLocaleDateString()} | ${new Date(appr.updatedAt).toLocaleDateString()} |\n\n**Net change:** ${wordDelta > 0 ? '+' : ''}${wordDelta} words.\n\nTo view a detailed inline diff, open the document inspector and select the Compare tab.`,
+              timestamp: new Date(),
+            }]);
+          }
+        } catch {
+          handleSend('Compare the current document against the last approved version.');
+        }
+      })();
+      return;
+    }
+
+    // P5: Promote to review — governed transition with confirmation
+    if (action.intent === 'promote_to_review') {
+      (async () => {
+        const projectId = contextProfile?.projectId;
+        const artifactId = authoringContext?.artifactId;
+        if (!projectId || !artifactId) {
+          setMessages(prev => [...prev, {
+            id: `a-${Date.now()}`,
+            role: 'assistant',
+            content: '**Cannot promote.** No artifact is currently open. Open a document first.',
+            timestamp: new Date(),
+          }]);
+          return;
+        }
+        // Step 1: Check blockers
+        try {
+          const blockerRes = await fetch(`/api/authoring-actions/promotion-blockers/${projectId}?artifactId=${artifactId}`, {
+            headers: getAuthHeaders(),
+          });
+          const blockerData = await blockerRes.json();
+          if (blockerData.blocked) {
+            const lines = blockerData.blockers.map((b: any) => `- **[${b.severity}]** ${b.message}`).join('\n');
+            setMessages(prev => [...prev, {
+              id: `a-${Date.now()}`,
+              role: 'assistant',
+              content: `**Promotion blocked.** ${blockerData.blockerCount} critical issue(s) must be resolved first:\n\n${lines}`,
+              timestamp: new Date(),
+            }]);
+            return;
+          }
+        } catch {
+          // Non-blocking — proceed with promotion attempt
+        }
+
+        // Step 2: Attempt governed promotion
+        if (onRequestPromotion) {
+          try {
+            const result = await onRequestPromotion(artifactId);
+            setMessages(prev => [...prev, {
+              id: `a-${Date.now()}`,
+              role: 'assistant',
+              content: result.promoted
+                ? `**Promoted to review.** ${result.message} The document is now in the governance review pipeline.`
+                : `**Promotion not completed.** ${result.message}`,
+              timestamp: new Date(),
+            }]);
+          } catch (err) {
+            setMessages(prev => [...prev, {
+              id: `a-${Date.now()}`,
+              role: 'assistant',
+              content: `**Promotion failed.** ${err instanceof Error ? err.message : 'Unknown error'}`,
+              timestamp: new Date(),
+            }]);
+          }
+        } else {
+          // Fallback: call the status API directly
+          try {
+            const res = await fetch(`/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/status`, {
+              method: 'PUT',
+              headers: getAuthHeaders(),
+              body: JSON.stringify({ status: 'review' }),
+            });
+            if (res.ok) {
+              setMessages(prev => [...prev, {
+                id: `a-${Date.now()}`,
+                role: 'assistant',
+                content: '**Promoted to review.** The document has been moved to the governance review pipeline.',
+                timestamp: new Date(),
+              }]);
+            } else {
+              const err = await res.json().catch(() => ({ error: 'Unknown error' }));
+              setMessages(prev => [...prev, {
+                id: `a-${Date.now()}`,
+                role: 'assistant',
+                content: `**Promotion failed.** ${err.error || err.message || `HTTP ${res.status}`}`,
+                timestamp: new Date(),
+              }]);
+            }
+          } catch {
+            handleSend('Promote this document to review.');
+          }
+        }
+      })();
+      return;
+    }
+
+    // Other authoring intents — fall through to chat
+    const fallbackIntents: Record<string, string> = {};
+    const fallbackMessage = action.intent ? fallbackIntents[action.intent] : undefined;
+    if (fallbackMessage) {
+      handleSend(fallbackMessage);
       return;
     }
 
@@ -1606,6 +1823,37 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                                 <Download className="w-3 h-3" />
                               </button>
                             )}
+                          {/* Insert into Editor — when onDraftInsert is available and content is substantial */}
+                          {onDraftInsert &&
+                            contextProfile?.projectId &&
+                            msg.content.length > 100 &&
+                            authoringContext?.sectionCode && (
+                              <button
+                                onClick={() => {
+                                  // Extract code block content if present, otherwise use full response
+                                  const codeBlockMatch = msg.content.match(/```(?:\w+)?\n([\s\S]*?)```/);
+                                  const insertContent = codeBlockMatch ? codeBlockMatch[1].trim() : msg.content;
+                                  const title = authoringContext.sectionTitle
+                                    ? `${authoringContext.sectionCode} — ${authoringContext.sectionTitle}`
+                                    : `Section ${authoringContext.sectionCode} Draft`;
+                                  onDraftInsert(insertContent, title, authoringContext.sectionCode);
+                                  setMessages(prev =>
+                                    prev.map(m =>
+                                      m.id === msg.id ? { ...m, insertedToEditor: true } : m
+                                    )
+                                  );
+                                }}
+                                className="p-1 text-zinc-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                title="Insert into Editor"
+                              >
+                                <FileEdit className="w-3 h-3" />
+                              </button>
+                            )}
+                          {(msg as any).insertedToEditor && (
+                            <span className="text-[10px] text-blue-600 font-medium ml-1">
+                              Inserted
+                            </span>
+                          )}
                           {msg.savedAsArtifact && (
                             <span className="text-[10px] text-emerald-600 font-medium ml-1">
                               Saved

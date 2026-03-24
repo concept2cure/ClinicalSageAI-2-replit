@@ -143,13 +143,31 @@ router.get('/compare-versions/:projectId/:artifactId', async (req: Request, res:
       return res.status(400).json({ error: 'projectId and artifactId are required' });
     }
 
-    // Fetch artifact versions
-    const { db } = await import('../db.js');
-    const versions = await db.query.concept2cureArtifactVersions?.findMany?.({
-      where: (v: any, { eq }: any) => eq(v.artifactId, Number(artifactId)),
-      orderBy: (v: any, { desc }: any) => [desc(v.version)],
-      limit: 10,
-    }).catch(() => null);
+    // Fetch artifact versions — try direct version table, fall back to artifact API
+    let versions: any[] | null = null;
+    try {
+      const { db } = await import('../db.js');
+      versions = await db.query.concept2cureArtifactVersions?.findMany?.({
+        where: (v: any, { eq }: any) => eq(v.artifactId, Number(artifactId)),
+        orderBy: (v: any, { desc }: any) => [desc(v.version)],
+        limit: 10,
+      });
+    } catch {
+      // Version table may not exist — try fetching artifact directly for version info
+      try {
+        const { db } = await import('../db.js');
+        const artifact = await db.query.concept2cureArtifacts?.findFirst?.({
+          where: (a: any, { eq }: any) => eq(a.id, Number(artifactId)),
+        });
+        if (artifact) {
+          return res.json({
+            available: false,
+            message: `Artifact "${artifact.title}" found (v${artifact.version || 1}, status: ${artifact.status || 'draft'}). Detailed version history requires version tracking to be enabled.`,
+            artifact: { id: artifact.id, title: artifact.title, version: artifact.version, status: artifact.status },
+          });
+        }
+      } catch { /* non-blocking */ }
+    }
 
     if (!versions || versions.length < 2) {
       return res.json({
@@ -330,6 +348,37 @@ router.get('/module-readiness/:projectId/:moduleCode', async (req: Request, res:
     action: 'module_readiness',
     message: 'Module readiness hook is wired. Uses readiness-engine.',
     context: { projectId, moduleCode },
+  });
+});
+
+// Hook: Gather evidence relevant to current section
+router.get('/section-evidence/:projectId/:sectionCode', async (req: Request, res: Response) => {
+  const { projectId, sectionCode } = req.params;
+  try {
+    // Try to fetch evidence from the evidence management service
+    const { EvidenceManagementService } = await import(
+      '../services/EvidenceManagementService.js'
+    );
+    if (EvidenceManagementService) {
+      const svc = new EvidenceManagementService();
+      const evidence = await svc.getEvidenceForSection?.(Number(projectId), sectionCode);
+      if (evidence && Array.isArray(evidence)) {
+        return res.json({
+          status: 'data',
+          action: 'section_evidence',
+          evidence: evidence.slice(0, 20),
+          context: { projectId, sectionCode },
+        });
+      }
+    }
+  } catch {
+    // Service unavailable — return hook_ready
+  }
+  return res.json({
+    status: 'hook_ready',
+    action: 'section_evidence',
+    message: 'Evidence gathering hook is wired. Uses EvidenceManagementService.',
+    context: { projectId, sectionCode },
   });
 });
 

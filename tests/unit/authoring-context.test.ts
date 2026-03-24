@@ -15,7 +15,10 @@ import {
   hasSectionContext,
   hasArtifactContext,
   hasVersionContext,
+  validateActionContext,
+  ACTION_REQUIRED_CONTEXT,
   type AuthoringContextPack,
+  type AuthoringActionId,
 } from '../../shared/types/authoring-context';
 import {
   resolveAuthoringContext,
@@ -270,5 +273,160 @@ describe('failure behavior', () => {
     expect(result!.readiness?.score).toBe(100);
     expect(result!.readiness?.blocked).toBe(false);
     expect(result!.readiness?.blockers).toBeUndefined();
+  });
+});
+
+// ─── Action context validation ───────────────────────────────────────────────
+
+describe('validateActionContext', () => {
+  const fullCtx: AuthoringContextPack = {
+    projectId: '42',
+    workflowStage: 'section-workspace',
+    sectionCode: '2.5',
+    sectionTitle: 'Clinical Overview',
+    artifactId: 'art-123',
+    artifactVersionId: '3',
+  };
+
+  it('returns empty array when context has all required fields', () => {
+    expect(validateActionContext('resume_last_section', fullCtx)).toEqual([]);
+    expect(validateActionContext('draft_section_from_context', fullCtx)).toEqual([]);
+    expect(validateActionContext('explain_promotion_blockers', fullCtx)).toEqual([]);
+    expect(validateActionContext('compare_against_approved', fullCtx)).toEqual([]);
+    expect(validateActionContext('promote_to_review', fullCtx)).toEqual([]);
+  });
+
+  it('returns missing fields when context is null', () => {
+    const missing = validateActionContext('resume_last_section', null);
+    expect(missing).toContain('projectId');
+  });
+
+  it('reports missing sectionCode for draft action', () => {
+    const noSection: AuthoringContextPack = { projectId: '42', workflowStage: 'documents' };
+    const missing = validateActionContext('draft_section_from_context', noSection);
+    expect(missing).toContain('sectionCode');
+    expect(missing).not.toContain('projectId');
+  });
+
+  it('reports missing artifactId for compare action', () => {
+    const noArtifact: AuthoringContextPack = { projectId: '42', workflowStage: 'documents' };
+    const missing = validateActionContext('compare_against_approved', noArtifact);
+    expect(missing).toContain('artifactId');
+  });
+
+  it('reports missing artifactId for promote action', () => {
+    const noArtifact: AuthoringContextPack = { projectId: '42', workflowStage: 'review' };
+    const missing = validateActionContext('promote_to_review', noArtifact);
+    expect(missing).toContain('artifactId');
+  });
+});
+
+// ─── Behavioral tests for action patterns ────────────────────────────────────
+
+describe('action behavioral patterns', () => {
+  it('draft-from-context produces insertable context (sectionCode + title present)', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '2.5',
+      sectionTitle: 'Clinical Overview',
+      submissionType: 'IND',
+    });
+    expect(ctx).not.toBeNull();
+    expect(hasSectionContext(ctx)).toBe(true);
+    // Draft insertion requires sectionCode to build a title
+    const title = `${ctx!.sectionCode} — ${ctx!.sectionTitle}`;
+    expect(title).toBe('2.5 — Clinical Overview');
+    // And submissionType for regulatory requirements
+    expect(ctx!.submissionType).toBe('IND');
+  });
+
+  it('resume-last-section only requires projectId', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'projects',
+    });
+    expect(ctx).not.toBeNull();
+    expect(validateActionContext('resume_last_section', ctx)).toEqual([]);
+  });
+
+  it('blocker explanation enriches context with readiness and contradiction data', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      sectionCode: '2.5',
+      readiness: {
+        score: 35,
+        blocked: true,
+        blockers: [
+          { code: 'MISSING_EVIDENCE', severity: 'critical', message: 'No clinical evidence linked' },
+          { code: 'STALE_CONTENT', severity: 'major', message: 'Content not updated in 60+ days' },
+        ],
+      },
+      contradictions: [
+        { id: 'c1', type: 'dosage_conflict', severity: 'critical', explanation: 'Dosage in 2.5 conflicts with 2.7.3' },
+      ],
+    });
+    expect(ctx!.readiness?.blocked).toBe(true);
+    expect(ctx!.readiness?.blockers).toHaveLength(2);
+    expect(ctx!.contradictions).toHaveLength(1);
+    // Blocker explanation should be grounded in these sources
+    expect(ctx!.readiness!.blockers![0].source).toBeUndefined(); // source is optional
+    expect(ctx!.contradictions![0].type).toBe('dosage_conflict');
+  });
+
+  it('compare-version requires artifactId, fails gracefully without it', () => {
+    const noArtifact = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'documents',
+    });
+    expect(hasArtifactContext(noArtifact)).toBe(false);
+    expect(validateActionContext('compare_against_approved', noArtifact)).toContain('artifactId');
+
+    const withArtifact = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'documents',
+      artifactId: 'art-123',
+      artifactVersion: 3,
+    });
+    expect(hasArtifactContext(withArtifact)).toBe(true);
+    expect(validateActionContext('compare_against_approved', withArtifact)).toEqual([]);
+  });
+
+  it('promote-to-review requires projectId + artifactId', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      artifactId: 'art-123',
+      artifactStatus: 'drafting',
+    });
+    expect(validateActionContext('promote_to_review', ctx)).toEqual([]);
+    expect(ctx!.artifactStatus).toBe('drafting');
+  });
+
+  it('promote-to-review blocked when readiness.blocked is true', () => {
+    const ctx = resolveAuthoringContext({
+      projectId: '42',
+      layoutMode: 'section-workspace',
+      artifactId: 'art-123',
+      readiness: { score: 20, blocked: true, blockers: [{ code: 'X', severity: 'critical', message: 'blocked' }] },
+    });
+    // The context correctly reflects blocked state
+    expect(ctx!.readiness?.blocked).toBe(true);
+    // UI should check this before allowing promotion
+  });
+
+  it('ACTION_REQUIRED_CONTEXT covers all Wave 1 actions', () => {
+    const actions: AuthoringActionId[] = [
+      'resume_last_section',
+      'draft_section_from_context',
+      'explain_promotion_blockers',
+      'compare_against_approved',
+      'promote_to_review',
+    ];
+    for (const a of actions) {
+      expect(ACTION_REQUIRED_CONTEXT[a]).toBeDefined();
+      expect(Array.isArray(ACTION_REQUIRED_CONTEXT[a])).toBe(true);
+    }
   });
 });

@@ -917,6 +917,51 @@ export const ZenApp: React.FC = () => {
     if (partial.contradictions !== undefined) setSectionContradictions(partial.contradictions);
   }, []);
 
+  // ── P1: Draft insertion → pendingEditorContent → EditorPanel auto-creates artifact ──
+  const handleDraftInsert = useCallback((content: string, title: string, ctdSection?: string) => {
+    setPendingEditorContent({ title, content, ctdSection });
+    // Switch to documents mode where EditorPanel will consume the pending content
+    if (layoutMode !== 'documents' && layoutMode !== 'workspace' && layoutMode !== 'regulatory-workspace') {
+      setLayoutMode('documents');
+    }
+  }, [layoutMode]);
+
+  // ── P2: Navigate to section — real navigation ──
+  const handleNavigateToSection = useCallback((sectionCode: string) => {
+    setActiveSectionCode(sectionCode);
+    setLayoutMode('section-workspace');
+  }, []);
+
+  // ── P2: Open artifact — real navigation ──
+  const handleOpenArtifact = useCallback((artifactId: string) => {
+    setOpenArtifactId(artifactId);
+    setLayoutMode('documents');
+  }, []);
+
+  // ── P5: Governed promotion — calls real status API ──
+  const handleRequestPromotion = useCallback(async (artifactId: string): Promise<{ promoted: boolean; message: string }> => {
+    if (!activeProjectId) {
+      return { promoted: false, message: 'No active project.' };
+    }
+    const token = sessionStorage.getItem('trialsage_access_token') || localStorage.getItem('trialsage_access_token');
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res = await fetch(
+      `/api/concept2cure/projects/${activeProjectId}/artifacts/${artifactId}/status`,
+      {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({ status: 'review' }),
+      }
+    );
+    if (res.ok) {
+      return { promoted: true, message: 'Artifact promoted to review. Governance workflow initiated.' };
+    }
+    const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+    return { promoted: false, message: err.error || err.message || 'Promotion failed.' };
+  }, [activeProjectId]);
+
   // Workspace suggested actions — context-aware quick-start chips for AnA
   const workspaceSuggestedActions = useMemo(() => {
     const base = workspaceSummary?.nextActions ?? [];
@@ -2594,6 +2639,10 @@ export const ZenApp: React.FC = () => {
                   suggestedActions={workspaceSuggestedActions}
                   onActionRun={handleActionRun}
                   onNavigate={(path) => setLayoutMode(path as LayoutMode)}
+                  onDraftInsert={handleDraftInsert}
+                  onNavigateToSection={handleNavigateToSection}
+                  onOpenArtifact={handleOpenArtifact}
+                  onRequestPromotion={handleRequestPromotion}
                   initialMessage={
                     pendingDraftSection
                       ? `Draft CTD section ${pendingDraftSection.code}: ${pendingDraftSection.title}. Generate a compliant first draft following ICH M4 guidelines and 21 CFR 312.23(a) requirements.`
@@ -2701,6 +2750,10 @@ export const ZenApp: React.FC = () => {
             suggestedActions={layoutMode === 'projects' ? workspaceSuggestedActions : undefined}
             onActionRun={handleActionRun}
             onNavigate={(path) => setLayoutMode(path as LayoutMode)}
+            onDraftInsert={handleDraftInsert}
+            onNavigateToSection={handleNavigateToSection}
+            onOpenArtifact={handleOpenArtifact}
+            onRequestPromotion={handleRequestPromotion}
           />
         )}
       </div>
