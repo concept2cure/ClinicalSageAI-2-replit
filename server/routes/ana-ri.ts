@@ -41,6 +41,13 @@ import {
   getOrCreateThread,
   saveChatMessage as saveMessage,
 } from '../services/chat-thread-helpers.js';
+import { logKernelDecision } from '../services/kernel-decision-record.js';
+import { planKernelExecution } from '../services/kernel-router.js';
+import {
+  getKernelPolicyHint,
+  recordKernelPolicyOutcome,
+} from '../services/kernel-adaptive-policy.js';
+import { buildGoalPlan, replanGoalPlan } from '../services/kernel-goal-planner.js';
 
 const router = Router();
 
@@ -155,6 +162,20 @@ router.post('/chat', async (req: Request, res: Response) => {
     };
 
     const orchestration = orchestrate(orchestratorInput);
+    const routingPlan = planKernelExecution({
+      route: '/api/ana-ri/chat',
+      messageLength: message.length,
+      intentLens: orchestration.detectedIntent.lens,
+      intentConfidence: orchestration.detectedIntent.confidence,
+      submissionType: orchestration.detectedSubmissionType,
+      requestedMaxTokens: 4096,
+    });
+    let goalPlan = buildGoalPlan({
+      message,
+      intentLens: orchestration.detectedIntent.lens,
+      riskTier: routingPlan.riskTier,
+      submissionType: orchestration.detectedSubmissionType,
+    });
 
     // Inject authoring context into system prompt if available
     if (authoringContextBlock) {
@@ -186,12 +207,19 @@ router.post('/chat', async (req: Request, res: Response) => {
       });
     }
 
+    const policyHint = await getKernelPolicyHint({
+      organizationId: orgId ? Number(orgId) : null,
+      route: '/api/ana-ri/chat',
+      taskType: routingPlan.taskType,
+    });
+    const selectedStrategy = policyHint?.preferredStrategy || routingPlan.strategy;
+
     const response = await gw.route({
-      taskType: 'regulatory_review',
+      taskType: routingPlan.taskType,
       messages,
-      maxTokens: 4096,
-      temperature: 0.3,
-      strategy: 'quality_optimized',
+      maxTokens: routingPlan.maxTokens,
+      temperature: routingPlan.temperature,
+      strategy: selectedStrategy,
     });
 
     if (!response.content) {
@@ -235,6 +263,11 @@ router.post('/chat', async (req: Request, res: Response) => {
     // Check evidence discipline and structure
     const evidenceCheck = checkEvidenceDiscipline(response.content);
     const structureCheck = validateResponseStructure(response.content);
+    if (!evidenceCheck.compliant) {
+      goalPlan = replanGoalPlan(goalPlan, 'evidence_failure');
+    } else if (!structureCheck.valid) {
+      goalPlan = replanGoalPlan(goalPlan, 'structure_failure');
+    }
 
     // Log generation event for observability
     logGeneration({
@@ -252,6 +285,55 @@ router.post('/chat', async (req: Request, res: Response) => {
       model: response.model,
     });
 
+    // Kernel Decision Record (best effort, non-blocking)
+    void logKernelDecision({
+      requestId: `ana-ri-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+      threadId: threadId || null,
+      route: '/api/ana-ri/chat',
+      organizationId: orgId ? Number(orgId) : null,
+      userId,
+      projectId: req.body.project_context?.projectId
+        ? Number(req.body.project_context.projectId)
+        : null,
+      plannerVersion: routingPlan.plannerVersion,
+      orchestratorName: routingPlan.orchestratorName,
+      intentLens: orchestration.detectedIntent.lens,
+      intentConfidence: orchestration.detectedIntent.confidence,
+      submissionType: orchestration.detectedSubmissionType || null,
+      selectedTaskType: routingPlan.taskType,
+      selectedProvider: response.provider,
+      selectedModel: response.model,
+      routingStrategy: selectedStrategy,
+      selectedTools: [],
+      constraints: {
+        ...routingPlan.constraints,
+        maxTokens: routingPlan.maxTokens,
+        temperature: routingPlan.temperature,
+      },
+      decisionRationale: routingPlan.decisionRationale,
+      estimatedCostUsd: response.usage?.estimatedCostUsd ?? null,
+      latencyMs: response.latencyMs ?? null,
+      outcome: 'success',
+    });
+    void recordKernelPolicyOutcome({
+      organizationId: orgId ? Number(orgId) : null,
+      route: '/api/ana-ri/chat',
+      taskType: routingPlan.taskType,
+      strategy: selectedStrategy,
+      threadId: threadId || null,
+      modelProvider: response.provider,
+      modelName: response.model,
+      qualityScore: evaluation.overallScore / Math.max(evaluation.maxOverallScore, 1),
+      latencyMs: response.latencyMs ?? null,
+      estimatedCostUsd: response.usage?.estimatedCostUsd ?? null,
+      success: true,
+      metadata: {
+        intent: orchestration.detectedIntent.lens,
+        submissionType: orchestration.detectedSubmissionType,
+        evidenceCompliant: evidenceCheck.compliant,
+      },
+    });
+
     return res.json({
       response: response.content,
       thread_id: threadId,
@@ -263,6 +345,7 @@ router.post('/chat', async (req: Request, res: Response) => {
         workstreamHandoff: orchestration.workstreamHandoff,
         suggestedActions: orchestration.suggestedActions,
         meta: orchestration.orchestrationMeta,
+        goalPlan,
       },
       evaluation: {
         grade: evaluation.grade,
@@ -284,9 +367,67 @@ router.post('/chat', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('[AnA RI] Chat error:', error);
+    void logKernelDecision({
+      requestId: `ana-ri-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+      route: '/api/ana-ri/chat',
+      orchestratorName: 'kernel-router-v1',
+      selectedTaskType: 'regulatory_review',
+      routingStrategy: 'quality_optimized',
+      selectedTools: [],
+      outcome: 'failed',
+      errorMessage: error?.message || 'unknown error',
+      decisionRationale: 'AnA RI route failed before completion.',
+    });
     return res.status(500).json({
       error: 'Internal server error',
       code: 'INTERNAL_ERROR',
+      message: error?.message,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/ana-ri/plan — Return planner preview without generation
+// ─────────────────────────────────────────────────────────────────────────────
+router.post('/plan', async (req: Request, res: Response) => {
+  try {
+    const { message, intent_lens, submission_type } = req.body || {};
+    if (!message || typeof message !== 'string') {
+      return res.status(400).json({ error: 'Message is required', code: 'INVALID_MESSAGE' });
+    }
+
+    const orchestration = orchestrate({
+      message,
+      intentLens: intent_lens,
+      submissionType: submission_type,
+    });
+    const routingPlan = planKernelExecution({
+      route: '/api/ana-ri/chat',
+      messageLength: message.length,
+      intentLens: orchestration.detectedIntent.lens,
+      intentConfidence: orchestration.detectedIntent.confidence,
+      submissionType: orchestration.detectedSubmissionType,
+      requestedMaxTokens: 4096,
+    });
+    const goalPlan = buildGoalPlan({
+      message,
+      intentLens: orchestration.detectedIntent.lens,
+      riskTier: routingPlan.riskTier,
+      submissionType: orchestration.detectedSubmissionType,
+    });
+
+    return res.json({
+      routingPlan,
+      goalPlan,
+      orchestration: {
+        detectedIntent: orchestration.detectedIntent,
+        detectedSubmissionType: orchestration.detectedSubmissionType,
+      },
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      error: 'Failed to compute plan',
+      code: 'PLANNER_ERROR',
       message: error?.message,
     });
   }

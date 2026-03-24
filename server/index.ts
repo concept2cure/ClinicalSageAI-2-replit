@@ -5784,37 +5784,67 @@ app.post('/api/lumen/regulatory-analysis', async (req: Request, res: Response) =
     const { query, context } = req.body;
     console.log('📋 Request data:', { query, context });
 
-    // Return comprehensive regulatory analysis
-    res.json({
-      comprehensive_analysis: {
-        regulatory_readiness_score: 85,
-        overall_risk_assessment: 'Medium',
-        timeline_analysis: {
-          projected_delay_days: 30,
+    const { getGateway } = await import('./services/ai-gateway');
+    const gateway = getGateway();
+    const response = await gateway.route({
+      taskType: 'regulatory_review',
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You are AnA RI. Return strict JSON only. No markdown. Provide concrete compliance analysis.',
         },
-        cost_analysis: {
-          total_financial_impact: 150000,
+        {
+          role: 'user',
+          content: `Generate a regulatory analysis for the payload below.
+
+Query: ${query || ''}
+Context: ${JSON.stringify(context || {}, null, 2)}
+
+Return JSON shape:
+{
+  "comprehensive_analysis": {
+    "regulatory_readiness_score": number,
+    "overall_risk_assessment": "Low|Medium|High|Critical",
+    "timeline_analysis": { "projected_delay_days": number },
+    "cost_analysis": { "total_financial_impact": number },
+    "regulatory_gaps": [{ "regulation_section": string, "risk_level": string, "compliance_status": string, "requirement_area": string }],
+    "ich_e6r3_assessment": { "compliance_score": number, "risk_factors": string[], "recommendations": string[] }
+  },
+  "lumen_intelligence_summary": {
+    "confidence_score": number,
+    "analysis_timestamp": string,
+    "data_sources": string[]
+  }
+}`,
         },
-        regulatory_gaps: [
-          {
-            regulation_section: '21 CFR 312.23',
-            risk_level: 'medium',
-            compliance_status: 'needs_review',
-            requirement_area: 'Clinical Protocol',
-          },
-        ],
-        ich_e6r3_assessment: {
-          compliance_score: 90,
-          risk_factors: ['Data integrity requirements', 'Quality management'],
-          recommendations: ['Implement risk-based monitoring', 'Update SOPs'],
-        },
-      },
-      lumen_intelligence_summary: {
-        confidence_score: 92,
-        analysis_timestamp: new Date().toISOString(),
-        data_sources: ['FDA guidance', 'ICH E6(R3)', 'EMA guidelines'],
-      },
+      ],
+      maxTokens: 3000,
+      temperature: 0.2,
+      strategy: 'quality_optimized',
+      callerModule: 'lumen/regulatory-analysis',
     });
+
+    try {
+      res.json(JSON.parse(response.content));
+    } catch {
+      res.json({
+        comprehensive_analysis: {
+          regulatory_readiness_score: 70,
+          overall_risk_assessment: 'Medium',
+          timeline_analysis: { projected_delay_days: 0 },
+          cost_analysis: { total_financial_impact: 0 },
+          regulatory_gaps: [],
+          ich_e6r3_assessment: { compliance_score: 75, risk_factors: [], recommendations: [] },
+        },
+        lumen_intelligence_summary: {
+          confidence_score: 60,
+          analysis_timestamp: new Date().toISOString(),
+          data_sources: ['AI Gateway', 'Parser fallback'],
+        },
+        raw_response: response.content,
+      });
+    }
   } catch (error) {
     console.error('Error in regulatory analysis:', error);
     res.status(500).json({ error: 'Failed to perform regulatory analysis' });
@@ -5833,36 +5863,65 @@ app.post('/api/lumen/ich-e6r3-guidance', async (req: Request, res: Response) => 
     });
 
     const { query } = req.body;
+    const started = Date.now();
 
-    // Return ICH E6(R3) guidance response
-    res.json({
-      guidance_response: {
-        answer: `Based on ICH E6(R3) guidelines, regarding "${query}": The Good Clinical Practice guidelines emphasize risk-based approaches to clinical trial management, focusing on patient safety and data integrity.`,
-        regulatory_framework: 'ICH_E6_R3',
-        confidence_score: 88,
-        supporting_sections: [
-          {
-            section: '5.0 Quality Management',
-            relevance: 'High',
-            summary: 'Establishes quality management principles for clinical trials',
-          },
-        ],
-        implementation_guidance: [
-          'Implement proportionate risk-based monitoring',
-          'Ensure data integrity throughout trial lifecycle',
-          'Maintain focus on patient safety and rights',
-        ],
-        references: [
-          'ICH E6(R3) Section 5.0 - Quality Management',
-          'ICH E6(R3) Section 5.5 - Risk-based Monitoring',
-        ],
-      },
-      query_metadata: {
-        query_timestamp: new Date().toISOString(),
-        processing_time_ms: 1250,
-        guidance_version: 'E6(R3) Step 2b',
-      },
+    const { getGateway } = await import('./services/ai-gateway');
+    const gateway = getGateway();
+    const response = await gateway.route({
+      taskType: 'regulatory_review',
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You are AnA RI specialized in ICH E6(R3). Return strict JSON only and focus on actionable, evidence-aware guidance.',
+        },
+        {
+          role: 'user',
+          content: `Question: ${query || ''}
+
+Return JSON:
+{
+  "guidance_response": {
+    "answer": string,
+    "regulatory_framework": "ICH_E6_R3",
+    "confidence_score": number,
+    "supporting_sections": [{ "section": string, "relevance": string, "summary": string }],
+    "implementation_guidance": string[],
+    "references": string[]
+  },
+  "query_metadata": {
+    "query_timestamp": string,
+    "processing_time_ms": number,
+    "guidance_version": string
+  }
+}`,
+        },
+      ],
+      maxTokens: 2200,
+      temperature: 0.2,
+      strategy: 'quality_optimized',
+      callerModule: 'lumen/ich-e6r3-guidance',
     });
+
+    try {
+      res.json(JSON.parse(response.content));
+    } catch {
+      res.json({
+        guidance_response: {
+          answer: response.content,
+          regulatory_framework: 'ICH_E6_R3',
+          confidence_score: 70,
+          supporting_sections: [],
+          implementation_guidance: [],
+          references: [],
+        },
+        query_metadata: {
+          query_timestamp: new Date().toISOString(),
+          processing_time_ms: Date.now() - started,
+          guidance_version: 'E6(R3)',
+        },
+      });
+    }
   } catch (error) {
     console.error('Error in ICH E6(R3) guidance:', error);
     res.status(500).json({ error: 'Failed to provide ICH E6(R3) guidance' });

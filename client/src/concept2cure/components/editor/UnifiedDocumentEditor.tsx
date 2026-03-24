@@ -1094,6 +1094,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
   documentMode: documentModeProp,
   submissionType,
   isReadOnly = false,
+  documentMode: documentModeProp,
   onToggleLock,
   showTraceability = true,
   showCompliance = true,

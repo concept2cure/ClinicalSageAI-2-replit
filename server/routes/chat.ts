@@ -20,8 +20,15 @@ import {
 import { getEmbeddingService } from '../services/enhancedEmbeddingService.js';
 import { getIntelligencePrefix } from '../services/lumen-context-builder.js';
 import { processResponseActions } from '../services/ana-guidance-executor.js';
+import { logKernelDecision } from '../services/kernel-decision-record.js';
+import { planKernelExecution } from '../services/kernel-router.js';
+import {
+  getKernelPolicyHint,
+  recordKernelPolicyOutcome,
+} from '../services/kernel-adaptive-policy.js';
 import { createHash } from 'crypto';
 import { interceptChatResponse } from '../services/intelligence/rim-interceptors.js';
+import { buildMemoryContextForChat } from '../services/memory-context-assembler.js';
 
 const router = Router();
 
@@ -355,6 +362,9 @@ const sendMessageHandler = async (req: Request, res: Response) => {
     // If we have retrieved evidence, inject it into the system prompt so
     // the model can ground its answer and cite by [SRC-n] reference.
     let evidenceBlock = '';
+    let memoryAtomCount = 0;
+    let memoryBlockChars = 0;
+    let memoryDiagnostics: Record<string, unknown> | null = null;
     if (sources.length > 0) {
       evidenceBlock =
         '\n\n--- RETRIEVED EVIDENCE (cite as [SRC-n]) ---\n' +
@@ -405,7 +415,20 @@ const sendMessageHandler = async (req: Request, res: Response) => {
 
       // Use the orchestrator's enriched system prompt instead of the basic one
       const basePrompt = system_prompt || orchestratorResult.systemPrompt;
-      const systemPrompt = intelligencePrefix + basePrompt + evidenceBlock;
+
+      const { memoryBlock, atoms, diagnostics } = await buildMemoryContextForChat({
+        threadId,
+        organizationId: numericOrgId || undefined,
+        projectId: project_id || undefined,
+        query: message,
+        limitPerLayer: 4,
+        maxChars: 3500,
+      });
+      memoryAtomCount = atoms.length;
+      memoryBlockChars = memoryBlock.length;
+      memoryDiagnostics = diagnostics;
+
+      const systemPrompt = intelligencePrefix + basePrompt + memoryBlock + evidenceBlock;
 
       const gwMessages = [
         { role: 'system' as const, content: systemPrompt },
@@ -419,15 +442,31 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       ];
 
       console.log(`[AnA] Sending through AI Gateway (${sources.length} sources retrieved)...`);
+      const routingPlan = planKernelExecution({
+        route: '/api/chat',
+        messageLength: message.length,
+        intentLens: orchestratorResult.detectedIntent.lens,
+        intentConfidence: orchestratorResult.detectedIntent.confidence,
+        submissionType: orchestratorResult.detectedSubmissionType,
+        hasEvidence: sources.length > 0,
+        requestedMaxTokens: GENERATION_MAX_TOKENS,
+      });
+      const policyHint = await getKernelPolicyHint({
+        organizationId: numericOrgId ?? null,
+        route: '/api/chat',
+        taskType: routingPlan.taskType,
+      });
+      const selectedStrategy = policyHint?.preferredStrategy || routingPlan.strategy;
 
       const gwResponse: GatewayResponse = await gw.route({
-        taskType: 'chat',
+        taskType: routingPlan.taskType,
         messages: gwMessages,
-        temperature: GENERATION_TEMPERATURE,
-        maxTokens: GENERATION_MAX_TOKENS,
+        temperature: routingPlan.temperature,
+        maxTokens: routingPlan.maxTokens,
         callerModule: 'ana-ri-chat',
         organizationId: numericOrgId ?? undefined,
         userId: numericUserId,
+        strategy: selectedStrategy,
       });
 
       assistantMessage =
@@ -445,8 +484,51 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       console.log(
         `[AnA] AI Gateway response via ${model} (${latencyMs}ms, req=${gwResponse.requestId})`
       );
+      void logKernelDecision({
+        requestId: gwResponse.requestId,
+        threadId,
+        route: '/api/chat',
+        organizationId: numericOrgId ?? null,
+        userId: numericUserId,
+        projectId: typeof project_id === 'string' ? parseInt(project_id, 10) : project_id || null,
+        plannerVersion: routingPlan.plannerVersion,
+        orchestratorName: routingPlan.orchestratorName,
+        intentLens: orchestratorResult.detectedIntent.lens,
+        intentConfidence: orchestratorResult.detectedIntent.confidence,
+        submissionType: orchestratorResult.detectedSubmissionType || null,
+        selectedTaskType: routingPlan.taskType,
+        selectedProvider: gwResponse.provider,
+        selectedModel: gwResponse.model,
+        routingStrategy: selectedStrategy,
+        selectedTools: [],
+        constraints: {
+          ...routingPlan.constraints,
+          maxTokens: routingPlan.maxTokens,
+          temperature: routingPlan.temperature,
+          retrievedSources: sources.length,
+        },
+        decisionRationale: routingPlan.decisionRationale,
+        estimatedCostUsd: gwResponse.usage?.estimatedCostUsd ?? null,
+        latencyMs: gwResponse.latencyMs,
+        outcome: 'success',
+      });
     } catch (gwError: any) {
       console.error('[AnA] AI Gateway call failed:', gwError.message);
+      void logKernelDecision({
+        requestId: `chat-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+        threadId,
+        route: '/api/chat',
+        organizationId: numericOrgId ?? null,
+        userId: numericUserId,
+        projectId: typeof project_id === 'string' ? parseInt(project_id, 10) : project_id || null,
+        orchestratorName: 'kernel-router-v1',
+        selectedTaskType: 'chat',
+        routingStrategy: 'quality_optimized',
+        selectedTools: [],
+        decisionRationale: 'AnA chat failed during AI Gateway call.',
+        outcome: 'failed',
+        errorMessage: gwError?.message || 'AI Gateway call failed',
+      });
       return res.status(503).json({
         error: 'AI provider call failed',
         code: 'AI_PROVIDER_UNAVAILABLE',
@@ -682,6 +764,24 @@ const sendMessageHandler = async (req: Request, res: Response) => {
     const supportedClaims = claims.filter(c => c.status === 'SUPPORTED').length;
     const citationCoverage = sources.length > 0 ? citedRefs.size / sources.length : 0;
     const supportedClaimRate = claims.length > 0 ? supportedClaims / claims.length : 0;
+    void recordKernelPolicyOutcome({
+      organizationId: numericOrgId ?? null,
+      route: '/api/chat',
+      taskType: 'chat',
+      strategy: 'quality_optimized',
+      threadId,
+      modelProvider: provider || null,
+      modelName: model || null,
+      qualityScore: supportedClaimRate,
+      latencyMs,
+      estimatedCostUsd: null,
+      success: true,
+      metadata: {
+        citationCoverage,
+        sourcesRetrieved: sources.length,
+        claims: claims.length,
+      },
+    });
 
     // ── RIM: Intercept for regulatory pattern capture (non-blocking) ──
     if (numericOrgId) {
@@ -714,6 +814,9 @@ const sendMessageHandler = async (req: Request, res: Response) => {
         orgScoped: !!orgUuid,
         citationCoverage,
         supportedClaimRate,
+        memoryAtomCount,
+        memoryBlockChars,
+        memoryDiagnostics,
       },
       // Provenance chain
       retrievalRunId,

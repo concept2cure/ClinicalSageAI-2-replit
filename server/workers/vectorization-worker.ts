@@ -15,6 +15,7 @@
 import { getOpenAIClient } from '../services/openai-client';
 import pdfParse from 'pdf-parse';
 import { pool } from '../db';
+import * as crypto from 'crypto';
 
 interface ProcessingJob {
   id: string;
@@ -42,6 +43,12 @@ const CHUNK_OVERLAP = 200; // tokens overlap
 const MAX_RETRIES = 3;
 const BATCH_SIZE = 5;
 const EMBEDDING_MODEL = 'text-embedding-3-small';
+const EMBEDDING_CACHE_TTL_MS = Number(process.env.EMBEDDING_CACHE_TTL_MS || 15 * 60 * 1000);
+const embeddingCache = new Map<string, { embedding: number[]; expiresAt: number }>();
+const EMBEDDING_CACHE_MAX_ENTRIES = Number(process.env.EMBEDDING_CACHE_MAX_ENTRIES || 10000);
+const EMBEDDING_CACHE_LOG_EVERY = Number(process.env.EMBEDDING_CACHE_LOG_EVERY || 20);
+let embeddingCacheHits = 0;
+let embeddingCacheMisses = 0;
 
 // OpenAI client
 const openai = getOpenAIClient();
@@ -101,16 +108,86 @@ function chunkText(
  */
 async function generateEmbeddings(texts: string[]): Promise<number[][]> {
   try {
-    const response = await openai.embeddings.create({
-      model: EMBEDDING_MODEL,
-      input: texts,
-      dimensions: 1536,
-    });
+    const now = Date.now();
+    const results: Array<number[] | null> = new Array(texts.length).fill(null);
+    const misses: Array<{ index: number; text: string; key: string }> = [];
 
-    return response.data.map(d => d.embedding);
+    for (let i = 0; i < texts.length; i++) {
+      const text = texts[i];
+      const key = embeddingCacheKey(text);
+      const cached = embeddingCache.get(key);
+
+      if (cached && cached.expiresAt > now) {
+        results[i] = cached.embedding;
+        embeddingCacheHits += 1;
+      } else {
+        if (cached) embeddingCache.delete(key);
+        misses.push({ index: i, text, key });
+        embeddingCacheMisses += 1;
+      }
+    }
+
+    if (misses.length > 0) {
+      const response = await openai.embeddings.create({
+        model: EMBEDDING_MODEL,
+        input: misses.map(m => m.text),
+        dimensions: 1536,
+      });
+
+      for (let i = 0; i < response.data.length; i++) {
+        const embedding = response.data[i].embedding;
+        const miss = misses[i];
+        results[miss.index] = embedding;
+        ensureEmbeddingCacheCapacity();
+        embeddingCache.set(miss.key, { embedding, expiresAt: now + EMBEDDING_CACHE_TTL_MS });
+      }
+    }
+
+    return results.map((embedding, i) => {
+      if (!embedding) {
+        throw new Error(`Missing embedding output at index ${i}`);
+      }
+      return embedding;
+    });
   } catch (error: any) {
     console.error('Error generating embeddings:', error.message);
     throw error;
+  } finally {
+    maybeLogEmbeddingCacheStats();
+  }
+}
+
+function embeddingCacheKey(text: string): string {
+  return `${EMBEDDING_MODEL}:${crypto.createHash('sha256').update(text).digest('hex')}`;
+}
+
+function maybeLogEmbeddingCacheStats(): void {
+  pruneExpiredEmbeddingCache();
+  const total = embeddingCacheHits + embeddingCacheMisses;
+  if (total === 0 || total % EMBEDDING_CACHE_LOG_EVERY !== 0) {
+    return;
+  }
+  const hitRate = ((embeddingCacheHits / total) * 100).toFixed(1);
+  console.log(
+    `[vectorization-worker] embedding cache stats: hits=${embeddingCacheHits}, misses=${embeddingCacheMisses}, hitRate=${hitRate}%, size=${embeddingCache.size}`
+  );
+}
+
+function pruneExpiredEmbeddingCache(): void {
+  const now = Date.now();
+  for (const [key, value] of embeddingCache.entries()) {
+    if (value.expiresAt <= now) {
+      embeddingCache.delete(key);
+    }
+  }
+}
+
+function ensureEmbeddingCacheCapacity(): void {
+  pruneExpiredEmbeddingCache();
+  while (embeddingCache.size >= EMBEDDING_CACHE_MAX_ENTRIES) {
+    const oldestKey = embeddingCache.keys().next().value as string | undefined;
+    if (!oldestKey) break;
+    embeddingCache.delete(oldestKey);
   }
 }
 
