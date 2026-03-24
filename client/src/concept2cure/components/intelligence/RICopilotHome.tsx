@@ -21,6 +21,7 @@ import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { apiRequest } from '@/lib/queryClient';
+import { queryKeys } from '@/concept2cure/hooks/queryKeys';
 import { useCSRSearch } from '../../hooks/useWorkspaceIntelligence';
 import {
   usePrecedentSearch,
@@ -191,7 +192,7 @@ export const RICopilotHome: React.FC<RICopilotHomeProps> = ({
 
   // ── Load project artifacts for governance rail ─────────────────────────────
   const artifactQuery = useQuery({
-    queryKey: ['concept2cure', 'projects', projectId, 'artifacts'],
+    queryKey: queryKeys.projects.artifacts(projectId!),
     queryFn: async () => {
       const res = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/artifacts`);
       const payload = await res.json();

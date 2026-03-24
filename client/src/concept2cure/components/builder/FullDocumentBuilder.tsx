@@ -7,6 +7,7 @@
  */
 
 import React, { useState, useCallback } from 'react';
+import { apiRequest } from '@/lib/queryClient';
 import NanoBananaImageGenerator from '@/components/NanoBananaImageGenerator';
 import { LIFECYCLE } from '@/concept2cure/components/ui/enterprise';
 
@@ -117,13 +118,7 @@ export const FullDocumentBuilder: React.FC = () => {
         setGenerateProgress(prev => Math.min(prev + 8, 90));
       }, 500);
 
-      const response = await fetch('/api/deep-research/document/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify({
+      const response = await apiRequest('POST', '/api/deep-research/document/generate', {
           documentType: selectedType,
           targetAgencies: selectedAgencies,
           studyInfo: {
@@ -134,7 +129,6 @@ export const FullDocumentBuilder: React.FC = () => {
               .filter(Boolean),
             sampleSize: studyInfo.sampleSize ? parseInt(studyInfo.sampleSize, 10) : undefined,
           },
-        }),
       });
 
       clearInterval(progressInterval);

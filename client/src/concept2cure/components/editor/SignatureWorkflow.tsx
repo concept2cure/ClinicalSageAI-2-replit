@@ -49,6 +49,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
 import { LIFECYCLE } from '../ui/enterprise';
 import { getCurrentUser } from '../../utils/getCurrentUser';
 
@@ -208,17 +209,6 @@ async function computeSHA256(content: string): Promise<string> {
 }
 
 // =============================================================================
-// Auth helper
-// =============================================================================
-
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
-// =============================================================================
 // Component
 // =============================================================================
 
@@ -313,9 +303,7 @@ export function SignatureWorkflow({
   const fetchSignatures = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/part11/signatures/${documentId}`, {
-        headers: { ...getAuthHeaders() },
-      });
+      const res = await apiRequest('GET', `/api/part11/signatures/${documentId}`);
       const json = await res.json();
       if (json.success && Array.isArray(json.data)) {
         setSignatures(json.data);
@@ -351,13 +339,7 @@ export function SignatureWorkflow({
     try {
       const hash = await computeSHA256(documentContent);
 
-      const res = await fetch('/api/part11/signatures', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeaders(),
-        },
-        body: JSON.stringify({
+      const res = await apiRequest('POST', '/api/part11/signatures', {
           documentId,
           documentVersion,
           documentContent: hash,
@@ -367,7 +349,6 @@ export function SignatureWorkflow({
           signerOrganization: '',
           meaning: selectedMeaning,
           password,
-        }),
       });
 
       const json = await res.json();
@@ -424,14 +405,7 @@ export function SignatureWorkflow({
 
       // Try server-side verification first
       try {
-        const res = await fetch('/api/part11/verify', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...getAuthHeaders(),
-          },
-          body: JSON.stringify({ documentId, currentHash }),
-        });
+        const res = await apiRequest('POST', '/api/part11/verify', { documentId, currentHash });
 
         if (res.ok) {
           const json = await res.json();
