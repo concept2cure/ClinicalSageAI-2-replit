@@ -517,3 +517,76 @@ GO/NO-GO RECOMMENDATION:
 ---
 
 *Audit conducted via automated static codebase analysis of the `copilot/audit-and-gap-analysis` branch. All findings are based on code evidence only; operational/runtime behavior and external documentation (vendor contracts, published studies) were not available for review.*
+
+---
+
+## Addendum (March 24, 2026): Concept2Cure + AnA 1.0 RI Intelligence Engine Audit
+
+### A. Current model landscape (what is in place now)
+
+| Area | Current State | Evidence-based Assessment |
+|---|---|---|
+| Pre-trained foundation models | AI Gateway registry includes Anthropic Claude 4 family, while OpenAI/Moonshot entries are present but disabled in current config. | **In place.** Production path is Claude-first (and effectively Claude-only under current flags). |
+| Fine-tuned/custom models | AnA RI fine-tuned route (`/api/lumen-cortex-ft`) exposes an in-memory model registry, synthetic dataset metadata, and activation endpoints, but inference currently calls OpenAI chat completions directly (or fallback text) rather than a deployed proprietary checkpoint endpoint. | **Partially in place (control-plane scaffolding exists; true model-serving plane is missing).** |
+| Non-LLM intelligence layers | RIM/AnA orchestration layers exist and are explicit: intent detection, submission-type detection, role-adaptive prompting, deficiency context injection, and command/action orchestration. | **In place.** These are proprietary deterministic/logical intelligence layers on top of LLMs. |
+
+### B. If we plan to use Claude API LLM (target direction)
+
+**What already aligns:**
+1. Gateway routing is already configured with Anthropic enabled and preferred for all core task types.
+2. AnA RI chat route already calls the centralized AI Gateway (not a direct provider SDK call).
+
+**What is misaligned today:**
+1. `lumen-cortex-ft` inference still directly calls OpenAI endpoint (`https://api.openai.com/v1/chat/completions`) and references `OPENAI_API_KEY`/`LUMEN_CORTEX_MODEL_ID`.
+2. AnA RI state in `server/index.ts` includes static/simulated responses for several `/api/lumen/*` endpoints, which can obscure true model capability in production audits.
+
+### C. Does AnA include model serving, quantization, and basic inference engines?
+
+| Capability | Status | Notes |
+|---|---|---|
+| Basic inference engine | **Yes (partial).** | AI Gateway provides routed inference with policy checks, deterministic mode, fallback, and provider health tracking. |
+| Quantization | **Declared, not operationalized end-to-end.** | Quantization is represented in FT config types (`4bit`/`8bit`/`none`) and seeded model metadata, but no real runtime artifact lifecycle (build/package/load) is wired in this route. |
+| Model serving | **Control-plane only (partial).** | FT route has registry/version endpoints and activation APIs, but active inference is not served from a managed fine-tuned model endpoint/containerized runtime (it proxies to external API). |
+
+### D. Are models swappable/composable as dynamic "brains"?
+
+**Current state:**
+- **Partially yes at LLM-provider layer:** AI Gateway supports model selection/routing/fallback by task type.
+- **Yes at reasoning/orchestration layer:** AnA orchestrator dynamically composes lenses, role adapters, deficiency context, document actions, and command context.
+- **Not yet fully yes at true model-runtime layer:** no unified abstraction for swapping between hosted external LLM, internal fine-tuned checkpoint, quantized edge model, or multimodal specialist model through a single contract with consistent eval gates.
+
+### E. Recommended enhancements (priority order)
+
+1. **Unify all inference through AI Gateway (P0).**
+   - Remove direct OpenAI calls from `lumen-cortex-ft` and route through gateway provider abstraction.
+   - Add Claude-native fine-tuned/custom-model handling path (if using Anthropic adapters/tooling strategy).
+
+2. **Separate control plane from data plane for model runtime (P0).**
+   - Keep registry/versioning APIs, but back them with real model deployment records (artifact URI, checksum, framework, quantization format, hardware profile, promotion stage).
+   - Introduce explicit deployment statuses (`staged`, `canary`, `live`, `rollback`).
+
+3. **Implement real model-serving contract (P1).**
+   - Standardize inference request envelope across chat, doc drafting, and regulatory review.
+   - Add runtime adapters for: external Claude API, internal hosted checkpoint, and fallback deterministic engine.
+
+4. **Quantization lifecycle (P1).**
+   - Add build/validation pipeline for quantized variants (e.g., 4-bit + baseline), plus latency/quality regression gates before promotion.
+   - Persist benchmark/eval results per model version.
+
+5. **Multimodal and foundation-model governance (P1).**
+   - Register modality capabilities explicitly (text, table, image, OCR).
+   - Enforce per-task model allowlists and evidence/citation policies.
+
+6. **Brain composability as first-class graph (P2).**
+   - Treat "brains" as composable nodes: classifier brain, planner brain, generator brain, verifier brain.
+   - Add orchestration policies for when to compose vs. swap single brain based on risk/cost/latency profile.
+
+7. **Close simulation gaps in public endpoints (P2).**
+   - Replace static `/api/lumen/*` payloads with real service responses or clearly mark them as demo-only to avoid audit ambiguity.
+
+### F. Executive verdict
+
+- **Foundation LLMs:** Present and strong, with a Claude-first posture.
+- **Fine-tuned/custom models:** Mostly architectural scaffolding right now; not yet a production-grade custom model runtime.
+- **Model serving + quantization:** Partially represented in API/data contracts, but missing robust deployment lifecycle and runtime execution path.
+- **Dynamic brain swap/composition:** Strong at orchestration/prompt-policy layer; incomplete at underlying model-runtime layer.
