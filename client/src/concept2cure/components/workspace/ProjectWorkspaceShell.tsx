@@ -1667,6 +1667,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
         </div>
       )}
     </div>
+    </DocumentModeProvider>
   );
 };
 
@@ -1858,7 +1859,6 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
         )}
       </div>
       </div>
-    </DocumentModeProvider>
   );
 }
 
