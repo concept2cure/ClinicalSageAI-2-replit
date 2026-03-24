@@ -56,6 +56,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { LoadingState, InlineLoading } from '@/components/ui/statesV2';
+import { queryKeys } from '@/concept2cure/hooks/queryKeys';
 import { Spinner } from '@/components/ui/spinner';
 import {
   fetchPackReadiness,
@@ -190,7 +191,7 @@ export default function PackBuilderPanel({ projectId }: PackBuilderPanelProps) {
 
   // ── Readiness check ────────────────────────────────────────────────────────
   const { data: readiness, isLoading: readinessLoading } = useQuery({
-    queryKey: ['ivdr-pack-readiness', projectId, buildForm.packType],
+    queryKey: queryKeys.ivdr.packReadiness(projectId, buildForm.packType),
     queryFn: () => fetchPackReadiness(projectId, buildForm.packType),
     enabled: showBuild && !!projectId,
     staleTime: 10_000,
