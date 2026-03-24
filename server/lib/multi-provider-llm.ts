@@ -57,6 +57,16 @@ export interface LLMRequest {
   maxTokens?: number;
   responseFormat?: 'text' | 'json';
   provider?: LLMProvider;
+  workloadClass?: 'INTERACTIVE' | 'BATCH';
+  maxCostPer1kTokens?: number;
+  preferLowLatency?: boolean;
+}
+
+interface ResolvedRoutingPolicy {
+  workloadClass: 'INTERACTIVE' | 'BATCH';
+  maxCostPer1kTokens?: number;
+  preferLowLatency: boolean;
+  maxTokensCap?: number;
 }
 
 export interface LLMResponse {
@@ -70,6 +80,13 @@ export interface LLMResponse {
   };
   latencyMs: number;
   fallbackUsed: boolean;
+  routing: {
+    workloadClass: 'INTERACTIVE' | 'BATCH';
+    preferLowLatency: boolean;
+    maxCostPer1kTokens?: number;
+    maxTokensCap?: number;
+    providersTried: Exclude<LLMProvider, 'AUTO'>[];
+  };
 }
 
 export interface ProviderHealth {
@@ -79,6 +96,14 @@ export interface ProviderHealth {
   lastSuccessTime?: Date;
   lastFailureTime?: Date;
   avgLatencyMs: number;
+}
+
+export interface RoutingStats {
+  totalRequests: number;
+  totalFallbacks: number;
+  fallbackRatePct: number;
+  providerSuccesses: Record<Exclude<LLMProvider, 'AUTO'>, number>;
+  providerFailures: Record<Exclude<LLMProvider, 'AUTO'>, number>;
 }
 
 // =============================================================================
@@ -122,6 +147,12 @@ export class MultiProviderLLMService {
   private circuitBreakers: Map<LLMProvider, CircuitBreaker> = new Map();
   private promptProtection = getPromptInjectionProtection();
   private pool: Pool;
+  private routingStats: RoutingStats = {
+    totalRequests: 0,
+    totalFallbacks: 0,
+    providerSuccesses: { OPENAI: 0, KIMI: 0 },
+    providerFailures: { OPENAI: 0, KIMI: 0 },
+  };
   
   // Provider priority order (first available is used)
   // Kimi AI is PRIMARY, OpenAI is SECONDARY fallback
@@ -196,9 +227,10 @@ export class MultiProviderLLMService {
   async chatCompletion(request: LLMRequest): Promise<LLMResponse> {
     const startTime = Date.now();
     const correlationId = `llm-${Date.now()}-${Math.random().toString(36).substr(2, 8)}`;
+    const routingPolicy = this.resolveRoutingPolicy(request);
     
     // Determine which providers to try
-    const providersToTry = this.getProvidersToTry(request.provider);
+    const providersToTry = this.getProvidersToTry(request, routingPolicy);
     
     if (providersToTry.length === 0) {
       throw new LLMProviderError(
@@ -212,6 +244,8 @@ export class MultiProviderLLMService {
     
     let lastError: Error | null = null;
     let fallbackUsed = false;
+    const providersTried: Exclude<LLMProvider, 'AUTO'>[] = [];
+    this.routingStats.totalRequests += 1;
 
     for (let i = 0; i < providersToTry.length; i++) {
       const provider = providersToTry[i];
@@ -220,6 +254,7 @@ export class MultiProviderLLMService {
       const config = PROVIDER_CONFIGS[provider];
       
       if (!client || !breaker) continue;
+      providersTried.push(provider);
       
       // Check if circuit breaker allows requests
       if (!breaker.isAllowingRequests()) {
@@ -232,11 +267,16 @@ export class MultiProviderLLMService {
         console.log(`[MultiProvider:${correlationId}] Trying ${config.displayName}...`);
         
         const response = await breaker.execute(async () => {
+          const requestedMaxTokens = request.maxTokens || config.maxTokens;
+          const effectiveMaxTokens = routingPolicy.maxTokensCap
+            ? Math.min(requestedMaxTokens, routingPolicy.maxTokensCap)
+            : requestedMaxTokens;
+
           return client.chat.completions.create({
             model: request.model || config.defaultModel,
             messages: sanitizedMessages,
             temperature: request.temperature ?? 0.1,
-            max_tokens: request.maxTokens || config.maxTokens,
+            max_tokens: effectiveMaxTokens,
             response_format: request.responseFormat === 'json' 
               ? { type: 'json_object' } 
               : undefined
@@ -250,6 +290,10 @@ export class MultiProviderLLMService {
           `[MultiProvider:${correlationId}] ${config.displayName} succeeded in ${latencyMs}ms, ` +
           `${response.usage?.total_tokens || 0} tokens`
         );
+        this.routingStats.providerSuccesses[provider] += 1;
+        if (fallbackUsed) {
+          this.routingStats.totalFallbacks += 1;
+        }
 
         return {
           content,
@@ -261,12 +305,20 @@ export class MultiProviderLLMService {
             total: response.usage?.total_tokens || 0
           },
           latencyMs,
-          fallbackUsed
+          fallbackUsed,
+          routing: {
+            workloadClass: routingPolicy.workloadClass,
+            preferLowLatency: routingPolicy.preferLowLatency,
+            maxCostPer1kTokens: routingPolicy.maxCostPer1kTokens,
+            maxTokensCap: routingPolicy.maxTokensCap,
+            providersTried,
+          },
         };
 
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
         fallbackUsed = true;
+        this.routingStats.providerFailures[provider] += 1;
         
         console.warn(
           `[MultiProvider:${correlationId}] ${config.displayName} failed: ${lastError.message}`
@@ -282,6 +334,10 @@ export class MultiProviderLLMService {
       }
     }
 
+    if (fallbackUsed) {
+      this.routingStats.totalFallbacks += 1;
+    }
+
     // All providers failed
     throw new LLMProviderError(
       `All LLM providers failed. Last error: ${lastError?.message || 'Unknown error'}`,
@@ -293,16 +349,124 @@ export class MultiProviderLLMService {
   /**
    * Get list of providers to try based on request and availability
    */
-  private getProvidersToTry(requestedProvider?: LLMProvider): Exclude<LLMProvider, 'AUTO'>[] {
+  private getProvidersToTry(
+    request: LLMRequest,
+    routingPolicy?: ResolvedRoutingPolicy
+  ): Exclude<LLMProvider, 'AUTO'>[] {
+    const requestedProvider = request.provider;
+
     if (requestedProvider && requestedProvider !== 'AUTO') {
       // Specific provider requested - try only that one
       return this.clients.has(requestedProvider) ? [requestedProvider] : [];
     }
-    
-    // AUTO mode - try providers in priority order
-    return this.providerPriority.filter(p => 
+
+    // AUTO mode - rank providers using request policy + health + configured priority
+    const availableProviders = this.providerPriority.filter(p =>
       p !== 'AUTO' && this.clients.has(p)
     ) as Exclude<LLMProvider, 'AUTO'>[];
+
+    const resolvedPolicy = routingPolicy || this.resolveRoutingPolicy(request);
+    const ranked = this.rankProviders(availableProviders, resolvedPolicy);
+    if (ranked.length > 0) {
+      console.log(
+        `[MultiProvider] Routed AUTO request (${resolvedPolicy.workloadClass}) to ` +
+          `${ranked.join(' → ')}`
+      );
+    }
+    return ranked;
+  }
+
+  /**
+   * Rank providers using request-level policy (cost/latency) and breaker health.
+   * Lower score is better.
+   */
+  private rankProviders(
+    providers: Exclude<LLMProvider, 'AUTO'>[],
+    policy: ResolvedRoutingPolicy
+  ): Exclude<LLMProvider, 'AUTO'>[] {
+    const { preferLowLatency, maxCostPer1kTokens } = policy;
+
+    const scored = providers
+      .map(provider => {
+        const config = PROVIDER_CONFIGS[provider];
+        const breaker = this.circuitBreakers.get(provider);
+        const metrics = breaker?.getMetrics();
+        const avgLatencyMs = metrics?.avgResponseTimeMs || 0;
+        const isHealthy = breaker?.isAllowingRequests() ?? false;
+
+        // Base score from configured priority position
+        const priorityIndex = this.providerPriority.indexOf(provider);
+        let score = priorityIndex < 0 ? 100 : priorityIndex * 10;
+
+        // Encourage healthy providers and penalize unhealthy/open circuits
+        score += isHealthy ? 0 : 500;
+
+        // Optional hard cost cap - heavily penalize providers above budget
+        if (typeof maxCostPer1kTokens === 'number' && config.costPer1kTokens > maxCostPer1kTokens) {
+          score += 250;
+        }
+
+        // Latency vs cost preference weight
+        if (preferLowLatency) {
+          score += Math.min(avgLatencyMs / 100, 100);
+          score += config.costPer1kTokens * 20;
+        } else {
+          score += config.costPer1kTokens * 200;
+          score += Math.min(avgLatencyMs / 250, 100);
+        }
+
+        return { provider, score };
+      })
+      .sort((a, b) => a.score - b.score);
+
+    return scored.map(item => item.provider);
+  }
+
+  /**
+   * Resolve routing policy from request first, then environment defaults.
+   */
+  private resolveRoutingPolicy(request: LLMRequest): ResolvedRoutingPolicy {
+    const envWorkload = process.env.LLM_ROUTING_DEFAULT_WORKLOAD_CLASS;
+    const envMaxCostRaw = process.env.LLM_ROUTING_MAX_COST_PER_1K_TOKENS;
+    const envPreferLowLatencyRaw = process.env.LLM_ROUTING_PREFER_LOW_LATENCY;
+    const envInteractiveCapRaw = process.env.LLM_ROUTING_INTERACTIVE_MAX_TOKENS;
+    const envBatchCapRaw = process.env.LLM_ROUTING_BATCH_MAX_TOKENS;
+
+    const workloadClass =
+      request.workloadClass ||
+      (envWorkload === 'BATCH' || envWorkload === 'INTERACTIVE' ? envWorkload : 'INTERACTIVE');
+
+    let maxCostPer1kTokens = request.maxCostPer1kTokens;
+    if (typeof maxCostPer1kTokens !== 'number' && envMaxCostRaw) {
+      const parsed = Number(envMaxCostRaw);
+      if (!Number.isNaN(parsed) && parsed > 0) {
+        maxCostPer1kTokens = parsed;
+      }
+    }
+
+    let preferLowLatency = request.preferLowLatency;
+    if (typeof preferLowLatency !== 'boolean' && envPreferLowLatencyRaw) {
+      preferLowLatency = envPreferLowLatencyRaw.toLowerCase() === 'true';
+    }
+    if (typeof preferLowLatency !== 'boolean') {
+      preferLowLatency = workloadClass !== 'BATCH';
+    }
+
+    const selectedCapRaw = workloadClass === 'BATCH' ? envBatchCapRaw : envInteractiveCapRaw;
+    let maxTokensCap: number | undefined;
+    if (selectedCapRaw) {
+      const parsed = Number(selectedCapRaw);
+      if (!Number.isNaN(parsed) && parsed > 0) {
+        maxTokensCap = parsed;
+      }
+    }
+
+    return {
+      workloadClass,
+      maxCostPer1kTokens,
+      preferLowLatency,
+      maxTokensCap,
+    };
   }
 
   /**
@@ -379,6 +543,36 @@ export class MultiProviderLLMService {
     }
     
     return health;
+  }
+
+  /**
+   * Get aggregate routing stats for observability.
+   */
+  getRoutingStats(): RoutingStats {
+    const fallbackRatePct =
+      this.routingStats.totalRequests > 0
+        ? Number(((this.routingStats.totalFallbacks / this.routingStats.totalRequests) * 100).toFixed(2))
+        : 0;
+
+    return {
+      totalRequests: this.routingStats.totalRequests,
+      totalFallbacks: this.routingStats.totalFallbacks,
+      fallbackRatePct,
+      providerSuccesses: { ...this.routingStats.providerSuccesses },
+      providerFailures: { ...this.routingStats.providerFailures },
+    };
+  }
+
+  /**
+   * Reset routing stats counters (useful for periodic reporting windows).
+   */
+  resetRoutingStats(): void {
+    this.routingStats = {
+      totalRequests: 0,
+      totalFallbacks: 0,
+      providerSuccesses: { OPENAI: 0, KIMI: 0 },
+      providerFailures: { OPENAI: 0, KIMI: 0 },
+    };
   }
 
   /**
