@@ -17,19 +17,25 @@ import {
   getClientProfile,
   ingestDocument,
   getMemoryEntries,
+  searchMemoryEntriesSemantic,
   getIngestedDocuments,
   // Project-level intelligence
   upsertProjectIntelligence,
   getProjectIntelligence,
   ingestProjectDocument,
   getProjectMemoryEntries,
+  searchProjectMemoryEntriesSemantic,
   getProjectIngestedDocuments,
   buildProjectIntelligenceContext,
   getDocumentChecklist,
   archiveMemoryEntry,
   verifyMemoryEntry,
   buildClientIntelligenceContext,
+  supersedeClientMemoryEntry,
+  supersedeProjectMemoryEntry,
+  getSharedMemoryPool,
 } from '../services/client-intelligence-memory';
+import { buildMemoryContextForChat } from '../services/memory-context-assembler.js';
 
 const router = Router();
 
@@ -245,6 +251,87 @@ router.get('/memory', async (req: Request, res: Response) => {
   }
 });
 
+
+/**
+ * GET /api/client-intelligence/memory/semantic-search
+ * Semantic search across client memory entries for a profile.
+ */
+router.get('/memory/semantic-search', async (req: Request, res: Response) => {
+  try {
+    const { organizationId } = getRequestContext(req);
+    const profileId = req.query.profileId
+      ? parseInt(req.query.profileId as string, 10)
+      : null;
+    const query = (req.query.query as string)?.trim();
+
+    if (!query) {
+      return res.status(400).json({ success: false, error: 'query is required' });
+    }
+
+    const category = req.query.category as string | undefined;
+    const limit = parseInt(req.query.limit as string, 10) || 10;
+    const minSimilarity = req.query.minSimilarity
+      ? parseFloat(req.query.minSimilarity as string)
+      : undefined;
+
+    const result = await searchMemoryEntriesSemantic(profileId, organizationId, query, {
+      category,
+      limit,
+      minSimilarity,
+    });
+
+    return res.json({ success: true, ...result });
+  } catch (err: any) {
+    console.error('[ClientIntelligence] GET /memory/semantic-search error:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * GET /api/client-intelligence/memory/context-assemble
+ * Build bounded memory context from working + client + project memory for a query.
+ */
+router.get('/memory/context-assemble', async (req: Request, res: Response) => {
+  try {
+    const { organizationId } = getRequestContext(req);
+    const threadId = (req.query.threadId as string)?.trim();
+    const query = (req.query.query as string)?.trim();
+    const projectId = req.query.projectId ? parseInt(req.query.projectId as string, 10) : undefined;
+    const limitPerLayer = req.query.limitPerLayer ? parseInt(req.query.limitPerLayer as string, 10) : 4;
+    const maxChars = req.query.maxChars ? parseInt(req.query.maxChars as string, 10) : 3500;
+    const minSimilarity = req.query.minSimilarity ? parseFloat(req.query.minSimilarity as string) : undefined;
+    const maxAgeDays = req.query.maxAgeDays ? parseInt(req.query.maxAgeDays as string, 10) : undefined;
+
+    if (!threadId) {
+      return res.status(400).json({ success: false, error: 'threadId is required' });
+    }
+    if (!query) {
+      return res.status(400).json({ success: false, error: 'query is required' });
+    }
+
+    const result = await buildMemoryContextForChat({
+      threadId,
+      organizationId,
+      projectId,
+      query,
+      limitPerLayer,
+      maxChars,
+      minSimilarity,
+      maxAgeDays,
+    });
+
+    return res.json({
+      success: true,
+      ...result,
+      memoryBlockChars: result.memoryBlock.length,
+      memoryDiagnostics: result.diagnostics,
+    });
+  } catch (err: any) {
+    console.error('[ClientIntelligence] GET /memory/context-assemble error:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 /**
  * POST /api/client-intelligence/memory/:id/verify
  * Mark a memory entry as verified by a human.
@@ -258,6 +345,26 @@ router.post('/memory/:id/verify', async (req: Request, res: Response) => {
     return res.json({ success: true });
   } catch (err: any) {
     console.error('[ClientIntelligence] POST /memory/:id/verify error:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * POST /api/client-intelligence/memory/:id/supersede
+ * Mark a client memory entry as superseded (optionally linked to successor entry).
+ */
+router.post('/memory/:id/supersede', async (req: Request, res: Response) => {
+  try {
+    const { organizationId } = getRequestContext(req);
+    const entryId = parseInt(req.params.id, 10);
+    const supersededById = req.body?.supersededById
+      ? parseInt(String(req.body.supersededById), 10)
+      : undefined;
+
+    await supersedeClientMemoryEntry(entryId, organizationId, supersededById);
+    return res.json({ success: true });
+  } catch (err: any) {
+    console.error('[ClientIntelligence] POST /memory/:id/supersede error:', err);
     return res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -404,6 +511,91 @@ router.get('/project/:projectId/memory', async (req: Request, res: Response) => 
     return res.json({ success: true, ...result });
   } catch (err: any) {
     console.error('[ProjectIntelligence] GET memory error:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+
+/**
+ * GET /api/client-intelligence/project/:projectId/memory/semantic-search
+ * Semantic search across project memory entries.
+ */
+router.get('/project/:projectId/memory/semantic-search', async (req: Request, res: Response) => {
+  try {
+    const { organizationId } = getRequestContext(req);
+    const projectId = parseInt(req.params.projectId, 10);
+    const query = (req.query.query as string)?.trim();
+
+    if (!query) {
+      return res.status(400).json({ success: false, error: 'query is required' });
+    }
+
+    const profile = await getProjectIntelligence(projectId);
+    if (!profile) return res.json({ success: true, entries: [], totalCount: 0, query });
+
+    const category = req.query.category as string | undefined;
+    const limit = parseInt(req.query.limit as string, 10) || 10;
+    const minSimilarity = req.query.minSimilarity
+      ? parseFloat(req.query.minSimilarity as string)
+      : undefined;
+
+    const result = await searchProjectMemoryEntriesSemantic(
+      profile.id,
+      projectId,
+      organizationId,
+      query,
+      { category, limit, minSimilarity }
+    );
+
+    return res.json({ success: true, ...result });
+  } catch (err: any) {
+    console.error('[ProjectIntelligence] GET semantic memory error:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * POST /api/client-intelligence/project/:projectId/memory/:id/supersede
+ * Mark a project memory entry as superseded.
+ */
+router.post('/project/:projectId/memory/:id/supersede', async (req: Request, res: Response) => {
+  try {
+    const { organizationId } = getRequestContext(req);
+    const projectId = parseInt(req.params.projectId, 10);
+    const entryId = parseInt(req.params.id, 10);
+
+    await supersedeProjectMemoryEntry(entryId, projectId, organizationId);
+    return res.json({ success: true });
+  } catch (err: any) {
+    console.error('[ProjectIntelligence] POST /project/:projectId/memory/:id/supersede error:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * GET /api/client-intelligence/memory/shared-pool
+ * Unified memory pool for multi-agent collaboration (client + project memory).
+ */
+router.get('/memory/shared-pool', async (req: Request, res: Response) => {
+  try {
+    const { organizationId } = getRequestContext(req);
+    const projectId = req.query.projectId ? parseInt(req.query.projectId as string, 10) : undefined;
+    const category = (req.query.category as string | undefined)?.trim();
+    const query = (req.query.query as string | undefined)?.trim();
+    const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 100;
+    const includeSuperseded = req.query.includeSuperseded === 'true';
+
+    const result = await getSharedMemoryPool(organizationId, {
+      projectId,
+      category,
+      query,
+      limit,
+      includeSuperseded,
+    });
+
+    return res.json({ success: true, ...result });
+  } catch (err: any) {
+    console.error('[ClientIntelligence] GET /memory/shared-pool error:', err);
     return res.status(500).json({ success: false, error: err.message });
   }
 });
