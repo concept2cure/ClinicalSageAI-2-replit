@@ -13,6 +13,7 @@ import type {
   WorkflowStage,
   ReadinessSnapshot,
   ContradictionEntry,
+  DecisionEntry,
 } from '../../../../shared/types/authoring-context';
 
 // ─── Layout → WorkflowStage mapping ─────────────────────────────────────────
@@ -79,6 +80,8 @@ export interface ContextResolverInput {
   contradictions?: ContradictionEntry[];
   /** Recent resolution bundle ID */
   recentResolutionBundleId?: string;
+  /** Decision context from decision lifecycle */
+  decisions?: DecisionEntry[];
 }
 
 /**
@@ -111,6 +114,7 @@ export function resolveAuthoringContext(
     linkedSectionCodes,
     readiness: input.readiness,
     contradictions: input.contradictions,
+    decisions: input.decisions,
     recentResolutionBundleId: input.recentResolutionBundleId,
   };
 }
@@ -177,4 +181,37 @@ export function serializeContextForChat(ctx: AuthoringContextPack): Record<strin
     }
   }
   return result;
+}
+
+/**
+ * Fetch recent decision context for a project/section from the decision API.
+ * Non-blocking — returns empty array on failure.
+ */
+export async function fetchDecisionContext(
+  projectId: string,
+  opts?: { sectionCode?: string; moduleCode?: string; authToken?: string }
+): Promise<DecisionEntry[]> {
+  try {
+    const params = new URLSearchParams();
+    if (opts?.sectionCode) params.set('sectionCode', opts.sectionCode);
+    if (opts?.moduleCode) params.set('moduleCode', opts.moduleCode);
+    params.set('limit', '5');
+
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (opts?.authToken) headers['Authorization'] = `Bearer ${opts.authToken}`;
+
+    const res = await fetch(
+      `/api/authoring-actions/decision-context/${projectId}?${params.toString()}`,
+      { headers }
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.items || []).map((item: any) => ({
+      id: item.decision.id,
+      status: item.decision.status,
+      summary: item.decision.summary,
+    }));
+  } catch {
+    return [];
+  }
 }

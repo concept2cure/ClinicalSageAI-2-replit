@@ -1392,8 +1392,16 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 `- **${a.label}** — ${a.reason}`).join('\n')
               : '';
 
+            // Decision architecture context
+            const decisionLine = data.decisionId
+              ? `\n\n**Decision:** \`${data.decisionId.slice(0, 16)}…\` — Status: **${data.decisionStatus || 'recorded'}** — Authority: **${data.authority?.level || 'unknown'}**`
+              : '';
+            const authorityNote = data.authority?.requiresHumanConfirmation
+              ? '\n> This result needs your confirmation before any action is taken.'
+              : '';
+
             setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
-              content: `**Section Preflight — §${sectionCode}** ${overallIcon}\n\n**Overall:** ${data.overall.toUpperCase()} — ${data.summary}\n\n| Check | Status | Detail |\n|---|---|---|\n${checkLines}${actionLines}` }]);
+              content: `**Section Preflight — §${sectionCode}** ${overallIcon}\n\n**Overall:** ${data.overall.toUpperCase()} — ${data.summary}\n\n| Check | Status | Detail |\n|---|---|---|\n${checkLines}${actionLines}${decisionLine}${authorityNote}` }]);
             onRefreshIntelligence?.();
           } else {
             setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
@@ -1435,8 +1443,16 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             const actionLines = data.recommendedActions?.length
               ? '\n\n**Next:**\n' + data.recommendedActions.map((a: any) => `- ${a.label} — ${a.reason}`).join('\n')
               : '';
+            // Decision-aware status enrichment
+            const dasLine = data.decisionAwareStatus
+              ? `\n\n**Decision status:** ${data.decisionAwareStatus.summary || 'No pending decisions'}`
+              : '';
+            const decisionLine = data.decisionId
+              ? `\n**Decision:** \`${data.decisionId.slice(0, 16)}…\` — **${data.decisionStatus || 'recorded'}**`
+              : '';
+
             setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
-              content: `**Module Preflight — ${moduleCode.toUpperCase()}** ${overallIcon}\n\n**Overall:** ${data.overall.toUpperCase()} — ${data.summary}\n\n**Sections:** ${data.counts.ready}/${data.counts.total} ready, ${data.counts.blocked} blocked, ${data.counts.provisional} provisional${sectionTable}${blockerLines}${actionLines}` }]);
+              content: `**Module Preflight — ${moduleCode.toUpperCase()}** ${overallIcon}\n\n**Overall:** ${data.overall.toUpperCase()} — ${data.summary}\n\n**Sections:** ${data.counts.ready}/${data.counts.total} ready, ${data.counts.blocked} blocked, ${data.counts.provisional} provisional${sectionTable}${blockerLines}${actionLines}${dasLine}${decisionLine}` }]);
             onRefreshIntelligence?.();
           } else {
             setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
@@ -1475,8 +1491,16 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             const actionLines = data.recommendedActions?.length
               ? '\n\n**Next:**\n' + data.recommendedActions.map((a: any) => `- ${a.label} — ${a.reason}`).join('\n')
               : '';
+            // Decision-aware enrichment
+            const dasLine = data.decisionAwareStatus
+              ? `\n\n**Decision status:** ${data.decisionAwareStatus.summary || 'No pending decisions'}`
+              : '';
+            const decisionLine = data.decisionId
+              ? `\n**Decision:** \`${data.decisionId.slice(0, 16)}…\` — **${data.decisionStatus || 'recorded'}**`
+              : '';
+
             setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
-              content: `**Dossier Preflight** ${overallIcon}\n\n**Overall:** ${data.overall.toUpperCase()} — ${data.summary}\n\n**Modules:** ${data.counts.readyModules}/${data.counts.totalModules} ready, ${data.counts.blockedModules} blocked${moduleTable}${blockerLines}${actionLines}` }]);
+              content: `**Dossier Preflight** ${overallIcon}\n\n**Overall:** ${data.overall.toUpperCase()} — ${data.summary}\n\n**Modules:** ${data.counts.readyModules}/${data.counts.totalModules} ready, ${data.counts.blockedModules} blocked${moduleTable}${blockerLines}${actionLines}${dasLine}${decisionLine}` }]);
             onRefreshIntelligence?.();
           } else {
             setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
@@ -1550,10 +1574,16 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         const doPromote = async () => {
           if (onRequestPromotion) {
             const result = await onRequestPromotion(artifactId);
+            const pendingNote = result.pendingApprovals?.length
+              ? `\n\n**Pending approvals:** ${result.pendingApprovals.map((a: any) => `${a.requiredRole} (${a.reason})`).join(', ')}`
+              : '';
+            const decisionNote = result.decisionId
+              ? `\n**Decision:** \`${result.decisionId.slice(0, 16)}…\` — Authority: **${result.authority?.level || 'confirmed'}**`
+              : '';
             setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
               content: result.promoted
-                ? `✅ **Promoted to review.** ${result.message} The document is now in the governance review pipeline.`
-                : `**Promotion not completed.** ${result.message}` }]);
+                ? `✅ **Promoted to review.** ${result.message} The document is now in the governance review pipeline.${pendingNote}${decisionNote}`
+                : `**Promotion not completed.** ${result.message}${result.decisionId ? `\n**Decision:** \`${result.decisionId.slice(0, 16)}…\` — blocked` : ''}` }]);
           } else {
             const res = await fetch(`/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/status`, {
               method: 'PUT', headers: getAuthHeaders(),

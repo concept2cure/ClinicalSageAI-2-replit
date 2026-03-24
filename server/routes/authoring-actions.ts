@@ -244,16 +244,66 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
       // Non-blocking — proceed without contradiction check
     }
 
+    // ── Record blocked promotion as a formal decision ──────────────
     if (blocked) {
+      let blockedDecision: any = null;
+      try {
+        const { decisionLifecycleService } = await import(
+          '../services/decision-lifecycle-service.js'
+        );
+        blockedDecision = decisionLifecycleService.recordGovernedActionDecision({
+          projectId: String(projectId),
+          kind: 'promotion-decision',
+          governedAction: 'promote-to-review',
+          artifactId: String(artifactId),
+          summary: `Promotion blocked: ${blockReasons.length} unresolved issue(s)`,
+          rationale: blockReasons.join('; '),
+          sourceSignals: blockReasons.map(r => ({
+            kind: 'contradiction' as const, summary: r, severity: 'critical' as const,
+          })),
+          createdByType: 'ana',
+          createdById: (req as any).userId || undefined,
+        });
+        // Receipt for the blocked promotion
+        if (blockedDecision) {
+          decisionLifecycleService.createReceipt({
+            decisionId: blockedDecision.id,
+            projectId: String(projectId),
+            recommendation: {
+              summary: 'Promote artifact to review',
+              actionIds: ['promote-to-review'],
+              rationale: 'Promotion requested but blocked by unresolved issues',
+            },
+            confirmation: { accepted: false, rejectionReason: 'Blocked by contradictions' },
+            execution: { executed: false, error: 'Blocked by unresolved contradictions' },
+            affectedObjects: [{ objectType: 'artifact', objectId: String(artifactId), previousState: 'draft', newState: 'draft', changeDescription: 'Promotion blocked' }],
+          });
+        }
+      } catch { /* non-blocking */ }
+
       return res.json({
         promoted: false,
         reason: 'blocked',
         blockers: blockReasons,
         message: `Promotion blocked: ${blockReasons.length} unresolved issue(s). Resolve these before promoting.`,
+        decisionId: blockedDecision?.id || null,
+        authority: blockedDecision?.authority || null,
       });
     }
 
-    // Step 2: Execute promotion via existing governed path
+    // Step 2: Authority check
+    let authorityCheck: any = null;
+    try {
+      const { decisionLifecycleService } = await import(
+        '../services/decision-lifecycle-service.js'
+      );
+      authorityCheck = decisionLifecycleService.checkAuthority(
+        'promote-to-review',
+        (req as any).userRole || undefined
+      );
+    } catch { /* non-blocking */ }
+
+    // Step 3: Execute promotion via existing governed path
     try {
       const { db } = await import('../db.js');
       // Update artifact status to 'review'
@@ -273,10 +323,71 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
           .where(eq(concept2cureArtifacts.id, Number(artifactId)));
       });
 
+      // ── Record successful promotion decision + receipt ──────────
+      let promotionDecision: any = null;
+      let promotionReceipt: any = null;
+      try {
+        const { decisionLifecycleService } = await import(
+          '../services/decision-lifecycle-service.js'
+        );
+        promotionDecision = decisionLifecycleService.recordGovernedActionDecision({
+          projectId: String(projectId),
+          kind: 'promotion-decision',
+          governedAction: 'promote-to-review',
+          artifactId: String(artifactId),
+          summary: 'Artifact promoted to review',
+          rationale: 'No blocking contradictions. Preflight passed or skipped.',
+          sourceSignals: [{ kind: 'user-request' as const, summary: 'User confirmed promotion' }],
+          createdByType: 'human',
+          createdById: (req as any).userId || undefined,
+        });
+        // Transition to confirmed → executed
+        if (promotionDecision) {
+          decisionLifecycleService.transitionDecision(promotionDecision.id, 'confirmed', {
+            actorId: (req as any).userId,
+          });
+          decisionLifecycleService.transitionDecision(promotionDecision.id, 'executed', {
+            actorId: (req as any).userId,
+          });
+          promotionReceipt = decisionLifecycleService.createReceipt({
+            decisionId: promotionDecision.id,
+            projectId: String(projectId),
+            recommendation: {
+              summary: 'Promote artifact to review',
+              actionIds: ['promote-to-review'],
+              rationale: 'Artifact passed preflight or user overrode warnings',
+            },
+            confirmation: {
+              accepted: true,
+              confirmedById: (req as any).userId || undefined,
+            },
+            execution: {
+              executed: true,
+              executedById: (req as any).userId || undefined,
+              executionMethod: 'status-transition:draft→review',
+            },
+            affectedObjects: [{
+              objectType: 'artifact',
+              objectId: String(artifactId),
+              previousState: 'draft',
+              newState: 'review',
+              changeDescription: 'Artifact status changed from draft to review',
+            }],
+            pendingApprovals: authorityCheck?.authority?.requiresReviewerApproval
+              ? [{ requiredRole: 'reviewer', reason: 'Artifact needs reviewer sign-off', status: 'pending' as const }]
+              : [],
+          });
+        }
+      } catch { /* non-blocking */ }
+
       return res.json({
         promoted: true,
         message: 'Artifact promoted to review. Governance workflow initiated.',
         newStatus: 'review',
+        decisionId: promotionDecision?.id || null,
+        receiptId: promotionReceipt?.id || null,
+        authority: promotionDecision?.authority || null,
+        pendingApprovals: promotionReceipt?.pendingApprovals || [],
       });
     } catch (promoteErr: any) {
       return res.json({
@@ -325,6 +436,29 @@ router.post('/correction-draft', async (req: Request, res: Response) => {
     }
 
     if (targets.length > 0) {
+      // ── Record correction decision (non-blocking) ───────────────
+      let correctionDecision: any = null;
+      try {
+        const { decisionLifecycleService } = await import(
+          '../services/decision-lifecycle-service.js'
+        );
+        correctionDecision = decisionLifecycleService.recordGovernedActionDecision({
+          projectId: String(projectId),
+          kind: 'correction-decision',
+          governedAction: 'prepare-correction-draft',
+          artifactId: artifactId ? String(artifactId) : undefined,
+          sectionCode,
+          summary: `${targets.length} correction target(s) identified`,
+          rationale: triggerDescription || 'Correction requested via AnA',
+          sourceSignals: targets.map((t: any) => ({
+            kind: 'user-request' as const,
+            summary: t.revisionRationale || 'Correction target identified',
+          })),
+          createdByType: 'ana',
+          createdById: (req as any).userId || undefined,
+        });
+      } catch { /* non-blocking */ }
+
       return res.json({
         status: 'data',
         action: 'correction_draft',
@@ -338,6 +472,8 @@ router.post('/correction-draft', async (req: Request, res: Response) => {
           hasContent: !!t.currentContent,
         })),
         message: `${targets.length} rewrite target(s) identified. Review rationale before applying corrections.`,
+        decisionId: correctionDecision?.id || null,
+        authority: correctionDecision?.authority || null,
       });
     }
 
@@ -404,6 +540,28 @@ router.post('/harmonize-sections', async (req: Request, res: Response) => {
         productName: productName || undefined,
       });
 
+      // ── Record harmonization decision (non-blocking) ─────────────
+      let harmonizeDecision: any = null;
+      try {
+        const { decisionLifecycleService } = await import(
+          '../services/decision-lifecycle-service.js'
+        );
+        harmonizeDecision = decisionLifecycleService.recordGovernedActionDecision({
+          projectId: String(projectId),
+          kind: 'harmonization-decision',
+          governedAction: 'prepare-harmonization-suggestion',
+          summary: `Harmonization: ${result.totalIssues} issue(s), score ${result.consistencyScore}%`,
+          rationale: `Checked ${Object.keys(sections).length} sections: ${Object.keys(sections).join(', ')}`,
+          sourceSignals: result.issues.slice(0, 5).map((i: any) => ({
+            kind: 'cross-section-inconsistency' as const,
+            summary: i.description || 'Inconsistency detected',
+            severity: i.severity === 'critical' ? 'critical' as const : i.severity === 'error' ? 'major' as const : 'minor' as const,
+          })),
+          createdByType: 'ana',
+          createdById: (req as any).userId || undefined,
+        });
+      } catch { /* non-blocking */ }
+
       return res.json({
         status: 'data',
         action: 'harmonize_sections',
@@ -424,6 +582,8 @@ router.post('/harmonize-sections', async (req: Request, res: Response) => {
         })),
         checkedDimensions: result.checkedDimensions,
         sectionsCompared: Object.keys(sections),
+        decisionId: harmonizeDecision?.id || null,
+        authority: harmonizeDecision?.authority || null,
       });
     } catch {
       return res.json({
@@ -1115,10 +1275,47 @@ router.post('/module-preflight', async (req: Request, res: Response) => {
         reason: 'All preflight checks pass.' });
     }
 
+    // ── Record formal decision (non-blocking) ─────────────────────
+    let decisionRecord: any = null;
+    try {
+      const { decisionLifecycleService } = await import(
+        '../services/decision-lifecycle-service.js'
+      );
+      const signals: Array<{ kind: string; id?: string; summary: string; severity?: string }> = [];
+      for (const blocker of majorBlockers) {
+        signals.push({ kind: blocker.kind || 'readiness-blocker', summary: blocker.message, severity: blocker.severity });
+      }
+      decisionRecord = decisionLifecycleService.recordPreflightDecision({
+        projectId: String(projectId),
+        kind: 'module-preflight-judgment',
+        moduleCode, regulatorBody, submissionType,
+        workflowStage: 'dossier',
+        overall, summary,
+        sourceSignals: signals as any,
+        recommendedActionIds: recommendedActions.map((a: any) => a.id),
+        createdById: (req as any).userId || undefined,
+      });
+    } catch { /* non-blocking */ }
+
+    // ── Decision-aware gating enrichment ─────────────────────────
+    let decisionAwareStatus: any = null;
+    try {
+      const { decisionLifecycleService } = await import(
+        '../services/decision-lifecycle-service.js'
+      );
+      decisionAwareStatus = decisionLifecycleService.computeDecisionAwareStatus(
+        String(projectId), { moduleCode }
+      );
+    } catch { /* non-blocking */ }
+
     return res.json({
       status: 'data', action: 'module_preflight', moduleCode,
       regulatorBody, submissionType, overall, summary,
       sectionResults, counts, majorBlockers, recommendedActions,
+      decisionId: decisionRecord?.id || null,
+      decisionStatus: decisionRecord?.status || null,
+      authority: decisionRecord?.authority || null,
+      decisionAwareStatus: decisionAwareStatus || null,
     });
   } catch (err: any) {
     console.error('[authoring-actions] module-preflight error:', err?.message);
@@ -1245,10 +1442,47 @@ router.post('/dossier-preflight', async (req: Request, res: Response) => {
         reason: 'All modules pass preflight.' });
     }
 
+    // ── Record formal decision (non-blocking) ─────────────────────
+    let decisionRecord: any = null;
+    try {
+      const { decisionLifecycleService } = await import(
+        '../services/decision-lifecycle-service.js'
+      );
+      const signals: Array<{ kind: string; id?: string; summary: string; severity?: string }> = [];
+      for (const blocker of majorBlockers) {
+        signals.push({ kind: blocker.kind || 'readiness-blocker', summary: blocker.message, severity: blocker.severity });
+      }
+      decisionRecord = decisionLifecycleService.recordPreflightDecision({
+        projectId: String(projectId),
+        kind: 'dossier-preflight-judgment',
+        regulatorBody, submissionType,
+        workflowStage: 'submissions',
+        overall, summary,
+        sourceSignals: signals as any,
+        recommendedActionIds: recommendedActions.map((a: any) => a.id),
+        createdById: (req as any).userId || undefined,
+      });
+    } catch { /* non-blocking */ }
+
+    // ── Decision-aware gating enrichment ─────────────────────────
+    let decisionAwareStatus: any = null;
+    try {
+      const { decisionLifecycleService } = await import(
+        '../services/decision-lifecycle-service.js'
+      );
+      decisionAwareStatus = decisionLifecycleService.computeDecisionAwareStatus(
+        String(projectId), {}
+      );
+    } catch { /* non-blocking */ }
+
     return res.json({
       status: 'data', action: 'dossier_preflight',
       regulatorBody, submissionType, overall, summary,
       moduleResults, counts: dCounts, majorBlockers, recommendedActions,
+      decisionId: decisionRecord?.id || null,
+      decisionStatus: decisionRecord?.status || null,
+      authority: decisionRecord?.authority || null,
+      decisionAwareStatus: decisionAwareStatus || null,
     });
   } catch (err: any) {
     console.error('[authoring-actions] dossier-preflight error:', err?.message);
@@ -1440,10 +1674,54 @@ router.post('/section-preflight', async (req: Request, res: Response) => {
         reason: 'All checks pass — ready for governed promotion.' });
     }
 
+    // ── Record formal decision (non-blocking) ─────────────────────
+    let decisionRecord: any = null;
+    try {
+      const { decisionLifecycleService } = await import(
+        '../services/decision-lifecycle-service.js'
+      );
+      const signals: Array<{ kind: string; id?: string; summary: string; severity?: string }> = [];
+      if (checks.contradictions?.items?.length) {
+        for (const item of checks.contradictions.items) {
+          signals.push({ kind: 'contradiction', id: item.id, summary: item.explanation, severity: item.severity });
+        }
+      }
+      if (checks.bodyExpectations?.missing?.length) {
+        signals.push({ kind: 'body-gap', summary: `${checks.bodyExpectations.missing.length} body requirement(s) missing`, severity: 'major' });
+      }
+      if (checks.crossSectionConsistency?.items?.length) {
+        for (const item of checks.crossSectionConsistency.items) {
+          signals.push({ kind: 'cross-section-inconsistency', summary: item.explanation, severity: item.severity });
+        }
+      }
+      if (checks.readiness?.blockers?.length) {
+        for (const b of checks.readiness.blockers) {
+          signals.push({ kind: 'readiness-blocker', summary: b.message, severity: b.severity });
+        }
+      }
+
+      decisionRecord = decisionLifecycleService.recordPreflightDecision({
+        projectId: String(projectId),
+        kind: 'section-preflight-judgment',
+        sectionCode, artifactId, artifactVersionId,
+        regulatorBody, submissionType,
+        workflowStage: 'section-workspace',
+        overall, summary,
+        sourceSignals: signals as any,
+        recommendedActionIds: recommendedActions.map((a: any) => a.id),
+        createdById: (req as any).userId || undefined,
+      });
+    } catch {
+      // Decision recording is non-blocking
+    }
+
     return res.json({
       status: 'data', action: 'section_preflight',
       sectionCode, artifactId, artifactVersionId, regulatorBody, submissionType,
       overall, summary, checks, recommendedActions,
+      decisionId: decisionRecord?.id || null,
+      decisionStatus: decisionRecord?.status || null,
+      authority: decisionRecord?.authority || null,
     });
   } catch (err: any) {
     console.error('[authoring-actions] section-preflight error:', err?.message);
@@ -1538,6 +1816,203 @@ router.get('/section-context/:projectId/:sectionCode', async (req: Request, res:
   } catch (err: any) {
     console.error('[authoring-actions] section-context error:', err?.message);
     return res.status(500).json({ error: 'Failed to fetch section context' });
+  }
+});
+
+// ─── Decision Architecture API ───────────────────────────────────────────────
+
+/**
+ * GET /decisions/:projectId
+ * Retrieve formal decision records for a project, optionally filtered.
+ */
+router.get('/decisions/:projectId', async (req: Request, res: Response) => {
+  try {
+    const { projectId } = req.params;
+    const { kind, status, sectionCode, moduleCode, limit } = req.query;
+
+    const { decisionLifecycleService } = await import(
+      '../services/decision-lifecycle-service.js'
+    );
+
+    const decisions = decisionLifecycleService.getProjectDecisions(
+      projectId,
+      {
+        kind: kind as any || undefined,
+        status: status as any || undefined,
+        sectionCode: sectionCode as string || undefined,
+        moduleCode: moduleCode as string || undefined,
+        limit: limit ? Number(limit) : 20,
+      }
+    );
+
+    return res.json({
+      projectId,
+      count: decisions.length,
+      decisions: decisions.map(d => ({
+        id: d.id,
+        kind: d.kind,
+        status: d.status,
+        summary: d.summary,
+        rationale: d.rationale,
+        authority: d.authority,
+        sectionCode: d.sectionCode,
+        moduleCode: d.moduleCode,
+        artifactId: d.artifactId,
+        createdByType: d.createdByType,
+        createdAt: d.createdAt,
+        sourceSignalCount: d.sourceSignals.length,
+        hasReceipt: !!d.linkedReceiptId,
+      })),
+    });
+  } catch (err: any) {
+    console.error('[authoring-actions] decisions error:', err?.message);
+    return res.status(500).json({ error: 'Failed to fetch decisions' });
+  }
+});
+
+/**
+ * GET /decision/:decisionId
+ * Retrieve a single decision + its receipt.
+ */
+router.get('/decision/:decisionId', async (req: Request, res: Response) => {
+  try {
+    const { decisionId } = req.params;
+
+    const { decisionLifecycleService } = await import(
+      '../services/decision-lifecycle-service.js'
+    );
+
+    const decision = decisionLifecycleService.getDecision(decisionId);
+    if (!decision) {
+      return res.status(404).json({ error: 'Decision not found' });
+    }
+
+    const receipt = decisionLifecycleService.getReceiptForDecision(decisionId);
+
+    return res.json({
+      decision,
+      receipt: receipt || null,
+    });
+  } catch (err: any) {
+    console.error('[authoring-actions] decision detail error:', err?.message);
+    return res.status(500).json({ error: 'Failed to fetch decision' });
+  }
+});
+
+/**
+ * POST /decision/:decisionId/confirm
+ * Confirm or reject a recommended decision.
+ */
+router.post('/decision/:decisionId/confirm', async (req: Request, res: Response) => {
+  try {
+    const { decisionId } = req.params;
+    const { accepted, reason } = req.body;
+    const userId = (req as any).userId || 'unknown';
+    const userRole = (req as any).userRole || undefined;
+
+    const { decisionLifecycleService } = await import(
+      '../services/decision-lifecycle-service.js'
+    );
+
+    const newStatus = accepted ? 'confirmed' : 'rejected';
+    const result = decisionLifecycleService.transitionDecision(
+      decisionId,
+      newStatus as any,
+      { actorId: userId, actorRole: userRole, reason }
+    );
+
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    return res.json({
+      success: true,
+      decision: result.decision,
+    });
+  } catch (err: any) {
+    console.error('[authoring-actions] decision confirm error:', err?.message);
+    return res.status(500).json({ error: 'Failed to confirm decision' });
+  }
+});
+
+/**
+ * GET /decision-context/:projectId
+ * Get decision context for AnA explanation grounding.
+ */
+router.get('/decision-context/:projectId', async (req: Request, res: Response) => {
+  try {
+    const { projectId } = req.params;
+    const { sectionCode, moduleCode, limit } = req.query;
+
+    const { decisionLifecycleService } = await import(
+      '../services/decision-lifecycle-service.js'
+    );
+
+    const context = decisionLifecycleService.getDecisionContext(
+      projectId,
+      {
+        sectionCode: sectionCode as string || undefined,
+        moduleCode: moduleCode as string || undefined,
+        limit: limit ? Number(limit) : 10,
+      }
+    );
+
+    return res.json({
+      projectId,
+      count: context.length,
+      items: context.map(({ decision, receipt }) => ({
+        decision: {
+          id: decision.id,
+          kind: decision.kind,
+          status: decision.status,
+          summary: decision.summary,
+          rationale: decision.rationale,
+          authority: decision.authority,
+          sourceSignals: decision.sourceSignals,
+          recommendedActionIds: decision.recommendedActionIds,
+          createdByType: decision.createdByType,
+          createdAt: decision.createdAt,
+        },
+        receipt: receipt ? {
+          id: receipt.id,
+          recommendation: receipt.recommendation,
+          confirmation: receipt.confirmation,
+          execution: receipt.execution,
+          affectedObjects: receipt.affectedObjects,
+          pendingApprovals: receipt.pendingApprovals,
+          provisionalItems: receipt.provisionalItems,
+        } : null,
+      })),
+    });
+  } catch (err: any) {
+    console.error('[authoring-actions] decision-context error:', err?.message);
+    return res.status(500).json({ error: 'Failed to fetch decision context' });
+  }
+});
+
+/**
+ * GET /authority-map
+ * Return the full authority boundary map for UI display.
+ */
+router.get('/authority-map', async (_req: Request, res: Response) => {
+  try {
+    const { AUTHORITY_BOUNDARY_MAP } = await import(
+      '../../shared/types/decision-architecture.js'
+    );
+    return res.json({
+      entries: AUTHORITY_BOUNDARY_MAP.map((e: any) => ({
+        action: e.action,
+        level: e.authority.level,
+        requiresHumanConfirmation: e.authority.requiresHumanConfirmation,
+        requiresReviewerApproval: e.authority.requiresReviewerApproval,
+        requiresEscalation: e.authority.requiresEscalation,
+        allowedActorRoles: e.authority.allowedActorRoles,
+        description: e.description,
+      })),
+    });
+  } catch (err: any) {
+    console.error('[authoring-actions] authority-map error:', err?.message);
+    return res.status(500).json({ error: 'Failed to fetch authority map' });
   }
 });
 
