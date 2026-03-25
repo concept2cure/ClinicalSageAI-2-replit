@@ -1019,6 +1019,38 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               {(msg as any).insertedToEditor && (
                 <span className="text-xs text-blue-600 font-medium ml-1">Inserted</span>
               )}
+              {/* Save as artifact — calls /api/ana-ri/generate */}
+              {contextProfile?.projectId && msg.content.length > 200 && !msg.savedAsArtifact && (
+                <button
+                  onClick={async () => {
+                    try {
+                      const res = await apiRequest('POST', '/api/ana-ri/generate', {
+                        action_type: 'revised_artifact',
+                        conversation_context: messages.slice(-10).map(m => ({ role: m.role, content: m.content })),
+                        project_id: contextProfile.projectId,
+                        user_role: contextProfile?.userRole || undefined,
+                      });
+                      if (res.ok) {
+                        const data = await res.json();
+                        toast({ title: 'Saved as artifact', description: data.artifactId ? `Artifact #${data.artifactId}` : 'Content saved to project' });
+                        setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, savedAsArtifact: true } : m));
+                      } else {
+                        toast({ title: 'Save failed', description: 'Could not save artifact', variant: 'destructive' });
+                      }
+                    } catch (err) {
+                      toast({ title: 'Save failed', description: err instanceof Error ? err.message : 'Unknown error', variant: 'destructive' });
+                    }
+                  }}
+                  className="p-1.5 text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors"
+                  title="Save as artifact"
+                  aria-label="Save response as project artifact"
+                >
+                  <Download className="w-4 h-4" />
+                </button>
+              )}
+              {msg.savedAsArtifact && (
+                <span className="text-xs text-emerald-600 font-medium ml-1">Saved</span>
+              )}
             </div>
           )}
         </div>

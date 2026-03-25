@@ -185,8 +185,25 @@ router.post('/chat', async (req: Request, res: Response) => {
       orchestration.systemPrompt += `\n\n## Current Authoring Context\n\nYou have access to the user's current authoring context. Use this to provide section-specific, artifact-aware responses. When the user asks about "this section", "this document", "what's blocking", or similar, reference this context:\n\n${authoringContextBlock}`;
     }
 
+    // Inject intelligence prefix + 3-layer memory (same as streaming endpoint)
+    const chatIntelligencePrefix = await getIntelligencePrefix(
+      orgId ? Number(orgId) : undefined,
+      req.body.project_id || req.body.context?.projectId
+    ).catch(() => '');
+
+    const { memoryBlock: chatMemoryBlock } = await buildMemoryContextForChat({
+      threadId: thread_id || undefined,
+      organizationId: orgId ? Number(orgId) : undefined,
+      projectId: req.body.project_id || req.body.context?.projectId || undefined,
+      query: message,
+      limitPerLayer: 4,
+      maxChars: 3500,
+    }).catch(() => ({ memoryBlock: '', atoms: [], diagnostics: null }));
+
+    const enrichedSystemPrompt = chatIntelligencePrefix + orchestration.systemPrompt + chatMemoryBlock;
+
     // Build message history for the AI gateway
-    const messages: GatewayMessage[] = [{ role: 'system', content: orchestration.systemPrompt }];
+    const messages: GatewayMessage[] = [{ role: 'system', content: enrichedSystemPrompt }];
 
     // Add conversation history
     if (conversation_history && Array.isArray(conversation_history)) {
@@ -336,6 +353,19 @@ router.post('/chat', async (req: Request, res: Response) => {
         evidenceCompliant: evidenceCheck.compliant,
       },
     });
+
+    // RIM interception — capture intelligence signals (non-blocking)
+    const projectIdForRim = req.body.project_id || req.body.context?.projectId;
+    if (response.content && projectIdForRim) {
+      void interceptChatResponse({
+        projectId: String(projectIdForRim),
+        organizationId: orgId ? Number(orgId) : undefined,
+        threadId: threadId || undefined,
+        userMessage: message,
+        assistantMessage: response.content,
+        submissionType: orchestration.detectedSubmissionType || undefined,
+      }).catch(() => {});
+    }
 
     return res.json({
       response: response.content,
