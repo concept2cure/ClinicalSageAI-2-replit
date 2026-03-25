@@ -29,6 +29,9 @@ import {
   Square,
   Paperclip,
   X,
+  FileDown,
+  BookmarkPlus,
+  RefreshCw,
 } from 'lucide-react';
 
 marked.setOptions({ breaks: true, gfm: true });
@@ -1158,10 +1161,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 title="Regenerate"
                 aria-label="Regenerate response"
               >
-                <RotateCcw className="w-4 h-4" />
+                <RefreshCw className="w-4 h-4" />
               </button>
               {/* Insert into editor */}
-              {onDraftInsert && authoringContext?.sectionCode && msg.content.length > 100 && (
+              {onDraftInsert && msg.content.length > 100 && (
                 <button
                   onClick={() => {
                     let insertContent = msg.content;
@@ -1172,10 +1175,12 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     if (!insertContent.startsWith('<')) {
                       insertContent = insertContent.split('\n\n').filter(p => p.trim()).map(p => `<p>${p.trim()}</p>`).join('\n');
                     }
-                    const title = authoringContext.sectionTitle
+                    const title = authoringContext?.sectionTitle
                       ? `${authoringContext.sectionCode} — ${authoringContext.sectionTitle}`
-                      : `Section ${authoringContext.sectionCode} Draft`;
-                    onDraftInsert(insertContent, title, authoringContext.sectionCode);
+                      : authoringContext?.sectionCode
+                        ? `Section ${authoringContext.sectionCode} Draft`
+                        : `AnA Draft — ${new Date().toLocaleDateString()}`;
+                    onDraftInsert(insertContent, title, authoringContext?.sectionCode);
                     setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, insertedToEditor: true } : m));
                   }}
                   className="p-1.5 text-zinc-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
@@ -1188,7 +1193,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               {(msg as any).insertedToEditor && (
                 <span className="text-xs text-blue-600 font-medium ml-1">Inserted</span>
               )}
-              {/* Export as text file */}
+              {/* Export as file */}
               {msg.content.length > 100 && (
                 <button
                   onClick={() => {
@@ -1205,7 +1210,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   title="Export as markdown"
                   aria-label="Export response as markdown"
                 >
-                  <Download className="w-4 h-4" />
+                  <FileDown className="w-4 h-4" />
                 </button>
               )}
               {/* Save as artifact — calls /api/ana-ri/generate */}
@@ -1234,7 +1239,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   title="Save as artifact"
                   aria-label="Save response as project artifact"
                 >
-                  <Download className="w-4 h-4" />
+                  <BookmarkPlus className="w-4 h-4" />
                 </button>
               )}
               {msg.savedAsArtifact && (
@@ -1406,72 +1411,84 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           </div>
         )}
 
-        {/* Slash command autocomplete */}
-        {input.startsWith('/') && !input.includes(' ') && (
-          <div className="absolute bottom-full left-0 right-0 mb-1 mx-4 bg-white rounded-xl border border-zinc-200 shadow-lg py-1 z-50 max-h-[200px] overflow-y-auto" role="listbox" aria-label="Slash commands" data-testid="ana-slash-commands">
-            {[
-              { cmd: '/risk', desc: 'Analyze submission risk profile' },
-              { cmd: '/readiness', desc: 'Check submission readiness' },
-              { cmd: '/precedent', desc: 'Find regulatory precedents' },
-              { cmd: '/claims', desc: 'Analyze evidence chain' },
-              { cmd: '/recommend', desc: 'Get prioritized next actions' },
-              { cmd: '/next', desc: 'What should I work on next?' },
-              { cmd: '/simulate', desc: 'Simulate reviewer challenges' },
-              { cmd: '/signals', desc: 'Show RIM intelligence signals' },
-              { cmd: '/assess', desc: 'Full project assessment (readiness + risks + actions)' },
-              { cmd: '/twin', desc: 'Submission twin — claims, evidence, reviewer simulation' },
-              { cmd: '/consistency', desc: 'Cross-module consistency analysis' },
-              { cmd: '/deficiencies', desc: 'Known deficiency patterns for this submission type' },
-              { cmd: '/knowledge', desc: 'Search project knowledge base' },
-              { cmd: '/decisions', desc: 'View project decision audit trail' },
-              { cmd: '/sap', desc: 'Generate Statistical Analysis Plan' },
-              { cmd: '/power', desc: 'Calculate sample size and power' },
-              { cmd: '/dose', desc: 'Design dose escalation protocol' },
-              { cmd: '/defensibility', desc: 'Statistical defensibility assessment' },
-              { cmd: '/design', desc: 'Design a clinical trial' },
-              { cmd: '/safety', desc: 'Safety narratives, TEAE, SAE, benefit-risk' },
-              { cmd: '/cmc', desc: 'CMC comparability, manufacturing, Module 3' },
-              { cmd: '/csr', desc: 'Clinical study report analysis (ICH E3)' },
-              { cmd: '/device', desc: 'Medical device: 510(k), PMA, De Novo, EU MDR' },
-              { cmd: '/ectd', desc: 'eCTD module structure and artifact placement' },
-              { cmd: '/audit', desc: 'Audit document — completeness, consistency, defensibility' },
-              { cmd: '/amend', desc: 'Amend document — change tracking, impact analysis' },
-              { cmd: '/review', desc: 'Regulatory review — reviewer perspective, deficiency detection' },
-              { cmd: '/memo', desc: 'Generate risk assessment memo (go/no-go)' },
-              { cmd: '/brief', desc: 'Generate reviewer question anticipation brief' },
-              { cmd: '/strategy', desc: 'Generate regulatory strategy note' },
-              { cmd: '/narrative', desc: 'Generate safety narrative (TEAE, SAE, benefit-risk)' },
-              { cmd: '/report', desc: 'Generate regulatory report' },
-              { cmd: '/iss', desc: 'Integrated Summary of Safety' },
-              { cmd: '/ise', desc: 'Integrated Summary of Efficacy' },
-              { cmd: '/ib', desc: 'Investigator\'s Brochure' },
-              { cmd: '/smpc', desc: 'Summary of Product Characteristics (EU)' },
-              { cmd: '/rmp', desc: 'Risk Management Plan (EU)' },
-              { cmd: '/uspi', desc: 'US Prescribing Information' },
-              { cmd: '/draft', desc: 'Draft any CTD section (auto-detects type)' },
-              { cmd: '/scan', desc: 'Scan section for regulatory deficiencies' },
-              { cmd: '/checklist', desc: 'Generate compliance checklist' },
-              { cmd: '/freeze', desc: 'Freeze document (immutable snapshot)' },
-              { cmd: '/sign', desc: 'Request electronic signature (21 CFR Part 11)' },
-              { cmd: '/submit', desc: 'Submit document to regulatory workflow' },
-              { cmd: '/preflight', desc: 'Run section preflight' },
-              { cmd: '/status', desc: 'Quick project status — readiness, blockers, next step' },
-              { cmd: '/workflow', desc: 'Full submission workflow status and next steps' },
-              { cmd: '/help', desc: 'Show what AnA can do for your project right now' },
-              { cmd: '/export', desc: 'Export this conversation' },
-            ].filter(c => c.cmd.startsWith(input.toLowerCase())).map(c => (
-              <button
-                key={c.cmd}
-                type="button"
-                onClick={() => { setInput(c.cmd + ' '); inputRef.current?.focus(); }}
-                className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-zinc-50 transition-colors"
-              >
-                <code className="text-xs font-mono text-[#b4654a] bg-[#fdf5f2] px-1.5 py-0.5 rounded">{c.cmd}</code>
-                <span className="text-xs text-zinc-500">{c.desc}</span>
-              </button>
-            ))}
-          </div>
-        )}
+        {/* Slash command autocomplete — categorized */}
+        {input.startsWith('/') && !input.includes(' ') && (() => {
+          const allCmds = [
+            { cmd: '/status', desc: 'Quick project status', cat: 'Project' },
+            { cmd: '/assess', desc: 'Full assessment', cat: 'Project' },
+            { cmd: '/workflow', desc: 'Submission workflow', cat: 'Project' },
+            { cmd: '/risk', desc: 'Risk profile', cat: 'Intel' },
+            { cmd: '/readiness', desc: 'Readiness score', cat: 'Intel' },
+            { cmd: '/recommend', desc: 'Next actions', cat: 'Intel' },
+            { cmd: '/precedent', desc: 'Find precedents', cat: 'Intel' },
+            { cmd: '/claims', desc: 'Evidence chains', cat: 'Intel' },
+            { cmd: '/simulate', desc: 'Reviewer simulation', cat: 'Intel' },
+            { cmd: '/draft', desc: 'Draft CTD section', cat: 'Author' },
+            { cmd: '/audit', desc: 'Audit document', cat: 'Author' },
+            { cmd: '/review', desc: 'Regulatory review', cat: 'Author' },
+            { cmd: '/scan', desc: 'Deficiency scan', cat: 'Author' },
+            { cmd: '/amend', desc: 'Amend document', cat: 'Author' },
+            { cmd: '/memo', desc: 'Risk memo', cat: 'Docs' },
+            { cmd: '/brief', desc: 'Reviewer brief', cat: 'Docs' },
+            { cmd: '/strategy', desc: 'Strategy note', cat: 'Docs' },
+            { cmd: '/narrative', desc: 'Safety narrative', cat: 'Docs' },
+            { cmd: '/iss', desc: 'Integrated Safety Summary', cat: 'Docs' },
+            { cmd: '/ise', desc: 'Integrated Efficacy Summary', cat: 'Docs' },
+            { cmd: '/ib', desc: 'Investigator Brochure', cat: 'Docs' },
+            { cmd: '/report', desc: 'Regulatory report', cat: 'Docs' },
+            { cmd: '/uspi', desc: 'USPI (FDA)', cat: 'Docs' },
+            { cmd: '/smpc', desc: 'SmPC (EU)', cat: 'Docs' },
+            { cmd: '/rmp', desc: 'RMP (EU)', cat: 'Docs' },
+            { cmd: '/sap', desc: 'Statistical Analysis Plan', cat: 'Biostats' },
+            { cmd: '/power', desc: 'Sample size & power', cat: 'Biostats' },
+            { cmd: '/dose', desc: 'Dose escalation', cat: 'Biostats' },
+            { cmd: '/defensibility', desc: 'Statistical defensibility', cat: 'Biostats' },
+            { cmd: '/design', desc: 'Trial design', cat: 'Biostats' },
+            { cmd: '/safety', desc: 'Safety domain', cat: 'Domain' },
+            { cmd: '/cmc', desc: 'CMC/Manufacturing', cat: 'Domain' },
+            { cmd: '/csr', desc: 'Clinical study report', cat: 'Domain' },
+            { cmd: '/device', desc: 'Medical device', cat: 'Domain' },
+            { cmd: '/ectd', desc: 'eCTD structure', cat: 'Domain' },
+            { cmd: '/checklist', desc: 'Compliance checklist', cat: 'Lifecycle' },
+            { cmd: '/preflight', desc: 'Section preflight', cat: 'Lifecycle' },
+            { cmd: '/freeze', desc: 'Freeze document', cat: 'Lifecycle' },
+            { cmd: '/sign', desc: 'E-signature', cat: 'Lifecycle' },
+            { cmd: '/submit', desc: 'Submit to workflow', cat: 'Lifecycle' },
+            { cmd: '/signals', desc: 'RIM signals', cat: 'Other' },
+            { cmd: '/twin', desc: 'Submission twin', cat: 'Other' },
+            { cmd: '/consistency', desc: 'Cross-module check', cat: 'Other' },
+            { cmd: '/deficiencies', desc: 'Deficiency patterns', cat: 'Other' },
+            { cmd: '/knowledge', desc: 'Search knowledge', cat: 'Other' },
+            { cmd: '/decisions', desc: 'Decision trail', cat: 'Other' },
+            { cmd: '/next', desc: 'What to do next', cat: 'Other' },
+            { cmd: '/help', desc: 'What can AnA do?', cat: 'Other' },
+            { cmd: '/export', desc: 'Export conversation', cat: 'Other' },
+          ];
+          const isJust = input === '/';
+          const filtered = isJust ? allCmds.slice(0, 10) : allCmds.filter(c => c.cmd.startsWith(input.toLowerCase()));
+          if (filtered.length === 0) return null;
+          let lastCat = '';
+          return (
+            <div className="absolute bottom-full left-0 right-0 mb-1 mx-4 bg-white rounded-xl border border-zinc-200 shadow-lg py-1 z-50 max-h-[280px] overflow-y-auto" role="listbox" aria-label="Slash commands" data-testid="ana-slash-commands">
+              {filtered.map(c => {
+                const showCat = !isJust && c.cat !== lastCat;
+                lastCat = c.cat;
+                return (
+                  <React.Fragment key={c.cmd}>
+                    {showCat && <div className="px-3 pt-2 pb-1 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">{c.cat}</div>}
+                    <button type="button" onClick={() => { setInput(c.cmd + ' '); inputRef.current?.focus(); }}
+                      className="w-full flex items-center gap-3 px-3 py-1.5 text-left hover:bg-zinc-50 transition-colors">
+                      <code className="text-[11px] font-mono text-[#b4654a] bg-[#fdf5f2] px-1.5 py-0.5 rounded min-w-[90px]">{c.cmd}</code>
+                      <span className="text-xs text-zinc-500 truncate">{c.desc}</span>
+                    </button>
+                  </React.Fragment>
+                );
+              })}
+              {isJust && <div className="px-3 py-1.5 text-[10px] text-zinc-400 text-center">Type to filter {allCmds.length} commands</div>}
+            </div>
+          );
+        })()}
+
 
         {/* Textarea */}
         <textarea
