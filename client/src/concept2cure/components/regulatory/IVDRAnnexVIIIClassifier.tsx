@@ -21,6 +21,7 @@
  */
 
 import React, { useState, useCallback } from 'react';
+import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -385,16 +386,12 @@ export default function IVDRAnnexVIIIClassifier() {
     if (!result) return;
     setSaving(true);
     try {
-      const resp = await fetch('/api/ivdr/classify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const resp = await apiRequest('POST', '/api/ivdr/classify', {
           ...answers,
           analytes: answers.analytes
             .split(',')
             .map(a => a.trim())
             .filter(Boolean),
-        }),
       });
       if (!resp.ok) throw new Error(await resp.text());
       const data = await resp.json();
@@ -409,7 +406,7 @@ export default function IVDRAnnexVIIIClassifier() {
   // ── Load history ───────────────────────────────────────────────────────
   const loadHistory = async () => {
     try {
-      const resp = await fetch('/api/ivdr/classifications');
+      const resp = await apiRequest('GET', '/api/ivdr/classifications');
       if (resp.ok) {
         const data = await resp.json();
         setRecords(data.classifications || []);

@@ -55,8 +55,8 @@ const DEFAULT_MODELS: ModelConfig[] = [
       'summarization',
       'general',
     ],
-    // Platform uses Anthropic Claude exclusively — OpenAI disabled
-    enabled: false,
+    // Enabled at registry level — buildModelRegistry() gates on API key presence
+    enabled: true,
   },
   {
     id: 'gpt-4o-mini',
@@ -67,8 +67,8 @@ const DEFAULT_MODELS: ModelConfig[] = [
     costPer1kInput: 0.00015,
     costPer1kOutput: 0.0006,
     capabilities: ['chat', 'general', 'summarization'],
-    // Platform uses Anthropic Claude exclusively — OpenAI disabled
-    enabled: false,
+    // Enabled at registry level — buildModelRegistry() gates on API key presence
+    enabled: true,
   },
   {
     id: 'claude-opus-4',
@@ -147,17 +147,17 @@ const DEFAULT_MODELS: ModelConfig[] = [
 ];
 
 // Task → preferred provider order
-// Platform uses Anthropic Claude exclusively for all tasks
+// Anthropic Claude is primary; OpenAI is automatic fallback when Claude is unavailable
 const TASK_PROVIDER_PREFERENCES: Record<TaskType, ProviderName[]> = {
-  chat: ['anthropic'],
-  document_analysis: ['anthropic'],
-  document_drafting: ['anthropic'],
-  structured_output: ['anthropic'],
-  regulatory_review: ['anthropic'],
-  code_generation: ['anthropic'],
-  summarization: ['anthropic'],
-  embedding: ['anthropic'],
-  general: ['anthropic'],
+  chat: ['anthropic', 'openai'],
+  document_analysis: ['anthropic', 'openai'],
+  document_drafting: ['anthropic', 'openai'],
+  structured_output: ['anthropic', 'openai'],
+  regulatory_review: ['anthropic', 'openai'],
+  code_generation: ['anthropic', 'openai'],
+  summarization: ['anthropic', 'openai'],
+  embedding: ['anthropic', 'openai'],
+  general: ['anthropic', 'openai'],
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

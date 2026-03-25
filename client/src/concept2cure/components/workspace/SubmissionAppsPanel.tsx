@@ -10,6 +10,8 @@
 
 import React, { useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 import {
   getAllSubmissionApps,
   getSectionLabel,
@@ -29,14 +31,6 @@ import {
   Sparkles,
   ArrowRight,
 } from 'lucide-react';
-
-// ── Auth helper ──
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
 
 // App icon map
 const APP_ICONS: Record<string, React.ReactNode> = {
@@ -63,6 +57,7 @@ export const SubmissionAppsPanel: React.FC<SubmissionAppsPanelProps> = ({
   onCreateDraft,
   onOpenTransformCanvas,
 }) => {
+  const { toast } = useToast();
   const [selectedApp, setSelectedApp] = useState<SubmissionAppCandidate | null>(null);
   const [running, setRunning] = useState(false);
   const apps = getAllSubmissionApps();
@@ -71,30 +66,28 @@ export const SubmissionAppsPanel: React.FC<SubmissionAppsPanelProps> = ({
     if (!selectedApp || !projectId) return;
     setRunning(true);
     try {
-      // Create governed draft via existing artifact creation endpoint
       const title = `${selectedApp.label} — ${projectName || 'Project'}`;
       const scaffoldContent = generateAppScaffold(selectedApp);
-      const res = await fetch(`/api/concept2cure/projects/${projectId}/artifacts`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-        body: JSON.stringify({
-          title,
-          content: scaffoldContent,
-          type: selectedApp.targetDocType,
-          category: 'document',
-          ctdSection: selectedApp.defaultCtdSection,
-          templateId: selectedApp.templateKey,
-        }),
+      const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts`, {
+        title,
+        content: scaffoldContent,
+        type: selectedApp.targetDocType,
+        category: 'document',
+        ctdSection: selectedApp.defaultCtdSection,
+        templateId: selectedApp.templateKey,
       });
       if (res.ok) {
+        toast({ title: 'Draft created' });
         onCreateDraft(title, selectedApp.defaultCtdSection, selectedApp.templateKey);
+      } else {
+        toast({ title: 'Failed to create draft', variant: 'destructive' });
       }
     } catch {
-      /* silent */
+      toast({ title: 'Failed to create draft', variant: 'destructive' });
     } finally {
       setRunning(false);
     }
-  }, [selectedApp, projectId, projectName, onCreateDraft]);
+  }, [selectedApp, projectId, projectName, onCreateDraft, toast]);
 
   return (
     <div className="flex-1 flex flex-col bg-white min-h-0 overflow-hidden">

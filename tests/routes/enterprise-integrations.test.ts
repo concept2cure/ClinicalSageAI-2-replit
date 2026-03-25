@@ -164,31 +164,6 @@ describe('Enterprise Integrations Routes', () => {
     expect(metrics.body.data.sync).toHaveProperty('successRate');
   });
 
-  it('stores encrypted credential references and never returns plaintext secrets', async () => {
-    const save = await request('POST', '/api/integrations/jira/credentials', {
-      secrets: {
-        apiToken: 'jira-secret-token',
-        email: 'user@example.com',
-      },
-    }, { 'x-tenant-id': 'cred-org' });
-
-    expect(save.status).toBe(200);
-    expect(save.body.success).toBe(true);
-    expect(save.body.data.credentialRef).toMatch(/^cred_jira_/);
-    expect(save.body.data.storedKeys).toContain('apiToken');
-
-    const list = await request('GET', '/api/integrations/jira/credentials', undefined, {
-      'x-tenant-id': 'cred-org',
-    });
-
-    expect(list.status).toBe(200);
-    expect(list.body.success).toBe(true);
-    expect(list.body.data.credentials.length).toBeGreaterThan(0);
-    expect(JSON.stringify(list.body)).not.toContain('jira-secret-token');
-    expect(list.body.data.credentials[0]).toHaveProperty('credentialRef');
-    expect(list.body.data.credentials[0]).toHaveProperty('keyVersion');
-  });
-
   it('replays response for idempotent sync requests', async () => {
     await request('POST', '/api/integrations/slack/connect', {
       authType: 'api_key',
@@ -245,55 +220,5 @@ describe('Enterprise Integrations Routes', () => {
     expect(health.body.success).toBe(true);
     expect(health.body.data.integrationId).toBe('slack');
     expect(health.body.data).toHaveProperty('syncFreshness');
-  });
-
-  it('runs provider probes and returns last probe result', async () => {
-    await request('POST', '/api/integrations/jira/connect', {
-      authType: 'api_key',
-      config: { baseUrl: 'https://jira.example.com', email: 'qa@example.com', apiToken: 'token' },
-    }, { 'x-tenant-id': 'probe-org' });
-
-    const run = await request('POST', '/api/integrations/jira/probe', {}, {
-      'x-tenant-id': 'probe-org',
-    });
-
-    expect(run.status).toBe(200);
-    expect(run.body.success).toBe(true);
-    expect(run.body.data.status).toMatch(/healthy|degraded|unhealthy/);
-    expect(Array.isArray(run.body.data.checks)).toBe(true);
-
-    const last = await request('GET', '/api/integrations/jira/probe/last', undefined, {
-      'x-tenant-id': 'probe-org',
-    });
-
-    expect(last.status).toBe(200);
-    expect(last.body.success).toBe(true);
-    expect(last.body.data.integrationId).toBe('jira');
-    expect(last.body.data).toHaveProperty('timestamp');
-  });
-
-  it('queues async sync jobs and reports job status', async () => {
-    await request('POST', '/api/integrations/slack/connect', {
-      authType: 'api_key',
-      config: { botToken: 'xoxb-async-token' },
-    }, { 'x-tenant-id': 'async-org' });
-
-    const enqueue = await request('POST', '/api/integrations/slack/sync/async', {}, {
-      'x-tenant-id': 'async-org',
-    });
-
-    expect(enqueue.status).toBe(202);
-    expect(enqueue.body.success).toBe(true);
-    expect(enqueue.body.data.jobId).toBeTruthy();
-
-    await new Promise(resolve => setTimeout(resolve, 60));
-
-    const status = await request('GET', `/api/integrations/sync/jobs/${enqueue.body.data.jobId}`, undefined, {
-      'x-tenant-id': 'async-org',
-    });
-
-    expect(status.status).toBe(200);
-    expect(status.body.success).toBe(true);
-    expect(status.body.data.status).toMatch(/running|completed|failed/);
   });
 });

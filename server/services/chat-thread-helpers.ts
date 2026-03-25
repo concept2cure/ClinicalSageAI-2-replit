@@ -13,6 +13,39 @@
 import { pool } from '../db.js';
 
 /**
+ * Ensure critical chat tables exist. Called lazily on first use.
+ * Uses IF NOT EXISTS so it's safe to call multiple times.
+ */
+let tablesEnsured = false;
+async function ensureChatTables(): Promise<void> {
+  if (tablesEnsured) return;
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS chat_threads (
+        id TEXT PRIMARY KEY,
+        user_id INTEGER,
+        project_id INTEGER,
+        organization_id INTEGER,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      );
+      CREATE TABLE IF NOT EXISTS chat_messages (
+        id SERIAL PRIMARY KEY,
+        thread_id TEXT REFERENCES chat_threads(id) ON DELETE CASCADE,
+        role TEXT NOT NULL,
+        content TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+    tablesEnsured = true;
+  } catch (e: unknown) {
+    // Tables may already exist with different schema — that's fine
+    console.warn('[chat-thread-helpers] Table ensure warning:', e instanceof Error ? e.message : String(e));
+    tablesEnsured = true; // Don't retry
+  }
+}
+
+/**
  * Get an existing thread or create a new one.
  * @param threadId - Existing thread ID (or null to create new)
  * @param userId - Optional user ID to associate
@@ -23,6 +56,7 @@ export async function getOrCreateThread(
   userId?: number,
   prefix: string = 'thread'
 ): Promise<string> {
+  await ensureChatTables();
   if (threadId) {
     const existing = await pool.query('SELECT id FROM chat_threads WHERE id = $1', [threadId]);
     if (existing.rows.length > 0) return threadId;

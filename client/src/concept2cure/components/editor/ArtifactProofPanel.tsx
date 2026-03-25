@@ -27,13 +27,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
+import { apiRequest } from '@/lib/queryClient';
 
 interface ProofItem {
   label: string;
@@ -70,13 +64,12 @@ const ArtifactProofPanel: React.FC<ArtifactProofPanelProps> = ({ projectId, arti
   useEffect(() => {
     if (!projectId || !artifact?.id) return;
     setLoading(true);
-    const headers = getAuthHeaders();
     const base = `/api/concept2cure/projects/${projectId}/artifacts/${artifact.id}`;
 
     Promise.allSettled([
-      fetch(`${base}/provenance`, { headers }).then(r => r.ok ? r.json() : null),
-      fetch(`${base}/signatures`, { headers }).then(r => r.ok ? r.json() : null),
-      fetch(`${base}/verify-integrity`, { headers }).then(r => r.ok ? r.json() : null),
+      apiRequest('GET', `${base}/provenance`).then(r => r.ok ? r.json() : null),
+      apiRequest('GET', `${base}/signatures`).then(r => r.ok ? r.json() : null),
+      apiRequest('GET', `${base}/verify-integrity`).then(r => r.ok ? r.json() : null),
     ]).then(([prov, sig, integrity]) => {
       if (prov.status === 'fulfilled' && prov.value) {
         const d = prov.value.data ?? prov.value;

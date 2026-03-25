@@ -14,6 +14,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { useProjectKnowledge } from '../../hooks/useProjectKnowledge';
+import { useProjectIntelligence } from '../../hooks/useIntelligence';
 import { useProject } from '../../context/ProjectContext';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -35,6 +36,10 @@ import {
   FileCode,
   Image as ImageIcon,
   AlertCircle,
+  Lightbulb,
+  AlertTriangle,
+  HelpCircle,
+  Bookmark,
 } from 'lucide-react';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -150,6 +155,7 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
   } = useProjectKnowledge(projectId);
 
   const { activeProject, projectArtifacts } = useProject();
+  const { data: intelligence } = useProjectIntelligence(projectId ? Number(projectId) : 0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Custom instructions editing
@@ -362,6 +368,109 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
             )}
           </div>
         </Section>
+
+        {/* ── Project Memory Section (Claude.ai parity — what AnA has learned) ── */}
+        {intelligence && (
+          <Section title="Memory" icon={Brain} defaultOpen={true}>
+            <div className="px-4 space-y-3">
+              {/* Regulatory strategy */}
+              {intelligence.regulatoryStrategy && (
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs font-medium text-zinc-600">
+                    <Bookmark className="w-3 h-3" />
+                    Strategy
+                  </div>
+                  <p className="text-xs text-zinc-500 leading-relaxed">{intelligence.regulatoryStrategy}</p>
+                </div>
+              )}
+
+              {/* Target indication / population */}
+              {(intelligence.targetIndication || intelligence.targetPopulation) && (
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs font-medium text-zinc-600">
+                    <Bookmark className="w-3 h-3" />
+                    Clinical Target
+                  </div>
+                  {intelligence.targetIndication && (
+                    <p className="text-xs text-zinc-500">{intelligence.targetIndication}</p>
+                  )}
+                  {intelligence.targetPopulation && (
+                    <p className="text-xs text-zinc-500">{intelligence.targetPopulation}</p>
+                  )}
+                </div>
+              )}
+
+              {/* Learned insights */}
+              {Array.isArray(intelligence.learnedInsights) && intelligence.learnedInsights.length > 0 && (
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs font-medium text-zinc-600">
+                    <Lightbulb className="w-3 h-3" />
+                    Learned Insights ({intelligence.learnedInsights.length})
+                  </div>
+                  <ul className="space-y-0.5">
+                    {intelligence.learnedInsights.slice(0, 5).map((insight: any, i: number) => (
+                      <li key={i} className="text-xs text-zinc-500 leading-relaxed">
+                        {typeof insight === 'string' ? `• ${insight}` : `• ${insight.insight || insight.content || JSON.stringify(insight)}`}
+                      </li>
+                    ))}
+                    {intelligence.learnedInsights.length > 5 && (
+                      <li className="text-xs text-zinc-400">+{intelligence.learnedInsights.length - 5} more</li>
+                    )}
+                  </ul>
+                </div>
+              )}
+
+              {/* Risk factors */}
+              {Array.isArray(intelligence.riskFactors) && intelligence.riskFactors.length > 0 && (
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs font-medium text-amber-600">
+                    <AlertTriangle className="w-3 h-3" />
+                    Risk Factors ({intelligence.riskFactors.length})
+                  </div>
+                  <ul className="space-y-0.5">
+                    {intelligence.riskFactors.slice(0, 3).map((risk: any, i: number) => (
+                      <li key={i} className="text-xs text-zinc-500">
+                        • {risk.risk || risk.description || JSON.stringify(risk)}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Open questions */}
+              {Array.isArray(intelligence.openQuestions) && intelligence.openQuestions.length > 0 && (
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs font-medium text-blue-600">
+                    <HelpCircle className="w-3 h-3" />
+                    Open Questions ({intelligence.openQuestions.length})
+                  </div>
+                  <ul className="space-y-0.5">
+                    {intelligence.openQuestions.slice(0, 3).map((q: any, i: number) => (
+                      <li key={i} className="text-xs text-zinc-500">
+                        • {q.question || JSON.stringify(q)}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Document stats */}
+              {intelligence.documentStats && (
+                <div className="text-xs text-zinc-400 pt-1 border-t border-zinc-100">
+                  {intelligence.documentStats.totalIngested || 0} docs ingested &middot; {intelligence.memoryEntryCount || 0} knowledge atoms
+                </div>
+              )}
+
+              {/* Empty state */}
+              {!intelligence.regulatoryStrategy && !intelligence.targetIndication &&
+               (!Array.isArray(intelligence.learnedInsights) || intelligence.learnedInsights.length === 0) && (
+                <p className="text-xs text-zinc-400 text-center py-2">
+                  AnA will learn about this project as you upload documents and have conversations.
+                </p>
+              )}
+            </div>
+          </Section>
+        )}
 
         {/* ── Generated Artifacts Section ── */}
         <Section title="Generated Artifacts" icon={FileText} count={artifacts.length} defaultOpen={artifacts.length > 0}>

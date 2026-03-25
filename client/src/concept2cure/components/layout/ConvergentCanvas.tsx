@@ -63,7 +63,7 @@ import {
 } from 'lucide-react';
 
 // Import Phase 52 Components
-import { ContextRibbon, RiskLevel, ConnectionStatus, WorkspaceMode } from './ContextRibbon';
+import { ContextRibbon, ConnectionStatus, WorkspaceMode } from './ContextRibbon';
 import { MorningBriefing, BriefingAlert, TodaysPriority } from '../dashboard/MorningBriefing';
 import { CouncilThread, CouncilMessage, AgentRole } from '../chat/CouncilThread';
 
@@ -88,10 +88,6 @@ export interface ConvergentCanvasProps {
   workspaceMode?: WorkspaceMode;
   
   // Ribbon Props
-  deadline?: string;
-  daysRemaining?: number;
-  riskLevel?: RiskLevel;
-  riskItems?: number;
   connection?: ConnectionStatus;
   activeUsers?: number;
   
@@ -431,10 +427,6 @@ export const ConvergentCanvas: React.FC<ConvergentCanvasProps> = ({
   projectName = 'Global Dashboard',
   projectStatus = 'Monitoring',
   workspaceMode = 'monitoring',
-  deadline,
-  daysRemaining,
-  riskLevel = 'LOW',
-  riskItems = 0,
   connection = 'LIVE',
   activeUsers = 0,
   showBriefingOnLoad = true,
@@ -510,10 +502,6 @@ export const ConvergentCanvas: React.FC<ConvergentCanvasProps> = ({
           project={projectName}
           status={projectStatus}
           workspaceMode={workspaceMode}
-          deadline={deadline}
-          daysRemaining={daysRemaining}
-          riskLevel={riskLevel}
-          riskItems={riskItems}
           connection={connection}
           activeUsers={activeUsers}
         />

@@ -37,6 +37,11 @@ import {
   detectSubmissionType,
 } from '../services/ana-ri/orchestrator.js';
 import type { UserRole, IntentLens } from '../services/ana-ri/persona.js';
+import { planKernelExecution } from '../services/kernel-router.js';
+import {
+  parseSharedMemoryContract,
+  renderSharedMemoryForPrompt,
+} from '../services/shared-memory-contract.js';
 
 const logger = createScopedLogger('cortex-unified');
 const router = Router();
@@ -48,6 +53,28 @@ const RATE_LIMIT_MAX_REQUESTS = 50; // Lower limit for AI queries
 // Bounded rate limiter for expensive AI operations (max 10,000 entries to prevent memory leak)
 const RATE_LIMIT_MAP_MAX = 10_000;
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const MAX_TOOL_CALLS = 3;
+const MAX_TOOL_CHAIN_DEPTH = 2;
+const MAX_TOOL_ARG_CHARS = 2000;
+const TOOL_NAME_ALLOWLIST = /^[a-z0-9_.-]+$/i;
+
+function sanitizeToolArgs(input: Record<string, string>): Record<string, string> {
+  const entries = Object.entries(input || {}).slice(0, 20);
+  return Object.fromEntries(
+    entries.map(([key, value]) => {
+      const safeKey = String(key).slice(0, 100);
+      const safeValue =
+        typeof value === 'string'
+          ? value.slice(0, MAX_TOOL_ARG_CHARS)
+          : JSON.stringify(value).slice(0, MAX_TOOL_ARG_CHARS);
+      return [safeKey, safeValue];
+    })
+  );
+}
+
+function isSafeToolName(toolName: string): boolean {
+  return TOOL_NAME_ALLOWLIST.test(toolName);
+}
 
 const rateLimiter = (req: Request, res: Response, next: NextFunction) => {
   const clientId = (req.headers['x-organization-id'] as string) || req.ip || 'anonymous';
@@ -355,6 +382,20 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
       submissionType: submission_type || undefined,
       conversationHistory,
     });
+    const contradictionCount = Number(clientContext?.contradictionCount || 0);
+    const criticalContradictionCount = Number(clientContext?.criticalContradictionCount || 0);
+    const executionPlan = planKernelExecution({
+      route: '/api/cortex/chat',
+      messageLength: message.length,
+      intentLens: orchestratorResult.detectedIntent.lens,
+      intentConfidence: orchestratorResult.detectedIntent.confidence,
+      submissionType: orchestratorResult.detectedSubmissionType,
+      hasEvidence: !!workingMemorySummary,
+      contradictionCount: Number.isFinite(contradictionCount) ? contradictionCount : 0,
+      criticalContradictionCount: Number.isFinite(criticalContradictionCount)
+        ? criticalContradictionCount
+        : 0,
+    });
 
     // Compose the final system prompt: base context + orchestrator enrichments
     // The base prompt (from lumen-context-builder) already has the core AnA identity,
@@ -371,6 +412,8 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
       '## ACTIVE INTENT LENS',
       '## CURRENT PROJECT CONTEXT',
       '## CURRENT DOCUMENT CONTEXT',
+      '## ACTIVE WORKSTREAM',
+      '## WORKSTREAM HANDOFF',
       '## DEFICIENCY',
       '## DOCUMENT ACTION',
       '## ROLE-ADAPTIVE',
@@ -404,7 +447,8 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
         `(${orchestratorResult.orchestrationMeta.submissionTypeSource}), ` +
         `role=${orchestratorResult.appliedRole}, ` +
         `deficiency=${orchestratorResult.orchestrationMeta.deficiencyContextInjected}, ` +
-        `docActions=${orchestratorResult.orchestrationMeta.documentActionContextInjected}`
+        `docActions=${orchestratorResult.orchestrationMeta.documentActionContextInjected}, ` +
+        `workstream=${orchestratorResult.activeWorkstream.stream}`
     );
 
     const systemPrompt = (modePrefix ? modePrefix : '') + baseSystemPrompt + dynamicOverlays;
@@ -416,9 +460,10 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
 
     // Inject working memory summary between system prompt and history
     if (workingMemorySummary) {
+      const sharedMemory = parseSharedMemoryContract(workingMemorySummary);
       aiMessages.push({
         role: 'system',
-        content: `[Conversation Working Memory]\n${workingMemorySummary}`,
+        content: renderSharedMemoryForPrompt(sharedMemory),
       });
     }
 
@@ -469,6 +514,8 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
             intentConfidence: orchestratorResult.detectedIntent.confidence,
             submissionType: orchestratorResult.detectedSubmissionType,
             role: orchestratorResult.appliedRole,
+            activeWorkstream: orchestratorResult.activeWorkstream,
+            workstreamHandoff: orchestratorResult.workstreamHandoff,
             phase: 'analyzing',
           })}\n\n`
         );
@@ -524,8 +571,20 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
           }
 
           if (detectedToolCalls.length > 0 && openaiTools.length > 0) {
-            const MAX_TOOL_CALLS = 3;
-            const toolCalls = detectedToolCalls.slice(0, MAX_TOOL_CALLS);
+            if (!executionPlan.allowToolExecution) {
+              logger.warn(
+                '[Chat] Tool execution blocked by kernel risk policy for this request'
+              );
+              aiMessages.push({
+                role: 'user' as const,
+                content:
+                  'Tool execution is disabled for this high-risk context. Continue with reasoning only.',
+              });
+            }
+
+            const toolCalls = executionPlan.allowToolExecution
+              ? detectedToolCalls.slice(0, Math.min(MAX_TOOL_CALLS, executionPlan.maxToolCalls))
+              : [];
 
             // Loop detection: reject if LLM requests the same tool twice
             const seenTools = new Set<string>();
@@ -554,7 +613,16 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
 
             for (const toolCall of dedupedCalls) {
               const toolName = fromOpenAIName(toolCall.name);
-              const toolArgs = toolCall.args;
+              const toolArgs = sanitizeToolArgs(toolCall.args);
+
+              if (!isSafeToolName(toolName)) {
+                logger.warn(`[Chat] Unsafe tool name blocked: ${toolName}`);
+                aiMessages.push({
+                  role: 'user' as const,
+                  content: `Tool "${toolName}" is blocked by policy. Continue without it.`,
+                });
+                continue;
+              }
 
               const t0 = Date.now();
               const tool = getTool(toolName);
@@ -580,11 +648,13 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
               }
 
               try {
-                const result = await tool.execute(toolArgs, {
+                const toolContext = {
                   organizationId: String(organizationId),
                   userId: userId ? String(userId) : null,
                   projectId: numericProjectId ? `proj_${numericProjectId}` : null,
-                });
+                };
+
+                const result = await tool.execute(toolArgs, toolContext);
                 const latencyMs = Date.now() - t0;
 
                 // Collect artifacts for the response
@@ -597,6 +667,73 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
                   role: 'user' as const,
                   content: `Tool "${toolName}" result: ${JSON.stringify(resultPayload)}`,
                 });
+
+                // Guardrailed tool chaining (bounded depth + dedupe)
+                const chainQueue = Array.isArray(result.chain) ? [...result.chain] : [];
+                const executedChain = new Set<string>([toolName]);
+                let depth = 0;
+                while (
+                  chainQueue.length > 0 &&
+                  depth < Math.min(MAX_TOOL_CHAIN_DEPTH, executionPlan.maxToolChainDepth)
+                ) {
+                  const nextToolName = chainQueue.shift()!;
+                  if (executedChain.has(nextToolName)) {
+                    logger.warn(`[Chat] Skipping duplicate chained tool: ${nextToolName}`);
+                    continue;
+                  }
+                  if (!isSafeToolName(nextToolName)) {
+                    logger.warn(`[Chat] Blocked chained tool by name policy: ${nextToolName}`);
+                    continue;
+                  }
+                  const nextTool = getTool(nextToolName);
+                  if (!nextTool) {
+                    logger.warn(`[Chat] Chained tool not found: ${nextToolName}`);
+                    continue;
+                  }
+
+                  executedChain.add(nextToolName);
+                  depth += 1;
+                  const ct0 = Date.now();
+                  try {
+                    const chained = await nextTool.execute(toolArgs, toolContext);
+                    const chainLatencyMs = Date.now() - ct0;
+                    const chainPayload =
+                      chained.artifact || { message: chained.message?.content || 'ok' };
+                    if (chained.artifact) toolArtifacts.push(chained.artifact);
+                    aiMessages.push({
+                      role: 'user' as const,
+                      content: `Tool "${nextToolName}" result: ${JSON.stringify(chainPayload)}`,
+                    });
+                    logToolRun({
+                      threadId,
+                      projectId: numericProjectId,
+                      userId,
+                      organizationId,
+                      toolName: nextToolName,
+                      arguments: toolArgs,
+                      result: chainPayload as Record<string, unknown>,
+                      status: 'success',
+                      latencyMs: chainLatencyMs,
+                    });
+                  } catch (chainErr: any) {
+                    const chainLatencyMs = Date.now() - ct0;
+                    logger.warn(
+                      `[Chat] Chained tool "${nextToolName}" failed: ${chainErr?.message}`
+                    );
+                    logToolRun({
+                      threadId,
+                      projectId: numericProjectId,
+                      userId,
+                      organizationId,
+                      toolName: nextToolName,
+                      arguments: toolArgs,
+                      result: {},
+                      status: 'error',
+                      errorMessage: chainErr?.message || 'chain tool error',
+                      latencyMs: chainLatencyMs,
+                    });
+                  }
+                }
 
                 logger.info(`[Chat] Tool "${toolName}" executed in ${latencyMs}ms`);
                 logToolRun({
@@ -695,6 +832,8 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
             intent: orchestratorResult.detectedIntent.lens,
             intentConfidence: orchestratorResult.detectedIntent.confidence,
             submissionType: orchestratorResult.detectedSubmissionType,
+            activeWorkstream: orchestratorResult.activeWorkstream,
+            workstreamHandoff: orchestratorResult.workstreamHandoff,
             suggestedActions: orchestratorResult.suggestedActions,
           },
         })}\n\n`
@@ -781,7 +920,18 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
         intent: orchestratorResult.detectedIntent.lens,
         intentConfidence: orchestratorResult.detectedIntent.confidence,
         submissionType: orchestratorResult.detectedSubmissionType,
+        activeWorkstream: orchestratorResult.activeWorkstream,
+        workstreamHandoff: orchestratorResult.workstreamHandoff,
         suggestedActions: orchestratorResult.suggestedActions,
+      },
+      orchestration: {
+        detectedIntent: orchestratorResult.detectedIntent,
+        detectedSubmissionType: orchestratorResult.detectedSubmissionType,
+        appliedRole: orchestratorResult.appliedRole,
+        activeWorkstream: orchestratorResult.activeWorkstream,
+        workstreamHandoff: orchestratorResult.workstreamHandoff,
+        suggestedActions: orchestratorResult.suggestedActions,
+        meta: orchestratorResult.orchestrationMeta,
       },
     });
   } catch (error: any) {

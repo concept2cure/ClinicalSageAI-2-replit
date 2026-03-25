@@ -12,6 +12,7 @@ import { BookOpen, History, ListChecks, UserCheck, MapPin, Loader2 } from 'lucid
 import { useCSRSearch } from '../../hooks/useWorkspaceIntelligence';
 import { usePrecedentSearch } from '../../hooks/usePrecedentEngine';
 import { LIFECYCLE, toLifecycleStage } from '../ui/enterprise';
+import { WorkspaceTabBar, InspectorPanel, type WorkspaceTab } from '@/components/ui/workspace-primitives';
 
 interface INDRightRailProps {
   projectName?: string;
@@ -21,12 +22,12 @@ interface INDRightRailProps {
 
 type TabId = 'guidance' | 'basis' | 'inputs' | 'reviewer' | 'placement';
 
-const TABS: { id: TabId; label: string; icon: React.FC<{ className?: string }> }[] = [
-  { id: 'guidance', label: 'Guidance', icon: BookOpen },
-  { id: 'basis', label: 'Basis', icon: History },
-  { id: 'inputs', label: 'Inputs', icon: ListChecks },
-  { id: 'reviewer', label: 'Reviewer', icon: UserCheck },
-  { id: 'placement', label: 'CTD', icon: MapPin },
+const TABS: (WorkspaceTab & { id: TabId })[] = [
+  { id: 'guidance', label: 'Guidance', icon: <BookOpen className="w-3.5 h-3.5" /> },
+  { id: 'basis', label: 'Basis', icon: <History className="w-3.5 h-3.5" /> },
+  { id: 'inputs', label: 'Inputs', icon: <ListChecks className="w-3.5 h-3.5" /> },
+  { id: 'reviewer', label: 'Reviewer', icon: <UserCheck className="w-3.5 h-3.5" /> },
+  { id: 'placement', label: 'CTD', icon: <MapPin className="w-3.5 h-3.5" /> },
 ];
 
 export const INDRightRail: React.FC<INDRightRailProps> = ({
@@ -45,34 +46,14 @@ export const INDRightRail: React.FC<INDRightRailProps> = ({
   );
 
   return (
-    <div className="hidden lg:flex w-72 shrink-0 border-l border-zinc-200 flex-col bg-zinc-50/30 min-h-0">
+    <InspectorPanel className="hidden lg:flex" testId="ind-right-rail">
       {/* Tab bar */}
-      <div
-        className="flex items-center border-b border-zinc-200 px-1 shrink-0 overflow-x-auto"
-        role="tablist"
-        aria-label="Section context"
-      >
-        {TABS.map(tab => {
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              role="tab"
-              aria-selected={activeTab === tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                'flex items-center gap-1 px-2.5 py-2 text-xs font-medium whitespace-nowrap transition-colors border-b-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
-                activeTab === tab.id
-                  ? 'border-violet-500 text-violet-700'
-                  : 'border-transparent text-zinc-500 hover:text-zinc-700'
-              )}
-            >
-              <Icon className="w-3.5 h-3.5" />
-              {tab.label}
-            </button>
-          );
-        })}
-      </div>
+      <WorkspaceTabBar
+        tabs={TABS}
+        activeTab={activeTab}
+        onTabChange={(id) => setActiveTab(id as TabId)}
+        testId="ind-right-rail-tabs"
+      />
 
       {/* Tab content */}
       <div className="flex-1 overflow-y-auto p-3 text-sm">
@@ -254,7 +235,7 @@ export const INDRightRail: React.FC<INDRightRailProps> = ({
           </div>
         )}
       </div>
-    </div>
+    </InspectorPanel>
   );
 };
 

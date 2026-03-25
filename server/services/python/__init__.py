@@ -1,4 +1,0 @@
-
-"""
-TrialSage Python Services Package
-"""

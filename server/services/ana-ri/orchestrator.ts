@@ -14,6 +14,10 @@ import {
   type AnaRIPromptOptions,
   type IntentLens,
   type UserRole,
+  type WorkstreamContext,
+  type WorkstreamHandoff,
+  type WorkstreamPhase,
+  type WorkstreamType,
 } from './persona.js';
 import { buildDeficiencyContext, type SubmissionType } from './deficiency-taxonomy.js';
 import { buildDocumentActionContext, type DocumentActionType } from './document-actions.js';
@@ -154,6 +158,13 @@ export interface OrchestratorInput {
   submissionType?: SubmissionType;
   /** Conversation history for context */
   conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
+  /** Authoring context with optional pre-fetched decision context (_decisionContext) */
+  authoringContext?: {
+    projectId?: string;
+    sectionCode?: string;
+    moduleCode?: string;
+    [key: string]: unknown;
+  };
 }
 
 export interface OrchestratorOutput {
@@ -161,6 +172,8 @@ export interface OrchestratorOutput {
   detectedIntent: DetectedIntent;
   detectedSubmissionType: SubmissionType | null;
   appliedRole: UserRole;
+  activeWorkstream: WorkstreamContext;
+  workstreamHandoff: WorkstreamHandoff | null;
   /** Suggested document actions based on the interaction */
   suggestedActions: DocumentActionType[];
   /** Metadata about what was orchestrated */
@@ -170,6 +183,8 @@ export interface OrchestratorOutput {
     roleSource: 'explicit' | 'default';
     deficiencyContextInjected: boolean;
     documentActionContextInjected: boolean;
+    workstreamContextInjected: boolean;
+    workstreamHandoffInjected: boolean;
   };
 }
 
@@ -211,6 +226,13 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
     documentContext: input.documentContext,
   };
 
+  const activeWorkstream = detectWorkstream(input, detectedIntent.lens, detectedSubmissionType);
+  const workstreamHandoff = detectWorkstreamHandoff(input, activeWorkstream);
+  promptOptions.workstreamContext = activeWorkstream;
+  if (workstreamHandoff) {
+    promptOptions.workstreamHandoff = workstreamHandoff;
+  }
+
   let systemPrompt = buildAnaRISystemPrompt(promptOptions);
 
   // 5. Inject deficiency context if submission type is known
@@ -241,6 +263,30 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
   systemPrompt +=
     '\n\n## OPERATIONAL COMMANDS\nYou can execute platform commands. Available: create_project, list_projects, update_project, create_artifact, update_artifact, update_artifact_status, list_artifacts, place_in_dossier, create_task, update_task, list_tasks, check_dossier_readiness, create_submission_package, create_review_thread, add_review_comment, search_artifacts, list_team_members, list_artifact_versions, run_compliance_scan, export_artifact, compare_versions, review_version_impact, create_milestone, update_milestone, list_milestones, revert_to_version, load_user_context, load_conversation_history.\n\nWhen you decide to act (not just advise), embed commands:\n```command\n{"command":"command_name","params":{...}}\n```\nMultiple commands execute sequentially. Chain stops on failure.';
 
+  // 8b. Inject decision architecture context for grounded explanations.
+  // The chat route layer (async) pre-fetches decision context and attaches it
+  // as _decisionContext on the authoringContext object. This keeps orchestrate() sync.
+  if (input.authoringContext?.projectId) {
+    try {
+      const decisionCtx = (input.authoringContext as any)?._decisionContext as
+        Array<{ decision: any; receipt?: any }> | undefined;
+      if (decisionCtx && decisionCtx.length > 0) {
+        const decisionBlock = decisionCtx.map(({ decision, receipt }: any) => {
+          let line = `- [${decision.status?.toUpperCase?.() || '?'}] ${decision.kind}: ${decision.summary}`;
+          if (decision.authority?.level) line += ` (authority: ${decision.authority.level})`;
+          if (decision.sourceSignals?.length > 0) line += ` — ${decision.sourceSignals.length} signal(s)`;
+          if (receipt) {
+            if (receipt.execution?.executed) line += ' → executed';
+            if (receipt.pendingApprovals?.length > 0) line += ` → ${receipt.pendingApprovals.length} pending approval(s)`;
+            if (receipt.provisionalItems?.length > 0) line += ` → ${receipt.provisionalItems.length} provisional`;
+          }
+          return line;
+        }).join('\n');
+        systemPrompt += `\n\n## DECISION CONTEXT\nRecent decisions for this project/section:\n${decisionBlock}\n\nWhen explaining results, reference these decisions. Answer "why" from source signals and rationale. Answer "what happened" from receipts. Answer "what needs approval" from pending approvals. Never invent explanations — if no decision record exists, say so.`;
+      }
+    } catch { /* non-blocking */ }
+  }
+
   // 9. Inject conversation continuity context
   if (input.conversationHistory && input.conversationHistory.length > 0) {
     const continuityContext = buildContinuityContext(
@@ -252,14 +298,23 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
     }
   }
 
-  // 10. Determine suggested document actions
-  const suggestedActions = getSuggestedActions(detectedIntent.lens, detectedSubmissionType);
+  // 10. Inject command context — tells AnA what operational commands are available
+  systemPrompt += '\n\n' + buildCommandContextForPrompt();
+
+  // 11. Determine suggested document actions
+  const suggestedActions = getSuggestedActions(
+    detectedIntent.lens,
+    detectedSubmissionType,
+    activeWorkstream
+  );
 
   return {
     systemPrompt,
     detectedIntent,
     detectedSubmissionType,
     appliedRole,
+    activeWorkstream,
+    workstreamHandoff,
     suggestedActions,
     orchestrationMeta: {
       intentSource,
@@ -267,6 +322,8 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
       roleSource,
       deficiencyContextInjected,
       documentActionContextInjected,
+      workstreamContextInjected: true,
+      workstreamHandoffInjected: !!workstreamHandoff,
     },
   };
 }
@@ -276,7 +333,8 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
  */
 function getSuggestedActions(
   lens: IntentLens,
-  submissionType: SubmissionType | null
+  submissionType: SubmissionType | null,
+  workstream: WorkstreamContext
 ): DocumentActionType[] {
   const actions: DocumentActionType[] = [];
 
@@ -301,7 +359,475 @@ function getSuggestedActions(
       actions.push('risk_memo', 'rewritten_section', 'strategy_note');
   }
 
-  return actions;
+  switch (workstream.stream) {
+    case 'document_authoring':
+      actions.unshift('rewritten_section', 'revised_artifact');
+      break;
+    case 'deficiency_response':
+      actions.unshift('deficiency_preemption_memo', 'reviewer_question_brief');
+      break;
+    case 'evidence_development':
+      actions.unshift('evidence_memo');
+      break;
+    case 'submission_strategy':
+      actions.unshift('strategy_note');
+      break;
+    case 'review_preparation':
+      actions.unshift('reviewer_question_brief', 'risk_memo');
+      break;
+    case 'program_risk':
+      actions.unshift('risk_memo');
+      break;
+    default:
+      break;
+  }
+
+  if (submissionType === 'ectd' || submissionType === 'nda' || submissionType === 'bla') {
+    actions.push('attach_to_dossier');
+  }
+
+  return [...new Set(actions)];
+}
+
+function detectWorkstream(
+  input: OrchestratorInput,
+  lens: IntentLens,
+  submissionType: SubmissionType | null
+): WorkstreamContext {
+  const recentHistory = (input.conversationHistory || []).slice(-6);
+  const historyText = recentHistory.map(message => message.content).join(' ');
+  const contextText = [
+    input.message,
+    historyText,
+    input.projectContext?.submissionType,
+    input.projectContext?.phase,
+    input.documentContext?.documentType,
+    input.documentContext?.section,
+    input.documentContext?.module,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  const stream = detectWorkstreamType(contextText, lens);
+  const phase = detectWorkstreamPhase(input, stream);
+  const currentFocus = detectCurrentFocus(input, historyText, stream);
+  const blockers = detectBlockers(contextText, recentHistory);
+
+  return {
+    stream,
+    phase,
+    objective: summarizeObjective(input.message, stream, submissionType),
+    currentFocus,
+    blockers,
+    nextStep: inferNextStep(stream, phase, lens, submissionType),
+    collaborationMode: inferCollaborationMode(stream, phase, lens),
+  };
+}
+
+function detectWorkstreamHandoff(
+  input: OrchestratorInput,
+  activeWorkstream: WorkstreamContext
+): WorkstreamHandoff | null {
+  const history = input.conversationHistory || [];
+  if (history.length < 3) {
+    return null;
+  }
+
+  const previousHistory = history.slice(0, -1);
+  const previousText = previousHistory.map(message => message.content).join(' ');
+  if (!previousText.trim()) {
+    return null;
+  }
+
+  const previousLens = detectIntent(previousText).lens;
+  const previousSubmissionType = detectSubmissionType(previousText);
+  const previousStream = detectWorkstreamType(previousText, previousLens);
+
+  if (previousStream === 'general' || previousStream === activeWorkstream.stream) {
+    return null;
+  }
+
+  const carryForward = extractCarryForwardItems(previousHistory);
+  const openLoops = detectBlockers(previousText, previousHistory);
+  const transitionReason = inferTransitionReason(
+    previousStream,
+    activeWorkstream.stream,
+    input.message
+  );
+
+  return {
+    from: previousStream,
+    to: activeWorkstream.stream,
+    carryForward,
+    openLoops:
+      openLoops.length > 0
+        ? openLoops
+        : inferOpenLoopsFromStream(previousStream, previousSubmissionType),
+    transitionReason,
+  };
+}
+
+function detectWorkstreamType(text: string, lens: IntentLens): WorkstreamType {
+  const lower = text.toLowerCase();
+
+  if (
+    /deficien|information request|complete response|crl|rtf|reviewer question|response matrix/i.test(
+      lower
+    )
+  ) {
+    return 'deficiency_response';
+  }
+  if (
+    /rewrite|revise|redraft|draft|author|edit.*section|clinical overview|module [1-5]/i.test(lower)
+  ) {
+    return 'document_authoring';
+  }
+  if (/pathway|strategy|pre-ind|pre-sub|meeting|submission plan|sequence/i.test(lower)) {
+    return 'submission_strategy';
+  }
+
+  const scores: Array<{ stream: WorkstreamType; score: number }> = [
+    {
+      stream: 'submission_strategy',
+      score: scorePatterns(lower, [
+        /pathway|strategy|timeline|meeting|pre-ind|pre-sub|submission plan|sequence|agency/i,
+        /fda|ema|pmda|global|regional/i,
+      ]),
+    },
+    {
+      stream: 'document_authoring',
+      score: scorePatterns(lower, [
+        /rewrite|revise|redraft|edit|author|draft|section|module|narrative/i,
+        /clinical overview|summary|module 2|module 3|cer|briefing book/i,
+      ]),
+    },
+    {
+      stream: 'deficiency_response',
+      score: scorePatterns(lower, [
+        /deficien|information request|complete response|crl|rtf|reviewer question|response/i,
+        /objection|agency feedback|inspection finding|483/i,
+      ]),
+    },
+    {
+      stream: 'evidence_development',
+      score: scorePatterns(lower, [
+        /evidence|support|justify|validation|dataset|study|citation|source/i,
+        /endpoint|safety|exposure|comparability|stability|specification/i,
+      ]),
+    },
+    {
+      stream: 'review_preparation',
+      score: scorePatterns(lower, [
+        /audit|review|readiness|mock review|gap assessment|checklist/i,
+        /reviewer|inspection readiness|due diligence/i,
+      ]),
+    },
+    {
+      stream: 'program_risk',
+      score: scorePatterns(lower, [
+        /risk|threat|vulnerab|what could go wrong|mitigation|exposure/i,
+        /delay|timeline impact|probability|approval odds/i,
+      ]),
+    },
+    {
+      stream: 'cross_function_alignment',
+      score: scorePatterns(lower, [
+        /team|owner|stakeholder|handoff|alignment|decision maker|cross-functional/i,
+        /clinical|cmc|regulatory|quality.*together|dependencies/i,
+      ]),
+    },
+  ];
+
+  scores.sort((left, right) => right.score - left.score);
+  if (scores[0].score > 0) {
+    return scores[0].stream;
+  }
+
+  switch (lens) {
+    case 'improve':
+      return 'document_authoring';
+    case 'audit':
+      return 'review_preparation';
+    case 'risk':
+      return 'program_risk';
+    case 'strategy':
+      return 'submission_strategy';
+    case 'compare':
+      return 'evidence_development';
+    default:
+      return 'general';
+  }
+}
+
+function scorePatterns(text: string, patterns: RegExp[]): number {
+  return patterns.reduce((count, pattern) => count + (pattern.test(text) ? 1 : 0), 0);
+}
+
+function detectWorkstreamPhase(input: OrchestratorInput, stream: WorkstreamType): WorkstreamPhase {
+  const lower = input.message.toLowerCase();
+  const phaseFromThread = input.conversationHistory?.length
+    ? detectConversationPhase(input.conversationHistory)
+    : 'initial';
+
+  if (/approve|decide|go\/no-go|recommend final|which option/i.test(lower)) {
+    return 'decision';
+  }
+  if (/implement|execute|run|create|generate|send|file|submit/i.test(lower)) {
+    return 'execution';
+  }
+  if (/rewrite|redraft|draft|author|compose/i.test(lower)) {
+    return 'drafting';
+  }
+  if (/refine|tighten|improve|adjust|revise|make it/i.test(lower)) {
+    return 'refinement';
+  }
+  if (
+    stream === 'review_preparation' ||
+    stream === 'program_risk' ||
+    /audit|assess|analyze|evaluate/i.test(lower)
+  ) {
+    return 'analysis';
+  }
+  if (phaseFromThread === 'iterative_refinement') {
+    return 'refinement';
+  }
+  if (phaseFromThread === 'deep_dive' || phaseFromThread === 'follow_up') {
+    return 'analysis';
+  }
+  return 'triage';
+}
+
+function detectCurrentFocus(
+  input: OrchestratorInput,
+  historyText: string,
+  stream: WorkstreamType
+): string | undefined {
+  const text = `${input.message} ${historyText}`;
+  const sectionMatch = text.match(
+    /(?:Section|Module|Chapter)\s+[\d.]+[A-Za-z]?(?:\s*[-–:]\s*[^\n.]{3,60})?/i
+  );
+  if (sectionMatch) {
+    return sectionMatch[0].trim();
+  }
+  if (input.documentContext?.section) {
+    return input.documentContext.section;
+  }
+  if (input.documentContext?.documentType) {
+    return input.documentContext.documentType;
+  }
+
+  switch (stream) {
+    case 'submission_strategy':
+      return 'Regulatory pathway and sequencing';
+    case 'document_authoring':
+      return 'Draft quality and claim architecture';
+    case 'deficiency_response':
+      return 'Response package and reviewer objections';
+    case 'evidence_development':
+      return 'Evidence chain and support gaps';
+    case 'review_preparation':
+      return 'Submission readiness';
+    case 'program_risk':
+      return 'Risk ranking and mitigation';
+    case 'cross_function_alignment':
+      return 'Owners, dependencies, and unresolved decisions';
+    default:
+      return undefined;
+  }
+}
+
+function detectBlockers(
+  text: string,
+  history: Array<{ role: 'user' | 'assistant'; content: string }>
+): string[] {
+  const lower = `${text} ${history.map(message => message.content).join(' ')}`.toLowerCase();
+  const blockers: string[] = [];
+  const blockerPatterns: Array<{ pattern: RegExp; blocker: string }> = [
+    {
+      pattern: /missing|insufficient|inadequate|gap|not.*enough|lack of evidence/i,
+      blocker: 'Critical evidence is missing or insufficient',
+    },
+    {
+      pattern: /unresolved|safety signal|toxicit|adverse event concern|clinical hold/i,
+      blocker: 'Safety concerns remain unresolved',
+    },
+    {
+      pattern: /unclear pathway|which pathway|regulatory strategy|agency expectation/i,
+      blocker: 'Pathway or agency strategy is not settled',
+    },
+    {
+      pattern: /weak prose|rewrite|narrative|unclear section|structure/i,
+      blocker: 'Narrative quality is not yet submission-defensible',
+    },
+    {
+      pattern: /owner|alignment|handoff|dependency|waiting on/i,
+      blocker: 'Cross-functional dependencies are still open',
+    },
+  ];
+
+  for (const { pattern, blocker } of blockerPatterns) {
+    if (pattern.test(lower)) {
+      blockers.push(blocker);
+    }
+  }
+
+  return [...new Set(blockers)].slice(0, 3);
+}
+
+function extractCarryForwardItems(
+  history: Array<{ role: 'user' | 'assistant'; content: string }>
+): string[] {
+  const text = history.map(message => message.content).join(' ');
+  const carryForward = new Set<string>();
+
+  const sectionMatches = text.match(
+    /(?:Section|Module|Chapter)\s+[\d.]+[A-Za-z]?(?:\s*[-–:]\s*[^\n.]{3,60})?/gi
+  );
+  if (sectionMatches) {
+    sectionMatches.slice(0, 2).forEach(match => carryForward.add(match.trim()));
+  }
+
+  const termMatches = extractKeyRegTerms(text);
+  termMatches.slice(0, 3).forEach(term => carryForward.add(term));
+
+  return [...carryForward].slice(0, 4);
+}
+
+function inferTransitionReason(
+  previousStream: WorkstreamType,
+  currentStream: WorkstreamType,
+  message: string
+): string {
+  const lower = message.toLowerCase();
+
+  if (/now|next|switch|instead|move to|shift/i.test(lower)) {
+    return 'The user explicitly pivoted to the next regulatory workstream.';
+  }
+  if (currentStream === 'document_authoring') {
+    return `The thread moved from ${previousStream} into drafting so analysis can become governed text.`;
+  }
+  if (currentStream === 'deficiency_response') {
+    return `The thread moved from ${previousStream} into reviewer-response planning.`;
+  }
+  if (currentStream === 'submission_strategy') {
+    return `The thread moved from ${previousStream} into a program-level regulatory decision.`;
+  }
+
+  return `The thread shifted from ${previousStream} to ${currentStream} while preserving unresolved regulatory context.`;
+}
+
+function inferOpenLoopsFromStream(
+  stream: WorkstreamType,
+  submissionType: SubmissionType | null
+): string[] {
+  switch (stream) {
+    case 'submission_strategy':
+      return [
+        `Pathway decision remains open${submissionType ? ` for ${submissionType.toUpperCase()}` : ''}`,
+      ];
+    case 'document_authoring':
+      return ['Draft still needs a stronger claim-to-evidence chain'];
+    case 'deficiency_response':
+      return ['Reviewer objections still need mapped responses and evidence'];
+    case 'evidence_development':
+      return ['Evidence gaps still need to be closed or explicitly risk-accepted'];
+    case 'review_preparation':
+      return ['Readiness issues still need to be ranked and assigned'];
+    case 'program_risk':
+      return ['Top risks still need mitigation owners and timeline impact'];
+    case 'cross_function_alignment':
+      return ['Cross-functional dependencies still need owners and deadlines'];
+    default:
+      return [];
+  }
+}
+
+function summarizeObjective(
+  message: string,
+  stream: WorkstreamType,
+  submissionType: SubmissionType | null
+): string {
+  const normalized = message.replace(/\s+/g, ' ').trim();
+  if (normalized.length > 0 && normalized.length <= 180) {
+    return normalized;
+  }
+
+  const submissionLabel = submissionType ? `${submissionType.toUpperCase()} ` : '';
+  switch (stream) {
+    case 'submission_strategy':
+      return `Resolve the ${submissionLabel}regulatory pathway and execution sequence.`;
+    case 'document_authoring':
+      return 'Turn the current draft into submission-defensible language.';
+    case 'deficiency_response':
+      return 'Preempt or answer reviewer objections with evidence-backed responses.';
+    case 'evidence_development':
+      return 'Map what evidence exists, what is missing, and what must be strengthened.';
+    case 'review_preparation':
+      return 'Pressure-test the package the way an agency reviewer would.';
+    case 'program_risk':
+      return 'Rank approval risk and define concrete mitigations.';
+    case 'cross_function_alignment':
+      return 'Convert unresolved cross-functional issues into an executable plan.';
+    default:
+      return 'Advance the user toward a clearer regulatory decision or artifact.';
+  }
+}
+
+function inferNextStep(
+  stream: WorkstreamType,
+  phase: WorkstreamPhase,
+  lens: IntentLens,
+  submissionType: SubmissionType | null
+): string {
+  const submissionLabel = submissionType ? `${submissionType.toUpperCase()} ` : '';
+
+  switch (stream) {
+    case 'submission_strategy':
+      return `Decide the ${submissionLabel}pathway, key agency interaction, and the evidence required before the next milestone.`;
+    case 'document_authoring':
+      return phase === 'drafting'
+        ? 'Produce revised text with a tighter claim-to-evidence chain and explicit regulatory support.'
+        : 'Tighten the current draft, remove overstatement, and prepare the next review-ready version.';
+    case 'deficiency_response':
+      return 'Draft a deficiency response matrix that maps each likely question to evidence, owner, and mitigation.';
+    case 'evidence_development':
+      return 'Build an evidence inventory, mark critical gaps, and decide what can be defended now versus what needs new support.';
+    case 'review_preparation':
+      return 'Run a reviewer-style audit, rank the issues by severity, and convert the highest-risk items into assigned fixes.';
+    case 'program_risk':
+      return 'Rank the top risks by severity and likelihood, then define mitigations with timeline consequences.';
+    case 'cross_function_alignment':
+      return 'Translate the open issues into owners, dependencies, and a single decision path for the team.';
+    default:
+      return lens === 'improve'
+        ? 'Rewrite the weak material into a defensible version and identify the evidence still needed.'
+        : 'Clarify the blocking issue and convert it into the next concrete regulatory action.';
+  }
+}
+
+function inferCollaborationMode(
+  stream: WorkstreamType,
+  phase: WorkstreamPhase,
+  lens: IntentLens
+): 'drive' | 'coauthor' | 'advise' {
+  if (
+    stream === 'document_authoring' ||
+    phase === 'drafting' ||
+    phase === 'refinement' ||
+    lens === 'improve'
+  ) {
+    return 'coauthor';
+  }
+  if (
+    stream === 'submission_strategy' ||
+    stream === 'deficiency_response' ||
+    stream === 'program_risk' ||
+    phase === 'decision' ||
+    phase === 'execution'
+  ) {
+    return 'drive';
+  }
+  return 'advise';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

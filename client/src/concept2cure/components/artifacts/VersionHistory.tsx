@@ -10,6 +10,7 @@
 
 import React, { useState, useMemo } from 'react';
 import type { Artifact, ArtifactVersion } from '../../types';
+import { apiRequest } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -508,11 +509,7 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
                     setReviewingImpact(true);
                     setImpactContent(null);
                     try {
-                      const token = sessionStorage.getItem('trialsage_access_token') || localStorage.getItem('trialsage_access_token');
-                      const res = await fetch('/api/ana-ri/execute', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-                        body: JSON.stringify({
+                      const res = await apiRequest('POST', '/api/ana-ri/execute', {
                           command: 'review_version_impact',
                           params: {
                             projectId: Number(projectId),
@@ -521,7 +518,6 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
                             versionB: compareTarget.versionNumber,
                             saveAsArtifact: true,
                           },
-                        }),
                       });
                       const result = await res.json();
                       setImpactContent(result.success ? result.data?.impact || result.message : `Failed: ${result.message}`);

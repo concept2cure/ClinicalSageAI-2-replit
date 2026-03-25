@@ -26,6 +26,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -76,13 +77,6 @@ const AI_ACTIONS: { value: AIAction; label: string; description: string; icon: R
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
 
 function wordCount(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length;
@@ -247,18 +241,11 @@ export function BatchAIPanel({ content, submissionType, onApply, onClose }: Batc
       });
 
       try {
-        const res = await fetch('/api/concept2cure/ai/edit-section', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...getAuthHeaders(),
-          },
-          body: JSON.stringify({
+        const res = await apiRequest('POST', '/api/concept2cure/ai/edit-section', {
             action: selectedAction,
             text: section.text,
             sectionTitle: section.heading,
             submissionType: submissionType ?? 'general',
-          }),
         });
 
         if (!res.ok) {
