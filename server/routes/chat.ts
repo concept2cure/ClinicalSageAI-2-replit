@@ -251,8 +251,31 @@ const sendMessageHandler = async (req: Request, res: Response) => {
           `INSERT INTO ai_messages (thread_id, role, content) VALUES ($1, 'user', $2)`,
           [threadId, message]
         );
+        // Update thread activity timestamp for sort ordering
+        await pool.query(
+          `UPDATE ai_threads SET updated_at = NOW() WHERE id = $1`,
+          [threadId]
+        ).catch(() => {}); // Non-blocking
       } catch (e: any) {
         if (e?.code !== '42P01') console.warn('[AnA] ai_messages insert failed:', e.message);
+      }
+    }
+
+    // ── STEP 3a: AUTO-GENERATE THREAD TITLE FROM FIRST MESSAGE ──────────
+    if (previousMessages.length === 0 && message) {
+      try {
+        // Generate a concise title from the first message (no AI call needed)
+        const rawTitle = message.replace(/^\/\w+\s*/, '').trim(); // Strip slash commands
+        const title = rawTitle.length > 60
+          ? rawTitle.slice(0, 57).replace(/\s+\S*$/, '') + '...'
+          : rawTitle || 'New conversation';
+        await pool.query(
+          `UPDATE ai_threads SET title = $1, updated_at = NOW() WHERE id = $2`,
+          [title, threadId]
+        );
+      } catch (e: any) {
+        // Non-blocking — title generation failure doesn't break chat
+        if (e?.code !== '42P01') console.warn('[AnA] Thread title update failed:', e.message);
       }
     }
 
@@ -923,9 +946,9 @@ router.get('/threads', async (req: Request, res: Response) => {
       // Try ai_threads first (has project_id), fall back to chat_threads
       try {
         const aiResult = await pool.query(
-          `SELECT id, project_id, created_at FROM ai_threads
+          `SELECT id, project_id, title, created_at, updated_at FROM ai_threads
            WHERE project_id = $1 ${orgId ? 'AND organization_id = $2' : ''}
-           ORDER BY created_at DESC LIMIT ${orgId ? '$3' : '$2'}`,
+           ORDER BY COALESCE(updated_at, created_at) DESC LIMIT ${orgId ? '$3' : '$2'}`,
           orgId ? [projectId, orgId, limit] : [projectId, limit]
         );
         if (aiResult.rows.length > 0) {
