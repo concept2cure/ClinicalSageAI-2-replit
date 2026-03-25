@@ -267,12 +267,23 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
   const effectiveSuggestedActions = useMemo(() => {
     const parent = suggestedActions || [];
+
+    // Workflow-aware defaults when no authoring context
+    if (authoringSuggestedActions.length === 0 && contextProfile?.projectId) {
+      const workflowActions: SuggestedAction[] = [
+        { id: 'status', label: 'Project status', intent: undefined, description: 'Quick readiness check and next steps' },
+        { id: 'workflow', label: 'Submission workflow', intent: undefined, description: 'Full step-by-step progress' },
+        { id: 'assess', label: 'Full assessment', intent: undefined, description: 'Readiness + risks + actions' },
+      ];
+      return [...workflowActions, ...parent.slice(0, 2)];
+    }
+
     if (authoringSuggestedActions.length > 0) {
       const limit = Math.min(authoringSuggestedActions.length, 5);
       return [...authoringSuggestedActions.slice(0, limit), ...parent.slice(0, 1)];
     }
     return parent;
-  }, [suggestedActions, authoringSuggestedActions]);
+  }, [suggestedActions, authoringSuggestedActions, contextProfile?.projectId]);
 
   // ── Auto-scroll ──
   useEffect(() => {
@@ -986,6 +997,17 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       return;
     }
 
+    // ── Workflow quick actions (map label to slash commands) ──
+    const slashMap: Record<string, string> = {
+      'Project status': '/status',
+      'Submission workflow': '/workflow',
+      'Full assessment': '/assess',
+    };
+    if (slashMap[action.label]) {
+      handleSend(slashMap[action.label]);
+      return;
+    }
+
     // ── Fallback: send as chat message to AnA ──
     handleSend(action.label);
   };
@@ -1428,6 +1450,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               { cmd: '/sign', desc: 'Request electronic signature (21 CFR Part 11)' },
               { cmd: '/submit', desc: 'Submit document to regulatory workflow' },
               { cmd: '/preflight', desc: 'Run section preflight' },
+              { cmd: '/status', desc: 'Quick project status — readiness, blockers, next step' },
               { cmd: '/workflow', desc: 'Full submission workflow status and next steps' },
               { cmd: '/help', desc: 'Show what AnA can do for your project right now' },
               { cmd: '/export', desc: 'Export this conversation' },

@@ -41,7 +41,7 @@ interface SlashCommand {
 }
 
 function detectSlashCommand(message: string): SlashCommand | null {
-  const match = message.match(/^\/(risk|readiness|precedent|draft|preflight|claims|recommend|next|simulate|signals|export|assess|twin|consistency|deficiencies|knowledge|help|sap|power|dose|defensibility|design|safety|cmc|csr|device|ectd|audit|amend|review|memo|brief|strategy|freeze|sign|scan|checklist|submit|workflow)\b\s*(.*)/i);
+  const match = message.match(/^\/(risk|readiness|precedent|draft|preflight|claims|recommend|next|simulate|signals|export|assess|twin|consistency|deficiencies|knowledge|help|sap|power|dose|defensibility|design|safety|cmc|csr|device|ectd|audit|amend|review|memo|brief|strategy|freeze|sign|scan|checklist|submit|workflow|status)\b\s*(.*)/i);
   if (!match) return null;
   return { command: match[1].toLowerCase(), args: match[2].trim() };
 }
@@ -599,6 +599,11 @@ export async function enrichContextForChat(params: {
       checklist: () => enrichWithReadiness(projectId, organizationId),
       submit: () => Promise.all([enrichWithReadiness(projectId, organizationId), enrichWithECTD(projectId)]).then(r => r.join('')),
       workflow: () => submissionType ? buildWorkflowContext(projectId, submissionType, organizationId) : Promise.resolve(''),
+      status: () => Promise.all([
+        enrichWithReadiness(projectId, organizationId),
+        submissionType ? buildWorkflowContext(projectId, submissionType, organizationId) : Promise.resolve(''),
+        enrichWithRecommendations(projectId, organizationId),
+      ]).then(r => r.join('')),
       help: () => Promise.all([
         enrichWithReadiness(projectId, organizationId),
         enrichWithRecommendations(projectId, organizationId),
@@ -653,6 +658,7 @@ export async function enrichContextForChat(params: {
       checklist: 'Generate a regulatory compliance checklist for the current document. Auto-populate based on section content and citation tokens.',
       submit: 'Submit the current document to the regulatory workflow. Check readiness first, then update status to SUBMITTED.',
       workflow: 'Show the full submission workflow status. List all phases, steps completed vs remaining, critical blockers, and the next step the user should take. Be directive.',
+      status: 'Give a quick project status briefing: readiness score, workflow progress, top 3 blockers, and the single most important next action. Keep it concise — 5-7 lines max.',
       help: 'The user is asking what you can do. Look at their project state and suggest 3-4 specific things you can do RIGHT NOW. Show, don\'t tell. Demonstrate by referencing their actual readiness score, gaps, and recommendations.',
       export: 'Export this conversation.',
     };
