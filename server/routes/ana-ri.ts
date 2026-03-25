@@ -206,6 +206,7 @@ router.post('/chat', async (req: Request, res: Response) => {
     const chatEnrichment = await enrichContextForChat({
       message,
       projectId: req.body.project_id || req.body.context?.projectId,
+      organizationId: orgId ? Number(orgId) : undefined,
       submissionType: orchestration.detectedSubmissionType || undefined,
     }).catch(() => ({ block: '', sources: [] }));
 
@@ -537,6 +538,7 @@ router.post('/stream', async (req: Request, res: Response) => {
     const enrichment = await enrichContextForChat({
       message,
       projectId: project_id,
+      organizationId: orgId ? Number(orgId) : undefined,
       submissionType: orchestration.detectedSubmissionType || undefined,
     }).catch(() => ({ block: '', sources: [] }));
 

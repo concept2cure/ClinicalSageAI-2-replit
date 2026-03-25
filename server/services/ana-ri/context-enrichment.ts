@@ -14,6 +14,11 @@
  */
 
 import { pool } from '../../db.js';
+import { computeReadinessScore, type ReadinessContext } from '../intelligence/readiness-scoring-engine.js';
+import { generateRecommendations, type RecommendationContext } from '../intelligence/recommendation-engine.js';
+import { generateNextActions } from '../intelligence/next-best-action-engine.js';
+import { getProjectSignals } from '../intelligence/rim.js';
+import { getProjectIntelligence } from '../intelligence/project-intelligence-service.js';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -32,7 +37,7 @@ interface SlashCommand {
 }
 
 function detectSlashCommand(message: string): SlashCommand | null {
-  const match = message.match(/^\/(risk|readiness|precedent|draft|preflight|claims|recommend|next|simulate|signals|export)\b\s*(.*)/i);
+  const match = message.match(/^\/(risk|readiness|precedent|draft|preflight|claims|recommend|next|simulate|signals|export|assess)\b\s*(.*)/i);
   if (!match) return null;
   return { command: match[1].toLowerCase(), args: match[2].trim() };
 }
@@ -149,7 +154,25 @@ async function enrichWithCRLRTF(projectId: string | number): Promise<string> {
   );
 }
 
-async function enrichWithReadiness(projectId: string | number): Promise<string> {
+async function enrichWithReadiness(projectId: string | number, orgId?: number): Promise<string> {
+  // Try live readiness scoring engine first
+  if (orgId) {
+    try {
+      const ctx: ReadinessContext = { organizationId: orgId, projectId: Number(projectId) };
+      const score = await computeReadinessScore(ctx);
+      const gapLines = score.gaps.slice(0, 8).map(g =>
+        `- **[${g.severity.toUpperCase()}]** ${g.module}: ${g.description} _(${g.remediation})_`
+      ).join('\n');
+      const dimLines = Object.entries(score.dimensions || {}).map(([k, v]: [string, any]) =>
+        `| ${k} | ${typeof v === 'number' ? v : v?.score ?? '—'}/100 |`
+      ).join('\n');
+
+      return `\n\n## Live Readiness Assessment\n**Overall Score: ${score.overallScore}/100** | Trend: ${score.trend?.direction || 'unknown'}\n\n**Predictions:** Approval probability ~${score.predictions?.approvalProbability ?? '—'}% | Est. ${score.predictions?.estimatedDeficiencies ?? '—'} deficiencies | ~${score.predictions?.estimatedReviewDays ?? '—'} review days\n\n| Dimension | Score |\n|---|---|\n${dimLines}\n\n**Top Gaps (${score.gaps.length} total):**\n${gapLines || '- None identified'}\n\nPresent these scores directly. Be specific about gaps and remediation steps.`;
+    } catch (e: any) {
+      console.warn('[enrichment] Live readiness failed, falling back to memory:', e?.message);
+    }
+  }
+  // Fallback to stored memory
   return enrichWithProjectMemory(
     projectId,
     ['submission_readiness', 'readiness_score', 'completeness_assessment'],
@@ -159,7 +182,26 @@ async function enrichWithReadiness(projectId: string | number): Promise<string> 
   );
 }
 
-async function enrichWithRecommendations(projectId: string | number): Promise<string> {
+async function enrichWithRecommendations(projectId: string | number, orgId?: number): Promise<string> {
+  // Try live recommendation engine first
+  if (orgId) {
+    try {
+      const ctx: RecommendationContext & ReadinessContext = {
+        organizationId: orgId,
+        projectId: Number(projectId),
+        triggeredBy: 'ana-chat',
+      };
+      const actionSet = await generateNextActions(ctx, 8);
+      const actionLines = actionSet.actions.slice(0, 8).map((a, i) =>
+        `${i + 1}. **${a.title}** [${a.urgency}/${a.impact}] — ${a.description}${a.estimatedEffortHours ? ` (~${a.estimatedEffortHours}h)` : ''}`
+      ).join('\n');
+
+      return `\n\n## Next Best Actions (Live)\n**${actionSet.actions.length} actions** prioritized by urgency and impact.\n\n${actionLines || 'No actions generated.'}\n\nPresent these as a prioritized to-do list. Be directive — tell the user what to do first and why.`;
+    } catch (e: any) {
+      console.warn('[enrichment] Live recommendations failed, falling back to memory:', e?.message);
+    }
+  }
+  // Fallback to stored memory
   return enrichWithProjectMemory(
     projectId,
     ['recommendation_feedback', 'next_best_action', 'workflow_optimization'],
@@ -180,6 +222,18 @@ async function enrichWithClaims(projectId: string | number): Promise<string> {
 }
 
 async function enrichWithSignals(projectId: string | number): Promise<string> {
+  // Try live RIM signals first
+  try {
+    const signals = getProjectSignals(String(projectId));
+    if (signals && signals.length > 0) {
+      const signalLines = signals.slice(0, 10).map((s: any) =>
+        `- **[${s.riskLevel || s.type || 'signal'}]** ${s.content?.slice(0, 300) || s.message || 'No content'} (score: ${s.score ?? '—'})`
+      ).join('\n');
+      return `\n\n## RIM Intelligence Signals (Live)\n**${signals.length} signals** accumulated for this project.\n\n${signalLines}\n\nSummarize patterns, highlight recurring risks, and note trend directions.`;
+    }
+  } catch {
+    // Fall through to memory
+  }
   return enrichWithProjectMemory(
     projectId,
     ['intelligence_signal_summary', 'rim_pattern_registry', 'risk_signal'],
@@ -189,32 +243,95 @@ async function enrichWithSignals(projectId: string | number): Promise<string> {
   );
 }
 
+// ─── Project intelligence summary (first-message context) ────────────────────
+
+async function enrichWithProjectSummary(projectId: string | number, orgId?: number): Promise<string> {
+  if (!orgId) return '';
+  try {
+    const intel = await getProjectIntelligence(Number(projectId), orgId);
+    if (!intel) return '';
+
+    const parts: string[] = ['## Project Intelligence Profile'];
+    if (intel.regulatoryStrategy) parts.push(`**Strategy:** ${intel.regulatoryStrategy}`);
+    if (intel.targetIndication) parts.push(`**Indication:** ${intel.targetIndication}`);
+    if (intel.targetPopulation) parts.push(`**Population:** ${intel.targetPopulation}`);
+
+    if (intel.riskFactors.length > 0) {
+      parts.push(`\n**Known Risks (${intel.riskFactors.length}):**`);
+      for (const r of intel.riskFactors.slice(0, 5)) {
+        parts.push(`- [${(r as any).severity || 'medium'}] ${(r as any).description || (r as any).factor || String(r)}`);
+      }
+    }
+
+    if (intel.openQuestions.length > 0) {
+      parts.push(`\n**Open Questions (${intel.openQuestions.length}):**`);
+      for (const q of intel.openQuestions.slice(0, 3)) {
+        parts.push(`- ${(q as any).question || String(q)}`);
+      }
+    }
+
+    if (intel.keyDecisions.length > 0) {
+      parts.push(`\n**Key Decisions (${intel.keyDecisions.length}):**`);
+      for (const d of intel.keyDecisions.slice(0, 3)) {
+        parts.push(`- ${(d as any).decision || String(d)} (${(d as any).status || 'pending'})`);
+      }
+    }
+
+    if (intel.learnedInsights.length > 0) {
+      parts.push(`\n**Learned Insights (${intel.learnedInsights.length}):**`);
+      for (const i of intel.learnedInsights.slice(0, 3)) {
+        parts.push(`- ${(i as any).insight || String(i)}`);
+      }
+    }
+
+    parts.push(`\n**Documents:** ${intel.documentStats.totalIngested} ingested | ${intel.memoryEntryCount} memory atoms`);
+
+    return '\n\n' + parts.join('\n') + '\n\nUse this context to personalize your responses. Reference known risks, open questions, and decisions.';
+  } catch {
+    return '';
+  }
+}
+
 // ─── Main enrichment function ────────────────────────────────────────────────
 
 export async function enrichContextForChat(params: {
   message: string;
   projectId?: string | number;
+  organizationId?: number;
   submissionType?: string;
 }): Promise<EnrichmentResult> {
-  const { message, projectId, submissionType } = params;
+  const { message, projectId, organizationId, submissionType } = params;
   const blocks: string[] = [];
   const sources: string[] = [];
   let rewrittenMessage: string | undefined;
 
   if (!projectId) return { block: '', sources: [] };
 
+  // ── Always inject project intelligence summary when available ──
+  const projectSummary = await enrichWithProjectSummary(projectId, organizationId).catch(() => '');
+  if (projectSummary) {
+    blocks.push(projectSummary);
+    sources.push('project-profile');
+  }
+
   // ── Check for slash commands first ──
   const slash = detectSlashCommand(message);
   if (slash) {
     const enrichMap: Record<string, () => Promise<string>> = {
       risk: () => Promise.all([enrichWithForesight(projectId), enrichWithCRLRTF(projectId)]).then(r => r.join('')),
-      readiness: () => enrichWithReadiness(projectId),
+      readiness: () => enrichWithReadiness(projectId, organizationId),
       precedent: () => enrichWithPrecedents(projectId),
       claims: () => enrichWithClaims(projectId),
-      recommend: () => enrichWithRecommendations(projectId),
-      next: () => enrichWithRecommendations(projectId),
+      recommend: () => enrichWithRecommendations(projectId, organizationId),
+      next: () => enrichWithRecommendations(projectId, organizationId),
       signals: () => enrichWithSignals(projectId),
       simulate: () => enrichWithCRLRTF(projectId),
+      assess: () => Promise.all([
+        enrichWithReadiness(projectId, organizationId),
+        enrichWithRecommendations(projectId, organizationId),
+        enrichWithSignals(projectId),
+        enrichWithForesight(projectId),
+      ]).then(r => r.join('')),
     };
 
     const enrichFn = enrichMap[slash.command];
@@ -238,6 +355,7 @@ export async function enrichContextForChat(params: {
       next: 'What should I work on next? Prioritize by impact.',
       simulate: 'Simulate likely reviewer challenges and questions.',
       signals: 'Show me all accumulated regulatory intelligence signals.',
+      assess: 'Run a comprehensive assessment of this project: readiness score, top recommendations, risk signals, and predictions. Give me the full picture.',
       export: 'Export this conversation.',
     };
 
@@ -252,8 +370,8 @@ export async function enrichContextForChat(params: {
       { test: FORESIGHT_TRIGGERS, fn: () => enrichWithForesight(projectId), name: 'foresight' },
       { test: PRECEDENT_TRIGGERS, fn: () => enrichWithPrecedents(projectId), name: 'precedent' },
       { test: CRL_RTF_TRIGGERS, fn: () => enrichWithCRLRTF(projectId), name: 'deficiency' },
-      { test: READINESS_TRIGGERS, fn: () => enrichWithReadiness(projectId), name: 'readiness' },
-      { test: RECOMMENDATION_TRIGGERS, fn: () => enrichWithRecommendations(projectId), name: 'recommendations' },
+      { test: READINESS_TRIGGERS, fn: () => enrichWithReadiness(projectId, organizationId), name: 'readiness' },
+      { test: RECOMMENDATION_TRIGGERS, fn: () => enrichWithRecommendations(projectId, organizationId), name: 'recommendations' },
       { test: CLAIMS_TRIGGERS, fn: () => enrichWithClaims(projectId), name: 'claims' },
       { test: SIMULATION_TRIGGERS, fn: () => enrichWithCRLRTF(projectId), name: 'simulation' },
     ];

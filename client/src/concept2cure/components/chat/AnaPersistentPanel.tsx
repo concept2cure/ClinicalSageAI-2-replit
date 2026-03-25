@@ -1327,6 +1327,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               { cmd: '/next', desc: 'What should I work on next?' },
               { cmd: '/simulate', desc: 'Simulate reviewer challenges' },
               { cmd: '/signals', desc: 'Show RIM intelligence signals' },
+              { cmd: '/assess', desc: 'Full project assessment (readiness + risks + actions)' },
               { cmd: '/draft', desc: 'Draft current section' },
               { cmd: '/preflight', desc: 'Run section preflight' },
               { cmd: '/export', desc: 'Export this conversation' },
