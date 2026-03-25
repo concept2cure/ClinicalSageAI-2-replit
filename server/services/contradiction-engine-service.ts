@@ -781,7 +781,6 @@ class ContradictionEngineService {
       active: (row.active as boolean) ?? true,
     };
   }
-}
 
   // ═══════════════════════════════════════════════════════════════════════════
   // PASS 8: CROSS-ARTIFACT CONTRADICTION DETECTION
