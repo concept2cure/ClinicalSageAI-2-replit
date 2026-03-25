@@ -11,10 +11,9 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
-import { useAIAction } from '../../hooks/useAIAction';
-import type { AIActionType, AIActionSourceSurface } from '../../hooks/useAIAction';
 import {
   ArrowUp,
   Copy,
@@ -73,7 +72,7 @@ interface SuggestedAction {
 
 // ─── Authoring context import ────────────────────────────────────────────────
 import type { AuthoringContextPack } from '../../../../../shared/types/authoring-context';
-import { hasSectionContext, hasArtifactContext, hasVersionContext } from '../../../../../shared/types/authoring-context';
+import { hasSectionContext, hasArtifactContext } from '../../../../../shared/types/authoring-context';
 import { serializeContextForChat } from '../../services/authoring-context-resolver';
 
 interface AnaPersistentPanelProps {
@@ -126,7 +125,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   mode = 'full',
   defaultChatMode = 'standard',
 }) => {
-  const aiAction = useAIAction();
+  const { toast } = useToast();
 
   const [messages, setMessages] = useState<AnaMessage[]>([]);
   const [input, setInput] = useState('');
@@ -280,7 +279,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                         : m
                     ));
                   })
-                  .catch(() => {})
+                  .catch((err) => {
+                    console.warn('[Deep Research] Failed to fetch final results:', err?.message);
+                  })
                   .finally(() => setIsStreaming(false));
                 return;
               }
@@ -325,7 +326,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             content: data.response || 'Here are your results.',
             timestamp: new Date(), images: data.images, pptx: data.pptx,
           }]);
-        } catch {
+        } catch (err) {
+          const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+          toast({ title: 'Nano Banana error', description: errorMsg, variant: 'destructive' });
           setMessages(prev => [...prev, {
             id: `a-${Date.now()}`, role: 'assistant',
             content: 'Sorry, something went wrong. Please try again.',
@@ -355,35 +358,47 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       try {
         const authoringPayload = authoringContext ? serializeContextForChat(authoringContext) : {};
 
+        const streamPayload = {
+          message: text,
+          thread_id: threadIdRef.current || undefined,
+          project_id: contextProfile?.projectId || undefined,
+          submission_type: contextProfile?.productType || undefined,
+          user_role: contextProfile?.userRole || undefined,
+          authoring_context: authoringPayload,
+          project_context: contextProfile?.activeProject ? {
+            productName: contextProfile.activeProject,
+            submissionType: contextProfile.productType,
+          } : undefined,
+          context: {
+            screen: contextProfile?.screenName,
+            project: contextProfile?.activeProject,
+            projectId: contextProfile?.projectId,
+            productType: contextProfile?.productType,
+            userRole: contextProfile?.userRole,
+            ...(contextProfile?.moduleContext || {}),
+          },
+          conversationHistory: messages.slice(-20).map(m => ({
+            role: m.role,
+            content: m.content,
+          })),
+        };
+
+        // Use apiRequest for auth/org headers via its wrapper pattern.
+        // We need raw fetch for AbortController signal + SSE streaming,
+        // so we replicate the auth header logic from apiRequest.
+        const orgId = localStorage.getItem('organizationId') || localStorage.getItem('currentOrganizationId') || '1';
+        const authToken = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('auth_token') || '';
+
         const response = await fetch('/api/ana-ri/stream', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'x-organization-id': orgId,
+            ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+          },
           credentials: 'include',
           signal: abortController.signal,
-          body: JSON.stringify({
-            message: text,
-            thread_id: threadIdRef.current || undefined,
-            project_id: contextProfile?.projectId || undefined,
-            submission_type: contextProfile?.productType || undefined,
-            user_role: contextProfile?.userRole || undefined,
-            authoring_context: authoringPayload,
-            project_context: contextProfile?.activeProject ? {
-              productName: contextProfile.activeProject,
-              submissionType: contextProfile.productType,
-            } : undefined,
-            context: {
-              screen: contextProfile?.screenName,
-              project: contextProfile?.activeProject,
-              projectId: contextProfile?.projectId,
-              productType: contextProfile?.productType,
-              userRole: contextProfile?.userRole,
-              ...(contextProfile?.moduleContext || {}),
-            },
-            conversationHistory: messages.slice(-20).map(m => ({
-              role: m.role,
-              content: m.content,
-            })),
-          }),
+          body: JSON.stringify(streamPayload),
         });
 
         if (!response.ok) {
@@ -476,6 +491,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             m.id === assistantMsgId ? { ...m, isStreaming: false } : m
           ));
         } else {
+          const errorMsg = err?.message || 'Unknown error';
+          toast({ title: 'AnA error', description: errorMsg, variant: 'destructive' });
           setMessages(prev => prev.map(m =>
             m.id === assistantMsgId
               ? { ...m, content: 'Sorry, something went wrong. Please try again.', isStreaming: false }
@@ -525,6 +542,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         className={cn('py-6 px-4 sm:px-6', isUser ? '' : '')}
         onMouseEnter={() => !isUser && setHoveredMsgId(msg.id)}
         onMouseLeave={() => setHoveredMsgId(null)}
+        data-testid={isUser ? 'chat-message-user' : 'chat-message-assistant'}
+        {...(msg.isStreaming ? { role: 'status', 'aria-busy': true, 'aria-label': 'AnA is responding' } : {})}
       >
         <div className="max-w-[720px] mx-auto">
           {/* Role label */}
@@ -596,20 +615,29 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 onClick={() => handleCopy(msg.id, msg.content)}
                 className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-md transition-colors"
                 title="Copy"
+                aria-label="Copy message"
               >
                 {copiedId === msg.id ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
               </button>
               <button
-                onClick={() => { apiRequest('POST', '/api/concept2cure/feedback', { messageId: msg.id, positive: true }).catch(() => {}); }}
+                onClick={() => {
+                  apiRequest('POST', '/api/concept2cure/feedback', { messageId: msg.id, positive: true })
+                    .catch(() => toast({ title: 'Feedback failed', description: 'Could not submit feedback.', variant: 'destructive' }));
+                }}
                 className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-md transition-colors"
                 title="Good response"
+                aria-label="Mark as good response"
               >
                 <ThumbsUp className="w-4 h-4" />
               </button>
               <button
-                onClick={() => { apiRequest('POST', '/api/concept2cure/feedback', { messageId: msg.id, positive: false }).catch(() => {}); }}
+                onClick={() => {
+                  apiRequest('POST', '/api/concept2cure/feedback', { messageId: msg.id, positive: false })
+                    .catch(() => toast({ title: 'Feedback failed', description: 'Could not submit feedback.', variant: 'destructive' }));
+                }}
                 className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-md transition-colors"
                 title="Bad response"
+                aria-label="Mark as bad response"
               >
                 <ThumbsDown className="w-4 h-4" />
               </button>
@@ -752,6 +780,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           }
           rows={1}
           className="flex-1 resize-none bg-transparent border-none outline-none text-[15px] text-zinc-900 placeholder:text-zinc-400 leading-6 min-h-[24px] max-h-[200px]"
+          data-testid="ana-chat-input"
         />
 
         {/* Send or Stop button */}
@@ -774,6 +803,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 : 'bg-zinc-200 text-zinc-400 cursor-not-allowed'
             )}
             aria-label="Send message"
+            data-testid="ana-chat-send"
           >
             <ArrowUp className="w-4 h-4" />
           </button>
@@ -799,7 +829,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
   // ── Full mode ──
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-white">
+    <div className="flex-1 flex flex-col min-h-0 bg-white" data-testid="ana-chat-panel">
       {/* Conversation area */}
       <div
         className="flex-1 overflow-y-auto"
@@ -807,6 +837,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         aria-live="polite"
         aria-label="Conversation with AnA"
         style={{ scrollbarWidth: 'thin' }}
+        data-testid="ana-chat-messages"
       >
         {!hasMessages ? (
           /* Empty state — greeting + actions */
