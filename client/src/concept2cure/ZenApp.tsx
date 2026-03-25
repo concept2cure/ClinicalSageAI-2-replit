@@ -2323,6 +2323,7 @@ export const ZenApp: React.FC = () => {
           {!embeddedModule && layoutMode === 'dossier-map' && (
             <Suspense fallback={<ModuleLoadingFallback />}>
               <DossierMap
+                projectId={activeProjectId}
                 projectName={activeProject?.name}
                 projectType={activeProject?.type}
                 onSectionClick={sectionCode => {
@@ -2363,6 +2364,7 @@ export const ZenApp: React.FC = () => {
           {!embeddedModule && layoutMode === 'submissions' && (
             <Suspense fallback={<ModuleLoadingFallback />}>
               <SubmissionReadinessView
+                projectId={activeProjectId}
                 projectName={activeProject?.name}
                 projectType={activeProject?.type}
                 onSectionClick={sectionCode => {
