@@ -23,6 +23,7 @@ import { analyzeCrossModuleRelationships } from '../intelligence/cross-module-in
 import { buildEvidenceChain, computeConfidence, analyzeFactors, type EvidenceSource } from '../intelligence/evidence-confidence-model.js';
 import { getDeficienciesBySubmissionType, getCriticalDeficiencies, type SubmissionType } from './deficiency-taxonomy.js';
 import { buildWorkflowContext } from './workflow-orchestration.js';
+import { detectDocumentType, buildDocumentGenerationContext } from './document-routing.js';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -41,7 +42,7 @@ interface SlashCommand {
 }
 
 function detectSlashCommand(message: string): SlashCommand | null {
-  const match = message.match(/^\/(risk|readiness|precedent|draft|preflight|claims|recommend|next|simulate|signals|export|assess|twin|consistency|deficiencies|knowledge|help|sap|power|dose|defensibility|design|safety|cmc|csr|device|ectd|audit|amend|review|memo|brief|strategy|freeze|sign|scan|checklist|submit|workflow|status)\b\s*(.*)/i);
+  const match = message.match(/^\/(risk|readiness|precedent|draft|preflight|claims|recommend|next|simulate|signals|export|assess|twin|consistency|deficiencies|knowledge|help|sap|power|dose|defensibility|design|safety|cmc|csr|device|ectd|audit|amend|review|memo|brief|strategy|freeze|sign|scan|checklist|submit|workflow|status|narrative|report|iss|ise|ib|smpc|rmp|uspi)\b\s*(.*)/i);
   if (!match) return null;
   return { command: match[1].toLowerCase(), args: match[2].trim() };
 }
@@ -598,6 +599,14 @@ export async function enrichContextForChat(params: {
       scan: () => Promise.all([enrichWithClaims(projectId), enrichWithCRLRTF(projectId)]).then(r => r.join('')),
       checklist: () => enrichWithReadiness(projectId, organizationId),
       submit: () => Promise.all([enrichWithReadiness(projectId, organizationId), enrichWithECTD(projectId)]).then(r => r.join('')),
+      narrative: () => enrichWithSafety(projectId),
+      report: () => Promise.all([enrichWithReadiness(projectId, organizationId), enrichWithClaims(projectId)]).then(r => r.join('')),
+      iss: () => enrichWithSafety(projectId),
+      ise: () => enrichWithClaims(projectId),
+      ib: () => Promise.all([enrichWithSafety(projectId), enrichWithClaims(projectId)]).then(r => r.join('')),
+      smpc: () => enrichWithSafety(projectId),
+      rmp: () => enrichWithSafety(projectId),
+      uspi: () => enrichWithSafety(projectId),
       workflow: () => submissionType ? buildWorkflowContext(projectId, submissionType, organizationId) : Promise.resolve(''),
       status: () => Promise.all([
         enrichWithReadiness(projectId, organizationId),
@@ -657,6 +666,14 @@ export async function enrichContextForChat(params: {
       scan: slash.args ? `Scan for deficiencies in: ${slash.args}` : 'Scan the current section/document for regulatory deficiencies. Check completeness, missing keywords, placeholder text, and compliance gaps.',
       checklist: 'Generate a regulatory compliance checklist for the current document. Auto-populate based on section content and citation tokens.',
       submit: 'Submit the current document to the regulatory workflow. Check readiness first, then update status to SUBMITTED.',
+      narrative: slash.args ? `Generate a safety narrative for: ${slash.args}` : 'Generate a safety narrative. Ask what format: aggregate TEAE, SAE case narrative, benefit-risk, DSUR, or cross-study safety.',
+      report: slash.args ? `Generate a regulatory report on: ${slash.args}` : 'Generate a full regulatory report. Ask for domain: submission readiness, clinical study, CMC, pharmacovigilance, compliance, strategic intelligence.',
+      iss: 'Generate an Integrated Summary of Safety (ISS) — pooled safety analysis across all studies for this product.',
+      ise: 'Generate an Integrated Summary of Efficacy (ISE) — pooled efficacy analysis across pivotal studies.',
+      ib: 'Generate or update the Investigator\'s Brochure (IB) with all available nonclinical and clinical data.',
+      smpc: 'Generate a Summary of Product Characteristics (SmPC) per EMA QRD template.',
+      rmp: 'Generate or update the Risk Management Plan (RMP) per EMA GVP Module V.',
+      uspi: 'Generate US Prescribing Information (USPI) per FDA Physician Labeling Rule.',
       workflow: 'Show the full submission workflow status. List all phases, steps completed vs remaining, critical blockers, and the next step the user should take. Be directive.',
       status: 'Give a quick project status briefing: readiness score, workflow progress, top 3 blockers, and the single most important next action. Keep it concise — 5-7 lines max.',
       help: 'The user is asking what you can do. Look at their project state and suggest 3-4 specific things you can do RIGHT NOW. Show, don\'t tell. Demonstrate by referencing their actual readiness score, gaps, and recommendations.',
@@ -716,6 +733,17 @@ export async function enrichContextForChat(params: {
         blocks.push(recsBlock.value);
         sources.push('proactive-recommendations');
       }
+    }
+  }
+
+  // ── Document type detection — auto-detect what document the user wants ──
+  const detectedDoc = detectDocumentType(message);
+  if (detectedDoc && !slash) {
+    // Only inject document generation context if the user seems to be requesting a draft
+    const isDraftRequest = /\b(?:draft|write|generate|create|produce|build|prepare|compose)\b/i.test(message);
+    if (isDraftRequest) {
+      blocks.push(buildDocumentGenerationContext(detectedDoc));
+      sources.push(`doc-${detectedDoc.type}`);
     }
   }
 
