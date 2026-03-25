@@ -55,38 +55,81 @@ const renderMarkdown = (content: string): string => {
 
 // ─── Thinking messages — industry-specific, cute, rotating ──────────────────
 
-const THINKING_MESSAGES = [
+const THINKING_BASE = [
   'Reading the fine print in 21 CFR 312...',
   'Cross-referencing ICH guidelines...',
   'Thinking like a skeptical reviewer...',
   'Checking the eCTD module structure...',
-  'Reviewing your regulatory strategy...',
   'Scanning for deficiency patterns...',
   'Consulting the predicate database...',
-  'Evaluating endpoint defensibility...',
-  'Running the numbers on sample size...',
   'Checking if this would survive an AdCom...',
-  'Drafting like a senior medical writer...',
   'Channeling my inner FDA reviewer...',
   'Assessing benefit-risk with a straight face...',
   'Looking for the data gap nobody mentioned...',
   'Making sure this passes the RTF checklist...',
-  'Verifying CMC won\'t hold up the submission...',
-  'Counting the p-values...',
-  'Wondering if the DSMB would agree...',
-  'Checking ICH E6(R2) one more time...',
-  'Evaluating if "clinically meaningful" is actually meaningful...',
   'Comparing to what got approved last year...',
   'Pretending I\'m the rapporteur...',
-  'Stress-testing the primary endpoint...',
-  'Making sure the IB is actually informative...',
-  'Reviewing the safety narrative with fresh eyes...',
-  'Double-checking the MedDRA coding...',
-  'Calculating whether 80% power is enough...',
   'Hunting for inconsistencies across modules...',
   'Imagining the Day 120 questions...',
   'Reading between the lines of the guidance...',
+  'Checking the precedent database...',
+  'Reviewing recent FDA Complete Response letters...',
+  'Making sure no one says "data not shown"...',
+  'Looking for the dreaded "insufficient to assess"...',
+  'Applying the "would I sign this?" test...',
+  'Cross-checking Module 2 against Module 5...',
+  'Wondering what the clinical reviewer had for lunch...',
 ];
+
+const THINKING_BY_ROLE: Record<string, string[]> = {
+  ceo: [
+    'Calculating timeline risk for the board...',
+    'Checking what this means for the PDUFA date...',
+    'Translating regulatory risk into investor language...',
+    'Assessing what competitors filed last quarter...',
+    'Figuring out the "so what" for leadership...',
+  ],
+  ra_lead: [
+    'Checking 21 CFR Part 312.23(a) requirements...',
+    'Verifying the eCTD backbone structure...',
+    'Cross-referencing the pre-IND meeting minutes...',
+    'Confirming the submission sequence number...',
+    'Reviewing the FDA\'s refuse-to-file checklist...',
+  ],
+  medical_writer: [
+    'Drafting like a senior medical writer...',
+    'Tightening the narrative flow...',
+    'Making sure the IB is actually informative...',
+    'Checking if "data suggest" should be "data demonstrate"...',
+    'Removing every unnecessary "it should be noted that"...',
+  ],
+  clinical_lead: [
+    'Evaluating endpoint defensibility...',
+    'Stress-testing the primary endpoint...',
+    'Reviewing the safety narrative with fresh eyes...',
+    'Checking protocol deviations impact...',
+    'Assessing the clinical relevance of the effect size...',
+  ],
+  cmc_lead: [
+    'Verifying CMC won\'t hold up the submission...',
+    'Checking stability data against ICH Q1A...',
+    'Reviewing the control strategy coherence...',
+    'Assessing CQA-CPP linkages...',
+    'Making sure the drug substance spec is defensible...',
+  ],
+  investor: [
+    'Calculating probability of regulatory success...',
+    'Checking comparable company timelines...',
+    'Assessing the competitive regulatory landscape...',
+    'Estimating the de-risking milestones...',
+    'Translating science into investment thesis...',
+  ],
+};
+
+function getThinkingMessages(userRole?: string): string[] {
+  const roleMessages = userRole && THINKING_BY_ROLE[userRole] ? THINKING_BY_ROLE[userRole] : [];
+  return [...roleMessages, ...THINKING_BASE];
+}
 
 const INIT_MESSAGES = [
   'Reviewing your submission...',
@@ -229,8 +272,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   defaultChatMode = 'standard',
 }) => {
   const { toast } = useToast();
-  const thinkingMsg = useRotatingMessage(THINKING_MESSAGES, 2800, true);
-  const initMsg = useRotatingMessage(INIT_MESSAGES, 2200, true);
+  const roleThinkingMessages = useMemo(() => getThinkingMessages(contextProfile?.userRole), [contextProfile?.userRole]);
+  const thinkingMsg = useRotatingMessage(roleThinkingMessages, 2800, isStreaming);
+  const initMsg = useRotatingMessage(INIT_MESSAGES, 2200, isInitializing);
 
   const [messages, setMessages] = useState<AnaMessage[]>([]);
   const [input, setInput] = useState('');
