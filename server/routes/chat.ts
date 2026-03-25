@@ -906,6 +906,68 @@ router.post('/upload', async (req: Request, res: Response) => {
 });
 
 /**
+ * GET /api/chat/threads
+ * List threads, optionally filtered by project_id.
+ * Used by AnaPersistentPanel to restore previous conversations.
+ */
+router.get('/threads', async (req: Request, res: Response) => {
+  try {
+    const projectId = req.query.project_id as string | undefined;
+    const limit = Math.min(parseInt(req.query.limit as string || '10', 10), 50);
+    const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+
+    let query: string;
+    let params: unknown[];
+
+    if (projectId) {
+      // Try ai_threads first (has project_id), fall back to chat_threads
+      try {
+        const aiResult = await pool.query(
+          `SELECT id, project_id, created_at FROM ai_threads
+           WHERE project_id = $1 ${orgId ? 'AND organization_id = $2' : ''}
+           ORDER BY created_at DESC LIMIT ${orgId ? '$3' : '$2'}`,
+          orgId ? [projectId, orgId, limit] : [projectId, limit]
+        );
+        if (aiResult.rows.length > 0) {
+          return res.json({ threads: aiResult.rows });
+        }
+      } catch { /* ai_threads may not exist — fall through */ }
+
+      // Fall back to chat_threads (no project_id column)
+      query = `SELECT id, created_at, updated_at FROM chat_threads ORDER BY updated_at DESC LIMIT $1`;
+      params = [limit];
+    } else {
+      query = `SELECT id, created_at, updated_at FROM chat_threads ORDER BY updated_at DESC LIMIT $1`;
+      params = [limit];
+    }
+
+    const result = await pool.query(query, params);
+    res.json({ threads: result.rows });
+  } catch (error: any) {
+    // Table may not exist yet — return empty
+    console.warn('[AnA] Thread listing failed:', error?.message);
+    res.json({ threads: [] });
+  }
+});
+
+/**
+ * GET /api/chat/threads/:threadId/messages
+ * Retrieve messages for a specific thread.
+ * Used by AnaPersistentPanel to restore conversation content.
+ */
+router.get('/threads/:threadId/messages', async (req: Request, res: Response) => {
+  try {
+    const { threadId } = req.params;
+    const limit = Math.min(parseInt(req.query.limit as string || '30', 10), 100);
+    const messages = await getThreadMessages(threadId);
+    res.json({ messages: messages.slice(-limit) });
+  } catch (error: any) {
+    console.warn('[AnA] Thread messages failed:', error?.message);
+    res.json({ messages: [] });
+  }
+});
+
+/**
  * GET /api/chat/thread/:threadId
  * Retrieve conversation history from database
  */
