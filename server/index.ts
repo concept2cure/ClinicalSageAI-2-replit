@@ -1308,6 +1308,16 @@ try {
   console.error('❌ Failed to mount CER routes:', error);
 }
 
+// Mount PDF task + compression routes
+try {
+  const pdfTasksModule = await import('./routes/pdf-task-routes');
+  const pdfTaskRoutes = pdfTasksModule.default;
+  app.use('/api/pdf-tasks', pdfTaskRoutes);
+  console.log('✅ PDF task + compression routes mounted successfully');
+} catch (error) {
+  console.error('❌ Failed to mount PDF task routes:', error);
+}
+
 // Mount GRDHE (Global Regulatory Data Harmonization Engine) routes
 try {
   const grdheModule = await import('./routes/grdheRoutes.js');
