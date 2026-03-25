@@ -174,6 +174,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   const [messages, setMessages] = useState<AnaMessage[]>([]);
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(!!contextProfile?.projectId);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isFocused, setIsFocused] = useState(false);
   const [chatMode, setChatMode] = useState<'standard' | 'deep-research' | 'nano-banana'>(defaultChatMode);
@@ -322,54 +323,52 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     }
   }, [input]);
 
-  // ── Restore previous conversation OR auto-greet ──
-  const conversationLoadedRef = useRef(false);
-  const autoGreetSentRef = useRef(false);
+  // ── Initialize: restore conversation OR auto-greet (single atomic flow) ──
+  const initDoneRef = useRef(false);
   useEffect(() => {
-    if (conversationLoadedRef.current) return;
-    if (!contextProfile?.projectId) return;
-    conversationLoadedRef.current = true;
+    if (initDoneRef.current) return;
+    if (!contextProfile?.projectId) {
+      setIsInitializing(false);
+      return;
+    }
+    initDoneRef.current = true;
 
-    // Try to load the most recent thread for this project
-    apiRequest('GET', `/api/chat/threads?project_id=${contextProfile.projectId}&limit=1`)
-      .then(r => r.json())
-      .then(data => {
-        const thread = data?.threads?.[0] || data?.data?.[0];
-        if (!thread?.id) {
-          // No previous thread — auto-greet so AnA speaks first
-          if (!autoGreetSentRef.current && !initialMessage) {
-            autoGreetSentRef.current = true;
-            setTimeout(() => handleSend('/status', { silent: true }), 300);
+    (async () => {
+      let restored = false;
+
+      // Step 1: Try to restore previous conversation
+      try {
+        const threadRes = await apiRequest('GET', `/api/chat/threads?project_id=${contextProfile.projectId}&limit=1`);
+        const threadData = await threadRes.json();
+        const thread = threadData?.threads?.[0] || threadData?.data?.[0];
+
+        if (thread?.id) {
+          threadIdRef.current = thread.id;
+          const msgRes = await apiRequest('GET', `/api/chat/threads/${thread.id}/messages?limit=30`);
+          const msgData = await msgRes.json();
+          const msgs = msgData?.messages || msgData?.data || [];
+          if (msgs.length > 0) {
+            setMessages(msgs.map((m: any) => ({
+              id: m.id || `restored-${Date.now()}-${Math.random()}`,
+              role: m.role as 'user' | 'assistant',
+              content: m.content,
+              timestamp: new Date(m.created_at || m.timestamp || Date.now()),
+            })));
+            restored = true;
           }
-          return;
         }
-        threadIdRef.current = thread.id;
+      } catch {
+        /* Non-critical — will auto-greet instead */
+      }
 
-        return apiRequest('GET', `/api/chat/threads/${thread.id}/messages?limit=30`)
-          .then(r => r.json())
-          .then(msgData => {
-            const msgs = msgData?.messages || msgData?.data || [];
-            if (msgs.length > 0) {
-              setMessages(msgs.map((m: any) => ({
-                id: m.id || `restored-${Date.now()}-${Math.random()}`,
-                role: m.role as 'user' | 'assistant',
-                content: m.content,
-                timestamp: new Date(m.created_at || m.timestamp || Date.now()),
-              })));
-            } else if (!autoGreetSentRef.current && !initialMessage) {
-              // Thread exists but empty — auto-greet
-              autoGreetSentRef.current = true;
-              setTimeout(() => handleSend('/status', { silent: true }), 300);
-            }
-          });
-      })
-      .catch(() => {
-        // Failed to load — auto-greet so AnA speaks first
-        if (!autoGreetSentRef.current && !initialMessage) {
-          autoGreetSentRef.current = true;
-          setTimeout(() => handleSend('/status', { silent: true }), 300);
-        }
-      });
+      setIsInitializing(false);
+
+      // Step 2: If nothing restored and no initial message, auto-greet
+      if (!restored && !initialMessage) {
+        // Small delay to let the component render the empty state first
+        setTimeout(() => handleSend('/status', { silent: true }), 50);
+      }
+    })();
   }, [contextProfile?.projectId]);
 
   // ── Initial message ──
@@ -743,11 +742,16 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             m.id === assistantMsgId ? { ...m, isStreaming: false } : m
           ));
         } else {
-          const errorMsg = err?.message || 'Unknown error';
-          toast({ title: 'AnA error', description: errorMsg, variant: 'destructive' });
+          const isSilent = options?.silent;
+          if (!isSilent) {
+            const errorMsg = err?.message || 'Unknown error';
+            toast({ title: 'AnA error', description: errorMsg, variant: 'destructive' });
+          }
           setMessages(prev => prev.map(m =>
             m.id === assistantMsgId
-              ? { ...m, content: 'Sorry, something went wrong. Please try again.', isStreaming: false }
+              ? { ...m, content: isSilent
+                  ? `I'm ready to help with ${contextProfile?.activeProject || 'your project'}. What would you like to work on?`
+                  : 'Sorry, something went wrong. Please try again.', isStreaming: false }
               : m
           ));
         }
@@ -1657,30 +1661,43 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         style={{ scrollbarWidth: 'thin' }}
         data-testid="ana-chat-messages"
       >
-        {!hasMessages ? (
-          /* Empty state — greeting + actions */
+        {!hasMessages && !isStreaming ? (
+          /* Empty state — initializing or greeting + actions */
           <div className="flex flex-col items-center justify-center h-full px-6">
-            <div className="max-w-[560px] w-full text-center">
-              <h2 className="text-2xl font-medium text-zinc-900 mb-1">{defaultGreeting}</h2>
-              <p className="text-sm text-zinc-400 mb-6">{greetingSubtext}</p>
-
-              {effectiveSuggestedActions.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-8 max-w-md mx-auto">
-                  {effectiveSuggestedActions.map(action => (
-                    <button
-                      key={action.id}
-                      onClick={() => handleSuggestedAction(action)}
-                      className="text-left px-4 py-3 rounded-xl border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 transition-colors"
-                    >
-                      <p className="text-sm font-medium text-zinc-700">{action.label}</p>
-                      {action.description && (
-                        <p className="text-xs text-zinc-400 mt-0.5 line-clamp-1">{action.description}</p>
-                      )}
-                    </button>
-                  ))}
+            {isInitializing ? (
+              /* Loading state while AnA prepares */
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1.5 mb-3">
+                  <div className="w-2 h-2 rounded-full bg-[#b4654a] animate-[pulse_1.4s_ease-in-out_infinite]" />
+                  <div className="w-2 h-2 rounded-full bg-[#b4654a] animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
+                  <div className="w-2 h-2 rounded-full bg-[#b4654a] animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
                 </div>
-              )}
-            </div>
+                <p className="text-sm text-zinc-400">AnA is reviewing your project...</p>
+              </div>
+            ) : (
+              /* Ready state — greeting + suggested actions */
+              <div className="max-w-[560px] w-full text-center">
+                <h2 className="text-2xl font-medium text-zinc-900 mb-1">{defaultGreeting}</h2>
+                <p className="text-sm text-zinc-400 mb-6">{greetingSubtext}</p>
+
+                {effectiveSuggestedActions.length > 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-8 max-w-md mx-auto">
+                    {effectiveSuggestedActions.map(action => (
+                      <button
+                        key={action.id}
+                        onClick={() => handleSuggestedAction(action)}
+                        className="text-left px-4 py-3 rounded-xl border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 transition-colors"
+                      >
+                        <p className="text-sm font-medium text-zinc-700">{action.label}</p>
+                        {action.description && (
+                          <p className="text-xs text-zinc-400 mt-0.5 line-clamp-1">{action.description}</p>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         ) : (
           /* Messages */
