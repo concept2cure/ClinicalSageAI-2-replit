@@ -1532,7 +1532,7 @@ export async function generateSAP(ctx: CommandContext, params: any): Promise<Com
     if (res.rows.length === 0) return { success: false, action: 'generate_sap', message: 'Project not found' };
 
     // Call the biostats workflow endpoint internally
-    const { executeWorkflow } = await import('./ana-biostats/orchestrator.js').catch(() => ({ executeWorkflow: null }));
+    const { executeWorkflow } = await import('../ana-biostats/orchestrator.js').catch(() => ({ executeWorkflow: null }));
     if (!executeWorkflow) {
       return { success: false, action: 'generate_sap', message: 'Biostatistics orchestrator not available.' };
     }
@@ -1567,7 +1567,7 @@ export async function generateSAP(ctx: CommandContext, params: any): Promise<Com
 /** Compute sample size and power */
 export async function computeSampleSize(ctx: CommandContext, params: any): Promise<CommandResult> {
   try {
-    const { compute } = await import('./ana-biostats/computation-engine.js').catch(() => ({ compute: null }));
+    const { compute } = await import('../ana-biostats/computation-engine.js').catch(() => ({ compute: null }));
     if (!compute) {
       return { success: false, action: 'compute_sample_size', message: 'Computation engine not available.' };
     }
