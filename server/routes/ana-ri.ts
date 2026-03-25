@@ -496,13 +496,8 @@ router.post('/stream', async (req: Request, res: Response) => {
       return sendError(res, 503, 'No AI providers available.', null, 'GATEWAY_UNAVAILABLE');
     }
 
-    // Set SSE headers
-    res.writeHead(200, {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
-      'X-Accel-Buffering': 'no',
-    });
+    // SSE headers deferred until after context building (M-5 fix)
+    // This allows pre-stream failures to return proper HTTP error codes.
 
     // Resolve context
     const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
@@ -545,7 +540,7 @@ router.post('/stream', async (req: Request, res: Response) => {
       userRole: effectiveRole,
       projectContext: project_context,
       documentContext: document_context,
-      submissionType: submission_type as any,
+      submissionType: submission_type as SubmissionType | undefined,
       conversationHistory: conversation_history,
     });
 
@@ -650,6 +645,14 @@ router.post('/stream', async (req: Request, res: Response) => {
     }
 
     messages.push({ role: 'user', content: effectiveMessage });
+
+    // Set SSE headers NOW (after all context building, before first write)
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'X-Accel-Buffering': 'no',
+    });
 
     // Send thread_id immediately so client can track
     res.write(`data: ${JSON.stringify({ type: 'thread_id', thread_id: threadId })}\n\n`);
@@ -863,9 +866,7 @@ router.post('/generate', async (req: Request, res: Response) => {
       !Array.isArray(conversation_context) ||
       conversation_context.length === 0
     ) {
-      return res
-        .status(400)
-        .json({ error: 'conversation_context is required', code: 'INVALID_CONTEXT' });
+      return sendError(res, 400, 'conversation_context is required', null, 'INVALID_CONTEXT');
     }
 
     if (!project_id) {
@@ -1040,7 +1041,7 @@ router.post('/execute', async (req: Request, res: Response) => {
       return sendError(res, 403, 'Authentication required', null, 'NO_AUTH');
     }
 
-    const { CommandContext } = await import('../services/ana-ri/command-executor.js');
+    // CommandContext is a TypeScript interface — cannot destructure at runtime
     const executor = await import('../services/ana-ri/command-executor.js');
 
     const ctx = {

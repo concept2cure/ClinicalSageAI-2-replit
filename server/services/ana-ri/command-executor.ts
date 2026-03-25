@@ -586,7 +586,7 @@ export async function loadConversationHistory(
       message: `Found ${result.rows.length} conversation(s).`,
     };
   } catch (err: any) {
-    return { success: true, action: 'load_conversation_history', data: { conversations: [] }, message: 'No conversation history available.' };
+    return { success: false, action: 'load_conversation_history', message: 'Could not load conversation history.', error: err?.message };
   }
 }
 
