@@ -3974,6 +3974,24 @@ try {
   console.error('❌ Failed to mount Resolution routes:', error.message);
 }
 
+// Mount Operating System Foundation routes (governance boundaries, assumptions, decisions)
+try {
+  const operatingSystemRoutes = (await import('./routes/operating-system')).default;
+  app.use('/api/operating-system', operatingSystemRoutes);
+  console.log('✅ Operating System Foundation routes mounted at /api/operating-system');
+} catch (error: any) {
+  console.error('❌ Failed to mount Operating System routes:', error.message);
+}
+
+// Mount Governed Intelligence routes (contradictions, overlays, dependencies, impact)
+try {
+  const governedIntelRoutes = (await import('./routes/assumption-decision-contradiction')).default;
+  app.use('/api/governed-intelligence', governedIntelRoutes);
+  console.log('✅ Governed Intelligence routes mounted at /api/governed-intelligence');
+} catch (error: any) {
+  console.error('❌ Failed to mount Governed Intelligence routes:', error.message);
+}
+
 // Mount Client Intelligence Memory routes
 import clientIntelligenceRoutes from './routes/client-intelligence';
 app.use('/api/client-intelligence', clientIntelligenceRoutes);
