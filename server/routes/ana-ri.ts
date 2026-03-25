@@ -51,14 +51,19 @@ import {
 } from '../services/kernel-adaptive-policy.js';
 import { buildGoalPlan, replanGoalPlan } from '../services/kernel-goal-planner.js';
 import { buildMemoryContextForChat } from '../services/memory-context-assembler.js';
-import { getIntelligencePrefix, buildSectionSpecificPrompt } from '../services/lumen-context-builder.js';
+import {
+  getIntelligencePrefix,
+  buildSectionSpecificPrompt,
+} from '../services/lumen-context-builder.js';
 import { interceptChatResponse } from '../services/intelligence/rim-interceptors.js';
 import { enrichContextForChat } from '../services/ana-ri/context-enrichment.js';
 import { processResponseActions } from '../services/ana-guidance-executor.js';
-import { processCommandsInResponse, type CommandContext } from '../services/ana-ri/command-executor.js';
+import {
+  processCommandsInResponse,
+  type CommandContext,
+} from '../services/ana-ri/command-executor.js';
 
 const router = Router();
-
 
 const dbPool = {
   query: (...args: Parameters<ReturnType<typeof getPool>['query']>) => getPool().query(...args),
@@ -78,8 +83,13 @@ const sendSuccess = <T>(res: Response, data: T, meta?: Record<string, unknown>) 
   if (meta) return res.json({ success: true, data, meta });
   return res.json({ success: true, data });
 };
-const sendError = (res: Response, status: number, message: string, details?: unknown, code?: string) =>
-  res.status(status).json({ success: false, error: { message, code, details } });
+const sendError = (
+  res: Response,
+  status: number,
+  message: string,
+  details?: unknown,
+  code?: string
+) => res.status(status).json({ success: false, error: { message, code, details } });
 
 // AI Gateway instance
 let gateway: ReturnType<typeof getGateway> | null = null;
@@ -96,7 +106,15 @@ function ensureGateway() {
 
 // ─── Shared validation constants ─────────────────────────────────────────────
 const VALID_LENSES: IntentLens[] = ['auto', 'audit', 'improve', 'risk', 'strategy', 'compare'];
-const VALID_ROLES: UserRole[] = ['ceo', 'ra_lead', 'medical_writer', 'clinical_lead', 'cmc_lead', 'investor', 'general'];
+const VALID_ROLES: UserRole[] = [
+  'ceo',
+  'ra_lead',
+  'medical_writer',
+  'clinical_lead',
+  'cmc_lead',
+  'investor',
+  'general',
+];
 
 // ─── Request context extraction (typed, replaces (req as any) casts) ─────────
 function extractRequestContext(req: Request) {
@@ -161,14 +179,21 @@ router.post('/chat', async (req: Request, res: Response) => {
       if (ac.sectionTitle) parts.push(`  <section_title>${ac.sectionTitle}</section_title>`);
       if (ac.moduleCode) parts.push(`  <module_code>${ac.moduleCode}</module_code>`);
       if (ac.artifactId) parts.push(`  <artifact_id>${ac.artifactId}</artifact_id>`);
-      if (ac.artifactVersionId) parts.push(`  <artifact_version_id>${ac.artifactVersionId}</artifact_version_id>`);
-      if (ac.artifactStatus) parts.push(`  <artifact_status>${ac.artifactStatus}</artifact_status>`);
-      if (ac.submissionType) parts.push(`  <submission_type>${ac.submissionType}</submission_type>`);
+      if (ac.artifactVersionId)
+        parts.push(`  <artifact_version_id>${ac.artifactVersionId}</artifact_version_id>`);
+      if (ac.artifactStatus)
+        parts.push(`  <artifact_status>${ac.artifactStatus}</artifact_status>`);
+      if (ac.submissionType)
+        parts.push(`  <submission_type>${ac.submissionType}</submission_type>`);
       if (ac.readiness) {
-        parts.push(`  <readiness score="${ac.readiness.score ?? 'unknown'}" blocked="${ac.readiness.blocked ?? false}">`);
+        parts.push(
+          `  <readiness score="${ac.readiness.score ?? 'unknown'}" blocked="${ac.readiness.blocked ?? false}">`
+        );
         if (ac.readiness.blockers?.length) {
           for (const b of ac.readiness.blockers) {
-            parts.push(`    <blocker severity="${b.severity}" code="${b.code}">${b.message}</blocker>`);
+            parts.push(
+              `    <blocker severity="${b.severity}" code="${b.code}">${b.message}</blocker>`
+            );
           }
         }
         parts.push('  </readiness>');
@@ -176,7 +201,9 @@ router.post('/chat', async (req: Request, res: Response) => {
       if (ac.contradictions?.length) {
         parts.push('  <contradictions>');
         for (const c of ac.contradictions) {
-          parts.push(`    <contradiction id="${c.id}" type="${c.type}" severity="${c.severity}">${c.explanation}</contradiction>`);
+          parts.push(
+            `    <contradiction id="${c.id}" type="${c.type}" severity="${c.severity}">${c.explanation}</contradiction>`
+          );
         }
         parts.push('  </contradictions>');
       }
@@ -245,7 +272,11 @@ router.post('/chat', async (req: Request, res: Response) => {
       }).catch(() => ({ block: '', sources: [] as string[] })),
     ]);
 
-    const enrichedSystemPrompt = chatIntelligencePrefix + orchestration.systemPrompt + chatMemoryResult.memoryBlock + chatEnrichment.block;
+    const enrichedSystemPrompt =
+      chatIntelligencePrefix +
+      orchestration.systemPrompt +
+      chatMemoryResult.memoryBlock +
+      chatEnrichment.block;
 
     // Build message history — prefer server thread history, fall back to client
     const messages: GatewayMessage[] = [{ role: 'system', content: enrichedSystemPrompt }];
@@ -260,7 +291,9 @@ router.post('/chat', async (req: Request, res: Response) => {
           }
           historyLoaded = true;
         }
-      } catch { /* fall through to client history */ }
+      } catch {
+        /* fall through to client history */
+      }
     }
     if (!historyLoaded && conversation_history && Array.isArray(conversation_history)) {
       for (const msg of conversation_history.slice(-20)) {
@@ -277,15 +310,17 @@ router.post('/chat', async (req: Request, res: Response) => {
           [fileIds]
         );
         if (fileResult.rows.length > 0) {
-          const fileContext = fileResult.rows.map((f: any) =>
-            `- ${f.original_name} (${f.mime_type}) [ID: ${f.id}]`
-          ).join('\n');
+          const fileContext = fileResult.rows
+            .map((f: any) => `- ${f.original_name} (${f.mime_type}) [ID: ${f.id}]`)
+            .join('\n');
           messages.push({
             role: 'user' as const,
             content: `[The user has attached the following files to this message:\n${fileContext}\nReference these files in your response when relevant.]`,
           });
         }
-      } catch { /* non-blocking */ }
+      } catch {
+        /* non-blocking */
+      }
     }
 
     // Add current message (use rewritten version if slash command detected)
@@ -523,11 +558,13 @@ router.post('/stream', async (req: Request, res: Response) => {
     const validatedRole: UserRole | undefined =
       user_role && VALID_ROLES.includes(user_role) ? (user_role as UserRole) : undefined;
 
-    const effectiveRole: UserRole = validatedRole || inferRole({
-      screenName: req.body.context?.screenName,
-      title: req.body.context?.userTitle,
-      department: req.body.context?.department,
-    });
+    const effectiveRole: UserRole =
+      validatedRole ||
+      inferRole({
+        screenName: req.body.context?.screenName,
+        title: req.body.context?.userTitle,
+        department: req.body.context?.department,
+      });
 
     // Build authoring context block
     let authoringContextBlock = '';
@@ -539,8 +576,10 @@ router.post('/stream', async (req: Request, res: Response) => {
       if (ac.sectionTitle) parts.push(`  <section_title>${ac.sectionTitle}</section_title>`);
       if (ac.moduleCode) parts.push(`  <module_code>${ac.moduleCode}</module_code>`);
       if (ac.artifactId) parts.push(`  <artifact_id>${ac.artifactId}</artifact_id>`);
-      if (ac.artifactStatus) parts.push(`  <artifact_status>${ac.artifactStatus}</artifact_status>`);
-      if (ac.submissionType) parts.push(`  <submission_type>${ac.submissionType}</submission_type>`);
+      if (ac.artifactStatus)
+        parts.push(`  <artifact_status>${ac.artifactStatus}</artifact_status>`);
+      if (ac.submissionType)
+        parts.push(`  <submission_type>${ac.submissionType}</submission_type>`);
       parts.push('</authoring_context>');
       authoringContextBlock = parts.join('\n');
     }
@@ -571,10 +610,7 @@ router.post('/stream', async (req: Request, res: Response) => {
 
     // Intelligence + memory + enrichment — run in PARALLEL for speed
     const [intelligencePrefix, memoryResult, enrichment] = await Promise.all([
-      getIntelligencePrefix(
-        orgId ? Number(orgId) : undefined,
-        project_id
-      ).catch(() => ''),
+      getIntelligencePrefix(orgId ? Number(orgId) : undefined, project_id).catch(() => ''),
       buildMemoryContextForChat({
         threadId: thread_id || undefined,
         organizationId: orgId ? Number(orgId) : undefined,
@@ -588,7 +624,7 @@ router.post('/stream', async (req: Request, res: Response) => {
         projectId: project_id,
         organizationId: orgId ? Number(orgId) : undefined,
         submissionType: orchestration.detectedSubmissionType || undefined,
-    }).catch(() => ({ block: '', sources: [] as string[] })),
+      }).catch(() => ({ block: '', sources: [] as string[] })),
     ]);
 
     const memoryBlock = memoryResult.memoryBlock;
@@ -600,13 +636,18 @@ router.post('/stream', async (req: Request, res: Response) => {
     // Use rewritten message if slash command was detected
     const effectiveMessage = enrichment.rewrittenMessage || message;
 
-    const fullSystemPrompt = intelligencePrefix + orchestration.systemPrompt + memoryBlock + enrichment.block;
+    const fullSystemPrompt =
+      intelligencePrefix + orchestration.systemPrompt + memoryBlock + enrichment.block;
 
     // Thread resolution (before message building so we can load server history)
     let threadId = thread_id;
     if (orgId) {
       try {
-        threadId = await getOrCreateThread(thread_id || null, typeof userId === 'number' ? userId : undefined, 'ana-ri');
+        threadId = await getOrCreateThread(
+          thread_id || null,
+          typeof userId === 'number' ? userId : undefined,
+          'ana-ri'
+        );
         await saveMessage(threadId, 'user', message);
       } catch (e: any) {
         console.error('[AnA RI Stream] Thread persistence failed:', e?.message);
@@ -628,7 +669,9 @@ router.post('/stream', async (req: Request, res: Response) => {
           }
           streamHistoryLoaded = true;
         }
-      } catch { /* fall through to client history */ }
+      } catch {
+        /* fall through to client history */
+      }
     }
     if (!streamHistoryLoaded && conversation_history && Array.isArray(conversation_history)) {
       for (const msg of conversation_history.slice(-20)) {
@@ -645,15 +688,17 @@ router.post('/stream', async (req: Request, res: Response) => {
           [streamFileIds]
         );
         if (fileResult.rows.length > 0) {
-          const fileContext = fileResult.rows.map((f: any) =>
-            `- ${f.original_name} (${f.mime_type}) [ID: ${f.id}]`
-          ).join('\n');
+          const fileContext = fileResult.rows
+            .map((f: any) => `- ${f.original_name} (${f.mime_type}) [ID: ${f.id}]`)
+            .join('\n');
           messages.push({
             role: 'user' as const,
             content: `[The user has attached the following files:\n${fileContext}\nReference these files in your response when relevant.]`,
           });
         }
-      } catch { /* non-blocking */ }
+      } catch {
+        /* non-blocking */
+      }
     }
 
     messages.push({ role: 'user', content: effectiveMessage });
@@ -662,7 +707,7 @@ router.post('/stream', async (req: Request, res: Response) => {
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
+      Connection: 'keep-alive',
       'X-Accel-Buffering': 'no',
     });
 
@@ -670,17 +715,19 @@ router.post('/stream', async (req: Request, res: Response) => {
     res.write(`data: ${JSON.stringify({ type: 'thread_id', thread_id: threadId })}\n\n`);
 
     // Send orchestration metadata
-    res.write(`data: ${JSON.stringify({
-      type: 'orchestration',
-      orchestration: {
-        detectedIntent: orchestration.detectedIntent,
-        detectedSubmissionType: orchestration.detectedSubmissionType,
-        appliedRole: orchestration.appliedRole,
-        activeWorkstream: orchestration.activeWorkstream,
-        workstreamHandoff: orchestration.workstreamHandoff,
-        suggestedActions: orchestration.suggestedActions,
-      },
-    })}\n\n`);
+    res.write(
+      `data: ${JSON.stringify({
+        type: 'orchestration',
+        orchestration: {
+          detectedIntent: orchestration.detectedIntent,
+          detectedSubmissionType: orchestration.detectedSubmissionType,
+          appliedRole: orchestration.appliedRole,
+          activeWorkstream: orchestration.activeWorkstream,
+          workstreamHandoff: orchestration.workstreamHandoff,
+          suggestedActions: orchestration.suggestedActions,
+        },
+      })}\n\n`
+    );
 
     // Routing plan
     const routingPlan = planKernelExecution({
@@ -711,10 +758,12 @@ router.post('/stream', async (req: Request, res: Response) => {
       stream: true,
       onStream: (chunk: string, metadata?: any) => {
         fullContent += chunk;
-        res.write(`data: ${JSON.stringify({
-          type: metadata?.type || 'text',
-          content: chunk,
-        })}\n\n`);
+        res.write(
+          `data: ${JSON.stringify({
+            type: metadata?.type || 'text',
+            content: chunk,
+          })}\n\n`
+        );
       },
       callerModule: 'ana-ri-stream',
     });
@@ -764,7 +813,11 @@ router.post('/stream', async (req: Request, res: Response) => {
         const cmdCtx: CommandContext = {
           userId: typeof userId === 'number' ? userId : 0,
           organizationId: Number(orgId),
-          activeProjectId: project_id ? (typeof project_id === 'string' ? parseInt(project_id, 10) : project_id) : undefined,
+          activeProjectId: project_id
+            ? typeof project_id === 'string'
+              ? parseInt(project_id, 10)
+              : project_id
+            : undefined,
         };
         const cmdResult = await processCommandsInResponse(fullContent, cmdCtx);
         executedCommands = cmdResult.executedCommands;
@@ -777,22 +830,26 @@ router.post('/stream', async (req: Request, res: Response) => {
     }
 
     // Send done event
-    res.write(`data: ${JSON.stringify({
-      type: 'done',
-      model: gwResponse.model,
-      provider: gwResponse.provider,
-      usage: gwResponse.usage,
-      latencyMs: gwResponse.latencyMs,
-      executedActions: executedActions.length > 0 ? executedActions : undefined,
-      executedCommands: executedCommands.length > 0 ? executedCommands : undefined,
-      enrichmentSources: enrichment.sources.length > 0 ? enrichment.sources : undefined,
-    })}\n\n`);
+    res.write(
+      `data: ${JSON.stringify({
+        type: 'done',
+        model: gwResponse.model,
+        provider: gwResponse.provider,
+        usage: gwResponse.usage,
+        latencyMs: gwResponse.latencyMs,
+        executedActions: executedActions.length > 0 ? executedActions : undefined,
+        executedCommands: executedCommands.length > 0 ? executedCommands : undefined,
+        enrichmentSources: enrichment.sources.length > 0 ? enrichment.sources : undefined,
+      })}\n\n`
+    );
 
     res.end();
   } catch (error: any) {
     console.error('[AnA RI Stream] Error:', error.message);
     if (res.headersSent) {
-      res.write(`data: ${JSON.stringify({ type: 'error', error: 'An error occurred while generating the response' })}\n\n`);
+      res.write(
+        `data: ${JSON.stringify({ type: 'error', error: 'An error occurred while generating the response' })}\n\n`
+      );
       res.end();
     } else {
       sendError(res, 500, 'Internal server error');
@@ -1053,7 +1110,13 @@ router.post('/generate', async (req: Request, res: Response) => {
       'attach_to_dossier',
     ];
     if (!action_type || typeof action_type !== 'string' || !VALID_ACTIONS.includes(action_type)) {
-      return sendError(res, 400, `Invalid action_type. Must be one of: ${VALID_ACTIONS.join(', ')}`, null, 'INVALID_ACTION');
+      return sendError(
+        res,
+        400,
+        `Invalid action_type. Must be one of: ${VALID_ACTIONS.join(', ')}`,
+        null,
+        'INVALID_ACTION'
+      );
     }
 
     if (
@@ -1089,7 +1152,13 @@ router.post('/generate', async (req: Request, res: Response) => {
     });
 
     if (!result.success) {
-      return sendError(res, 502, result.error || 'Artifact generation failed', null, 'GENERATION_FAILED');
+      return sendError(
+        res,
+        502,
+        result.error || 'Artifact generation failed',
+        null,
+        'GENERATION_FAILED'
+      );
     }
 
     return sendSuccess(res, {
@@ -1179,7 +1248,6 @@ router.get('/rubric', (_req: Request, res: Response) => {
   const rubric = getFullRubric();
   return sendSuccess(res, { dimensions: rubric });
 });
-
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/ana-ri/health — AnA runtime readiness snapshot
@@ -1280,19 +1348,25 @@ router.post('/execute', async (req: Request, res: Response) => {
       );
     }
 
-    const [result] = await executor.executeCommands(
-      [{ command, params: params || {} }],
-      ctx
-    );
+    const [result] = await executor.executeCommands([{ command, params: params || {} }], ctx);
 
-    return sendSuccess(res, result || {
-      success: false,
-      action: command,
-      message: `Command ${command} did not produce a result.`,
-    });
+    return sendSuccess(
+      res,
+      result || {
+        success: false,
+        action: command,
+        message: `Command ${command} did not produce a result.`,
+      }
+    );
   } catch (error: any) {
     console.error('[AnA RI] Command execution error:', error);
-    return sendError(res, 500, error?.message || 'Command execution failed', null, 'EXECUTION_ERROR');
+    return sendError(
+      res,
+      500,
+      error?.message || 'Command execution failed',
+      null,
+      'EXECUTION_ERROR'
+    );
   }
 });
 
