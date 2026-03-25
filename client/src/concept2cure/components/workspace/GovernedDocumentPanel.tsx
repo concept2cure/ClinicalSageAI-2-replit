@@ -40,6 +40,7 @@ import { cn } from '@/lib/utils';
 import { ReviewThreadsPanel } from './ReviewThreadsPanel';
 import { getGovWorkflowTailoring } from '../../config/industry-tailoring';
 import { useDocumentModeOptional } from '../../contexts/DocumentModeContext';
+import DecisionLineageMap from '../audit/DecisionLineageMap';
 
 // ── Auth helper ──────────────────────────────────────────────────────────────
 function getAuthHeaders(): Record<string, string> {
@@ -214,7 +215,7 @@ export function GovernedDocumentPanel({
   const [changingStatus, setChangingStatus] = useState(false);
   const [rollingBack, setRollingBack] = useState(false);
   const [activeTab, setActiveTab] = useState<
-    'status' | 'audit' | 'versions' | 'snapshots' | 'threads' | 'governance'
+    'status' | 'audit' | 'versions' | 'snapshots' | 'threads' | 'governance' | 'lineage'
   >('status');
   const [permissions, setPermissions] = useState<UserPermissions | null>(null);
 
@@ -460,7 +461,7 @@ export function GovernedDocumentPanel({
 
       {/* Tab bar */}
       <div className="flex border-b border-zinc-200">
-        {(['status', 'audit', 'governance', 'versions', 'snapshots', 'threads'] as const).map(tab => (
+        {(['status', 'audit', 'governance', 'lineage', 'versions', 'snapshots', 'threads'] as const).map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -477,7 +478,9 @@ export function GovernedDocumentPanel({
                 ? 'Threads'
                 : tab === 'governance'
                   ? 'Gov'
-                  : tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  : tab === 'lineage'
+                    ? 'Lineage'
+                    : tab.charAt(0).toUpperCase() + tab.slice(1)}
           </button>
         ))}
       </div>
@@ -503,6 +506,8 @@ export function GovernedDocumentPanel({
           <AuditTab events={events} />
         ) : activeTab === 'governance' ? (
           <GovernanceTrailTab projectId={projectId} artifactId={artifact.id} />
+        ) : activeTab === 'lineage' ? (
+          <DecisionLineageTab entityType="artifact" entityId={typeof artifact.id === 'string' ? parseInt(artifact.id, 10) || 0 : artifact.id} />
         ) : activeTab === 'snapshots' ? (
           <SnapshotsTab snapshots={snapshots} />
         ) : activeTab === 'threads' ? (
@@ -881,6 +886,26 @@ function StatusTab({
 }
 
 // ── Audit Tab ────────────────────────────────────────────────────────────────
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DECISION LINEAGE TAB — Wraps DecisionLineageMap for the panel context
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function DecisionLineageTab({ entityType, entityId }: { entityType: string; entityId: number }) {
+  if (!entityId || entityId <= 0) {
+    return (
+      <div className="p-4 text-center text-xs text-zinc-400">
+        No artifact selected. Open an artifact to view its decision lineage.
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-1">
+      <DecisionLineageMap entityType={entityType} entityId={entityId} />
+    </div>
+  );
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GOVERNANCE TRAIL TAB — Shows boundary transitions + decision records
