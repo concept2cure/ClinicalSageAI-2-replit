@@ -2824,7 +2824,6 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
       })),
       metadata: updatedArtifact.metadata as Record<string, unknown>,
       status: updatedArtifact.status || 'draft',
-      ctdSection: updatedArtifact.ctdSection,
       createdAt: updatedArtifact.createdAt,
       updatedAt: updatedArtifact.updatedAt,
     };
@@ -6213,6 +6212,62 @@ router.get('/templates/:id', (req: Request, res: Response) => {
 // DOCX EXPORT FOR CHAT ARTIFACTS
 // ─────────────────────────────────────────────────────────────────────────────
 
+const EXPORT_REVIEW_NOTICE =
+  'REGULATORY SAFETY NOTICE: This document may contain AI-generated content. Qualified human review and approval are required before use in regulated submissions, clinical/safety decisions, or external communications.';
+
+const exportGovernanceSchema = z.object({
+  aiGenerated: z.boolean().default(true),
+  humanReviewApproved: z.boolean().default(false),
+  reviewerName: z.string().trim().min(1).max(200).optional(),
+  reviewerRole: z.string().trim().min(1).max(200).optional(),
+  reviewTimestamp: z.string().datetime().optional(),
+});
+
+function shouldEnforceExportReviewGate(): boolean {
+  if (process.env.CONCEPT2CURE_REQUIRE_EXPORT_HUMAN_REVIEW === 'true') return true;
+  if (process.env.CONCEPT2CURE_REQUIRE_EXPORT_HUMAN_REVIEW === 'false') return false;
+  return process.env.NODE_ENV === 'production';
+}
+
+function applyExportGovernanceHeaders(res: Response, governance: z.infer<typeof exportGovernanceSchema>): void {
+  res.setHeader('X-Concept2Cure-AI-Generated', String(governance.aiGenerated));
+  res.setHeader('X-Concept2Cure-Human-Review-Approved', String(governance.humanReviewApproved));
+  res.setHeader('X-Concept2Cure-Review-Required', 'true');
+  if (governance.reviewerName) {
+    res.setHeader('X-Concept2Cure-Reviewer', encodeURIComponent(governance.reviewerName));
+  }
+  if (governance.reviewTimestamp) {
+    res.setHeader('X-Concept2Cure-Review-Timestamp', governance.reviewTimestamp);
+  }
+}
+
+function validateExportGovernance(req: Request, res: Response): z.infer<typeof exportGovernanceSchema> | null {
+  const parsed = exportGovernanceSchema.safeParse(req.body?.governance ?? {});
+  if (!parsed.success) {
+    sendError(res, 400, 'Invalid export governance payload', parsed.error.flatten(), 'VALIDATION_ERROR');
+    return null;
+  }
+
+  const governance = parsed.data;
+  const strictGateEnabled = shouldEnforceExportReviewGate();
+  if (strictGateEnabled && !governance.humanReviewApproved) {
+    sendError(
+      res,
+      403,
+      'Human review approval is required before export in this environment',
+      {
+        required: 'governance.humanReviewApproved=true',
+        reviewerFields: ['governance.reviewerName', 'governance.reviewerRole', 'governance.reviewTimestamp'],
+      },
+      'HUMAN_REVIEW_REQUIRED'
+    );
+    return null;
+  }
+
+  applyExportGovernanceHeaders(res, governance);
+  return governance;
+}
+
 /**
  * POST /api/concept2cure/artifacts/export-docx
  * Generate a DOCX file from title + content and return as a download.
@@ -6225,10 +6280,13 @@ router.post('/artifacts/export-docx', async (req: Request, res: Response) => {
       content: z.string().min(1).max(1000000),
     });
     const { title, content } = schema.parse(req.body);
+    const governance = validateExportGovernance(req, res);
+    if (!governance) return;
+    const exportBody = governance.aiGenerated ? `${EXPORT_REVIEW_NOTICE}\n\n${content}` : content;
 
     // Dynamic import to avoid circular dependency issues
     const { generateDocxBuffer } = await import('../services/docxGenerator');
-    const buffer = await generateDocxBuffer(title, content);
+    const buffer = await generateDocxBuffer(title, exportBody);
 
     const safeFilename = title.replace(/[^a-zA-Z0-9_.-]/g, '_');
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
@@ -6258,6 +6316,9 @@ router.post('/artifacts/export-pdf', async (req: Request, res: Response) => {
   if (!title || !content) {
     return res.status(400).json({ error: 'title and content are required' });
   }
+
+  const governance = validateExportGovernance(req, res);
+  if (!governance) return;
 
   try {
     // Use pdf-lib to create a PDF from the content
@@ -6298,6 +6359,21 @@ router.post('/artifacts/export-pdf', async (req: Request, res: Response) => {
       color: rgb(0.5, 0.5, 0.5),
     });
     y -= 30;
+
+    if (governance.aiGenerated) {
+      const noticeLines = EXPORT_REVIEW_NOTICE.match(/.{1,110}(\s|$)/g) ?? [EXPORT_REVIEW_NOTICE];
+      for (const noticeLine of noticeLines) {
+        page.drawText(noticeLine.trim(), {
+          x: margin,
+          y,
+          size: 9,
+          font: timesBold,
+          color: rgb(0.65, 0.3, 0.2),
+        });
+        y -= 12;
+      }
+      y -= 6;
+    }
 
     // Draw a separator line
     page.drawLine({
@@ -6425,6 +6501,9 @@ router.post('/artifacts/export-pptx', async (req: Request, res: Response) => {
       nanoBanana: z.boolean().optional(), // opt-in to Nano Banana cover image
     });
     const { title, content, nanoBanana } = schema.parse(req.body);
+    const governance = validateExportGovernance(req, res);
+    if (!governance) return;
+    const exportBody = governance.aiGenerated ? `${EXPORT_REVIEW_NOTICE}\n\n${content}` : content;
 
     // If Nano Banana is enabled and configured, generate the full presentation with cover
     if (nanoBanana) {
@@ -6433,7 +6512,7 @@ router.post('/artifacts/export-pptx', async (req: Request, res: Response) => {
         if (isConfigured()) {
           const result = await generatePresentation({
             topic: title,
-            slideCount: Math.min(content.split(/\n---\n/).length || 6, 12),
+            slideCount: Math.min(exportBody.split(/\n---\n/).length || 6, 12),
             audience: 'scientific',
             generateImages: true,
           });
@@ -6450,7 +6529,7 @@ router.post('/artifacts/export-pptx', async (req: Request, res: Response) => {
     }
 
     const { generatePptxBuffer } = await import('../services/pptxGenerator');
-    const buffer = await generatePptxBuffer(title, content);
+    const buffer = await generatePptxBuffer(title, exportBody);
 
     const safeFilename = title.replace(/[^a-zA-Z0-9_.-]/g, '_');
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
