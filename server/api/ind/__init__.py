@@ -1,3 +1,0 @@
-"""
-IND API module
-"""
