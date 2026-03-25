@@ -664,9 +664,17 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       const formData = new FormData();
       formData.append('file', file);
       try {
+        // File upload requires multipart form — can't use apiRequest (which sets Content-Type: application/json).
+        // Replicate auth headers manually.
+        const uploadOrgId = localStorage.getItem('organizationId') || localStorage.getItem('currentOrganizationId') || '1';
+        const uploadToken = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('auth_token') || '';
         const res = await fetch('/api/chat/upload', {
           method: 'POST',
           credentials: 'include',
+          headers: {
+            'x-organization-id': uploadOrgId,
+            ...(uploadToken ? { Authorization: `Bearer ${uploadToken}` } : {}),
+          },
           body: formData,
         });
         if (res.ok) {
@@ -676,8 +684,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         } else {
           toast({ title: 'Upload failed', description: `Could not upload ${file.name}`, variant: 'destructive' });
         }
-      } catch {
-        toast({ title: 'Upload failed', description: `Could not upload ${file.name}`, variant: 'destructive' });
+      } catch (err) {
+        toast({ title: 'Upload failed', description: err instanceof Error ? err.message : `Could not upload ${file.name}`, variant: 'destructive' });
       }
     }
   }, [toast]);
@@ -1081,8 +1089,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   }}
                   className="p-1.5 text-zinc-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
                   title="Insert into editor"
+                  aria-label="Insert into document editor"
                 >
-                  <Download className="w-4 h-4" />
+                  <ArrowUp className="w-4 h-4 rotate-90" />
                 </button>
               )}
               {(msg as any).insertedToEditor && (
@@ -1308,7 +1317,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
         {/* Slash command autocomplete */}
         {input.startsWith('/') && !input.includes(' ') && (
-          <div className="absolute bottom-full left-0 right-0 mb-1 mx-4 bg-white rounded-xl border border-zinc-200 shadow-lg py-1 z-50 max-h-[200px] overflow-y-auto">
+          <div className="absolute bottom-full left-0 right-0 mb-1 mx-4 bg-white rounded-xl border border-zinc-200 shadow-lg py-1 z-50 max-h-[200px] overflow-y-auto" role="listbox" aria-label="Slash commands" data-testid="ana-slash-commands">
             {[
               { cmd: '/risk', desc: 'Analyze submission risk profile' },
               { cmd: '/readiness', desc: 'Check submission readiness' },
@@ -1368,6 +1377,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           className="flex-shrink-0 self-center p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-md transition-colors"
           aria-label="Attach file"
           title="Attach file (PDF, DOC, TXT, CSV, XLSX)"
+          data-testid="ana-file-upload"
         >
           <Paperclip className="w-4 h-4" />
         </button>
@@ -1427,10 +1437,14 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         const isDegrading = tokens > 16000;
         if (!isHeavy) return null;
         return (
-          <div className={cn(
-            'flex items-center justify-between px-4 py-1.5 text-[11px] border-b',
-            isDegrading ? 'bg-orange-50 border-orange-200 text-orange-700' : 'bg-amber-50 border-amber-200 text-amber-700'
-          )}>
+          <div
+            className={cn(
+              'flex items-center justify-between px-4 py-1.5 text-[11px] border-b',
+              isDegrading ? 'bg-orange-50 border-orange-200 text-orange-700' : 'bg-amber-50 border-amber-200 text-amber-700'
+            )}
+            role="alert"
+            data-testid="ana-health-bar"
+          >
             <span>{isDegrading ? 'Long conversation — responses may lose earlier context' : `~${tokensK}K tokens — consider starting a new thread for best results`}</span>
             <button
               onClick={() => { setMessages([]); threadIdRef.current = null; }}

@@ -95,13 +95,14 @@ async function enrichWithProjectMemory(
 ): Promise<string> {
   try {
     const catPlaceholders = categories.map((_, i) => `$${i + 2}`).join(', ');
+    const limitParam = `$${categories.length + 2}`;
     const result = await pool.query(
       `SELECT content, title, confidence, importance, category
        FROM project_memory_entries
        WHERE project_id = $1 AND category IN (${catPlaceholders})
        ORDER BY importance DESC, created_at DESC
-       LIMIT ${limit}`,
-      [projectId, ...categories]
+       LIMIT ${limitParam}`,
+      [projectId, ...categories, limit]
     );
 
     if (result.rows.length === 0) return '';
