@@ -41,7 +41,109 @@ export { CSR_KNOWLEDGE_DB_TABLES, type CsrKnowledgeDbTableName } from './csr-kno
 export * from './regulatory-atoms';
 export * from './api-keys';
 export * from './ctd-projects';
-export * from './unified_workflow';
+
+// unified_workflow.ts: re-export everything EXCEPT names already in schema.ts
+// Conflicts: documentComments, insertDocumentVersionSchema, DocumentVersion, InsertDocumentVersion
+export {
+  documentStatusEnum,
+  workflowStatusEnum,
+  approvalStatusEnum,
+  approvalTypeEnum,
+  moduleTypeEnum,
+  unifiedDocuments,
+  workflowDocumentVersions,
+  moduleDocuments,
+  documentAuditLogs,
+  workflowTemplates,
+  workflowSteps,
+  documentWorkflows,
+  workflowApprovals,
+  workflowHistory,
+  documentAttachments,
+  unifiedDocumentsRelations,
+  workflowDocumentVersionsRelations,
+  moduleDocumentsRelations,
+  workflowTemplatesRelations,
+  workflowStepsRelations,
+  documentWorkflowsRelations,
+  workflowApprovalsRelations,
+  workflowHistoryRelations,
+  documentAttachmentsRelations,
+  documentCommentsRelations,
+  insertUnifiedDocumentSchema,
+  insertModuleDocumentSchema,
+  insertWorkflowTemplateSchema,
+  insertWorkflowStepSchema,
+  insertDocumentWorkflowSchema,
+  insertWorkflowApprovalSchema,
+} from './unified_workflow';
+export type {
+  UnifiedDocument,
+  InsertUnifiedDocument,
+  ModuleDocument,
+  InsertModuleDocument,
+  WorkflowTemplate,
+  InsertWorkflowTemplate,
+  WorkflowStep,
+  InsertWorkflowStep,
+  DocumentWorkflow,
+  InsertDocumentWorkflow,
+  WorkflowApproval,
+  InsertWorkflowApproval,
+} from './unified_workflow';
+
 export * from './support-admin';
-export * from './orchestration';
+
+// orchestration.ts: re-export everything EXCEPT EvidenceSource (already in schema.ts)
+export {
+  workflowRunStatusEnum,
+  workflowStepStatusEnum,
+  approvalGateTypeEnum,
+  triggerSourceEnum,
+  actorTypeEnum,
+  evidenceClassEnum,
+  confidenceLevelEnum,
+  readinessRuleTypeEnum,
+  workflowRuns,
+  approvalCheckpoints,
+  readinessRules,
+  readinessEvaluations,
+  projectIntelligenceSummaries,
+  workflowRunsRelations,
+  approvalCheckpointsRelations,
+  readinessEvaluationsRelations,
+  insertWorkflowRunSchema,
+  insertApprovalCheckpointSchema,
+  insertReadinessRuleSchema,
+  insertReadinessEvaluationSchema,
+  insertProjectIntelligenceSummarySchema,
+} from './orchestration';
+export type {
+  WorkflowStepRecord,
+  TouchedObject,
+  CreatedOutput,
+  WorkflowBlocker,
+  ApprovalRecord,
+  DiffSummary,
+  DiffChange,
+  EvidencedRecommendation,
+  ReadinessFinding,
+  IntelligenceBlocker,
+  IntelligenceChange,
+  IntelligenceDecision,
+  IntelligenceRisk,
+  ReadinessSnapshot,
+  WorkflowOutcome,
+  WorkflowRun,
+  InsertWorkflowRun,
+  ApprovalCheckpoint,
+  InsertApprovalCheckpoint,
+  ReadinessRule,
+  InsertReadinessRule,
+  ReadinessEvaluation,
+  InsertReadinessEvaluation,
+  ProjectIntelligenceSummary,
+  InsertProjectIntelligenceSummary,
+} from './orchestration';
+
 export * from './resolution';

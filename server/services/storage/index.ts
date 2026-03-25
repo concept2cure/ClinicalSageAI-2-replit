@@ -42,7 +42,7 @@ export function getStorageProvider(): IStorageProvider {
     }
   }
 
-  return _instance;
+  return _instance!;
 }
 
 /** Reset singleton (for testing) */
