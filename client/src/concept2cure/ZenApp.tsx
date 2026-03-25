@@ -40,6 +40,7 @@ import {
 } from './components/projects/ProjectSwitcher';
 // [BATCH 3] WorkflowTimeline — renderer removed, import kept for type compatibility
 import { ProjectFilesCompact } from './components/workspace/ProjectFilesCompact';
+import { ProjectHeaderBar } from './components/workspace/ProjectHeaderBar';
 // [BATCH 3] CustomInstructions — knowledge-base renderer removed
 import { useProjectKnowledge } from './hooks/useProjectKnowledge';
 import { useProjectTasks } from './hooks/useProjectTasks';
@@ -48,6 +49,7 @@ import { useProjects } from './hooks/useProjects';
 import { useCortexThreads, useCortexHealth } from './hooks/useCortex';
 import { usePlatformContext } from './hooks/useLicense';
 import { useWorkspaceSummary } from './hooks/useWorkspaceSummary';
+import { useReadinessAssessment } from './hooks/useOrchestration';
 
 import { WorkspaceReadinessStrip } from './components/workspace/WorkspaceReadinessStrip';
 import { ProjectWorkspaceShell } from './components/workspace/ProjectWorkspaceShell';
@@ -687,6 +689,7 @@ export const ZenApp: React.FC = () => {
       conversationCount: p.conversations?.length ?? 0,
       starred: (p.metadata as any)?.starred ?? false,
       archived: p.status === 'archived',
+      status: p.status || 'active',
     }));
   }, [rawProjects]);
 
@@ -884,6 +887,12 @@ export const ZenApp: React.FC = () => {
 
   // Derive active project early so downstream hooks / memos can reference it
   const activeProject = projects.find(p => p.id === activeProjectId);
+
+  // Readiness score for the active project (displayed in ProjectHeaderBar)
+  const { data: readinessData } = useReadinessAssessment(
+    activeProjectId ? Number(activeProjectId) : null
+  );
+  const projectReadinessScore = readinessData?.metrics?.readinessScore;
 
   // ── Canonical AuthoringContextPack — derived from all available state ──────
   const authoringContext = useMemo<AuthoringContextPack | null>(() => {
@@ -2587,46 +2596,14 @@ export const ZenApp: React.FC = () => {
           {!embeddedModule && layoutMode === 'workspace' && (
             <div className="flex-1 flex flex-col min-h-0">
               {/* ── Project Header — Claude.ai style: breadcrumb + title + star ── */}
-              <div className="flex-shrink-0 bg-white px-6 pt-6 pb-4">
-                {/* Breadcrumb */}
-                <button
-                  onClick={() => setLayoutMode('projects')}
-                  className="flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-700 transition-colors mb-3"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                  All projects
-                </button>
-
-                {/* Project title + actions */}
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
-                    <h1 className="text-xl font-semibold text-zinc-900 truncate">
-                      {activeProject?.name || 'Untitled Project'}
-                    </h1>
-                    {activeProject?.description && (
-                      <p className="text-sm text-zinc-500 mt-1 line-clamp-2">
-                        {activeProject.description}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1 flex-shrink-0 ml-4">
-                    <button
-                      onClick={() => setEditProjectOpen(true)}
-                      title="Project settings"
-                      className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors"
-                    >
-                      <PenLine className="w-4 h-4" />
-                    </button>
-                    <button
-                      className="p-1.5 text-zinc-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors"
-                      title="Star project"
-                    >
-                      <Star className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-              {/* Removed old tab toggles — ProjectSidebar now handles Context/Instructions/Files */}
+              {/* Claude.ai-style project header bar */}
+              <ProjectHeaderBar
+                projectName={activeProject?.name || 'Untitled Project'}
+                submissionType={activeProject?.type || 'IND'}
+                readinessScore={projectReadinessScore}
+                onOpenConfig={() => setEditProjectOpen(true)}
+                onSwitchProject={() => setProjectSwitcherOpen(true)}
+              />
 
               {/* ── Workspace body: AnA chat + right panel ───────────── */}
               <div className="flex-1 flex min-h-0">
