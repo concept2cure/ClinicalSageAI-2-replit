@@ -312,6 +312,60 @@ These features already replicate Claude Projects patterns:
 
 ---
 
+### 3.4 Additional Gaps (from Extended UX Research)
+
+#### Gap E6: Move Conversations Between Projects
+
+**Claude.ai behavior**: Users can reassign a conversation to a different project via the three-dot menu.
+
+**Your current state**: `ai_threads` has a `project_id` column, so the data model supports it. No UI for moving.
+
+**Action**: Add "Move to project" option in conversation context menu. Backend: `PATCH /api/chat/threads/:id { project_id }`.
+
+**Files**: `ProjectsSidebar.tsx` (conversation menu), `chat.ts` (backend)
+
+---
+
+#### Gap E7: RAG Activation for Large Knowledge Bases
+
+**Claude.ai behavior**: When project knowledge approaches the 200K context limit (~13+ files), RAG (retrieval-augmented generation) activates automatically — not all files are stuffed into context, instead relevant chunks are retrieved per query.
+
+**Your current state**: `projectMemoryEntries` has pgvector embeddings (1536 dims). The infrastructure for semantic search exists. Unclear if it activates automatically when context is too large.
+
+**Action**: In the context assembly chain, when total file tokens exceed a threshold (e.g., 150K), switch from "stuff all files" to "semantic retrieval of top-K relevant chunks." Leverage existing pgvector index on `projectMemoryEntries`.
+
+**Files**: `memory-context-assembler.ts`, `lumen-context-builder.ts`
+
+---
+
+#### Gap E8: Nightly Project Memory Summaries
+
+**Claude.ai behavior**: Since March 2026, Claude maintains auto-generated project-scoped memory summaries, updated nightly. These persist key facts across conversations.
+
+**Your current state**: RIM's `projectIntelligenceProfiles` + `projectMemoryEntries` already track learned insights, but enrichment happens on-demand (via interceptors), not on a schedule.
+
+**Action**: Add a nightly cron job (Bull queue) that summarizes recent conversation signals into `projectMemoryEntries`. This is a natural extension of your existing RIM interceptor architecture.
+
+**Files**: New job in `server/services/` or `server/jobs/`, Bull queue configuration
+
+---
+
+#### Gap E9: Sharing Permissions (Can Use / Can Edit)
+
+**Claude.ai behavior**: Two permission tiers — "Can Use" (view + chat in project) and "Can Edit" (modify instructions, files, settings).
+
+**Your current state**: `clientAccess` table has `role` (admin, member, viewer) and `permissions` (JSON). The data model supports this. No project-level sharing UI.
+
+**Action**: Expose project-level sharing with two tiers. Map "Can Use" → viewer, "Can Edit" → member. Add share dialog to project settings.
+
+**Files**: New `ProjectShareDialog.tsx`, backend endpoint for project-level access grants
+
+---
+
+> **Full Claude Projects UX research**: See `docs/reports/claude-projects-ux-research.md` for the complete reference.
+
+---
+
 ## Part 4: Implementation Plan (Ordered Segments)
 
 ### Segment 1: Verify Context Injection Chain (Gap E1)
@@ -392,15 +446,17 @@ Your existing infrastructure EXCEEDS Claude Projects in several ways. These are 
 | Category | Count | Status |
 |----------|-------|--------|
 | Features already matching | 8 | No work needed |
-| Gaps to close (enhance) | 5 | E1-E5, ordered by priority |
+| Gaps to close (enhance) | 9 | E1-E9, ordered by priority |
 | New features to build | 3 | N1-N3 |
-| Implementation segments | 8 | Each independently deployable |
+| Implementation segments | 8+ | Each independently deployable |
 | Your competitive advantages | 12+ | Preserve and highlight |
 
 **Bottom line**: You're closer than you think. The core Claude Projects UX (project CRUD, file upload, custom instructions, conversations, context window) is already built. The main gaps are:
 1. Verifying the context injection chain works end-to-end (critical)
-2. UX polish (sidebar hierarchy, no-project state, chat header)
-3. Surfacing your existing memory/intelligence in the knowledge panel (high value, low effort)
+2. RAG activation when knowledge exceeds context window (high value, infra exists)
+3. UX polish (sidebar hierarchy, no-project state, move conversations, chat header)
+4. Surfacing your existing memory/intelligence in the knowledge panel (high value, low effort)
+5. Nightly memory summaries + sharing permissions (future)
 
 ---
 
