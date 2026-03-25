@@ -844,6 +844,189 @@ router.post('/plan', async (req: Request, res: Response) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// POST /api/ana-ri/plan — Return planner preview without generation
+// ─────────────────────────────────────────────────────────────────────────────
+router.post('/plan', async (req: Request, res: Response) => {
+  try {
+    const { message, intent_lens, submission_type, persist, thread_id } = req.body || {};
+    if (!message || typeof message !== 'string') {
+      return res.status(400).json({ error: 'Message is required', code: 'INVALID_MESSAGE' });
+    }
+
+    const orchestration = orchestrate({
+      message,
+      intentLens: intent_lens,
+      submissionType: submission_type,
+    });
+    const routingPlan = planKernelExecution({
+      route: '/api/ana-ri/chat',
+      messageLength: message.length,
+      intentLens: orchestration.detectedIntent.lens,
+      intentConfidence: orchestration.detectedIntent.confidence,
+      submissionType: orchestration.detectedSubmissionType,
+      requestedMaxTokens: 4096,
+    });
+    const goalPlan = buildGoalPlan({
+      message,
+      intentLens: orchestration.detectedIntent.lens,
+      riskTier: routingPlan.riskTier,
+      submissionType: orchestration.detectedSubmissionType,
+    });
+
+    let planRunId: string | null = null;
+    if (persist) {
+      const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+      const persisted = await createGoalPlanRun({
+        organizationId: orgId ? Number(orgId) : null,
+        threadId: thread_id || null,
+        route: '/api/ana-ri/plan',
+        goalPlan,
+        metadata: {
+          intentLens: orchestration.detectedIntent.lens,
+          submissionType: orchestration.detectedSubmissionType,
+        },
+      });
+      planRunId = persisted.id;
+    }
+
+    return res.json({
+      routingPlan,
+      goalPlan,
+      planRunId,
+      orchestration: {
+        detectedIntent: orchestration.detectedIntent,
+        detectedSubmissionType: orchestration.detectedSubmissionType,
+      },
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      error: 'Failed to compute plan',
+      code: 'PLANNER_ERROR',
+      message: error?.message,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/ana-ri/plan/:planRunId — Fetch persisted goal plan run
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/plan/:planRunId', async (req: Request, res: Response) => {
+  const planRun = await getGoalPlanRun(req.params.planRunId);
+  if (!planRun) {
+    return res.status(404).json({ error: 'Plan run not found', code: 'PLAN_NOT_FOUND' });
+  }
+  return res.json(planRun);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/ana-ri/plan/:planRunId/advance — Advance step status
+// ─────────────────────────────────────────────────────────────────────────────
+router.post('/plan/:planRunId/advance', async (req: Request, res: Response) => {
+  const { stepId, nextStatus } = req.body || {};
+  if (!stepId || !nextStatus) {
+    return res
+      .status(400)
+      .json({ error: 'stepId and nextStatus are required', code: 'INVALID_INPUT' });
+  }
+  const allowedStatuses = ['pending', 'in_progress', 'completed', 'blocked', 'replanned'] as const;
+  if (!allowedStatuses.includes(nextStatus)) {
+    return res.status(400).json({ error: 'Invalid nextStatus', code: 'INVALID_STATUS' });
+  }
+
+  const result = await advanceGoalPlanStep({
+    planRunId: req.params.planRunId,
+    stepId,
+    nextStatus,
+  });
+  if (!result.ok) {
+    return res.status(400).json({ error: result.message, code: 'PLAN_ADVANCE_FAILED' });
+  }
+  return res.json({ ok: true });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/ana-ri/plan/:planRunId/execute-next — Execute next runnable step
+// ─────────────────────────────────────────────────────────────────────────────
+router.post('/plan/:planRunId/execute-next', async (req: Request, res: Response) => {
+  const result = await executeNextGoalPlanStep(req.params.planRunId);
+  if (!result.ok) {
+    return res.status(400).json({ error: result.message, code: 'PLAN_EXECUTION_FAILED' });
+  }
+  const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+  await recordProtocolEvent({
+    planRunId: req.params.planRunId,
+    organizationId: orgId ? Number(orgId) : null,
+    actorType: 'system',
+    actorId: 'kernel-runtime',
+    messageType: 'decision',
+    payload: {
+      decision: 'execute_next_step',
+      rationale: 'Automatically executed next dependency-satisfied step',
+      stepId: result.executedStepId,
+    },
+  });
+  return res.json(result);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/ana-ri/plan/:planRunId/events — Step event audit trail
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/plan/:planRunId/events', async (req: Request, res: Response) => {
+  const events = await listGoalPlanEvents(req.params.planRunId);
+  return res.json({ events });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/ana-ri/plan/:planRunId/protocol — Append protocol event
+// ─────────────────────────────────────────────────────────────────────────────
+router.post('/plan/:planRunId/protocol', async (req: Request, res: Response) => {
+  const { actorType, actorId, messageType, payload, metadata } = req.body || {};
+  const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+  const event = {
+    planRunId: req.params.planRunId,
+    organizationId: orgId ? Number(orgId) : null,
+    actorType,
+    actorId,
+    messageType,
+    payload,
+    metadata,
+  };
+  const validation = validateProtocolEvent(event as any);
+  if (!validation.ok) {
+    return res.status(400).json({ error: validation.message, code: 'INVALID_PROTOCOL_EVENT' });
+  }
+
+  const recorded = await recordProtocolEvent(event as any);
+  if (!recorded.ok) {
+    return res
+      .status(500)
+      .json({ error: 'Failed to record protocol event', code: 'PROTOCOL_WRITE_FAILED' });
+  }
+  return res.json({ ok: true });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/ana-ri/plan/:planRunId/protocol — List protocol events
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/plan/:planRunId/protocol', async (req: Request, res: Response) => {
+  const events = await listProtocolEvents(req.params.planRunId);
+  return res.json({ events });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/ana-ri/kernel/metrics — Kernel observability summary
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/kernel/metrics', async (req: Request, res: Response) => {
+  const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+  const windowDays = req.query.window_days ? Number(req.query.window_days) : 7;
+  const metrics = await getKernelMetrics({
+    organizationId: orgId ? Number(orgId) : null,
+    windowDays: Number.isFinite(windowDays) && windowDays > 0 ? windowDays : 7,
+  });
+  return res.json(metrics);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // POST /api/ana-ri/generate — Generate Governed Artifact
 // ─────────────────────────────────────────────────────────────────────────────
 
