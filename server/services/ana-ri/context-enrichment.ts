@@ -40,7 +40,7 @@ interface SlashCommand {
 }
 
 function detectSlashCommand(message: string): SlashCommand | null {
-  const match = message.match(/^\/(risk|readiness|precedent|draft|preflight|claims|recommend|next|simulate|signals|export|assess|twin|consistency|deficiencies|knowledge|help|sap|power|dose|defensibility|design)\b\s*(.*)/i);
+  const match = message.match(/^\/(risk|readiness|precedent|draft|preflight|claims|recommend|next|simulate|signals|export|assess|twin|consistency|deficiencies|knowledge|help|sap|power|dose|defensibility|design|safety|cmc|csr|device|ectd)\b\s*(.*)/i);
   if (!match) return null;
   return { command: match[1].toLowerCase(), args: match[2].trim() };
 }
@@ -100,6 +100,34 @@ const BIOSTAT_TRIGGERS = [
   /\b(?:non.?inferiority|equivalence|superiority margin)\b/i,
   /\b(?:crossover|parallel.?arm|basket trial|umbrella trial|platform trial)\b/i,
   /\b(?:statistical defensib|endpoint.*quality|reviewer.*risk.*statistic)\b/i,
+];
+
+const SAFETY_TRIGGERS = [
+  /\b(?:safety|adverse event|teae|sae|serious adverse|benefit.risk|dsur)\b/i,
+  /\b(?:safety narrative|safety summary|safety section|safety report)\b/i,
+  /\b(?:meddr|causality|severity|fatal|death|discontinu)\b/i,
+];
+
+const CMC_TRIGGERS = [
+  /\b(?:cmc|chemistry.*manufacturing|manufacturing|comparability|analytical method)\b/i,
+  /\b(?:cqa|critical quality|process validation|control strategy|stability)\b/i,
+  /\b(?:module 3|drug substance|drug product|excipient|specification)\b/i,
+];
+
+const CSR_TRIGGERS = [
+  /\b(?:csr|clinical study report|study report|ich e3)\b/i,
+  /\b(?:efficacy.*result|safety.*result|disposition|demographics|baseline)\b/i,
+];
+
+const DEVICE_TRIGGERS = [
+  /\b(?:510\(k\)|predicate|substantial equivalence|medical device|de novo)\b/i,
+  /\b(?:pma|premarket|eu mdr|ivdr|clinical evaluation report|cer)\b/i,
+  /\b(?:device classification|product code|performance study)\b/i,
+];
+
+const ECTD_TRIGGERS = [
+  /\b(?:ectd|module [1-5]|ctd structure|dossier structure|submission structure)\b/i,
+  /\b(?:granule|lifecycle|sequence|submission.*package)\b/i,
 ];
 
 function matchesTriggers(message: string, triggers: RegExp[]): boolean {
@@ -359,6 +387,42 @@ async function enrichWithKnowledgeSearch(query: string, projectId: string | numb
   }
 }
 
+async function enrichWithDomainMemory(projectId: string | number, domain: string, categories: string[], label: string): Promise<string> {
+  const memBlock = await enrichWithProjectMemory(projectId, categories, label,
+    `Project-specific ${domain} data. Reference directly in your response.`, 5);
+  return memBlock || `\n\n## ${label}\nNo ${domain} data found for this project yet. Ask the user what ${domain} work they need and gather parameters conversationally.`;
+}
+
+async function enrichWithSafety(projectId: string | number): Promise<string> {
+  return enrichWithDomainMemory(projectId, 'safety',
+    ['safety_narrative', 'adverse_event_summary', 'benefit_risk', 'safety_signal'],
+    'Safety Intelligence');
+}
+
+async function enrichWithCMC(projectId: string | number): Promise<string> {
+  return enrichWithDomainMemory(projectId, 'CMC',
+    ['cmc_assessment', 'manufacturing_change', 'comparability', 'analytical_method'],
+    'CMC Intelligence');
+}
+
+async function enrichWithCSR(projectId: string | number): Promise<string> {
+  return enrichWithDomainMemory(projectId, 'CSR',
+    ['csr_section', 'clinical_study', 'efficacy_result', 'safety_result'],
+    'Clinical Study Report Intelligence');
+}
+
+async function enrichWithDevice(projectId: string | number): Promise<string> {
+  return enrichWithDomainMemory(projectId, 'medical device',
+    ['predicate_device', 'device_classification', 'substantial_equivalence', 'clinical_evaluation'],
+    'Medical Device Intelligence');
+}
+
+async function enrichWithECTD(projectId: string | number): Promise<string> {
+  return enrichWithDomainMemory(projectId, 'eCTD',
+    ['ectd_structure', 'module_status', 'submission_package', 'granule_tracking'],
+    'eCTD Structure Intelligence');
+}
+
 async function enrichWithBiostatContext(projectId: string | number, submissionType?: string): Promise<string> {
   // Inject biostatistics knowledge + project-specific signals
   const parts: string[] = [];
@@ -508,6 +572,11 @@ export async function enrichContextForChat(params: {
       dose: () => enrichWithBiostatContext(projectId, submissionType),
       defensibility: () => enrichWithBiostatContext(projectId, submissionType),
       design: () => enrichWithBiostatContext(projectId, submissionType),
+      safety: () => enrichWithSafety(projectId),
+      cmc: () => enrichWithCMC(projectId),
+      csr: () => enrichWithCSR(projectId),
+      device: () => enrichWithDevice(projectId),
+      ectd: () => enrichWithECTD(projectId),
       help: () => Promise.all([
         enrichWithReadiness(projectId, organizationId),
         enrichWithRecommendations(projectId, organizationId),
@@ -545,6 +614,11 @@ export async function enrichContextForChat(params: {
       dose: slash.args ? `Design a dose escalation study for: ${slash.args}` : 'Design a dose escalation protocol. Ask for: starting dose, dose levels, target DLT rate, escalation method (3+3, BOIN, CRM, or Modified Fibonacci).',
       defensibility: 'Run a statistical defensibility assessment on this project. Score across 7 dimensions: evidence sufficiency, defensibility, reviewer sensitivity, claim risk, cross-section consistency, submission risk. Generate reviewer risk annotations.',
       design: slash.args ? `Design a clinical trial for: ${slash.args}` : 'Help design the optimal clinical trial. Ask about: indication, phase, primary endpoint, comparator, and whether they need adaptive, basket, umbrella, or platform design features.',
+      safety: slash.args ? `Generate safety narrative for: ${slash.args}` : 'Help with safety narrative work. Ask what format they need: CSR safety section, Investigator\'s Brochure, CER, briefing book, or DSUR. Gather adverse event context.',
+      cmc: slash.args ? `Evaluate CMC for: ${slash.args}` : 'Help with CMC/manufacturing work. Ask about: manufacturing change type, CQA impact, comparability assessment needs, or Module 3 documentation.',
+      csr: slash.args ? `Analyze CSR for: ${slash.args}` : 'Help with Clinical Study Report work. Ask which section (efficacy, safety, disposition, demographics) or whether they need ICH E3 validation.',
+      device: slash.args ? `Analyze device submission for: ${slash.args}` : 'Help with medical device submission. Ask about: submission type (510(k), PMA, De Novo, EU MDR), predicate device, and classification.',
+      ectd: 'Show the eCTD module structure and help place artifacts in the correct CTD location. Reference Module 1-5 structure.',
       help: 'The user is asking what you can do. Look at their project state and suggest 3-4 specific things you can do RIGHT NOW. Show, don\'t tell. Demonstrate by referencing their actual readiness score, gaps, and recommendations.',
       export: 'Export this conversation.',
     };
@@ -565,6 +639,11 @@ export async function enrichContextForChat(params: {
       { test: CLAIMS_TRIGGERS, fn: () => enrichWithClaims(projectId), name: 'claims' },
       { test: SIMULATION_TRIGGERS, fn: () => enrichWithCRLRTF(projectId), name: 'simulation' },
       { test: BIOSTAT_TRIGGERS, fn: () => enrichWithBiostatContext(projectId, submissionType), name: 'biostatistics' },
+      { test: SAFETY_TRIGGERS, fn: () => enrichWithSafety(projectId), name: 'safety' },
+      { test: CMC_TRIGGERS, fn: () => enrichWithCMC(projectId), name: 'cmc' },
+      { test: CSR_TRIGGERS, fn: () => enrichWithCSR(projectId), name: 'csr' },
+      { test: DEVICE_TRIGGERS, fn: () => enrichWithDevice(projectId), name: 'device' },
+      { test: ECTD_TRIGGERS, fn: () => enrichWithECTD(projectId), name: 'ectd' },
     ];
 
     const matchedFns = triggers.filter(t => matchesTriggers(message, t.test));
