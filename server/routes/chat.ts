@@ -187,7 +187,7 @@ function normalizeBody(req: Request) {
 const sendMessageHandler = async (req: Request, res: Response) => {
   normalizeBody(req);
   try {
-    const { message, thread_id, file_id, system_prompt, project_id } = req.body;
+    const { message, thread_id, file_id, system_prompt, project_id, preferred_provider } = req.body;
 
     if (!message || typeof message !== 'string') {
       return res.status(400).json({
@@ -252,10 +252,9 @@ const sendMessageHandler = async (req: Request, res: Response) => {
           [threadId, message]
         );
         // Update thread activity timestamp for sort ordering
-        await pool.query(
-          `UPDATE ai_threads SET updated_at = NOW() WHERE id = $1`,
-          [threadId]
-        ).catch(() => {}); // Non-blocking
+        await pool
+          .query(`UPDATE ai_threads SET updated_at = NOW() WHERE id = $1`, [threadId])
+          .catch(() => {}); // Non-blocking
       } catch (e: any) {
         if (e?.code !== '42P01') console.warn('[AnA] ai_messages insert failed:', e.message);
       }
@@ -266,13 +265,14 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       try {
         // Generate a concise title from the first message (no AI call needed)
         const rawTitle = message.replace(/^\/\w+\s*/, '').trim(); // Strip slash commands
-        const title = rawTitle.length > 60
-          ? rawTitle.slice(0, 57).replace(/\s+\S*$/, '') + '...'
-          : rawTitle || 'New conversation';
-        await pool.query(
-          `UPDATE ai_threads SET title = $1, updated_at = NOW() WHERE id = $2`,
-          [title, threadId]
-        );
+        const title =
+          rawTitle.length > 60
+            ? rawTitle.slice(0, 57).replace(/\s+\S*$/, '') + '...'
+            : rawTitle || 'New conversation';
+        await pool.query(`UPDATE ai_threads SET title = $1, updated_at = NOW() WHERE id = $2`, [
+          title,
+          threadId,
+        ]);
       } catch (e: any) {
         // Non-blocking — title generation failure doesn't break chat
         if (e?.code !== '42P01') console.warn('[AnA] Thread title update failed:', e.message);
@@ -428,24 +428,26 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       let decisionContext: any[] = [];
       if (project_id) {
         try {
-          const { decisionLifecycleService } = await import(
-            '../services/decision-lifecycle-service.js'
-          );
-          decisionContext = decisionLifecycleService.getDecisionContext(
-            String(project_id),
-            { limit: 5 }
-          );
-        } catch { /* non-blocking */ }
+          const { decisionLifecycleService } =
+            await import('../services/decision-lifecycle-service.js');
+          decisionContext = decisionLifecycleService.getDecisionContext(String(project_id), {
+            limit: 5,
+          });
+        } catch {
+          /* non-blocking */
+        }
       }
 
       // Run the orchestrator for intent detection, deficiency context, and continuity
       const orchestratorResult = orchestrate({
         message,
         conversationHistory,
-        authoringContext: project_id ? {
-          projectId: String(project_id),
-          _decisionContext: decisionContext,
-        } : undefined,
+        authoringContext: project_id
+          ? {
+              projectId: String(project_id),
+              _decisionContext: decisionContext,
+            }
+          : undefined,
       });
 
       console.log(
@@ -499,6 +501,13 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       });
       const selectedStrategy = policyHint?.preferredStrategy || routingPlan.strategy;
 
+      // Validate preferred_provider if provided
+      const VALID_PROVIDERS = ['anthropic', 'openai', 'moonshot'] as const;
+      const validatedChatProvider =
+        preferred_provider && VALID_PROVIDERS.includes(preferred_provider)
+          ? (preferred_provider as (typeof VALID_PROVIDERS)[number])
+          : undefined;
+
       const gwResponse: GatewayResponse = await gw.route({
         taskType: routingPlan.taskType,
         messages: gwMessages,
@@ -508,6 +517,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
         organizationId: numericOrgId ?? undefined,
         userId: numericUserId,
         strategy: selectedStrategy,
+        ...(validatedChatProvider ? { provider: validatedChatProvider } : {}),
       });
 
       assistantMessage =
@@ -846,6 +856,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       thread_id: threadId,
       usage,
       model,
+      provider,
       sources,
       citations,
       confidence,
@@ -936,7 +947,7 @@ router.post('/upload', async (req: Request, res: Response) => {
 router.get('/threads', async (req: Request, res: Response) => {
   try {
     const projectId = req.query.project_id as string | undefined;
-    const limit = Math.min(parseInt(req.query.limit as string || '10', 10), 50);
+    const limit = Math.min(parseInt((req.query.limit as string) || '10', 10), 50);
     const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
 
     let query: string;
@@ -954,7 +965,9 @@ router.get('/threads', async (req: Request, res: Response) => {
         if (aiResult.rows.length > 0) {
           return res.json({ threads: aiResult.rows });
         }
-      } catch { /* ai_threads may not exist — fall through */ }
+      } catch {
+        /* ai_threads may not exist — fall through */
+      }
 
       // Fall back to chat_threads (no project_id column)
       query = `SELECT id, created_at, updated_at FROM chat_threads ORDER BY updated_at DESC LIMIT $1`;
@@ -981,7 +994,7 @@ router.get('/threads', async (req: Request, res: Response) => {
 router.get('/threads/:threadId/messages', async (req: Request, res: Response) => {
   try {
     const { threadId } = req.params;
-    const limit = Math.min(parseInt(req.query.limit as string || '30', 10), 100);
+    const limit = Math.min(parseInt((req.query.limit as string) || '30', 10), 100);
     const messages = await getThreadMessages(threadId);
     res.json({ messages: messages.slice(-limit) });
   } catch (error: any) {

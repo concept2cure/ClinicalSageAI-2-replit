@@ -122,6 +122,17 @@ const DEFAULT_MODELS: ModelConfig[] = [
     enabled: true,
   },
   {
+    id: 'kimi-k2-0711',
+    provider: 'moonshot',
+    model: 'kimi-k2-0711-preview',
+    contextWindow: 131072,
+    qualityScore: 88,
+    costPer1kInput: 0.0006,
+    costPer1kOutput: 0.0018,
+    capabilities: ['chat', 'document_analysis', 'general', 'structured_output', 'code_generation'],
+    enabled: true,
+  },
+  {
     id: 'moonshot-v1-128k',
     provider: 'moonshot',
     model: 'moonshot-v1-128k',
@@ -130,8 +141,7 @@ const DEFAULT_MODELS: ModelConfig[] = [
     costPer1kInput: 0.0008,
     costPer1kOutput: 0.0008,
     capabilities: ['chat', 'document_analysis', 'general'],
-    // Disabled — platform uses Anthropic Claude exclusively
-    enabled: false, // Enable via KIMI_API_KEY or MOONSHOT_API_KEY
+    enabled: true,
   },
   {
     id: 'moonshot-v1-32k',
@@ -142,22 +152,22 @@ const DEFAULT_MODELS: ModelConfig[] = [
     costPer1kInput: 0.0004,
     costPer1kOutput: 0.0004,
     capabilities: ['chat', 'general'],
-    enabled: false,
+    enabled: true,
   },
 ];
 
 // Task → preferred provider order
 // Anthropic Claude is primary; OpenAI is automatic fallback when Claude is unavailable
 const TASK_PROVIDER_PREFERENCES: Record<TaskType, ProviderName[]> = {
-  chat: ['anthropic', 'openai'],
-  document_analysis: ['anthropic', 'openai'],
-  document_drafting: ['anthropic', 'openai'],
-  structured_output: ['anthropic', 'openai'],
-  regulatory_review: ['anthropic', 'openai'],
-  code_generation: ['anthropic', 'openai'],
-  summarization: ['anthropic', 'openai'],
+  chat: ['anthropic', 'openai', 'moonshot'],
+  document_analysis: ['anthropic', 'openai', 'moonshot'],
+  document_drafting: ['anthropic', 'openai', 'moonshot'],
+  structured_output: ['anthropic', 'openai', 'moonshot'],
+  regulatory_review: ['anthropic', 'openai', 'moonshot'],
+  code_generation: ['anthropic', 'openai', 'moonshot'],
+  summarization: ['anthropic', 'openai', 'moonshot'],
   embedding: ['anthropic', 'openai'],
-  general: ['anthropic', 'openai'],
+  general: ['anthropic', 'openai', 'moonshot'],
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -167,7 +177,7 @@ const TASK_PROVIDER_PREFERENCES: Record<TaskType, ProviderName[]> = {
 const DETERMINISTIC_RESPONSES: Record<TaskType, string> = {
   chat:
     '## AnA Response (Demo Mode)\n\n' +
-    'I\'m AnA — your Audit & Narrative Assistant. I\'m currently running in **demo mode** because no AI provider API key is configured.\n\n' +
+    "I'm AnA — your Audit & Narrative Assistant. I'm currently running in **demo mode** because no AI provider API key is configured.\n\n" +
     'When connected to Claude, I can:\n' +
     '- **[KNOWN]** Analyze your regulatory documents against ICH, FDA, and EMA requirements\n' +
     '- **[KNOWN]** Detect contradictions, assumption drift, and cross-section inconsistencies\n' +
@@ -191,7 +201,8 @@ const DETERMINISTIC_RESPONSES: Record<TaskType, string> = {
     '- Evidence-backed claims with citation tracking\n' +
     '- Governed content that flows through the approval pipeline\n\n' +
     'Set `ANTHROPIC_API_KEY` in `.env` to enable real document drafting.',
-  structured_output: '{"result": "demo_mode", "status": "success", "message": "Deterministic mode active. Set ANTHROPIC_API_KEY to enable live AI.", "data": {}}',
+  structured_output:
+    '{"result": "demo_mode", "status": "success", "message": "Deterministic mode active. Set ANTHROPIC_API_KEY to enable live AI.", "data": {}}',
   regulatory_review:
     '## Regulatory Review (Demo Mode)\n\n' +
     '**[KNOWN]** AnA is operating in demo mode — no live AI analysis performed.\n\n' +
@@ -210,7 +221,7 @@ const DETERMINISTIC_RESPONSES: Record<TaskType, string> = {
     '[MISSING] Detailed analysis requires live AI — set ANTHROPIC_API_KEY in .env.',
   embedding: '[]',
   general:
-    '**AnA (Demo Mode):** I\'m running without an AI provider. ' +
+    "**AnA (Demo Mode):** I'm running without an AI provider. " +
     'Set `ANTHROPIC_API_KEY` in your `.env` file to enable full regulatory intelligence. ' +
     'All governance features (promotion, contradictions, readiness) work independently of the AI provider.',
 };
@@ -275,7 +286,9 @@ export class AIGateway {
     // Select model — fall back to deterministic if no providers available
     const selectedModel = this.selectModel(request, strategy);
     if (!selectedModel) {
-      console.warn('[AI Gateway] No providers available — falling back to demo mode. Set ANTHROPIC_API_KEY in .env to enable live AI.');
+      console.warn(
+        '[AI Gateway] No providers available — falling back to demo mode. Set ANTHROPIC_API_KEY in .env to enable live AI.'
+      );
       return this.buildDeterministicResponse(request, requestId, startTime);
     }
 
@@ -1116,8 +1129,8 @@ export class AIGateway {
           name: 'moonshot',
           enabled: !!moonshotKey,
           apiKey: moonshotKey,
-          baseUrl: 'https://api.moonshot.cn/v1',
-          defaultModel: 'moonshot-v1-32k',
+          baseUrl: 'https://api.moonshot.ai/v1',
+          defaultModel: 'kimi-k2-0711-preview',
           models: [],
         },
       ],
@@ -1172,7 +1185,7 @@ export class AIGateway {
       try {
         this.moonshotClient = new OpenAI({
           apiKey: moonshotConfig.apiKey,
-          baseURL: moonshotConfig.baseUrl || 'https://api.moonshot.cn/v1',
+          baseURL: moonshotConfig.baseUrl || 'https://api.moonshot.ai/v1',
         });
         console.log('  ✅ Moonshot/Kimi provider ready');
       } catch (e: any) {

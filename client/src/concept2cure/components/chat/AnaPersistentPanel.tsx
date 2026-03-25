@@ -40,6 +40,7 @@ import {
   HelpCircle,
   FileEdit,
   FolderPlus,
+  Bot,
 } from 'lucide-react';
 
 marked.setOptions({ breaks: true, gfm: true });
@@ -215,6 +216,10 @@ interface AnaMessage {
   pptx?: { base64: string; filename: string; mimeType: string };
   /** Whether this message has been saved as an artifact */
   savedAsArtifact?: boolean;
+  /** AI provider that generated this response */
+  modelProvider?: string;
+  /** AI model name that generated this response */
+  modelName?: string;
 }
 
 interface SuggestedAction {
@@ -227,6 +232,49 @@ interface SuggestedAction {
 // ─── AnA RI Types ─────────────────────────────────────────────────────────────
 
 type IntentLens = 'auto' | 'audit' | 'improve' | 'risk' | 'strategy' | 'compare';
+
+// ─── AI Provider / Model Selection ───────────────────────────────────────────
+
+type AIProviderChoice = 'auto' | 'anthropic' | 'openai' | 'moonshot';
+
+interface AIProviderOption {
+  id: AIProviderChoice;
+  label: string;
+  description: string;
+  color: string;
+  activeColor: string;
+}
+
+const AI_PROVIDERS: AIProviderOption[] = [
+  {
+    id: 'auto',
+    label: 'Auto',
+    description: 'Best model for the task',
+    color: 'text-[#8A8880]',
+    activeColor: 'text-[#D97757]',
+  },
+  {
+    id: 'anthropic',
+    label: 'Claude',
+    description: 'Anthropic Claude Sonnet 4',
+    color: 'text-[#8A8880]',
+    activeColor: 'text-[#CC785C]',
+  },
+  {
+    id: 'openai',
+    label: 'GPT-4o',
+    description: 'OpenAI GPT-4o',
+    color: 'text-[#8A8880]',
+    activeColor: 'text-[#10A37F]',
+  },
+  {
+    id: 'moonshot',
+    label: 'Kimi',
+    description: 'Moonshot Kimi K2',
+    color: 'text-[#8A8880]',
+    activeColor: 'text-[#6366F1]',
+  },
+];
 
 interface IntentLensOption {
   id: IntentLens;
@@ -487,6 +535,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   const [lastOrchestration, setLastOrchestration] = useState<AnaRIOrchestration | null>(null);
   const [showLensDropdown, setShowLensDropdown] = useState(false);
   const lensDropdownRef = useRef<HTMLDivElement>(null);
+  // AI Provider / Model selector
+  const [selectedProvider, setSelectedProvider] = useState<AIProviderChoice>('auto');
+  const [showProviderDropdown, setShowProviderDropdown] = useState(false);
+  const providerDropdownRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const initialMessageSentRef = useRef(false);
@@ -788,6 +840,19 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
   }, [showLensDropdown]);
+
+  // Close provider dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (providerDropdownRef.current && !providerDropdownRef.current.contains(e.target as Node)) {
+        setShowProviderDropdown(false);
+      }
+    };
+    if (showProviderDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showProviderDropdown]);
 
   // AnA personality — rotating thinking messages
   const [thinkingMsg, setThinkingMsg] = useState('');
@@ -1183,6 +1248,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             thread_id: threadIdRef.current || undefined,
             project_id: contextProfile?.projectId || undefined,
             submission_type: contextProfile?.productType || undefined,
+            preferred_provider: selectedProvider !== 'auto' ? selectedProvider : undefined,
             authoring_context: authoringPayload,
             context: {
               screen: contextProfile?.screenName,
@@ -1254,6 +1320,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   chatMode,
                   project_id: contextProfile?.projectId || undefined,
                   submission_type: contextProfile?.productType || undefined,
+                  preferred_provider: selectedProvider !== 'auto' ? selectedProvider : undefined,
                   context: {
                     screen: contextProfile?.screenName,
                     project: contextProfile?.activeProject,
@@ -1281,6 +1348,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                       chatMode,
                       project_id: contextProfile?.projectId || undefined,
                       submission_type: contextProfile?.productType || undefined,
+                      preferred_provider:
+                        selectedProvider !== 'auto' ? selectedProvider : undefined,
                       context: {
                         screen: contextProfile?.screenName,
                         project: contextProfile?.activeProject,
@@ -1338,6 +1407,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               content: assistantContent,
               timestamp: new Date(),
               executedActions: data.executedActions || undefined,
+              modelProvider: data.provider || data.modelProvider || undefined,
+              modelName: data.model || data.modelName || undefined,
             },
           ]);
 
@@ -1392,6 +1463,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             body: JSON.stringify({
               message: text,
               chatMode: 'standard',
+              preferred_provider: selectedProvider !== 'auto' ? selectedProvider : undefined,
               context: {
                 screen: contextProfile?.screenName,
                 projectId: contextProfile?.projectId,
@@ -1443,7 +1515,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         inputRef.current?.focus();
       }
     },
-    [input, isThinking, messages, contextProfile, chatMode, intentLens]
+    [input, isThinking, messages, contextProfile, chatMode, intentLens, selectedProvider]
   );
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -2062,29 +2134,55 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         const projectId = contextProfile?.projectId;
         const artifactId = authoringContext?.artifactId;
         if (!projectId || !artifactId) {
-          setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
-            content: '**Cannot approve.** No artifact is currently open.' }]);
+          setMessages(prev => [
+            ...prev,
+            {
+              id: `a-${Date.now()}`,
+              role: 'assistant',
+              timestamp: new Date(),
+              content: '**Cannot approve.** No artifact is currently open.',
+            },
+          ]);
           return;
         }
         try {
           const res = await fetch('/api/authoring-actions/approve-artifact', {
-            method: 'POST', headers: getAuthHeaders(),
+            method: 'POST',
+            headers: getAuthHeaders(),
             body: JSON.stringify({ projectId, artifactId }),
           });
           const data = await res.json();
           if (data.approved) {
-            const decisionNote = data.decisionId ? `\n**Decision:** \`${data.decisionId.slice(0, 16)}…\`` : '';
-            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
-              content: `**Artifact approved.** ${data.message}${decisionNote}` }]);
+            const decisionNote = data.decisionId
+              ? `\n**Decision:** \`${data.decisionId.slice(0, 16)}…\``
+              : '';
+            setMessages(prev => [
+              ...prev,
+              {
+                id: `a-${Date.now()}`,
+                role: 'assistant',
+                timestamp: new Date(),
+                content: `**Artifact approved.** ${data.message}${decisionNote}`,
+              },
+            ]);
           } else {
             const blockerLines = data.blockers?.length
               ? '\n\n' + data.blockers.map((b: string) => `- ${b}`).join('\n')
               : '';
-            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
-              content: `**Approval ${data.reason === 'unauthorized' ? 'unauthorized' : 'blocked'}.** ${data.message}${blockerLines}` }]);
+            setMessages(prev => [
+              ...prev,
+              {
+                id: `a-${Date.now()}`,
+                role: 'assistant',
+                timestamp: new Date(),
+                content: `**Approval ${data.reason === 'unauthorized' ? 'unauthorized' : 'blocked'}.** ${data.message}${blockerLines}`,
+              },
+            ]);
           }
           onRefreshIntelligence?.();
-        } catch { handleSend('Approve this artifact for the next governance stage.'); }
+        } catch {
+          handleSend('Approve this artifact for the next governance stage.');
+        }
       })();
       return;
     }
@@ -2095,28 +2193,52 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         const projectId = contextProfile?.projectId;
         const artifactId = authoringContext?.artifactId;
         if (!projectId || !artifactId) {
-          setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
-            content: '**Cannot lock.** No artifact is currently open.' }]);
+          setMessages(prev => [
+            ...prev,
+            {
+              id: `a-${Date.now()}`,
+              role: 'assistant',
+              timestamp: new Date(),
+              content: '**Cannot lock.** No artifact is currently open.',
+            },
+          ]);
           return;
         }
         try {
           const res = await fetch('/api/authoring-actions/lock-artifact', {
-            method: 'POST', headers: getAuthHeaders(),
+            method: 'POST',
+            headers: getAuthHeaders(),
             body: JSON.stringify({ projectId, artifactId }),
           });
           const data = await res.json();
           if (data.locked) {
-            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
-              content: `**Artifact locked.** ${data.message} No further edits are allowed. Content is frozen for submission.` }]);
+            setMessages(prev => [
+              ...prev,
+              {
+                id: `a-${Date.now()}`,
+                role: 'assistant',
+                timestamp: new Date(),
+                content: `**Artifact locked.** ${data.message} No further edits are allowed. Content is frozen for submission.`,
+              },
+            ]);
           } else {
             const blockerLines = data.blockers?.length
               ? '\n\n' + data.blockers.map((b: string) => `- ${b}`).join('\n')
               : '';
-            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
-              content: `**Lock ${data.reason === 'unauthorized' ? 'unauthorized' : 'blocked'}.** ${data.message}${blockerLines}` }]);
+            setMessages(prev => [
+              ...prev,
+              {
+                id: `a-${Date.now()}`,
+                role: 'assistant',
+                timestamp: new Date(),
+                content: `**Lock ${data.reason === 'unauthorized' ? 'unauthorized' : 'blocked'}.** ${data.message}${blockerLines}`,
+              },
+            ]);
           }
           onRefreshIntelligence?.();
-        } catch { handleSend('Lock this artifact for submission.'); }
+        } catch {
+          handleSend('Lock this artifact for submission.');
+        }
       })();
       return;
     }
@@ -2127,29 +2249,55 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         const projectId = contextProfile?.projectId;
         const artifactId = authoringContext?.artifactId;
         if (!projectId || !artifactId) {
-          setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
-            content: '**Cannot mark submission-ready.** No artifact is currently open.' }]);
+          setMessages(prev => [
+            ...prev,
+            {
+              id: `a-${Date.now()}`,
+              role: 'assistant',
+              timestamp: new Date(),
+              content: '**Cannot mark submission-ready.** No artifact is currently open.',
+            },
+          ]);
           return;
         }
         try {
           const res = await fetch('/api/authoring-actions/mark-submission-ready', {
-            method: 'POST', headers: getAuthHeaders(),
+            method: 'POST',
+            headers: getAuthHeaders(),
             body: JSON.stringify({ projectId, artifactId }),
           });
           const data = await res.json();
           if (data.submissionReady) {
-            const decisionNote = data.decisionId ? `\n**Decision:** \`${data.decisionId.slice(0, 16)}…\`` : '';
-            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
-              content: `**Submission-ready.** ${data.message} Governance boundary: **${data.governanceBoundary}**${decisionNote}` }]);
+            const decisionNote = data.decisionId
+              ? `\n**Decision:** \`${data.decisionId.slice(0, 16)}…\``
+              : '';
+            setMessages(prev => [
+              ...prev,
+              {
+                id: `a-${Date.now()}`,
+                role: 'assistant',
+                timestamp: new Date(),
+                content: `**Submission-ready.** ${data.message} Governance boundary: **${data.governanceBoundary}**${decisionNote}`,
+              },
+            ]);
           } else {
             const blockerLines = data.blockers?.length
               ? '\n\n' + data.blockers.map((b: string) => `- ${b}`).join('\n')
               : '';
-            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
-              content: `**Submission-ready ${data.reason === 'unauthorized' ? 'unauthorized — requires RA or submission lead' : 'blocked'}.** ${data.message}${blockerLines}` }]);
+            setMessages(prev => [
+              ...prev,
+              {
+                id: `a-${Date.now()}`,
+                role: 'assistant',
+                timestamp: new Date(),
+                content: `**Submission-ready ${data.reason === 'unauthorized' ? 'unauthorized — requires RA or submission lead' : 'blocked'}.** ${data.message}${blockerLines}`,
+              },
+            ]);
           }
           onRefreshIntelligence?.();
-        } catch { handleSend('Mark this artifact as submission-ready.'); }
+        } catch {
+          handleSend('Mark this artifact as submission-ready.');
+        }
       })();
       return;
     }
@@ -2630,13 +2778,31 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           });
           const data = await res.json();
           if (data.status === 'data' || data.success) {
-            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
-              content: data.message || `**Contradiction Resolution Explanation**\n\n${JSON.stringify(data.data, null, 2)}` }]);
+            setMessages(prev => [
+              ...prev,
+              {
+                id: `a-${Date.now()}`,
+                role: 'assistant',
+                timestamp: new Date(),
+                content:
+                  data.message ||
+                  `**Contradiction Resolution Explanation**\n\n${JSON.stringify(data.data, null, 2)}`,
+              },
+            ]);
           } else {
-            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
-              content: `**Contradiction explanation:** ${data.message || 'No explanation available'}` }]);
+            setMessages(prev => [
+              ...prev,
+              {
+                id: `a-${Date.now()}`,
+                role: 'assistant',
+                timestamp: new Date(),
+                content: `**Contradiction explanation:** ${data.message || 'No explanation available'}`,
+              },
+            ]);
           }
-        } catch { handleSend('Explain the contradictions and how to resolve them.'); }
+        } catch {
+          handleSend('Explain the contradictions and how to resolve them.');
+        }
       })();
       return;
     }
@@ -2677,13 +2843,29 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             if (plan?.overlayApplied) {
               lines.push(`**Overlay applied:** Yes (authority escalated)`);
             }
-            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
-              content: lines.join('\n') }]);
+            setMessages(prev => [
+              ...prev,
+              {
+                id: `a-${Date.now()}`,
+                role: 'assistant',
+                timestamp: new Date(),
+                content: lines.join('\n'),
+              },
+            ]);
           } else {
-            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
-              content: `**Resolution plan:** ${data.message || 'Could not create plan'}` }]);
+            setMessages(prev => [
+              ...prev,
+              {
+                id: `a-${Date.now()}`,
+                role: 'assistant',
+                timestamp: new Date(),
+                content: `**Resolution plan:** ${data.message || 'Could not create plan'}`,
+              },
+            ]);
           }
-        } catch { handleSend('Plan resolution for the blocking contradictions.'); }
+        } catch {
+          handleSend('Plan resolution for the blocking contradictions.');
+        }
       })();
       return;
     }
@@ -2692,7 +2874,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     if (action.intent === 'project_resolution_status') {
       (async () => {
         const projectId = contextProfile?.projectId;
-        if (!projectId) { handleSend('What is the resolution status of this project?'); return; }
+        if (!projectId) {
+          handleSend('What is the resolution status of this project?');
+          return;
+        }
         try {
           const res = await fetch(`/api/authoring-actions/project-resolution-status/${projectId}`, {
             headers: getAuthHeaders(),
@@ -2708,17 +2893,39 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               `**Bundles:** ${bundles?.total || 0} total — ${bundles?.active || 0} active, ${bundles?.pendingReview || 0} pending review`,
             ];
             if ((plans?.unresolved || 0) > 0) {
-              lines.push('', `**${plans.unresolved} unresolved plan(s)** require attention. Use "Plan resolution" to address blockers.`);
+              lines.push(
+                '',
+                `**${plans.unresolved} unresolved plan(s)** require attention. Use "Plan resolution" to address blockers.`
+              );
             } else if ((plans?.total || 0) === 0) {
-              lines.push('', 'No resolution plans found. The project has no active contradictions requiring resolution.');
+              lines.push(
+                '',
+                'No resolution plans found. The project has no active contradictions requiring resolution.'
+              );
             }
-            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
-              content: lines.join('\n') }]);
+            setMessages(prev => [
+              ...prev,
+              {
+                id: `a-${Date.now()}`,
+                role: 'assistant',
+                timestamp: new Date(),
+                content: lines.join('\n'),
+              },
+            ]);
           } else {
-            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
-              content: `**Resolution status:** ${data.message || 'Unable to retrieve'}` }]);
+            setMessages(prev => [
+              ...prev,
+              {
+                id: `a-${Date.now()}`,
+                role: 'assistant',
+                timestamp: new Date(),
+                content: `**Resolution status:** ${data.message || 'Unable to retrieve'}`,
+              },
+            ]);
           }
-        } catch { handleSend('What is the resolution status of this project?'); }
+        } catch {
+          handleSend('What is the resolution status of this project?');
+        }
       })();
       return;
     }
@@ -3157,6 +3364,29 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                             showActions === msg.id ? 'opacity-100' : 'opacity-0'
                           )}
                         >
+                          {/* Model badge */}
+                          {msg.modelProvider && (
+                            <span
+                              className={cn(
+                                'text-[10px] font-medium px-1.5 py-0.5 rounded mr-1',
+                                msg.modelProvider === 'anthropic'
+                                  ? 'text-[#CC785C] bg-[#FBF0EB]'
+                                  : msg.modelProvider === 'openai'
+                                    ? 'text-[#10A37F] bg-emerald-50'
+                                    : msg.modelProvider === 'moonshot'
+                                      ? 'text-[#6366F1] bg-indigo-50'
+                                      : 'text-zinc-500 bg-zinc-50'
+                              )}
+                            >
+                              {msg.modelProvider === 'anthropic'
+                                ? 'Claude'
+                                : msg.modelProvider === 'openai'
+                                  ? 'GPT-4o'
+                                  : msg.modelProvider === 'moonshot'
+                                    ? 'Kimi'
+                                    : msg.modelProvider}
+                            </span>
+                          )}
                           <button
                             onClick={() => handleCopy(msg.id, msg.content)}
                             className="p-1 text-[#B0AEA5] hover:text-[#4D4B45] hover:bg-[#F5F4EF] rounded transition-colors"
@@ -3677,6 +3907,66 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 )}
               </div>
             )}
+
+            {/* AI Provider / Model Selector */}
+            <div className="relative flex-shrink-0 self-center" ref={providerDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setShowProviderDropdown(prev => !prev)}
+                className={cn(
+                  'flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors',
+                  selectedProvider !== 'auto'
+                    ? `bg-[#F5F4EF] ${AI_PROVIDERS.find(p => p.id === selectedProvider)?.activeColor || 'text-[#D97757]'} hover:bg-[#EDEAE0]`
+                    : 'text-[#B0AEA5] hover:bg-[#F5F4EF] hover:text-[#6B6962]'
+                )}
+                title="Select AI model"
+              >
+                <Bot className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">
+                  {AI_PROVIDERS.find(p => p.id === selectedProvider)?.label}
+                </span>
+                <ChevronDown className="w-3 h-3 opacity-50" />
+              </button>
+
+              {showProviderDropdown && (
+                <div className="absolute bottom-full left-0 mb-1.5 w-52 bg-white rounded-xl border border-[#E8E6DC] shadow-lg py-1 z-50">
+                  {AI_PROVIDERS.map(prov => (
+                    <button
+                      key={prov.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedProvider(prov.id);
+                        setShowProviderDropdown(false);
+                      }}
+                      className={cn(
+                        'w-full flex items-start gap-3 px-3 py-2 text-left hover:bg-[#FAF9F5] transition-colors',
+                        selectedProvider === prov.id && 'bg-[#FAF9F5]'
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          'mt-0.5 flex-shrink-0',
+                          selectedProvider === prov.id ? prov.activeColor : prov.color
+                        )}
+                      >
+                        <Bot className="w-3.5 h-3.5" />
+                      </span>
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium text-[#141413]">{prov.label}</div>
+                        <div className="text-[10px] text-[#B0AEA5] leading-tight">
+                          {prov.description}
+                        </div>
+                      </div>
+                      {selectedProvider === prov.id && (
+                        <Check
+                          className={cn('w-4 h-4 ml-auto mt-0.5 flex-shrink-0', prov.activeColor)}
+                        />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {/* Input */}
             <textarea

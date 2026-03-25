@@ -143,6 +143,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       submission_type,
       conversation_history,
       authoring_context,
+      preferred_provider,
     } = req.body;
 
     if (!message || typeof message !== 'string') {
@@ -340,12 +341,20 @@ router.post('/chat', async (req: Request, res: Response) => {
     });
     const selectedStrategy = policyHint?.preferredStrategy || routingPlan.strategy;
 
+    // Validate preferred_provider if provided
+    const VALID_PROVIDERS = ['anthropic', 'openai', 'moonshot'] as const;
+    const validatedProvider =
+      preferred_provider && VALID_PROVIDERS.includes(preferred_provider)
+        ? (preferred_provider as (typeof VALID_PROVIDERS)[number])
+        : undefined;
+
     const response = await gw.route({
       taskType: routingPlan.taskType,
       messages,
       maxTokens: routingPlan.maxTokens,
       temperature: routingPlan.temperature,
       strategy: selectedStrategy,
+      ...(validatedProvider ? { provider: validatedProvider } : {}),
     });
 
     if (!response.content) {
