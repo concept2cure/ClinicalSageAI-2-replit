@@ -21,6 +21,7 @@ import { getProjectSignals } from '../intelligence/rim.js';
 import { getProjectIntelligence } from '../intelligence/project-intelligence-service.js';
 import { analyzeCrossModuleRelationships } from '../intelligence/cross-module-intelligence.js';
 import { buildEvidenceChain, computeConfidence, analyzeFactors, type EvidenceSource } from '../intelligence/evidence-confidence-model.js';
+import { getDeficienciesBySubmissionType, getCriticalDeficiencies, type SubmissionType } from './deficiency-taxonomy.js';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -39,7 +40,7 @@ interface SlashCommand {
 }
 
 function detectSlashCommand(message: string): SlashCommand | null {
-  const match = message.match(/^\/(risk|readiness|precedent|draft|preflight|claims|recommend|next|simulate|signals|export|assess|twin|consistency)\b\s*(.*)/i);
+  const match = message.match(/^\/(risk|readiness|precedent|draft|preflight|claims|recommend|next|simulate|signals|export|assess|twin|consistency|deficiencies|knowledge)\b\s*(.*)/i);
   if (!match) return null;
   return { command: match[1].toLowerCase(), args: match[2].trim() };
 }
@@ -296,6 +297,54 @@ async function enrichWithSignals(projectId: string | number): Promise<string> {
   );
 }
 
+async function enrichWithDeficiencies(submissionType?: string): Promise<string> {
+  try {
+    const type = (submissionType || 'IND') as SubmissionType;
+    const deficiencies = getDeficienciesBySubmissionType(type);
+    const critical = getCriticalDeficiencies(type);
+
+    if (deficiencies.length === 0) return '';
+
+    const criticalLines = critical.slice(0, 5).map(d =>
+      `- **[CRITICAL]** ${d.title}: ${d.description} _(${d.category})_`
+    ).join('\n');
+
+    const otherLines = deficiencies
+      .filter(d => !critical.includes(d))
+      .slice(0, 5)
+      .map(d => `- **[${d.severity?.toUpperCase() || 'MEDIUM'}]** ${d.title}: ${d.description}`)
+      .join('\n');
+
+    return `\n\n## Deficiency Taxonomy for ${type.toUpperCase()}\n**${critical.length} critical** out of ${deficiencies.length} known deficiency patterns.\n\n**Critical Deficiencies:**\n${criticalLines}\n\n**Other Patterns:**\n${otherLines}\n\nUse these to preempt reviewer deficiency findings. Be specific about which patterns apply to the user's current work.`;
+  } catch {
+    return '';
+  }
+}
+
+async function enrichWithKnowledgeSearch(query: string, projectId: string | number): Promise<string> {
+  try {
+    // Search project memory entries semantically
+    const result = await pool.query(
+      `SELECT title, content, category, confidence, importance
+       FROM project_memory_entries
+       WHERE project_id = $1
+       ORDER BY importance DESC, created_at DESC
+       LIMIT $2`,
+      [projectId, 10]
+    );
+
+    if (result.rows.length === 0) return '';
+
+    const entries = result.rows.map((r: any) =>
+      `- **${r.title || r.category}** [${r.category}] ${r.confidence ? `(${Math.round(r.confidence * 100)}%)` : ''}: ${r.content?.slice(0, 300)}`
+    ).join('\n');
+
+    return `\n\n## Knowledge Base Search Results\n**${result.rows.length} entries** found in project knowledge.\n\n${entries}\n\nReference these knowledge atoms when answering. Cite the category and confidence level.`;
+  } catch {
+    return '';
+  }
+}
+
 // ─── Project intelligence summary (first-message context) ────────────────────
 
 async function enrichWithProjectSummary(projectId: string | number, orgId?: number): Promise<string> {
@@ -391,6 +440,8 @@ export async function enrichContextForChat(params: {
         enrichWithReadiness(projectId, organizationId),
       ]).then(r => r.join('')),
       consistency: () => enrichWithCrossModule(projectId, organizationId),
+      deficiencies: () => enrichWithDeficiencies(submissionType),
+      knowledge: () => enrichWithKnowledgeSearch(slash.args || message, projectId),
     };
 
     const enrichFn = enrichMap[slash.command];
@@ -417,6 +468,8 @@ export async function enrichContextForChat(params: {
       assess: 'Run a comprehensive assessment of this project: readiness score, top recommendations, risk signals, and predictions. Give me the full picture.',
       twin: 'Run a submission twin analysis: evaluate claims vs evidence integrity, identify unsupported claims, simulate reviewer challenges, and assess submission fragility.',
       consistency: 'Analyze cross-module consistency: find stale references, status gaps, orphaned documents, and module dependency issues across the entire dossier.',
+      deficiencies: `Show the known deficiency taxonomy for ${submissionType || 'this submission type'}. List critical deficiency patterns and common reviewer triggers.`,
+      knowledge: slash.args ? `Search the project knowledge base for: ${slash.args}` : 'Show all knowledge atoms stored for this project.',
       export: 'Export this conversation.',
     };
 

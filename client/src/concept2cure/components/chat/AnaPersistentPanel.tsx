@@ -397,6 +397,30 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       setInput('');
 
       // ── Client-side slash commands ──
+      if (text.startsWith('/decisions')) {
+        const projectId = contextProfile?.projectId;
+        if (!projectId) {
+          setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: 'No project selected. Open a project to view decisions.', timestamp: new Date() }]);
+          return;
+        }
+        try {
+          const res = await apiRequest('GET', `/api/authoring-actions/decisions/${projectId}`);
+          const data = await res.json();
+          const decisions = data.decisions || data.data || [];
+          if (decisions.length === 0) {
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: 'No decisions recorded for this project yet.', timestamp: new Date() }]);
+          } else {
+            const lines = decisions.slice(0, 15).map((d: any, i: number) =>
+              `${i + 1}. **${d.title || d.type || 'Decision'}** — ${d.status || 'pending'}\n   ${d.rationale || d.description || ''}`
+            ).join('\n');
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: `**Project Decisions** (${decisions.length} total)\n\n${lines}`, timestamp: new Date() }]);
+          }
+        } catch {
+          setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: 'Could not load decisions. The endpoint may not be available yet.', timestamp: new Date() }]);
+        }
+        return;
+      }
+
       if (text.startsWith('/export')) {
         const md = messages.map(m => `### ${m.role === 'user' ? 'You' : 'AnA'}\n\n${m.content}`).join('\n\n---\n\n');
         const blob = new Blob([`# AnA Conversation — ${new Date().toLocaleDateString()}\n\n${md}`], { type: 'text/markdown' });
@@ -546,7 +570,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             role: m.role,
             content: m.content,
           })),
+          file_ids: attachedFiles.length > 0 ? attachedFiles.map(f => f.id) : undefined,
         };
+
+        // Clear attached files after sending (they're now part of the message context)
+        if (attachedFiles.length > 0) setAttachedFiles([]);
 
         // Use apiRequest for auth/org headers via its wrapper pattern.
         // We need raw fetch for AbortController signal + SSE streaming,
@@ -1365,6 +1393,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               { cmd: '/assess', desc: 'Full project assessment (readiness + risks + actions)' },
               { cmd: '/twin', desc: 'Submission twin — claims, evidence, reviewer simulation' },
               { cmd: '/consistency', desc: 'Cross-module consistency analysis' },
+              { cmd: '/deficiencies', desc: 'Known deficiency patterns for this submission type' },
+              { cmd: '/knowledge', desc: 'Search project knowledge base' },
+              { cmd: '/decisions', desc: 'View project decision audit trail' },
               { cmd: '/draft', desc: 'Draft current section' },
               { cmd: '/preflight', desc: 'Run section preflight' },
               { cmd: '/export', desc: 'Export this conversation' },
