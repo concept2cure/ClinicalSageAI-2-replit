@@ -12,7 +12,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { pool } from '../db.js';
+import { getPool } from '../db.ts';
 import { getGateway } from '../services/ai-gateway/index.js';
 import type { GatewayMessage } from '../services/ai-gateway/types.js';
 import {
@@ -58,6 +58,20 @@ import { processResponseActions } from '../services/ana-guidance-executor.js';
 import { processCommandsInResponse, type CommandContext } from '../services/ana-ri/command-executor.js';
 
 const router = Router();
+
+
+const dbPool = {
+  query: (...args: Parameters<ReturnType<typeof getPool>['query']>) => getPool().query(...args),
+};
+
+function isDatabaseAvailable(): boolean {
+  try {
+    getPool();
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 // ── Response envelope helpers (matches concept2cure.ts contract) ──
 const sendSuccess = <T>(res: Response, data: T, meta?: Record<string, unknown>) => {
@@ -258,7 +272,7 @@ router.post('/chat', async (req: Request, res: Response) => {
     const fileIds = req.body.file_ids;
     if (fileIds && Array.isArray(fileIds) && fileIds.length > 0) {
       try {
-        const fileResult = await pool.query(
+        const fileResult = await dbPool.query(
           `SELECT id, original_name, mime_type FROM file_uploads WHERE id = ANY($1)`,
           [fileIds]
         );
@@ -626,7 +640,7 @@ router.post('/stream', async (req: Request, res: Response) => {
     const streamFileIds = req.body.file_ids;
     if (streamFileIds && Array.isArray(streamFileIds) && streamFileIds.length > 0) {
       try {
-        const fileResult = await pool.query(
+        const fileResult = await dbPool.query(
           `SELECT id, original_name, mime_type FROM file_uploads WHERE id = ANY($1)`,
           [streamFileIds]
         );
@@ -981,6 +995,30 @@ router.get('/actions', (_req: Request, res: Response) => {
 router.get('/rubric', (_req: Request, res: Response) => {
   const rubric = getFullRubric();
   return sendSuccess(res, { dimensions: rubric });
+});
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/ana-ri/health — AnA runtime readiness snapshot
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.get('/health', (_req: Request, res: Response) => {
+  const gw = ensureGateway();
+  const enabledProviders = gw?.getEnabledProviders() || [];
+  const databaseAvailable = isDatabaseAvailable();
+
+  const checks = {
+    gateway: enabledProviders.length > 0,
+    database: databaseAvailable,
+  };
+
+  const status = checks.gateway && checks.database ? 'healthy' : 'degraded';
+
+  return sendSuccess(res, {
+    status,
+    checks,
+    providers: enabledProviders,
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
