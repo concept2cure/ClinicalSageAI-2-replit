@@ -162,6 +162,19 @@ If you think something needs rebuilding, **ask the user first**.
 - Use the AI gateway (`server/services/ai-gateway/`) instead of direct OpenAI/Anthropic calls
 - Conventional commits: `feat:`, `fix:`, `refactor:`, `chore:`
 
+## Chat-First Design (NON-NEGOTIABLE)
+
+> Skill file: `.claude/skills/chat-first-design.md`
+
+**The chat IS the product.** ALL new features MUST be accessible through the AnA chat interface.
+No new screens, no new panels, no new modals, no new pages. Everything is inline in the conversation.
+
+- Features are invoked by typing naturally or selecting suggested actions
+- Results render as rich markdown in chat (tables, lists, structured data)
+- Action buttons appear on messages (save, insert, export)
+- Settings/modes live in the input bar, not in separate UI
+- Intelligence (predictions, precedents, signals) surfaces naturally in AnA's responses
+
 ## UI State Standards (NON-NEGOTIABLE)
 
 > Full reference: `docs/standards/ui-state-standards.md`

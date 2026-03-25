@@ -296,6 +296,39 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     }
   }, [initialMessage]);
 
+  // ── Keyboard shortcuts ──
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      const isMod = e.metaKey || e.ctrlKey;
+
+      // Cmd+K / Ctrl+K — new conversation
+      if (isMod && e.key === 'k') {
+        e.preventDefault();
+        setMessages([]);
+        threadIdRef.current = null;
+        inputRef.current?.focus();
+      }
+
+      // Cmd+/ / Ctrl+/ — focus input
+      if (isMod && e.key === '/') {
+        e.preventDefault();
+        inputRef.current?.focus();
+      }
+
+      // Escape — stop streaming or blur input
+      if (e.key === 'Escape') {
+        if (isStreaming) {
+          handleStop();
+        } else {
+          inputRef.current?.blur();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleGlobalKeyDown);
+    return () => document.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [isStreaming]);
+
   // ── Stop streaming ──
   const handleStop = useCallback(() => {
     if (abortControllerRef.current) {
@@ -1018,6 +1051,26 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               )}
               {(msg as any).insertedToEditor && (
                 <span className="text-xs text-blue-600 font-medium ml-1">Inserted</span>
+              )}
+              {/* Export as text file */}
+              {msg.content.length > 100 && (
+                <button
+                  onClick={() => {
+                    const blob = new Blob([msg.content], { type: 'text/markdown' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `ana-response-${new Date().toISOString().split('T')[0]}.md`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    toast({ title: 'Exported', description: 'Response saved as markdown file' });
+                  }}
+                  className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-md transition-colors"
+                  title="Export as markdown"
+                  aria-label="Export response as markdown"
+                >
+                  <Download className="w-4 h-4" />
+                </button>
               )}
               {/* Save as artifact — calls /api/ana-ri/generate */}
               {contextProfile?.projectId && msg.content.length > 200 && !msg.savedAsArtifact && (

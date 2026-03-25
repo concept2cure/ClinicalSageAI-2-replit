@@ -51,6 +51,7 @@ import { buildGoalPlan, replanGoalPlan } from '../services/kernel-goal-planner.j
 import { buildMemoryContextForChat } from '../services/memory-context-assembler.js';
 import { getIntelligencePrefix } from '../services/lumen-context-builder.js';
 import { interceptChatResponse } from '../services/intelligence/rim-interceptors.js';
+import { enrichContextForChat } from '../services/ana-ri/context-enrichment.js';
 
 const router = Router();
 
@@ -200,7 +201,14 @@ router.post('/chat', async (req: Request, res: Response) => {
       maxChars: 3500,
     }).catch(() => ({ memoryBlock: '', atoms: [], diagnostics: null }));
 
-    const enrichedSystemPrompt = chatIntelligencePrefix + orchestration.systemPrompt + chatMemoryBlock;
+    // Context enrichment — auto-inject Foresight/Precedent/Deficiency data when relevant
+    const chatEnrichment = await enrichContextForChat({
+      message,
+      projectId: req.body.project_id || req.body.context?.projectId,
+      submissionType: orchestration.detectedSubmissionType || undefined,
+    }).catch(() => ({ block: '', sources: [] }));
+
+    const enrichedSystemPrompt = chatIntelligencePrefix + orchestration.systemPrompt + chatMemoryBlock + chatEnrichment.block;
 
     // Build message history for the AI gateway
     const messages: GatewayMessage[] = [{ role: 'system', content: enrichedSystemPrompt }];
@@ -523,7 +531,18 @@ router.post('/stream', async (req: Request, res: Response) => {
       maxChars: 3500,
     }).catch(() => ({ memoryBlock: '', atoms: [], diagnostics: null }));
 
-    const fullSystemPrompt = intelligencePrefix + orchestration.systemPrompt + memoryBlock;
+    // Context enrichment — auto-inject Foresight/Precedent/Deficiency data when relevant
+    const enrichment = await enrichContextForChat({
+      message,
+      projectId: project_id,
+      submissionType: orchestration.detectedSubmissionType || undefined,
+    }).catch(() => ({ block: '', sources: [] }));
+
+    if (enrichment.sources.length > 0) {
+      console.log(`[AnA RI Stream] Context enriched with: ${enrichment.sources.join(', ')}`);
+    }
+
+    const fullSystemPrompt = intelligencePrefix + orchestration.systemPrompt + memoryBlock + enrichment.block;
 
     // Build messages
     const messages: GatewayMessage[] = [{ role: 'system', content: fullSystemPrompt }];
