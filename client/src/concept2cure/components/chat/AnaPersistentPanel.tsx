@@ -755,7 +755,9 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             throw new Error(`Request failed (${fallbackRes.status})`);
           }
 
-          const data = await fallbackRes.json();
+          const rawData = await fallbackRes.json();
+          // sendSuccess wraps in { success, data } — unwrap if present
+          const data = rawData?.data || rawData;
           if (data.thread_id) threadIdRef.current = data.thread_id;
 
           setMessages(prev => prev.map(m =>
