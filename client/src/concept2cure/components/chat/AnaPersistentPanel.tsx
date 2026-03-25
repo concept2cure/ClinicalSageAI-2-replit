@@ -53,6 +53,65 @@ const renderMarkdown = (content: string): string => {
   }
 };
 
+// ─── Thinking messages — industry-specific, cute, rotating ──────────────────
+
+const THINKING_MESSAGES = [
+  'Reading the fine print in 21 CFR 312...',
+  'Cross-referencing ICH guidelines...',
+  'Thinking like a skeptical reviewer...',
+  'Checking the eCTD module structure...',
+  'Reviewing your regulatory strategy...',
+  'Scanning for deficiency patterns...',
+  'Consulting the predicate database...',
+  'Evaluating endpoint defensibility...',
+  'Running the numbers on sample size...',
+  'Checking if this would survive an AdCom...',
+  'Drafting like a senior medical writer...',
+  'Channeling my inner FDA reviewer...',
+  'Assessing benefit-risk with a straight face...',
+  'Looking for the data gap nobody mentioned...',
+  'Making sure this passes the RTF checklist...',
+  'Verifying CMC won\'t hold up the submission...',
+  'Counting the p-values...',
+  'Wondering if the DSMB would agree...',
+  'Checking ICH E6(R2) one more time...',
+  'Evaluating if "clinically meaningful" is actually meaningful...',
+  'Comparing to what got approved last year...',
+  'Pretending I\'m the rapporteur...',
+  'Stress-testing the primary endpoint...',
+  'Making sure the IB is actually informative...',
+  'Reviewing the safety narrative with fresh eyes...',
+  'Double-checking the MedDRA coding...',
+  'Calculating whether 80% power is enough...',
+  'Hunting for inconsistencies across modules...',
+  'Imagining the Day 120 questions...',
+  'Reading between the lines of the guidance...',
+];
+
+const INIT_MESSAGES = [
+  'Reviewing your submission...',
+  'Loading project intelligence...',
+  'Checking where you left off...',
+  'Pulling up your dossier status...',
+  'Assessing readiness...',
+  'Scanning for open items...',
+  'Loading regulatory context...',
+  'Checking your timeline...',
+];
+
+function useRotatingMessage(messages: string[], intervalMs: number, active: boolean): string {
+  const [msg, setMsg] = React.useState(() => messages[Math.floor(Math.random() * messages.length)]);
+  React.useEffect(() => {
+    if (!active) return;
+    setMsg(messages[Math.floor(Math.random() * messages.length)]);
+    const timer = setInterval(() => {
+      setMsg(messages[Math.floor(Math.random() * messages.length)]);
+    }, intervalMs);
+    return () => clearInterval(timer);
+  }, [active, messages, intervalMs]);
+  return msg;
+}
+
 // ─── Auth headers for raw fetch (SSE streaming + file upload need raw fetch) ──
 
 function getAuthHeaders(): Record<string, string> {
@@ -170,6 +229,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   defaultChatMode = 'standard',
 }) => {
   const { toast } = useToast();
+  const thinkingMsg = useRotatingMessage(THINKING_MESSAGES, 2800, true);
+  const initMsg = useRotatingMessage(INIT_MESSAGES, 2200, true);
 
   const [messages, setMessages] = useState<AnaMessage[]>([]);
   const [input, setInput] = useState('');
@@ -1102,8 +1163,18 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 )}
                 dangerouslySetInnerHTML={{ __html: htmlContent }}
               />
-              {/* Streaming cursor */}
-              {msg.isStreaming && (
+              {/* Streaming: thinking message (no content yet) or cursor (content flowing) */}
+              {msg.isStreaming && !msg.content && (
+                <div className="flex items-center gap-2 py-1">
+                  <div className="flex items-center gap-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#b4654a] animate-[pulse_1.4s_ease-in-out_infinite]" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#b4654a] animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#b4654a] animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
+                  </div>
+                  <span className="text-[13px] text-[#c9917a] italic">{thinkingMsg}</span>
+                </div>
+              )}
+              {msg.isStreaming && msg.content && (
                 <span className="inline-block w-[3px] h-[18px] bg-[#b4654a] ml-0.5 align-text-bottom animate-[blink_1s_ease-in-out_infinite]" />
               )}
               {/* Images (Nano Banana) */}
@@ -1672,7 +1743,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   <div className="w-2 h-2 rounded-full bg-[#b4654a] animate-[pulse_1.4s_ease-in-out_0.2s_infinite]" />
                   <div className="w-2 h-2 rounded-full bg-[#b4654a] animate-[pulse_1.4s_ease-in-out_0.4s_infinite]" />
                 </div>
-                <p className="text-sm text-zinc-400">AnA is reviewing your project...</p>
+                <p className="text-sm text-zinc-400 italic">{initMsg}</p>
               </div>
             ) : (
               /* Ready state — greeting + suggested actions */
