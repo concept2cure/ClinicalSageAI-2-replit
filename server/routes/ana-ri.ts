@@ -387,6 +387,198 @@ router.post('/chat', async (req: Request, res: Response) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// POST /api/ana-ri/stream — SSE streaming chat (Claude-like real-time tokens)
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.post('/stream', async (req: Request, res: Response) => {
+  try {
+    const {
+      message,
+      thread_id,
+      intent_lens,
+      user_role,
+      project_context,
+      document_context,
+      submission_type,
+      conversation_history,
+      authoring_context,
+      project_id,
+    } = req.body;
+
+    if (!message || typeof message !== 'string') {
+      return res.status(400).json({ error: 'Message is required', code: 'INVALID_MESSAGE' });
+    }
+
+    const gw = ensureGateway();
+    if (!gw || gw.getEnabledProviders().length === 0) {
+      return res.status(503).json({
+        error: 'No AI providers available.',
+        code: 'GATEWAY_UNAVAILABLE',
+      });
+    }
+
+    // Set SSE headers
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'X-Accel-Buffering': 'no',
+    });
+
+    // Resolve context
+    const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+    const userId = (req as any).userId || (req as any).user?.id || 'anonymous';
+
+    const VALID_LENSES: IntentLens[] = ['auto', 'audit', 'improve', 'risk', 'strategy', 'compare'];
+    const validatedLens: IntentLens | undefined =
+      intent_lens && VALID_LENSES.includes(intent_lens) ? (intent_lens as IntentLens) : undefined;
+
+    const VALID_ROLES: UserRole[] = ['ceo', 'ra_lead', 'medical_writer', 'clinical_lead', 'cmc_lead', 'investor', 'general'];
+    const validatedRole: UserRole | undefined =
+      user_role && VALID_ROLES.includes(user_role) ? (user_role as UserRole) : undefined;
+
+    const effectiveRole: UserRole = validatedRole || inferRole({
+      screenName: req.body.context?.screenName,
+      title: req.body.context?.userTitle,
+      department: req.body.context?.department,
+    });
+
+    // Build authoring context block
+    let authoringContextBlock = '';
+    if (authoring_context && typeof authoring_context === 'object') {
+      const ac = authoring_context;
+      const parts: string[] = ['<authoring_context>'];
+      if (ac.workflowStage) parts.push(`  <workflow_stage>${ac.workflowStage}</workflow_stage>`);
+      if (ac.sectionCode) parts.push(`  <section_code>${ac.sectionCode}</section_code>`);
+      if (ac.sectionTitle) parts.push(`  <section_title>${ac.sectionTitle}</section_title>`);
+      if (ac.moduleCode) parts.push(`  <module_code>${ac.moduleCode}</module_code>`);
+      if (ac.artifactId) parts.push(`  <artifact_id>${ac.artifactId}</artifact_id>`);
+      if (ac.artifactStatus) parts.push(`  <artifact_status>${ac.artifactStatus}</artifact_status>`);
+      if (ac.submissionType) parts.push(`  <submission_type>${ac.submissionType}</submission_type>`);
+      parts.push('</authoring_context>');
+      authoringContextBlock = parts.join('\n');
+    }
+
+    // Orchestrate
+    const orchestration = orchestrate({
+      message,
+      intentLens: validatedLens,
+      userRole: effectiveRole,
+      projectContext: project_context,
+      documentContext: document_context,
+      submissionType: submission_type as any,
+      conversationHistory: conversation_history,
+    });
+
+    if (authoringContextBlock) {
+      orchestration.systemPrompt += `\n\n## Current Authoring Context\n${authoringContextBlock}`;
+    }
+
+    // Build messages
+    const messages: GatewayMessage[] = [{ role: 'system', content: orchestration.systemPrompt }];
+
+    if (conversation_history && Array.isArray(conversation_history)) {
+      for (const msg of conversation_history.slice(-20)) {
+        messages.push({ role: msg.role as 'user' | 'assistant', content: msg.content });
+      }
+    }
+    messages.push({ role: 'user', content: message });
+
+    // Thread persistence
+    let threadId = thread_id;
+    if (orgId) {
+      try {
+        threadId = await getOrCreateThread(thread_id || null, typeof userId === 'number' ? userId : undefined, 'ana-ri');
+        await saveMessage(threadId, 'user', message);
+      } catch (e: any) {
+        console.error('[AnA RI Stream] Thread persistence failed:', e?.message);
+      }
+    }
+
+    // Send thread_id immediately so client can track
+    res.write(`data: ${JSON.stringify({ type: 'thread_id', thread_id: threadId })}\n\n`);
+
+    // Send orchestration metadata
+    res.write(`data: ${JSON.stringify({
+      type: 'orchestration',
+      orchestration: {
+        detectedIntent: orchestration.detectedIntent,
+        detectedSubmissionType: orchestration.detectedSubmissionType,
+        appliedRole: orchestration.appliedRole,
+        activeWorkstream: orchestration.activeWorkstream,
+        workstreamHandoff: orchestration.workstreamHandoff,
+        suggestedActions: orchestration.suggestedActions,
+      },
+    })}\n\n`);
+
+    // Routing plan
+    const routingPlan = planKernelExecution({
+      route: '/api/ana-ri/stream',
+      messageLength: message.length,
+      intentLens: orchestration.detectedIntent.lens,
+      intentConfidence: orchestration.detectedIntent.confidence,
+      submissionType: orchestration.detectedSubmissionType,
+      requestedMaxTokens: 4096,
+    });
+
+    const policyHint = await getKernelPolicyHint({
+      organizationId: orgId ? Number(orgId) : null,
+      route: '/api/ana-ri/stream',
+      taskType: routingPlan.taskType,
+    });
+    const selectedStrategy = policyHint?.preferredStrategy || routingPlan.strategy;
+
+    let fullContent = '';
+
+    // Stream via gateway
+    const gwResponse = await gw.route({
+      taskType: routingPlan.taskType,
+      messages,
+      maxTokens: routingPlan.maxTokens,
+      temperature: routingPlan.temperature,
+      strategy: selectedStrategy,
+      stream: true,
+      onStream: (chunk: string, metadata?: any) => {
+        fullContent += chunk;
+        res.write(`data: ${JSON.stringify({
+          type: metadata?.type || 'text',
+          content: chunk,
+        })}\n\n`);
+      },
+      callerModule: 'ana-ri-stream',
+    });
+
+    // Persist assistant response
+    if (orgId && threadId && fullContent) {
+      try {
+        await saveMessage(threadId, 'assistant', fullContent);
+      } catch (e: any) {
+        console.error('[AnA RI Stream] Assistant persist failed:', e?.message);
+      }
+    }
+
+    // Send done event
+    res.write(`data: ${JSON.stringify({
+      type: 'done',
+      model: gwResponse.model,
+      provider: gwResponse.provider,
+      usage: gwResponse.usage,
+      latencyMs: gwResponse.latencyMs,
+    })}\n\n`);
+
+    res.end();
+  } catch (error: any) {
+    console.error('[AnA RI Stream] Error:', error.message);
+    if (res.headersSent) {
+      res.write(`data: ${JSON.stringify({ type: 'error', error: 'An error occurred while generating the response' })}\n\n`);
+      res.end();
+    } else {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // POST /api/ana-ri/plan — Return planner preview without generation
 // ─────────────────────────────────────────────────────────────────────────────
 router.post('/plan', async (req: Request, res: Response) => {
