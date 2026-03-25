@@ -569,7 +569,10 @@ function DecisionsPanel() {
 }
 
 function ContradictionsPanel() {
-  const { data, isLoading } = useQuery({
+  const [scanning, setScanning] = React.useState(false);
+  const [scanResult, setScanResult] = React.useState<{ count: number; message: string } | null>(null);
+
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ['governed-intel', 'contradictions'],
     queryFn: async () => {
       const res = await fetch(`${GOV_API}/contradictions/search`, {
@@ -580,6 +583,28 @@ function ContradictionsPanel() {
       return res.json();
     },
   });
+
+  const handleScanProject = async (projectId: number = 1) => {
+    setScanning(true);
+    setScanResult(null);
+    try {
+      const res = await fetch(`${GOV_API}/contradictions/scan/${projectId}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+      });
+      const result = await res.json();
+      const findingCount = result.findings?.length ?? result.count ?? 0;
+      setScanResult({
+        count: findingCount,
+        message: findingCount > 0
+          ? `Scan complete: ${findingCount} finding(s) detected`
+          : 'Scan complete: no contradictions found',
+      });
+      refetch();
+    } catch {
+      setScanResult({ count: 0, message: 'Scan failed — contradiction engine may be unavailable' });
+    }
+    setScanning(false);
+  };
 
   const findings = data?.findings ?? [];
 
@@ -593,6 +618,16 @@ function ContradictionsPanel() {
           title="No Contradiction Findings"
           description="Run a project contradiction scan to detect assumption drift, decision/action inconsistencies, and cross-jurisdictional divergences. Each finding includes source classification, severity, and consequence paths."
         />
+        <div className="px-6 pb-6 flex justify-center">
+          <EnterpriseButton onClick={() => handleScanProject()} disabled={scanning} size="md">
+            {scanning ? 'Scanning...' : 'Run Contradiction Scan'}
+          </EnterpriseButton>
+        </div>
+        {scanResult && (
+          <div className={cn('mx-6 mb-4 px-3 py-2 rounded text-xs', scanResult.count > 0 ? 'bg-amber-50 text-amber-700' : 'bg-green-50 text-green-700')}>
+            {scanResult.message}
+          </div>
+        )}
       </EnterpriseCard>
     );
   }
@@ -603,10 +638,22 @@ function ContradictionsPanel() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard label="Total Findings" value={String(findings.length)} icon={AlertTriangle} iconClassName="bg-red-100 text-red-600" />
-        <MetricCard label="Unresolved" value={String(findings.filter((f: Record<string, unknown>) => f.reviewState === 'unresolved').length)} icon={XCircle} iconClassName="bg-amber-100 text-amber-600" />
+      <div className="flex items-center justify-between">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 flex-1">
+          <MetricCard label="Total Findings" value={String(findings.length)} icon={AlertTriangle} iconClassName="bg-red-100 text-red-600" />
+          <MetricCard label="Unresolved" value={String(findings.filter((f: Record<string, unknown>) => f.reviewState === 'unresolved').length)} icon={XCircle} iconClassName="bg-amber-100 text-amber-600" />
+        </div>
+        <div className="ml-4 flex-shrink-0">
+          <EnterpriseButton onClick={() => handleScanProject()} disabled={scanning} size="sm" variant="secondary">
+            {scanning ? 'Scanning...' : 'Re-scan'}
+          </EnterpriseButton>
+        </div>
       </div>
+      {scanResult && (
+        <div className={cn('px-3 py-2 rounded text-xs', scanResult.count > 0 ? 'bg-amber-50 text-amber-700' : 'bg-green-50 text-green-700')}>
+          {scanResult.message}
+        </div>
+      )}
       <EnterpriseCard noPadding>
         <CardSection border={false}>
           <CardHeader icon={AlertTriangle} iconClassName="bg-red-100 text-red-600" title="Contradiction Findings" subtitle="Structured-first detection with source classification" />
