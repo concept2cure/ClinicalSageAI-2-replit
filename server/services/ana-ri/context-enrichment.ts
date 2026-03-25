@@ -22,6 +22,7 @@ import { getProjectIntelligence } from '../intelligence/project-intelligence-ser
 import { analyzeCrossModuleRelationships } from '../intelligence/cross-module-intelligence.js';
 import { buildEvidenceChain, computeConfidence, analyzeFactors, type EvidenceSource } from '../intelligence/evidence-confidence-model.js';
 import { getDeficienciesBySubmissionType, getCriticalDeficiencies, type SubmissionType } from './deficiency-taxonomy.js';
+import { buildWorkflowContext } from './workflow-orchestration.js';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -40,7 +41,7 @@ interface SlashCommand {
 }
 
 function detectSlashCommand(message: string): SlashCommand | null {
-  const match = message.match(/^\/(risk|readiness|precedent|draft|preflight|claims|recommend|next|simulate|signals|export|assess|twin|consistency|deficiencies|knowledge|help|sap|power|dose|defensibility|design|safety|cmc|csr|device|ectd|audit|amend|review|memo|brief|strategy|freeze|sign|scan|checklist|submit)\b\s*(.*)/i);
+  const match = message.match(/^\/(risk|readiness|precedent|draft|preflight|claims|recommend|next|simulate|signals|export|assess|twin|consistency|deficiencies|knowledge|help|sap|power|dose|defensibility|design|safety|cmc|csr|device|ectd|audit|amend|review|memo|brief|strategy|freeze|sign|scan|checklist|submit|workflow)\b\s*(.*)/i);
   if (!match) return null;
   return { command: match[1].toLowerCase(), args: match[2].trim() };
 }
@@ -541,6 +542,15 @@ export async function enrichContextForChat(params: {
     sources.push('project-profile');
   }
 
+  // ── Always inject workflow status when submission type is known ──
+  if (submissionType) {
+    const workflowCtx = await buildWorkflowContext(projectId, submissionType, organizationId).catch(() => '');
+    if (workflowCtx) {
+      blocks.push(workflowCtx);
+      sources.push('workflow');
+    }
+  }
+
   // ── Check for slash commands first ──
   const slash = detectSlashCommand(message);
   if (slash) {
@@ -588,6 +598,7 @@ export async function enrichContextForChat(params: {
       scan: () => Promise.all([enrichWithClaims(projectId), enrichWithCRLRTF(projectId)]).then(r => r.join('')),
       checklist: () => enrichWithReadiness(projectId, organizationId),
       submit: () => Promise.all([enrichWithReadiness(projectId, organizationId), enrichWithECTD(projectId)]).then(r => r.join('')),
+      workflow: () => submissionType ? buildWorkflowContext(projectId, submissionType, organizationId) : Promise.resolve(''),
       help: () => Promise.all([
         enrichWithReadiness(projectId, organizationId),
         enrichWithRecommendations(projectId, organizationId),
@@ -641,6 +652,7 @@ export async function enrichContextForChat(params: {
       scan: slash.args ? `Scan for deficiencies in: ${slash.args}` : 'Scan the current section/document for regulatory deficiencies. Check completeness, missing keywords, placeholder text, and compliance gaps.',
       checklist: 'Generate a regulatory compliance checklist for the current document. Auto-populate based on section content and citation tokens.',
       submit: 'Submit the current document to the regulatory workflow. Check readiness first, then update status to SUBMITTED.',
+      workflow: 'Show the full submission workflow status. List all phases, steps completed vs remaining, critical blockers, and the next step the user should take. Be directive.',
       help: 'The user is asking what you can do. Look at their project state and suggest 3-4 specific things you can do RIGHT NOW. Show, don\'t tell. Demonstrate by referencing their actual readiness score, gaps, and recommendations.',
       export: 'Export this conversation.',
     };

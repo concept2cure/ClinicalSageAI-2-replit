@@ -1428,6 +1428,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               { cmd: '/sign', desc: 'Request electronic signature (21 CFR Part 11)' },
               { cmd: '/submit', desc: 'Submit document to regulatory workflow' },
               { cmd: '/preflight', desc: 'Run section preflight' },
+              { cmd: '/workflow', desc: 'Full submission workflow status and next steps' },
               { cmd: '/help', desc: 'Show what AnA can do for your project right now' },
               { cmd: '/export', desc: 'Export this conversation' },
             ].filter(c => c.cmd.startsWith(input.toLowerCase())).map(c => (
