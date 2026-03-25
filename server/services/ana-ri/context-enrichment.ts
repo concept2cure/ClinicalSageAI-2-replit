@@ -40,7 +40,7 @@ interface SlashCommand {
 }
 
 function detectSlashCommand(message: string): SlashCommand | null {
-  const match = message.match(/^\/(risk|readiness|precedent|draft|preflight|claims|recommend|next|simulate|signals|export|assess|twin|consistency|deficiencies|knowledge|help|sap|power|dose|defensibility|design|safety|cmc|csr|device|ectd|audit|amend|review|memo|brief|strategy)\b\s*(.*)/i);
+  const match = message.match(/^\/(risk|readiness|precedent|draft|preflight|claims|recommend|next|simulate|signals|export|assess|twin|consistency|deficiencies|knowledge|help|sap|power|dose|defensibility|design|safety|cmc|csr|device|ectd|audit|amend|review|memo|brief|strategy|freeze|sign|scan|checklist|submit)\b\s*(.*)/i);
   if (!match) return null;
   return { command: match[1].toLowerCase(), args: match[2].trim() };
 }
@@ -583,6 +583,11 @@ export async function enrichContextForChat(params: {
       memo: () => enrichWithForesight(projectId),
       brief: () => enrichWithCRLRTF(projectId),
       strategy: () => Promise.all([enrichWithPrecedents(projectId), enrichWithForesight(projectId)]).then(r => r.join('')),
+      freeze: () => enrichWithECTD(projectId),
+      sign: () => enrichWithECTD(projectId),
+      scan: () => Promise.all([enrichWithClaims(projectId), enrichWithCRLRTF(projectId)]).then(r => r.join('')),
+      checklist: () => enrichWithReadiness(projectId, organizationId),
+      submit: () => Promise.all([enrichWithReadiness(projectId, organizationId), enrichWithECTD(projectId)]).then(r => r.join('')),
       help: () => Promise.all([
         enrichWithReadiness(projectId, organizationId),
         enrichWithRecommendations(projectId, organizationId),
@@ -631,6 +636,11 @@ export async function enrichContextForChat(params: {
       memo: slash.args ? `Generate a risk memo for: ${slash.args}` : 'Generate a Regulatory Risk Assessment Memo with go/conditional-go/no-go recommendation.',
       brief: slash.args ? `Generate a reviewer brief for: ${slash.args}` : 'Generate a Reviewer Question Anticipation Brief with prepared answers for likely reviewer questions.',
       strategy: slash.args ? `Generate a strategy note for: ${slash.args}` : 'Generate a Regulatory Strategy Note with pathway analysis, argument hierarchy, and timeline.',
+      freeze: 'Freeze the current document. Create an immutable snapshot with SHA256 hash. No further edits possible without creating a new version.',
+      sign: 'Request electronic signature on the current document. Requires user PIN confirmation. Roles: AUTHOR, REVIEWER, or APPROVER.',
+      scan: slash.args ? `Scan for deficiencies in: ${slash.args}` : 'Scan the current section/document for regulatory deficiencies. Check completeness, missing keywords, placeholder text, and compliance gaps.',
+      checklist: 'Generate a regulatory compliance checklist for the current document. Auto-populate based on section content and citation tokens.',
+      submit: 'Submit the current document to the regulatory workflow. Check readiness first, then update status to SUBMITTED.',
       help: 'The user is asking what you can do. Look at their project state and suggest 3-4 specific things you can do RIGHT NOW. Show, don\'t tell. Demonstrate by referencing their actual readiness score, gaps, and recommendations.',
       export: 'Export this conversation.',
     };
