@@ -81,3 +81,12 @@ export {
 export {
   orchestrateResolution,
 } from './ana-resolution-orchestrator';
+
+// Contradiction → Resolution Bridge (Pass 9)
+export {
+  resolveContradiction,
+  planContradictionResolution,
+  executeContradictionResolution,
+  explainContradictionResolution,
+  getProjectResolutionStatus,
+} from './contradiction-resolution-bridge';

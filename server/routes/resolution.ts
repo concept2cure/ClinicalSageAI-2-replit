@@ -32,6 +32,13 @@
  * POST /api/resolution/orchestrate            — AnA full orchestration (detect → decide → plan → execute → prove)
  * POST /api/resolution/rewrite-targets        — Identify rewrite targets
  * POST /api/resolution/harmonization-actions  — Prepare harmonization actions
+ *
+ * Contradiction → Resolution Bridge (Pass 9):
+ * POST /api/resolution/contradiction/resolve  — Full contradiction → resolution with authority + overlay + receipt
+ * POST /api/resolution/contradiction/plan     — Plan resolution for a contradiction (no execution)
+ * POST /api/resolution/contradiction/execute  — Execute a planned contradiction resolution
+ * POST /api/resolution/contradiction/explain  — Explain resolution plan (structured, no LLM)
+ * GET  /api/resolution/contradiction/status/:projectId — Project resolution status summary
  */
 
 import { Router, Request, Response } from 'express';
@@ -65,6 +72,11 @@ import {
   summarizeResolutionBundle,
   executeBundle,
   orchestrateResolution,
+  resolveContradiction,
+  planContradictionResolution,
+  executeContradictionResolution,
+  explainContradictionResolution,
+  getProjectResolutionStatus,
 } from '../services/resolution';
 
 const router = Router();
@@ -441,6 +453,141 @@ router.post('/orchestrate', async (req: Request, res: Response) => {
       affectedObjects,
       forceConfidence,
     });
+
+    res.json({ success: true, result });
+  } catch (error: any) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// CONTRADICTION → RESOLUTION BRIDGE (Pass 9)
+// ---------------------------------------------------------------------------
+
+/**
+ * POST /api/resolution/contradiction/resolve
+ * Bridge a contradiction finding into the resolution orchestration layer.
+ * Performs overlay-aware authority check, orchestrates resolution, creates receipt.
+ */
+router.post('/contradiction/resolve', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrganizationId(req);
+    const userId = getUserId(req);
+    const { projectId, findingId, finding, overlayRules, actorRole } = req.body;
+
+    if (!projectId || !findingId || !finding) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: projectId, findingId, finding',
+      });
+    }
+
+    const result = await resolveContradiction({
+      organizationId: orgId,
+      userId,
+      projectId,
+      findingId,
+      finding,
+      overlayRules,
+      actorRole,
+    });
+
+    res.json({ success: true, result });
+  } catch (error: any) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/resolution/contradiction/plan
+ * Plan (but don't execute) resolution for a contradiction.
+ */
+router.post('/contradiction/plan', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrganizationId(req);
+    const userId = getUserId(req);
+    const { projectId, findingId, finding, overlayRules } = req.body;
+
+    if (!projectId || !findingId || !finding) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: projectId, findingId, finding',
+      });
+    }
+
+    const result = await planContradictionResolution(
+      orgId, userId, projectId, findingId, finding, overlayRules
+    );
+
+    res.json({ success: true, result });
+  } catch (error: any) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/resolution/contradiction/execute
+ * Execute a planned contradiction resolution (full orchestration with authority check).
+ */
+router.post('/contradiction/execute', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrganizationId(req);
+    const userId = getUserId(req);
+    const { projectId, findingId, finding, overlayRules, actorRole } = req.body;
+
+    if (!projectId || !findingId || !finding) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: projectId, findingId, finding',
+      });
+    }
+
+    const result = await executeContradictionResolution(
+      orgId, userId, projectId, findingId, finding, overlayRules, actorRole
+    );
+
+    res.json({ success: true, result });
+  } catch (error: any) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/resolution/contradiction/explain
+ * Explain a contradiction resolution plan (structured, no LLM).
+ */
+router.post('/contradiction/explain', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrganizationId(req);
+    const { projectId, findingId, finding, overlayRules } = req.body;
+
+    if (!projectId || !findingId || !finding) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: projectId, findingId, finding',
+      });
+    }
+
+    const result = await explainContradictionResolution(
+      orgId, projectId, findingId, finding, overlayRules
+    );
+
+    res.json({ success: true, result });
+  } catch (error: any) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * GET /api/resolution/contradiction/status/:projectId
+ * Get resolution status for a project (plans + bundles summary).
+ */
+router.get('/contradiction/status/:projectId', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrganizationId(req);
+    const projectId = parseInt(req.params.projectId, 10);
+
+    const result = await getProjectResolutionStatus(orgId, projectId);
 
     res.json({ success: true, result });
   } catch (error: any) {
