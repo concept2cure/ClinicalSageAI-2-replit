@@ -203,16 +203,24 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     }
   }, [showModeDropdown]);
 
-  // ── Default greeting ──
+  // ── Default greeting — project-aware ──
   const defaultGreeting = useMemo(() => {
     if (greeting) return greeting;
     const hour = new Date().getHours();
     const timeGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
     if (contextProfile?.activeProject) {
-      return `${timeGreeting}. What are you working on with ${contextProfile.activeProject}?`;
+      return `${timeGreeting}. I'm ready to work on ${contextProfile.activeProject}.`;
     }
-    return `${timeGreeting}. What can I help you with?`;
+    return `${timeGreeting}. What would you like to work on?`;
   }, [greeting, contextProfile?.activeProject]);
+
+  const greetingSubtext = useMemo(() => {
+    if (!contextProfile?.projectId) return 'Ask me anything, or type / for commands.';
+    if (contextProfile?.productType) {
+      return `${contextProfile.productType.toUpperCase()} submission · Type / for commands or just tell me what you need.`;
+    }
+    return 'Type / for commands or just tell me what you need.';
+  }, [contextProfile?.projectId, contextProfile?.productType]);
 
   // ── Authoring-aware suggested actions (full set) ──
   const authoringSuggestedActions = useMemo<SuggestedAction[]>(() => {
@@ -282,14 +290,15 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   const effectiveSuggestedActions = useMemo(() => {
     const parent = suggestedActions || [];
 
-    // Workflow-aware defaults when no authoring context
+    // Client-language defaults when no authoring context
     if (authoringSuggestedActions.length === 0 && contextProfile?.projectId) {
       const workflowActions: SuggestedAction[] = [
-        { id: 'status', label: 'Project status', intent: undefined, description: 'Quick readiness check and next steps' },
-        { id: 'workflow', label: 'Submission workflow', intent: undefined, description: 'Full step-by-step progress' },
-        { id: 'assess', label: 'Full assessment', intent: undefined, description: 'Readiness + risks + actions' },
+        { id: 'status', label: 'Where do I stand?', intent: undefined, description: 'Readiness score, blockers, and what to do next' },
+        { id: 'draft-next', label: 'What should I draft next?', intent: undefined, description: 'The most important document to write right now' },
+        { id: 'assess', label: 'Run a full check', intent: undefined, description: 'Readiness, risks, and recommended actions' },
+        { id: 'workflow-view', label: 'Show my submission progress', intent: undefined, description: 'Step-by-step workflow with completion status' },
       ];
-      return [...workflowActions, ...parent.slice(0, 2)];
+      return [...workflowActions, ...parent.slice(0, 1)];
     }
 
     if (authoringSuggestedActions.length > 0) {
@@ -999,9 +1008,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
     // ── Workflow quick actions (map label to slash commands) ──
     const slashMap: Record<string, string> = {
-      'Project status': '/status',
-      'Submission workflow': '/workflow',
-      'Full assessment': '/assess',
+      'Where do I stand?': '/status',
+      'What should I draft next?': '/recommend',
+      'Run a full check': '/assess',
+      'Show my submission progress': '/workflow',
     };
     if (slashMap[action.label]) {
       handleSend(slashMap[action.label]);
@@ -1109,11 +1119,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             </div>
           )}
 
-          {/* Action buttons (appear on hover for assistant messages) */}
+          {/* Action buttons — always visible, subtle until hover */}
           {!isUser && !msg.isStreaming && msg.content && (
             <div className={cn(
-              'flex items-center gap-1 mt-2 transition-opacity duration-150',
-              hoveredMsgId === msg.id ? 'opacity-100' : 'opacity-0'
+              'flex items-center gap-1 mt-3 transition-opacity duration-200',
+              hoveredMsgId === msg.id ? 'opacity-100' : 'opacity-40'
             )}>
               <button
                 onClick={() => handleCopy(msg.id, msg.content)}
@@ -1591,7 +1601,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             role="alert"
             data-testid="ana-health-bar"
           >
-            <span>{isDegrading ? 'Long conversation — responses may lose earlier context' : `~${tokensK}K tokens — consider starting a new thread for best results`}</span>
+            <span>{isDegrading ? 'This conversation is getting long — I may start forgetting earlier details. Consider starting fresh.' : 'This is a long conversation — starting a new one will give you better results.'}</span>
             <button
               onClick={() => { setMessages([]); threadIdRef.current = null; }}
               className="font-medium hover:underline"
@@ -1614,7 +1624,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           /* Empty state — greeting + actions */
           <div className="flex flex-col items-center justify-center h-full px-6">
             <div className="max-w-[560px] w-full text-center">
-              <h2 className="text-2xl font-medium text-zinc-900 mb-2">{defaultGreeting}</h2>
+              <h2 className="text-2xl font-medium text-zinc-900 mb-1">{defaultGreeting}</h2>
+              <p className="text-sm text-zinc-400 mb-6">{greetingSubtext}</p>
 
               {effectiveSuggestedActions.length > 0 && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-8 max-w-md mx-auto">
