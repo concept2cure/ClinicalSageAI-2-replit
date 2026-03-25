@@ -12,6 +12,7 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { pool } from '../db.js';
 import { getGateway } from '../services/ai-gateway/index.js';
 import type { GatewayMessage } from '../services/ai-gateway/types.js';
 import {
@@ -39,6 +40,7 @@ import {
 } from '../services/ana-ri/enforcement.js';
 import {
   getOrCreateThread,
+  getThreadMessages,
   saveChatMessage as saveMessage,
 } from '../services/chat-thread-helpers.js';
 import { logKernelDecision } from '../services/kernel-decision-record.js';
@@ -53,6 +55,7 @@ import { getIntelligencePrefix } from '../services/lumen-context-builder.js';
 import { interceptChatResponse } from '../services/intelligence/rim-interceptors.js';
 import { enrichContextForChat } from '../services/ana-ri/context-enrichment.js';
 import { processResponseActions } from '../services/ana-guidance-executor.js';
+import { processCommandsInResponse, type CommandContext } from '../services/ana-ri/command-executor.js';
 
 const router = Router();
 
@@ -212,17 +215,45 @@ router.post('/chat', async (req: Request, res: Response) => {
 
     const enrichedSystemPrompt = chatIntelligencePrefix + orchestration.systemPrompt + chatMemoryBlock + chatEnrichment.block;
 
-    // Build message history for the AI gateway
+    // Build message history — prefer server thread history, fall back to client
     const messages: GatewayMessage[] = [{ role: 'system', content: enrichedSystemPrompt }];
 
-    // Add conversation history
-    if (conversation_history && Array.isArray(conversation_history)) {
+    let historyLoaded = false;
+    if (threadId) {
+      try {
+        const serverHistory = await getThreadMessages(threadId);
+        if (serverHistory.length > 0) {
+          for (const msg of serverHistory.slice(-20)) {
+            messages.push({ role: msg.role as 'user' | 'assistant', content: msg.content });
+          }
+          historyLoaded = true;
+        }
+      } catch { /* fall through to client history */ }
+    }
+    if (!historyLoaded && conversation_history && Array.isArray(conversation_history)) {
       for (const msg of conversation_history.slice(-20)) {
-        messages.push({
-          role: msg.role as 'user' | 'assistant',
-          content: msg.content,
-        });
+        messages.push({ role: msg.role as 'user' | 'assistant', content: msg.content });
       }
+    }
+
+    // Inject file context if file_ids provided
+    const fileIds = req.body.file_ids;
+    if (fileIds && Array.isArray(fileIds) && fileIds.length > 0) {
+      try {
+        const fileResult = await pool.query(
+          `SELECT id, original_name, mime_type FROM file_uploads WHERE id = ANY($1)`,
+          [fileIds]
+        );
+        if (fileResult.rows.length > 0) {
+          const fileContext = fileResult.rows.map((f: any) =>
+            `- ${f.original_name} (${f.mime_type}) [ID: ${f.id}]`
+          ).join('\n');
+          messages.push({
+            role: 'user' as const,
+            content: `[The user has attached the following files to this message:\n${fileContext}\nReference these files in your response when relevant.]`,
+          });
+        }
+      } catch { /* non-blocking */ }
     }
 
     // Add current message (use rewritten version if slash command detected)
@@ -551,17 +582,7 @@ router.post('/stream', async (req: Request, res: Response) => {
 
     const fullSystemPrompt = intelligencePrefix + orchestration.systemPrompt + memoryBlock + enrichment.block;
 
-    // Build messages
-    const messages: GatewayMessage[] = [{ role: 'system', content: fullSystemPrompt }];
-
-    if (conversation_history && Array.isArray(conversation_history)) {
-      for (const msg of conversation_history.slice(-20)) {
-        messages.push({ role: msg.role as 'user' | 'assistant', content: msg.content });
-      }
-    }
-    messages.push({ role: 'user', content: effectiveMessage });
-
-    // Thread persistence
+    // Thread resolution (before message building so we can load server history)
     let threadId = thread_id;
     if (orgId) {
       try {
@@ -571,6 +592,51 @@ router.post('/stream', async (req: Request, res: Response) => {
         console.error('[AnA RI Stream] Thread persistence failed:', e?.message);
       }
     }
+
+    // Build messages — prefer server thread history, fall back to client
+    const messages: GatewayMessage[] = [{ role: 'system', content: fullSystemPrompt }];
+
+    let streamHistoryLoaded = false;
+    if (threadId) {
+      try {
+        const serverHistory = await getThreadMessages(threadId);
+        // Exclude the message we just saved (it's the current user message)
+        const previousMsgs = serverHistory.slice(0, -1);
+        if (previousMsgs.length > 0) {
+          for (const msg of previousMsgs.slice(-20)) {
+            messages.push({ role: msg.role as 'user' | 'assistant', content: msg.content });
+          }
+          streamHistoryLoaded = true;
+        }
+      } catch { /* fall through to client history */ }
+    }
+    if (!streamHistoryLoaded && conversation_history && Array.isArray(conversation_history)) {
+      for (const msg of conversation_history.slice(-20)) {
+        messages.push({ role: msg.role as 'user' | 'assistant', content: msg.content });
+      }
+    }
+
+    // Inject file context if file_ids provided
+    const streamFileIds = req.body.file_ids;
+    if (streamFileIds && Array.isArray(streamFileIds) && streamFileIds.length > 0) {
+      try {
+        const fileResult = await pool.query(
+          `SELECT id, original_name, mime_type FROM file_uploads WHERE id = ANY($1)`,
+          [streamFileIds]
+        );
+        if (fileResult.rows.length > 0) {
+          const fileContext = fileResult.rows.map((f: any) =>
+            `- ${f.original_name} (${f.mime_type}) [ID: ${f.id}]`
+          ).join('\n');
+          messages.push({
+            role: 'user' as const,
+            content: `[The user has attached the following files:\n${fileContext}\nReference these files in your response when relevant.]`,
+          });
+        }
+      } catch { /* non-blocking */ }
+    }
+
+    messages.push({ role: 'user', content: effectiveMessage });
 
     // Send thread_id immediately so client can track
     res.write(`data: ${JSON.stringify({ type: 'thread_id', thread_id: threadId })}\n\n`);
@@ -663,6 +729,25 @@ router.post('/stream', async (req: Request, res: Response) => {
       }
     }
 
+    // Command executor — execute operational commands (create project, artifact, task, etc.)
+    let executedCommands: any[] = [];
+    if (fullContent && orgId) {
+      try {
+        const cmdCtx: CommandContext = {
+          userId: typeof userId === 'number' ? userId : 0,
+          organizationId: Number(orgId),
+          activeProjectId: project_id ? (typeof project_id === 'string' ? parseInt(project_id, 10) : project_id) : undefined,
+        };
+        const cmdResult = await processCommandsInResponse(fullContent, cmdCtx);
+        executedCommands = cmdResult.executedCommands;
+        if (executedCommands.length > 0) {
+          console.log(`[AnA RI Stream] Executed ${executedCommands.length} command(s)`);
+        }
+      } catch (e: any) {
+        console.warn('[AnA RI Stream] Command executor failed:', e?.message);
+      }
+    }
+
     // Send done event
     res.write(`data: ${JSON.stringify({
       type: 'done',
@@ -671,6 +756,7 @@ router.post('/stream', async (req: Request, res: Response) => {
       usage: gwResponse.usage,
       latencyMs: gwResponse.latencyMs,
       executedActions: executedActions.length > 0 ? executedActions : undefined,
+      executedCommands: executedCommands.length > 0 ? executedCommands : undefined,
       enrichmentSources: enrichment.sources.length > 0 ? enrichment.sources : undefined,
     })}\n\n`);
 

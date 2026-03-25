@@ -1605,3 +1605,102 @@ export function buildCommandContextForPrompt(): string {
 
   return lines.join('\n');
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Command Parser + Router
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface ParsedCommand {
+  command: CommandName;
+  params: Record<string, unknown>;
+}
+
+/**
+ * Parse ```command blocks from AnA's response text.
+ */
+export function parseCommandBlocks(responseText: string): ParsedCommand[] {
+  const commands: ParsedCommand[] = [];
+  const regex = /```command\s*\n([\s\S]*?)```/g;
+  let match;
+  while ((match = regex.exec(responseText)) !== null) {
+    try {
+      const parsed = JSON.parse(match[1].trim());
+      if (parsed.command && COMMAND_REGISTRY.some(c => c.name === parsed.command)) {
+        commands.push({ command: parsed.command as CommandName, params: parsed.params || {} });
+      }
+    } catch { /* skip malformed */ }
+  }
+  return commands;
+}
+
+/**
+ * Execute parsed commands and return results.
+ */
+export async function executeCommands(
+  commands: ParsedCommand[],
+  ctx: CommandContext,
+): Promise<CommandResult[]> {
+  const results: CommandResult[] = [];
+  const commandMap: Record<string, (ctx: CommandContext, params: any) => Promise<CommandResult>> = {
+    create_project: createProject,
+    list_projects: listProjects,
+    update_project: updateProject,
+    create_artifact: createArtifact,
+    update_artifact: updateArtifact,
+    update_artifact_status: updateArtifactStatus,
+    list_artifacts: listArtifacts,
+    place_in_dossier: placeInDossier,
+    create_task: createTask,
+    update_task: updateTask,
+    list_tasks: listTasks,
+    check_dossier_readiness: checkDossierReadiness,
+    load_user_context: loadUserContext,
+    load_conversation_history: loadConversationHistory,
+    create_submission_package: createSubmissionPackage,
+    create_review_thread: createReviewThread,
+    add_review_comment: addReviewComment,
+    search_artifacts: searchArtifacts,
+    list_team_members: listTeamMembers,
+    list_artifact_versions: listArtifactVersions,
+    run_compliance_scan: runComplianceScan,
+    export_artifact: exportArtifact,
+    compare_versions: compareVersions,
+    review_version_impact: reviewVersionImpact,
+    create_milestone: createMilestone,
+    update_milestone: updateMilestone,
+    list_milestones: listMilestones,
+    revert_to_version: revertToVersion,
+  };
+
+  for (const cmd of commands) {
+    const handler = commandMap[cmd.command];
+    if (handler) {
+      try {
+        const result = await handler(ctx, cmd.params);
+        results.push(result);
+        console.log(`[AnA Command] Executed ${cmd.command}: ${result.success ? 'OK' : 'FAILED'} — ${result.message}`);
+      } catch (err: any) {
+        results.push({ success: false, action: cmd.command, message: `Execution failed: ${err?.message}` });
+      }
+    }
+  }
+  return results;
+}
+
+/**
+ * Process response text: parse command blocks, execute them, return results.
+ */
+export async function processCommandsInResponse(
+  responseText: string,
+  ctx: CommandContext,
+): Promise<{ executedCommands: CommandResult[]; cleanedText: string }> {
+  const commands = parseCommandBlocks(responseText);
+  if (commands.length === 0) return { executedCommands: [], cleanedText: responseText };
+
+  const executedCommands = await executeCommands(commands, ctx);
+
+  // Strip command blocks from response text (user doesn't need to see raw JSON)
+  const cleanedText = responseText.replace(/```command\s*\n[\s\S]*?```/g, '').trim();
+
+  return { executedCommands, cleanedText };
+}

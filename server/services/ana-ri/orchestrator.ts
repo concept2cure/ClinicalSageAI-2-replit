@@ -298,7 +298,10 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
     }
   }
 
-  // 10. Determine suggested document actions
+  // 10. Inject command context — tells AnA what operational commands are available
+  systemPrompt += '\n\n' + buildCommandContextForPrompt();
+
+  // 11. Determine suggested document actions
   const suggestedActions = getSuggestedActions(
     detectedIntent.lens,
     detectedSubmissionType,

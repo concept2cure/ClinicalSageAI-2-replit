@@ -665,9 +665,18 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     ? { ...m, isStreaming: false, executedActions: data.executedActions }
                     : m
                 ));
-                // Notify about auto-executed actions
+                // Notify about auto-executed actions and commands
                 if (data.executedActions?.length) {
-                  toast({ title: 'Actions executed', description: `${data.executedActions.length} artifact(s) created from this response` });
+                  toast({ title: 'Actions executed', description: `${data.executedActions.length} artifact(s) created` });
+                }
+                if (data.executedCommands?.length) {
+                  const cmdSummary = data.executedCommands
+                    .filter((c: any) => c.success)
+                    .map((c: any) => c.message)
+                    .join('; ');
+                  if (cmdSummary) {
+                    toast({ title: 'Commands executed', description: cmdSummary });
+                  }
                 }
               } else if (data.type === 'error') {
                 setMessages(prev => prev.map(m =>
