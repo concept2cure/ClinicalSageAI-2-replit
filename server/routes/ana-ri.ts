@@ -51,7 +51,7 @@ import {
 } from '../services/kernel-adaptive-policy.js';
 import { buildGoalPlan, replanGoalPlan } from '../services/kernel-goal-planner.js';
 import { buildMemoryContextForChat } from '../services/memory-context-assembler.js';
-import { getIntelligencePrefix } from '../services/lumen-context-builder.js';
+import { getIntelligencePrefix, buildSectionSpecificPrompt } from '../services/lumen-context-builder.js';
 import { interceptChatResponse } from '../services/intelligence/rim-interceptors.js';
 import { enrichContextForChat } from '../services/ana-ri/context-enrichment.js';
 import { processResponseActions } from '../services/ana-guidance-executor.js';
@@ -188,6 +188,15 @@ router.post('/chat', async (req: Request, res: Response) => {
     // Inject authoring context into system prompt if available
     if (authoringContextBlock) {
       orchestration.systemPrompt += `\n\n## Current Authoring Context\n\nYou have access to the user's current authoring context. Use this to provide section-specific, artifact-aware responses. When the user asks about "this section", "this document", "what's blocking", or similar, reference this context:\n\n${authoringContextBlock}`;
+    }
+
+    // Inject section-specific ICH M4 guidance when drafting a CTD section
+    const chatSectionCode = authoring_context?.sectionCode || req.body.context?.sectionCode;
+    if (chatSectionCode) {
+      const chatSectionGuide = buildSectionSpecificPrompt(chatSectionCode);
+      if (chatSectionGuide) {
+        orchestration.systemPrompt += `\n\n${chatSectionGuide}`;
+      }
     }
 
     // Inject intelligence prefix + 3-layer memory (same as streaming endpoint)
@@ -547,6 +556,15 @@ router.post('/stream', async (req: Request, res: Response) => {
 
     if (authoringContextBlock) {
       orchestration.systemPrompt += `\n\n## Current Authoring Context\n${authoringContextBlock}`;
+    }
+
+    // Inject section-specific ICH M4 guidance when drafting a CTD section
+    const sectionCode = authoring_context?.sectionCode || req.body.context?.sectionCode;
+    if (sectionCode) {
+      const sectionGuide = buildSectionSpecificPrompt(sectionCode);
+      if (sectionGuide) {
+        orchestration.systemPrompt += `\n\n${sectionGuide}`;
+      }
     }
 
     // Inject intelligence prefix (client/project knowledge)

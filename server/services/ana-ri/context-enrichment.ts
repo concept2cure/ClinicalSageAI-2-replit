@@ -40,7 +40,7 @@ interface SlashCommand {
 }
 
 function detectSlashCommand(message: string): SlashCommand | null {
-  const match = message.match(/^\/(risk|readiness|precedent|draft|preflight|claims|recommend|next|simulate|signals|export|assess|twin|consistency|deficiencies|knowledge|help|sap|power|dose|defensibility|design|safety|cmc|csr|device|ectd)\b\s*(.*)/i);
+  const match = message.match(/^\/(risk|readiness|precedent|draft|preflight|claims|recommend|next|simulate|signals|export|assess|twin|consistency|deficiencies|knowledge|help|sap|power|dose|defensibility|design|safety|cmc|csr|device|ectd|audit|amend|review|memo|brief|strategy)\b\s*(.*)/i);
   if (!match) return null;
   return { command: match[1].toLowerCase(), args: match[2].trim() };
 }
@@ -577,6 +577,12 @@ export async function enrichContextForChat(params: {
       csr: () => enrichWithCSR(projectId),
       device: () => enrichWithDevice(projectId),
       ectd: () => enrichWithECTD(projectId),
+      audit: () => Promise.all([enrichWithReadiness(projectId, organizationId), enrichWithClaims(projectId)]).then(r => r.join('')),
+      amend: () => enrichWithProjectMemory(projectId, ['document_version', 'change_impact', 'amendment_tracking'], 'Amendment Context', 'Relevant version history and change impact data.', 5),
+      review: () => Promise.all([enrichWithClaims(projectId), enrichWithCRLRTF(projectId)]).then(r => r.join('')),
+      memo: () => enrichWithForesight(projectId),
+      brief: () => enrichWithCRLRTF(projectId),
+      strategy: () => Promise.all([enrichWithPrecedents(projectId), enrichWithForesight(projectId)]).then(r => r.join('')),
       help: () => Promise.all([
         enrichWithReadiness(projectId, organizationId),
         enrichWithRecommendations(projectId, organizationId),
@@ -619,6 +625,12 @@ export async function enrichContextForChat(params: {
       csr: slash.args ? `Analyze CSR for: ${slash.args}` : 'Help with Clinical Study Report work. Ask which section (efficacy, safety, disposition, demographics) or whether they need ICH E3 validation.',
       device: slash.args ? `Analyze device submission for: ${slash.args}` : 'Help with medical device submission. Ask about: submission type (510(k), PMA, De Novo, EU MDR), predicate device, and classification.',
       ectd: 'Show the eCTD module structure and help place artifacts in the correct CTD location. Reference Module 1-5 structure.',
+      audit: slash.args ? `Audit this document/section: ${slash.args}. Read as a hostile reviewer. Check completeness, consistency, defensibility, and compliance. Produce findings with severity and concrete fixes.` : 'Audit the current section or document. Check completeness, consistency, defensibility, and ICH compliance. Produce specific findings with severity ratings.',
+      amend: slash.args ? `Amend/revise: ${slash.args}. Identify affected sections, rewrite only what changed, track changes with regulatory impact.` : 'Help amend the current document. Identify what changed, which sections are affected, rewrite with change tracking.',
+      review: 'Conduct a regulatory review of the current section. Think like an FDA/EMA reviewer. Flag weaknesses, unsupported claims, and likely deficiency triggers.',
+      memo: slash.args ? `Generate a risk memo for: ${slash.args}` : 'Generate a Regulatory Risk Assessment Memo with go/conditional-go/no-go recommendation.',
+      brief: slash.args ? `Generate a reviewer brief for: ${slash.args}` : 'Generate a Reviewer Question Anticipation Brief with prepared answers for likely reviewer questions.',
+      strategy: slash.args ? `Generate a strategy note for: ${slash.args}` : 'Generate a Regulatory Strategy Note with pathway analysis, argument hierarchy, and timeline.',
       help: 'The user is asking what you can do. Look at their project state and suggest 3-4 specific things you can do RIGHT NOW. Show, don\'t tell. Demonstrate by referencing their actual readiness score, gaps, and recommendations.',
       export: 'Export this conversation.',
     };
