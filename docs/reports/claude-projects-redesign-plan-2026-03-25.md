@@ -209,20 +209,25 @@ These features already replicate Claude Projects patterns:
 
 ### 3.2 Gaps to Close (Enhance Existing)
 
-#### Gap E1: Knowledge Panel Integration with Chat Context
+#### Gap E1: Knowledge Panel Integration with Chat Context — VERIFIED CLOSED
 
 **Claude.ai behavior**: All project files + instructions are automatically injected into every conversation's context window. Zero user effort.
 
-**Your current state**: `useProjectKnowledge()` manages files, but it's unclear if `AnaPersistentPanel` actually injects file content + custom instructions into the AI context for every message.
+**Your current state**: FULLY WIRED. Verified 2026-03-25. The full chain:
+1. `chat.ts:394` → calls `getIntelligencePrefix(orgId, projectId)`
+2. `lumen-context-builder.ts:1811` → calls `buildProjectIntelligenceContext(projectId)`
+3. `client-intelligence-memory.ts:1202` → fetches `projectIntelligenceProfiles` (regulatory strategy, custom instructions, persona) + `projectMemoryEntries` (30 knowledge atoms)
+4. `memory-context-assembler.ts:437` → adds semantic search results (project + client memory)
 
-**Where to check**:
-- `server/services/memory-context-assembler.ts` — Does it pull `projectIntelligenceProfiles.customInstructions`?
-- `server/services/lumen-context-builder.ts` — Does it include uploaded file content?
-- `server/routes/chat.ts` — When sending a message, is project knowledge included?
+Context assembly per chat message:
+```
+intelligencePrefix (client + project intelligence, custom instructions, knowledge atoms)
++ basePrompt (orchestrator system prompt)
++ memoryBlock (semantic memory: working + project + client)
++ evidenceBlock
+```
 
-**Action**: Verify the full context injection chain. If gaps exist, wire `customInstructions` + file content into the chat context assembly.
-
-**Files to modify**: `memory-context-assembler.ts`, `chat.ts`
+**No work needed.** Custom instructions, project persona, learned intelligence, and memory entries are all injected into every chat message automatically.
 
 ---
 
