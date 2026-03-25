@@ -308,7 +308,63 @@ export class DecisionLifecycleService {
       pendingApprovals: opts.pendingApprovals?.length ?? 0,
     });
 
+    // Persist receipt to DB (non-blocking)
+    this.persistReceipt(receipt).catch((err: unknown) => {
+      log.warn('Receipt persistence failed (in-memory retained)', {
+        receiptId: receipt.id,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    });
+
     return receipt;
+  }
+
+  /** Persist receipt to decision_receipts table (non-blocking bridge) */
+  private async persistReceipt(receipt: DecisionReceipt): Promise<boolean> {
+    try {
+      const { pool } = await import('../db.js');
+      if (!pool) return false;
+
+      await pool.query(`
+        INSERT INTO decision_receipts (
+          id, decision_id, project_id,
+          recommendation_summary, recommendation_action_ids, recommendation_rationale,
+          confirmation_accepted, confirmed_by_id, confirmed_at, rejection_reason,
+          execution_executed, executed_at, executed_by_id, execution_method, execution_error,
+          affected_objects, pending_approvals, provisional_items
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+        ON CONFLICT (id) DO NOTHING
+      `, [
+        receipt.id,
+        receipt.decisionId,
+        receipt.projectId,
+        receipt.recommendation?.summary,
+        JSON.stringify(receipt.recommendation?.actionIds ?? []),
+        receipt.recommendation?.rationale,
+        receipt.confirmation?.accepted ?? false,
+        receipt.confirmation?.confirmedById,
+        receipt.confirmation?.confirmedAt,
+        receipt.confirmation?.rejectionReason,
+        receipt.execution?.executed ?? false,
+        receipt.execution?.executedAt,
+        receipt.execution?.executedById,
+        receipt.execution?.executionMethod,
+        receipt.execution?.error,
+        JSON.stringify(receipt.affectedObjects ?? []),
+        JSON.stringify(receipt.pendingApprovals ?? []),
+        JSON.stringify(receipt.provisionalItems ?? []),
+      ]);
+
+      log.info('Receipt persisted to DB', { receiptId: receipt.id });
+      return true;
+    } catch (err: unknown) {
+      // Table may not exist yet — degrade gracefully
+      log.debug('Receipt persistence skipped (table may not exist)', {
+        receiptId: receipt.id,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      return false;
+    }
   }
 
   // ── Authority checks ────────────────────────────────────────────

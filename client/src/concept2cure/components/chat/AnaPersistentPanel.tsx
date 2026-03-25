@@ -588,6 +588,36 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       });
     }
 
+    // Promotion lifecycle: approve (review → approved)
+    if (hasArtifactContext(authoringContext) && authoringContext.artifactStatus === 'review') {
+      actions.push({
+        id: 'approve-artifact',
+        label: 'Approve artifact',
+        intent: 'approve_artifact',
+        description: 'Approve after reviewer sign-off (all gates checked)',
+      });
+    }
+
+    // Promotion lifecycle: lock (approved → locked)
+    if (hasArtifactContext(authoringContext) && authoringContext.artifactStatus === 'approved') {
+      actions.push({
+        id: 'lock-artifact',
+        label: 'Lock for submission',
+        intent: 'lock_artifact',
+        description: 'Lock content — no further edits allowed',
+      });
+    }
+
+    // Promotion lifecycle: mark submission-ready (locked → submission_ready)
+    if (hasArtifactContext(authoringContext) && authoringContext.artifactStatus === 'locked') {
+      actions.push({
+        id: 'mark-submission-ready',
+        label: 'Mark submission-ready',
+        intent: 'mark_submission_ready',
+        description: 'Confirm readiness for regulatory submission (requires RA lead)',
+      });
+    }
+
     // Wave 2 actions — available in deeper authoring contexts
 
     // Action 6: Correction draft — available when section has issues
@@ -683,6 +713,41 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         description: 'Detect body-specific content gaps in this section',
       });
     }
+
+    // ── Wave 3: Contradiction → Resolution actions ──
+
+    // Action 14: Explain contradiction resolution (always available when contradictions exist)
+    if (authoringContext.contradictions && authoringContext.contradictions.length > 0) {
+      actions.push({
+        id: 'explain-contradiction-resolution',
+        label: `Explain ${authoringContext.contradictions.length} contradiction(s)`,
+        intent: 'explain_contradiction_resolution',
+        description: 'Structured explanation of contradictions and resolution paths',
+      });
+    }
+
+    // Action 15: Plan contradiction resolution
+    if (authoringContext.contradictions && authoringContext.contradictions.length > 0) {
+      const blockingCount = authoringContext.contradictions.filter(
+        (c: any) => c.severity === 'critical' || c.severity === 'high'
+      ).length;
+      if (blockingCount > 0) {
+        actions.push({
+          id: 'plan-contradiction-resolution',
+          label: `Plan resolution for ${blockingCount} blocker(s)`,
+          intent: 'plan_contradiction_resolution',
+          description: 'Create resolution plan with authority check and affected objects',
+        });
+      }
+    }
+
+    // Action 16: Project resolution status
+    actions.push({
+      id: 'project-resolution-status',
+      label: 'Resolution status',
+      intent: 'project_resolution_status',
+      description: 'View resolution plans, bundles, and progress',
+    });
 
     return actions;
   }, [authoringContext]);
@@ -1906,6 +1971,106 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       return;
     }
 
+    // ── Promotion Lifecycle: Approve / Lock / Submission-Ready ─────────
+
+    // APPROVE ARTIFACT (review → approved)
+    if (action.intent === 'approve_artifact') {
+      (async () => {
+        const projectId = contextProfile?.projectId;
+        const artifactId = authoringContext?.artifactId;
+        if (!projectId || !artifactId) {
+          setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+            content: '**Cannot approve.** No artifact is currently open.' }]);
+          return;
+        }
+        try {
+          const res = await fetch('/api/authoring-actions/approve-artifact', {
+            method: 'POST', headers: getAuthHeaders(),
+            body: JSON.stringify({ projectId, artifactId }),
+          });
+          const data = await res.json();
+          if (data.approved) {
+            const decisionNote = data.decisionId ? `\n**Decision:** \`${data.decisionId.slice(0, 16)}…\`` : '';
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Artifact approved.** ${data.message}${decisionNote}` }]);
+          } else {
+            const blockerLines = data.blockers?.length
+              ? '\n\n' + data.blockers.map((b: string) => `- ${b}`).join('\n')
+              : '';
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Approval ${data.reason === 'unauthorized' ? 'unauthorized' : 'blocked'}.** ${data.message}${blockerLines}` }]);
+          }
+          onRefreshIntelligence?.();
+        } catch { handleSend('Approve this artifact for the next governance stage.'); }
+      })();
+      return;
+    }
+
+    // LOCK ARTIFACT (approved → locked)
+    if (action.intent === 'lock_artifact') {
+      (async () => {
+        const projectId = contextProfile?.projectId;
+        const artifactId = authoringContext?.artifactId;
+        if (!projectId || !artifactId) {
+          setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+            content: '**Cannot lock.** No artifact is currently open.' }]);
+          return;
+        }
+        try {
+          const res = await fetch('/api/authoring-actions/lock-artifact', {
+            method: 'POST', headers: getAuthHeaders(),
+            body: JSON.stringify({ projectId, artifactId }),
+          });
+          const data = await res.json();
+          if (data.locked) {
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Artifact locked.** ${data.message} No further edits are allowed. Content is frozen for submission.` }]);
+          } else {
+            const blockerLines = data.blockers?.length
+              ? '\n\n' + data.blockers.map((b: string) => `- ${b}`).join('\n')
+              : '';
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Lock ${data.reason === 'unauthorized' ? 'unauthorized' : 'blocked'}.** ${data.message}${blockerLines}` }]);
+          }
+          onRefreshIntelligence?.();
+        } catch { handleSend('Lock this artifact for submission.'); }
+      })();
+      return;
+    }
+
+    // MARK SUBMISSION-READY (locked → submission_ready)
+    if (action.intent === 'mark_submission_ready') {
+      (async () => {
+        const projectId = contextProfile?.projectId;
+        const artifactId = authoringContext?.artifactId;
+        if (!projectId || !artifactId) {
+          setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+            content: '**Cannot mark submission-ready.** No artifact is currently open.' }]);
+          return;
+        }
+        try {
+          const res = await fetch('/api/authoring-actions/mark-submission-ready', {
+            method: 'POST', headers: getAuthHeaders(),
+            body: JSON.stringify({ projectId, artifactId }),
+          });
+          const data = await res.json();
+          if (data.submissionReady) {
+            const decisionNote = data.decisionId ? `\n**Decision:** \`${data.decisionId.slice(0, 16)}…\`` : '';
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Submission-ready.** ${data.message} Governance boundary: **${data.governanceBoundary}**${decisionNote}` }]);
+          } else {
+            const blockerLines = data.blockers?.length
+              ? '\n\n' + data.blockers.map((b: string) => `- ${b}`).join('\n')
+              : '';
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Submission-ready ${data.reason === 'unauthorized' ? 'unauthorized — requires RA or submission lead' : 'blocked'}.** ${data.message}${blockerLines}` }]);
+          }
+          onRefreshIntelligence?.();
+        } catch { handleSend('Mark this artifact as submission-ready.'); }
+      })();
+      return;
+    }
+
     // ── Wave 2 Authoring Actions — real operational behavior ──────────
 
     // ACTION 6: Correction draft
@@ -2353,6 +2518,124 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         } catch {
           handleSend(`What is missing for ${body} in section ${sectionCode}?`);
         }
+      })();
+      return;
+    }
+
+    // ── Wave 3: Contradiction → Resolution intent handlers ──────
+
+    // ACTION 14: Explain contradiction resolution
+    if (action.intent === 'explain_contradiction_resolution') {
+      (async () => {
+        const projectId = contextProfile?.projectId;
+        const contradictions = authoringContext?.contradictions;
+        if (!projectId || !contradictions?.length) {
+          handleSend('Explain the contradictions in this project and how to resolve them.');
+          return;
+        }
+        // Explain the first (most severe) contradiction
+        const sorted = [...contradictions].sort((a: any, b: any) => {
+          const sev: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1 };
+          return (sev[b.severity] || 0) - (sev[a.severity] || 0);
+        });
+        const finding = sorted[0];
+        try {
+          const res = await fetch('/api/authoring-actions/explain-contradiction-resolution', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ projectId, findingId: finding.id, finding }),
+          });
+          const data = await res.json();
+          if (data.status === 'data' || data.success) {
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: data.message || `**Contradiction Resolution Explanation**\n\n${JSON.stringify(data.data, null, 2)}` }]);
+          } else {
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Contradiction explanation:** ${data.message || 'No explanation available'}` }]);
+          }
+        } catch { handleSend('Explain the contradictions and how to resolve them.'); }
+      })();
+      return;
+    }
+
+    // ACTION 15: Plan contradiction resolution
+    if (action.intent === 'plan_contradiction_resolution') {
+      (async () => {
+        const projectId = contextProfile?.projectId;
+        const contradictions = authoringContext?.contradictions;
+        if (!projectId || !contradictions?.length) {
+          handleSend('Plan resolution for the contradictions blocking this project.');
+          return;
+        }
+        // Plan resolution for the most severe blocking contradiction
+        const blocking = contradictions.filter(
+          (c: any) => c.severity === 'critical' || c.severity === 'high'
+        );
+        const finding = blocking[0] || contradictions[0];
+        try {
+          const res = await fetch('/api/authoring-actions/plan-contradiction-resolution', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ projectId, findingId: finding.id, finding }),
+          });
+          const data = await res.json();
+          if (data.status === 'data' || data.success) {
+            const plan = data.data;
+            const lines = [
+              `**Resolution Plan for "${finding.type || finding.contradictionType}"**`,
+              '',
+              `**Governed action:** ${plan?.governedAction || '—'}`,
+              `**Authority level:** ${plan?.authorityLevel || '—'}`,
+              `**Confidence:** ${plan?.confidence || '—'}`,
+              `**Affected objects:** ${plan?.affectedObjectCount || 0}`,
+              `**Requires human confirmation:** ${plan?.requiresHumanConfirmation ? 'Yes' : 'No'}`,
+              `**Recommended path:** ${plan?.recommendedPath || '—'}`,
+            ];
+            if (plan?.overlayApplied) {
+              lines.push(`**Overlay applied:** Yes (authority escalated)`);
+            }
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: lines.join('\n') }]);
+          } else {
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Resolution plan:** ${data.message || 'Could not create plan'}` }]);
+          }
+        } catch { handleSend('Plan resolution for the blocking contradictions.'); }
+      })();
+      return;
+    }
+
+    // ACTION 16: Project resolution status
+    if (action.intent === 'project_resolution_status') {
+      (async () => {
+        const projectId = contextProfile?.projectId;
+        if (!projectId) { handleSend('What is the resolution status of this project?'); return; }
+        try {
+          const res = await fetch(`/api/authoring-actions/project-resolution-status/${projectId}`, {
+            headers: getAuthHeaders(),
+          });
+          const data = await res.json();
+          if (data.status === 'data' || data.success) {
+            const plans = data.data?.plans;
+            const bundles = data.data?.bundles;
+            const lines = [
+              '**Project Resolution Status**',
+              '',
+              `**Plans:** ${plans?.total || 0} total — ${plans?.unresolved || 0} unresolved, ${plans?.inProgress || 0} in-progress, ${plans?.resolved || 0} resolved`,
+              `**Bundles:** ${bundles?.total || 0} total — ${bundles?.active || 0} active, ${bundles?.pendingReview || 0} pending review`,
+            ];
+            if ((plans?.unresolved || 0) > 0) {
+              lines.push('', `**${plans.unresolved} unresolved plan(s)** require attention. Use "Plan resolution" to address blockers.`);
+            } else if ((plans?.total || 0) === 0) {
+              lines.push('', 'No resolution plans found. The project has no active contradictions requiring resolution.');
+            }
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: lines.join('\n') }]);
+          } else {
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Resolution status:** ${data.message || 'Unable to retrieve'}` }]);
+          }
+        } catch { handleSend('What is the resolution status of this project?'); }
       })();
       return;
     }
