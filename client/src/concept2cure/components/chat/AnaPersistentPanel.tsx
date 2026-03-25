@@ -1733,6 +1733,13 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   // ── Full mode ──
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-white" data-testid="ana-chat-panel">
+      {/* Project context badge — shows which project this chat belongs to */}
+      {contextProfile?.activeProject && (
+        <div className="flex items-center gap-2 px-4 py-1.5 border-b border-zinc-100 bg-zinc-50/80 text-xs text-zinc-500">
+          <svg className="w-3 h-3 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>
+          <span className="font-medium text-zinc-700">{contextProfile.activeProject}</span>
+        </div>
+      )}
       {/* Conversation health bar — shows when context is heavy */}
       {messages.length > 6 && (() => {
         const tokens = estimateTokens(messages);

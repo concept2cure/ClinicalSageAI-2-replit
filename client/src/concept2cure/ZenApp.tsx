@@ -1780,6 +1780,9 @@ export const ZenApp: React.FC = () => {
           setActiveConversationId(id);
           setActiveThreadId(id);
         }}
+        onSelectProject={id => {
+          setActiveProjectId(id);
+        }}
         onNewChat={handleNewChat}
         onOpenProjects={() => setProjectSwitcherOpen(true)}
         onOpenSearch={() => setCommandPaletteOpen(true)}
