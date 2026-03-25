@@ -154,6 +154,9 @@ export class GovernanceBoundaryService {
     const database = this.getDb();
     const blockedReasons: string[] = [];
 
+    // 0. Auto-seed default rules if none exist (lazy initialization)
+    await this.ensureDefaultRules(request.organizationId);
+
     // 1. Validate transition direction
     if (request.fromBoundary === request.toBoundary) {
       blockedReasons.push(
@@ -362,6 +365,29 @@ export class GovernanceBoundaryService {
       .from(governanceBoundaryTransitions)
       .where(and(...conditions))
       .orderBy(desc(governanceBoundaryTransitions.createdAt));
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // AUTO-SEED (lazy initialization)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  private seededOrgs = new Set<number>();
+
+  /**
+   * Ensure default rules exist for the organization.
+   * Called lazily on first evaluateTransition() — idempotent.
+   */
+  private async ensureDefaultRules(organizationId: number): Promise<void> {
+    if (this.seededOrgs.has(organizationId)) return;
+    try {
+      const existing = await this.getRules(organizationId);
+      if (existing.length === 0) {
+        await this.seedDefaultRules(organizationId);
+      }
+      this.seededOrgs.add(organizationId);
+    } catch {
+      // Non-blocking — seeding failure doesn't prevent transition evaluation
+    }
   }
 
   // ─────────────────────────────────────────────────────────────────────────

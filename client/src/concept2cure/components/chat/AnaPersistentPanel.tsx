@@ -589,6 +589,36 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       });
     }
 
+    // Promotion lifecycle: approve (review → approved)
+    if (hasArtifactContext(authoringContext) && authoringContext.artifactStatus === 'review') {
+      actions.push({
+        id: 'approve-artifact',
+        label: 'Approve artifact',
+        intent: 'approve_artifact',
+        description: 'Approve after reviewer sign-off (all gates checked)',
+      });
+    }
+
+    // Promotion lifecycle: lock (approved → locked)
+    if (hasArtifactContext(authoringContext) && authoringContext.artifactStatus === 'approved') {
+      actions.push({
+        id: 'lock-artifact',
+        label: 'Lock for submission',
+        intent: 'lock_artifact',
+        description: 'Lock content — no further edits allowed',
+      });
+    }
+
+    // Promotion lifecycle: mark submission-ready (locked → submission_ready)
+    if (hasArtifactContext(authoringContext) && authoringContext.artifactStatus === 'locked') {
+      actions.push({
+        id: 'mark-submission-ready',
+        label: 'Mark submission-ready',
+        intent: 'mark_submission_ready',
+        description: 'Confirm readiness for regulatory submission (requires RA lead)',
+      });
+    }
+
     // Wave 2 actions — available in deeper authoring contexts
 
     // Action 6: Correction draft — available when section has issues
@@ -1642,6 +1672,106 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
             content: `**Promotion failed.** ${err instanceof Error ? err.message : 'Unknown error'}` }]);
         }
+      })();
+      return;
+    }
+
+    // ── Promotion Lifecycle: Approve / Lock / Submission-Ready ─────────
+
+    // APPROVE ARTIFACT (review → approved)
+    if (action.intent === 'approve_artifact') {
+      (async () => {
+        const projectId = contextProfile?.projectId;
+        const artifactId = authoringContext?.artifactId;
+        if (!projectId || !artifactId) {
+          setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+            content: '**Cannot approve.** No artifact is currently open.' }]);
+          return;
+        }
+        try {
+          const res = await fetch('/api/authoring-actions/approve-artifact', {
+            method: 'POST', headers: getAuthHeaders(),
+            body: JSON.stringify({ projectId, artifactId }),
+          });
+          const data = await res.json();
+          if (data.approved) {
+            const decisionNote = data.decisionId ? `\n**Decision:** \`${data.decisionId.slice(0, 16)}…\`` : '';
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Artifact approved.** ${data.message}${decisionNote}` }]);
+          } else {
+            const blockerLines = data.blockers?.length
+              ? '\n\n' + data.blockers.map((b: string) => `- ${b}`).join('\n')
+              : '';
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Approval ${data.reason === 'unauthorized' ? 'unauthorized' : 'blocked'}.** ${data.message}${blockerLines}` }]);
+          }
+          onRefreshIntelligence?.();
+        } catch { handleSend('Approve this artifact for the next governance stage.'); }
+      })();
+      return;
+    }
+
+    // LOCK ARTIFACT (approved → locked)
+    if (action.intent === 'lock_artifact') {
+      (async () => {
+        const projectId = contextProfile?.projectId;
+        const artifactId = authoringContext?.artifactId;
+        if (!projectId || !artifactId) {
+          setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+            content: '**Cannot lock.** No artifact is currently open.' }]);
+          return;
+        }
+        try {
+          const res = await fetch('/api/authoring-actions/lock-artifact', {
+            method: 'POST', headers: getAuthHeaders(),
+            body: JSON.stringify({ projectId, artifactId }),
+          });
+          const data = await res.json();
+          if (data.locked) {
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Artifact locked.** ${data.message} No further edits are allowed. Content is frozen for submission.` }]);
+          } else {
+            const blockerLines = data.blockers?.length
+              ? '\n\n' + data.blockers.map((b: string) => `- ${b}`).join('\n')
+              : '';
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Lock ${data.reason === 'unauthorized' ? 'unauthorized' : 'blocked'}.** ${data.message}${blockerLines}` }]);
+          }
+          onRefreshIntelligence?.();
+        } catch { handleSend('Lock this artifact for submission.'); }
+      })();
+      return;
+    }
+
+    // MARK SUBMISSION-READY (locked → submission_ready)
+    if (action.intent === 'mark_submission_ready') {
+      (async () => {
+        const projectId = contextProfile?.projectId;
+        const artifactId = authoringContext?.artifactId;
+        if (!projectId || !artifactId) {
+          setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+            content: '**Cannot mark submission-ready.** No artifact is currently open.' }]);
+          return;
+        }
+        try {
+          const res = await fetch('/api/authoring-actions/mark-submission-ready', {
+            method: 'POST', headers: getAuthHeaders(),
+            body: JSON.stringify({ projectId, artifactId }),
+          });
+          const data = await res.json();
+          if (data.submissionReady) {
+            const decisionNote = data.decisionId ? `\n**Decision:** \`${data.decisionId.slice(0, 16)}…\`` : '';
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Submission-ready.** ${data.message} Governance boundary: **${data.governanceBoundary}**${decisionNote}` }]);
+          } else {
+            const blockerLines = data.blockers?.length
+              ? '\n\n' + data.blockers.map((b: string) => `- ${b}`).join('\n')
+              : '';
+            setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', timestamp: new Date(),
+              content: `**Submission-ready ${data.reason === 'unauthorized' ? 'unauthorized — requires RA or submission lead' : 'blocked'}.** ${data.message}${blockerLines}` }]);
+          }
+          onRefreshIntelligence?.();
+        } catch { handleSend('Mark this artifact as submission-ready.'); }
       })();
       return;
     }
