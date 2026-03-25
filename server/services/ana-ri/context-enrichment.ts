@@ -166,7 +166,7 @@ async function enrichWithProjectMemory(
     }).join('\n');
 
     return `\n\n## ${label}\n${description}\n${items}`;
-  } catch {
+  } catch (e: unknown) { console.warn("[enrichment] Query failed:", e instanceof Error ? e.message : String(e));
     return '';
   }
 }
@@ -290,7 +290,7 @@ async function enrichWithClaims(projectId: string | number): Promise<string> {
 
       return `\n\n## Evidence & Claims Analysis\n**Evidence Chain Strength:** ${chain.chainStrength} | **Confidence:** ${confidence}/100\n**Factors:** ${Object.entries(factors).map(([k, v]) => `${k}: ${v}`).join(', ')}\n\n**Evidence Entries:**\n${entryLines}\n\nAnalyze the strength of evidence chains. Flag any claims with weak or missing evidence support.`;
     }
-  } catch {
+  } catch (e: unknown) { console.warn("[enrichment] Query failed:", e instanceof Error ? e.message : String(e));
     // Fall through
   }
   return enrichWithProjectMemory(
@@ -329,7 +329,7 @@ async function enrichWithSignals(projectId: string | number): Promise<string> {
       ).join('\n');
       return `\n\n## RIM Intelligence Signals (Live)\n**${signals.length} signals** accumulated for this project.\n\n${signalLines}\n\nSummarize patterns, highlight recurring risks, and note trend directions.`;
     }
-  } catch {
+  } catch (e: unknown) { console.warn("[enrichment] Query failed:", e instanceof Error ? e.message : String(e));
     // Fall through to memory
   }
   return enrichWithProjectMemory(
@@ -360,7 +360,7 @@ async function enrichWithDeficiencies(submissionType?: string): Promise<string> 
       .join('\n');
 
     return `\n\n## Deficiency Taxonomy for ${type.toUpperCase()}\n**${critical.length} critical** out of ${deficiencies.length} known deficiency patterns.\n\n**Critical Deficiencies:**\n${criticalLines}\n\n**Other Patterns:**\n${otherLines}\n\nUse these to preempt reviewer deficiency findings. Be specific about which patterns apply to the user's current work.`;
-  } catch {
+  } catch (e: unknown) { console.warn("[enrichment] Query failed:", e instanceof Error ? e.message : String(e));
     return '';
   }
 }
@@ -384,7 +384,7 @@ async function enrichWithKnowledgeSearch(query: string, projectId: string | numb
     ).join('\n');
 
     return `\n\n## Knowledge Base Search Results\n**${result.rows.length} entries** found in project knowledge.\n\n${entries}\n\nReference these knowledge atoms when answering. Cite the category and confidence level.`;
-  } catch {
+  } catch (e: unknown) { console.warn("[enrichment] Query failed:", e instanceof Error ? e.message : String(e));
     return '';
   }
 }
@@ -516,7 +516,7 @@ async function enrichWithProjectSummary(projectId: string | number, orgId?: numb
     parts.push(`\n**Documents:** ${intel.documentStats.totalIngested} ingested | ${intel.memoryEntryCount} memory atoms`);
 
     return '\n\n' + parts.join('\n') + '\n\nUse this context to personalize your responses. Reference known risks, open questions, and decisions.';
-  } catch {
+  } catch (e: unknown) { console.warn("[enrichment] Query failed:", e instanceof Error ? e.message : String(e));
     return '';
   }
 }

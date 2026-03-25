@@ -11,6 +11,7 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { apiRequest } from '@/lib/queryClient';
+import { getAuthHeaders } from '@/lib/auth-headers';
 import { useToast } from '@/hooks/use-toast';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
@@ -153,17 +154,6 @@ function useRotatingMessage(messages: string[], intervalMs: number, active: bool
     return () => clearInterval(timer);
   }, [active, messages, intervalMs]);
   return msg;
-}
-
-// ─── Auth headers for raw fetch (SSE streaming + file upload need raw fetch) ──
-
-function getAuthHeaders(): Record<string, string> {
-  const orgId = localStorage.getItem('organizationId') || localStorage.getItem('currentOrganizationId') || '1';
-  const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('auth_token') || '';
-  return {
-    'x-organization-id': orgId,
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
 }
 
 // ─── Link extraction — surface regulatory references ─────────────────────────
