@@ -288,6 +288,41 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     }
   }, [input]);
 
+  // ── Restore previous conversation from server thread ──
+  const conversationLoadedRef = useRef(false);
+  useEffect(() => {
+    if (conversationLoadedRef.current || messages.length > 0) return;
+    if (!contextProfile?.projectId) return;
+    conversationLoadedRef.current = true;
+
+    // Try to load the most recent thread for this project
+    apiRequest('GET', `/api/chat/threads?project_id=${contextProfile.projectId}&limit=1`)
+      .then(r => r.json())
+      .then(data => {
+        const thread = data?.threads?.[0] || data?.data?.[0];
+        if (!thread?.id) return;
+        threadIdRef.current = thread.id;
+
+        // Load messages from this thread
+        return apiRequest('GET', `/api/chat/threads/${thread.id}/messages?limit=30`)
+          .then(r => r.json())
+          .then(msgData => {
+            const msgs = msgData?.messages || msgData?.data || [];
+            if (msgs.length > 0) {
+              setMessages(msgs.map((m: any) => ({
+                id: m.id || `restored-${Date.now()}-${Math.random()}`,
+                role: m.role as 'user' | 'assistant',
+                content: m.content,
+                timestamp: new Date(m.created_at || m.timestamp || Date.now()),
+              })));
+            }
+          });
+      })
+      .catch(() => {
+        // Non-critical — start fresh conversation
+      });
+  }, [contextProfile?.projectId]);
+
   // ── Initial message ──
   useEffect(() => {
     if (initialMessage && !initialMessageSentRef.current) {
@@ -1328,6 +1363,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               { cmd: '/simulate', desc: 'Simulate reviewer challenges' },
               { cmd: '/signals', desc: 'Show RIM intelligence signals' },
               { cmd: '/assess', desc: 'Full project assessment (readiness + risks + actions)' },
+              { cmd: '/twin', desc: 'Submission twin — claims, evidence, reviewer simulation' },
+              { cmd: '/consistency', desc: 'Cross-module consistency analysis' },
               { cmd: '/draft', desc: 'Draft current section' },
               { cmd: '/preflight', desc: 'Run section preflight' },
               { cmd: '/export', desc: 'Export this conversation' },

@@ -19,6 +19,8 @@ import { generateRecommendations, type RecommendationContext } from '../intellig
 import { generateNextActions } from '../intelligence/next-best-action-engine.js';
 import { getProjectSignals } from '../intelligence/rim.js';
 import { getProjectIntelligence } from '../intelligence/project-intelligence-service.js';
+import { analyzeCrossModuleRelationships } from '../intelligence/cross-module-intelligence.js';
+import { buildEvidenceChain, computeConfidence, analyzeFactors, type EvidenceSource } from '../intelligence/evidence-confidence-model.js';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -37,7 +39,7 @@ interface SlashCommand {
 }
 
 function detectSlashCommand(message: string): SlashCommand | null {
-  const match = message.match(/^\/(risk|readiness|precedent|draft|preflight|claims|recommend|next|simulate|signals|export|assess)\b\s*(.*)/i);
+  const match = message.match(/^\/(risk|readiness|precedent|draft|preflight|claims|recommend|next|simulate|signals|export|assess|twin|consistency)\b\s*(.*)/i);
   if (!match) return null;
   return { command: match[1].toLowerCase(), args: match[2].trim() };
 }
@@ -212,6 +214,40 @@ async function enrichWithRecommendations(projectId: string | number, orgId?: num
 }
 
 async function enrichWithClaims(projectId: string | number): Promise<string> {
+  // Try to build evidence chains from stored memory
+  try {
+    const result = await pool.query(
+      `SELECT content, title, confidence, category
+       FROM project_memory_entries
+       WHERE project_id = $1 AND category IN ('evidence_assessment', 'claim_evidence_map', 'evidence_gap')
+       ORDER BY importance DESC, created_at DESC
+       LIMIT $2`,
+      [projectId, 8]
+    );
+
+    if (result.rows.length > 0) {
+      // Build evidence sources from memory entries
+      const sources: EvidenceSource[] = result.rows.map((r: any) => ({
+        sourceType: r.category === 'evidence_gap' ? 'ai_analysis' as const : 'document_state' as const,
+        sourceId: `mem-${r.title || 'unknown'}`,
+        sourceTitle: r.title || 'Evidence entry',
+        relevance: r.confidence || 0.5,
+        extractedValue: r.content?.slice(0, 200),
+      }));
+
+      const chain = buildEvidenceChain(sources);
+      const confidence = computeConfidence(sources);
+      const factors = analyzeFactors(sources);
+
+      const entryLines = result.rows.map((r: any) =>
+        `- **${r.title || r.category}** [${r.confidence ? Math.round(r.confidence * 100) + '%' : '—'}]: ${r.content?.slice(0, 300)}`
+      ).join('\n');
+
+      return `\n\n## Evidence & Claims Analysis\n**Evidence Chain Strength:** ${chain.chainStrength} | **Confidence:** ${confidence}/100\n**Factors:** ${Object.entries(factors).map(([k, v]) => `${k}: ${v}`).join(', ')}\n\n**Evidence Entries:**\n${entryLines}\n\nAnalyze the strength of evidence chains. Flag any claims with weak or missing evidence support.`;
+    }
+  } catch {
+    // Fall through
+  }
   return enrichWithProjectMemory(
     projectId,
     ['evidence_assessment', 'claim_evidence_map', 'evidence_gap'],
@@ -219,6 +255,23 @@ async function enrichWithClaims(projectId: string | number): Promise<string> {
     'Evidence chain data and claim-to-evidence mapping. Flag any unsupported claims.',
     5
   );
+}
+
+async function enrichWithCrossModule(projectId: string | number, orgId?: number): Promise<string> {
+  if (!orgId) return '';
+  try {
+    const report = await analyzeCrossModuleRelationships({ organizationId: orgId, projectId: Number(projectId) });
+    if (!report || report.insights.length === 0) return '';
+
+    const insightLines = report.insights.slice(0, 8).map((i: any) =>
+      `- **[${i.severity || i.type || 'info'}]** ${i.description || i.message || String(i)}${i.affectedModules ? ` (${i.affectedModules.join(', ')})` : ''}`
+    ).join('\n');
+
+    return `\n\n## Cross-Module Consistency Report (Live)\n**${report.insights.length} insights** across ${report.documentsCovered || '—'} documents.\n\n${insightLines}\n\nHighlight stale references, status gaps, and orphaned documents. Be specific about which modules are affected.`;
+  } catch (e: any) {
+    console.warn('[enrichment] Cross-module analysis failed:', e?.message);
+    return '';
+  }
 }
 
 async function enrichWithSignals(projectId: string | number): Promise<string> {
@@ -332,6 +385,12 @@ export async function enrichContextForChat(params: {
         enrichWithSignals(projectId),
         enrichWithForesight(projectId),
       ]).then(r => r.join('')),
+      twin: () => Promise.all([
+        enrichWithClaims(projectId),
+        enrichWithCRLRTF(projectId),
+        enrichWithReadiness(projectId, organizationId),
+      ]).then(r => r.join('')),
+      consistency: () => enrichWithCrossModule(projectId, organizationId),
     };
 
     const enrichFn = enrichMap[slash.command];
@@ -356,6 +415,8 @@ export async function enrichContextForChat(params: {
       simulate: 'Simulate likely reviewer challenges and questions.',
       signals: 'Show me all accumulated regulatory intelligence signals.',
       assess: 'Run a comprehensive assessment of this project: readiness score, top recommendations, risk signals, and predictions. Give me the full picture.',
+      twin: 'Run a submission twin analysis: evaluate claims vs evidence integrity, identify unsupported claims, simulate reviewer challenges, and assess submission fragility.',
+      consistency: 'Analyze cross-module consistency: find stale references, status gaps, orphaned documents, and module dependency issues across the entire dossier.',
       export: 'Export this conversation.',
     };
 
