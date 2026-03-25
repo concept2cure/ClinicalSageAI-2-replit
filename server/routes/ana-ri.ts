@@ -48,6 +48,9 @@ import {
   recordKernelPolicyOutcome,
 } from '../services/kernel-adaptive-policy.js';
 import { buildGoalPlan, replanGoalPlan } from '../services/kernel-goal-planner.js';
+import { buildMemoryContextForChat } from '../services/memory-context-assembler.js';
+import { getIntelligencePrefix } from '../services/lumen-context-builder.js';
+import { interceptChatResponse } from '../services/intelligence/rim-interceptors.js';
 
 const router = Router();
 
@@ -474,8 +477,26 @@ router.post('/stream', async (req: Request, res: Response) => {
       orchestration.systemPrompt += `\n\n## Current Authoring Context\n${authoringContextBlock}`;
     }
 
+    // Inject intelligence prefix (client/project knowledge)
+    const intelligencePrefix = await getIntelligencePrefix(
+      orgId ? Number(orgId) : undefined,
+      project_id
+    ).catch(() => '');
+
+    // Inject 3-layer memory context (working + project + client memory)
+    const { memoryBlock } = await buildMemoryContextForChat({
+      threadId: thread_id || undefined,
+      organizationId: orgId ? Number(orgId) : undefined,
+      projectId: project_id || undefined,
+      query: message,
+      limitPerLayer: 4,
+      maxChars: 3500,
+    }).catch(() => ({ memoryBlock: '', atoms: [], diagnostics: null }));
+
+    const fullSystemPrompt = intelligencePrefix + orchestration.systemPrompt + memoryBlock;
+
     // Build messages
-    const messages: GatewayMessage[] = [{ role: 'system', content: orchestration.systemPrompt }];
+    const messages: GatewayMessage[] = [{ role: 'system', content: fullSystemPrompt }];
 
     if (conversation_history && Array.isArray(conversation_history)) {
       for (const msg of conversation_history.slice(-20)) {
@@ -555,6 +576,18 @@ router.post('/stream', async (req: Request, res: Response) => {
       } catch (e: any) {
         console.error('[AnA RI Stream] Assistant persist failed:', e?.message);
       }
+    }
+
+    // RIM interception — capture intelligence signals (non-blocking)
+    if (fullContent && project_id) {
+      void interceptChatResponse({
+        projectId: String(project_id),
+        organizationId: orgId ? Number(orgId) : undefined,
+        threadId: threadId || undefined,
+        userMessage: message,
+        assistantMessage: fullContent,
+        submissionType: orchestration.detectedSubmissionType || undefined,
+      }).catch(() => {});
     }
 
     // Send done event

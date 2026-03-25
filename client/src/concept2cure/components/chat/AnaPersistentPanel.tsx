@@ -27,6 +27,8 @@ import {
   Image as ImageIcon,
   Download,
   Square,
+  Paperclip,
+  X,
 } from 'lucide-react';
 
 marked.setOptions({ breaks: true, gfm: true });
@@ -47,6 +49,34 @@ const renderMarkdown = (content: string): string => {
     return content.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 };
+
+// ─── Link extraction — surface regulatory references ─────────────────────────
+
+function extractLinks(content: string): Array<{ url: string; label: string }> {
+  const urlRegex = /https?:\/\/[^\s)<>\]]+/g;
+  const seen = new Set<string>();
+  const links: Array<{ url: string; label: string }> = [];
+  let match;
+  while ((match = urlRegex.exec(content)) !== null) {
+    const url = match[0].replace(/[.,;:!?)]+$/, ''); // trim trailing punctuation
+    if (seen.has(url)) continue;
+    seen.add(url);
+    // Generate short label from domain
+    try {
+      const domain = new URL(url).hostname.replace('www.', '');
+      links.push({ url, label: domain });
+    } catch {
+      links.push({ url, label: url.slice(0, 40) });
+    }
+  }
+  return links.slice(0, 5);
+}
+
+// ─── Estimate token count for health monitoring ──────────────────────────────
+
+function estimateTokens(messages: Array<{ content: string }>): number {
+  return messages.reduce((sum, m) => sum + Math.ceil(m.content.length / 4), 0);
+}
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -136,6 +166,8 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   const [showModeDropdown, setShowModeDropdown] = useState(false);
   const [hoveredMsgId, setHoveredMsgId] = useState<string | null>(null);
   const [intentLens, setIntentLens] = useState<'auto' | 'audit' | 'improve' | 'risk' | 'strategy' | 'compare'>('auto');
+  const [attachedFiles, setAttachedFiles] = useState<Array<{ name: string; id: string }>>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const modeDropdownRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -576,6 +608,29 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     setTimeout(() => setCopiedId(null), 2000);
   };
 
+  const handleFileUpload = useCallback(async (files: FileList) => {
+    for (const file of Array.from(files)) {
+      const formData = new FormData();
+      formData.append('file', file);
+      try {
+        const res = await fetch('/api/chat/upload', {
+          method: 'POST',
+          credentials: 'include',
+          body: formData,
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setAttachedFiles(prev => [...prev, { name: file.name, id: data.fileId || data.id || file.name }]);
+          toast({ title: 'File attached', description: file.name });
+        } else {
+          toast({ title: 'Upload failed', description: `Could not upload ${file.name}`, variant: 'destructive' });
+        }
+      } catch {
+        toast({ title: 'Upload failed', description: `Could not upload ${file.name}`, variant: 'destructive' });
+      }
+    }
+  }, [toast]);
+
   const handleSuggestedAction = (action: SuggestedAction) => {
     if (action.intent && onActionRun) {
       onActionRun({ id: action.id, intent: action.intent, label: action.label, status: 'running', ts: Date.now() });
@@ -877,6 +932,27 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   {msg.pptx.filename}
                 </button>
               )}
+              {/* Extracted links — surface regulatory references */}
+              {!msg.isStreaming && msg.content && (() => {
+                const links = extractLinks(msg.content);
+                if (links.length === 0) return null;
+                return (
+                  <div className="flex flex-wrap gap-1.5 mt-3">
+                    {links.map((link, i) => (
+                      <a
+                        key={i}
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                      >
+                        {link.label}
+                        <span className="text-blue-400">↗</span>
+                      </a>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
           )}
 
@@ -963,6 +1039,25 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             <RotateCcw className="w-3 h-3" />
             New conversation
           </button>
+        </div>
+      )}
+
+      {/* Attached file pills */}
+      {attachedFiles.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {attachedFiles.map((f, i) => (
+            <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded-full bg-zinc-100 text-zinc-600 border border-zinc-200">
+              <Paperclip className="w-3 h-3" />
+              {f.name}
+              <button
+                onClick={() => setAttachedFiles(prev => prev.filter((_, j) => j !== i))}
+                className="text-zinc-400 hover:text-zinc-600"
+                aria-label={`Remove ${f.name}`}
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          ))}
         </div>
       )}
 
@@ -1089,6 +1184,25 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           data-testid="ana-chat-input"
         />
 
+        {/* File upload */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          className="hidden"
+          accept=".pdf,.doc,.docx,.txt,.csv,.xlsx"
+          multiple
+          onChange={(e) => { if (e.target.files?.length) handleFileUpload(e.target.files); e.target.value = ''; }}
+        />
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="flex-shrink-0 self-center p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-md transition-colors"
+          aria-label="Attach file"
+          title="Attach file (PDF, DOC, TXT, CSV, XLSX)"
+        >
+          <Paperclip className="w-4 h-4" />
+        </button>
+
         {/* Send or Stop button */}
         {isStreaming ? (
           <button
@@ -1136,6 +1250,28 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
   // ── Full mode ──
   return (
     <div className="flex-1 flex flex-col min-h-0 bg-white" data-testid="ana-chat-panel">
+      {/* Conversation health bar — shows when context is heavy */}
+      {messages.length > 6 && (() => {
+        const tokens = estimateTokens(messages);
+        const tokensK = (tokens / 1000).toFixed(1);
+        const isHeavy = tokens > 8000;
+        const isDegrading = tokens > 16000;
+        if (!isHeavy) return null;
+        return (
+          <div className={cn(
+            'flex items-center justify-between px-4 py-1.5 text-[11px] border-b',
+            isDegrading ? 'bg-orange-50 border-orange-200 text-orange-700' : 'bg-amber-50 border-amber-200 text-amber-700'
+          )}>
+            <span>{isDegrading ? 'Long conversation — responses may lose earlier context' : `~${tokensK}K tokens — consider starting a new thread for best results`}</span>
+            <button
+              onClick={() => { setMessages([]); threadIdRef.current = null; }}
+              className="font-medium hover:underline"
+            >
+              New conversation
+            </button>
+          </div>
+        );
+      })()}
       {/* Conversation area */}
       <div
         className="flex-1 overflow-y-auto"
