@@ -183,7 +183,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
 
             {/* Actions */}
             {!isEditing && (
-              <div className="mt-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="mt-2 flex items-center gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
