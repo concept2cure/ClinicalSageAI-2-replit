@@ -19,6 +19,19 @@ import { tagArtifact, type TagArtifactResult } from '../artifact-tagger.js';
 import { logGeneration } from './enforcement.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Backend service imports — wiring AnA to the full platform
+// ─────────────────────────────────────────────────────────────────────────────
+import { precedentEngine } from '../precedent-engine.js';
+import { submissionTwinService } from '../submission-twin-service.js';
+import { contradictionEngineService } from '../contradiction-engine-service.js';
+import { crossJurisdictionalEngine } from '../cross-jurisdictional-intelligence.js';
+import { getEndpointRecommenderService } from '../endpoint-recommender-service.js';
+import { runRIMAssessment, type RIMContext } from '../intelligence/rim.js';
+import { buildEvidenceChain, computeConfidence, type EvidenceSource } from '../intelligence/evidence-confidence-model.js';
+import { intelligentReportEngine } from '../intelligent-report-engine.js';
+import { clinicalIntelligenceService } from '../clinical-intelligence-service.js';
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -1800,7 +1813,419 @@ export async function submitDocument(ctx: CommandContext, params: any): Promise<
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 18. COMMAND REGISTRY
+// 19. PRECEDENT ENGINE COMMANDS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Search regulatory precedents by indication, submission type, or therapeutic area */
+export async function searchPrecedents(ctx: CommandContext, params: any): Promise<CommandResult> {
+  try {
+    const results = await precedentEngine.search({
+      submissionType: params.submissionType,
+      indication: params.indication,
+      therapeuticArea: params.therapeuticArea,
+      query: params.query,
+      limit: params.limit || 10,
+    }, ctx.organizationId);
+    return {
+      success: true, action: 'search_precedents',
+      data: { precedents: results, count: results.length },
+      message: `Found ${results.length} regulatory precedent(s) matching your search.`,
+    };
+  } catch (err: any) {
+    return { success: false, action: 'search_precedents', message: 'Precedent search failed.', error: err?.message };
+  }
+}
+
+/** Analyze CRL (Complete Response Letter) trigger risks */
+export async function analyzeCRLTriggers(ctx: CommandContext, params: any): Promise<CommandResult> {
+  try {
+    const result = await precedentEngine.analyzeCRLTriggers({
+      submissionType: params.submissionType || 'NDA',
+      indication: params.indication,
+      therapeuticArea: params.therapeuticArea,
+      query: params.query,
+    });
+    return {
+      success: true, action: 'analyze_crl_triggers',
+      data: { analysis: result },
+      message: `CRL trigger analysis complete. Identified risk factors based on regulatory precedents.`,
+    };
+  } catch (err: any) {
+    return { success: false, action: 'analyze_crl_triggers', message: 'CRL trigger analysis failed.', error: err?.message };
+  }
+}
+
+/** Analyze RTF (Refuse to File) trigger risks */
+export async function analyzeRTFTriggers(ctx: CommandContext, params: any): Promise<CommandResult> {
+  try {
+    const result = await precedentEngine.analyzeRTFTriggers({
+      submissionType: params.submissionType || 'NDA',
+      indication: params.indication,
+      therapeuticArea: params.therapeuticArea,
+      query: params.query,
+    });
+    return {
+      success: true, action: 'analyze_rtf_triggers',
+      data: { analysis: result },
+      message: `RTF trigger analysis complete. Identified filing risk factors.`,
+    };
+  } catch (err: any) {
+    return { success: false, action: 'analyze_rtf_triggers', message: 'RTF trigger analysis failed.', error: err?.message };
+  }
+}
+
+/** Recommend regulatory submission strategy based on precedents */
+export async function recommendStrategy(ctx: CommandContext, params: any): Promise<CommandResult> {
+  try {
+    const result = await precedentEngine.recommendStrategy({
+      submissionType: params.submissionType,
+      indication: params.indication,
+      therapeuticArea: params.therapeuticArea,
+      query: params.query,
+    });
+    return {
+      success: true, action: 'recommend_strategy',
+      data: { strategy: result },
+      message: `Strategy recommendation generated based on regulatory precedent analysis.`,
+    };
+  } catch (err: any) {
+    return { success: false, action: 'recommend_strategy', message: 'Strategy recommendation failed.', error: err?.message };
+  }
+}
+
+/** Check a regulatory claim against precedent evidence */
+export async function checkClaim(ctx: CommandContext, params: any): Promise<CommandResult> {
+  try {
+    if (!params.claim) return { success: false, action: 'check_claim', message: 'claim text is required.' };
+    const result = await precedentEngine.checkClaim(params.claim, {
+      submissionType: params.submissionType,
+      therapeuticArea: params.therapeuticArea,
+      indication: params.indication,
+    });
+    return {
+      success: true, action: 'check_claim',
+      data: { claimCheck: result },
+      message: `Claim checked against regulatory precedents. Assessment complete.`,
+    };
+  } catch (err: any) {
+    return { success: false, action: 'check_claim', message: 'Claim check failed.', error: err?.message };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 20. SUBMISSION TWIN COMMANDS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Run full submission twin assessment (claims, evidence, drift, challenges, readiness) */
+export async function runSubmissionAssessment(ctx: CommandContext, params: any): Promise<CommandResult> {
+  try {
+    const packageId = params.packageId;
+    if (!packageId) return { success: false, action: 'run_submission_assessment', message: 'packageId is required.' };
+    const result = await submissionTwinService.runFullAssessment(packageId, ctx.organizationId, ctx.userId);
+    return {
+      success: true, action: 'run_submission_assessment',
+      data: { assessment: result },
+      message: `Full submission twin assessment complete for package ${packageId}. ${result.claims?.length ?? 0} claim(s), ${result.driftAlerts?.length ?? 0} drift alert(s), ${result.challenges?.length ?? 0} challenge(s), ${result.weakZones?.length ?? 0} weak zone(s).`,
+    };
+  } catch (err: any) {
+    return { success: false, action: 'run_submission_assessment', message: 'Submission assessment failed.', error: err?.message };
+  }
+}
+
+/** Simulate regulatory reviewer challenges on a submission */
+export async function simulateChallenges(ctx: CommandContext, params: any): Promise<CommandResult> {
+  try {
+    const packageId = params.packageId;
+    const assessmentId = params.assessmentId;
+    if (!packageId) return { success: false, action: 'simulate_challenges', message: 'packageId is required.' };
+    if (!assessmentId) return { success: false, action: 'simulate_challenges', message: 'assessmentId is required. Run run_submission_assessment first.' };
+    const lenses = params.lenses || ['clinical', 'statistical', 'cmc', 'safety'];
+    const challenges = await submissionTwinService.simulateChallenges(packageId, ctx.organizationId, assessmentId, lenses);
+    return {
+      success: true, action: 'simulate_challenges',
+      data: { challenges, count: challenges.length },
+      message: `Simulated ${challenges.length} potential reviewer challenge(s) across ${lenses.join(', ')} lenses.`,
+    };
+  } catch (err: any) {
+    return { success: false, action: 'simulate_challenges', message: 'Challenge simulation failed.', error: err?.message };
+  }
+}
+
+/** Detect narrative drift in a submission package */
+export async function detectDrift(ctx: CommandContext, params: any): Promise<CommandResult> {
+  try {
+    const packageId = params.packageId;
+    if (!packageId) return { success: false, action: 'detect_drift', message: 'packageId is required.' };
+    const drifts = await submissionTwinService.detectDrift(packageId, ctx.organizationId);
+    return {
+      success: true, action: 'detect_drift',
+      data: { drifts, count: drifts.length },
+      message: drifts.length > 0
+        ? `Detected ${drifts.length} narrative drift(s) in the submission package. Review recommended.`
+        : `No narrative drift detected. Submission narrative is consistent.`,
+    };
+  } catch (err: any) {
+    return { success: false, action: 'detect_drift', message: 'Drift detection failed.', error: err?.message };
+  }
+}
+
+/** Predict next best artifact to work on */
+export async function predictNextArtifact(ctx: CommandContext, params: any): Promise<CommandResult> {
+  try {
+    const packageId = params.packageId;
+    if (!packageId) return { success: false, action: 'predict_next_artifact', message: 'packageId is required.' };
+    const prediction = await submissionTwinService.predictNextBestArtifact(packageId, ctx.organizationId);
+    return {
+      success: true, action: 'predict_next_artifact',
+      data: { prediction },
+      message: `Next best artifact prediction generated. Focus on what maximizes submission readiness.`,
+    };
+  } catch (err: any) {
+    return { success: false, action: 'predict_next_artifact', message: 'Prediction failed.', error: err?.message };
+  }
+}
+
+/** Compute submission readiness and fragility scores */
+export async function computeReadiness(ctx: CommandContext, params: any): Promise<CommandResult> {
+  try {
+    const packageId = params.packageId;
+    if (!packageId) return { success: false, action: 'compute_readiness', message: 'packageId is required.' };
+    const result = await submissionTwinService.computeReadinessAndFragility(packageId, ctx.organizationId);
+    return {
+      success: true, action: 'compute_readiness',
+      data: { readinessScore: result.readinessScore, fragilityScore: result.fragilityScore, weakZones: result.weakZones },
+      message: `Readiness: ${result.readinessScore}% | Fragility: ${result.fragilityScore}% | ${result.weakZones.length} weak zone(s) identified.`,
+    };
+  } catch (err: any) {
+    return { success: false, action: 'compute_readiness', message: 'Readiness computation failed.', error: err?.message };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 21. CONTRADICTION ENGINE COMMANDS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Scan a project for cross-artifact contradictions */
+export async function scanContradictions(ctx: CommandContext, params: any): Promise<CommandResult> {
+  try {
+    const projectId = params.projectId || ctx.activeProjectId;
+    if (!projectId) return { success: false, action: 'scan_contradictions', message: 'projectId is required.' };
+    const result = await contradictionEngineService.scanProject(ctx.organizationId, projectId);
+    const { findings, summary } = result;
+    const criticalCount = (summary.bySeverity['critical'] || 0) + (summary.bySeverity['high'] || 0);
+    return {
+      success: true, action: 'scan_contradictions',
+      data: { findings, summary, totalCount: summary.total, criticalCount },
+      message: `Found ${summary.total} contradiction(s): ${criticalCount} critical/high severity. ${summary.total === 0 ? 'Documents are internally consistent.' : 'Review recommended.'}`,
+    };
+  } catch (err: any) {
+    return { success: false, action: 'scan_contradictions', message: 'Contradiction scan failed.', error: err?.message };
+  }
+}
+
+/** Check if contradictions block promotion of an artifact */
+export async function checkPromotionBlockers(ctx: CommandContext, params: any): Promise<CommandResult> {
+  try {
+    const artifactId = params.artifactId;
+    if (!artifactId) return { success: false, action: 'check_promotion_blockers', message: 'artifactId is required.' };
+    const projectId = params.projectId || ctx.activeProjectId || 0;
+    const result = await contradictionEngineService.checkPromotionBlocked(ctx.organizationId, projectId, artifactId);
+    const blocked = result.blocked;
+    return {
+      success: true, action: 'check_promotion_blockers',
+      data: { blocked, artifactId },
+      message: blocked
+        ? `Promotion BLOCKED for artifact ${artifactId}. Unresolved contradictions must be resolved first.`
+        : `Artifact ${artifactId} is clear for promotion. No blocking contradictions found.`,
+    };
+  } catch (err: any) {
+    return { success: false, action: 'check_promotion_blockers', message: 'Promotion check failed.', error: err?.message };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 22. CROSS-JURISDICTIONAL INTELLIGENCE
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Analyze cross-jurisdictional regulatory divergences and harmonization strategies */
+export async function analyzeJurisdictions(ctx: CommandContext, params: any): Promise<CommandResult> {
+  try {
+    const targetAgencies = params.targetAgencies || params.agencies || ['FDA', 'EMA'];
+    const result = await crossJurisdictionalEngine.analyze({
+      submissionType: params.submissionType || 'NDA',
+      therapeuticArea: params.therapeuticArea,
+      targetAgencies,
+      productType: params.productType,
+    });
+    return {
+      success: true, action: 'analyze_jurisdictions',
+      data: {
+        divergences: result.divergences,
+        reliancePathways: result.reliancePathways,
+        filingSequences: result.filingSequences,
+        harmonizationFrameworks: result.harmonizationFrameworks,
+        summary: result.summary,
+      },
+      message: `Cross-jurisdictional analysis complete for ${targetAgencies.join(', ')}. ${result.divergences?.length || 0} divergence(s), ${result.reliancePathways?.length || 0} reliance pathway(s), ${result.filingSequences?.length || 0} filing sequence option(s).`,
+    };
+  } catch (err: any) {
+    return { success: false, action: 'analyze_jurisdictions', message: 'Jurisdictional analysis failed.', error: err?.message };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 23. ENDPOINT RECOMMENDER
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Recommend clinical trial endpoints for an indication */
+export async function recommendEndpoints(ctx: CommandContext, params: any): Promise<CommandResult> {
+  try {
+    if (!params.indication) return { success: false, action: 'recommend_endpoints', message: 'indication is required.' };
+    const service = getEndpointRecommenderService();
+    const recommendations = await service.getComprehensiveEndpointRecommendations(
+      params.indication,
+      params.phase,
+      params.count || 10,
+      params.therapeuticArea,
+    );
+    return {
+      success: true, action: 'recommend_endpoints',
+      data: { recommendations, count: recommendations.length },
+      message: `Generated ${recommendations.length} endpoint recommendation(s) for ${params.indication}${params.phase ? ` (Phase ${params.phase})` : ''}.`,
+    };
+  } catch (err: any) {
+    return { success: false, action: 'recommend_endpoints', message: 'Endpoint recommendation failed.', error: err?.message };
+  }
+}
+
+/** Evaluate a specific endpoint for an indication */
+export async function evaluateEndpoint(ctx: CommandContext, params: any): Promise<CommandResult> {
+  try {
+    if (!params.endpoint || !params.indication) {
+      return { success: false, action: 'evaluate_endpoint', message: 'endpoint and indication are required.' };
+    }
+    const service = getEndpointRecommenderService();
+    const evaluation = await service.evaluateEndpoint(params.endpoint, params.indication, params.phase);
+    return {
+      success: true, action: 'evaluate_endpoint',
+      data: { evaluation },
+      message: `Endpoint "${params.endpoint}" scored ${evaluation.score}/100 for ${params.indication}. ${evaluation.feedback}`,
+    };
+  } catch (err: any) {
+    return { success: false, action: 'evaluate_endpoint', message: 'Endpoint evaluation failed.', error: err?.message };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 24. RIM INTELLIGENCE COMMANDS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Run a full RIM (Regulatory Intelligence Model) assessment on content */
+export async function runRIMScan(ctx: CommandContext, params: any): Promise<CommandResult> {
+  try {
+    const projectId = params.projectId || ctx.activeProjectId;
+    if (!projectId) return { success: false, action: 'run_rim_scan', message: 'projectId is required.' };
+    const rimCtx: RIMContext = {
+      organizationId: ctx.organizationId,
+      projectId,
+      userId: ctx.userId,
+      sectionCode: params.sectionCode,
+      submissionType: params.submissionType,
+      targetAgency: params.targetAgency,
+      textToScan: params.text || params.content,
+      artifactId: params.artifactId,
+      artifactVersionId: params.versionId,
+    };
+    const assessment = await runRIMAssessment(rimCtx);
+    return {
+      success: true, action: 'run_rim_scan',
+      data: {
+        rimScore: assessment.rimScore,
+        judgment: assessment.judgment,
+        patternMatchCount: assessment.patternMatches?.length || 0,
+        topActions: assessment.topActions,
+        signalSummary: assessment.signalSummary,
+        runStatus: assessment.run.status,
+        verdict: assessment.rimVerdict,
+      },
+      message: `RIM assessment complete. Score: ${assessment.rimScore ?? 'N/A'}/100 — ${assessment.rimVerdict}. ${assessment.patternMatches?.length || 0} pattern(s) detected. ${assessment.topActions?.length || 0} recommended action(s).`,
+    };
+  } catch (err: any) {
+    return { success: false, action: 'run_rim_scan', message: 'RIM assessment failed.', error: err?.message };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 25. INTELLIGENT REPORT ENGINE
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Generate a regulatory report (sealed, audited, 21 CFR Part 11 compliant) */
+export async function generateReport(ctx: CommandContext, params: any): Promise<CommandResult> {
+  try {
+    if (!params.domain || !params.title) {
+      return { success: false, action: 'generate_report', message: 'domain and title are required.' };
+    }
+    const projectId = params.projectId || ctx.activeProjectId;
+    const report = await (intelligentReportEngine as any).generateReport({
+      organizationId: ctx.organizationId,
+      projectId,
+      domain: params.domain,
+      title: params.title,
+      targetRegulatory: params.targetRegulatory || 'FDA',
+      userId: ctx.userId,
+      parameters: params.parameters || {},
+    });
+    return {
+      success: true, action: 'generate_report',
+      data: { reportId: report?.record?.id, verificationCode: report?.verificationCode, title: params.title },
+      message: `Report "${params.title}" generated (domain: ${params.domain}). Cryptographically sealed with verification code.`,
+    };
+  } catch (err: any) {
+    return { success: false, action: 'generate_report', message: 'Report generation failed.', error: err?.message };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 26. CLINICAL INTELLIGENCE
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Generate clinical trial insights for an indication and phase */
+export async function generateClinicalInsights(ctx: CommandContext, params: any): Promise<CommandResult> {
+  try {
+    if (!params.indication) return { success: false, action: 'generate_clinical_insights', message: 'indication is required.' };
+    const insights = await clinicalIntelligenceService.generateClinicalTrialInsights(params.indication, params.phase || 'Phase 2');
+    return {
+      success: true, action: 'generate_clinical_insights',
+      data: { insights },
+      message: `Clinical trial insights generated for ${params.indication} (${params.phase || 'Phase 2'}).`,
+    };
+  } catch (err: any) {
+    return { success: false, action: 'generate_clinical_insights', message: 'Clinical insights generation failed.', error: err?.message };
+  }
+}
+
+/** Perform cross-document semantic analysis */
+export async function analyzeCrossDocument(ctx: CommandContext, params: any): Promise<CommandResult> {
+  try {
+    const documentIds = params.documentIds;
+    if (!documentIds || !Array.isArray(documentIds) || documentIds.length < 2) {
+      return { success: false, action: 'analyze_cross_document', message: 'documentIds array (minimum 2) is required.' };
+    }
+    const result = await clinicalIntelligenceService.performCrossDocumentAnalysis(
+      documentIds, params.documentType || 'CSR'
+    );
+    return {
+      success: true, action: 'analyze_cross_document',
+      data: { analysis: result },
+      message: `Cross-document analysis complete across ${documentIds.length} documents.`,
+    };
+  } catch (err: any) {
+    return { success: false, action: 'analyze_cross_document', message: 'Cross-document analysis failed.', error: err?.message };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 27. COMMAND REGISTRY
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type CommandName =
@@ -1820,7 +2245,25 @@ export type CommandName =
   | 'assess_defensibility' | 'design_trial'
   | 'draft_section' | 'scan_deficiencies' | 'freeze_document'
   | 'sign_document' | 'export_document' | 'generate_checklist'
-  | 'submit_document';
+  | 'submit_document'
+  // Precedent Engine
+  | 'search_precedents' | 'analyze_crl_triggers' | 'analyze_rtf_triggers'
+  | 'recommend_strategy' | 'check_claim'
+  // Submission Twin
+  | 'run_submission_assessment' | 'simulate_challenges' | 'detect_drift'
+  | 'predict_next_artifact' | 'compute_readiness'
+  // Contradiction Engine
+  | 'scan_contradictions' | 'check_promotion_blockers'
+  // Cross-Jurisdictional
+  | 'analyze_jurisdictions'
+  // Endpoint Recommender
+  | 'recommend_endpoints' | 'evaluate_endpoint'
+  // RIM Intelligence
+  | 'run_rim_scan'
+  // Report Engine
+  | 'generate_report'
+  // Clinical Intelligence
+  | 'generate_clinical_insights' | 'analyze_cross_document';
 
 export interface CommandDefinition {
   name: CommandName;
@@ -1870,6 +2313,41 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
   { name: 'export_document', description: 'Export document as PDF or DOCX', parameters: 'docId, format (pdf/docx)', example: '"Export the Clinical Overview as a Word document"' },
   { name: 'generate_checklist', description: 'Generate regulatory compliance checklist for a document', parameters: 'docId', example: '"Generate a compliance checklist for the CMC module"' },
   { name: 'submit_document', description: 'Submit document to regulatory workflow', parameters: 'docId', example: '"Submit the IND cover letter"' },
+
+  // ── Precedent Engine ──────────────────────────────────────────────────────
+  { name: 'search_precedents', description: 'Search regulatory precedents by indication, submission type, or therapeutic area', parameters: 'query?, indication?, submissionType?, therapeuticArea?, limit?', example: '"Find precedents for oncology NDA submissions"' },
+  { name: 'analyze_crl_triggers', description: 'Analyze Complete Response Letter (CRL) trigger risks based on regulatory precedents', parameters: 'submissionType?, indication?, therapeuticArea?, query?', example: '"What CRL risks does our NDA face?"' },
+  { name: 'analyze_rtf_triggers', description: 'Analyze Refuse to File (RTF) trigger risks', parameters: 'submissionType?, indication?, therapeuticArea?, query?', example: '"Check RTF risks for our submission"' },
+  { name: 'recommend_strategy', description: 'Recommend regulatory submission strategy based on precedent analysis', parameters: 'submissionType?, indication?, therapeuticArea?, query?', example: '"What submission strategy should we use for this oncology compound?"' },
+  { name: 'check_claim', description: 'Check a specific regulatory claim against precedent evidence', parameters: 'claim, submissionType?, indication?, therapeuticArea?', example: '"Is the claim that our drug shows superior efficacy defensible?"' },
+
+  // ── Submission Twin ───────────────────────────────────────────────────────
+  { name: 'run_submission_assessment', description: 'Run a full submission twin assessment (claims, evidence integrity, drift, challenges, readiness, fragility)', parameters: 'packageId', example: '"Run a full assessment on submission package 3"' },
+  { name: 'simulate_challenges', description: 'Simulate regulatory reviewer challenges on a submission package', parameters: 'packageId, assessmentId, lenses? (clinical/statistical/cmc/safety)', example: '"Simulate reviewer challenges for package 3 from a clinical and statistical lens"' },
+  { name: 'detect_drift', description: 'Detect narrative drift (inconsistencies across documents) in a submission package', parameters: 'packageId', example: '"Check if our submission has any narrative drift"' },
+  { name: 'predict_next_artifact', description: 'Predict the next best artifact to work on to maximize submission readiness', parameters: 'packageId', example: '"What should I work on next for submission package 3?"' },
+  { name: 'compute_readiness', description: 'Compute submission readiness score and fragility analysis with weak zones', parameters: 'packageId', example: '"How ready is submission package 3?"' },
+
+  // ── Contradiction Engine ──────────────────────────────────────────────────
+  { name: 'scan_contradictions', description: 'Scan a project for cross-artifact contradictions (assumption drift, decision-action inconsistency, cross-jurisdictional divergence)', parameters: 'projectId?', example: '"Are there any contradictions in our project documents?"' },
+  { name: 'check_promotion_blockers', description: 'Check if unresolved contradictions block artifact promotion', parameters: 'artifactId', example: '"Can I promote artifact 12 or are there blockers?"' },
+
+  // ── Cross-Jurisdictional Intelligence ─────────────────────────────────────
+  { name: 'analyze_jurisdictions', description: 'Analyze cross-jurisdictional regulatory divergences, harmonization frameworks, reliance pathways, and optimal filing sequences', parameters: 'targetAgencies (e.g. FDA,EMA,PMDA), submissionType?, therapeuticArea?, productType?', example: '"Compare FDA vs EMA vs PMDA requirements for our biologics submission"' },
+
+  // ── Endpoint Recommender ──────────────────────────────────────────────────
+  { name: 'recommend_endpoints', description: 'Recommend clinical trial endpoints for a given indication with evidence and regulatory guidance', parameters: 'indication, phase?, therapeuticArea?, count?', example: '"What endpoints should we use for a Phase 3 NSCLC trial?"' },
+  { name: 'evaluate_endpoint', description: 'Evaluate a specific endpoint for regulatory defensibility and precedent support', parameters: 'endpoint, indication, phase?', example: '"How defensible is PFS as our primary endpoint for breast cancer?"' },
+
+  // ── RIM Intelligence ──────────────────────────────────────────────────────
+  { name: 'run_rim_scan', description: 'Run a full Regulatory Intelligence Model (RIM) assessment — pattern detection, judgment scoring, signal capture, and recommended actions', parameters: 'projectId?, text?, artifactId?, sectionCode?, submissionType?, targetAgency?', example: '"Run a RIM assessment on the Clinical Overview section"' },
+
+  // ── Report Engine ─────────────────────────────────────────────────────────
+  { name: 'generate_report', description: 'Generate a sealed regulatory report (21 CFR Part 11 compliant, cryptographically sealed). Domains: regulatory_submission, clinical_study, cmc_manufacturing, pharmacovigilance, quality_management, compliance_attestation, strategic_intelligence, device_regulatory, biostatistics', parameters: 'domain, title, projectId?, targetRegulatory?, parameters?', example: '"Generate a clinical study report for our Phase 2 trial"' },
+
+  // ── Clinical Intelligence ─────────────────────────────────────────────────
+  { name: 'generate_clinical_insights', description: 'Generate clinical trial insights for an indication — key variables, risk factors, design recommendations', parameters: 'indication, phase?', example: '"Generate clinical insights for NSCLC Phase 3"' },
+  { name: 'analyze_cross_document', description: 'Perform semantic cross-document analysis to find connections, gaps, and inconsistencies', parameters: 'documentIds (array of 2+), documentType? (CSR/CER)', example: '"Compare documents 10, 12, and 15 for cross-document patterns"' },
 ];
 
 /**
@@ -1980,6 +2458,33 @@ export async function executeCommands(
     export_document: exportDocument,
     generate_checklist: generateChecklist,
     submit_document: submitDocument,
+    // Precedent Engine
+    search_precedents: searchPrecedents,
+    analyze_crl_triggers: analyzeCRLTriggers,
+    analyze_rtf_triggers: analyzeRTFTriggers,
+    recommend_strategy: recommendStrategy,
+    check_claim: checkClaim,
+    // Submission Twin
+    run_submission_assessment: runSubmissionAssessment,
+    simulate_challenges: simulateChallenges,
+    detect_drift: detectDrift,
+    predict_next_artifact: predictNextArtifact,
+    compute_readiness: computeReadiness,
+    // Contradiction Engine
+    scan_contradictions: scanContradictions,
+    check_promotion_blockers: checkPromotionBlockers,
+    // Cross-Jurisdictional
+    analyze_jurisdictions: analyzeJurisdictions,
+    // Endpoint Recommender
+    recommend_endpoints: recommendEndpoints,
+    evaluate_endpoint: evaluateEndpoint,
+    // RIM Intelligence
+    run_rim_scan: runRIMScan,
+    // Report Engine
+    generate_report: generateReport,
+    // Clinical Intelligence
+    generate_clinical_insights: generateClinicalInsights,
+    analyze_cross_document: analyzeCrossDocument,
   };
 
   for (const cmd of commands) {
