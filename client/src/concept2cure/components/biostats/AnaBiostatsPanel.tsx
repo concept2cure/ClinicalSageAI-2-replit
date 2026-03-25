@@ -10,6 +10,7 @@
 
 import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -170,12 +171,7 @@ export function AnaBiostatsPanel({ projectId, defaultTrack, onArtifactCreated, c
   // Quick compute mutation
   const computeMutation = useMutation({
     mutationFn: async (input: Partial<StatisticalInput>) => {
-      const res = await fetch('/api/ana-biostats/compute', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(input),
-        credentials: 'include',
-      });
+      const res = await apiRequest('POST', '/api/ana-biostats/compute', input);
       if (!res.ok) throw new Error(await res.text());
       return res.json();
     },
@@ -192,16 +188,11 @@ export function AnaBiostatsPanel({ projectId, defaultTrack, onArtifactCreated, c
   // Workflow mutation (with document generation)
   const workflowMutation = useMutation({
     mutationFn: async ({ input, documentType }: { input: Partial<StatisticalInput>; documentType: StatisticalDocumentType }) => {
-      const res = await fetch('/api/ana-biostats/workflow', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const res = await apiRequest('POST', '/api/ana-biostats/workflow', {
           workflowType: documentType === 'statistical_risk_memo' ? 'statistical_risk_review' : 'sample_size_rationale',
           input,
           generateDocument: true,
           documentType,
-        }),
-        credentials: 'include',
       });
       if (!res.ok) throw new Error(await res.text());
       return res.json();

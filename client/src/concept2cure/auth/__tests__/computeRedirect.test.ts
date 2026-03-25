@@ -19,7 +19,7 @@ describe('computeRedirect', () => {
   it('prefers organization membership to client portal', () => {
     const user = { organizationId: 'org_123' } as any;
     const redirect = computeRedirect('', user);
-    expect(redirect).toBe('/client-portal');
+    expect(redirect).toBe('/concept2cure');
   });
 
   it('uses role-based client redirect for client_user/client_admin', () => {

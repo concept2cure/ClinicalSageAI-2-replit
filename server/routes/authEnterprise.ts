@@ -54,7 +54,7 @@ const enterpriseAuthLimiter = rateLimit({
       message: 'Too many authentication attempts. Please try again later.',
     },
   },
-  keyGenerator: req => req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown',
+  validate: { xForwardedForHeader: false },
 });
 
 /** Helper: extract and verify JWT from Authorization header */

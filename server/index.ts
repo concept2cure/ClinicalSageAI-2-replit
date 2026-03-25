@@ -1,4 +1,5 @@
-import 'dotenv/config';
+import { config as dotenvConfig } from 'dotenv';
+dotenvConfig({ override: true });
 
 // Initialize Sentry error monitoring early, before other imports
 import './utils/sentry';
@@ -123,6 +124,7 @@ import { testAssemblyRoutes } from './routes/test-assembly';
 
 // Import Phase 5: PM Settings & Configuration routes
 import pmSettingsRouter from './src/routes/pm-settings.router';
+import controlPlaneRouter from './src/routes/control-plane.router';
 import reportsManifestRoutes from './routes/reports/manifest-routes';
 import reportsGenerationRoutes from './routes/reports/generate-report';
 
@@ -912,7 +914,9 @@ try {
 try {
   const lumenCortexRoutes = await import('./routes/lumen-cortex');
   app.use('/api/lumen-cortex', lumenCortexRoutes.default);
-  console.log('✅ AnA Intelligence dedicated routes mounted (health, 10K harvest, observation terms)');
+  console.log(
+    '✅ AnA Intelligence dedicated routes mounted (health, 10K harvest, observation terms)'
+  );
 } catch (error) {
   console.error('❌ Failed to mount AnA Intelligence routes:', error);
 }
@@ -936,6 +940,8 @@ try {
 
 // Mount Phase 5: PM Settings & Configuration routes
 try {
+  app.use('/api/control-plane', controlPlaneRouter);
+
   app.use('/api/pm-settings', pmSettingsRouter);
   console.log('✅ Phase 5: PM Settings & Configuration API routes mounted');
 } catch (error) {
@@ -1467,16 +1473,7 @@ try {
   console.error('❌ Failed to mount GCC Platform routes:', error);
 }
 
-// Mount Supply Chain Management routes (synchronous to ensure they load before catch-all)
-try {
-  const supplyChainModule = await import('./routes/supplyChain.routes.js');
-  const createSupplyChainRoutes =
-    supplyChainModule.default || supplyChainModule.createSupplyChainRoutes;
-  app.use('/api/supply-chain', createSupplyChainRoutes());
-  console.log('✅ Supply Chain Management API routes mounted successfully');
-} catch (error) {
-  console.error('❌ Failed to mount Supply Chain routes:', error);
-}
+// Supply Chain Management routes removed — contained 100% mock data (BETA audit 2026-03-25)
 
 // Mount Document Authoring routes with 21 CFR Part 11 compliance
 try {
@@ -3302,7 +3299,8 @@ app.post('/api/ask-ana-ri', async (req: Request, res: Response) => {
 
     const audienceProfileMap: Record<string, string> = {
       executive: 'Focus on business impact, timeline risk, and go/no-go recommendations.',
-      regulatory_lead: 'Focus on submission quality, compliance strategy, and deficiency prevention.',
+      regulatory_lead:
+        'Focus on submission quality, compliance strategy, and deficiency prevention.',
       medical_writer: 'Focus on narrative quality, source traceability, and consistency controls.',
       qa_reviewer: 'Focus on auditability, verification checks, and remediation priority.',
       engineer: 'Focus on implementation details, API contracts, and automation reliability.',
@@ -3314,8 +3312,7 @@ app.post('/api/ask-ana-ri', async (req: Request, res: Response) => {
       brief: 'Provide a concise executive answer with top 3 actions and key risk.',
     };
 
-    const audienceDirective =
-      audienceProfileMap[audience] || audienceProfileMap['regulatory_lead'];
+    const audienceDirective = audienceProfileMap[audience] || audienceProfileMap['regulatory_lead'];
     const formatDirective = responseFormatMap[responseFormat] || responseFormatMap['markdown'];
 
     // System prompt for AnA regulatory expert
@@ -3379,7 +3376,7 @@ Formatting adaptation:
       if (context && directContextMap[context]) return directContextMap[context];
 
       for (const rule of modeRules) {
-        if (rule.patterns.some((pattern) => normalizedQuery.includes(pattern))) {
+        if (rule.patterns.some(pattern => normalizedQuery.includes(pattern))) {
           return rule.mode;
         }
       }
@@ -3388,79 +3385,79 @@ Formatting adaptation:
     };
 
     const indPyramidTemplateLibrary: Record<string, string[]> = {
-        'Module 1': [
-          'Cover Letter',
-          'FDA Forms (1571/1572/3674) Checklist',
-          'Investigator Brochure Change Summary',
-          'Cross-Reference & Lifecycle Manifest',
-        ],
-        'Module 2': [
-          'Quality Overall Summary (QOS)',
-          'Nonclinical Overview & Written Summaries',
-          'Clinical Overview & Clinical Summary',
-          'Benefit-Risk Framing Narrative',
-        ],
-        'Module 3': [
-          'Drug Substance (3.2.S) Template Pack',
-          'Drug Product (3.2.P) Template Pack',
-          'Analytical Method Validation Template (ICH Q2)',
-          'Stability Protocol + Report Template (ICH Q1)',
-        ],
-        'Module 4': [
-          'Pharmacology/Toxicology Study Report Shell',
-          'GLP Compliance Statement Template',
-          'Nonclinical Tabulation Pack',
-        ],
-        'Module 5': [
-          'Clinical Study Protocol Template',
-          'SAP Template (ICH E9 aligned)',
-          'CSR Template (ICH E3 aligned)',
-          'ISS/ISE Evidence Integration Shell',
-        ],
-      };
+      'Module 1': [
+        'Cover Letter',
+        'FDA Forms (1571/1572/3674) Checklist',
+        'Investigator Brochure Change Summary',
+        'Cross-Reference & Lifecycle Manifest',
+      ],
+      'Module 2': [
+        'Quality Overall Summary (QOS)',
+        'Nonclinical Overview & Written Summaries',
+        'Clinical Overview & Clinical Summary',
+        'Benefit-Risk Framing Narrative',
+      ],
+      'Module 3': [
+        'Drug Substance (3.2.S) Template Pack',
+        'Drug Product (3.2.P) Template Pack',
+        'Analytical Method Validation Template (ICH Q2)',
+        'Stability Protocol + Report Template (ICH Q1)',
+      ],
+      'Module 4': [
+        'Pharmacology/Toxicology Study Report Shell',
+        'GLP Compliance Statement Template',
+        'Nonclinical Tabulation Pack',
+      ],
+      'Module 5': [
+        'Clinical Study Protocol Template',
+        'SAP Template (ICH E9 aligned)',
+        'CSR Template (ICH E3 aligned)',
+        'ISS/ISE Evidence Integration Shell',
+      ],
+    };
 
     const therapeuticTemplateLibrary: Record<string, string[]> = {
-        oncology: [
-          'RECIST Endpoint Justification Template',
-          'Dose Escalation + DLT Decision Log',
-          'Biomarker Stratification Narrative',
-        ],
-        cardiology: [
-          'MACE Endpoint Adjudication Template',
-          'QT/QTc Risk Management Narrative',
-          'CV Outcomes Study Synopsis Template',
-        ],
-        neurology: [
-          'Cognitive Endpoint Validation Template',
-          'Relapse/Progression Adjudication Narrative',
-          'Neuroimaging Evidence Summary Template',
-        ],
-        immunology: [
-          'Immunogenicity Risk Assessment Template',
-          'Cytokine Release Monitoring Plan',
-          'Long-Term Safety Extension Synopsis',
-        ],
-        infectious_disease: [
-          'Antimicrobial Resistance Surveillance Template',
-          'Virologic Response Endpoint Narrative',
-          'Pathogen Subgroup Analysis Shell',
-        ],
-        rare_disease: [
-          'Natural History Evidence Integration Template',
-          'External Control Justification Narrative',
-          'Accelerated Approval Readiness Checklist',
-        ],
-        endocrinology: [
-          'Glycemic Endpoint & Rescue Criteria Template',
-          'Metabolic Safety Monitoring Narrative',
-          'Device-Drug Combination Use-Case Template',
-        ],
-        respiratory: [
-          'Exacerbation Endpoint Definition Template',
-          'Pulmonary Function Analysis Shell',
-          'Inhalation Device Human Factors Narrative',
-        ],
-      };
+      oncology: [
+        'RECIST Endpoint Justification Template',
+        'Dose Escalation + DLT Decision Log',
+        'Biomarker Stratification Narrative',
+      ],
+      cardiology: [
+        'MACE Endpoint Adjudication Template',
+        'QT/QTc Risk Management Narrative',
+        'CV Outcomes Study Synopsis Template',
+      ],
+      neurology: [
+        'Cognitive Endpoint Validation Template',
+        'Relapse/Progression Adjudication Narrative',
+        'Neuroimaging Evidence Summary Template',
+      ],
+      immunology: [
+        'Immunogenicity Risk Assessment Template',
+        'Cytokine Release Monitoring Plan',
+        'Long-Term Safety Extension Synopsis',
+      ],
+      infectious_disease: [
+        'Antimicrobial Resistance Surveillance Template',
+        'Virologic Response Endpoint Narrative',
+        'Pathogen Subgroup Analysis Shell',
+      ],
+      rare_disease: [
+        'Natural History Evidence Integration Template',
+        'External Control Justification Narrative',
+        'Accelerated Approval Readiness Checklist',
+      ],
+      endocrinology: [
+        'Glycemic Endpoint & Rescue Criteria Template',
+        'Metabolic Safety Monitoring Narrative',
+        'Device-Drug Combination Use-Case Template',
+      ],
+      respiratory: [
+        'Exacerbation Endpoint Definition Template',
+        'Pulmonary Function Analysis Shell',
+        'Inhalation Device Human Factors Narrative',
+      ],
+    };
 
     const pythonSkillPack = [
       'Pydantic schemas for dossier entities and controlled terminology checks',
@@ -3482,7 +3479,9 @@ Formatting adaptation:
         { key: 'endocrinology', patterns: ['endocrine', 'diabetes', 'metabolic'] },
         { key: 'respiratory', patterns: ['respiratory', 'pulmonary', 'asthma', 'copd'] },
       ];
-      return rules.find((rule) => rule.patterns.some((p) => normalizedQuery.includes(p)))?.key || 'oncology';
+      return (
+        rules.find(rule => rule.patterns.some(p => normalizedQuery.includes(p)))?.key || 'oncology'
+      );
     })();
 
     const indTemplateBlock = Object.entries(indPyramidTemplateLibrary)
@@ -3490,7 +3489,7 @@ Formatting adaptation:
       .join('\n');
 
     const therapyTemplateBlock = therapeuticTemplateLibrary[therapeuticArea]
-      .map((template) => `- ${template}`)
+      .map(template => `- ${template}`)
       .join('\n');
 
     const pythonSkillBlock = pythonSkillPack.map((skill, idx) => `${idx + 1}. ${skill}`).join('\n');
@@ -3500,9 +3499,15 @@ Formatting adaptation:
         { key: 'startup', patterns: ['startup', 'seed', 'series a', 'early stage'] },
         { key: 'mid_market', patterns: ['mid-market', 'growth', 'scaleup'] },
         { key: 'enterprise', patterns: ['enterprise', 'global', 'multi-region', 'portfolio'] },
-        { key: 'consultancy', patterns: ['consultancy', 'agency', 'service line', 'client delivery'] },
+        {
+          key: 'consultancy',
+          patterns: ['consultancy', 'agency', 'service line', 'client delivery'],
+        },
       ];
-      return segmentRules.find((rule) => rule.patterns.some((p) => normalizedQuery.includes(p)))?.key || 'startup';
+      return (
+        segmentRules.find(rule => rule.patterns.some(p => normalizedQuery.includes(p)))?.key ||
+        'startup'
+      );
     })();
 
     const clientOutcomeMap: Record<string, string[]> = {
@@ -3545,10 +3550,9 @@ Formatting adaptation:
       '3. Institutionalize continuous improvement loop from agency feedback.',
     ].join('\n');
 
-    const clientOutcomeBlock = clientOutcomeMap[clientSegment].map((item) => `- ${item}`).join('\n');
+    const clientOutcomeBlock = clientOutcomeMap[clientSegment].map(item => `- ${item}`).join('\n');
 
     const buildCapabilityFallback = (mode: string): string => {
-
       const responseByMode: Record<string, string> = {
         build_design: `I can lead this as a build/design problem.
 
@@ -3784,29 +3788,62 @@ For "${query}", I suggest consulting the latest ICH guidelines and FDA guidance 
     };
 
     const nextQuestionsByMode: Record<string, string[]> = {
-      build_design: ['Which submission type and region are in scope?', 'What is your target filing date?'],
+      build_design: [
+        'Which submission type and region are in scope?',
+        'What is your target filing date?',
+      ],
       author: ['Which section should be drafted first?', 'What source evidence is available now?'],
-      audit: ['Do you want risk-ranked findings or full line-by-line review?', 'What is your remediation deadline?'],
-      evaluate: ['What are the options under consideration?', 'Which KPI matters most: speed, risk, or cost?'],
-      predict: ['Which agencies do you expect to engage first?', 'What prior deficiencies should be considered?'],
-      code: ['Preferred runtime: FastAPI, CLI, or batch?', 'Do you require strict validation schemas?'],
-      docx: ['Which template standard do you use?', 'Do you need module-level or full dossier output?'],
+      audit: [
+        'Do you want risk-ranked findings or full line-by-line review?',
+        'What is your remediation deadline?',
+      ],
+      evaluate: [
+        'What are the options under consideration?',
+        'Which KPI matters most: speed, risk, or cost?',
+      ],
+      predict: [
+        'Which agencies do you expect to engage first?',
+        'What prior deficiencies should be considered?',
+      ],
+      code: [
+        'Preferred runtime: FastAPI, CLI, or batch?',
+        'Do you require strict validation schemas?',
+      ],
+      docx: [
+        'Which template standard do you use?',
+        'Do you need module-level or full dossier output?',
+      ],
     };
 
-    const deliveryPackageByMode: Record<string, { kpis: string[]; timeline: string[]; automation: string[] }> = {
+    const deliveryPackageByMode: Record<
+      string,
+      { kpis: string[]; timeline: string[]; automation: string[] }
+    > = {
       build_design: {
         kpis: ['Roadmap approval cycle time', 'Planning rework rate', 'Critical risk closure time'],
-        timeline: ['Week 1: scope + gap map', 'Week 2-3: roadmap + ownership', 'Week 4: governance sign-off'],
+        timeline: [
+          'Week 1: scope + gap map',
+          'Week 2-3: roadmap + ownership',
+          'Week 4: governance sign-off',
+        ],
         automation: ['Requirements extraction', 'Dependency mapping', 'Milestone status alerts'],
       },
       author: {
         kpis: ['Draft turnaround time', 'Reviewer comment density', 'Citation completeness %'],
-        timeline: ['Week 1: section drafting', 'Week 2: evidence reconciliation', 'Week 3: QC pass'],
+        timeline: [
+          'Week 1: section drafting',
+          'Week 2: evidence reconciliation',
+          'Week 3: QC pass',
+        ],
         automation: ['Section auto-assembly', 'Citation linting', 'Terminology consistency checks'],
       },
       audit: {
         kpis: ['Open findings count', 'High-risk finding closure SLA', 'Repeat issue rate'],
-        timeline: ['Day 1-3: baseline audit', 'Day 4-7: remediation planning', 'Week 2: verification audit'],
+        timeline: [
+          'Day 1-3: baseline audit',
+          'Day 4-7: remediation planning',
+          'Week 2: verification audit',
+        ],
         automation: ['Gap scanning', 'Contradiction detection', 'CAPA tracking notifications'],
       },
       evaluate: {
@@ -3815,19 +3852,39 @@ For "${query}", I suggest consulting the latest ICH guidelines and FDA guidance 
         automation: ['Scenario comparison tables', 'Risk scoring', 'Decision log generation'],
       },
       predict: {
-        kpis: ['Predicted vs actual agency queries', 'Mitigation completion %', 'Deficiency recurrence rate'],
+        kpis: [
+          'Predicted vs actual agency queries',
+          'Mitigation completion %',
+          'Deficiency recurrence rate',
+        ],
         timeline: ['Week 1: risk forecast', 'Week 2: mitigation execution', 'Week 3: dry-run Q&A'],
         automation: ['Question forecasting', 'Signal clustering', 'Mitigation tracker updates'],
       },
       code: {
         kpis: ['Automation coverage %', 'Validation failure rate', 'Manual effort reduction hours'],
-        timeline: ['Week 1: scaffold + schemas', 'Week 2: validators + tests', 'Week 3: deploy + monitor'],
-        automation: ['Schema validation pipelines', 'DOCX generation jobs', 'Submission package checks'],
+        timeline: [
+          'Week 1: scaffold + schemas',
+          'Week 2: validators + tests',
+          'Week 3: deploy + monitor',
+        ],
+        automation: [
+          'Schema validation pipelines',
+          'DOCX generation jobs',
+          'Submission package checks',
+        ],
       },
       docx: {
         kpis: ['Template reuse %', 'Formatting defect rate', 'Approval cycle duration'],
-        timeline: ['Week 1: template mapping', 'Week 2: section population', 'Week 3: QA + final export'],
-        automation: ['Template merge engines', 'Cross-reference integrity checks', 'Export QA gates'],
+        timeline: [
+          'Week 1: template mapping',
+          'Week 2: section population',
+          'Week 3: QA + final export',
+        ],
+        automation: [
+          'Template merge engines',
+          'Cross-reference integrity checks',
+          'Export QA gates',
+        ],
       },
     };
 
@@ -3840,7 +3897,8 @@ For "${query}", I suggest consulting the latest ICH guidelines and FDA guidance 
       audience: audience,
       responseFormat: responseFormat,
       warnings,
-      recommendedArtifacts: recommendedArtifactsByMode[resolvedMode] || recommendedArtifactsByMode['evaluate'],
+      recommendedArtifacts:
+        recommendedArtifactsByMode[resolvedMode] || recommendedArtifactsByMode['evaluate'],
       nextQuestions: nextQuestionsByMode[resolvedMode] || nextQuestionsByMode['evaluate'],
       deliveryPackage: deliveryPackageByMode[resolvedMode] || deliveryPackageByMode['evaluate'],
       timestamp: new Date().toISOString(),
@@ -3876,6 +3934,15 @@ try {
   console.log('✅ AnA RI routes mounted (/api/ana-ri)');
 } catch (error) {
   console.error('❌ Failed to mount AnA RI routes:', error);
+}
+
+// Mount Authoring Actions routes (Wave 1 + Wave 2 AnA-first authoring actions)
+try {
+  const authoringActionsModule = await import('./routes/authoring-actions');
+  app.use('/api/authoring-actions', authoringActionsModule.default);
+  console.log('✅ Authoring Actions routes mounted (/api/authoring-actions)');
+} catch (error) {
+  console.error('❌ Failed to mount Authoring Actions routes:', error);
 }
 
 // Mount Ana Platform Control routes (agentic settings, modules, onboarding)
@@ -7697,12 +7764,17 @@ async function startServer() {
 
   // Load RIM pattern registry from persistence (restores learned patterns + hit counts)
   try {
-    const { loadPatternRegistry, patternRegistry } = await import('./services/intelligence/pattern-registry.js');
+    const { loadPatternRegistry, patternRegistry } =
+      await import('./services/intelligence/pattern-registry.js');
     const result = await loadPatternRegistry(1); // org 1 as default; per-org load on first request
     if (result.loaded) {
-      console.log(`✅ RIM pattern registry loaded (${patternRegistry.size} patterns, ${result.learnedCount} learned)`);
+      console.log(
+        `✅ RIM pattern registry loaded (${patternRegistry.size} patterns, ${result.learnedCount} learned)`
+      );
     } else {
-      console.log(`ℹ️ RIM pattern registry: no persisted data found, using ${patternRegistry.size} seed patterns`);
+      console.log(
+        `ℹ️ RIM pattern registry: no persisted data found, using ${patternRegistry.size} seed patterns`
+      );
     }
   } catch (err) {
     console.warn('⚠️ RIM pattern registry load failed (using seed patterns only):', err);

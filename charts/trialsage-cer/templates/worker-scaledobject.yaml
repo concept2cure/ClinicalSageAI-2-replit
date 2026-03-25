@@ -1,0 +1,24 @@
+{{- if and .Values.worker.enabled .Values.worker.keda.enabled -}}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ include "trialsage-cer.fullname" . }}-worker
+  namespace: {{ include "trialsage-cer.namespace" . }}
+  labels:
+    {{- include "trialsage-cer.labels" . | nindent 4 }}
+    app.kubernetes.io/component: worker
+spec:
+  scaleTargetRef:
+    name: {{ include "trialsage-cer.fullname" . }}-worker
+  minReplicaCount: {{ .Values.worker.keda.minReplicaCount }}
+  maxReplicaCount: {{ .Values.worker.keda.maxReplicaCount }}
+  pollingInterval: {{ .Values.worker.keda.pollingInterval }}
+  cooldownPeriod: {{ .Values.worker.keda.cooldownPeriod }}
+  triggers:
+    - type: redis
+      metadata:
+        addressFromEnv: REDIS_URL
+        listName: {{ .Values.worker.keda.redisListName | quote }}
+        listLength: {{ .Values.worker.keda.queueLength | quote }}
+        activationListLength: {{ .Values.worker.keda.activationQueueLength | quote }}
+{{- end }}

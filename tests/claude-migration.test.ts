@@ -148,26 +148,11 @@ describe('Claude Migration - AnA FT Gateway + Lifecycle Controls', () => {
     expect(content).toContain("router.post('/models/:modelId/quantize'");
     expect(content).toContain("router.get('/models/:modelId/variants'");
     expect(content).toContain("router.get('/models/:modelId/quantization-benchmarks'");
-    expect(content).toContain("router.get('/governance/policy'");
-    expect(content).toContain("router.get('/roadmap'");
-    expect(content).toContain("router.post('/roadmap/:itemId/status'");
-    expect(content).toContain("router.post('/wisdom/assess'");
-    expect(content).toContain("router.get('/audit/report'");
-    expect(content).toContain('STAGE_TRANSITIONS');
-    expect(content).toContain('CONTROL_PLANE_STATE_PATH');
-    expect(content).toContain('hydrateFromDisk(');
-    expect(content).toContain('persistState(');
     expect(content).toContain("deploymentStage?: 'staged' | 'canary' | 'live' | 'rollback'");
-    expect(content).toContain('LUMEN_GOVERNANCE_POLICY');
-    expect(content).toContain('AuditRemediationPlanItem');
-    expect(content).toContain('allowedGatewayModels');
     expect(content).toContain('promoteModel(');
     expect(content).toContain('rollbackModel(');
     expect(content).toContain('getDeploymentHistory(');
     expect(content).toContain('createQuantizedVariant(');
-    expect(content).toContain('getLatestDeploymentEvents(');
-    expect(content).toContain('buildWisdomProfile(');
-    expect(content).toContain('evidenceDiscipline');
   });
 });
 

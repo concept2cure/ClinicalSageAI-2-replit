@@ -12,6 +12,11 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import { LoadingState, ErrorState } from '@/components/ui/statesV2';
+import { PageTitleHeader, WorkspaceStatusBadge } from '@/components/ui/workspace-primitives';
+import type { StatusBadgeConfig } from '@/components/ui/workspace-primitives';
 import {
   AlertTriangle,
   CheckCircle2,
@@ -26,14 +31,6 @@ import {
   XCircle,
   RefreshCw,
 } from 'lucide-react';
-
-// ── Auth helper ──────────────────────────────────────────────────────────────
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -119,26 +116,19 @@ const StatCard: React.FC<{
   </div>
 );
 
-// ── Readiness badge ──────────────────────────────────────────────────────────
-const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
-  const config: Record<string, { bg: string; text: string; label: string }> = {
-    blocked: { bg: 'bg-red-50 border-red-200', text: 'text-red-700', label: 'Blocked' },
-    in_review: { bg: 'bg-amber-50 border-amber-200', text: 'text-amber-700', label: 'In Review' },
-    clear: { bg: 'bg-green-50 border-green-200', text: 'text-green-700', label: 'Clear' },
-  };
-  const c = config[status] || config.clear;
-  return (
-    <span
-      className={cn(
-        'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border',
-        c.bg,
-        c.text
-      )}
-    >
-      {c.label}
-    </span>
-  );
+// ── Readiness badge (maps review statuses to WorkspaceStatusBadge) ───────────
+const REVIEW_STATUS_CONFIG: Record<string, StatusBadgeConfig> = {
+  blocked: { key: 'blocked', label: 'Blocked', color: 'bg-red-100 text-red-700' },
+  in_review: { key: 'in_review', label: 'In Review', color: 'bg-amber-100 text-amber-700' },
+  clear: { key: 'clear', label: 'Clear', color: 'bg-green-100 text-green-700' },
 };
+
+const ReviewStatusBadge: React.FC<{ status: string }> = ({ status }) => (
+  <WorkspaceStatusBadge
+    status={status}
+    config={REVIEW_STATUS_CONFIG[status] || REVIEW_STATUS_CONFIG.clear}
+  />
+);
 
 // ── Component ────────────────────────────────────────────────────────────────
 
@@ -147,6 +137,7 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
   onNavigateToArtifact,
   className,
 }) => {
+  const { toast } = useToast();
   const [data, setData] = useState<PulseData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -155,9 +146,7 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/concept2cure/projects/${projectId}/review-pulse`, {
-        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-      });
+      const res = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/review-pulse`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       if (json.success) {
@@ -167,10 +156,11 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
       }
     } catch (err: any) {
       setError(err.message);
+      toast({ title: 'Failed to load review pulse', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
-  }, [projectId]);
+  }, [projectId, toast]);
 
   useEffect(() => {
     fetchPulse();
@@ -178,21 +168,20 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
 
   if (loading) {
     return (
-      <div className={cn('flex items-center justify-center py-16', className)}>
-        <Loader2 className="w-5 h-5 text-zinc-400 animate-spin" />
-        <span className="ml-2 text-sm text-zinc-500">Loading review pulse…</span>
+      <div className={className}>
+        <LoadingState message="Loading review pulse…" size="md" />
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <div className={cn('text-center py-16 text-sm text-zinc-500', className)}>
-        <XCircle className="w-5 h-5 mx-auto mb-2 text-zinc-400" />
-        {error || 'No data available'}
-        <button onClick={fetchPulse} className="block mx-auto mt-2 text-blue-600 underline text-xs">
-          Retry
-        </button>
+      <div className={className}>
+        <ErrorState
+          title="Review pulse unavailable"
+          message={error || 'No data available'}
+          retry={fetchPulse}
+        />
       </div>
     );
   }
@@ -203,24 +192,19 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
   return (
     <div className={cn('space-y-6 pb-8', className)}>
       {/* ── Header ─────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-base font-semibold text-zinc-900 flex items-center gap-2">
-            <Target className="w-4 h-4 text-blue-600" />
-            Review Pulse
-          </h2>
-          <p className="text-xs text-zinc-500 mt-0.5">
-            Project review orchestration — signals from document workspace
-          </p>
-        </div>
-        <button
-          onClick={fetchPulse}
-          className="p-1.5 rounded hover:bg-zinc-100 text-zinc-400 hover:text-zinc-600 transition"
-          title="Refresh"
-        >
-          <RefreshCw className="w-4 h-4" />
-        </button>
-      </div>
+      <PageTitleHeader
+        title="Review Pulse"
+        description="Project review orchestration — signals from document workspace"
+        actions={
+          <button
+            onClick={fetchPulse}
+            className="p-1.5 rounded hover:bg-zinc-100 text-zinc-400 hover:text-zinc-600 transition"
+            title="Refresh"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
+        }
+      />
 
       {/* ── Summary strip ──────────────────────────────────────────────── */}
       <div className="flex flex-wrap gap-3">
@@ -365,7 +349,7 @@ export const ReviewPulseDashboard: React.FC<Props> = ({
                       )}
                     </td>
                     <td className="px-3 py-2 text-center">
-                      <StatusBadge status={a.reviewStatus} />
+                      <ReviewStatusBadge status={a.reviewStatus} />
                     </td>
                   </tr>
                 ))}

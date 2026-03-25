@@ -11,16 +11,7 @@
  */
 
 import { useQuery, useMutation } from '@tanstack/react-query';
-
-// ── Auth helper ──────────────────────────────────────────────────────────────
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token');
-  return token
-    ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
-    : { 'Content-Type': 'application/json' };
-}
+import { apiRequest } from '@/lib/queryClient';
 
 const BASE = '/api/precedent-engine';
 
@@ -269,12 +260,7 @@ export function usePrecedentSearch(params: SearchParams | null) {
   return useQuery({
     queryKey: precedentKeys.search(params!),
     queryFn: async (): Promise<PrecedentRecord[]> => {
-      const res = await fetch(`${BASE}/search`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(params),
-      });
-      if (!res.ok) throw new Error('Search failed');
+      const res = await apiRequest('POST', `${BASE}/search`, params);
       const json = await res.json();
       return json.data ?? [];
     },
@@ -287,12 +273,7 @@ export function usePrecedentSearch(params: SearchParams | null) {
 export function usePrecedentCompare() {
   return useMutation({
     mutationFn: async (params: CompareParams): Promise<CompareResult> => {
-      const res = await fetch(`${BASE}/compare`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(params),
-      });
-      if (!res.ok) throw new Error('Compare failed');
+      const res = await apiRequest('POST', `${BASE}/compare`, params);
       const json = await res.json();
       return json.data;
     },
@@ -304,12 +285,7 @@ export function usePrecedentRisk(params: RiskParams | null) {
   return useQuery({
     queryKey: precedentKeys.risk(params!),
     queryFn: async (): Promise<RiskResult> => {
-      const res = await fetch(`${BASE}/risk`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(params),
-      });
-      if (!res.ok) throw new Error('Risk analysis failed');
+      const res = await apiRequest('POST', `${BASE}/risk`, params);
       const json = await res.json();
       return json.data;
     },
@@ -323,12 +299,7 @@ export function usePrecedentStrategy(params: StrategyParams | null) {
   return useQuery({
     queryKey: precedentKeys.strategy(params!),
     queryFn: async (): Promise<StrategyResult> => {
-      const res = await fetch(`${BASE}/strategy`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(params),
-      });
-      if (!res.ok) throw new Error('Strategy recommendation failed');
+      const res = await apiRequest('POST', `${BASE}/strategy`, params);
       const json = await res.json();
       return json.data;
     },
@@ -341,12 +312,7 @@ export function usePrecedentStrategy(params: StrategyParams | null) {
 export function useClaimCheck() {
   return useMutation({
     mutationFn: async (params: ClaimCheckParams): Promise<ClaimCheckResult> => {
-      const res = await fetch(`${BASE}/check-claim`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(params),
-      });
-      if (!res.ok) throw new Error('Claim check failed');
+      const res = await apiRequest('POST', `${BASE}/check-claim`, params);
       const json = await res.json();
       return json.data;
     },
@@ -358,12 +324,7 @@ export function useCRLTriggers(params: RiskParams | null) {
   return useQuery({
     queryKey: precedentKeys.crlTriggers(params!),
     queryFn: async (): Promise<CRLTriggerResult> => {
-      const res = await fetch(`${BASE}/crl-triggers`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(params),
-      });
-      if (!res.ok) throw new Error('CRL trigger analysis failed');
+      const res = await apiRequest('POST', `${BASE}/crl-triggers`, params);
       const json = await res.json();
       return json.data;
     },
@@ -377,12 +338,7 @@ export function useRTFTriggers(params: RiskParams | null) {
   return useQuery({
     queryKey: precedentKeys.rtfTriggers(params!),
     queryFn: async (): Promise<RTFTriggerResult> => {
-      const res = await fetch(`${BASE}/rtf-triggers`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(params),
-      });
-      if (!res.ok) throw new Error('RTF trigger analysis failed');
+      const res = await apiRequest('POST', `${BASE}/rtf-triggers`, params);
       const json = await res.json();
       return json.data;
     },
@@ -396,12 +352,7 @@ export function useEMAPatterns(params: RiskParams | null) {
   return useQuery({
     queryKey: precedentKeys.emaPatterns(params!),
     queryFn: async (): Promise<EMAPatternResult> => {
-      const res = await fetch(`${BASE}/ema-patterns`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(params),
-      });
-      if (!res.ok) throw new Error('EMA pattern analysis failed');
+      const res = await apiRequest('POST', `${BASE}/ema-patterns`, params);
       const json = await res.json();
       return json.data;
     },
@@ -415,12 +366,7 @@ export function useAdvisoryCommittee(params: RiskParams | null) {
   return useQuery({
     queryKey: precedentKeys.advisoryCommittee(params!),
     queryFn: async (): Promise<AdvisoryCommitteeResult> => {
-      const res = await fetch(`${BASE}/advisory-committee`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(params),
-      });
-      if (!res.ok) throw new Error('Advisory Committee analysis failed');
+      const res = await apiRequest('POST', `${BASE}/advisory-committee`, params);
       const json = await res.json();
       return json.data;
     },
