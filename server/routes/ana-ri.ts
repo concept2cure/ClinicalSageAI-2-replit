@@ -363,7 +363,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       route: '/api/ana-ri/chat',
       action: 'chat',
       projectId: req.body.project_context?.projectId,
-      organizationId: orgId ? Number(orgId) : undefined,
+      organizationId: orgIdNum ?? undefined,
       userId,
       artifactCreated: false,
       anaRiOrchestrated: true,
@@ -1080,7 +1080,7 @@ router.post('/generate', async (req: Request, res: Response) => {
       actionType: action_type,
       conversationContext: conversation_context,
       projectId: Number(project_id),
-      organizationId: Number(orgId),
+      organizationId: orgIdNum,
       userId: userId ? Number(userId) : undefined,
       userRole: user_role,
       intentLens: intent_lens,
@@ -1263,7 +1263,7 @@ router.post('/execute', async (req: Request, res: Response) => {
 
     const ctx = {
       userId: Number(userId),
-      organizationId: Number(orgId),
+      organizationId: orgIdNum,
       activeProjectId: params?.projectId ? Number(params.projectId) : undefined,
       userName: (req as any).user?.name,
       userRole: (req as any).user?.title,

@@ -921,6 +921,125 @@ router.post('/:integrationId/disconnect', async (req: Request, res: Response) =>
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// CONNECT / CONFIGURE INTEGRATION
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.post('/:integrationId/connect', async (req: Request, res: Response) => {
+  try {
+    const tenantId = getTenantId(req);
+    const idempotent = await readIdempotencyResponse(req, tenantId);
+    if (idempotent) {
+      return res.status(idempotent.status).json({
+        ...idempotent.body,
+        receipt: buildExecutionReceipt('connect_integration', tenantId, req.params.integrationId, true),
+      });
+    }
+
+    const { integrationId } = req.params;
+    const parsed = ConnectSchema.safeParse(req.body || {});
+
+    if (!parsed.success) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid request body',
+        details: parsed.error.flatten(),
+      });
+    }
+
+    const { name, authType, config, metadata } = parsed.data;
+    const missingFields = validateProviderConfig(integrationId, config);
+    if (missingFields.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: `Missing required configuration fields for ${integrationId}`,
+        missingFields,
+      });
+    }
+
+    const integration: IntegrationConfig = {
+      id: integrationId,
+      tenantId,
+      name: name || integrationId,
+      status: 'connected',
+      authType: authType || 'api_key',
+      lastSync: new Date().toISOString(),
+      config,
+      metadata: {
+        ...(metadata || {}),
+        connectedAt: new Date().toISOString(),
+        connectedBy: (req as any).user?.email || 'unknown',
+      },
+    };
+
+    const persisted = await upsertIntegration(tenantId, integration);
+    const responseBody = {
+      success: true,
+      data: { ...persisted, config: maskSecrets(persisted.config) },
+      message: `${persisted.name} connected successfully`,
+      receipt: buildExecutionReceipt('connect_integration', tenantId, integrationId),
+    };
+
+    await writeIdempotencyResponse(req, tenantId, 200, responseBody);
+    await emitIntegrationAudit(req, tenantId, 'connect_integration', integrationId, true, {
+      authType: persisted.authType,
+    });
+    res.json(responseBody);
+  } catch (error: any) {
+    logger.error('Failed to connect integration', {
+      error: error?.message,
+      integrationId: req.params.integrationId,
+    });
+    res.status(500).json({ success: false, error: 'Failed to connect integration' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DISCONNECT INTEGRATION
+// ═══════════════════════════════════════════════════════════════════════════════
+
+router.post('/:integrationId/disconnect', async (req: Request, res: Response) => {
+  try {
+    const tenantId = getTenantId(req);
+    const idempotent = await readIdempotencyResponse(req, tenantId);
+    if (idempotent) {
+      return res.status(idempotent.status).json({
+        ...idempotent.body,
+        receipt: buildExecutionReceipt('disconnect_integration', tenantId, req.params.integrationId, true),
+      });
+    }
+
+    const { integrationId } = req.params;
+
+    const integration = await getIntegration(tenantId, integrationId);
+    if (!integration) {
+      return res.status(404).json({ success: false, error: 'Integration not found' });
+    }
+
+    const deleted = await deleteIntegration(tenantId, integrationId);
+
+    if (!deleted) {
+      return res.status(500).json({ success: false, error: 'Failed to disconnect integration' });
+    }
+
+    const responseBody = {
+      success: true,
+      message: `${integration.name} disconnected successfully`,
+      receipt: buildExecutionReceipt('disconnect_integration', tenantId, integrationId),
+    };
+
+    await writeIdempotencyResponse(req, tenantId, 200, responseBody);
+    await emitIntegrationAudit(req, tenantId, 'disconnect_integration', integrationId, true);
+    res.json(responseBody);
+  } catch (error: any) {
+    logger.error('Failed to disconnect integration', {
+      error: error?.message,
+      integrationId: req.params.integrationId,
+    });
+    res.status(500).json({ success: false, error: 'Failed to disconnect integration' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // TEST CONNECTION
 // ═══════════════════════════════════════════════════════════════════════════════
 
