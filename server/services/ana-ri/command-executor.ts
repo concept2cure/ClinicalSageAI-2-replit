@@ -431,7 +431,7 @@ export async function listTasks(
     if (filters?.priority) { query += ` AND priority = $${paramIdx}`; values.push(filters.priority); paramIdx++; }
     if (filters?.assigneeId) { query += ` AND assignee_id = $${paramIdx}`; values.push(filters.assigneeId); paramIdx++; }
 
-    query += ' ORDER BY CASE priority WHEN \'critical\' THEN 0 WHEN \'high\' THEN 1 WHEN \'medium\' THEN 2 ELSE 3 END, due_date ASC NULLS LAST LIMIT 100';
+    query += ' ORDER BY CASE priority WHEN \'urgent\' THEN 0 WHEN \'critical\' THEN 1 WHEN \'high\' THEN 2 WHEN \'medium\' THEN 3 ELSE 4 END, due_date ASC NULLS LAST LIMIT 100';
     const result = await pool.query(query, values);
 
     return {

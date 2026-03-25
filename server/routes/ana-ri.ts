@@ -80,6 +80,21 @@ function ensureGateway() {
   return gateway;
 }
 
+// ─── Shared validation constants ─────────────────────────────────────────────
+const VALID_LENSES: IntentLens[] = ['auto', 'audit', 'improve', 'risk', 'strategy', 'compare'];
+const VALID_ROLES: UserRole[] = ['ceo', 'ra_lead', 'medical_writer', 'clinical_lead', 'cmc_lead', 'investor', 'general'];
+
+// ─── Request context extraction (typed, replaces (req as any) casts) ─────────
+function extractRequestContext(req: Request) {
+  const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId || null;
+  const userId = (req as any).userId || (req as any).user?.id || 'anonymous';
+  return {
+    orgId: orgId ? Number(orgId) : null,
+    userId: typeof userId === 'number' ? userId : 0,
+    numericOrgId: orgId ? Number(orgId) : null,
+  };
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/ana-ri/chat — Main AnA RI Chat
 // ─────────────────────────────────────────────────────────────────────────────
@@ -103,26 +118,15 @@ router.post('/chat', async (req: Request, res: Response) => {
     }
 
     // Validate intent_lens if provided
-    const VALID_LENSES: IntentLens[] = ['auto', 'audit', 'improve', 'risk', 'strategy', 'compare'];
     const validatedLens: IntentLens | undefined =
       intent_lens && VALID_LENSES.includes(intent_lens) ? (intent_lens as IntentLens) : undefined;
 
     // Validate user_role if provided
-    const VALID_ROLES: UserRole[] = [
-      'ceo',
-      'ra_lead',
-      'medical_writer',
-      'clinical_lead',
-      'cmc_lead',
-      'investor',
-      'general',
-    ];
     const validatedRole: UserRole | undefined =
       user_role && VALID_ROLES.includes(user_role) ? (user_role as UserRole) : undefined;
 
     // Resolve org/user context
-    const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
-    const userId = (req as any).userId || (req as any).user?.id || 'anonymous';
+    const { orgId, userId } = extractRequestContext(req);
 
     // Infer role if not provided
     const effectiveRole: UserRole =
@@ -207,30 +211,27 @@ router.post('/chat', async (req: Request, res: Response) => {
       }
     }
 
-    // Inject intelligence prefix + 3-layer memory (same as streaming endpoint)
-    const chatIntelligencePrefix = await getIntelligencePrefix(
-      orgId ? Number(orgId) : undefined,
-      req.body.project_id || req.body.context?.projectId
-    ).catch(() => '');
+    // Intelligence + memory + enrichment — run in PARALLEL for speed
+    const chatProjectId = req.body.project_id || req.body.context?.projectId;
+    const [chatIntelligencePrefix, chatMemoryResult, chatEnrichment] = await Promise.all([
+      getIntelligencePrefix(orgId ? Number(orgId) : undefined, chatProjectId).catch(() => ''),
+      buildMemoryContextForChat({
+        threadId: thread_id || undefined,
+        organizationId: orgId ? Number(orgId) : undefined,
+        projectId: chatProjectId || undefined,
+        query: message,
+        limitPerLayer: 4,
+        maxChars: 3500,
+      }).catch(() => ({ memoryBlock: '', atoms: [], diagnostics: null })),
+      enrichContextForChat({
+        message,
+        projectId: chatProjectId,
+        organizationId: orgId ? Number(orgId) : undefined,
+        submissionType: orchestration.detectedSubmissionType || undefined,
+      }).catch(() => ({ block: '', sources: [] as string[] })),
+    ]);
 
-    const { memoryBlock: chatMemoryBlock } = await buildMemoryContextForChat({
-      threadId: thread_id || undefined,
-      organizationId: orgId ? Number(orgId) : undefined,
-      projectId: req.body.project_id || req.body.context?.projectId || undefined,
-      query: message,
-      limitPerLayer: 4,
-      maxChars: 3500,
-    }).catch(() => ({ memoryBlock: '', atoms: [], diagnostics: null }));
-
-    // Context enrichment — auto-inject Foresight/Precedent/Deficiency data when relevant
-    const chatEnrichment = await enrichContextForChat({
-      message,
-      projectId: req.body.project_id || req.body.context?.projectId,
-      organizationId: orgId ? Number(orgId) : undefined,
-      submissionType: orchestration.detectedSubmissionType || undefined,
-    }).catch(() => ({ block: '', sources: [] }));
-
-    const enrichedSystemPrompt = chatIntelligencePrefix + orchestration.systemPrompt + chatMemoryBlock + chatEnrichment.block;
+    const enrichedSystemPrompt = chatIntelligencePrefix + orchestration.systemPrompt + chatMemoryResult.memoryBlock + chatEnrichment.block;
 
     // Build message history — prefer server thread history, fall back to client
     const messages: GatewayMessage[] = [{ role: 'system', content: enrichedSystemPrompt }];
@@ -315,18 +316,18 @@ router.post('/chat', async (req: Request, res: Response) => {
     });
 
     // Persist message and response if we have org context
-    let threadId = thread_id;
+    let resolvedThreadId = thread_id;
     let persistenceFailed = false;
     if (orgId) {
       try {
-        // getOrCreateThread(threadId, userId?, prefix?) — returns thread ID string
-        threadId = await getOrCreateThread(
+        // getOrCreateThread(resolvedThreadId, userId?, prefix?) — returns thread ID string
+        resolvedThreadId = await getOrCreateThread(
           thread_id || null,
           typeof userId === 'number' ? userId : undefined,
           'ana-ri'
         );
-        await saveMessage(threadId, 'user', message);
-        await saveMessage(threadId, 'assistant', response.content);
+        await saveMessage(resolvedThreadId, 'user', message);
+        await saveMessage(resolvedThreadId, 'assistant', response.content);
       } catch (e: any) {
         console.error('[AnA RI] Thread persistence failed:', e?.message);
         persistenceFailed = true;
@@ -361,7 +362,7 @@ router.post('/chat', async (req: Request, res: Response) => {
     // Kernel Decision Record (best effort, non-blocking)
     void logKernelDecision({
       requestId: `ana-ri-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
-      threadId: threadId || null,
+      threadId: resolvedThreadId || null,
       route: '/api/ana-ri/chat',
       organizationId: orgId ? Number(orgId) : null,
       userId,
@@ -393,7 +394,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       route: '/api/ana-ri/chat',
       taskType: routingPlan.taskType,
       strategy: selectedStrategy,
-      threadId: threadId || null,
+      threadId: resolvedThreadId || null,
       modelProvider: response.provider,
       modelName: response.model,
       qualityScore: evaluation.overallScore / Math.max(evaluation.maxOverallScore, 1),
@@ -413,7 +414,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       void interceptChatResponse({
         projectId: String(projectIdForRim),
         organizationId: orgId ? Number(orgId) : undefined,
-        threadId: threadId || undefined,
+        threadId: resolvedThreadId || undefined,
         userMessage: message,
         assistantMessage: response.content,
         submissionType: orchestration.detectedSubmissionType || undefined,
@@ -422,7 +423,7 @@ router.post('/chat', async (req: Request, res: Response) => {
 
     return sendSuccess(res, {
       response: response.content,
-      thread_id: threadId,
+      thread_id: resolvedThreadId,
       orchestration: {
         detectedIntent: orchestration.detectedIntent,
         detectedSubmissionType: orchestration.detectedSubmissionType,
@@ -500,14 +501,11 @@ router.post('/stream', async (req: Request, res: Response) => {
     // This allows pre-stream failures to return proper HTTP error codes.
 
     // Resolve context
-    const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
-    const userId = (req as any).userId || (req as any).user?.id || 'anonymous';
+    const { orgId, userId } = extractRequestContext(req);
 
-    const VALID_LENSES: IntentLens[] = ['auto', 'audit', 'improve', 'risk', 'strategy', 'compare'];
     const validatedLens: IntentLens | undefined =
       intent_lens && VALID_LENSES.includes(intent_lens) ? (intent_lens as IntentLens) : undefined;
 
-    const VALID_ROLES: UserRole[] = ['ceo', 'ra_lead', 'medical_writer', 'clinical_lead', 'cmc_lead', 'investor', 'general'];
     const validatedRole: UserRole | undefined =
       user_role && VALID_ROLES.includes(user_role) ? (user_role as UserRole) : undefined;
 
@@ -557,29 +555,29 @@ router.post('/stream', async (req: Request, res: Response) => {
       }
     }
 
-    // Inject intelligence prefix (client/project knowledge)
-    const intelligencePrefix = await getIntelligencePrefix(
-      orgId ? Number(orgId) : undefined,
-      project_id
-    ).catch(() => '');
+    // Intelligence + memory + enrichment — run in PARALLEL for speed
+    const [intelligencePrefix, memoryResult, enrichment] = await Promise.all([
+      getIntelligencePrefix(
+        orgId ? Number(orgId) : undefined,
+        project_id
+      ).catch(() => ''),
+      buildMemoryContextForChat({
+        threadId: thread_id || undefined,
+        organizationId: orgId ? Number(orgId) : undefined,
+        projectId: project_id || undefined,
+        query: message,
+        limitPerLayer: 4,
+        maxChars: 3500,
+      }).catch(() => ({ memoryBlock: '', atoms: [], diagnostics: null })),
+      enrichContextForChat({
+        message,
+        projectId: project_id,
+        organizationId: orgId ? Number(orgId) : undefined,
+        submissionType: orchestration.detectedSubmissionType || undefined,
+    }).catch(() => ({ block: '', sources: [] as string[] })),
+    ]);
 
-    // Inject 3-layer memory context (working + project + client memory)
-    const { memoryBlock } = await buildMemoryContextForChat({
-      threadId: thread_id || undefined,
-      organizationId: orgId ? Number(orgId) : undefined,
-      projectId: project_id || undefined,
-      query: message,
-      limitPerLayer: 4,
-      maxChars: 3500,
-    }).catch(() => ({ memoryBlock: '', atoms: [], diagnostics: null }));
-
-    // Context enrichment — auto-inject Foresight/Precedent/Deficiency data when relevant
-    const enrichment = await enrichContextForChat({
-      message,
-      projectId: project_id,
-      organizationId: orgId ? Number(orgId) : undefined,
-      submissionType: orchestration.detectedSubmissionType || undefined,
-    }).catch(() => ({ block: '', sources: [] }));
+    const memoryBlock = memoryResult.memoryBlock;
 
     if (enrichment.sources.length > 0) {
       console.log(`[AnA RI Stream] Context enriched with: ${enrichment.sources.join(', ')}`);
@@ -873,8 +871,7 @@ router.post('/generate', async (req: Request, res: Response) => {
       return sendError(res, 400, 'project_id is required', null, 'MISSING_PROJECT');
     }
 
-    const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
-    const userId = (req as any).userId || (req as any).user?.id;
+    const { orgId, userId } = extractRequestContext(req);
 
     if (!orgId) {
       return sendError(res, 403, 'Organization context required', null, 'NO_ORG');
@@ -1034,8 +1031,7 @@ router.post('/execute', async (req: Request, res: Response) => {
       return sendError(res, 400, 'command is required', null, 'INVALID_COMMAND');
     }
 
-    const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
-    const userId = (req as any).userId || (req as any).user?.id;
+    const { orgId, userId } = extractRequestContext(req);
 
     if (!orgId || !userId) {
       return sendError(res, 403, 'Authentication required', null, 'NO_AUTH');
