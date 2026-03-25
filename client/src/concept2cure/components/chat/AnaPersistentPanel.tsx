@@ -1053,64 +1053,121 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             ? serializeContextForChat(authoringContext)
             : {};
 
-          let response = await apiRequest('POST', '/api/ana-ri/chat', {
-            message: text,
-            chatMode,
-            thread_id: threadIdRef.current || undefined,
-            project_id: contextProfile?.projectId || undefined,
-            submission_type: contextProfile?.productType || undefined,
-            // Canonical authoring context (section, artifact, workflow stage)
-            authoring_context: authoringPayload,
-            context: {
-              screen: contextProfile?.screenName,
-              project: contextProfile?.activeProject,
-              projectId: contextProfile?.projectId,
-              productType: contextProfile?.productType,
-              userRole: contextProfile?.userRole,
-              ...(contextProfile?.moduleContext || {}),
-              // Also spread key authoring fields into legacy context for backward compat
-              ...(authoringContext
-                ? {
-                    sectionCode: authoringContext.sectionCode,
-                    artifactId: authoringContext.artifactId,
-                    artifactVersionId: authoringContext.artifactVersionId,
-                    workflowStage: authoringContext.workflowStage,
-                    sectionTitle: authoringContext.sectionTitle,
-                    moduleCode: authoringContext.moduleCode,
-                    artifactStatus: authoringContext.artifactStatus,
-                  }
-                : {}),
-            },
-            conversationHistory: messages.slice(-10).map(m => ({
-              role: m.role,
-              content: m.content,
-            })),
-          });
+          // Use raw fetch for chat calls to avoid apiRequest throwing on errors.
+          // apiRequest throws for non-ok/non-401 responses, breaking the fallback chain.
+          const chatHeaders: Record<string, string> = {
+            'Content-Type': 'application/json',
+          };
+          const authToken =
+            localStorage.getItem('token') ||
+            localStorage.getItem('authToken') ||
+            localStorage.getItem('auth_token');
+          if (authToken) {
+            chatHeaders['Authorization'] = `Bearer ${authToken}`;
+          }
+          const orgId =
+            localStorage.getItem('organizationId') ||
+            localStorage.getItem('currentOrganizationId') ||
+            '1';
+          chatHeaders['x-organization-id'] = orgId;
 
-          if (!response.ok) {
-            // Fallback to Cortex unified chat
-            response = await apiRequest('POST', '/api/cortex/chat', {
-              message: text,
-              chatMode,
-              project_id: contextProfile?.projectId || undefined,
-              submission_type: contextProfile?.productType || undefined,
-              context: {
-                screen: contextProfile?.screenName,
-                project: contextProfile?.activeProject,
-                projectId: contextProfile?.projectId,
-                productType: contextProfile?.productType,
-                userRole: contextProfile?.userRole,
-              },
-              conversationHistory: messages.slice(-10).map(m => ({
-                role: m.role,
-                content: m.content,
-              })),
+          let rawData: any = null;
+          let chatSucceeded = false;
+
+          // ── Attempt 1: AnA RI endpoint ──
+          try {
+            const anaRes = await fetch('/api/ana-ri/chat', {
+              method: 'POST',
+              headers: chatHeaders,
+              credentials: 'include',
+              body: JSON.stringify({
+                message: text,
+                chatMode,
+                thread_id: threadIdRef.current || undefined,
+                project_id: contextProfile?.projectId || undefined,
+                submission_type: contextProfile?.productType || undefined,
+                authoring_context: authoringPayload,
+                context: {
+                  screen: contextProfile?.screenName,
+                  project: contextProfile?.activeProject,
+                  projectId: contextProfile?.projectId,
+                  productType: contextProfile?.productType,
+                  userRole: contextProfile?.userRole,
+                  ...(contextProfile?.moduleContext || {}),
+                  ...(authoringContext
+                    ? {
+                        sectionCode: authoringContext.sectionCode,
+                        artifactId: authoringContext.artifactId,
+                        artifactVersionId: authoringContext.artifactVersionId,
+                        workflowStage: authoringContext.workflowStage,
+                        sectionTitle: authoringContext.sectionTitle,
+                        moduleCode: authoringContext.moduleCode,
+                        artifactStatus: authoringContext.artifactStatus,
+                      }
+                    : {}),
+                },
+                conversationHistory: messages.slice(-10).map(m => ({
+                  role: m.role,
+                  content: m.content,
+                })),
+              }),
             });
-            if (!response.ok) {
-              throw new Error(`Request failed (${response.status})`);
+            if (anaRes.ok) {
+              rawData = await anaRes.json();
+              chatSucceeded = true;
+            } else {
+              const errBody = await anaRes.text().catch(() => '');
+              console.warn(`[AnA RI] ${anaRes.status}: ${errBody.slice(0, 200)}`);
+            }
+          } catch (anaErr: any) {
+            console.warn('[AnA RI] Network error:', anaErr?.message);
+          }
+
+          // ── Attempt 2: Cortex fallback ──
+          if (!chatSucceeded) {
+            try {
+              const cortexRes = await fetch('/api/cortex/chat', {
+                method: 'POST',
+                headers: chatHeaders,
+                credentials: 'include',
+                body: JSON.stringify({
+                  message: text,
+                  chatMode,
+                  project_id: contextProfile?.projectId || undefined,
+                  submission_type: contextProfile?.productType || undefined,
+                  context: {
+                    screen: contextProfile?.screenName,
+                    project: contextProfile?.activeProject,
+                    projectId: contextProfile?.projectId,
+                    productType: contextProfile?.productType,
+                    userRole: contextProfile?.userRole,
+                  },
+                  conversationHistory: messages.slice(-10).map(m => ({
+                    role: m.role,
+                    content: m.content,
+                  })),
+                }),
+              });
+              if (cortexRes.ok) {
+                rawData = await cortexRes.json();
+                chatSucceeded = true;
+              } else {
+                const errBody = await cortexRes.text().catch(() => '');
+                console.warn(`[Cortex] ${cortexRes.status}: ${errBody.slice(0, 200)}`);
+              }
+            } catch (cortexErr: any) {
+              console.warn('[Cortex] Network error:', cortexErr?.message);
             }
           }
-          data = await response.json();
+
+          if (!chatSucceeded || !rawData) {
+            throw new Error(
+              'Unable to reach AI service. Please check your connection and try again.'
+            );
+          }
+
+          // Unwrap sendSuccess envelope: {success, data: {...}} → inner data
+          data = rawData?.data && rawData.success ? rawData.data : rawData;
 
           const normalizedOrchestration = normalizeOrchestrationPayload(data);
           if (normalizedOrchestration) {
@@ -1123,7 +1180,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           }
 
           const assistantContent =
-            data.response || 'I received your message but had no response content.';
+            data.response || data.answer || 'I received your message but had no response content.';
 
           setMessages(prev => [
             ...prev,
@@ -1163,16 +1220,75 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           }
         }
       } catch (err: any) {
-        setMessages(prev => [
-          ...prev,
-          {
-            id: `a-${Date.now()}`,
-            role: 'assistant',
-            content: `Sorry, I encountered an error processing your request. Please try again.`,
-            timestamp: new Date(),
-            isError: true,
-          },
-        ]);
+        console.error('[AnA Chat Error]', err?.message || err, err);
+        // Try cortex fallback on any error using raw fetch (apiRequest throws and breaks fallback chains)
+        try {
+          const fbToken =
+            localStorage.getItem('token') ||
+            localStorage.getItem('authToken') ||
+            localStorage.getItem('auth_token');
+          const fbOrgId =
+            localStorage.getItem('organizationId') ||
+            localStorage.getItem('currentOrganizationId') ||
+            '1';
+          const fbHeaders: Record<string, string> = {
+            'Content-Type': 'application/json',
+            'x-organization-id': fbOrgId,
+          };
+          if (fbToken) fbHeaders['Authorization'] = `Bearer ${fbToken}`;
+
+          const fallbackRes = await fetch('/api/cortex/chat', {
+            method: 'POST',
+            headers: fbHeaders,
+            credentials: 'include',
+            body: JSON.stringify({
+              message: text,
+              chatMode: 'standard',
+              context: {
+                screen: contextProfile?.screenName,
+                projectId: contextProfile?.projectId,
+                productType: contextProfile?.productType,
+                userRole: contextProfile?.userRole,
+              },
+              conversationHistory: messages.slice(-10).map(m => ({
+                role: m.role,
+                content: m.content,
+              })),
+            }),
+          });
+          if (!fallbackRes.ok) {
+            throw new Error(`Cortex returned ${fallbackRes.status}`);
+          }
+          const fallbackRaw = await fallbackRes.json();
+          const fallbackData =
+            fallbackRaw?.data && fallbackRaw.success ? fallbackRaw.data : fallbackRaw;
+          const fallbackContent =
+            fallbackData?.response ||
+            fallbackData?.answer ||
+            'I received your message but had no response content.';
+          if (fallbackData?.thread_id) threadIdRef.current = fallbackData.thread_id;
+          setMessages(prev => [
+            ...prev,
+            {
+              id: `a-${Date.now()}`,
+              role: 'assistant',
+              content: fallbackContent,
+              timestamp: new Date(),
+            },
+          ]);
+        } catch (fallbackErr: any) {
+          console.error('[AnA Fallback Error]', fallbackErr?.message || fallbackErr);
+          setMessages(prev => [
+            ...prev,
+            {
+              id: `a-${Date.now()}`,
+              role: 'assistant',
+              content: `Sorry, I encountered an error: ${err?.message || 'Unknown error'}. Please try again.`,
+              timestamp: new Date(),
+              isError: true,
+            },
+          ]);
+        }
       } finally {
         setIsThinking(false);
         // Return focus to input after send completes

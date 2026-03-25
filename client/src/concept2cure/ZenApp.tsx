@@ -151,7 +151,11 @@ import {
   resolveWorkflowStage,
   type ContextResolverInput,
 } from './services/authoring-context-resolver';
-import type { AuthoringContextPack, ReadinessSnapshot, ContradictionEntry } from '../../../shared/types/authoring-context';
+import type {
+  AuthoringContextPack,
+  ReadinessSnapshot,
+  ContradictionEntry,
+} from '../../../shared/types/authoring-context';
 
 // First-run onboarding experience
 const FirstRunExperience = lazy(() => import('./components/enablement/FirstRunExperience'));
@@ -740,7 +744,9 @@ export const ZenApp: React.FC = () => {
   const [activeSectionTitle, setActiveSectionTitle] = useState<string | undefined>();
   const [activeModuleCode, setActiveModuleCode] = useState<string | undefined>();
   const [sectionReadiness, setSectionReadiness] = useState<ReadinessSnapshot | undefined>();
-  const [sectionContradictions, setSectionContradictions] = useState<ContradictionEntry[] | undefined>();
+  const [sectionContradictions, setSectionContradictions] = useState<
+    ContradictionEntry[] | undefined
+  >();
 
   // Account-level custom instructions for Knowledge Base
   const [customInstructions, setCustomInstructions] = useState('');
@@ -901,10 +907,18 @@ export const ZenApp: React.FC = () => {
       contradictions: sectionContradictions,
     });
   }, [
-    activeProjectId, layoutMode, activeProject?.type, activeProject?.region,
-    activeProject?.regulatoryRegion, activeSectionCode, activeSectionTitle,
-    activeArtifactId, activeArtifactVersion, activeArtifactStatus,
-    sectionReadiness, sectionContradictions,
+    activeProjectId,
+    layoutMode,
+    activeProject?.type,
+    activeProject?.region,
+    activeProject?.regulatoryRegion,
+    activeSectionCode,
+    activeSectionTitle,
+    activeArtifactId,
+    activeArtifactVersion,
+    activeArtifactStatus,
+    sectionReadiness,
+    sectionContradictions,
   ]);
 
   // Handler for child surfaces to update authoring context fields
@@ -913,20 +927,28 @@ export const ZenApp: React.FC = () => {
     if (partial.sectionTitle !== undefined) setActiveSectionTitle(partial.sectionTitle);
     if (partial.moduleCode !== undefined) setActiveModuleCode(partial.moduleCode);
     if (partial.artifactId !== undefined) setActiveArtifactId(partial.artifactId);
-    if (partial.artifactVersionId !== undefined) setActiveArtifactVersion(partial.artifactVersionId);
+    if (partial.artifactVersionId !== undefined)
+      setActiveArtifactVersion(partial.artifactVersionId);
     if (partial.artifactStatus !== undefined) setActiveArtifactStatus(partial.artifactStatus);
     if (partial.readiness !== undefined) setSectionReadiness(partial.readiness);
     if (partial.contradictions !== undefined) setSectionContradictions(partial.contradictions);
   }, []);
 
   // ── P1: Draft insertion → pendingEditorContent → EditorPanel auto-creates artifact ──
-  const handleDraftInsert = useCallback((content: string, title: string, ctdSection?: string) => {
-    setPendingEditorContent({ title, content, ctdSection });
-    // Switch to documents mode where EditorPanel will consume the pending content
-    if (layoutMode !== 'documents' && layoutMode !== 'workspace' && layoutMode !== 'regulatory-workspace') {
-      setLayoutMode('documents');
-    }
-  }, [layoutMode]);
+  const handleDraftInsert = useCallback(
+    (content: string, title: string, ctdSection?: string) => {
+      setPendingEditorContent({ title, content, ctdSection });
+      // Switch to documents mode where EditorPanel will consume the pending content
+      if (
+        layoutMode !== 'documents' &&
+        layoutMode !== 'workspace' &&
+        layoutMode !== 'regulatory-workspace'
+      ) {
+        setLayoutMode('documents');
+      }
+    },
+    [layoutMode]
+  );
 
   // ── P2: Navigate to section — real navigation ──
   const handleNavigateToSection = useCallback((sectionCode: string) => {
@@ -941,28 +963,36 @@ export const ZenApp: React.FC = () => {
   }, []);
 
   // ── P5: Governed promotion — calls real status API ──
-  const handleRequestPromotion = useCallback(async (artifactId: string): Promise<{ promoted: boolean; message: string }> => {
-    if (!activeProjectId) {
-      return { promoted: false, message: 'No active project.' };
-    }
-    const token = sessionStorage.getItem('trialsage_access_token') || localStorage.getItem('trialsage_access_token');
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-
-    const res = await fetch(
-      `/api/concept2cure/projects/${activeProjectId}/artifacts/${artifactId}/status`,
-      {
-        method: 'PUT',
-        headers,
-        body: JSON.stringify({ status: 'review' }),
+  const handleRequestPromotion = useCallback(
+    async (artifactId: string): Promise<{ promoted: boolean; message: string }> => {
+      if (!activeProjectId) {
+        return { promoted: false, message: 'No active project.' };
       }
-    );
-    if (res.ok) {
-      return { promoted: true, message: 'Artifact promoted to review. Governance workflow initiated.' };
-    }
-    const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
-    return { promoted: false, message: err.error || err.message || 'Promotion failed.' };
-  }, [activeProjectId]);
+      const token =
+        sessionStorage.getItem('trialsage_access_token') ||
+        localStorage.getItem('trialsage_access_token');
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch(
+        `/api/concept2cure/projects/${activeProjectId}/artifacts/${artifactId}/status`,
+        {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify({ status: 'review' }),
+        }
+      );
+      if (res.ok) {
+        return {
+          promoted: true,
+          message: 'Artifact promoted to review. Governance workflow initiated.',
+        };
+      }
+      const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+      return { promoted: false, message: err.error || err.message || 'Promotion failed.' };
+    },
+    [activeProjectId]
+  );
 
   // Workspace suggested actions — context-aware quick-start chips for AnA
   const workspaceSuggestedActions = useMemo(() => {
@@ -1118,7 +1148,8 @@ export const ZenApp: React.FC = () => {
   // Feed real intelligence data into authoring context when available
   useEffect(() => {
     if (authoringIntelligence.readiness) setSectionReadiness(authoringIntelligence.readiness);
-    if (authoringIntelligence.contradictions) setSectionContradictions(authoringIntelligence.contradictions);
+    if (authoringIntelligence.contradictions)
+      setSectionContradictions(authoringIntelligence.contradictions);
   }, [authoringIntelligence.readiness, authoringIntelligence.contradictions]);
 
   // Threads for current project
@@ -2273,7 +2304,7 @@ export const ZenApp: React.FC = () => {
                 onInitialContentConsumed={() => setPendingEditorContent(null)}
                 openArtifactId={openArtifactId}
                 onOpenArtifactConsumed={() => setOpenArtifactId(undefined)}
-                onActiveDocumentChange={(doc) => {
+                onActiveDocumentChange={doc => {
                   if (doc) {
                     setActiveArtifactId(doc.id);
                     setActiveArtifactVersion(doc.version != null ? String(doc.version) : undefined);
@@ -2288,37 +2319,8 @@ export const ZenApp: React.FC = () => {
               />
             ))}
 
-          {/* ── Unified Workflow: Project Home Dashboard ──────────────────── */}
-          {!embeddedModule && layoutMode === 'project-home' && activeProject && (
-            <Suspense fallback={<ModuleLoadingFallback />}>
-              <ProjectHomeDashboard
-                project={{
-                  id: activeProject.id,
-                  name: activeProject.name,
-                  type: activeProject.type || 'IND',
-                  description: activeProject.description,
-                  sponsor: activeProject.sponsor,
-                  product: activeProject.product,
-                  region: activeProject.region,
-                }}
-                onNavigate={(mode, sectionCode) => {
-                  // Map workflow names to layout modes
-                  const modeMap: Record<string, LayoutMode> = {
-                    dossier: 'dossier-map',
-                    documents: 'documents',
-                    review: 'review',
-                    submissions: 'submissions',
-                    'section-workspace': 'section-workspace',
-                  };
-                  const resolved = modeMap[mode] || (mode as LayoutMode);
-                  if (resolved === 'section-workspace' && sectionCode) {
-                    setActiveSectionCode(sectionCode);
-                  }
-                  setLayoutMode(resolved);
-                }}
-              />
-            </Suspense>
-          )}
+          {/* ── Project Home: AnA is the full-screen interface (ChatGPT/Claude style) ── */}
+          {/* ProjectHomeDashboard removed — AnA handles everything via chat */}
 
           {/* ── Unified Workflow: Dossier Map ────────────────────────────── */}
           {!embeddedModule && layoutMode === 'dossier-map' && (
@@ -2558,30 +2560,8 @@ export const ZenApp: React.FC = () => {
             </Suspense>
           )}
 
-          {/* ── Projects Index ─────────────────────────────────────────────── */}
-          {!embeddedModule && layoutMode === 'projects' && (
-            <Suspense
-              fallback={
-                <div className="flex-1 flex items-center justify-center">
-                  <LoadingState size="sm" message="" />
-                </div>
-              }
-            >
-              <PlatformHome
-                userName={userName}
-                projects={projects}
-                onProjectClick={projectId => {
-                  navInProgressRef.current = true;
-                  setActiveProjectId(projectId);
-                  setLayoutMode('project-home');
-                  navigate(`/concept2cure/project/${projectId}`);
-                }}
-                onNewProject={() => setNewProjectOpen(true)}
-                onNavigate={mode => setLayoutMode(mode as LayoutMode)}
-                workspaceSummary={workspaceSummary}
-              />
-            </Suspense>
-          )}
+          {/* ── Projects Index: AnA is the full-screen interface (ChatGPT/Claude style) ── */}
+          {/* PlatformHome removed — AnA handles everything via chat */}
 
           {/* ── Project Workspace — Claude.ai-style project view ──────── */}
           {!embeddedModule && layoutMode === 'workspace' && (
@@ -2647,7 +2627,7 @@ export const ZenApp: React.FC = () => {
                   }
                   suggestedActions={workspaceSuggestedActions}
                   onActionRun={handleActionRun}
-                  onNavigate={(path) => setLayoutMode(path as LayoutMode)}
+                  onNavigate={path => setLayoutMode(path as LayoutMode)}
                   onDraftInsert={handleDraftInsert}
                   onNavigateToSection={handleNavigateToSection}
                   onOpenArtifact={handleOpenArtifact}
@@ -2735,38 +2715,52 @@ export const ZenApp: React.FC = () => {
           )}
         </div>
 
-        {/* AnA — THE single chat surface
+        {/* AnA — THE single chat surface (ChatGPT/Claude style)
+            projects/project-home/deep-research: full screen — AnA IS the interface
             workspace/regulatory-workspace: rendered inline above (mode="full")
-            module pages: shown here as compact input bar at bottom
-            projects/home: shown here as full chat (no module content above) */}
-        {layoutMode !== 'workspace' && layoutMode !== 'regulatory-workspace' && layoutMode !== 'section-workspace' && (
-          <AnaPersistentPanel
-            mode={layoutMode === 'projects' || layoutMode === 'deep-research' ? 'full' : 'compact'}
-            defaultChatMode={layoutMode === 'deep-research' ? 'deep-research' : 'standard'}
-            authoringContext={authoringContext}
-            contextProfile={{
-              productType: activeProject?.type,
-              userRole: userRole,
-              screenName: layoutMode,
-              activeProject: activeProject?.name,
-              projectId: activeProjectId,
-              moduleContext,
-            }}
-            greeting={
-              layoutMode === 'deep-research'
-                ? "What would you like to research? I'll search across ClinicalTrials.gov, PubMed, FDA, EMA, and more."
-                : platformGreeting?.text
-            }
-            suggestedActions={layoutMode === 'projects' ? workspaceSuggestedActions : undefined}
-            onActionRun={handleActionRun}
-            onNavigate={(path) => setLayoutMode(path as LayoutMode)}
-            onDraftInsert={handleDraftInsert}
-            onNavigateToSection={handleNavigateToSection}
-            onOpenArtifact={handleOpenArtifact}
-            onRequestPromotion={handleRequestPromotion}
-            onRefreshIntelligence={authoringIntelligence.refetch}
-          />
-        )}
+            module pages (dossier, documents, etc.): compact input bar at bottom */}
+        {layoutMode !== 'workspace' &&
+          layoutMode !== 'regulatory-workspace' &&
+          layoutMode !== 'section-workspace' && (
+            <AnaPersistentPanel
+              mode={
+                layoutMode === 'projects' ||
+                layoutMode === 'project-home' ||
+                layoutMode === 'deep-research'
+                  ? 'full'
+                  : 'compact'
+              }
+              defaultChatMode={layoutMode === 'deep-research' ? 'deep-research' : 'standard'}
+              authoringContext={authoringContext}
+              contextProfile={{
+                productType: activeProject?.type,
+                userRole: userRole,
+                screenName: layoutMode,
+                activeProject: activeProject?.name,
+                projectId: activeProjectId,
+                moduleContext,
+              }}
+              greeting={
+                layoutMode === 'deep-research'
+                  ? "What would you like to research? I'll search across ClinicalTrials.gov, PubMed, FDA, EMA, and more."
+                  : layoutMode === 'project-home' && activeProject
+                    ? `Working on ${activeProject.name}. What would you like to do?`
+                    : platformGreeting?.text
+              }
+              suggestedActions={
+                layoutMode === 'projects' || layoutMode === 'project-home'
+                  ? workspaceSuggestedActions
+                  : undefined
+              }
+              onActionRun={handleActionRun}
+              onNavigate={path => setLayoutMode(path as LayoutMode)}
+              onDraftInsert={handleDraftInsert}
+              onNavigateToSection={handleNavigateToSection}
+              onOpenArtifact={handleOpenArtifact}
+              onRequestPromotion={handleRequestPromotion}
+              onRefreshIntelligence={authoringIntelligence.refetch}
+            />
+          )}
       </div>
 
       {/* Dr. Sage — Persistent global help/guide/copilot layer */}
