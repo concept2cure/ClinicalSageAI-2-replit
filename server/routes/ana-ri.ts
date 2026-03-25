@@ -57,6 +57,23 @@ function ensureGateway() {
   return gateway;
 }
 
+function toNumericOrgId(raw: unknown): number | null {
+  if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
+  if (typeof raw === 'string') {
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function buildDegradedAnaResponse(message: string): string {
+  return `## AnA Response (Degraded Mode)\n\n` +
+    `I can still help with strategy and structure while live model providers are unavailable.\n\n` +
+    `### Request Summary\n${message.slice(0, 600)}\n\n` +
+    `### Immediate Guidance\n- Clarify submission type and target agency.\n- List top 3 evidentiary gaps.\n- Prioritize one draft artifact to produce next (risk memo, strategy note, or rewrite).\n\n` +
+    `### Next Step\nRetry in a few minutes for full model-backed analysis, or continue in degraded mode for workflow planning.`;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/ana-ri/chat — Main AnA RI Chat
 // ─────────────────────────────────────────────────────────────────────────────
@@ -98,6 +115,7 @@ router.post('/chat', async (req: Request, res: Response) => {
 
     // Resolve org/user context
     const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+    const orgIdNum = toNumericOrgId(orgId);
     const userId = (req as any).userId || (req as any).user?.id || 'anonymous';
 
     // Infer role if not provided
@@ -141,9 +159,20 @@ router.post('/chat', async (req: Request, res: Response) => {
     // Call AI Gateway
     const gw = ensureGateway();
     if (!gw) {
-      return res.status(503).json({
-        error: 'AI services unavailable',
-        code: 'GATEWAY_UNAVAILABLE',
+      const degradedResponse = buildDegradedAnaResponse(message);
+      return res.status(200).json({
+        response: degradedResponse,
+        thread_id: thread_id || null,
+        orchestration: {
+          detectedIntent: orchestration.detectedIntent,
+          detectedSubmissionType: orchestration.detectedSubmissionType,
+          appliedRole: orchestration.appliedRole,
+          suggestedActions: orchestration.suggestedActions,
+          meta: { ...orchestration.orchestrationMeta, degradedMode: true },
+        },
+        provider: 'degraded-fallback',
+        model: 'none',
+        degraded: true,
       });
     }
 
@@ -203,7 +232,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       route: '/api/ana-ri/chat',
       action: 'chat',
       projectId: req.body.project_context?.projectId,
-      organizationId: orgId ? Number(orgId) : undefined,
+      organizationId: orgIdNum ?? undefined,
       userId,
       artifactCreated: false,
       anaRiOrchestrated: true,
@@ -299,9 +328,10 @@ router.post('/generate', async (req: Request, res: Response) => {
     }
 
     const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+    const orgIdNum = toNumericOrgId(orgId);
     const userId = (req as any).userId || (req as any).user?.id;
 
-    if (!orgId) {
+    if (!orgIdNum) {
       return res.status(403).json({ error: 'Organization context required', code: 'NO_ORG' });
     }
 
@@ -311,7 +341,7 @@ router.post('/generate', async (req: Request, res: Response) => {
       actionType: action_type,
       conversationContext: conversation_context,
       projectId: Number(project_id),
-      organizationId: Number(orgId),
+      organizationId: orgIdNum,
       userId: userId ? Number(userId) : undefined,
       userRole: user_role,
       intentLens: intent_lens,
@@ -467,9 +497,10 @@ router.post('/execute', async (req: Request, res: Response) => {
     }
 
     const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+    const orgIdNum = toNumericOrgId(orgId);
     const userId = (req as any).userId || (req as any).user?.id;
 
-    if (!orgId || !userId) {
+    if (!orgIdNum || !userId) {
       return res.status(403).json({ error: 'Authentication required', code: 'NO_AUTH' });
     }
 
@@ -478,7 +509,7 @@ router.post('/execute', async (req: Request, res: Response) => {
 
     const ctx = {
       userId: Number(userId),
-      organizationId: Number(orgId),
+      organizationId: orgIdNum,
       activeProjectId: params?.projectId ? Number(params.projectId) : undefined,
       userName: (req as any).user?.name,
       userRole: (req as any).user?.title,
