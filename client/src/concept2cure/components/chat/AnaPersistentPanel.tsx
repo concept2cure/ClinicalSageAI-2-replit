@@ -360,6 +360,18 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
       setMessages(prev => [...prev.slice(-199), userMsg]);
       setInput('');
+
+      // ── Client-side slash commands ──
+      if (text.startsWith('/export')) {
+        const md = messages.map(m => `### ${m.role === 'user' ? 'You' : 'AnA'}\n\n${m.content}`).join('\n\n---\n\n');
+        const blob = new Blob([`# AnA Conversation — ${new Date().toLocaleDateString()}\n\n${md}`], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = `ana-conversation-${new Date().toISOString().split('T')[0]}.md`; a.click();
+        URL.revokeObjectURL(url);
+        setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: 'Conversation exported as markdown.', timestamp: new Date() }]);
+        return;
+      }
+
       setIsStreaming(true);
 
       // ── Deep Research mode ──
@@ -586,8 +598,14 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 ));
               } else if (data.type === 'done') {
                 setMessages(prev => prev.map(m =>
-                  m.id === assistantMsgId ? { ...m, isStreaming: false } : m
+                  m.id === assistantMsgId
+                    ? { ...m, isStreaming: false, executedActions: data.executedActions }
+                    : m
                 ));
+                // Notify about auto-executed actions
+                if (data.executedActions?.length) {
+                  toast({ title: 'Actions executed', description: `${data.executedActions.length} artifact(s) created from this response` });
+                }
               } else if (data.type === 'error') {
                 setMessages(prev => prev.map(m =>
                   m.id === assistantMsgId
@@ -1025,6 +1043,24 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               >
                 <ThumbsDown className="w-4 h-4" />
               </button>
+              {/* Regenerate response */}
+              <button
+                onClick={() => {
+                  // Find the user message that preceded this assistant message
+                  const msgIndex = messages.findIndex(m => m.id === msg.id);
+                  const precedingUserMsg = messages.slice(0, msgIndex).reverse().find(m => m.role === 'user');
+                  if (precedingUserMsg) {
+                    // Remove this assistant message and re-send
+                    setMessages(prev => prev.filter(m => m.id !== msg.id));
+                    handleSend(precedingUserMsg.content);
+                  }
+                }}
+                className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-md transition-colors"
+                title="Regenerate"
+                aria-label="Regenerate response"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
               {/* Insert into editor */}
               {onDraftInsert && authoringContext?.sectionCode && msg.content.length > 100 && (
                 <button
@@ -1123,6 +1159,25 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           >
             <RotateCcw className="w-3 h-3" />
             New conversation
+          </button>
+          <button
+            onClick={() => {
+              const md = messages.map(m =>
+                `### ${m.role === 'user' ? 'You' : 'AnA'}\n\n${m.content}`
+              ).join('\n\n---\n\n');
+              const blob = new Blob([`# AnA Conversation — ${new Date().toLocaleDateString()}\n\n${md}`], { type: 'text/markdown' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `ana-conversation-${new Date().toISOString().split('T')[0]}.md`;
+              a.click();
+              URL.revokeObjectURL(url);
+              toast({ title: 'Exported', description: 'Conversation saved as markdown' });
+            }}
+            className="flex items-center gap-1.5 px-3 py-1 text-xs text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-full transition-colors"
+          >
+            <Download className="w-3 h-3" />
+            Export
           </button>
         </div>
       )}
@@ -1251,6 +1306,35 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           </div>
         )}
 
+        {/* Slash command autocomplete */}
+        {input.startsWith('/') && !input.includes(' ') && (
+          <div className="absolute bottom-full left-0 right-0 mb-1 mx-4 bg-white rounded-xl border border-zinc-200 shadow-lg py-1 z-50 max-h-[200px] overflow-y-auto">
+            {[
+              { cmd: '/risk', desc: 'Analyze submission risk profile' },
+              { cmd: '/readiness', desc: 'Check submission readiness' },
+              { cmd: '/precedent', desc: 'Find regulatory precedents' },
+              { cmd: '/claims', desc: 'Analyze evidence chain' },
+              { cmd: '/recommend', desc: 'Get prioritized next actions' },
+              { cmd: '/next', desc: 'What should I work on next?' },
+              { cmd: '/simulate', desc: 'Simulate reviewer challenges' },
+              { cmd: '/signals', desc: 'Show RIM intelligence signals' },
+              { cmd: '/draft', desc: 'Draft current section' },
+              { cmd: '/preflight', desc: 'Run section preflight' },
+              { cmd: '/export', desc: 'Export this conversation' },
+            ].filter(c => c.cmd.startsWith(input.toLowerCase())).map(c => (
+              <button
+                key={c.cmd}
+                type="button"
+                onClick={() => { setInput(c.cmd + ' '); inputRef.current?.focus(); }}
+                className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-zinc-50 transition-colors"
+              >
+                <code className="text-xs font-mono text-[#b4654a] bg-[#fdf5f2] px-1.5 py-0.5 rounded">{c.cmd}</code>
+                <span className="text-xs text-zinc-500">{c.desc}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Textarea */}
         <textarea
           ref={inputRef}
@@ -1262,7 +1346,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           placeholder={
             chatMode === 'deep-research' ? 'Ask a research question...'
               : chatMode === 'nano-banana' ? 'Describe an image or presentation...'
-              : 'Message AnA...'
+              : 'Message AnA... (try /risk, /readiness, /precedent)'
           }
           rows={1}
           className="flex-1 resize-none bg-transparent border-none outline-none text-[15px] text-zinc-900 placeholder:text-zinc-400 leading-6 min-h-[24px] max-h-[200px]"

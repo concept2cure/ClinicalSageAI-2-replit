@@ -52,6 +52,7 @@ import { buildMemoryContextForChat } from '../services/memory-context-assembler.
 import { getIntelligencePrefix } from '../services/lumen-context-builder.js';
 import { interceptChatResponse } from '../services/intelligence/rim-interceptors.js';
 import { enrichContextForChat } from '../services/ana-ri/context-enrichment.js';
+import { processResponseActions } from '../services/ana-guidance-executor.js';
 
 const router = Router();
 
@@ -223,8 +224,9 @@ router.post('/chat', async (req: Request, res: Response) => {
       }
     }
 
-    // Add current message
-    messages.push({ role: 'user', content: message });
+    // Add current message (use rewritten version if slash command detected)
+    const chatEffectiveMessage = chatEnrichment.rewrittenMessage || message;
+    messages.push({ role: 'user', content: chatEffectiveMessage });
 
     // Call AI Gateway
     const gw = ensureGateway();
@@ -542,6 +544,9 @@ router.post('/stream', async (req: Request, res: Response) => {
       console.log(`[AnA RI Stream] Context enriched with: ${enrichment.sources.join(', ')}`);
     }
 
+    // Use rewritten message if slash command was detected
+    const effectiveMessage = enrichment.rewrittenMessage || message;
+
     const fullSystemPrompt = intelligencePrefix + orchestration.systemPrompt + memoryBlock + enrichment.block;
 
     // Build messages
@@ -552,7 +557,7 @@ router.post('/stream', async (req: Request, res: Response) => {
         messages.push({ role: msg.role as 'user' | 'assistant', content: msg.content });
       }
     }
-    messages.push({ role: 'user', content: message });
+    messages.push({ role: 'user', content: effectiveMessage });
 
     // Thread persistence
     let threadId = thread_id;
@@ -639,6 +644,23 @@ router.post('/stream', async (req: Request, res: Response) => {
       }).catch(() => {});
     }
 
+    // Guidance executor — auto-create artifacts if response contains action signals
+    let executedActions: any[] = [];
+    if (fullContent && project_id && orgId) {
+      try {
+        const guidance = await processResponseActions(fullContent, {
+          projectId: typeof project_id === 'string' ? parseInt(project_id, 10) : project_id,
+          organizationId: Number(orgId),
+          userId: typeof userId === 'number' ? userId : 0,
+          userName: 'AnA',
+          threadId: threadId || undefined,
+        });
+        executedActions = guidance.actions;
+      } catch (e: any) {
+        console.warn('[AnA RI Stream] Guidance executor failed:', e?.message);
+      }
+    }
+
     // Send done event
     res.write(`data: ${JSON.stringify({
       type: 'done',
@@ -646,6 +668,8 @@ router.post('/stream', async (req: Request, res: Response) => {
       provider: gwResponse.provider,
       usage: gwResponse.usage,
       latencyMs: gwResponse.latencyMs,
+      executedActions: executedActions.length > 0 ? executedActions : undefined,
+      enrichmentSources: enrichment.sources.length > 0 ? enrichment.sources : undefined,
     })}\n\n`);
 
     res.end();
