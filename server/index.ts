@@ -1470,16 +1470,7 @@ try {
   console.error('❌ Failed to mount GCC Platform routes:', error);
 }
 
-// Mount Supply Chain Management routes (synchronous to ensure they load before catch-all)
-try {
-  const supplyChainModule = await import('./routes/supplyChain.routes.js');
-  const createSupplyChainRoutes =
-    supplyChainModule.default || supplyChainModule.createSupplyChainRoutes;
-  app.use('/api/supply-chain', createSupplyChainRoutes());
-  console.log('✅ Supply Chain Management API routes mounted successfully');
-} catch (error) {
-  console.error('❌ Failed to mount Supply Chain routes:', error);
-}
+// Supply Chain Management routes removed — contained 100% mock data (BETA audit 2026-03-25)
 
 // Mount Document Authoring routes with 21 CFR Part 11 compliance
 try {
