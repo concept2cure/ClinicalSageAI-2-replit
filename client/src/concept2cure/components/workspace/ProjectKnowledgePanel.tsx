@@ -145,6 +145,7 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
     isLoading,
     error,
     uploadDocument,
+    addTextContent,
     removeDocument,
     updateCustomInstructions,
     contextTokens,
@@ -162,6 +163,11 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
   const [isEditingInstructions, setIsEditingInstructions] = useState(false);
   const [instructionsDraft, setInstructionsDraft] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+
+  // Add text content (Claude.ai "Add content" parity)
+  const [isAddingText, setIsAddingText] = useState(false);
+  const [textTitle, setTextTitle] = useState('');
+  const [textContent, setTextContent] = useState('');
 
   const docs = knowledge?.documents ?? [];
   const artifacts = projectArtifacts ?? [];
@@ -263,6 +269,52 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
               accept=".pdf,.doc,.docx,.txt,.md,.csv,.xlsx,.xls,.png,.jpg,.jpeg"
               onChange={handleFileChange}
             />
+
+            {/* Add text content (Claude.ai parity) */}
+            {isAddingText ? (
+              <div className="space-y-2 mb-2 p-2 rounded-md border border-zinc-200 bg-zinc-50">
+                <input
+                  type="text"
+                  value={textTitle}
+                  onChange={e => setTextTitle(e.target.value)}
+                  placeholder="Title (e.g., Predicate device notes)"
+                  className="w-full px-2 py-1 text-xs border border-zinc-200 rounded-md bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+                <Textarea
+                  value={textContent}
+                  onChange={e => setTextContent(e.target.value)}
+                  placeholder="Paste or type content here..."
+                  className="text-xs min-h-[80px] border-zinc-200 resize-y"
+                />
+                <div className="flex items-center gap-2 justify-end">
+                  <Button variant="ghost" size="sm" onClick={() => setIsAddingText(false)} className="text-xs h-7">
+                    Cancel
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={async () => {
+                      await addTextContent(textTitle || 'Text content', textContent);
+                      setTextTitle('');
+                      setTextContent('');
+                      setIsAddingText(false);
+                    }}
+                    disabled={!textContent.trim()}
+                    className="text-xs h-7 bg-zinc-900 text-white hover:bg-zinc-800"
+                  >
+                    <Save className="w-3 h-3 mr-1" />
+                    Add
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setIsAddingText(true)}
+                className="w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-xs text-zinc-500 hover:bg-zinc-50 transition-colors mb-2"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                Add text content
+              </button>
+            )}
 
             {/* File list */}
             {isLoading ? (
