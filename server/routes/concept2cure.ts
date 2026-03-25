@@ -11657,6 +11657,17 @@ router.post('/feedback', authMiddleware, async (req: Request, res: Response) => 
       conversationId,
     });
 
+    // Feed back to RIM learning loop (non-blocking)
+    try {
+      const { interceptFeedback } = await import('../services/intelligence/rim-interceptors.js');
+      interceptFeedback({
+        organizationId,
+        projectId: req.body.projectId ? Number(req.body.projectId) : undefined,
+        userId,
+        feedbackType: positive ? 'accepted' : 'rejected',
+      });
+    } catch { /* non-blocking */ }
+
     return sendSuccess(res, { recorded: true });
   } catch (error: any) {
     logConcept2cureError('feedback submission', error);

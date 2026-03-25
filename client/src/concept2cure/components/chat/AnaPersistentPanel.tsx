@@ -1103,7 +1103,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               </button>
               <button
                 onClick={() => {
-                  apiRequest('POST', '/api/concept2cure/feedback', { messageId: msg.id, positive: true })
+                  apiRequest('POST', '/api/concept2cure/feedback', { messageId: msg.id, positive: true, projectId: contextProfile?.projectId })
                     .catch(() => toast({ title: 'Feedback failed', description: 'Could not submit feedback.', variant: 'destructive' }));
                 }}
                 className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-md transition-colors"
@@ -1114,7 +1114,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               </button>
               <button
                 onClick={() => {
-                  apiRequest('POST', '/api/concept2cure/feedback', { messageId: msg.id, positive: false })
+                  apiRequest('POST', '/api/concept2cure/feedback', { messageId: msg.id, positive: false, projectId: contextProfile?.projectId })
                     .catch(() => toast({ title: 'Feedback failed', description: 'Could not submit feedback.', variant: 'destructive' }));
                 }}
                 className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-md transition-colors"
@@ -1407,6 +1407,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               { cmd: '/decisions', desc: 'View project decision audit trail' },
               { cmd: '/draft', desc: 'Draft current section' },
               { cmd: '/preflight', desc: 'Run section preflight' },
+              { cmd: '/help', desc: 'Show what AnA can do for your project right now' },
               { cmd: '/export', desc: 'Export this conversation' },
             ].filter(c => c.cmd.startsWith(input.toLowerCase())).map(c => (
               <button

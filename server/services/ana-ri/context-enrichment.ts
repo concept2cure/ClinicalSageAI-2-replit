@@ -40,7 +40,7 @@ interface SlashCommand {
 }
 
 function detectSlashCommand(message: string): SlashCommand | null {
-  const match = message.match(/^\/(risk|readiness|precedent|draft|preflight|claims|recommend|next|simulate|signals|export|assess|twin|consistency|deficiencies|knowledge)\b\s*(.*)/i);
+  const match = message.match(/^\/(risk|readiness|precedent|draft|preflight|claims|recommend|next|simulate|signals|export|assess|twin|consistency|deficiencies|knowledge|help)\b\s*(.*)/i);
   if (!match) return null;
   return { command: match[1].toLowerCase(), args: match[2].trim() };
 }
@@ -442,6 +442,10 @@ export async function enrichContextForChat(params: {
       consistency: () => enrichWithCrossModule(projectId, organizationId),
       deficiencies: () => enrichWithDeficiencies(submissionType),
       knowledge: () => enrichWithKnowledgeSearch(slash.args || message, projectId),
+      help: () => Promise.all([
+        enrichWithReadiness(projectId, organizationId),
+        enrichWithRecommendations(projectId, organizationId),
+      ]).then(r => r.join('')),
     };
 
     const enrichFn = enrichMap[slash.command];
@@ -470,6 +474,7 @@ export async function enrichContextForChat(params: {
       consistency: 'Analyze cross-module consistency: find stale references, status gaps, orphaned documents, and module dependency issues across the entire dossier.',
       deficiencies: `Show the known deficiency taxonomy for ${submissionType || 'this submission type'}. List critical deficiency patterns and common reviewer triggers.`,
       knowledge: slash.args ? `Search the project knowledge base for: ${slash.args}` : 'Show all knowledge atoms stored for this project.',
+      help: 'The user is asking what you can do. Look at their project state and suggest 3-4 specific things you can do RIGHT NOW. Show, don\'t tell. Demonstrate by referencing their actual readiness score, gaps, and recommendations.',
       export: 'Export this conversation.',
     };
 
@@ -493,7 +498,7 @@ export async function enrichContextForChat(params: {
     const matchedFns = triggers.filter(t => matchesTriggers(message, t.test));
 
     if (matchedFns.length > 0) {
-      const results = await Promise.allSettled(
+      await Promise.allSettled(
         matchedFns.map(async t => {
           const block = await t.fn();
           if (block) {
@@ -502,6 +507,24 @@ export async function enrichContextForChat(params: {
           }
         })
       );
+    }
+
+    // ── Proactive enrichment for greetings/help — inject status so AnA can lead ──
+    const isGreeting = /^(hi|hello|hey|good\s*(morning|afternoon|evening)|what.?s up|how are you|help|what can you do)/i.test(message.trim());
+    if (isGreeting && sources.length === 0) {
+      // Inject readiness + top recommendation so AnA can give a proactive status update
+      const [readinessBlock, recsBlock] = await Promise.allSettled([
+        enrichWithReadiness(projectId, organizationId),
+        enrichWithRecommendations(projectId, organizationId),
+      ]);
+      if (readinessBlock.status === 'fulfilled' && readinessBlock.value) {
+        blocks.push(readinessBlock.value);
+        sources.push('proactive-readiness');
+      }
+      if (recsBlock.status === 'fulfilled' && recsBlock.value) {
+        blocks.push(recsBlock.value);
+        sources.push('proactive-recommendations');
+      }
     }
   }
 
