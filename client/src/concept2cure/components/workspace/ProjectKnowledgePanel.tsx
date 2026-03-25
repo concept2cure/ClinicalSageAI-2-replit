@@ -14,7 +14,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { useProjectKnowledge } from '../../hooks/useProjectKnowledge';
-import { useProjectIntelligence } from '../../hooks/useIntelligence';
+import { useProjectIntelligence, useIntelligenceDashboard } from '../../hooks/useIntelligence';
 import { useProject } from '../../context/ProjectContext';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -40,6 +40,9 @@ import {
   AlertTriangle,
   HelpCircle,
   Bookmark,
+  Zap,
+  TrendingUp,
+  ShieldCheck,
 } from 'lucide-react';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -157,6 +160,7 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
 
   const { activeProject, projectArtifacts } = useProject();
   const { data: intelligence } = useProjectIntelligence(projectId ? Number(projectId) : 0);
+  const { data: dashboard } = useIntelligenceDashboard(projectId);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Custom instructions editing
@@ -518,6 +522,88 @@ export const ProjectKnowledgePanel: React.FC<ProjectKnowledgePanelProps> = ({
                (!Array.isArray(intelligence.learnedInsights) || intelligence.learnedInsights.length === 0) && (
                 <p className="text-xs text-zinc-400 text-center py-2">
                   AnA will learn about this project as you upload documents and have conversations.
+                </p>
+              )}
+            </div>
+          </Section>
+        )}
+
+        {/* ── Readiness + RIM Signals Section ── */}
+        {dashboard && (
+          <Section title="Intelligence" icon={Zap} defaultOpen={true}>
+            <div className="px-4 space-y-3">
+              {/* Readiness score */}
+              {dashboard.readiness && (
+                <div className="flex items-center gap-3 p-2.5 rounded-lg bg-zinc-50">
+                  <div className="flex-shrink-0">
+                    <div className={cn(
+                      'w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold',
+                      (dashboard.readiness.overallScore ?? 0) >= 80 ? 'bg-emerald-100 text-emerald-700' :
+                      (dashboard.readiness.overallScore ?? 0) >= 50 ? 'bg-amber-100 text-amber-700' :
+                      'bg-red-100 text-red-700'
+                    )}>
+                      {dashboard.readiness.overallScore ?? '—'}
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-medium text-zinc-700">Readiness Score</div>
+                    <div className="text-[11px] text-zinc-500">
+                      {(dashboard.readiness.overallScore ?? 0) >= 80 ? 'On track for submission' :
+                       (dashboard.readiness.overallScore ?? 0) >= 50 ? 'Gaps to address' :
+                       'Significant work remaining'}
+                    </div>
+                  </div>
+                  <TrendingUp className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0" />
+                </div>
+              )}
+
+              {/* Cross-module signals */}
+              {dashboard.crossModule && (
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-xs font-medium text-zinc-600">
+                    <ShieldCheck className="w-3 h-3" />
+                    Cross-Module Signals
+                  </div>
+                  {dashboard.crossModule.bySeverity && (
+                    <div className="flex items-center gap-3 text-[11px]">
+                      {dashboard.crossModule.bySeverity.critical > 0 && (
+                        <span className="flex items-center gap-1 text-red-600">
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                          {dashboard.crossModule.bySeverity.critical} critical
+                        </span>
+                      )}
+                      {dashboard.crossModule.bySeverity.high > 0 && (
+                        <span className="flex items-center gap-1 text-amber-600">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                          {dashboard.crossModule.bySeverity.high} high
+                        </span>
+                      )}
+                      {(dashboard.crossModule.bySeverity.medium + dashboard.crossModule.bySeverity.low) > 0 && (
+                        <span className="flex items-center gap-1 text-zinc-500">
+                          <span className="w-1.5 h-1.5 rounded-full bg-zinc-400" />
+                          {dashboard.crossModule.bySeverity.medium + dashboard.crossModule.bySeverity.low} other
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  <div className="text-[11px] text-zinc-400">
+                    {dashboard.crossModule.documentsCovered || 0} documents analyzed &middot; {dashboard.crossModule.totalInsights || 0} insights
+                  </div>
+                </div>
+              )}
+
+              {/* Recommendations count */}
+              {dashboard.recommendations && (
+                <div className="text-[11px] text-zinc-500 pt-1 border-t border-zinc-100">
+                  {dashboard.recommendations.totalRecommendations || 0} recommendations &middot;
+                  {' '}{dashboard.nextActions?.totalActions || 0} next actions
+                </div>
+              )}
+
+              {/* Empty state */}
+              {!dashboard.readiness && !dashboard.crossModule && (
+                <p className="text-xs text-zinc-400 text-center py-2">
+                  Intelligence signals will accumulate as you work on this project.
                 </p>
               )}
             </div>
