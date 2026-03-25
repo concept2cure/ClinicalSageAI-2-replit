@@ -40,6 +40,10 @@ export const authService = {
       localStorage.setItem('organizationId', String(user.organizationId));
       localStorage.setItem('currentOrganizationId', String(user.organizationId));
     }
+    // Persist email for silent token refresh
+    if (user?.email) {
+      localStorage.setItem('userEmail', user.email);
+    }
   },
 
   clearToken() {

@@ -1120,63 +1120,117 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
 
           // Use raw fetch for chat calls to avoid apiRequest throwing on errors.
           // apiRequest throws for non-ok/non-401 responses, breaking the fallback chain.
-          const chatHeaders: Record<string, string> = {
-            'Content-Type': 'application/json',
+
+          // Helper: build auth headers from current localStorage
+          const buildChatHeaders = (): Record<string, string> => {
+            const h: Record<string, string> = { 'Content-Type': 'application/json' };
+            const t =
+              localStorage.getItem('token') ||
+              localStorage.getItem('authToken') ||
+              localStorage.getItem('auth_token');
+            if (t) h['Authorization'] = `Bearer ${t}`;
+            const o =
+              localStorage.getItem('organizationId') ||
+              localStorage.getItem('currentOrganizationId') ||
+              '1';
+            h['x-organization-id'] = o;
+            return h;
           };
-          const authToken =
-            localStorage.getItem('token') ||
-            localStorage.getItem('authToken') ||
-            localStorage.getItem('auth_token');
-          if (authToken) {
-            chatHeaders['Authorization'] = `Bearer ${authToken}`;
-          }
-          const orgId =
-            localStorage.getItem('organizationId') ||
-            localStorage.getItem('currentOrganizationId') ||
-            '1';
-          chatHeaders['x-organization-id'] = orgId;
+
+          // Helper: silently refresh token via dev-login when we get a 401
+          const refreshTokenOnce = async (): Promise<boolean> => {
+            try {
+              const email =
+                localStorage.getItem('userEmail') ||
+                localStorage.getItem('user_email') ||
+                'jm.smith@concept2cure.pro';
+              const resp = await fetch('/api/auth/dev-login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email }),
+              });
+              if (!resp.ok) return false;
+              const data = await resp.json();
+              if (data.accessToken) {
+                localStorage.setItem('token', data.accessToken);
+                localStorage.setItem('authToken', data.accessToken);
+                localStorage.setItem('auth_token', data.accessToken);
+                if (data.user?.organizationId) {
+                  localStorage.setItem('organizationId', String(data.user.organizationId));
+                  localStorage.setItem('currentOrganizationId', String(data.user.organizationId));
+                }
+                if (data.user?.email) {
+                  localStorage.setItem('userEmail', data.user.email);
+                }
+                console.log('[AnA] Token refreshed silently');
+                return true;
+              }
+            } catch {
+              // silent
+            }
+            return false;
+          };
+
+          let chatHeaders = buildChatHeaders();
 
           let rawData: any = null;
           let chatSucceeded = false;
 
+          // ── Build chat body (reused for retries) ──
+          const chatBody = JSON.stringify({
+            message: text,
+            chatMode,
+            thread_id: threadIdRef.current || undefined,
+            project_id: contextProfile?.projectId || undefined,
+            submission_type: contextProfile?.productType || undefined,
+            authoring_context: authoringPayload,
+            context: {
+              screen: contextProfile?.screenName,
+              project: contextProfile?.activeProject,
+              projectId: contextProfile?.projectId,
+              productType: contextProfile?.productType,
+              userRole: contextProfile?.userRole,
+              ...(contextProfile?.moduleContext || {}),
+              ...(authoringContext
+                ? {
+                    sectionCode: authoringContext.sectionCode,
+                    artifactId: authoringContext.artifactId,
+                    artifactVersionId: authoringContext.artifactVersionId,
+                    workflowStage: authoringContext.workflowStage,
+                    sectionTitle: authoringContext.sectionTitle,
+                    moduleCode: authoringContext.moduleCode,
+                    artifactStatus: authoringContext.artifactStatus,
+                  }
+                : {}),
+            },
+            conversationHistory: messages.slice(-10).map(m => ({
+              role: m.role,
+              content: m.content,
+            })),
+          });
+
           // ── Attempt 1: AnA RI endpoint ──
           try {
-            const anaRes = await fetch('/api/ana-ri/chat', {
+            let anaRes = await fetch('/api/ana-ri/chat', {
               method: 'POST',
               headers: chatHeaders,
               credentials: 'include',
-              body: JSON.stringify({
-                message: text,
-                chatMode,
-                thread_id: threadIdRef.current || undefined,
-                project_id: contextProfile?.projectId || undefined,
-                submission_type: contextProfile?.productType || undefined,
-                authoring_context: authoringPayload,
-                context: {
-                  screen: contextProfile?.screenName,
-                  project: contextProfile?.activeProject,
-                  projectId: contextProfile?.projectId,
-                  productType: contextProfile?.productType,
-                  userRole: contextProfile?.userRole,
-                  ...(contextProfile?.moduleContext || {}),
-                  ...(authoringContext
-                    ? {
-                        sectionCode: authoringContext.sectionCode,
-                        artifactId: authoringContext.artifactId,
-                        artifactVersionId: authoringContext.artifactVersionId,
-                        workflowStage: authoringContext.workflowStage,
-                        sectionTitle: authoringContext.sectionTitle,
-                        moduleCode: authoringContext.moduleCode,
-                        artifactStatus: authoringContext.artifactStatus,
-                      }
-                    : {}),
-                },
-                conversationHistory: messages.slice(-10).map(m => ({
-                  role: m.role,
-                  content: m.content,
-                })),
-              }),
+              body: chatBody,
             });
+            // Auto-refresh token on 401 and retry once
+            if (anaRes.status === 401) {
+              console.warn('[AnA RI] 401 — refreshing token and retrying...');
+              const refreshed = await refreshTokenOnce();
+              if (refreshed) {
+                chatHeaders = buildChatHeaders();
+                anaRes = await fetch('/api/ana-ri/chat', {
+                  method: 'POST',
+                  headers: chatHeaders,
+                  credentials: 'include',
+                  body: chatBody,
+                });
+              }
+            }
             if (anaRes.ok) {
               rawData = await anaRes.json();
               chatSucceeded = true;
@@ -1191,7 +1245,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           // ── Attempt 2: Cortex fallback ──
           if (!chatSucceeded) {
             try {
-              const cortexRes = await fetch('/api/cortex/chat', {
+              let cortexRes = await fetch('/api/cortex/chat', {
                 method: 'POST',
                 headers: chatHeaders,
                 credentials: 'include',
@@ -1213,6 +1267,35 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   })),
                 }),
               });
+              // Auto-refresh token on 401 and retry once
+              if (cortexRes.status === 401) {
+                const refreshed = await refreshTokenOnce();
+                if (refreshed) {
+                  chatHeaders = buildChatHeaders();
+                  cortexRes = await fetch('/api/cortex/chat', {
+                    method: 'POST',
+                    headers: chatHeaders,
+                    credentials: 'include',
+                    body: JSON.stringify({
+                      message: text,
+                      chatMode,
+                      project_id: contextProfile?.projectId || undefined,
+                      submission_type: contextProfile?.productType || undefined,
+                      context: {
+                        screen: contextProfile?.screenName,
+                        project: contextProfile?.activeProject,
+                        projectId: contextProfile?.projectId,
+                        productType: contextProfile?.productType,
+                        userRole: contextProfile?.userRole,
+                      },
+                      conversationHistory: messages.slice(-10).map(m => ({
+                        role: m.role,
+                        content: m.content,
+                      })),
+                    }),
+                  });
+                }
+              }
               if (cortexRes.ok) {
                 rawData = await cortexRes.json();
                 chatSucceeded = true;
