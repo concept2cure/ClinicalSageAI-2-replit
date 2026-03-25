@@ -40,7 +40,7 @@ interface SlashCommand {
 }
 
 function detectSlashCommand(message: string): SlashCommand | null {
-  const match = message.match(/^\/(risk|readiness|precedent|draft|preflight|claims|recommend|next|simulate|signals|export|assess|twin|consistency|deficiencies|knowledge|help)\b\s*(.*)/i);
+  const match = message.match(/^\/(risk|readiness|precedent|draft|preflight|claims|recommend|next|simulate|signals|export|assess|twin|consistency|deficiencies|knowledge|help|sap|power|dose|defensibility|design)\b\s*(.*)/i);
   if (!match) return null;
   return { command: match[1].toLowerCase(), args: match[2].trim() };
 }
@@ -86,6 +86,20 @@ const CLAIMS_TRIGGERS = [
 const SIMULATION_TRIGGERS = [
   /\b(?:simulat|what.if|scenario|challenge|reviewer.*question)\b/i,
   /\b(?:how would.*reviewer|anticipat.*question|likely.*question)\b/i,
+];
+
+const BIOSTAT_TRIGGERS = [
+  /\b(?:sample size|power analysis|power calculation|statistical power|how many patients|how many subjects)\b/i,
+  /\b(?:sap|statistical analysis plan|analysis plan)\b/i,
+  /\b(?:dose escalation|dose.finding|3\+3|boin|crm|mtd|maximum tolerated dose|dlt)\b/i,
+  /\b(?:biostatistic|biostat|statistician|statistical design|trial design)\b/i,
+  /\b(?:adaptive design|group sequential|interim analysis|stopping rule|futility)\b/i,
+  /\b(?:multiplicity|multiple endpoints|alpha spending|bonferroni|dunnett)\b/i,
+  /\b(?:missing data|dropout|attrition|imputation|mmrm|locf)\b/i,
+  /\b(?:estimand|intercurrent event|ich e9)\b/i,
+  /\b(?:non.?inferiority|equivalence|superiority margin)\b/i,
+  /\b(?:crossover|parallel.?arm|basket trial|umbrella trial|platform trial)\b/i,
+  /\b(?:statistical defensib|endpoint.*quality|reviewer.*risk.*statistic)\b/i,
 ];
 
 function matchesTriggers(message: string, triggers: RegExp[]): boolean {
@@ -345,6 +359,53 @@ async function enrichWithKnowledgeSearch(query: string, projectId: string | numb
   }
 }
 
+async function enrichWithBiostatContext(projectId: string | number, submissionType?: string): Promise<string> {
+  // Inject biostatistics knowledge + project-specific signals
+  const parts: string[] = [];
+
+  // Get project biostat signals
+  try {
+    const result = await pool.query(
+      `SELECT signal_type, severity, description, status
+       FROM biostat_signals
+       WHERE project_id = $1 AND status != 'resolved'
+       ORDER BY severity DESC, created_at DESC
+       LIMIT $2`,
+      [projectId, 8]
+    );
+    if (result.rows.length > 0) {
+      const signalLines = result.rows.map((r: any) =>
+        `- **[${r.severity?.toUpperCase() || 'INFO'}]** ${r.signal_type}: ${r.description?.slice(0, 300) || 'No description'}`
+      ).join('\n');
+      parts.push(`**Active Biostat Signals (${result.rows.length}):**\n${signalLines}`);
+    }
+  } catch { /* table might not exist yet */ }
+
+  // Get existing assumptions
+  try {
+    const assumptions = await pool.query(
+      `SELECT finding_type, parameter_name, status, description
+       FROM biostat_assumption_findings
+       WHERE project_id = $1
+       ORDER BY created_at DESC
+       LIMIT $2`,
+      [projectId, 5]
+    );
+    if (assumptions.rows.length > 0) {
+      const assLines = assumptions.rows.map((r: any) =>
+        `- ${r.parameter_name || r.finding_type}: ${r.description?.slice(0, 200) || ''} (${r.status})`
+      ).join('\n');
+      parts.push(`**Statistical Assumptions:**\n${assLines}`);
+    }
+  } catch { /* table might not exist */ }
+
+  if (parts.length === 0) {
+    return `\n\n## Biostatistics Context\nNo biostatistics signals or assumptions found for this project yet. You can compute sample size, generate SAP sections, run defensibility assessments, or design dose escalation protocols. Ask the user what statistical work they need.`;
+  }
+
+  return `\n\n## Biostatistics Context\n${parts.join('\n\n')}\n\nUse these signals and assumptions when discussing statistical design. Flag unresolved signals.`;
+}
+
 // ─── Project intelligence summary (first-message context) ────────────────────
 
 async function enrichWithProjectSummary(projectId: string | number, orgId?: number): Promise<string> {
@@ -442,6 +503,11 @@ export async function enrichContextForChat(params: {
       consistency: () => enrichWithCrossModule(projectId, organizationId),
       deficiencies: () => enrichWithDeficiencies(submissionType),
       knowledge: () => enrichWithKnowledgeSearch(slash.args || message, projectId),
+      sap: () => enrichWithBiostatContext(projectId, submissionType),
+      power: () => enrichWithBiostatContext(projectId, submissionType),
+      dose: () => enrichWithBiostatContext(projectId, submissionType),
+      defensibility: () => enrichWithBiostatContext(projectId, submissionType),
+      design: () => enrichWithBiostatContext(projectId, submissionType),
       help: () => Promise.all([
         enrichWithReadiness(projectId, organizationId),
         enrichWithRecommendations(projectId, organizationId),
@@ -474,6 +540,11 @@ export async function enrichContextForChat(params: {
       consistency: 'Analyze cross-module consistency: find stale references, status gaps, orphaned documents, and module dependency issues across the entire dossier.',
       deficiencies: `Show the known deficiency taxonomy for ${submissionType || 'this submission type'}. List critical deficiency patterns and common reviewer triggers.`,
       knowledge: slash.args ? `Search the project knowledge base for: ${slash.args}` : 'Show all knowledge atoms stored for this project.',
+      sap: slash.args ? `Generate a Statistical Analysis Plan for: ${slash.args}` : 'Generate a Statistical Analysis Plan. Ask the user for study parameters: indication, phase, primary endpoint, sample size target, alpha/power, and missing data strategy.',
+      power: slash.args ? `Calculate sample size and power for: ${slash.args}` : 'Calculate sample size and statistical power. Ask the user for: endpoint type (continuous/binary/time-to-event), effect size, alpha, target power, allocation ratio, and dropout rate.',
+      dose: slash.args ? `Design a dose escalation study for: ${slash.args}` : 'Design a dose escalation protocol. Ask for: starting dose, dose levels, target DLT rate, escalation method (3+3, BOIN, CRM, or Modified Fibonacci).',
+      defensibility: 'Run a statistical defensibility assessment on this project. Score across 7 dimensions: evidence sufficiency, defensibility, reviewer sensitivity, claim risk, cross-section consistency, submission risk. Generate reviewer risk annotations.',
+      design: slash.args ? `Design a clinical trial for: ${slash.args}` : 'Help design the optimal clinical trial. Ask about: indication, phase, primary endpoint, comparator, and whether they need adaptive, basket, umbrella, or platform design features.',
       help: 'The user is asking what you can do. Look at their project state and suggest 3-4 specific things you can do RIGHT NOW. Show, don\'t tell. Demonstrate by referencing their actual readiness score, gaps, and recommendations.',
       export: 'Export this conversation.',
     };
@@ -493,6 +564,7 @@ export async function enrichContextForChat(params: {
       { test: RECOMMENDATION_TRIGGERS, fn: () => enrichWithRecommendations(projectId, organizationId), name: 'recommendations' },
       { test: CLAIMS_TRIGGERS, fn: () => enrichWithClaims(projectId), name: 'claims' },
       { test: SIMULATION_TRIGGERS, fn: () => enrichWithCRLRTF(projectId), name: 'simulation' },
+      { test: BIOSTAT_TRIGGERS, fn: () => enrichWithBiostatContext(projectId, submissionType), name: 'biostatistics' },
     ];
 
     const matchedFns = triggers.filter(t => matchesTriggers(message, t.test));
