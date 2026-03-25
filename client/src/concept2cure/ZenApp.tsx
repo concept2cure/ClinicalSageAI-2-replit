@@ -1138,14 +1138,15 @@ export const ZenApp: React.FC = () => {
 
   // Set active project when projects load (prefer summary's last-touched project)
   // NOTE: activeProjectId intentionally excluded from deps to prevent re-trigger loops
+  // Restore last active project from workspace summary (don't force-select first project)
+  // This allows an unscoped "general" chat mode when no project is selected (Claude.ai parity)
   useEffect(() => {
     if (!activeProjectId) {
       const summaryProject = workspaceSummary?.active?.projectId;
       if (summaryProject) {
         setActiveProjectId(summaryProject);
-      } else if (projects.length > 0) {
-        setActiveProjectId(projects[0].id);
       }
+      // Intentionally NOT auto-selecting projects[0] — allow unscoped state
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projects, workspaceSummary]);
@@ -1780,6 +1781,9 @@ export const ZenApp: React.FC = () => {
           setActiveConversationId(id);
           setActiveThreadId(id);
         }}
+        onSelectProject={id => {
+          setActiveProjectId(id);
+        }}
         onNewChat={handleNewChat}
         onOpenProjects={() => setProjectSwitcherOpen(true)}
         onOpenSearch={() => setCommandPaletteOpen(true)}
@@ -2320,6 +2324,7 @@ export const ZenApp: React.FC = () => {
           {!embeddedModule && layoutMode === 'dossier-map' && (
             <Suspense fallback={<ModuleLoadingFallback />}>
               <DossierMap
+                projectId={activeProjectId}
                 projectName={activeProject?.name}
                 projectType={activeProject?.type}
                 onSectionClick={sectionCode => {
@@ -2360,6 +2365,7 @@ export const ZenApp: React.FC = () => {
           {!embeddedModule && layoutMode === 'submissions' && (
             <Suspense fallback={<ModuleLoadingFallback />}>
               <SubmissionReadinessView
+                projectId={activeProjectId}
                 projectName={activeProject?.name}
                 projectType={activeProject?.type}
                 onSectionClick={sectionCode => {
