@@ -169,11 +169,22 @@ If you think something needs rebuilding, **ask the user first**.
 **The chat IS the product.** ALL new features MUST be accessible through the AnA chat interface.
 No new screens, no new panels, no new modals, no new pages. Everything is inline in the conversation.
 
-- Features are invoked by typing naturally or selecting suggested actions
-- Results render as rich markdown in chat (tables, lists, structured data)
-- Action buttons appear on messages (save, insert, export)
-- Settings/modes live in the input bar, not in separate UI
-- Intelligence (predictions, precedents, signals) surfaces naturally in AnA's responses
+- 43 slash commands + 39 operational commands — everything through chat
+- Features invoked by typing naturally, slash commands, or suggested actions
+- Results render as rich markdown (tables, lists, structured data)
+- Action buttons appear on hover (save, insert, export, regenerate)
+- Intelligence surfaces naturally — AnA "knows" without being told
+
+## AnA 1.0 RI Operating System (NON-NEGOTIABLE)
+
+> Skill file: `.claude/skills/ana-operating-system.md`
+
+AnA is a complete regulatory intelligence operating function. When modifying AnA:
+
+- Read `.claude/skills/ana-operating-system.md` for full architecture, all commands, all workflows
+- Follow the "Adding New Capabilities" section for the correct wiring pattern
+- Run the AnA-specific audit checklist before shipping
+- Never bypass the chat-first rule — no new screens for AnA features
 
 ## UI State Standards (NON-NEGOTIABLE)
 
