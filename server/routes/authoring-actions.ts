@@ -217,31 +217,58 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'projectId and artifactId are required' });
     }
 
-    // Step 1: Check promotion blockers
+    const orgId = (req as any).tenantId || (req as any).organizationId || 1;
+
+    // Step 1: Governance boundary evaluation (includes contradiction + readiness gates)
     let blocked = false;
     const blockReasons: string[] = [];
+    let boundaryTransition: any = null;
 
     try {
-      const { contradictionEngineService } = await import(
-        '../services/contradiction-engine-service.js'
+      const { GovernanceBoundaryService } = await import(
+        '../services/governance-boundary-service.js'
       );
-      if (contradictionEngineService?.checkPromotionBlocked) {
-        const result = await contradictionEngineService.checkPromotionBlocked(
-          'default',
-          Number(projectId),
-          Number(artifactId)
-        );
-        if (result?.blocked) {
-          blocked = true;
-          blockReasons.push(
-            ...((result.findings || []).map(
-              (f: any) => f.explanation || 'Unresolved blocking contradiction'
-            ))
-          );
-        }
+      const boundaryService = GovernanceBoundaryService.getInstance();
+      const transitionResult = await boundaryService.evaluateTransition({
+        organizationId: Number(orgId),
+        projectId: Number(projectId),
+        artifactId: Number(artifactId),
+        fromBoundary: 'advisory',
+        toBoundary: 'governed_draft',
+        actorId: (req as any).userId ? Number((req as any).userId) : undefined,
+        actorRole: (req as any).userRole || undefined,
+      });
+
+      boundaryTransition = transitionResult.transition;
+
+      if (!transitionResult.allowed) {
+        blocked = true;
+        blockReasons.push(...transitionResult.blockedReasons);
       }
     } catch {
-      // Non-blocking — proceed without contradiction check
+      // Governance boundary service unavailable — fall back to direct contradiction check
+      try {
+        const { contradictionEngineService } = await import(
+          '../services/contradiction-engine-service.js'
+        );
+        if (contradictionEngineService?.checkPromotionBlocked) {
+          const result = await contradictionEngineService.checkPromotionBlocked(
+            orgId,
+            Number(projectId),
+            Number(artifactId)
+          );
+          if (result?.blocked) {
+            blocked = true;
+            blockReasons.push(
+              ...((result.blockingFindings || result.findings || []).map(
+                (f: any) => f.title || f.explanation || 'Unresolved blocking contradiction'
+              ))
+            );
+          }
+        }
+      } catch {
+        // Non-blocking — proceed without contradiction check
+      }
     }
 
     // ── Record blocked promotion as a formal decision ──────────────
@@ -388,6 +415,7 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
         receiptId: promotionReceipt?.id || null,
         authority: promotionDecision?.authority || null,
         pendingApprovals: promotionReceipt?.pendingApprovals || [],
+        boundaryTransitionId: boundaryTransition?.id || null,
       });
     } catch (promoteErr: any) {
       return res.json({
@@ -2281,6 +2309,139 @@ router.get('/contradiction-context/:projectId', async (req: Request, res: Respon
   } catch (err: any) {
     console.error('[authoring-actions] contradiction-context error:', err?.message);
     return res.status(500).json({ error: 'Failed to fetch contradiction context' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// WAVE 3 ACTIONS — Contradiction → Resolution Bridge (Pass 10)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * POST /plan-contradiction-resolution
+ * Plan (but don't execute) resolution for a specific contradiction.
+ * Returns authority check, recommended path, affected objects.
+ */
+router.post('/plan-contradiction-resolution', async (req: Request, res: Response) => {
+  try {
+    const { projectId, findingId, finding, overlayRules } = req.body;
+    if (!projectId || !findingId || !finding) {
+      return res.status(400).json({ error: 'projectId, findingId, and finding are required' });
+    }
+
+    const orgId = (req as any).tenantId || (req as any).organizationId || 1;
+    const userId = (req as any).userId || 0;
+
+    const { planContradictionResolution } = await import(
+      '../services/resolution/contradiction-resolution-bridge.js'
+    );
+    const result = await planContradictionResolution(
+      Number(orgId), Number(userId), Number(projectId),
+      findingId, finding, overlayRules
+    );
+
+    return res.json({
+      status: result.success ? 'data' : 'error',
+      action: 'plan_contradiction_resolution',
+      ...result,
+    });
+  } catch (err: any) {
+    console.error('[authoring-actions] plan-contradiction-resolution error:', err?.message);
+    return res.status(500).json({ error: 'Failed to plan contradiction resolution' });
+  }
+});
+
+/**
+ * POST /execute-contradiction-resolution
+ * Execute a contradiction resolution (full orchestration with authority + overlay awareness).
+ * Creates decision record + receipt. Triggers preflight refresh.
+ */
+router.post('/execute-contradiction-resolution', async (req: Request, res: Response) => {
+  try {
+    const { projectId, findingId, finding, overlayRules } = req.body;
+    if (!projectId || !findingId || !finding) {
+      return res.status(400).json({ error: 'projectId, findingId, and finding are required' });
+    }
+
+    const orgId = (req as any).tenantId || (req as any).organizationId || 1;
+    const userId = (req as any).userId || 0;
+    const actorRole = (req as any).userRole || undefined;
+
+    const { executeContradictionResolution } = await import(
+      '../services/resolution/contradiction-resolution-bridge.js'
+    );
+    const result = await executeContradictionResolution(
+      Number(orgId), Number(userId), Number(projectId),
+      findingId, finding, overlayRules, actorRole
+    );
+
+    return res.json({
+      status: result.success ? 'data' : 'blocked',
+      action: 'execute_contradiction_resolution',
+      ...result,
+    });
+  } catch (err: any) {
+    console.error('[authoring-actions] execute-contradiction-resolution error:', err?.message);
+    return res.status(500).json({ error: 'Failed to execute contradiction resolution' });
+  }
+});
+
+/**
+ * POST /explain-contradiction-resolution
+ * Explain a contradiction resolution plan (structured, no LLM).
+ */
+router.post('/explain-contradiction-resolution', async (req: Request, res: Response) => {
+  try {
+    const { projectId, findingId, finding, overlayRules } = req.body;
+    if (!projectId || !findingId || !finding) {
+      return res.status(400).json({ error: 'projectId, findingId, and finding are required' });
+    }
+
+    const orgId = (req as any).tenantId || (req as any).organizationId || 1;
+
+    const { explainContradictionResolution } = await import(
+      '../services/resolution/contradiction-resolution-bridge.js'
+    );
+    const result = await explainContradictionResolution(
+      Number(orgId), Number(projectId), findingId, finding, overlayRules
+    );
+
+    return res.json({
+      status: result.success ? 'data' : 'error',
+      action: 'explain_contradiction_resolution',
+      ...result,
+    });
+  } catch (err: any) {
+    console.error('[authoring-actions] explain-contradiction-resolution error:', err?.message);
+    return res.status(500).json({ error: 'Failed to explain contradiction resolution' });
+  }
+});
+
+/**
+ * GET /project-resolution-status/:projectId
+ * Get resolution status for a project (plans + bundles summary).
+ */
+router.get('/project-resolution-status/:projectId', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId, 10);
+    if (isNaN(projectId)) {
+      return res.status(400).json({ error: 'Invalid projectId' });
+    }
+
+    const orgId = (req as any).tenantId || (req as any).organizationId || 1;
+
+    const { getProjectResolutionStatus } = await import(
+      '../services/resolution/contradiction-resolution-bridge.js'
+    );
+    const result = await getProjectResolutionStatus(Number(orgId), projectId);
+
+    return res.json({
+      status: result.success ? 'data' : 'error',
+      action: 'project_resolution_status',
+      ...result,
+    });
+  } catch (err: any) {
+    console.error('[authoring-actions] project-resolution-status error:', err?.message);
+    return res.status(500).json({ error: 'Failed to get project resolution status' });
   }
 });
 

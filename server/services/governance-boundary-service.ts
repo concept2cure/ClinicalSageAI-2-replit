@@ -256,7 +256,52 @@ export class GovernanceBoundaryService {
       }
     }
 
-    // 3. Default structural rules (always applied)
+    // 3. Contradiction gate — block if unresolved blocking contradictions exist
+    if (request.projectId && request.toBoundary !== 'advisory') {
+      try {
+        const { contradictionEngineService } = await import('./contradiction-engine-service.js');
+        if (contradictionEngineService?.checkPromotionBlocked) {
+          const contradictionCheck = await contradictionEngineService.checkPromotionBlocked(
+            request.organizationId,
+            request.projectId,
+            request.artifactId
+          );
+          if (contradictionCheck?.blocked) {
+            const blockingCount = contradictionCheck.blockingFindings?.length ?? 0;
+            blockedReasons.push(
+              `${blockingCount} unresolved blocking contradiction(s) must be resolved before transitioning to ${request.toBoundary}.`
+            );
+          }
+        }
+      } catch {
+        // Contradiction engine unavailable — continue without gate (non-blocking degradation)
+      }
+    }
+
+    // 4. Readiness gate — block promoted/locked/submission transitions if readiness fails
+    if (request.projectId &&
+        (request.toBoundary === 'approved' || request.toBoundary === 'locked' || request.toBoundary === 'submission_ready')) {
+      try {
+        const { evaluateReadiness } = await import('./readiness-evaluation-service.js');
+        if (evaluateReadiness) {
+          const readinessResult = await evaluateReadiness({
+            organizationId: request.organizationId,
+            projectId: request.projectId,
+            programType: '*',
+          });
+          if (!readinessResult.isReady && readinessResult.blockerCount > 0) {
+            blockedReasons.push(
+              `Readiness evaluation failed: ${readinessResult.blockerCount} blocker(s), score ${readinessResult.overallScore}/100. ` +
+              `All blockers must be resolved before transitioning to ${request.toBoundary}.`
+            );
+          }
+        }
+      } catch {
+        // Readiness engine unavailable — continue without gate (non-blocking degradation)
+      }
+    }
+
+    // 5. Default structural rules (always applied)
     if (request.toBoundary === 'locked' || request.toBoundary === 'submission_ready') {
       if (!request.actorId) {
         blockedReasons.push(
