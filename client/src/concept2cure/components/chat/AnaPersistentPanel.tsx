@@ -322,10 +322,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     }
   }, [input]);
 
-  // ── Restore previous conversation from server thread ──
+  // ── Restore previous conversation OR auto-greet ──
   const conversationLoadedRef = useRef(false);
+  const autoGreetSentRef = useRef(false);
   useEffect(() => {
-    if (conversationLoadedRef.current || messages.length > 0) return;
+    if (conversationLoadedRef.current) return;
     if (!contextProfile?.projectId) return;
     conversationLoadedRef.current = true;
 
@@ -334,10 +335,16 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       .then(r => r.json())
       .then(data => {
         const thread = data?.threads?.[0] || data?.data?.[0];
-        if (!thread?.id) return;
+        if (!thread?.id) {
+          // No previous thread — auto-greet so AnA speaks first
+          if (!autoGreetSentRef.current && !initialMessage) {
+            autoGreetSentRef.current = true;
+            setTimeout(() => handleSend('/status'), 300);
+          }
+          return;
+        }
         threadIdRef.current = thread.id;
 
-        // Load messages from this thread
         return apiRequest('GET', `/api/chat/threads/${thread.id}/messages?limit=30`)
           .then(r => r.json())
           .then(msgData => {
@@ -349,11 +356,19 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                 content: m.content,
                 timestamp: new Date(m.created_at || m.timestamp || Date.now()),
               })));
+            } else if (!autoGreetSentRef.current && !initialMessage) {
+              // Thread exists but empty — auto-greet
+              autoGreetSentRef.current = true;
+              setTimeout(() => handleSend('/status'), 300);
             }
           });
       })
       .catch(() => {
-        // Non-critical — start fresh conversation
+        // Failed to load — auto-greet so AnA speaks first
+        if (!autoGreetSentRef.current && !initialMessage) {
+          autoGreetSentRef.current = true;
+          setTimeout(() => handleSend('/status'), 300);
+        }
       });
   }, [contextProfile?.projectId]);
 
@@ -1032,7 +1047,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
     return (
       <div
         key={msg.id}
-        className={cn('py-6 px-4 sm:px-6', isUser ? '' : '')}
+        className={cn(
+          'px-4 sm:px-6',
+          isUser ? 'py-4 bg-zinc-50/60' : 'py-6'
+        )}
         onMouseEnter={() => !isUser && setHoveredMsgId(msg.id)}
         onMouseLeave={() => setHoveredMsgId(null)}
         data-testid={isUser ? 'chat-message-user' : 'chat-message-assistant'}
@@ -1054,8 +1072,18 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             <div className="text-[15px] text-[#0D0D0D] leading-[1.7] whitespace-pre-wrap">
               {msg.content}
             </div>
-          ) : (
-            <div className="relative">
+          ) : (() => {
+            // Detect if this is a document (long + has structure)
+            const isDocument = !msg.isStreaming && msg.content.length > 800 && /^#{1,3}\s/m.test(msg.content);
+            return (
+            <div className={cn('relative', isDocument && 'mt-2 border border-zinc-200 rounded-xl bg-white shadow-sm')}>
+              {isDocument && (
+                <div className="flex items-center gap-2 px-4 py-2 border-b border-zinc-100 bg-zinc-50/50 rounded-t-xl">
+                  <div className="w-2 h-2 rounded-full bg-[#b4654a]" />
+                  <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Generated Document</span>
+                </div>
+              )}
+              <div className={cn(isDocument && 'px-4 py-4')}>
               <div
                 className={cn(
                   'ana-response text-[15px] leading-[1.7] text-[#1a1a1a]',
@@ -1116,8 +1144,10 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                   </div>
                 );
               })()}
+              </div>
             </div>
-          )}
+          );
+          })()}
 
           {/* Action buttons — always visible, subtle until hover */}
           {!isUser && !msg.isStreaming && msg.content && (
