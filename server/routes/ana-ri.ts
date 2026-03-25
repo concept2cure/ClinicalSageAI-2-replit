@@ -1045,100 +1045,30 @@ router.post('/execute', async (req: Request, res: Response) => {
       organizationId: Number(orgId),
       activeProjectId: params?.projectId ? Number(params.projectId) : undefined,
       userName: (req as any).user?.name,
-      userRole: (req as any).user?.title,
+      userRole: (req as any).user?.role || (req as any).user?.title,
     };
 
-    let result;
-    switch (command) {
-      case 'create_project':
-        result = await executor.createProject(ctx, params || {});
-        break;
-      case 'list_projects':
-        result = await executor.listProjects(ctx);
-        break;
-      case 'update_project':
-        result = await executor.updateProject(ctx, params?.projectId, params?.updates || {});
-        break;
-      case 'create_artifact':
-        result = await executor.createArtifact(ctx, params || {});
-        break;
-      case 'update_artifact':
-        result = await executor.updateArtifact(ctx, params || {});
-        break;
-      case 'update_artifact_status':
-        result = await executor.updateArtifactStatus(ctx, params || {});
-        break;
-      case 'list_artifacts':
-        result = await executor.listArtifacts(ctx, params?.projectId, params?.filters);
-        break;
-      case 'place_in_dossier':
-        result = await executor.placeInDossier(ctx, params || {});
-        break;
-      case 'create_task':
-        result = await executor.createTask(ctx, params || {});
-        break;
-      case 'update_task':
-        result = await executor.updateTask(ctx, params || {});
-        break;
-      case 'list_tasks':
-        result = await executor.listTasks(ctx, params?.projectId, params?.filters);
-        break;
-      case 'check_dossier_readiness':
-        result = await executor.checkDossierReadiness(ctx, params?.projectId);
-        break;
-      case 'create_submission_package':
-        result = await executor.createSubmissionPackage(ctx, params || {});
-        break;
-      case 'create_review_thread':
-        result = await executor.createReviewThread(ctx, params || {});
-        break;
-      case 'add_review_comment':
-        result = await executor.addReviewComment(ctx, params || {});
-        break;
-      case 'list_artifact_versions':
-        result = await executor.listArtifactVersions(ctx, params || {});
-        break;
-      case 'run_compliance_scan':
-        result = await executor.runComplianceScan(ctx, params || {});
-        break;
-      case 'export_artifact':
-        result = await executor.exportArtifact(ctx, params || {});
-        break;
-      case 'compare_versions':
-        result = await executor.compareVersions(ctx, params || {});
-        break;
-      case 'review_version_impact':
-        result = await executor.reviewVersionImpact(ctx, params || {});
-        break;
-      case 'create_milestone':
-        result = await executor.createMilestone(ctx, params || {});
-        break;
-      case 'update_milestone':
-        result = await executor.updateMilestone(ctx, params || {});
-        break;
-      case 'list_milestones':
-        result = await executor.listMilestones(ctx, params?.packageId);
-        break;
-      case 'revert_to_version':
-        result = await executor.revertToVersion(ctx, params || {});
-        break;
-      case 'search_artifacts':
-        result = await executor.searchArtifacts(ctx, params || {});
-        break;
-      case 'list_team_members':
-        result = await executor.listTeamMembers(ctx);
-        break;
-      case 'load_user_context':
-        result = await executor.loadUserContext(ctx);
-        break;
-      case 'load_conversation_history':
-        result = await executor.loadConversationHistory(ctx, params);
-        break;
-      default:
-        return sendError(res, 400, `Unknown command: ${command}`, { availableCommands: executor.COMMAND_REGISTRY.map((c: any) => c.name) }, 'UNKNOWN_COMMAND');
+    const isKnownCommand = executor.COMMAND_REGISTRY.some((c: any) => c.name === command);
+    if (!isKnownCommand) {
+      return sendError(
+        res,
+        400,
+        `Unknown command: ${command}`,
+        { availableCommands: executor.COMMAND_REGISTRY.map((c: any) => c.name) },
+        'UNKNOWN_COMMAND'
+      );
     }
 
-    return sendSuccess(res, result);
+    const [result] = await executor.executeCommands(
+      [{ command, params: params || {} }],
+      ctx
+    );
+
+    return sendSuccess(res, result || {
+      success: false,
+      action: command,
+      message: `Command ${command} did not produce a result.`,
+    });
   } catch (error: any) {
     console.error('[AnA RI] Command execution error:', error);
     return sendError(res, 500, error?.message || 'Command execution failed', null, 'EXECUTION_ERROR');
