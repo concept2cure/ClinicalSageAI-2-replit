@@ -23,6 +23,7 @@
  */
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { apiRequest } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
 import {
   Beaker,
@@ -350,11 +351,8 @@ export const CMCHub: React.FC<CMCHubProps> = ({
   // Load existing CMC data from project metadata
   useEffect(() => {
     if (!projectId) return;
-    const token = sessionStorage.getItem('concept2cure_token') || localStorage.getItem('concept2cure_token');
-    const headers: Record<string, string> = {};
-    if (token) headers['Authorization'] = `Bearer ${token}`;
 
-    fetch(`/api/concept2cure/projects/${projectId}/cmc`, { headers })
+    apiRequest('GET', `/api/concept2cure/projects/${projectId}/cmc`)
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (data?.cmcDrugSubstance) {
@@ -425,17 +423,9 @@ export const CMCHub: React.FC<CMCHubProps> = ({
     setIsSaving(true);
     setSaveSuccess(false);
     try {
-      const token = sessionStorage.getItem('concept2cure_token') || localStorage.getItem('concept2cure_token');
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
-      const res = await fetch(`/api/concept2cure/projects/${projectId}/cmc`, {
-        method: 'PUT',
-        headers,
-        body: JSON.stringify({
+      const res = await apiRequest('PUT', `/api/concept2cure/projects/${projectId}/cmc`, {
           cmcDrugSubstance: dsForm,
           cmcDrugProduct: dpForm,
-        }),
       });
 
       if (!res.ok) throw new Error('Save failed');
@@ -459,20 +449,12 @@ export const CMCHub: React.FC<CMCHubProps> = ({
     // Direct generation via API
     setGeneratingSection(sectionCode);
     try {
-      const token = sessionStorage.getItem('concept2cure_token') || localStorage.getItem('concept2cure_token');
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
-      await fetch('/api/cmc/generate-enhanced-blueprint', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
+      await apiRequest('POST', '/api/cmc/generate-enhanced-blueprint', {
           projectId,
           section: sectionCode,
           drugSubstance: dsForm,
           drugProduct: dpForm,
           submissionType: submissionType || 'IND',
-        }),
       });
     } catch (err) {
       console.error('[CMC] Generation failed:', err);

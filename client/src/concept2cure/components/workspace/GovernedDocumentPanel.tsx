@@ -37,17 +37,12 @@ import {
   PenTool,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import { LoadingState } from '@/components/ui/statesV2';
 import { ReviewThreadsPanel } from './ReviewThreadsPanel';
 import { getGovWorkflowTailoring } from '../../config/industry-tailoring';
 import { useDocumentModeOptional } from '../../contexts/DocumentModeContext';
-
-// ── Auth helper ──────────────────────────────────────────────────────────────
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
 
 // ── Types ────────────────────────────────────────────────────────────────────
 interface Artifact {
@@ -233,17 +228,15 @@ export function GovernedDocumentPanel({
   const currentStatus = artifact.status || 'draft';
   const allowedTransitions = VALID_TRANSITIONS[currentStatus] || [];
 
+  const { toast } = useToast();
+
   // ── Fetch user permissions ───────────────────────────────────────────
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch('/api/concept2cure/user/permissions', {
-          headers: getAuthHeaders(),
-        });
-        if (res.ok) {
-          const payload = await res.json();
-          setPermissions(payload.data ?? payload);
-        }
+        const res = await apiRequest('GET', '/api/concept2cure/user/permissions');
+        const payload = await res.json();
+        setPermissions(payload.data ?? payload);
       } catch {
         // Default to restrictive if permissions fetch fails
       }
@@ -256,15 +249,9 @@ export function GovernedDocumentPanel({
     setLoading(true);
     try {
       const [provRes, verRes, snapRes] = await Promise.all([
-        fetch(`/api/concept2cure/projects/${projectId}/artifacts/${artifact.id}/provenance`, {
-          headers: getAuthHeaders(),
-        }),
-        fetch(`/api/concept2cure/projects/${projectId}/artifacts/${artifact.id}/versions`, {
-          headers: getAuthHeaders(),
-        }),
-        fetch(`/api/concept2cure/projects/${projectId}/artifacts/${artifact.id}/snapshots`, {
-          headers: getAuthHeaders(),
-        }),
+        apiRequest('GET', `/api/concept2cure/projects/${projectId}/artifacts/${artifact.id}/provenance`),
+        apiRequest('GET', `/api/concept2cure/projects/${projectId}/artifacts/${artifact.id}/versions`),
+        apiRequest('GET', `/api/concept2cure/projects/${projectId}/artifacts/${artifact.id}/snapshots`),
       ]);
 
       if (provRes.ok) {
@@ -343,11 +330,11 @@ export function GovernedDocumentPanel({
         );
       }
     } catch {
-      // silent
+      toast({ title: 'Failed to load governance data', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
-  }, [projectId, artifact.id]);
+  }, [projectId, artifact.id, toast]);
 
   useEffect(() => {
     fetchData();
@@ -367,20 +354,16 @@ export function GovernedDocumentPanel({
         if (reason) body.reason = reason;
         if (attestation) body.attestation = attestation;
 
-        const res = await fetch(
-          `/api/concept2cure/projects/${projectId}/artifacts/${artifact.id}/status`,
-          {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-            body: JSON.stringify(body),
-          }
-        );
+        const res = await apiRequest('PUT', `/api/concept2cure/projects/${projectId}/artifacts/${artifact.id}/status`, body);
         if (res.ok) {
           onStatusChange?.(targetStatus);
+          toast({ title: `Status changed to ${targetStatus}` });
           fetchData(); // refresh audit trail
+        } else {
+          toast({ title: 'Status change failed', variant: 'destructive' });
         }
       } catch {
-        // silent
+        toast({ title: 'Status change failed', variant: 'destructive' });
       } finally {
         setChangingStatus(false);
         setRationaleTarget(null);
@@ -418,20 +401,16 @@ export function GovernedDocumentPanel({
       if (!projectId || !artifact.id || currentStatus === 'locked') return;
       setRollingBack(true);
       try {
-        const res = await fetch(
-          `/api/concept2cure/projects/${projectId}/artifacts/${artifact.id}/rollback`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-            body: JSON.stringify({ targetVersion }),
-          }
-        );
+        const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts/${artifact.id}/rollback`, { targetVersion });
         if (res.ok) {
           onStatusChange?.(currentStatus); // trigger UI refresh
+          toast({ title: `Rolled back to version ${targetVersion}` });
           fetchData();
+        } else {
+          toast({ title: 'Rollback failed', variant: 'destructive' });
         }
       } catch {
-        // silent
+        toast({ title: 'Rollback failed', variant: 'destructive' });
       } finally {
         setRollingBack(false);
       }
@@ -482,9 +461,7 @@ export function GovernedDocumentPanel({
 
       <div className="flex-1 overflow-y-auto">
         {loading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-4 h-4 animate-spin text-zinc-400" />
-          </div>
+          <LoadingState message="Loading governance data…" size="sm" />
         ) : activeTab === 'status' ? (
           <StatusTab
             artifact={artifact}

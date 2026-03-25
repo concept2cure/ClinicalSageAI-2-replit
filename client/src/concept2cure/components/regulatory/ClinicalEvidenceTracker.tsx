@@ -19,6 +19,10 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useForm } from 'react-hook-form';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import { LoadingState } from '@/components/ui/statesV2';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -191,23 +195,33 @@ const STUDY_TYPES = [
 // COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 
+interface EvidenceCreateForm {
+  studyTitle: string;
+  studyType: string;
+  registryId: string;
+  sampleSize: string;
+  populationDef: string;
+  inclusionCriteria: string;
+  exclusionCriteria: string;
+  sourceDocInput: string;
+}
+
 export default function ClinicalEvidenceTracker() {
   const [records, setRecords] = useState<EvidenceRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [saving, setSaving] = useState(false);
-
-  // Create form
-  const [newStudyTitle, setNewStudyTitle] = useState('');
-  const [newStudyType, setNewStudyType] = useState('prospective');
-  const [newRegistryId, setNewRegistryId] = useState('');
-  const [newSampleSize, setNewSampleSize] = useState('');
-  const [newPopulationDef, setNewPopulationDef] = useState('');
-  const [newInclusionCriteria, setNewInclusionCriteria] = useState('');
-  const [newExclusionCriteria, setNewExclusionCriteria] = useState('');
   const [newSourceDocs, setNewSourceDocs] = useState<string[]>([]);
-  const [newSourceDocInput, setNewSourceDocInput] = useState('');
+  const { toast } = useToast();
+
+  // Create form — canonical react-hook-form pattern
+  const createForm = useForm<EvidenceCreateForm>({
+    defaultValues: {
+      studyTitle: '', studyType: 'prospective', registryId: '', sampleSize: '',
+      populationDef: '', inclusionCriteria: '', exclusionCriteria: '', sourceDocInput: '',
+    },
+  });
 
   // 2×2 table edit
   const [table, setTable] = useState<ContingencyTable>({ tp: 0, fp: 0, tn: 0, fn: 0 });
@@ -230,13 +244,11 @@ export default function ClinicalEvidenceTracker() {
   const loadRecords = useCallback(async () => {
     setLoading(true);
     try {
-      const resp = await fetch('/api/ivdr/clinical-evidence');
-      if (resp.ok) {
-        const data = await resp.json();
-        setRecords(data.evidence || []);
-      }
+      const resp = await apiRequest('GET', '/api/ivdr/clinical-evidence');
+      const data = await resp.json();
+      setRecords(data.evidence || []);
     } catch (err) {
-      console.error('Load clinical evidence failed:', err);
+      toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to load clinical evidence', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -277,8 +289,8 @@ export default function ClinicalEvidenceTracker() {
       setSourceDocInput('');
 
       // Fetch immutable audit history
-      fetch(`/api/ivdr/clinical-evidence/${selected.id}/history`)
-        .then(r => (r.ok ? r.json() : { history: [] }))
+      apiRequest('GET', `/api/ivdr/clinical-evidence/${selected.id}/history`)
+        .then(r => r.json())
         .then(data => setEvidenceHistory(data.history || []))
         .catch(() => setEvidenceHistory([]));
     }
@@ -286,40 +298,29 @@ export default function ClinicalEvidenceTracker() {
 
   // ── Create study ───────────────────────────────────────────────────────
   const handleCreate = async () => {
-    if (!newStudyTitle.trim() || !newStudyType) return;
+    const vals = createForm.getValues();
+    if (!vals.studyTitle.trim() || !vals.studyType) return;
     setSaving(true);
     try {
-      const resp = await fetch('/api/ivdr/clinical-evidence', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          studyTitle: newStudyTitle,
-          studyType: newStudyType,
-          registryId: newRegistryId || undefined,
-          sampleSize: newSampleSize ? Number(newSampleSize) : undefined,
-          populationDefinition: newPopulationDef || undefined,
-          inclusionCriteria: newInclusionCriteria || undefined,
-          exclusionCriteria: newExclusionCriteria || undefined,
+      const resp = await apiRequest('POST', '/api/ivdr/clinical-evidence', {
+          studyTitle: vals.studyTitle,
+          studyType: vals.studyType,
+          registryId: vals.registryId || undefined,
+          sampleSize: vals.sampleSize ? Number(vals.sampleSize) : undefined,
+          populationDefinition: vals.populationDef || undefined,
+          inclusionCriteria: vals.inclusionCriteria || undefined,
+          exclusionCriteria: vals.exclusionCriteria || undefined,
           sourceDocuments: newSourceDocs.length > 0 ? newSourceDocs : undefined,
-        }),
-      });
-      if (resp.ok) {
-        const data = await resp.json();
-        setRecords(prev => [data.evidence, ...prev]);
-        setSelectedId(data.evidence.id);
-        setShowCreate(false);
-        setNewStudyTitle('');
-        setNewStudyType('prospective');
-        setNewRegistryId('');
-        setNewSampleSize('');
-        setNewPopulationDef('');
-        setNewInclusionCriteria('');
-        setNewExclusionCriteria('');
-        setNewSourceDocs([]);
-        setNewSourceDocInput('');
-      }
+        });
+      const data = await resp.json();
+      setRecords(prev => [data.evidence, ...prev]);
+      setSelectedId(data.evidence.id);
+      setShowCreate(false);
+      createForm.reset();
+      setNewSourceDocs([]);
+      toast({ title: 'Study Created', description: `Created "${vals.studyTitle}".` });
     } catch (err) {
-      console.error('Create study failed:', err);
+      toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to create study', variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -330,10 +331,7 @@ export default function ClinicalEvidenceTracker() {
     if (!selectedId) return;
     setSaving(true);
     try {
-      const resp = await fetch(`/api/ivdr/clinical-evidence/${selectedId}/results`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const resp = await apiRequest('PUT', `/api/ivdr/clinical-evidence/${selectedId}/results`, {
           truePositive: table.tp,
           falsePositive: table.fp,
           trueNegative: table.tn,
@@ -344,13 +342,13 @@ export default function ClinicalEvidenceTracker() {
           inclusionCriteria: inclusionCriteria || undefined,
           exclusionCriteria: exclusionCriteria || undefined,
           sourceDocuments: sourceDocUrls.length > 0 ? sourceDocUrls : undefined,
-        }),
-      });
+        });
       if (resp.ok) {
         await loadRecords();
+        toast({ title: 'Results Saved', description: 'Clinical evidence results updated.' });
       }
     } catch (err) {
-      console.error('Save results failed:', err);
+      toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to save results', variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -396,13 +394,12 @@ export default function ClinicalEvidenceTracker() {
                 <Label>Study Title *</Label>
                 <Input
                   placeholder="e.g., Prospective evaluation of XYZ IVD vs reference PCR"
-                  value={newStudyTitle}
-                  onChange={e => setNewStudyTitle(e.target.value)}
+                  {...createForm.register('studyTitle')}
                 />
               </div>
               <div>
                 <Label>Study Type *</Label>
-                <Select value={newStudyType} onValueChange={setNewStudyType}>
+                <Select value={createForm.watch('studyType')} onValueChange={(v) => createForm.setValue('studyType', v)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -419,8 +416,7 @@ export default function ClinicalEvidenceTracker() {
                 <Label>Registry ID</Label>
                 <Input
                   placeholder="e.g., NCT12345678 or ISRCTN12345678"
-                  value={newRegistryId}
-                  onChange={e => setNewRegistryId(e.target.value)}
+                  {...createForm.register('registryId')}
                 />
               </div>
               <div>
@@ -428,8 +424,7 @@ export default function ClinicalEvidenceTracker() {
                 <Input
                   type="number"
                   placeholder="e.g., 500"
-                  value={newSampleSize}
-                  onChange={e => setNewSampleSize(e.target.value)}
+                  {...createForm.register('sampleSize')}
                 />
               </div>
             </div>
@@ -444,8 +439,7 @@ export default function ClinicalEvidenceTracker() {
                 <Textarea
                   className="min-h-[80px]"
                   placeholder="Define the target population, e.g., adult patients ≥18 y presenting with suspected SARS-CoV-2 infection at point-of-care facilities..."
-                  value={newPopulationDef}
-                  onChange={e => setNewPopulationDef(e.target.value)}
+                  {...createForm.register('populationDef')}
                 />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -454,8 +448,7 @@ export default function ClinicalEvidenceTracker() {
                   <Textarea
                     className="min-h-[80px]"
                     placeholder="• Aged ≥18 years&#10;• Symptomatic within 7 days of onset&#10;• Willing to provide informed consent"
-                    value={newInclusionCriteria}
-                    onChange={e => setNewInclusionCriteria(e.target.value)}
+                    {...createForm.register('inclusionCriteria')}
                   />
                 </div>
                 <div>
@@ -463,8 +456,7 @@ export default function ClinicalEvidenceTracker() {
                   <Textarea
                     className="min-h-[80px]"
                     placeholder="• Immunocompromised patients on biologics&#10;• Previous participation in the same study&#10;• Unable to provide adequate specimen"
-                    value={newExclusionCriteria}
-                    onChange={e => setNewExclusionCriteria(e.target.value)}
+                    {...createForm.register('exclusionCriteria')}
                   />
                 </div>
               </div>
@@ -474,16 +466,15 @@ export default function ClinicalEvidenceTracker() {
                   <div className="flex-1">
                     <Input
                       placeholder="Add URL or document reference (e.g., DOI, protocol ID)"
-                      value={newSourceDocInput}
-                      onChange={e => setNewSourceDocInput(e.target.value)}
+                      {...createForm.register('sourceDocInput')}
                       onKeyDown={e => {
-                        if (e.key === 'Enter' && newSourceDocInput.trim()) {
+                        if (e.key === 'Enter' && createForm.getValues('sourceDocInput').trim()) {
                           e.preventDefault();
-                          const trimmed = newSourceDocInput.trim();
+                          const trimmed = createForm.getValues('sourceDocInput').trim();
                           if (!newSourceDocs.includes(trimmed)) {
                             setNewSourceDocs(prev => [...prev, trimmed]);
                           }
-                          setNewSourceDocInput('');
+                          createForm.setValue('sourceDocInput', '');
                         }
                       }}
                     />
@@ -492,13 +483,13 @@ export default function ClinicalEvidenceTracker() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    disabled={!newSourceDocInput.trim()}
+                    disabled={!createForm.getValues('sourceDocInput').trim()}
                     onClick={() => {
-                      const trimmed = newSourceDocInput.trim();
+                      const trimmed = createForm.getValues('sourceDocInput').trim();
                       if (!newSourceDocs.includes(trimmed)) {
                         setNewSourceDocs(prev => [...prev, trimmed]);
                       }
-                      setNewSourceDocInput('');
+                      createForm.setValue('sourceDocInput', '');
                     }}
                   >
                     <Plus className="h-3 w-3 mr-1" />
@@ -542,7 +533,7 @@ export default function ClinicalEvidenceTracker() {
             <h3 className="text-sm font-semibold text-lg">Studies</h3>
           </div>
           <div className="px-3 py-2">
-            {loading && <p className="text-sm text-muted-foreground">Loading...</p>}
+            {loading && <LoadingState message="Loading clinical evidence..." size="sm" testId="evidence-loading" />}
             {!loading && records.length === 0 && (
               <p className="text-sm text-muted-foreground">
                 No clinical evidence studies yet. Click "New Study" to begin.

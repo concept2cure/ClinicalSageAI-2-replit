@@ -618,12 +618,12 @@ export class LayoutAwareIngestionWorker {
    * Generate embedding using OpenAI
    */
   private async generateEmbedding(text: string): Promise<number[]> {
-    const response = await openai.embeddings.create({
+    const response = await ai.embeddings({
       model: CONFIG.embeddingModel,
       input: text.slice(0, 8000), // Truncate to model limit
       dimensions: CONFIG.embeddingDimensions,
     });
-    return response.data[0].embedding;
+    return response.embedding || [];
   }
 
   /**

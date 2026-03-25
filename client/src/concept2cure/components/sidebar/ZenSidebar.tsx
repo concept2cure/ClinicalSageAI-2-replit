@@ -56,6 +56,7 @@ export interface ZenSidebarProps {
   activeConversationId?: string;
   activeProjectId?: string;
   onSelectConversation: (id: string) => void;
+  onSelectProject?: (id: string) => void;
   onNewChat: () => void;
   onOpenProjects: () => void;
   onOpenSearch: () => void;
@@ -217,14 +218,102 @@ const SectionLabel: React.FC<{ label: string }> = ({ label }) => (
   </div>
 );
 
+// ─── Project row with expandable conversations (Claude.ai style) ─────────────
+
+const ProjectRow: React.FC<{
+  project: Project;
+  isActive: boolean;
+  isExpanded: boolean;
+  conversations: Conversation[];
+  activeConversationId?: string;
+  onSelect: () => void;
+  onSelectConversation: (id: string) => void;
+  onDeleteConversation: (id: string) => void;
+  onNewChat: () => void;
+}> = ({
+  project,
+  isActive,
+  isExpanded,
+  conversations,
+  activeConversationId,
+  onSelect,
+  onSelectConversation,
+  onDeleteConversation,
+  onNewChat,
+}) => (
+  <div>
+    <div
+      onClick={onSelect}
+      role="button"
+      tabIndex={0}
+      onKeyDown={e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSelect();
+        }
+      }}
+      className={cn(
+        'group relative flex items-center gap-2 mx-2 px-3 py-2 rounded-lg cursor-pointer select-none transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none',
+        isActive
+          ? 'bg-blue-50 text-blue-900 ring-1 ring-blue-200'
+          : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
+      )}
+    >
+      <FolderOpen className={cn('w-4 h-4 flex-shrink-0', isActive ? 'text-blue-500' : 'opacity-50')} />
+      <span className="flex-1 text-sm font-medium truncate leading-5">{project.name}</span>
+      <ChevronDown
+        className={cn(
+          'w-3 h-3 flex-shrink-0 transition-transform duration-150',
+          isActive ? 'text-blue-400' : 'text-zinc-400',
+          !isExpanded && '-rotate-90'
+        )}
+      />
+    </div>
+
+    {/* Expanded: show conversations nested under this project */}
+    {isExpanded && (
+      <div className="ml-4 pl-3 border-l-2 border-zinc-200 mt-0.5 space-y-0.5">
+        {/* New conversation within project */}
+        <button
+          onClick={e => {
+            e.stopPropagation();
+            onNewChat();
+          }}
+          className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-blue-600 hover:bg-blue-50 rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+        >
+          <Plus className="w-3 h-3" />
+          New conversation
+        </button>
+
+        {conversations.length === 0 && (
+          <p className="px-3 py-2 text-xs text-zinc-400">No conversations yet</p>
+        )}
+
+        {conversations.map(c => (
+          <ConvoRow
+            key={c.id}
+            convo={c}
+            isActive={c.id === activeConversationId}
+            onSelect={() => onSelectConversation(c.id)}
+            onDelete={() => onDeleteConversation(c.id)}
+          />
+        ))}
+      </div>
+    )}
+  </div>
+);
+
 // ─── Main sidebar ─────────────────────────────────────────────────────────────
 
 export const ZenSidebar: React.FC<ZenSidebarProps> = ({
   isCollapsed,
   onToggleCollapse,
   conversations,
+  projects,
   activeConversationId,
+  activeProjectId,
   onSelectConversation,
+  onSelectProject,
   onNewChat,
   onOpenProjects,
   onOpenSettings,
@@ -237,23 +326,31 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
   const displayName = userName || 'My Account';
   const avatarInitial = displayName[0].toUpperCase();
 
-  // Group conversations by time
-  const now = new Date();
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const startOfYesterday = new Date(startOfToday.getTime() - 86400000);
-  const sevenDaysAgo = new Date(startOfToday.getTime() - 7 * 86400000);
+  // Group conversations by project (Claude.ai style)
+  const conversationsByProject = React.useMemo(() => {
+    const map = new Map<string, Conversation[]>();
+    const sorted = [...conversations].sort(
+      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+    for (const c of sorted) {
+      const pid = c.projectId || '__unscoped__';
+      if (!map.has(pid)) map.set(pid, []);
+      map.get(pid)!.push(c);
+    }
+    return map;
+  }, [conversations]);
 
-  const sorted = [...conversations].sort(
-    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-  );
+  // Unscoped conversations (no project)
+  const unscopedConversations = conversationsByProject.get('__unscoped__') || [];
 
-  const todayConvos = sorted.filter(c => new Date(c.timestamp) >= startOfToday);
-  const yesterdayConvos = sorted.filter(
-    c => new Date(c.timestamp) >= startOfYesterday && new Date(c.timestamp) < startOfToday
-  );
-  const olderConvos = sorted.filter(
-    c => new Date(c.timestamp) >= sevenDaysAgo && new Date(c.timestamp) < startOfYesterday
-  );
+  // Sort projects: active project first, then by name
+  const sortedProjects = React.useMemo(() => {
+    return [...projects].sort((a, b) => {
+      if (a.id === activeProjectId) return -1;
+      if (b.id === activeProjectId) return 1;
+      return a.name.localeCompare(b.name);
+    });
+  }, [projects, activeProjectId]);
 
   // ── Collapsed icon-only strip ──────────────────────────────────────────────
   if (isCollapsed) {
@@ -454,60 +551,51 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
 
           <div className="mx-2 my-1.5 border-t border-zinc-100" />
 
-          {/* ── Conversations ──────────────────────────────────── */}
-          <WorkspaceGroup label="Conversations" defaultOpen={conversations.length > 0}>
-            {conversations.length === 0 && (
+          {/* ── Projects with nested conversations (Claude.ai style) ── */}
+          <WorkspaceGroup label="Projects" defaultOpen={true}>
+            {sortedProjects.length === 0 && (
               <div className="px-4 py-4 text-center">
-                <MessageSquare className="w-6 h-6 text-zinc-300 mx-auto mb-1.5" />
-                <p className="text-xs text-zinc-400 leading-relaxed">No conversations yet.</p>
+                <FolderOpen className="w-6 h-6 text-zinc-300 mx-auto mb-1.5" />
+                <p className="text-xs text-zinc-400 leading-relaxed">No projects yet.</p>
+                <button
+                  onClick={onOpenProjects}
+                  className="mt-2 text-xs text-blue-600 hover:underline focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                >
+                  Create your first project
+                </button>
               </div>
             )}
 
-            {todayConvos.length > 0 && (
-              <>
-                <SectionLabel label="Today" />
-                {todayConvos.map(c => (
-                  <ConvoRow
-                    key={c.id}
-                    convo={c}
-                    isActive={c.id === activeConversationId}
-                    onSelect={() => onSelectConversation(c.id)}
-                    onDelete={() => onDeleteConversation(c.id)}
-                  />
-                ))}
-              </>
-            )}
-
-            {yesterdayConvos.length > 0 && (
-              <>
-                <SectionLabel label="Yesterday" />
-                {yesterdayConvos.map(c => (
-                  <ConvoRow
-                    key={c.id}
-                    convo={c}
-                    isActive={c.id === activeConversationId}
-                    onSelect={() => onSelectConversation(c.id)}
-                    onDelete={() => onDeleteConversation(c.id)}
-                  />
-                ))}
-              </>
-            )}
-
-            {olderConvos.length > 0 && (
-              <>
-                <SectionLabel label="Previous 7 days" />
-                {olderConvos.map(c => (
-                  <ConvoRow
-                    key={c.id}
-                    convo={c}
-                    isActive={c.id === activeConversationId}
-                    onSelect={() => onSelectConversation(c.id)}
-                    onDelete={() => onDeleteConversation(c.id)}
-                  />
-                ))}
-              </>
-            )}
+            {sortedProjects.map(project => (
+              <ProjectRow
+                key={project.id}
+                project={project}
+                isActive={project.id === activeProjectId}
+                isExpanded={project.id === activeProjectId}
+                conversations={conversationsByProject.get(project.id) || []}
+                activeConversationId={activeConversationId}
+                onSelect={() => onSelectProject?.(project.id)}
+                onSelectConversation={onSelectConversation}
+                onDeleteConversation={onDeleteConversation}
+                onNewChat={onNewChat}
+              />
+            ))}
           </WorkspaceGroup>
+
+          {/* ── General conversations (not in any project) ── */}
+          {unscopedConversations.length > 0 && (
+            <WorkspaceGroup label="General" defaultOpen={!activeProjectId}>
+              {unscopedConversations.map(c => (
+                <ConvoRow
+                  key={c.id}
+                  convo={c}
+                  isActive={c.id === activeConversationId}
+                  onSelect={() => onSelectConversation(c.id)}
+                  onDelete={() => onDeleteConversation(c.id)}
+                />
+              ))}
+            </WorkspaceGroup>
+          )}
         </div>
 
         {/* User / settings footer */}

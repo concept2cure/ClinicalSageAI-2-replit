@@ -28,6 +28,7 @@ import {
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -91,13 +92,6 @@ function formatDate(dateStr: string) {
   }
 }
 
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
 // ── Component ────────────────────────────────────────────────────────────────
 
 const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
@@ -120,9 +114,7 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
     if (!projectId) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/concept2cure/projects/${projectId}/artifacts`, {
-        headers: getAuthHeaders(),
-      });
+      const res = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/artifacts`);
       if (res.ok) {
         const payload = await res.json();
         const all = payload.data ?? payload;
@@ -166,11 +158,9 @@ const DataRoomPanel: React.FC<DataRoomPanelProps> = ({
       if (!projectId) return;
       setExtracting(sourceId);
       try {
-        const res = await fetch('/api/concept2cure/ai/extract-metadata', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-          body: JSON.stringify({ projectId, artifactId: sourceId }),
-        });
+        const res = await apiRequest('POST', '/api/concept2cure/ai/extract-metadata',
+          { projectId, artifactId: sourceId }
+        );
         if (res.ok) {
           const payload = await res.json();
           const metadata = payload.data ?? payload;

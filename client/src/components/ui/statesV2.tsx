@@ -732,6 +732,282 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// INLINE ERROR STATE — Field-level / section-level inline error
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface InlineErrorStateProps {
+  /** Error message */
+  message: string;
+  /** Retry callback */
+  retry?: () => void;
+  /** Test ID */
+  testId?: string;
+}
+
+/**
+ * Small inline error indicator for field-level or section-level failures.
+ * Use when a full ErrorState would be too heavy.
+ */
+export const InlineErrorState: React.FC<InlineErrorStateProps> = ({
+  message,
+  retry,
+  testId = 'inline-error',
+}) => {
+  return (
+    <div
+      className="flex items-center gap-2 text-sm text-red-600 py-1.5"
+      role="alert"
+      aria-live="assertive"
+      data-testid={testId}
+    >
+      <svg
+        className="h-4 w-4 shrink-0"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        aria-hidden="true"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+        />
+      </svg>
+      <span>{message}</span>
+      {retry && (
+        <button
+          onClick={retry}
+          className="text-xs font-medium text-red-700 hover:text-red-900 underline underline-offset-2 transition-colors"
+          type="button"
+          data-testid={`${testId}-retry`}
+        >
+          Retry
+        </button>
+      )}
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NO RESULTS STATE — Search-specific empty with query context
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface NoResultsStateProps {
+  /** The search query that returned no results */
+  query?: string;
+  /** Suggestion text */
+  suggestion?: string;
+  /** Action to clear/reset search */
+  onClear?: () => void;
+  /** Test ID */
+  testId?: string;
+}
+
+/**
+ * Search-specific empty state showing what was searched and how to recover.
+ */
+export const NoResultsState: React.FC<NoResultsStateProps> = ({
+  query,
+  suggestion = 'Try broadening your search or adjusting filters.',
+  onClear,
+  testId = 'no-results',
+}) => {
+  const titleId = useId();
+
+  return (
+    <div
+      className="flex flex-col items-center justify-center p-8 text-center"
+      role="region"
+      aria-labelledby={titleId}
+      data-testid={testId}
+    >
+      <div className="mb-3 p-3 bg-gray-100 rounded-full" aria-hidden="true">
+        <svg
+          className="h-6 w-6 text-gray-400"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+          />
+        </svg>
+      </div>
+      <h3 id={titleId} className="text-sm font-medium text-gray-900 mb-1">
+        {query ? `No results for "${query}"` : 'No results found'}
+      </h3>
+      <p className="text-xs text-gray-500 max-w-sm mb-3">{suggestion}</p>
+      {onClear && (
+        <button
+          onClick={onClear}
+          className="text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors"
+          type="button"
+          data-testid={`${testId}-clear`}
+        >
+          Clear search
+        </button>
+      )}
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// BLOCKED STATE — Permission denied / locked / unauthorized
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface BlockedStateProps {
+  /** What is blocked */
+  title?: string;
+  /** Why it is blocked */
+  message: string;
+  /** Action to request access or navigate away */
+  action?: {
+    label: string;
+    onClick: () => void;
+  };
+  /** Test ID */
+  testId?: string;
+}
+
+/**
+ * Blocked/permission-denied state. Use when the user cannot access a resource.
+ */
+export const BlockedState: React.FC<BlockedStateProps> = ({
+  title = 'Access restricted',
+  message,
+  action,
+  testId = 'blocked-state',
+}) => {
+  const titleId = useId();
+  const descId = useId();
+
+  return (
+    <div
+      className="flex flex-col items-center justify-center p-8 text-center"
+      role="region"
+      aria-labelledby={titleId}
+      aria-describedby={descId}
+      data-testid={testId}
+    >
+      <div className="mb-4 p-3 bg-amber-50 rounded-full" aria-hidden="true">
+        <svg
+          className="h-7 w-7 text-amber-500"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+          />
+        </svg>
+      </div>
+      <h3 id={titleId} className="text-sm font-medium text-gray-900 mb-1">
+        {title}
+      </h3>
+      <p id={descId} className="text-xs text-gray-500 max-w-sm mb-3">
+        {message}
+      </p>
+      {action && (
+        <button
+          onClick={action.onClick}
+          className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+          type="button"
+          data-testid={`${testId}-action`}
+        >
+          {action.label}
+        </button>
+      )}
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MISSING CONFIGURATION STATE — Setup required / not configured
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface MissingConfigurationStateProps {
+  /** What is not configured */
+  title?: string;
+  /** Description of what needs to be set up */
+  message: string;
+  /** Action to begin configuration */
+  action?: {
+    label: string;
+    onClick: () => void;
+  };
+  /** Test ID */
+  testId?: string;
+}
+
+/**
+ * Missing configuration state. Use when a feature requires setup before use.
+ */
+export const MissingConfigurationState: React.FC<MissingConfigurationStateProps> = ({
+  title = 'Configuration required',
+  message,
+  action,
+  testId = 'missing-config',
+}) => {
+  const titleId = useId();
+  const descId = useId();
+
+  return (
+    <div
+      className="flex flex-col items-center justify-center p-8 text-center"
+      role="region"
+      aria-labelledby={titleId}
+      aria-describedby={descId}
+      data-testid={testId}
+    >
+      <div className="mb-4 p-3 bg-blue-50 rounded-full" aria-hidden="true">
+        <svg
+          className="h-7 w-7 text-blue-500"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+          />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+          />
+        </svg>
+      </div>
+      <h3 id={titleId} className="text-sm font-medium text-gray-900 mb-1">
+        {title}
+      </h3>
+      <p id={descId} className="text-xs text-gray-500 max-w-sm mb-3">
+        {message}
+      </p>
+      {action && (
+        <button
+          onClick={action.onClick}
+          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          type="button"
+          data-testid={`${testId}-action`}
+        >
+          {action.label}
+        </button>
+      )}
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // EXPORTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -745,5 +1021,9 @@ export default {
   SkeletonTable,
   DataStateWrapper,
   InlineLoading,
+  InlineErrorState,
+  NoResultsState,
+  BlockedState,
+  MissingConfigurationState,
   ProgressIndicator,
 };

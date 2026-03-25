@@ -7,6 +7,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import { apiRequest } from '@/lib/queryClient';
 
 type HealthState = 'healthy' | 'heavy' | 'degrading' | 'at_risk';
 
@@ -50,11 +51,7 @@ export function ConversationHealthPill({
   useEffect(() => {
     if (!conversationId) return;
     setLoading(true);
-    fetch(`/api/concept2cure/conversations/${conversationId}/health`, {
-      headers: {
-        'x-organization-id': String(organizationId),
-      },
-    })
+    apiRequest('GET', `/api/concept2cure/conversations/${conversationId}/health`)
       .then(r => r.json())
       .then(json => {
         if (json.success && json.data) {
@@ -62,7 +59,7 @@ export function ConversationHealthPill({
         }
       })
       .catch(() => {
-        // Health check failed silently
+        // Health check is non-critical — suppress
       })
       .finally(() => setLoading(false));
   }, [conversationId, organizationId]);

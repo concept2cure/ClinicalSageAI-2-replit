@@ -30,7 +30,6 @@ import {
   AlertTriangle,
   CheckCircle,
   XCircle,
-  Loader2,
   ArrowUpRight,
   Target,
   Scale,
@@ -44,6 +43,8 @@ import {
   Globe,
   Users,
 } from 'lucide-react';
+import { LoadingState, InlineLoading } from '@/components/ui/statesV2';
+import { Spinner } from '@/components/ui/spinner';
 import {
   usePrecedentSearch,
   usePrecedentCompare,
@@ -389,7 +390,7 @@ export function PrecedentIntelligenceDashboard({
                   size="sm"
                 >
                   {searchLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                    <Spinner size="sm" className="mr-1" />
                   ) : (
                     <Search className="w-4 h-4 mr-1" />
                   )}
@@ -416,12 +417,7 @@ export function PrecedentIntelligenceDashboard({
               </div>
               <div className="px-3 py-2">
                 {searchLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="w-6 h-6 animate-spin text-violet-500" />
-                    <span className="ml-2 text-sm text-zinc-500">
-                      Searching across FDA databases...
-                    </span>
-                  </div>
+                  <LoadingState size="sm" message="Searching across FDA databases..." />
                 ) : !searchResults?.length ? (
                   <div className="text-center py-8">
                     <Search className="w-8 h-8 text-zinc-400 mx-auto mb-2" />
@@ -616,7 +612,7 @@ export function PrecedentIntelligenceDashboard({
                       size="sm"
                     >
                       {compareMutation.isPending ? (
-                        <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                        <Spinner size="sm" className="mr-1" />
                       ) : (
                         <GitCompare className="w-4 h-4 mr-1" />
                       )}
@@ -754,7 +750,7 @@ export function PrecedentIntelligenceDashboard({
                 size="sm"
               >
                 {riskLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                  <Spinner size="sm" className="mr-1" />
                 ) : (
                   <ShieldAlert className="w-4 h-4 mr-1" />
                 )}
@@ -922,7 +918,7 @@ export function PrecedentIntelligenceDashboard({
                 size="sm"
               >
                 {strategyLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                  <Spinner size="sm" className="mr-1" />
                 ) : (
                   <Compass className="w-4 h-4 mr-1" />
                 )}
@@ -1109,7 +1105,7 @@ export function PrecedentIntelligenceDashboard({
                 className="bg-red-600 hover:bg-red-700 text-white"
                 size="sm"
               >
-                {crlLoading ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Ban className="w-4 h-4 mr-1" />}
+                {crlLoading ? <Spinner size="sm" className="mr-1" /> : <Ban className="w-4 h-4 mr-1" />}
                 Analyze CRL Risk
               </Button>
             </div>
@@ -1194,7 +1190,7 @@ export function PrecedentIntelligenceDashboard({
                 className="bg-orange-600 hover:bg-orange-700 text-white"
                 size="sm"
               >
-                {rtfLoading ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <ClipboardCheck className="w-4 h-4 mr-1" />}
+                {rtfLoading ? <Spinner size="sm" className="mr-1" /> : <ClipboardCheck className="w-4 h-4 mr-1" />}
                 Run RTF Check
               </Button>
             </div>
@@ -1283,7 +1279,7 @@ export function PrecedentIntelligenceDashboard({
                 className="bg-sky-600 hover:bg-sky-700 text-white"
                 size="sm"
               >
-                {emaLoading ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Globe className="w-4 h-4 mr-1" />}
+                {emaLoading ? <Spinner size="sm" className="mr-1" /> : <Globe className="w-4 h-4 mr-1" />}
                 Analyze EMA Patterns
               </Button>
             </div>
@@ -1384,7 +1380,7 @@ export function PrecedentIntelligenceDashboard({
                 className="bg-purple-600 hover:bg-purple-700 text-white"
                 size="sm"
               >
-                {adcomLoading ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Users className="w-4 h-4 mr-1" />}
+                {adcomLoading ? <Spinner size="sm" className="mr-1" /> : <Users className="w-4 h-4 mr-1" />}
                 Analyze AdCom Risk
               </Button>
             </div>

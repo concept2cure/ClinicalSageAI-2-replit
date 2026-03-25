@@ -24,8 +24,12 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useForm } from 'react-hook-form';
 import { InlineAIButton } from '../ui/InlineAIButton';
 import { Button } from '@/components/ui/button';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import { LoadingState } from '@/components/ui/statesV2';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -324,17 +328,24 @@ function evaluateThreshold(
 // COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 
+interface ValidationCreateForm {
+  deviceName: string;
+  analyteName: string;
+  validationType: string;
+}
+
 export default function AnalyticalValidationTracker() {
   const [validations, setValidations] = useState<ValidationRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [saving, setSaving] = useState(false);
+  const { toast } = useToast();
 
-  // Create form state
-  const [newDeviceName, setNewDeviceName] = useState('');
-  const [newAnalyteName, setNewAnalyteName] = useState('');
-  const [newValidationType, setNewValidationType] = useState('quantitative');
+  // Create form — canonical react-hook-form pattern
+  const createForm = useForm<ValidationCreateForm>({
+    defaultValues: { deviceName: '', analyteName: '', validationType: 'quantitative' },
+  });
 
   // Parameter edit state — flat key/value map
   const [paramValues, setParamValues] = useState<Record<string, string>>({});
@@ -357,13 +368,11 @@ export default function AnalyticalValidationTracker() {
   const loadValidations = useCallback(async () => {
     setLoading(true);
     try {
-      const resp = await fetch('/api/ivdr/validations');
-      if (resp.ok) {
-        const data = await resp.json();
-        setValidations(data.validations || []);
-      }
+      const resp = await apiRequest('GET', '/api/ivdr/validations');
+      const data = await resp.json();
+      setValidations(data.validations || []);
     } catch (err) {
-      console.error('Load validations failed:', err);
+      toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to load validations', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -421,11 +430,9 @@ export default function AnalyticalValidationTracker() {
       // Load parameter history for the selected validation
       (async () => {
         try {
-          const histResp = await fetch(`/api/ivdr/validations/${selected.id}/history`);
-          if (histResp.ok) {
-            const histData = await histResp.json();
-            setParamHistory(histData.history || []);
-          }
+          const histResp = await apiRequest('GET', `/api/ivdr/validations/${selected.id}/history`);
+          const histData = await histResp.json();
+          setParamHistory(histData.history || []);
         } catch {
           setParamHistory([]);
         }
@@ -435,28 +442,23 @@ export default function AnalyticalValidationTracker() {
 
   // ── Create validation ──────────────────────────────────────────────────
   const handleCreate = async () => {
-    if (!newDeviceName.trim() || !newAnalyteName.trim()) return;
+    const vals = createForm.getValues();
+    if (!vals.deviceName.trim() || !vals.analyteName.trim()) return;
     setSaving(true);
     try {
-      const resp = await fetch('/api/ivdr/validations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          deviceName: newDeviceName,
-          analyteName: newAnalyteName,
-          validationType: newValidationType,
-        }),
-      });
-      if (resp.ok) {
-        const data = await resp.json();
-        setValidations(prev => [data.validation, ...prev]);
-        setSelectedId(data.validation.id);
-        setShowCreate(false);
-        setNewDeviceName('');
-        setNewAnalyteName('');
-      }
+      const resp = await apiRequest('POST', '/api/ivdr/validations', {
+          deviceName: vals.deviceName,
+          analyteName: vals.analyteName,
+          validationType: vals.validationType,
+        });
+      const data = await resp.json();
+      setValidations(prev => [data.validation, ...prev]);
+      setSelectedId(data.validation.id);
+      setShowCreate(false);
+      createForm.reset();
+      toast({ title: 'Validation Created', description: `Created "${vals.deviceName}" validation.` });
     } catch (err) {
-      console.error('Create validation failed:', err);
+      toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to create validation', variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -499,16 +501,13 @@ export default function AnalyticalValidationTracker() {
         };
       }
 
-      const resp = await fetch(`/api/ivdr/validations/${selectedId}/parameters`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
+      const resp = await apiRequest('PUT', `/api/ivdr/validations/${selectedId}/parameters`, body);
       if (resp.ok) {
         await loadValidations();
+        toast({ title: 'Parameters Saved', description: 'Validation parameters updated.' });
       }
     } catch (err) {
-      console.error('Save params failed:', err);
+      toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to save parameters', variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -559,21 +558,19 @@ export default function AnalyticalValidationTracker() {
                 <Label>Device Name *</Label>
                 <Input
                   placeholder="e.g., Rapid HbA1c Analyzer"
-                  value={newDeviceName}
-                  onChange={e => setNewDeviceName(e.target.value)}
+                  {...createForm.register('deviceName')}
                 />
               </div>
               <div>
                 <Label>Analyte Name *</Label>
                 <Input
                   placeholder="e.g., Glycated hemoglobin (HbA1c)"
-                  value={newAnalyteName}
-                  onChange={e => setNewAnalyteName(e.target.value)}
+                  {...createForm.register('analyteName')}
                 />
               </div>
               <div>
                 <Label>Validation Type</Label>
-                <Select value={newValidationType} onValueChange={setNewValidationType}>
+                <Select value={createForm.watch('validationType')} onValueChange={(v) => createForm.setValue('validationType', v)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -604,7 +601,7 @@ export default function AnalyticalValidationTracker() {
             <h3 className="text-sm font-semibold text-lg">Validations</h3>
           </div>
           <div className="px-3 py-2">
-            {loading && <p className="text-sm text-muted-foreground">Loading...</p>}
+            {loading && <LoadingState message="Loading validations..." size="sm" testId="validation-loading" />}
             {!loading && validations.length === 0 && (
               <p className="text-sm text-muted-foreground">
                 No validations yet. Click "New Validation" to begin.
