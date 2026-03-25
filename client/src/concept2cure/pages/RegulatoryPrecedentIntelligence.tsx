@@ -572,6 +572,17 @@ function ContradictionsPanel() {
   const [scanning, setScanning] = React.useState(false);
   const [scanResult, setScanResult] = React.useState<{ count: number; message: string } | null>(null);
 
+  // Fetch active project for scan targeting
+  const { data: projectsData } = useQuery({
+    queryKey: ['governed-intel', 'projects-for-scan'],
+    queryFn: async () => {
+      const res = await fetch('/api/concept2cure/projects');
+      if (!res.ok) return { projects: [] };
+      return res.json();
+    },
+  });
+  const activeProjectId = projectsData?.projects?.[0]?.id ?? 1;
+
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['governed-intel', 'contradictions'],
     queryFn: async () => {
@@ -584,7 +595,7 @@ function ContradictionsPanel() {
     },
   });
 
-  const handleScanProject = async (projectId: number = 1) => {
+  const handleScanProject = async (projectId: number = activeProjectId) => {
     setScanning(true);
     setScanResult(null);
     try {
@@ -799,22 +810,35 @@ function OverlayRulesPanel() {
 // ─── Impact & Staleness Panel ────────────────────────────────────────────────
 
 function ImpactPanel() {
-  const { data, isLoading } = useQuery({
-    queryKey: ['governed-intel', 'impact-summary', 1],
+  // Fetch active project for the org (uses first available)
+  const { data: projectsData } = useQuery({
+    queryKey: ['governed-intel', 'projects-for-impact'],
     queryFn: async () => {
-      const res = await fetch(`${GOV_API}/impact-summary/1`);
-      if (!res.ok) return null;
+      const res = await fetch('/api/concept2cure/projects');
+      if (!res.ok) return { projects: [] };
       return res.json();
     },
   });
+  const activeProjectId = projectsData?.projects?.[0]?.id ?? 1;
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['governed-intel', 'impact-summary', activeProjectId],
+    queryFn: async () => {
+      const res = await fetch(`${GOV_API}/impact-summary/${activeProjectId}`);
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!activeProjectId,
+  });
 
   const { data: staleData } = useQuery({
-    queryKey: ['governed-intel', 'stale-deps', 1],
+    queryKey: ['governed-intel', 'stale-deps', activeProjectId],
     queryFn: async () => {
-      const res = await fetch(`${GOV_API}/dependencies/stale/1`);
+      const res = await fetch(`${GOV_API}/dependencies/stale/${activeProjectId}`);
       if (!res.ok) return { stale: [], count: 0 };
       return res.json();
     },
+    enabled: !!activeProjectId,
   });
 
   if (isLoading) return <LoadingCards count={4} />;
