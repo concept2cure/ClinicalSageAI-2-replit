@@ -12,7 +12,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { pool } from '../db.js';
+import { getPool } from '../db.ts';
 import { getGateway } from '../services/ai-gateway/index.js';
 import type { GatewayMessage } from '../services/ai-gateway/types.js';
 import {
@@ -58,6 +58,20 @@ import { processResponseActions } from '../services/ana-guidance-executor.js';
 import { processCommandsInResponse, type CommandContext } from '../services/ana-ri/command-executor.js';
 
 const router = Router();
+
+
+const dbPool = {
+  query: (...args: Parameters<ReturnType<typeof getPool>['query']>) => getPool().query(...args),
+};
+
+function isDatabaseAvailable(): boolean {
+  try {
+    getPool();
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 // ── Response envelope helpers (matches concept2cure.ts contract) ──
 const sendSuccess = <T>(res: Response, data: T, meta?: Record<string, unknown>) => {
@@ -258,7 +272,7 @@ router.post('/chat', async (req: Request, res: Response) => {
     const fileIds = req.body.file_ids;
     if (fileIds && Array.isArray(fileIds) && fileIds.length > 0) {
       try {
-        const fileResult = await pool.query(
+        const fileResult = await dbPool.query(
           `SELECT id, original_name, mime_type FROM file_uploads WHERE id = ANY($1)`,
           [fileIds]
         );
@@ -349,7 +363,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       route: '/api/ana-ri/chat',
       action: 'chat',
       projectId: req.body.project_context?.projectId,
-      organizationId: orgId ? Number(orgId) : undefined,
+      organizationId: orgIdNum ?? undefined,
       userId,
       artifactCreated: false,
       anaRiOrchestrated: true,
@@ -626,7 +640,7 @@ router.post('/stream', async (req: Request, res: Response) => {
     const streamFileIds = req.body.file_ids;
     if (streamFileIds && Array.isArray(streamFileIds) && streamFileIds.length > 0) {
       try {
-        const fileResult = await pool.query(
+        const fileResult = await dbPool.query(
           `SELECT id, original_name, mime_type FROM file_uploads WHERE id = ANY($1)`,
           [streamFileIds]
         );
@@ -830,6 +844,189 @@ router.post('/plan', async (req: Request, res: Response) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// POST /api/ana-ri/plan — Return planner preview without generation
+// ─────────────────────────────────────────────────────────────────────────────
+router.post('/plan', async (req: Request, res: Response) => {
+  try {
+    const { message, intent_lens, submission_type, persist, thread_id } = req.body || {};
+    if (!message || typeof message !== 'string') {
+      return res.status(400).json({ error: 'Message is required', code: 'INVALID_MESSAGE' });
+    }
+
+    const orchestration = orchestrate({
+      message,
+      intentLens: intent_lens,
+      submissionType: submission_type,
+    });
+    const routingPlan = planKernelExecution({
+      route: '/api/ana-ri/chat',
+      messageLength: message.length,
+      intentLens: orchestration.detectedIntent.lens,
+      intentConfidence: orchestration.detectedIntent.confidence,
+      submissionType: orchestration.detectedSubmissionType,
+      requestedMaxTokens: 4096,
+    });
+    const goalPlan = buildGoalPlan({
+      message,
+      intentLens: orchestration.detectedIntent.lens,
+      riskTier: routingPlan.riskTier,
+      submissionType: orchestration.detectedSubmissionType,
+    });
+
+    let planRunId: string | null = null;
+    if (persist) {
+      const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+      const persisted = await createGoalPlanRun({
+        organizationId: orgId ? Number(orgId) : null,
+        threadId: thread_id || null,
+        route: '/api/ana-ri/plan',
+        goalPlan,
+        metadata: {
+          intentLens: orchestration.detectedIntent.lens,
+          submissionType: orchestration.detectedSubmissionType,
+        },
+      });
+      planRunId = persisted.id;
+    }
+
+    return res.json({
+      routingPlan,
+      goalPlan,
+      planRunId,
+      orchestration: {
+        detectedIntent: orchestration.detectedIntent,
+        detectedSubmissionType: orchestration.detectedSubmissionType,
+      },
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      error: 'Failed to compute plan',
+      code: 'PLANNER_ERROR',
+      message: error?.message,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/ana-ri/plan/:planRunId — Fetch persisted goal plan run
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/plan/:planRunId', async (req: Request, res: Response) => {
+  const planRun = await getGoalPlanRun(req.params.planRunId);
+  if (!planRun) {
+    return res.status(404).json({ error: 'Plan run not found', code: 'PLAN_NOT_FOUND' });
+  }
+  return res.json(planRun);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/ana-ri/plan/:planRunId/advance — Advance step status
+// ─────────────────────────────────────────────────────────────────────────────
+router.post('/plan/:planRunId/advance', async (req: Request, res: Response) => {
+  const { stepId, nextStatus } = req.body || {};
+  if (!stepId || !nextStatus) {
+    return res
+      .status(400)
+      .json({ error: 'stepId and nextStatus are required', code: 'INVALID_INPUT' });
+  }
+  const allowedStatuses = ['pending', 'in_progress', 'completed', 'blocked', 'replanned'] as const;
+  if (!allowedStatuses.includes(nextStatus)) {
+    return res.status(400).json({ error: 'Invalid nextStatus', code: 'INVALID_STATUS' });
+  }
+
+  const result = await advanceGoalPlanStep({
+    planRunId: req.params.planRunId,
+    stepId,
+    nextStatus,
+  });
+  if (!result.ok) {
+    return res.status(400).json({ error: result.message, code: 'PLAN_ADVANCE_FAILED' });
+  }
+  return res.json({ ok: true });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/ana-ri/plan/:planRunId/execute-next — Execute next runnable step
+// ─────────────────────────────────────────────────────────────────────────────
+router.post('/plan/:planRunId/execute-next', async (req: Request, res: Response) => {
+  const result = await executeNextGoalPlanStep(req.params.planRunId);
+  if (!result.ok) {
+    return res.status(400).json({ error: result.message, code: 'PLAN_EXECUTION_FAILED' });
+  }
+  const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+  await recordProtocolEvent({
+    planRunId: req.params.planRunId,
+    organizationId: orgId ? Number(orgId) : null,
+    actorType: 'system',
+    actorId: 'kernel-runtime',
+    messageType: 'decision',
+    payload: {
+      decision: 'execute_next_step',
+      rationale: 'Automatically executed next dependency-satisfied step',
+      stepId: result.executedStepId,
+    },
+  });
+  return res.json(result);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/ana-ri/plan/:planRunId/events — Step event audit trail
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/plan/:planRunId/events', async (req: Request, res: Response) => {
+  const events = await listGoalPlanEvents(req.params.planRunId);
+  return res.json({ events });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/ana-ri/plan/:planRunId/protocol — Append protocol event
+// ─────────────────────────────────────────────────────────────────────────────
+router.post('/plan/:planRunId/protocol', async (req: Request, res: Response) => {
+  const { actorType, actorId, messageType, payload, metadata } = req.body || {};
+  const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+  const event = {
+    planRunId: req.params.planRunId,
+    organizationId: orgId ? Number(orgId) : null,
+    actorType,
+    actorId,
+    messageType,
+    payload,
+    metadata,
+  };
+  const validation = validateProtocolEvent(event as any);
+  if (!validation.ok) {
+    return res.status(400).json({ error: validation.message, code: 'INVALID_PROTOCOL_EVENT' });
+  }
+
+  const recorded = await recordProtocolEvent(event as any);
+  if (!recorded.ok) {
+    return res
+      .status(500)
+      .json({ error: 'Failed to record protocol event', code: 'PROTOCOL_WRITE_FAILED' });
+  }
+  return res.json({ ok: true });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/ana-ri/plan/:planRunId/protocol — List protocol events
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/plan/:planRunId/protocol', async (req: Request, res: Response) => {
+  const events = await listProtocolEvents(req.params.planRunId);
+  return res.json({ events });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/ana-ri/kernel/metrics — Kernel observability summary
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/kernel/metrics', async (req: Request, res: Response) => {
+  const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+  const windowDays = req.query.window_days ? Number(req.query.window_days) : 7;
+  const metrics = await getKernelMetrics({
+    organizationId: orgId ? Number(orgId) : null,
+    windowDays: Number.isFinite(windowDays) && windowDays > 0 ? windowDays : 7,
+  });
+  return res.json(metrics);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // POST /api/ana-ri/generate — Generate Governed Artifact
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -883,7 +1080,7 @@ router.post('/generate', async (req: Request, res: Response) => {
       actionType: action_type,
       conversationContext: conversation_context,
       projectId: Number(project_id),
-      organizationId: Number(orgId),
+      organizationId: orgIdNum,
       userId: userId ? Number(userId) : undefined,
       userRole: user_role,
       intentLens: intent_lens,
@@ -983,6 +1180,30 @@ router.get('/rubric', (_req: Request, res: Response) => {
   return sendSuccess(res, { dimensions: rubric });
 });
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/ana-ri/health — AnA runtime readiness snapshot
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.get('/health', (_req: Request, res: Response) => {
+  const gw = ensureGateway();
+  const enabledProviders = gw?.getEnabledProviders() || [];
+  const databaseAvailable = isDatabaseAvailable();
+
+  const checks = {
+    gateway: enabledProviders.length > 0,
+    database: databaseAvailable,
+  };
+
+  const status = checks.gateway && checks.database ? 'healthy' : 'degraded';
+
+  return sendSuccess(res, {
+    status,
+    checks,
+    providers: enabledProviders,
+  });
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/ana-ri/evaluate — Evaluate a response
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1042,103 +1263,33 @@ router.post('/execute', async (req: Request, res: Response) => {
 
     const ctx = {
       userId: Number(userId),
-      organizationId: Number(orgId),
+      organizationId: orgIdNum,
       activeProjectId: params?.projectId ? Number(params.projectId) : undefined,
       userName: (req as any).user?.name,
-      userRole: (req as any).user?.title,
+      userRole: (req as any).user?.role || (req as any).user?.title,
     };
 
-    let result;
-    switch (command) {
-      case 'create_project':
-        result = await executor.createProject(ctx, params || {});
-        break;
-      case 'list_projects':
-        result = await executor.listProjects(ctx);
-        break;
-      case 'update_project':
-        result = await executor.updateProject(ctx, params?.projectId, params?.updates || {});
-        break;
-      case 'create_artifact':
-        result = await executor.createArtifact(ctx, params || {});
-        break;
-      case 'update_artifact':
-        result = await executor.updateArtifact(ctx, params || {});
-        break;
-      case 'update_artifact_status':
-        result = await executor.updateArtifactStatus(ctx, params || {});
-        break;
-      case 'list_artifacts':
-        result = await executor.listArtifacts(ctx, params?.projectId, params?.filters);
-        break;
-      case 'place_in_dossier':
-        result = await executor.placeInDossier(ctx, params || {});
-        break;
-      case 'create_task':
-        result = await executor.createTask(ctx, params || {});
-        break;
-      case 'update_task':
-        result = await executor.updateTask(ctx, params || {});
-        break;
-      case 'list_tasks':
-        result = await executor.listTasks(ctx, params?.projectId, params?.filters);
-        break;
-      case 'check_dossier_readiness':
-        result = await executor.checkDossierReadiness(ctx, params?.projectId);
-        break;
-      case 'create_submission_package':
-        result = await executor.createSubmissionPackage(ctx, params || {});
-        break;
-      case 'create_review_thread':
-        result = await executor.createReviewThread(ctx, params || {});
-        break;
-      case 'add_review_comment':
-        result = await executor.addReviewComment(ctx, params || {});
-        break;
-      case 'list_artifact_versions':
-        result = await executor.listArtifactVersions(ctx, params || {});
-        break;
-      case 'run_compliance_scan':
-        result = await executor.runComplianceScan(ctx, params || {});
-        break;
-      case 'export_artifact':
-        result = await executor.exportArtifact(ctx, params || {});
-        break;
-      case 'compare_versions':
-        result = await executor.compareVersions(ctx, params || {});
-        break;
-      case 'review_version_impact':
-        result = await executor.reviewVersionImpact(ctx, params || {});
-        break;
-      case 'create_milestone':
-        result = await executor.createMilestone(ctx, params || {});
-        break;
-      case 'update_milestone':
-        result = await executor.updateMilestone(ctx, params || {});
-        break;
-      case 'list_milestones':
-        result = await executor.listMilestones(ctx, params?.packageId);
-        break;
-      case 'revert_to_version':
-        result = await executor.revertToVersion(ctx, params || {});
-        break;
-      case 'search_artifacts':
-        result = await executor.searchArtifacts(ctx, params || {});
-        break;
-      case 'list_team_members':
-        result = await executor.listTeamMembers(ctx);
-        break;
-      case 'load_user_context':
-        result = await executor.loadUserContext(ctx);
-        break;
-      case 'load_conversation_history':
-        result = await executor.loadConversationHistory(ctx, params);
-        break;
-      default:
-        return sendError(res, 400, `Unknown command: ${command}`, { availableCommands: executor.COMMAND_REGISTRY.map((c: any) => c.name) }, 'UNKNOWN_COMMAND');
+    const isKnownCommand = executor.COMMAND_REGISTRY.some((c: any) => c.name === command);
+    if (!isKnownCommand) {
+      return sendError(
+        res,
+        400,
+        `Unknown command: ${command}`,
+        { availableCommands: executor.COMMAND_REGISTRY.map((c: any) => c.name) },
+        'UNKNOWN_COMMAND'
+      );
     }
 
-    return sendSuccess(res, result);
+    const [result] = await executor.executeCommands(
+      [{ command, params: params || {} }],
+      ctx
+    );
+
+    return sendSuccess(res, result || {
+      success: false,
+      action: command,
+      message: `Command ${command} did not produce a result.`,
+    });
   } catch (error: any) {
     console.error('[AnA RI] Command execution error:', error);
     return sendError(res, 500, error?.message || 'Command execution failed', null, 'EXECUTION_ERROR');

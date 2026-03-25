@@ -8,7 +8,7 @@
  * - DOCX Export → POST /api/concept2cure/documents/generate (via chat tool) + download
  */
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import UnifiedDocumentEditor from './UnifiedDocumentEditor';
 import { cn } from '@/lib/utils';
 import {
@@ -36,6 +36,7 @@ import {
   Database,
   Zap,
   ArrowRight,
+  Rocket,
   Users,
   MessageSquare,
   Eye,
@@ -74,6 +75,8 @@ import { SubmissionReadinessValidator } from '../submission/SubmissionReadinessV
 import { ComplianceScannerPanel } from './ComplianceScannerPanel';
 import { AnAMemory } from '../intelligence/AnAMemory';
 import ArtifactProofPanel from './ArtifactProofPanel';
+import EditorGAReadinessPanel from './EditorGAReadinessPanel';
+import { buildCapabilityModels, buildRemediationQueue } from './gaReadinessModel';
 import { getCurrentUser } from '../../utils/getCurrentUser';
 import { useDocumentModeOptional, type DocumentMode } from '../../contexts/DocumentModeContext';
 import {
@@ -203,11 +206,99 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     | 'submission-readiness'
     | 'compliance-scanner'
     | 'ana-memory'
-    | 'proof';
+    | 'proof'
+    | 'ga-readiness';
   const [activeInspector, setActiveInspector] = useState<InspectorPanel | null>(null);
   const toggleInspector = useCallback((panel: InspectorPanel) => {
     setActiveInspector(prev => (prev === panel ? null : panel));
   }, []);
+
+  const gaChecks = useMemo(
+    () => [
+      {
+        id: 'project-context',
+        label: 'Project context',
+        status: projectId ? 'ready' : ('missing' as const),
+        detail: projectId
+          ? `Linked to project ${projectId.slice(0, 8)}…`
+          : 'Editor should be opened with a projectId to enable persistence, governance, and audit.',
+      },
+      {
+        id: 'artifact-loaded',
+        label: 'Document loaded',
+        status: activeArtifact?.id ? 'ready' : ('missing' as const),
+        detail: activeArtifact?.id
+          ? `${activeArtifact.title} (${activeArtifact.status || 'draft'})`
+          : 'No active artifact selected. Choose or create a document.',
+      },
+      {
+        id: 'api-wiring',
+        label: 'Authoring API wiring',
+        status: artifacts.length > 0 ? ('ready' as const) : ('partial' as const),
+        detail:
+          artifacts.length > 0
+            ? `Artifact APIs responding (${artifacts.length} document${artifacts.length === 1 ? '' : 's'} loaded).`
+            : 'No artifacts fetched yet. Confirm /api/concept2cure/projects/:id/artifacts is reachable.',
+      },
+      {
+        id: 'collaboration',
+        label: 'Collaboration channel',
+        status: collaboration.isConnected ? ('ready' as const) : ('partial' as const),
+        detail: collaboration.isConnected
+          ? 'Presence + typing channel connected.'
+          : 'Collaboration socket is offline; editor still supports single-user authoring.',
+      },
+      {
+        id: 'export-controls',
+        label: 'Export and submission controls',
+        status: activeArtifact ? ('ready' as const) : ('partial' as const),
+        detail: activeArtifact
+          ? 'DOCX/PDF/Markdown export plus audit export are available.'
+          : 'Open a document to enable governed export and status pipeline.',
+      },
+    ],
+    [projectId, activeArtifact, artifacts.length, collaboration.isConnected]
+  );
+
+  const gaWorkflowModels = useMemo(
+    () => [
+      {
+        name: 'Author → Review → Approve → Lock',
+        owner: 'Regulatory author + QA reviewer',
+        objective: 'Produce a controlled submission-ready artifact with traceable approvals.',
+        path: ['Draft', 'Peer review', 'Approval', 'Locked'],
+      },
+      {
+        name: 'AI-assisted drafting loop',
+        owner: 'Medical writer',
+        objective: 'Accelerate drafting while preserving human-in-the-loop control.',
+        path: ['Prompt/selection', 'AI suggestion', 'Diff review', 'Apply + autosave'],
+      },
+      {
+        name: 'Evidence and compliance loop',
+        owner: 'Regulatory operations',
+        objective: 'Validate claims against references and submission requirements.',
+        path: ['Cross-ref', 'Claim check', 'Compliance scan', 'Submission readiness'],
+      },
+    ],
+    []
+  );
+
+  const competitiveCapabilities = useMemo(
+    () =>
+      buildCapabilityModels({
+        projectId,
+        hasActiveArtifact: !!activeArtifact,
+        artifactCount: artifacts.length,
+        collaborationConnected: collaboration.isConnected,
+      }),
+    [projectId, activeArtifact, artifacts.length, collaboration.isConnected]
+  );
+
+  const gaRemediationQueue = useMemo(
+    () => buildRemediationQueue(gaChecks, competitiveCapabilities),
+    [gaChecks, competitiveCapabilities]
+  );
 
   // Auto-open inspector when initialInspector is set from parent
   useEffect(() => {
@@ -1869,6 +1960,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               { id: 'provenance', label: 'Provenance', icon: <ShieldCheck className="w-3.5 h-3.5" /> },
               { id: 'audit', label: 'Audit Trail', icon: <ClipboardList className="w-3.5 h-3.5" /> },
               { id: 'submission-readiness', label: 'Submission', icon: <Shield className="w-3.5 h-3.5" /> },
+              { id: 'ga-readiness', label: 'GA Readiness', icon: <Rocket className="w-3.5 h-3.5" /> },
               { id: 'proof', label: 'Proof', icon: <Shield className="w-3.5 h-3.5" />, activeColor: 'bg-emerald-600 text-white font-medium shadow-sm' },
             ],
           },
@@ -2606,6 +2698,15 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               projectName={projectName}
               onClose={() => setActiveInspector(null)}
             />
+        </InspectorDrawer>
+        <InspectorDrawer visible={activeInspector === 'ga-readiness'} width="w-96">
+          <EditorGAReadinessPanel
+            checks={gaChecks}
+            models={gaWorkflowModels}
+            capabilities={competitiveCapabilities}
+            remediationQueue={gaRemediationQueue}
+            onOpenInspector={id => toggleInspector(id as InspectorPanel)}
+          />
         </InspectorDrawer>
       </div>
 

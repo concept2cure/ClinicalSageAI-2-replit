@@ -10,8 +10,37 @@ import { spawn } from 'child_process';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import fs from 'fs';
+import { z } from 'zod';
+import {
+  COMPRESSION_PROFILES,
+  compressPdfBatch,
+  compressPdfWithGhostscript,
+  isGhostscriptAvailable,
+  recommendCompressionQuality,
+} from '../services/pdf-compression-service.js';
 
 const router = Router();
+const qualityEnum = z.enum(['screen', 'ebook', 'printer', 'prepress', 'default']);
+const compressSchema = z.object({
+  inputPath: z.string().min(1),
+  outputPath: z.string().min(1).optional(),
+  quality: qualityEnum.optional(),
+});
+const recommendSchema = z.object({
+  inputPath: z.string().min(1),
+});
+const batchSchema = z.object({
+  defaultQuality: qualityEnum.optional(),
+  files: z
+    .array(
+      z.object({
+        inputPath: z.string().min(1),
+        outputPath: z.string().min(1).optional(),
+        quality: qualityEnum.optional(),
+      })
+    )
+    .min(1),
+});
 
 // Initialize exports directory if it doesn't exist
 const exportsDir = path.join(process.cwd(), 'data', 'exports');
@@ -161,6 +190,105 @@ router.get('/download/:filename', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error downloading PDF:', error);
     res.status(500).json({ error: 'Error downloading PDF' });
+  }
+});
+
+/**
+ * Compress an existing PDF via Ghostscript.
+ * Body: { inputPath: string, outputPath?: string, quality?: 'screen'|'ebook'|'printer'|'prepress'|'default' }
+ */
+router.post('/compress', async (req: Request, res: Response) => {
+  try {
+    const parsed = compressSchema.safeParse(req.body || {});
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid request body',
+        details: parsed.error.issues.map(issue => issue.message),
+      });
+    }
+    const { inputPath, outputPath, quality } = parsed.data;
+
+    const available = await isGhostscriptAvailable();
+    if (!available) {
+      return res.status(503).json({ error: 'Ghostscript not available on server runtime' });
+    }
+
+    const result = await compressPdfWithGhostscript({
+      inputPath,
+      outputPath: typeof outputPath === 'string' ? outputPath : undefined,
+      quality: quality || 'ebook',
+    });
+
+    return res.json({
+      ok: true,
+      result,
+      message: `Compressed PDF saved to ${result.outputPath}`,
+    });
+  } catch (error) {
+    console.error('Error compressing PDF:', error);
+    return res.status(500).json({
+      error: 'PDF compression failed',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+router.get('/compress/profiles', (_req: Request, res: Response) => {
+  return res.json({
+    ok: true,
+    profiles: COMPRESSION_PROFILES,
+  });
+});
+
+router.post('/compress/recommend', async (req: Request, res: Response) => {
+  try {
+    const parsed = recommendSchema.safeParse(req.body || {});
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid request body',
+        details: parsed.error.issues.map(issue => issue.message),
+      });
+    }
+    const { inputPath } = parsed.data;
+
+    const recommendation = await recommendCompressionQuality(inputPath);
+    return res.json({ ok: true, recommendation });
+  } catch (error) {
+    return res.status(500).json({
+      error: 'Failed to recommend compression profile',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+router.post('/compress/batch', async (req: Request, res: Response) => {
+  try {
+    const parsed = batchSchema.safeParse(req.body || {});
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid request body',
+        details: parsed.error.issues.map(issue => issue.message),
+      });
+    }
+    const { files, defaultQuality } = parsed.data;
+
+    const available = await isGhostscriptAvailable();
+    if (!available) {
+      return res.status(503).json({ error: 'Ghostscript not available on server runtime' });
+    }
+
+    const result = await compressPdfBatch({ files, defaultQuality });
+
+    return res.json({
+      ok: true,
+      summary: result.summary,
+      result,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: 'Batch PDF compression failed',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
   }
 });
 
