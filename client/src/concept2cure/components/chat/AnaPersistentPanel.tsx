@@ -50,6 +50,17 @@ const renderMarkdown = (content: string): string => {
   }
 };
 
+// ─── Auth headers for raw fetch (SSE streaming + file upload need raw fetch) ──
+
+function getAuthHeaders(): Record<string, string> {
+  const orgId = localStorage.getItem('organizationId') || localStorage.getItem('currentOrganizationId') || '1';
+  const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('auth_token') || '';
+  return {
+    'x-organization-id': orgId,
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
+
 // ─── Link extraction — surface regulatory references ─────────────────────────
 
 function extractLinks(content: string): Array<{ url: string; label: string }> {
@@ -90,7 +101,7 @@ interface AnaMessage {
   pptx?: { base64: string; filename: string; mimeType: string };
   savedAsArtifact?: boolean;
   insertedToEditor?: boolean;
-  executedActions?: any[];
+  executedActions?: Array<{ action: string; success: boolean; message?: string; artifactId?: string }>;
 }
 
 interface SuggestedAction {
@@ -488,7 +499,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
               setMessages(prev => prev.map(m =>
                 m.id === progressMsgId ? { ...m, content: label } : m
               ));
-            } catch {}
+            } catch { /* Skip malformed SSE chunk */ }
           };
           eventSource.onerror = () => {
             eventSource.close();
@@ -587,19 +598,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
         // Clear attached files after sending (they're now part of the message context)
         if (attachedFiles.length > 0) setAttachedFiles([]);
 
-        // Use apiRequest for auth/org headers via its wrapper pattern.
-        // We need raw fetch for AbortController signal + SSE streaming,
-        // so we replicate the auth header logic from apiRequest.
-        const orgId = localStorage.getItem('organizationId') || localStorage.getItem('currentOrganizationId') || '1';
-        const authToken = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('auth_token') || '';
-
+        // Raw fetch required for AbortController signal + SSE streaming
+        // (apiRequest doesn't accept a signal parameter)
         const response = await fetch('/api/ana-ri/stream', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-organization-id': orgId,
-            ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
-          },
+          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
           credentials: 'include',
           signal: abortController.signal,
           body: JSON.stringify(streamPayload),
@@ -696,7 +699,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
                     : m
                 ));
               }
-            } catch {}
+            } catch { /* Skip malformed SSE chunk */ }
           }
         }
 
@@ -747,17 +750,11 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
       const formData = new FormData();
       formData.append('file', file);
       try {
-        // File upload requires multipart form — can't use apiRequest (which sets Content-Type: application/json).
-        // Replicate auth headers manually.
-        const uploadOrgId = localStorage.getItem('organizationId') || localStorage.getItem('currentOrganizationId') || '1';
-        const uploadToken = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('auth_token') || '';
+        // Raw fetch required for multipart form (apiRequest sets Content-Type: application/json)
         const res = await fetch('/api/chat/upload', {
           method: 'POST',
           credentials: 'include',
-          headers: {
-            'x-organization-id': uploadOrgId,
-            ...(uploadToken ? { Authorization: `Bearer ${uploadToken}` } : {}),
-          },
+          headers: getAuthHeaders(),
           body: formData,
         });
         if (res.ok) {
@@ -793,7 +790,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             onOpenArtifact(data.artifactId);
             setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: `Opening **${data.title || 'your last document'}**. Status: ${data.status || 'draft'}.`, timestamp: new Date() }]);
           } else { handleSend('Open my most recently edited section.'); }
-        } catch { handleSend('Resume my last section.'); }
+        } catch { /* API failed — fall back to natural language */ handleSend('Resume my last section.'); }
       })();
       return;
     }
@@ -824,7 +821,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             const lines = data.blockers.map((b: any, i: number) => `${i + 1}. **[${b.severity.toUpperCase()}]** ${b.message} _(${b.source})_`).join('\n');
             setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: `**Promotion ${data.blocked ? 'BLOCKED' : 'has warnings'}** — ${data.blockerCount} issue(s):\n\n${lines}`, timestamp: new Date() }]);
           }
-        } catch { handleSend('What is blocking this document from promotion?'); }
+        } catch { /* API failed — fall back to natural language */ handleSend('What is blocking this document from promotion?'); }
       })();
       return;
     }
@@ -846,7 +843,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
             onOpenCompareInspector?.();
             onRefreshIntelligence?.();
           }
-        } catch { handleSend('Compare the current document against the last approved version.'); }
+        } catch { /* API failed — fall back to natural language */ handleSend('Compare the current document against the last approved version.'); }
       })();
       return;
     }
@@ -872,7 +869,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           } else {
             setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: `**Preflight:** ${data.message || data.error || 'Unable to run.'}`, timestamp: new Date() }]);
           }
-        } catch { handleSend('Run preflight on this section.'); }
+        } catch { /* API failed — fall back to natural language */ handleSend('Run preflight on this section.'); }
       })();
       return;
     }
@@ -892,7 +889,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           } else {
             setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: `**Module preflight:** ${data.message || data.error || 'Unable to run.'}`, timestamp: new Date() }]);
           }
-        } catch { handleSend(`Run preflight on module ${moduleCode}.`); }
+        } catch { /* API failed — fall back to natural language */ handleSend(`Run preflight on module ${moduleCode}.`); }
       })();
       return;
     }
@@ -912,7 +909,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           } else {
             setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: `**Dossier preflight:** ${data.message || data.error || 'Unable to run.'}`, timestamp: new Date() }]);
           }
-        } catch { handleSend('Run dossier preflight.'); }
+        } catch { /* API failed — fall back to natural language */ handleSend('Run dossier preflight.'); }
       })();
       return;
     }
@@ -948,7 +945,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           } else {
             setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: `**Section expectations:** ${data.message}`, timestamp: new Date() }]);
           }
-        } catch { handleSend(`What does ${body} expect in section ${sectionCode}?`); }
+        } catch { /* API failed — fall back to natural language */ handleSend(`What does ${body} expect in section ${sectionCode}?`); }
       })();
       return;
     }
@@ -971,7 +968,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           } else {
             setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: `**Cross-section consistency:** ${data.message}`, timestamp: new Date() }]);
           }
-        } catch { handleSend('Check this section against linked sections.'); }
+        } catch { /* API failed — fall back to natural language */ handleSend('Check this section against linked sections.'); }
       })();
       return;
     }
@@ -992,7 +989,7 @@ const AnaPersistentPanel: React.FC<AnaPersistentPanelProps> = ({
           } else {
             setMessages(prev => [...prev, { id: `a-${Date.now()}`, role: 'assistant', content: `**Body-aware gaps:** ${data.message}`, timestamp: new Date() }]);
           }
-        } catch { handleSend(`What is missing for ${body} in section ${sectionCode}?`); }
+        } catch { /* API failed — fall back to natural language */ handleSend(`What is missing for ${body} in section ${sectionCode}?`); }
       })();
       return;
     }

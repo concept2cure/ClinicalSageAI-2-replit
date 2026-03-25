@@ -59,6 +59,14 @@ import { processCommandsInResponse, type CommandContext } from '../services/ana-
 
 const router = Router();
 
+// ── Response envelope helpers (matches concept2cure.ts contract) ──
+const sendSuccess = <T>(res: Response, data: T, meta?: Record<string, unknown>) => {
+  if (meta) return res.json({ success: true, data, meta });
+  return res.json({ success: true, data });
+};
+const sendError = (res: Response, status: number, message: string, details?: unknown, code?: string) =>
+  res.status(status).json({ success: false, error: { message, code, details } });
+
 // AI Gateway instance
 let gateway: ReturnType<typeof getGateway> | null = null;
 function ensureGateway() {
@@ -91,7 +99,7 @@ router.post('/chat', async (req: Request, res: Response) => {
     } = req.body;
 
     if (!message || typeof message !== 'string') {
-      return res.status(400).json({ error: 'Message is required', code: 'INVALID_MESSAGE' });
+      return sendError(res, 400, 'Message is required', null, 'INVALID_MESSAGE');
     }
 
     // Validate intent_lens if provided
@@ -228,9 +236,9 @@ router.post('/chat', async (req: Request, res: Response) => {
     const messages: GatewayMessage[] = [{ role: 'system', content: enrichedSystemPrompt }];
 
     let historyLoaded = false;
-    if (threadId) {
+    if (thread_id) {
       try {
-        const serverHistory = await getThreadMessages(threadId);
+        const serverHistory = await getThreadMessages(thread_id);
         if (serverHistory.length > 0) {
           for (const msg of serverHistory.slice(-20)) {
             messages.push({ role: msg.role as 'user' | 'assistant', content: msg.content });
@@ -272,10 +280,7 @@ router.post('/chat', async (req: Request, res: Response) => {
     // Call AI Gateway
     const gw = ensureGateway();
     if (!gw) {
-      return res.status(503).json({
-        error: 'AI services unavailable',
-        code: 'GATEWAY_UNAVAILABLE',
-      });
+      return sendError(res, 503, 'AI services unavailable', null, 'GATEWAY_UNAVAILABLE');
     }
 
     const policyHint = await getKernelPolicyHint({
@@ -294,10 +299,7 @@ router.post('/chat', async (req: Request, res: Response) => {
     });
 
     if (!response.content) {
-      return res.status(502).json({
-        error: 'No response from AI provider',
-        code: 'EMPTY_RESPONSE',
-      });
+      return sendError(res, 502, 'No response from AI provider', null, 'EMPTY_RESPONSE');
     }
 
     // Evaluate response quality (async, non-blocking)
@@ -418,7 +420,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       }).catch(() => {});
     }
 
-    return res.json({
+    return sendSuccess(res, {
       response: response.content,
       thread_id: threadId,
       orchestration: {
@@ -462,11 +464,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       errorMessage: error?.message || 'unknown error',
       decisionRationale: 'AnA RI route failed before completion.',
     });
-    return res.status(500).json({
-      error: 'Internal server error',
-      code: 'INTERNAL_ERROR',
-      message: error?.message,
-    });
+    return sendError(res, 500, error?.message || 'Internal server error', null, 'INTERNAL_ERROR');
   }
 });
 
@@ -490,15 +488,12 @@ router.post('/stream', async (req: Request, res: Response) => {
     } = req.body;
 
     if (!message || typeof message !== 'string') {
-      return res.status(400).json({ error: 'Message is required', code: 'INVALID_MESSAGE' });
+      return sendError(res, 400, 'Message is required', null, 'INVALID_MESSAGE');
     }
 
     const gw = ensureGateway();
     if (!gw || gw.getEnabledProviders().length === 0) {
-      return res.status(503).json({
-        error: 'No AI providers available.',
-        code: 'GATEWAY_UNAVAILABLE',
-      });
+      return sendError(res, 503, 'No AI providers available.', null, 'GATEWAY_UNAVAILABLE');
     }
 
     // Set SSE headers
@@ -785,7 +780,7 @@ router.post('/stream', async (req: Request, res: Response) => {
       res.write(`data: ${JSON.stringify({ type: 'error', error: 'An error occurred while generating the response' })}\n\n`);
       res.end();
     } else {
-      res.status(500).json({ error: 'Internal server error' });
+      sendError(res, 500, 'Internal server error');
     }
   }
 });
@@ -797,7 +792,7 @@ router.post('/plan', async (req: Request, res: Response) => {
   try {
     const { message, intent_lens, submission_type } = req.body || {};
     if (!message || typeof message !== 'string') {
-      return res.status(400).json({ error: 'Message is required', code: 'INVALID_MESSAGE' });
+      return sendError(res, 400, 'Message is required', null, 'INVALID_MESSAGE');
     }
 
     const orchestration = orchestrate({
@@ -820,7 +815,7 @@ router.post('/plan', async (req: Request, res: Response) => {
       submissionType: orchestration.detectedSubmissionType,
     });
 
-    return res.json({
+    return sendSuccess(res, {
       routingPlan,
       goalPlan,
       orchestration: {
@@ -829,11 +824,7 @@ router.post('/plan', async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    return res.status(500).json({
-      error: 'Failed to compute plan',
-      code: 'PLANNER_ERROR',
-      message: error?.message,
-    });
+    return sendError(res, 500, error?.message || 'Failed to compute plan', null, 'PLANNER_ERROR');
   }
 });
 
@@ -864,10 +855,7 @@ router.post('/generate', async (req: Request, res: Response) => {
       'attach_to_dossier',
     ];
     if (!action_type || typeof action_type !== 'string' || !VALID_ACTIONS.includes(action_type)) {
-      return res.status(400).json({
-        error: `Invalid action_type. Must be one of: ${VALID_ACTIONS.join(', ')}`,
-        code: 'INVALID_ACTION',
-      });
+      return sendError(res, 400, `Invalid action_type. Must be one of: ${VALID_ACTIONS.join(', ')}`, null, 'INVALID_ACTION');
     }
 
     if (
@@ -881,14 +869,14 @@ router.post('/generate', async (req: Request, res: Response) => {
     }
 
     if (!project_id) {
-      return res.status(400).json({ error: 'project_id is required', code: 'MISSING_PROJECT' });
+      return sendError(res, 400, 'project_id is required', null, 'MISSING_PROJECT');
     }
 
     const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
     const userId = (req as any).userId || (req as any).user?.id;
 
     if (!orgId) {
-      return res.status(403).json({ error: 'Organization context required', code: 'NO_ORG' });
+      return sendError(res, 403, 'Organization context required', null, 'NO_ORG');
     }
 
     const { generateArtifact } = await import('../services/ana-ri/artifact-generator.js');
@@ -906,13 +894,10 @@ router.post('/generate', async (req: Request, res: Response) => {
     });
 
     if (!result.success) {
-      return res.status(502).json({
-        error: result.error || 'Artifact generation failed',
-        code: 'GENERATION_FAILED',
-      });
+      return sendError(res, 502, result.error || 'Artifact generation failed', null, 'GENERATION_FAILED');
     }
 
-    return res.json({
+    return sendSuccess(res, {
       content: result.content,
       title: result.title,
       artifactId: result.artifactId,
@@ -922,11 +907,7 @@ router.post('/generate', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('[AnA RI] Generate error:', error);
-    return res.status(500).json({
-      error: 'Internal server error',
-      code: 'INTERNAL_ERROR',
-      message: error?.message,
-    });
+    return sendError(res, 500, error?.message || 'Internal server error', null, 'INTERNAL_ERROR');
   }
 });
 
@@ -951,7 +932,7 @@ router.get('/deficiencies', (_req: Request, res: Response) => {
     results = results.filter(d => d.severity === severity);
   }
 
-  return res.json({
+  return sendSuccess(res, {
     count: results.length,
     deficiencies: results,
     categories: getDeficiencyCategories(),
@@ -967,7 +948,7 @@ router.get('/deficiencies/critical', (_req: Request, res: Response) => {
   const type = (submission_type as SubmissionType) || 'general';
   const critical = getCriticalDeficiencies(type);
 
-  return res.json({
+  return sendSuccess(res, {
     count: critical.length,
     submissionType: type,
     deficiencies: critical,
@@ -983,7 +964,7 @@ router.get('/actions', (_req: Request, res: Response) => {
 
   const actions = lens ? getActionsForLens(lens as IntentLens) : getAllActions();
 
-  return res.json({
+  return sendSuccess(res, {
     count: actions.length,
     actions: actions.map(a => ({
       type: a.type,
@@ -1001,7 +982,7 @@ router.get('/actions', (_req: Request, res: Response) => {
 
 router.get('/rubric', (_req: Request, res: Response) => {
   const rubric = getFullRubric();
-  return res.json({ dimensions: rubric });
+  return sendSuccess(res, { dimensions: rubric });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1012,11 +993,11 @@ router.post('/evaluate', (req: Request, res: Response) => {
   const { response, context } = req.body;
 
   if (!response || typeof response !== 'string') {
-    return res.status(400).json({ error: 'Response text is required' });
+    return sendError(res, 400, 'Response text is required');
   }
 
   const evaluation = evaluateResponse(response, context || {});
-  return res.json(evaluation);
+  return sendSuccess(res, evaluation);
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1025,7 +1006,7 @@ router.post('/evaluate', (req: Request, res: Response) => {
 
 router.get('/observability', (_req: Request, res: Response) => {
   const stats = getGenerationStats();
-  return res.json(stats);
+  return sendSuccess(res, stats);
 });
 
 router.get('/observability/log', (_req: Request, res: Response) => {
@@ -1037,7 +1018,7 @@ router.get('/observability/log', (_req: Request, res: Response) => {
       orchestrated === 'true' ? true : orchestrated === 'false' ? false : undefined,
     limit: limit ? Number(limit) : 100,
   });
-  return res.json({ count: log.length, events: log });
+  return sendSuccess(res, { count: log.length, events: log });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1049,14 +1030,14 @@ router.post('/execute', async (req: Request, res: Response) => {
     const { command, params } = req.body;
 
     if (!command || typeof command !== 'string') {
-      return res.status(400).json({ error: 'command is required', code: 'INVALID_COMMAND' });
+      return sendError(res, 400, 'command is required', null, 'INVALID_COMMAND');
     }
 
     const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
     const userId = (req as any).userId || (req as any).user?.id;
 
     if (!orgId || !userId) {
-      return res.status(403).json({ error: 'Authentication required', code: 'NO_AUTH' });
+      return sendError(res, 403, 'Authentication required', null, 'NO_AUTH');
     }
 
     const { CommandContext } = await import('../services/ana-ri/command-executor.js');
@@ -1157,21 +1138,13 @@ router.post('/execute', async (req: Request, res: Response) => {
         result = await executor.loadConversationHistory(ctx, params);
         break;
       default:
-        return res.status(400).json({
-          error: `Unknown command: ${command}`,
-          code: 'UNKNOWN_COMMAND',
-          availableCommands: executor.COMMAND_REGISTRY.map((c: any) => c.name),
-        });
+        return sendError(res, 400, `Unknown command: ${command}`, { availableCommands: executor.COMMAND_REGISTRY.map((c: any) => c.name) }, 'UNKNOWN_COMMAND');
     }
 
-    return res.json(result);
+    return sendSuccess(res, result);
   } catch (error: any) {
     console.error('[AnA RI] Command execution error:', error);
-    return res.status(500).json({
-      error: 'Command execution failed',
-      code: 'EXECUTION_ERROR',
-      message: error?.message,
-    });
+    return sendError(res, 500, error?.message || 'Command execution failed', null, 'EXECUTION_ERROR');
   }
 });
 
@@ -1181,7 +1154,7 @@ router.post('/execute', async (req: Request, res: Response) => {
 
 router.get('/commands', async (_req: Request, res: Response) => {
   const { COMMAND_REGISTRY } = await import('../services/ana-ri/command-executor.js');
-  return res.json({ commands: COMMAND_REGISTRY });
+  return sendSuccess(res, { commands: COMMAND_REGISTRY });
 });
 
 export default router;
