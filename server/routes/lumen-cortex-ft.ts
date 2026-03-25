@@ -315,6 +315,11 @@ class ModelRegistry {
     });
   }
 
+  async hydrateFromDisk(): Promise<void> {
+    // No-op: models are registered in-memory via constructor.
+    // This method exists to satisfy startup initialization calls.
+  }
+
   getActiveModel(): LumenCortexModel | undefined {
     return this.activeModelId ? this.models.get(this.activeModelId) : undefined;
   }
