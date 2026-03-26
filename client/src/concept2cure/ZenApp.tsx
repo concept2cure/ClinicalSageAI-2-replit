@@ -218,6 +218,9 @@ const ECTDNavigatorPanel = lazy(() =>
 const RegulatoryIntelligenceFullPanel = lazy(() =>
   import('./components/regulatory/RegulatoryIntelligence').then(m => ({ default: m.default }))
 );
+const VaultBrowserPanel = lazy(() =>
+  import('@/components/sharepoint/SharePointFileManager').then(m => ({ default: m.default }))
+);
 
 // [BATCH 3] CMC, Vault, StudyArchitect, Templates — standalone modes removed, redirect to documents
 
@@ -322,6 +325,7 @@ const PANEL_COMPONENTS: Record<string, React.LazyExoticComponent<React.Component
     : {}),
   ectd: ECTDNavigatorPanel,
   intelligence: RegulatoryIntelligenceFullPanel,
+  vault: VaultBrowserPanel,
   'doc-editor': EditorPanel,
   'ana-biostats': AnaBiostatsPanel,
 };
@@ -362,6 +366,7 @@ type LayoutMode =
   | 'review-readiness'
   | 'report-engine'
   | 'safety-narrative'
+  | 'vault-workspace'
   // ── Compatibility redirects (redirect on mount, no renderer) ──
   | 'workspace' // → regulatory-workspace
   | 'assistant' // → regulatory-workspace
@@ -825,7 +830,7 @@ export const ZenApp: React.FC = () => {
       // Standalone authoring / specialist modules → documents
       'ectd-coauthor': 'documents',
       cmc: 'documents',
-      'document-vault': 'documents',
+      'document-vault': 'vault-workspace',
       'clinical-trial': 'documents',
       templates: 'documents',
       'document-builder': 'documents',
@@ -1349,6 +1354,12 @@ export const ZenApp: React.FC = () => {
         setActiveToolPanel(null);
         setToolPanelFullscreen(false);
       }
+
+      // Vault drawer: Alt+V
+      if (e.altKey && e.key.toLowerCase() === 'v') {
+        e.preventDefault();
+        setActiveToolPanel('vault');
+      }
     };
 
     document.addEventListener('keydown', handleKeyDown);
@@ -1791,6 +1802,7 @@ export const ZenApp: React.FC = () => {
               'project-home': 'projects',
               'dossier-map': 'dossier',
               documents: 'documents',
+              'vault-workspace': 'documents',
               review: 'review',
               submissions: 'submissions',
               'section-workspace': 'dossier',
@@ -1813,7 +1825,7 @@ export const ZenApp: React.FC = () => {
               'command-center': 'projects',
               'mission-control': 'projects',
               'submission-workspace': 'submissions',
-              'document-vault': 'documents',
+              'document-vault': 'vault-workspace',
               'enablement-center': 'projects',
               'client-intelligence': 'projects',
               'collaboration-hub': 'review',
@@ -1911,6 +1923,9 @@ export const ZenApp: React.FC = () => {
               break;
             case 'documents':
               setLayoutMode('documents');
+              break;
+            case 'document-vault':
+              setLayoutMode('vault-workspace');
               break;
             case 'review':
               setLayoutMode('review');
@@ -2387,6 +2402,31 @@ export const ZenApp: React.FC = () => {
             </div>
           )}
 
+          {/* ── Global Vault Workspace: browse/search/manage from anywhere ── */}
+          {!embeddedModule && layoutMode === 'vault-workspace' && (
+            <div className="flex-1 flex flex-col min-h-0 bg-zinc-50" data-testid="workspace-vault">
+              <div className="h-12 px-4 flex items-center justify-between border-b border-zinc-200 bg-white">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-zinc-500" />
+                  <span className="text-sm font-semibold text-zinc-900">Vault Workspace</span>
+                </div>
+                <button
+                  onClick={() => setActiveToolPanel('vault')}
+                  className="text-xs font-medium px-2.5 py-1 rounded-md border border-zinc-200 hover:bg-zinc-100 text-zinc-700"
+                >
+                  Open in right drawer
+                </button>
+              </div>
+              <div className="flex-1 min-h-0">
+                <ErrorBoundary>
+                  <Suspense fallback={<ModuleLoadingFallback />}>
+                    <VaultBrowserPanel moduleContext="vault" />
+                  </Suspense>
+                </ErrorBoundary>
+              </div>
+            </div>
+          )}
+
           {/* ── Unified Workflow: Review (governance & approvals) ─────────── */}
           {!embeddedModule && layoutMode === 'review' && (
             <div className="flex-1 flex flex-col min-h-0" data-testid="workspace-review">
@@ -2768,6 +2808,35 @@ export const ZenApp: React.FC = () => {
             />
           )}
       </GlobalOperatingShell>
+
+      {/* Global right-drawer Vault presence across the app shell */}
+      {!embeddedModule && !activeToolPanel && (
+        <button
+          onClick={() => setActiveToolPanel('vault')}
+          className="fixed right-0 top-1/2 -translate-y-1/2 z-40 h-36 w-10 border border-zinc-200 border-r-0 rounded-l-xl bg-white/95 hover:bg-zinc-50 shadow-sm flex flex-col items-center justify-center gap-1"
+          title="Open Vault drawer"
+          aria-label="Open Vault drawer"
+        >
+          <FileText className="w-4 h-4 text-zinc-600" />
+          <span className="text-[10px] tracking-wide text-zinc-600 [writing-mode:vertical-rl] rotate-180">
+            Vault
+          </span>
+        </button>
+      )}
+
+      {!embeddedModule && activeToolPanel && (
+        <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-96 lg:w-[620px] shadow-2xl">
+          <ToolPanelWrapper
+            panel={activeToolPanel}
+            onClose={() => {
+              setActiveToolPanel(null);
+              setToolPanelFullscreen(false);
+            }}
+            isFullscreen={toolPanelFullscreen}
+            onToggleFullscreen={() => setToolPanelFullscreen(prev => !prev)}
+          />
+        </div>
+      )}
 
       {/* Dr. Sage — Persistent global help/guide/copilot layer */}
       <DrSageGlobalLayer

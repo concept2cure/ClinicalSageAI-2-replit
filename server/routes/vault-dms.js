@@ -26,6 +26,97 @@ const ensureDir = async dir => {
   await fs.mkdir(dir, { recursive: true });
 };
 
+const VAULT_REGISTRY_OPTIONS = Object.freeze([
+  'vault_files',
+  'evidence_entries',
+  'evidence_search_outputs',
+  'knowledge_base_assets',
+  'document_data_center_assets',
+  'submission_packages',
+  'linked_source_docs',
+]);
+
+const REGISTRY_OPTION_ALIASES = Object.freeze({
+  vault_files: 'vault_files',
+  vault: 'vault_files',
+  files: 'vault_files',
+  evidence_entries: 'evidence_entries',
+  evidence_entry: 'evidence_entries',
+  evidence: 'evidence_entries',
+  evidence_search_outputs: 'evidence_search_outputs',
+  evidence_search_output: 'evidence_search_outputs',
+  evidence_search: 'evidence_search_outputs',
+  knowledge_base_assets: 'knowledge_base_assets',
+  knowledge_base: 'knowledge_base_assets',
+  knowledgebase: 'knowledge_base_assets',
+  document_data_center_assets: 'document_data_center_assets',
+  data_center_assets: 'document_data_center_assets',
+  document_center_assets: 'document_data_center_assets',
+  submission_packages: 'submission_packages',
+  submission_package: 'submission_packages',
+  submissions: 'submission_packages',
+  linked_source_docs: 'linked_source_docs',
+  linked_source_doc: 'linked_source_docs',
+  source_docs: 'linked_source_docs',
+});
+
+const normalizeRegistryOption = value => {
+  const raw = String(value || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[\s-]+/g, '_');
+  return REGISTRY_OPTION_ALIASES[raw] || null;
+};
+
+const normalizeDocumentForRegistry = (document, organizationId) => {
+  const normalized = { ...(document || {}) };
+  normalized.company =
+    normalized.company ||
+    normalized.organizationName ||
+    normalized.metadata?.company ||
+    String(normalized.organizationId || organizationId || '');
+  normalized.registryOption =
+    normalizeRegistryOption(
+      normalized.registryOption ||
+        normalized.registry_option ||
+        normalized.metadata?.registryOption ||
+        normalized.metadata?.registry_option ||
+        normalized.type ||
+        normalized.category
+    ) || 'vault_files';
+  return normalized;
+};
+
+const sortByCompanyProjectUser = (documents = [], organizationId) =>
+  [...documents]
+    .map(doc => normalizeDocumentForRegistry(doc, organizationId))
+    .sort((a, b) => {
+      const companyA = String(a.company || '').toLowerCase();
+      const companyB = String(b.company || '').toLowerCase();
+      if (companyA !== companyB) return companyA.localeCompare(companyB);
+
+      const projectA = String(a.projectId || '').toLowerCase();
+      const projectB = String(b.projectId || '').toLowerCase();
+      if (projectA !== projectB) return projectA.localeCompare(projectB);
+
+      const userA = String(a.userId || a.uploadedBy || '').toLowerCase();
+      const userB = String(b.userId || b.uploadedBy || '').toLowerCase();
+      if (userA !== userB) return userA.localeCompare(userB);
+
+      return String(a.title || a.name || '').localeCompare(String(b.title || b.name || ''), undefined, {
+        sensitivity: 'base',
+      });
+    });
+
+const applyRegistryOptionFilter = (documents = [], filters = {}, organizationId) => {
+  const normalizedRegistryOption = normalizeRegistryOption(
+    filters.registryOption || filters.registry_option
+  );
+  const normalizedDocs = documents.map(doc => normalizeDocumentForRegistry(doc, organizationId));
+  if (!normalizedRegistryOption) return normalizedDocs;
+  return normalizedDocs.filter(doc => doc.registryOption === normalizedRegistryOption);
+};
+
 const safeOrgId = orgId => String(orgId || 1).replace(/[^a-zA-Z0-9_-]/g, '_');
 const safeProjectId = projectId => String(projectId || 'general').replace(/[^a-zA-Z0-9_-]/g, '_');
 
@@ -96,7 +187,7 @@ const withAudit = (document, action, userId, details = {}) => ({
 const fallbackVaultDmsService = {
   async listDocuments(organizationId, filters = {}) {
     const { documents } = await readOrgIndex(organizationId);
-    return documents.filter(doc => {
+    const filtered = documents.filter(doc => {
       if (filters.projectId && String(doc.projectId || '') !== String(filters.projectId)) return false;
       if (filters.status && String(doc.status || '') !== String(filters.status)) return false;
       if (filters.workflowRunId && String(doc.workflowRunId || '') !== String(filters.workflowRunId)) {
@@ -105,6 +196,10 @@ const fallbackVaultDmsService = {
       if (filters.userId && String(doc.userId || '') !== String(filters.userId)) return false;
       return true;
     });
+    return sortByCompanyProjectUser(
+      applyRegistryOptionFilter(filtered, filters, organizationId),
+      organizationId
+    );
   },
 
   async searchDocuments(organizationId, term, filters = {}) {
@@ -172,10 +267,14 @@ const fallbackVaultDmsService = {
     const createdDoc = {
       id,
       organizationId,
+      company: documentData.company || documentData.organizationName || null,
       title,
       name: title,
       type: documentData.type || 'vault',
       category: documentData.category || 'regulatory',
+      registryOption: normalizeRegistryOption(
+        documentData.registryOption || documentData.registry_option || documentData.type || documentData.category
+      ) || 'vault_files',
       status: documentData.status || 'draft',
       version: documentData.version || '1.0',
       projectId,
@@ -398,6 +497,20 @@ const extractListFilters = req => ({
   userId: req.query.userId || req.query.user_id,
   status: req.query.status,
   workflowRunId: req.query.workflowRunId || req.query.workflow_run_id,
+  registryOption: req.query.registryOption || req.query.registry_option,
+});
+
+router.get('/registry/options', (_req, res) => {
+  res.json({
+    options: VAULT_REGISTRY_OPTIONS.map(key => ({
+      key,
+      label: key
+        .split('_')
+        .map(chunk => chunk.charAt(0).toUpperCase() + chunk.slice(1))
+        .join(' '),
+    })),
+    sorting: ['company', 'project', 'user'],
+  });
 });
 
 router.get('/health', async (req, res) => {
@@ -413,8 +526,9 @@ router.get('/health', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const vaultService = resolveVaultService(req);
-    const documents = await vaultService.listDocuments(req.organizationId, extractListFilters(req));
-    res.status(200).json(documents);
+    const filters = extractListFilters(req);
+    const documents = await vaultService.listDocuments(req.organizationId, filters);
+    res.status(200).json(sortByCompanyProjectUser(applyRegistryOptionFilter(documents, filters, req.organizationId), req.organizationId));
   } catch (error) {
     console.error('[Vault API] Error in GET / route:', error);
     res.status(500).json({ error: 'An internal server error occurred.' });
@@ -425,8 +539,9 @@ router.get('/', async (req, res) => {
 router.get('/documents', async (req, res) => {
   try {
     const vaultService = resolveVaultService(req);
-    const documents = await vaultService.listDocuments(req.organizationId, extractListFilters(req));
-    res.json(documents);
+    const filters = extractListFilters(req);
+    const documents = await vaultService.listDocuments(req.organizationId, filters);
+    res.json(sortByCompanyProjectUser(applyRegistryOptionFilter(documents, filters, req.organizationId), req.organizationId));
   } catch (error) {
     console.error('List documents error:', error);
     res.status(500).json({ error: error.message });
@@ -437,19 +552,17 @@ router.get('/documents', async (req, res) => {
 router.get('/search/:term', async (req, res) => {
   try {
     const vaultService = resolveVaultService(req);
+    const filters = extractListFilters(req);
     const { term } = req.params;
 
     if (!term || term.trim().length === 0) {
       return res.status(400).json({ error: 'Search term is required.' });
     }
 
-    const documents = await vaultService.searchDocuments(
-      req.organizationId,
-      term,
-      extractListFilters(req)
+    const documents = await vaultService.searchDocuments(req.organizationId, term, filters);
+    res.status(200).json(
+      sortByCompanyProjectUser(applyRegistryOptionFilter(documents, filters, req.organizationId), req.organizationId)
     );
-
-    res.status(200).json(documents);
   } catch (error) {
     console.error(`[Vault API] Error in GET /search/${req.params.term} route:`, error);
     res.status(500).json({ error: 'An internal server error occurred.' });
@@ -460,16 +573,15 @@ router.get('/search/:term', async (req, res) => {
 router.get('/search', async (req, res) => {
   try {
     const vaultService = resolveVaultService(req);
+    const filters = extractListFilters(req);
     const term = req.query.q || req.query.query || '';
     if (!String(term).trim()) {
       return res.status(200).json([]);
     }
-    const documents = await vaultService.searchDocuments(
-      req.organizationId,
-      String(term),
-      extractListFilters(req)
+    const documents = await vaultService.searchDocuments(req.organizationId, String(term), filters);
+    return res.status(200).json(
+      sortByCompanyProjectUser(applyRegistryOptionFilter(documents, filters, req.organizationId), req.organizationId)
     );
-    return res.status(200).json(documents);
   } catch (error) {
     console.error('Search query endpoint error:', error);
     return res.status(500).json({ error: error.message });
@@ -480,11 +592,14 @@ router.get('/search', async (req, res) => {
 router.get('/projects/:projectId/documents', async (req, res) => {
   try {
     const vaultService = resolveVaultService(req);
-    const documents = await vaultService.listDocuments(req.organizationId, {
+    const filters = {
       ...extractListFilters(req),
       projectId: req.params.projectId,
-    });
-    return res.status(200).json(documents);
+    };
+    const documents = await vaultService.listDocuments(req.organizationId, filters);
+    return res.status(200).json(
+      sortByCompanyProjectUser(applyRegistryOptionFilter(documents, filters, req.organizationId), req.organizationId)
+    );
   } catch (error) {
     console.error('Project document retrieval error:', error);
     return res.status(500).json({ error: error.message });
@@ -495,11 +610,14 @@ router.get('/projects/:projectId/documents', async (req, res) => {
 router.get('/workflows/:workflowRunId/documents', async (req, res) => {
   try {
     const vaultService = resolveVaultService(req);
-    const documents = await vaultService.listDocuments(req.organizationId, {
+    const filters = {
       ...extractListFilters(req),
       workflowRunId: req.params.workflowRunId,
-    });
-    return res.status(200).json(documents);
+    };
+    const documents = await vaultService.listDocuments(req.organizationId, filters);
+    return res.status(200).json(
+      sortByCompanyProjectUser(applyRegistryOptionFilter(documents, filters, req.organizationId), req.organizationId)
+    );
   } catch (error) {
     console.error('Workflow document retrieval error:', error);
     return res.status(500).json({ error: error.message });
