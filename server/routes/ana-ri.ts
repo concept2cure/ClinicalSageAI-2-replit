@@ -12,7 +12,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { pool } from '../db.js';
+import { getPool } from '../db.ts';
 import { getGateway } from '../services/ai-gateway/index.js';
 import type { GatewayMessage } from '../services/ai-gateway/types.js';
 import {
@@ -55,9 +55,28 @@ import { getIntelligencePrefix, buildSectionSpecificPrompt } from '../services/l
 import { interceptChatResponse } from '../services/intelligence/rim-interceptors.js';
 import { enrichContextForChat } from '../services/ana-ri/context-enrichment.js';
 import { processResponseActions } from '../services/ana-guidance-executor.js';
-import { processCommandsInResponse, type CommandContext } from '../services/ana-ri/command-executor.js';
 
 const router = Router();
+
+
+const dbPool = {
+  query: (...args: Parameters<ReturnType<typeof getPool>['query']>) => getPool().query(...args),
+};
+
+async function isDatabaseAvailable(): Promise<boolean> {
+  try {
+    const pool = getPool();
+    await Promise.race([
+      pool.query('SELECT 1'),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Database readiness check timeout')), 2000),
+      ),
+    ]);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 // ── Response envelope helpers (matches concept2cure.ts contract) ──
 const sendSuccess = <T>(res: Response, data: T, meta?: Record<string, unknown>) => {
@@ -83,6 +102,15 @@ function ensureGateway() {
 // ─── Shared validation constants ─────────────────────────────────────────────
 const VALID_LENSES: IntentLens[] = ['auto', 'audit', 'improve', 'risk', 'strategy', 'compare'];
 const VALID_ROLES: UserRole[] = ['ceo', 'ra_lead', 'medical_writer', 'clinical_lead', 'cmc_lead', 'investor', 'general'];
+
+
+interface CommandContext {
+  userId: number;
+  organizationId: number;
+  activeProjectId?: number;
+  userName?: string;
+  userRole?: string;
+}
 
 // ─── Request context extraction (typed, replaces (req as any) casts) ─────────
 function extractRequestContext(req: Request) {
@@ -258,7 +286,7 @@ router.post('/chat', async (req: Request, res: Response) => {
     const fileIds = req.body.file_ids;
     if (fileIds && Array.isArray(fileIds) && fileIds.length > 0) {
       try {
-        const fileResult = await pool.query(
+        const fileResult = await dbPool.query(
           `SELECT id, original_name, mime_type FROM file_uploads WHERE id = ANY($1)`,
           [fileIds]
         );
@@ -493,7 +521,8 @@ router.post('/stream', async (req: Request, res: Response) => {
     }
 
     const gw = ensureGateway();
-    if (!gw || gw.getEnabledProviders().length === 0) {
+    const deterministicMode = gw?.isDeterministicMode?.() || false;
+    if (!gw || (!deterministicMode && gw.getEnabledProviders().length === 0)) {
       return sendError(res, 503, 'No AI providers available.', null, 'GATEWAY_UNAVAILABLE');
     }
 
@@ -626,7 +655,7 @@ router.post('/stream', async (req: Request, res: Response) => {
     const streamFileIds = req.body.file_ids;
     if (streamFileIds && Array.isArray(streamFileIds) && streamFileIds.length > 0) {
       try {
-        const fileResult = await pool.query(
+        const fileResult = await dbPool.query(
           `SELECT id, original_name, mime_type FROM file_uploads WHERE id = ANY($1)`,
           [streamFileIds]
         );
@@ -752,6 +781,7 @@ router.post('/stream', async (req: Request, res: Response) => {
           organizationId: Number(orgId),
           activeProjectId: project_id ? (typeof project_id === 'string' ? parseInt(project_id, 10) : project_id) : undefined,
         };
+        const { processCommandsInResponse } = await import('../services/ana-ri/command-executor.js');
         const cmdResult = await processCommandsInResponse(fullContent, cmdCtx);
         executedCommands = cmdResult.executedCommands;
         if (executedCommands.length > 0) {
@@ -983,6 +1013,39 @@ router.get('/rubric', (_req: Request, res: Response) => {
   return sendSuccess(res, { dimensions: rubric });
 });
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/ana-ri/health — AnA runtime readiness snapshot
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.get('/health', async (_req: Request, res: Response) => {
+  const gw = ensureGateway();
+  const enabledProviders = gw?.getEnabledProviders() || [];
+  const providerHealth = gw?.getProviderHealth?.() || [];
+  const deterministicMode = gw?.isDeterministicMode?.() || false;
+  const databaseAvailable = await isDatabaseAvailable();
+
+  const hasHealthyProvider = providerHealth.some((provider: any) => provider.healthy);
+  const providerHealthUnavailable = providerHealth.length === 0 && enabledProviders.length > 0;
+
+  const checks = {
+    gateway: deterministicMode || enabledProviders.length > 0,
+    providersHealthy: deterministicMode || hasHealthyProvider || providerHealthUnavailable,
+    database: databaseAvailable,
+  };
+
+  const status = checks.gateway && checks.providersHealthy && checks.database ? 'healthy' : 'degraded';
+
+  return sendSuccess(res, {
+    status,
+    checks,
+    providers: enabledProviders,
+    providerHealth,
+    deterministicMode,
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/ana-ri/evaluate — Evaluate a response
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1150,8 +1213,12 @@ router.post('/execute', async (req: Request, res: Response) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 router.get('/commands', async (_req: Request, res: Response) => {
-  const { COMMAND_REGISTRY } = await import('../services/ana-ri/command-executor.js');
-  return sendSuccess(res, { commands: COMMAND_REGISTRY });
+  try {
+    const { COMMAND_REGISTRY } = await import('../services/ana-ri/command-executor.js');
+    return sendSuccess(res, { commands: COMMAND_REGISTRY });
+  } catch (error: any) {
+    return sendError(res, 503, error?.message || 'Command registry unavailable', null, 'COMMANDS_UNAVAILABLE');
+  }
 });
 
 export default router;

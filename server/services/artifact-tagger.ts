@@ -14,7 +14,11 @@
  * @compliance FDA 21 CFR Part 11 — immutable audit trail
  */
 
-import { pool } from '../db.js';
+import { getPool } from '../db.ts';
+
+const pool = {
+  connect: (...args: Parameters<ReturnType<typeof getPool>['connect']>) => getPool().connect(...args),
+};
 
 export interface TagArtifactParams {
   projectId: number;
