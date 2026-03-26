@@ -18,7 +18,7 @@
  */
 
 import React, { useEffect, lazy, Suspense } from 'react';
-import { Switch, Route, useLocation, useRoute, Redirect } from 'wouter';
+import { Switch, Route, useLocation, Redirect } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ZenLogin, ZenSignup, ZenAuthLayout, ZenOnboarding } from '../auth';
 import { ZenApp } from '../ZenApp';
@@ -28,6 +28,11 @@ import {
   useAuth as usePortalAuth,
 } from '@/portal-v2/services/authService';
 import { isFeatureEnabled } from '@/flags/featureFlags';
+import {
+  STANDALONE_MODULE_ROUTE_PATTERNS,
+  buildLoginRedirectPath,
+  parseProjectRoute,
+} from './projectModuleRoutePolicy';
 
 // Lazy-load CERV2Page only when a project 510k route is hit (standalone mode)
 const CERV2Page = lazy(() => import('@/pages/csr/CERV2Page'));
