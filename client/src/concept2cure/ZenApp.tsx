@@ -2123,7 +2123,7 @@ export const ZenApp: React.FC = () => {
 
       {/* Main area */}
       <GlobalOperatingShell layoutMode={layoutMode} activeProjectName={activeProject?.name}>
-        {/* Compact top bar: breadcrumb + quick actions (PR268) */}
+        {/* Compact top bar: breadcrumb + quick-action nav (PR268) */}
         <div className="h-12 border-b border-zinc-200 bg-white px-4 flex items-center gap-3 shrink-0">
           <button
             className="inline-flex items-center gap-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-900"

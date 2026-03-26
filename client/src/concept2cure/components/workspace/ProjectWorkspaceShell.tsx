@@ -1164,7 +1164,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           </div>
         </div>
 
-        {/* ── Canonical shell context band (project/document/review/report continuity) ───────── */}
+        {/* ── Canonical shell context band ─────────────────────────────────────────── */}
         <div className="flex items-center gap-2 px-4 h-9 border-b border-zinc-200 bg-white/95 shrink-0">
           <span className="text-[11px] font-semibold text-zinc-700">Project</span>
           <span className="text-[11px] text-zinc-900 font-medium truncate max-w-[240px]">
@@ -1201,7 +1201,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           </div>
         </div>
 
-        {/* ── Project nav tab strip (PR268) ─────────────────────────────────── */}
+        {/* ── Project nav tab strip (PR268) ────────────────────────────────────── */}
         <div className="flex items-center gap-1 px-2 py-1.5 border-b border-zinc-100 bg-zinc-50/70 shrink-0 overflow-x-auto">
           {[
             { key: 'overview', label: 'Overview' },
