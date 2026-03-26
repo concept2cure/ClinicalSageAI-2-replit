@@ -440,7 +440,7 @@ const PRIMARY_NAV_ID_BY_LAYOUT: Partial<Record<LayoutMode, string>> = {
   documents: 'documents',
   review: 'review',
   submissions: 'submissions',
-  'section-workspace': 'dossier',
+  'section-workspace': 'documents',
   'vault-workspace': 'vault',
   'review-readiness': 'review',
   'report-engine': 'reports',
@@ -2134,6 +2134,11 @@ export const ZenApp: React.FC = () => {
         layoutMode={layoutMode}
         activeProjectName={activeProject?.name}
         currentGlobalNodeLabel={currentGlobalNodeLabel}
+        activeArtifactLabel={
+          activeArtifactId
+            ? `${activeArtifactId}${activeArtifactVersion ? ` · v${activeArtifactVersion}` : ''}`
+            : undefined
+        }
         onAction={handleHeaderAction}
       >
         {/* Content Area */}

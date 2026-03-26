@@ -26,6 +26,7 @@ export function runScout(params: { conversationId: string; objective: string; ta
 
   const list = kernelStore.findings.get(conversationId) ?? [];
   kernelStore.findings.set(conversationId, [finding, ...list]);
+  kernelStore.persist();
   return finding;
 }
 
@@ -37,5 +38,6 @@ export function promoteScoutFinding(conversationId: string, findingId: string) {
   const findings = kernelStore.findings.get(conversationId) ?? [];
   const updated = findings.map(f => (f.id === findingId ? { ...f, promoted: true } : f));
   kernelStore.findings.set(conversationId, updated);
+  kernelStore.persist();
   return updated.find(f => f.id === findingId);
 }

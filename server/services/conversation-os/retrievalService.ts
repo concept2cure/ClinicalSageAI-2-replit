@@ -12,6 +12,7 @@ export function ingestKnowledgeChunks(conversationId: string, sourceId: string, 
 
   const existing = kernelStore.chunks.get(conversationId) ?? [];
   kernelStore.chunks.set(conversationId, [...existing, ...chunks]);
+  kernelStore.persist();
   return chunks;
 }
 
