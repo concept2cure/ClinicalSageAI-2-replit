@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import DOMPurify from 'dompurify';
 import FDA510kService from '@/services/FDA510kService';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -345,7 +346,9 @@ export default function LiteratureReviewPanel() {
                     <Card className="p-4 mt-2">
                       <div
                         className="text-sm text-gray-700"
-                        dangerouslySetInnerHTML={{ __html: pdfSummary.replace(/\n/g, '<br>') }}
+                        dangerouslySetInnerHTML={{
+                          __html: DOMPurify.sanitize(pdfSummary.replace(/\n/g, '<br>')),
+                        }}
                       />
                     </Card>
                   </div>

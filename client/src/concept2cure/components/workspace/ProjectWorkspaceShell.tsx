@@ -93,6 +93,23 @@ import { canEscalateToEdit } from '../../contexts/DocumentModeContext';
 type LeftRailMode = 'files' | 'dossier' | 'templates' | 'outline' | 'registry';
 type OperatingLayer = 'document_studio' | 'vault' | 'reports';
 type WorkspaceWorkbench = 'cmc' | 'biostats' | 'device' | 'clinical';
+type ProjectNav =
+  | 'overview'
+  | 'documents'
+  | 'vault'
+  | 'reports'
+  | 'tasks'
+  | 'reviews'
+  | 'submission'
+  | 'activity';
+type DocumentTab =
+  | 'content'
+  | 'evidence'
+  | 'versions'
+  | 'review'
+  | 'signatures'
+  | 'provenance'
+  | 'export';
 
 // ── Dossier metrics types ────────────────────────────────────────────────────
 interface SectionMetrics {
@@ -195,6 +212,27 @@ const WORKBENCHES: WorkbenchConfig[] = [
   },
 ];
 
+const PROJECT_NAV_ITEMS: Array<{ id: ProjectNav; label: string }> = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'documents', label: 'Documents' },
+  { id: 'vault', label: 'Vault' },
+  { id: 'reports', label: 'Reports' },
+  { id: 'tasks', label: 'Tasks' },
+  { id: 'reviews', label: 'Reviews' },
+  { id: 'submission', label: 'Submission' },
+  { id: 'activity', label: 'Activity' },
+];
+
+const DOCUMENT_TAB_ITEMS: Array<{ id: DocumentTab; label: string }> = [
+  { id: 'content', label: 'Content' },
+  { id: 'evidence', label: 'Evidence' },
+  { id: 'versions', label: 'Versions' },
+  { id: 'review', label: 'Review' },
+  { id: 'signatures', label: 'Signatures' },
+  { id: 'provenance', label: 'Provenance' },
+  { id: 'export', label: 'Export' },
+];
+
 // ── Types ────────────────────────────────────────────────────────────────────
 
 interface ProjectWorkspaceShellProps {
@@ -249,6 +287,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   const [selectedFolder, setSelectedFolder] = useState<string>('drafts');
   const [selectedDocId, setSelectedDocId] = useState<string | undefined>();
   const [mode, setMode] = useState<'dashboard' | 'browse' | 'edit'>('dashboard');
+  const [projectNav, setProjectNav] = useState<ProjectNav>('overview');
+  const [documentTab, setDocumentTab] = useState<DocumentTab>('content');
   const [leftRailMode, setLeftRailMode] = useState<LeftRailMode>('files');
   const [activeLayer, setActiveLayer] = useState<OperatingLayer>('document_studio');
   const [activeWorkbench, setActiveWorkbench] = useState<WorkspaceWorkbench>('clinical');
@@ -296,6 +336,12 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
 
   // Section requirements panel
   const [sectionReqs, setSectionReqs] = useState<SectionRequirement | null>(null);
+  const [conversationSnapshot, setConversationSnapshot] = useState<{
+    manifestMode?: string;
+    latestFinding?: string;
+    latestPlanTask?: string;
+    proposals: Array<{ id: string; status: string }>;
+  }>({ proposals: [] });
 
   // Governed document panel (right inspector)
   const [showGovernedPanel, setShowGovernedPanel] = useState(false);
@@ -319,6 +365,42 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       setMode('edit');
     }
   }, [initialContent, initialTitle]);
+
+  useEffect(() => {
+    if (!projectId || mode !== 'dashboard') return;
+    const conversationId = `project-${projectId}`;
+    const qs = `?projectId=${encodeURIComponent(projectId)}&userId=1`;
+    Promise.all([
+      fetch(`/api/conversation-os/conversations/${conversationId}/tools`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode: 'on-demand', projectId, userId: 1 }) }).then(r => r.json()).catch(() => null),
+      fetch(`/api/conversation-os/conversations/${conversationId}/scout${qs}`).then(r => r.json()).catch(() => null),
+      fetch(`/api/conversation-os/conversations/${conversationId}/plan-summary${qs}`).then(r => r.json()).catch(() => null),
+      fetch(`/api/conversation-os/conversations/${conversationId}/proposals${qs}`).then(r => r.json()).catch(() => null),
+    ]).then(([manifestRes, scoutRes, planRes, proposalRes]) => {
+      setConversationSnapshot({
+        manifestMode: manifestRes?.manifest?.mode,
+        latestFinding: scoutRes?.findings?.[0]?.summary,
+        latestPlanTask: planRes?.plan?.task,
+        proposals: (proposalRes?.proposals ?? []).slice(0, 3).map((p: any) => ({ id: p.id, status: p.status })),
+      });
+    });
+  }, [projectId, mode]);
+
+  const actOnProposal = useCallback(
+    async (proposalId: string, action: 'accept' | 'reject') => {
+      if (!projectId) return;
+      const conversationId = `project-${projectId}`;
+      await fetch(`/api/conversation-os/conversations/${conversationId}/proposals/${proposalId}/${action}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId, userId: 1 }),
+      });
+      setConversationSnapshot(prev => ({
+        ...prev,
+        proposals: prev.proposals.map(p => (p.id === proposalId ? { ...p, status: action === 'accept' ? 'accepted' : 'rejected' } : p)),
+      }));
+    },
+    [projectId]
+  );
 
   // If openArtifactId is provided, switch to edit mode for that artifact (gated)
   useEffect(() => {
@@ -406,6 +488,58 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     },
     [pushShellToast]
   );
+
+  useEffect(() => {
+    if (activeLayer === 'vault') {
+      setProjectNav('vault');
+      return;
+    }
+    if (activeLayer === 'reports') {
+      setProjectNav('reports');
+      return;
+    }
+    if (phase4Panel === 'pulse') {
+      setProjectNav('activity');
+      return;
+    }
+    if (mode === 'dashboard') {
+      setProjectNav('overview');
+      return;
+    }
+    setProjectNav('documents');
+  }, [activeLayer, mode, phase4Panel]);
+
+  useEffect(() => {
+    if (mode !== 'edit') {
+      setDocumentTab('content');
+      setEditorInitialInspector(null);
+      return;
+    }
+    switch (documentTab) {
+      case 'content':
+        setShowGovernedPanel(false);
+        setEditorInitialInspector(null);
+        break;
+      case 'evidence':
+        setShowGovernedPanel(true);
+        setEditorInitialInspector('provenance');
+        break;
+      case 'versions':
+        setShowGovernedPanel(false);
+        setEditorInitialInspector('compare');
+        break;
+      case 'review':
+      case 'signatures':
+      case 'export':
+        setShowGovernedPanel(true);
+        setEditorInitialInspector('audit');
+        break;
+      case 'provenance':
+        setShowGovernedPanel(true);
+        setEditorInitialInspector('provenance');
+        break;
+    }
+  }, [documentTab, mode]);
 
   // ── Global keyboard shortcuts ────────────────────────────────────────────
   useEffect(() => {
@@ -844,8 +978,10 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       }
       setSelectedDocId(artifactId);
       setMode('edit');
-      if (inspector) setEditorInitialInspector(inspector);
-      setShowGovernedPanel(inspector === 'audit');
+      if (inspector === 'compare') setDocumentTab('versions');
+      else if (inspector === 'provenance') setDocumentTab('provenance');
+      else if (inspector === 'audit') setDocumentTab('review');
+      else setDocumentTab('content');
     },
     [artifacts, pushShellToast]
   );
@@ -905,7 +1041,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       if (!tryOpenForEdit(doc.status)) return;
       setSelectedDocId(doc.id);
       setMode('edit');
-      setShowGovernedPanel(true);
+      setDocumentTab('content');
       setSectionReqs(null); // close reqs panel when opening governed panel
     },
     [tryOpenForEdit]
@@ -1222,6 +1358,45 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           </div>
         </div>
 
+        <div className="flex items-center gap-1 px-4 h-9 border-b border-zinc-200 bg-zinc-50/70 shrink-0 overflow-x-auto">
+          {PROJECT_NAV_ITEMS.map(item => (
+            <button
+              key={item.id}
+              onClick={() => {
+                setProjectNav(item.id);
+                if (item.id === 'overview') {
+                  setMode('dashboard');
+                  setPhase4Panel('none');
+                } else if (item.id === 'documents') {
+                  setActiveLayer('document_studio');
+                  setMode(selectedDocId ? 'edit' : 'browse');
+                  setPhase4Panel('none');
+                } else if (item.id === 'vault') {
+                  setActiveLayer('vault');
+                  setMode('browse');
+                  setLeftRailMode('files');
+                } else if (item.id === 'reports' || item.id === 'activity' || item.id === 'reviews') {
+                  setActiveLayer('reports');
+                  setMode('browse');
+                  setPhase4Panel('pulse');
+                } else if (item.id === 'submission') {
+                  onNavigate ? onNavigate('submission-builder') : setMode('dashboard');
+                } else if (item.id === 'tasks') {
+                  setMode('dashboard');
+                }
+              }}
+              className={cn(
+                'px-2.5 py-1 text-xs rounded-md border whitespace-nowrap transition-colors',
+                projectNav === item.id
+                  ? 'bg-zinc-900 text-white border-zinc-900'
+                  : 'bg-white text-zinc-600 border-zinc-200 hover:bg-zinc-100'
+              )}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+
         {/* ── Pending move banner ───────────────────────────────────────────── */}
         {pendingMove && (
           <div className="flex items-center gap-2.5 px-4 h-10 border-b border-amber-200 bg-amber-50 shrink-0">
@@ -1429,6 +1604,25 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               </button>
               <NotificationCenter projectId={projectId} industryMode={industryMode} />
             </div>
+          </div>
+        )}
+
+        {mode === 'edit' && activeArtifact && (
+          <div className="flex items-center gap-1 px-4 h-9 border-b border-zinc-200 bg-white shrink-0 overflow-x-auto">
+            {DOCUMENT_TAB_ITEMS.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setDocumentTab(tab.id)}
+                className={cn(
+                  'px-2.5 py-1 text-xs rounded-md border whitespace-nowrap transition-colors',
+                  documentTab === tab.id
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-white text-zinc-600 border-zinc-200 hover:bg-blue-50'
+                )}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
         )}
 
@@ -1847,6 +2041,30 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                   onOpenSubmissions={onNavigate ? () => onNavigate('submission-builder') : undefined}
                   onOpenTemplates={onNavigate ? () => onNavigate('template-library') : undefined}
                 />
+                <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-2">
+                  <div className="text-sm font-semibold text-slate-900">Conversation OS Durability</div>
+                  <div className="text-xs text-slate-600">Tool manifest: {conversationSnapshot.manifestMode ?? 'not initialized'}</div>
+                  <div className="text-xs text-slate-600">Latest scout: {conversationSnapshot.latestFinding ?? 'no finding yet'}</div>
+                  <div className="text-xs text-slate-600">Latest plan: {conversationSnapshot.latestPlanTask ?? 'no plan yet'}</div>
+                  <div className="text-xs text-slate-700 space-y-1">
+                    <div>Proposals:</div>
+                    {conversationSnapshot.proposals.length ? (
+                      conversationSnapshot.proposals.map(p => (
+                        <div key={p.id} className="flex items-center gap-2">
+                          <span>{p.id.slice(0, 8)} ({p.status})</span>
+                          {p.status === 'pending' && (
+                            <>
+                              <button className="text-emerald-700 underline" onClick={() => actOnProposal(p.id, 'accept')}>accept</button>
+                              <button className="text-rose-700 underline" onClick={() => actOnProposal(p.id, 'reject')}>reject</button>
+                            </>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <div>none</div>
+                    )}
+                  </div>
+                </div>
               </div>
             ) : mode === 'browse' ? (
               <DocumentListPane
@@ -1905,9 +2123,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               onClose={() => setShowGovernedPanel(false)}
               onOpenDiff={() => {
                 if (!tryOpenForEdit(activeArtifact.status)) return;
-                setShowGovernedPanel(false);
                 setMode('edit');
-                setEditorInitialInspector('compare');
+                setDocumentTab('versions');
               }}
             />
           )}

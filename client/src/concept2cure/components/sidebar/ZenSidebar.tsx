@@ -694,11 +694,23 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
               onClick={() => onNavigate?.('documents')}
             />
             <NavItem
+              icon={<Archive className="w-3.5 h-3.5" />}
+              label="Vault"
+              active={activeNavId === 'vault'}
+              onClick={() => onNavigate?.('document-vault')}
+            />
+            <NavItem
               icon={<ShieldCheck className="w-3.5 h-3.5" />}
               label="Review"
               active={activeNavId === 'review'}
               accentColor="emerald"
               onClick={() => onNavigate?.('review')}
+            />
+            <NavItem
+              icon={<Activity className="w-3.5 h-3.5" />}
+              label="Reports"
+              active={activeNavId === 'reports'}
+              onClick={() => onNavigate?.('report-engine')}
             />
             <NavItem
               icon={<FlaskConical className="w-3.5 h-3.5" />}

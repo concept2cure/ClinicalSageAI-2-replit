@@ -11,19 +11,11 @@
  */
 
 import React, { useState, useCallback, useMemo } from 'react';
+import DOMPurify from 'dompurify';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   BookOpen,
   FileText,
@@ -41,8 +33,14 @@ import { buildProvenanceLine, buildProvenancePayload } from '@/services/aiContex
 
 function getConfidenceConfig(score) {
   const safeScore = typeof score === 'number' ? score : 0;
-  if (safeScore >= 0.8) return { label: 'High', color: 'bg-emerald-100 text-emerald-800 border-emerald-200', icon: ShieldCheck };
-  if (safeScore >= 0.5) return { label: 'Medium', color: 'bg-amber-100 text-amber-800 border-amber-200', icon: Info };
+  if (safeScore >= 0.8)
+    return {
+      label: 'High',
+      color: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+      icon: ShieldCheck,
+    };
+  if (safeScore >= 0.5)
+    return { label: 'Medium', color: 'bg-amber-100 text-amber-800 border-amber-200', icon: Info };
   return { label: 'Low', color: 'bg-red-100 text-red-800 border-red-200', icon: ShieldAlert };
 }
 
@@ -55,13 +53,19 @@ export function ConfidenceBadge({ score = 0, className = '' }) {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Badge variant="outline" className={`${config.color} text-xs font-medium gap-1 ${className}`}>
+          <Badge
+            variant="outline"
+            className={`${config.color} text-xs font-medium gap-1 ${className}`}
+          >
             <Icon className="h-3 w-3" />
             {config.label} ({percent}%)
           </Badge>
         </TooltipTrigger>
         <TooltipContent>
-          <p>AI confidence score: {percent}% based on {score >= 0.5 ? 'source quality and relevance' : 'limited or no sources'}</p>
+          <p>
+            AI confidence score: {percent}% based on{' '}
+            {score >= 0.5 ? 'source quality and relevance' : 'limited or no sources'}
+          </p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
@@ -90,7 +94,9 @@ export function InlineCitation({ citation, index }) {
           <div className="flex items-start gap-2">
             <FileText className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
             <div className="min-w-0">
-              <p className="text-sm font-medium leading-tight">{citation.title || 'Unknown Source'}</p>
+              <p className="text-sm font-medium leading-tight">
+                {citation.title || 'Unknown Source'}
+              </p>
               {citation.section && (
                 <p className="text-xs text-muted-foreground mt-0.5">Section: {citation.section}</p>
               )}
@@ -101,7 +107,11 @@ export function InlineCitation({ citation, index }) {
           </div>
           {citation.snippet && (
             <div className="bg-muted/50 rounded-md p-2 text-xs text-muted-foreground italic border-l-2 border-blue-300">
-              &ldquo;{citation.snippet.length > 200 ? citation.snippet.substring(0, 200) + '…' : citation.snippet}&rdquo;
+              &ldquo;
+              {citation.snippet.length > 200
+                ? citation.snippet.substring(0, 200) + '…'
+                : citation.snippet}
+              &rdquo;
             </div>
           )}
           <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -121,7 +131,9 @@ export function InlineCitation({ citation, index }) {
 export function CitationList({ citations = [], className = '' }) {
   if (!citations || citations.length === 0) {
     return (
-      <div className={`flex items-center gap-2 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 ${className}`}>
+      <div
+        className={`flex items-center gap-2 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 ${className}`}
+      >
         <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
         <span>No sources available — AI response based on general knowledge only</span>
       </div>
@@ -144,9 +156,7 @@ export function CitationList({ citations = [], className = '' }) {
           </span>
           <div className="min-w-0 flex-1">
             <p className="font-medium truncate">{citation.title || 'Unknown Source'}</p>
-            {citation.section && (
-              <p className="text-muted-foreground">&sect;{citation.section}</p>
-            )}
+            {citation.section && <p className="text-muted-foreground">&sect;{citation.section}</p>}
           </div>
           <Badge variant="outline" className="text-[11px] shrink-0">
             {Math.round((citation.relevanceScore || 0) * 100)}%
@@ -167,11 +177,11 @@ export function CitationList({ citations = [], className = '' }) {
  * Handles both plain text and HTML content from AI responses.
  */
 export function AIResponseBlock({
-  response,          // AIResponse from aiContext.js
+  response, // AIResponse from aiContext.js
   className = '',
   showProvenance = true,
   showCitations = true,
-  onInsertToEditor,  // callback: (content, provenance) => void
+  onInsertToEditor, // callback: (content, provenance) => void
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -187,7 +197,9 @@ export function AIResponseBlock({
 
     // Rich HTML with embedded metadata
     const sanitizedPayload = JSON.stringify(provenancePayload).replace(/'/g, '&#39;');
-    const richHtml = `<div data-ai-provenance='${sanitizedPayload}'>${escapeForHtml(response.content)}</div><hr><p style="font-size:10px;color:#888;">${escapeForHtml(provenanceLine)}</p>`;
+    const richHtml = `<div data-ai-provenance='${sanitizedPayload}'>${escapeForHtml(
+      response.content
+    )}</div><hr><p style="font-size:10px;color:#888;">${escapeForHtml(provenanceLine)}</p>`;
 
     try {
       if (typeof ClipboardItem !== 'undefined') {
@@ -230,11 +242,17 @@ export function AIResponseBlock({
       <div className="flex items-center gap-2 flex-wrap">
         <ConfidenceBadge score={response.confidence} />
         {response.isRealAI ? (
-          <Badge variant="outline" className="text-[11px] bg-emerald-50 text-emerald-700 border-emerald-200">
+          <Badge
+            variant="outline"
+            className="text-[11px] bg-emerald-50 text-emerald-700 border-emerald-200"
+          >
             AI Generated
           </Badge>
         ) : (
-          <Badge variant="outline" className="text-[11px] bg-amber-50 text-amber-700 border-amber-200">
+          <Badge
+            variant="outline"
+            className="text-[11px] bg-amber-50 text-amber-700 border-amber-200"
+          >
             Demo Mode
           </Badge>
         )}
@@ -244,14 +262,10 @@ export function AIResponseBlock({
       </div>
 
       {/* Content with inline citations */}
-      <div className="prose prose-sm max-w-none text-foreground">
-        {renderedContent}
-      </div>
+      <div className="prose prose-sm max-w-none text-foreground">{renderedContent}</div>
 
       {/* Citations */}
-      {showCitations && (
-        <CitationList citations={citations} />
-      )}
+      {showCitations && <CitationList citations={citations} />}
 
       {/* Provenance & Actions */}
       {showProvenance && (
@@ -263,13 +277,12 @@ export function AIResponseBlock({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={handleSafeCopy}
-                  >
-                    {copied ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleSafeCopy}>
+                    {copied ? (
+                      <Check className="h-3 w-3 text-emerald-600" />
+                    ) : (
+                      <Copy className="h-3 w-3" />
+                    )}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Copy with provenance</TooltipContent>
@@ -364,7 +377,13 @@ function renderPlainTextWithCitations(text, citations) {
           if (match) {
             const citationIndex = parseInt(match[1], 10) - 1;
             if (citationIndex >= 0 && citationIndex < citations.length) {
-              return <InlineCitation key={`cite-${i}`} citation={citations[citationIndex]} index={citationIndex} />;
+              return (
+                <InlineCitation
+                  key={`cite-${i}`}
+                  citation={citations[citationIndex]}
+                  index={citationIndex}
+                />
+              );
             }
             return <span key={i}>{part}</span>;
           }
@@ -395,18 +414,19 @@ function renderPlainTextWithCitations(text, citations) {
  * and interleaves InlineCitation components.
  */
 function renderHtmlWithCitations(html, citations) {
+  const safeHtml = DOMPurify.sanitize(html);
   if (!citations || citations.length === 0) {
-    return <div dangerouslySetInnerHTML={{ __html: html }} />;
+    return <div dangerouslySetInnerHTML={{ __html: safeHtml }} />;
   }
 
   // Extract citation markers from the HTML
   const markerPattern = /\[(\d+)\]/g;
-  const hasMarkers = markerPattern.test(html);
+  const hasMarkers = markerPattern.test(safeHtml);
 
   if (!hasMarkers) {
     return (
       <div>
-        <div dangerouslySetInnerHTML={{ __html: html }} />
+        <div dangerouslySetInnerHTML={{ __html: safeHtml }} />
         <span className="ml-1">
           {citations.map((c, i) => (
             <InlineCitation key={c.id || `html-cite-${i}`} citation={c} index={i} />
@@ -417,7 +437,7 @@ function renderHtmlWithCitations(html, citations) {
   }
 
   // Split HTML around citation markers and interleave
-  const parts = html.split(/(\[\d+\])/g);
+  const parts = safeHtml.split(/\(\[\d+\]\)/g);
   return (
     <div>
       {parts.map((part, i) => {
@@ -425,7 +445,13 @@ function renderHtmlWithCitations(html, citations) {
         if (match) {
           const citationIndex = parseInt(match[1], 10) - 1;
           if (citationIndex >= 0 && citationIndex < citations.length) {
-            return <InlineCitation key={`html-cite-${i}`} citation={citations[citationIndex]} index={citationIndex} />;
+            return (
+              <InlineCitation
+                key={`html-cite-${i}`}
+                citation={citations[citationIndex]}
+                index={citationIndex}
+              />
+            );
           }
           return <span key={i}>{part}</span>;
         }

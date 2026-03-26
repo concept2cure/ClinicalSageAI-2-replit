@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import DOMPurify from 'dompurify';
 import {
   FileText,
   Download,
@@ -939,7 +940,9 @@ const CERStreamingGenerator = ({
                       <div
                         className="prose max-w-full"
                         dangerouslySetInnerHTML={{
-                          __html: generatedContent[section.id].replace(/\n/g, '<br/>'),
+                          __html: DOMPurify.sanitize(
+                            generatedContent[section.id].replace(/\n/g, '<br/>')
+                          ),
                         }}
                       />
                     )}

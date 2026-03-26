@@ -182,7 +182,6 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
     }
 
     const normalizedEmail = email.trim().toLowerCase();
-    console.log('[Enterprise Auth] Verifying password for:', normalizedEmail);
 
     // SECURITY FIX: Dev-mode any-password bypass removed. Always validate against database.
 

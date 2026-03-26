@@ -2,38 +2,61 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import express from 'express';
 import * as http from 'node:http';
 
-function mockCommonDeps(options: { dbAvailable: boolean; providers: string[]; commandImportFails?: boolean; deterministicMode?: boolean; providerHealthy?: boolean; dbQueryFails?: boolean; providerHealthReport?: Array<{ provider: string; healthy: boolean }> }) {
-  vi.doMock('../../server/db.ts', () => ({
-    getPool: options.dbAvailable
-      ? () => ({
+function mockCommonDeps(options: {
+  dbAvailable: boolean;
+  providers: string[];
+  commandImportFails?: boolean;
+  deterministicMode?: boolean;
+  providerHealthy?: boolean;
+  dbQueryFails?: boolean;
+  providerHealthReport?: Array<{ provider: string; healthy: boolean }>;
+}) {
+  vi.doMock('../../server/db.ts', () => {
+    const mockPool = options.dbAvailable
+      ? {
           query: options.dbQueryFails
             ? vi.fn(async () => {
                 throw new Error('Database ping failed');
               })
             : vi.fn(async () => ({ rows: [{ '?column?': 1 }] })),
           connect: vi.fn(),
-        })
-      : () => {
-          throw new Error('Database connection not available');
-        },
-  }));
+          on: vi.fn(),
+        }
+      : null;
+    return {
+      pool: mockPool,
+      getPool: options.dbAvailable
+        ? () => mockPool
+        : () => {
+            throw new Error('Database connection not available');
+          },
+    };
+  });
 
   vi.doMock('../../server/services/ai-gateway/index.js', () => ({
     getGateway: () => ({
       getEnabledProviders: () => options.providers,
       getProviderHealth: () =>
-        options.providerHealthReport ?? [{ provider: 'anthropic', healthy: options.providerHealthy ?? true }],
+        options.providerHealthReport ?? [
+          { provider: 'anthropic', healthy: options.providerHealthy ?? true },
+        ],
       isDeterministicMode: () => options.deterministicMode ?? false,
-      route: vi.fn(async ({ onStream }: { onStream?: (chunk: string, metadata?: { type?: string }) => void }) => {
-        onStream?.('deterministic reply', { type: 'text' });
-        return {
-          content: 'deterministic reply',
-          model: 'deterministic',
-          provider: 'deterministic',
-          usage: {},
-          latencyMs: 1,
-        };
-      }),
+      route: vi.fn(
+        async ({
+          onStream,
+        }: {
+          onStream?: (chunk: string, metadata?: { type?: string }) => void;
+        }) => {
+          onStream?.('deterministic reply', { type: 'text' });
+          return {
+            content: 'deterministic reply',
+            model: 'deterministic',
+            provider: 'deterministic',
+            usage: {},
+            latencyMs: 1,
+          };
+        }
+      ),
     }),
   }));
 
@@ -85,7 +108,9 @@ function mockCommonDeps(options: { dbAvailable: boolean; providers: string[]; co
     saveChatMessage: vi.fn(async () => {}),
   }));
 
-  vi.doMock('../../server/services/kernel-decision-record.js', () => ({ logKernelDecision: vi.fn() }));
+  vi.doMock('../../server/services/kernel-decision-record.js', () => ({
+    logKernelDecision: vi.fn(),
+  }));
   vi.doMock('../../server/services/kernel-router.js', () => ({
     planKernelExecution: vi.fn(() => ({
       taskType: 'chat',
@@ -107,6 +132,53 @@ function mockCommonDeps(options: { dbAvailable: boolean; providers: string[]; co
     buildGoalPlan: vi.fn(() => ({ id: 'goal' })),
     replanGoalPlan: vi.fn((g: any) => g),
   }));
+  vi.doMock('../../server/services/kernel-plan-runtime.js', () => ({
+    createGoalPlanRun: vi.fn(async () => 'run-1'),
+    getGoalPlanRun: vi.fn(async () => null),
+    advanceGoalPlanStep: vi.fn(async () => ({})),
+    executeNextGoalPlanStep: vi.fn(async () => ({})),
+    listGoalPlanEvents: vi.fn(async () => []),
+  }));
+  vi.doMock('../../server/services/kernel-agent-protocol.js', () => ({
+    recordProtocolEvent: vi.fn(async () => ({})),
+    listProtocolEvents: vi.fn(async () => []),
+    validateProtocolEvent: vi.fn(() => true),
+  }));
+  vi.doMock('../../server/services/ana-kernel-orchestrator.js', () => ({
+    buildKernelExecutionContext: vi.fn(async () => ({
+      routingPlan: {
+        taskType: 'chat',
+        maxTokens: 100,
+        temperature: 0.2,
+        strategy: 'task_based',
+        plannerVersion: 'test',
+        orchestratorName: 'test',
+        decisionRationale: 'test',
+        constraints: {},
+        riskTier: 'low',
+      },
+      selectedStrategy: 'task_based',
+      goalPlan: { id: 'goal' },
+    })),
+    recordKernelSuccess: vi.fn(async () => {}),
+  }));
+  vi.doMock('../../server/services/kernel-observability.js', () => ({
+    computeQualityBand: vi.fn(() => 'moderate'),
+    getKernelMetrics: vi.fn(async () => ({
+      windowDays: 7,
+      kdr: { total: 0, successRate: 0, avgLatencyMs: 0 },
+      policy: { totalOutcomes: 0, avgQualityScore: 0, qualityBand: 'weak' },
+      plans: { totalRuns: 0, completedRuns: 0, completionRate: 0 },
+      protocol: { totalEvents: 0, decisions: 0 },
+    })),
+  }));
+  vi.doMock('../../server/services/kernel-beta-readiness.js', () => ({
+    getKernelBetaReadiness: vi.fn(async () => ({
+      ready: true,
+      tables: {},
+      missing: [],
+    })),
+  }));
   vi.doMock('../../server/services/memory-context-assembler.js', () => ({
     buildMemoryContextForChat: vi.fn(async () => ({ memoryBlock: '' })),
   }));
@@ -114,7 +186,9 @@ function mockCommonDeps(options: { dbAvailable: boolean; providers: string[]; co
     getIntelligencePrefix: vi.fn(async () => ''),
     buildSectionSpecificPrompt: vi.fn(() => ''),
   }));
-  vi.doMock('../../server/services/intelligence/rim-interceptors.js', () => ({ interceptChatResponse: vi.fn() }));
+  vi.doMock('../../server/services/intelligence/rim-interceptors.js', () => ({
+    interceptChatResponse: vi.fn(),
+  }));
   vi.doMock('../../server/services/ana-ri/context-enrichment.js', () => ({
     enrichContextForChat: vi.fn(async () => ({ block: '', sources: [] })),
   }));
@@ -134,7 +208,10 @@ function mockCommonDeps(options: { dbAvailable: boolean; providers: string[]; co
   }
 }
 
-async function callRoute(router: express.Router, path: string): Promise<{ status: number; body: any }> {
+async function callRoute(
+  router: express.Router,
+  path: string
+): Promise<{ status: number; body: any }> {
   return new Promise(resolve => {
     const app = express();
     app.use(express.json());
@@ -143,19 +220,16 @@ async function callRoute(router: express.Router, path: string): Promise<{ status
     const server = http.createServer(app);
     server.listen(0, () => {
       const port = (server.address() as any).port;
-      const req = http.request(
-        { hostname: '127.0.0.1', port, path, method: 'GET' },
-        (res: any) => {
-          let data = '';
-          res.on('data', (chunk: string) => {
-            data += chunk;
-          });
-          res.on('end', () => {
-            server.close();
-            resolve({ status: res.statusCode, body: JSON.parse(data) });
-          });
-        }
-      );
+      const req = http.request({ hostname: '127.0.0.1', port, path, method: 'GET' }, (res: any) => {
+        let data = '';
+        res.on('data', (chunk: string) => {
+          data += chunk;
+        });
+        res.on('end', () => {
+          server.close();
+          resolve({ status: res.statusCode, body: JSON.parse(data) });
+        });
+      });
       req.end();
     });
   });
@@ -164,7 +238,7 @@ async function callRoute(router: express.Router, path: string): Promise<{ status
 async function callSseRoute(
   router: express.Router,
   path: string,
-  body: Record<string, unknown>,
+  body: Record<string, unknown>
 ): Promise<{ status: number; body: string }> {
   return new Promise(resolve => {
     const app = express();
@@ -191,7 +265,7 @@ async function callSseRoute(
             server.close();
             resolve({ status: res.statusCode, body: data });
           });
-        },
+        }
       );
       req.write(JSON.stringify(body));
       req.end();
@@ -261,10 +335,13 @@ describe('AnA RI health/commands endpoints', () => {
     expect(res.body.data.checks.providersHealthy).toBe(true);
   });
 
-
-
   it('reports healthy in deterministic mode even without providers', async () => {
-    mockCommonDeps({ dbAvailable: true, providers: [], deterministicMode: true, providerHealthy: false });
+    mockCommonDeps({
+      dbAvailable: true,
+      providers: [],
+      deterministicMode: true,
+      providerHealthy: false,
+    });
     const mod = await import('../../server/routes/ana-ri');
     const res = await callRoute(mod.default, '/api/ana-ri/health');
 

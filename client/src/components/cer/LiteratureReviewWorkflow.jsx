@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import DOMPurify from 'dompurify';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -563,8 +564,8 @@ export default function LiteratureReviewWorkflow({
                 ? biasAppraisal.overallRisk === 'high'
                   ? 'low'
                   : biasAppraisal.overallRisk === 'low'
-                    ? 'high'
-                    : 'medium'
+                  ? 'high'
+                  : 'medium'
                 : null,
             };
           } catch (error) {
@@ -652,7 +653,9 @@ export default function LiteratureReviewWorkflow({
     const searchQueriesList = reviewData.searchQueries
       .map(query => {
         const dbName = DATABASES.find(db => db.id === query.database)?.name || query.database;
-        return `- **${dbName}**: ${query.query}${query.results !== null ? ` (${query.results} results)` : ''}`;
+        return `- **${dbName}**: ${query.query}${
+          query.results !== null ? ` (${query.results} results)` : ''
+        }`;
       })
       .join('\n');
 
@@ -678,13 +681,17 @@ export default function LiteratureReviewWorkflow({
           ? study.overallRelevance >= 4
             ? 'High'
             : study.overallRelevance >= 3
-              ? 'Medium'
-              : 'Low'
+            ? 'Medium'
+            : 'Low'
           : 'Not assessed';
 
         const qualityLevel = study.overallQuality || 'Not assessed';
 
-        return `- **${study.title}** (${study.authors?.[0] || 'Unknown'} et al., ${new Date(study.publication_date).getFullYear() || 'Unknown'})\n  - Type: ${study.studyType?.name || study.studyType || 'Not specified'}\n  - Relevance: ${relevanceLevel}\n  - Quality: ${qualityLevel}`;
+        return `- **${study.title}** (${study.authors?.[0] || 'Unknown'} et al., ${
+          new Date(study.publication_date).getFullYear() || 'Unknown'
+        })\n  - Type: ${
+          study.studyType?.name || study.studyType || 'Not specified'
+        }\n  - Relevance: ${relevanceLevel}\n  - Quality: ${qualityLevel}`;
       })
       .join('\n\n');
 
@@ -697,7 +704,9 @@ export default function LiteratureReviewWorkflow({
 ${databaseNames}
 
 ### Search Period
-From ${formatDate(reviewData.searchPeriod.startDate)} to ${formatDate(reviewData.searchPeriod.endDate)}
+From ${formatDate(reviewData.searchPeriod.startDate)} to ${formatDate(
+      reviewData.searchPeriod.endDate
+    )}
 
 ### Search Queries
 ${searchQueriesList}
@@ -1396,15 +1405,15 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                                     study.overallRelevance >= 4
                                       ? 'bg-[#e4ebd8] text-[#788c5d]'
                                       : study.overallRelevance >= 3
-                                        ? 'bg-[#FFF4CE] text-[#797775]'
-                                        : 'bg-[#f5ddd4] text-[#c15f3c]'
+                                      ? 'bg-[#FFF4CE] text-[#797775]'
+                                      : 'bg-[#f5ddd4] text-[#c15f3c]'
                                   }`}
                                 >
                                   {study.overallRelevance >= 4
                                     ? 'High'
                                     : study.overallRelevance >= 3
-                                      ? 'Medium'
-                                      : 'Low'}
+                                    ? 'Medium'
+                                    : 'Low'}
                                 </Badge>
                               ) : (
                                 <span className="text-xs text-[#6b6963]">Not assessed</span>
@@ -1417,15 +1426,15 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                                     study.overallQuality === 'high'
                                       ? 'bg-[#e4ebd8] text-[#788c5d]'
                                       : study.overallQuality === 'medium'
-                                        ? 'bg-[#FFF4CE] text-[#797775]'
-                                        : 'bg-[#f5ddd4] text-[#c15f3c]'
+                                      ? 'bg-[#FFF4CE] text-[#797775]'
+                                      : 'bg-[#f5ddd4] text-[#c15f3c]'
                                   }`}
                                 >
                                   {study.overallQuality === 'high'
                                     ? 'High'
                                     : study.overallQuality === 'medium'
-                                      ? 'Medium'
-                                      : 'Low'}
+                                    ? 'Medium'
+                                    : 'Low'}
                                 </Badge>
                               ) : (
                                 <span className="text-xs text-[#6b6963]">Not assessed</span>
@@ -1543,15 +1552,15 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                                     study.overallRelevance >= 4
                                       ? 'bg-[#e4ebd8] text-[#788c5d]'
                                       : study.overallRelevance >= 3
-                                        ? 'bg-[#FFF4CE] text-[#797775]'
-                                        : 'bg-[#f5ddd4] text-[#c15f3c]'
+                                      ? 'bg-[#FFF4CE] text-[#797775]'
+                                      : 'bg-[#f5ddd4] text-[#c15f3c]'
                                   }`}
                                 >
                                   {study.overallRelevance >= 4
                                     ? 'High'
                                     : study.overallRelevance >= 3
-                                      ? 'Medium'
-                                      : 'Low'}
+                                    ? 'Medium'
+                                    : 'Low'}
                                 </Badge>
                               ) : (
                                 <span className="text-xs text-[#6b6963]">Pending</span>
@@ -1565,15 +1574,15 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                                     study.overallQuality === 'high'
                                       ? 'bg-[#e4ebd8] text-[#788c5d]'
                                       : study.overallQuality === 'medium'
-                                        ? 'bg-[#FFF4CE] text-[#797775]'
-                                        : 'bg-[#f5ddd4] text-[#c15f3c]'
+                                      ? 'bg-[#FFF4CE] text-[#797775]'
+                                      : 'bg-[#f5ddd4] text-[#c15f3c]'
                                   }`}
                                 >
                                   {study.overallQuality === 'high'
                                     ? 'High'
                                     : study.overallQuality === 'medium'
-                                      ? 'Medium'
-                                      : 'Low'}
+                                    ? 'Medium'
+                                    : 'Low'}
                                 </Badge>
                               ) : (
                                 <span className="text-xs text-[#6b6963]">Pending</span>
@@ -1751,15 +1760,15 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                                         study.overallRelevance >= 4
                                           ? 'bg-[#e4ebd8] text-[#788c5d]'
                                           : study.overallRelevance >= 3
-                                            ? 'bg-[#FFF4CE] text-[#797775]'
-                                            : 'bg-[#f5ddd4] text-[#c15f3c]'
+                                          ? 'bg-[#FFF4CE] text-[#797775]'
+                                          : 'bg-[#f5ddd4] text-[#c15f3c]'
                                       }`}
                                     >
                                       {study.overallRelevance >= 4
                                         ? 'High'
                                         : study.overallRelevance >= 3
-                                          ? 'Medium'
-                                          : 'Low'}{' '}
+                                        ? 'Medium'
+                                        : 'Low'}{' '}
                                       Relevance
                                     </Badge>
                                   )}
@@ -1775,15 +1784,15 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                                     study.aiAppraisal.relevance.overallScore >= 4
                                       ? 'bg-[#e4ebd8] text-[#788c5d]'
                                       : study.aiAppraisal.relevance.overallScore >= 3
-                                        ? 'bg-[#FFF4CE] text-[#797775]'
-                                        : 'bg-[#f5ddd4] text-[#c15f3c]'
+                                      ? 'bg-[#FFF4CE] text-[#797775]'
+                                      : 'bg-[#f5ddd4] text-[#c15f3c]'
                                   }`}
                                 >
                                   {study.aiAppraisal.relevance.overallScore >= 4
                                     ? 'High'
                                     : study.aiAppraisal.relevance.overallScore >= 3
-                                      ? 'Medium'
-                                      : 'Low'}
+                                    ? 'Medium'
+                                    : 'Low'}
                                 </Badge>
                               </div>
                             )}
@@ -1881,15 +1890,15 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                                         study.overallQuality === 'high'
                                           ? 'bg-[#e4ebd8] text-[#788c5d]'
                                           : study.overallQuality === 'medium'
-                                            ? 'bg-[#FFF4CE] text-[#797775]'
-                                            : 'bg-[#f5ddd4] text-[#c15f3c]'
+                                          ? 'bg-[#FFF4CE] text-[#797775]'
+                                          : 'bg-[#f5ddd4] text-[#c15f3c]'
                                       }`}
                                     >
                                       {study.overallQuality === 'high'
                                         ? 'High'
                                         : study.overallQuality === 'medium'
-                                          ? 'Medium'
-                                          : 'Low'}{' '}
+                                        ? 'Medium'
+                                        : 'Low'}{' '}
                                       Quality
                                     </Badge>
                                   )}
@@ -1905,15 +1914,15 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                                     study.aiAppraisal.bias.overallRisk === 'low'
                                       ? 'bg-[#e4ebd8] text-[#788c5d]'
                                       : study.aiAppraisal.bias.overallRisk === 'some_concerns'
-                                        ? 'bg-[#FFF4CE] text-[#797775]'
-                                        : 'bg-[#f5ddd4] text-[#c15f3c]'
+                                      ? 'bg-[#FFF4CE] text-[#797775]'
+                                      : 'bg-[#f5ddd4] text-[#c15f3c]'
                                   }`}
                                 >
                                   {study.aiAppraisal.bias.overallRisk === 'low'
                                     ? 'High'
                                     : study.aiAppraisal.bias.overallRisk === 'some_concerns'
-                                      ? 'Medium'
-                                      : 'Low'}
+                                    ? 'Medium'
+                                    : 'Low'}
                                 </Badge>
                               </div>
                             )}
@@ -1967,7 +1976,7 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                 <div className="prose prose-sm max-w-none">
                   <div
                     className="text-[#141413]"
-                    dangerouslySetInnerHTML={{ __html: searchSummary.content }}
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(searchSummary.content) }}
                   />
                 </div>
               )}
@@ -2008,8 +2017,8 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                                   study.relevance === 'High'
                                     ? 'bg-[#e4ebd8] text-[#788c5d]'
                                     : study.relevance === 'Medium'
-                                      ? 'bg-[#FFF4CE] text-[#797775]'
-                                      : 'bg-[#f5ddd4] text-[#c15f3c]'
+                                    ? 'bg-[#FFF4CE] text-[#797775]'
+                                    : 'bg-[#f5ddd4] text-[#c15f3c]'
                                 }`}
                               >
                                 {study.relevance}
@@ -2021,8 +2030,8 @@ This search and appraisal methodology follows the requirements of MEDDEV 2.7/1 R
                                   study.quality === 'High'
                                     ? 'bg-[#e4ebd8] text-[#788c5d]'
                                     : study.quality === 'Medium'
-                                      ? 'bg-[#FFF4CE] text-[#797775]'
-                                      : 'bg-[#f5ddd4] text-[#c15f3c]'
+                                    ? 'bg-[#FFF4CE] text-[#797775]'
+                                    : 'bg-[#f5ddd4] text-[#c15f3c]'
                                 }`}
                               >
                                 {study.quality}

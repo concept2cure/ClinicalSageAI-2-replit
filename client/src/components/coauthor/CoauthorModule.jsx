@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import DOMPurify from 'dompurify';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import DraftEditor from './DraftEditor';
 import TemplateEditor from './TemplateEditor';
@@ -165,7 +166,11 @@ export default function CoauthorModule({ sectionId = '2.7', sectionTitle = 'Clin
                   {sectionId} {sectionTitle} - Review
                 </h3>
                 <div className="prose prose-sm max-w-none">
-                  <div dangerouslySetInnerHTML={{ __html: content.replace(/\n/g, '<br />') }} />
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: DOMPurify.sanitize(content.replace(/\n/g, '<br />')),
+                    }}
+                  />
                 </div>
               </div>
             </div>

@@ -1,10 +1,9 @@
-import { Router } from 'express';
+import { Router, Response } from 'express';
 import DocumentOrchestrationService from '../services/DocumentOrchestrationService.js';
 import { db } from '../db';
 import { fda510kDocuments, fda510kProjects } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import PDFDocument from 'pdfkit';
-import { Response } from 'express';
 
 const router = Router();
 const orchestrationService = new DocumentOrchestrationService();
@@ -32,7 +31,7 @@ router.post('/api/510k/:projectId/generate-documents', async (req, res) => {
     console.error('Document generation error:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to generate documents'
+      error: error instanceof Error ? error.message : 'Failed to generate documents',
     });
   }
 });
@@ -54,13 +53,13 @@ router.post('/api/510k/documents/:documentId/lock', async (req, res) => {
 
     res.json({
       success: true,
-      document: lockedDocument
+      document: lockedDocument,
     });
   } catch (error) {
     console.error('Document lock error:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to lock document'
+      error: error instanceof Error ? error.message : 'Failed to lock document',
     });
   }
 });
@@ -82,13 +81,13 @@ router.post('/api/510k/documents/:documentId/version', async (req, res) => {
 
     res.json({
       success: true,
-      document: newVersion
+      document: newVersion,
     });
   } catch (error) {
     console.error('Document versioning error:', error);
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to create document version'
+      error: error instanceof Error ? error.message : 'Failed to create document version',
     });
   }
 });
@@ -107,13 +106,13 @@ router.get('/api/510k/:projectId/documents', async (req, res) => {
 
     res.json({
       success: true,
-      documents
+      documents,
     });
   } catch (error) {
     console.error('Error fetching documents:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch documents'
+      error: 'Failed to fetch documents',
     });
   }
 });
@@ -133,19 +132,19 @@ router.get('/api/510k/documents/:documentId', async (req, res) => {
     if (!document) {
       return res.status(404).json({
         success: false,
-        error: 'Document not found'
+        error: 'Document not found',
       });
     }
 
     res.json({
       success: true,
-      document
+      document,
     });
   } catch (error) {
     console.error('Error fetching document:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch document'
+      error: 'Failed to fetch document',
     });
   }
 });
@@ -165,18 +164,17 @@ router.get('/api/510k/documents/:documentId/pdf/3601', async (req, res) => {
     if (!document || document.documentType !== 'fda-form') {
       return res.status(404).json({
         success: false,
-        error: 'FDA form not found'
+        error: 'FDA form not found',
       });
     }
 
     const formData = JSON.parse(document.content);
     generateForm3601PDF(res, formData);
-
   } catch (error) {
     console.error('Error generating PDF:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to generate PDF'
+      error: 'Failed to generate PDF',
     });
   }
 });
@@ -196,18 +194,17 @@ router.get('/api/510k/documents/:documentId/pdf/3514', async (req, res) => {
     if (!document || document.documentType !== 'fda-form') {
       return res.status(404).json({
         success: false,
-        error: 'FDA form not found'
+        error: 'FDA form not found',
       });
     }
 
     const formData = JSON.parse(document.content);
     generateForm3514PDF(res, formData);
-
   } catch (error) {
     console.error('Error generating PDF:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to generate PDF'
+      error: 'Failed to generate PDF',
     });
   }
 });
@@ -227,18 +224,17 @@ router.get('/api/510k/documents/:documentId/pdf/3881', async (req, res) => {
     if (!document || document.documentType !== 'fda-form') {
       return res.status(404).json({
         success: false,
-        error: 'FDA form not found'
+        error: 'FDA form not found',
       });
     }
 
     const formData = JSON.parse(document.content);
     generateForm3881PDF(res, formData);
-
   } catch (error) {
     console.error('Error generating PDF:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to generate PDF'
+      error: 'Failed to generate PDF',
     });
   }
 });
@@ -264,7 +260,9 @@ function generateForm3601PDF(res: Response, formData: any) {
   doc.fontSize(10);
   doc.text(`Applicant Name: ${formData.applicantName}`);
   doc.text(`Address: ${formData.applicantAddress}`);
-  doc.text(`City, State, ZIP: ${formData.applicantCity}, ${formData.applicantState} ${formData.applicantZip}`);
+  doc.text(
+    `City, State, ZIP: ${formData.applicantCity}, ${formData.applicantState} ${formData.applicantZip}`
+  );
   doc.text(`Phone: ${formData.applicantPhone}`);
   doc.text(`Email: ${formData.applicantEmail}`);
   doc.moveDown();
@@ -355,7 +353,7 @@ function generateForm3881PDF(res: Response, formData: any) {
   doc.fontSize(10);
   doc.text(formData.indicationsForUse, {
     width: 500,
-    align: 'justify'
+    align: 'justify',
   });
   doc.moveDown();
 
@@ -366,7 +364,7 @@ function generateForm3881PDF(res: Response, formData: any) {
   } else {
     doc.text('[ ] Prescription Use (Part 21 CFR 801 Subpart D)');
   }
-  
+
   if (formData.overTheCounterUse) {
     doc.text('[✓] Over-The-Counter Use (Part 21 CFR 801 Subpart C)');
   } else {

@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { getPool } from '../../db';
+import { getPool } from '../../db.ts';
 
 interface WritebackInput {
   organizationId: number;

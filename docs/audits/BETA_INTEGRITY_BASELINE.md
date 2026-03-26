@@ -1,47 +1,87 @@
 # BETA INTEGRITY BASELINE (Phase 0)
 
-Date: 2026-03-26
-Branch inspected: `work` (requested `concept2cure-v2` not present in local clone)
+Date: 2026-03-26 (UTC)
+Branch observed: `work` (requested `concept2cure-v2` branch is not present locally)
 
-## 1) Current canonical shell files
+## 1) Canonical shell/nav files
+
+Primary shell/navigation truth is currently concentrated in:
 - `client/src/concept2cure/ZenApp.tsx`
 - `client/src/concept2cure/components/sidebar/ZenSidebar.tsx`
 - `client/src/concept2cure/components/shell/GlobalOperatingShell.tsx`
 - `client/src/concept2cure/components/workspace/ProjectWorkspaceShell.tsx`
 
-## 2) Current compute truth
-- Artifact compute APIs and persistence are wired through `server/routes/compute.ts` and `server/services/compute/computeService.ts`.
-- The `docx` path is isolated via `workers/artifact-compute/docx-python-runtime.py` invoked by `server/services/compute/workerClient.ts`.
-- Runtime maturity exists but is partially inferred by output format and not uniformly represented by runtime profile records.
+`ZenApp.tsx` is the effective routing and nav identity broker via layout mode + nav-id mapping and shell orchestration.
 
-## 3) Current conversation OS durability truth
-- Primary Conversation OS state is in-memory (`Map`-backed kernel in `server/services/conversation-os/conversationKernel.ts`).
-- Routes and services are functional, but restart durability is not guaranteed.
+## 2) Current compute truth
+
+Compute has a credible governed consequence path with runtime maturity labeling already present:
+- Runtime maturity is explicitly derived and surfaced (`production-path`/`provisional`/`stub`; seeded appears in panel fallback).
+- Compute jobs retain artifact consequence metadata including artifact/version/status, placement, provenance ref, and audit ref.
+- UI panel already exposes consequence reopening affordances (editor/provenance/audit-oriented information).
+
+Primary compute files:
+- `server/routes/compute.ts`
+- `server/services/compute/computeService.ts`
+- `server/services/compute/runtimeProfiles.ts`
+- `server/services/compute/artifactWriteback.ts`
+- `client/src/concept2cure/components/compute/ComputeJobPanel.tsx`
+
+## 3) Current Conversation OS durability truth
+
+Before this sprint hardening, conversation state was primarily in-memory (`kernelStore` maps/arrays in `conversationKernel.ts`) with no restart-safe primary storage.
+
+Durability gap areas:
+- tool manifests
+- tool events
+- retrieval chunks/results
+- scout findings
+- plans
+- proposals and proposal status
+- artifact version consequences
 
 ## 4) Current route-policy truth
-- Project module route policy helper is present in `tests/concept2cure/project-module-route-policy.test.ts` coverage and `client/src/concept2cure/router/projectModuleRoutePolicy.ts` use in ZenApp.
-- Nav identity mapping is duplicated and partly stale in ZenApp switch logic + inline nav mapping.
 
-## 5) Current ownership/workbench persistence truth
-- Ownership preference persistence for workbench context exists in ZenApp effects/mutations (`updateOwnershipPreferencesMutation` flow).
-- Restoration behavior is present but vulnerable to nav identity mismatch drift.
+Route policy helper usage is present and should be preserved:
+- `getProjectModuleRoutePolicy` is consumed from `ZenApp.tsx` and is part of project module routing embed policy tests.
 
-## 6) Top 10 integration risks
-1. Duplicated nav identity mappings in ZenApp (high drift risk).
-2. Stale shell branding in sidebar surfaces.
-3. Conversation OS in-memory kernel causes restart data loss.
-4. Compute maturity labels are partly inferred and partly static.
-5. Workspace shell has multiple context bars but no explicit project/document strip contract.
-6. Right-drawer usage is easy to fork by mode-specific panels.
-7. Review/report/vault nav IDs are inconsistently normalized.
-8. Compute consequence metadata visibility can diverge across list vs detail payloads.
-9. Type boundaries around large layout unions are brittle.
-10. Integrated confidence trails lane-local confidence.
+## 5) Current ownership/workbench restoration truth
 
-## 7) Exact files targeted for this sprint
+Workbench restoration behavior is controlled inside `ZenApp.tsx` by:
+- active project ownership preferences
+- `currentWorkbenchContext` persistence flow
+- synchronization of layout mode with stored ownership preferences
+
+This area is tightly coupled to layoutMode transitions and should not be rewritten.
+
+## 6) Current document-first truth
+
+Document-first behavior is substantially represented in `ProjectWorkspaceShell.tsx` with project nav/document tabs and governed panels. Compute writeback indicates governed artifact lifecycle integration rather than export-only flow.
+
+Remaining concern: shell-level context labels and nav identity mismatches can still obscure that governed-document consequence is the primary operating truth.
+
+## 7) Top 10 integration risks
+
+1. Layout-to-nav identity drift in `ZenApp` can create shell inconsistency.
+2. Conversation OS restart volatility if kernel remains in-memory only.
+3. Fragmented shell semantics if `GlobalOperatingShell` and sidebar diverge.
+4. Hidden regression risk in workbench restoration side effects.
+5. Document tab identity not clearly bound to governed behavior in user perception.
+6. Over-reporting runtime maturity where emitters are provisional.
+7. Compute consequence metadata regressions across route/service/UI seams.
+8. Route-policy embed regressions from shell navigation refactors.
+9. Parallel shell affordances leading to “second operating model” confusion.
+10. Existing test surface may miss shell/context integration edges.
+
+## 8) Exact files to touch in this sprint
+
 - `docs/audits/BETA_INTEGRITY_BASELINE.md`
 - `docs/audits/BETA_INTEGRITY_REPORT.md`
 - `client/src/concept2cure/ZenApp.tsx`
-- `client/src/concept2cure/components/sidebar/ZenSidebar.tsx`
 - `client/src/concept2cure/components/shell/GlobalOperatingShell.tsx`
-- `client/src/concept2cure/components/workspace/ProjectWorkspaceShell.tsx`
+- `server/services/conversation-os/conversationKernel.ts`
+- `server/services/conversation-os/toolGateService.ts`
+- `server/services/conversation-os/scoutService.ts`
+- `server/services/conversation-os/orchestrationService.ts`
+- `server/services/conversation-os/artifactProposalService.ts`
+- `server/services/conversation-os/retrievalService.ts`

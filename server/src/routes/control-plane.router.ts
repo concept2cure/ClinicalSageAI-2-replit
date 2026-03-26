@@ -14,9 +14,6 @@ import {
 import { buildAnaAuditReport } from '../control-plane/audit-report';
 import { ANA_RULE_CATALOG } from '../control-plane/rule-catalog';
 import { runAnaSelfTest } from '../control-plane/self-test';
-import { getPersistentKernelDecisionSummary } from '../control-plane/persistent-queries';
-import { buildAnaAuditReport } from '../control-plane/audit-report';
-import { ANA_RULE_CATALOG } from '../control-plane/rule-catalog';
 
 const router = Router();
 
@@ -31,10 +28,6 @@ function requireControlPlaneAccess(req: any, res: any, next: any) {
   const allowNonProdBypass = process.env.ANA_ALLOW_NONPROD_CONTROL_PLANE !== 'false';
 
   if (hasAdminRole || hasOpsHeader || (nonProd && allowNonProdBypass)) {
-  const hasOpsHeader = req.headers['x-ana-ops-token'] && req.headers['x-ana-ops-token'] === process.env.ANA_OPS_TOKEN;
-  const nonProd = process.env.NODE_ENV !== 'production';
-
-  if (hasAdminRole || hasOpsHeader || nonProd) {
     return next();
   }
 
@@ -64,8 +57,12 @@ router.get('/kernel/policy', requireControlPlaneAccess, (_req, res) => {
       denyThreshold: defaultAnaPolicyBundle.denyThreshold,
       biasTermThreshold: defaultAnaPolicyBundle.biasTermThreshold,
       scientificIntegrityTermCount: defaultAnaPolicyBundle.scientificIntegrityTerms.length,
-      identityExemptRoutePatterns: defaultAnaPolicyBundle.identityExemptRoutePatterns.map(p => p.toString()),
-      highRiskRegulatoryRoutePatterns: defaultAnaPolicyBundle.highRiskRegulatoryRoutePatterns.map(p => p.toString()),
+      identityExemptRoutePatterns: defaultAnaPolicyBundle.identityExemptRoutePatterns.map(p =>
+        p.toString()
+      ),
+      highRiskRegulatoryRoutePatterns: defaultAnaPolicyBundle.highRiskRegulatoryRoutePatterns.map(
+        p => p.toString()
+      ),
       immutableRoutePatterns: defaultAnaPolicyBundle.immutableRoutePatterns.map(p => p.toString()),
     },
   });
@@ -75,19 +72,15 @@ router.get('/kernel/summary', requireControlPlaneAccess, (_req, res) => {
   res.json({ summary: getKernelDecisionSummary() });
 });
 
-
 router.get('/kernel/rules', requireControlPlaneAccess, (_req, res) => {
   res.json({ rules: ANA_RULE_CATALOG });
 });
-
 
 router.get('/kernel/self-test', requireControlPlaneAccess, (_req, res) => {
   const result = runAnaSelfTest();
   const status = result.overallPassed ? 200 : 503;
   res.status(status).json({ selfTest: result });
 });
-
-
 
 router.get('/kernel/hash-chain/verify', requireControlPlaneAccess, async (_req, res) => {
   const verification = await verifyPersistentKernelHashChain();
@@ -104,7 +97,6 @@ router.get('/kernel/summary/persistent', requireControlPlaneAccess, async (req, 
     summary,
   });
 });
-
 
 router.get('/kernel/audit-report', requireControlPlaneAccess, async (req, res) => {
   const rawHours = Number(req.query.hours || 24);

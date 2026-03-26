@@ -131,7 +131,7 @@ router.get('/:projectId', async (req, res) => {
  */
 router.post('/', async (req, res) => {
   try {
-    console.log('Create project request received:', req.body);
+    console.log('Create project request received');
 
     const validatedData = createProjectSchema.parse(req.body);
 

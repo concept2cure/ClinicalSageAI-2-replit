@@ -43,7 +43,7 @@ router.get('/:tenantId', async (req, res) => {
 
     // Get users for this organization with their roles
     const query = `
-      SELECT 
+      SELECT
         u.id,
         u.email,
         u.name,
@@ -81,7 +81,7 @@ router.post('/', async (req, res) => {
       return res.status(500).json({ error: 'Database connection not available' });
     }
 
-    console.log('Create user request received:', req.body);
+    console.log('Create user request received');
 
     // Parse and validate the request body
     const validatedData = createUserSchema.parse(req.body);
@@ -91,7 +91,7 @@ router.post('/', async (req, res) => {
     if (!organizationId) {
       return res.status(400).json({ error: 'Organization ID is required' });
     }
-    
+
     // Use atomic user creation with quota enforcement
     const { atomicCreateUser } = await import('../services/atomicQuotaService.js');
     const result = await atomicCreateUser(organizationId, {
@@ -99,39 +99,39 @@ router.post('/', async (req, res) => {
       name: validatedData.name,
       role: validatedData.role,
       title: validatedData.title,
-      department: validatedData.department
+      department: validatedData.department,
     });
-    
+
     if (!result.success) {
       if (result.error === 'QUOTA_EXCEEDED') {
         return res.status(403).json({
           success: false,
           error: 'Quota exceeded',
           message: result.message,
-          details: result.details
+          details: result.details,
         });
       }
       if (result.error === 'USER_EXISTS') {
         return res.status(400).json({
           success: false,
           error: result.error,
-          message: result.message
+          message: result.message,
         });
       }
       return res.status(400).json({
         success: false,
         error: result.error,
-        message: result.message
+        message: result.message,
       });
     }
-    
+
     console.log('Created user atomically:', result.data);
     console.log('Quota info:', result.quotaInfo);
-    
+
     // Return the created user with quota info
     res.status(201).json({
       ...result.data,
-      quotaInfo: result.quotaInfo
+      quotaInfo: result.quotaInfo,
     });
   } catch (error) {
     console.error('Error creating user:', error);
@@ -150,7 +150,7 @@ router.post('/legacy', async (req, res) => {
       return res.status(500).json({ error: 'Database connection not available' });
     }
 
-    console.log('Create user request received:', req.body);
+    console.log('Create legacy user request received');
 
     // Parse and validate the request body
     const validatedData = createUserSchema.parse(req.body);
@@ -185,7 +185,7 @@ router.post('/legacy', async (req, res) => {
       // Update existing user's title and department if provided
       if (validatedData.title || validatedData.department) {
         const updateUserQuery = `
-          UPDATE users 
+          UPDATE users
           SET title = $1, department = $2, updated_at = NOW()
           WHERE id = $3
         `;
@@ -232,7 +232,7 @@ router.post('/legacy', async (req, res) => {
 
     // Get the full user data to return
     const getUserQuery = `
-      SELECT 
+      SELECT
         u.id,
         u.email,
         u.name,
@@ -284,7 +284,7 @@ router.patch('/:organizationId/:userId', async (req, res) => {
     const validatedData = updateUserRoleSchema.parse(req.body);
 
     const updateQuery = `
-      UPDATE organization_users 
+      UPDATE organization_users
       SET role = $1, updated_at = NOW()
       WHERE organization_id = $2 AND user_id = $3
       RETURNING *
@@ -326,7 +326,7 @@ router.delete('/:organizationId/:userId', async (req, res) => {
     }
 
     const deleteQuery = `
-      DELETE FROM organization_users 
+      DELETE FROM organization_users
       WHERE organization_id = $1 AND user_id = $2
       RETURNING *
     `;

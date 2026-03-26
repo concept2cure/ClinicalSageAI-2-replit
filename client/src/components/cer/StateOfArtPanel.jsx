@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import DOMPurify from 'dompurify';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -833,17 +834,19 @@ export default function StateOfArtPanel({ onSectionGenerated }) {
               <div className="prose max-w-none">
                 <div
                   dangerouslySetInnerHTML={{
-                    __html: sotaContent
-                      .replace(/# /g, '<h1>')
-                      .replace(/\n## /g, '</h1><h2>')
-                      .replace(/\n### /g, '</h2><h3>')
-                      .replace(/\n#### /g, '</h3><h4>')
-                      .replace(
-                        /<h(\d)>([^<]+)/g,
-                        '<h$1 class="text-[#141413] font-semibold mb-3 mt-5">$2'
-                      )
-                      .replace(/\n/g, '<br/>')
-                      .replace(/- ([^\n]+)/g, '<li>$1</li>'),
+                    __html: DOMPurify.sanitize(
+                      sotaContent
+                        .replace(/# /g, '<h1>')
+                        .replace(/\n## /g, '</h1><h2>')
+                        .replace(/\n### /g, '</h2><h3>')
+                        .replace(/\n#### /g, '</h3><h4>')
+                        .replace(
+                          /<h(\d)>([^<]+)/g,
+                          '<h$1 class="text-[#141413] font-semibold mb-3 mt-5">$2'
+                        )
+                        .replace(/\n/g, '<br/>')
+                        .replace(/- ([^\n]+)/g, '<li>$1</li>')
+                    ),
                   }}
                 />
               </div>

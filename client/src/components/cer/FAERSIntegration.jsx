@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import DOMPurify from 'dompurify';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { searchFaersEvents, generateEventSummaryReport } from '@/services/faers-api';
 import {
@@ -294,7 +295,13 @@ export function FAERSIntegration({ productName, productId, onDataSelected, onSec
                                   onClick={() => toggleEventSelection(event)}
                                 >
                                   <CheckSquare
-                                    className={`h-4 w-4 ${selectedEvents.some(e => e.safetyreportid === event.safetyreportid) ? 'text-primary' : 'text-gray-300'}`}
+                                    className={`h-4 w-4 ${
+                                      selectedEvents.some(
+                                        e => e.safetyreportid === event.safetyreportid
+                                      )
+                                        ? 'text-primary'
+                                        : 'text-gray-300'
+                                    }`}
                                   />
                                 </Button>
                               </TableCell>
@@ -317,16 +324,16 @@ export function FAERSIntegration({ productName, productId, onDataSelected, onSec
                                 {event.seriousnessdeath === '1'
                                   ? 'Death'
                                   : event.seriousnesslifethreatening === '1'
-                                    ? 'Life-threatening'
-                                    : event.seriousnesshospitalization === '1'
-                                      ? 'Hospitalization'
-                                      : event.seriousnessdisabling === '1'
-                                        ? 'Disabling'
-                                        : event.seriousnesscongenitalanomali === '1'
-                                          ? 'Congenital Anomaly'
-                                          : event.seriousnessother === '1'
-                                            ? 'Other Serious'
-                                            : 'Not Specified'}
+                                  ? 'Life-threatening'
+                                  : event.seriousnesshospitalization === '1'
+                                  ? 'Hospitalization'
+                                  : event.seriousnessdisabling === '1'
+                                  ? 'Disabling'
+                                  : event.seriousnesscongenitalanomali === '1'
+                                  ? 'Congenital Anomaly'
+                                  : event.seriousnessother === '1'
+                                  ? 'Other Serious'
+                                  : 'Not Specified'}
                               </TableCell>
                             </TableRow>
                           ))}
@@ -438,9 +445,10 @@ export function FAERSIntegration({ productName, productId, onDataSelected, onSec
                   <div className="prose max-w-none">
                     <div
                       dangerouslySetInnerHTML={{
-                        __html:
+                        __html: DOMPurify.sanitize(
                           generateReportMutation.data?.reportPreview ||
-                          'Report preview not available.',
+                            'Report preview not available.'
+                        ),
                       }}
                     />
                   </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import DOMPurify from 'dompurify';
 import FDA510kService from '../../services/FDA510kService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -508,11 +509,15 @@ const PredicateDeviceComparison = ({
             <thead>
               <tr class="bg-gray-100">
                 <th class="w-1/5 p-2 border border-gray-300">Characteristic</th>
-                <th class="p-2 border border-gray-300">Subject Device: ${deviceProfile.deviceName || 'Your Device'}</th>
+                <th class="p-2 border border-gray-300">Subject Device: ${
+                  deviceProfile.deviceName || 'Your Device'
+                }</th>
                 ${selectedPredicates
                   .map(
                     (p, i) =>
-                      `<th class="p-2 border border-gray-300">Predicate ${i + 1}: ${p.deviceName || 'Unknown'}</th>`
+                      `<th class="p-2 border border-gray-300">Predicate ${i + 1}: ${
+                        p.deviceName || 'Unknown'
+                      }</th>`
                   )
                   .join('')}
                 <th class="p-2 border border-gray-300">Equivalence</th>
@@ -527,7 +532,9 @@ const PredicateDeviceComparison = ({
         // Add category header
         tableHtml += `
           <tr>
-            <td colspan="${selectedPredicates.length + 3}" class="bg-gray-200 font-bold text-left p-2 border border-gray-300">
+            <td colspan="${
+              selectedPredicates.length + 3
+            }" class="bg-gray-200 font-bold text-left p-2 border border-gray-300">
               ${category}
             </td>
           </tr>
@@ -557,7 +564,11 @@ const PredicateDeviceComparison = ({
           // In a full implementation, would show more nuanced equivalence across predicates
           if (selectedPredicates.length > 0) {
             const firstPredicateValue = formatFieldValue(selectedPredicates[0][field]);
-            tableHtml += `<td>${getEquivalenceFactor(field, subjectValue, firstPredicateValue)}</td>`;
+            tableHtml += `<td>${getEquivalenceFactor(
+              field,
+              subjectValue,
+              firstPredicateValue
+            )}</td>`;
           } else {
             tableHtml += `<td>-</td>`;
           }
@@ -571,7 +582,9 @@ const PredicateDeviceComparison = ({
           </table>
           <div class="mt-4 text-sm text-gray-600">
             <p><strong>Note:</strong> This comparison is preliminary and should be reviewed by qualified regulatory personnel.</p>
-            <p>Generated on ${new Date().toLocaleDateString()} for ${deviceProfile.deviceName || 'Subject Device'}</p>
+            <p>Generated on ${new Date().toLocaleDateString()} for ${
+        deviceProfile.deviceName || 'Subject Device'
+      }</p>
           </div>
         </div>
       `;
@@ -844,7 +857,7 @@ const PredicateDeviceComparison = ({
           <CardContent>
             <div
               className="comparison-preview border rounded-md p-4 mb-4 max-h-[400px] overflow-auto"
-              dangerouslySetInnerHTML={{ __html: comparisonTable }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(comparisonTable) }}
             />
           </CardContent>
           <CardFooter className="flex justify-end space-x-2">

@@ -226,7 +226,9 @@ export default function UnifiedSubmissionCenter() {
       await apiRequest(`/api/agent-swarm/swarms/${swarm.id}/start`, 'POST');
       toast({
         title: 'AI Swarm Launched',
-        description: `${swarm.agents?.length || 4} agents working on "${project.name || project.title}"`,
+        description: `${swarm.agents?.length || 4} agents working on "${
+          project.name || project.title
+        }"`,
       });
       pollSwarmStatus(swarm.id);
     } catch (err) {
@@ -735,10 +737,10 @@ export default function UnifiedSubmissionCenter() {
                                 activeSwarm.status === 'completed'
                                   ? 'border-green-300 text-green-700'
                                   : activeSwarm.status === 'running'
-                                    ? 'border-blue-300 text-blue-700'
-                                    : activeSwarm.status === 'failed'
-                                      ? 'border-red-300 text-red-700'
-                                      : 'border-gray-300 text-gray-700'
+                                  ? 'border-blue-300 text-blue-700'
+                                  : activeSwarm.status === 'failed'
+                                  ? 'border-red-300 text-red-700'
+                                  : 'border-gray-300 text-gray-700'
                               )}
                             >
                               {activeSwarm.status || 'pending'}
@@ -1041,7 +1043,7 @@ export default function UnifiedSubmissionCenter() {
         open={showCreateProjectDialog}
         onOpenChange={setShowCreateProjectDialog}
         onCreate={createProjectMutation.mutate}
-        isLoading={createProjectMutation.isLoading}
+        isLoading={createProjectMutation.isPending}
       />
 
       {/* Create Task Dialog */}
@@ -1049,7 +1051,7 @@ export default function UnifiedSubmissionCenter() {
         open={showCreateTaskDialog}
         onOpenChange={setShowCreateTaskDialog}
         onCreate={createTaskMutation.mutate}
-        isLoading={createTaskMutation.isLoading}
+        isLoading={createTaskMutation.isPending}
         projects={filteredProjects}
       />
     </div>
@@ -1234,8 +1236,8 @@ function PipelineView({ projects }) {
                   index === 0
                     ? 'bg-blue-100 text-blue-700'
                     : index === stages.length - 1
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-gray-100 text-gray-700'
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-gray-100 text-gray-700'
                 )}
               >
                 {index + 1}
@@ -1500,15 +1502,21 @@ function TimelineView({ projects, tasks }) {
             <div className="text-center text-gray-500 py-12">
               <Calendar className="h-12 w-12 mx-auto mb-3 text-gray-300" />
               <p>No milestones or tasks with dates found.</p>
-              <p className="text-sm mt-1">Add target dates to projects and tasks to see them here.</p>
+              <p className="text-sm mt-1">
+                Add target dates to projects and tasks to see them here.
+              </p>
             </div>
           ) : (
             <div className="relative pl-8">
               <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-gray-200" />
               <div className="space-y-6">
-                {allItems.map((item) => (
+                {allItems.map(item => (
                   <div key={item.id} className="relative flex items-start gap-4">
-                    <div className={`absolute left-[-1.25rem] top-1.5 h-3 w-3 rounded-full border-2 border-white ${statusColors[item.status] || 'bg-gray-400'}`} />
+                    <div
+                      className={`absolute left-[-1.25rem] top-1.5 h-3 w-3 rounded-full border-2 border-white ${
+                        statusColors[item.status] || 'bg-gray-400'
+                      }`}
+                    />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-sm">{item.title}</span>
@@ -1517,13 +1525,14 @@ function TimelineView({ projects, tasks }) {
                         </Badge>
                       </div>
                       <p className="text-xs text-gray-500 mt-0.5">
-                        {new Date(item.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                        {new Date(item.date).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                        })}
                       </p>
                     </div>
-                    <Badge
-                      variant="secondary"
-                      className="text-xs whitespace-nowrap"
-                    >
+                    <Badge variant="secondary" className="text-xs whitespace-nowrap">
                       {(item.status || 'planned').replace('_', ' ')}
                     </Badge>
                   </div>
