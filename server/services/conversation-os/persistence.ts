@@ -1,4 +1,5 @@
 import { getPool } from '../../db.ts';
+import { allowConversationOsMemoryFallback } from './conversationKernel';
 import type { ArtifactProposal, PlanTrace, RetrievalChunk, ScoutFinding, ToolEvent, ToolManifest } from './types';
 
 const makeId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -10,6 +11,12 @@ function tableMissing(error: unknown) {
 }
 function dbUnavailable(error: unknown) {
   return error instanceof Error && /Database connection not available/i.test(error.message);
+}
+function canFallback(error: unknown) {
+  return (
+    allowConversationOsMemoryFallback() &&
+    (tableMissing(error) || dbUnavailable(error))
+  );
 }
 
 export class ConversationOsPersistence {
@@ -29,7 +36,7 @@ export class ConversationOsPersistence {
       );
       return true;
     } catch (error) {
-      if (tableMissing(error) || dbUnavailable(error)) return false;
+      if (canFallback(error)) return false;
       throw error;
     }
   }
@@ -49,7 +56,7 @@ export class ConversationOsPersistence {
         updatedAt: new Date(result.rows[0].updated_at).toISOString(),
       };
     } catch (error) {
-      if (tableMissing(error) || dbUnavailable(error)) return null;
+      if (canFallback(error)) return null;
       throw error;
     }
   }
@@ -64,7 +71,7 @@ export class ConversationOsPersistence {
       );
       return true;
     } catch (error) {
-      if (tableMissing(error) || dbUnavailable(error)) return false;
+      if (canFallback(error)) return false;
       throw error;
     }
   }
@@ -86,7 +93,7 @@ export class ConversationOsPersistence {
         timestamp: new Date(row.created_at).toISOString(),
       }));
     } catch (error) {
-      if (tableMissing(error) || dbUnavailable(error)) return [];
+      if (canFallback(error)) return [];
       throw error;
     }
   }
@@ -114,7 +121,7 @@ export class ConversationOsPersistence {
       }
       return true;
     } catch (error) {
-      if (tableMissing(error) || dbUnavailable(error)) return false;
+      if (canFallback(error)) return false;
       throw error;
     }
   }
@@ -129,7 +136,7 @@ export class ConversationOsPersistence {
       );
       return result.rows.map(row => ({ id: row.id, sourceId: row.source_id, section: row.section ?? undefined, approvedOnly: row.approved_only, text: row.text, tags: row.tags ?? [] }));
     } catch (error) {
-      if (tableMissing(error) || dbUnavailable(error)) return [];
+      if (canFallback(error)) return [];
       throw error;
     }
   }
@@ -145,7 +152,7 @@ export class ConversationOsPersistence {
       );
       return true;
     } catch (error) {
-      if (tableMissing(error) || dbUnavailable(error)) return false;
+      if (canFallback(error)) return false;
       throw error;
     }
   }
@@ -160,7 +167,7 @@ export class ConversationOsPersistence {
       );
       return result.rows.map(row => ({ id: row.id, summary: row.summary, chunkIds: row.chunk_ids ?? [], promoted: row.promoted, createdAt: new Date(row.created_at).toISOString() }));
     } catch (error) {
-      if (tableMissing(error) || dbUnavailable(error)) return [];
+      if (canFallback(error)) return [];
       throw error;
     }
   }
@@ -186,7 +193,7 @@ export class ConversationOsPersistence {
       }
       return true;
     } catch (error) {
-      if (tableMissing(error) || dbUnavailable(error)) return false;
+      if (canFallback(error)) return false;
       throw error;
     }
   }
@@ -212,7 +219,7 @@ export class ConversationOsPersistence {
         steps: stepsRes.rows.map(row => ({ id: row.id, label: row.label, status: row.step_status })),
       };
     } catch (error) {
-      if (tableMissing(error) || dbUnavailable(error)) return null;
+      if (canFallback(error)) return null;
       throw error;
     }
   }
@@ -232,7 +239,7 @@ export class ConversationOsPersistence {
       );
       return true;
     } catch (error) {
-      if (tableMissing(error) || dbUnavailable(error)) return false;
+      if (canFallback(error)) return false;
       throw error;
     }
   }
@@ -247,7 +254,7 @@ export class ConversationOsPersistence {
       );
       return result.rows.map(row => ({ id: row.id, conversationId: row.conversation_id, artifactId: row.artifact_id, content: row.content, status: row.status, createdAt: new Date(row.created_at).toISOString() }));
     } catch (error) {
-      if (tableMissing(error) || dbUnavailable(error)) return [];
+      if (canFallback(error)) return [];
       throw error;
     }
   }
@@ -261,7 +268,7 @@ export class ConversationOsPersistence {
       );
       return true;
     } catch (error) {
-      if (tableMissing(error) || dbUnavailable(error)) return false;
+      if (canFallback(error)) return false;
       throw error;
     }
   }
@@ -276,7 +283,77 @@ export class ConversationOsPersistence {
       );
       return true;
     } catch (error) {
-      if (tableMissing(error) || dbUnavailable(error)) return false;
+      if (canFallback(error)) return false;
+      throw error;
+    }
+  }
+
+  async recordAcceptedArtifactVersion(
+    ctx: Ctx & { organizationId: string },
+    payload: {
+      proposalId: string;
+      proposalVersionId?: string | null;
+      artifactExternalId: string;
+      artifactVersion: number;
+      artifactStatus: string;
+      placementState?: string | null;
+      provenanceEventId?: string | null;
+      auditId?: string | null;
+      governanceState: 'ACCEPTED_GOVERNED' | 'ACCEPTED_PERSISTED_NO_GOVERNANCE';
+      failureReason?: string | null;
+    }
+  ) {
+    try {
+      const pool = getPool();
+      await pool.query(
+        `INSERT INTO conversation_os_accepted_artifact_versions (
+          id, project_id, conversation_id, proposal_id, proposal_version_id, user_id, organization_id,
+          artifact_external_id, artifact_version, artifact_status, placement_state, provenance_event_id,
+          audit_id, governance_state, failure_reason, created_at
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,NOW())`,
+        [
+          this.id(),
+          ctx.projectId,
+          ctx.conversationId,
+          payload.proposalId,
+          payload.proposalVersionId ?? null,
+          ctx.userId,
+          ctx.organizationId,
+          payload.artifactExternalId,
+          payload.artifactVersion,
+          payload.artifactStatus,
+          payload.placementState ?? null,
+          payload.provenanceEventId ?? null,
+          payload.auditId ?? null,
+          payload.governanceState,
+          payload.failureReason ?? null,
+        ]
+      );
+      return true;
+    } catch (error) {
+      if (canFallback(error)) return false;
+      throw error;
+    }
+  }
+
+  async listAcceptedArtifactVersions(ctx: Ctx, artifactExternalId: string) {
+    try {
+      const pool = getPool();
+      const result = await pool.query(
+        `SELECT artifact_external_id, artifact_version, artifact_status, created_at
+         FROM conversation_os_accepted_artifact_versions
+         WHERE project_id = $1 AND conversation_id = $2 AND artifact_external_id = $3
+         ORDER BY artifact_version ASC`,
+        [ctx.projectId, ctx.conversationId, artifactExternalId]
+      );
+      return result.rows.map(row => ({
+        version: row.artifact_version,
+        content: '',
+        acceptedAt: new Date(row.created_at).toISOString(),
+        status: row.artifact_status,
+      }));
+    } catch (error) {
+      if (canFallback(error)) return [];
       throw error;
     }
   }

@@ -74,3 +74,7 @@ class ConversationKernelStore {
 
 export const kernelStore = new ConversationKernelStore();
 kernelStore.hydrate();
+
+export function allowConversationOsMemoryFallback() {
+  return process.env.CONVERSATION_OS_ALLOW_MEMORY_FALLBACK === 'true';
+}
