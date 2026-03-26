@@ -175,6 +175,21 @@ export interface InferenceResponse {
   tokenUsage: { prompt: number; completion: number; total: number };
   latencyMs: number;
   routedTo: 'fine-tuned' | 'base' | 'fallback';
+  wisdom?: {
+    confidenceBand: 'high' | 'medium' | 'low';
+    evidenceDiscipline: {
+      knownCount: number;
+      inferredCount: number;
+      missingCount: number;
+      compliant: boolean;
+    };
+    safetyProfile: {
+      riskLevel: 'low' | 'medium' | 'high';
+      requiresHumanReview: boolean;
+      rationale: string;
+    };
+    nextBestActions: string[];
+  };
 }
 
 export interface Citation {
@@ -298,6 +313,11 @@ class ModelRegistry {
         runtime: baseModel.deploymentConfig?.runtime || null,
       },
     });
+  }
+
+  async hydrateFromDisk(): Promise<void> {
+    // No-op: models are registered in-memory via constructor.
+    // This method exists to satisfy startup initialization calls.
   }
 
   getActiveModel(): LumenCortexModel | undefined {
@@ -563,6 +583,7 @@ class ModelRegistry {
 }
 
 const registry = new ModelRegistry();
+void registry.hydrateFromDisk();
 
 // ---------------------------------------------------------------------------
 // REGULATORY-AWARE INFERENCE
@@ -707,6 +728,7 @@ async function performInference(request: InferenceRequest): Promise<InferenceRes
         },
         latencyMs: Date.now() - startTime,
         routedTo,
+        wisdom: buildWisdomProfile(content, citations, regulatoryFlags),
       };
     }
   } catch (err) {
@@ -725,6 +747,7 @@ async function performInference(request: InferenceRequest): Promise<InferenceRes
     tokenUsage: { prompt: 0, completion: 0, total: 0 },
     latencyMs: Date.now() - startTime,
     routedTo,
+    wisdom: buildWisdomProfile(content, citations, regulatoryFlags),
   };
 }
 

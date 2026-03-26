@@ -257,7 +257,7 @@ ${sapContent.substring(0, 3000)}`,
         { jsonMode: true, temperature: 0.2 }
       );
 
-      datasetsPayload = JSON.parse(aiContent || '{"datasets":[]}');
+      datasetsPayload = JSON.parse(aiResponse.content || '{"datasets":[]}');
     } catch (aiError) {
       console.error(
         '[StatisticalContinuum] AI analysis spec generation failed, using fallback:',
@@ -392,7 +392,7 @@ SAP Summary: ${(sapSnapshot?.content || '').substring(0, 2000)}`,
     };
 
     try {
-      tlfPayload = JSON.parse(tlfContent || '{"tlfs":[]}');
+      tlfPayload = JSON.parse(aiResponse.content || '{"tlfs":[]}');
     } catch {
       tlfPayload = { tlfs: [] };
     }
@@ -542,7 +542,7 @@ Results: ${JSON.stringify(resultsSnapshot, null, 2).substring(0, 2000)}`,
 
     let sectionsPayload: { sections: Record<string, string> };
     try {
-      sectionsPayload = JSON.parse(csrContent || '{"sections":{}}');
+      sectionsPayload = JSON.parse(aiResponse.content || '{"sections":{}}');
     } catch {
       sectionsPayload = { sections: {} };
     }

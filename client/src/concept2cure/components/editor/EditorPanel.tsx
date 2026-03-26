@@ -8,7 +8,7 @@
  * - DOCX Export → POST /api/concept2cure/documents/generate (via chat tool) + download
  */
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import UnifiedDocumentEditor from './UnifiedDocumentEditor';
 import { cn } from '@/lib/utils';
 import {
@@ -36,6 +36,7 @@ import {
   Database,
   Zap,
   ArrowRight,
+  Rocket,
   Users,
   MessageSquare,
   Eye,
@@ -74,6 +75,8 @@ import { SubmissionReadinessValidator } from '../submission/SubmissionReadinessV
 import { ComplianceScannerPanel } from './ComplianceScannerPanel';
 import { AnAMemory } from '../intelligence/AnAMemory';
 import ArtifactProofPanel from './ArtifactProofPanel';
+import EditorGAReadinessPanel from './EditorGAReadinessPanel';
+import { buildCapabilityModels, buildRemediationQueue } from './gaReadinessModel';
 import { getCurrentUser } from '../../utils/getCurrentUser';
 import { useDocumentModeOptional, type DocumentMode } from '../../contexts/DocumentModeContext';
 import {
@@ -203,11 +206,99 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     | 'submission-readiness'
     | 'compliance-scanner'
     | 'ana-memory'
-    | 'proof';
+    | 'proof'
+    | 'ga-readiness';
   const [activeInspector, setActiveInspector] = useState<InspectorPanel | null>(null);
   const toggleInspector = useCallback((panel: InspectorPanel) => {
     setActiveInspector(prev => (prev === panel ? null : panel));
   }, []);
+
+  const gaChecks = useMemo(
+    () => [
+      {
+        id: 'project-context',
+        label: 'Project context',
+        status: projectId ? 'ready' : ('missing' as const),
+        detail: projectId
+          ? `Linked to project ${projectId.slice(0, 8)}…`
+          : 'Editor should be opened with a projectId to enable persistence, governance, and audit.',
+      },
+      {
+        id: 'artifact-loaded',
+        label: 'Document loaded',
+        status: activeArtifact?.id ? 'ready' : ('missing' as const),
+        detail: activeArtifact?.id
+          ? `${activeArtifact.title} (${activeArtifact.status || 'draft'})`
+          : 'No active artifact selected. Choose or create a document.',
+      },
+      {
+        id: 'api-wiring',
+        label: 'Authoring API wiring',
+        status: artifacts.length > 0 ? ('ready' as const) : ('partial' as const),
+        detail:
+          artifacts.length > 0
+            ? `Artifact APIs responding (${artifacts.length} document${artifacts.length === 1 ? '' : 's'} loaded).`
+            : 'No artifacts fetched yet. Confirm /api/concept2cure/projects/:id/artifacts is reachable.',
+      },
+      {
+        id: 'collaboration',
+        label: 'Collaboration channel',
+        status: collaboration.isConnected ? ('ready' as const) : ('partial' as const),
+        detail: collaboration.isConnected
+          ? 'Presence + typing channel connected.'
+          : 'Collaboration socket is offline; editor still supports single-user authoring.',
+      },
+      {
+        id: 'export-controls',
+        label: 'Export and submission controls',
+        status: activeArtifact ? ('ready' as const) : ('partial' as const),
+        detail: activeArtifact
+          ? 'DOCX/PDF/Markdown export plus audit export are available.'
+          : 'Open a document to enable governed export and status pipeline.',
+      },
+    ],
+    [projectId, activeArtifact, artifacts.length, collaboration.isConnected]
+  );
+
+  const gaWorkflowModels = useMemo(
+    () => [
+      {
+        name: 'Author → Review → Approve → Lock',
+        owner: 'Regulatory author + QA reviewer',
+        objective: 'Produce a controlled submission-ready artifact with traceable approvals.',
+        path: ['Draft', 'Peer review', 'Approval', 'Locked'],
+      },
+      {
+        name: 'AI-assisted drafting loop',
+        owner: 'Medical writer',
+        objective: 'Accelerate drafting while preserving human-in-the-loop control.',
+        path: ['Prompt/selection', 'AI suggestion', 'Diff review', 'Apply + autosave'],
+      },
+      {
+        name: 'Evidence and compliance loop',
+        owner: 'Regulatory operations',
+        objective: 'Validate claims against references and submission requirements.',
+        path: ['Cross-ref', 'Claim check', 'Compliance scan', 'Submission readiness'],
+      },
+    ],
+    []
+  );
+
+  const competitiveCapabilities = useMemo(
+    () =>
+      buildCapabilityModels({
+        projectId,
+        hasActiveArtifact: !!activeArtifact,
+        artifactCount: artifacts.length,
+        collaborationConnected: collaboration.isConnected,
+      }),
+    [projectId, activeArtifact, artifacts.length, collaboration.isConnected]
+  );
+
+  const gaRemediationQueue = useMemo(
+    () => buildRemediationQueue(gaChecks, competitiveCapabilities),
+    [gaChecks, competitiveCapabilities]
+  );
 
   // Auto-open inspector when initialInspector is set from parent
   useEffect(() => {
@@ -308,6 +399,166 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
   const pendingCommentClientIdRef = useRef<string>('');
   const [cancelCommentId, setCancelCommentId] = useState<string | null>(null);
 
+  const gaChecks = useMemo(
+    () =>
+      buildReadinessChecks({
+        projectId,
+        hasActiveArtifact: !!activeArtifact?.id,
+        artifactCount: artifacts.length,
+        collaborationConnected: collaboration.isConnected,
+        signatureCount: signatures.length,
+        provenanceCount,
+        unresolvedCommentCount: comments.filter(c => !c.resolved).length,
+        trustLoadFailed,
+      }),
+    [
+      projectId,
+      activeArtifact?.id,
+      artifacts.length,
+      collaboration.isConnected,
+      signatures.length,
+      provenanceCount,
+      comments,
+      trustLoadFailed,
+    ]
+  );
+
+  const gaWorkflowModels = useMemo(
+    () => [
+      {
+        name: 'Author → Review → Approve → Lock',
+        owner: 'Regulatory author + QA reviewer',
+        objective: 'Produce a controlled submission-ready artifact with traceable approvals.',
+        path: ['Draft', 'Peer review', 'Approval', 'Locked'],
+      },
+      {
+        name: 'AI-assisted drafting loop',
+        owner: 'Medical writer',
+        objective: 'Accelerate drafting while preserving human-in-the-loop control.',
+        path: ['Prompt/selection', 'AI suggestion', 'Diff review', 'Apply + autosave'],
+      },
+      {
+        name: 'Evidence and compliance loop',
+        owner: 'Regulatory operations',
+        objective: 'Validate claims against references and submission requirements.',
+        path: ['Cross-ref', 'Claim check', 'Compliance scan', 'Submission readiness'],
+      },
+    ],
+    []
+  );
+
+  const competitiveCapabilities = useMemo(
+    () =>
+      buildCapabilityModels({
+        projectId,
+        hasActiveArtifact: !!activeArtifact,
+        artifactCount: artifacts.length,
+        collaborationConnected: collaboration.isConnected,
+        signatureCount: signatures.length,
+        provenanceCount,
+        unresolvedCommentCount: comments.filter(c => !c.resolved).length,
+        trustLoadFailed,
+      }),
+    [
+      projectId,
+      activeArtifact,
+      artifacts.length,
+      collaboration.isConnected,
+      signatures.length,
+      provenanceCount,
+      comments,
+      trustLoadFailed,
+    ]
+  );
+
+  const gaRemediationQueue = useMemo(
+    () => buildRemediationQueue(gaChecks, competitiveCapabilities),
+    [gaChecks, competitiveCapabilities]
+  );
+  const gaReadinessScore = useMemo(() => {
+    const readyCount = gaChecks.filter(check => check.status === 'ready').length;
+    return gaChecks.length ? Math.round((readyCount / gaChecks.length) * 100) : 0;
+  }, [gaChecks]);
+  const gaBlockingCount = useMemo(
+    () => gaChecks.filter(check => check.status === 'missing').length,
+    [gaChecks]
+  );
+  const nextRemediation = gaRemediationQueue[0];
+  const humanJourneySteps = useMemo(
+    () =>
+      [
+        {
+          id: 'draft',
+          label: 'Draft with AnA',
+          done: !!activeArtifact?.content && activeArtifact.content.replace(/<[^>]+>/g, '').trim().length > 40,
+          target: 'intelligence',
+        },
+        {
+          id: 'evidence',
+          label: 'Link evidence',
+          done: provenanceCount > 0,
+          target: 'dataroom',
+        },
+        {
+          id: 'review',
+          label: 'Resolve review',
+          done: comments.filter(c => !c.resolved).length === 0,
+          target: 'comments',
+        },
+        {
+          id: 'sign',
+          label: 'Sign & approve',
+          done: signatures.length > 0 || activeArtifact?.status === 'approved',
+          target: 'audit',
+        },
+        {
+          id: 'submit',
+          label: 'Submission ready',
+          done: gaBlockingCount === 0 && (activeArtifact?.status === 'approved' || activeArtifact?.status === 'locked'),
+          target: 'submission-readiness',
+        },
+      ] as const,
+    [activeArtifact, provenanceCount, comments, signatures.length, gaBlockingCount]
+  );
+  const nextJourneyStep = humanJourneySteps.find(step => !step.done) || humanJourneySteps[humanJourneySteps.length - 1];
+  const completedJourneySteps = humanJourneySteps.filter(step => step.done).length;
+  const journeyProgress = Math.round((completedJourneySteps / humanJourneySteps.length) * 100);
+  const gaSnoozeKey = useMemo(
+    () => `editor-ga-snooze-${projectId || 'global'}-${activeArtifact?.id || 'none'}`,
+    [projectId, activeArtifact?.id]
+  );
+  const openInspectorById = useCallback(
+    (id: string) => {
+      const validInspectors: InspectorPanel[] = [
+        'intelligence',
+        'provenance',
+        'compare',
+        'audit',
+        'dataroom',
+        'inconsistency',
+        'health',
+        'versions',
+        'batch-ai',
+        'crossref',
+        'comments',
+        'review',
+        'reviewers',
+        'submission-readiness',
+        'compliance-scanner',
+        'ana-memory',
+        'proof',
+        'ga-readiness',
+      ];
+      if (validInspectors.includes(id as InspectorPanel)) toggleInspector(id as InspectorPanel);
+    },
+    [toggleInspector]
+  );
+  const snoozeGaReadiness = useCallback(() => {
+    const until = Date.now() + 24 * 60 * 60 * 1000;
+    localStorage.setItem(gaSnoozeKey, String(until));
+    setActiveInspector(null);
+  }, [gaSnoozeKey]);
+
   useEffect(() => {
     if (modeCtx && activeArtifact?.status) {
       modeCtx.setArtifactStatus(activeArtifact.status);
@@ -315,6 +566,15 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
       modeCtx.setArtifactStatus(null);
     }
   }, [modeCtx, activeArtifact?.status, activeArtifact?.id]);
+
+  useEffect(() => {
+    if (!activeArtifact) return;
+    if (gaBlockingCount === 0) return;
+    if (activeInspector) return;
+    const snoozedUntil = Number(localStorage.getItem(gaSnoozeKey) || 0);
+    if (Number.isFinite(snoozedUntil) && snoozedUntil > Date.now()) return;
+    setActiveInspector('ga-readiness');
+  }, [activeArtifact, gaBlockingCount, activeInspector, gaSnoozeKey]);
 
   // ── Review mode: snapshot content when entering review mode ─────────
   const handleToggleReviewMode = useCallback(() => {
@@ -1008,6 +1268,55 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
     pushToast(`Downloaded ${filename}`, 'success');
   }, [activeArtifact, pushToast]);
 
+  // ── Launch Checklist Export ─────────────────────────────────────────
+  const handleExportLaunchChecklist = useCallback(() => {
+    if (!activeArtifact) return;
+    const lines = [
+      `# Launch Checklist — ${activeArtifact.title}`,
+      '',
+      `Generated: ${new Date().toISOString()}`,
+      `Readiness score: ${gaReadinessScore}%`,
+      `Blocking gaps: ${gaBlockingCount}`,
+      '',
+      '## Human Workflow',
+      ...humanJourneySteps.map(step => `- [${step.done ? 'x' : ' '}] ${step.label}`),
+      '',
+      '## Readiness Checks',
+      ...gaChecks.map(
+        check =>
+          `- **${check.label}** — ${check.status.toUpperCase()}\n  - ${check.detail}${check.inspectorTarget ? `\n  - Workflow: ${check.inspectorTarget}` : ''}`
+      ),
+      '',
+      '## Competitive Capability Snapshot',
+      ...competitiveCapabilities.map(
+        cap =>
+          `- **${cap.capability}**\n  - Concept2Cure: ${cap.c2c}\n  - Weave Bio baseline: ${cap.weaveBio}\n  - Artos baseline: ${cap.artos}${cap.gapSummary ? `\n  - Gap: ${cap.gapSummary}` : ''}`
+      ),
+      '',
+      '## Remediation Queue',
+      ...(gaRemediationQueue.length
+        ? gaRemediationQueue.map(
+            item =>
+              `- [${item.severity === 'high' ? 'HIGH' : 'MED'}] ${item.title}\n  - ${item.detail}\n  - Workflow: ${item.inspectorTarget}`
+          )
+        : ['- No remediation items.']),
+      '',
+    ];
+    const md = lines.join('\n');
+    const filename = `${activeArtifact.title.replace(/[^a-zA-Z0-9_-]/g, '_')}_launch_checklist.md`;
+    downloadBlob(new Blob([md], { type: 'text/markdown' }), filename);
+    pushToast(`Downloaded ${filename}`, 'success');
+  }, [
+    activeArtifact,
+    gaReadinessScore,
+    gaBlockingCount,
+    humanJourneySteps,
+    gaChecks,
+    competitiveCapabilities,
+    gaRemediationQueue,
+    pushToast,
+  ]);
+
   // ── Sign & Approve ───────────────────────────────────────────────────
   const handleSignApprove = useCallback(async () => {
     if (!projectId || !activeArtifact) return;
@@ -1607,6 +1916,43 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
             Error
           </span>
         )}
+        {activeArtifact && (
+          <>
+            <span
+              className={cn(
+                'inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md font-semibold shrink-0',
+                gaReadinessScore >= 80
+                  ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
+                  : gaReadinessScore >= 60
+                    ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'
+                    : 'bg-red-50 text-red-700 ring-1 ring-red-200'
+              )}
+              title="GA readiness score for current editing session"
+            >
+              <Rocket className="w-3 h-3" />
+              Readiness {gaReadinessScore}%
+            </span>
+            {gaBlockingCount > 0 && (
+              <span
+                className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md font-semibold bg-red-50 text-red-700 ring-1 ring-red-200 shrink-0"
+                title="Blocking launch gaps requiring remediation"
+              >
+                <AlertTriangle className="w-3 h-3" />
+                {gaBlockingCount} blocker{gaBlockingCount === 1 ? '' : 's'}
+              </span>
+            )}
+            {nextRemediation && (
+              <button
+                onClick={() => openInspectorById(nextRemediation.inspectorTarget)}
+                className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md font-medium bg-blue-50 text-blue-700 ring-1 ring-blue-200 hover:bg-blue-100 transition-colors shrink-0 max-w-[260px]"
+                title={nextRemediation.detail}
+              >
+                <ArrowRight className="w-3 h-3 shrink-0" />
+                <span className="truncate">Next: {nextRemediation.title}</span>
+              </button>
+            )}
+          </>
+        )}
 
         {/* Live collaboration presence */}
         {activeArtifact && (
@@ -1689,6 +2035,20 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
 
         {/* Keyboard shortcuts */}
         <button
+          onClick={() => toggleInspector('intelligence')}
+          className="px-2 py-1.5 text-xs text-violet-700 bg-violet-50 hover:bg-violet-100 rounded-lg transition-colors duration-150 ring-1 ring-violet-200"
+          title="Open AnA 1.0 RI intelligence copilot"
+        >
+          Ask AnA RI
+        </button>
+        <button
+          onClick={() => toggleInspector('ga-readiness')}
+          className="px-2 py-1.5 text-xs text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors duration-150 ring-1 ring-blue-200"
+          title="Open launch checklist and readiness actions"
+        >
+          Launch Checklist
+        </button>
+        <button
           onClick={() => setShowShortcuts(true)}
           className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors duration-150"
           title="Keyboard shortcuts (Ctrl+Shift+/)"
@@ -1753,6 +2113,17 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               >
                 <Download className="w-3 h-3 text-zinc-400" />
                 Markdown (.md)
+              </button>
+              <button
+                role="menuitem"
+                onClick={() => {
+                  handleExportLaunchChecklist();
+                  setOverflowOpen(false);
+                }}
+                className="w-full text-left px-3 py-1.5 hover:bg-zinc-50 text-xs text-zinc-700 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+              >
+                <ClipboardList className="w-3 h-3 text-zinc-400" />
+                Launch Checklist (.md)
               </button>
               <div className="border-t border-zinc-200 my-1" />
               {/* Sign — opens Part 11 compliant dialog */}
@@ -1832,6 +2203,45 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
         </div>
       </div>
 
+      {/* Human-first journey guidance strip */}
+      {activeArtifact && (
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-zinc-200 bg-gradient-to-r from-blue-50/70 to-violet-50/70 overflow-x-auto">
+          <span className="text-xs font-semibold text-zinc-700 shrink-0">
+            Human workflow ({completedJourneySteps}/{humanJourneySteps.length} · {journeyProgress}%):
+          </span>
+          {humanJourneySteps.map((step, idx) => (
+            <React.Fragment key={step.id}>
+              <button
+                onClick={() => openInspectorById(step.target)}
+                className={cn(
+                  'inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md shrink-0 transition-colors',
+                  step.done
+                    ? 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200'
+                    : nextJourneyStep.id === step.id
+                      ? 'bg-blue-100 text-blue-700 ring-1 ring-blue-200'
+                      : 'bg-white text-zinc-600 ring-1 ring-zinc-200 hover:bg-zinc-50'
+                )}
+                title={`Open ${step.label} workflow`}
+              >
+                {step.done ? <CheckCircle className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
+                {step.label}
+              </button>
+              {idx < humanJourneySteps.length - 1 && (
+                <ArrowRight className="w-3 h-3 text-zinc-400 shrink-0" />
+              )}
+            </React.Fragment>
+          ))}
+          <button
+            onClick={() => toggleInspector('ga-readiness')}
+            className="ml-1 inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md shrink-0 bg-violet-100 text-violet-700 ring-1 ring-violet-200 hover:bg-violet-200 transition-colors"
+            title="Open full launch checklist and remediation queue"
+          >
+            <Rocket className="w-3 h-3" />
+            Full checklist
+          </button>
+        </div>
+      )}
+
       {/* ── Ribbon toolbar — canonical InspectorRibbon ── */}
       <InspectorRibbon
         groups={[
@@ -1869,6 +2279,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               { id: 'provenance', label: 'Provenance', icon: <ShieldCheck className="w-3.5 h-3.5" /> },
               { id: 'audit', label: 'Audit Trail', icon: <ClipboardList className="w-3.5 h-3.5" /> },
               { id: 'submission-readiness', label: 'Submission', icon: <Shield className="w-3.5 h-3.5" /> },
+              { id: 'ga-readiness', label: 'GA Readiness', icon: <Rocket className="w-3.5 h-3.5" /> },
               { id: 'proof', label: 'Proof', icon: <Shield className="w-3.5 h-3.5" />, activeColor: 'bg-emerald-600 text-white font-medium shadow-sm' },
             ],
           },
@@ -2606,6 +3017,15 @@ const EditorPanel: React.FC<EditorPanelProps> = ({
               projectName={projectName}
               onClose={() => setActiveInspector(null)}
             />
+        </InspectorDrawer>
+        <InspectorDrawer visible={activeInspector === 'ga-readiness'} width="w-96">
+          <EditorGAReadinessPanel
+            checks={gaChecks}
+            models={gaWorkflowModels}
+            capabilities={competitiveCapabilities}
+            remediationQueue={gaRemediationQueue}
+            onOpenInspector={id => toggleInspector(id as InspectorPanel)}
+          />
         </InspectorDrawer>
       </div>
 

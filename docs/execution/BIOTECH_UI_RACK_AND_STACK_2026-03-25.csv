@@ -1,0 +1,11 @@
+priority,epic_id,story_id,title,owner,dependency,deliverable,status
+P0,E1,E1-S1,Stage Gate Contract,Product,,product-spec-stage-gates-v1,Ready
+P0,E1,E1-S2,Shared Status Dictionary,Product,E1-S1,status-dictionary-v1,Ready
+P0,E2,E2-S1,Global Evidence Access Pattern,Design+Product,E1-S2,evidence-access-pattern-v1,Ready
+P0,E2,E2-S2,Parity Checklist vs Weave/Artos,Product Ops,E2-S1,parity-checklist-traceability-v1,Ready
+P1,E3,E3-S1,Reviewer Assignment and SLA Model,Product+QA,E1-S2,review-orchestration-model-v1,Ready
+P1,E3,E3-S2,Change Confidence Requirements,Eng+Design,E3-S1|E2-S1,change-confidence-requirements-v1,Ready
+P1,E4,E4-S1,Preflight Check Matrix,RA+Product,E1-S1,preflight-check-matrix-v1,Ready
+P1,E4,E4-S2,Final Sign-off Packet Definition,RA+Product,E4-S1,submission-signoff-packet-v1,Ready
+P2,E5,E5-S1,Program Readiness Requirements,Product Ops,E1-S1,portfolio-readiness-requirements-v1,Ready
+P2,E6,E6-S1,Confidence Decomposition Contract,AI Product,E2-S1|E3-S2,confidence-decomposition-contract-v1,Ready

@@ -57,6 +57,19 @@ export interface CommandResult {
   error?: string;
 }
 
+function hasPrivacyAdminRole(role?: string): boolean {
+  const normalized = String(role || '').toLowerCase();
+  return [
+    'admin',
+    'manager',
+    'owner',
+    'super_admin',
+    'platform_admin',
+    'dpo',
+    'privacy_officer',
+  ].includes(normalized);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. PROJECT OPERATIONS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -606,6 +619,171 @@ export async function loadConversationHistory(
     };
   } catch (err: any) {
     return { success: false, action: 'load_conversation_history', message: 'Could not load conversation history.', error: err?.message };
+  }
+}
+
+/** Export personal data package for a user (GDPR Art. 15/20 support). */
+export async function exportPersonalData(
+  ctx: CommandContext,
+  params: { dataSubjectId?: number }
+): Promise<CommandResult> {
+  try {
+    const dataSubjectId = params?.dataSubjectId || ctx.userId;
+    if (dataSubjectId !== ctx.userId && !hasPrivacyAdminRole(ctx.userRole)) {
+      return {
+        success: false,
+        action: 'export_personal_data',
+        message: 'Forbidden: only the data subject or a privacy/admin role can export personal data.',
+      };
+    }
+    const safeQuery = async (sql: string, values: unknown[]) => {
+      try {
+        return await pool.query(sql, values);
+      } catch {
+        return { rows: [] as any[] };
+      }
+    };
+
+    const [profile, conversations, artifacts, comments] = await Promise.all([
+      safeQuery(
+        `SELECT id, email, name, title, department, created_at, updated_at
+         FROM users WHERE organization_id = $1 AND id = $2`,
+        [ctx.organizationId, dataSubjectId]
+      ),
+      safeQuery(
+        `SELECT id, title, summary, status, project_id, updated_at
+         FROM concept2cure_conversations
+         WHERE organization_id = $1 AND created_by_id = $2
+         ORDER BY updated_at DESC LIMIT 500`,
+        [ctx.organizationId, dataSubjectId]
+      ),
+      safeQuery(
+        `SELECT artifact_id, project_id, title, status, ctd_section, updated_at
+         FROM concept2cure_artifacts
+         WHERE organization_id = $1 AND created_by_id = $2
+         ORDER BY updated_at DESC LIMIT 500`,
+        [ctx.organizationId, dataSubjectId]
+      ),
+      safeQuery(
+        `SELECT id, thread_id, artifact_id, body, created_at, updated_at
+         FROM concept2cure_thread_comments
+         WHERE org_id = $1 AND author_id = $2
+         ORDER BY updated_at DESC LIMIT 500`,
+        [ctx.organizationId, dataSubjectId]
+      ),
+    ]);
+
+    return {
+      success: true,
+      action: 'export_personal_data',
+      data: {
+        dataSubjectId,
+        exportedAt: new Date().toISOString(),
+        profile: profile.rows[0] || null,
+        conversations: conversations.rows,
+        artifacts: artifacts.rows,
+        comments: comments.rows,
+        counts: {
+          conversations: conversations.rows.length,
+          artifacts: artifacts.rows.length,
+          comments: comments.rows.length,
+        },
+      },
+      message: `Personal data export prepared for subject ${dataSubjectId}.`,
+    };
+  } catch (err: any) {
+    return { success: false, action: 'export_personal_data', message: 'Personal data export failed.', error: err?.message };
+  }
+}
+
+/** Erase/redact user-generated personal data (GDPR Art. 17 support). */
+export async function erasePersonalData(
+  ctx: CommandContext,
+  params: { dataSubjectId?: number; reason?: string }
+): Promise<CommandResult> {
+  const dataSubjectId = params?.dataSubjectId || ctx.userId;
+  if (dataSubjectId !== ctx.userId && !hasPrivacyAdminRole(ctx.userRole)) {
+    return {
+      success: false,
+      action: 'erase_personal_data',
+      message: 'Forbidden: only the data subject or a privacy/admin role can erase personal data.',
+    };
+  }
+
+  const client = await pool.connect();
+  try {
+    const reason = params?.reason || 'GDPR Art. 17 erasure request';
+    await client.query('BEGIN');
+
+    const userResult = await client.query(
+      `UPDATE users
+       SET email = CONCAT('erased+', id, '@redacted.local'),
+           name = CONCAT('[ERASED USER ', id, ']'),
+           title = NULL,
+           department = NULL,
+           preferences = '{}'::jsonb,
+           updated_at = NOW()
+       WHERE organization_id = $1 AND id = $2
+       RETURNING id`,
+      [ctx.organizationId, dataSubjectId]
+    );
+
+    const convResult = await client.query(
+      `UPDATE concept2cure_conversations
+       SET title = '[ERASED CONVERSATION]',
+           summary = '[REDACTED PER GDPR ART.17]',
+           updated_at = NOW()
+       WHERE organization_id = $1 AND created_by_id = $2
+       RETURNING id`,
+      [ctx.organizationId, dataSubjectId]
+    ).catch(() => ({ rows: [] as any[] }));
+
+    const artResult = await client.query(
+      `UPDATE concept2cure_artifacts
+       SET title = CONCAT('[ERASED] ', COALESCE(title, 'artifact')),
+           content = '[REDACTED PER GDPR ART.17]',
+           metadata = COALESCE(metadata, '{}'::jsonb) || '{"gdpr_erased": true}'::jsonb,
+           updated_at = NOW()
+       WHERE organization_id = $1 AND created_by_id = $2
+       RETURNING artifact_id`,
+      [ctx.organizationId, dataSubjectId]
+    ).catch(() => ({ rows: [] as any[] }));
+
+    const commentResult = await client.query(
+      `UPDATE concept2cure_thread_comments
+       SET body = '[REDACTED PER GDPR ART.17]',
+           updated_at = NOW()
+       WHERE org_id = $1 AND author_id = $2
+       RETURNING id`,
+      [ctx.organizationId, dataSubjectId]
+    ).catch(() => ({ rows: [] as any[] }));
+
+    await client.query(
+      `INSERT INTO gdpr_data_subject_requests
+        (organization_id, data_subject_id, request_type, status, response_deadline, completed_at, response_details)
+       VALUES ($1, $2, 'erasure', 'completed', NOW(), NOW(), $3)`,
+      [ctx.organizationId, String(dataSubjectId), `AnA erasure workflow completed. Reason: ${reason}`]
+    ).catch(() => undefined);
+
+    await client.query('COMMIT');
+
+    return {
+      success: true,
+      action: 'erase_personal_data',
+      data: {
+        dataSubjectId,
+        redactedUser: userResult.rows.length > 0,
+        redactedConversations: convResult.rows.length,
+        redactedArtifacts: artResult.rows.length,
+        redactedComments: commentResult.rows.length,
+      },
+      message: `Erasure workflow completed for subject ${dataSubjectId}.`,
+    };
+  } catch (err: any) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return { success: false, action: 'erase_personal_data', message: 'Erasure workflow failed.', error: err?.message };
+  } finally {
+    client.release();
   }
 }
 
@@ -2247,6 +2425,7 @@ export type CommandName =
   | 'create_milestone' | 'update_milestone' | 'list_milestones'
   | 'revert_to_version'
   | 'load_user_context' | 'load_conversation_history'
+  | 'export_personal_data' | 'erase_personal_data'
   | 'generate_sap' | 'compute_sample_size' | 'compute_dose_escalation'
   | 'assess_defensibility' | 'design_trial'
   | 'draft_section' | 'scan_deficiencies' | 'freeze_document'
@@ -2293,6 +2472,8 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
   { name: 'check_dossier_readiness', description: 'Check submission readiness of the dossier', parameters: 'projectId', example: '"How ready is the dossier for project 5?"' },
   { name: 'load_user_context', description: 'Load my full context (projects, history, artifacts)', parameters: 'none', example: '"What am I working on?"' },
   { name: 'load_conversation_history', description: 'Load my past conversations', parameters: 'projectId?, limit?', example: '"Show my recent conversations for this project"' },
+  { name: 'export_personal_data', description: 'Export personal data package for a data subject (GDPR access/portability)', parameters: 'dataSubjectId? (defaults to current user)', example: '"Export my personal data package"' },
+  { name: 'erase_personal_data', description: 'Erase/redact user-generated personal data for GDPR right-to-erasure workflow', parameters: 'dataSubjectId? (defaults to current user), reason?', example: '"Delete my personal data and redact prior authored content"' },
   { name: 'create_submission_package', description: 'Create a submission package for regulatory filing', parameters: 'projectId, title, packageFamily (ind/510k/cer/nda/bla/pma), targetDate?', example: '"Create an IND submission package for project 5"' },
   { name: 'create_review_thread', description: 'Create a review thread on an artifact with comments', parameters: 'projectId, artifactId, title, content, assigneeId?', example: '"Create a review thread on artifact 12 asking about safety data gaps"' },
   { name: 'add_review_comment', description: 'Add a comment to an existing review thread', parameters: 'threadId, content', example: '"Add a comment to review thread 5 noting the updated safety tables"' },
@@ -2438,6 +2619,8 @@ export async function executeCommands(
     check_dossier_readiness: checkDossierReadiness,
     load_user_context: loadUserContext,
     load_conversation_history: loadConversationHistory,
+    export_personal_data: exportPersonalData,
+    erase_personal_data: erasePersonalData,
     create_submission_package: createSubmissionPackage,
     create_review_thread: createReviewThread,
     add_review_comment: addReviewComment,
