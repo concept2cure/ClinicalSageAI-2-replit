@@ -10,13 +10,8 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { apiRequest } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
-import {
-  FileText,
-  AlertTriangle,
-  BookOpen,
-  History,
-  XCircle,
-} from 'lucide-react';
+import { FileText, AlertTriangle, BookOpen, History, XCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { EmptyState } from '@/components/ui/statesV2';
 import {
@@ -123,7 +118,8 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
       return contradictions.map(c => ({
         id: c.id,
         type: c.type,
-        severity: c.severity === 'critical' ? 'critical' : c.severity === 'major' ? 'warning' : 'info',
+        severity:
+          c.severity === 'critical' ? 'critical' : c.severity === 'major' ? 'warning' : 'info',
         description: c.explanation,
         source: 'contradiction-engine',
       }));
@@ -141,7 +137,9 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
       onContextChange({
         sectionCode: section.code,
         sectionTitle: section.title,
-        moduleCode: section.module?.match(/Module (\d)/)?.[1] ? `m${section.module.match(/Module (\d)/)?.[1]}` : undefined,
+        moduleCode: section.module?.match(/Module (\d)/)?.[1]
+          ? `m${section.module.match(/Module (\d)/)?.[1]}`
+          : undefined,
         workflowStage: 'section-workspace',
         artifactStatus: section.status,
       });
@@ -153,17 +151,27 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
     if (!projectId || fetchedIssues !== null) return;
     setIsLoadingIssues(true);
     try {
-      const res = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/contradictions?sectionCode=${section.code}`);
+      const res = await apiRequest(
+        'GET',
+        `/api/concept2cure/projects/${projectId}/contradictions?sectionCode=${section.code}`
+      );
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data.findings)) {
-          setFetchedIssues(data.findings.map((f: any) => ({
-            id: f.id || `f-${Math.random().toString(36).slice(2)}`,
-            type: f.type || f.contradictionType || 'finding',
-            severity: f.authorityState === 'blocks_promotion' ? 'critical' : f.severity === 'major' ? 'warning' : 'info',
-            description: f.explanation || f.description || f.summary || 'Finding detected',
-            source: f.sourceClassification || 'contradiction-engine',
-          })));
+          setFetchedIssues(
+            data.findings.map((f: any) => ({
+              id: f.id || `f-${Math.random().toString(36).slice(2)}`,
+              type: f.type || f.contradictionType || 'finding',
+              severity:
+                f.authorityState === 'blocks_promotion'
+                  ? 'critical'
+                  : f.severity === 'major'
+                    ? 'warning'
+                    : 'info',
+              description: f.explanation || f.description || f.summary || 'Finding detected',
+              source: f.sourceClassification || 'contradiction-engine',
+            }))
+          );
         }
       }
     } catch {
@@ -189,15 +197,31 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
     }
   }, [editorContent, onSave]);
 
-  const statusConfig = WORKFLOW_STATUS_CONFIG[section.status] || WORKFLOW_STATUS_CONFIG['not-started'];
+  const statusConfig =
+    WORKFLOW_STATUS_CONFIG[section.status] || WORKFLOW_STATUS_CONFIG['not-started'];
   const readinessScore = readiness?.score;
   const isBlocked = readiness?.blocked || issues.some(i => i.severity === 'critical');
 
   const tabs: WorkspaceTab[] = [
     { id: 'editor', label: 'Editor', icon: <FileText className="w-3.5 h-3.5" /> },
-    { id: 'issues', label: 'Issues', icon: <AlertTriangle className="w-3.5 h-3.5" />, count: issues.length },
-    { id: 'evidence', label: 'Evidence', icon: <BookOpen className="w-3.5 h-3.5" />, count: evidence.length },
-    { id: 'versions', label: 'Versions', icon: <History className="w-3.5 h-3.5" />, count: versions.length },
+    {
+      id: 'issues',
+      label: 'Issues',
+      icon: <AlertTriangle className="w-3.5 h-3.5" />,
+      count: issues.length,
+    },
+    {
+      id: 'evidence',
+      label: 'Evidence',
+      icon: <BookOpen className="w-3.5 h-3.5" />,
+      count: evidence.length,
+    },
+    {
+      id: 'versions',
+      label: 'Versions',
+      icon: <History className="w-3.5 h-3.5" />,
+      count: versions.length,
+    },
   ];
 
   return (
@@ -211,14 +235,16 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
         secondaryInfo={
           <>
             <span className="text-[11px] text-zinc-400">{section.module}</span>
-            {projectName && (
-              <SecondaryInfoItem>{projectName}</SecondaryInfoItem>
-            )}
+            {projectName && <SecondaryInfoItem>{projectName}</SecondaryInfoItem>}
             {readinessScore != null && (
               <SecondaryInfoItem
                 className={cn(
                   'font-medium',
-                  readinessScore >= 70 ? 'text-emerald-600' : readinessScore >= 40 ? 'text-amber-600' : 'text-red-600'
+                  readinessScore >= 70
+                    ? 'text-emerald-600'
+                    : readinessScore >= 40
+                      ? 'text-amber-600'
+                      : 'text-red-600'
                 )}
               >
                 Readiness: {readinessScore}%
@@ -234,21 +260,14 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
         actions={
           <>
             {onSave && section.status !== 'locked' && section.status !== 'approved' && (
-              <button
-                onClick={handleSave}
-                disabled={isSaving}
-                className="px-3 py-1.5 text-xs font-medium bg-zinc-900 text-white rounded-lg hover:bg-zinc-800 disabled:opacity-50 transition-colors"
-              >
+              <Button onClick={handleSave} disabled={isSaving} variant="default" size="sm">
                 {isSaving ? <Spinner size="sm" /> : 'Save'}
-              </button>
+              </Button>
             )}
             {onSubmitForReview && section.status === 'drafting' && !isBlocked && (
-              <button
-                onClick={onSubmitForReview}
-                className="px-3 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
+              <Button onClick={onSubmitForReview} variant="default" size="sm">
                 Submit for Review
-              </button>
+              </Button>
             )}
           </>
         }
@@ -259,7 +278,7 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
       <WorkspaceTabBar
         tabs={tabs}
         activeTab={activeTab}
-        onTabChange={(id) => setActiveTab(id as TabId)}
+        onTabChange={id => setActiveTab(id as TabId)}
         testId="section-workspace-tabs"
       />
 
@@ -297,18 +316,24 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
                 key={issue.id}
                 className={cn(
                   'border rounded-lg p-3',
-                  issue.severity === 'critical' ? 'border-red-200 bg-red-50' :
-                  issue.severity === 'warning' ? 'border-amber-200 bg-amber-50' :
-                  'border-zinc-200 bg-zinc-50'
+                  issue.severity === 'critical'
+                    ? 'border-red-200 bg-red-50'
+                    : issue.severity === 'warning'
+                      ? 'border-amber-200 bg-amber-50'
+                      : 'border-zinc-200 bg-zinc-50'
                 )}
               >
                 <div className="flex items-center gap-2 mb-1">
-                  <span className={cn(
-                    'text-[10px] font-bold uppercase px-1.5 py-0.5 rounded',
-                    issue.severity === 'critical' ? 'bg-red-200 text-red-800' :
-                    issue.severity === 'warning' ? 'bg-amber-200 text-amber-800' :
-                    'bg-zinc-200 text-zinc-700'
-                  )}>
+                  <span
+                    className={cn(
+                      'text-[10px] font-bold uppercase px-1.5 py-0.5 rounded',
+                      issue.severity === 'critical'
+                        ? 'bg-red-200 text-red-800'
+                        : issue.severity === 'warning'
+                          ? 'bg-amber-200 text-amber-800'
+                          : 'bg-zinc-200 text-zinc-700'
+                    )}
+                  >
                     {issue.severity}
                   </span>
                   <span className="text-[10px] text-zinc-400 font-mono">{issue.type}</span>
@@ -324,10 +349,17 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
                 <h4 className="text-xs font-semibold text-zinc-600 mb-2">Readiness Blockers</h4>
                 {readiness.blockers.map((b, i) => (
                   <div key={i} className="flex items-start gap-2 py-1.5">
-                    <XCircle className={cn('w-3.5 h-3.5 mt-0.5 flex-shrink-0', b.severity === 'critical' ? 'text-red-500' : 'text-amber-500')} />
+                    <XCircle
+                      className={cn(
+                        'w-3.5 h-3.5 mt-0.5 flex-shrink-0',
+                        b.severity === 'critical' ? 'text-red-500' : 'text-amber-500'
+                      )}
+                    />
                     <div>
                       <span className="text-xs text-zinc-700">{b.message}</span>
-                      {b.source && <span className="text-[10px] text-zinc-400 ml-1">({b.source})</span>}
+                      {b.source && (
+                        <span className="text-[10px] text-zinc-400 ml-1">({b.source})</span>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -346,11 +378,16 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
               />
             )}
             {evidence.map(ev => (
-              <div key={ev.id} className="border border-zinc-200 rounded-lg p-3 hover:border-zinc-300 transition-colors">
+              <div
+                key={ev.id}
+                className="border border-zinc-200 rounded-lg p-3 hover:border-zinc-300 transition-colors"
+              >
                 <div className="flex items-center gap-2">
                   <BookOpen className="w-3.5 h-3.5 text-zinc-400" />
                   <span className="text-xs font-medium text-zinc-800">{ev.title}</span>
-                  <span className="text-[10px] px-1.5 py-0.5 bg-zinc-100 text-zinc-500 rounded font-mono">{ev.type}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 bg-zinc-100 text-zinc-500 rounded font-mono">
+                    {ev.type}
+                  </span>
                 </div>
                 <p className="text-[11px] text-zinc-500 mt-1 ml-5">{ev.source}</p>
               </div>
@@ -368,7 +405,10 @@ export const SectionWorkspace: React.FC<SectionWorkspaceProps> = ({
               />
             )}
             {versions.map(v => (
-              <div key={v.version} className="border border-zinc-200 rounded-lg p-3 hover:border-zinc-300 transition-colors">
+              <div
+                key={v.version}
+                className="border border-zinc-200 rounded-lg p-3 hover:border-zinc-300 transition-colors"
+              >
                 <div className="flex items-center gap-2">
                   <History className="w-3.5 h-3.5 text-zinc-400" />
                   <span className="text-xs font-semibold text-zinc-800">v{v.version}</span>

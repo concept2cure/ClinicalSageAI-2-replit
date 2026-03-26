@@ -1,0 +1,27 @@
+{
+  "$schema": "https://github.com/figma/code-connect/blob/main/schemas/v1.schema.json",
+  "codeConnect": {
+    "parser": "react",
+    "label": "Concept2Cure React",
+    "include": [
+      "src/**/*.figma.tsx",
+      "src/components/**/*",
+      "src/design-system/**/*",
+      "src/features/**/*"
+    ],
+    "exclude": ["**/*.test.*", "**/*.spec.*", "**/*.stories.*", "docs/**", "dist/**", "build/**"],
+    "importPaths": {
+      "@/components/ui/*": "src/components/ui/{name}",
+      "@/components/ui/statesV2": "src/components/ui/statesV2",
+      "@/components/ui/workspace-primitives": "src/components/ui/workspace-primitives",
+      "@/design-system/patterns/*": "src/design-system/patterns/{name}"
+    },
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  },
+  "figma": {
+    "teamId": "REPLACE_WITH_FIGMA_TEAM_ID",
+    "fileKey": "REPLACE_WITH_FIGMA_FILE_KEY"
+  }
+}

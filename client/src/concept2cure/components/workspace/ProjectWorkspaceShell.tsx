@@ -369,18 +369,18 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   useEffect(() => {
     if (!projectId || mode !== 'dashboard') return;
     const conversationId = `project-${projectId}`;
-    const qs = `?projectId=${encodeURIComponent(projectId)}&userId=1`;
+    const qs = `?projectId=${encodeURIComponent(projectId)}`;
     Promise.all([
-      fetch(`/api/conversation-os/conversations/${conversationId}/tools`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode: 'on-demand', projectId, userId: 1 }) }).then(r => r.json()).catch(() => null),
-      fetch(`/api/conversation-os/conversations/${conversationId}/scout${qs}`).then(r => r.json()).catch(() => null),
-      fetch(`/api/conversation-os/conversations/${conversationId}/plan-summary${qs}`).then(r => r.json()).catch(() => null),
-      fetch(`/api/conversation-os/conversations/${conversationId}/proposals${qs}`).then(r => r.json()).catch(() => null),
+      apiRequest('POST', `/api/conversation-os/conversations/${conversationId}/tools`, { mode: 'on-demand', projectId }).catch(() => null),
+      apiRequest('GET', `/api/conversation-os/conversations/${conversationId}/scout${qs}`).catch(() => null),
+      apiRequest('GET', `/api/conversation-os/conversations/${conversationId}/plan-summary${qs}`).catch(() => null),
+      apiRequest('GET', `/api/conversation-os/conversations/${conversationId}/proposals${qs}`).catch(() => null),
     ]).then(([manifestRes, scoutRes, planRes, proposalRes]) => {
       setConversationSnapshot({
-        manifestMode: manifestRes?.manifest?.mode,
-        latestFinding: scoutRes?.findings?.[0]?.summary,
-        latestPlanTask: planRes?.plan?.task,
-        proposals: (proposalRes?.proposals ?? []).slice(0, 3).map((p: any) => ({ id: p.id, status: p.status })),
+        manifestMode: (manifestRes as any)?.manifest?.mode,
+        latestFinding: (scoutRes as any)?.findings?.[0]?.summary,
+        latestPlanTask: (planRes as any)?.plan?.task,
+        proposals: ((proposalRes as any)?.proposals ?? []).slice(0, 3).map((p: any) => ({ id: p.id, status: p.status })),
       });
     });
   }, [projectId, mode]);
@@ -389,11 +389,7 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     async (proposalId: string, action: 'accept' | 'reject') => {
       if (!projectId) return;
       const conversationId = `project-${projectId}`;
-      await fetch(`/api/conversation-os/conversations/${conversationId}/proposals/${proposalId}/${action}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId, userId: 1, organizationId: 1 }),
-      });
+      await apiRequest('POST', `/api/conversation-os/conversations/${conversationId}/proposals/${proposalId}/${action}`, { projectId });
       setConversationSnapshot(prev => ({
         ...prev,
         proposals: prev.proposals.map(p => (p.id === proposalId ? { ...p, status: action === 'accept' ? 'accepted' : 'rejected' } : p)),

@@ -10,7 +10,7 @@
  * 3. Confidence - Consistent patterns that build user trust
  * 4. Conversation - Interfaces that feel like a dialogue
  *
- * @version 3.0.0
+ * @version 3.1.0
  * @author Concept2Cure Engineering
  */
 
@@ -19,30 +19,14 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export * from './tokens';
-export * from './theme';
+
+// NOTE: ./theme, ./primitives/*, ./components/* were removed in v3.1.0.
+// The canonical UI primitives live in @/components/ui/ (shadcn/Radix).
+// Do NOT recreate design-system/primitives or design-system/components —
+// use the mapped shadcn components listed in figma.connect.ts instead.
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// PRIMITIVES
-// ═══════════════════════════════════════════════════════════════════════════════
-
-export * from './primitives/Text';
-export * from './primitives/Surface';
-export * from './primitives/Icon';
-export * from './primitives/Spacer';
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// COMPONENTS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-export * from './components/Button';
-export * from './components/Card';
-export * from './components/Input';
-export * from './components/Avatar';
-export * from './components/Badge';
-export * from './components/Tooltip';
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// PATTERNS
+// PATTERNS (compound, domain-specific components)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export * from './patterns/ConversationBubble';
@@ -55,10 +39,3 @@ export * from './patterns/EmptyState';
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export * from './motion';
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// HOOKS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-export * from './hooks/useReducedMotion';
-export * from './hooks/useTheme';

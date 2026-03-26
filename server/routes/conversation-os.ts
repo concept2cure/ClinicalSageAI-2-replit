@@ -8,15 +8,17 @@ import { listToolEvents, upsertToolManifest } from '../services/conversation-os/
 const router = Router();
 
 const resolveContext = (req: any) => {
-  const authUser = req.user ?? {};
-  const projectId = authUser.projectId ?? req.body?.projectId ?? req.query?.projectId;
-  const userId = authUser.id ?? req.body?.userId ?? req.query?.userId;
-  const organizationId = authUser.organizationId ?? req.body?.organizationId ?? req.query?.organizationId;
+  const authUser = req.user;
+  // Authoritative source: JWT-authenticated user. Body/query only for projectId
+  // (which selects the active project and is not a credential).
+  const userId = authUser?.id ? String(authUser.id) : undefined;
+  const organizationId = authUser?.organizationId ? String(authUser.organizationId) : undefined;
+  const projectId = req.body?.projectId ?? req.query?.projectId;
   return {
     conversationId: req.params.conversationId,
     projectId: projectId ? String(projectId) : undefined,
-    userId: userId ? String(userId) : undefined,
-    organizationId: organizationId ? String(organizationId) : undefined,
+    userId,
+    organizationId,
   };
 };
 

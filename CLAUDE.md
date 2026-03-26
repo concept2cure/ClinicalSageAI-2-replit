@@ -26,13 +26,13 @@ If `git checkout concept2cure-v2` fails, stop and tell the user — do NOT creat
 
 ### Forbidden Actions
 
-| Action | Why |
-|--------|-----|
-| `git checkout -b claude/*` | Creates orphaned branches — all work goes to `concept2cure-v2` |
-| `git checkout -b feature/*` | Same problem — no branch creation allowed |
-| `git checkout main` | `main` is deprecated — never switch to it |
-| Committing to any branch other than `concept2cure-v2` | There is only one branch |
-| Opening PRs to `main` | `main` is not the target anymore |
+| Action                                                | Why                                                            |
+| ----------------------------------------------------- | -------------------------------------------------------------- |
+| `git checkout -b claude/*`                            | Creates orphaned branches — all work goes to `concept2cure-v2` |
+| `git checkout -b feature/*`                           | Same problem — no branch creation allowed                      |
+| `git checkout main`                                   | `main` is deprecated — never switch to it                      |
+| Committing to any branch other than `concept2cure-v2` | There is only one branch                                       |
+| Opening PRs to `main`                                 | `main` is not the target anymore                               |
 
 ### Allowed Git Operations
 
@@ -45,6 +45,7 @@ git push origin concept2cure-v2
 ```
 
 ### Why This Exists
+
 `concept2cure-v2` is the core and only product branch. All previous branching strategies
 (`main`, `claude/*`, `feature/*`) caused work to go missing. One branch, one truth.
 
@@ -53,6 +54,7 @@ git push origin concept2cure-v2
 ## Project Overview
 
 ClinicalSageAI is an enterprise regulatory intelligence platform for life sciences (FDA, EMA, PMDA, Health Canada).
+
 - **Frontend**: React + TypeScript + Vite (in `client/`)
 - **Backend**: Express + TypeScript (in `server/`)
 - **Database**: PostgreSQL via Drizzle ORM (schema in `shared/schema/`)
@@ -86,17 +88,17 @@ docs/                                # Comprehensive documentation (60+ subdirs)
 
 These files are very large. Read only the section you need, never the whole file:
 
-| File | Size | Notes |
-|------|------|-------|
-| `server/index.ts` | 285KB | Main Express app — all middleware/routes mounted here |
-| `server/routes/concept2cure.ts` | 429KB | Core product routes — monolithic |
-| `server/routes/authoring.router.ts` | 174KB | Authoring workflow routes |
-| `client/src/concept2cure/ZenApp.tsx` | 113KB | Main React app shell |
-| `server/services/lumen-context-builder.ts` | 91KB | Context assembly for AI |
-| `server/services/intelligent-report-engine.ts` | 106KB | Report generation |
-| `server/services/foresight/foresight-ai-engine.ts` | 75KB | Predictive analytics |
-| `server/services/precedent-engine.ts` | 60KB | Regulatory precedent |
-| `shared/schema/schema.ts` | 730KB | Legacy monolithic schema backup |
+| File                                               | Size  | Notes                                                 |
+| -------------------------------------------------- | ----- | ----------------------------------------------------- |
+| `server/index.ts`                                  | 285KB | Main Express app — all middleware/routes mounted here |
+| `server/routes/concept2cure.ts`                    | 429KB | Core product routes — monolithic                      |
+| `server/routes/authoring.router.ts`                | 174KB | Authoring workflow routes                             |
+| `client/src/concept2cure/ZenApp.tsx`               | 113KB | Main React app shell                                  |
+| `server/services/lumen-context-builder.ts`         | 91KB  | Context assembly for AI                               |
+| `server/services/intelligent-report-engine.ts`     | 106KB | Report generation                                     |
+| `server/services/foresight/foresight-ai-engine.ts` | 75KB  | Predictive analytics                                  |
+| `server/services/precedent-engine.ts`              | 60KB  | Regulatory precedent                                  |
+| `shared/schema/schema.ts`                          | 730KB | Legacy monolithic schema backup                       |
 
 ## Tech Stack
 
@@ -151,6 +153,49 @@ If you think something needs rebuilding, **ask the user first**.
 
 ---
 
+## Figma–Code Governed Component Contract (NON-NEGOTIABLE)
+
+> Skill file: `.claude/skills/figma-component-contract.md`
+
+**All UI implementation MUST use components from the governed registry.**
+The single source of truth is `client/src/component-registry.ts` — 28 mapped components.
+
+### Before Writing Any UI Code:
+
+1. Check `component-registry.ts` for an existing mapped component
+2. If a match exists → import from its `importPath`
+3. If no match → add an entry to the registry + create a Code Connect mapping
+
+### Component Categories:
+
+- **Primitives** (16): Button, Badge, Input, Textarea, Card, Dialog, Tabs, Select, Alert, Table, Progress, Tooltip, DropdownMenu, Switch, Checkbox, Skeleton
+- **Layout** (6): WorkspaceHeader, WorkspaceHeaderRich, PageTitleHeader, WorkspaceCanvas, WorkspaceStatusBadge, SectionPanel
+- **State** (3): DataStateWrapper, LoadingState, ErrorState
+- **Patterns** (4): ConversationBubble, MetricCard, ActionBar, EmptyState
+
+### Forbidden Patterns (will be rejected in review):
+
+| Forbidden                              | Use Instead                                          |
+| -------------------------------------- | ---------------------------------------------------- |
+| Raw `<button>`                         | `<Button variant="..." size="...">`                  |
+| Raw `<input>` / `<select>`             | `<Input>`, `<Select>` inside `<FormField>`           |
+| Custom status pill                     | `<WorkspaceStatusBadge status="...">`                |
+| `{isLoading && <div>Loading...</div>}` | `<DataStateWrapper>` or `<LoadingState>`             |
+| Ad-hoc layout wrapper                  | `<WorkspaceHeader>` + `<WorkspaceCanvas>`            |
+| Local empty state component            | `EmptyState` from statesV2 or design-system/patterns |
+
+### Code Connect Files:
+
+- `client/src/primitives.figma.tsx` — 15 shadcn/Radix primitives
+- `client/src/domain.figma.tsx` — 9 workspace layout + domain patterns
+
+### Figma MCP:
+
+MCP config at `.vscode/mcp.json` connects Codex to Figma Dev Mode.
+Set `FIGMA_ACCESS_TOKEN` environment variable before use.
+
+---
+
 ## Code Standards
 
 - TypeScript strict mode — no `any` unless unavoidable
@@ -195,18 +240,18 @@ These rules apply to **every React component that fetches data, mutates data, or
 
 ### Mandatory Components
 
-| Scenario | Use This | Import From |
-|----------|----------|-------------|
-| Data display with loading/error/empty | `DataStateWrapper<T>` | `@/components/ui/statesV2` |
-| Content-shaped loading | `SkeletonTable` / `SkeletonCard` / `SkeletonText` | `@/components/ui/statesV2` |
-| Page-level loading | `LoadingState` | `@/components/ui/statesV2` |
-| Error with retry | `ErrorState` | `@/components/ui/statesV2` |
-| Button loading indicator | `InlineLoading` or `Spinner` | `@/components/ui/statesV2` or `spinner` |
-| Toast feedback | `useToast` → `toast()` | `@/hooks/use-toast` |
-| Form state | `useForm` + `FormField` | `react-hook-form` + `@/components/ui/form` |
-| API calls | `apiRequest()` | `@/lib/queryClient` |
-| Query keys | `queryKeys.domain.method()` | `@/concept2cure/hooks/queryKeys` |
-| Route code splitting | `React.lazy()` + `Suspense` + `ErrorBoundary` | React + `@/components/ui/error-boundary` |
+| Scenario                              | Use This                                          | Import From                                |
+| ------------------------------------- | ------------------------------------------------- | ------------------------------------------ |
+| Data display with loading/error/empty | `DataStateWrapper<T>`                             | `@/components/ui/statesV2`                 |
+| Content-shaped loading                | `SkeletonTable` / `SkeletonCard` / `SkeletonText` | `@/components/ui/statesV2`                 |
+| Page-level loading                    | `LoadingState`                                    | `@/components/ui/statesV2`                 |
+| Error with retry                      | `ErrorState`                                      | `@/components/ui/statesV2`                 |
+| Button loading indicator              | `InlineLoading` or `Spinner`                      | `@/components/ui/statesV2` or `spinner`    |
+| Toast feedback                        | `useToast` → `toast()`                            | `@/hooks/use-toast`                        |
+| Form state                            | `useForm` + `FormField`                           | `react-hook-form` + `@/components/ui/form` |
+| API calls                             | `apiRequest()`                                    | `@/lib/queryClient`                        |
+| Query keys                            | `queryKeys.domain.method()`                       | `@/concept2cure/hooks/queryKeys`           |
+| Route code splitting                  | `React.lazy()` + `Suspense` + `ErrorBoundary`     | React + `@/components/ui/error-boundary`   |
 
 ### Hard Rules
 
@@ -223,18 +268,18 @@ These rules apply to **every React component that fetches data, mutates data, or
 
 ### Forbidden in New Code
 
-| Forbidden | Use Instead |
-|-----------|-------------|
-| `{isLoading && <div>Loading...</div>}` | `<DataStateWrapper>` or `<LoadingState>` |
-| `mutation.isLoading` | `mutation.isPending` (TanStack v5) |
-| `useState` per form field | `useForm()` from react-hook-form |
-| Ad-hoc query keys `['tasks', id]` | `queryKeys.domain.method(id)` |
-| Raw `fetch()` with manual headers | `apiRequest()` from `queryClient.ts` |
-| `axios` in new code | `apiRequest()` (native fetch) |
-| Per-file `getAuthHeaders()` | `apiRequest()` handles auth automatically |
-| `res.json({ error: '...' })` | `sendError(res, status, message)` |
-| `alert()` / `console.log` for errors | `toast()` or `<ErrorState>` |
-| Custom spinner HTML | `<Spinner>`, `<InlineLoading>`, or `<LoadingState>` |
+| Forbidden                              | Use Instead                                         |
+| -------------------------------------- | --------------------------------------------------- |
+| `{isLoading && <div>Loading...</div>}` | `<DataStateWrapper>` or `<LoadingState>`            |
+| `mutation.isLoading`                   | `mutation.isPending` (TanStack v5)                  |
+| `useState` per form field              | `useForm()` from react-hook-form                    |
+| Ad-hoc query keys `['tasks', id]`      | `queryKeys.domain.method(id)`                       |
+| Raw `fetch()` with manual headers      | `apiRequest()` from `queryClient.ts`                |
+| `axios` in new code                    | `apiRequest()` (native fetch)                       |
+| Per-file `getAuthHeaders()`            | `apiRequest()` handles auth automatically           |
+| `res.json({ error: '...' })`           | `sendError(res, status, message)`                   |
+| `alert()` / `console.log` for errors   | `toast()` or `<ErrorState>`                         |
+| Custom spinner HTML                    | `<Spinner>`, `<InlineLoading>`, or `<LoadingState>` |
 
 ## Schema Changes
 
@@ -255,16 +300,19 @@ These rules apply to **every React component that fetches data, mutates data, or
 ## File Operation Rules
 
 ### NEVER ask for confirmation before:
+
 - Modifying, deleting, moving, or renaming existing files
 - All git operations (add, commit, push, pull)
 
 ### ALWAYS ask for confirmation before:
+
 - Creating a file that has never existed before in the repository
 
 ## Pull Request Rules
 
 PRs are generally not needed since `concept2cure-v2` is the single branch. If the user
 explicitly asks to open a PR (e.g., for code review purposes):
+
 - **From**: `concept2cure-v2`
 - **Title**: conventional commit style, e.g. `feat: add CSR knowledge database schema`
 - **Never** open a PR from or to `main` — it is deprecated
@@ -279,11 +327,13 @@ explicitly asks to open a PR (e.g., for code review purposes):
 AnA is the user-facing AI assistant with persona-based routing and regulatory intelligence.
 
 **Key files**:
+
 - `server/routes/ana-ri.ts` — RI orchestration routes
 - `client/src/concept2cure/components/chat/AnaPersistentPanel.tsx` — persistent chat UI
 - `server/routes/chat.ts` (39KB) — chat infrastructure
 
 **Rules**:
+
 - AnA interceptors feed into RIM (non-blocking)
 - Persona routing is governed — don't bypass it
 - Chat context uses the 3-layer memory assembler (working + project + client memory)
@@ -293,11 +343,13 @@ AnA is the user-facing AI assistant with persona-based routing and regulatory in
 Microkernel architecture for goal planning, decision records, and adaptive policy.
 
 **Key files**:
+
 - `server/services/kernel-*.ts` — goal planner, decision records, adaptive policy, router
 - `server/src/control-plane/kernel.ts` — control plane microkernel
 - `db/migrations/20260324_ai_kernel_*.sql` — kernel DB schema
 
 **Rules**:
+
 - Decision records are append-only (audit trail)
 - Adaptive policy outcomes must be traceable
 - Goal planner supports replanning — don't flatten to single-shot
@@ -311,12 +363,14 @@ Layer 3: Client Memory      — account-level intelligence
 ```
 
 **Key files**:
+
 - `server/services/memory-context-assembler.ts` — assembles all 3 layers for AI context
 - `server/services/working-memory.ts` — thread-level working memory
 - `server/services/client-intelligence-memory.ts` — account-level memory
 - `server/services/shared-memory-contract.ts` — shared memory pool, supersession lifecycle
 
 **Rules**:
+
 - Structured forgetting: old entries dropped unless critical/verified
 - Deduplication by title + content prefix
 - Respect maxChars while prioritizing high-value atoms
@@ -325,12 +379,14 @@ Layer 3: Client Memory      — account-level intelligence
 ### 4. Document Authoring (Wave 2 Hardened)
 
 **Key files**:
+
 - `server/routes/authoring.router.ts` (174KB) — authoring workflow
 - `server/routes/authoring-actions.ts` — governed AI actions
 - `client/src/concept2cure/components/editor/UnifiedDocumentEditor.tsx` — editor
 - Editor extensions: AI Autocomplete, Citations, ReviewMode, ComplianceScannerPanel
 
 **Rules**:
+
 - Actions are governed — don't bypass escalation gating
 - Document mode system has canonical lock toggle
 - Context packing for authoring uses lumen-context-builder
@@ -338,6 +394,7 @@ Layer 3: Client Memory      — account-level intelligence
 ### 5. Submission Workflow
 
 **Key files**:
+
 - `server/services/submission-twin-service.ts` (51KB) — submission simulation
 - `client/src/concept2cure/components/workflow/SubmissionReadiness.tsx`
 - `client/src/concept2cure/components/workflow/DossierMap.tsx`
@@ -376,14 +433,14 @@ server/services/intelligence/
 
 ### Judgment Framework — 6 Codified Models
 
-| Model | Weight | Purpose |
-|-------|--------|---------|
-| Evidence Sufficiency | 25% | Is the evidence base strong enough? |
-| Defensibility | 20% | Can it withstand regulatory scrutiny? |
-| Reviewer Sensitivity | 15% | Likelihood to trigger reviewer questions? |
-| Claim Risk | 15% | Are claims supportable with data? |
-| Cross-Section Consistency | 10% | Internal consistency across sections? |
-| Submission Risk | 15% | Overall submission risk (composite) |
+| Model                     | Weight | Purpose                                   |
+| ------------------------- | ------ | ----------------------------------------- |
+| Evidence Sufficiency      | 25%    | Is the evidence base strong enough?       |
+| Defensibility             | 20%    | Can it withstand regulatory scrutiny?     |
+| Reviewer Sensitivity      | 15%    | Likelihood to trigger reviewer questions? |
+| Claim Risk                | 15%    | Are claims supportable with data?         |
+| Cross-Section Consistency | 10%    | Internal consistency across sections?     |
+| Submission Risk           | 15%    | Overall submission risk (composite)       |
 
 ### Pattern Registry — 16 Seed Patterns
 
@@ -434,6 +491,7 @@ Every signal carries: `signalId`, `provenance` (framework version, pattern versi
 ### Version Constants
 
 When modifying scoring logic or patterns, bump the corresponding version:
+
 - `JUDGMENT_FRAMEWORK_VERSION` in `judgment-framework.ts`
 - `PATTERN_REGISTRY_VERSION` in `pattern-registry.ts`
 - `RIM_VERSION` in `rim.ts`
@@ -442,13 +500,14 @@ When modifying scoring logic or patterns, bump the corresponding version:
 
 ## Database Tables (Key)
 
-| Table | Purpose |
-|-------|---------|
-| `projectIntelligenceProfiles` | Continuity object — learned insights, decisions, risks, open questions |
-| `projectMemoryEntries` | Knowledge atoms — category, content, confidence, importance, embeddings |
-| `projectIngestedDocuments` | Document tracking — what's been ingested |
+| Table                         | Purpose                                                                 |
+| ----------------------------- | ----------------------------------------------------------------------- |
+| `projectIntelligenceProfiles` | Continuity object — learned insights, decisions, risks, open questions  |
+| `projectMemoryEntries`        | Knowledge atoms — category, content, confidence, importance, embeddings |
+| `projectIngestedDocuments`    | Document tracking — what's been ingested                                |
 
 **RIM-specific categories in `projectMemoryEntries`**:
+
 - `rim_pattern_registry` — learned patterns + hit counts
 - `intelligence_signal_summary` — persisted signals from RIM runs
 - `recommendation_feedback` — user feedback on recommendations
@@ -475,6 +534,7 @@ The project has gone through systematic consolidation:
 ## Report & Output Preferences
 
 When producing audit reports, analysis summaries, or any long-form deliverable:
+
 - **Write the report to a file** (e.g., `docs/reports/<descriptive-name>.md`) so the user can copy the entire thing at once.
 - Always tell the user the file path so they can open/copy it.
 - Still provide a brief summary in chat, but the full report goes to a file.
