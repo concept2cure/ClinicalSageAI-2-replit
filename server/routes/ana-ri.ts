@@ -45,6 +45,25 @@ import {
 } from '../services/chat-thread-helpers.js';
 import { logKernelDecision } from '../services/kernel-decision-record.js';
 import { planKernelExecution } from '../services/kernel-router.js';
+import { buildGoalPlan, replanGoalPlan } from '../services/kernel-goal-planner.js';
+import {
+  createGoalPlanRun,
+  getGoalPlanRun,
+  advanceGoalPlanStep,
+  executeNextGoalPlanStep,
+  listGoalPlanEvents,
+} from '../services/kernel-plan-runtime.js';
+import {
+  recordProtocolEvent,
+  listProtocolEvents,
+  validateProtocolEvent,
+} from '../services/kernel-agent-protocol.js';
+import { getKernelMetrics } from '../services/kernel-observability.js';
+import { getKernelBetaReadiness } from '../services/kernel-beta-readiness.js';
+import {
+  buildKernelExecutionContext,
+  recordKernelSuccess,
+} from '../services/ana-kernel-orchestrator.js';
 import {
   getKernelPolicyHint,
   recordKernelPolicyOutcome,
@@ -233,6 +252,10 @@ router.post('/chat', async (req: Request, res: Response) => {
     };
 
     const orchestration = orchestrate(orchestratorInput);
+    const executionCtx = await buildKernelExecutionContext({
+      route: '/api/ana-ri/chat',
+      message,
+      organizationId: orgId ? Number(orgId) : null,
     const routingPlan = planKernelExecution({
       route: '/api/ana-ri/chat',
       messageLength: message.length,
@@ -241,6 +264,9 @@ router.post('/chat', async (req: Request, res: Response) => {
       submissionType: orchestration.detectedSubmissionType,
       requestedMaxTokens: 4096,
     });
+    const routingPlan = executionCtx.routingPlan;
+    const selectedStrategy = executionCtx.selectedStrategy;
+    let goalPlan = executionCtx.goalPlan;
     let goalPlan = buildGoalPlan({
       message,
       intentLens: orchestration.detectedIntent.lens,
@@ -426,6 +452,26 @@ router.post('/chat', async (req: Request, res: Response) => {
       model: response.model,
     });
 
+    // Unified kernel success recording (KDR + adaptive-policy outcome)
+    void recordKernelSuccess({
+      route: '/api/ana-ri/chat',
+      threadId: threadId || null,
+      projectId: req.body.project_context?.projectId
+        ? Number(req.body.project_context.projectId)
+        : null,
+      organizationId: orgId ? Number(orgId) : null,
+      userId,
+      intentLens: orchestration.detectedIntent.lens,
+      intentConfidence: orchestration.detectedIntent.confidence,
+      submissionType: orchestration.detectedSubmissionType,
+      routingPlan,
+      selectedStrategy,
+      provider: response.provider,
+      model: response.model,
+      latencyMs: response.latencyMs ?? null,
+      estimatedCostUsd: response.usage?.estimatedCostUsd ?? null,
+      qualityScore: evaluation.overallScore / Math.max(evaluation.maxOverallScore, 1),
+      metadata: {
     // Kernel Decision Record (best effort, non-blocking)
     void logKernelDecision({
       requestId: `ana-ri-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
@@ -475,6 +521,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       },
     });
 
+    return res.json({
     // RIM interception — capture intelligence signals (non-blocking)
     const projectIdForRim = req.body.project_id || req.body.context?.projectId;
     if (response.content && projectIdForRim) {
@@ -985,6 +1032,70 @@ router.post('/plan', async (req: Request, res: Response) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// POST /api/ana-ri/plan — Return planner preview without generation
+// ─────────────────────────────────────────────────────────────────────────────
+router.post('/plan', async (req: Request, res: Response) => {
+  try {
+    const { message, intent_lens, submission_type, persist, thread_id } = req.body || {};
+    if (!message || typeof message !== 'string') {
+      return res.status(400).json({ error: 'Message is required', code: 'INVALID_MESSAGE' });
+    }
+
+    const orchestration = orchestrate({
+      message,
+      intentLens: intent_lens,
+      submissionType: submission_type,
+    });
+    const routingPlan = planKernelExecution({
+      route: '/api/ana-ri/chat',
+      messageLength: message.length,
+      intentLens: orchestration.detectedIntent.lens,
+      intentConfidence: orchestration.detectedIntent.confidence,
+      submissionType: orchestration.detectedSubmissionType,
+      requestedMaxTokens: 4096,
+    });
+    const goalPlan = buildGoalPlan({
+      message,
+      intentLens: orchestration.detectedIntent.lens,
+      riskTier: routingPlan.riskTier,
+      submissionType: orchestration.detectedSubmissionType,
+    });
+
+    let planRunId: string | null = null;
+    if (persist) {
+      const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+      const persisted = await createGoalPlanRun({
+        organizationId: orgId ? Number(orgId) : null,
+        threadId: thread_id || null,
+        route: '/api/ana-ri/plan',
+        goalPlan,
+        metadata: {
+          intentLens: orchestration.detectedIntent.lens,
+          submissionType: orchestration.detectedSubmissionType,
+        },
+      });
+      planRunId = persisted.id;
+    }
+
+    return res.json({
+      routingPlan,
+      goalPlan,
+      planRunId,
+      orchestration: {
+        detectedIntent: orchestration.detectedIntent,
+        detectedSubmissionType: orchestration.detectedSubmissionType,
+      },
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      error: 'Failed to compute plan',
+      code: 'PLANNER_ERROR',
+      message: error?.message,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // GET /api/ana-ri/plan/:planRunId — Fetch persisted goal plan run
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/plan/:planRunId', async (req: Request, res: Response) => {
@@ -1101,6 +1212,14 @@ router.get('/kernel/metrics', async (req: Request, res: Response) => {
     windowDays: Number.isFinite(windowDays) && windowDays > 0 ? windowDays : 7,
   });
   return res.json(metrics);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/ana-ri/kernel/readiness — Beta launch readiness checks
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/kernel/readiness', async (_req: Request, res: Response) => {
+  const readiness = await getKernelBetaReadiness();
+  return res.json(readiness);
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
