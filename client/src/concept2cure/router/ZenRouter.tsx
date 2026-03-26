@@ -18,7 +18,7 @@
  */
 
 import React, { useEffect, lazy, Suspense } from 'react';
-import { Switch, Route, useLocation, useRoute, Redirect } from 'wouter';
+import { Switch, Route, useLocation, Redirect } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ZenLogin, ZenSignup, ZenAuthLayout, ZenOnboarding } from '../auth';
 import { ZenApp } from '../ZenApp';
@@ -28,6 +28,11 @@ import {
   useAuth as usePortalAuth,
 } from '@/portal-v2/services/authService';
 import { isFeatureEnabled } from '@/flags/featureFlags';
+import {
+  STANDALONE_MODULE_ROUTE_PATTERNS,
+  buildLoginRedirectPath,
+  parseProjectRoute,
+} from './projectModuleRoutePolicy';
 
 // Lazy-load CERV2Page only when a project 510k route is hit (standalone mode)
 const CERV2Page = lazy(() => import('@/pages/csr/CERV2Page'));
@@ -68,9 +73,15 @@ const PasswordResetPage = lazy(() => import('@/portal-v2/components/auth/Passwor
  * Bridge that extracts :projectId from URL and renders CERV2Page with it.
  */
 const Project510kBridge: React.FC = () => {
+<<<<<<< HEAD
   const [, exactParams] = useRoute('/concept2cure/project/:projectId/510k');
   const [, nestedParams] = useRoute('/concept2cure/project/:projectId/510k/:rest*');
   const projectId = exactParams?.projectId ?? nestedParams?.projectId ?? null;
+=======
+  const [location] = useLocation();
+  const routeState = parseProjectRoute(location);
+  const projectId = routeState.module === '510k' ? routeState.projectId : null;
+>>>>>>> pr271
   return (
     <Suspense
       fallback={
@@ -88,9 +99,15 @@ const Project510kBridge: React.FC = () => {
  * Bridge that extracts :projectId from URL and renders PMAWorkspace with it.
  */
 const ProjectPMABridge: React.FC = () => {
+<<<<<<< HEAD
   const [, exactParams] = useRoute('/concept2cure/project/:projectId/pma');
   const [, nestedParams] = useRoute('/concept2cure/project/:projectId/pma/:rest*');
   const projectId = exactParams?.projectId ?? nestedParams?.projectId ?? null;
+=======
+  const [location] = useLocation();
+  const routeState = parseProjectRoute(location);
+  const projectId = routeState.module === 'pma' ? routeState.projectId : null;
+>>>>>>> pr271
   return (
     <Suspense
       fallback={
@@ -162,9 +179,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
+<<<<<<< HEAD
       // Redirect to login with return URL
       const returnTo = encodeURIComponent(location);
       setLocation(`/concept2cure/login?returnTo=${returnTo}`);
+=======
+      setLocation(buildLoginRedirectPath(location));
+>>>>>>> pr271
     }
   }, [isAuthenticated, isLoading, location, setLocation]);
 
@@ -346,6 +367,7 @@ export const ZenRouter: React.FC = () => {
             )}
           </Route>
 
+<<<<<<< HEAD
           {/* Project-scoped 510(k) workspace
               When EMBED_MODULES_IN_SHELL is enabled, this route falls through
               to ZenApp (caught by project/:projectId/:rest*) which renders CERV2
@@ -397,6 +419,20 @@ export const ZenRouter: React.FC = () => {
               )}
             </Route>
           )}
+=======
+          {!shouldEmbedModulesInShell &&
+            STANDALONE_MODULE_ROUTE_PATTERNS.map(path => (
+              <Route key={path} path={path}>
+                {() => (
+                  <PageTransition>
+                    <ProtectedRoute>
+                      {path.includes('/510k') ? <Project510kBridge /> : <ProjectPMABridge />}
+                    </ProtectedRoute>
+                  </PageTransition>
+                )}
+              </Route>
+            ))}
+>>>>>>> pr271
           {/* Billing Dashboard - protected */}
           <Route path="/concept2cure/billing">
             {() => (
