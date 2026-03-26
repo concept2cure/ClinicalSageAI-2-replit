@@ -8,13 +8,12 @@
  * @compliance FDA 21 CFR Part 11, EU Annex 11, ICH E6 GCP
  */
 
-import React, { useState, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   Building,
   Building2,
   Users,
   Shield,
-  Settings,
   FileText,
   CheckCircle,
   ChevronRight,
@@ -31,18 +30,12 @@ import {
   Key,
   Clock,
   Database,
-  Globe,
-  Zap,
   Check,
   X,
 } from 'lucide-react';
 import type { OrganizationBusinessModel, SubscriptionTier } from '../../core/securityTypes';
 import {
   getArchetypeConfig,
-  BIG_PHARMA_CONFIG,
-  VIRTUAL_BIOTECH_CONFIG,
-  CRO_CONFIG,
-  ACADEMIC_CONFIG,
   type TenantArchetypeConfig,
   type ComplianceConfig,
 } from '../../core/regulatoryCompliance';
@@ -64,6 +57,10 @@ interface OnboardingData {
 
   // Step 3: Subscription
   subscriptionTier: SubscriptionTier;
+  modelPack: 'standard' | 'regulatory_pro' | 'enterprise_gxp';
+  selectedModules: string[];
+  estimatedSeats: number;
+  estimatedStorageGB: number;
   billingEmail: string;
   billingCycle: 'monthly' | 'annual';
 
@@ -78,6 +75,16 @@ interface OnboardingData {
   // Step 6: Review
   agreedToTerms: boolean;
   agreedToDataProcessing: boolean;
+}
+
+interface PricingEstimate {
+  basePrice: number;
+  seatCost: number;
+  storageCost: number;
+  modulesCost: number;
+  preDiscountMonthly: number;
+  discount: number;
+  finalMonthly: number;
 }
 
 type WizardStep =
@@ -153,7 +160,7 @@ const SUBSCRIPTION_TIERS: {
   recommended?: boolean;
 }[] = [
   {
-    id: 'STARTER',
+    id: 'starter',
     name: 'Starter',
     description: 'For small teams getting started',
     features: [
@@ -164,7 +171,7 @@ const SUBSCRIPTION_TIERS: {
     ],
   },
   {
-    id: 'PROFESSIONAL',
+    id: 'professional',
     name: 'Professional',
     description: 'For growing regulatory teams',
     features: [
@@ -177,7 +184,7 @@ const SUBSCRIPTION_TIERS: {
     recommended: true,
   },
   {
-    id: 'ENTERPRISE',
+    id: 'enterprise',
     name: 'Enterprise',
     description: 'Full regulatory platform',
     features: [
@@ -191,25 +198,141 @@ const SUBSCRIPTION_TIERS: {
   },
 ];
 
+const MODEL_PACKS: {
+  id: OnboardingData['modelPack'];
+  name: string;
+  description: string;
+  monthlyAddon: number;
+}[] = [
+  {
+    id: 'standard',
+    name: 'Standard AI',
+    description: 'Default regulated assistant model set',
+    monthlyAddon: 0,
+  },
+  {
+    id: 'regulatory_pro',
+    name: 'Regulatory Pro',
+    description: 'Enhanced reasoning + extraction for submissions',
+    monthlyAddon: 399,
+  },
+  {
+    id: 'enterprise_gxp',
+    name: 'Enterprise GxP',
+    description: 'Highest-trust model stack for enterprise validation programs',
+    monthlyAddon: 999,
+  },
+];
+
+const MODULE_ADDONS: {
+  id: string;
+  name: string;
+  description: string;
+  monthlyAddon: number;
+}[] = [
+  { id: 'deep_research', name: 'Deep Research', description: 'Multi-source evidence synthesis', monthlyAddon: 149 },
+  { id: 'ctd_builder', name: 'CTD Builder', description: 'Submission module automation', monthlyAddon: 249 },
+  { id: 'safety_narrative', name: 'Safety Narrative', description: 'Signal-driven narrative acceleration', monthlyAddon: 179 },
+  { id: 'multi_agency_export', name: 'Multi-Agency Export', description: 'FDA/EMA/PMDA packaging accelerator', monthlyAddon: 199 },
+];
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const ONBOARDING_STORAGE_KEY = 'portal_v2_onboarding_draft_v1';
+const ONBOARDING_DRAFT_TTL_MS = 1000 * 60 * 60 * 24;
+
+type PersistedOnboardingDraft = {
+  savedAt: number;
+  currentStep: WizardStep;
+  data: Pick<
+    OnboardingData,
+    | 'organizationName'
+    | 'domain'
+    | 'country'
+    | 'industry'
+    | 'businessModel'
+    | 'archetype'
+    | 'subscriptionTier'
+    | 'modelPack'
+    | 'selectedModules'
+    | 'estimatedSeats'
+    | 'estimatedStorageGB'
+    | 'billingCycle'
+    | 'complianceCustomizations'
+  >;
+};
+
+function isValidEmail(email: string): boolean {
+  return EMAIL_REGEX.test(email.trim());
+}
+
+function estimatePricing(data: OnboardingData): PricingEstimate {
+  const pricing = data.archetype?.pricing;
+  const selectedModel = MODEL_PACKS.find(m => m.id === data.modelPack) || MODEL_PACKS[0];
+  const basePrice = pricing?.baseMonthly || 0;
+  const seatCost = (pricing?.perUserMonthly || 0) * Math.max(data.estimatedSeats, 0);
+  const storageCost = (pricing?.storagePerGBMonthly || 0) * Math.max(data.estimatedStorageGB, 0);
+  const modulesCost = MODULE_ADDONS
+    .filter(module => data.selectedModules.includes(module.id))
+    .reduce((sum, module) => sum + module.monthlyAddon, 0);
+  const preDiscountMonthly = basePrice + seatCost + storageCost + selectedModel.monthlyAddon + modulesCost;
+  const discount = data.billingCycle === 'annual' ? pricing?.annualDiscount || 0 : 0;
+  const finalMonthly = preDiscountMonthly * (1 - discount);
+
+  return {
+    basePrice,
+    seatCost,
+    storageCost,
+    modulesCost,
+    preDiscountMonthly,
+    discount,
+    finalMonthly,
+  };
+}
+
+function toPersistedDraft(data: OnboardingData, currentStep: WizardStep): PersistedOnboardingDraft {
+  return {
+    savedAt: Date.now(),
+    currentStep,
+    data: {
+      organizationName: data.organizationName,
+      domain: data.domain,
+      country: data.country,
+      industry: data.industry,
+      businessModel: data.businessModel,
+      archetype: data.archetype,
+      subscriptionTier: data.subscriptionTier,
+      modelPack: data.modelPack,
+      selectedModules: data.selectedModules,
+      estimatedSeats: data.estimatedSeats,
+      estimatedStorageGB: data.estimatedStorageGB,
+      billingCycle: data.billingCycle,
+      complianceCustomizations: data.complianceCustomizations,
+    },
+  };
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface OnboardingWizardProps {
-  onComplete: (data: OnboardingData) => void;
+  onComplete?: (data: OnboardingData) => void | Promise<void>;
   onCancel?: () => void;
 }
 
 export function OnboardingWizard({ onComplete, onCancel }: OnboardingWizardProps) {
-  const [currentStep, setCurrentStep] = useState<WizardStep>('organization');
-  const [data, setData] = useState<OnboardingData>({
+  const [data, setData] = useState<OnboardingData>(() => ({
     organizationName: '',
     domain: '',
     country: '',
     industry: '',
     businessModel: null,
     archetype: null,
-    subscriptionTier: 'PROFESSIONAL',
+    subscriptionTier: 'professional',
+    modelPack: 'standard',
+    selectedModules: [],
+    estimatedSeats: 10,
+    estimatedStorageGB: 25,
     billingEmail: '',
     billingCycle: 'annual',
     complianceCustomizations: {},
@@ -218,9 +341,35 @@ export function OnboardingWizard({ onComplete, onCancel }: OnboardingWizardProps
     initialUsers: [],
     agreedToTerms: false,
     agreedToDataProcessing: false,
-  });
+  }));
+  const [currentStep, setCurrentStep] = useState<WizardStep>('organization');
 
   const currentStepIndex = STEPS.findIndex(s => s.id === currentStep);
+
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(ONBOARDING_STORAGE_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as PersistedOnboardingDraft;
+      if (!saved.savedAt || Date.now() - saved.savedAt > ONBOARDING_DRAFT_TTL_MS) {
+        sessionStorage.removeItem(ONBOARDING_STORAGE_KEY);
+        return;
+      }
+      if (saved.data && typeof saved.data === 'object') {
+        setData(prev => ({ ...prev, ...saved.data }));
+      }
+      if (saved.currentStep && STEPS.some(step => step.id === saved.currentStep)) {
+        setCurrentStep(saved.currentStep);
+      }
+    } catch {
+      sessionStorage.removeItem(ONBOARDING_STORAGE_KEY);
+    }
+  }, []);
+
+  useEffect(() => {
+    const payload = JSON.stringify(toPersistedDraft(data, currentStep));
+    sessionStorage.setItem(ONBOARDING_STORAGE_KEY, payload);
+  }, [data, currentStep]);
 
   const updateData = useCallback((updates: Partial<OnboardingData>) => {
     setData(prev => ({ ...prev, ...updates }));
@@ -239,17 +388,20 @@ export function OnboardingWizard({ onComplete, onCancel }: OnboardingWizardProps
   }, [currentStepIndex]);
 
   const canProceed = useMemo(() => {
+    const billingEmailValid = isValidEmail(data.billingEmail);
+    const adminEmailValid = isValidEmail(data.adminEmail);
+
     switch (currentStep) {
       case 'organization':
-        return data.organizationName && data.country;
+        return Boolean(data.organizationName.trim() && data.country);
       case 'business-model':
         return data.businessModel !== null;
       case 'subscription':
-        return data.subscriptionTier && data.billingEmail;
+        return data.subscriptionTier && billingEmailValid;
       case 'compliance':
         return true; // Optional customizations
       case 'users':
-        return data.adminEmail && data.adminName;
+        return Boolean(adminEmailValid && data.adminName.trim());
       case 'review':
         return data.agreedToTerms && data.agreedToDataProcessing;
       default:
@@ -259,17 +411,27 @@ export function OnboardingWizard({ onComplete, onCancel }: OnboardingWizardProps
 
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [setupCompleted, setSetupCompleted] = useState(false);
 
   const handleComplete = useCallback(async () => {
     if (!data.agreedToTerms || !data.agreedToDataProcessing) return;
+    setCheckoutError(null);
 
-    // First, call the parent handler to create the organization
-    onComplete(data);
+    try {
+      // First, call the parent handler to create the organization context
+      await onComplete?.(data);
+    } catch (err) {
+      setCheckoutError(
+        err instanceof Error
+          ? err.message
+          : 'We could not finish organization setup. Please try again.'
+      );
+      return;
+    }
 
     // Then redirect to Stripe Checkout with Link for payment
-    if (data.subscriptionTier !== 'free') {
+    if (data.subscriptionTier !== 'starter') {
       setCheckoutLoading(true);
-      setCheckoutError(null);
       try {
         const res = await fetch('/api/billing/checkout', {
           method: 'POST',
@@ -280,6 +442,7 @@ export function OnboardingWizard({ onComplete, onCancel }: OnboardingWizardProps
           body: JSON.stringify({
             tier: data.subscriptionTier,
             billingCycle: data.billingCycle,
+            seats: data.estimatedSeats,
           }),
         });
 
@@ -290,15 +453,24 @@ export function OnboardingWizard({ onComplete, onCancel }: OnboardingWizardProps
 
         const { checkoutUrl } = await res.json();
         if (checkoutUrl) {
+          sessionStorage.removeItem(ONBOARDING_STORAGE_KEY);
           window.location.href = checkoutUrl;
           return;
         }
+        throw new Error('Checkout URL was not returned by billing service');
       } catch (err) {
         setCheckoutError(err instanceof Error ? err.message : 'Payment setup failed');
         setCheckoutLoading(false);
       }
+    } else {
+      sessionStorage.removeItem(ONBOARDING_STORAGE_KEY);
+      setSetupCompleted(true);
     }
   }, [data, onComplete]);
+
+  if (setupCompleted) {
+    return <ActivationCompleteView organizationName={data.organizationName} />;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-primary-900 to-slate-900 flex items-center justify-center p-4">
@@ -312,7 +484,19 @@ export function OnboardingWizard({ onComplete, onCancel }: OnboardingWizardProps
             <div>
               <h1 className="text-2xl font-bold text-white">Welcome to Concept2Cure</h1>
               <p className="text-primary-100">Let's set up your organization</p>
+              <p className="text-primary-200 text-sm mt-1">
+                Step {currentStepIndex + 1} of {STEPS.length}: {STEPS[currentStepIndex].label}
+              </p>
+              <p className="text-primary-200/90 text-xs mt-1">
+                Draft is auto-saved for 24 hours on this browser.
+              </p>
             </div>
+          </div>
+          <div className="mt-4 h-1.5 bg-white/20 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-white transition-all duration-300"
+              style={{ width: `${((currentStepIndex + 1) / STEPS.length) * 100}%` }}
+            />
           </div>
         </div>
 
@@ -406,7 +590,7 @@ export function OnboardingWizard({ onComplete, onCancel }: OnboardingWizardProps
                     <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
                     Redirecting to Payment...
                   </>
-                ) : data.subscriptionTier === 'free' ? (
+                ) : data.subscriptionTier === 'starter' ? (
                   <>
                     <CheckCircle className="h-5 w-5" />
                     Complete Setup
@@ -429,6 +613,65 @@ export function OnboardingWizard({ onComplete, onCancel }: OnboardingWizardProps
               </button>
             )}
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ActivationCompleteView({ organizationName }: { organizationName: string }) {
+  const goToAna = () => {
+    window.location.href = '/ai?welcome=true';
+  };
+
+  const goToAdmin = () => {
+    window.location.href = '/admin';
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-primary-900 to-slate-900 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full p-8">
+        <div className="flex items-center gap-3 mb-4">
+          <CheckCircle className="h-7 w-7 text-green-600" />
+          <h2 className="text-2xl font-semibold text-gray-900">Organization Setup Complete</h2>
+        </div>
+        <p className="text-gray-600 mb-6">
+          {organizationName || 'Your organization'} is now active. Next, complete company-level and
+          user/role-level onboarding in Admin, then launch AnA RI for first-use workflows.
+        </p>
+
+        <div className="grid md:grid-cols-2 gap-4 mb-6">
+          <div className="rounded-xl border border-gray-200 p-4">
+            <h3 className="font-medium text-gray-900 mb-2">Company-Level Setup</h3>
+            <ul className="text-sm text-gray-600 space-y-1">
+              <li>• Confirm compliance defaults and signatures</li>
+              <li>• Validate security/session policies</li>
+              <li>• Verify module enablement by plan</li>
+            </ul>
+          </div>
+          <div className="rounded-xl border border-gray-200 p-4">
+            <h3 className="font-medium text-gray-900 mb-2">User/Role-Level Setup</h3>
+            <ul className="text-sm text-gray-600 space-y-1">
+              <li>• Invite team members and assign roles</li>
+              <li>• Confirm role permissions and SoD</li>
+              <li>• Complete first project access checks</li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            onClick={goToAdmin}
+            className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+          >
+            Open Admin Setup
+          </button>
+          <button
+            onClick={goToAna}
+            className="px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700"
+          >
+            Enter AnA RI
+          </button>
         </div>
       </div>
     </div>
@@ -587,14 +830,10 @@ function BusinessModelStep({ data, updateData }: StepProps) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function SubscriptionStep({ data, updateData }: StepProps) {
-  const selectedTier = SUBSCRIPTION_TIERS.find(t => t.id === data.subscriptionTier);
   const archetype = data.archetype;
-
-  // Calculate pricing
+  const selectedModel = MODEL_PACKS.find(m => m.id === data.modelPack) || MODEL_PACKS[0];
   const pricing = archetype?.pricing;
-  const basePrice = pricing?.baseMonthly || 0;
-  const discount = data.billingCycle === 'annual' ? pricing?.annualDiscount || 0 : 0;
-  const finalPrice = basePrice * (1 - discount);
+  const pricingEstimate = estimatePricing(data);
 
   return (
     <div className="space-y-6">
@@ -644,6 +883,9 @@ function SubscriptionStep({ data, updateData }: StepProps) {
             placeholder="billing@company.com"
             className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
           />
+          {data.billingEmail && !isValidEmail(data.billingEmail) && (
+            <p className="text-xs text-red-600 mt-1">Enter a valid billing email address.</p>
+          )}
         </div>
 
         <div>
@@ -671,19 +913,105 @@ function SubscriptionStep({ data, updateData }: StepProps) {
         </div>
       </div>
 
+      {/* AI Model Pack */}
+      <div className="space-y-3 pt-4 border-t">
+        <h3 className="font-semibold text-gray-900">AI Model Pack</h3>
+        <div className="grid md:grid-cols-3 gap-3">
+          {MODEL_PACKS.map(model => (
+            <button
+              key={model.id}
+              onClick={() => updateData({ modelPack: model.id })}
+              className={`p-4 border rounded-xl text-left transition ${
+                data.modelPack === model.id
+                  ? 'border-primary-500 bg-primary-50'
+                  : 'border-gray-200 hover:border-primary-300'
+              }`}
+            >
+              <p className="font-medium text-gray-900">{model.name}</p>
+              <p className="text-xs text-gray-500 mt-1">{model.description}</p>
+              <p className="text-sm text-gray-700 mt-2">
+                {model.monthlyAddon === 0 ? 'Included' : `+$${model.monthlyAddon}/mo`}
+              </p>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Module Add-ons */}
+      <div className="space-y-3 pt-4 border-t">
+        <h3 className="font-semibold text-gray-900">Module Add-ons</h3>
+        <div className="grid md:grid-cols-2 gap-3">
+          {MODULE_ADDONS.map(module => {
+            const selected = data.selectedModules.includes(module.id);
+            return (
+              <button
+                key={module.id}
+                onClick={() =>
+                  updateData({
+                    selectedModules: selected
+                      ? data.selectedModules.filter(id => id !== module.id)
+                      : [...data.selectedModules, module.id],
+                  })
+                }
+                className={`p-4 border rounded-xl text-left transition ${
+                  selected ? 'border-primary-500 bg-primary-50' : 'border-gray-200 hover:border-primary-300'
+                }`}
+              >
+                <p className="font-medium text-gray-900">{module.name}</p>
+                <p className="text-xs text-gray-500 mt-1">{module.description}</p>
+                <p className="text-sm text-gray-700 mt-2">+${module.monthlyAddon}/mo</p>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Usage Inputs */}
+      <div className="grid md:grid-cols-2 gap-6 pt-4 border-t">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Estimated Seats</label>
+          <input
+            type="number"
+            min={1}
+            value={data.estimatedSeats}
+            onChange={e => updateData({ estimatedSeats: Math.max(1, Number(e.target.value) || 1) })}
+            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Estimated Storage (GB)</label>
+          <input
+            type="number"
+            min={1}
+            value={data.estimatedStorageGB}
+            onChange={e =>
+              updateData({ estimatedStorageGB: Math.max(1, Number(e.target.value) || 1) })
+            }
+            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+          />
+        </div>
+      </div>
+
       {/* Pricing Summary */}
       {pricing && (
         <div className="p-4 bg-gray-50 rounded-lg">
+          <div className="text-sm text-gray-600 mb-3 space-y-1">
+            <div className="flex justify-between"><span>Base Plan</span><span>${pricingEstimate.basePrice.toLocaleString()}/mo</span></div>
+            <div className="flex justify-between"><span>Seats ({data.estimatedSeats})</span><span>${pricingEstimate.seatCost.toLocaleString()}/mo</span></div>
+            <div className="flex justify-between"><span>Storage ({data.estimatedStorageGB} GB)</span><span>${pricingEstimate.storageCost.toLocaleString()}/mo</span></div>
+            <div className="flex justify-between"><span>Model Pack ({selectedModel.name})</span><span>${selectedModel.monthlyAddon.toLocaleString()}/mo</span></div>
+            <div className="flex justify-between"><span>Module Add-ons ({data.selectedModules.length})</span><span>${pricingEstimate.modulesCost.toLocaleString()}/mo</span></div>
+          </div>
           <div className="flex justify-between items-center">
             <span className="text-gray-600">Estimated Monthly Cost</span>
             <div className="text-right">
-              {discount > 0 && (
+              {pricingEstimate.discount > 0 && (
                 <span className="text-gray-400 line-through text-sm mr-2">
-                  ${basePrice.toLocaleString()}/mo
+                  ${pricingEstimate.preDiscountMonthly.toLocaleString()}/mo
                 </span>
               )}
               <span className="text-2xl font-bold text-gray-900">
-                ${finalPrice.toLocaleString()}
+                ${pricingEstimate.finalMonthly.toLocaleString()}
               </span>
               <span className="text-gray-500">/mo</span>
             </div>
@@ -701,7 +1029,7 @@ function SubscriptionStep({ data, updateData }: StepProps) {
 // STEP 4: COMPLIANCE
 // ─────────────────────────────────────────────────────────────────────────────
 
-function ComplianceStep({ data, updateData }: StepProps) {
+function ComplianceStep({ data, updateData: _updateData }: StepProps) {
   const archetype = data.archetype;
   const config = archetype?.compliance;
 
@@ -854,15 +1182,29 @@ function SettingRow({
 function UsersStep({ data, updateData }: StepProps) {
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserRole, setNewUserRole] = useState('viewer');
+  const [inviteError, setInviteError] = useState<string | null>(null);
 
   const addUser = () => {
-    if (newUserEmail) {
-      updateData({
-        initialUsers: [...data.initialUsers, { email: newUserEmail, role: newUserRole }],
-      });
-      setNewUserEmail('');
-      setNewUserRole('viewer');
+    const email = newUserEmail.trim().toLowerCase();
+    if (!email) return;
+
+    if (!isValidEmail(email)) {
+      setInviteError('Enter a valid email before adding a team member.');
+      return;
     }
+
+    const exists = data.initialUsers.some(user => user.email.toLowerCase() === email);
+    if (exists || data.adminEmail.toLowerCase() === email) {
+      setInviteError('That user is already included in this onboarding list.');
+      return;
+    }
+
+    updateData({
+      initialUsers: [...data.initialUsers, { email, role: newUserRole }],
+    });
+    setInviteError(null);
+    setNewUserEmail('');
+    setNewUserRole('viewer');
   };
 
   const removeUser = (index: number) => {
@@ -905,6 +1247,9 @@ function UsersStep({ data, updateData }: StepProps) {
               placeholder="admin@company.com"
               className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             />
+            {data.adminEmail && !isValidEmail(data.adminEmail) && (
+              <p className="text-xs text-red-600 mt-1">Enter a valid admin email address.</p>
+            )}
           </div>
         </div>
 
@@ -946,6 +1291,7 @@ function UsersStep({ data, updateData }: StepProps) {
             Add
           </button>
         </div>
+        {inviteError && <p className="text-xs text-red-600 mb-3">{inviteError}</p>}
 
         {data.initialUsers.length > 0 && (
           <ul className="space-y-2">
@@ -980,6 +1326,8 @@ function UsersStep({ data, updateData }: StepProps) {
 function ReviewStep({ data, updateData }: StepProps) {
   const archetype = data.archetype;
   const tier = SUBSCRIPTION_TIERS.find(t => t.id === data.subscriptionTier);
+  const model = MODEL_PACKS.find(m => m.id === data.modelPack) || MODEL_PACKS[0];
+  const pricingEstimate = estimatePricing(data);
 
   return (
     <div className="space-y-6">
@@ -1021,6 +1369,7 @@ function ReviewStep({ data, updateData }: StepProps) {
           <p className="text-sm text-gray-500">
             Billed {data.billingCycle === 'annual' ? 'annually' : 'monthly'}
           </p>
+          <p className="text-sm text-gray-500 mt-1">Model: {model.name}</p>
         </div>
 
         <div className="bg-gray-50 rounded-xl p-4">
@@ -1031,6 +1380,15 @@ function ReviewStep({ data, updateData }: StepProps) {
           <p className="font-semibold text-gray-900">{1 + data.initialUsers.length} user(s)</p>
           <p className="text-sm text-gray-500">Admin: {data.adminEmail}</p>
         </div>
+      </div>
+
+      <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+        <h4 className="font-medium text-emerald-900 mb-2">Estimated Monthly Total</h4>
+        <p className="text-2xl font-bold text-emerald-900">${pricingEstimate.finalMonthly.toLocaleString()}/mo</p>
+        <p className="text-xs text-emerald-800 mt-1">
+          Includes base plan, {data.estimatedSeats} seat(s), {data.estimatedStorageGB} GB storage,
+          {` ${model.name}`}, and {data.selectedModules.length} module add-on(s).
+        </p>
       </div>
 
       {/* Compliance Summary */}
