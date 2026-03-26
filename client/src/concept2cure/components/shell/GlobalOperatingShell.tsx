@@ -11,11 +11,13 @@ interface GlobalOperatingShellProps {
   children: React.ReactNode;
 }
 
-const LAYERS = [
-  { id: 'projects', label: 'Projects', icon: FolderKanban },
-  { id: 'documents', label: 'Documents', icon: FileText },
+const GLOBAL_NODES = [
+  { id: 'projects', label: 'Home', icon: Home },
+  { id: 'documents', label: 'Search', icon: Search },
   { id: 'vault', label: 'Vault', icon: Archive },
+  { id: 'review', label: 'Review', icon: ShieldCheck },
   { id: 'reports', label: 'Reports', icon: ScrollText },
+  { id: 'submissions', label: 'Submission', icon: Send },
 ] as const;
 
 export function GlobalOperatingShell({
@@ -130,7 +132,7 @@ export function GlobalOperatingShell({
             })}
           </div>
         </div>
-      )}
+      </div>
       {children}
     </div>
   );

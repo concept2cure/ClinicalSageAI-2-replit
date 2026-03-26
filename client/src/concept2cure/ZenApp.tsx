@@ -877,42 +877,40 @@ export const ZenApp: React.FC = () => {
     }>
   >([]);
 
+  const DEMOTED_REDIRECTS: Partial<Record<LayoutMode, LayoutMode>> = {
+    'mission-control': 'projects',
+    snowglobe: 'projects',
+    'snowglobe-chambers': 'projects',
+    rules: 'projects',
+    'ectd-coauthor': 'documents',
+    cmc: 'documents',
+    'document-vault': 'vault-workspace',
+    'clinical-trial': 'documents',
+    templates: 'documents',
+    'document-builder': 'documents',
+    artifacts: 'documents',
+    sherpa: 'projects',
+    analytics: 'projects',
+    timeline: 'projects',
+    audit: 'projects',
+    'enablement-center': 'projects',
+    'platform-admin': 'projects',
+    'biologics-dashboard': 'projects',
+    'ctd-onboarding': 'projects',
+    'client-intelligence': 'projects',
+    'collaboration-hub': 'projects',
+    'user-inbox': 'projects',
+    'client-branding': 'projects',
+    'training-center': 'projects',
+    'client-onboarding': 'projects',
+    'knowledge-base': 'projects',
+    'project-knowledge': 'projects',
+    'ana-platform-control': 'projects',
+  };
+
   // [BATCH 3] Redirect demoted layout modes to surviving destinations.
   // This catches deep links, stale bookmarks, and any navigation to removed worlds.
   useEffect(() => {
-    const DEMOTED_REDIRECTS: Partial<Record<LayoutMode, LayoutMode>> = {
-      // MissionControl + SnowGlobe worlds
-      'mission-control': 'projects',
-      snowglobe: 'projects',
-      'snowglobe-chambers': 'projects',
-      rules: 'projects',
-      // Standalone authoring / specialist modules → documents
-      'ectd-coauthor': 'documents',
-      cmc: 'documents',
-      'document-vault': 'vault-workspace',
-      'clinical-trial': 'documents',
-      templates: 'documents',
-      'document-builder': 'documents',
-      artifacts: 'documents',
-      // Demoted SaaS-catalog destinations → projects
-      sherpa: 'projects',
-      analytics: 'projects',
-      timeline: 'projects',
-      audit: 'projects',
-      'enablement-center': 'projects',
-      'platform-admin': 'projects',
-      'biologics-dashboard': 'projects',
-      'ctd-onboarding': 'projects',
-      'client-intelligence': 'projects',
-      'collaboration-hub': 'projects',
-      'user-inbox': 'projects',
-      'client-branding': 'projects',
-      'training-center': 'projects',
-      'client-onboarding': 'projects',
-      'knowledge-base': 'projects',
-      'project-knowledge': 'projects',
-      'ana-platform-control': 'projects',
-    };
     const redirect = DEMOTED_REDIRECTS[layoutMode];
     if (redirect) {
       setLayoutMode(redirect);
@@ -1968,7 +1966,15 @@ export const ZenApp: React.FC = () => {
         projects={projects}
         activeConversationId={activeConversationId}
         activeProjectId={activeProjectId}
+<<<<<<< codex/execute-beta-integrity-sprint-plan
+        activeNavId={
+          activeToolPanel === 'ana-biostats'
+            ? 'biostatistics'
+            : SIDEBAR_ACTIVE_NAV_BY_LAYOUT[layoutMode] ?? undefined
+        }
+=======
         activeNavId={activeNavId}
+>>>>>>> concept2cure-v2
         onSelectConversation={id => {
           setActiveConversationId(id);
           setActiveThreadId(id);
@@ -1986,11 +1992,16 @@ export const ZenApp: React.FC = () => {
         industryMode={industryMode}
         onNavigate={id => {
           switch (id) {
-            case 'home':
-              setLayoutMode('projects');
-              break;
             case 'projects':
-              setLayoutMode('projects');
+            case 'home':
+            case 'documents':
+            case 'vault':
+            case 'review':
+            case 'reports':
+            case 'submissions':
+            case 'dossier':
+            case 'project-home':
+              setLayoutMode(SIDEBAR_NAV_TO_LAYOUT[id] ?? 'projects');
               break;
             case 'tools':
               setActiveToolPanel('intelligence');
@@ -2029,28 +2040,11 @@ export const ZenApp: React.FC = () => {
               break;
             // ── Core submission workflow ──
             case 'regulatory-workspace':
-              setLayoutMode('regulatory-workspace');
-              break;
-            case 'dossier':
-              setLayoutMode('dossier-map');
-              break;
-            case 'documents':
-              setLayoutMode('documents');
+            case 'section-workspace':
+              setLayoutMode(id);
               break;
             case 'document-vault':
               setLayoutMode('vault-workspace');
-              break;
-            case 'review':
-              setLayoutMode('review');
-              break;
-            case 'submissions':
-              setLayoutMode('submissions');
-              break;
-            case 'section-workspace':
-              setLayoutMode('section-workspace');
-              break;
-            case 'project-home':
-              setLayoutMode('project-home');
               break;
             // ── Surviving specialist tools ──
             case 'precedent-intelligence':
@@ -2133,6 +2127,13 @@ export const ZenApp: React.FC = () => {
       <GlobalOperatingShell
         layoutMode={layoutMode}
         activeProjectName={activeProject?.name}
+<<<<<<< codex/execute-beta-integrity-sprint-plan
+        activeArtifactLabel={activeArtifactId ? `Artifact ${activeArtifactId}` : undefined}
+        onNavigateGlobal={target => {
+          const next = SIDEBAR_NAV_TO_LAYOUT[target] ?? 'projects';
+          setLayoutMode(next);
+        }}
+=======
         currentGlobalNodeLabel={currentGlobalNodeLabel}
         activeArtifactLabel={
           activeArtifactId
@@ -2140,6 +2141,7 @@ export const ZenApp: React.FC = () => {
             : undefined
         }
         onAction={handleHeaderAction}
+>>>>>>> concept2cure-v2
       >
         {/* Content Area */}
         <div className="flex-1 flex min-w-0 min-h-0">
@@ -3066,3 +3068,30 @@ export const ZenApp: React.FC = () => {
 };
 
 export default ZenApp;
+
+const SIDEBAR_ACTIVE_NAV_BY_LAYOUT: Record<string, string> = {
+  projects: 'projects',
+  'project-home': 'projects',
+  documents: 'documents',
+  'regulatory-workspace': 'documents',
+  'section-workspace': 'documents',
+  'vault-workspace': 'vault',
+  'report-engine': 'reports',
+  review: 'review',
+  'review-readiness': 'review',
+  submissions: 'submissions',
+  'dossier-map': 'dossier',
+};
+
+const SIDEBAR_NAV_TO_LAYOUT: Record<string, LayoutMode> = {
+  projects: 'projects',
+  home: 'projects',
+  documents: 'documents',
+  vault: 'vault-workspace',
+  review: 'review',
+  reports: 'report-engine',
+  submissions: 'submissions',
+  dossier: 'dossier-map',
+  'project-home': 'project-home',
+};
+

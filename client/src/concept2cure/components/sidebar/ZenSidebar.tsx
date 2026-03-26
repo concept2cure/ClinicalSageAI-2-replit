@@ -679,7 +679,7 @@ export const ZenSidebar: React.FC<ZenSidebarProps> = ({
 
           {/* ── SUBMISSION WORKFLOW — secondary nav ────────────────── */}
           <div className="mx-2 my-1 border-t border-zinc-100" />
-          <WorkspaceGroup label="Workflow" defaultOpen={true}>
+          <WorkspaceGroup label="Global Operating Nav" defaultOpen={true}>
             <NavItem
               icon={<LayoutGrid className="w-3.5 h-3.5" />}
               label="Dossier Map"

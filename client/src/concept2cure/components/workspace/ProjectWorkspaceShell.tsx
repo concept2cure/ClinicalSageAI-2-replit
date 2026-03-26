@@ -1202,6 +1202,70 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           )}
         </div>
 
+        {/* ── ProjectNav strip ─────────────────────────────────────────────── */}
+        <div className="flex items-center gap-1.5 px-4 h-9 border-b border-zinc-200 bg-white shrink-0 overflow-x-auto">
+          <span className="text-[11px] font-semibold tracking-wide text-zinc-500 uppercase mr-1">
+            ProjectNav
+          </span>
+          <button
+            onClick={() => setMode('dashboard')}
+            className={cn(
+              'text-xs px-2 py-1 rounded-md border',
+              mode === 'dashboard'
+                ? 'bg-zinc-900 text-white border-zinc-900'
+                : 'bg-white text-zinc-600 border-zinc-200 hover:bg-zinc-50'
+            )}
+          >
+            Home
+          </button>
+          <button
+            onClick={() => setMode('browse')}
+            className={cn(
+              'text-xs px-2 py-1 rounded-md border',
+              mode === 'browse' ? 'bg-zinc-900 text-white border-zinc-900' : 'bg-white text-zinc-600 border-zinc-200 hover:bg-zinc-50'
+            )}
+          >
+            Documents
+          </button>
+          <button
+            onClick={() => setShowGovernedPanel(true)}
+            className={cn(
+              'text-xs px-2 py-1 rounded-md border',
+              showGovernedPanel ? 'bg-zinc-900 text-white border-zinc-900' : 'bg-white text-zinc-600 border-zinc-200 hover:bg-zinc-50'
+            )}
+          >
+            Governed
+          </button>
+        </div>
+
+        {/* ── DocumentTab strip ────────────────────────────────────────────── */}
+        <div className="flex items-center gap-1.5 px-4 h-9 border-b border-zinc-200 bg-zinc-50/60 shrink-0 overflow-x-auto">
+          <span className="text-[11px] font-semibold tracking-wide text-zinc-500 uppercase mr-1">
+            DocumentTabs
+          </span>
+          <button
+            onClick={() => setEditorInitialInspector('compare')}
+            className="text-xs px-2 py-1 rounded-md border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-100"
+          >
+            Compare
+          </button>
+          <button
+            onClick={() => setEditorInitialInspector('provenance')}
+            className="text-xs px-2 py-1 rounded-md border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-100"
+          >
+            Provenance
+          </button>
+          <button
+            onClick={() => {
+              setEditorInitialInspector('audit');
+              setShowGovernedPanel(true);
+            }}
+            className="text-xs px-2 py-1 rounded-md border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-100"
+          >
+            Audit
+          </button>
+        </div>
+
         {/* ── AnA 1.0 controlled shell layer/workbench bar ─────────────────── */}
         <div className="flex items-center gap-3 px-4 h-11 border-b border-zinc-200 bg-zinc-50/70 shrink-0 overflow-x-auto">
           <div className="text-[11px] font-semibold tracking-wide text-zinc-500 uppercase whitespace-nowrap">
