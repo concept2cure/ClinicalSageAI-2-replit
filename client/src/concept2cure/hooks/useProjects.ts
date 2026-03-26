@@ -15,7 +15,7 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Project, Conversation, SubmissionType } from '../types';
+import { Project, Conversation, SubmissionType, WorkbenchMode } from '../types';
 import { queryKeys } from './queryKeys';
 
 /** Storage key for localStorage fallback */
@@ -32,6 +32,79 @@ function getAuthHeaders(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+function withRequiredOwnership(project: Project): Project {
+  const canonicalChatHistory = project.conversations;
+  const canonicalDocumentInventory = project.knowledge?.documents;
+  const canonicalApprovals = project.signatures;
+  const canonicalActivity = project.auditTrail;
+  const existingDerived = project.ownership?.derived;
+  const existingPreferences = project.ownership?.preferences;
+
+  const projectInstructions =
+    existingPreferences?.projectInstructions ??
+    project.ownership?.projectInstructions ??
+    project.customInstructions ??
+    '';
+  const reusableSnippetsKnowledge =
+    existingPreferences?.reusableSnippetsKnowledge ??
+    project.ownership?.reusableSnippetsKnowledge ??
+    [];
+  const currentWorkbenchContext =
+    existingPreferences?.currentWorkbenchContext ??
+    project.ownership?.currentWorkbenchContext ??
+    'project-home';
+
+  const derived = {
+    chatHistory:
+      canonicalChatHistory !== undefined
+        ? canonicalChatHistory
+        : existingDerived?.chatHistory ?? project.ownership?.chatHistory ?? [],
+    documentInventory:
+      canonicalDocumentInventory !== undefined
+        ? canonicalDocumentInventory
+        : existingDerived?.documentInventory ?? project.ownership?.documentInventory ?? [],
+    vaultLinkedFilesEvidence:
+      existingDerived?.vaultLinkedFilesEvidence ?? project.ownership?.vaultLinkedFilesEvidence ?? [],
+    reports: existingDerived?.reports ?? project.ownership?.reports ?? [],
+    reviewState: existingDerived?.reviewState ?? project.ownership?.reviewState ?? 'not_started',
+    approvals:
+      canonicalApprovals !== undefined
+        ? canonicalApprovals
+        : existingDerived?.approvals ?? project.ownership?.approvals ?? [],
+    readinessState:
+      existingDerived?.readinessState ?? project.ownership?.readinessState ?? 'not_ready',
+    activityHistory:
+      canonicalActivity !== undefined
+        ? canonicalActivity
+        : existingDerived?.activityHistory ?? project.ownership?.activityHistory ?? [],
+  };
+
+  return {
+    ...project,
+    customInstructions: project.customInstructions ?? projectInstructions,
+    ownership: {
+      derived,
+      preferences: {
+        projectInstructions,
+        reusableSnippetsKnowledge,
+        currentWorkbenchContext: currentWorkbenchContext as WorkbenchMode,
+      },
+      // Backward-compat flat shape
+      chatHistory: derived.chatHistory,
+      documentInventory: derived.documentInventory,
+      vaultLinkedFilesEvidence: derived.vaultLinkedFilesEvidence,
+      reports: derived.reports,
+      reviewState: derived.reviewState,
+      approvals: derived.approvals,
+      readinessState: derived.readinessState,
+      activityHistory: derived.activityHistory,
+      projectInstructions,
+      reusableSnippetsKnowledge,
+      currentWorkbenchContext: currentWorkbenchContext as WorkbenchMode,
+    },
+  };
+}
+
 /**
  * Retrieves projects from localStorage
  * @returns Array of projects with properly typed dates
@@ -42,22 +115,24 @@ function getStoredProjects(): Project[] {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       const projects = JSON.parse(stored);
-      return projects.map((p: any) => ({
-        ...p,
-        createdAt: new Date(p.createdAt),
-        updatedAt: new Date(p.updatedAt),
-        conversations:
-          p.conversations?.map((c: any) => ({
-            ...c,
-            createdAt: new Date(c.createdAt),
-            updatedAt: new Date(c.updatedAt),
-            messages:
-              c.messages?.map((m: any) => ({
-                ...m,
-                timestamp: new Date(m.timestamp),
-              })) || [],
-          })) || [],
-      }));
+      return projects.map((p: any) =>
+        withRequiredOwnership({
+          ...p,
+          createdAt: new Date(p.createdAt),
+          updatedAt: new Date(p.updatedAt),
+          conversations:
+            p.conversations?.map((c: any) => ({
+              ...c,
+              createdAt: new Date(c.createdAt),
+              updatedAt: new Date(c.updatedAt),
+              messages:
+                c.messages?.map((m: any) => ({
+                  ...m,
+                  timestamp: new Date(m.timestamp),
+                })) || [],
+            })) || [],
+        })
+      );
     }
   } catch (e) {
     console.error('[useProjects] Failed to parse stored projects:', e);
@@ -102,7 +177,7 @@ async function fetchProjectsFromAPI(): Promise<Project[]> {
       payload?.error?.message || payload?.error || `Failed to fetch projects: ${response.status}`
     );
   }
-  return payload?.data ?? payload;
+  return (payload?.data ?? payload).map((project: Project) => withRequiredOwnership(project));
 }
 
 /**
@@ -129,7 +204,7 @@ async function createProjectAPI(
       payload?.error?.message || payload?.error || `Failed to create project: ${response.status}`
     );
   }
-  return payload?.data ?? payload;
+  return withRequiredOwnership(payload?.data ?? payload);
 }
 
 /**
@@ -154,7 +229,34 @@ async function updateProjectAPI(project: Project): Promise<Project> {
       payload?.error?.message || payload?.error || `Failed to update project: ${response.status}`
     );
   }
-  return payload?.data ?? payload;
+  return withRequiredOwnership(payload?.data ?? payload);
+}
+
+async function patchOwnershipPreferencesAPI(
+  projectId: string,
+  preferences: {
+    projectInstructions?: string;
+    reusableSnippetsKnowledge?: string[];
+    currentWorkbenchContext?: WorkbenchMode;
+  }
+): Promise<Project> {
+  const response = await fetch(`/api/concept2cure/projects/${projectId}/ownership-preferences`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify(preferences),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || payload?.success === false) {
+    throw new Error(
+      payload?.error?.message ||
+        payload?.error ||
+        `Failed to update ownership preferences: ${response.status}`
+    );
+  }
+  return withRequiredOwnership(payload?.data ?? payload);
 }
 
 /**
@@ -243,7 +345,7 @@ export function useProjects() {
       }
 
       // Fallback to localStorage
-      const newProject: Project = {
+      const newProject: Project = withRequiredOwnership({
         id: `proj_${Date.now()}`,
         name: data.name,
         submissionType: data.submissionType,
@@ -251,7 +353,7 @@ export function useProjects() {
         conversations: [],
         createdAt: new Date(),
         updatedAt: new Date(),
-      };
+      });
       const projects = getStoredProjects();
       projects.unshift(newProject);
       saveStoredProjects(projects);
@@ -265,7 +367,7 @@ export function useProjects() {
   // Update project mutation
   const updateProject = useMutation({
     mutationFn: async (project: Project) => {
-      const updatedProject = { ...project, updatedAt: new Date() };
+      const updatedProject = withRequiredOwnership({ ...project, updatedAt: new Date() });
 
       if (USE_API) {
         try {
@@ -305,6 +407,60 @@ export function useProjects() {
       const projects = getStoredProjects();
       const filtered = projects.filter(p => p.id !== projectId);
       saveStoredProjects(filtered);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [...queryKeys.projects.all] });
+    },
+  });
+
+  const updateOwnershipPreferences = useMutation({
+    mutationFn: async ({
+      projectId,
+      preferences,
+    }: {
+      projectId: string;
+      preferences: {
+        projectInstructions?: string;
+        reusableSnippetsKnowledge?: string[];
+        currentWorkbenchContext?: WorkbenchMode;
+      };
+    }) => {
+      if (USE_API) {
+        try {
+          return await patchOwnershipPreferencesAPI(projectId, preferences);
+        } catch (e) {
+          console.warn('API ownership preference update failed, using localStorage fallback:', e);
+        }
+      }
+
+      const projects = getStoredProjects();
+      const index = projects.findIndex(p => p.id === projectId);
+      if (index === -1) throw new Error('Project not found');
+      const project = withRequiredOwnership(projects[index]);
+      const merged = withRequiredOwnership({
+        ...project,
+        customInstructions: preferences.projectInstructions ?? project.customInstructions,
+        ownership: {
+          ...project.ownership,
+          preferences: {
+            projectInstructions:
+              preferences.projectInstructions ??
+              project.ownership?.preferences.projectInstructions ??
+              '',
+            reusableSnippetsKnowledge:
+              preferences.reusableSnippetsKnowledge ??
+              project.ownership?.preferences.reusableSnippetsKnowledge ??
+              [],
+            currentWorkbenchContext:
+              preferences.currentWorkbenchContext ??
+              project.ownership?.preferences.currentWorkbenchContext ??
+              'project-home',
+          },
+        },
+      });
+      projects[index] = merged;
+      saveStoredProjects(projects);
+      return merged;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [...queryKeys.projects.all] });
@@ -415,6 +571,8 @@ export function useProjects() {
     isCreating: createProject.isPending,
     isUpdating: updateProject.isPending,
     isDeleting: deleteProject.isPending,
+    updateOwnershipPreferences: updateOwnershipPreferences.mutateAsync,
+    isUpdatingOwnershipPreferences: updateOwnershipPreferences.isPending,
   };
 }
 
@@ -438,7 +596,7 @@ export function useProject(projectId: string | null) {
                 payload?.error?.message || payload?.error || 'Failed to fetch project'
               );
             }
-            return payload?.data ?? payload;
+            return withRequiredOwnership(payload?.data ?? payload);
           }
         } catch (e) {
           console.warn('API project fetch failed, using localStorage fallback:', e);
@@ -446,7 +604,8 @@ export function useProject(projectId: string | null) {
       }
 
       const projects = getStoredProjects();
-      return projects.find(p => p.id === projectId) || null;
+      const project = projects.find(p => p.id === projectId) || null;
+      return project ? withRequiredOwnership(project) : null;
     },
     enabled: !!projectId,
   });

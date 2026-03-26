@@ -143,6 +143,79 @@ export interface Project {
   auditTrail?: AuditEntry[];
   /** Electronic signatures on the project */
   signatures?: ElectronicSignature[];
+  /** Canonical project-owned collaboration and governance modules */
+  ownership?: ProjectOwnership;
+}
+
+export type ProjectReviewState =
+  | 'not_started'
+  | 'in_review'
+  | 'changes_requested'
+  | 'approval_pending'
+  | 'approved';
+
+export type ProjectReadinessState = 'not_ready' | 'at_risk' | 'ready_for_review' | 'ready';
+
+export type WorkbenchMode =
+  | 'project-home'
+  | 'regulatory-workspace'
+  | 'documents'
+  | 'review'
+  | 'review-readiness'
+  | 'submissions'
+  | 'section-workspace'
+  | 'report-engine';
+
+export interface OwnershipReportRef {
+  id: string;
+  title: string;
+  kind: 'artifact_report' | 'submission_snapshot';
+  status: 'draft' | 'review' | 'approved' | 'published' | 'locked';
+  updatedAt?: string;
+}
+
+export interface ProjectOwnershipDerived {
+  chatHistory: Conversation[];
+  documentInventory: UploadedDocument[];
+  vaultLinkedFilesEvidence: UploadedDocument[];
+  reports: OwnershipReportRef[];
+  reviewState: ProjectReviewState;
+  approvals: ElectronicSignature[];
+  readinessState: ProjectReadinessState;
+  activityHistory: AuditEntry[];
+}
+
+export interface ProjectOwnershipPreferences {
+  projectInstructions: string;
+  reusableSnippetsKnowledge: string[];
+  currentWorkbenchContext: WorkbenchMode;
+}
+
+export interface ProjectOwnership {
+  derived: ProjectOwnershipDerived;
+  preferences: ProjectOwnershipPreferences;
+  /** @deprecated Backward-compatible flat mirror for legacy consumers */
+  chatHistory?: Conversation[];
+  /** @deprecated Backward-compatible flat mirror for legacy consumers */
+  documentInventory?: UploadedDocument[];
+  /** @deprecated Backward-compatible flat mirror for legacy consumers */
+  vaultLinkedFilesEvidence?: UploadedDocument[];
+  /** @deprecated Backward-compatible flat mirror for legacy consumers */
+  projectInstructions?: string;
+  /** @deprecated Backward-compatible flat mirror for legacy consumers */
+  reusableSnippetsKnowledge?: string[];
+  /** @deprecated Backward-compatible flat mirror for legacy consumers */
+  reports?: OwnershipReportRef[];
+  /** @deprecated Backward-compatible flat mirror for legacy consumers */
+  reviewState?: ProjectReviewState;
+  /** @deprecated Backward-compatible flat mirror for legacy consumers */
+  approvals?: ElectronicSignature[];
+  /** @deprecated Backward-compatible flat mirror for legacy consumers */
+  readinessState?: ProjectReadinessState;
+  /** @deprecated Backward-compatible flat mirror for legacy consumers */
+  activityHistory?: AuditEntry[];
+  /** @deprecated Backward-compatible flat mirror for legacy consumers */
+  currentWorkbenchContext?: WorkbenchMode;
 }
 
 /**
