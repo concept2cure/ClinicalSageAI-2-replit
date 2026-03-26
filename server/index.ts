@@ -103,6 +103,9 @@ import cmcCoreRoutes from './api/cmc/routes';
 import cmcSpecificationRoutes from './api/cmc/specificationRoutes';
 import cmcStabilityRoutes from './api/cmc/stabilityRoutes';
 import cmcBatchRecordRoutes from './api/cmc/batchRecordRoutes';
+import cmcWorkflowRoutes from './api/cmc/workflowRoutes';
+import cmcCollaborationRoutes from './api/cmc/collaborationRoutes';
+import cmcDocumentRoutes from './api/cmc/documentRoutes';
 
 // Import AI assistance routes
 import aiAssistanceRoutes, { setAIService } from './routes/ai-assistance';
@@ -886,10 +889,13 @@ try {
   app.use('/api/cmc/specifications', cmcSpecificationRoutes);
   app.use('/api/cmc/stability', cmcStabilityRoutes);
   app.use('/api/cmc/batch-records', cmcBatchRecordRoutes);
+  app.use('/api/cmc/workflows', cmcWorkflowRoutes);
+  app.use('/api/cmc/collaboration', cmcCollaborationRoutes);
+  app.use('/api/cmc/documents', cmcDocumentRoutes);
   app.use('/api/cmc/dashboard-legacy', cmcDashboardRoutes);
   app.use('/api/cmc/dashboard', cmcDashboardPrisma);
   console.log(
-    '✅ CMC Module API routes mounted (aggregator + projects + blueprint + specifications + stability + batch-records + dashboard)'
+    '✅ CMC Module API routes mounted (aggregator + projects + blueprint + specifications + stability + batch-records + workflows + collaboration + documents + dashboard)'
   );
 } catch (error) {
   console.error('❌ Failed to mount CMC Module routes:', error);
