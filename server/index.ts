@@ -7602,6 +7602,17 @@ async function startServer() {
   }
 
   // ──────────────────────────────────────────────────────────────────────────
+  // CONVERSATION OS — artifact split, retrieval, tool gate, scout + orchestration
+  // ──────────────────────────────────────────────────────────────────────────
+  try {
+    const conversationOsRoutes = await import('./routes/conversation-os');
+    app.use('/api/conversation-os', conversationOsRoutes.default);
+    console.log('✅ Conversation OS routes mounted at /api/conversation-os');
+  } catch (error) {
+    console.error('❌ Failed to mount conversation-os routes:', error);
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
   // WORKSPACE PROJECTS — GET /api/workspace/projects, POST /api/workspace/projects
   // Inline handlers to avoid dynamic import ordering issues.
   // ──────────────────────────────────────────────────────────────────────────
