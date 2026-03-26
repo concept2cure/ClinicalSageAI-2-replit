@@ -11,6 +11,8 @@ import {
   Plus, Trash2, Eye, Copy, Check, AlertTriangle,
   Lock, Unlock, RefreshCw, ChevronRight,
 } from 'lucide-react';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
 // ============================================================================
 // TYPES
@@ -63,6 +65,7 @@ export default function CommandCenter() {
   const [createdKey, setCreatedKey] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (activeTab === 'api-keys') fetchApiKeys();
@@ -71,11 +74,9 @@ export default function CommandCenter() {
 
   async function fetchApiKeys() {
     try {
-      const res = await fetch('/api/api-keys', { credentials: 'include' });
-      if (res.ok) {
-        const data = await res.json();
-        setApiKeys(data.keys || []);
-      }
+      const res = await apiRequest('GET', '/api/api-keys');
+      const data = await res.json();
+      setApiKeys(data.keys || []);
     } catch {
       // Silently fail — keys may not be set up yet
     }
@@ -83,11 +84,9 @@ export default function CommandCenter() {
 
   async function fetchUsage() {
     try {
-      const res = await fetch('/api/module-subscriptions/user-intelligence', { credentials: 'include' });
-      if (res.ok) {
-        const data = await res.json();
-        setUsage(data.usage || []);
-      }
+      const res = await apiRequest('GET', '/api/module-subscriptions/user-intelligence');
+      const data = await res.json();
+      setUsage(data.usage || []);
     } catch {
       // Silently fail
     }
@@ -97,30 +96,25 @@ export default function CommandCenter() {
     if (!newKeyName.trim()) return;
     setLoading(true);
     try {
-      const res = await fetch('/api/api-keys', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ name: newKeyName, scopes: newKeyScopes }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setCreatedKey(data.apiKey);
-        setNewKeyName('');
-        fetchApiKeys();
-      }
-    } catch {
-      // Handle error
+      const res = await apiRequest('POST', '/api/api-keys', { name: newKeyName, scopes: newKeyScopes });
+      const data = await res.json();
+      setCreatedKey(data.apiKey);
+      setNewKeyName('');
+      toast({ title: 'API Key Created', description: 'Your new API key has been generated.' });
+      fetchApiKeys();
+    } catch (err) {
+      toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to create API key', variant: 'destructive' });
     }
     setLoading(false);
   }
 
   async function revokeKey(keyId: number) {
     try {
-      await fetch(`/api/api-keys/${keyId}`, { method: 'DELETE', credentials: 'include' });
+      await apiRequest('DELETE', `/api/api-keys/${keyId}`);
+      toast({ title: 'Key Revoked', description: 'The API key has been revoked.' });
       fetchApiKeys();
-    } catch {
-      // Handle error
+    } catch (err) {
+      toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to revoke key', variant: 'destructive' });
     }
   }
 
@@ -230,8 +224,8 @@ function OverviewTab() {
 
   useEffect(() => {
     // Fetch API key count
-    fetch('/api/api-keys', { credentials: 'include' })
-      .then((r) => r.ok ? r.json() : null)
+    apiRequest('GET', '/api/api-keys')
+      .then((r) => r.json())
       .then((data) => {
         if (data?.keys) {
           const active = data.keys.filter((k: ApiKeyItem) => k.status === 'active');
@@ -246,8 +240,8 @@ function OverviewTab() {
       .catch(() => {});
 
     // Fetch usage summary
-    fetch('/api/module-subscriptions/user-intelligence', { credentials: 'include' })
-      .then((r) => r.ok ? r.json() : null)
+    apiRequest('GET', '/api/module-subscriptions/user-intelligence')
+      .then((r) => r.json())
       .then((data) => {
         if (data?.usage) {
           const total = data.usage.reduce((sum: number, u: UsageSummary) => sum + u.creditsUsed, 0);
@@ -257,8 +251,8 @@ function OverviewTab() {
       .catch(() => {});
 
     // Check public API health
-    fetch('/api/v1/health')
-      .then((r) => r.ok ? r.json() : null)
+    apiRequest('GET', '/api/v1/health')
+      .then((r) => r.json())
       .then((data) => {
         setServiceStatus((prev) =>
           prev.map((s) =>

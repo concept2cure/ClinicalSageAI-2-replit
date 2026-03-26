@@ -55,8 +55,8 @@ const DEFAULT_MODELS: ModelConfig[] = [
       'summarization',
       'general',
     ],
-    // Platform uses Anthropic Claude exclusively — OpenAI disabled
-    enabled: false,
+    // Enabled at registry level — buildModelRegistry() gates on API key presence
+    enabled: true,
   },
   {
     id: 'gpt-4o-mini',
@@ -67,8 +67,8 @@ const DEFAULT_MODELS: ModelConfig[] = [
     costPer1kInput: 0.00015,
     costPer1kOutput: 0.0006,
     capabilities: ['chat', 'general', 'summarization'],
-    // Platform uses Anthropic Claude exclusively — OpenAI disabled
-    enabled: false,
+    // Enabled at registry level — buildModelRegistry() gates on API key presence
+    enabled: true,
   },
   {
     id: 'claude-opus-4',
@@ -122,6 +122,17 @@ const DEFAULT_MODELS: ModelConfig[] = [
     enabled: true,
   },
   {
+    id: 'kimi-k2-0711',
+    provider: 'moonshot',
+    model: 'kimi-k2-0711-preview',
+    contextWindow: 131072,
+    qualityScore: 88,
+    costPer1kInput: 0.0006,
+    costPer1kOutput: 0.0018,
+    capabilities: ['chat', 'document_analysis', 'general', 'structured_output', 'code_generation'],
+    enabled: true,
+  },
+  {
     id: 'moonshot-v1-128k',
     provider: 'moonshot',
     model: 'moonshot-v1-128k',
@@ -130,8 +141,7 @@ const DEFAULT_MODELS: ModelConfig[] = [
     costPer1kInput: 0.0008,
     costPer1kOutput: 0.0008,
     capabilities: ['chat', 'document_analysis', 'general'],
-    // Disabled — platform uses Anthropic Claude exclusively
-    enabled: false, // Enable via KIMI_API_KEY or MOONSHOT_API_KEY
+    enabled: true,
   },
   {
     id: 'moonshot-v1-32k',
@@ -142,22 +152,22 @@ const DEFAULT_MODELS: ModelConfig[] = [
     costPer1kInput: 0.0004,
     costPer1kOutput: 0.0004,
     capabilities: ['chat', 'general'],
-    enabled: false,
+    enabled: true,
   },
 ];
 
 // Task → preferred provider order
-// Platform uses Anthropic Claude exclusively for all tasks
+// Anthropic Claude is primary; OpenAI is automatic fallback when Claude is unavailable
 const TASK_PROVIDER_PREFERENCES: Record<TaskType, ProviderName[]> = {
-  chat: ['anthropic'],
-  document_analysis: ['anthropic'],
-  document_drafting: ['anthropic'],
-  structured_output: ['anthropic'],
-  regulatory_review: ['anthropic'],
-  code_generation: ['anthropic'],
-  summarization: ['anthropic'],
-  embedding: ['anthropic'],
-  general: ['anthropic'],
+  chat: ['anthropic', 'openai', 'moonshot'],
+  document_analysis: ['anthropic', 'openai', 'moonshot'],
+  document_drafting: ['anthropic', 'openai', 'moonshot'],
+  structured_output: ['anthropic', 'openai', 'moonshot'],
+  regulatory_review: ['anthropic', 'openai', 'moonshot'],
+  code_generation: ['anthropic', 'openai', 'moonshot'],
+  summarization: ['anthropic', 'openai', 'moonshot'],
+  embedding: ['anthropic', 'openai'],
+  general: ['anthropic', 'openai', 'moonshot'],
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -165,21 +175,55 @@ const TASK_PROVIDER_PREFERENCES: Record<TaskType, ProviderName[]> = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const DETERMINISTIC_RESPONSES: Record<TaskType, string> = {
-  chat: 'This is a deterministic response for testing. The AI Gateway is operating in deterministic mode.',
+  chat:
+    '## AnA Response (Demo Mode)\n\n' +
+    "I'm AnA — your Audit & Narrative Assistant. I'm currently running in **demo mode** because no AI provider API key is configured.\n\n" +
+    'When connected to Claude, I can:\n' +
+    '- **[KNOWN]** Analyze your regulatory documents against ICH, FDA, and EMA requirements\n' +
+    '- **[KNOWN]** Detect contradictions, assumption drift, and cross-section inconsistencies\n' +
+    '- **[KNOWN]** Guide you through governed promotion (draft → review → approved → locked → submission-ready)\n' +
+    '- **[INFERRED]** Suggest corrections based on body-specific expectations\n\n' +
+    'To enable live AI responses, set `ANTHROPIC_API_KEY` in your `.env` file.\n\n' +
+    '*Evidence discipline: Every claim is tagged [KNOWN], [INFERRED], or [MISSING].*',
   document_analysis:
-    '## Document Analysis (Deterministic Mode)\n\nThe document has been analyzed. Key findings:\n- Section 1: Compliant\n- Section 2: Requires review\n- Section 3: Compliant\n\nOverall risk: Low.',
+    '## Document Analysis (Demo Mode)\n\n' +
+    '**[KNOWN]** The document structure follows eCTD Module format.\n\n' +
+    '**Findings:**\n' +
+    '- **[KNOWN]** Section headers present and correctly numbered\n' +
+    '- **[INFERRED]** Content completeness appears adequate for initial review\n' +
+    '- **[MISSING]** Cross-references to supporting data not verified (requires live AI)\n\n' +
+    '**Recommendation:** Enable live AI mode for full regulatory analysis with body-specific gap detection.',
   document_drafting:
-    '## Document Draft (Deterministic Mode)\n\nThis is a placeholder document draft generated in deterministic mode. Enable live AI to generate real regulatory documents.',
-  structured_output: '{"result": "deterministic", "status": "success", "data": {}}',
+    '## Document Draft (Demo Mode)\n\n' +
+    '**[KNOWN]** This is a placeholder draft generated in demo mode.\n\n' +
+    'When connected to Claude, AnA generates regulatory-grade document drafts with:\n' +
+    '- Body-specific language (FDA/EMA/PMDA)\n' +
+    '- Evidence-backed claims with citation tracking\n' +
+    '- Governed content that flows through the approval pipeline\n\n' +
+    'Set `ANTHROPIC_API_KEY` in `.env` to enable real document drafting.',
+  structured_output:
+    '{"result": "demo_mode", "status": "success", "message": "Deterministic mode active. Set ANTHROPIC_API_KEY to enable live AI.", "data": {}}',
   regulatory_review:
-    '## Regulatory Review (Deterministic Mode)\n\n**Compliance Status**: Passed\n\n- 21 CFR Part 11: Compliant\n- ICH E6(R2): Compliant\n- FDA 510(k) Requirements: Met\n\nNo critical findings identified.',
+    '## Regulatory Review (Demo Mode)\n\n' +
+    '**[KNOWN]** AnA is operating in demo mode — no live AI analysis performed.\n\n' +
+    '**When connected, AnA provides:**\n' +
+    '- **Compliance check** against 21 CFR Part 11, ICH E6(R2), EU MDR, ISO 14155\n' +
+    '- **Gap detection** with body-specific expectations (FDA, EMA, PMDA, MHRA)\n' +
+    '- **Risk ranking** with severity classification (critical → major → minor)\n' +
+    '- **Correction drafts** with governed execution paths\n' +
+    '- **Contradiction detection** with overlay-aware authority escalation\n\n' +
+    '**[MISSING]** Live regulatory analysis requires `ANTHROPIC_API_KEY` in `.env`.',
   code_generation:
-    '// Deterministic mode — no code generated\nfunction placeholder() {\n  return "deterministic";\n}',
+    '// Demo mode — set ANTHROPIC_API_KEY for live code generation\nfunction demoMode() {\n  return { status: "demo", message: "AI provider not configured" };\n}',
   summarization:
-    'Summary (Deterministic Mode): The content covers regulatory requirements for medical device submissions. Key points include substantial equivalence demonstration, performance testing requirements, and labeling standards.',
+    '**Summary (Demo Mode):** [KNOWN] This content relates to regulatory submissions. ' +
+    '[INFERRED] The document appears to follow standard eCTD formatting. ' +
+    '[MISSING] Detailed analysis requires live AI — set ANTHROPIC_API_KEY in .env.',
   embedding: '[]',
   general:
-    'This is a deterministic response from the AI Gateway. Set DETERMINISTIC_MODE=false to enable live AI responses.',
+    "**AnA (Demo Mode):** I'm running without an AI provider. " +
+    'Set `ANTHROPIC_API_KEY` in your `.env` file to enable full regulatory intelligence. ' +
+    'All governance features (promotion, contradictions, readiness) work independently of the AI provider.',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -239,10 +283,13 @@ export class AIGateway {
       return this.buildDeterministicResponse(request, requestId, startTime);
     }
 
-    // Select model
+    // Select model — fall back to deterministic if no providers available
     const selectedModel = this.selectModel(request, strategy);
     if (!selectedModel) {
-      throw new GatewayNoProviderError('No available provider for this request');
+      console.warn(
+        '[AI Gateway] No providers available — falling back to demo mode. Set ANTHROPIC_API_KEY in .env to enable live AI.'
+      );
+      return this.buildDeterministicResponse(request, requestId, startTime);
     }
 
     // Execute with fallback
@@ -909,8 +956,8 @@ export class AIGateway {
     const content = DETERMINISTIC_RESPONSES[request.taskType] || DETERMINISTIC_RESPONSES.general;
     return {
       content,
-      provider: 'openai',
-      model: 'deterministic',
+      provider: 'anthropic',
+      model: 'demo-mode',
       usage: {
         inputTokens: 0,
         outputTokens: content.split(' ').length,
@@ -1082,8 +1129,8 @@ export class AIGateway {
           name: 'moonshot',
           enabled: !!moonshotKey,
           apiKey: moonshotKey,
-          baseUrl: 'https://api.moonshot.cn/v1',
-          defaultModel: 'moonshot-v1-32k',
+          baseUrl: 'https://api.moonshot.ai/v1',
+          defaultModel: 'kimi-k2-0711-preview',
           models: [],
         },
       ],
@@ -1138,7 +1185,7 @@ export class AIGateway {
       try {
         this.moonshotClient = new OpenAI({
           apiKey: moonshotConfig.apiKey,
-          baseURL: moonshotConfig.baseUrl || 'https://api.moonshot.cn/v1',
+          baseURL: moonshotConfig.baseUrl || 'https://api.moonshot.ai/v1',
         });
         console.log('  ✅ Moonshot/Kimi provider ready');
       } catch (e: any) {

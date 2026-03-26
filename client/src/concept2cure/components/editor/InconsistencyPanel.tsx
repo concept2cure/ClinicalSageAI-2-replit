@@ -21,6 +21,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -44,13 +45,6 @@ interface InconsistencyPanelProps {
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
 
 function getSeverityColor(severity: string) {
   switch (severity) {
@@ -112,15 +106,11 @@ const InconsistencyPanel: React.FC<InconsistencyPanelProps> = ({
 
     setLoading(true);
     try {
-      const res = await fetch('/api/concept2cure/ai/check-inconsistency', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-        body: JSON.stringify({
+      const res = await apiRequest('POST', '/api/concept2cure/ai/check-inconsistency', {
           changedText: plainText.slice(0, 2000), // First 2000 chars
           changedSectionTitle: activeArtifactTitle,
           projectId,
           artifactId: activeArtifactId,
-        }),
       });
       if (res.ok) {
         const payload = await res.json();

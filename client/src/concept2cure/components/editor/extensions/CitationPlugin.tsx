@@ -7,6 +7,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { apiRequest } from '@/lib/queryClient';
 import { Extension, Mark, mergeAttributes, type Editor } from '@tiptap/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
@@ -39,15 +40,6 @@ interface CitationSearchPanelProps {
   projectId: string | number;
 }
 
-// ── Auth helper ──────────────────────────────────────────────────────────────
-
-function getAuthToken(): string | null {
-  return (
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token')
-  );
-}
-
 // ── API ──────────────────────────────────────────────────────────────────────
 
 async function searchCitations(
@@ -55,15 +47,9 @@ async function searchCitations(
   projectId: string | number,
   limit = 10
 ): Promise<CitationSearchResponse> {
-  const token = getAuthToken();
-  const response = await fetch('/api/concept2cure/ai/citation-search', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: JSON.stringify({ query, projectId, limit }),
-  });
+  const response = await apiRequest('POST', '/api/concept2cure/ai/citation-search',
+    { query, projectId, limit }
+  );
 
   if (!response.ok) {
     throw new Error(`Citation search failed: ${response.statusText}`);

@@ -48,11 +48,12 @@ class RealTimeValidationService extends EventEmitter {
   private debounceTimers: Map<string, NodeJS.Timeout>;
   private regulatoryTerms: Set<string>;
   private validationRules: Map<string, any> = new Map();
+  private ai = ai;
 
   constructor() {
     super();
 
-    // Initialize OpenAI client
+    // Initialize validation cache
     this.validationCache = new Map();
     this.debounceTimers = new Map();
 

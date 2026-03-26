@@ -317,7 +317,7 @@ router.get('/observation-terms', async (req, res) => {
 // ── Chat endpoint — connects AnaPersistentPanel to the AI gateway ───────────
 router.post('/chat', async (req, res) => {
   try {
-    const { message, chatMode, context, conversationHistory } = req.body || {};
+    const { message, chatMode, context, conversationHistory, preferred_provider } = req.body || {};
     if (!message || typeof message !== 'string') {
       return res.status(400).json({ error: 'Message is required' });
     }
@@ -342,6 +342,8 @@ ${context.activeDocumentExcerpt ? `\nDocument excerpt:\n"${context.activeDocumen
 
     // Try to use the AI gateway
     let aiResponse: string;
+    let aiProvider: string | undefined;
+    let aiModel: string | undefined;
     try {
       const { getGateway } = await import('../services/ai-gateway/index.js');
       const gateway = getGateway();
@@ -361,13 +363,24 @@ ${context.activeDocumentExcerpt ? `\nDocument excerpt:\n"${context.activeDocumen
 
       messages.push({ role: 'user', content: message });
 
-      const result = await gateway.chat({
+      // Validate preferred_provider
+      const VALID_PROVIDERS = ['anthropic', 'openai', 'moonshot'] as const;
+      const validProvider =
+        preferred_provider && VALID_PROVIDERS.includes(preferred_provider)
+          ? (preferred_provider as (typeof VALID_PROVIDERS)[number])
+          : undefined;
+
+      const result = await gateway.route({
+        taskType: 'chat',
         messages: messages as any,
         maxTokens: 4096,
         temperature: 0.7,
+        ...(validProvider ? { provider: validProvider } : {}),
       });
 
       aiResponse = result.content || 'I can help with that. Could you share more details?';
+      aiProvider = result.provider;
+      aiModel = result.model;
     } catch (gatewayError) {
       console.error('[AnA Chat] AI Gateway error:', gatewayError);
       aiResponse = `I understand you're asking about "${message.slice(0, 100)}". While I'm having trouble connecting to my AI engine right now, here's what I can tell you:\n\n- For regulatory guidance, consult the relevant FDA guidance documents\n- For document drafting, start with the CTD structure appropriate for your submission type\n- For compliance questions, reference 21 CFR Part 11 and ICH guidelines\n\nPlease try again in a moment, or use the AI actions in the editor toolbar for document-specific assistance.`;
@@ -376,6 +389,8 @@ ${context.activeDocumentExcerpt ? `\nDocument excerpt:\n"${context.activeDocumen
     res.json({
       success: true,
       response: aiResponse,
+      provider: aiProvider,
+      model: aiModel,
       chatMode: chatMode || 'standard',
       context: {
         screen: context?.screen,
@@ -387,7 +402,7 @@ ${context.activeDocumentExcerpt ? `\nDocument excerpt:\n"${context.activeDocumen
     console.error('[AnA Chat] Error:', error);
     res.status(500).json({
       error: 'Chat service temporarily unavailable',
-      response: 'I\'m having trouble connecting right now. Please try again in a moment.',
+      response: "I'm having trouble connecting right now. Please try again in a moment.",
     });
   }
 });

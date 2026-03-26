@@ -97,6 +97,53 @@ const zipSchema = exportSchema.extend({
 const sanitizeFilename = (value: string) =>
   value.replace(/[^a-zA-Z0-9._-]/g, '_').replace(/_+/g, '_');
 
+const exportGovernanceSchema = z.object({
+  aiGenerated: z.boolean().default(true),
+  humanReviewApproved: z.boolean().default(false),
+  reviewerName: z.string().trim().min(1).max(200).optional(),
+  reviewerRole: z.string().trim().min(1).max(200).optional(),
+  reviewTimestamp: z.string().datetime().optional(),
+});
+
+function shouldEnforceExportReviewGate(): boolean {
+  if (process.env.CONCEPT2CURE_REQUIRE_EXPORT_HUMAN_REVIEW === 'true') return true;
+  if (process.env.CONCEPT2CURE_REQUIRE_EXPORT_HUMAN_REVIEW === 'false') return false;
+  return process.env.NODE_ENV === 'production';
+}
+
+function applyGovernanceHeaders(res: Response, governance: z.infer<typeof exportGovernanceSchema>) {
+  res.setHeader('X-Concept2Cure-AI-Generated', String(governance.aiGenerated));
+  res.setHeader('X-Concept2Cure-Human-Review-Approved', String(governance.humanReviewApproved));
+  res.setHeader('X-Concept2Cure-Review-Required', 'true');
+  res.setHeader('X-Concept2Cure-Review-Notice', 'Human review required for regulated use');
+  if (governance.reviewerName) {
+    res.setHeader('X-Concept2Cure-Reviewer', encodeURIComponent(governance.reviewerName));
+  }
+  if (governance.reviewTimestamp) {
+    res.setHeader('X-Concept2Cure-Review-Timestamp', governance.reviewTimestamp);
+  }
+}
+
+function validateExportGovernance(req: Request, res: Response) {
+  const parsed = exportGovernanceSchema.safeParse(req.body?.governance ?? {});
+  if (!parsed.success) {
+    res.status(400).json({ error: 'Invalid governance payload', details: parsed.error.flatten() });
+    return null;
+  }
+
+  const governance = parsed.data;
+  if (shouldEnforceExportReviewGate() && !governance.humanReviewApproved) {
+    res.status(403).json({
+      error: 'HUMAN_REVIEW_REQUIRED',
+      message: 'Human review approval is required before export in this environment',
+    });
+    return null;
+  }
+
+  applyGovernanceHeaders(res, governance);
+  return governance;
+}
+
 // ── POST /pdf ──────────────────────────────────────────────────────────────────
 router.post('/pdf', authMiddleware, requireEditorAccess, async (req: Request, res: Response) => {
   try {
@@ -108,6 +155,7 @@ router.post('/pdf', authMiddleware, requireEditorAccess, async (req: Request, re
     }
 
     const { docType, content, meta } = validation.data;
+    if (!validateExportGovernance(req, res)) return;
 
     // Validate content has substantive nodes (not just empty paragraphs)
     const substantiveNodes = content.content.filter(
@@ -155,6 +203,7 @@ router.post('/docx', authMiddleware, requireEditorAccess, async (req: Request, r
     }
 
     const { docType, content, meta } = validation.data;
+    if (!validateExportGovernance(req, res)) return;
 
     // Validate content has substantive nodes
     const substantiveNodes = content.content.filter(
@@ -205,6 +254,7 @@ router.post('/zip', authMiddleware, requireEditorAccess, async (req: Request, re
     }
 
     const { docType, content, meta, attachments = [] } = validation.data;
+    if (!validateExportGovernance(req, res)) return;
     const title = sanitizeFilename(meta?.title || meta?.id || docType);
 
     // Validate content has substantive nodes before starting ZIP stream
@@ -361,7 +411,6 @@ router.get('/mock/:docType/zip', async (req: Request, res: Response) => {
             title: mockDoc.title,
             version: mockDoc.version,
             exportedAt: new Date().toISOString(),
-            generator: 'Concept2Cure.RI CERV2 Mock Export',
             generator: 'Concept2Cure CERV2 Mock Export',
           },
           null,

@@ -11,6 +11,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { apiRequest } from '@/lib/queryClient';
 import {
   FileText,
   Hash,
@@ -42,14 +43,6 @@ import {
   ShieldCheck,
   XCircle,
 } from 'lucide-react';
-
-// ── Auth helper ──────────────────────────────────────────────────────────────
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
 
 // ── Types ────────────────────────────────────────────────────────────────────
 interface ProvenanceData {
@@ -280,9 +273,8 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(
-        `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/provenance`,
-        { headers: getAuthHeaders() }
+      const res = await apiRequest('GET',
+        `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/provenance`
       );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const payload = await res.json();
@@ -322,9 +314,8 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
   const fetchComments = useCallback(async () => {
     setCommentsLoading(true);
     try {
-      const res = await fetch(
-        `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/comments`,
-        { headers: getAuthHeaders() }
+      const res = await apiRequest('GET',
+        `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/comments`
       );
       if (res.ok) {
         const payload = await res.json();
@@ -347,13 +338,9 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
     if (!newComment.trim()) return;
     setAddingComment(true);
     try {
-      const res = await fetch(
+      const res = await apiRequest('POST',
         `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/comments`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-          body: JSON.stringify({ comment: newComment.trim() }),
-        }
+        { comment: newComment.trim() }
       );
       if (res.ok) {
         setNewComment('');
@@ -369,9 +356,8 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
   const handleResolveComment = useCallback(
     async (commentId: string) => {
       try {
-        const res = await fetch(
-          `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/comments/${commentId}/resolve`,
-          { method: 'PUT', headers: getAuthHeaders() }
+        const res = await apiRequest('PUT',
+          `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/comments/${commentId}/resolve`
         );
         if (res.ok) fetchComments();
       } catch {
@@ -393,9 +379,8 @@ const DocumentProvenancePanel: React.FC<DocumentProvenancePanelProps> = ({
   const handleVerifyIntegrity = useCallback(async () => {
     setVerifyingIntegrity(true);
     try {
-      const res = await fetch(
-        `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/verify-integrity`,
-        { headers: getAuthHeaders() }
+      const res = await apiRequest('GET',
+        `/api/concept2cure/projects/${projectId}/artifacts/${artifactId}/verify-integrity`
       );
       if (res.ok) {
         const payload = await res.json();

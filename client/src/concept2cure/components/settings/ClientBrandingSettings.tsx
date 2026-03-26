@@ -13,6 +13,7 @@
 
 import React, { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
 import {
   Upload,
@@ -91,7 +92,7 @@ const ClientBrandingSettings: React.FC = () => {
   const { data: branding, isLoading: brandingLoading } = useQuery<BrandingSettings>({
     queryKey: ['client-branding'],
     queryFn: async () => {
-      const res = await fetch('/api/client-branding/settings');
+      const res = await apiRequest('GET', '/api/client-branding/settings');
       if (!res.ok) throw new Error('Failed to fetch branding');
       return res.json();
     },
@@ -101,7 +102,7 @@ const ClientBrandingSettings: React.FC = () => {
   const { data: templates = [], isLoading: templatesLoading } = useQuery<ClientTemplate[]>({
     queryKey: ['client-templates'],
     queryFn: async () => {
-      const res = await fetch('/api/client-branding/templates');
+      const res = await apiRequest('GET', '/api/client-branding/templates');
       if (!res.ok) return [];
       return res.json();
     },
@@ -110,11 +111,7 @@ const ClientBrandingSettings: React.FC = () => {
   // Update branding
   const updateBranding = useMutation({
     mutationFn: async (data: Partial<BrandingSettings>) => {
-      const res = await fetch('/api/client-branding/settings', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+      const res = await apiRequest('PATCH', '/api/client-branding/settings', data);
       return res.json();
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['client-branding'] }),
@@ -127,13 +124,9 @@ const ClientBrandingSettings: React.FC = () => {
         const reader = new FileReader();
         reader.onload = async () => {
           try {
-            const res = await fetch('/api/client-branding/upload-logo', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
+            const res = await apiRequest('POST', '/api/client-branding/upload-logo', {
                 logoBase64: reader.result,
                 fileName: file.name,
-              }),
             });
             if (!res.ok) throw new Error('Upload failed');
             resolve();
@@ -150,11 +143,7 @@ const ClientBrandingSettings: React.FC = () => {
   // Create template
   const createTemplate = useMutation({
     mutationFn: async (data: Record<string, unknown>) => {
-      const res = await fetch('/api/client-branding/templates', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+      const res = await apiRequest('POST', '/api/client-branding/templates', data);
       return res.json();
     },
     onSuccess: () => {
@@ -166,7 +155,7 @@ const ClientBrandingSettings: React.FC = () => {
   // Delete template
   const deleteTemplate = useMutation({
     mutationFn: async (id: number) => {
-      await fetch(`/api/client-branding/templates/${id}`, { method: 'DELETE' });
+      await apiRequest('DELETE', `/api/client-branding/templates/${id}`);
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['client-templates'] }),
   });

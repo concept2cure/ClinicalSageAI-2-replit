@@ -65,6 +65,64 @@ export const queryKeys = {
     compliance: () => ['concept2cure', 'compliance'] as const,
   },
 
+  // ── Control Plane ─────────────────────────────────────────────────────────
+  controlPlane: {
+    apiKeys: () => ['concept2cure', 'control-plane', 'api-keys'] as const,
+    usage: () => ['concept2cure', 'control-plane', 'usage'] as const,
+    health: () => ['concept2cure', 'control-plane', 'health'] as const,
+  },
+
+  // ── Settings ─────────────────────────────────────────────────────────────
+  settings: {
+    profile: () => ['concept2cure', 'settings', 'profile'] as const,
+    notifications: () => ['concept2cure', 'settings', 'notifications'] as const,
+  },
+
+  // ── Decision Lineage ─────────────────────────────────────────────────────
+  decisionLineage: {
+    graph: (entityType: string, entityId: number, organizationId?: number) =>
+      ['concept2cure', 'decision-lineage', entityType, entityId, organizationId] as const,
+    chainVerification: () => ['concept2cure', 'decision-lineage', 'chain'] as const,
+  },
+
+  // ── Proof ────────────────────────────────────────────────────────────────
+  proof: {
+    certificate: (workflowRunId: string) =>
+      ['concept2cure', 'proof', 'certificate', workflowRunId] as const,
+  },
+
+  // ── Biologics ────────────────────────────────────────────────────────────
+  biologics: {
+    pathway: (params: Record<string, string>) =>
+      ['concept2cure', 'biologics', 'pathway', params] as const,
+    expedited: (agency: string, params: Record<string, string>) =>
+      ['concept2cure', 'biologics', 'expedited', agency, params] as const,
+  },
+
+  // ── Reports ──────────────────────────────────────────────────────────────
+  reports: {
+    catalog: () => ['concept2cure', 'reports', 'catalog'] as const,
+    list: () => ['concept2cure', 'reports', 'list'] as const,
+  },
+
+  // ── CMC ───────────────────────────────────────────────────────────────────
+  cmc: {
+    data: (projectId: number | string) =>
+      ['concept2cure', 'cmc', projectId] as const,
+  },
+
+  // ── Branding ─────────────────────────────────────────────────────────────
+  branding: {
+    settings: () => ['concept2cure', 'branding', 'settings'] as const,
+    templates: () => ['concept2cure', 'branding', 'templates'] as const,
+  },
+
+  // ── IVDR ──────────────────────────────────────────────────────────────────
+  ivdr: {
+    packReadiness: (projectId: number | string, packType: string) =>
+      ['concept2cure', 'ivdr', 'pack-readiness', projectId, packType] as const,
+  },
+
   // ── Intelligence Layer ────────────────────────────────────────────────────
   intelligence: {
     dashboard: (projectId: number | string) =>

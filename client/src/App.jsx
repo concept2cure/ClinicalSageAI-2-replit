@@ -6,10 +6,10 @@ import { useState, useEffect, lazy, Suspense } from 'react';
 import { AuthProvider, useAuth } from './portal-v2/services/authService';
 import queryClient from './lib/queryClient';
 import { TenantProvider } from './contexts/TenantContext.tsx';
-import { LumenAiAssistantProvider } from './contexts/LumenAiAssistantContext';
+import { AnAAssistantProvider } from './contexts/AnAAssistantContext';
 import { FileProvider } from './contexts/FileContext.jsx';
 import { EvidenceGraphProvider } from './contexts/EvidenceGraphContext';
-import { LumenAiAssistantContainer } from '@/components/ai/LumenAiAssistantContainer';
+import { AnAAssistantContainer } from '@/components/ai/AnAAssistantContainer';
 import { memoryOptimizer } from './utils/memoryOptimizer';
 
 // Initialize memory optimization
@@ -491,6 +491,9 @@ function MainApp() {
                 </Suspense>
               )}
             </Route>
+            <Route path="/cmc-module">
+              {() => <Redirect to="/cmc-wizard" />}
+            </Route>
             <Route path="/csr-analyzer">
               {() => (
                 <Suspense fallback={<LoadingPage />}>
@@ -659,13 +662,16 @@ function MainApp() {
             </Route>
             {/* CSR Detail page route */}
             <Route path="/cmc">
+              {() => <Redirect to="/cmc-wizard" />}
+            </Route>
+            {/* Legacy CMC Module page route */}
+            <Route path="/cmc-classic">
               {() => (
                 <Suspense fallback={<LoadingPage />}>
                   <CMCPage />
                 </Suspense>
               )}
             </Route>
-            {/* CMC Module page route */}
             {/* IND Wizard route DELETED per user request */} {/* IND Wizard page route */}
             {/* Old CER route hidden — superseded by CERV2Page (Wave 2) */}
             <Route path="/cerv2">
@@ -933,7 +939,7 @@ function App() {
           <AuthProvider>
             <TenantProvider>
               <EvidenceGraphProvider>
-                <LumenAiAssistantProvider>
+                <AnAAssistantProvider>
                   <Switch>
                     {/* Unified auth routes - redirect to Concept2Cure login */}
                     <Route path="/sign-in">{() => <Redirect to="/concept2cure/login" />}</Route>
@@ -944,8 +950,8 @@ function App() {
                     <Route>{() => <AppContent />}</Route>
                   </Switch>
                   {/* Global AI Assistant */}
-                  <LumenAiAssistantContainer />
-                </LumenAiAssistantProvider>
+                  <AnAAssistantContainer />
+                </AnAAssistantProvider>
               </EvidenceGraphProvider>
             </TenantProvider>
           </AuthProvider>

@@ -260,16 +260,21 @@ async function buildCandidates(subId: string): Promise<Card[]> {
         .slice(0, 8)
         .map((c, i) => `${i + 1}. ${c.title} | Why: ${c.rationale}`)
         .join('\n');
-      const text = await aiClient.complete([
+      const response = await ai.chat({
+        model: 'gpt-4o',
+        messages: [
           {
             role: 'system',
             content:
               "You are a senior CMC regulatory advisor. Rewrite each card's 'Why' to be crisp and executive-ready. Keep one sentence per item. Return the same list numbered 1..N with only the rewritten sentences.",
           },
           { role: 'user', content: msg },
-        ], { temperature: 0.2, callerModule: 'playbook/buildCandidates' });
-      const lines = (text || '').split('\n').filter(Boolean);
-      lines.forEach((line, idx) => {
+        ],
+        temperature: 0.2,
+      });
+      const text = response.content || '';
+      const lines = text.split('\n').filter(Boolean);
+      lines.forEach((line: string, idx: number) => {
         const t = line.replace(/^\d+\.\s*/, '').trim();
         if (cards[idx] && t) cards[idx].rationale = t;
       });

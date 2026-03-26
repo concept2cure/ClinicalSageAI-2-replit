@@ -57,11 +57,7 @@ function buildLcsTable(a: string[], b: string[]): number[][] {
 /**
  * Back-track through the LCS table to produce diff chunks.
  */
-function backtrackDiff(
-  table: number[][],
-  a: string[],
-  b: string[]
-): DiffChunk[] {
+function backtrackDiff(table: number[][], a: string[], b: string[]): DiffChunk[] {
   const chunks: DiffChunk[] = [];
   let i = a.length;
   let j = b.length;
@@ -108,8 +104,8 @@ function backtrackDiff(
  * Compute a line-by-line diff between two strings.
  */
 export function diffText(oldText: string, newText: string): DiffResult {
-  const aLines = oldText.split('\n');
-  const bLines = newText.split('\n');
+  const aLines = oldText === '' ? [] : oldText.split('\n');
+  const bLines = newText === '' ? [] : newText.split('\n');
 
   const table = buildLcsTable(aLines, bLines);
   const changes = backtrackDiff(table, aLines, bLines);
@@ -150,10 +146,7 @@ function tryParseJson(content: string): Record<string, unknown> | null {
  * For structured JSON content, diff each top-level key separately so that
  * section-based documents produce per-section diffs.
  */
-export function diffStructured(
-  oldContent: string,
-  newContent: string
-): SectionDiffResult[] {
+export function diffStructured(oldContent: string, newContent: string): SectionDiffResult[] {
   const oldObj = tryParseJson(oldContent);
   const newObj = tryParseJson(newContent);
 
@@ -214,10 +207,7 @@ export async function listVersions(documentId: number, organizationId: number) {
     .from(documentVersions)
     .innerJoin(documents, eq(documents.id, documentVersions.documentId))
     .where(
-      and(
-        eq(documentVersions.documentId, documentId),
-        eq(documents.organizationId, organizationId)
-      )
+      and(eq(documentVersions.documentId, documentId), eq(documents.organizationId, organizationId))
     )
     .orderBy(desc(documentVersions.createdAt));
 
@@ -261,10 +251,7 @@ export async function compareVersions(
     return row;
   };
 
-  const [verA, verB] = await Promise.all([
-    fetchVersion(versionA),
-    fetchVersion(versionB),
-  ]);
+  const [verA, verB] = await Promise.all([fetchVersion(versionA), fetchVersion(versionB)]);
 
   const oldContent = verA.content || '';
   const newContent = verB.content || '';

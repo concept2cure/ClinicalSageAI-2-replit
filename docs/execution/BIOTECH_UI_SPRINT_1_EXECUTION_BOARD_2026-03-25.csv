@@ -1,0 +1,10 @@
+issue_type,epic,summary,description,owner,priority,acceptance_criteria,depends_on,status
+Epic,E1,Canonical Submission Journey,"Define stage-gated submission progression and unified status language",Product,P0,"Stage gates, owners, SLA, blocker taxonomy approved",,Ready
+Story,E1,E1-S1 Stage Gate Contract,"Document entry/exit rules for intake,drafting,review,export",Product,P0,"Each stage has entry/exit criteria and blocker reason codes",,Ready
+Story,E1,E1-S2 Shared Status Dictionary,"Canonical status terms across Dossier/Documents/Review/Submissions",Product,P0,"Published status dictionary mapped from existing labels",E1-S1,Ready
+Epic,E2,Universal Traceability,"Define single pattern for source lineage access",Design+Product,P0,"Any claim/table/section has defined lineage access requirements",E1-S2,Ready
+Story,E2,E2-S1 Global Evidence Access Pattern,"Interaction + metadata contract for lineage view",Design,P0,"Source,timestamp,contributor,version metadata required",E1-S2,Ready
+Story,E2,E2-S2 Parity Checklist,"Traceability parity checklist against market expectations",Product Ops,P0,"Checklist approved by RA + QA",E2-S1,Ready
+Story,E3,E3-S1 Reviewer Assignment and SLA Model,"Reviewer owner, deadline, state and approval stamp requirements",QA+Product,P1,"Every review item includes owner, deadline, and approval stamp",E1-S2,Ready
+Story,E4,E4-S1 Preflight Check Matrix,"Mandatory pass/fail checks before export sign-off",RA+Product,P1,"Completeness, compliance, signatures, evidence coverage checks defined",E1-S1,Ready
+Task,E0,T0 KPI Baseline Setup,"Assign KPI owners and define baseline query/dashboard specs",Analytics,P0,"Owners + baseline method published for 5 KPIs",,Ready

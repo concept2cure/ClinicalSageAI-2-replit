@@ -28,6 +28,7 @@ import {
 } from '../services/kernel-adaptive-policy.js';
 import { createHash } from 'crypto';
 import { interceptChatResponse } from '../services/intelligence/rim-interceptors.js';
+import { buildMemoryContextForChat } from '../services/memory-context-assembler.js';
 
 const router = Router();
 
@@ -186,7 +187,7 @@ function normalizeBody(req: Request) {
 const sendMessageHandler = async (req: Request, res: Response) => {
   normalizeBody(req);
   try {
-    const { message, thread_id, file_id, system_prompt, project_id } = req.body;
+    const { message, thread_id, file_id, system_prompt, project_id, preferred_provider } = req.body;
 
     if (!message || typeof message !== 'string') {
       return res.status(400).json({
@@ -250,8 +251,31 @@ const sendMessageHandler = async (req: Request, res: Response) => {
           `INSERT INTO ai_messages (thread_id, role, content) VALUES ($1, 'user', $2)`,
           [threadId, message]
         );
+        // Update thread activity timestamp for sort ordering
+        await pool
+          .query(`UPDATE ai_threads SET updated_at = NOW() WHERE id = $1`, [threadId])
+          .catch(() => {}); // Non-blocking
       } catch (e: any) {
         if (e?.code !== '42P01') console.warn('[AnA] ai_messages insert failed:', e.message);
+      }
+    }
+
+    // ── STEP 3a: AUTO-GENERATE THREAD TITLE FROM FIRST MESSAGE ──────────
+    if (previousMessages.length === 0 && message) {
+      try {
+        // Generate a concise title from the first message (no AI call needed)
+        const rawTitle = message.replace(/^\/\w+\s*/, '').trim(); // Strip slash commands
+        const title =
+          rawTitle.length > 60
+            ? rawTitle.slice(0, 57).replace(/\s+\S*$/, '') + '...'
+            : rawTitle || 'New conversation';
+        await pool.query(`UPDATE ai_threads SET title = $1, updated_at = NOW() WHERE id = $2`, [
+          title,
+          threadId,
+        ]);
+      } catch (e: any) {
+        // Non-blocking — title generation failure doesn't break chat
+        if (e?.code !== '42P01') console.warn('[AnA] Thread title update failed:', e.message);
       }
     }
 
@@ -361,6 +385,9 @@ const sendMessageHandler = async (req: Request, res: Response) => {
     // If we have retrieved evidence, inject it into the system prompt so
     // the model can ground its answer and cite by [SRC-n] reference.
     let evidenceBlock = '';
+    let memoryAtomCount = 0;
+    let memoryBlockChars = 0;
+    let memoryDiagnostics: Record<string, unknown> | null = null;
     if (sources.length > 0) {
       evidenceBlock =
         '\n\n--- RETRIEVED EVIDENCE (cite as [SRC-n]) ---\n' +
@@ -397,10 +424,30 @@ const sendMessageHandler = async (req: Request, res: Response) => {
         .filter((m: any) => m.role === 'user' || m.role === 'assistant')
         .map((m: any) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
 
+      // Pre-fetch decision context for AnA explanation grounding (non-blocking)
+      let decisionContext: any[] = [];
+      if (project_id) {
+        try {
+          const { decisionLifecycleService } =
+            await import('../services/decision-lifecycle-service.js');
+          decisionContext = decisionLifecycleService.getDecisionContext(String(project_id), {
+            limit: 5,
+          });
+        } catch {
+          /* non-blocking */
+        }
+      }
+
       // Run the orchestrator for intent detection, deficiency context, and continuity
       const orchestratorResult = orchestrate({
         message,
         conversationHistory,
+        authoringContext: project_id
+          ? {
+              projectId: String(project_id),
+              _decisionContext: decisionContext,
+            }
+          : undefined,
       });
 
       console.log(
@@ -411,7 +458,20 @@ const sendMessageHandler = async (req: Request, res: Response) => {
 
       // Use the orchestrator's enriched system prompt instead of the basic one
       const basePrompt = system_prompt || orchestratorResult.systemPrompt;
-      const systemPrompt = intelligencePrefix + basePrompt + evidenceBlock;
+
+      const { memoryBlock, atoms, diagnostics } = await buildMemoryContextForChat({
+        threadId,
+        organizationId: numericOrgId || undefined,
+        projectId: project_id || undefined,
+        query: message,
+        limitPerLayer: 4,
+        maxChars: 3500,
+      });
+      memoryAtomCount = atoms.length;
+      memoryBlockChars = memoryBlock.length;
+      memoryDiagnostics = diagnostics;
+
+      const systemPrompt = intelligencePrefix + basePrompt + memoryBlock + evidenceBlock;
 
       const gwMessages = [
         { role: 'system' as const, content: systemPrompt },
@@ -441,6 +501,13 @@ const sendMessageHandler = async (req: Request, res: Response) => {
       });
       const selectedStrategy = policyHint?.preferredStrategy || routingPlan.strategy;
 
+      // Validate preferred_provider if provided
+      const VALID_PROVIDERS = ['anthropic', 'openai', 'moonshot'] as const;
+      const validatedChatProvider =
+        preferred_provider && VALID_PROVIDERS.includes(preferred_provider)
+          ? (preferred_provider as (typeof VALID_PROVIDERS)[number])
+          : undefined;
+
       const gwResponse: GatewayResponse = await gw.route({
         taskType: routingPlan.taskType,
         messages: gwMessages,
@@ -450,6 +517,7 @@ const sendMessageHandler = async (req: Request, res: Response) => {
         organizationId: numericOrgId ?? undefined,
         userId: numericUserId,
         strategy: selectedStrategy,
+        ...(validatedChatProvider ? { provider: validatedChatProvider } : {}),
       });
 
       assistantMessage =
@@ -784,9 +852,11 @@ const sendMessageHandler = async (req: Request, res: Response) => {
     // ── RESPONSE (backward compat + provenance chain) ──────────────────
     res.json({
       answer: assistantMessage,
+      response: assistantMessage,
       thread_id: threadId,
       usage,
       model,
+      provider,
       sources,
       citations,
       confidence,
@@ -796,12 +866,24 @@ const sendMessageHandler = async (req: Request, res: Response) => {
         orgScoped: !!orgUuid,
         citationCoverage,
         supportedClaimRate,
+        memoryAtomCount,
+        memoryBlockChars,
+        memoryDiagnostics,
       },
       // Provenance chain
       retrievalRunId,
       snapshotHashSha256,
       generationRunId,
       claims,
+      orchestration: {
+        detectedIntent: orchestratorResult.detectedIntent,
+        detectedSubmissionType: orchestratorResult.detectedSubmissionType,
+        appliedRole: orchestratorResult.appliedRole,
+        activeWorkstream: orchestratorResult.activeWorkstream,
+        workstreamHandoff: orchestratorResult.workstreamHandoff,
+        suggestedActions: orchestratorResult.suggestedActions,
+        meta: orchestratorResult.orchestrationMeta,
+      },
       // AnA 1.0 RI — Executed guidance actions
       executedActions: executedActions.length > 0 ? executedActions : undefined,
     });
@@ -854,6 +936,70 @@ router.post('/upload', async (req: Request, res: Response) => {
       error: 'Failed to upload file',
       code: 'UPLOAD_ERROR',
     });
+  }
+});
+
+/**
+ * GET /api/chat/threads
+ * List threads, optionally filtered by project_id.
+ * Used by AnaPersistentPanel to restore previous conversations.
+ */
+router.get('/threads', async (req: Request, res: Response) => {
+  try {
+    const projectId = req.query.project_id as string | undefined;
+    const limit = Math.min(parseInt((req.query.limit as string) || '10', 10), 50);
+    const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+
+    let query: string;
+    let params: unknown[];
+
+    if (projectId) {
+      // Try ai_threads first (has project_id), fall back to chat_threads
+      try {
+        const aiResult = await pool.query(
+          `SELECT id, project_id, title, created_at, updated_at FROM ai_threads
+           WHERE project_id = $1 ${orgId ? 'AND organization_id = $2' : ''}
+           ORDER BY COALESCE(updated_at, created_at) DESC LIMIT ${orgId ? '$3' : '$2'}`,
+          orgId ? [projectId, orgId, limit] : [projectId, limit]
+        );
+        if (aiResult.rows.length > 0) {
+          return res.json({ threads: aiResult.rows });
+        }
+      } catch {
+        /* ai_threads may not exist — fall through */
+      }
+
+      // Fall back to chat_threads (no project_id column)
+      query = `SELECT id, created_at, updated_at FROM chat_threads ORDER BY updated_at DESC LIMIT $1`;
+      params = [limit];
+    } else {
+      query = `SELECT id, created_at, updated_at FROM chat_threads ORDER BY updated_at DESC LIMIT $1`;
+      params = [limit];
+    }
+
+    const result = await pool.query(query, params);
+    res.json({ threads: result.rows });
+  } catch (error: any) {
+    // Table may not exist yet — return empty
+    console.warn('[AnA] Thread listing failed:', error?.message);
+    res.json({ threads: [] });
+  }
+});
+
+/**
+ * GET /api/chat/threads/:threadId/messages
+ * Retrieve messages for a specific thread.
+ * Used by AnaPersistentPanel to restore conversation content.
+ */
+router.get('/threads/:threadId/messages', async (req: Request, res: Response) => {
+  try {
+    const { threadId } = req.params;
+    const limit = Math.min(parseInt((req.query.limit as string) || '30', 10), 100);
+    const messages = await getThreadMessages(threadId);
+    res.json({ messages: messages.slice(-limit) });
+  } catch (error: any) {
+    console.warn('[AnA] Thread messages failed:', error?.message);
+    res.json({ messages: [] });
   }
 });
 

@@ -4,35 +4,6 @@ import { createScopedLogger } from '../utils/logger';
 import type { GoalPlan, PlanStepStatus } from './kernel-goal-planner';
 
 const logger = createScopedLogger('kernel-plan-runtime');
-type PlanRunEventType =
-  | 'run_created'
-  | 'step_advanced'
-  | 'step_executed'
-  | 'run_completed'
-  | 'run_failed';
-
-async function recordPlanRunEvent(input: {
-  planRunId: string;
-  stepId?: string | null;
-  eventType: PlanRunEventType;
-  payload?: Record<string, unknown>;
-}) {
-  try {
-    await pool.query(
-      `INSERT INTO ai_goal_plan_step_events
-         (plan_run_id, step_id, event_type, payload)
-       VALUES ($1,$2,$3,$4)`,
-      [
-        input.planRunId,
-        input.stepId || null,
-        input.eventType,
-        JSON.stringify(input.payload || {}),
-      ]
-    );
-  } catch (error: any) {
-    logger.warn(`Failed to record plan event: ${error?.message || 'unknown error'}`);
-  }
-}
 
 const ALLOWED_TRANSITIONS: Record<PlanStepStatus, PlanStepStatus[]> = {
   pending: ['in_progress', 'blocked', 'replanned'],

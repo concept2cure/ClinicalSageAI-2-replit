@@ -37,7 +37,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LumenAssistantButton } from '@/components/assistant';
+import { AnAQuickAssistantButton } from '@/components/assistant';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 // Navigation Context menu for quick access to cross-module features
@@ -426,7 +426,7 @@ export default function MainNavigation({ showLabels = true }) {
                     <Bell className="h-4 w-4" />
                   </Button>
                   <CrossModuleFeatures />
-                  <LumenAssistantButton
+                  <AnAQuickAssistantButton
                     variant="outline"
                     size="icon"
                     tooltip="Ask AnA — RI Co-pilot"
@@ -438,7 +438,7 @@ export default function MainNavigation({ showLabels = true }) {
             <div className="space-y-4 flex flex-col items-center">
               <UserMenu />
               <CrossModuleFeatures />
-              <LumenAssistantButton variant="outline" size="icon" tooltip="Ask AnA" />
+              <AnAQuickAssistantButton variant="outline" size="icon" tooltip="Ask AnA" />
             </div>
           )}
         </div>

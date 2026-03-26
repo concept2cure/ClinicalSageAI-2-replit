@@ -412,6 +412,8 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
       '## ACTIVE INTENT LENS',
       '## CURRENT PROJECT CONTEXT',
       '## CURRENT DOCUMENT CONTEXT',
+      '## ACTIVE WORKSTREAM',
+      '## WORKSTREAM HANDOFF',
       '## DEFICIENCY',
       '## DOCUMENT ACTION',
       '## ROLE-ADAPTIVE',
@@ -445,7 +447,8 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
         `(${orchestratorResult.orchestrationMeta.submissionTypeSource}), ` +
         `role=${orchestratorResult.appliedRole}, ` +
         `deficiency=${orchestratorResult.orchestrationMeta.deficiencyContextInjected}, ` +
-        `docActions=${orchestratorResult.orchestrationMeta.documentActionContextInjected}`
+        `docActions=${orchestratorResult.orchestrationMeta.documentActionContextInjected}, ` +
+        `workstream=${orchestratorResult.activeWorkstream.stream}`
     );
 
     const systemPrompt = (modePrefix ? modePrefix : '') + baseSystemPrompt + dynamicOverlays;
@@ -511,6 +514,8 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
             intentConfidence: orchestratorResult.detectedIntent.confidence,
             submissionType: orchestratorResult.detectedSubmissionType,
             role: orchestratorResult.appliedRole,
+            activeWorkstream: orchestratorResult.activeWorkstream,
+            workstreamHandoff: orchestratorResult.workstreamHandoff,
             phase: 'analyzing',
           })}\n\n`
         );
@@ -827,6 +832,8 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
             intent: orchestratorResult.detectedIntent.lens,
             intentConfidence: orchestratorResult.detectedIntent.confidence,
             submissionType: orchestratorResult.detectedSubmissionType,
+            activeWorkstream: orchestratorResult.activeWorkstream,
+            workstreamHandoff: orchestratorResult.workstreamHandoff,
             suggestedActions: orchestratorResult.suggestedActions,
           },
         })}\n\n`
@@ -913,7 +920,18 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
         intent: orchestratorResult.detectedIntent.lens,
         intentConfidence: orchestratorResult.detectedIntent.confidence,
         submissionType: orchestratorResult.detectedSubmissionType,
+        activeWorkstream: orchestratorResult.activeWorkstream,
+        workstreamHandoff: orchestratorResult.workstreamHandoff,
         suggestedActions: orchestratorResult.suggestedActions,
+      },
+      orchestration: {
+        detectedIntent: orchestratorResult.detectedIntent,
+        detectedSubmissionType: orchestratorResult.detectedSubmissionType,
+        appliedRole: orchestratorResult.appliedRole,
+        activeWorkstream: orchestratorResult.activeWorkstream,
+        workstreamHandoff: orchestratorResult.workstreamHandoff,
+        suggestedActions: orchestratorResult.suggestedActions,
+        meta: orchestratorResult.orchestrationMeta,
       },
     });
   } catch (error: any) {

@@ -25,6 +25,8 @@ interface UseProjectKnowledgeReturn {
   error: string | null;
   /** Upload a document to the project */
   uploadDocument: (file: File) => Promise<UploadedDocument | null>;
+  /** Add raw text content as a knowledge item (Claude.ai parity) */
+  addTextContent: (title: string, content: string) => Promise<UploadedDocument | null>;
   /** Remove a document from the project */
   removeDocument: (documentId: string) => Promise<void>;
   /** Update custom instructions */
@@ -394,11 +396,67 @@ export function useProjectKnowledge(projectId: string | null): UseProjectKnowled
     [projectId]
   );
 
+  /**
+   * Add raw text content as a knowledge item (Claude.ai "Add content" parity).
+   */
+  const addTextContent = useCallback(
+    async (title: string, content: string): Promise<UploadedDocument | null> => {
+      if (!projectId) {
+        setError('No project selected');
+        return null;
+      }
+      if (!content.trim()) {
+        setError('Content cannot be empty');
+        return null;
+      }
+
+      const tokenCount = estimateTokens(content);
+      if (contextTokens + tokenCount > maxContextTokens) {
+        setError(`Adding this content would exceed the ${maxContextTokens.toLocaleString()} token limit`);
+        return null;
+      }
+
+      setError(null);
+
+      try {
+        // Try API — create as a text document
+        await fetch('/api/concept2cure/documents/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+          body: JSON.stringify({ projectId, title, content, type: 'text' }),
+        }).catch(() => {}); // Non-blocking
+
+        const doc: UploadedDocument = {
+          id: `txt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          name: title || 'Text content',
+          type: 'txt',
+          size: new Blob([content]).size,
+          uploadedAt: new Date().toISOString(),
+          tokenCount,
+          status: 'processed',
+        };
+
+        setKnowledge(prev => {
+          if (!prev) return prev;
+          return { ...prev, documents: [...prev.documents, doc] };
+        });
+
+        queryClient.invalidateQueries({ queryKey: ['workspace-summary'] });
+        return doc;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to add text content');
+        return null;
+      }
+    },
+    [projectId, contextTokens, maxContextTokens, queryClient]
+  );
+
   return {
     knowledge,
     isLoading,
     error,
     uploadDocument,
+    addTextContent,
     removeDocument,
     updateCustomInstructions,
     contextTokens,

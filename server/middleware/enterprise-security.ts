@@ -50,6 +50,12 @@ const config = {
       process.env.NODE_ENV !== 'production'
         ? ['http://localhost:5000', 'http://localhost:3000']
         : []
+    )
+    .concat(
+      // Allow GitHub Codespaces forwarded origins
+      process.env.CODESPACES === 'true' || process.env.CODESPACE_NAME
+        ? [`https://${process.env.CODESPACE_NAME}-5000.app.github.dev`]
+        : []
     ),
 
   // Rate Limits — environment-aware (single canonical definition)
@@ -144,6 +150,9 @@ export function corsMiddleware(req: Request, res: Response, next: NextFunction) 
 
   // Check if origin is allowed — always validate, even in development
   if (origin && config.allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else if (origin && !config.isProduction && origin.endsWith('.app.github.dev')) {
+    // Allow all GitHub Codespaces origins in development
     res.setHeader('Access-Control-Allow-Origin', origin);
   } else if (!origin) {
     // Same-origin requests, server-to-server, or curl — no wildcard in production
@@ -547,7 +556,10 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
     return res.status(403).json({ error: 'Forbidden', code: 'CSRF_VALIDATION_FAILED' });
   }
 
-  if (!config.allowedOrigins.includes(source)) {
+  if (
+    !config.allowedOrigins.includes(source) &&
+    !(source.endsWith('.app.github.dev') && !config.isProduction)
+  ) {
     console.warn(
       `[SECURITY] CSRF: origin mismatch — ${source} not in allowedOrigins for ${req.path}`
     );

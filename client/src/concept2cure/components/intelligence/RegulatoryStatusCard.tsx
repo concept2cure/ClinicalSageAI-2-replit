@@ -10,27 +10,18 @@
  * Wired to live APIs: Precedent Engine search + Foresight score.
  */
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   ShieldCheck,
   TrendingUp,
   FileSearch,
   Target,
-  Loader2,
   ChevronRight,
   AlertTriangle,
 } from 'lucide-react';
-
-// ── Auth helper ──────────────────────────────────────────────────────────────
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token');
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-}
+import { apiRequest } from '@/lib/queryClient';
+import { DataStateWrapper, InlineLoading } from '@/components/ui/statesV2';
 
 interface RegulatoryStatusCardProps {
   submissionType?: string;
@@ -54,40 +45,25 @@ export function RegulatoryStatusCard({
   phase,
   onOpenIntelligence,
 }: RegulatoryStatusCardProps) {
-  const [data, setData] = useState<StatusData | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!submissionType) return;
-    setLoading(true);
-
-    let cancelled = false;
-
-    // Fetch both precedent count and prediction in parallel
-    Promise.allSettled([
-      fetch('/api/precedent-engine/search', {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({
+  const { data, isLoading, error } = useQuery<StatusData | null>({
+    queryKey: ['concept2cure', 'regulatory-status', submissionType, indication, phase],
+    queryFn: async () => {
+      const [precRes, foresightRes] = await Promise.allSettled([
+        apiRequest('POST', '/api/precedent-engine/search', {
           submissionType,
           indication: indication || undefined,
           limit: 20,
-        }),
-      }).then(r => (r.ok ? r.json() : null)),
-      fetch('/api/foresight/score', {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({
+        }).then(r => r.json()),
+        apiRequest('POST', '/api/foresight/score', {
           studyId: `dash_${Date.now()}`,
           phase: phase || 'III',
           indication: indication || 'general',
           biomarkers: [],
           endpoints: [],
           sampleSize: 100,
-        }),
-      }).then(r => (r.ok ? r.json() : null)),
-    ]).then(([precRes, foresightRes]) => {
-      if (cancelled) return;
+        }).then(r => r.json()),
+      ]);
+
       const precedentsFound =
         precRes.status === 'fulfilled' && precRes.value
           ? (precRes.value.count ?? precRes.value.data?.length ?? 0)
@@ -99,7 +75,6 @@ export function RegulatoryStatusCard({
           : null;
 
       const successScore = prediction?.successScore ?? 0;
-      // Derive readiness from precedents + prediction
       const readiness = Math.min(
         100,
         Math.round(
@@ -111,19 +86,18 @@ export function RegulatoryStatusCard({
         )
       );
 
-      setData({
+      return {
         precedentsFound,
         riskScore: prediction?.riskFactors?.length
           ? Math.min(100, prediction.riskFactors.length * 15)
           : 35,
         approvalProbability: successScore,
         submissionReadiness: readiness,
-      });
-      setLoading(false);
-    });
-
-    return () => { cancelled = true; };
-  }, [submissionType, indication, phase]);
+      };
+    },
+    enabled: !!submissionType,
+    staleTime: 60_000,
+  });
 
   if (!submissionType) return null;
 
@@ -148,77 +122,80 @@ export function RegulatoryStatusCard({
         )}
       </div>
 
-      {loading ? (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
-        </div>
-      ) : data ? (
-        <div className="grid grid-cols-2 sm:grid-cols-2 gap-0 divide-x divide-y divide-zinc-100">
-          {/* Submission Readiness */}
-          <div className="p-3">
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <Target className="w-3.5 h-3.5 text-violet-500" />
-              <span className="text-xs text-zinc-500 font-medium">Readiness</span>
+      <DataStateWrapper<StatusData | null>
+        isLoading={isLoading}
+        error={error}
+        data={data ?? null}
+        loadingComponent={<InlineLoading label="Loading regulatory status" testId="reg-status-loading" />}
+        emptyTitle="No Data Available"
+        emptyDescription="Configure submission type to see status."
+        isEmpty={(d) => !d}
+        testId="regulatory-status"
+      >
+        {(statusData) => statusData ? (
+          <div className="grid grid-cols-2 sm:grid-cols-2 gap-0 divide-x divide-y divide-zinc-100">
+            {/* Submission Readiness */}
+            <div className="p-3">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <Target className="w-3.5 h-3.5 text-violet-500" />
+                <span className="text-xs text-zinc-500 font-medium">Readiness</span>
+              </div>
+              <div className="text-2xl font-semibold text-zinc-900">{statusData.submissionReadiness}%</div>
+              <div className="h-1.5 bg-zinc-100 rounded-full mt-1.5 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-violet-500 transition-all duration-150"
+                  style={{ width: `${statusData.submissionReadiness}%` }}
+                />
+              </div>
             </div>
-            <div className="text-2xl font-semibold text-zinc-900">{data.submissionReadiness}%</div>
-            <div className="h-1.5 bg-zinc-100 rounded-full mt-1.5 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-violet-500 transition-all duration-150"
-                style={{ width: `${data.submissionReadiness}%` }}
-              />
-            </div>
-          </div>
 
-          {/* Precedents Found */}
-          <div className="p-3">
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <FileSearch className="w-3.5 h-3.5 text-blue-500" />
-              <span className="text-xs text-zinc-500 font-medium">Precedents</span>
+            {/* Precedents Found */}
+            <div className="p-3">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <FileSearch className="w-3.5 h-3.5 text-blue-500" />
+                <span className="text-xs text-zinc-500 font-medium">Precedents</span>
+              </div>
+              <div className="text-2xl font-semibold text-zinc-900">{statusData.precedentsFound}</div>
+              <span className="text-xs text-zinc-400">matching records</span>
             </div>
-            <div className="text-2xl font-semibold text-zinc-900">{data.precedentsFound}</div>
-            <span className="text-xs text-zinc-400">matching records</span>
-          </div>
 
-          {/* Risk Score */}
-          <div className="p-3">
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
-              <span className="text-xs text-zinc-500 font-medium">Risk Score</span>
+            {/* Risk Score */}
+            <div className="p-3">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                <span className="text-xs text-zinc-500 font-medium">Risk Score</span>
+              </div>
+              <div className="text-2xl font-semibold text-zinc-900">{statusData.riskScore}</div>
+              <span
+                className={`text-xs font-medium ${
+                  statusData.riskScore < 30
+                    ? 'text-emerald-600'
+                    : statusData.riskScore < 60
+                      ? 'text-amber-600'
+                      : 'text-red-600'
+                }`}
+              >
+                {statusData.riskScore < 30 ? 'Low' : statusData.riskScore < 60 ? 'Moderate' : 'High'}
+              </span>
             </div>
-            <div className="text-2xl font-semibold text-zinc-900">{data.riskScore}</div>
-            <span
-              className={`text-xs font-medium ${
-                data.riskScore < 30
-                  ? 'text-emerald-600'
-                  : data.riskScore < 60
-                    ? 'text-amber-600'
-                    : 'text-red-600'
-              }`}
-            >
-              {data.riskScore < 30 ? 'Low' : data.riskScore < 60 ? 'Moderate' : 'High'}
-            </span>
-          </div>
 
-          {/* Approval Probability */}
-          <div className="p-3">
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
-              <span className="text-xs text-zinc-500 font-medium">Approval Prob.</span>
-            </div>
-            <div className="text-2xl font-semibold text-zinc-900">{data.approvalProbability}%</div>
-            <div className="h-1.5 bg-zinc-100 rounded-full mt-1.5 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-emerald-500 transition-all duration-150"
-                style={{ width: `${data.approvalProbability}%` }}
-              />
+            {/* Approval Probability */}
+            <div className="p-3">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
+                <span className="text-xs text-zinc-500 font-medium">Approval Prob.</span>
+              </div>
+              <div className="text-2xl font-semibold text-zinc-900">{statusData.approvalProbability}%</div>
+              <div className="h-1.5 bg-zinc-100 rounded-full mt-1.5 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-emerald-500 transition-all duration-150"
+                  style={{ width: `${statusData.approvalProbability}%` }}
+                />
+              </div>
             </div>
           </div>
-        </div>
-      ) : (
-        <div className="p-4 text-center text-xs text-zinc-400">
-          No data available. Configure submission type to see status.
-        </div>
-      )}
+        ) : null}
+      </DataStateWrapper>
     </div>
   );
 }
