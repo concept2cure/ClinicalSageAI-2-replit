@@ -1,4 +1,5 @@
-import { kernelStore } from './conversationKernel';
+import { allowConversationOsMemoryFallback, kernelStore } from './conversationKernel';
+import { conversationPersistence, type ConversationContext } from './persistence';
 import type { ConversationToolConfig, ToolManifest, ToolMode } from './types';
 
 const defaultTools: ConversationToolConfig[] = [
@@ -7,65 +8,60 @@ const defaultTools: ConversationToolConfig[] = [
   { name: 'artifact.accept', kind: 'mutating', enabled: true, requireExplicitPermission: true },
 ];
 
-export function upsertToolManifest(conversationId: string, mode: ToolMode, tools?: ConversationToolConfig[]) {
-  const manifest: ToolManifest = {
-    conversationId,
-    mode,
-    tools: tools?.length ? tools : defaultTools,
-    updatedAt: new Date().toISOString(),
-  };
-  kernelStore.manifests.set(conversationId, manifest);
-  kernelStore.persist();
+const withCtx = (ctx: Partial<ConversationContext> & { conversationId: string }): ConversationContext => ({
+  projectId: ctx.projectId ?? '',
+  conversationId: ctx.conversationId,
+  userId: ctx.userId ?? '',
+});
+
+export async function upsertToolManifest(params: { conversationId: string; mode: ToolMode; tools?: ConversationToolConfig[]; projectId?: string; userId?: string; }) {
+  const ctx = withCtx(params);
+  if (!ctx.projectId || !ctx.userId) throw new Error('projectId and userId are required');
+  const manifest: ToolManifest = { conversationId: ctx.conversationId, mode: params.mode, tools: params.tools?.length ? params.tools : defaultTools, updatedAt: new Date().toISOString() };
+  if (allowConversationOsMemoryFallback()) {
+    kernelStore.manifests.set(ctx.conversationId, manifest);
+    kernelStore.persist();
+  }
+  await conversationPersistence.upsertToolManifest(ctx, manifest);
   return manifest;
 }
 
-export function ensureToolManifest(conversationId: string): ToolManifest {
-  return kernelStore.manifests.get(conversationId) ?? upsertToolManifest(conversationId, 'on-demand');
+export async function ensureToolManifest(params: { conversationId: string; projectId?: string; userId?: string; }): Promise<ToolManifest> {
+  const ctx = withCtx(params);
+  if (!ctx.projectId || !ctx.userId) throw new Error('projectId and userId are required');
+  const persisted = await conversationPersistence.getToolManifest(ctx);
+  if (persisted) return persisted;
+  if (allowConversationOsMemoryFallback()) {
+    return kernelStore.manifests.get(ctx.conversationId) ?? upsertToolManifest({ ...ctx, mode: 'on-demand' });
+  }
+  return upsertToolManifest({ ...ctx, mode: 'on-demand' });
 }
 
-export function authorizeToolUse(params: {
-  conversationId: string;
-  tool: string;
-  explicitTrigger?: boolean;
-}) {
-  const { conversationId, tool, explicitTrigger } = params;
-  const manifest = ensureToolManifest(conversationId);
-  const config = manifest.tools.find(t => t.name === tool);
+export async function authorizeToolUse(params: { conversationId: string; tool: string; explicitTrigger?: boolean; projectId?: string; userId?: string; }) {
+  const ctx = withCtx(params);
+  const manifest = await ensureToolManifest(ctx);
+  const config = manifest.tools.find(t => t.name === params.tool);
 
-  if (!config || !config.enabled || manifest.mode === 'off') {
-    return logToolEvent(conversationId, tool, 'blocked', 'Tool disabled by manifest');
-  }
-
-  if (manifest.mode === 'on-demand' && !explicitTrigger) {
-    return logToolEvent(conversationId, tool, 'blocked', 'On-demand mode requires explicit trigger');
-  }
-
-  if (config.kind === 'mutating' && !explicitTrigger) {
-    return logToolEvent(conversationId, tool, 'blocked', 'Mutating tool requires explicit permission');
-  }
-
-  return logToolEvent(conversationId, tool, 'allowed', 'Authorized by conversation manifest');
+  if (!config || !config.enabled || manifest.mode === 'off') return logToolEvent(ctx, params.tool, 'blocked', 'Tool disabled by manifest');
+  if (manifest.mode === 'on-demand' && !params.explicitTrigger) return logToolEvent(ctx, params.tool, 'blocked', 'On-demand mode requires explicit trigger');
+  if (config.kind === 'mutating' && !params.explicitTrigger) return logToolEvent(ctx, params.tool, 'blocked', 'Mutating tool requires explicit permission');
+  return logToolEvent(ctx, params.tool, 'allowed', 'Authorized by conversation manifest');
 }
 
-function logToolEvent(
-  conversationId: string,
-  tool: string,
-  action: 'allowed' | 'blocked',
-  reason: string
-) {
-  const event = {
-    id: kernelStore.id(),
-    conversationId,
-    tool,
-    action,
-    reason,
-    timestamp: new Date().toISOString(),
-  };
-  kernelStore.events.unshift(event);
-  kernelStore.persist();
+async function logToolEvent(ctx: ConversationContext, tool: string, action: 'allowed' | 'blocked', reason: string) {
+  const event = { id: kernelStore.id(), conversationId: ctx.conversationId, tool, action, reason, timestamp: new Date().toISOString() };
+  if (allowConversationOsMemoryFallback()) {
+    kernelStore.events.unshift(event);
+    kernelStore.persist();
+  }
+  await conversationPersistence.logToolEvent(ctx, event);
   return event;
 }
 
-export function listToolEvents(conversationId: string) {
-  return kernelStore.events.filter(e => e.conversationId === conversationId).slice(0, 100);
+export async function listToolEvents(params: { conversationId: string; projectId?: string; userId?: string }) {
+  const ctx = withCtx(params);
+  if (!ctx.projectId) throw new Error('projectId is required');
+  const dbEvents = await conversationPersistence.listToolEvents(ctx);
+  if (dbEvents.length > 0 || !allowConversationOsMemoryFallback()) return dbEvents;
+  return kernelStore.events.filter(e => e.conversationId === ctx.conversationId).slice(0, 100);
 }

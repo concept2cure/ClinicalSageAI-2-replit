@@ -336,6 +336,12 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
 
   // Section requirements panel
   const [sectionReqs, setSectionReqs] = useState<SectionRequirement | null>(null);
+  const [conversationSnapshot, setConversationSnapshot] = useState<{
+    manifestMode?: string;
+    latestFinding?: string;
+    latestPlanTask?: string;
+    proposals: Array<{ id: string; status: string }>;
+  }>({ proposals: [] });
 
   // Governed document panel (right inspector)
   const [showGovernedPanel, setShowGovernedPanel] = useState(false);
@@ -359,6 +365,42 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       setMode('edit');
     }
   }, [initialContent, initialTitle]);
+
+  useEffect(() => {
+    if (!projectId || mode !== 'dashboard') return;
+    const conversationId = `project-${projectId}`;
+    const qs = `?projectId=${encodeURIComponent(projectId)}&userId=1`;
+    Promise.all([
+      fetch(`/api/conversation-os/conversations/${conversationId}/tools`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode: 'on-demand', projectId, userId: 1 }) }).then(r => r.json()).catch(() => null),
+      fetch(`/api/conversation-os/conversations/${conversationId}/scout${qs}`).then(r => r.json()).catch(() => null),
+      fetch(`/api/conversation-os/conversations/${conversationId}/plan-summary${qs}`).then(r => r.json()).catch(() => null),
+      fetch(`/api/conversation-os/conversations/${conversationId}/proposals${qs}`).then(r => r.json()).catch(() => null),
+    ]).then(([manifestRes, scoutRes, planRes, proposalRes]) => {
+      setConversationSnapshot({
+        manifestMode: manifestRes?.manifest?.mode,
+        latestFinding: scoutRes?.findings?.[0]?.summary,
+        latestPlanTask: planRes?.plan?.task,
+        proposals: (proposalRes?.proposals ?? []).slice(0, 3).map((p: any) => ({ id: p.id, status: p.status })),
+      });
+    });
+  }, [projectId, mode]);
+
+  const actOnProposal = useCallback(
+    async (proposalId: string, action: 'accept' | 'reject') => {
+      if (!projectId) return;
+      const conversationId = `project-${projectId}`;
+      await fetch(`/api/conversation-os/conversations/${conversationId}/proposals/${proposalId}/${action}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId, userId: 1, organizationId: 1 }),
+      });
+      setConversationSnapshot(prev => ({
+        ...prev,
+        proposals: prev.proposals.map(p => (p.id === proposalId ? { ...p, status: action === 'accept' ? 'accepted' : 'rejected' } : p)),
+      }));
+    },
+    [projectId]
+  );
 
   // If openArtifactId is provided, switch to edit mode for that artifact (gated)
   useEffect(() => {
@@ -1935,6 +1977,30 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                   onOpenSubmissions={onNavigate ? () => onNavigate('submission-builder') : undefined}
                   onOpenTemplates={onNavigate ? () => onNavigate('template-library') : undefined}
                 />
+                <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-2">
+                  <div className="text-sm font-semibold text-slate-900">Conversation OS Durability</div>
+                  <div className="text-xs text-slate-600">Tool manifest: {conversationSnapshot.manifestMode ?? 'not initialized'}</div>
+                  <div className="text-xs text-slate-600">Latest scout: {conversationSnapshot.latestFinding ?? 'no finding yet'}</div>
+                  <div className="text-xs text-slate-600">Latest plan: {conversationSnapshot.latestPlanTask ?? 'no plan yet'}</div>
+                  <div className="text-xs text-slate-700 space-y-1">
+                    <div>Proposals:</div>
+                    {conversationSnapshot.proposals.length ? (
+                      conversationSnapshot.proposals.map(p => (
+                        <div key={p.id} className="flex items-center gap-2">
+                          <span>{p.id.slice(0, 8)} ({p.status})</span>
+                          {p.status === 'pending' && (
+                            <>
+                              <button className="text-emerald-700 underline" onClick={() => actOnProposal(p.id, 'accept')}>accept</button>
+                              <button className="text-rose-700 underline" onClick={() => actOnProposal(p.id, 'reject')}>reject</button>
+                            </>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <div>none</div>
+                    )}
+                  </div>
+                </div>
               </div>
             ) : mode === 'browse' ? (
               <DocumentListPane
