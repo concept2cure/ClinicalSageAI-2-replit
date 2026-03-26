@@ -7,6 +7,13 @@ import {
 } from '../control-plane/decision-log';
 import { anaMicrokernel } from '../control-plane/kernel';
 import { defaultAnaPolicyBundle } from '../control-plane/policy-bundle';
+import {
+  getPersistentKernelDecisionSummary,
+  verifyPersistentKernelHashChain,
+} from '../control-plane/persistent-queries';
+import { buildAnaAuditReport } from '../control-plane/audit-report';
+import { ANA_RULE_CATALOG } from '../control-plane/rule-catalog';
+import { runAnaSelfTest } from '../control-plane/self-test';
 import { getPersistentKernelDecisionSummary } from '../control-plane/persistent-queries';
 import { buildAnaAuditReport } from '../control-plane/audit-report';
 import { ANA_RULE_CATALOG } from '../control-plane/rule-catalog';
@@ -16,6 +23,14 @@ const router = Router();
 function requireControlPlaneAccess(req: any, res: any, next: any) {
   const role = req?.user?.role || req?.user?.roles?.[0];
   const hasAdminRole = typeof role === 'string' && role.toLowerCase().includes('admin');
+  const opsToken = process.env.ANA_OPS_TOKEN;
+  const hasOpsHeader = Boolean(
+    opsToken && req.headers['x-ana-ops-token'] && req.headers['x-ana-ops-token'] === opsToken
+  );
+  const nonProd = process.env.NODE_ENV !== 'production';
+  const allowNonProdBypass = process.env.ANA_ALLOW_NONPROD_CONTROL_PLANE !== 'false';
+
+  if (hasAdminRole || hasOpsHeader || (nonProd && allowNonProdBypass)) {
   const hasOpsHeader = req.headers['x-ana-ops-token'] && req.headers['x-ana-ops-token'] === process.env.ANA_OPS_TOKEN;
   const nonProd = process.env.NODE_ENV !== 'production';
 
@@ -65,6 +80,19 @@ router.get('/kernel/rules', requireControlPlaneAccess, (_req, res) => {
   res.json({ rules: ANA_RULE_CATALOG });
 });
 
+
+router.get('/kernel/self-test', requireControlPlaneAccess, (_req, res) => {
+  const result = runAnaSelfTest();
+  const status = result.overallPassed ? 200 : 503;
+  res.status(status).json({ selfTest: result });
+});
+
+
+
+router.get('/kernel/hash-chain/verify', requireControlPlaneAccess, async (_req, res) => {
+  const verification = await verifyPersistentKernelHashChain();
+  res.json({ verification });
+});
 
 router.get('/kernel/summary/persistent', requireControlPlaneAccess, async (req, res) => {
   const rawHours = Number(req.query.hours || 24);

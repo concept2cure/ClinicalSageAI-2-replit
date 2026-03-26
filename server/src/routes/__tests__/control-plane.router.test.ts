@@ -13,10 +13,12 @@ function makeApp() {
 describe('control-plane router', () => {
   const originalNodeEnv = process.env.NODE_ENV;
   const originalPersist = process.env.ANA_KERNEL_PERSIST;
+  const originalBypass = process.env.ANA_ALLOW_NONPROD_CONTROL_PLANE;
 
   afterEach(() => {
     process.env.NODE_ENV = originalNodeEnv;
     process.env.ANA_KERNEL_PERSIST = originalPersist;
+    process.env.ANA_ALLOW_NONPROD_CONTROL_PLANE = originalBypass;
   });
 
   it('returns policy in non-production mode', async () => {
@@ -37,6 +39,17 @@ describe('control-plane router', () => {
     expect(res.body?.error?.code).toBe('FORBIDDEN');
   });
 
+
+
+  it('non-production bypass can be disabled', async () => {
+    process.env.NODE_ENV = 'test';
+    process.env.ANA_ALLOW_NONPROD_CONTROL_PLANE = 'false';
+
+    const app = makeApp();
+    const res = await request(app).get('/api/control-plane/kernel/policy');
+
+    expect(res.status).toBe(403);
+  });
 
   it('returns rule catalog', async () => {
     process.env.NODE_ENV = 'test';
@@ -62,6 +75,18 @@ describe('control-plane router', () => {
   });
 
 
+
+  it('returns self-test envelope', async () => {
+    process.env.NODE_ENV = 'test';
+
+    const app = makeApp();
+    const res = await request(app).get('/api/control-plane/kernel/self-test');
+
+    expect(res.status).toBe(200);
+    expect(res.body?.selfTest?.overallPassed).toBe(true);
+    expect(Array.isArray(res.body?.selfTest?.checks)).toBe(true);
+  });
+
   it('returns audit report envelope', async () => {
     process.env.NODE_ENV = 'test';
     process.env.ANA_KERNEL_PERSIST = 'false';
@@ -75,6 +100,19 @@ describe('control-plane router', () => {
     expect(typeof res.body?.report?.riskSignals?.scientificIntegrityFlagPct).toBe('number');
     expect(typeof res.body?.report?.controlCoverage?.tracesWithRegulatoryReferencePct).toBe('number');
     expect(Array.isArray(res.body?.report?.recommendations)).toBe(true);
+  });
+
+
+  it('returns hash chain verification envelope', async () => {
+    process.env.NODE_ENV = 'test';
+    process.env.ANA_KERNEL_PERSIST = 'false';
+
+    const app = makeApp();
+    const res = await request(app).get('/api/control-plane/kernel/hash-chain/verify');
+
+    expect(res.status).toBe(200);
+    expect(res.body?.verification?.persistenceEnabled).toBe(false);
+    expect(typeof res.body?.verification?.ok).toBe('boolean');
   });
 
   it('returns persistent summary envelope', async () => {

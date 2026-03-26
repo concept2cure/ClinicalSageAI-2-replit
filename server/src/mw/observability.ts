@@ -85,6 +85,11 @@ export const httpLogger = (req: Request, res: Response, next: NextFunction) => {
   });
 
   (req as any).anaKernelDecision = kernel;
+  res.setHeader('x-ana-kernel-decision', kernel.finalDecision);
+
+  if (kernel.controls.requiresHumanReview) {
+    res.setHeader('x-ana-review-required', 'true');
+  }
 
   if (kernel.finalDecision === 'deny') {
     logger.warn(
@@ -104,7 +109,11 @@ export const httpLogger = (req: Request, res: Response, next: NextFunction) => {
         message: 'Request denied by cross-cutting control plane policy.',
         requestId,
         policy: {
+          mode: kernel.mode,
           decision: kernel.finalDecision,
+          enforcedDecision: kernel.enforcedDecision,
+          policyBundleId: kernel.policyBundleId,
+          policyBundleVersion: kernel.policyBundleVersion,
           flags: kernel.flags,
           score: kernel.score,
           trace: kernel.trace,
@@ -175,7 +184,10 @@ export function errorHandler(err: any, req: Request, res: Response, next: NextFu
       timestamp: new Date().toISOString(),
       requestId: res.getHeader('x-request-id'),
       kernelDecision: kernel?.finalDecision,
+      kernelEnforcedDecision: kernel?.enforcedDecision,
       kernelFlags: kernel?.flags || [],
+      policyBundleId: kernel?.policyBundleId,
+      policyBundleVersion: kernel?.policyBundleVersion,
     },
   });
 }
