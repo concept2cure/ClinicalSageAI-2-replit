@@ -116,6 +116,15 @@ const VALID_ROLES: UserRole[] = [
   'general',
 ];
 
+
+interface CommandContext {
+  userId: number;
+  organizationId: number;
+  activeProjectId?: number;
+  userName?: string;
+  userRole?: string;
+}
+
 // ─── Request context extraction (typed, replaces (req as any) casts) ─────────
 function extractRequestContext(req: Request) {
   const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId || null;
@@ -551,7 +560,8 @@ router.post('/stream', async (req: Request, res: Response) => {
     }
 
     const gw = ensureGateway();
-    if (!gw || gw.getEnabledProviders().length === 0) {
+    const deterministicMode = gw?.isDeterministicMode?.() || false;
+    if (!gw || (!deterministicMode && gw.getEnabledProviders().length === 0)) {
       return sendError(res, 503, 'No AI providers available.', null, 'GATEWAY_UNAVAILABLE');
     }
 
@@ -828,6 +838,7 @@ router.post('/stream', async (req: Request, res: Response) => {
               : project_id
             : undefined,
         };
+        const { processCommandsInResponse } = await import('../services/ana-ri/command-executor.js');
         const cmdResult = await processCommandsInResponse(fullContent, cmdCtx);
         executedCommands = cmdResult.executedCommands;
         if (executedCommands.length > 0) {
@@ -1258,6 +1269,39 @@ router.get('/rubric', (_req: Request, res: Response) => {
   return sendSuccess(res, { dimensions: rubric });
 });
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/ana-ri/health — AnA runtime readiness snapshot
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.get('/health', async (_req: Request, res: Response) => {
+  const gw = ensureGateway();
+  const enabledProviders = gw?.getEnabledProviders() || [];
+  const providerHealth = gw?.getProviderHealth?.() || [];
+  const deterministicMode = gw?.isDeterministicMode?.() || false;
+  const databaseAvailable = await isDatabaseAvailable();
+
+  const hasHealthyProvider = providerHealth.some((provider: any) => provider.healthy);
+  const providerHealthUnavailable = providerHealth.length === 0 && enabledProviders.length > 0;
+
+  const checks = {
+    gateway: deterministicMode || enabledProviders.length > 0,
+    providersHealthy: deterministicMode || hasHealthyProvider || providerHealthUnavailable,
+    database: databaseAvailable,
+  };
+
+  const status = checks.gateway && checks.providersHealthy && checks.database ? 'healthy' : 'degraded';
+
+  return sendSuccess(res, {
+    status,
+    checks,
+    providers: enabledProviders,
+    providerHealth,
+    deterministicMode,
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/ana-ri/health — AnA runtime readiness snapshot
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1384,8 +1428,12 @@ router.post('/execute', async (req: Request, res: Response) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 router.get('/commands', async (_req: Request, res: Response) => {
-  const { COMMAND_REGISTRY } = await import('../services/ana-ri/command-executor.js');
-  return sendSuccess(res, { commands: COMMAND_REGISTRY });
+  try {
+    const { COMMAND_REGISTRY } = await import('../services/ana-ri/command-executor.js');
+    return sendSuccess(res, { commands: COMMAND_REGISTRY });
+  } catch (error: any) {
+    return sendError(res, 503, error?.message || 'Command registry unavailable', null, 'COMMANDS_UNAVAILABLE');
+  }
 });
 
 export default router;
