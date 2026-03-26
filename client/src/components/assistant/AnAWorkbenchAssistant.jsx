@@ -20,7 +20,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
  * An AI assistant that provides context-aware help for regulatory documents and workflows.
  * This component can be used in both a collapsed sidebar mode and an expanded full view mode.
  */
-const LumentAssistant = ({ context = {}, active = false }) => {
+const AnAAssistant = ({ context = {}, active = false }) => {
   const [isExpanded, setIsExpanded] = useState(active);
   const [inputValue, setInputValue] = useState('');
   const [messages, setMessages] = useState([
@@ -220,4 +220,4 @@ const LumentAssistant = ({ context = {}, active = false }) => {
   );
 };
 
-export default LumentAssistant;
+export default AnAAssistant;
