@@ -111,11 +111,17 @@ function shouldEnforceExportReviewGate(): boolean {
   return process.env.NODE_ENV === 'production';
 }
 
+// LAUNCH-GATE NOTE (2025-01): These governance headers are HTTP-response-only.
+// They are NOT persisted to concept2cure_provenance_events or concept2cure_audit_events.
+// This means the export has no governed consequence — the headers vanish with the response.
+// To make exports governed, route content through the Artifact Compute Plane
+// (server/services/compute/artifactWriteback.ts → registerArtifactWithGovernance).
 function applyGovernanceHeaders(res: Response, governance: z.infer<typeof exportGovernanceSchema>) {
   res.setHeader('X-Concept2Cure-AI-Generated', String(governance.aiGenerated));
   res.setHeader('X-Concept2Cure-Human-Review-Approved', String(governance.humanReviewApproved));
   res.setHeader('X-Concept2Cure-Review-Required', 'true');
   res.setHeader('X-Concept2Cure-Review-Notice', 'Human review required for regulated use');
+  res.setHeader('X-Concept2Cure-Governance-Persistence', 'none');
   if (governance.reviewerName) {
     res.setHeader('X-Concept2Cure-Reviewer', encodeURIComponent(governance.reviewerName));
   }

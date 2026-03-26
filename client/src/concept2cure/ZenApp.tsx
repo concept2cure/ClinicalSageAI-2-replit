@@ -1286,7 +1286,7 @@ export const ZenApp: React.FC = () => {
       });
       if (!res.ok) return [];
       const data = await res.json();
-      return Array.isArray(data) ? data : (data?.data ?? data?.artifacts ?? []);
+      return Array.isArray(data) ? data : data?.data ?? data?.artifacts ?? [];
     },
     enabled: !!activeProjectId,
     staleTime: 30_000,
@@ -1710,8 +1710,8 @@ export const ZenApp: React.FC = () => {
     const lastActivity = ownershipActivity
       ? `${ownershipActivity.action} · ${new Date(ownershipActivity.timestamp).toLocaleString()}`
       : taskSummary.total > 0
-        ? `${taskSummary.completed}/${taskSummary.total} tasks complete`
-        : 'No tasks yet';
+      ? `${taskSummary.completed}/${taskSummary.total} tasks complete`
+      : 'No tasks yet';
     return {
       deadlineDays,
       complianceScore,
@@ -1966,15 +1966,7 @@ export const ZenApp: React.FC = () => {
         projects={projects}
         activeConversationId={activeConversationId}
         activeProjectId={activeProjectId}
-<<<<<<< codex/execute-beta-integrity-sprint-plan
-        activeNavId={
-          activeToolPanel === 'ana-biostats'
-            ? 'biostatistics'
-            : SIDEBAR_ACTIVE_NAV_BY_LAYOUT[layoutMode] ?? undefined
-        }
-=======
         activeNavId={activeNavId}
->>>>>>> concept2cure-v2
         onSelectConversation={id => {
           setActiveConversationId(id);
           setActiveThreadId(id);
@@ -2127,13 +2119,6 @@ export const ZenApp: React.FC = () => {
       <GlobalOperatingShell
         layoutMode={layoutMode}
         activeProjectName={activeProject?.name}
-<<<<<<< codex/execute-beta-integrity-sprint-plan
-        activeArtifactLabel={activeArtifactId ? `Artifact ${activeArtifactId}` : undefined}
-        onNavigateGlobal={target => {
-          const next = SIDEBAR_NAV_TO_LAYOUT[target] ?? 'projects';
-          setLayoutMode(next);
-        }}
-=======
         currentGlobalNodeLabel={currentGlobalNodeLabel}
         activeArtifactLabel={
           activeArtifactId
@@ -2141,7 +2126,6 @@ export const ZenApp: React.FC = () => {
             : undefined
         }
         onAction={handleHeaderAction}
->>>>>>> concept2cure-v2
       >
         {/* Content Area */}
         <div className="flex-1 flex min-w-0 min-h-0">
@@ -2916,8 +2900,8 @@ export const ZenApp: React.FC = () => {
                 layoutMode === 'deep-research'
                   ? "What would you like to research? I'll search across ClinicalTrials.gov, PubMed, FDA, EMA, and more."
                   : layoutMode === 'project-home' && activeProject
-                    ? `Working on ${activeProject.name}. What would you like to do?`
-                    : platformGreeting?.text
+                  ? `Working on ${activeProject.name}. What would you like to do?`
+                  : platformGreeting?.text
               }
               suggestedActions={
                 layoutMode === 'projects' || layoutMode === 'project-home'
@@ -3094,4 +3078,3 @@ const SIDEBAR_NAV_TO_LAYOUT: Record<string, LayoutMode> = {
   dossier: 'dossier-map',
   'project-home': 'project-home',
 };
-

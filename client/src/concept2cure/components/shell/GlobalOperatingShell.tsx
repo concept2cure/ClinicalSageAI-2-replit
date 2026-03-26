@@ -1,5 +1,15 @@
 import React from 'react';
-import { Layers, FolderKanban, FileText, Archive, ScrollText, Search, ShieldCheck, Send } from 'lucide-react';
+import {
+  Layers,
+  FolderKanban,
+  FileText,
+  Archive,
+  ScrollText,
+  Search,
+  ShieldCheck,
+  Send,
+  Home,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface GlobalOperatingShellProps {
@@ -11,7 +21,7 @@ interface GlobalOperatingShellProps {
   children: React.ReactNode;
 }
 
-const GLOBAL_NODES = [
+const LAYERS = [
   { id: 'projects', label: 'Home', icon: Home },
   { id: 'documents', label: 'Search', icon: Search },
   { id: 'vault', label: 'Vault', icon: Archive },
@@ -44,7 +54,9 @@ export function GlobalOperatingShell({
           <Layers className="w-3.5 h-3.5 text-zinc-500" />
           <span className="text-xs font-medium text-zinc-700">Concept2Cure OS</span>
           {activeProjectName && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-600">{activeProjectName}</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-600">
+              {activeProjectName}
+            </span>
           )}
           {activeArtifactLabel && (
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-100">
@@ -112,7 +124,8 @@ export function GlobalOperatingShell({
             {LAYERS.map(layer => {
               const Icon = layer.icon;
               const isActive =
-                (layoutMode === 'documents' || layoutMode === 'regulatory-workspace') && layer.id === 'documents' ||
+                ((layoutMode === 'documents' || layoutMode === 'regulatory-workspace') &&
+                  layer.id === 'documents') ||
                 (layoutMode === 'report-engine' && layer.id === 'reports') ||
                 (layoutMode === 'projects' && layer.id === 'projects');
               return (
@@ -132,7 +145,7 @@ export function GlobalOperatingShell({
             })}
           </div>
         </div>
-      </div>
+      )}
       {children}
     </div>
   );
