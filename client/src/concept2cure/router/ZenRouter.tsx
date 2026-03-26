@@ -73,6 +73,8 @@ const Project510kBridge: React.FC = () => {
   return (
     <Suspense
       fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#FAF9F5]">
+          <p className="text-sm text-[#B0AEA5]">Loading workspace…</p>
         <div className="min-h-screen flex items-center justify-center bg-[#faf9f5]">
           <p className="text-sm text-zinc-400">Loading workspace…</p>
         </div>
@@ -106,6 +108,7 @@ const ProjectPMABridge: React.FC = () => {
 // LOADING SCREEN
 // ═══════════════════════════════════════════════════════════════════════════════
 const ZenLoadingScreen: React.FC<{ message?: string }> = ({ message = 'Loading...' }) => (
+  <div className="min-h-screen bg-[#FAF9F5] flex items-center justify-center">
   <div className="min-h-screen bg-[#faf9f5] flex items-center justify-center">
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -117,6 +120,15 @@ const ZenLoadingScreen: React.FC<{ message?: string }> = ({ message = 'Loading..
         transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
         className="relative w-20 h-20 rounded-2xl overflow-hidden shadow-md"
       >
+        <img
+          src="/src/assets/concept2cure-logo.jpg"
+          alt="Concept2Cure"
+          className="w-full h-full object-cover object-center"
+        />
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: 'radial-gradient(circle at center, transparent 40%, #faf9f5 100%)' }}
+        />
         <div className="relative w-20 h-20 rounded-2xl overflow-hidden shadow-md">
           <img
             src="/src/assets/concept2cure-logo.jpg"

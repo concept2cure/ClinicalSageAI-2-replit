@@ -1604,6 +1604,13 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                   t.type === 'info' && 'bg-zinc-700 text-white'
                 )}
               >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
                 {t.message}
                 <button
                   onClick={() => setShellToasts(prev => prev.filter(x => x.id !== t.id))}
@@ -1806,6 +1813,7 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   );
