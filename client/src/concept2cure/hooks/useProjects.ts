@@ -32,6 +32,26 @@ function getAuthHeaders(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+function withRequiredOwnership(project: Project): Project {
+  return {
+    ...project,
+    ownership: {
+      chatHistory: project.ownership?.chatHistory ?? project.conversations ?? [],
+      documentInventory: project.ownership?.documentInventory ?? project.knowledge?.documents ?? [],
+      vaultLinkedFilesEvidence: project.ownership?.vaultLinkedFilesEvidence ?? [],
+      projectInstructions:
+        project.ownership?.projectInstructions ?? project.customInstructions ?? '',
+      reusableSnippetsKnowledge: project.ownership?.reusableSnippetsKnowledge ?? [],
+      reports: project.ownership?.reports ?? [],
+      reviewState: project.ownership?.reviewState ?? 'draft',
+      approvals: project.ownership?.approvals ?? project.signatures ?? [],
+      readinessState: project.ownership?.readinessState ?? 'not_started',
+      activityHistory: project.ownership?.activityHistory ?? project.auditTrail ?? [],
+      currentWorkbenchContext: project.ownership?.currentWorkbenchContext ?? '',
+    },
+  };
+}
+
 /**
  * Retrieves projects from localStorage
  * @returns Array of projects with properly typed dates
@@ -42,22 +62,24 @@ function getStoredProjects(): Project[] {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       const projects = JSON.parse(stored);
-      return projects.map((p: any) => ({
-        ...p,
-        createdAt: new Date(p.createdAt),
-        updatedAt: new Date(p.updatedAt),
-        conversations:
-          p.conversations?.map((c: any) => ({
-            ...c,
-            createdAt: new Date(c.createdAt),
-            updatedAt: new Date(c.updatedAt),
-            messages:
-              c.messages?.map((m: any) => ({
-                ...m,
-                timestamp: new Date(m.timestamp),
-              })) || [],
-          })) || [],
-      }));
+      return projects.map((p: any) =>
+        withRequiredOwnership({
+          ...p,
+          createdAt: new Date(p.createdAt),
+          updatedAt: new Date(p.updatedAt),
+          conversations:
+            p.conversations?.map((c: any) => ({
+              ...c,
+              createdAt: new Date(c.createdAt),
+              updatedAt: new Date(c.updatedAt),
+              messages:
+                c.messages?.map((m: any) => ({
+                  ...m,
+                  timestamp: new Date(m.timestamp),
+                })) || [],
+            })) || [],
+        })
+      );
     }
   } catch (e) {
     console.error('[useProjects] Failed to parse stored projects:', e);
@@ -102,7 +124,7 @@ async function fetchProjectsFromAPI(): Promise<Project[]> {
       payload?.error?.message || payload?.error || `Failed to fetch projects: ${response.status}`
     );
   }
-  return payload?.data ?? payload;
+  return (payload?.data ?? payload).map((project: Project) => withRequiredOwnership(project));
 }
 
 /**
@@ -129,7 +151,7 @@ async function createProjectAPI(
       payload?.error?.message || payload?.error || `Failed to create project: ${response.status}`
     );
   }
-  return payload?.data ?? payload;
+  return withRequiredOwnership(payload?.data ?? payload);
 }
 
 /**
@@ -154,7 +176,7 @@ async function updateProjectAPI(project: Project): Promise<Project> {
       payload?.error?.message || payload?.error || `Failed to update project: ${response.status}`
     );
   }
-  return payload?.data ?? payload;
+  return withRequiredOwnership(payload?.data ?? payload);
 }
 
 /**
@@ -243,7 +265,7 @@ export function useProjects() {
       }
 
       // Fallback to localStorage
-      const newProject: Project = {
+      const newProject: Project = withRequiredOwnership({
         id: `proj_${Date.now()}`,
         name: data.name,
         submissionType: data.submissionType,
@@ -251,7 +273,7 @@ export function useProjects() {
         conversations: [],
         createdAt: new Date(),
         updatedAt: new Date(),
-      };
+      });
       const projects = getStoredProjects();
       projects.unshift(newProject);
       saveStoredProjects(projects);
@@ -265,7 +287,7 @@ export function useProjects() {
   // Update project mutation
   const updateProject = useMutation({
     mutationFn: async (project: Project) => {
-      const updatedProject = { ...project, updatedAt: new Date() };
+      const updatedProject = withRequiredOwnership({ ...project, updatedAt: new Date() });
 
       if (USE_API) {
         try {
@@ -438,7 +460,7 @@ export function useProject(projectId: string | null) {
                 payload?.error?.message || payload?.error || 'Failed to fetch project'
               );
             }
-            return payload?.data ?? payload;
+            return withRequiredOwnership(payload?.data ?? payload);
           }
         } catch (e) {
           console.warn('API project fetch failed, using localStorage fallback:', e);
@@ -446,7 +468,8 @@ export function useProject(projectId: string | null) {
       }
 
       const projects = getStoredProjects();
-      return projects.find(p => p.id === projectId) || null;
+      const project = projects.find(p => p.id === projectId) || null;
+      return project ? withRequiredOwnership(project) : null;
     },
     enabled: !!projectId,
   });
