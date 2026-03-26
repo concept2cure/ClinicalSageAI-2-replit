@@ -1,14 +1,17 @@
 # Repository Audit & Remediation Plan (Phase Continuation)
 
-_Last updated: 2026-03-24_
+_Last updated: 2026-03-26_
 
 ## Current blocking state
 
 The audit cannot progress to meaningful type/lint/test triage until dependency resolution is stable in CI/local dev:
 
-1. `npm install` fails with a registry policy `403 Forbidden` on scoped packages.
-2. `yarn run lint` fails because the workspace isn't represented in lockfile state.
-3. `npm run -s typecheck` fails early with missing ambient type packages (`jest`, `node`, `react`, `react-dom`) before file-level diagnostics can be trusted.
+1. Root `package-lock.json` is missing and registry policy currently blocks lockfile generation (`403` on scoped package metadata).
+2. `npm run -s typecheck` fails on pre-existing parse/syntax blockers in client/server source files.
+3. `npm run -s lint` reports `2310` issues (`9` errors + `2301` warnings) with parser and duplicate-key errors in server routes/services.
+4. `npm test` fails one Jest suite due Vitest import usage under CommonJS (`gaReadinessModel.test.ts`).
+
+See detailed baseline evidence in `docs/audit/package-manager-baseline-2026-03-26.md`.
 
 ## Plan overview
 

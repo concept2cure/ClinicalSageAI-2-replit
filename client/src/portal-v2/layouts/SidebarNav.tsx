@@ -112,7 +112,7 @@ const moduleRouteMap: Record<string, string> = {
   training: '/client-portal/training',
   analytics: '/client-portal/analytics',
   ai_assistant: '/client-portal/ai-assistant',
-  lumen_cortex: '/client-portal/lumen-cortex',
+  ana_cortex: '/ana',
   project_hub: '/client-portal/project-hub',
   timeline_planner: '/client-portal/timeline-planner',
   platform_readiness: '/admin/platform-readiness',

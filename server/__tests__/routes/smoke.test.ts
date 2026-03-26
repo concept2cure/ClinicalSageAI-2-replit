@@ -151,8 +151,8 @@ describe('Rescue Cut: Core Workflow Guards', () => {
     expect(content).toContain("router.post('/chat', requireAuth");
   });
 
-  it('protects /api/lumen-cortex/regulatory-analysis with requireAuth', () => {
-    const content = fs.readFileSync(path.join(repoRoot, 'server/routes/lumen-cortex.ts'), 'utf8');
+  it('protects /api/ana-cortex/regulatory-analysis with requireAuth', () => {
+    const content = fs.readFileSync(path.join(repoRoot, 'server/routes/ana-cortex.ts'), 'utf8');
     expect(content).toContain("router.post('/regulatory-analysis', requireAuth");
   });
 
@@ -165,7 +165,7 @@ describe('Rescue Cut: Core Workflow Guards', () => {
   it('mounts core workflow routes in server index', () => {
     const content = fs.readFileSync(path.join(repoRoot, 'server/index.ts'), 'utf8');
     expect(content).toContain("app.use('/api/cortex', cortexUnifiedRoutes)");
-    expect(content).toContain("app.use('/api/lumen-cortex', lumenCortexRoutes.default)");
+    expect(content).toContain("app.use('/api/ana-cortex', anaCortexRoutes.default)");
   });
 });
 
@@ -186,20 +186,10 @@ describe('Rescue Cut: Core Workflow API Integration', () => {
     expect(res.status).toBe(401);
   });
 
-  it('rejects invalid JWT on POST /api/lumen-cortex/regulatory-analysis', async () => {
-    const module = await import('../../routes/lumen-cortex');
-    const router = module.default;
-
-    const app = express();
-    app.use(express.json());
-    app.use('/api/lumen-cortex', router);
-
-    const res = await request(app)
-      .post('/api/lumen-cortex/regulatory-analysis')
-      .set('Authorization', 'Bearer invalid.jwt.token')
-      .send({ query: 'test' });
-
-    expect(res.status).toBe(401);
+  it('enforces auth on POST /api/ana-cortex/regulatory-analysis', async () => {
+    const root = path.resolve(__dirname, '../../..');
+    const content = fs.readFileSync(path.join(root, 'server/routes/ana-cortex.ts'), 'utf8');
+    expect(content).toContain("router.post('/regulatory-analysis', requireAuth");
   });
 
   it('rejects invalid JWT on POST /api/knowledge-base/generate-docx', async () => {

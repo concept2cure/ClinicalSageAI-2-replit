@@ -186,7 +186,7 @@ export interface ArtifactChangeInterceptInput {
   changeType: 'create' | 'update' | 'delete';
   title: string;
   contentLength: number;
-  source: 'lumen_cortex' | 'manual' | 'import' | 'template';
+  source: 'ana_cortex' | 'manual' | 'import' | 'template';
   content?: string;
 }
 

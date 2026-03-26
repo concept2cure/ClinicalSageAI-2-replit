@@ -24,7 +24,7 @@
  * - WCAG 2.1 AA: Keyboard navigable, screen reader friendly
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { zenClasses } from '../design/zen';
 import {
@@ -33,14 +33,18 @@ import {
   Plus,
   Search,
   Settings,
-  User,
   ChevronLeft,
   ChevronRight,
   Sparkles,
-  Command,
   MessageSquare,
   FileText,
   MoreHorizontal,
+  PanelRight,
+  Brain,
+  ChevronsUpDown,
+  Activity,
+  Clock3,
+  Workflow,
 } from 'lucide-react';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -64,21 +68,31 @@ interface ZenShellProps {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 interface ZenHeaderProps {
+  projects: ZenProject[];
+  activeProjectId?: string;
+  onProjectChange: (id: string) => void;
   projectName?: string;
   onMenuClick: () => void;
   onSearchClick: () => void;
   onSettingsClick: () => void;
   onProfileClick: () => void;
+  onToggleRightDrawer: () => void;
   isSidebarOpen: boolean;
+  rightDrawerOpen: boolean;
 }
 
 const ZenHeader: React.FC<ZenHeaderProps> = ({
+  projects,
+  activeProjectId,
+  onProjectChange,
   projectName,
   onMenuClick,
   onSearchClick,
   onSettingsClick,
   onProfileClick,
+  onToggleRightDrawer,
   isSidebarOpen,
+  rightDrawerOpen,
 }) => (
   <header className="h-12 flex items-center justify-between px-3 border-b border-zinc-200 bg-white/80 backdrop-blur-sm">
     {/* Left section */}
@@ -93,12 +107,22 @@ const ZenHeader: React.FC<ZenHeaderProps> = ({
 
       {/* Project indicator */}
       {projectName && (
-        <div className="flex items-center gap-2 px-2">
+        <label className="relative flex items-center gap-2 px-2">
           <div className="w-2 h-2 rounded-full bg-blue-500" />
-          <span className="text-sm font-medium text-zinc-700 truncate max-w-[200px]">
-            {projectName}
-          </span>
-        </div>
+          <select
+            value={activeProjectId}
+            onChange={e => onProjectChange(e.target.value)}
+            className="appearance-none bg-transparent pr-5 text-sm font-medium text-zinc-700 truncate max-w-[220px] outline-none"
+            aria-label="Project switcher"
+          >
+            {projects.map(project => (
+              <option key={project.id} value={project.id}>
+                {project.name}
+              </option>
+            ))}
+          </select>
+          <ChevronsUpDown className="w-3.5 h-3.5 text-zinc-400 pointer-events-none absolute right-2" />
+        </label>
       )}
     </div>
 
@@ -116,6 +140,13 @@ const ZenHeader: React.FC<ZenHeaderProps> = ({
         <Search className="w-4 h-4" />
       </button>
       <button
+        onClick={onToggleRightDrawer}
+        className={cn(zenClasses.buttonIcon, rightDrawerOpen && 'bg-blue-50 text-blue-700')}
+        aria-label="Toggle right drawer"
+      >
+        <PanelRight className="w-4 h-4" />
+      </button>
+      <button
         onClick={onSettingsClick}
         className={cn(zenClasses.buttonIcon, 'hidden sm:flex')}
         aria-label="Settings"
@@ -130,6 +161,76 @@ const ZenHeader: React.FC<ZenHeaderProps> = ({
     </div>
   </header>
 );
+
+interface ContextHeaderProps {
+  projectName?: string;
+  projectType?: string;
+}
+
+const ContextHeader: React.FC<ContextHeaderProps> = ({ projectName, projectType }) => (
+  <div className="flex items-center justify-between gap-3 border-b border-zinc-200 bg-white px-4 py-2.5">
+    <div>
+      <p className="text-xs uppercase tracking-wide text-zinc-500">Context Header</p>
+      <p className="text-sm font-medium text-zinc-900">
+        {projectName || 'No active project'}
+        {projectType ? <span className="ml-2 rounded bg-zinc-100 px-1.5 py-0.5 text-xs">{projectType}</span> : null}
+      </p>
+    </div>
+    <div className="hidden md:flex items-center gap-2 text-xs text-zinc-500">
+      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-emerald-700">
+        <Activity className="w-3 h-3" /> Live Sync
+      </span>
+      <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-1 text-blue-700">
+        <Clock3 className="w-3 h-3" /> Updated now
+      </span>
+    </div>
+  </div>
+);
+
+interface CommandBarProps {
+  onOpenCommandPalette: () => void;
+}
+
+const CommandBar: React.FC<CommandBarProps> = ({ onOpenCommandPalette }) => (
+  <div className="border-b border-zinc-200 bg-zinc-50 px-4 py-2">
+    <button
+      onClick={onOpenCommandPalette}
+      className="group flex w-full items-center gap-3 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-left transition hover:border-zinc-300"
+      aria-label="Open command bar"
+    >
+      <Search className="w-4 h-4 text-zinc-400" />
+      <span className="flex-1 text-sm text-zinc-500">Command Bar: Search actions, projects, and workflows…</span>
+      <kbd className="rounded border bg-zinc-50 px-1.5 py-0.5 text-xs text-zinc-500">⌘K</kbd>
+    </button>
+  </div>
+);
+
+interface RightDrawerProps {
+  isOpen: boolean;
+}
+
+const RightDrawer: React.FC<RightDrawerProps> = ({ isOpen }) => {
+  if (!isOpen) return null;
+
+  return (
+    <aside className="hidden xl:flex w-[300px] border-l border-zinc-200 bg-white flex-col">
+      <div className="h-12 border-b border-zinc-200 px-4 flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-zinc-800">Right Drawer Framework</h2>
+        <MoreHorizontal className="w-4 h-4 text-zinc-400" />
+      </div>
+      <div className="p-4 space-y-3">
+        <div className="rounded-lg border border-zinc-200 p-3">
+          <p className="text-xs text-zinc-500 mb-1">Active workflow</p>
+          <p className="text-sm font-medium text-zinc-900 inline-flex items-center gap-2"><Workflow className="w-4 h-4 text-blue-600" /> Draft to Submission</p>
+        </div>
+        <div className="rounded-lg border border-zinc-200 p-3">
+          <p className="text-xs text-zinc-500 mb-1">AnA focus</p>
+          <p className="text-sm font-medium text-zinc-900">Risk signal triage in progress</p>
+        </div>
+      </div>
+    </aside>
+  );
+};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ZEN SIDEBAR - Clean project navigation
@@ -537,6 +638,7 @@ export const ZenShell: React.FC<ZenShellProps> = ({ children }) => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [rightDrawerOpen, setRightDrawerOpen] = useState(true);
   const [activeProjectId, setActiveProjectId] = useState<string | undefined>('1');
 
   // Mock projects (will be replaced with context)
@@ -601,20 +703,43 @@ export const ZenShell: React.FC<ZenShellProps> = ({ children }) => {
       />
 
       {/* Main area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex min-w-0">
+        <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
         <ZenHeader
+          projects={mockProjects}
+          activeProjectId={activeProjectId}
+          onProjectChange={setActiveProjectId}
           projectName={activeProject?.name}
           onMenuClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
           onSearchClick={() => setCommandPaletteOpen(true)}
           onSettingsClick={() => console.log('Settings')}
           onProfileClick={() => console.log('Profile')}
+          onToggleRightDrawer={() => setRightDrawerOpen(prev => !prev)}
           isSidebarOpen={mobileSidebarOpen}
+          rightDrawerOpen={rightDrawerOpen}
         />
+
+        <ContextHeader projectName={activeProject?.name} projectType={activeProject?.type} />
+
+        <CommandBar onOpenCommandPalette={() => setCommandPaletteOpen(true)} />
 
         {/* Content */}
         <main className="flex-1 overflow-hidden">{children}</main>
+        </div>
+
+        <RightDrawer isOpen={rightDrawerOpen} />
       </div>
+
+      {/* Persistent AnA Access */}
+      <button
+        onClick={() => setCommandPaletteOpen(true)}
+        className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-full bg-violet-600 px-4 py-2 text-sm font-medium text-white shadow-lg transition hover:bg-violet-700"
+        aria-label="Persistent AnA access"
+      >
+        <Brain className="h-4 w-4" />
+        <span>AnA</span>
+      </button>
 
       {/* Command palette */}
       <ZenCommandPalette isOpen={commandPaletteOpen} onClose={() => setCommandPaletteOpen(false)} />

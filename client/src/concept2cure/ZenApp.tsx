@@ -147,6 +147,7 @@ import DrSageGlobalLayer from './components/dr-sage/DrSagePanel';
 
 // AnA Persistent Panel — always-available AI conversation on every page
 import AnaPersistentPanel from './components/chat/AnaPersistentPanel';
+import { GlobalOperatingShell } from './components/shell/GlobalOperatingShell';
 
 // Canonical authoring context resolver
 import {
@@ -217,6 +218,9 @@ const ECTDNavigatorPanel = lazy(() =>
 );
 const RegulatoryIntelligenceFullPanel = lazy(() =>
   import('./components/regulatory/RegulatoryIntelligence').then(m => ({ default: m.default }))
+);
+const VaultBrowserPanel = lazy(() =>
+  import('@/components/sharepoint/SharePointFileManager').then(m => ({ default: m.default }))
 );
 
 // [BATCH 3] CMC, Vault, StudyArchitect, Templates — standalone modes removed, redirect to documents
@@ -322,6 +326,7 @@ const PANEL_COMPONENTS: Record<string, React.LazyExoticComponent<React.Component
     : {}),
   ectd: ECTDNavigatorPanel,
   intelligence: RegulatoryIntelligenceFullPanel,
+  vault: VaultBrowserPanel,
   'doc-editor': EditorPanel,
   'ana-biostats': AnaBiostatsPanel,
 };
@@ -362,6 +367,7 @@ type LayoutMode =
   | 'review-readiness'
   | 'report-engine'
   | 'safety-narrative'
+  | 'vault-workspace'
   // ── Compatibility redirects (redirect on mount, no renderer) ──
   | 'workspace' // → regulatory-workspace
   | 'assistant' // → regulatory-workspace
@@ -656,6 +662,7 @@ export const ZenApp: React.FC = () => {
     createProject: createProjectMutation,
     updateProject: updateProjectMutation,
     deleteProject: deleteProjectMutation,
+    updateOwnershipPreferences: updateOwnershipPreferencesMutation,
   } = useProjects();
 
   // Map DB submission type strings to the UI SubmissionType enum
@@ -823,7 +830,7 @@ export const ZenApp: React.FC = () => {
       // Standalone authoring / specialist modules → documents
       'ectd-coauthor': 'documents',
       cmc: 'documents',
-      'document-vault': 'documents',
+      'document-vault': 'vault-workspace',
       'clinical-trial': 'documents',
       templates: 'documents',
       'document-builder': 'documents',
@@ -892,6 +899,68 @@ export const ZenApp: React.FC = () => {
 
   // Derive active project early so downstream hooks / memos can reference it
   const activeProject = projects.find(p => p.id === activeProjectId);
+  const activeRawProject = rawProjects.find(p => p.id === activeProjectId);
+
+  useEffect(() => {
+    if (!activeRawProject) return;
+    const preferredContext =
+      activeRawProject.ownership?.preferences?.currentWorkbenchContext ||
+      activeRawProject.ownership?.currentWorkbenchContext;
+    if (!preferredContext) return;
+    if (layoutMode === preferredContext) return;
+    if (urlProjectId) return; // Respect direct URL route during initial load
+    setLayoutMode(preferredContext as LayoutMode);
+  }, [activeRawProject, layoutMode, urlProjectId]);
+
+  useEffect(() => {
+    if (!activeProjectId) return;
+    if (!activeRawProject) return;
+    const supportedContexts = new Set([
+      'project-home',
+      'regulatory-workspace',
+      'documents',
+      'review',
+      'review-readiness',
+      'submissions',
+      'section-workspace',
+      'report-engine',
+    ]);
+    if (!supportedContexts.has(layoutMode)) return;
+    const currentStored =
+      activeRawProject.ownership?.preferences?.currentWorkbenchContext ||
+      activeRawProject.ownership?.currentWorkbenchContext;
+    if (currentStored === layoutMode) return;
+    const t = setTimeout(() => {
+      void updateOwnershipPreferencesMutation({
+        projectId: activeProjectId,
+        preferences: { currentWorkbenchContext: layoutMode as any },
+      }).catch(error => {
+        console.warn('Failed to persist workbench context preference', error);
+      });
+    }, 350);
+    return () => clearTimeout(t);
+  }, [activeProjectId, activeRawProject, layoutMode, updateOwnershipPreferencesMutation]);
+
+  useEffect(() => {
+    if (!activeRawProject?.ownership) return;
+    setModuleContext(prev => ({
+      ...prev,
+      projectInstructions:
+        activeRawProject.ownership?.preferences?.projectInstructions ||
+        activeRawProject.ownership?.projectInstructions ||
+        '',
+      reviewState:
+        activeRawProject.ownership?.derived?.reviewState || activeRawProject.ownership?.reviewState,
+      readinessState:
+        activeRawProject.ownership?.derived?.readinessState ||
+        activeRawProject.ownership?.readinessState,
+    }));
+    setCustomInstructions(
+      activeRawProject.ownership?.preferences?.projectInstructions ||
+        activeRawProject.ownership?.projectInstructions ||
+        ''
+    );
+  }, [activeRawProject]);
 
   // Readiness score for the active project (displayed in ProjectHeaderBar)
   const { data: readinessData } = useReadinessAssessment(
@@ -1347,6 +1416,12 @@ export const ZenApp: React.FC = () => {
         setActiveToolPanel(null);
         setToolPanelFullscreen(false);
       }
+
+      // Vault drawer: Alt+V
+      if (e.altKey && e.key.toLowerCase() === 'v') {
+        e.preventDefault();
+        setActiveToolPanel('vault');
+      }
     };
 
     document.addEventListener('keydown', handleKeyDown);
@@ -1574,8 +1649,10 @@ export const ZenApp: React.FC = () => {
       : '—';
     const complianceScore = taskSummary.healthScore / 100;
     const riskCount = taskSummary.overdue + (taskSummary.byStatus?.blocked || 0);
-    const lastActivity =
-      taskSummary.total > 0
+    const ownershipActivity = activeRawProject?.ownership?.derived?.activityHistory?.[0];
+    const lastActivity = ownershipActivity
+      ? `${ownershipActivity.action} · ${new Date(ownershipActivity.timestamp).toLocaleString()}`
+      : taskSummary.total > 0
         ? `${taskSummary.completed}/${taskSummary.total} tasks complete`
         : 'No tasks yet';
     return {
@@ -1585,7 +1662,7 @@ export const ZenApp: React.FC = () => {
       lastActivity,
       auditStatus: 'Audit trail active',
     };
-  }, [activeProject, taskSummary]);
+  }, [activeProject, activeRawProject, taskSummary]);
 
   // Dynamic workspace label based on active project's submission type
   const submissionWorkspaceLabel = useMemo(() => {
@@ -1789,6 +1866,7 @@ export const ZenApp: React.FC = () => {
               'project-home': 'projects',
               'dossier-map': 'dossier',
               documents: 'documents',
+              'vault-workspace': 'documents',
               review: 'review',
               submissions: 'submissions',
               'section-workspace': 'dossier',
@@ -1811,7 +1889,7 @@ export const ZenApp: React.FC = () => {
               'command-center': 'projects',
               'mission-control': 'projects',
               'submission-workspace': 'submissions',
-              'document-vault': 'documents',
+              'document-vault': 'vault-workspace',
               'enablement-center': 'projects',
               'client-intelligence': 'projects',
               'collaboration-hub': 'review',
@@ -1910,6 +1988,9 @@ export const ZenApp: React.FC = () => {
             case 'documents':
               setLayoutMode('documents');
               break;
+            case 'document-vault':
+              setLayoutMode('vault-workspace');
+              break;
             case 'review':
               setLayoutMode('review');
               break;
@@ -2000,7 +2081,7 @@ export const ZenApp: React.FC = () => {
       />
 
       {/* Main area — no top bar, exactly like Claude.ai */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-0">
+      <GlobalOperatingShell layoutMode={layoutMode} activeProjectName={activeProject?.name}>
         {/* Content Area */}
         <div className="flex-1 flex min-w-0 min-h-0">
           {/* ── Embedded Module Host ── */}
@@ -2351,6 +2432,7 @@ export const ZenApp: React.FC = () => {
                     setActiveArtifactStatus(undefined);
                   }
                 }}
+                onNavigate={mode => setLayoutMode(mode as LayoutMode)}
               />
             ))}
 
@@ -2381,6 +2463,31 @@ export const ZenApp: React.FC = () => {
                   <FullDocumentBuilder />
                 </Suspense>
               </ErrorBoundary>
+            </div>
+          )}
+
+          {/* ── Global Vault Workspace: browse/search/manage from anywhere ── */}
+          {!embeddedModule && layoutMode === 'vault-workspace' && (
+            <div className="flex-1 flex flex-col min-h-0 bg-zinc-50" data-testid="workspace-vault">
+              <div className="h-12 px-4 flex items-center justify-between border-b border-zinc-200 bg-white">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-zinc-500" />
+                  <span className="text-sm font-semibold text-zinc-900">Vault Workspace</span>
+                </div>
+                <button
+                  onClick={() => setActiveToolPanel('vault')}
+                  className="text-xs font-medium px-2.5 py-1 rounded-md border border-zinc-200 hover:bg-zinc-100 text-zinc-700"
+                >
+                  Open in right drawer
+                </button>
+              </div>
+              <div className="flex-1 min-h-0">
+                <ErrorBoundary>
+                  <Suspense fallback={<ModuleLoadingFallback />}>
+                    <VaultBrowserPanel moduleContext="vault" />
+                  </Suspense>
+                </ErrorBoundary>
+              </div>
             </div>
           )}
 
@@ -2742,6 +2849,7 @@ export const ZenApp: React.FC = () => {
                 activeProject: activeProject?.name,
                 projectId: activeProjectId,
                 moduleContext,
+                customInstructions,
               }}
               greeting={
                 layoutMode === 'deep-research'
@@ -2764,7 +2872,36 @@ export const ZenApp: React.FC = () => {
               onRefreshIntelligence={authoringIntelligence.refetch}
             />
           )}
-      </div>
+      </GlobalOperatingShell>
+
+      {/* Global right-drawer Vault presence across the app shell */}
+      {!embeddedModule && !activeToolPanel && (
+        <button
+          onClick={() => setActiveToolPanel('vault')}
+          className="fixed right-0 top-1/2 -translate-y-1/2 z-40 h-36 w-10 border border-zinc-200 border-r-0 rounded-l-xl bg-white/95 hover:bg-zinc-50 shadow-sm flex flex-col items-center justify-center gap-1"
+          title="Open Vault drawer"
+          aria-label="Open Vault drawer"
+        >
+          <FileText className="w-4 h-4 text-zinc-600" />
+          <span className="text-[10px] tracking-wide text-zinc-600 [writing-mode:vertical-rl] rotate-180">
+            Vault
+          </span>
+        </button>
+      )}
+
+      {!embeddedModule && activeToolPanel && (
+        <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-96 lg:w-[620px] shadow-2xl">
+          <ToolPanelWrapper
+            panel={activeToolPanel}
+            onClose={() => {
+              setActiveToolPanel(null);
+              setToolPanelFullscreen(false);
+            }}
+            isFullscreen={toolPanelFullscreen}
+            onToggleFullscreen={() => setToolPanelFullscreen(prev => !prev)}
+          />
+        </div>
+      )}
 
       {/* Dr. Sage — Persistent global help/guide/copilot layer */}
       <DrSageGlobalLayer

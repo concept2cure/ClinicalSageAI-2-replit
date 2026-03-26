@@ -63,7 +63,7 @@ const moduleRouteMap: Record<string, string> = {
   cer_generator: '/client-portal/cer-generator',
   ectd_coauthor: '/client-portal/documents', // [BATCH 5] remapped from ectd-coauthor
   '510k_builder': '/client-portal/510k-builder',
-  lumen_cortex: '/client-portal/lumen-cortex',
+  ana_cortex: '/ana',
   ai_assistant: '/client-portal/ai-assistant',
   safety_reporting: '/client-portal/safety',
   training: '/client-portal/training',

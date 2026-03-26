@@ -73,9 +73,9 @@ const PasswordResetPage = lazy(() => import('@/portal-v2/components/auth/Passwor
  * Bridge that extracts :projectId from URL and renders CERV2Page with it.
  */
 const Project510kBridge: React.FC = () => {
-  const [location] = useLocation();
-  const routeState = parseProjectRoute(location);
-  const projectId = routeState.module === '510k' ? routeState.projectId : null;
+  const [, exactParams] = useRoute('/concept2cure/project/:projectId/510k');
+  const [, nestedParams] = useRoute('/concept2cure/project/:projectId/510k/:rest*');
+  const projectId = exactParams?.projectId ?? nestedParams?.projectId ?? null;
   return (
     <Suspense
       fallback={
@@ -93,9 +93,9 @@ const Project510kBridge: React.FC = () => {
  * Bridge that extracts :projectId from URL and renders PMAWorkspace with it.
  */
 const ProjectPMABridge: React.FC = () => {
-  const [location] = useLocation();
-  const routeState = parseProjectRoute(location);
-  const projectId = routeState.module === 'pma' ? routeState.projectId : null;
+  const [, exactParams] = useRoute('/concept2cure/project/:projectId/pma');
+  const [, nestedParams] = useRoute('/concept2cure/project/:projectId/pma/:rest*');
+  const projectId = exactParams?.projectId ?? nestedParams?.projectId ?? null;
   return (
     <Suspense
       fallback={
@@ -167,7 +167,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      setLocation(buildLoginRedirectPath(location));
+      // Redirect to login with return URL
+      const returnTo = encodeURIComponent(location);
+      setLocation(`/concept2cure/login?returnTo=${returnTo}`);
     }
   }, [isAuthenticated, isLoading, location, setLocation]);
 
@@ -349,18 +351,57 @@ export const ZenRouter: React.FC = () => {
             )}
           </Route>
 
-          {!shouldEmbedModulesInShell &&
-            STANDALONE_MODULE_ROUTE_PATTERNS.map(path => (
-              <Route key={path} path={path}>
-                {() => (
-                  <PageTransition>
-                    <ProtectedRoute>
-                      {path.includes('/510k') ? <Project510kBridge /> : <ProjectPMABridge />}
-                    </ProtectedRoute>
-                  </PageTransition>
-                )}
-              </Route>
-            ))}
+          {/* Project-scoped 510(k) workspace
+              When EMBED_MODULES_IN_SHELL is enabled, this route falls through
+              to ZenApp (caught by project/:projectId/:rest*) which renders CERV2
+              inside the shell frame. When disabled, standalone full-page bridge. */}
+          {!shouldEmbedModulesInShell && (
+            <Route path="/concept2cure/project/:projectId/510k">
+              {() => (
+                <PageTransition>
+                  <ProtectedRoute>
+                    <Project510kBridge />
+                  </ProtectedRoute>
+                </PageTransition>
+              )}
+            </Route>
+          )}
+
+          {/* Project-scoped PMA workspace (standalone mode) */}
+          {!shouldEmbedModulesInShell && (
+            <Route path="/concept2cure/project/:projectId/510k/:rest*">
+              {() => (
+                <PageTransition>
+                  <ProtectedRoute>
+                    <Project510kBridge />
+                  </ProtectedRoute>
+                </PageTransition>
+              )}
+            </Route>
+          )}
+
+          {!shouldEmbedModulesInShell && (
+            <Route path="/concept2cure/project/:projectId/pma">
+              {() => (
+                <PageTransition>
+                  <ProtectedRoute>
+                    <ProjectPMABridge />
+                  </ProtectedRoute>
+                </PageTransition>
+              )}
+            </Route>
+          )}
+          {!shouldEmbedModulesInShell && (
+            <Route path="/concept2cure/project/:projectId/pma/:rest*">
+              {() => (
+                <PageTransition>
+                  <ProtectedRoute>
+                    <ProjectPMABridge />
+                  </ProtectedRoute>
+                </PageTransition>
+              )}
+            </Route>
+          )}
           {/* Billing Dashboard - protected */}
           <Route path="/concept2cure/billing">
             {() => (

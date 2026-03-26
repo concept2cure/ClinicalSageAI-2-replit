@@ -118,6 +118,13 @@ WHERE k_number = $1
 ORDER BY severity_score DESC;
 """
 
+SELECT_SIGNALS_BY_K_NUMBERS = """
+SELECT *
+FROM predicate.predicate_safety_signals
+WHERE k_number = ANY($1::text[])
+ORDER BY k_number, severity_score DESC;
+"""
+
 SELECT_TOXIC_K_NUMBERS = """
 SELECT k_number, MAX(severity_score) AS max_severity, COUNT(*) AS signal_count
 FROM predicate.predicate_safety_signals
@@ -156,6 +163,39 @@ SELECT COUNT(DISTINCT s.id) AS family_recall_count
 FROM family f
 JOIN predicate.predicate_safety_signals s ON s.k_number = f.k_number
 WHERE s.signal_type IN ('Class1Recall', 'Class2Recall');
+"""
+
+CHECK_FAMILY_SAFETY_BY_K_NUMBERS = """
+WITH RECURSIVE roots AS (
+    SELECT UNNEST($1::text[]) AS root_k_number
+),
+family AS (
+    SELECT
+        r.root_k_number,
+        pl.parent_k_number AS k_number,
+        1 AS depth
+    FROM roots r
+    JOIN predicate.predicate_lineage pl ON pl.child_k_number = r.root_k_number
+
+    UNION ALL
+
+    SELECT
+        f.root_k_number,
+        pl.parent_k_number AS k_number,
+        f.depth + 1
+    FROM family f
+    JOIN predicate.predicate_lineage pl ON pl.child_k_number = f.k_number
+    WHERE f.depth < 5
+)
+SELECT
+    r.root_k_number AS k_number,
+    COUNT(DISTINCT s.id)::int AS family_recall_count
+FROM roots r
+LEFT JOIN family f ON f.root_k_number = r.root_k_number
+LEFT JOIN predicate.predicate_safety_signals s
+    ON s.k_number = f.k_number
+   AND s.signal_type IN ('Class1Recall', 'Class2Recall')
+GROUP BY r.root_k_number;
 """
 
 # ─────────────────────────────────────────────────────────────────────────────
