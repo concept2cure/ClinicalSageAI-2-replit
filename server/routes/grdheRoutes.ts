@@ -665,7 +665,7 @@ router.post('/exports/:jobId/execute', asyncHandler(async (req: Request, res: Re
         errorMessage: error.message,
         errorDetails: { stack: error.stack }
       });
-    } catch {}
+    } catch { /* non-blocking: best-effort status update */ }
     
     res.status(500).json({
       success: false,

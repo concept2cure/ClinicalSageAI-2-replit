@@ -248,6 +248,7 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
           if (savedModule) setCurrentModule(savedModule);
         }
       } catch (error) {
+        console.error('[TenantContext] Failed to load tenant data:', error);
       } finally {
         setIsLoading(false);
       }
@@ -355,6 +356,7 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
             }
           }
         } catch (error) {
+          console.error('[TenantContext] Failed to load client workspaces:', error);
         }
       }
 

@@ -334,6 +334,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
           body: JSON.stringify(prefs),
         });
       } catch (error) {
+        console.error('[UserContext] Failed to persist preferences:', error);
       }
     },
     [profile]

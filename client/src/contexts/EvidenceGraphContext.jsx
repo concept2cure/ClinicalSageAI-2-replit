@@ -184,6 +184,7 @@ export function EvidenceGraphProvider({ children }) {
         const evidence = await publisher.publishEvidence();
         allEvidence.push(...evidence);
       } catch (error) {
+        console.error(`[EvidenceGraph] Failed to collect evidence from ${source}:`, error);
       }
     }
     

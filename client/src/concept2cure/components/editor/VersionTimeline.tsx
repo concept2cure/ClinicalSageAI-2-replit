@@ -10,6 +10,7 @@
  */
 
 import React, { useState, useMemo, useCallback } from 'react';
+import DOMPurify from 'dompurify';
 import {
   History,
   Clock,
@@ -297,7 +298,7 @@ export const VersionTimeline: React.FC<VersionTimelineProps> = ({
           <div
             className="px-4 py-3 prose prose-xs prose-zinc max-w-none text-xs"
             dangerouslySetInnerHTML={{
-              __html: previewVersion.content.slice(0, 2000),
+              __html: DOMPurify.sanitize(previewVersion.content.slice(0, 2000)),
             }}
           />
         </div>

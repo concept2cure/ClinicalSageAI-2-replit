@@ -40,6 +40,7 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
       setTimelineData(timeline);
       setHistory(hist);
     } catch (error) {
+      console.error('[Gatekeeper] Failed to load dashboard data:', error);
     } finally {
       setLoading(false);
     }
@@ -59,6 +60,7 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
       setGatekeeperData(result);
       loadData(); // Refresh all data
     } catch (error) {
+      console.error('[Gatekeeper] Failed to run gatekeeper:', error);
     } finally {
       setLoading(false);
     }
@@ -75,6 +77,7 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
       });
       loadData(); // Refresh data after fixes
     } catch (error) {
+      console.error('[Gatekeeper] Failed to apply auto-fix:', error);
     } finally {
       setLoading(false);
     }
@@ -90,6 +93,7 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
       navigator.clipboard.writeText(digest.message);
       toast({ title: 'Copied', description: 'Slack digest copied to clipboard' });
     } catch (error) {
+      console.error('[Gatekeeper] Failed to generate Slack digest:', error);
     }
   };
 
@@ -104,6 +108,7 @@ export default function GatekeeperDashboard({ subId }: { subId: string }) {
       a.click();
       window.URL.revokeObjectURL(url);
     } catch (error) {
+      console.error('[Gatekeeper] Failed to download calendar:', error);
     }
   };
 

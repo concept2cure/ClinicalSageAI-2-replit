@@ -553,7 +553,7 @@ router.post('/approve-artifact', async (req: Request, res: Response) => {
         boundaryTransitionId: boundaryTransition?.id || null,
       });
     } catch (err: any) {
-      return res.json({ approved: false, reason: 'error', message: err?.message || 'Failed to approve' });
+      return res.status(500).json({ approved: false, reason: 'error', message: err?.message || 'Failed to approve' });
     }
   } catch (err: any) {
     console.error('[authoring-actions] approve-artifact error:', err?.message);
@@ -660,7 +660,7 @@ router.post('/lock-artifact', async (req: Request, res: Response) => {
         boundaryTransitionId: boundaryTransition?.id || null,
       });
     } catch (err: any) {
-      return res.json({ locked: false, reason: 'error', message: err?.message || 'Failed to lock' });
+      return res.status(500).json({ locked: false, reason: 'error', message: err?.message || 'Failed to lock' });
     }
   } catch (err: any) {
     console.error('[authoring-actions] lock-artifact error:', err?.message);

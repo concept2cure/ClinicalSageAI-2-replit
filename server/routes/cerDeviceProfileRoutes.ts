@@ -9,9 +9,11 @@ const deviceProfileService = DeviceProfileService.getInstance();
  * Create a new device profile
  * POST /api/cer/device-profile
  */
-// Add a debug middleware to trace request
+// Trace request in development only
 router.use((req, res, next) => {
-  console.log('Device Profile Route accessed:', req.method, req.originalUrl, req.baseUrl, req.path);
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Device Profile Route accessed:', req.method, req.path);
+  }
   next();
 });
 

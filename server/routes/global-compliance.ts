@@ -143,7 +143,7 @@ router.post('/regions/:orgId/enable', async (req: Request, res: Response) => {
         '../services/compliance/globalComplianceEngine.js'
       );
       defaults = getRegionalAuditRequirements(regionCode);
-    } catch {}
+    } catch { /* non-blocking: fall back to empty defaults */ }
 
     const result = await pool.query(
       `INSERT INTO regional_compliance_config
@@ -208,7 +208,7 @@ router.post('/gap-analysis/:orgId', async (req: Request, res: Response) => {
         eSignatures: result.rows.some((r: any) => r.e_signature_required),
         hashAlgorithm: result.rows[0]?.hash_algorithm || 'SHA-256',
       };
-    } catch {}
+    } catch { /* non-blocking: fall back to empty config for gap analysis */ }
 
     const gapAnalysis = validateComplianceForRegions(targetRegions, currentConfig);
 

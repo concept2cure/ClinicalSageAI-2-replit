@@ -932,7 +932,7 @@ const DocumentEditor = () => {
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(taskStatus.draft_content);
-                  alert('Content copied to clipboard!');
+                  // Clipboard copy succeeded — no alert needed
                 }}
                 style={{
                   padding: '0.375rem 0.75rem',

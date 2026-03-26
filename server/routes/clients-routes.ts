@@ -929,9 +929,7 @@ router.patch('/:id/settings', async (req, res) => {
     const { id } = req.params;
     const settings = req.body;
 
-    console.log('Updating workspace settings for client', id, ':', Object.keys(settings));
-    console.log('Request params:', req.params);
-    console.log('Request URL:', req.url);
+    console.log('Updating workspace settings for client', id);
 
     // Validate that client ID exists
     if (!id) {

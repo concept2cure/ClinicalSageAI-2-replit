@@ -709,14 +709,14 @@ export const SOPManagement: React.FC<SOPManagementProps> = ({ className }) => {
             <SOPList
               sops={sops}
               onSelect={setSelectedSOP}
-              onEdit={(sop) => console.log('Edit SOP:', sop.id)}
+              onEdit={(sop) => setSelectedSOP(sop)}
             />
           </TabsContent>
 
           <TabsContent value="training" className="m-0">
             <TrainingMatrix
               records={trainingRecords}
-              onAcknowledge={(id) => console.log('Acknowledge training:', id)}
+              onAcknowledge={(id) => { /* TODO: implement training acknowledgement */ }}
             />
           </TabsContent>
 

@@ -180,6 +180,7 @@ export default function EditorCanvas({
         setValidationIssues(issues);
       }
     } catch (error) {
+      console.error('[EditorCanvas] Validation failed:', error);
     } finally {
       setIsValidating(false);
     }

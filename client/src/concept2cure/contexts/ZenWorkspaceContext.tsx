@@ -549,6 +549,7 @@ export const ZenWorkspaceProvider: React.FC<ZenWorkspaceProviderProps> = ({
       
       localStorage.setItem(storageKey, JSON.stringify(sessionData));
     } catch (error) {
+      /* non-blocking: localStorage may be unavailable */
     }
   }, [state, storageKey]);
   

@@ -713,12 +713,14 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
           dispatch({ type: 'SET_CONVERSATIONS', payload: parsed.conversations });
         if (parsed.artifacts) dispatch({ type: 'SET_ARTIFACTS', payload: parsed.artifacts });
       } catch (e) {
+        /* non-blocking: skip corrupted localStorage */
       }
     }
     if (savedProfile) {
       try {
         dispatch({ type: 'SET_USER_PROFILE', payload: JSON.parse(savedProfile) });
       } catch (e) {
+        /* non-blocking: skip corrupted localStorage */
       }
     }
   }, []);
@@ -730,6 +732,7 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
         try {
           dispatch({ type: 'SET_USER_PROFILE', payload: JSON.parse(storageEvent.newValue) });
         } catch (e) {
+          /* non-blocking: skip corrupted storage event */
         }
       }
     };
