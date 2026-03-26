@@ -86,7 +86,6 @@ import {
   Replace,
   Type,
 } from 'lucide-react';
-    documentMode: documentModeProp,
 import InlineApprovalPanel from './InlineApprovalPanel';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1094,6 +1093,7 @@ export const UnifiedDocumentEditor: React.FC<UnifiedDocumentEditorProps> = ({
   documentType = 'General',
   submissionType,
   isReadOnly = false,
+  documentMode: documentModeProp,
   onToggleLock,
   showTraceability = true,
   showCompliance = true,

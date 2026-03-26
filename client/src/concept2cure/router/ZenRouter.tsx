@@ -77,8 +77,6 @@ const Project510kBridge: React.FC = () => {
       fallback={
         <div className="min-h-screen flex items-center justify-center bg-[#FAF9F5]">
           <p className="text-sm text-[#B0AEA5]">Loading workspace…</p>
-        <div className="min-h-screen flex items-center justify-center bg-[#faf9f5]">
-          <p className="text-sm text-zinc-400">Loading workspace…</p>
         </div>
       }
     >
@@ -111,69 +109,34 @@ const ProjectPMABridge: React.FC = () => {
 // ═══════════════════════════════════════════════════════════════════════════════
 const ZenLoadingScreen: React.FC<{ message?: string }> = ({ message = 'Loading...' }) => (
   <div className="min-h-screen bg-[#FAF9F5] flex items-center justify-center">
-  <div className="min-h-screen bg-[#faf9f5] flex items-center justify-center">
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className="flex flex-col items-center gap-6"
     >
-      {/* Brand logo with gentle pulse */}
       <motion.div
         animate={{ scale: [1, 1.03, 1], opacity: [0.8, 1, 0.8] }}
         transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-        className="relative"
+        className="relative w-20 h-20 rounded-2xl overflow-hidden shadow-md"
       >
-        <svg
-          viewBox="0 0 40 40"
-          className="w-full h-full"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <circle
-            cx="20"
-            cy="20"
-            r="18"
-            stroke="currentColor"
-            strokeWidth="2"
-            className="text-[#D97757]"
-          />
-          <motion.path
-            d="M12 14C16 14 18 18 20 20C22 22 24 26 28 26"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            className="text-[#D97757]"
-          />
-          <motion.path
-            d="M28 14C24 14 22 18 20 20C18 22 16 26 12 26"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            className="text-[#E8967A]"
-          />
-        </svg>
+        <img
+          src="/src/assets/concept2cure-logo.jpg"
+          alt="Concept2Cure"
+          className="w-full h-full object-cover object-center"
+        />
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: 'radial-gradient(circle at center, transparent 40%, #faf9f5 100%)' }}
+        />
       </motion.div>
 
-      <p className="text-sm text-[#8A8880]">{message}</p>
-        <div className="relative w-20 h-20 rounded-2xl overflow-hidden shadow-md">
-          <img
-            src="/src/assets/concept2cure-logo.jpg"
-            alt="Concept2Cure"
-            className="w-full h-full object-cover object-center"
-          />
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{ background: 'radial-gradient(circle at center, transparent 40%, #faf9f5 100%)' }}
-          />
-        </div>
-      </motion.div>
-
-      <p className="text-sm text-zinc-500" style={{ fontFamily: "'Poppins', Arial, sans-serif" }}>{message}</p>
+      <p className="text-sm text-zinc-500" style={{ fontFamily: "'Poppins', Arial, sans-serif" }}>
+        {message}
+      </p>
 
       {/* Progress bar */}
       <div className="w-48 h-1 bg-[#E8E6DC] rounded-full overflow-hidden">
         <motion.div
-          className="h-full bg-[#D97757] rounded-full"
           className="h-full rounded-full"
           style={{ background: 'linear-gradient(135deg, #d97757, #c15f3c)' }}
           initial={{ x: '-100%' }}
