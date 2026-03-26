@@ -103,10 +103,35 @@ jobs:
           RUN_INTEGRATION_TESTS: 'true'
           TEST_DATABASE_URL: postgresql://postgres:${{ env.TEST_DB_PASSWORD }}@localhost:5432/concept2cure-ri_test
 
+
+  aios-audit-assets:
+    name: AIOS Audit Assets
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python tooling dependencies
+        run: python3 -m pip install --upgrade pip pyyaml
+
+      - name: Generate AIOS evidence pack and enforce release gates
+        run: make aios-gate
+
+      - name: Validate AIOS audit assets
+        run: make aios-validate
+
+      - name: Run AIOS audit tooling tests
+        run: make aios-test
+
   build:
     name: Build
     runs-on: ubuntu-latest
-    needs: [lint, test, integration-tests]
+    needs: [lint, test, integration-tests, aios-audit-assets]
     steps:
       - uses: actions/checkout@v4
 
