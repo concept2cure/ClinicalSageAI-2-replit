@@ -88,6 +88,8 @@ import { canEscalateToEdit } from '../../contexts/DocumentModeContext';
 
 // ── Left-rail mode type ──────────────────────────────────────────────────────
 type LeftRailMode = 'files' | 'dossier' | 'templates' | 'outline';
+type OperatingLayer = 'document_studio' | 'vault' | 'reports';
+type WorkspaceWorkbench = 'cmc' | 'biostats' | 'device' | 'clinical';
 
 // ── Dossier metrics types ────────────────────────────────────────────────────
 interface SectionMetrics {
@@ -100,6 +102,21 @@ interface SectionMetrics {
   templateCoverageAvailable: boolean;
   evidenceCount: number;
   precedentCount: number;
+}
+
+interface OperatingLayerConfig {
+  id: OperatingLayer;
+  label: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+}
+
+interface WorkbenchConfig {
+  id: WorkspaceWorkbench;
+  label: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+  defaultFolder: string;
 }
 
 // ── Cut/paste move state ─────────────────────────────────────────────────────
@@ -122,6 +139,58 @@ const FOLDER_LABELS: Record<string, string> = {
   audit: 'Audit / Provenance',
   final: 'Submitted / Final',
 };
+
+const OPERATING_LAYERS: OperatingLayerConfig[] = [
+  {
+    id: 'document_studio',
+    label: 'Document Studio',
+    description: 'Core authoring + governed workflow',
+    icon: FileText,
+  },
+  {
+    id: 'vault',
+    label: 'Vault Layer',
+    description: 'Evidence and document operations',
+    icon: Files,
+  },
+  {
+    id: 'reports',
+    label: 'Reports Layer',
+    description: 'Readiness, review, and executive reporting',
+    icon: Activity,
+  },
+];
+
+const WORKBENCHES: WorkbenchConfig[] = [
+  {
+    id: 'cmc',
+    label: 'CMC',
+    description: 'Module 3 authoring',
+    icon: Layers,
+    defaultFolder: 'cmc',
+  },
+  {
+    id: 'biostats',
+    label: 'Biostats',
+    description: 'Statistical narratives',
+    icon: Brain,
+    defaultFolder: 'clinical',
+  },
+  {
+    id: 'device',
+    label: 'Device',
+    description: 'Device evidence and equivalence',
+    icon: Target,
+    defaultFolder: 'evidence',
+  },
+  {
+    id: 'clinical',
+    label: 'Clinical',
+    description: 'Clinical studies and summaries',
+    icon: BookOpen,
+    defaultFolder: 'clinical',
+  },
+];
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -178,6 +247,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   const [selectedDocId, setSelectedDocId] = useState<string | undefined>();
   const [mode, setMode] = useState<'dashboard' | 'browse' | 'edit'>('dashboard');
   const [leftRailMode, setLeftRailMode] = useState<LeftRailMode>('files');
+  const [activeLayer, setActiveLayer] = useState<OperatingLayer>('document_studio');
+  const [activeWorkbench, setActiveWorkbench] = useState<WorkspaceWorkbench>('clinical');
   const [selectedCtdSection, setSelectedCtdSection] = useState<string | undefined>();
 
   // New document creation
@@ -829,6 +900,32 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     setMode('dashboard');
   }, []);
 
+  const handleLayerChange = useCallback((layer: OperatingLayer) => {
+    setActiveLayer(layer);
+    if (layer === 'document_studio') {
+      setPhase4Panel('none');
+      return;
+    }
+    if (layer === 'vault') {
+      setPhase4Panel('none');
+      setMode('browse');
+      setLeftRailMode('files');
+      return;
+    }
+    setMode('browse');
+    setPhase4Panel('pulse');
+  }, []);
+
+  const handleWorkbenchChange = useCallback((workbench: WorkspaceWorkbench) => {
+    setActiveWorkbench(workbench);
+    const config = WORKBENCHES.find(item => item.id === workbench);
+    if (!config) return;
+    setSelectedFolder(config.defaultFolder);
+    setLeftRailMode('files');
+    setMode('browse');
+    setPhase4Panel('none');
+  }, []);
+
   // Which docs to show in the center pane when browsing
   const browseLabel =
     leftRailMode === 'dossier'
@@ -937,6 +1034,61 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
               </button>
             </div>
           )}
+        </div>
+
+        {/* ── AnA 1.0 controlled shell layer/workbench bar ─────────────────── */}
+        <div className="flex items-center gap-3 px-4 h-11 border-b border-zinc-200 bg-zinc-50/70 shrink-0 overflow-x-auto">
+          <div className="text-[11px] font-semibold tracking-wide text-zinc-500 uppercase whitespace-nowrap">
+            AnA 1.0 Shell
+          </div>
+          <div className="flex items-center gap-1.5">
+            {OPERATING_LAYERS.map(layer => {
+              const LayerIcon = layer.icon;
+              const selected = activeLayer === layer.id;
+              return (
+                <button
+                  key={layer.id}
+                  onClick={() => handleLayerChange(layer.id)}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors',
+                    selected
+                      ? 'bg-zinc-900 text-white'
+                      : 'bg-white text-zinc-600 border border-zinc-200 hover:bg-zinc-100'
+                  )}
+                  title={layer.description}
+                >
+                  <LayerIcon className="w-3.5 h-3.5" />
+                  {layer.label}
+                </button>
+              );
+            })}
+          </div>
+          <span className="text-zinc-300">|</span>
+          <div className="text-[11px] font-semibold tracking-wide text-zinc-500 uppercase whitespace-nowrap">
+            Workbenches
+          </div>
+          <div className="flex items-center gap-1.5">
+            {WORKBENCHES.map(workbench => {
+              const WorkbenchIcon = workbench.icon;
+              const selected = activeWorkbench === workbench.id;
+              return (
+                <button
+                  key={workbench.id}
+                  onClick={() => handleWorkbenchChange(workbench.id)}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors',
+                    selected
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white text-zinc-600 border border-zinc-200 hover:bg-blue-50'
+                  )}
+                  title={workbench.description}
+                >
+                  <WorkbenchIcon className="w-3.5 h-3.5" />
+                  {workbench.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* ── Pending move banner ───────────────────────────────────────────── */}
@@ -1604,13 +1756,6 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                   t.type === 'info' && 'bg-zinc-700 text-white'
                 )}
               >
-                <X className="w-3 h-3" />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
                 {t.message}
                 <button
                   onClick={() => setShellToasts(prev => prev.filter(x => x.id !== t.id))}
@@ -1813,7 +1958,6 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
             </div>
           </div>
         )}
-      </div>
       </div>
     </div>
   );
