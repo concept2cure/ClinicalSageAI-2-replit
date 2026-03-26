@@ -255,7 +255,14 @@ interface ProjectWorkspaceShellProps {
   onOpenArtifactConsumed?: () => void;
   /** Callback when the active document changes — used for chat/authoring context awareness */
   onActiveDocumentChange?: (
-    doc: { id?: string; title: string; ctdSection?: string; excerpt: string; version?: number; status?: string } | null
+    doc: {
+      id?: string;
+      title: string;
+      ctdSection?: string;
+      excerpt: string;
+      version?: number;
+      status?: string;
+    } | null
   ) => void;
   /** Navigate to a different layout mode (e.g., submission-builder, template-library) */
   onNavigate?: (mode: string) => void;
@@ -371,16 +378,29 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     const conversationId = `project-${projectId}`;
     const qs = `?projectId=${encodeURIComponent(projectId)}`;
     Promise.all([
-      apiRequest('POST', `/api/conversation-os/conversations/${conversationId}/tools`, { mode: 'on-demand', projectId }).catch(() => null),
-      apiRequest('GET', `/api/conversation-os/conversations/${conversationId}/scout${qs}`).catch(() => null),
-      apiRequest('GET', `/api/conversation-os/conversations/${conversationId}/plan-summary${qs}`).catch(() => null),
-      apiRequest('GET', `/api/conversation-os/conversations/${conversationId}/proposals${qs}`).catch(() => null),
+      apiRequest('POST', `/api/conversation-os/conversations/${conversationId}/tools`, {
+        mode: 'on-demand',
+        projectId,
+      }).catch(() => null),
+      apiRequest('GET', `/api/conversation-os/conversations/${conversationId}/scout${qs}`).catch(
+        () => null
+      ),
+      apiRequest(
+        'GET',
+        `/api/conversation-os/conversations/${conversationId}/plan-summary${qs}`
+      ).catch(() => null),
+      apiRequest(
+        'GET',
+        `/api/conversation-os/conversations/${conversationId}/proposals${qs}`
+      ).catch(() => null),
     ]).then(([manifestRes, scoutRes, planRes, proposalRes]) => {
       setConversationSnapshot({
         manifestMode: (manifestRes as any)?.manifest?.mode,
         latestFinding: (scoutRes as any)?.findings?.[0]?.summary,
         latestPlanTask: (planRes as any)?.plan?.task,
-        proposals: ((proposalRes as any)?.proposals ?? []).slice(0, 3).map((p: any) => ({ id: p.id, status: p.status })),
+        proposals: ((proposalRes as any)?.proposals ?? [])
+          .slice(0, 3)
+          .map((p: any) => ({ id: p.id, status: p.status })),
       });
     });
   }, [projectId, mode]);
@@ -389,10 +409,16 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     async (proposalId: string, action: 'accept' | 'reject') => {
       if (!projectId) return;
       const conversationId = `project-${projectId}`;
-      await apiRequest('POST', `/api/conversation-os/conversations/${conversationId}/proposals/${proposalId}/${action}`, { projectId });
+      await apiRequest(
+        'POST',
+        `/api/conversation-os/conversations/${conversationId}/proposals/${proposalId}/${action}`,
+        { projectId }
+      );
       setConversationSnapshot(prev => ({
         ...prev,
-        proposals: prev.proposals.map(p => (p.id === proposalId ? { ...p, status: action === 'accept' ? 'accepted' : 'rejected' } : p)),
+        proposals: prev.proposals.map(p =>
+          p.id === proposalId ? { ...p, status: action === 'accept' ? 'accepted' : 'rejected' } : p
+        ),
       }));
     },
     [projectId]
@@ -436,7 +462,10 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
   const loadDossierMetrics = useCallback(async () => {
     if (!projectId) return;
     try {
-      const res = await apiRequest('GET', `/api/concept2cure/projects/${projectId}/dossier-metrics`);
+      const res = await apiRequest(
+        'GET',
+        `/api/concept2cure/projects/${projectId}/dossier-metrics`
+      );
       const payload = await res.json();
       if (payload.data) {
         setDossierMetrics(payload.data);
@@ -618,11 +647,11 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     setCreatingNew(true);
     try {
       const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts`, {
-          title: newDocTitle.trim(),
-          content: '<p>Begin editing your document here...</p>',
-          type: 'regulatory_document',
-          category: 'document',
-        });
+        title: newDocTitle.trim(),
+        content: '<p>Begin editing your document here...</p>',
+        type: 'regulatory_document',
+        category: 'document',
+      });
       if (res.ok) {
         const payload = await res.json();
         const created = payload.data ?? payload;
@@ -649,13 +678,13 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       setCreatingNew(true);
       try {
         const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts`, {
-            title: label,
-            content: `<h1>${label}</h1><p>Generated from template <code>${templateKey}</code> for CTD section ${ctdSection}.</p>`,
-            type: 'regulatory_document',
-            category: 'document',
-            ctdSection,
-            templateId: templateKey,
-          });
+          title: label,
+          content: `<h1>${label}</h1><p>Generated from template <code>${templateKey}</code> for CTD section ${ctdSection}.</p>`,
+          type: 'regulatory_document',
+          category: 'document',
+          ctdSection,
+          templateId: templateKey,
+        });
         if (res.ok) {
           const payload = await res.json();
           const created = payload.data ?? payload;
@@ -683,12 +712,12 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       setCreatingNew(true);
       try {
         const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts`, {
-            title,
-            content: '<p>Begin editing your document here...</p>',
-            type: 'regulatory_document',
-            category: 'document',
-            ...(ctdSection ? { ctdSection } : {}),
-          });
+          title,
+          content: '<p>Begin editing your document here...</p>',
+          type: 'regulatory_document',
+          category: 'document',
+          ...(ctdSection ? { ctdSection } : {}),
+        });
         if (res.ok) {
           const payload = await res.json();
           const created = payload.data ?? payload;
@@ -715,13 +744,15 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       setCreatingNew(true);
       try {
         const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts`, {
-            title,
-            content: `<h1>${title}</h1><p>Generated from template <code>${templateId}</code>${ctdSection ? ` for CTD section ${ctdSection}` : ''}.</p>`,
-            type: 'regulatory_document',
-            category: 'document',
-            ...(ctdSection ? { ctdSection } : {}),
-            templateId,
-          });
+          title,
+          content: `<h1>${title}</h1><p>Generated from template <code>${templateId}</code>${
+            ctdSection ? ` for CTD section ${ctdSection}` : ''
+          }.</p>`,
+          type: 'regulatory_document',
+          category: 'document',
+          ...(ctdSection ? { ctdSection } : {}),
+          templateId,
+        });
         if (res.ok) {
           const payload = await res.json();
           const created = payload.data ?? payload;
@@ -748,13 +779,16 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       if (!projectId) return;
       setPlacementLoading(true);
       try {
-        const res = await apiRequest('PUT',
-          `/api/concept2cure/projects/${projectId}/artifacts/${params.artifactId}/placement`, {
-              operation: params.operation,
-              fromSection: params.fromSection,
-              toSection: params.toSection,
-              reason: params.reason,
-            });
+        const res = await apiRequest(
+          'PUT',
+          `/api/concept2cure/projects/${projectId}/artifacts/${params.artifactId}/placement`,
+          {
+            operation: params.operation,
+            fromSection: params.fromSection,
+            toSection: params.toSection,
+            reason: params.reason,
+          }
+        );
         if (res.ok) {
           await loadArtifacts();
           setPlacementDialog({ open: false, artifact: null, operation: 'place' });
@@ -900,7 +934,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
     return artifacts.find(a => a.id === selectedDocId) || null;
   }, [selectedDocId, artifacts]);
   const reviewInFlight = useMemo(
-    () => artifacts.filter(a => ['review', 'approved'].includes((a.status || '').toLowerCase())).length,
+    () =>
+      artifacts.filter(a => ['review', 'approved'].includes((a.status || '').toLowerCase())).length,
     [artifacts]
   );
 
@@ -988,13 +1023,13 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       if (!projectId) return;
       try {
         const res = await apiRequest('POST', `/api/concept2cure/projects/${projectId}/artifacts`, {
-            title,
-            content: `<h1>${title}</h1><p>Begin editing this document.</p>`,
-            type: 'regulatory_document',
-            category: 'document',
-            ctdSection,
-            templateId: templateKey,
-          });
+          title,
+          content: `<h1>${title}</h1><p>Begin editing this document.</p>`,
+          type: 'regulatory_document',
+          category: 'document',
+          ctdSection,
+          templateId: templateKey,
+        });
         const payload = await res.json();
         const created = payload.data ?? payload;
         await loadArtifacts();
@@ -1015,12 +1050,15 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
       const art = activeArtifactRef.current;
       try {
         const scaffoldHtml = `<h2>${label}</h2><p>[Content for ${label} — fill this section per regulatory requirements.]</p>`;
-        const res = await apiRequest('POST',
-          `/api/concept2cure/projects/${projectId}/artifacts/${art.id}/versions`, {
-              content: (activeDocContent || '') + '\n' + scaffoldHtml,
-              changeDescription: `Added template subsection: ${label}`,
-              changeType: 'template_subsection_insert',
-            });
+        const res = await apiRequest(
+          'POST',
+          `/api/concept2cure/projects/${projectId}/artifacts/${art.id}/versions`,
+          {
+            content: (activeDocContent || '') + '\n' + scaffoldHtml,
+            changeDescription: `Added template subsection: ${label}`,
+            changeType: 'template_subsection_insert',
+          }
+        );
         if (res.ok) {
           await loadArtifacts();
         }
@@ -1261,7 +1299,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
           </span>
           <span className="text-zinc-300">/</span>
           <span className="text-[11px] text-zinc-600">
-            Doc: {activeArtifact?.title ? activeArtifact.title.slice(0, 44) : 'No document selected'}
+            Doc:{' '}
+            {activeArtifact?.title ? activeArtifact.title.slice(0, 44) : 'No document selected'}
           </span>
           <span className="text-zinc-300">/</span>
           <span className="text-[11px] text-zinc-600">Reviews in flight: {reviewInFlight}</span>
@@ -1307,7 +1346,11 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                   setActiveLayer('vault');
                   setMode('browse');
                   setLeftRailMode('files');
-                } else if (item.id === 'reports' || item.id === 'activity' || item.id === 'reviews') {
+                } else if (
+                  item.id === 'reports' ||
+                  item.id === 'activity' ||
+                  item.id === 'reviews'
+                ) {
                   setActiveLayer('reports');
                   setMode('browse');
                   setPhase4Panel('pulse');
@@ -1396,8 +1439,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 activeArtifact.status === 'locked'
                   ? 'bg-red-100/60 text-red-600'
                   : activeArtifact.status === 'approved'
-                    ? 'bg-green-100/60 text-green-600'
-                    : 'bg-zinc-100 text-zinc-500'
+                  ? 'bg-green-100/60 text-green-600'
+                  : 'bg-zinc-100 text-zinc-500'
               )}
             >
               {activeArtifact.status || 'draft'}
@@ -1443,10 +1486,10 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 activeArtifact.status === 'locked'
                   ? 'bg-red-50 text-red-700'
                   : activeArtifact.status === 'approved'
-                    ? 'bg-green-50 text-green-700'
-                    : activeArtifact.status === 'review'
-                      ? 'bg-yellow-50 text-yellow-700'
-                      : 'bg-zinc-100 text-zinc-500'
+                  ? 'bg-green-50 text-green-700'
+                  : activeArtifact.status === 'review'
+                  ? 'bg-yellow-50 text-yellow-700'
+                  : 'bg-zinc-100 text-zinc-500'
               )}
             >
               {activeArtifact.status || 'draft'}
@@ -1628,8 +1671,8 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                       leftRailMode === tab.key
                         ? 'text-zinc-900 bg-white border-b-2 border-zinc-900'
                         : tab.disabled
-                          ? 'text-zinc-400 cursor-not-allowed'
-                          : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100/60'
+                        ? 'text-zinc-400 cursor-not-allowed'
+                        : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100/60'
                     )}
                     data-testid={`rail-mode-${tab.key}`}
                     title={tab.disabled ? 'Open a document to use Outline' : tab.label}
@@ -1669,10 +1712,10 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                         activeArtifact.status === 'locked'
                           ? 'bg-red-50 text-red-700'
                           : activeArtifact.status === 'approved'
-                            ? 'bg-green-50 text-green-700'
-                            : activeArtifact.status === 'review'
-                              ? 'bg-yellow-50 text-yellow-700'
-                              : 'bg-zinc-100 text-zinc-500'
+                          ? 'bg-green-50 text-green-700'
+                          : activeArtifact.status === 'review'
+                          ? 'bg-yellow-50 text-yellow-700'
+                          : 'bg-zinc-100 text-zinc-500'
                       )}
                     >
                       {activeArtifact.status || 'draft'}
@@ -1826,213 +1869,243 @@ export const ProjectWorkspaceShell: React.FC<ProjectWorkspaceShellProps> = ({
                 if (domain === 'precedent-intelligence') onNavigate?.('precedent-intelligence');
               }}
             >
-            {phase4Panel === 'transform' ? (
-              <RegulatoryTransformCanvas
-                projectId={projectId}
-                projectName={projectName || 'Project'}
-                ctdSection={phase4Ctx.ctdSection}
-                templateKey={phase4Ctx.templateKey}
-                artifactId={phase4Ctx.artifactId}
-                artifactTitle={phase4Ctx.artifactTitle}
-                onClose={closePhase4Panel}
-                onCreateDraft={handlePhase4CreateDraft}
-                onOpenEditor={(artId: string) => {
-                  const art = artifacts.find(a => a.id === artId);
-                  if (!tryOpenForEdit(art?.status)) return;
-                  setSelectedDocId(artId);
-                  setMode('edit');
-                  closePhase4Panel();
-                }}
-                onOpenPlacement={(artId?: string) => {
-                  if (artId) {
+              {phase4Panel === 'transform' ? (
+                <RegulatoryTransformCanvas
+                  projectId={projectId}
+                  projectName={projectName || 'Project'}
+                  ctdSection={phase4Ctx.ctdSection}
+                  templateKey={phase4Ctx.templateKey}
+                  artifactId={phase4Ctx.artifactId}
+                  artifactTitle={phase4Ctx.artifactTitle}
+                  onClose={closePhase4Panel}
+                  onCreateDraft={handlePhase4CreateDraft}
+                  onOpenEditor={(artId: string) => {
+                    const art = artifacts.find(a => a.id === artId);
+                    if (!tryOpenForEdit(art?.status)) return;
+                    setSelectedDocId(artId);
+                    setMode('edit');
+                    closePhase4Panel();
+                  }}
+                  onOpenPlacement={(artId?: string) => {
+                    if (artId) {
+                      const art = artifacts.find(a => a.id === artId);
+                      if (art)
+                        handleOpenPlacementForDoc(art, art.ctdSection ? 'relocate' : 'place');
+                    }
+                    closePhase4Panel();
+                  }}
+                  onOpenVerification={(artId: string) => openVerification(artId)}
+                />
+              ) : phase4Panel === 'verification' && phase4Ctx.artifactId ? (
+                <GoldenDossierVerificationPanel
+                  projectId={projectId}
+                  artifactId={phase4Ctx.artifactId}
+                  onClose={closePhase4Panel}
+                  onOpenEditor={(artId: string) => {
+                    const art = artifacts.find(a => a.id === artId);
+                    if (!tryOpenForEdit(art?.status)) return;
+                    setSelectedDocId(artId);
+                    setMode('edit');
+                    closePhase4Panel();
+                  }}
+                  onOpenPlacement={(artId: string) => {
                     const art = artifacts.find(a => a.id === artId);
                     if (art) handleOpenPlacementForDoc(art, art.ctdSection ? 'relocate' : 'place');
-                  }
-                  closePhase4Panel();
-                }}
-                onOpenVerification={(artId: string) => openVerification(artId)}
-              />
-            ) : phase4Panel === 'verification' && phase4Ctx.artifactId ? (
-              <GoldenDossierVerificationPanel
-                projectId={projectId}
-                artifactId={phase4Ctx.artifactId}
-                onClose={closePhase4Panel}
-                onOpenEditor={(artId: string) => {
-                  const art = artifacts.find(a => a.id === artId);
-                  if (!tryOpenForEdit(art?.status)) return;
-                  setSelectedDocId(artId);
-                  setMode('edit');
-                  closePhase4Panel();
-                }}
-                onOpenPlacement={(artId: string) => {
-                  const art = artifacts.find(a => a.id === artId);
-                  if (art) handleOpenPlacementForDoc(art, art.ctdSection ? 'relocate' : 'place');
-                  closePhase4Panel();
-                }}
-                onOpenProvenance={() => {
-                  if (phase4Ctx.artifactId) {
-                    const art = artifacts.find(a => a.id === phase4Ctx.artifactId);
-                    if (!tryOpenForEdit(art?.status)) {
-                      closePhase4Panel();
-                      return;
-                    }
-                    setSelectedDocId(phase4Ctx.artifactId);
-                    setMode('edit');
-                  }
-                  closePhase4Panel();
-                }}
-                onOpenAudit={() => closePhase4Panel()}
-                onOpenCompare={() => closePhase4Panel()}
-                onOpenTransformCanvas={() =>
-                  openTransformCanvas(
-                    undefined,
-                    undefined,
-                    phase4Ctx.artifactId,
-                    phase4Ctx.artifactTitle
-                  )
-                }
-                onCreateSubsection={() => {}}
-              />
-            ) : phase4Panel === 'twin' ? (
-              <ProgramTwinPanel
-                projectId={projectId}
-                projectName={projectName || 'Project'}
-                onClose={closePhase4Panel}
-                onOpenVerification={openVerification}
-                onOpenTransformCanvas={() => openTransformCanvas()}
-                onSelectSection={(section: string) => {
-                  setSelectedCtdSection(section);
-                  setMode('browse');
-                  closePhase4Panel();
-                }}
-              />
-            ) : phase4Panel === 'apps' ? (
-              <SubmissionAppsPanel
-                projectId={projectId}
-                projectName={projectName || 'Project'}
-                onClose={closePhase4Panel}
-                onCreateDraft={handlePhase4CreateDraft}
-                onOpenTransformCanvas={(ctdSec?: string, tmplKey?: string) =>
-                  openTransformCanvas(ctdSec, tmplKey)
-                }
-              />
-            ) : phase4Panel === 'pulse' ? (
-              <div className="flex-1 overflow-y-auto px-6 py-4">
-                <ReviewPulseDashboard
-                  projectId={projectId}
-                  onNavigateToArtifact={artifactId => {
-                    const art = artifacts.find(a => a.id === artifactId);
                     closePhase4Panel();
-                    if (!tryOpenForEdit(art?.status)) {
-                      setSelectedDocId(artifactId);
-                      setMode('browse');
-                      return;
+                  }}
+                  onOpenProvenance={() => {
+                    if (phase4Ctx.artifactId) {
+                      const art = artifacts.find(a => a.id === phase4Ctx.artifactId);
+                      if (!tryOpenForEdit(art?.status)) {
+                        closePhase4Panel();
+                        return;
+                      }
+                      setSelectedDocId(phase4Ctx.artifactId);
+                      setMode('edit');
                     }
-                    setSelectedDocId(artifactId);
-                    setMode('edit');
+                    closePhase4Panel();
                   }}
+                  onOpenAudit={() => closePhase4Panel()}
+                  onOpenCompare={() => closePhase4Panel()}
+                  onOpenTransformCanvas={() =>
+                    openTransformCanvas(
+                      undefined,
+                      undefined,
+                      phase4Ctx.artifactId,
+                      phase4Ctx.artifactTitle
+                    )
+                  }
+                  onCreateSubsection={() => {}}
                 />
-              </div>
-            ) : mode === 'dashboard' ? (
-              <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-                <ComputeJobPanel
+              ) : phase4Panel === 'twin' ? (
+                <ProgramTwinPanel
                   projectId={projectId}
-                  onOpenArtifact={artifactId => openComputeArtifact(artifactId)}
-                  onOpenProvenance={artifactId => openComputeArtifact(artifactId, 'provenance')}
-                  onOpenAudit={artifactId => openComputeArtifact(artifactId, 'audit')}
-                  onPlaceArtifact={artifactId => {
-                    const art = artifacts.find(a => a.id === artifactId);
-                    if (!art) return;
-                    handleOpenPlacementForDoc(art, art.ctdSection ? 'relocate' : 'place');
-                  }}
-                />
-                <ProjectDashboard
-                  projectId={projectId}
-                  projectName={projectName || 'Untitled Project'}
-                  projectType={projectType}
-                  submissionType={submissionType}
-                  artifacts={artifacts}
-                  onOpenDocument={(docId: string) => {
-                    const art = artifacts.find(a => a.id === docId);
-                    if (!tryOpenForEdit(art?.status)) {
-                      setSelectedDocId(docId);
-                      setMode('browse');
-                      return;
-                    }
-                    setSelectedDocId(docId);
-                    setMode('edit');
-                    setShowGovernedPanel(true);
-                  }}
-                  onCreateDocument={() => setShowNewDocDialog(true)}
-                  onOpenEditor={() => setMode('browse')}
-                  onOpenDossier={() => {
-                    setLeftRailMode('dossier');
+                  projectName={projectName || 'Project'}
+                  onClose={closePhase4Panel}
+                  onOpenVerification={openVerification}
+                  onOpenTransformCanvas={() => openTransformCanvas()}
+                  onSelectSection={(section: string) => {
+                    setSelectedCtdSection(section);
                     setMode('browse');
+                    closePhase4Panel();
                   }}
-                  onOpenIntelligence={onSwitchToIntelligence}
-                  onOpenSubmissions={onNavigate ? () => onNavigate('submission-builder') : undefined}
-                  onOpenTemplates={onNavigate ? () => onNavigate('template-library') : undefined}
                 />
-                <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-2">
-                  <div className="text-sm font-semibold text-slate-900">Conversation OS Durability</div>
-                  <div className="text-xs text-slate-600">Tool manifest: {conversationSnapshot.manifestMode ?? 'not initialized'}</div>
-                  <div className="text-xs text-slate-600">Latest scout: {conversationSnapshot.latestFinding ?? 'no finding yet'}</div>
-                  <div className="text-xs text-slate-600">Latest plan: {conversationSnapshot.latestPlanTask ?? 'no plan yet'}</div>
-                  <div className="text-xs text-slate-700 space-y-1">
-                    <div>Proposals:</div>
-                    {conversationSnapshot.proposals.length ? (
-                      conversationSnapshot.proposals.map(p => (
-                        <div key={p.id} className="flex items-center gap-2">
-                          <span>{p.id.slice(0, 8)} ({p.status})</span>
-                          {p.status === 'pending' && (
-                            <>
-                              <button className="text-emerald-700 underline" onClick={() => actOnProposal(p.id, 'accept')}>accept</button>
-                              <button className="text-rose-700 underline" onClick={() => actOnProposal(p.id, 'reject')}>reject</button>
-                            </>
-                          )}
-                        </div>
-                      ))
-                    ) : (
-                      <div>none</div>
-                    )}
+              ) : phase4Panel === 'apps' ? (
+                <SubmissionAppsPanel
+                  projectId={projectId}
+                  projectName={projectName || 'Project'}
+                  onClose={closePhase4Panel}
+                  onCreateDraft={handlePhase4CreateDraft}
+                  onOpenTransformCanvas={(ctdSec?: string, tmplKey?: string) =>
+                    openTransformCanvas(ctdSec, tmplKey)
+                  }
+                />
+              ) : phase4Panel === 'pulse' ? (
+                <div className="flex-1 overflow-y-auto px-6 py-4">
+                  <ReviewPulseDashboard
+                    projectId={projectId}
+                    onNavigateToArtifact={artifactId => {
+                      const art = artifacts.find(a => a.id === artifactId);
+                      closePhase4Panel();
+                      if (!tryOpenForEdit(art?.status)) {
+                        setSelectedDocId(artifactId);
+                        setMode('browse');
+                        return;
+                      }
+                      setSelectedDocId(artifactId);
+                      setMode('edit');
+                    }}
+                  />
+                </div>
+              ) : mode === 'dashboard' ? (
+                <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+                  <ComputeJobPanel
+                    projectId={projectId}
+                    onOpenArtifact={artifactId => openComputeArtifact(artifactId)}
+                    onOpenProvenance={artifactId => openComputeArtifact(artifactId, 'provenance')}
+                    onOpenAudit={artifactId => openComputeArtifact(artifactId, 'audit')}
+                    onPlaceArtifact={artifactId => {
+                      const art = artifacts.find(a => a.id === artifactId);
+                      if (!art) return;
+                      handleOpenPlacementForDoc(art, art.ctdSection ? 'relocate' : 'place');
+                    }}
+                  />
+                  <ProjectDashboard
+                    projectId={projectId}
+                    projectName={projectName || 'Untitled Project'}
+                    projectType={projectType}
+                    submissionType={submissionType}
+                    artifacts={artifacts}
+                    onOpenDocument={(docId: string) => {
+                      const art = artifacts.find(a => a.id === docId);
+                      if (!tryOpenForEdit(art?.status)) {
+                        setSelectedDocId(docId);
+                        setMode('browse');
+                        return;
+                      }
+                      setSelectedDocId(docId);
+                      setMode('edit');
+                      setShowGovernedPanel(true);
+                    }}
+                    onCreateDocument={() => setShowNewDocDialog(true)}
+                    onOpenEditor={() => setMode('browse')}
+                    onOpenDossier={() => {
+                      setLeftRailMode('dossier');
+                      setMode('browse');
+                    }}
+                    onOpenIntelligence={onSwitchToIntelligence}
+                    onOpenSubmissions={
+                      onNavigate ? () => onNavigate('submission-builder') : undefined
+                    }
+                    onOpenTemplates={onNavigate ? () => onNavigate('template-library') : undefined}
+                  />
+                  <div className="rounded-lg border border-slate-200 bg-white p-4 space-y-2">
+                    <div className="text-sm font-semibold text-slate-900">
+                      Conversation OS Durability
+                    </div>
+                    <div className="text-xs text-slate-600">
+                      Tool manifest: {conversationSnapshot.manifestMode ?? 'not initialized'}
+                    </div>
+                    <div className="text-xs text-slate-600">
+                      Latest scout: {conversationSnapshot.latestFinding ?? 'no finding yet'}
+                    </div>
+                    <div className="text-xs text-slate-600">
+                      Latest plan: {conversationSnapshot.latestPlanTask ?? 'no plan yet'}
+                    </div>
+                    <div className="text-xs text-slate-700 space-y-1">
+                      <div>Proposals:</div>
+                      {conversationSnapshot.proposals.length ? (
+                        conversationSnapshot.proposals.map(p => (
+                          <div key={p.id} className="flex items-center gap-2">
+                            <span>
+                              {p.id.slice(0, 8)} ({p.status})
+                            </span>
+                            {p.status === 'pending' && (
+                              <>
+                                <button
+                                  className="text-emerald-700 underline"
+                                  onClick={() => actOnProposal(p.id, 'accept')}
+                                >
+                                  accept
+                                </button>
+                                <button
+                                  className="text-rose-700 underline"
+                                  onClick={() => actOnProposal(p.id, 'reject')}
+                                >
+                                  reject
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        ))
+                      ) : (
+                        <div>none</div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ) : mode === 'browse' ? (
-              <DocumentListPane
-                folderLabel={browseLabel}
-                documents={browseDocs}
-                selectedId={selectedDocId}
-                onSelect={handleSelectDoc}
-                onCreateNew={() => setShowNewDoc(true)}
-                onCutDocument={handleCutDocument}
-                onCopyCtdPath={handleCopyCtdPath}
-                onOpenPlacement={handleOpenPlacementForDoc}
-              />
-            ) : (
-              <div ref={editorContainerRef} className="flex-1 flex min-h-0 min-w-0">
-                <Suspense
-                  fallback={
-                    <div className="flex-1 flex flex-col items-center justify-center gap-3" data-testid="editor-loading">
-                      <LoadingState message="Loading editor..." size="sm" testId="editor-suspense" />
-                    </div>
-                  }
-                >
-                  <EditorPanel
-                    projectId={projectId}
-                    submissionType={submissionType || projectType}
-                    initialContent={initialContent}
-                    initialTitle={initialTitle}
-                    initialCtdSection={initialCtdSection}
-                    onInitialContentConsumed={onInitialContentConsumed}
-                    openArtifactId={openArtifactId}
-                    onOpenArtifactConsumed={onOpenArtifactConsumed}
-                    onContentChange={handleDocContentChange}
-                    initialInspector={editorInitialInspector}
-                  />
-                </Suspense>
-              </div>
-            )}
+              ) : mode === 'browse' ? (
+                <DocumentListPane
+                  folderLabel={browseLabel}
+                  documents={browseDocs}
+                  selectedId={selectedDocId}
+                  onSelect={handleSelectDoc}
+                  onCreateNew={() => setShowNewDoc(true)}
+                  onCutDocument={handleCutDocument}
+                  onCopyCtdPath={handleCopyCtdPath}
+                  onOpenPlacement={handleOpenPlacementForDoc}
+                />
+              ) : (
+                <div ref={editorContainerRef} className="flex-1 flex min-h-0 min-w-0">
+                  <Suspense
+                    fallback={
+                      <div
+                        className="flex-1 flex flex-col items-center justify-center gap-3"
+                        data-testid="editor-loading"
+                      >
+                        <LoadingState
+                          message="Loading editor..."
+                          size="sm"
+                          testId="editor-suspense"
+                        />
+                      </div>
+                    }
+                  >
+                    <EditorPanel
+                      projectId={projectId}
+                      submissionType={submissionType || projectType}
+                      initialContent={initialContent}
+                      initialTitle={initialTitle}
+                      initialCtdSection={initialCtdSection}
+                      onInitialContentConsumed={onInitialContentConsumed}
+                      openArtifactId={openArtifactId}
+                      onOpenArtifactConsumed={onOpenArtifactConsumed}
+                      onContentChange={handleDocContentChange}
+                      initialInspector={editorInitialInspector}
+                    />
+                  </Suspense>
+                </div>
+              )}
             </DocumentStudioSurface>
           </div>
 
@@ -2268,8 +2341,8 @@ function SectionRequirementsPanel({ reqs, metrics, onClose }: SectionReqsPanelPr
                     metrics.completionPercent >= 75
                       ? 'bg-emerald-500'
                       : metrics.completionPercent >= 25
-                        ? 'bg-amber-500'
-                        : 'bg-red-400'
+                      ? 'bg-amber-500'
+                      : 'bg-red-400'
                   )}
                   style={{ width: `${Math.min(100, metrics.completionPercent)}%` }}
                 />

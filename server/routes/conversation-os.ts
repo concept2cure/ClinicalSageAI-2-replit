@@ -1,8 +1,21 @@
 import { Router } from 'express';
-import { createProposal, acceptProposal, rejectProposal, listArtifactVersions, listProposals } from '../services/conversation-os/artifactProposalService';
-import { getLatestPlanSummary, planAndExecute } from '../services/conversation-os/orchestrationService';
+import {
+  createProposal,
+  acceptProposal,
+  rejectProposal,
+  listArtifactVersions,
+  listProposals,
+} from '../services/conversation-os/artifactProposalService';
+import {
+  getLatestPlanSummary,
+  planAndExecute,
+} from '../services/conversation-os/orchestrationService';
 import { ingestKnowledgeChunks } from '../services/conversation-os/retrievalService';
-import { listScoutFindings, promoteScoutFinding, runScout } from '../services/conversation-os/scoutService';
+import {
+  listScoutFindings,
+  promoteScoutFinding,
+  runScout,
+} from '../services/conversation-os/scoutService';
 import { listToolEvents, upsertToolManifest } from '../services/conversation-os/toolGateService';
 
 const router = Router();
@@ -24,7 +37,9 @@ const resolveContext = (req: any) => {
 
 function requireContext(res: any, ctx: { projectId?: string; userId?: string }, op: string) {
   if (!ctx.projectId || !ctx.userId) {
-    res.status(400).json({ success: false, error: `${op} requires authoritative projectId and userId context` });
+    res
+      .status(400)
+      .json({ success: false, error: `${op} requires authoritative projectId and userId context` });
     return false;
   }
   return true;
@@ -116,7 +131,9 @@ router.post('/conversations/:conversationId/proposals/:proposalId/accept', async
   const ctx = resolveContext(req);
   if (!requireContext(res, ctx, 'proposal accept')) return;
   if (!ctx.organizationId) {
-    res.status(400).json({ success: false, error: 'proposal accept requires organizationId context' });
+    res
+      .status(400)
+      .json({ success: false, error: 'proposal accept requires organizationId context' });
     return;
   }
   try {
@@ -140,12 +157,15 @@ router.get('/artifacts/:artifactId/versions', async (req, res) => {
     res.status(400).json({ success: false, error: 'artifact versions requires projectId context' });
     return;
   }
-  res.json({ success: true, versions: await listArtifactVersions({
-    artifactId: req.params.artifactId,
-    conversationId: String(req.query?.conversationId ?? ''),
-    projectId: ctx.projectId,
-    userId: ctx.userId,
-  }) });
+  res.json({
+    success: true,
+    versions: await listArtifactVersions({
+      artifactId: req.params.artifactId,
+      conversationId: String(req.query?.conversationId ?? ''),
+      projectId: ctx.projectId,
+      userId: ctx.userId,
+    }),
+  });
 });
 
 export default router;
