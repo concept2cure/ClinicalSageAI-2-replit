@@ -513,7 +513,7 @@ router.post('/dev-login', loginLimiter, async (req: Request, res: Response) => {
       { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
     );
 
-    console.log(`[auth] Dev login successful for ${userData.email}`);
+    console.log(`[auth] Dev login successful for user ${userData.id}`);
 
     res.json({
       success: true,
@@ -696,15 +696,12 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
 const tokenBlacklist = new Set<string>();
 
 // Clean up expired tokens every hour
-setInterval(
-  () => {
-    // Simple TTL: clear the set every 24 hours to prevent memory growth
-    if (tokenBlacklist.size > 10000) {
-      tokenBlacklist.clear();
-    }
-  },
-  60 * 60 * 1000
-);
+setInterval(() => {
+  // Simple TTL: clear the set every 24 hours to prevent memory growth
+  if (tokenBlacklist.size > 10000) {
+    tokenBlacklist.clear();
+  }
+}, 60 * 60 * 1000);
 
 /** Check if a token has been blacklisted (logout) */
 export function isTokenBlacklisted(token: string): boolean {

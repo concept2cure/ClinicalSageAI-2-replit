@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import DOMPurify from 'dompurify';
 import { cerApiService } from '@/services/CerAPIService';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -522,14 +523,16 @@ const LiteratureMethodologyPanel = ({
                   <div
                     className="markdown-content"
                     dangerouslySetInnerHTML={{
-                      __html: generatedMethodology.content
-                        .replace(/\n/g, '<br />')
-                        .replace(/#{1,6}\s+([^\n]+)/g, (match, p1, offset, string) => {
-                          const level = match.trim().indexOf(' ');
-                          return `<h${level} class="text-lg font-bold mt-4 mb-2">${p1}</h${level}>`;
-                        })
-                        .replace(/\*\*([^\*]+)\*\*/g, '<strong>$1</strong>')
-                        .replace(/\*([^\*]+)\*/g, '<em>$1</em>'),
+                      __html: DOMPurify.sanitize(
+                        generatedMethodology.content
+                          .replace(/\n/g, '<br />')
+                          .replace(/#{1,6}\s+([^\n]+)/g, (match, p1, offset, string) => {
+                            const level = match.trim().indexOf(' ');
+                            return `<h${level} class="text-lg font-bold mt-4 mb-2">${p1}</h${level}>`;
+                          })
+                          .replace(/\*\*([^\*]+)\*\*/g, '<strong>$1</strong>')
+                          .replace(/\*([^\*]+)\*/g, '<em>$1</em>')
+                      ),
                     }}
                   />
                 </div>

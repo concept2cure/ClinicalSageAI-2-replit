@@ -80,7 +80,7 @@ const ClientLicenseManagement = () => {
   const [isEditLicenseDialogOpen, setIsEditLicenseDialogOpen] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState(null);
   const [showPrivateKey, setShowPrivateKey] = useState(false);
-  
+
   // License form data
   const [newLicenseData, setNewLicenseData] = useState({
     clientName: '',
@@ -131,10 +131,11 @@ const ClientLicenseManagement = () => {
 
   // Create new license mutation
   const createLicenseMutation = useMutation({
-    mutationFn: (licenseData) => apiRequest('/api/licenses', {
-      method: 'POST',
-      body: JSON.stringify(licenseData),
-    }),
+    mutationFn: licenseData =>
+      apiRequest('/api/licenses', {
+        method: 'POST',
+        body: JSON.stringify(licenseData),
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries(['/api/licenses']);
       setIsNewLicenseDialogOpen(false);
@@ -143,7 +144,7 @@ const ClientLicenseManagement = () => {
         description: 'Client license has been created successfully with private URL.',
       });
     },
-    onError: (error) => {
+    onError: error => {
       toast({
         title: 'Error',
         description: error.message || 'Failed to create license',
@@ -154,10 +155,11 @@ const ClientLicenseManagement = () => {
 
   // Update license mutation
   const updateLicenseMutation = useMutation({
-    mutationFn: ({ id, data }) => apiRequest(`/api/licenses/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    }),
+    mutationFn: ({ id, data }) =>
+      apiRequest(`/api/licenses/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries(['/api/licenses']);
       setIsEditLicenseDialogOpen(false);
@@ -170,9 +172,10 @@ const ClientLicenseManagement = () => {
 
   // Revoke license mutation
   const revokeLicenseMutation = useMutation({
-    mutationFn: (id) => apiRequest(`/api/licenses/${id}/revoke`, {
-      method: 'POST',
-    }),
+    mutationFn: id =>
+      apiRequest(`/api/licenses/${id}/revoke`, {
+        method: 'POST',
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries(['/api/licenses']);
       toast({
@@ -185,9 +188,10 @@ const ClientLicenseManagement = () => {
 
   // Generate new access key mutation
   const regenerateKeyMutation = useMutation({
-    mutationFn: (id) => apiRequest(`/api/licenses/${id}/regenerate-key`, {
-      method: 'POST',
-    }),
+    mutationFn: id =>
+      apiRequest(`/api/licenses/${id}/regenerate-key`, {
+        method: 'POST',
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries(['/api/licenses']);
       toast({
@@ -207,7 +211,7 @@ const ClientLicenseManagement = () => {
     });
   };
 
-  const formatDate = (date) => {
+  const formatDate = date => {
     return new Date(date).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -215,11 +219,11 @@ const ClientLicenseManagement = () => {
     });
   };
 
-  const getLicenseStatus = (license) => {
+  const getLicenseStatus = license => {
     const now = new Date();
     const validUntil = new Date(license.validUntil);
     const daysRemaining = Math.ceil((validUntil - now) / (1000 * 60 * 60 * 24));
-    
+
     if (license.status === 'revoked') return { status: 'revoked', color: 'destructive' };
     if (daysRemaining < 0) return { status: 'expired', color: 'destructive' };
     if (daysRemaining < 30) return { status: 'expiring', color: 'warning' };
@@ -278,11 +282,18 @@ const ClientLicenseManagement = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${licenses.reduce((sum, l) => {
-                const monthly = l.licenseType === 'starter' ? 2500 : 
-                              l.licenseType === 'professional' ? 7500 : 15000;
-                return sum + monthly;
-              }, 0).toLocaleString()}
+              $
+              {licenses
+                .reduce((sum, l) => {
+                  const monthly =
+                    l.licenseType === 'starter'
+                      ? 2500
+                      : l.licenseType === 'professional'
+                      ? 7500
+                      : 15000;
+                  return sum + monthly;
+                }, 0)
+                .toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">Monthly recurring</p>
           </CardContent>
@@ -327,14 +338,16 @@ const ClientLicenseManagement = () => {
                   </TableCell>
                 </TableRow>
               ) : (
-                licenses.map((license) => {
+                licenses.map(license => {
                   const status = getLicenseStatus(license);
                   return (
                     <TableRow key={license.id}>
                       <TableCell className="font-medium">{license.clientName}</TableCell>
                       <TableCell>{license.companyName}</TableCell>
                       <TableCell>
-                        <Badge variant={license.licenseType === 'enterprise' ? 'default' : 'secondary'}>
+                        <Badge
+                          variant={license.licenseType === 'enterprise' ? 'default' : 'secondary'}
+                        >
                           {license.licenseType}
                         </Badge>
                       </TableCell>
@@ -346,16 +359,14 @@ const ClientLicenseManagement = () => {
                           <div className="text-sm text-gray-500">
                             {license.submissionsUsed || 0}/{license.maxSubmissions} submissions
                           </div>
-                          <Progress 
-                            value={(license.submissionsUsed || 0) / license.maxSubmissions * 100} 
+                          <Progress
+                            value={((license.submissionsUsed || 0) / license.maxSubmissions) * 100}
                             className="h-2"
                           />
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={status.color}>
-                          {status.status}
-                        </Badge>
+                        <Badge variant={status.color}>{status.status}</Badge>
                       </TableCell>
                       <TableCell>{formatDate(license.validUntil)}</TableCell>
                       <TableCell className="text-right">
@@ -398,7 +409,7 @@ const ClientLicenseManagement = () => {
               Create a new license with private URL and access limits
             </DialogDescription>
           </DialogHeader>
-          
+
           <Tabs defaultValue="basic" className="w-full">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="basic">Basic Info</TabsTrigger>
@@ -406,14 +417,16 @@ const ClientLicenseManagement = () => {
               <TabsTrigger value="features">Features</TabsTrigger>
               <TabsTrigger value="security">Security</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="basic" className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Client Name</Label>
                   <Input
                     value={newLicenseData.clientName}
-                    onChange={(e) => setNewLicenseData({...newLicenseData, clientName: e.target.value})}
+                    onChange={e =>
+                      setNewLicenseData({ ...newLicenseData, clientName: e.target.value })
+                    }
                     placeholder="John Doe"
                   />
                 </div>
@@ -421,7 +434,9 @@ const ClientLicenseManagement = () => {
                   <Label>Company Name</Label>
                   <Input
                     value={newLicenseData.companyName}
-                    onChange={(e) => setNewLicenseData({...newLicenseData, companyName: e.target.value})}
+                    onChange={e =>
+                      setNewLicenseData({ ...newLicenseData, companyName: e.target.value })
+                    }
                     placeholder="Pharma Corp"
                   />
                 </div>
@@ -431,7 +446,9 @@ const ClientLicenseManagement = () => {
                 <Input
                   type="email"
                   value={newLicenseData.contactEmail}
-                  onChange={(e) => setNewLicenseData({...newLicenseData, contactEmail: e.target.value})}
+                  onChange={e =>
+                    setNewLicenseData({ ...newLicenseData, contactEmail: e.target.value })
+                  }
                   placeholder="john.doe@company.com"
                 />
               </div>
@@ -439,7 +456,9 @@ const ClientLicenseManagement = () => {
                 <Label>License Type</Label>
                 <Select
                   value={newLicenseData.licenseType}
-                  onValueChange={(value) => setNewLicenseData({...newLicenseData, licenseType: value})}
+                  onValueChange={value =>
+                    setNewLicenseData({ ...newLicenseData, licenseType: value })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -457,7 +476,9 @@ const ClientLicenseManagement = () => {
                   <Input
                     type="date"
                     value={newLicenseData.validFrom}
-                    onChange={(e) => setNewLicenseData({...newLicenseData, validFrom: e.target.value})}
+                    onChange={e =>
+                      setNewLicenseData({ ...newLicenseData, validFrom: e.target.value })
+                    }
                   />
                 </div>
                 <div>
@@ -465,12 +486,14 @@ const ClientLicenseManagement = () => {
                   <Input
                     type="date"
                     value={newLicenseData.validUntil}
-                    onChange={(e) => setNewLicenseData({...newLicenseData, validUntil: e.target.value})}
+                    onChange={e =>
+                      setNewLicenseData({ ...newLicenseData, validUntil: e.target.value })
+                    }
                   />
                 </div>
               </div>
             </TabsContent>
-            
+
             <TabsContent value="limits" className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -478,7 +501,9 @@ const ClientLicenseManagement = () => {
                   <Input
                     type="number"
                     value={newLicenseData.maxUsers}
-                    onChange={(e) => setNewLicenseData({...newLicenseData, maxUsers: parseInt(e.target.value)})}
+                    onChange={e =>
+                      setNewLicenseData({ ...newLicenseData, maxUsers: parseInt(e.target.value) })
+                    }
                   />
                 </div>
                 <div>
@@ -486,7 +511,12 @@ const ClientLicenseManagement = () => {
                   <Input
                     type="number"
                     value={newLicenseData.maxSubmissions}
-                    onChange={(e) => setNewLicenseData({...newLicenseData, maxSubmissions: parseInt(e.target.value)})}
+                    onChange={e =>
+                      setNewLicenseData({
+                        ...newLicenseData,
+                        maxSubmissions: parseInt(e.target.value),
+                      })
+                    }
                   />
                 </div>
               </div>
@@ -496,7 +526,12 @@ const ClientLicenseManagement = () => {
                   <Input
                     type="number"
                     value={newLicenseData.maxProjects}
-                    onChange={(e) => setNewLicenseData({...newLicenseData, maxProjects: parseInt(e.target.value)})}
+                    onChange={e =>
+                      setNewLicenseData({
+                        ...newLicenseData,
+                        maxProjects: parseInt(e.target.value),
+                      })
+                    }
                   />
                 </div>
                 <div>
@@ -504,103 +539,126 @@ const ClientLicenseManagement = () => {
                   <Input
                     type="number"
                     value={newLicenseData.maxStorageGB}
-                    onChange={(e) => setNewLicenseData({...newLicenseData, maxStorageGB: parseInt(e.target.value)})}
+                    onChange={e =>
+                      setNewLicenseData({
+                        ...newLicenseData,
+                        maxStorageGB: parseInt(e.target.value),
+                      })
+                    }
                   />
                 </div>
               </div>
             </TabsContent>
-            
+
             <TabsContent value="features" className="space-y-4">
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <Label>FDA 510(k) Submissions</Label>
                   <Switch
                     checked={newLicenseData.features.fda510k}
-                    onCheckedChange={(checked) => setNewLicenseData({
-                      ...newLicenseData, 
-                      features: {...newLicenseData.features, fda510k: checked}
-                    })}
+                    onCheckedChange={checked =>
+                      setNewLicenseData({
+                        ...newLicenseData,
+                        features: { ...newLicenseData.features, fda510k: checked },
+                      })
+                    }
                   />
                 </div>
                 <div className="flex items-center justify-between">
                   <Label>FDA PMA Submissions</Label>
                   <Switch
                     checked={newLicenseData.features.fdaPMA}
-                    onCheckedChange={(checked) => setNewLicenseData({
-                      ...newLicenseData, 
-                      features: {...newLicenseData.features, fdaPMA: checked}
-                    })}
+                    onCheckedChange={checked =>
+                      setNewLicenseData({
+                        ...newLicenseData,
+                        features: { ...newLicenseData.features, fdaPMA: checked },
+                      })
+                    }
                   />
                 </div>
                 <div className="flex items-center justify-between">
                   <Label>EU MDR CER</Label>
                   <Switch
                     checked={newLicenseData.features.euMDR}
-                    onCheckedChange={(checked) => setNewLicenseData({
-                      ...newLicenseData, 
-                      features: {...newLicenseData.features, euMDR: checked}
-                    })}
+                    onCheckedChange={checked =>
+                      setNewLicenseData({
+                        ...newLicenseData,
+                        features: { ...newLicenseData.features, euMDR: checked },
+                      })
+                    }
                   />
                 </div>
                 <div className="flex items-center justify-between">
                   <Label>AI Assistance</Label>
                   <Switch
                     checked={newLicenseData.features.aiAssistance}
-                    onCheckedChange={(checked) => setNewLicenseData({
-                      ...newLicenseData, 
-                      features: {...newLicenseData.features, aiAssistance: checked}
-                    })}
+                    onCheckedChange={checked =>
+                      setNewLicenseData({
+                        ...newLicenseData,
+                        features: { ...newLicenseData.features, aiAssistance: checked },
+                      })
+                    }
                   />
                 </div>
                 <div className="flex items-center justify-between">
                   <Label>Collaboration Tools</Label>
                   <Switch
                     checked={newLicenseData.features.collaborationTools}
-                    onCheckedChange={(checked) => setNewLicenseData({
-                      ...newLicenseData, 
-                      features: {...newLicenseData.features, collaborationTools: checked}
-                    })}
+                    onCheckedChange={checked =>
+                      setNewLicenseData({
+                        ...newLicenseData,
+                        features: { ...newLicenseData.features, collaborationTools: checked },
+                      })
+                    }
                   />
                 </div>
                 <div className="flex items-center justify-between">
                   <Label>Advanced Analytics</Label>
                   <Switch
                     checked={newLicenseData.features.advancedAnalytics}
-                    onCheckedChange={(checked) => setNewLicenseData({
-                      ...newLicenseData, 
-                      features: {...newLicenseData.features, advancedAnalytics: checked}
-                    })}
+                    onCheckedChange={checked =>
+                      setNewLicenseData({
+                        ...newLicenseData,
+                        features: { ...newLicenseData.features, advancedAnalytics: checked },
+                      })
+                    }
                   />
                 </div>
                 <div className="flex items-center justify-between">
                   <Label>API Access</Label>
                   <Switch
                     checked={newLicenseData.features.apiAccess}
-                    onCheckedChange={(checked) => setNewLicenseData({
-                      ...newLicenseData, 
-                      features: {...newLicenseData.features, apiAccess: checked}
-                    })}
+                    onCheckedChange={checked =>
+                      setNewLicenseData({
+                        ...newLicenseData,
+                        features: { ...newLicenseData.features, apiAccess: checked },
+                      })
+                    }
                   />
                 </div>
                 <div className="flex items-center justify-between">
                   <Label>White Labeling</Label>
                   <Switch
                     checked={newLicenseData.features.whiteLabeling}
-                    onCheckedChange={(checked) => setNewLicenseData({
-                      ...newLicenseData, 
-                      features: {...newLicenseData.features, whiteLabeling: checked}
-                    })}
+                    onCheckedChange={checked =>
+                      setNewLicenseData({
+                        ...newLicenseData,
+                        features: { ...newLicenseData.features, whiteLabeling: checked },
+                      })
+                    }
                   />
                 </div>
               </div>
             </TabsContent>
-            
+
             <TabsContent value="security" className="space-y-4">
               <div>
                 <Label>IP Restrictions (optional)</Label>
                 <Textarea
                   value={newLicenseData.ipRestrictions}
-                  onChange={(e) => setNewLicenseData({...newLicenseData, ipRestrictions: e.target.value})}
+                  onChange={e =>
+                    setNewLicenseData({ ...newLicenseData, ipRestrictions: e.target.value })
+                  }
                   placeholder="Enter IP addresses or ranges (one per line)"
                   rows={4}
                 />
@@ -612,26 +670,27 @@ const ClientLicenseManagement = () => {
                 <Label>Internal Notes</Label>
                 <Textarea
                   value={newLicenseData.notes}
-                  onChange={(e) => setNewLicenseData({...newLicenseData, notes: e.target.value})}
+                  onChange={e => setNewLicenseData({ ...newLicenseData, notes: e.target.value })}
                   placeholder="Any internal notes about this client..."
                   rows={3}
                 />
               </div>
             </TabsContent>
           </Tabs>
-          
+
           <DialogFooter className="mt-6">
-            <Button
-              variant="outline"
-              onClick={() => setIsNewLicenseDialogOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setIsNewLicenseDialogOpen(false)}>
               Cancel
             </Button>
             <Button
               onClick={() => createLicenseMutation.mutate(newLicenseData)}
-              disabled={createLicenseMutation.isLoading || !newLicenseData.clientName || !newLicenseData.companyName}
+              disabled={
+                createLicenseMutation.isPending ||
+                !newLicenseData.clientName ||
+                !newLicenseData.companyName
+              }
             >
-              {createLicenseMutation.isLoading ? 'Creating...' : 'Issue License'}
+              {createLicenseMutation.isPending ? 'Creating...' : 'Issue License'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -646,9 +705,7 @@ const ClientLicenseManagement = () => {
             <div className="mt-2 space-y-2">
               <p>Private URL for {licensesData.latestLicense.clientName}:</p>
               <div className="flex items-center gap-2 p-2 bg-gray-100 rounded">
-                <code className="flex-1 text-sm">
-                  {licensesData.latestLicense.privateUrl}
-                </code>
+                <code className="flex-1 text-sm">{licensesData.latestLicense.privateUrl}</code>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -659,7 +716,8 @@ const ClientLicenseManagement = () => {
               </div>
               <div className="flex items-center gap-2 p-2 bg-gray-100 rounded">
                 <code className="flex-1 text-sm">
-                  License Key: {showPrivateKey ? licensesData.latestLicense.licenseKey : '••••••••••••••••'}
+                  License Key:{' '}
+                  {showPrivateKey ? licensesData.latestLicense.licenseKey : '••••••••••••••••'}
                 </code>
                 <Button
                   variant="ghost"

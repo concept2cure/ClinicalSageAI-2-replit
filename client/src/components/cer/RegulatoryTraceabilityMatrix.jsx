@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import DOMPurify from 'dompurify';
 import { cerApiService } from '@/services/CerAPIService';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -661,8 +662,8 @@ const RegulatoryTraceabilityMatrix = ({
                                   factor.complianceStatus?.ich === 'compliant'
                                     ? 'text-green-600'
                                     : factor.complianceStatus?.ich === 'non-compliant'
-                                      ? 'text-red-600'
-                                      : 'text-amber-600'
+                                    ? 'text-red-600'
+                                    : 'text-amber-600'
                                 }`}
                               >
                                 {factor.complianceStatus?.ich || 'pending'}
@@ -675,8 +676,8 @@ const RegulatoryTraceabilityMatrix = ({
                                   factor.complianceStatus?.mdr === 'compliant'
                                     ? 'text-green-600'
                                     : factor.complianceStatus?.mdr === 'non-compliant'
-                                      ? 'text-red-600'
-                                      : 'text-amber-600'
+                                    ? 'text-red-600'
+                                    : 'text-amber-600'
                                 }`}
                               >
                                 {factor.complianceStatus?.mdr || 'pending'}
@@ -1123,7 +1124,9 @@ const RegulatoryTraceabilityMatrix = ({
                     <div
                       className="markdown-content"
                       dangerouslySetInnerHTML={{
-                        __html: traceabilityData.generatedReport.content.replace(/\n/g, '<br />'),
+                        __html: DOMPurify.sanitize(
+                          traceabilityData.generatedReport.content.replace(/\n/g, '<br />')
+                        ),
                       }}
                     />
                   </div>

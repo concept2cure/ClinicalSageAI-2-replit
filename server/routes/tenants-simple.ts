@@ -115,11 +115,10 @@ router.get('/', async (req, res) => {
  */
 router.post('/', async (req, res) => {
   try {
-    console.log('Create tenant request received:', req.body);
+    console.log('Create tenant request received');
 
     // Validate request body
     const validatedData = createTenantSchema.parse(req.body);
-    console.log('Validated data:', validatedData);
 
     // SECURITY: Use crypto.randomBytes for API key generation (not Math.random)
     const crypto = await import('crypto');
@@ -163,9 +162,8 @@ router.post('/', async (req, res) => {
 router.patch('/:id', async (req, res) => {
   try {
     const tenantId = parseInt(req.params.id);
-    console.log('🔍 Update tenant request data:', req.body);
+
     const validatedData = updateTenantSchema.parse(req.body);
-    console.log('🔍 Validated update data:', validatedData);
 
     // Use postgres for update
     const result = await sql`
@@ -351,7 +349,6 @@ router.post('/:id/api-key', async (req, res) => {
     }
 
     const updatedOrg = result[0];
-    console.log('Generated new API key for organization:', updatedOrg.id);
 
     res.json({
       id: updatedOrg.id,

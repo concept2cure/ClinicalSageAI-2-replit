@@ -938,9 +938,9 @@ router.post('/plan', async (req: Request, res: Response) => {
 router.get('/plan/:planRunId', async (req: Request, res: Response) => {
   const planRun = await getGoalPlanRun(req.params.planRunId);
   if (!planRun) {
-    return res.status(404).json({ error: 'Plan run not found', code: 'PLAN_NOT_FOUND' });
+    return sendError(res, 404, 'Plan run not found', null, 'PLAN_NOT_FOUND');
   }
-  return res.json(planRun);
+  return sendSuccess(res, planRun);
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -949,13 +949,11 @@ router.get('/plan/:planRunId', async (req: Request, res: Response) => {
 router.post('/plan/:planRunId/advance', async (req: Request, res: Response) => {
   const { stepId, nextStatus } = req.body || {};
   if (!stepId || !nextStatus) {
-    return res
-      .status(400)
-      .json({ error: 'stepId and nextStatus are required', code: 'INVALID_INPUT' });
+    return sendError(res, 400, 'stepId and nextStatus are required', null, 'INVALID_INPUT');
   }
   const allowedStatuses = ['pending', 'in_progress', 'completed', 'blocked', 'replanned'] as const;
   if (!allowedStatuses.includes(nextStatus)) {
-    return res.status(400).json({ error: 'Invalid nextStatus', code: 'INVALID_STATUS' });
+    return sendError(res, 400, 'Invalid nextStatus', null, 'INVALID_STATUS');
   }
 
   const result = await advanceGoalPlanStep({
@@ -964,9 +962,9 @@ router.post('/plan/:planRunId/advance', async (req: Request, res: Response) => {
     nextStatus,
   });
   if (!result.ok) {
-    return res.status(400).json({ error: result.message, code: 'PLAN_ADVANCE_FAILED' });
+    return sendError(res, 400, result.message, null, 'PLAN_ADVANCE_FAILED');
   }
-  return res.json({ ok: true });
+  return sendSuccess(res, { ok: true });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -975,7 +973,7 @@ router.post('/plan/:planRunId/advance', async (req: Request, res: Response) => {
 router.post('/plan/:planRunId/execute-next', async (req: Request, res: Response) => {
   const result = await executeNextGoalPlanStep(req.params.planRunId);
   if (!result.ok) {
-    return res.status(400).json({ error: result.message, code: 'PLAN_EXECUTION_FAILED' });
+    return sendError(res, 400, result.message, null, 'PLAN_EXECUTION_FAILED');
   }
   const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
   await recordProtocolEvent({
@@ -990,7 +988,7 @@ router.post('/plan/:planRunId/execute-next', async (req: Request, res: Response)
       stepId: result.executedStepId,
     },
   });
-  return res.json(result);
+  return sendSuccess(res, result);
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -998,7 +996,7 @@ router.post('/plan/:planRunId/execute-next', async (req: Request, res: Response)
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/plan/:planRunId/events', async (req: Request, res: Response) => {
   const events = await listGoalPlanEvents(req.params.planRunId);
-  return res.json({ events });
+  return sendSuccess(res, { events });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1018,16 +1016,14 @@ router.post('/plan/:planRunId/protocol', async (req: Request, res: Response) => 
   };
   const validation = validateProtocolEvent(event as any);
   if (!validation.ok) {
-    return res.status(400).json({ error: validation.message, code: 'INVALID_PROTOCOL_EVENT' });
+    return sendError(res, 400, validation.message, null, 'INVALID_PROTOCOL_EVENT');
   }
 
   const recorded = await recordProtocolEvent(event as any);
   if (!recorded.ok) {
-    return res
-      .status(500)
-      .json({ error: 'Failed to record protocol event', code: 'PROTOCOL_WRITE_FAILED' });
+    return sendError(res, 500, 'Failed to record protocol event', null, 'PROTOCOL_WRITE_FAILED');
   }
-  return res.json({ ok: true });
+  return sendSuccess(res, { ok: true });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1035,7 +1031,7 @@ router.post('/plan/:planRunId/protocol', async (req: Request, res: Response) => 
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/plan/:planRunId/protocol', async (req: Request, res: Response) => {
   const events = await listProtocolEvents(req.params.planRunId);
-  return res.json({ events });
+  return sendSuccess(res, { events });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1048,7 +1044,7 @@ router.get('/kernel/metrics', async (req: Request, res: Response) => {
     organizationId: orgId ? Number(orgId) : null,
     windowDays: Number.isFinite(windowDays) && windowDays > 0 ? windowDays : 7,
   });
-  return res.json(metrics);
+  return sendSuccess(res, metrics);
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1056,7 +1052,7 @@ router.get('/kernel/metrics', async (req: Request, res: Response) => {
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/kernel/readiness', async (_req: Request, res: Response) => {
   const readiness = await getKernelBetaReadiness();
-  return res.json(readiness);
+  return sendSuccess(res, readiness);
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
