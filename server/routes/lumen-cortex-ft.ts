@@ -24,6 +24,8 @@ import { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { getGateway } from '../services/ai-gateway/index.js';
 import type { GatewayMessage } from '../services/ai-gateway/types.js';
+import { promises as fs } from 'fs';
+import path from 'path';
 
 // ---------------------------------------------------------------------------
 // TYPES
@@ -142,6 +144,7 @@ const LUMEN_GOVERNANCE_POLICY = {
   supportedModalities: ['text'] as const,
   allowedTaskType: 'regulatory_review' as const,
 };
+const CONTROL_PLANE_STATE_PATH = path.resolve(process.cwd(), 'tmp', 'lumen-cortex-ft-control-plane.json');
 
 const STAGE_TRANSITIONS: Record<
   NonNullable<DeploymentConfig['deploymentStage']>,
@@ -230,6 +233,17 @@ export interface QuantizationBenchmark {
   recommendation: 'promote' | 'review' | 'reject';
 }
 
+export interface AuditRemediationPlanItem {
+  id: string;
+  title: string;
+  description: string;
+  priority: 'P0' | 'P1' | 'P2';
+  status: 'pending' | 'in_progress' | 'completed' | 'blocked';
+  owner: 'AI Platform' | 'Regulatory AI' | 'Infrastructure' | 'QA';
+  targetDate: string;
+  dependencies?: string[];
+}
+
 // ---------------------------------------------------------------------------
 // MODEL REGISTRY (In-memory + DB persistence)
 // ---------------------------------------------------------------------------
@@ -239,6 +253,55 @@ class ModelRegistry {
   private activeModelId: string | null = null;
   private deploymentEvents: Map<string, DeploymentEvent[]> = new Map();
   private quantizationBenchmarks: Map<string, QuantizationBenchmark[]> = new Map();
+  private remediationPlan: AuditRemediationPlanItem[] = [
+    {
+      id: 'AFT-P0-001',
+      title: 'Unify inference via AI Gateway',
+      description: 'Remove direct provider inference paths and route all FT inference through gateway.',
+      priority: 'P0',
+      status: 'completed',
+      owner: 'AI Platform',
+      targetDate: '2026-03-24',
+    },
+    {
+      id: 'AFT-P0-002',
+      title: 'Lifecycle promotion/rollback controls',
+      description: 'Add explicit staged/canary/live/rollback transitions with API controls.',
+      priority: 'P0',
+      status: 'completed',
+      owner: 'AI Platform',
+      targetDate: '2026-03-24',
+    },
+    {
+      id: 'AFT-P1-003',
+      title: 'Quantization variant + benchmark workflow',
+      description: 'Create quantized model variants and capture benchmark evidence for decisions.',
+      priority: 'P1',
+      status: 'in_progress',
+      owner: 'Regulatory AI',
+      targetDate: '2026-03-31',
+      dependencies: ['AFT-P0-001', 'AFT-P0-002'],
+    },
+    {
+      id: 'AFT-P1-004',
+      title: 'Policy allowlists and governance endpoint',
+      description: 'Enforce model/regulatory-body allowlists and expose policy endpoint.',
+      priority: 'P1',
+      status: 'completed',
+      owner: 'QA',
+      targetDate: '2026-03-24',
+    },
+    {
+      id: 'AFT-P2-005',
+      title: 'Persist control plane in durable store',
+      description: 'Replace in-memory registry/events with DB-backed durable model control plane.',
+      priority: 'P2',
+      status: 'pending',
+      owner: 'Infrastructure',
+      targetDate: '2026-04-15',
+      dependencies: ['AFT-P0-002'],
+    },
+  ];
 
   constructor() {
     // Register the base fine-tuned model
@@ -313,6 +376,7 @@ class ModelRegistry {
         runtime: baseModel.deploymentConfig?.runtime || null,
       },
     });
+    void this.persistState();
   }
 
   async hydrateFromDisk(): Promise<void> {
@@ -345,6 +409,7 @@ class ModelRegistry {
         finetuneType: model.finetuneType,
       },
     });
+    void this.persistState();
   }
 
   setActiveModel(id: string): boolean {
@@ -358,6 +423,7 @@ class ModelRegistry {
         actor: 'system',
         reason: 'manual activation',
       });
+      void this.persistState();
       return true;
     }
     return false;
@@ -371,6 +437,13 @@ class ModelRegistry {
     const model = this.models.get(id);
     if (!model) return null;
     const previousStage = model.deploymentConfig?.deploymentStage || null;
+    if (
+      previousStage &&
+      previousStage !== stage &&
+      !STAGE_TRANSITIONS[previousStage].includes(stage)
+    ) {
+      throw new Error(`Invalid stage transition: ${previousStage} -> ${stage}`);
+    }
 
     model.deploymentConfig = {
       servingEndpoint: '/api/lumen-cortex-ft/inference',
@@ -401,6 +474,7 @@ class ModelRegistry {
         canaryPercentage: model.deploymentConfig.canaryPercentage,
       },
     });
+    void this.persistState();
     return model;
   }
 
@@ -408,6 +482,9 @@ class ModelRegistry {
     const model = this.models.get(id);
     if (!model) return null;
     const previousStage = model.deploymentConfig?.deploymentStage || null;
+    if (previousStage && !STAGE_TRANSITIONS[previousStage].includes('rollback')) {
+      throw new Error(`Invalid stage transition: ${previousStage} -> rollback`);
+    }
     model.deploymentConfig = {
       ...model.deploymentConfig,
       deploymentStage: 'rollback',
@@ -428,6 +505,7 @@ class ModelRegistry {
         status: model.status,
       },
     });
+    void this.persistState();
     return model;
   }
 
@@ -495,6 +573,7 @@ class ModelRegistry {
     const list = this.quantizationBenchmarks.get(variantId) || [];
     list.push(benchmark);
     this.quantizationBenchmarks.set(variantId, list);
+    void this.persistState();
 
     return variant;
   }
@@ -507,6 +586,105 @@ class ModelRegistry {
     return (this.quantizationBenchmarks.get(modelId) || []).slice().sort((a, b) => {
       return b.measuredAt.getTime() - a.measuredAt.getTime();
     });
+  }
+
+  getLatestDeploymentEvents(limit = 50): DeploymentEvent[] {
+    const all = Array.from(this.deploymentEvents.values()).flat();
+    return all
+      .slice()
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, limit);
+  }
+
+  getRemediationPlan(): AuditRemediationPlanItem[] {
+    return this.remediationPlan.slice();
+  }
+
+  updateRemediationPlanStatus(
+    id: string,
+    status: AuditRemediationPlanItem['status']
+  ): AuditRemediationPlanItem | null {
+    const idx = this.remediationPlan.findIndex(item => item.id === id);
+    if (idx < 0) return null;
+    this.remediationPlan[idx] = {
+      ...this.remediationPlan[idx],
+      status,
+    };
+    void this.persistState();
+    return this.remediationPlan[idx];
+  }
+
+  async hydrateFromDisk(): Promise<void> {
+    try {
+      const raw = await fs.readFile(CONTROL_PLANE_STATE_PATH, 'utf-8');
+      const parsed = JSON.parse(raw) as {
+        activeModelId: string | null;
+        models: LumenCortexModel[];
+        deploymentEvents: Array<[string, DeploymentEvent[]]>;
+        quantizationBenchmarks: Array<[string, QuantizationBenchmark[]]>;
+        remediationPlan: AuditRemediationPlanItem[];
+      };
+      if (!parsed || !Array.isArray(parsed.models)) return;
+
+      this.models = new Map(parsed.models.map(model => [model.id, this.reviveModel(model)]));
+      this.activeModelId = parsed.activeModelId;
+      this.deploymentEvents = new Map(
+        (parsed.deploymentEvents || []).map(([k, events]) => [
+          k,
+          (events || []).map(event => ({
+            ...event,
+            createdAt: new Date(event.createdAt),
+          })),
+        ])
+      );
+      this.quantizationBenchmarks = new Map(
+        (parsed.quantizationBenchmarks || []).map(([k, rows]) => [
+          k,
+          (rows || []).map(row => ({
+            ...row,
+            measuredAt: new Date(row.measuredAt),
+          })),
+        ])
+      );
+      if (Array.isArray(parsed.remediationPlan) && parsed.remediationPlan.length > 0) {
+        this.remediationPlan = parsed.remediationPlan;
+      }
+    } catch {
+      // No persisted state yet — keep seeded defaults
+    }
+  }
+
+  private reviveModel(model: LumenCortexModel): LumenCortexModel {
+    return {
+      ...model,
+      createdAt: new Date(model.createdAt),
+      updatedAt: new Date(model.updatedAt),
+      deployedAt: model.deployedAt ? new Date(model.deployedAt) : undefined,
+      deploymentConfig: model.deploymentConfig
+        ? {
+            ...model.deploymentConfig,
+            promotedAt: model.deploymentConfig.promotedAt
+              ? new Date(model.deploymentConfig.promotedAt)
+              : undefined,
+          }
+        : undefined,
+    };
+  }
+
+  private async persistState(): Promise<void> {
+    try {
+      await fs.mkdir(path.dirname(CONTROL_PLANE_STATE_PATH), { recursive: true });
+      const state = {
+        activeModelId: this.activeModelId,
+        models: Array.from(this.models.values()),
+        deploymentEvents: Array.from(this.deploymentEvents.entries()),
+        quantizationBenchmarks: Array.from(this.quantizationBenchmarks.entries()),
+        remediationPlan: this.remediationPlan,
+      };
+      await fs.writeFile(CONTROL_PLANE_STATE_PATH, JSON.stringify(state, null, 2), 'utf-8');
+    } catch (err) {
+      console.warn('[lumen-cortex-ft] Failed to persist control plane state:', err);
+    }
   }
 
   private recordDeploymentEvent(
@@ -608,6 +786,56 @@ const REGULATORY_SYSTEM_PROMPTS: Record<string, string> = {
   ICH: `You are AnA RI, a regulatory AI assistant trained on the complete ICH guideline corpus (Q1-Q14, E1-E19, M1-M13, S1-S10). Generate content that is harmonized across major regulatory bodies and strictly adheres to ICH technical requirements.`,
 };
 
+function buildWisdomProfile(content: string, citations: Citation[], flags: RegulatoryFlag[]) {
+  const knownCount = (content.match(/\bKNOWN\b/g) || []).length;
+  const inferredCount = (content.match(/\bINFERRED\b/g) || []).length;
+  const missingCount = (content.match(/\bMISSING\b/g) || []).length;
+  const criticalFlags = flags.filter(f => f.severity === 'critical').length;
+  const majorFlags = flags.filter(f => f.severity === 'major').length;
+
+  let confidenceBand: 'high' | 'medium' | 'low' = 'medium';
+  if (citations.length >= 3 && criticalFlags === 0 && missingCount === 0) confidenceBand = 'high';
+  if (criticalFlags > 0 || missingCount >= 2 || citations.length === 0) confidenceBand = 'low';
+
+  const riskLevel: 'low' | 'medium' | 'high' =
+    criticalFlags > 0 ? 'high' : majorFlags > 0 || missingCount > 0 ? 'medium' : 'low';
+
+  const nextBestActions: string[] = [];
+  if (missingCount > 0) {
+    nextBestActions.push('Resolve all MISSING evidence items before submission packaging.');
+  }
+  if (criticalFlags > 0) {
+    nextBestActions.push('Escalate to RA lead for critical deficiency triage.');
+  }
+  if (citations.length < 2) {
+    nextBestActions.push('Add additional primary citations (ICH/CFR/FDA/EMA) for defensibility.');
+  }
+  if (nextBestActions.length === 0) {
+    nextBestActions.push('Proceed to canary review workflow with QA sign-off.');
+  }
+
+  return {
+    confidenceBand,
+    evidenceDiscipline: {
+      knownCount,
+      inferredCount,
+      missingCount,
+      compliant: missingCount === 0 && citations.length > 0,
+    },
+    safetyProfile: {
+      riskLevel,
+      requiresHumanReview: riskLevel !== 'low',
+      rationale:
+        riskLevel === 'high'
+          ? 'Critical flags detected in generated content.'
+          : riskLevel === 'medium'
+            ? 'Some uncertainty or major findings require human validation.'
+            : 'No major/critical findings and evidence profile is acceptable.',
+    },
+    nextBestActions,
+  };
+}
+
 let gatewayInstance: ReturnType<typeof getGateway> | null = null;
 function ensureGateway() {
   if (!gatewayInstance) {
@@ -664,6 +892,39 @@ async function performInference(request: InferenceRequest): Promise<InferenceRes
         { role: 'system', content: systemPrompt },
         { role: 'user', content: enrichedPrompt },
       ];
+
+      const explicitModel = request.modelVersion || process.env.LUMEN_CORTEX_MODEL_ID || undefined;
+      const resolvedModel =
+        explicitModel &&
+        LUMEN_GOVERNANCE_POLICY.allowedGatewayModels.includes(
+          explicitModel as (typeof LUMEN_GOVERNANCE_POLICY.allowedGatewayModels)[number]
+        )
+          ? explicitModel
+          : undefined;
+
+      if (explicitModel && !resolvedModel) {
+        throw new Error(
+          `Model '${explicitModel}' blocked by governance policy. Allowed: ${LUMEN_GOVERNANCE_POLICY.allowedGatewayModels.join(', ')}`
+        );
+      }
+
+      const response = await gateway.route({
+        taskType: 'regulatory_review',
+        messages,
+        model: resolvedModel,
+        temperature: request.temperature ?? 0.3,
+        maxTokens: request.maxTokens ?? 4096,
+        strategy: 'quality_optimized',
+        callerModule: 'lumen-cortex-ft/inference',
+        metadata: {
+          regulatoryBody,
+          submissionType: request.regulatoryContext?.submissionType || null,
+          formatGuide: request.formatGuide || null,
+          citationMode: request.citationMode || null,
+          governancePolicy: 'lumen-ft-v1',
+          supportedModalities: LUMEN_GOVERNANCE_POLICY.supportedModalities.join(','),
+        },
+      });
 
       const response = await gateway.route({
         taskType: 'regulatory_review',
@@ -909,6 +1170,16 @@ router.post('/models/:modelId/promote', (req: Request, res: Response) => {
       .json({ error: "Invalid stage. Expected one of: 'staged' | 'canary' | 'live'" });
   }
 
+  let updated: LumenCortexModel | null = null;
+  try {
+    updated = registry.promoteModel(
+      req.params.modelId,
+      stage as NonNullable<DeploymentConfig['deploymentStage']>,
+      actor
+    );
+  } catch (err) {
+    return res.status(409).json({ error: String(err) });
+  }
   const updated = registry.promoteModel(
     req.params.modelId,
     stage as NonNullable<DeploymentConfig['deploymentStage']>,
@@ -935,6 +1206,12 @@ router.post('/models/:modelId/promote', (req: Request, res: Response) => {
  */
 router.post('/models/:modelId/rollback', (req: Request, res: Response) => {
   const actor = String(req.body?.actor || 'system');
+  let updated: LumenCortexModel | null = null;
+  try {
+    updated = registry.rollbackModel(req.params.modelId, actor);
+  } catch (err) {
+    return res.status(409).json({ error: String(err) });
+  }
   const updated = registry.rollbackModel(req.params.modelId, actor);
   if (!updated) return res.status(404).json({ error: 'Model not found' });
   return res.json({
@@ -1205,6 +1482,23 @@ router.post('/roadmap/:itemId/status', (req: Request, res: Response) => {
 });
 
 /**
+ * POST /wisdom/assess
+ * Evaluate any draft text for AnA "wisdom" signals (evidence discipline + safety posture)
+ */
+router.post('/wisdom/assess', (req: Request, res: Response) => {
+  const content = String(req.body?.content || '');
+  const citations = (Array.isArray(req.body?.citations) ? req.body.citations : []) as Citation[];
+  const flags = (Array.isArray(req.body?.regulatoryFlags) ? req.body.regulatoryFlags : []) as RegulatoryFlag[];
+  if (!content.trim()) return res.status(400).json({ error: 'content is required' });
+
+  const wisdom = buildWisdomProfile(content, citations, flags);
+  return res.json({
+    success: true,
+    data: wisdom,
+  });
+});
+
+/**
  * GET /audit/report
  * Aggregated control-plane report for governance and remediation audits
  */
@@ -1245,6 +1539,67 @@ router.get('/audit/report', (_req: Request, res: Response) => {
         items: planItems,
       },
       benchmarkSummary,
+    },
+  });
+});
+
+/**
+ * GET /beta-readiness
+ * Operational readiness checkpoint for beta launch
+ */
+router.get('/beta-readiness', async (_req: Request, res: Response) => {
+  const activeModel = registry.getActiveModel();
+  const planItems = registry.getRemediationPlan();
+  const latestEvents = registry.getLatestDeploymentEvents(20);
+
+  let persistenceWritable = false;
+  try {
+    await fs.mkdir(path.dirname(CONTROL_PLANE_STATE_PATH), { recursive: true });
+    const probe = `${CONTROL_PLANE_STATE_PATH}.probe`;
+    await fs.writeFile(probe, JSON.stringify({ ts: Date.now() }), 'utf-8');
+    await fs.unlink(probe);
+    persistenceWritable = true;
+  } catch {
+    persistenceWritable = false;
+  }
+
+  const completedP0 = planItems.filter(i => i.priority === 'P0' && i.status === 'completed').length;
+  const totalP0 = planItems.filter(i => i.priority === 'P0').length;
+
+  const readinessScore = Math.round(
+    [
+      activeModel ? 1 : 0,
+      persistenceWritable ? 1 : 0,
+      totalP0 > 0 ? completedP0 / totalP0 : 0,
+      latestEvents.length > 0 ? 1 : 0,
+      LUMEN_GOVERNANCE_POLICY.allowedGatewayModels.length > 0 ? 1 : 0,
+    ].reduce((a, b) => a + b, 0) * 20
+  );
+
+  const blockers: string[] = [];
+  if (!activeModel) blockers.push('No active model configured.');
+  if (!persistenceWritable) blockers.push('Control-plane persistence path is not writable.');
+  if (totalP0 > 0 && completedP0 < totalP0) blockers.push('Not all P0 remediation items are completed.');
+  if (latestEvents.length === 0) blockers.push('No deployment events found.');
+
+  return res.json({
+    success: true,
+    data: {
+      module: 'lumen-cortex-ft',
+      readinessScore,
+      betaReady: blockers.length === 0 && readinessScore >= 80,
+      checks: {
+        activeModelConfigured: Boolean(activeModel),
+        persistenceWritable,
+        p0Completion: { completed: completedP0, total: totalP0 },
+        latestDeploymentEvents: latestEvents.length,
+        governancePolicyLoaded: true,
+      },
+      blockers,
+      recommendations:
+        blockers.length === 0
+          ? ['Proceed with canary rollout and external UAT.']
+          : ['Resolve blockers before opening beta traffic.', ...blockers],
     },
   });
 });
