@@ -1,7 +1,7 @@
 # Concept2Cure — Project Planning & Roadmap Index
 
-> **Version:** 1.0 | **Created:** 2026-01-29 | **Status:** AUTHORITATIVE  
-> **Purpose:** Single entry point for all Concept2Cure planning and roadmap documentation  
+> **Version:** 1.0 | **Created:** 2026-01-29 | **Status:** AUTHORITATIVE
+> **Purpose:** Single entry point for all Concept2Cure planning and roadmap documentation
 > **Principle:** This index reflects the UI workspace structure.
 
 ---
@@ -10,33 +10,51 @@
 
 Concept2Cure is a **Project-centric workspace OS**. All planning documentation is organized to mirror the three-pane UI structure:
 
-| UI Pane | Planning Analog |
-|---------|-----------------|
-| Left Sidebar (Projects + Modules) | Project & Module Roadmaps |
-| Center Pane (Chat / Workflow / Editor) | Implementation Phases |
-| Right Pane (Artifacts / Audit / Tasks) | Deliverables & Evidence |
+| UI Pane                                | Planning Analog           |
+| -------------------------------------- | ------------------------- |
+| Left Sidebar (Projects + Modules)      | Project & Module Roadmaps |
+| Center Pane (Chat / Workflow / Editor) | Implementation Phases     |
+| Right Pane (Artifacts / Audit / Tasks) | Deliverables & Evidence   |
 
 ---
 
 ## 📚 Master Documents
 
-| Document | Purpose | Status |
-|----------|---------|--------|
-| [MASTER ROADMAP](roadmap/CONCEPT2CURE_MASTER_ROADMAP.md) | **PRIMARY** — Complete build guide with UI alignment | ✅ Authoritative |
-| [UNIFIED PROJECT ROADMAP](CONCEPT2CURE_UNIFIED_PROJECT_ROADMAP.md) | Index to roadmap parts 1-5 | ✅ Reference |
-| [IMPLEMENTATION TRACKER](../CONCEPT2CURE_IMPLEMENTATION_TRACKER.md) | Phase-by-phase completion status | ✅ Active |
+| Document                                                            | Purpose                                                                                                 | Status           |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ---------------- |
+| [MASTER ROADMAP](roadmap/CONCEPT2CURE_MASTER_ROADMAP.md)            | **PRIMARY** — Complete build guide with UI alignment                                                    | ✅ Authoritative |
+| [UNIFIED PROJECT ROADMAP](CONCEPT2CURE_UNIFIED_PROJECT_ROADMAP.md)  | Index to roadmap parts 1-5                                                                              | ✅ Reference     |
+| [IMPLEMENTATION TRACKER](../CONCEPT2CURE_IMPLEMENTATION_TRACKER.md) | Phase-by-phase completion status                                                                        | ✅ Active        |
+| [LAUNCH TRUTH TRACK](reports/launch-truth-track-2026-03-26.md)      | Credibility gap closure workstream — 6 workstreams (provenance, export, claims, AI truth, Veeva, gates) | ✅ Active        |
+
+---
+
+## 🔒 Launch Truth Track (Credibility Gates)
+
+The product audit revealed trust gaps that are separate from feature gaps. The **Launch Truth Track** is a cross-cutting workstream that blocks external launch until all credibility claims are provable.
+
+| Workstream | Area                                | Status                                             |
+| ---------- | ----------------------------------- | -------------------------------------------------- |
+| TT-1       | Sentence-level source click-through | 🔴 30% — DB schema done, no UI or population logic |
+| TT-2       | eCTD export verifiability           | 🟡 75% — Server real, user can't preview/validate  |
+| TT-3       | Takeda study claim documentation    | 🔴 0% — DECISION REQUIRED from founder             |
+| TT-4       | AI runtime truth transparency       | 🟡 70% — Flags exist, not surfaced in UI           |
+| TT-5       | Enterprise integration (Veeva)      | 🔴 0% — DECISION REQUIRED from founder             |
+| TT-6       | GA readiness gates framework        | 🟡 25% — Partial governance, no launch gates       |
+
+> **Full plan**: [Launch Truth Track](reports/launch-truth-track-2026-03-26.md)
 
 ---
 
 ## 🏗️ Roadmap Parts (Detailed)
 
-| Part | Focus | Document |
-|------|-------|----------|
-| Part 1 | Lumen Cortex + Portal Architecture | [CONCEPT2CURE_ROADMAP_PART1.md](CONCEPT2CURE_ROADMAP_PART1.md) |
-| Part 2 | File Structure + 10-Week Plan (superseded) | [CONCEPT2CURE_ROADMAP_PART2.md](CONCEPT2CURE_ROADMAP_PART2.md) |
-| Part 3 | UI/UX + Database + Compliance | [CONCEPT2CURE_ROADMAP_PART3.md](CONCEPT2CURE_ROADMAP_PART3.md) |
+| Part   | Focus                                           | Document                                                       |
+| ------ | ----------------------------------------------- | -------------------------------------------------------------- |
+| Part 1 | Lumen Cortex + Portal Architecture              | [CONCEPT2CURE_ROADMAP_PART1.md](CONCEPT2CURE_ROADMAP_PART1.md) |
+| Part 2 | File Structure + 10-Week Plan (superseded)      | [CONCEPT2CURE_ROADMAP_PART2.md](CONCEPT2CURE_ROADMAP_PART2.md) |
+| Part 3 | UI/UX + Database + Compliance                   | [CONCEPT2CURE_ROADMAP_PART3.md](CONCEPT2CURE_ROADMAP_PART3.md) |
 | Part 4 | **12-Week Implementation Plan (authoritative)** | [CONCEPT2CURE_ROADMAP_PART4.md](CONCEPT2CURE_ROADMAP_PART4.md) |
-| Part 5 | Testing + Deployment + KPIs | [CONCEPT2CURE_ROADMAP_PART5.md](CONCEPT2CURE_ROADMAP_PART5.md) |
+| Part 5 | Testing + Deployment + KPIs                     | [CONCEPT2CURE_ROADMAP_PART5.md](CONCEPT2CURE_ROADMAP_PART5.md) |
 
 ---
 
@@ -61,51 +79,51 @@ Concept2Cure is a **Project-centric workspace OS**. All planning documentation i
 
 ### Module Workspaces
 
-| Module | Dashboard | Chats | Artifacts | Workflows | PM Docs |
-|--------|-----------|-------|-----------|-----------|---------|
-| Client Portal V2 | Config, usage | Support threads | Config reports | Provisioning | Integration plan |
-| Project Cortex | Data readiness | Design threads | Mappings, specs | ETL pipeline | Data risks |
-| eCTD Co-Author | Completion % | Drafting threads | CTD sections | Draft→Sign→Export | Content risks |
-| CER Generator | Gap analysis | Review threads | CER reports | Data→Draft→Finalize | Compliance plan |
-| Regulatory Intel | Alerts, calendar | Query threads | Briefings | Alert→Analyze→Report | Source coverage |
-| Mission Control | Portfolio | Executive threads | KPI reports | Plan→Execute→Review | Program risks |
+| Module           | Dashboard        | Chats             | Artifacts       | Workflows            | PM Docs          |
+| ---------------- | ---------------- | ----------------- | --------------- | -------------------- | ---------------- |
+| Client Portal V2 | Config, usage    | Support threads   | Config reports  | Provisioning         | Integration plan |
+| Project Cortex   | Data readiness   | Design threads    | Mappings, specs | ETL pipeline         | Data risks       |
+| eCTD Co-Author   | Completion %     | Drafting threads  | CTD sections    | Draft→Sign→Export    | Content risks    |
+| CER Generator    | Gap analysis     | Review threads    | CER reports     | Data→Draft→Finalize  | Compliance plan  |
+| Regulatory Intel | Alerts, calendar | Query threads     | Briefings       | Alert→Analyze→Report | Source coverage  |
+| Mission Control  | Portfolio        | Executive threads | KPI reports     | Plan→Execute→Review  | Program risks    |
 
 ---
 
 ## 📋 PM Hub Documents
 
-| Document Type | Scope | Purpose |
-|---------------|-------|---------|
-| Project Roadmap | Project | Timeline, milestones, dependencies |
-| Module Roadmap | Module | Module-specific delivery plan |
-| Requirements | Project/Module | Functional & regulatory requirements |
-| Risks | Project/Module | Risk register with mitigations |
-| ADRs | Project/Module | Architecture Decision Records |
-| Validation Plan | Project | IQ/OQ/PQ validation strategy |
-| Evidence Matrix | Project | Traceability to artifacts + audit |
+| Document Type   | Scope          | Purpose                              |
+| --------------- | -------------- | ------------------------------------ |
+| Project Roadmap | Project        | Timeline, milestones, dependencies   |
+| Module Roadmap  | Module         | Module-specific delivery plan        |
+| Requirements    | Project/Module | Functional & regulatory requirements |
+| Risks           | Project/Module | Risk register with mitigations       |
+| ADRs            | Project/Module | Architecture Decision Records        |
+| Validation Plan | Project        | IQ/OQ/PQ validation strategy         |
+| Evidence Matrix | Project        | Traceability to artifacts + audit    |
 
 ---
 
 ## 🔤 Terminology Reference
 
-| Term | Definition | Example |
-|------|------------|---------|
-| **Project** | Top-level container for a regulatory submission or program | "Acme 510(k) Q2 2026" |
-| **Module** | Functional workspace within a project | Client Portal V2, eCTD Co-Author |
-| **Chat** | Conversational AI interaction | "Draft device description" |
-| **Artifact** | Persistent output (document, report, export) | Clinical Summary v2.1.docx |
-| **Workflow** | Multi-step process with gates and approvals | IND Submission Pipeline |
-| **PM Doc** | Project management documentation | Roadmap, Risks, ADRs |
+| Term         | Definition                                                 | Example                          |
+| ------------ | ---------------------------------------------------------- | -------------------------------- |
+| **Project**  | Top-level container for a regulatory submission or program | "Acme 510(k) Q2 2026"            |
+| **Module**   | Functional workspace within a project                      | Client Portal V2, eCTD Co-Author |
+| **Chat**     | Conversational AI interaction                              | "Draft device description"       |
+| **Artifact** | Persistent output (document, report, export)               | Clinical Summary v2.1.docx       |
+| **Workflow** | Multi-step process with gates and approvals                | IND Submission Pipeline          |
+| **PM Doc**   | Project management documentation                           | Roadmap, Risks, ADRs             |
 
 ### Deprecated Terms (Do Not Use)
 
-| ❌ Old Term | ✅ Replace With |
-|-------------|-----------------|
-| "Document output" | **Artifact** |
-| "AI session" | **Chat** |
-| "Process" | **Workflow** |
-| "Planning docs" | **PM Docs** |
-| "Module UI" | **Module Workspace** |
+| ❌ Old Term       | ✅ Replace With      |
+| ----------------- | -------------------- |
+| "Document output" | **Artifact**         |
+| "AI session"      | **Chat**             |
+| "Process"         | **Workflow**         |
+| "Planning docs"   | **PM Docs**          |
+| "Module UI"       | **Module Workspace** |
 
 ---
 
@@ -122,8 +140,8 @@ Concept2Cure is a **Project-centric workspace OS**. All planning documentation i
 
 ## 📝 Change Log
 
-| Date | Change | Author |
-|------|--------|--------|
+| Date       | Change                                             | Author  |
+| ---------- | -------------------------------------------------- | ------- |
 | 2026-01-29 | Created planning index with UI workspace alignment | Copilot |
-| 2026-01-29 | Added terminology reference and deprecated terms | Copilot |
-| 2026-01-29 | Linked all roadmap parts and master documents | Copilot |
+| 2026-01-29 | Added terminology reference and deprecated terms   | Copilot |
+| 2026-01-29 | Linked all roadmap parts and master documents      | Copilot |

@@ -1,4 +1,5 @@
 # ClinicalSageAI — Full Platform Audit & BETA Readiness Assessment
+
 **Date**: 2026-03-25
 **Target**: Biotech client BETA launch (IND/NDA regulatory submissions)
 **Branch**: concept2cure-v2
@@ -7,19 +8,19 @@
 
 ## EXECUTIVE SUMMARY
 
-| Area | Status | Score |
-|------|--------|-------|
-| Authentication & Security | Production-Ready | 9/10 |
-| AI Chat (AnA) | Production-Ready | 9/10 |
-| Document Editor & Authoring | Production-Ready | 9/10 |
-| Regulatory Intelligence (RIM) | Functional | 8/10 |
-| Submission Workflow | Functional | 8/10 |
-| Design System & UI States | Production-Ready | 9/10 |
-| Infrastructure & Deployment | Production-Ready | 9/10 |
-| Testing | Good | 8/10 |
-| Project Management | Needs Work | 6/10 |
-| Code Hygiene | Needs Cleanup | 6/10 |
-| **OVERALL** | **BETA-Ready with targeted fixes** | **8/10** |
+| Area                          | Status                             | Score    |
+| ----------------------------- | ---------------------------------- | -------- |
+| Authentication & Security     | Production-Ready                   | 9/10     |
+| AI Chat (AnA)                 | Production-Ready                   | 9/10     |
+| Document Editor & Authoring   | Production-Ready                   | 9/10     |
+| Regulatory Intelligence (RIM) | Functional                         | 8/10     |
+| Submission Workflow           | Functional                         | 8/10     |
+| Design System & UI States     | Production-Ready                   | 9/10     |
+| Infrastructure & Deployment   | Production-Ready                   | 9/10     |
+| Testing                       | Good                               | 8/10     |
+| Project Management            | Needs Work                         | 6/10     |
+| Code Hygiene                  | Needs Cleanup                      | 6/10     |
+| **OVERALL**                   | **BETA-Ready with targeted fixes** | **8/10** |
 
 **Verdict**: The core product (auth -> project -> document authoring -> AI chat -> submission workflow) works end-to-end. Targeted cleanup and hardening will make it BETA-ready for a biotech client within a focused sprint.
 
@@ -28,6 +29,7 @@
 ## SECTION 1: WHAT'S READY TODAY (Green Light)
 
 ### 1.1 Authentication (Production-Ready)
+
 - Full login/signup flow with email/password + SSO (Google, Microsoft)
 - MFA via TOTP with recovery codes
 - Account lockout after 5 failed attempts (15-min lock)
@@ -38,6 +40,7 @@
 - **Files**: `server/routes/auth.ts`, `client/src/concept2cure/auth/ZenLogin.tsx`
 
 ### 1.2 AI Chat -- AnA 1.0 RI (Production-Ready)
+
 - SSE streaming conversations with Claude API
 - Role-aware personas (CEO, RA Lead, Medical Writer, etc.)
 - 43 slash commands + 39 operational commands
@@ -48,6 +51,7 @@
 - **Files**: `client/src/concept2cure/components/chat/AnaPersistentPanel.tsx`, `server/routes/ana-ri.ts`
 
 ### 1.3 Document Editor (Production-Ready, Wave 2 Hardened)
+
 - TipTap-based rich text editor with custom extensions
 - AI Autocomplete, Citations, ReviewMode, ComplianceScanner
 - Version control with timeline and diff view
@@ -59,6 +63,7 @@
 - **Files**: `client/src/concept2cure/components/editor/UnifiedDocumentEditor.tsx`, `server/routes/authoring.router.ts`
 
 ### 1.4 Security Infrastructure (Production-Ready)
+
 - Helmet.js with strict CSP in production
 - CORS: strict origin whitelist (not wildcard)
 - CSRF protection on all `/api` endpoints
@@ -70,6 +75,7 @@
 - **Files**: `server/services/enterprise-security.ts`, `server/services/redisRateLimiter.ts`
 
 ### 1.5 Design System & Accessibility (Production-Ready)
+
 - 50+ UI components (Radix UI + Tailwind CSS)
 - `DataStateWrapper<T>` handles all 5 states (loading, error, empty, success, background refresh)
 - `statesV2.tsx`: LoadingState, EmptyState, ErrorState, SkeletonTable/Card/Text
@@ -78,6 +84,7 @@
 - **Files**: `client/src/components/ui/statesV2.tsx`
 
 ### 1.6 Deployment & CI/CD (Production-Ready)
+
 - Docker multi-stage build (non-root user, LibreOffice for DOCX->PDF)
 - GitHub Actions: lint -> typecheck -> test -> deploy gates
 - AWS ECS deployment with OIDC auth + blue-green capability
@@ -87,6 +94,7 @@
 - `.env.example` well-documented (4.2KB)
 
 ### 1.7 Testing (Good)
+
 - 84 test files (Vitest + Jest hybrid)
 - Playwright E2E tests: submission ops, governed lifecycle, collaboration, workspace smoke
 - Coverage thresholds: 70% lines/functions, 60% branches (enforced in CI)
@@ -94,6 +102,7 @@
 - PostgreSQL integration tests with pgvector in CI
 
 ### 1.8 Regulatory Intelligence -- RIM (Functional)
+
 - 15+ services in `server/services/intelligence/`
 - 6 codified judgment models (Evidence Sufficiency, Defensibility, Reviewer Sensitivity, Claim Risk, Cross-Section Consistency, Submission Risk)
 - 16 seed patterns in pattern registry (deficiency, reviewer_trigger, rejection, etc.)
@@ -103,6 +112,7 @@
 - **Files**: `server/services/intelligence/rim.ts`, `client/src/concept2cure/components/intelligence/`
 
 ### 1.9 Submission Workflow (Functional)
+
 - Readiness tracking by CTD section (ready/needs-work/blocked/not-started)
 - Dossier map visualization (eCTD structure)
 - Section workspace with status aggregation
@@ -114,17 +124,21 @@
 ## SECTION 2: CRITICAL GAPS (Must Fix Before BETA)
 
 ### 2.1 Mock Data Serving in Production Routes (P0 -- HIGH)
+
 **Problem**: `server/routes/supplyChain.routes.ts` serves 100% hardcoded mock data (mockSuppliers, mockMaterials, mockBatches, mockShipments) and IS mounted in production at `/api/supply-chain` (server/index.ts:1475-1478).
 **Risk**: Client discovers fake data -- immediate credibility loss.
 **Fix**: Remove the route mounting from `server/index.ts`. Supply chain is not a BETA feature for a biotech client.
 
 ### 2.2 Dead Code & Legacy Files (P0 -- MEDIUM-HIGH)
+
 **Problem**: 296 route files total:
+
 - 14 Python files (cannot run in Node.js -- dead code)
 - 26 legacy `.js` files (some may contain mock data)
 - 248 TypeScript files (primary)
 
 **Python files to remove**:
+
 ```
 server/routes/__init__.py
 server/routes/acks.py
@@ -146,7 +160,9 @@ server/routes/sequence_create_region.py
 **Fix**: Delete all `.py` files. Audit `.js` files for mock data.
 
 ### 2.3 Project Management Dashboard (P1 -- MEDIUM-HIGH)
+
 **Problem**: `ProjectHomeDashboard.tsx` is only 97 lines -- navigation stubs. A biotech RA team needs:
+
 - Submission type, target agency, product info
 - Timeline with milestones
 - Team members and roles
@@ -157,6 +173,7 @@ server/routes/sequence_create_region.py
 **Fix**: Build out with real project metadata. Data already exists in backend APIs.
 
 ### 2.4 Placeholder/Coming Soon in Active Routes (P0 -- MEDIUM)
+
 **Problem**: 59 instances of "Coming Soon" / "placeholder" / "not yet implemented" across 25 route files.
 
 Key offenders:
@@ -175,10 +192,12 @@ Key offenders:
 **Fix**: Remove routes that return "Coming Soon" responses. Template placeholders in client-branding.ts are intentional.
 
 ### 2.5 npm Lock File Missing (P0 -- MEDIUM)
+
 **Problem**: No `package-lock.json` committed. Builds are non-deterministic. Can't run `npm audit`.
 **Fix**: Generate and commit lock file.
 
 ### 2.6 GDPR Data Deletion Endpoints (P2 -- may not apply to US biotech)
+
 **Problem**: No explicit right-to-be-forgotten / data portability API endpoints.
 **Fix**: For US-only BETA, document as known gap. Add endpoints before EU expansion.
 
@@ -186,15 +205,15 @@ Key offenders:
 
 ## SECTION 3: NICE-TO-HAVE (Post-BETA)
 
-| Item | Notes |
-|------|-------|
-| Mobile responsiveness | Desktop-first acceptable for RA professionals |
-| Client portal TS migration | Legacy JSX works but inconsistent |
-| Raw fetch() cleanup | 8 instances, most justified (SSE, uploads) |
-| Console.log reduction | 1,356 calls -- use scoped logger |
-| Load testing | Rate limiter + concurrent AI sessions |
-| Conversation branching UI | Component exists, not wired up |
-| Feature flag documentation | `ENABLE_EARLY_ACCESS_MODULES` and others |
+| Item                       | Notes                                         |
+| -------------------------- | --------------------------------------------- |
+| Mobile responsiveness      | Desktop-first acceptable for RA professionals |
+| Client portal TS migration | Legacy JSX works but inconsistent             |
+| Raw fetch() cleanup        | 8 instances, most justified (SSE, uploads)    |
+| Console.log reduction      | 1,356 calls -- use scoped logger              |
+| Load testing               | Rate limiter + concurrent AI sessions         |
+| Conversation branching UI  | Component exists, not wired up                |
+| Feature flag documentation | `ENABLE_EARLY_ACCESS_MODULES` and others      |
 
 ---
 
@@ -202,33 +221,33 @@ Key offenders:
 
 ### Sprint 1: BETA Blockers (Days 1-3)
 
-| # | Task | Priority | Effort |
-|---|------|----------|--------|
-| 1 | Remove supplyChain mock route from server/index.ts | P0 | 30min |
-| 2 | Audit 25 route files with "Coming Soon" -- remove or implement | P0 | 4h |
-| 3 | Delete 14 dead Python files from server/routes/ | P0 | 30min |
-| 4 | Generate and commit package-lock.json, run npm audit | P0 | 1h |
-| 5 | Build out ProjectHomeDashboard with real project metadata | P1 | 8h |
+| #   | Task                                                           | Priority | Effort |
+| --- | -------------------------------------------------------------- | -------- | ------ |
+| 1   | Remove supplyChain mock route from server/index.ts             | P0       | 30min  |
+| 2   | Audit 25 route files with "Coming Soon" -- remove or implement | P0       | 4h     |
+| 3   | Delete 14 dead Python files from server/routes/                | P0       | 30min  |
+| 4   | Generate and commit package-lock.json, run npm audit           | P0       | 1h     |
+| 5   | Build out ProjectHomeDashboard with real project metadata      | P1       | 8h     |
 
 ### Sprint 2: Hardening (Days 4-6)
 
-| # | Task | Priority | Effort |
-|---|------|----------|--------|
-| 6 | Audit 26 legacy .js route files -- remove unmounted | P1 | 4h |
-| 7 | Add user data export endpoint (GDPR) | P2 | 4h |
-| 8 | Replace raw fetch() in useModules.ts with apiRequest() | P2 | 2h |
-| 9 | Run full E2E test suite, fix any failures | P1 | 4h |
-| 10 | Smoke test full user journey | P1 | 4h |
+| #   | Task                                                   | Priority | Effort |
+| --- | ------------------------------------------------------ | -------- | ------ |
+| 6   | Audit 26 legacy .js route files -- remove unmounted    | P1       | 4h     |
+| 7   | Add user data export endpoint (GDPR)                   | P2       | 4h     |
+| 8   | Replace raw fetch() in useModules.ts with apiRequest() | P2       | 2h     |
+| 9   | Run full E2E test suite, fix any failures              | P1       | 4h     |
+| 10  | Smoke test full user journey                           | P1       | 4h     |
 
 ### Sprint 3: Polish (Days 7-10)
 
-| # | Task | Priority | Effort |
-|---|------|----------|--------|
-| 11 | Structured logging in critical paths | P2 | 4h |
-| 12 | Load test rate limiter + concurrent AI sessions | P2 | 4h |
-| 13 | Multi-tenant isolation E2E test | P1 | 4h |
-| 14 | BETA onboarding guide for biotech client | P1 | 4h |
-| 15 | Feature flag audit and documentation | P2 | 2h |
+| #   | Task                                            | Priority | Effort |
+| --- | ----------------------------------------------- | -------- | ------ |
+| 11  | Structured logging in critical paths            | P2       | 4h     |
+| 12  | Load test rate limiter + concurrent AI sessions | P2       | 4h     |
+| 13  | Multi-tenant isolation E2E test                 | P1       | 4h     |
+| 14  | BETA onboarding guide for biotech client        | P1       | 4h     |
+| 15  | Feature flag audit and documentation            | P2       | 2h     |
 
 ---
 
@@ -250,6 +269,23 @@ After implementing fixes:
 
 ---
 
+## SECTION 5B: LAUNCH TRUTH TRACK (Credibility Gates)
+
+The product audit revealed **trust gaps** — not feature gaps, but claims the platform makes that are not provably true. These affect buyer confidence directly.
+
+| Gap                                     | Trust Impact                                    | Status                        | Plan                                                                                            |
+| --------------------------------------- | ----------------------------------------------- | ----------------------------- | ----------------------------------------------------------------------------------------------- |
+| Sentence-level source click-through     | Core differentiator for regulatory traceability | 30% — DB done, no UI          | [TT-1](launch-truth-track-2026-03-26.md#workstream-tt-1-sentence-level-source-click-through)    |
+| eCTD XML export user verification       | User can't confirm export is real eCTD          | 75% — Server real, no preview | [TT-2](launch-truth-track-2026-03-26.md#workstream-tt-2-ectd-export-verifiability)              |
+| Takeda study claim ("97% time savings") | Central ROI narrative, zero evidence            | 0% — Needs founder decision   | [TT-3](launch-truth-track-2026-03-26.md#workstream-tt-3-takeda-study--claim-documentation)      |
+| AI fallback transparency                | User can't tell real AI from template           | 70% — Flags exist, not shown  | [TT-4](launch-truth-track-2026-03-26.md#workstream-tt-4-ai-runtime-truth-transparency)          |
+| Veeva Vault integration                 | Every enterprise pharma asks for this           | 0% — Needs founder decision   | [TT-5](launch-truth-track-2026-03-26.md#workstream-tt-5-enterprise-integration-readiness-veeva) |
+| GA readiness gates                      | No structured launch gate framework             | 25% — Partial governance      | [TT-6](launch-truth-track-2026-03-26.md#workstream-tt-6-ga-readiness-gates)                     |
+
+> Full workstream plan: [Launch Truth Track](launch-truth-track-2026-03-26.md)
+
+---
+
 ## SECTION 6: ARCHITECTURE STRENGTHS (For Client Pitch)
 
 These are differentiators worth highlighting to a biotech client:
@@ -265,4 +301,4 @@ These are differentiators worth highlighting to a biotech client:
 
 ---
 
-*Report generated by comprehensive codebase audit. All findings verified against source code.*
+_Report generated by comprehensive codebase audit. All findings verified against source code._
