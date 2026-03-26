@@ -126,7 +126,7 @@ const RiskMitigationPlanDialog = ({
   const fetchEnhancedRiskAnalytics = async () => {
     try {
       // Connect to REAL AnA 1.0 RI Regulatory Analysis Hub
-      const response = await fetch('/api/lumen-cortex/regulatory-analysis', {
+      const response = await fetch('/api/ana-cortex/regulatory-analysis', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -171,7 +171,7 @@ const RiskMitigationPlanDialog = ({
             'Patient Safety': 'Medium Risk',
           },
           regulatory_framework: 'ICH E6(R3) Good Clinical Practice',
-          lumen_ai_recommendations: analysisData.lumen_ai_recommendations,
+          ana_1_0_ri_recommendations: analysisData.ana_1_0_ri_recommendations,
         };
 
         const realCostAnalysis = {
@@ -262,7 +262,7 @@ const RiskMitigationPlanDialog = ({
   const fetchRegulatoryGuidance = async () => {
     try {
       // Connect to REAL AnA 1.0 RI Regulatory Intelligence Hub
-      const response = await fetch('/api/lumen-cortex/ich-e6r3-guidance', {
+      const response = await fetch('/api/ana-cortex/ich-e6r3-guidance', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -297,7 +297,7 @@ const RiskMitigationPlanDialog = ({
               'Comprehensive regulatory compliance required',
             key_sections: section.key_points || [],
             compliance_impact: section.compliance_priority || 'Critical',
-            lumen_ai_analysis: guidanceData.lumen_ai_ich_analysis,
+            ana_1_0_ri_analysis: guidanceData.ana_1_0_ri_ich_analysis,
             regulatory_impact: guidanceData.regulatory_impact_assessment,
           })) || [];
 

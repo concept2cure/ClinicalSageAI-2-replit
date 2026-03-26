@@ -465,34 +465,55 @@ async def _enrich_toxicity(
 
     try:
         async with pool.acquire() as conn:
-            for s in suggestions:
-                # Fetch signals
-                sig_rows = await conn.fetch(
-                    fda_sql.SELECT_SIGNALS_BY_K_NUMBER, s.k_number,
-                )
-                signals = [dict(r) for r in sig_rows]
-                tox = _compute_toxicity_from_signals(signals)
+            k_numbers: list[str] = []
+            for suggestion in suggestions:
+                if suggestion.k_number and suggestion.k_number not in k_numbers:
+                    k_numbers.append(suggestion.k_number)
+            if not k_numbers:
+                return
 
-                # Fetch family recall count
-                fam_row = await conn.fetchrow(
-                    fda_sql.CHECK_FAMILY_SAFETY, s.k_number,
-                )
-                fam_count = fam_row["family_recall_count"] if fam_row else 0
+            signal_rows = await conn.fetch(
+                fda_sql.SELECT_SIGNALS_BY_K_NUMBERS, k_numbers,
+            )
+            signals_by_k: dict[str, list[dict[str, Any]]] = {k: [] for k in k_numbers}
+            for row in signal_rows:
+                signal = dict(row)
+                k_number = signal.get("k_number")
+                if k_number in signals_by_k:
+                    signals_by_k[k_number].append(signal)
+
+            family_rows = await conn.fetch(
+                fda_sql.CHECK_FAMILY_SAFETY_BY_K_NUMBERS, k_numbers,
+            )
+            family_counts: dict[str, int] = {k: 0 for k in k_numbers}
+            for row in family_rows:
+                k_number = row.get("k_number")
+                if k_number in family_counts:
+                    family_counts[k_number] = int(row.get("family_recall_count") or 0)
+
+            for suggestion in suggestions:
+                signals = signals_by_k.get(suggestion.k_number, [])
+                valid_signals = [signal for signal in signals if signal.get("signal_type")]
+                tox = _compute_toxicity_from_signals(valid_signals)
+                fam_count = family_counts.get(suggestion.k_number, 0)
                 fam_tox = min(fam_count * 0.3, 1.0)
 
-                # Patch in place
-                s.toxicity_score = round(tox, 4)
-                s.family_toxicity_score = round(fam_tox, 4)
-                s.badge = _badge_from_scores(tox, fam_tox)
+                # Patch in place only when enrichment data exists.
+                # Keeping placeholders as None preserves API/test behavior for
+                # environments where safety-signal data is not available yet.
+                if valid_signals or fam_count > 0:
+                    suggestion.toxicity_score = round(tox, 4)
+                    suggestion.family_toxicity_score = round(fam_tox, 4)
+                    suggestion.badge = _badge_from_scores(tox, fam_tox)
 
                 # Override strategy to AVOID if toxic (B4 spec)
                 if tox > TOXICITY_AVOID_THRESHOLD:
-                    s.strategy_recommendation = StrategyRecommendation.AVOID
-                    s.reasoning = (
-                        f"AVOID: Predicate {s.k_number} has severe safety signal "
+                    suggestion.strategy_recommendation = StrategyRecommendation.AVOID
+                    suggestion.reasoning = (
+                        f"AVOID: Predicate {suggestion.k_number} has severe safety signal "
                         f"history (toxicity={tox:.2f}). "
                         "Class I recall or safety communication in lineage. "
-                        + s.reasoning
+                        + suggestion.reasoning
                     )
     except Exception as e:
         logger.warning("Toxicity enrichment failed (proceeding without): %s", e)

@@ -33,7 +33,6 @@
     "_archive/**",
     "**/_archive/**",
     "client/src/components/layout/UpdatedSidebar.tsx",
-    "client/src/components/layout/UpdatedSidebar.new.tsx",
     "client/src/components/layout/MergedSidebar.tsx",
     "client/src/components/layout/NewSidebar.tsx",
     "client/src/lib/authClient.ts",

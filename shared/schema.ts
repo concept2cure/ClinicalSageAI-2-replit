@@ -1683,6 +1683,11 @@ export const lumenObservationTerms = pgTable(
   })
 );
 
+// AnA naming aliases (canonical naming moving forward)
+export const anaFilingDocuments = lumenFilingDocuments;
+export const anaDataAtoms = lumenDataAtoms;
+export const anaObservationTerms = lumenObservationTerms;
+
 /**
  * ======================================================================================
  * DOCUMENT AUTHORING WITH 21 CFR PART 11 COMPLIANCE

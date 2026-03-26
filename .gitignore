@@ -49,8 +49,7 @@ t"
 *"
 *.log(*)
 pool.end*
-# Package lock (using npm ci from package.json)
-package-lock.json
+# Commit lockfile when registry/auth policy allows generation.
 staging-report.json
 postmerge-report.json
 test-results/

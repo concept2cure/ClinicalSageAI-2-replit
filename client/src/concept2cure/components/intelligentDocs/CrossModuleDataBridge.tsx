@@ -129,7 +129,7 @@ const MODULE_CONFIGS: ModuleConfig[] = [
     icon: Zap,
     color: 'indigo',
     dataTypes: ['regulatory_references'],
-    apiEndpoint: '/api/lumen-cortex/intelligence',
+    apiEndpoint: '/api/ana-cortex/intelligence',
   },
 ];
 

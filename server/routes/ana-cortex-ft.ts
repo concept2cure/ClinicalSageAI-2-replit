@@ -31,7 +31,7 @@ import path from 'path';
 // TYPES
 // ---------------------------------------------------------------------------
 
-export interface LumenCortexModel {
+export interface AnaCortexModel {
   id: string;
   name: string;
   version: string;
@@ -249,7 +249,7 @@ export interface AuditRemediationPlanItem {
 // ---------------------------------------------------------------------------
 
 class ModelRegistry {
-  private models: Map<string, LumenCortexModel> = new Map();
+  private models: Map<string, AnaCortexModel> = new Map();
   private activeModelId: string | null = null;
   private deploymentEvents: Map<string, DeploymentEvent[]> = new Map();
   private quantizationBenchmarks: Map<string, QuantizationBenchmark[]> = new Map();
@@ -305,8 +305,8 @@ class ModelRegistry {
 
   constructor() {
     // Register the base fine-tuned model
-    const baseModel: LumenCortexModel = {
-      id: 'lumen-cortex-v1',
+    const baseModel: AnaCortexModel = {
+      id: 'ana-cortex-v1',
       name: 'AnA RI Regulatory',
       version: '1.0.0',
       baseModel: 'claude-sonnet-4',
@@ -344,7 +344,7 @@ class ModelRegistry {
         tokensPerSecond: 45,
       },
       deploymentConfig: {
-        servingEndpoint: '/api/lumen-cortex-ft/inference',
+        servingEndpoint: '/api/ana-cortex-ft/inference',
         replicas: 2,
         maxConcurrency: 50,
         timeoutMs: 30000,
@@ -384,19 +384,19 @@ class ModelRegistry {
     // This method exists to satisfy startup initialization calls.
   }
 
-  getActiveModel(): LumenCortexModel | undefined {
+  getActiveModel(): AnaCortexModel | undefined {
     return this.activeModelId ? this.models.get(this.activeModelId) : undefined;
   }
 
-  getModel(id: string): LumenCortexModel | undefined {
+  getModel(id: string): AnaCortexModel | undefined {
     return this.models.get(id);
   }
 
-  getAllModels(): LumenCortexModel[] {
+  getAllModels(): AnaCortexModel[] {
     return Array.from(this.models.values());
   }
 
-  registerModel(model: LumenCortexModel): void {
+  registerModel(model: AnaCortexModel): void {
     this.models.set(model.id, model);
     this.recordDeploymentEvent({
       modelId: model.id,
@@ -433,7 +433,7 @@ class ModelRegistry {
     id: string,
     stage: NonNullable<DeploymentConfig['deploymentStage']>,
     actor: string
-  ): LumenCortexModel | null {
+  ): AnaCortexModel | null {
     const model = this.models.get(id);
     if (!model) return null;
     const previousStage = model.deploymentConfig?.deploymentStage || null;
@@ -446,7 +446,7 @@ class ModelRegistry {
     }
 
     model.deploymentConfig = {
-      servingEndpoint: '/api/lumen-cortex-ft/inference',
+      servingEndpoint: '/api/ana-cortex-ft/inference',
       replicas: 2,
       maxConcurrency: 50,
       timeoutMs: 30000,
@@ -478,7 +478,7 @@ class ModelRegistry {
     return model;
   }
 
-  rollbackModel(id: string, actor: string): LumenCortexModel | null {
+  rollbackModel(id: string, actor: string): AnaCortexModel | null {
     const model = this.models.get(id);
     if (!model) return null;
     const previousStage = model.deploymentConfig?.deploymentStage || null;
@@ -519,12 +519,12 @@ class ModelRegistry {
     modelId: string,
     quantization: '4bit' | '8bit' | 'none',
     actor: string
-  ): LumenCortexModel | null {
+  ): AnaCortexModel | null {
     const source = this.models.get(modelId);
     if (!source) return null;
 
     const variantId = `${source.id}-${quantization}-${uuidv4().split('-')[0]}`;
-    const variant: LumenCortexModel = {
+    const variant: AnaCortexModel = {
       ...source,
       id: variantId,
       name: `${source.name} (${quantization})`,
@@ -578,7 +578,7 @@ class ModelRegistry {
     return variant;
   }
 
-  getModelVariants(parentModelId: string): LumenCortexModel[] {
+  getModelVariants(parentModelId: string): AnaCortexModel[] {
     return Array.from(this.models.values()).filter(m => m.parentModelId === parentModelId);
   }
 
@@ -933,7 +933,7 @@ async function performInference(request: InferenceRequest): Promise<InferenceRes
         temperature: request.temperature ?? 0.3,
         maxTokens: request.maxTokens ?? 4096,
         strategy: 'quality_optimized',
-        callerModule: 'lumen-cortex-ft/inference',
+        callerModule: 'ana-cortex-ft/inference',
         metadata: {
           regulatoryBody,
           submissionType: request.regulatoryContext?.submissionType || null,
@@ -1295,8 +1295,8 @@ router.post('/training/start', async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'datasetId and baseModel required' });
   }
 
-  const model: LumenCortexModel = {
-    id: `lumen-cortex-${uuidv4().split('-')[0]}`,
+  const model: AnaCortexModel = {
+    id: `ana-cortex-${uuidv4().split('-')[0]}`,
     name: `AnA RI Fine-Tune ${new Date().toISOString().split('T')[0]}`,
     version: '0.1.0-training',
     baseModel,
@@ -1399,7 +1399,7 @@ router.get('/health', (_req: Request, res: Response) => {
   const model = registry.getActiveModel();
   res.json({
     status: 'healthy',
-    service: 'lumen-cortex-ft',
+    service: 'ana-cortex-ft',
     activeModel: model
       ? {
           id: model.id,

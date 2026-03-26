@@ -4,9 +4,9 @@ import crypto from 'crypto';
 import { db } from '../db';
 import { sql, and, eq, inArray } from 'drizzle-orm';
 import {
-  lumenDataAtoms,
-  lumenFilingDocuments,
-  lumenObservationTerms,
+  anaDataAtoms,
+  anaFilingDocuments,
+  anaObservationTerms,
   csrReports,
 } from '@shared/schema';
 
@@ -14,7 +14,7 @@ const SEC_BASE_URL = 'https://data.sec.gov';
 const SEC_ARCHIVE_URL = 'https://www.sec.gov/Archives/edgar/data';
 
 const DEFAULT_USER_AGENT =
-  process.env.SEC_USER_AGENT || 'LumenCortexHarvester/1.0 (contact: compliance@c2c.ai)';
+  process.env.SEC_USER_AGENT || 'AnA-1.0-RI-CortexHarvester/1.0 (contact: compliance@c2c.ai)';
 
 const REJECTION_SIGNAL_PATTERNS = [
   /complete response letter/gi,
@@ -45,7 +45,7 @@ export interface Harvest10KOptions {
   includeAmended?: boolean;
 }
 
-export class LumenCortexService {
+export class AnaCortexService {
   private getDb() {
     if (!db) {
       throw new Error('Database not available');
@@ -62,6 +62,26 @@ export class LumenCortexService {
       connected: true,
       neonDetected: isNeon,
       databaseUrlPresent: Boolean(connectionString),
+    };
+  }
+
+  async getCapabilityHealth() {
+    const neon = await this.verifyNeonConnection();
+    return {
+      module: 'AnA Cortex',
+      engineVersion: 'AnA 1.0 RI',
+      availability: neon.connected ? 'available' : 'degraded',
+      capabilities: [
+        'Regulatory readiness analysis',
+        'SEC 10-K harvesting',
+        'Signal extraction (rejection/subjective/objective/operational)',
+        'CSR observation term synthesis',
+      ],
+      dependencies: {
+        database: neon.connected ? 'online' : 'offline',
+        neonDetected: neon.neonDetected,
+      },
+      checkedAt: new Date().toISOString(),
     };
   }
 
@@ -117,14 +137,14 @@ export class LumenCortexService {
 
     const dbInstance = this.getDb();
     const existing = await dbInstance
-      .select({ accessionNo: lumenFilingDocuments.accessionNo })
-      .from(lumenFilingDocuments)
+      .select({ accessionNo: anaFilingDocuments.accessionNo })
+      .from(anaFilingDocuments)
       .where(
         and(
-          eq(lumenFilingDocuments.organizationId, options.organizationId),
-          eq(lumenFilingDocuments.source, 'SEC'),
+          eq(anaFilingDocuments.organizationId, options.organizationId),
+          eq(anaFilingDocuments.source, 'SEC'),
           inArray(
-            lumenFilingDocuments.accessionNo,
+            anaFilingDocuments.accessionNo,
             harvested.map(item => item.accessionNo)
           )
         )
@@ -148,7 +168,7 @@ export class LumenCortexService {
       const extractedSignals = this.extractSignals(parsedText);
 
       await dbInstance
-        .insert(lumenFilingDocuments)
+        .insert(anaFilingDocuments)
         .values({
           organizationId: options.organizationId,
           source: 'SEC',
@@ -174,7 +194,7 @@ export class LumenCortexService {
       });
 
       if (dataAtoms.length > 0) {
-        await dbInstance.insert(lumenDataAtoms).values(dataAtoms).onConflictDoNothing();
+        await dbInstance.insert(anaDataAtoms).values(dataAtoms).onConflictDoNothing();
         atomsCreated += dataAtoms.length;
       }
 
@@ -229,7 +249,7 @@ export class LumenCortexService {
     }
 
     if (terms.length > 0) {
-      await dbInstance.insert(lumenObservationTerms).values(terms).onConflictDoNothing();
+      await dbInstance.insert(anaObservationTerms).values(terms).onConflictDoNothing();
     }
 
     return {
@@ -246,7 +266,7 @@ export class LumenCortexService {
 
   private async fetchSecSubmissions(cik: string) {
     const url = `${SEC_BASE_URL}/submissions/CIK${cik}.json`;
-    const response = await axios.get(url, {
+    const response = await this.fetchWithRetry(url, {
       headers: {
         'User-Agent': DEFAULT_USER_AGENT,
         Accept: 'application/json',
@@ -256,13 +276,31 @@ export class LumenCortexService {
   }
 
   private async fetchFilingContent(url: string) {
-    const response = await axios.get(url, {
+    const response = await this.fetchWithRetry(url, {
       headers: {
         'User-Agent': DEFAULT_USER_AGENT,
         Accept: 'text/html,application/xhtml+xml',
       },
     });
     return response.data;
+  }
+
+  private async fetchWithRetry(url: string, config: Record<string, unknown>, attempts = 3) {
+    let lastError: unknown;
+    for (let attempt = 1; attempt <= attempts; attempt += 1) {
+      try {
+        return await axios.get(url, {
+          timeout: 15000,
+          ...(config || {}),
+        });
+      } catch (error) {
+        lastError = error;
+        if (attempt < attempts) {
+          await new Promise(resolve => setTimeout(resolve, attempt * 250));
+        }
+      }
+    }
+    throw lastError;
   }
 
   private extractReadableText(rawContent: string) {
@@ -282,18 +320,30 @@ export class LumenCortexService {
   private extractSignals(text: string) {
     const sentences = text.split(/(?<=\.)\s+/g).slice(0, 4000);
 
-    const rejectionSignals = this.collectMatches(sentences, REJECTION_SIGNAL_PATTERNS, 6);
+    const rejectionSignals = this.collectMatches(sentences, REJECTION_SIGNAL_PATTERNS, 8);
     const subjectiveSignals = this.collectMatches(sentences, SUBJECTIVE_PATTERNS, 6);
     const objectiveSignals = this.collectMatches(sentences, OBJECTIVE_PATTERNS, 6);
+    const operationalSignals = this.collectMatches(
+      sentences,
+      [/manufacturing/gi, /supply chain/gi, /quality issue/gi, /inspection/gi, /delayed/gi],
+      6
+    );
+    const regulatoryRiskScore = Math.min(
+      100,
+      rejectionSignals.length * 12 + subjectiveSignals.length * 5 + operationalSignals.length * 8
+    );
 
     return {
       rejectionSignals,
       subjectiveSignals,
       objectiveSignals,
+      operationalSignals,
       summary: {
         rejectionCount: rejectionSignals.length,
         subjectiveCount: subjectiveSignals.length,
         objectiveCount: objectiveSignals.length,
+        operationalCount: operationalSignals.length,
+        regulatoryRiskScore,
         fingerprint: crypto.createHash('sha256').update(text.slice(0, 10000)).digest('hex'),
       },
     };
@@ -330,7 +380,7 @@ export class LumenCortexService {
     organizationId: number;
     sourceId: string;
     companyName: string;
-    signals: ReturnType<LumenCortexService['extractSignals']>;
+    signals: ReturnType<AnaCortexService['extractSignals']>;
   }) {
     const atoms = [] as Array<{
       organizationId: number;
@@ -386,6 +436,21 @@ export class LumenCortexService {
         structuredData: signal,
         tags: ['10k', 'objective', 'metric'],
         confidence: 0.7,
+        status: 'active',
+      });
+    });
+
+    params.signals.operationalSignals.forEach((signal, index) => {
+      atoms.push({
+        organizationId: params.organizationId,
+        sourceType: '10k',
+        sourceId: params.sourceId,
+        atomType: 'operational_signal',
+        title: `${params.companyName} operational signal ${index + 1}`,
+        content: signal.snippet,
+        structuredData: signal,
+        tags: ['10k', 'operations', 'execution-risk'],
+        confidence: 0.72,
         status: 'active',
       });
     });
@@ -481,4 +546,4 @@ export class LumenCortexService {
   }
 }
 
-export const lumenCortexService = new LumenCortexService();
+export const anaCortexService = new AnaCortexService();

@@ -64,7 +64,7 @@ export default function RegulatoryAITesting() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/lumen-cortex/ich-e6r3-guidance', {
+      const response = await fetch('/api/ana-cortex/ich-e6r3-guidance', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

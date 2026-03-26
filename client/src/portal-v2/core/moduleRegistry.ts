@@ -239,12 +239,12 @@ export const MODULE_REGISTRY: Record<ModuleId, ModuleConfig> = {
     requiredRoles: ['admin', 'regulatory_lead', 'executive', 'project_manager'],
     isNew: true,
   },
-  lumen_cortex: {
-    id: 'lumen_cortex',
+  ana_cortex: {
+    id: 'ana_cortex',
     label: 'AnA Cortex',
     description: 'Advanced RI Co-pilot analytics engine with deep regulatory insights',
     icon: 'Brain',
-    route: '/portal/lumen-cortex',
+    route: '/ana',
     category: 'intelligence',
     requiredRoles: [
       'admin',

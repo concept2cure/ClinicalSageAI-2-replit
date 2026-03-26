@@ -68,15 +68,14 @@ const PasswordResetPage = lazy(() => import('@/portal-v2/components/auth/Passwor
  * Bridge that extracts :projectId from URL and renders CERV2Page with it.
  */
 const Project510kBridge: React.FC = () => {
-  const [, params] = useRoute('/concept2cure/project/:projectId/510k');
-  const projectId = params?.projectId ?? null;
+  const [, exactParams] = useRoute('/concept2cure/project/:projectId/510k');
+  const [, nestedParams] = useRoute('/concept2cure/project/:projectId/510k/:rest*');
+  const projectId = exactParams?.projectId ?? nestedParams?.projectId ?? null;
   return (
     <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center bg-[#FAF9F5]">
           <p className="text-sm text-[#B0AEA5]">Loading workspace…</p>
-        <div className="min-h-screen flex items-center justify-center bg-[#faf9f5]">
-          <p className="text-sm text-zinc-400">Loading workspace…</p>
         </div>
       }
     >
@@ -89,8 +88,9 @@ const Project510kBridge: React.FC = () => {
  * Bridge that extracts :projectId from URL and renders PMAWorkspace with it.
  */
 const ProjectPMABridge: React.FC = () => {
-  const [, params] = useRoute('/concept2cure/project/:projectId/pma');
-  const projectId = params?.projectId ?? null;
+  const [, exactParams] = useRoute('/concept2cure/project/:projectId/pma');
+  const [, nestedParams] = useRoute('/concept2cure/project/:projectId/pma/:rest*');
+  const projectId = exactParams?.projectId ?? nestedParams?.projectId ?? null;
   return (
     <Suspense
       fallback={
@@ -109,7 +109,6 @@ const ProjectPMABridge: React.FC = () => {
 // ═══════════════════════════════════════════════════════════════════════════════
 const ZenLoadingScreen: React.FC<{ message?: string }> = ({ message = 'Loading...' }) => (
   <div className="min-h-screen bg-[#FAF9F5] flex items-center justify-center">
-  <div className="min-h-screen bg-[#faf9f5] flex items-center justify-center">
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
@@ -129,19 +128,6 @@ const ZenLoadingScreen: React.FC<{ message?: string }> = ({ message = 'Loading..
           className="absolute inset-0 pointer-events-none"
           style={{ background: 'radial-gradient(circle at center, transparent 40%, #faf9f5 100%)' }}
         />
-        <div className="relative w-20 h-20 rounded-2xl overflow-hidden shadow-md">
-          <img
-            src="/src/assets/concept2cure-logo.jpg"
-            alt="Concept2Cure"
-            className="w-full h-full object-cover object-center"
-          />
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              background: 'radial-gradient(circle at center, transparent 40%, #faf9f5 100%)',
-            }}
-          />
-        </div>
       </motion.div>
 
       <p className="text-sm text-zinc-500" style={{ fontFamily: "'Poppins', Arial, sans-serif" }}>
@@ -172,14 +158,15 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { isAuthenticated, isLoading } = usePortalAuth();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       // Redirect to login with return URL
-      setLocation('/concept2cure/login');
+      const returnTo = encodeURIComponent(location);
+      setLocation(`/concept2cure/login?returnTo=${returnTo}`);
     }
-  }, [isAuthenticated, isLoading, setLocation]);
+  }, [isAuthenticated, isLoading, location, setLocation]);
 
   if (isLoading) {
     return <ZenLoadingScreen message="Checking authentication..." />;
@@ -266,6 +253,7 @@ const LandingPageRoute: React.FC = () => {
 
 export const ZenRouter: React.FC = () => {
   const [location] = useLocation();
+  const shouldEmbedModulesInShell = isFeatureEnabled('EMBED_MODULES_IN_SHELL');
 
   return (
     <PortalAuthProvider>
@@ -362,7 +350,7 @@ export const ZenRouter: React.FC = () => {
               When EMBED_MODULES_IN_SHELL is enabled, this route falls through
               to ZenApp (caught by project/:projectId/:rest*) which renders CERV2
               inside the shell frame. When disabled, standalone full-page bridge. */}
-          {!isFeatureEnabled('EMBED_MODULES_IN_SHELL') && (
+          {!shouldEmbedModulesInShell && (
             <Route path="/concept2cure/project/:projectId/510k">
               {() => (
                 <PageTransition>
@@ -375,8 +363,31 @@ export const ZenRouter: React.FC = () => {
           )}
 
           {/* Project-scoped PMA workspace (standalone mode) */}
-          {!isFeatureEnabled('EMBED_MODULES_IN_SHELL') && (
+          {!shouldEmbedModulesInShell && (
+            <Route path="/concept2cure/project/:projectId/510k/:rest*">
+              {() => (
+                <PageTransition>
+                  <ProtectedRoute>
+                    <Project510kBridge />
+                  </ProtectedRoute>
+                </PageTransition>
+              )}
+            </Route>
+          )}
+
+          {!shouldEmbedModulesInShell && (
             <Route path="/concept2cure/project/:projectId/pma">
+              {() => (
+                <PageTransition>
+                  <ProtectedRoute>
+                    <ProjectPMABridge />
+                  </ProtectedRoute>
+                </PageTransition>
+              )}
+            </Route>
+          )}
+          {!shouldEmbedModulesInShell && (
+            <Route path="/concept2cure/project/:projectId/pma/:rest*">
               {() => (
                 <PageTransition>
                   <ProtectedRoute>
