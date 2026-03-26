@@ -27,7 +27,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useLocation, useRoute } from 'wouter';
+import { useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
 import { ZenSidebar } from './components/sidebar/ZenSidebar';
 import { ZenChat } from './components/chat/ZenChat';
@@ -57,6 +57,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import type { IndustryMode } from './types/workspace';
 // [BATCH 3] ProductAuditQuestionnaire — renderer removed
 import { isFeatureEnabled } from '@/flags/featureFlags';
+import { getProjectModuleRoutePolicy } from './router/projectModuleRoutePolicy';
 
 // Lazy-load CERV2Page for embedded module rendering inside the shell
 const EmbeddedCERV2Page = lazy(() => import('@/pages/csr/CERV2Page'));
@@ -612,24 +613,22 @@ export const ZenApp: React.FC = () => {
   // ─────────────────────────────────────────────────────────────────────────────
   // URL-DRIVEN PROJECT IDENTITY
   // ─────────────────────────────────────────────────────────────────────────────
-  const [, navigate] = useLocation();
-  const [, routeParams] = useRoute('/concept2cure/project/:projectId/:rest*');
-  const [, routeParamsExact] = useRoute('/concept2cure/project/:projectId');
-  const urlProjectId = routeParams?.projectId ?? routeParamsExact?.projectId ?? null;
+  const [location, navigate] = useLocation();
+  const embedModulesEnabled = isFeatureEnabled('EMBED_MODULES_IN_SHELL');
+  const projectModuleRoutePolicy = useMemo(
+    () => getProjectModuleRoutePolicy(location, embedModulesEnabled),
+    [location, embedModulesEnabled]
+  );
+  const urlProjectId = projectModuleRoutePolicy.projectId;
 
   // ─────────────────────────────────────────────────────────────────────────────
   // EMBEDDED MODULE DETECTION
   // When EMBED_MODULES_IN_SHELL is enabled and URL has /project/:id/510k,
   // render CERV2Page inside the shell frame instead of as a standalone page.
   // ─────────────────────────────────────────────────────────────────────────────
-  const urlModuleSegment = (routeParams as Record<string, string> | null)?.['rest*'] ?? null; // e.g. '510k', 'pma'
-  const embedModulesEnabled = isFeatureEnabled('EMBED_MODULES_IN_SHELL');
-  const embeddedModule =
-    embedModulesEnabled && urlModuleSegment === '510k'
-      ? '510k'
-      : embedModulesEnabled && urlModuleSegment === 'pma'
-        ? 'pma'
-        : null;
+  const embeddedModule = projectModuleRoutePolicy.shouldRenderInShell
+    ? projectModuleRoutePolicy.module
+    : null;
 
   // ─────────────────────────────────────────────────────────────────────────────
   // DATA HOOKS (Connected to Cortex + Data Layer)
@@ -1881,7 +1880,7 @@ export const ZenApp: React.FC = () => {
               setLayoutMode('regulatory-workspace');
               break;
             case '510k-workspace':
-              if (embeddedModule !== null || !isFeatureEnabled('EMBED_MODULES_IN_SHELL')) {
+              if (embeddedModule !== null || !embedModulesEnabled) {
                 window.location.href = '/cerv2';
               } else if (activeProjectId) {
                 navigate(`/concept2cure/project/${activeProjectId}/510k`);
@@ -1890,7 +1889,7 @@ export const ZenApp: React.FC = () => {
               }
               break;
             case 'pma-workspace':
-              if (embeddedModule !== null || !isFeatureEnabled('EMBED_MODULES_IN_SHELL')) {
+              if (embeddedModule !== null || !embedModulesEnabled) {
                 setLayoutMode('projects');
               } else if (activeProjectId) {
                 navigate(`/concept2cure/project/${activeProjectId}/pma`);
