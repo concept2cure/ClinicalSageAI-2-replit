@@ -943,94 +943,6 @@ router.get('/studies/:id/trends', async (req, res) => {
   }
 });
 
-// POST /api/stability/studies/:id/p8/push - Push to authoring for P.8
-router.post('/studies/:id/p8/push', async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    // Generate P.8 content with tokens and markdown
-    const studyResult = await pool.query('SELECT * FROM stab_studies WHERE study_id = $1', [id]);
-    const study = studyResult.rows[0];
-
-    if (!study) {
-      return res.status(404).json({ error: 'Study not found' });
-    }
-
-    // Generate P.8 tokens and markdown
-    const tokens = {
-      STUDY_ID: study.study_id,
-      PRODUCT_NAME: study.product_name || 'Test Product',
-      STUDY_DESIGN: study.study_design || 'Long-term and accelerated stability',
-      CONDITIONS: 'Long-term: 25°C/60% RH, Accelerated: 40°C/75% RH',
-      TIMEPOINTS: '0, 3, 6, 9, 12, 18, 24 months',
-      GENERATED_DATE: new Date().toISOString().split('T')[0],
-    };
-
-    const markdown = `
-# 3.2.P.8 Stability Study Report
-
-## Study Overview
-- **Study ID**: ${tokens.STUDY_ID}
-- **Product**: ${tokens.PRODUCT_NAME}
-- **Study Design**: ${tokens.STUDY_DESIGN}
-- **Generation Date**: ${tokens.GENERATED_DATE}
-
-## Storage Conditions
-${tokens.CONDITIONS}
-
-## Sampling Timepoints
-${tokens.TIMEPOINTS}
-
-## Results Summary
-Stability data demonstrates that the product maintains quality throughout the proposed shelf life under the recommended storage conditions.
-
-## Conclusion
-The stability study supports a shelf life of 24 months when stored under the recommended conditions.
-    `;
-
-    // Store export record
-    await pool.query(
-      `
-      INSERT INTO stab_exports (study_id, export_type, tokens, markdown, created_at)
-      VALUES ($1, 'p8_push', $2, $3, NOW())
-    `,
-      [id, JSON.stringify(tokens), markdown]
-    );
-
-    res.json({
-      ok: true,
-      tokens,
-      markdown,
-      message: 'P.8 content successfully pushed to authoring',
-    });
-  } catch (error) {
-    console.error('Error pushing P.8 to authoring:', error);
-    res.status(500).json({ error: 'Failed to push P.8 to authoring' });
-  }
-});
-
-// POST /api/stability/studies/:id/results - Add new result
-router.post('/studies/:id/results', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { test_name, condition, timepoint, value, unit, pass } = req.body;
-
-    const result = await pool.query(
-      `
-      INSERT INTO stab_results (study_id, test_name, condition, timepoint, value, unit, pass, created_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
-      RETURNING *
-    `,
-      [id, test_name, condition, timepoint, value, unit, pass]
-    );
-
-    res.json(result.rows[0]);
-  } catch (error) {
-    console.error('Error adding result:', error);
-    res.status(500).json({ error: 'Failed to add result' });
-  }
-});
-
 // GET /api/stability/studies/:id/results - Get results for study
 router.get('/studies/:id/results', async (req, res) => {
   try {
@@ -1099,43 +1011,6 @@ router.delete('/studies/results/:id', async (req, res) => {
   } catch (error) {
     console.error('Error deleting result:', error);
     res.status(500).json({ error: 'Failed to delete result' });
-  }
-});
-
-// POST /api/stability/studies/:id/ai/root-cause - AI Root Cause Analysis
-router.post('/studies/:id/ai/root-cause', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { oosData } = req.body;
-
-    // Simulate AI analysis (in production, would call actual AI service)
-    const analysis = `
-    Based on the OOT result for ${oosData.test_parameter}:
-
-    **Potential Root Causes:**
-    1. **Analytical Variability** - ${oosData.deviation_percent}% deviation suggests possible sample preparation or instrument drift
-    2. **Environmental Factors** - Temperature/humidity excursions during storage
-    3. **Batch-specific Issues** - Raw material variation or manufacturing process deviation
-
-    **Recommended Actions:**
-    1. Re-test using retained sample
-    2. Review environmental monitoring data
-    3. Investigate analytical method performance
-    4. Consider trending analysis across multiple batches
-    `;
-
-    res.json({
-      analysis,
-      confidence: 0.85,
-      recommendations: [
-        'Immediate re-testing required',
-        'Review batch records',
-        'Analytical method verification',
-      ],
-    });
-  } catch (error) {
-    console.error('Error performing AI root cause analysis:', error);
-    res.status(500).json({ error: 'Failed to perform root cause analysis' });
   }
 });
 
@@ -1672,7 +1547,9 @@ router.post('/studies/:id/p8/export', async (req, res) => {
       `Study: ${study.name} (${study.code})`,
       `Zone: ${study.climatic_zone || '—'}; Duration: ${study.duration_months} months`,
       ``,
-      `Conditions: ${conds.map((c: any) => `${c.kind}: ${c.temp}${c.rh ? '/' + c.rh : ''}`).join('; ')}`,
+      `Conditions: ${conds
+        .map((c: any) => `${c.kind}: ${c.temp}${c.rh ? '/' + c.rh : ''}`)
+        .join('; ')}`,
       `Timepoints: ${tps.map((t: any) => t.label).join(', ')}`,
       `Tests: ${tests.map((t: any) => `${t.name}${t.unit ? ' (' + t.unit + ')' : ''}`).join(', ')}`,
       ``,
@@ -1819,244 +1696,6 @@ router.get('/studies/:id/ai/t90', async (req, res) => {
     res.status(500).json({ error: 'Failed to calculate T90' });
   }
 });
-
-// STEP 4: Inline editing endpoints
-
-// PATCH /api/stability/conditions/:condId  { kind?, temp?, rh?, description? }
-router.patch('/conditions/:condId', async (req, res) => {
-  const c = req.params.condId;
-  const b = req.body || {};
-  await pool.query(
-    `UPDATE stab_conditions SET kind=COALESCE($2,kind), temp=COALESCE($3,temp), rh=COALESCE($4,rh), description=COALESCE($5,description) WHERE cond_id=$1`,
-    [c, b.kind || null, b.temp || null, b.rh || null, b.description || null]
-  );
-  // find study_id for audit
-  const { rows: s } = await pool.query(`SELECT study_id FROM stab_conditions WHERE cond_id=$1`, [
-    c,
-  ]);
-  if (s[0]) await audit(s[0].study_id, 'condition_update', { condId: c, body: b }, req);
-  res.json({ ok: true });
-});
-
-// PATCH /api/stability/timepoints/:tpId  { label?, month?, planned_date? }
-router.patch('/timepoints/:tpId', async (req, res) => {
-  const t = req.params.tpId;
-  const b = req.body || {};
-  await pool.query(
-    `UPDATE stab_timepoints SET label=COALESCE($2,label), month=COALESCE($3,month), planned_date=COALESCE($4::date,planned_date) WHERE tp_id=$1`,
-    [t, b.label || null, b.month || null, b.planned_date || null]
-  );
-  const { rows: s } = await pool.query(`SELECT study_id FROM stab_timepoints WHERE tp_id=$1`, [t]);
-  if (s[0]) await audit(s[0].study_id, 'tp_update', { tpId: t, body: b }, req);
-  res.json({ ok: true });
-});
-
-// DELETE /api/stability/timepoints/:tpId
-router.delete('/timepoints/:tpId', async (req, res) => {
-  const t = req.params.tpId;
-  const { rows: s } = await pool.query(`SELECT study_id FROM stab_timepoints WHERE tp_id=$1`, [t]);
-  await pool.query(`DELETE FROM stab_timepoints WHERE tp_id=$1`, [t]);
-  if (s[0]) await audit(s[0].study_id, 'tp_delete', { tpId: t }, req);
-  res.json({ ok: true });
-});
-
-// In-Use endpoints
-// GET /api/stability/studies/:id/inuse
-router.get('/studies/:id/inuse', async (req, res) => {
-  const { rows } = await pool.query(`SELECT * FROM stab_inuse WHERE study_id=$1 LIMIT 1`, [
-    req.params.id,
-  ]);
-  res.json(rows[0] || null);
-});
-
-// POST /api/stability/studies/:id/inuse  { multi_dose:boolean, opened_frequency, hold_time_days, microbial_limits, preservative, start_on }
-router.post('/studies/:id/inuse', async (req, res) => {
-  const id = req.params.id;
-  const b = req.body || {};
-  await pool.query(
-    `INSERT INTO stab_inuse (study_id,multi_dose,opened_frequency,hold_time_days,microbial_limits,preservative,start_on,updated_at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,now())
-     ON CONFLICT (study_id) DO UPDATE SET multi_dose=$2, opened_frequency=$3, hold_time_days=$4, microbial_limits=$5, preservative=$6, start_on=$7, updated_at=now()`,
-    [
-      id,
-      !!b.multi_dose,
-      b.opened_frequency || null,
-      b.hold_time_days || null,
-      b.microbial_limits || null,
-      b.preservative || null,
-      b.start_on || null,
-    ]
-  );
-  await audit(id, 'inuse_update', b, req);
-  res.json({ ok: true });
-});
-
-// OOT/OOS rules endpoints
-// GET /api/stability/studies/:id/oot/rules
-router.get('/studies/:id/oot/rules', async (req, res) => {
-  const id = req.params.id;
-  const { rows } = await pool.query(
-    `SELECT rule_id, test_id, rules FROM stab_oot_rules WHERE study_id=$1`,
-    [id]
-  );
-  res.json(rows);
-});
-
-// POST /api/stability/studies/:id/oot/rules  { test_id?:string, rules:string[] }
-router.post('/studies/:id/oot/rules', async (req, res) => {
-  const id = req.params.id;
-  const b = req.body || {};
-  await pool.query(
-    `INSERT INTO stab_oot_rules (study_id,test_id,rules) VALUES ($1,$2,$3)
-     ON CONFLICT (study_id, COALESCE(test_id, '00000000-0000-0000-0000-000000000000')) DO UPDATE SET rules=$3`,
-    [id, b.test_id || null, JSON.stringify(b.rules || [])]
-  );
-  await audit(id, 'oot_rules_update', b, req);
-  res.json({ ok: true });
-});
-
-// GET /api/stability/studies/:id/oot/check?test=<name>
-router.get('/studies/:id/oot/check', async (req, res) => {
-  const id = req.params.id;
-  const testNm = String(req.query.test || '').toLowerCase();
-  const { rows: test } = await pool.query(
-    `SELECT test_id FROM stab_tests WHERE study_id=$1 AND LOWER(name)=$2`,
-    [id, testNm]
-  );
-  if (!test[0]) return res.json({ breaches: [], rules: [] });
-
-  const { rows: rulesRow } = await pool.query(
-    `SELECT rules FROM stab_oot_rules WHERE study_id=$1 AND (test_id=$2 OR test_id IS NULL) ORDER BY test_id NULLS LAST LIMIT 1`,
-    [id, test[0].test_id]
-  );
-  const rules = rulesRow[0]?.rules || ['WE1', 'WE2'];
-
-  const { rows: pts } = await pool.query(
-    `
-    SELECT t.month, r.value::float AS v, c.kind
-    FROM stab_results r JOIN stab_timepoints t ON t.tp_id=r.tp_id
-    JOIN stab_conditions c ON c.cond_id=r.cond_id
-    WHERE r.study_id=$1 AND r.test_id=$2 AND r.value ~ '^[0-9.]+$'
-    ORDER BY t.month`,
-    [id, test[0].test_id]
-  );
-
-  // Simple WE checks (per condition aggregated)
-  const byCond: Record<string, number[]> = {};
-  pts.forEach((p: any) => {
-    (byCond[p.kind] ||= []).push(p.v);
-  });
-
-  function mean(a: number[]) {
-    return a.reduce((s, v) => s + v, 0) / a.length;
-  }
-  function sd(a: number[]) {
-    const m = mean(a);
-    return Math.sqrt(a.reduce((s, v) => s + (v - m) * (v - m), 0) / (a.length - 1 || 1));
-  }
-
-  const breaches: any[] = [];
-  for (const [cond, series] of Object.entries(byCond)) {
-    if (series.length < 5) continue;
-    const m = mean(series),
-      s = sd(series);
-    const we: any = {};
-    // WE1: any beyond 3σ
-    if (rules.includes('WE1') && series.some(v => v > m + 3 * s || v < m - 3 * s)) we.WE1 = true;
-    // WE2: 2 of 3 beyond 2σ
-    if (rules.includes('WE2')) {
-      for (let i = 2; i < series.length; i++) {
-        const w = series.slice(i - 2, i + 1);
-        const count = w.filter(v => v > m + 2 * s).length + w.filter(v => v < m - 2 * s).length;
-        if (count >= 2) {
-          we.WE2 = true;
-          break;
-        }
-      }
-    }
-    // WE3: 4 of 5 beyond 1σ
-    if (rules.includes('WE3')) {
-      for (let i = 4; i < series.length; i++) {
-        const w = series.slice(i - 4, i + 1);
-        const hi = w.filter(v => v > m + s).length,
-          lo = w.filter(v => v < m - s).length;
-        if (hi >= 4 || lo >= 4) {
-          we.WE3 = true;
-          break;
-        }
-      }
-    }
-    // WE4: 8 on one side of mean
-    if (rules.includes('WE4')) {
-      let run = 0;
-      for (const v of series) {
-        run = v > m ? (run >= 0 ? run + 1 : 1) : v < m ? (run <= 0 ? run - 1 : -1) : 0;
-        if (Math.abs(run) >= 8) {
-          we.WE4 = true;
-          break;
-        }
-      }
-    }
-    if (Object.keys(we).length) breaches.push({ cond, we });
-  }
-
-  res.json({ rules, breaches });
-});
-
-// P.8 export endpoint
-// POST /api/stability/studies/:id/p8/export?fmt=pdf|docx
-router.post('/studies/:id/p8/export', async (req, res) => {
-  const id = req.params.id;
-  const fmt = (req.query.fmt as string) || 'pdf';
-  const [{ rows: s }, { rows: conds }, { rows: tps }, { rows: tests }] = await Promise.all([
-    pool.query(`SELECT * FROM stab_studies WHERE study_id=$1`, [id]),
-    pool.query(`SELECT * FROM stab_conditions WHERE study_id=$1`, [id]),
-    pool.query(`SELECT * FROM stab_timepoints WHERE study_id=$1 ORDER BY month`, [id]),
-    pool.query(`SELECT * FROM stab_tests WHERE study_id=$1 ORDER BY name`, [id]),
-  ]);
-  if (!s[0]) return res.status(404).json({ error: 'not found' });
-
-  // Compose a simple P.8 text
-  const p8 = [
-    `3.2.P.8 Stability Summary`,
-    ``,
-    `Study: ${s[0].name} (${s[0].code})`,
-    `Zone: ${s[0].climatic_zone || '—'}; Duration: ${s[0].duration_months} months`,
-    ``,
-    `Conditions: ${conds.map((c: any) => `${c.kind}: ${c.temp}${c.rh ? '/' + c.rh : ''}`).join('; ')}`,
-    `Timepoints: ${tps.map((t: any) => t.label).join(', ')}`,
-    `Tests: ${tests.map((t: any) => `${t.name}${t.unit ? ' (' + t.unit + ')' : ''}`).join(', ')}`,
-    ``,
-    `Label storage: ${s[0].label_storage || 'TBD'}`,
-  ].join('\n');
-
-  if (fmt === 'pdf') {
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="P8_${s[0].code}.pdf"`);
-    const doc = new PDFDocument({
-      size: 'A4',
-      margins: { top: 54, bottom: 54, left: 54, right: 54 },
-    });
-    doc.pipe(res);
-    doc.fontSize(16).text('3.2.P.8 Stability Summary', { underline: true });
-    doc.moveDown();
-    doc.fontSize(11).text(p8);
-    doc.end();
-    await audit(id, 'p8_export', { fmt: 'pdf' }, req);
-    return;
-  } else {
-    // Return as zip with text file
-    const JSZip = (await import('jszip')).default;
-    const zip = new JSZip();
-    zip.file(`P8_${s[0].code}.txt`, p8);
-    const buf = await zip.generateAsync({ type: 'nodebuffer' });
-    res.setHeader('Content-Type', 'application/zip');
-    res.setHeader('Content-Disposition', `attachment; filename="P8_${s[0].code}.zip"`);
-    res.end(buf);
-    await audit(id, 'p8_export', { fmt: 'docx' }, req);
-  }
-});
-
 // --- OOT Surveillance engine (Western Electric rules) ---
 function mean(a: number[]) {
   return a.reduce((s, v) => s + v, 0) / a.length;
@@ -2209,7 +1848,9 @@ router.get('/oot-surveillance', async (req, res) => {
           investigator: 'System',
           capa_required: triggeredRules.includes('WE1'),
           target_closure_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-          investigation_notes: `Triggered rules: ${triggeredRules.join(', ')}. Series: [${series.map(v => v.toFixed(1)).join(', ')}]. Statistics: mean=${m.toFixed(2)}, sd=${s.toFixed(2)}`,
+          investigation_notes: `Triggered rules: ${triggeredRules.join(', ')}. Series: [${series
+            .map(v => v.toFixed(1))
+            .join(', ')}]. Statistics: mean=${m.toFixed(2)}, sd=${s.toFixed(2)}`,
           timepoints: row.timepoints,
           values: series.map(v => parseFloat(v.toFixed(2))),
         });
@@ -3109,7 +2750,10 @@ router.post(
     const sid = req.params.sampleId;
     if (!req.file) return res.status(400).json({ error: 'file missing' });
     const fs = await import('fs');
-    const path = `/mnt/data/uploads/coc_${sid}_${Date.now()}_${req.file.originalname.replace(/\s+/g, '_')}`;
+    const path = `/mnt/data/uploads/coc_${sid}_${Date.now()}_${req.file.originalname.replace(
+      /\s+/g,
+      '_'
+    )}`;
     fs.writeFileSync(path, req.file.buffer);
     const url = path.replace('/mnt/data', '/uploads');
     const { rows: find } = await pool.query<any>(

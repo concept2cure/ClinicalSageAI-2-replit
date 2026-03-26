@@ -14,10 +14,9 @@
 
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
-import { db } from '../db';
+import { db, getPool } from '../db';
 import { projects, auditEvents } from '@shared/schema';
 import { and, eq, isNull, sql, asc, desc } from 'drizzle-orm';
-import { getPool } from '../db';
 import { getTenantContext, getRequestActor } from '../utils/tenantContext';
 import { ProjectRollupService } from '../services/project-rollup-service';
 
@@ -216,7 +215,9 @@ router.post('/:projectId/children', async (req: Request, res: Response) => {
 
     if (childDepth > MAX_DEPTH) {
       return res.status(400).json({
-        error: `Cannot create child: maximum hierarchy depth is ${MAX_DEPTH + 1} levels (Program → Project → Study → Sub-project)`,
+        error: `Cannot create child: maximum hierarchy depth is ${
+          MAX_DEPTH + 1
+        } levels (Program → Project → Study → Sub-project)`,
         currentDepth: parent.depth,
         maxDepth: MAX_DEPTH,
       });
@@ -430,7 +431,9 @@ router.patch('/:projectId/move', async (req: Request, res: Response) => {
           JSON.stringify({ parentProjectId: project.parent_project_id, depth: project.depth }),
           JSON.stringify({ parentProjectId: newParentId }),
           JSON.stringify(['parentProjectId', 'depth', 'path']),
-          `Project moved from parent ${project.parent_project_id || 'root'} to ${newParentId || 'root'}`,
+          `Project moved from parent ${project.parent_project_id || 'root'} to ${
+            newParentId || 'root'
+          }`,
           JSON.stringify({
             source: 'project-hierarchy',
             previousParent: project.parent_project_id,

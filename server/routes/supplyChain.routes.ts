@@ -181,76 +181,6 @@ const mockDeviations = [
     shipmentId: 1
   }
 ];
-
-// ============================================================================
-// SUPPLIER ROUTES
-// ============================================================================
-
-// GET /api/supply-chain/suppliers
-router.get('/suppliers', async (req, res) => {
-  try {
-    const { supplierType, qualificationStatus, riskLevel, search } = req.query;
-    
-    let filteredSuppliers = [...mockSuppliers];
-    
-    if (supplierType) {
-      filteredSuppliers = filteredSuppliers.filter(s => s.supplierType === supplierType);
-    }
-    if (qualificationStatus) {
-      filteredSuppliers = filteredSuppliers.filter(s => s.qualificationStatus === qualificationStatus);
-    }
-    if (riskLevel) {
-      filteredSuppliers = filteredSuppliers.filter(s => s.riskLevel === riskLevel);
-    }
-    if (search) {
-      const searchTerm = search.toString().toLowerCase();
-      filteredSuppliers = filteredSuppliers.filter(s => 
-        s.name.toLowerCase().includes(searchTerm) ||
-        s.supplierCode.toLowerCase().includes(searchTerm) ||
-        s.location.toLowerCase().includes(searchTerm)
-      );
-    }
-    
-    res.json({
-      success: true,
-      data: filteredSuppliers,
-      total: filteredSuppliers.length,
-    });
-  } catch (error) {
-    console.error('Error fetching suppliers:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch suppliers',
-    });
-  }
-});
-
-// POST /api/supply-chain/suppliers
-router.post('/suppliers', async (req, res) => {
-  try {
-    const newSupplier = {
-      id: mockSuppliers.length + 1,
-      supplierCode: req.body.supplierCode || `SUP-${String(mockSuppliers.length + 1).padStart(3, '0')}`,
-      ...req.body,
-      isActive: true
-    };
-    
-    mockSuppliers.push(newSupplier);
-    
-    res.status(201).json({
-      success: true,
-      data: newSupplier,
-    });
-  } catch (error) {
-    console.error('Error creating supplier:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to create supplier',
-    });
-  }
-});
-
-// POST /api/supply-chain/suppliers/:id/qualify
 router.post('/suppliers/:id/qualify', async (req, res) => {
   try {
     const supplierId = parseInt(req.params.id);
@@ -281,76 +211,6 @@ router.post('/suppliers/:id/qualify', async (req, res) => {
     });
   }
 });
-
-// ============================================================================
-// MATERIAL ROUTES  
-// ============================================================================
-
-// GET /api/supply-chain/materials
-router.get('/materials', async (req, res) => {
-  try {
-    const { materialType, materialCategory, regulatoryStatus, search } = req.query;
-    
-    let filteredMaterials = [...mockMaterials];
-    
-    if (materialType) {
-      filteredMaterials = filteredMaterials.filter(m => m.materialType === materialType);
-    }
-    if (materialCategory) {
-      filteredMaterials = filteredMaterials.filter(m => m.materialCategory === materialCategory);
-    }
-    if (regulatoryStatus) {
-      filteredMaterials = filteredMaterials.filter(m => m.regulatoryStatus === regulatoryStatus);
-    }
-    if (search) {
-      const searchTerm = search.toString().toLowerCase();
-      filteredMaterials = filteredMaterials.filter(m => 
-        m.name.toLowerCase().includes(searchTerm) ||
-        m.materialCode.toLowerCase().includes(searchTerm) ||
-        m.casNumber?.toLowerCase().includes(searchTerm)
-      );
-    }
-    
-    res.json({
-      success: true,
-      data: filteredMaterials,
-      total: filteredMaterials.length,
-    });
-  } catch (error) {
-    console.error('Error fetching materials:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch materials',
-    });
-  }
-});
-
-// POST /api/supply-chain/materials
-router.post('/materials', async (req, res) => {
-  try {
-    const newMaterial = {
-      id: mockMaterials.length + 1,
-      materialCode: req.body.materialCode || `MAT-${String(mockMaterials.length + 1).padStart(3, '0')}`,
-      ...req.body,
-      isActive: true
-    };
-    
-    mockMaterials.push(newMaterial);
-    
-    res.status(201).json({
-      success: true,
-      data: newMaterial,
-    });
-  } catch (error) {
-    console.error('Error creating material:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to create material',
-    });
-  }
-});
-
-// ============================================================================
 // BATCH ROUTES
 // ============================================================================
 
@@ -523,39 +383,6 @@ router.post('/batches/:id/release', async (req, res) => {
     });
   }
 });
-
-// ============================================================================
-// SHIPMENT ROUTES
-// ============================================================================
-
-// GET /api/supply-chain/shipments
-router.get('/shipments', async (req, res) => {
-  try {
-    const { shipmentStatus, shipmentType } = req.query;
-    
-    let filteredShipments = [...mockShipments];
-    
-    if (shipmentStatus) {
-      filteredShipments = filteredShipments.filter(s => s.shipmentStatus === shipmentStatus);
-    }
-    if (shipmentType) {
-      filteredShipments = filteredShipments.filter(s => s.shipmentType === shipmentType);
-    }
-    
-    res.json({
-      success: true,
-      data: filteredShipments,
-      total: filteredShipments.length,
-    });
-  } catch (error) {
-    console.error('Error fetching shipments:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch shipments',
-    });
-  }
-});
-
 // GET /api/supply-chain/temperature-readings/:shipmentId
 router.get('/temperature-readings/:shipmentId', async (req, res) => {
   try {

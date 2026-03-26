@@ -245,32 +245,6 @@ router.post('/project/:projectId/generate-all', async (req: Request, res: Respon
     res.status(500).json({ error: 'Failed to generate FDA forms' });
   }
 });
-
-// Get all available form definitions from registry
-router.get('/registry', async (req: Request, res: Response) => {
-  try {
-    const { FDAFormsRegistry, getFormsByCategory } = await import('../config/FDAFormsRegistry');
-    
-    const formCategories = {
-      '510k': getFormsByCategory('510k'),
-      'PMA': getFormsByCategory('PMA'),
-      'Clinical': getFormsByCategory('Clinical'),
-      'Special': getFormsByCategory('Special'),
-      'Common': getFormsByCategory('Common')
-    };
-    
-    res.json({
-      success: true,
-      registry: FDAFormsRegistry,
-      categories: formCategories,
-      totalForms: Object.keys(FDAFormsRegistry).length
-    });
-  } catch (error) {
-    console.error('Error fetching forms registry:', error);
-    res.status(500).json({ error: 'Failed to fetch forms registry' });
-  }
-});
-
 // Generate any SMART form from registry
 router.post('/project/:projectId/generate-smart/:formId', async (req: Request, res: Response) => {
   const { projectId, formId } = req.params;
@@ -495,90 +469,6 @@ router.get('/project/:projectId/form/:formType', async (req: Request, res: Respo
     res.status(500).json({ error: 'Failed to fetch form' });
   }
 });
-
-// Generate a smart form for a specific form ID
-router.post('/project/:projectId/generate-smart/:formId', async (req: Request, res: Response) => {
-  try {
-    const { projectId, formId } = req.params;
-    const formGenerator = new FDAFormGenerator();
-    
-    // Get form definition from registry
-    const formDef = formsRegistry.getForm(formId);
-    if (!formDef) {
-      return res.status(404).json({ error: `Form ${formId} not found in registry` });
-    }
-    
-    // Fetch project data
-    const projectData = await fetchProjectData(parseInt(projectId));
-    if (!projectData) {
-      return res.status(404).json({ error: 'Project not found' });
-    }
-    
-    // Generate the form using the universal smart form generator
-    const generatedForm = await formGenerator.generateUniversalSmartForm(formId, projectId);
-    
-    res.json({
-      success: true,
-      formId,
-      projectId,
-      form: generatedForm,
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    console.error('[FDA Forms] Error generating smart form:', error);
-    res.status(500).json({ error: 'Failed to generate smart form' });
-  }
-});
-
-// Auto-generate all required forms for a project
-router.post('/project/:projectId/auto-generate', async (req: Request, res: Response) => {
-  try {
-    const { projectId } = req.params;
-    const formGenerator = new FDAFormGenerator();
-    
-    // Get required forms based on project type (510k for now)
-    const requiredForms = formsRegistry.getFormsByCategory('510k');
-    const results = [];
-    
-    // Fetch project data once for all forms
-    const projectData = await fetchProjectData(parseInt(projectId));
-    if (!projectData) {
-      return res.status(404).json({ error: 'Project not found' });
-    }
-    
-    // Generate each required form
-    for (const formId of requiredForms) {
-      try {
-        const generatedForm = await formGenerator.generateUniversalSmartForm(formId, projectId);
-        results.push({
-          formId,
-          status: 'success',
-          form: generatedForm
-        });
-      } catch (error: any) {
-        results.push({
-          formId,
-          status: 'error',
-          error: error.message
-        });
-      }
-    }
-    
-    res.json({
-      success: true,
-      projectId,
-      results,
-      totalGenerated: results.filter(r => r.status === 'success').length,
-      totalFailed: results.filter(r => r.status === 'error').length,
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    console.error('[FDA Forms] Error auto-generating forms:', error);
-    res.status(500).json({ error: 'Failed to auto-generate forms' });
-  }
-});
-
-// Generate forms for a specific workflow stage
 router.post('/project/:projectId/generate-stage/:stage', async (req: Request, res: Response) => {
   try {
     const { projectId, stage } = req.params;
